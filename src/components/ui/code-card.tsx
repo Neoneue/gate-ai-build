@@ -56,7 +56,11 @@ const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
   default:  'text-ink-900',
   muted:    'text-ink-500',
   keyword:  'text-[var(--color-syntax-keyword)]',
-  string:   'text-success-500',
+  // Brand palette: keys = blue-700 (--color-syntax-property), all literal
+  // values = success-700 green (--color-syntax-terminal-blue). One hue per
+  // role — keys vs values — using the codebase's own ramp instead of an
+  // external palette so the JSON view stays on-brand.
+  string:   'text-[var(--color-syntax-terminal-blue)]',
   variable: 'text-[var(--color-syntax-variable)]',
   property: 'text-[var(--color-syntax-property)]',
   number:   'text-[var(--color-syntax-terminal-blue)]',
