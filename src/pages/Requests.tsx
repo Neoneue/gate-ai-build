@@ -1293,7 +1293,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
             content of any request inspection — is visible on first open. */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-2">
           <TabsList className="group-data-horizontal/tabs:h-10">
-            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="messages">Message</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="audit">Security</TabsTrigger>
           </TabsList>
