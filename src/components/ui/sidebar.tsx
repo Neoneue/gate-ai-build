@@ -152,12 +152,14 @@ function SidebarCollapsed({
             {section.items.map((item) => {
               const Icon = item.icon;
               const isActive = activeId === item.id;
+              const isDisabled = !item.pageId;
               return (
                 <button
                   key={item.id}
                   type="button"
                   aria-label={item.label}
                   aria-current={isActive ? 'page' : undefined}
+                  disabled={isDisabled}
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   // Collapsed-rail icon buttons (36px square) use
                   // `active:translate-y-px` instead of `scale-[0.98]` —
@@ -167,7 +169,9 @@ function SidebarCollapsed({
                   className={
                     isActive
                       ? 'flex items-center justify-center size-9 rounded-sm bg-ink-200 text-ink-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
-                      : 'flex items-center justify-center size-9 rounded-sm text-ink-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-ink-700 hover:bg-ink-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                      : isDisabled
+                        ? 'flex items-center justify-center size-9 rounded-sm text-ink-300 cursor-not-allowed'
+                        : 'flex items-center justify-center size-9 rounded-sm text-ink-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-ink-700 hover:bg-ink-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
                   }
                 >
                   <Icon className="size-[18px]" strokeWidth={1.5} />
@@ -226,16 +230,20 @@ function SidebarExpanded({
             {section.items.map((item) => {
               const Icon = item.icon;
               const isActive = activeId === item.id;
+              const isDisabled = !item.pageId;
               return (
                 <button
                   key={item.id}
                   type="button"
                   aria-current={isActive ? 'page' : undefined}
+                  disabled={isDisabled}
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   className={
                     isActive
                       ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-ink-200 bg-ink-100 text-ink-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
-                      : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-700 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                      : isDisabled
+                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-400 cursor-not-allowed'
+                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-700 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
                   }
                 >
                   <Icon className="size-4 shrink-0" strokeWidth={1.75} />
