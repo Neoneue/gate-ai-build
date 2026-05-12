@@ -99,20 +99,14 @@ export function Models() {
             onNavigate={(path: string) => navigate(path)}
           >
             {selectedModel ? (
-              <div
-                key={`detail-${selectedModel.id}`}
-                className="flex flex-col gap-6 animate-in fade-in-0 slide-in-from-right-2 duration-200 ease-out motion-reduce:animate-none motion-reduce:duration-0"
-              >
+              <div className="flex flex-col gap-6">
                 <ModelDetailPage
                   model={selectedModel}
                   onBack={() => setSelectedModel(null)}
                 />
               </div>
             ) : (
-              <div
-                key="list"
-                className="flex flex-col gap-6 animate-in fade-in-0 slide-in-from-left-2 duration-200 ease-out motion-reduce:animate-none motion-reduce:duration-0"
-              >
+              <div className="flex flex-col gap-6">
                 <ModelsSurface onSelect={setSelectedModel} />
               </div>
             )}

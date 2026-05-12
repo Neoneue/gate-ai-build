@@ -1041,8 +1041,13 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
             <RequestBodyPanel row={row} />
           </TabsContent>
 
-          <TabsContent value="details">
-            <DetailList>
+          {/* `pt-2` on this and the Audit panel: the global Tabs `gap-2`
+              (8px) sits tight against the messages body card chrome (its
+              border + shadow buffer the gap visually). Details/Audit have
+              no chrome, so without the extra 8px the table's top border
+              reads as touching the tabs. */}
+          <TabsContent value="details" className="pt-2">
+            <DetailList className="rounded-md">
               <DetailRow
                 label="Model"
                 value={
@@ -1092,7 +1097,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
 
           {/* Audit tab — runtime guardrail checks (did this request pass
               policy at runtime?). */}
-          <TabsContent value="audit">
+          <TabsContent value="audit" className="pt-2">
             <SecurityPanel row={row} />
           </TabsContent>
         </Tabs>
@@ -1645,7 +1650,7 @@ function SecurityCheckRow({
   status: CheckStatus;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-xs border border-ink-200 p-4">
+    <div className="flex items-start justify-between gap-3 rounded-md border border-ink-200 p-4">
       <div className="flex flex-col gap-1 min-w-0">
         <span className="font-sans text-sm font-medium text-ink-900">{title}</span>
         <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>
