@@ -94,7 +94,7 @@ function PageHeader() {
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Every generation routed through the gateway. Click any row to inspect prompts, security scans and the audit anchor.
+          Every model call across your gateway, captured as it happens. Kept for debugging and audit.
         </p>
       </div>
       <div className="flex items-center gap-4 shrink-0">
@@ -171,7 +171,7 @@ function HeroMetricCard() {
         <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
           <BreakdownRow label="Success" value="8,182" tone="success" />
           <BreakdownRow label="Errors"  value="47"    tone="danger" />
-          <BreakdownRow label={'Slow > 1s'} value="12" tone="warning" />
+          <BreakdownRow label={'Slow > 10s'} value="4" tone="warning" />
         </div>
       </div>
 
@@ -314,7 +314,19 @@ const RANGE_OPTIONS = [
 
 /* ─── Requests log table ─────────────────────────────────────────────────── */
 
-type RequestStatus = 'success' | 'warn' | 'danger';
+/** Gateway-action statuses (CTO direction, Marcus 2026-05-12). Each
+ *  value names what the gateway DID with the request, not the HTTP code:
+ *    success  — passed guardrails, model responded
+ *    flagged  — guardrail flagged content (advisory) but allowed it through
+ *    redacted — gateway stripped PII before sending; call succeeded
+ *    blocked  — guardrail rejected, request never hit the model
+ *    error    — provider 4xx/5xx or upstream failure */
+type RequestStatus = 'success' | 'flagged' | 'redacted' | 'blocked' | 'error';
+
+/** Which guardrail check fired for non-`success` rows. Maps 1:1 to the
+ *  five runtime checks rendered in the modal's Audit tab so the row's
+ *  status and the failing/flagging check stay in lock-step. */
+type GuardrailReason = 'injection' | 'pii' | 'allowlist' | 'spend' | 'toxicity';
 
 type RequestRow = {
   /** Compact month/day for the cell ("May 12"); modal pairs it with 2026
@@ -339,81 +351,119 @@ type RequestRow = {
   /** True when this request crossed the 1s "slow" threshold. */
   slow?: boolean;
   cost: string;
+  /** Which guardrail check fired. Set for `blocked`, `flagged`, and
+   *  `redacted` rows; absent for plain `success` and `error`. Drives the
+   *  matching check state on the modal's Audit tab so the row and the
+   *  modal stay in lock-step. */
+  guardrailReason?: GuardrailReason;
 };
 
 const REQUEST_ROWS_1H: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true,  cost: '$0.0284' },
-  { day: 'May 12', time: '14:29:51', relative: '1m ago',   status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '0.96s',             cost: '$0.0192' },
-  { day: 'May 12', time: '14:29:23', relative: '1m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,420', outTokens: '2,008', latency: '2.14s', slow: true,  cost: '$0.0312' },
-  { day: 'May 12', time: '14:28:48', relative: '2m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '1.08s', slow: true,  cost: '$0.0091' },
-  { day: 'May 12', time: '14:28:09', relative: '2m ago',   status: 'danger',  code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
-  { day: 'May 12', time: '14:27:42', relative: '3m ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '5,024', outTokens: '2,612', latency: '1.95s', slow: true,  cost: '$0.0068' },
-  { day: 'May 12', time: '14:27:11', relative: '3m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,442', outTokens: '820',   latency: '0.91s',             cost: '$0.0072' },
-  { day: 'May 12', time: '14:26:52', relative: '4m ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.18s',             cost: '$0.0000' },
-  { day: 'May 12', time: '14:26:14', relative: '4m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '3,104', outTokens: '1,420', latency: '1.31s', slow: true,  cost: '$0.0315' },
-  { day: 'May 12', time: '14:25:47', relative: '5m ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '6,204', outTokens: '3,109', latency: '0.42s',             cost: '$0.0184' },
-  { day: 'May 12', time: '14:25:10', relative: '5m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '942',   outTokens: '517',   latency: '0.74s',             cost: '$0.0062' },
-  { day: 'May 12', time: '14:24:38', relative: '6m ago',   status: 'warn',    code: '408', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_polaris_55', keyId: 'dev',        inTokens: '4,108', outTokens: '0',     latency: '8.04s', slow: true,  cost: '$0.0000' },
-  { day: 'May 12', time: '14:24:02', relative: '6m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '1,712', outTokens: '904',   latency: '1.05s', slow: true,  cost: '$0.0167' },
-  { day: 'May 12', time: '14:23:24', relative: '7m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,209', outTokens: '1,058', latency: '0.83s',             cost: '$0.0096' },
+  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
+  { day: 'May 12', time: '14:29:51', relative: '1m ago',   status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
+  { day: 'May 12', time: '14:29:23', relative: '1m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,420', outTokens: '2,008', latency: '14.20s', slow: true, cost: '$0.0312' },
+  { day: 'May 12', time: '14:28:48', relative: '2m ago',   status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '5.40s',              cost: '$0.0091', guardrailReason: 'pii' },
+  { day: 'May 12', time: '14:28:09', relative: '2m ago',   status: 'error',  code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'May 12', time: '14:27:42', relative: '3m ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '5,024', outTokens: '2,612', latency: '13.40s', slow: true, cost: '$0.0068' },
+  { day: 'May 12', time: '14:27:11', relative: '3m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,442', outTokens: '820',   latency: '3.20s',              cost: '$0.0072' },
+  { day: 'May 12', time: '14:26:52', relative: '4m ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000' },
+  { day: 'May 12', time: '14:26:31', relative: '4m ago',   status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.05s',              cost: '$0.0000', guardrailReason: 'injection' },
+  { day: 'May 12', time: '14:26:14', relative: '4m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '3,104', outTokens: '1,420', latency: '4.10s',              cost: '$0.0315' },
+  { day: 'May 12', time: '14:25:47', relative: '5m ago',   status: 'flagged', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '6,204', outTokens: '3,109', latency: '7.20s',              cost: '$0.0184', guardrailReason: 'toxicity' },
+  { day: 'May 12', time: '14:25:10', relative: '5m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '942',   outTokens: '517',   latency: '11.60s', slow: true, cost: '$0.0062' },
+  { day: 'May 12', time: '14:24:38', relative: '6m ago',   status: 'error',    code: '408', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_polaris_55', keyId: 'dev',        inTokens: '4,108', outTokens: '0',     latency: '18.20s', slow: true, cost: '$0.0000' },
+  { day: 'May 12', time: '14:24:02', relative: '6m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '1,712', outTokens: '904',   latency: '4.80s',              cost: '$0.0167' },
+  { day: 'May 12', time: '14:23:24', relative: '7m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,209', outTokens: '1,058', latency: '3.40s',              cost: '$0.0096' },
 ];
 
 // 24H view — hour-to-multiple-hours spaced; spans yesterday → now.
 const REQUEST_ROWS_24H: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
-  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,402', outTokens: '1,718', latency: '0.88s',             cost: '$0.0346' },
-  { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '2.84s', slow: true, cost: '$0.1842' },
-  { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '0.91s',             cost: '$0.0124' },
-  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'danger',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
-  { day: 'May 12', time: '06:38:19', relative: '8h ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '942',   outTokens: '481',   latency: '0.74s',             cost: '$0.0058' },
-  { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '0.46s',             cost: '$0.0172' },
-  { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '1.18s', slow: true, cost: '$0.0241' },
-  { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.22s',             cost: '$0.0000' },
-  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '4,208', outTokens: '2,104', latency: '1.41s', slow: true, cost: '$0.0512' },
-  { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '0.81s',             cost: '$0.0094' },
-  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '2.18s', slow: true, cost: '$0.0098' },
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
+  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,402', outTokens: '1,718', latency: '3.80s',              cost: '$0.0346' },
+  { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.80s', slow: true, cost: '$0.1842' },
+  { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '5.10s',              cost: '$0.0124' },
+  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'May 12', time: '06:38:19', relative: '8h ago',    status: 'flagged', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '942',   outTokens: '481',   latency: '6.40s',              cost: '$0.0058', guardrailReason: 'toxicity' },
+  { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '7.80s',              cost: '$0.0172' },
+  { day: 'May 12', time: '03:42:11', relative: '11h ago',   status: 'blocked', code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'allowlist' },
+  { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'redacted',code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '4.50s',              cost: '$0.0241', guardrailReason: 'pii' },
+  { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
+  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '4,208', outTokens: '2,104', latency: '5.90s',              cost: '$0.0512' },
+  { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '3.40s',              cost: '$0.0094' },
+  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '6.20s',              cost: '$0.0098' },
 ];
 
 // 7D view — day-to-half-day spaced; spans the past week.
 const REQUEST_ROWS_7D: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
-  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'prod-web',   inTokens: '4,108', outTokens: '2,094', latency: '0.94s',             cost: '$0.0418' },
-  { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '3.42s', slow: true, cost: '$0.2104' },
-  { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '0.86s',             cost: '$0.0148' },
-  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'danger',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
-  { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '0.78s',             cost: '$0.0086' },
-  { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '0.41s',             cost: '$0.0228' },
-  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,118', outTokens: '1,564', latency: '1.28s', slow: true, cost: '$0.0382' },
-  { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.19s',             cost: '$0.0000' },
-  { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '0.92s',             cost: '$0.0118' },
-  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '2.04s', slow: true, cost: '$0.0084' },
-  { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '1.08s', slow: true, cost: '$0.0298' },
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
+  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'prod-web',   inTokens: '4,108', outTokens: '2,094', latency: '3.80s',              cost: '$0.0418' },
+  { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '12.30s', slow: true, cost: '$0.2104' },
+  { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'flagged', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '5.20s',              cost: '$0.0148', guardrailReason: 'toxicity' },
+  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '4.10s',              cost: '$0.0086' },
+  { day: 'May 9',  time: '16:08:42', relative: '3d ago',    status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'pii' },
+  { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '6.80s',              cost: '$0.0228' },
+  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,118', outTokens: '1,564', latency: '3.50s',              cost: '$0.0382' },
+  { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
+  { day: 'May 7',  time: '08:42:18', relative: '5d ago',    status: 'blocked', code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'spend' },
+  { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '5.40s',              cost: '$0.0118', guardrailReason: 'pii' },
+  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '7.20s',              cost: '$0.0084' },
+  { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '3.80s',              cost: '$0.0298' },
 ];
 
 // 30D view — multi-day spaced; spans the past month.
 const REQUEST_ROWS_30D: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
-  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,608', outTokens: '1,812', latency: '0.92s',             cost: '$0.0368' },
-  { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '14,208',outTokens: '7,420', latency: '3.58s', slow: true, cost: '$0.2418' },
-  { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '0.84s',             cost: '$0.0158' },
-  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'danger',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
-  { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '0.82s',             cost: '$0.0098' },
-  { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '0.44s',             cost: '$0.0264' },
-  { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,408', outTokens: '1,718', latency: '1.34s', slow: true, cost: '$0.0418' },
-  { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.21s',             cost: '$0.0000' },
-  { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '0.94s',             cost: '$0.0128' },
-  { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '2.18s', slow: true, cost: '$0.0094' },
-  { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '1.18s', slow: true, cost: '$0.0342' },
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
+  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,608', outTokens: '1,812', latency: '3.80s',              cost: '$0.0368' },
+  { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '14,208',outTokens: '7,420', latency: '22.40s', slow: true, cost: '$0.2418' },
+  { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '5.40s',              cost: '$0.0158', guardrailReason: 'pii' },
+  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'Apr 30', time: '11:32:48', relative: '12d ago',   status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'injection' },
+  { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '4.80s',              cost: '$0.0098' },
+  { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '7.20s',              cost: '$0.0264' },
+  { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'flagged', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,408', outTokens: '1,718', latency: '3.90s',              cost: '$0.0418', guardrailReason: 'toxicity' },
+  { day: 'Apr 21', time: '09:14:32', relative: '21d ago',   status: 'blocked', code: '403', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'pii' },
+  { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
+  { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '5.40s',              cost: '$0.0128' },
+  { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '11.80s', slow: true, cost: '$0.0094' },
+  { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '6.10s',              cost: '$0.0342' },
 ];
 
 const STATUS_BADGE: Record<RequestStatus, {
-  variant: 'success' | 'warning' | 'destructive';
-  dot: 'success' | 'warning' | 'danger';
+  variant: 'success' | 'warning' | 'destructive' | 'neutral';
 }> = {
-  success: { variant: 'success',     dot: 'success' },
-  warn:    { variant: 'warning',     dot: 'warning' },
-  danger:  { variant: 'destructive', dot: 'danger'  },
+  success:  { variant: 'success'     },
+  flagged:  { variant: 'warning'     },
+  redacted: { variant: 'neutral'     },
+  blocked:  { variant: 'destructive' },
+  error:    { variant: 'destructive' },
 };
+
+/** Per-CTO direction (Marcus, 2026-05-12): row Status badge shows the
+ *  semantic gateway action — success/flagged/redacted/blocked/error —
+ *  not the HTTP code. The raw HTTP code still lives on `row.code` and
+ *  surfaces in the modal Details tab. Lowercase here, the Badge
+ *  primitive's `capitalize` rule renders the visual case. */
+const STATUS_MESSAGE: Record<RequestStatus, string> = {
+  success:  'success',
+  flagged:  'flagged',
+  redacted: 'redacted',
+  blocked:  'blocked',
+  error:    'error',
+};
+
+function statusLabel(row: RequestRow) {
+  if (row.slow) return 'slow';
+  return STATUS_MESSAGE[row.status];
+}
+
+/** Slow short-circuits the row's underlying status in the badge. The
+ *  raw `row.status` still drives the modal Audit tab so investigators
+ *  can see whether the slow request also blocked / errored / etc. */
+function statusVariant(row: RequestRow): 'success' | 'warning' | 'destructive' | 'neutral' {
+  if (row.slow) return 'warning';
+  return STATUS_BADGE[row.status].variant;
+}
 
 // Per-range row set + pagination total. Pill drives both — total reflects
 // the headline volume for the window (1H ties to HERO_TOTAL; 24H/7D/30D
@@ -521,10 +571,12 @@ function RequestsTableSection() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="200">200 OK</SelectItem>
-              <SelectItem value="4xx">4xx</SelectItem>
-              <SelectItem value="5xx">5xx</SelectItem>
-              <SelectItem value="slow">{'Slow > 1s'}</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="flagged">Flagged</SelectItem>
+              <SelectItem value="redacted">Redacted</SelectItem>
+              <SelectItem value="blocked">Blocked</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="slow">{'Slow > 10s'}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -588,8 +640,10 @@ function RequestsTableSection() {
                         the scan target; absolute (mono tabular, ink-500)
                         qualifies for forensic alignment across rows. py-2
                         trims 8px off the default py-3 so the dual-line cell
-                        doesn't bloat row height. */}
-                    <div className="flex flex-col gap-0.5">
+                        doesn't bloat row height. `gap-0` lets the natural
+                        line-heights own the vertical rhythm — we keep the
+                        codebase on the 4px grid and don't drift to gap-0.5. */}
+                    <div className="flex flex-col gap-0">
                       <span className="font-sans text-sm text-ink-800">
                         {row.relative}
                       </span>
@@ -599,8 +653,8 @@ function RequestsTableSection() {
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <Badge variant={badge.variant}>
-                      {row.code}
+                    <Badge variant={statusVariant(row)}>
+                      {statusLabel(row)}
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-[260px]">
@@ -730,8 +784,8 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           titleFont="mono"
           titleAriaLabel={`Request ${requestId}`}
           badge={
-            <Badge variant={badge.variant}>
-              {row.code}
+            <Badge variant={statusVariant(row)}>
+              {statusLabel(row)}
             </Badge>
           }
           meta={
@@ -795,6 +849,10 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                     <span className="text-ink-500">POST</span> /v1/messages
                   </span>
                 }
+              />
+              <DetailRow
+                label="HTTP status"
+                value={<Badge variant={badge.variant}>{row.code}</Badge>}
               />
               <DetailRow
                 label="Cache"
@@ -919,49 +977,108 @@ function MessagesPanel() {
 
 /* Security scan report — every gateway request runs the same set of
    guardrails (prompt-injection, PII, toxicity, model allowlist, spend cap).
-   Status is hardcoded `pass` on this demo data; descriptions use live values
-   from the row where possible (cost, model, key) so the panel doesn't read
-   as decoupled from the selected request. */
+   The check state is driven by `row.status` + `row.guardrailReason`:
+     - `blocked` row → matching check renders as `block` (destructive)
+     - `flagged` row → matching check renders as `flag` (warning)
+     - `redacted` row → matching check renders as `redact` (info)
+     - anything else → all five checks `pass`
+   Descriptions use live row values so the panel doesn't read as decoupled
+   from the selected request. */
+type CheckStatus = 'pass' | 'flag' | 'redact' | 'block';
+type CheckKey = 'injection' | 'pii' | 'toxicity' | 'allowlist' | 'spend';
+
+/** Maps a row's overall status to the check-level state that should
+ *  render for its matching guardrail. `success`/`error` rows pass all
+ *  checks (errors come from the provider, not from policy). */
+function rowActionToCheckStatus(status: RequestStatus): CheckStatus {
+  switch (status) {
+    case 'blocked':  return 'block';
+    case 'flagged':  return 'flag';
+    case 'redacted': return 'redact';
+    default:         return 'pass';
+  }
+}
+
 function SecurityPanel({ row }: { row: RequestRow }) {
+  const reason = row.guardrailReason;
+  const matchState = rowActionToCheckStatus(row.status);
+  const stateFor = (key: CheckKey): CheckStatus =>
+    reason === key && matchState !== 'pass' ? matchState : 'pass';
   const checks: {
+    key: CheckKey;
     title: string;
     description: string;
-    status: 'pass';
+    status: CheckStatus;
   }[] = [
     {
+      key: 'injection',
       title: 'Prompt injection scan',
-      description: 'No injection patterns detected · 0/247 rules matched',
-      status: 'pass',
+      description:
+        stateFor('injection') === 'block'
+          ? 'Injection pattern matched · request rejected before model call'
+          : stateFor('injection') === 'flag'
+            ? 'Injection signal detected · request allowed but flagged'
+            : 'No injection patterns detected · 0/247 rules matched',
+      status: stateFor('injection'),
     },
     {
+      key: 'pii',
       title: 'PII redaction',
-      description: 'No PII detected',
-      status: 'pass',
+      description:
+        stateFor('pii') === 'block'
+          ? 'PII detected in outbound payload · request rejected before model call'
+          : stateFor('pii') === 'redact'
+            ? 'PII redacted from outbound payload before model call'
+            : stateFor('pii') === 'flag'
+              ? 'PII detected · request allowed but flagged'
+              : 'No PII detected',
+      status: stateFor('pii'),
     },
     {
+      key: 'toxicity',
       title: 'Output toxicity',
-      description: 'Below threshold (0.04 / 0.7)',
-      status: 'pass',
+      description:
+        stateFor('toxicity') === 'block'
+          ? 'Toxicity score above threshold · request rejected before model call'
+          : stateFor('toxicity') === 'flag'
+            ? 'Toxicity score above flag threshold · request allowed but flagged'
+            : 'Below threshold (0.04 / 0.7)',
+      status: stateFor('toxicity'),
     },
     {
+      key: 'allowlist',
       title: 'Model allowlist',
-      description: `${row.model} approved for key ${row.keyId}`,
-      status: 'pass',
+      description:
+        stateFor('allowlist') === 'block'
+          ? `${row.model} not in allowlist for key ${row.keyId}`
+          : `${row.model} approved for key ${row.keyId}`,
+      status: stateFor('allowlist'),
     },
     {
+      key: 'spend',
       title: 'Spend cap',
-      description: `Within daily cap · ${row.cost} of $50.00`,
-      status: 'pass',
+      description:
+        stateFor('spend') === 'block'
+          ? `Daily cap exceeded · $50.00 of $50.00 used`
+          : `Within daily cap · ${row.cost} of $50.00`,
+      status: stateFor('spend'),
     },
   ];
   return (
     <div className="flex flex-col gap-2">
       {checks.map((check) => (
-        <SecurityCheckRow key={check.title} {...check} />
+        <SecurityCheckRow key={check.key} {...check} />
       ))}
     </div>
   );
 }
+
+const CHECK_BADGE_VARIANT: Record<CheckStatus, 'success' | 'warning' | 'destructive' | 'neutral'> = {
+  pass:   'success',
+  flag:   'warning',
+  redact: 'neutral',
+  block:  'destructive',
+};
 
 function SecurityCheckRow({
   title,
@@ -970,7 +1087,7 @@ function SecurityCheckRow({
 }: {
   title: string;
   description: string;
-  status: 'pass';
+  status: CheckStatus;
 }) {
   return (
     <div className="flex items-start justify-between gap-3 rounded-xs border border-ink-200 p-4">
@@ -978,7 +1095,7 @@ function SecurityCheckRow({
         <span className="font-sans text-sm font-medium text-ink-900">{title}</span>
         <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>
       </div>
-      <Badge variant="success">
+      <Badge variant={CHECK_BADGE_VARIANT[status]}>
         {status}
       </Badge>
     </div>
