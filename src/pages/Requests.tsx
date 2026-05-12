@@ -1025,9 +1025,14 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
       <DialogScrollBody>
         {/* Tabs default to Messages so the prompt/response — the load-bearing
             content of any request inspection — is visible on first open. */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-2">
           <TabsList>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="messages">
+              Messages
+              <span className="ml-1 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-sm bg-ink-100 text-ink-700 font-mono text-xs font-medium tabular-nums">
+                2
+              </span>
+            </TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="audit">Audit</TabsTrigger>
           </TabsList>
@@ -1146,7 +1151,7 @@ function auditVerdict(row: RequestRow): { label: string; toneCls: string } {
 function KpiRail({ row }: { row: RequestRow }) {
   const verdict = auditVerdict(row);
   return (
-    <KpiRailShell columns={5}>
+    <KpiRailShell columns={5} className="border border-ink-200 shadow-none">
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />
@@ -1459,9 +1464,11 @@ function BodySection({
     // `shrink-0` so the section never gets squished by its flex parent
     // when sibling sections also expand. The outer panel's max-h handles
     // overflow via scroll; sticky headers stay pinned during scroll.
-    // Border + default `shadow-(--shadow-border)` ring — border stays
-    // crisp where the ring clips at the scrollable parent's edges.
-    <CodeCard className="shrink-0 border border-ink-200">
+    // Lighter `border-ink-100` instead of `ink-200` — the CodeCard's
+    // default shadow already provides a 1px ring, so pairing it with a
+    // softer real border keeps the edge crisp at scroll clip points
+    // without doubling the visual weight.
+    <CodeCard className="shrink-0 border border-ink-100">
       {/* Sticky header so the section label stays pinned at the top of
           the scrollable area as you scroll through the body content
           underneath. Header sits on the card surface (white) so it reads
@@ -1483,7 +1490,7 @@ function BodySection({
       </button>
       {expanded && (
         <div className="overflow-x-auto border-t border-ink-200 bg-ink-50">
-          <CodeBlock lines={lines} />
+          <CodeBlock lines={lines} density="compact" />
         </div>
       )}
     </CodeCard>
@@ -1500,10 +1507,13 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
   return (
     // Hard cap on the panel — modal height never grows when sections are
     // expanded. Scrolling lives inside this container; sticky section
-    // headers stay pinned at the top as the user scrolls. Padding gives
-    // the cards' shadow ring room to render around their rounded corners
-    // instead of being clipped flush by the scroll container's edges.
-    <div className="flex flex-col gap-3 max-h-80 overflow-y-auto p-2">
+    // headers stay pinned at the top as the user scrolls.
+    // `-mx-2 px-2 py-2`: extend the scroll viewport 8px beyond the modal
+    // content column on each side, then inset the cards back to the
+    // column edge — gives the shadow ring room to render around the
+    // rounded corners without making the cards visually narrower than
+    // the KPI rail / tabs above them.
+    <div className="flex flex-col gap-3 max-h-80 overflow-y-auto -mx-2 px-2 py-2">
       <BodySection
         label="Request body #1"
         lines={requestLines}
