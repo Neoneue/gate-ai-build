@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
@@ -51,7 +51,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -94,7 +94,7 @@ function PageHeader() {
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Every model call across your gateway, captured as it happens. Kept for debugging and audit.
+          Every model call across your gateway, captured as it happens. Kept for debugging and auditing.
         </p>
       </div>
       <div className="flex items-center gap-4 shrink-0">
@@ -107,59 +107,272 @@ function PageHeader() {
   );
 }
 
-/* ─── Hero metric (REQUESTS / 1H + line chart + breakdown) ───────────────── */
+/* ─── Hero metric (REQUESTS / range + line chart + breakdown) ────────────── */
 
+type RangeKey = '1h' | '24h' | '7d' | '30d';
+
+type HeroView = {
+  eyebrow: string;
+  total: number;
+  success: number;
+  errors: number;
+  slow: number;
+  delta: string;
+  deltaNote: string;
+  data: Array<{ time: string; requests: number }>;
+  ticks: string[];
+  bucketLabel: string;
+  domainTop: number;
+};
+
+// Module-scoped range store. RequestsTableSection writes via the existing
+// SegmentedPill onValueChange; HeroMetricCard subscribes via useRange().
+// This keeps Requests() untouched (no state lifting) and avoids a context
+// Provider mismatch (Hero and Table are siblings, not ancestor/descendant).
+const rangeStore = {
+  current: '1h' as RangeKey,
+  listeners: new Set<() => void>(),
+  set(next: RangeKey) {
+    this.current = next;
+    this.listeners.forEach((l) => l());
+  },
+  subscribe(l: () => void) {
+    this.listeners.add(l);
+    return () => {
+      this.listeners.delete(l);
+    };
+  },
+};
+
+function useRange(): RangeKey {
+  return useSyncExternalStore(
+    (cb) => rangeStore.subscribe(cb),
+    () => rangeStore.current,
+    () => rangeStore.current,
+  );
+}
+
+// Deterministic LCG-seeded bucket generator. At low totals (48 / 468 /
+// 2,248) the output stays spiky and sparse — many empty buckets, a few
+// clear spikes — instead of smoothing into a curve. Seeded per range so
+// the chart is stable across renders.
+function makeHeroBuckets(
+  count: number,
+  totalTarget: number,
+  shape: 'daily' | 'weekly' | 'monthly',
+  seed: number,
+): number[] {
+  let s = seed >>> 0;
+  const rand = () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+  const weights: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    let base = 1;
+    if (shape === 'daily') {
+      base = 0.15 + 0.85 * Math.exp(-Math.pow((t - 0.55) * 2.2, 2));
+    } else if (shape === 'weekly') {
+      const day = (t * 7) % 1;
+      const dailyShape = 0.15 + 0.85 * Math.exp(-Math.pow((day - 0.55) * 2.2, 2));
+      const dayIndex = Math.floor(t * 7);
+      const weekend = dayIndex >= 5 ? 0.5 : 1.0;
+      base = dailyShape * weekend;
+    } else {
+      const day = (t * 30) % 1;
+      const dailyShape = 0.2 + 0.8 * Math.exp(-Math.pow((day - 0.55) * 2.2, 2));
+      const trend = 0.6 + 0.8 * t;
+      const dayIndex = Math.floor(t * 30);
+      const weekend = dayIndex % 7 >= 5 ? 0.55 : 1.0;
+      base = dailyShape * trend * weekend;
+    }
+    const r = rand();
+    // Heavy zero-bias + fewer-but-clearer spikes for low-volume views.
+    const spike = r > 0.90 ? 1 + r * 3 : r > 0.55 ? 0.2 + r * 0.5 : 0;
+    weights.push(base * spike);
+  }
+  const sumW = weights.reduce((a, b) => a + b, 0) || 1;
+  return weights.map((w) => Math.max(0, Math.round((w / sumW) * totalTarget)));
+}
+
+// Anchor "now" for the mock = May 12 14:30 (today's date in fixtures).
+// Stable constant — never use `new Date()` here, the chart must not drift
+// across renders or test runs.
+const ANCHOR = { month: 4 /* May, 0-indexed */, day: 12, hour: 14, minute: 30 };
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
+function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; hour: number; minute: number } {
+  // Use Date arithmetic with year 2026 as scaffolding only — we read the
+  // calendar fields back out, never the year. This handles month boundaries
+  // (e.g. Apr ↔ May) correctly without a hand-rolled days-per-month table.
+  const d = new Date(2026, ANCHOR.month, ANCHOR.day, ANCHOR.hour, ANCHOR.minute);
+  d.setMinutes(d.getMinutes() - minutesAgo);
+  return { month: d.getMonth(), day: d.getDate(), hour: d.getHours(), minute: d.getMinutes() };
+}
+
+function pad2(n: number): string {
+  return n.toString().padStart(2, '0');
+}
+
+// ── 1H view (kept visually identical to prior hardcoded fixture) ──────────
 // 61 minute-bucketed points spanning the trailing hour 13:30 → 14:30
 // inclusive. Each point is the per-minute request count (NOT a running
-// total). Shape: baseline drifts upward (~50/min → ~220/min) so the
-// line rises diagonally across the hour; oscillation amplitude grows
-// quadratically (t^1.5) so the first quarter reads almost smooth and
-// the last quarter has visible 4-minute peaks/dips — matches the
-// "ramp with growing wobble" reference. Sum is tuned to 8,241 so the
-// headline number and breakdown rows reconcile.
-const HERO_INCREMENTS = [
-   50,  53,  55,  59,  62,  64,  66,  70,  74,  76,
-   76,  81,  87,  87,  86,  93, 100,  98,  95, 104,
-  113, 110, 105, 115, 127, 121, 114, 127, 140, 132,
-  123, 138, 154, 144, 131, 149, 168, 155, 140, 161,
-  182, 166, 148, 172, 192, 178, 157, 183, 211, 189,
-  165, 195, 221, 200, 173, 206, 240, 212, 181, 217, 250,
-];
-const HERO_TOTAL = HERO_INCREMENTS.reduce((a, b) => a + b, 0);
-
-const HERO_DATA = HERO_INCREMENTS.map((inc, i) => {
-  // i=0 → 13:30, i=60 → 14:30 — labels printed `H:MM` (24h, no leading zero).
+// total). Low-traffic demo: 6 total requests in the hour, with one
+// minute (14:02) hosting 2 of them. The 2-request minute renders as a
+// spike twice as tall as the single-unit spikes. Timestamps reconcile
+// with REQUEST_ROWS_1H:
+//
+//   index   minute   value   notes
+//     5      13:35     1     one request
+//    18      13:48     1     one request (error)
+//    32      14:02     2     two requests in the same minute
+//    46      14:16     1     one request (slow)
+//    60      14:30     1     one request (just now)
+const HERO_1H_INCREMENTS = (() => {
+  const arr = Array<number>(61).fill(0);
+  arr[5] = 1;
+  arr[18] = 1;
+  arr[32] = 2;
+  arr[46] = 1;
+  arr[60] = 1;
+  return arr;
+})();
+const HERO_1H_DATA = HERO_1H_INCREMENTS.map((inc, i) => {
   const minute = 30 + i;
   const hh = Math.floor(13 + minute / 60);
   const mm = minute % 60;
-  return {
-    time: `${hh}:${mm.toString().padStart(2, '0')}`,
-    requests: inc,
-  };
+  return { time: `${hh}:${pad2(mm)}`, requests: inc };
 });
 
-const HERO_TICKS = ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', '14:30'];
+// ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
+const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, 'daily', 0xc57e11a7);
+const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
+  // Bucket 0 = 14:30 yesterday; bucket 95 = 14:15 today (15-min buckets).
+  const minutesAgo = (95 - i) * 15;
+  const { hour, minute } = minutesBeforeAnchor(minutesAgo);
+  return { time: `${pad2(hour)}:${pad2(minute)}`, requests };
+});
+const HERO_24H_TICKS = ['15:00', '20:00', '01:00', '06:00', '11:00', '14:30'];
 
-const heroChartConfig = {
-  requests: {
-    label: 'Requests/min',
-    color: 'var(--color-chart-1)',
+// ── 7D view (168 × 1-hour buckets) ────────────────────────────────────────
+const HERO_7D_BUCKETS = makeHeroBuckets(168, 468, 'weekly', 0x7dc0ffee);
+const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
+  // Bucket 167 = current hour (14:00 today); bucket 0 = 167h before that.
+  const minutesAgo = (167 - i) * 60;
+  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
+  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
+});
+const HERO_7D_TICKS = [
+  'May 6 00:00',
+  'May 7 00:00',
+  'May 8 00:00',
+  'May 9 00:00',
+  'May 10 00:00',
+  'May 11 00:00',
+  'May 12 00:00',
+];
+
+// ── 30D view (120 × 6-hour buckets) ───────────────────────────────────────
+const HERO_30D_BUCKETS = makeHeroBuckets(120, 2_248, 'monthly', 0x30dcafe0);
+const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
+  // Bucket 119 = current 6h window (anchor); bucket 0 = 119*6h earlier.
+  const minutesAgo = (119 - i) * 360;
+  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
+  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
+});
+const HERO_30D_TICKS = [
+  'Apr 13 00:00',
+  'Apr 18 00:00',
+  'Apr 23 00:00',
+  'Apr 28 00:00',
+  'May 3 00:00',
+  'May 8 00:00',
+  'May 12 00:00',
+];
+
+const HERO_VIEWS: Record<RangeKey, HeroView> = {
+  '1h': {
+    eyebrow: 'REQUESTS / 1H',
+    total: HERO_1H_INCREMENTS.reduce((a, b) => a + b, 0),
+    success: 5,
+    errors: 1,
+    slow: 2,
+    delta: '+12.8%',
+    deltaNote: 'vs last hour',
+    data: HERO_1H_DATA,
+    ticks: ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', '14:30'],
+    bucketLabel: 'Requests/min',
+    // Dynamic domain: top is `max(values) + 1` so the tallest spike never
+    // touches the chart ceiling and the y-axis scales with the data.
+    domainTop: Math.max(...HERO_1H_INCREMENTS, 1) + 1,
   },
-} satisfies ChartConfig;
+  '24h': {
+    eyebrow: 'REQUESTS / 24H',
+    total: 48,
+    success: 46,
+    errors: 2,
+    slow: 22,
+    delta: '+8.2%',
+    deltaNote: 'vs prior day',
+    data: HERO_24H_DATA,
+    ticks: HERO_24H_TICKS,
+    bucketLabel: 'Requests/15m',
+    domainTop: Math.max(...HERO_24H_BUCKETS, 1) + 1,
+  },
+  '7d': {
+    eyebrow: 'REQUESTS / 7D',
+    total: 468,
+    success: 455,
+    errors: 13,
+    slow: 218,
+    delta: '+5.4%',
+    deltaNote: 'vs prior week',
+    data: HERO_7D_DATA,
+    ticks: HERO_7D_TICKS,
+    bucketLabel: 'Requests/hr',
+    domainTop: Math.max(...HERO_7D_BUCKETS, 1) + 1,
+  },
+  '30d': {
+    eyebrow: 'REQUESTS / 30D',
+    total: 2_248,
+    success: 2_188,
+    errors: 60,
+    slow: 1_072,
+    delta: '+14.6%',
+    deltaNote: 'vs prior month',
+    data: HERO_30D_DATA,
+    ticks: HERO_30D_TICKS,
+    bucketLabel: 'Requests/6h',
+    domainTop: Math.max(...HERO_30D_BUCKETS, 1) + 1,
+  },
+};
 
 function HeroMetricCard() {
+  const range = useRange();
+  const view = HERO_VIEWS[range];
+  const config = {
+    requests: {
+      label: view.bucketLabel,
+      color: 'var(--color-chart-1)',
+    },
+  } satisfies ChartConfig;
+  const firstTick = view.ticks[0];
+  const lastTick = view.ticks[view.ticks.length - 1];
+
   return (
     <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
           <span className="font-mono uppercase tracking-[0.1em] text-xs font-medium text-ink-500">
-            REQUESTS / 1H
+            {view.eyebrow}
           </span>
           <div className="flex items-baseline gap-3">
             <HeroNumeric size="lg">
-              {HERO_TOTAL.toLocaleString()}
+              {view.total.toLocaleString()}
             </HeroNumeric>
-            <DeltaTag delta="+12.8%" note="vs last hour" />
+            <DeltaTag delta={view.delta} note={view.deltaNote} />
           </div>
         </div>
 
@@ -169,19 +382,19 @@ function HeroMetricCard() {
             fixed-width so dots align across rows regardless of label or
             value length. */}
         <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
-          <BreakdownRow label="Success" value="8,182" tone="success" />
-          <BreakdownRow label="Errors"  value="47"    tone="danger" />
-          <BreakdownRow label={'Slow > 10s'} value="4" tone="warning" />
+          <BreakdownRow label="Success" value={view.success.toLocaleString()} tone="success" />
+          <BreakdownRow label="Errors"  value={view.errors.toLocaleString()}  tone="danger" />
+          <BreakdownRow label={'Slow > 10s'} value={view.slow.toLocaleString()} tone="warning" />
         </div>
       </div>
 
-      {/* Full-width line chart with minute-ago axis + per-point tooltip */}
+      {/* Full-width line chart with range-aware axis + per-point tooltip */}
       <ChartContainer
-        config={heroChartConfig}
+        config={config}
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
-          data={HERO_DATA}
+          data={view.data}
           margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
         >
           <defs>
@@ -190,17 +403,15 @@ function HeroMetricCard() {
               <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          {/* Domain ceiling 300 gives ~5px of headroom above the top peak (250/min)
-              so the line doesn't clip the chart rect top. Per-minute counts, not
-              cumulative — curve starts near 50 and ramps up to ~250 with growing
-              oscillation. */}
+          {/* Dynamic domain: top is `max(values) + 1` so the tallest
+              spike never touches the chart ceiling and the y-axis
+              scales with whatever data the gateway is producing. */}
           <YAxis
             width={0}
             tick={false}
             axisLine={false}
             tickLine={false}
-            domain={[0, 300]}
-            ticks={[0, 100, 200, 300]}
+            domain={[0, view.domainTop]}
           />
           <XAxis
             dataKey="time"
@@ -208,7 +419,7 @@ function HeroMetricCard() {
             axisLine={false}
             tickMargin={8}
             height={24}
-            ticks={HERO_TICKS}
+            ticks={view.ticks}
             interval={0}
             tick={(tickProps) => {
               const { x, y, payload } = tickProps as {
@@ -217,10 +428,17 @@ function HeroMetricCard() {
                 payload: { value: string };
               };
               const value = payload.value;
+              // 7D/30D tick values are full timestamps ('May 6 00:00');
+              // render just the date portion ('May 6'). 1H/24H values
+              // have no space — render as-is.
+              const spaceIdx = value.indexOf(' ');
+              const display = spaceIdx === -1
+                ? value
+                : value.slice(0, value.lastIndexOf(' '));
               const anchor =
-                value === HERO_TICKS[0]
+                value === firstTick
                   ? 'start'
-                  : value === HERO_TICKS[HERO_TICKS.length - 1]
+                  : value === lastTick
                     ? 'end'
                     : 'middle';
               return (
@@ -232,7 +450,7 @@ function HeroMetricCard() {
                   fontSize={11}
                   fill="var(--color-ink-500)"
                 >
-                  {value}
+                  {display}
                 </text>
               );
             }}
@@ -248,17 +466,6 @@ function HeroMetricCard() {
             strokeWidth={1.5}
             fill="url(#cmp013-hero-spark)"
             isAnimationActive={false}
-          />
-          {/* ChartContainer is pinned to h-24 (96px); XAxis height=24 + margin top=4
-              gives a drawing rect from y=4 to y=72 (68px tall). With domain [0, 300],
-              gridlines at 0/100/200/300 land at y = 72, 49, 27, 4 respectively.
-              Hardcoded because YAxis width={0} disables tick-driven grid generation. */}
-          <CartesianGrid
-            horizontal
-            vertical={false}
-            horizontalPoints={[4, 27, 49, 72]}
-            stroke="var(--color-ink-300)"
-            strokeDasharray="2 3"
           />
         </AreaChart>
       </ChartContainer>
@@ -358,75 +565,78 @@ type RequestRow = {
   guardrailReason?: GuardrailReason;
 };
 
+// Low-traffic demo: 5 requests in the trailing hour. Timestamps match
+// the five spike minutes in HERO_1H_INCREMENTS so the chart and table
+// reconcile (chart spikes at minutes 5, 18, 32, 46, 60 of the hour =
+// 13:35, 13:48, 14:02, 14:16, 14:30). Order is reverse-chronological
+// (most recent first) to match the table's default sort.
 const REQUEST_ROWS_1H: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 12', time: '14:29:51', relative: '1m ago',   status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
-  { day: 'May 12', time: '14:29:23', relative: '1m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,420', outTokens: '2,008', latency: '14.20s', slow: true, cost: '$0.0312' },
-  { day: 'May 12', time: '14:28:48', relative: '2m ago',   status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '5.40s',              cost: '$0.0091', guardrailReason: 'pii' },
-  { day: 'May 12', time: '14:28:09', relative: '2m ago',   status: 'error',  code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
-  { day: 'May 12', time: '14:27:42', relative: '3m ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '5,024', outTokens: '2,612', latency: '13.40s', slow: true, cost: '$0.0068' },
-  { day: 'May 12', time: '14:27:11', relative: '3m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,442', outTokens: '820',   latency: '3.20s',              cost: '$0.0072' },
-  { day: 'May 12', time: '14:26:52', relative: '4m ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000' },
-  { day: 'May 12', time: '14:26:31', relative: '4m ago',   status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.05s',              cost: '$0.0000', guardrailReason: 'injection' },
-  { day: 'May 12', time: '14:26:14', relative: '4m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '3,104', outTokens: '1,420', latency: '4.10s',              cost: '$0.0315' },
-  { day: 'May 12', time: '14:25:47', relative: '5m ago',   status: 'flagged', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '6,204', outTokens: '3,109', latency: '7.20s',              cost: '$0.0184', guardrailReason: 'toxicity' },
-  { day: 'May 12', time: '14:25:10', relative: '5m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '942',   outTokens: '517',   latency: '11.60s', slow: true, cost: '$0.0062' },
-  { day: 'May 12', time: '14:24:38', relative: '6m ago',   status: 'error',    code: '408', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_polaris_55', keyId: 'dev',        inTokens: '4,108', outTokens: '0',     latency: '18.20s', slow: true, cost: '$0.0000' },
-  { day: 'May 12', time: '14:24:02', relative: '6m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '1,712', outTokens: '904',   latency: '4.80s',              cost: '$0.0167' },
-  { day: 'May 12', time: '14:23:24', relative: '7m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,209', outTokens: '1,058', latency: '3.40s',              cost: '$0.0096' },
+  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
+  { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842' },
+  { day: 'May 12', time: '14:02:55', relative: '28m ago',  status: 'success',  code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '480',   outTokens: '215',   latency: '2.50s',              cost: '$0.0050' },
+  { day: 'May 12', time: '14:02:42', relative: '28m ago',  status: 'success',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '10.50s', slow: true, cost: '$0.0091' },
+  { day: 'May 12', time: '13:48:11', relative: '42m ago',  status: 'error',    code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '$0.0000' },
+  { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
 ];
 
-// 24H view — hour-to-multiple-hours spaced; spans yesterday → now.
+// 24H view — cumulative superset: contains the 1H rows plus older entries
+// spanning yesterday → ~1h ago. Widening the window retains the recent
+// rows; we never want a longer range to "lose" events that were visible
+// in a narrower one.
 const REQUEST_ROWS_24H: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,402', outTokens: '1,718', latency: '3.80s',              cost: '$0.0346' },
+  ...REQUEST_ROWS_1H,
+  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
   { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.80s', slow: true, cost: '$0.1842' },
-  { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '5.10s',              cost: '$0.0124' },
-  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '13.60s', slow: true, cost: '$0.0124' },
+  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '$0.0000' },
   { day: 'May 12', time: '06:38:19', relative: '8h ago',    status: 'flagged', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '942',   outTokens: '481',   latency: '6.40s',              cost: '$0.0058', guardrailReason: 'toxicity' },
-  { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '7.80s',              cost: '$0.0172' },
+  { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '14.20s', slow: true, cost: '$0.0172' },
   { day: 'May 12', time: '03:42:11', relative: '11h ago',   status: 'blocked', code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'allowlist' },
   { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'redacted',code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '4.50s',              cost: '$0.0241', guardrailReason: 'pii' },
   { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
-  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '4,208', outTokens: '2,104', latency: '5.90s',              cost: '$0.0512' },
+  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '4,208', outTokens: '2,104', latency: '12.80s', slow: true, cost: '$0.0512' },
   { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '3.40s',              cost: '$0.0094' },
-  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '6.20s',              cost: '$0.0098' },
+  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '13.20s', slow: true, cost: '$0.0098' },
 ];
 
-// 7D view — day-to-half-day spaced; spans the past week.
+// 7D view — cumulative superset: contains the 24H rows plus older entries
+// spanning the past week. Same rule as 24H: a wider window must include
+// every event from the narrower one.
 const REQUEST_ROWS_7D: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'prod-web',   inTokens: '4,108', outTokens: '2,094', latency: '3.80s',              cost: '$0.0418' },
+  ...REQUEST_ROWS_24H,
+  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'prod-web',   inTokens: '4,108', outTokens: '2,094', latency: '12.80s', slow: true, cost: '$0.0418' },
   { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '12.30s', slow: true, cost: '$0.2104' },
   { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'flagged', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '5.20s',              cost: '$0.0148', guardrailReason: 'toxicity' },
-  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
-  { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '4.10s',              cost: '$0.0086' },
+  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '$0.0000' },
+  { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '13.40s', slow: true, cost: '$0.0086' },
   { day: 'May 9',  time: '16:08:42', relative: '3d ago',    status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'pii' },
-  { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '6.80s',              cost: '$0.0228' },
-  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,118', outTokens: '1,564', latency: '3.50s',              cost: '$0.0382' },
+  { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '14.60s', slow: true, cost: '$0.0228' },
+  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,118', outTokens: '1,564', latency: '11.80s', slow: true, cost: '$0.0382' },
   { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
   { day: 'May 7',  time: '08:42:18', relative: '5d ago',    status: 'blocked', code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'spend' },
   { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '5.40s',              cost: '$0.0118', guardrailReason: 'pii' },
-  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '7.20s',              cost: '$0.0084' },
-  { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '3.80s',              cost: '$0.0298' },
+  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '14.80s', slow: true, cost: '$0.0084' },
+  { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '12.40s', slow: true, cost: '$0.0298' },
 ];
 
-// 30D view — multi-day spaced; spans the past month.
+// 30D view — cumulative superset: contains the 7D rows plus older entries
+// spanning the past month. Same rule: widening the window only appends,
+// never removes.
 const REQUEST_ROWS_30D: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,608', outTokens: '1,812', latency: '3.80s',              cost: '$0.0368' },
+  ...REQUEST_ROWS_7D,
+  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,608', outTokens: '1,812', latency: '12.20s', slow: true, cost: '$0.0368' },
   { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '14,208',outTokens: '7,420', latency: '22.40s', slow: true, cost: '$0.2418' },
   { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'redacted',code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '5.40s',              cost: '$0.0158', guardrailReason: 'pii' },
-  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '—'       },
+  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                  cost: '$0.0000' },
   { day: 'Apr 30', time: '11:32:48', relative: '12d ago',   status: 'blocked', code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'injection' },
-  { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '4.80s',              cost: '$0.0098' },
-  { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '7.20s',              cost: '$0.0264' },
+  { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '13.40s', slow: true, cost: '$0.0098' },
+  { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '14.80s', slow: true, cost: '$0.0264' },
   { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'flagged', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,408', outTokens: '1,718', latency: '3.90s',              cost: '$0.0418', guardrailReason: 'toxicity' },
   { day: 'Apr 21', time: '09:14:32', relative: '21d ago',   status: 'blocked', code: '403', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.10s',              cost: '$0.0000', guardrailReason: 'pii' },
   { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'error',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '2.20s',              cost: '$0.0000' },
-  { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '5.40s',              cost: '$0.0128' },
+  { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '13.20s', slow: true, cost: '$0.0128' },
   { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '11.80s', slow: true, cost: '$0.0094' },
-  { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '6.10s',              cost: '$0.0342' },
+  { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '14.40s', slow: true, cost: '$0.0342' },
 ];
 
 const STATUS_BADGE: Record<RequestStatus, {
@@ -466,9 +676,10 @@ function statusVariant(row: RequestRow): 'success' | 'warning' | 'destructive' |
 }
 
 // Per-range row set + pagination total. Pill drives both — total reflects
-// the headline volume for the window (1H ties to HERO_TOTAL; 24H/7D/30D
-// scale up plausibly). Rows shown are the head of the range; pagination
-// represents the full count.
+// the headline volume for the window — totals are sourced from
+// HERO_VIEWS so the hero card and the pagination footer can never drift.
+// Rows shown are the head of the range; pagination represents the full
+// count.
 const RANGE_ROWS: Record<string, RequestRow[]> = {
   '1h':  REQUEST_ROWS_1H,
   '24h': REQUEST_ROWS_24H,
@@ -477,10 +688,10 @@ const RANGE_ROWS: Record<string, RequestRow[]> = {
 };
 
 const RANGE_TOTALS: Record<string, number> = {
-  '1h':  HERO_TOTAL,
-  '24h': 197_580,
-  '7d':  1_387_612,
-  '30d': 5_948_304,
+  '1h':  HERO_VIEWS['1h'].total,
+  '24h': HERO_VIEWS['24h'].total,
+  '7d':  HERO_VIEWS['7d'].total,
+  '30d': HERO_VIEWS['30d'].total,
 };
 
 function RequestsTableSection() {
@@ -490,7 +701,7 @@ function RequestsTableSection() {
   // so a deep-paged 30D state doesn't carry over into a 1H view that
   // doesn't have those pages.
   const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_1H;
-  const total = RANGE_TOTALS[range] ?? HERO_TOTAL;
+  const total = RANGE_TOTALS[range] ?? HERO_VIEWS['1h'].total;
   const [model, setModel] = useState('all');
   const [keyId, setKeyId] = useState('all');
   const [status, setStatus] = useState('all');
@@ -587,6 +798,7 @@ function RequestsTableSection() {
             value={range}
             onValueChange={(next) => {
               setRange(next);
+              rangeStore.set(next as RangeKey);
               setPage(1);
             }}
           />
@@ -1247,23 +1459,20 @@ function BodySection({
     // `shrink-0` so the section never gets squished by its flex parent
     // when sibling sections also expand. The outer panel's max-h handles
     // overflow via scroll; sticky headers stay pinned during scroll.
-    //
-    // Solid border + `shadow-none` instead of the default
-    // `shadow-(--shadow-border)` ring — the ring gets clipped by the
-    // scrollable parent's `overflow-y-auto`, which made the top/bottom
-    // edges of each section read as broken. A real border lives inside
-    // the box, so it stays crisp regardless of clipping.
-    <CodeCard className="bg-ink-50 shrink-0 border border-ink-200 shadow-none">
+    // Border + default `shadow-(--shadow-border)` ring — border stays
+    // crisp where the ring clips at the scrollable parent's edges.
+    <CodeCard className="shrink-0 border border-ink-200">
       {/* Sticky header so the section label stays pinned at the top of
           the scrollable area as you scroll through the body content
-          underneath. `bg-ink-50` matches the surrounding surface so the
-          sticky strip blends in. No hover treatment — header is a toggle,
+          underneath. Header sits on the card surface (white) so it reads
+          as part of the chrome; the code well below is ink-50 to set the
+          payload visually apart. No hover treatment — header is a toggle,
           not a row affordance. */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full px-4 py-2 text-left bg-ink-50"
+        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full px-4 py-2 text-left bg-white"
       >
         <span className="font-sans text-sm font-medium text-ink-500">{label}</span>
         <ChevronDown
@@ -1273,7 +1482,7 @@ function BodySection({
         />
       </button>
       {expanded && (
-        <div className="overflow-x-auto border-t border-ink-200">
+        <div className="overflow-x-auto border-t border-ink-200 bg-ink-50">
           <CodeBlock lines={lines} />
         </div>
       )}
@@ -1291,8 +1500,10 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
   return (
     // Hard cap on the panel — modal height never grows when sections are
     // expanded. Scrolling lives inside this container; sticky section
-    // headers stay pinned at the top as the user scrolls.
-    <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
+    // headers stay pinned at the top as the user scrolls. Padding gives
+    // the cards' shadow ring room to render around their rounded corners
+    // instead of being clipped flush by the scroll container's edges.
+    <div className="flex flex-col gap-3 max-h-80 overflow-y-auto p-2">
       <BodySection
         label="Request body #1"
         lines={requestLines}
