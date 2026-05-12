@@ -13,10 +13,9 @@ import { SIDEBAR_SECTIONS } from './nav-sections';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
- * CMP-014 surfaces. Renders the outer surface card, the macOS-style
- * ScreenHead strip (traffic lights + URL + eyebrow), the primary <Sidebar>,
- * and the DashTopBar (toggle + breadcrumb + Docs/Notifications/avatar).
- * Page content is passed in via `children`.
+ * CMP-014 surfaces. Renders the primary <Sidebar> and the DashTopBar
+ * (toggle + breadcrumb + Docs/Notifications/avatar). Page content is
+ * passed in via `children`.
  *
  * Single source of truth for the nav data lives in `./nav-sections`
  * (no longer duplicated 3×). Active state is derived from `activeNavId`,
@@ -24,10 +23,6 @@ import { SIDEBAR_SECTIONS } from './nav-sections';
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface DashboardChromeProps {
-  /** URL slug rendered after `acme-prod.constellation.io / ` in ScreenHead. */
-  urlSlug: string;
-  /** Mono-uppercase eyebrow shown right-aligned in ScreenHead, prefixed `DIR.A · `. */
-  screenEyebrow: string;
   /** Last (current-page) breadcrumb crumb. */
   breadcrumbCurrent: string;
   /** id of the active sidebar item. */
@@ -39,8 +34,6 @@ export interface DashboardChromeProps {
 }
 
 export function DashboardChrome({
-  urlSlug,
-  screenEyebrow,
   breadcrumbCurrent,
   activeNavId,
   sidebarExpanded,
@@ -50,7 +43,6 @@ export function DashboardChrome({
 }: DashboardChromeProps) {
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden bg-white">
-      <ScreenHead urlSlug={urlSlug} eyebrow={screenEyebrow} />
       <div className="flex flex-row flex-1 min-h-0">
         <Sidebar
           sections={SIDEBAR_SECTIONS}
@@ -74,28 +66,6 @@ export function DashboardChrome({
               scrolls. */}
           <div className="flex flex-col gap-6 px-6 pt-6 pb-8 overflow-y-auto [&>*]:shrink-0">{children}</div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Screen head (production chrome strip) ──────────────────────────────── */
-
-function ScreenHead({ urlSlug, eyebrow }: { urlSlug: string; eyebrow: string }) {
-  return (
-    <div className="relative flex items-center h-[41px] px-4 bg-ink-50 border-b border-ink-200 shrink-0">
-      <div className="flex items-center gap-2">
-        {/* macOS traffic-lights — tokens live in src/index.css so the
-            chrome strip never inlines hex literals. */}
-        <span className="size-2.5 rounded-full bg-[var(--color-traffic-red)]" aria-hidden />
-        <span className="size-2.5 rounded-full bg-[var(--color-traffic-amber)]" aria-hidden />
-        <span className="size-2.5 rounded-full bg-[var(--color-traffic-green)]" aria-hidden />
-      </div>
-      <div className="absolute left-1/2 -translate-x-1/2 font-mono text-xs text-ink-600 tabular-nums">
-        acme-prod.constellation.io / {urlSlug}
-      </div>
-      <div className="ml-auto font-mono uppercase tracking-[0.1em] text-xs font-medium text-ink-500">
-        DIR.A · {eyebrow}
       </div>
     </div>
   );

@@ -33,8 +33,6 @@ export function Settings() {
 
   return (
     <DashboardChrome
-            urlSlug="settings"
-            screenEyebrow="SETTINGS"
             breadcrumbCurrent="Settings"
             activeNavId="settings"
             sidebarExpanded={sidebarExpanded}

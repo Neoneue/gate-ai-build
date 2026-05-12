@@ -77,8 +77,6 @@ export function Dashboard() {
 
   return (
     <DashboardChrome
-            urlSlug="overview"
-            screenEyebrow="OVERVIEW"
             breadcrumbCurrent="Overview"
             activeNavId="overview"
             sidebarExpanded={sidebarExpanded}

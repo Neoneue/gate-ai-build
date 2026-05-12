@@ -108,8 +108,6 @@ export function Activity() {
 
   return (
     <DashboardChrome
-            urlSlug="activity"
-            screenEyebrow="WORKSPACE"
             breadcrumbCurrent="Usage analytics"
             activeNavId="activity"
             sidebarExpanded={sidebarExpanded}

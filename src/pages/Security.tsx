@@ -70,8 +70,6 @@ export function Security() {
 
   return (
     <DashboardChrome
-            urlSlug="security"
-            screenEyebrow="THREATS"
             breadcrumbCurrent="Threats"
             activeNavId="security-threats"
             sidebarExpanded={sidebarExpanded}

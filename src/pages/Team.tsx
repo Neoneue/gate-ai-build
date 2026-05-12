@@ -75,8 +75,6 @@ export function Team() {
 
   return (
     <DashboardChrome
-            urlSlug="team"
-            screenEyebrow="TEAM"
             breadcrumbCurrent="Team"
             activeNavId="team"
             sidebarExpanded={sidebarExpanded}

@@ -92,8 +92,6 @@ export function Models() {
 
   return (
     <DashboardChrome
-            urlSlug={selectedModel ? `models/${selectedModel.id}` : 'models'}
-            screenEyebrow="MODELS"
             breadcrumbCurrent={selectedModel ? selectedModel.name : 'Models'}
             activeNavId="models"
             sidebarExpanded={sidebarExpanded}

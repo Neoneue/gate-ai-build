@@ -58,8 +58,6 @@ export function Conversations() {
 
   return (
     <DashboardChrome
-            urlSlug="conversations"
-            screenEyebrow="CONVERSATIONS"
             breadcrumbCurrent="Conversations"
             activeNavId="conversations"
             sidebarExpanded={sidebarExpanded}

@@ -64,16 +64,7 @@ import { MessageBlock, type MessageRole } from '@/components/ui/message-block';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
-/* ─────────────────────────────────────────────────────────────────────────
- * CMP-013 — Requests (Observability)
- *
- * Chrome strategy: chrome subcomponents (DashboardSurface, ScreenHead,
- * DashSidebar, DashTopBar) are **copied** from CMP-012 rather than imported.
- * The two artboards share a frame today but the active-nav state is
- * intrinsically per-page; importing would couple them and force one to
- * become the source of truth for the other's nav. Copy keeps each surface
- * free to evolve independently.
- * ───────────────────────────────────────────────────────────────────────── */
+/* CMP-013 — Requests (Observability) */
 
 export function Requests() {
   const navigate = useNavigate();
@@ -81,8 +72,6 @@ export function Requests() {
 
   return (
     <DashboardChrome
-          urlSlug="requests"
-          screenEyebrow="REQUESTS"
           breadcrumbCurrent="Requests"
           activeNavId="requests"
           sidebarExpanded={sidebarExpanded}
