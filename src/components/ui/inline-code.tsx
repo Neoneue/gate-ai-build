@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * InlineCode — short identifier chip rendered as a `<code>` element.
- * Recipe: `font-mono text-ink-800 bg-ink-100 rounded-xs px-1.5 py-0.5`.
+ * Recipe: `font-mono text-ink-800 bg-ink-100 rounded-xs px-1 py-0`.
  *
  * Extracted 2026-05-11 after the 5-agent audit found the same recipe
  * hand-rolled 5 times in CMP-016 (model handles inline in prose,
@@ -36,7 +36,7 @@ export function InlineCode({
       data-slot="inline-code"
       data-size={size}
       className={cn(
-        'font-mono text-ink-800 bg-ink-100 rounded-xs px-1.5 py-0.5',
+        'font-mono text-ink-800 bg-ink-100 rounded-xs px-1 py-0',
         size === 'sm' ? 'text-xs' : 'text-sm',
         className,
       )}

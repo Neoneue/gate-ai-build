@@ -307,6 +307,7 @@ function BreakdownRow({
 
 const RANGE_OPTIONS = [
   { value: '1h',  label: '1H'  },
+  { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
 ];
@@ -316,7 +317,14 @@ const RANGE_OPTIONS = [
 type RequestStatus = 'success' | 'warn' | 'danger';
 
 type RequestRow = {
+  /** Compact month/day for the cell ("May 12"); modal pairs it with 2026
+   *  for the full header. Per-row so 24H/7D/30D ranges that span multiple
+   *  days render the correct date next to each timestamp. */
+  day: string;
   time: string;
+  /** Human-friendly relative time ("just now", "2m ago"). The cell renders
+   *  this as the primary scan target above the absolute date+time. */
+  relative: string;
   status: RequestStatus;
   code: string;
   vendor: Vendor;
@@ -333,21 +341,69 @@ type RequestRow = {
   cost: string;
 };
 
-const REQUEST_ROWS: RequestRow[] = [
-  { time: '14:30:14', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true,  cost: '$0.0284' },
-  { time: '14:29:51', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '0.96s',             cost: '$0.0192' },
-  { time: '14:29:23', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,420', outTokens: '2,008', latency: '2.14s', slow: true,  cost: '$0.0312' },
-  { time: '14:28:48', status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '1.08s', slow: true,  cost: '$0.0091' },
-  { time: '14:28:09', status: 'danger',  code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
-  { time: '14:27:42', status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '5,024', outTokens: '2,612', latency: '1.95s', slow: true,  cost: '$0.0068' },
-  { time: '14:27:11', status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,442', outTokens: '820',   latency: '0.91s',             cost: '$0.0072' },
-  { time: '14:26:52', status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.18s',             cost: '$0.0000' },
-  { time: '14:26:14', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '3,104', outTokens: '1,420', latency: '1.31s', slow: true,  cost: '$0.0315' },
-  { time: '14:25:47', status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '6,204', outTokens: '3,109', latency: '0.42s',             cost: '$0.0184' },
-  { time: '14:25:10', status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '942',   outTokens: '517',   latency: '0.74s',             cost: '$0.0062' },
-  { time: '14:24:38', status: 'warn',    code: '408', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_polaris_55', keyId: 'dev',        inTokens: '4,108', outTokens: '0',     latency: '8.04s', slow: true,  cost: '$0.0000' },
-  { time: '14:24:02', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '1,712', outTokens: '904',   latency: '1.05s', slow: true,  cost: '$0.0167' },
-  { time: '14:23:24', status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,209', outTokens: '1,058', latency: '0.83s',             cost: '$0.0096' },
+const REQUEST_ROWS_1H: RequestRow[] = [
+  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true,  cost: '$0.0284' },
+  { day: 'May 12', time: '14:29:51', relative: '1m ago',   status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '1,892', outTokens: '955',   latency: '0.96s',             cost: '$0.0192' },
+  { day: 'May 12', time: '14:29:23', relative: '1m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,420', outTokens: '2,008', latency: '2.14s', slow: true,  cost: '$0.0312' },
+  { day: 'May 12', time: '14:28:48', relative: '2m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '1.08s', slow: true,  cost: '$0.0091' },
+  { day: 'May 12', time: '14:28:09', relative: '2m ago',   status: 'danger',  code: '500', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
+  { day: 'May 12', time: '14:27:42', relative: '3m ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '5,024', outTokens: '2,612', latency: '1.95s', slow: true,  cost: '$0.0068' },
+  { day: 'May 12', time: '14:27:11', relative: '3m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,442', outTokens: '820',   latency: '0.91s',             cost: '$0.0072' },
+  { day: 'May 12', time: '14:26:52', relative: '4m ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',             conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.18s',             cost: '$0.0000' },
+  { day: 'May 12', time: '14:26:14', relative: '4m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '3,104', outTokens: '1,420', latency: '1.31s', slow: true,  cost: '$0.0315' },
+  { day: 'May 12', time: '14:25:47', relative: '5m ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '6,204', outTokens: '3,109', latency: '0.42s',             cost: '$0.0184' },
+  { day: 'May 12', time: '14:25:10', relative: '5m ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '942',   outTokens: '517',   latency: '0.74s',             cost: '$0.0062' },
+  { day: 'May 12', time: '14:24:38', relative: '6m ago',   status: 'warn',    code: '408', vendor: 'meta',      model: 'llama-4.2-405b',      conversation: 'cnv_polaris_55', keyId: 'dev',        inTokens: '4,108', outTokens: '0',     latency: '8.04s', slow: true,  cost: '$0.0000' },
+  { day: 'May 12', time: '14:24:02', relative: '6m ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '1,712', outTokens: '904',   latency: '1.05s', slow: true,  cost: '$0.0167' },
+  { day: 'May 12', time: '14:23:24', relative: '7m ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,209', outTokens: '1,058', latency: '0.83s',             cost: '$0.0096' },
+];
+
+// 24H view — hour-to-multiple-hours spaced; spans yesterday → now.
+const REQUEST_ROWS_24H: RequestRow[] = [
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
+  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,402', outTokens: '1,718', latency: '0.88s',             cost: '$0.0346' },
+  { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '2.84s', slow: true, cost: '$0.1842' },
+  { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '0.91s',             cost: '$0.0124' },
+  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'danger',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
+  { day: 'May 12', time: '06:38:19', relative: '8h ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '942',   outTokens: '481',   latency: '0.74s',             cost: '$0.0058' },
+  { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '0.46s',             cost: '$0.0172' },
+  { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '1.18s', slow: true, cost: '$0.0241' },
+  { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.22s',             cost: '$0.0000' },
+  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '4,208', outTokens: '2,104', latency: '1.41s', slow: true, cost: '$0.0512' },
+  { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '0.81s',             cost: '$0.0094' },
+  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '2.18s', slow: true, cost: '$0.0098' },
+];
+
+// 7D view — day-to-half-day spaced; spans the past week.
+const REQUEST_ROWS_7D: RequestRow[] = [
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
+  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'prod-web',   inTokens: '4,108', outTokens: '2,094', latency: '0.94s',             cost: '$0.0418' },
+  { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '3.42s', slow: true, cost: '$0.2104' },
+  { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '0.86s',             cost: '$0.0148' },
+  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'danger',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
+  { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '0.78s',             cost: '$0.0086' },
+  { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '0.41s',             cost: '$0.0228' },
+  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,118', outTokens: '1,564', latency: '1.28s', slow: true, cost: '$0.0382' },
+  { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.19s',             cost: '$0.0000' },
+  { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '0.92s',             cost: '$0.0118' },
+  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '2.04s', slow: true, cost: '$0.0084' },
+  { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '1.08s', slow: true, cost: '$0.0298' },
+];
+
+// 30D view — multi-day spaced; spans the past month.
+const REQUEST_ROWS_30D: RequestRow[] = [
+  { day: 'May 12', time: '14:30:14', relative: 'just now',  status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '1.13s', slow: true, cost: '$0.0284' },
+  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '3,608', outTokens: '1,812', latency: '0.92s',             cost: '$0.0368' },
+  { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '14,208',outTokens: '7,420', latency: '3.58s', slow: true, cost: '$0.2418' },
+  { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '0.84s',             cost: '$0.0158' },
+  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'danger',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '—',     outTokens: '—',     latency: '—',                 cost: '—'       },
+  { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '0.82s',             cost: '$0.0098' },
+  { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '0.44s',             cost: '$0.0264' },
+  { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '3,408', outTokens: '1,718', latency: '1.34s', slow: true, cost: '$0.0418' },
+  { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'warn',    code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '—',     outTokens: '—',     latency: '0.21s',             cost: '$0.0000' },
+  { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '0.94s',             cost: '$0.0128' },
+  { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '2.18s', slow: true, cost: '$0.0094' },
+  { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '1.18s', slow: true, cost: '$0.0342' },
 ];
 
 const STATUS_BADGE: Record<RequestStatus, {
@@ -359,13 +415,32 @@ const STATUS_BADGE: Record<RequestStatus, {
   danger:  { variant: 'destructive', dot: 'danger'  },
 };
 
-// Synthetic total — held at module scope so the pagination math reconciles
-// with the hero metric narrative. Bound to HERO_TOTAL so the headline and
-// the pagination count stay in sync automatically if HERO_INCREMENTS shifts.
-const REQUESTS_TOTAL = HERO_TOTAL;
+// Per-range row set + pagination total. Pill drives both — total reflects
+// the headline volume for the window (1H ties to HERO_TOTAL; 24H/7D/30D
+// scale up plausibly). Rows shown are the head of the range; pagination
+// represents the full count.
+const RANGE_ROWS: Record<string, RequestRow[]> = {
+  '1h':  REQUEST_ROWS_1H,
+  '24h': REQUEST_ROWS_24H,
+  '7d':  REQUEST_ROWS_7D,
+  '30d': REQUEST_ROWS_30D,
+};
+
+const RANGE_TOTALS: Record<string, number> = {
+  '1h':  HERO_TOTAL,
+  '24h': 197_580,
+  '7d':  1_387_612,
+  '30d': 5_948_304,
+};
 
 function RequestsTableSection() {
+  const navigate = useNavigate();
   const [range, setRange] = useState('1h');
+  // Looked up per render. Pill change → new rows + new total; page resets
+  // so a deep-paged 30D state doesn't carry over into a 1H view that
+  // doesn't have those pages.
+  const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_1H;
+  const total = RANGE_TOTALS[range] ?? HERO_TOTAL;
   const [model, setModel] = useState('all');
   const [keyId, setKeyId] = useState('all');
   const [status, setStatus] = useState('all');
@@ -458,7 +533,10 @@ function RequestsTableSection() {
             size="sm"
             options={RANGE_OPTIONS}
             value={range}
-            onValueChange={setRange}
+            onValueChange={(next) => {
+              setRange(next);
+              setPage(1);
+            }}
           />
         </div>
 
@@ -478,7 +556,7 @@ function RequestsTableSection() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {REQUEST_ROWS.map((row, i) => {
+            {rows.map((row, i) => {
               const badge = STATUS_BADGE[row.status];
               const isMissing = row.inTokens === '—';
               const numericCls = isMissing
@@ -505,8 +583,20 @@ function RequestsTableSection() {
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
                   onClick={() => setSelectedRow(row)}
                 >
-                  <TableCell className="whitespace-nowrap font-mono tabular-nums tracking-tight text-ink-500">
-                    {row.time}
+                  <TableCell className="whitespace-nowrap py-2">
+                    {/* Two-tier timestamp: relative (sans, ink-800) leads as
+                        the scan target; absolute (mono tabular, ink-500)
+                        qualifies for forensic alignment across rows. py-2
+                        trims 8px off the default py-3 so the dual-line cell
+                        doesn't bloat row height. */}
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-sans text-sm text-ink-800">
+                        {row.relative}
+                      </span>
+                      <span className="font-mono text-xs tabular-nums tracking-tight text-ink-500">
+                        {row.day}, {row.time}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <Badge variant={badge.variant}>
@@ -530,10 +620,18 @@ function RequestsTableSection() {
                       </span>
                     </RowActionButton>
                   </TableCell>
-                  <TableCell className="max-w-[200px] font-mono tabular-nums tracking-tight text-ink-800">
-                    <span className="block truncate" title={row.conversation}>
+                  <TableCell className="max-w-[200px]">
+                    <TextLink
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/conversations?open=${row.conversation}`);
+                      }}
+                      title={row.conversation}
+                      aria-label={`Open conversation ${row.conversation}`}
+                      className="font-mono text-sm tabular-nums tracking-tight truncate block max-w-full text-left"
+                    >
                       {row.conversation}
-                    </span>
+                    </TextLink>
                   </TableCell>
                   <TableCell className="max-w-[140px] font-mono text-ink-800 tracking-tight">
                     <span className="block truncate" title={row.keyId}>
@@ -565,7 +663,7 @@ function RequestsTableSection() {
         </Table>
 
         <TablePaginationFooter
-          total={REQUESTS_TOTAL}
+          total={total}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}
@@ -610,6 +708,9 @@ function RequestDetailDialog({
 }
 
 function RequestDetailBody({ row }: { row: RequestRow }) {
+  const navigate = useNavigate();
+  const openConversation = () =>
+    navigate(`/conversations?open=${row.conversation}`);
   const badge = STATUS_BADGE[row.status];
   const requestId = `req_${row.conversation.replace('cnv_', '').slice(0, 8)}${row.code}`;
   const provider = VENDOR_META[row.vendor].label;
@@ -635,8 +736,11 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           }
           meta={
             <span className="font-mono tracking-snug">
-              Apr 22, 2026 · {row.time} UTC · part of conversation{' '}
-              <TextLink aria-label={`Open conversation ${row.conversation}`}>
+              {row.day}, 2026 · {row.time} UTC · part of conversation{' '}
+              <TextLink
+                onClick={openConversation}
+                aria-label={`Open conversation ${row.conversation}`}
+              >
                 {row.conversation}
               </TextLink>
             </span>
@@ -735,7 +839,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               value={requestId}
               label="request ID"
             />
-            <Button variant="default" size="sm">
+            <Button variant="default" size="sm" onClick={openConversation}>
               Open Conversation
               <ExternalLink data-icon="inline-end" aria-hidden />
             </Button>

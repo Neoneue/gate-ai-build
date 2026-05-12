@@ -29,7 +29,12 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none motion-reduce:duration-0",
+        // `fill-mode-forwards` on the closed state holds opacity 0 after
+        // the 100ms exit animation finishes. Without it the overlay snaps
+        // back to opacity 1 (its base style) and flashes the backdrop
+        // while waiting for the popup's longer 200ms exit to complete —
+        // a clearly visible flicker on dismiss.
+        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       {...props}
@@ -55,7 +60,11 @@ function DialogContent({
           // (slower than dropdowns; the surface is visually heavy enough that
           // a 100ms snap reads as a glitch). Origin stays centered (modal
           // exception — they aren't anchored to a trigger).
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-ink-900 border border-ink-200 shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:duration-0",
+          // `fill-mode-forwards` on data-closed holds opacity/scale at
+          // their end state after the 200ms exit animation finishes, so
+          // the popup doesn't snap back to opacity 1 / zoom 1 for the
+          // ~28ms between animation-end and React unmount.
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-ink-900 border border-ink-200 shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
         {...props}
