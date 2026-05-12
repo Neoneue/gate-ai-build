@@ -105,8 +105,8 @@
      a single CodeBlock primitive paints all variants from these vars. */
   --color-syntax-keyword:        #B6491A; /* curl, -H, -d, export — orange-red */
   --color-syntax-variable:       #D69E2E; /* $KEY interpolations — amber */
-  --color-syntax-property:       #4165FF; /* JSON keys / object props — saturated blue */
-  --color-syntax-terminal-blue:  var(--color-blue-400); /* terminal numbers / status — aliased to the brand ramp's blue-400 (#6A8EFB) so the two tokens never drift */
+  --color-syntax-property:       var(--color-blue-700); /* JSON keys / object props — brand blue-700 (#1F2FCE) */
+  --color-syntax-terminal-blue:  var(--color-success-700); /* JSON literals (strings + numbers + booleans) — brand success-700 green. Name retained for back-compat with code-card.tsx token map. */
 
   /* macOS window-control "traffic light" tokens. These are platform
      affordances (CMP-012 dashboard chrome strip), not part of the

@@ -35,7 +35,7 @@ export function DeltaTag({
   // direction and is the convention readers expect for tabular deltas.
   const display = trimmed;
   return (
-    <div className="inline-flex items-center gap-1.5">
+    <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
         <Icon className="size-3.5" />
         <span className="font-mono text-xs/4 font-medium tabular-nums tracking-tight">

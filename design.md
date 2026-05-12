@@ -207,6 +207,17 @@ rounded:
   # Concentric rule: item radius < container radius. Tabs trigger (4px) sits inside Tabs
   # list (6px). Card (8px) sits on canvas with shadow-as-border. Modal (16px) wraps
   # cards (8px) → ratio = 2.
+  #
+  # Modal-interior rule (codified 2026-05-12): every bordered surface inside a
+  # Dialog / AlertDialog / Drawer / Sheet — cards, lists (DetailList), code wells
+  # (CodeCard / BodySection), row tiles (SecurityCheckRow), KPI rails — must use
+  # rounded-md (8px). Primitives whose page-level default is smaller (DetailList
+  # ships rounded-xs, SecurityCheckRow-style audit rows ship rounded-xs) get a
+  # `className="rounded-md"` override at the modal usage site. The primitive's
+  # default stays smaller so it still reads correctly in tighter inline contexts
+  # (toolbars, table cells, badges). Mixing radii inside one modal — e.g. an
+  # 8px BodySection next to a 4px DetailList — is a design bug; one radius
+  # vocabulary per modal composition.
   xs: "4px"  # sub-elements (tabs item, segmented, SelectItem, badge)
   sm: "6px"  # buttons / chrome / popovers (Button, Input, Select trigger, Menu popup, Toast)
   md: "8px"  # cards / everyday surfaces (Card, KpiRail, table containers) — NEW tier (2026-05-10)

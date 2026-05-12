@@ -99,20 +99,14 @@ export function Models() {
             onNavigate={(path: string) => navigate(path)}
           >
             {selectedModel ? (
-              <div
-                key={`detail-${selectedModel.id}`}
-                className="flex flex-col gap-6 animate-in fade-in-0 slide-in-from-right-2 duration-200 ease-out motion-reduce:animate-none motion-reduce:duration-0"
-              >
+              <div className="flex flex-col gap-6">
                 <ModelDetailPage
                   model={selectedModel}
                   onBack={() => setSelectedModel(null)}
                 />
               </div>
             ) : (
-              <div
-                key="list"
-                className="flex flex-col gap-6 animate-in fade-in-0 slide-in-from-left-2 duration-200 ease-out motion-reduce:animate-none motion-reduce:duration-0"
-              >
+              <div className="flex flex-col gap-6">
                 <ModelsSurface onSelect={setSelectedModel} />
               </div>
             )}
@@ -1086,13 +1080,18 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
     <div role="img" aria-label={ariaLabel} className="flex items-center gap-1">
       <div className="flex items-center">
         {visible.map((v, i) => (
+          // `inline-flex items-center` on the wrapper so the inline-flex
+          // VendorAvatar inside centers vertically. A plain `<span>` here
+          // inherits the cell's 21px line-box and the SVG hangs from the
+          // baseline instead — visibly higher than the sibling +N text.
+          //
+          // Stacked drop-shadows synthesize a 1px white ring around the
+          // SVG paths so overlapping glyphs read as a separated stack
+          // rather than a collided silhouette. (No chip wrapper — the
+          // bare-icon VendorAvatar treatment is preserved.)
           <span
             key={v}
-            className={i === 0 ? '' : '-ml-1'}
-            // Stacked drop-shadows synthesize a 1px white ring around the
-            // SVG paths so overlapping glyphs read as a separated stack
-            // rather than a collided silhouette. (No chip wrapper — the
-            // bare-icon VendorAvatar treatment is preserved.)
+            className={`inline-flex items-center ${i === 0 ? '' : '-ml-1'}`}
             style={{
               filter:
                 'drop-shadow(0 0 1.5px var(--color-white)) drop-shadow(0 0 1.5px var(--color-white))',
@@ -1103,7 +1102,16 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
         ))}
       </div>
       {overflow > 0 ? (
-        <span aria-hidden className="font-mono text-xs text-ink-500 tabular-nums">+{overflow}</span>
+        // h-4 matches the icon's `size-4` so items-center on the parent
+        // aligns the visual middle of the glyph with the visual middle
+        // of the avatar. leading-none collapses the line-box to the
+        // glyph height; inline-flex centers the text inside h-4.
+        <span
+          aria-hidden
+          className="inline-flex h-4 items-center font-mono text-xs leading-none text-ink-500 tabular-nums"
+        >
+          +{overflow}
+        </span>
       ) : null}
     </div>
   );

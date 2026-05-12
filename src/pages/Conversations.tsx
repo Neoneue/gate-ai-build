@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Activity, ArrowRight, Download, Search, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
@@ -204,6 +204,27 @@ function ConversationsTableSection() {
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
   const [selectedRow, setSelectedRow] = useState<ConversationRow | null>(null);
 
+  // Deep-link support: `?open=cnv_xxx` opens that conversation on mount.
+  // Used by the Requests page to navigate here with a specific row pre-opened.
+  // Closing the modal strips the param so the URL reflects state.
+  //
+  // The ref tracks the last openId we acted on. Without it, the close path
+  // hits a reopen-loop: setSelectedRow(null) and setSearchParams() commit on
+  // different renders, so for one frame selectedRow is null but openId still
+  // points at the row — the effect would re-open the modal the user just
+  // dismissed. Gating on lastProcessedOpenId makes the effect URL-driven
+  // only, not state-driven.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openId = searchParams.get('open');
+  const lastProcessedOpenId = useRef<string | null>(null);
+  useEffect(() => {
+    if (openId === lastProcessedOpenId.current) return;
+    lastProcessedOpenId.current = openId;
+    if (!openId) return;
+    const match = CONVERSATION_ROWS.find((r) => r.conversationId === openId);
+    if (match) setSelectedRow(match);
+  }, [openId]);
+
   return (
     <>
     <Card density="flush">
@@ -361,6 +382,17 @@ function ConversationsTableSection() {
       onOpenChange={(open) => {
         if (!open) setSelectedRow(null);
       }}
+      onOpenChangeComplete={(open) => {
+        // Strip ?open= AFTER the exit animation finishes — stripping it
+        // inside onOpenChange triggers a router re-render mid-animation,
+        // which reads as a flicker. Base UI fires this once the close
+        // transition has fully completed.
+        if (!open && searchParams.has('open')) {
+          const next = new URLSearchParams(searchParams);
+          next.delete('open');
+          setSearchParams(next, { replace: true });
+        }
+      }}
     />
     </>
   );
@@ -392,12 +424,25 @@ function ConversationsTableSection() {
 function ConversationDetailDialog({
   row,
   onOpenChange,
+  onOpenChangeComplete,
 }: {
   row: ConversationRow | null;
   onOpenChange: (open: boolean) => void;
+  onOpenChangeComplete: (open: boolean) => void;
 }) {
+  // Hold the last non-null row so the body stays rendered during the
+  // close animation. Without this, the modal briefly renders empty chrome
+  // between selectedRow → null and the unmount, which reads as a flicker.
+  const [stickyRow, setStickyRow] = useState<ConversationRow | null>(row);
+  useEffect(() => {
+    if (row) setStickyRow(row);
+  }, [row]);
   return (
-    <Dialog open={!!row} onOpenChange={onOpenChange}>
+    <Dialog
+      open={!!row}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={onOpenChangeComplete}
+    >
       <DialogScrollContent
         // sm:max-w-5xl ≈ 1024px — wide enough for the two-column body to
         // breathe at typical desktop viewports, narrow enough that the
@@ -406,7 +451,7 @@ function ConversationDetailDialog({
         // the inner panels scroll independently inside the body.
         className="sm:max-w-5xl"
       >
-        {row ? <ConversationDetailBody row={row} /> : null}
+        {stickyRow ? <ConversationDetailBody row={stickyRow} /> : null}
       </DialogScrollContent>
     </Dialog>
   );

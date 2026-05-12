@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  // **Badge contract (locked 2026-05-11):**
-  //   1. **Text-only.** Color tone (bg + text) IS the status indicator.
-  //      Do NOT nest <StatusDot/>, lucide icons, or any other glyph
-  //      inside a Badge — redundant signal, asymmetric padding, bad UI.
-  //   2. **Symmetric `px-2.5` padding always.** Removed the prior
-  //      `has-data-[icon=*]:p*-1.5` asymmetric-padding rules along with
-  //      icon support — they enabled the dot-in-badge anti-pattern.
-  //   3. **First letter capitalized.** `text-transform: capitalize` is
-  //      baked in so `<Badge>blocked</Badge>` renders "Blocked".
-  //      Consumers can write the data as it lives in their model;
-  //      visual case is the primitive's job. Digits and already-uppercase
-  //      letters unchanged ("200 OK" stays "200 OK").
-  //   4. **Variants encode tone**, not severity-mix-with-icon. `success`
-  //      / `warning` / `destructive` / `info` / `neutral` / `outline` /
-  //      `ghost` / `secondary` / `link` / `default`.
-  // First-letter cascade fix: prior `first-letter:uppercase` did not
-  // apply to inline-flex (CSS ::first-letter is block-level only);
-  // switched to `capitalize` which works on any display type.
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center overflow-hidden rounded-xs border border-transparent px-2.5 font-mono text-xs font-medium tabular-nums whitespace-nowrap capitalize transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+  // **Badge contract:**
+  //   1. **Tone IS the signal.** Color (bg + text) carries status. Do NOT
+  //      nest StatusDot inside a Badge — redundant signal and the only
+  //      "icon" pattern that was a real anti-pattern.
+  //   2. **Icons allowed for capability/category labels** (e.g., "Vision",
+  //      "Streaming" — where the glyph is the affordance, not redundant
+  //      signal). Any inner `<svg>` without an explicit `size-*` class is
+  //      auto-sized to `size-3` (12px) to match `text-xs` glyph height;
+  //      `gap-1` (4px) handles icon↔label spacing. Mirrors Button's
+  //      `[&_svg:not([class*='size-'])]:size-3.5` pattern.
+  //   3. **Symmetric `px-2` (8px) padding always.** On the 4px grid.
+  //      Was `px-2.5` (10px), broke the grid.
+  //   4. **First letter capitalized.** `capitalize` is baked in so
+  //      `<Badge>blocked</Badge>` renders "Blocked". Digits and already-
+  //      uppercase letters unchanged ("200 OK" stays "200 OK").
+  //   5. **Variants encode tone.** `success` / `warning` / `destructive` /
+  //      `info` / `neutral` / `outline` / `ghost` / `secondary` / `link` /
+  //      `default`.
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-xs border border-transparent px-2 font-mono text-xs font-medium tabular-nums whitespace-nowrap capitalize transition-[colors,box-shadow] duration-150 ease-out [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
   {
     variants: {
       variant: {

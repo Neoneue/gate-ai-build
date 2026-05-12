@@ -3,10 +3,17 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  // The `:not(:first-child)` guard lives at the container so the header's
+  // top hairline only renders when something sits above the table (e.g.,
+  // a toolbar inside the same Card). When the table is the first child of
+  // its parent (e.g., the Providers table that sits directly inside a Card
+  // density=flush), the Card's `--shadow-border` ring owns the top edge by
+  // itself — stacking the header's `border-t` on top of the ring at the
+  // same y-position is what reads as a "darker line" along the top.
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-t [&:not(:first-child)>table>thead>tr]:border-ink-200"
     >
       <table
         data-slot="table"
@@ -24,10 +31,7 @@ function TableHeader({
   return (
     <thead
       data-slot="table-header"
-      className={cn(
-        "bg-ink-50 [&_tr]:border-t [&_tr]:border-ink-200",
-        className,
-      )}
+      className={cn("bg-ink-50", className)}
       {...props}
     />
   )
