@@ -821,7 +821,6 @@ function RequestsTableSection() {
           </TableHeader>
           <TableBody>
             {rows.map((row, i) => {
-              const badge = STATUS_BADGE[row.status];
               const isMissing = row.inTokens === '—';
               const numericCls = isMissing
                 ? 'text-right whitespace-nowrap font-mono tabular-nums text-ink-400'
@@ -1626,8 +1625,8 @@ function SecurityPanel({ row }: { row: RequestRow }) {
   ];
   return (
     <div className="flex flex-col gap-2">
-      {checks.map((check) => (
-        <SecurityCheckRow key={check.key} {...check} />
+      {checks.map(({ key, ...rest }) => (
+        <SecurityCheckRow key={key} {...rest} />
       ))}
     </div>
   );
