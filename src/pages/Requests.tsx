@@ -1718,11 +1718,11 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
         />
       )}
       <BodySection
-        label="Full request payload"
+        label="Full request"
         lines={requestLines}
         defaultExpanded={false}
         copyValue={requestPayload}
-        copyLabel="request payload"
+        copyLabel="request"
         icon={<Braces className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />}
       />
     </div>
