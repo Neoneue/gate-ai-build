@@ -57,6 +57,7 @@ export function DeltaTag({
 export function CompactKpi({
   title,
   value,
+  valueSuffix,
   delta,
   deltaNote,
   deltaInverted = false,
@@ -66,6 +67,10 @@ export function CompactKpi({
 }: {
   title: string;
   value: string;
+  /** Subordinate metric rendered between value and delta (e.g. share of
+   *  total like "66%"). Rendered as muted ink-500 text aligned to the
+   *  value baseline. */
+  valueSuffix?: React.ReactNode;
   delta?: string;
   deltaNote?: string;
   /** Pass-through to DeltaTag for lower-is-better metrics. */
@@ -82,6 +87,14 @@ export function CompactKpi({
       <Eyebrow as="div">{title}</Eyebrow>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
+        {valueSuffix ? (
+          <span className="inline-flex items-center text-ink-500">
+            <span aria-hidden className="inline-block h-3.5 w-0" />
+            <span className="font-mono text-xs/4 font-medium tabular-nums tracking-tight">
+              {valueSuffix}
+            </span>
+          </span>
+        ) : null}
         {delta ? (
           <DeltaTag delta={delta} note={deltaNote} inverted={deltaInverted} />
         ) : (

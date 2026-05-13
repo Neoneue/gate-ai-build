@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import {
+  Info,
   MoreHorizontal,
   Search,
   Send,
@@ -47,7 +48,7 @@ import {
 } from '@/components/ui/tabs';
 import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
-import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
@@ -90,9 +91,7 @@ export function Team() {
 
 function TeamSurface() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [tab, setTab] = useState<'members' | 'invitations' | 'requests'>(
-    'members',
-  );
+  const [tab, setTab] = useState<'members' | 'invitations'>('members');
 
   return (
     <>
@@ -101,7 +100,6 @@ function TeamSurface() {
         <TabsList variant="line" className="px-0 -mt-2">
           <TeamTabsTrigger value="members" label="Members" count={MEMBER_ROWS.length} />
           <TeamTabsTrigger value="invitations" label="Invitations" count={INVITATION_ROWS.length} />
-          <TeamTabsTrigger value="requests" label="Requests" count={REQUEST_ROWS.length} />
         </TabsList>
 
         <TabsContent value="members">
@@ -109,9 +107,6 @@ function TeamSurface() {
         </TabsContent>
         <TabsContent value="invitations">
           <InvitationsPane onInvite={() => setInviteOpen(true)} />
-        </TabsContent>
-        <TabsContent value="requests">
-          <RequestsPane />
         </TabsContent>
       </Tabs>
 
@@ -164,6 +159,12 @@ function TeamTabsTrigger({
 
 type MemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 type MemberStatus = 'active' | 'invited' | 'suspended';
+type MemberSeat = 'payg' | 'byok';
+
+const SEAT_BADGE: Record<MemberSeat, { variant: 'info' | 'neutral'; label: string }> = {
+  payg: { variant: 'info',    label: 'PAYG' },
+  byok: { variant: 'neutral', label: 'BYOK' },
+};
 
 const ROLE_LABEL: Record<MemberRole, string> = {
   owner: 'Owner',
@@ -192,23 +193,23 @@ type MemberRow = {
   avatarTone: AvatarTone;
   role: MemberRole;
   status: MemberStatus;
+  seat: MemberSeat;
   joined: string;
   isYou?: boolean;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',  name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',    joined: 'Apr 20, 2026', isYou: true },
-  { id: 'usr_kira',  name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',    joined: 'Apr 22, 2026' },
-  { id: 'usr_mate',  name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',    joined: 'May 01, 2026' },
-  { id: 'usr_pulja', name: 'Pulja Shah',    email: 'pulja.shah@acme.io',           avatarTone: 'amber',   role: 'member', status: 'invited',   joined: '—' },
-  { id: 'usr_dani',  name: 'Daniela Reyes', email: 'd.reyes@constellationnetwork.io', avatarTone: 'ink',    role: 'viewer', status: 'suspended', joined: 'Mar 14, 2026' },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',  seat: 'payg', joined: 'Apr 20, 2026', isYou: true },
+  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',  seat: 'payg', joined: 'Apr 22, 2026' },
+  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',  seat: 'byok', joined: 'May 01, 2026' },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'viewer', status: 'active',  seat: 'payg', joined: 'May 08, 2026' },
 ];
 
 function MembersPane() {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | MemberRole>('all');
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState('25');
+  const [rowsPerPage, setRowsPerPage] = useState('10');
 
   const visible = MEMBER_ROWS.filter((r) => {
     if (roleFilter !== 'all' && r.role !== roleFilter) return false;
@@ -285,11 +286,12 @@ function MembersPane() {
                 same. Member gets the largest share to fit avatar +
                 name + email; Actions gets the smallest because it's a
                 single icon button. */}
-            <TableHead className="w-[38%]">Member</TableHead>
-            <TableHead className="w-[19%]">Joined</TableHead>
-            <TableHead className="w-[19%]">Role</TableHead>
-            <TableHead className="w-[19%]">Status</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
+            <TableHead className="w-[34%]">Member</TableHead>
+            <TableHead className="w-[14%]">Joined</TableHead>
+            <TableHead className="w-[15%]">Role</TableHead>
+            <TableHead className="w-[12%]">Seat</TableHead>
+            <TableHead className="w-[15%]">Status</TableHead>
+            <TableHead className="w-[10%] text-right pl-0 pr-4">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -379,6 +381,11 @@ function MemberRowView({ row }: { row: MemberRow }) {
         )}
       </TableCell>
       <TableCell className="whitespace-nowrap">
+        <Badge variant={SEAT_BADGE[row.seat].variant}>
+          {SEAT_BADGE[row.seat].label}
+        </Badge>
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
         <Badge variant={badge.variant}>
           {badge.label}
         </Badge>
@@ -416,7 +423,7 @@ type InvitationRow = {
 };
 
 const INVITATION_ROWS: InvitationRow[] = [
-  { id: 'inv_01', email: 'jordan.lee@acme.io',  invitedBy: 'Chad Ponticas', sent: 'May 07, 2026', role: 'member', expires: 'in 6 days' },
+  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: 'May 07, 2026', role: 'member', expires: 'in 6 days' },
   { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: 'May 06, 2026', role: 'admin',  expires: 'in 5 days' },
 ];
 
@@ -490,77 +497,6 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
   );
 }
 
-/* ─── Requests pane ───────────────────────────────────────────────────── */
-
-type RequestRow = {
-  id: string;
-  email: string;
-  requested: string;
-  role: MemberRole;
-  reason: string;
-};
-
-const REQUEST_ROWS: RequestRow[] = [
-  { id: 'req_01', email: 'noah.gauthier@constellationnetwork.io', requested: 'May 09, 2026', role: 'member', reason: 'Joining the platform team — needs prod-web key access.' },
-];
-
-function RequestsPane() {
-  if (REQUEST_ROWS.length === 0) {
-    return (
-      <EmptyState
-        className="py-16"
-        title="No access requests"
-        body="People who’ve asked to join this workspace show up here. You’ll see their email, the role they want, and a short note."
-      />
-    );
-  }
-  return (
-    <Card density="flush">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[28%]">Email</TableHead>
-            <TableHead className="w-[15%]">Requested</TableHead>
-            <TableHead className="w-[13%]">Role</TableHead>
-            <TableHead className="w-[39%]">Reason</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {REQUEST_ROWS.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="font-mono text-sm text-ink-900 tracking-snug">
-                <span className="block truncate" title={row.email}>{row.email}</span>
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
-                {row.requested}
-              </TableCell>
-              <TableCell>
-                <Badge variant="neutral">{ROLE_LABEL[row.role]}</Badge>
-              </TableCell>
-              <TableCell className="font-sans text-sm text-ink-800 tracking-snug">
-                <span className="block truncate" title={row.reason}>
-                  {row.reason}
-                </span>
-              </TableCell>
-              <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
-                <RowActionsMenu
-                  label={`Open actions for ${row.email}`}
-                  items={[
-                    { id: 'approve', label: 'Approve request' },
-                    { id: 'decline', label: 'Decline request', destructive: true },
-                  ]}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
-  );
-}
-
-
 /* ─── Invite member dialog ────────────────────────────────────────────── */
 
 function InviteMemberDialog({
@@ -570,18 +506,15 @@ function InviteMemberDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [emails, setEmails] = useState('');
+  const [email, setEmail] = useState('');
   const [role, setRole] = useState<MemberRole>('member');
+  const [seat, setSeat] = useState<MemberSeat>('byok');
 
-  // Validation: at least one well-formed email token. Splitting on
-  // commas / spaces / newlines mirrors the textarea instructions; each
-  // token is checked against a pragmatic email regex (not RFC-strict;
-  // that path is for the server). Empty input ⇒ disabled; any-token-
-  // -invalid ⇒ disabled. Send is enabled only when every non-empty
-  // token validates.
-  const tokens = emails.split(/[\s,]+/).filter(Boolean);
-  const allValid = tokens.length > 0 && tokens.every((t) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t));
-  const showInvalid = tokens.length > 0 && !allValid;
+  // Single-email validation: pragmatic regex (not RFC-strict; server
+  // owns the canonical check). Empty ⇒ disabled; malformed ⇒ disabled.
+  const trimmed = email.trim();
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  const showInvalid = trimmed.length > 0 && !isValid;
 
   return (
     <Dialog
@@ -589,20 +522,20 @@ function InviteMemberDialog({
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setEmails('');
+          setEmail('');
           setRole('member');
+          setSeat('byok');
         }
       }}
     >
       <DialogContent className="sm:max-w-lg gap-4">
-        {/* Form wrapper enables Enter-to-submit from the textarea (and
-            from anywhere inside the dialog). Submit handler closes the
-            dialog; the demo doesn't actually send, but the contract
+        {/* Form wrapper enables Enter-to-submit. Submit handler closes
+            the dialog; the demo doesn't actually send, but the contract
             mirrors a real implementation. */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (allValid) onOpenChange(false);
+            if (isValid) onOpenChange(false);
           }}
           className="flex flex-col gap-4"
         >
@@ -611,27 +544,29 @@ function InviteMemberDialog({
               Invite member
             </DialogTitle>
             <DialogDescription>
-              Enter one or more emails separated by commas, spaces, or new lines. They’ll see the invitation in their notifications.
+              Enter the teammate's email. They'll see the invitation in their notifications.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-emails" className="text-ink-600 font-medium text-sm">
-              Emails
+            <Label htmlFor="invite-email" className="text-ink-600 font-medium text-sm">
+              Email
             </Label>
-            <Textarea
-              id="invite-emails"
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              placeholder="teammate@example.com, other@example.com"
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teammate@example.com"
               spellCheck={false}
+              autoComplete="off"
               aria-invalid={showInvalid || undefined}
-              aria-describedby={showInvalid ? 'invite-emails-error' : undefined}
-              className="font-mono text-sm min-h-20"
+              aria-describedby={showInvalid ? 'invite-email-error' : undefined}
+              className="font-mono text-sm"
             />
             {showInvalid ? (
-              <p id="invite-emails-error" className="font-sans text-xs text-destructive">
-                One or more entries don’t look like an email address.
+              <p id="invite-email-error" className="font-sans text-xs text-destructive">
+                That doesn't look like an email address.
               </p>
             ) : null}
           </div>
@@ -670,6 +605,46 @@ function InviteMemberDialog({
             </Select>
           </div>
 
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1">
+              <Label htmlFor="invite-seat" className="text-ink-600 font-medium text-sm">
+                Seat
+              </Label>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <span
+                      {...props}
+                      tabIndex={0}
+                      className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="About seat types"
+                    >
+                      <Info className="size-3.5" strokeWidth={1.75} aria-hidden />
+                    </span>
+                  )}
+                />
+                <TooltipContent className="max-w-sm text-left">
+                  Inviting a new paid (PAYG) member will increase the billing of that team.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Select value={seat} onValueChange={(v: string) => setSeat(v as MemberSeat)}>
+              <SelectTrigger
+                id="invite-seat"
+                size="default"
+                className="border-ink-200 bg-white text-ink-900 w-full"
+              >
+                <SelectValue>
+                  {(value) => SEAT_BADGE[value as MemberSeat]?.label ?? String(value)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="min-w-[var(--anchor-width)]">
+                <SelectItem value="byok">BYOK</SelectItem>
+                <SelectItem value="payg">PAYG</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <DialogFooter>
             <DialogClose
               render={
@@ -681,10 +656,10 @@ function InviteMemberDialog({
             <Button
               type="submit"
               variant="default"
-              disabled={!allValid}
+              disabled={!isValid}
             >
               <Send data-icon="inline-start" aria-hidden />
-              Send invitations
+              Send invitation
             </Button>
           </DialogFooter>
         </form>

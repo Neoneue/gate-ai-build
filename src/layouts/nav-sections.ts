@@ -1,7 +1,6 @@
 import {
   Activity,
   ArrowLeftRight,
-  Bell,
   Box,
   Coins,
   CreditCard,
@@ -43,9 +42,8 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Security',
     items: [
-      { id: 'security-threats', icon: TriangleAlert, label: 'Threats', pageId: '/security' },
-      { id: 'policies',          icon: Shield,        label: 'Policies' },
-      { id: 'events',            icon: Bell,          label: 'Events' },
+      { id: 'security-events', icon: TriangleAlert, label: 'Events', pageId: '/security' },
+      { id: 'policies',        icon: Shield,        label: 'Policies' },
     ],
   },
   {
