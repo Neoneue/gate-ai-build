@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Info, Key } from 'lucide-react';
+import { Info, Key, Search } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -28,6 +28,7 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Input } from '@/components/ui/input';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import {
   Select,
@@ -81,21 +82,23 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  * events is covered by Audit Trail PRD R12.
  * ───────────────────────────────────────────────────────────────────────── */
 
-type PresetRange = '24h' | '7d' | '30d';
+type PresetRange = '1h' | '24h' | '7d' | '30d';
 type Range = PresetRange | 'custom';
 type CustomRange = { from: Date; to: Date };
 
 const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
-  { value: '24h', label: '24h' },
-  { value: '7d',  label: '7d'  },
-  { value: '30d', label: '30d' },
+  { value: '1h',  label: '1H'  },
+  { value: '24h', label: '24H' },
+  { value: '7d',  label: '7D'  },
+  { value: '30d', label: '30D' },
 ];
 
 /** Multiplier applied to base (7d) values to fabricate plausible per-range
- *  totals on this static artboard. Real implementation would aggregate from
- *  the gateway event stream per the PRD acceptance criterion (chart-by-key
- *  total === per-key-table total for the same range). */
+ *  totals on this static artboard. 1h = 1/168 of a week. Real implementation
+ *  would aggregate from the gateway event stream per the PRD acceptance
+ *  criterion (chart-by-key total === per-key-table total for the same range). */
 const RANGE_SCALE: Record<PresetRange, number> = {
+  '1h':  0.006,
   '24h': 0.16,
   '7d':  1,
   '30d': 4.2,
@@ -170,7 +173,6 @@ function PageHeader({
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <SegmentedPill
-          size="sm"
           options={RANGE_OPTIONS}
           value={range === 'custom' ? '' : range}
           onValueChange={(v) => onRangeChange(v as PresetRange)}
@@ -178,6 +180,7 @@ function PageHeader({
         <DateRangePicker
           value={customRange}
           onChange={onCustomRangeChange}
+          size="default"
         />
       </div>
     </div>
@@ -193,6 +196,11 @@ type KpiSpec = {
 };
 
 const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens: KpiSpec }> = {
+  '1h': {
+    spend:    { value: '$5.56',   delta: '+2.1%', spark: [2, 1, 2, 3, 2, 4, 3, 5, 4] },
+    requests: { value: '383',     delta: '+1.4%', spark: [2, 3, 2, 4, 3, 5, 4, 6, 5] },
+    tokens:   { value: '147 K',   delta: '+1.7%', spark: [3, 4, 3, 5, 4, 6, 5, 7, 6] },
+  },
   '24h': {
     spend:    { value: '$148.29',  delta: '+4.1%', spark: [6, 8, 7, 10, 9, 11, 13, 12, 14] },
     requests: { value: '10,207',   delta: '+2.6%', spark: [5, 6, 6, 8, 9, 8, 10, 11, 12] },
@@ -226,29 +234,51 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
   return KPI_DATA[range === 'custom' ? '7d' : range];
 }
 
+// Title suffix + delta trailing copy tied to the active range. Mirrors
+// the Requests hero pattern (eyebrow "X / 24H", delta note "vs prior day").
+const RANGE_TITLE_SUFFIX: Record<Range, string> = {
+  '1h':     '1h',
+  '24h':    '24h',
+  '7d':     '7d',
+  '30d':    '30d',
+  custom:   'custom',
+};
+const RANGE_DELTA_NOTE: Record<Range, string> = {
+  '1h':     'vs last hour',
+  '24h':    'vs prior day',
+  '7d':     'vs prior week',
+  '30d':    'vs prior month',
+  custom:   'vs prior range',
+};
+
 function KpiRail({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
   const k = getKpiSpec(range, customRange);
+  const suffix = RANGE_TITLE_SUFFIX[range];
+  const note = RANGE_DELTA_NOTE[range];
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
         flat
-        title="Total Spend"
+        title={`Total Spend / ${suffix}`}
         value={k.spend.value}
         delta={k.spend.delta}
+        deltaNote={note}
         spark={<CompactSpark colorVar="var(--color-chart-1)" data={k.spend.spark} />}
       />
       <CompactKpi
         flat
-        title="Total Requests"
+        title={`Total Requests / ${suffix}`}
         value={k.requests.value}
         delta={k.requests.delta}
+        deltaNote={note}
         spark={<CompactSpark colorVar="var(--color-ink-500)" data={k.requests.spark} />}
       />
       <CompactKpi
         flat
-        title="Tokens Used"
+        title={`Tokens Used / ${suffix}`}
         value={k.tokens.value}
         delta={k.tokens.delta}
+        deltaNote={note}
         spark={<CompactSpark colorVar="var(--color-chart-3)" data={k.tokens.spark} />}
       />
     </KpiRailShell>
@@ -336,6 +366,7 @@ const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
 };
 
 const RANGE_LABELS: Record<PresetRange, string[]> = {
+  '1h':  ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', 'Now'],
   '24h': ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'],
   '7d':  ['Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26', 'Apr 27'],
   '30d': ['Apr 1', 'Apr 5', 'Apr 10', 'Apr 14', 'Apr 19', 'Apr 23', 'Apr 27'],
@@ -739,6 +770,7 @@ const KEY_SORT_OPTIONS: { value: KeySortKey; label: string }[] = [
 
 function UsageByKey({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
   const [sort, setSort] = useState<KeySortKey>('owner');
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
 
@@ -749,7 +781,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   // inside TablePaginationFooter.
   useEffect(() => {
     setPage(1);
-  }, [range, customRange, sort]);
+  }, [range, customRange, sort, query]);
 
   const sortedRows = useMemo(() => {
     const scale = effectiveScale(range, customRange);
@@ -780,22 +812,41 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
     });
   }, [range, customRange, sort]);
 
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return sortedRows;
+    return sortedRows.filter(
+      (r) => r.label.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q),
+    );
+  }, [sortedRows, query]);
+
   const perPage = parseInt(rowsPerPage, 10);
   const pageRows = useMemo(
-    () => sortedRows.slice((page - 1) * perPage, page * perPage),
-    [sortedRows, page, perPage],
+    () => filteredRows.slice((page - 1) * perPage, page * perPage),
+    [filteredRows, page, perPage],
   );
 
   return (
     <Card density="flush">
-      <div className="flex items-center justify-between gap-3 p-4">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <h3 className="font-heading text-base leading-snug font-medium text-ink-900 m-0">
-            Usage by key
-          </h3>
-          <p className="font-sans text-sm/5 tracking-tight text-ink-500 m-0">
-            All API keys in this workspace, across users.
-          </p>
+      <div className="flex items-center gap-2 p-4">
+        <div className="relative w-72 min-w-0 shrink-0">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <Input
+            size="sm"
+            type="search"
+            name="q"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Search key or owner…"
+            className="pl-8"
+            aria-label="Search keys"
+          />
         </div>
         <Select value={sort} onValueChange={(v: string) => setSort(v as KeySortKey)}>
           <SelectTrigger
@@ -886,7 +937,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         </TableBody>
       </Table>
       <TablePaginationFooter
-        total={sortedRows.length}
+        total={filteredRows.length}
         page={page}
         rowsPerPage={rowsPerPage}
         onPageChange={setPage}

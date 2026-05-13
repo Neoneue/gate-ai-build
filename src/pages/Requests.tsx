@@ -1,4 +1,4 @@
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
@@ -76,6 +76,31 @@ export function Requests() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
 
+  // Range state lifted from RequestsTableSection so PageHeader can also
+  // drive it (the data selector + Custom range button live in the top-
+  // right page-header chrome now). rangeStore stays the single source of
+  // truth for HeroMetricCard and other useRange()/useCustomRange()
+  // subscribers — the effects below keep it in lockstep.
+  const [range, setRange] = useState<RangeKey>('1h');
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+
+  useEffect(() => { rangeStore.set(range); }, [range]);
+  useEffect(() => { rangeStore.setCustom(customRange); }, [customRange]);
+
+  const handleRangeChange = (next: RangeKey) => {
+    setRange(next);
+    setCustomRange(null);
+  };
+  const handleCustomRangeChange = (next: CustomRange | null) => {
+    if (next) {
+      setCustomRange(next);
+      setRange('custom');
+    } else {
+      setCustomRange(null);
+      setRange('1h');
+    }
+  };
+
   return (
     <DashboardChrome
           breadcrumbCurrent="Requests"
@@ -84,16 +109,34 @@ export function Requests() {
           onToggleSidebar={toggleSidebar}
           onNavigate={(path: string) => navigate(path)}
         >
-          <PageHeader />
+          <PageHeader
+            range={range}
+            customRange={customRange}
+            onRangeChange={handleRangeChange}
+            onCustomRangeChange={handleCustomRangeChange}
+          />
           <HeroMetricCard />
-          <RequestsTableSection />
+          <RequestsTableSection
+            range={range}
+            customRange={customRange}
+          />
         </DashboardChrome>
   );
 }
 
-/* ─── Page header (eyebrow + title + actions) ────────────────────────────── */
+/* ─── Page header (title + range selector + custom date) ──────────────── */
 
-function PageHeader() {
+function PageHeader({
+  range,
+  customRange,
+  onRangeChange,
+  onCustomRangeChange,
+}: {
+  range: RangeKey;
+  customRange: CustomRange | null;
+  onRangeChange: (r: RangeKey) => void;
+  onCustomRangeChange: (r: CustomRange | null) => void;
+}) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -103,11 +146,20 @@ function PageHeader() {
           Every model call across your stack, captured in real-time.
         </p>
       </div>
-      <div className="flex items-center gap-4 shrink-0">
-        <Button variant="outline" size="default">
-          <Download data-icon="inline-start" aria-hidden />
-          Export CSV
-        </Button>
+      <div className="flex items-center gap-2 shrink-0">
+        <SegmentedPill
+          options={RANGE_OPTIONS}
+          // Empty string when a custom range is active so no preset reads
+          // as selected — see segmented-pill internal notes for why empty
+          // string deselects all items.
+          value={range === 'custom' ? '' : range}
+          onValueChange={(next) => onRangeChange(next as RangeKey)}
+        />
+        <DateRangePicker
+          value={customRange}
+          onChange={onCustomRangeChange}
+          size="default"
+        />
       </div>
     </div>
   );
@@ -832,12 +884,14 @@ const RANGE_TOTALS: Record<string, number> = {
   custom: 0,
 };
 
-function RequestsTableSection() {
+function RequestsTableSection({
+  range,
+  customRange,
+}: {
+  range: RangeKey;
+  customRange: CustomRange | null;
+}) {
   const navigate = useNavigate();
-  const [range, setRange] = useState<RangeKey>('1h');
-  // Custom range is a sibling of `range` rather than a sub-state because
-  // both feed into the rangeStore — Hero needs to read them together.
-  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   // Looked up per render. Pill change → new rows + new total; page resets
   // so a deep-paged 30D state doesn't carry over into a 1H view that
   // doesn't have those pages. When the user picks a custom range, the
@@ -861,6 +915,13 @@ function RequestsTableSection() {
   // signal — `null` means closed, a row means open. Avoids carrying a
   // separate `open` flag.
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
+
+  // Range now lifted to the parent — when it (or the custom range) flips,
+  // reset to page 1 so a deep-paged 30D state doesn't carry over into a
+  // 1H view that doesn't have those pages.
+  useEffect(() => {
+    setPage(1);
+  }, [range, customRange]);
 
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
@@ -974,48 +1035,10 @@ function RequestsTableSection() {
             </SelectContent>
           </Select>
 
-          <div className="ml-auto flex items-center gap-2">
-            <SegmentedPill
-              size="sm"
-              options={RANGE_OPTIONS}
-              // Empty string when a custom range is active so no preset
-              // reads as selected. SegmentedPill / ToggleGroup match on
-              // strict equality between `value` and each option's
-              // `value`; an empty string matches nothing, so neither the
-              // `aria-pressed` flag nor the sliding indicator activate.
-              // (Verified: segmented-pill.tsx maps the active item to
-              // `[value]` and the indicator measures only when a match
-              // exists — `indicator.ready` stays false otherwise.)
-              value={range === 'custom' ? '' : range}
-              onValueChange={(next) => {
-                setRange(next as RangeKey);
-                rangeStore.set(next as RangeKey);
-                // Preset + custom are mutually exclusive: picking a
-                // preset clears any active custom range so the Hero
-                // can't keep painting the custom view underneath.
-                setCustomRange(null);
-                rangeStore.setCustom(null);
-                setPage(1);
-              }}
-            />
-            <DateRangePicker
-              value={customRange}
-              onChange={(next) => {
-                if (next) {
-                  setCustomRange(next);
-                  rangeStore.setCustom(next);
-                  setRange('custom');
-                  rangeStore.set('custom');
-                } else {
-                  setCustomRange(null);
-                  rangeStore.setCustom(null);
-                  setRange('1h');
-                  rangeStore.set('1h');
-                }
-                setPage(1);
-              }}
-            />
-          </div>
+          <Button variant="outline" size="sm" className="ml-auto">
+            <Download data-icon="inline-start" aria-hidden />
+            Export CSV
+          </Button>
         </div>
 
         {/* Table */}

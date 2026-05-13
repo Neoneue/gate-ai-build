@@ -83,12 +83,6 @@ function PageHeader() {
           A conversation is a chain of requests that share session context — agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline" size="default">
-          <Download data-icon="inline-start" aria-hidden />
-          Export
-        </Button>
-      </div>
     </div>
   );
 }
@@ -291,6 +285,10 @@ function ConversationsTableSection() {
             <SelectItem value="dev">dev</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="ml-auto">
+          <Download data-icon="inline-start" aria-hidden />
+          Export CSV
+        </Button>
       </div>
 
       {/* Table */}

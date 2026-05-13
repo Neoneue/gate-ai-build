@@ -15,6 +15,9 @@ export interface DateRangePickerProps {
   value: { from: Date; to: Date } | null;
   onChange: (range: { from: Date; to: Date } | null) => void;
   className?: string;
+  /** Trigger button height. Defaults to `sm` (h-8) to match the inline
+   *  toolbar usage on Requests; pass `default` for h-10 page-header chrome. */
+  size?: 'sm' | 'default';
 }
 
 const MONTH_LABELS = [
@@ -37,7 +40,7 @@ function formatRange(value: { from: Date; to: Date }): string {
  * unfocused affordance for resetting back to no range.
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+export function DateRangePicker({ value, onChange, className, size = 'sm' }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
   // Draft mirrors the applied value when the popover opens, then diverges
   // until Apply commits or Cancel/outside-press resets it.
@@ -80,7 +83,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
         render={
           <Button
             variant="outline"
-            size="sm"
+            size={size}
             className={cn(value ? 'pr-2' : undefined, className)}
             aria-label={value ? `Custom range: ${formatRange(value)}` : 'Pick a custom date range'}
           >
