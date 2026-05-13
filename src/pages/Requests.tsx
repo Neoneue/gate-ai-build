@@ -81,7 +81,7 @@ export function Requests() {
   // right page-header chrome now). rangeStore stays the single source of
   // truth for HeroMetricCard and other useRange()/useCustomRange()
   // subscribers — the effects below keep it in lockstep.
-  const [range, setRange] = useState<RangeKey>('1h');
+  const [range, setRange] = useState<RangeKey>('24h');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   useEffect(() => { rangeStore.set(range); }, [range]);
@@ -97,7 +97,7 @@ export function Requests() {
       setRange('custom');
     } else {
       setCustomRange(null);
-      setRange('1h');
+      setRange('24h');
     }
   };
 
@@ -194,7 +194,7 @@ type HeroView = {
 // This keeps Requests() untouched (no state lifting) and avoids a context
 // Provider mismatch (Hero and Table are siblings, not ancestor/descendant).
 const rangeStore = {
-  current: '1h' as RangeKey,
+  current: '24h' as RangeKey,
   // Populated alongside `current = 'custom'` when the user applies a
   // custom range. Reading both from a single store keeps Hero and Table
   // pinned to the same source of truth.

@@ -185,7 +185,7 @@ export function Security() {
   // chrome in the top-right (matches Activity / Requests). EventsTableSection
   // reads it as props; the static 17-row sample doesn't actually filter
   // against it yet (real wiring is a follow-up).
-  const [range, setRange] = useState<EventsRange>('1h');
+  const [range, setRange] = useState<EventsRange>('24h');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const handleRangeChange = (next: PresetRange) => {
@@ -198,7 +198,7 @@ export function Security() {
       setRange('custom');
     } else {
       setCustomRange(null);
-      setRange('1h');
+      setRange('24h');
     }
   };
 

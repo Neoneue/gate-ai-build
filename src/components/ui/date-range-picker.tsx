@@ -85,10 +85,10 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
             variant="outline"
             size={size}
             className={cn(value ? 'pr-2' : undefined, className)}
-            aria-label={value ? `Custom range: ${formatRange(value)}` : 'Pick a custom date range'}
+            aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
           >
             <CalendarIcon data-icon="inline-start" aria-hidden />
-            <span>{value ? formatRange(value) : 'Custom range'}</span>
+            <span>{value ? formatRange(value) : 'Custom'}</span>
             {value ? (
               // Inline reset affordance. Rendered as a non-button span so
               // it doesn't nest a <button> inside the trigger button (a11y);

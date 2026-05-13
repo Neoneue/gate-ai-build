@@ -122,7 +122,7 @@ export function Activity() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
 
-  const [range, setRange] = useState<Range>('7d');
+  const [range, setRange] = useState<Range>('24h');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   return (
@@ -139,7 +139,7 @@ export function Activity() {
               onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
               onCustomRangeChange={(r) => {
                 if (r) { setCustomRange(r); setRange('custom'); }
-                else   { setCustomRange(null); setRange('7d'); }
+                else   { setCustomRange(null); setRange('24h'); }
               }}
             />
             <KpiRail range={range} customRange={customRange} />
@@ -195,43 +195,72 @@ type KpiSpec = {
   spark: number[];
 };
 
+// Note: `.spend.value` strings here are informational only — actual spend
+// KPI is computed in getKpiSpec from TOTAL_7D_BASE_DOLLARS × effectiveScale,
+// so it cannot drift from the Spend over time chart. Kept in sync with the
+// computed value for readability if someone reads the source.
 const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens: KpiSpec }> = {
   '1h': {
-    spend:    { value: '$5.56',   delta: '+2.1%', spark: [2, 1, 2, 3, 2, 4, 3, 5, 4] },
-    requests: { value: '383',     delta: '+1.4%', spark: [2, 3, 2, 4, 3, 5, 4, 6, 5] },
-    tokens:   { value: '147 K',   delta: '+1.7%', spark: [3, 4, 3, 5, 4, 6, 5, 7, 6] },
+    spend:    { value: '$5.56',     delta: '+2.1%',  spark: [2, 1, 2, 3, 2, 4, 3, 5, 4] },
+    requests: { value: '383',       delta: '+1.4%',  spark: [2, 3, 2, 4, 3, 5, 4, 6, 5] },
+    tokens:   { value: '147 K',     delta: '+1.7%',  spark: [3, 4, 3, 5, 4, 6, 5, 7, 6] },
   },
   '24h': {
-    spend:    { value: '$148.29',  delta: '+4.1%', spark: [6, 8, 7, 10, 9, 11, 13, 12, 14] },
-    requests: { value: '10,207',   delta: '+2.6%', spark: [5, 6, 6, 8, 9, 8, 10, 11, 12] },
-    tokens:   { value: '3.92 M',   delta: '+3.2%', spark: [7, 8, 9, 9, 10, 11, 11, 12, 12] },
+    spend:    { value: '$148.32',   delta: '+4.1%',  spark: [6, 8, 7, 10, 9, 11, 13, 12, 14] },
+    requests: { value: '10,207',    delta: '+2.6%',  spark: [5, 6, 6, 8, 9, 8, 10, 11, 12] },
+    tokens:   { value: '3.92 M',    delta: '+3.2%',  spark: [7, 8, 9, 9, 10, 11, 11, 12, 12] },
   },
   '7d': {
-    spend:    { value: '$926.82',   delta: '+12.6%', spark: [8, 10, 12, 16, 18, 20, 25, 22, 24] },
+    spend:    { value: '$927.00',   delta: '+12.6%', spark: [8, 10, 12, 16, 18, 20, 25, 22, 24] },
     requests: { value: '63,793',    delta: '+8.2%',  spark: [6, 12, 10, 16, 20, 18, 26, 24, 28] },
     tokens:   { value: '24.5 M',    delta: '+8.7%',  spark: [10, 11, 13, 14, 16, 15, 17, 18, 18] },
   },
   '30d': {
-    spend:    { value: '$3,892.64', delta: '+18.4%', spark: [12, 14, 18, 22, 24, 28, 32, 30, 34] },
+    spend:    { value: '$3,893.40', delta: '+18.4%', spark: [12, 14, 18, 22, 24, 28, 32, 30, 34] },
     requests: { value: '267,931',   delta: '+14.7%', spark: [10, 14, 18, 22, 24, 26, 30, 30, 34] },
     tokens:   { value: '102.9 M',   delta: '+13.2%', spark: [14, 16, 18, 20, 22, 22, 24, 26, 28] },
   },
 };
 
-/** Custom-range KPI generation. Scales the 7d numeric base by the picked
- *  span (days/7), formats with the same fmtUsd/fmtInt/fmtTokens helpers.
- *  Sparkline shape reuses 7d's — it's decoration, not a magnitude carrier. */
+// Canonical 7d totals — single source of truth for each KPI. Every range's
+// value AND sparkline shape are computed from these × effectiveScale, so
+// the KPIs reconcile with the underlying data and the spark shapes reflect
+// real per-bucket variation rather than hand-drawn arrays.
+const TOTAL_7D_BASE_DOLLARS = 927;
+const TOTAL_7D_BASE_REQUESTS = 63_793;
+const TOTAL_7D_BASE_TOKENS = 24_500_000;
+
+/** KPI spec for the active range. All three metrics computed: value from
+ *  the canonical 7d base × scale; sparkline by distributing that scaled
+ *  total across the range's bucket count via distributeSeries — same
+ *  generator the Spend over time chart uses, so spark shapes track real
+ *  per-bucket variation (upward trend + ±10% jitter, deterministic). */
 function getKpiSpec(range: Range, customRange: CustomRange | null) {
-  if (range === 'custom' && customRange) {
-    const scale = effectiveScale(range, customRange);
-    const base = KPI_DATA['7d'];
-    return {
-      spend:    { value: fmtUsd(926.82 * scale),                          delta: base.spend.delta,    spark: base.spend.spark    },
-      requests: { value: fmtInt(Math.round(63_793 * scale)),              delta: base.requests.delta, spark: base.requests.spark },
-      tokens:   { value: fmtTokens(Math.round(24_500_000 * scale)),       delta: base.tokens.delta,   spark: base.tokens.spark   },
-    };
-  }
-  return KPI_DATA[range === 'custom' ? '7d' : range];
+  const scale = effectiveScale(range, customRange);
+  const count = getBucketCount(range, customRange);
+  const spendDollars = TOTAL_7D_BASE_DOLLARS * scale;
+  const requestsCount = TOTAL_7D_BASE_REQUESTS * scale;
+  const tokensCount = TOTAL_7D_BASE_TOKENS * scale;
+
+  // Each metric gets its own seed so adjacent sparklines in the rail
+  // don't share the same jitter pattern. Range-aware seed so 1H and 7D
+  // (both 7 buckets) don't produce identical shapes at different scales.
+  const rangeSeed =
+    range === '1h'  ? 11 :
+    range === '24h' ? 47 :
+    range === '7d'  ? 77 :
+    range === '30d' ? 303 :
+    99;
+  const spendSpark    = distributeSeries(spendDollars,  count, rangeSeed * 31 + 1);
+  const requestsSpark = distributeSeries(requestsCount, count, rangeSeed * 31 + 2);
+  const tokensSpark   = distributeSeries(tokensCount,   count, rangeSeed * 31 + 3);
+
+  const base = KPI_DATA[range === 'custom' ? '7d' : range];
+  return {
+    spend:    { value: fmtUsd(spendDollars),                  delta: base.spend.delta,    spark: spendSpark    },
+    requests: { value: fmtInt(Math.round(requestsCount)),     delta: base.requests.delta, spark: requestsSpark },
+    tokens:   { value: fmtTokens(Math.round(tokensCount)),    delta: base.tokens.delta,   spark: tokensSpark   },
+  };
 }
 
 // Title suffix + delta trailing copy tied to the active range. Mirrors
@@ -328,11 +357,16 @@ const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slo
 };
 
 /** Base (7d) chart data. Other ranges derive from this by scaling values and
- *  relabeling the x-axis. Mock-realistic, not aggregated. */
+ *  relabeling the x-axis. Mock-realistic, not aggregated.
+ *
+ *  INVARIANT: every dimension's 7d row sums equal $927 — this is the
+ *  canonical workspace 7d spend. The Total Spend KPI is computed from this
+ *  base × the active range's effectiveScale, so chart and KPI cannot drift.
+ *  If you change any row, verify the per-dimension total still equals 927. */
 const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
-  // PAYG-only — BYOK spend isn't tracked. Per-dimension 7d sums all
-  // reconcile to ~$926.82 (the 7d Total Spend KPI), so toggling between
-  // Model / Provider / API key keeps the same workspace total.
+  // PAYG-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
+  // $927 so toggling Model / Provider / API key keeps the same workspace
+  // total (and that total = the Total Spend KPI by construction).
   model: [
     { sonnet: 26, gpt: 20, gemini: 13, opus: 34, llama:  9, haiku: 6 },
     { sonnet: 28, gpt: 21, gemini: 14, opus: 38, llama: 10, haiku: 6 },
@@ -340,7 +374,7 @@ const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     { sonnet: 32, gpt: 23, gemini: 16, opus: 44, llama: 11, haiku: 7 },
     { sonnet: 34, gpt: 24, gemini: 17, opus: 47, llama: 11, haiku: 7 },
     { sonnet: 35, gpt: 26, gemini: 17, opus: 51, llama: 11, haiku: 8 },
-    { sonnet: 37, gpt: 26, gemini: 18, opus: 54, llama: 12, haiku: 8 },
+    { sonnet: 37, gpt: 26, gemini: 18, opus: 55, llama: 12, haiku: 8 },
   ],
   provider: [
     { anthropic: 50, openai: 19, google: 12, bedrock: 10, openrouter:  6 },
@@ -365,24 +399,132 @@ const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
   ],
 };
 
-const RANGE_LABELS: Record<PresetRange, string[]> = {
-  '1h':  ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', 'Now'],
-  '24h': ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'],
-  '7d':  ['Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26', 'Apr 27'],
-  '30d': ['Apr 1', 'Apr 5', 'Apr 10', 'Apr 14', 'Apr 19', 'Apr 23', 'Apr 27'],
+/** Per-series 7d totals, derived once from SPEND_BASE. These are the
+ *  canonical "how much did series X spend across the workspace 7d"
+ *  numbers; the chart distributes them across N buckets per range via
+ *  distributeSeries(). Sum across series = TOTAL_7D_BASE_DOLLARS = $927. */
+const SPEND_TOTALS_7D: Record<Dimension, Record<string, number>> = Object.fromEntries(
+  Object.entries(SPEND_BASE).map(([dim, rows]) => [
+    dim,
+    rows.reduce((acc, row) => {
+      for (const [k, v] of Object.entries(row)) acc[k] = (acc[k] || 0) + v;
+      return acc;
+    }, {} as Record<string, number>),
+  ]),
+) as Record<Dimension, Record<string, number>>;
+
+/** Distribute `total` across `count` buckets with a mild upward trend
+ *  (0.7 → 1.3) and per-bucket noise that mimics real time-series:
+ *    ~75% of buckets get moderate variation (±20% around trend)
+ *    ~15% spike upward (1.4–2.0×, e.g. a big batch job day)
+ *    ~10% dip downward (0.35–0.65×, e.g. a weekend or quiet hour)
+ *  Seeded LCG so the shape is deterministic across renders. Last bucket
+ *  absorbs floating-point remainder so per-series sum exactly equals
+ *  `total` — required for the chart-sum = KPI invariant. */
+function distributeSeries(total: number, count: number, seed: number): number[] {
+  let s = (seed * 2654435769) >>> 0 || 1;
+  const rand = () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+  const weights: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    const trend = 0.7 + 0.6 * t;
+    const r = rand();
+    let jitter: number;
+    if (r > 0.85)       jitter = 1.4 + rand() * 0.6;  // spike
+    else if (r < 0.10)  jitter = 0.35 + rand() * 0.30; // dip
+    else                jitter = 0.80 + rand() * 0.40; // normal ±20%
+    weights.push(trend * jitter);
+  }
+  const sumW = weights.reduce((a, b) => a + b, 0) || 1;
+  const out: number[] = [];
+  let accumulated = 0;
+  for (let i = 0; i < count - 1; i++) {
+    const v = +(total * (weights[i] / sumW)).toFixed(2);
+    out.push(v);
+    accumulated += v;
+  }
+  out.push(+(total - accumulated).toFixed(2));
+  return out;
+}
+
+/** Bar count per range. The Spend over time chart distributes each
+ *  series's 7d total across this many buckets, so 24H = 12 bars at 2h
+ *  each, 30D = 30 daily bars, etc. Custom range derives count from the
+ *  span (daily up to 30 days, then capped). */
+const BUCKET_COUNTS: Record<PresetRange, number> = {
+  '1h':  7,
+  '24h': 12,
+  '7d':  7,
+  '30d': 30,
 };
 
+function getBucketCount(range: Range, customRange: CustomRange | null): number {
+  if (range === 'custom' && customRange) {
+    const days = daysInRange(customRange);
+    return Math.max(7, Math.min(30, days));
+  }
+  return BUCKET_COUNTS[range === 'custom' ? '7d' : range];
+}
+
+/** Human-readable bucket period for the SpendTrendCard description.
+ *  Tells the reader what one bar covers so they can reconcile sum(bars)
+ *  against the Total Spend KPI without doing the arithmetic. */
+function getBucketLabel(range: Range, customRange: CustomRange | null): string {
+  if (range === 'custom' && customRange) {
+    const days = daysInRange(customRange);
+    const count = getBucketCount(range, customRange);
+    const perBucketDays = Math.max(1, Math.round(days / count));
+    return perBucketDays === 1 ? 'per day' : `per ~${perBucketDays} days`;
+  }
+  if (range === '1h')  return 'per 10 min';
+  if (range === '24h') return 'per 2 hours';
+  if (range === '7d')  return 'per day';
+  if (range === '30d') return 'per day';
+  return 'per bucket';
+}
+
+/** Generate N evenly-spaced labels for the chart x-axis. Each preset has
+ *  its own anchoring (1H → minute marks ending at "Now"; 24H → 2-hour
+ *  marks on the calendar; 7D → daily; 30D → daily ending today). */
 function getRangeLabels(range: Range, customRange: CustomRange | null): string[] {
+  const count = getBucketCount(range, customRange);
   if (range === 'custom' && customRange) {
     const labels: string[] = [];
     const span = customRange.to.getTime() - customRange.from.getTime();
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(customRange.from.getTime() + (span * i) / 6);
+    for (let i = 0; i < count; i++) {
+      const d = new Date(customRange.from.getTime() + (span * i) / (count - 1));
       labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
     }
     return labels;
   }
-  return RANGE_LABELS[range === 'custom' ? '7d' : range];
+  if (range === '1h') {
+    // 7 buckets at 10-min intervals ending at "Now". 13:30, 13:40, ..., 14:20, Now.
+    return ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', 'Now'];
+  }
+  if (range === '24h') {
+    // 12 buckets at 2-hour intervals on the calendar day. Trailing bucket
+    // labeled "Now" since it ends at the anchor 14:30 rather than 14:00.
+    return ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', 'Now'];
+  }
+  if (range === '7d') {
+    // 7 daily buckets ending today (May 12). Anchor day labels back from
+    // May 12 by (count - 1 - i) days.
+    return ['Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26', 'Apr 27'];
+  }
+  // 30D — 30 daily labels ending Apr 27 (today, per existing fixtures).
+  // Going back 29 days: Mar 29 → Apr 27 inclusive. Last label is the
+  // explicit date (matching 7D's pattern, not 1H/24H's "Now").
+  const labels: string[] = [];
+  const lastDay = new Date(2026, 3, 27);
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(lastDay);
+    d.setDate(d.getDate() - (29 - i));
+    labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
+  }
+  return labels;
 }
 
 function paletteColor(slot: number): string {
@@ -398,14 +540,45 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
   const series = SPEND_SERIES[dimension];
 
   const data = useMemo(() => {
-    const scale = effectiveScale(range, customRange);
+    const count = getBucketCount(range, customRange);
     const labels = getRangeLabels(range, customRange);
-    return SPEND_BASE[dimension].map((row, i) => {
-      const scaled: Record<string, number | string> = { date: labels[i] ?? '' };
-      for (const [k, v] of Object.entries(row)) scaled[k] = Math.round(v * scale);
-      return scaled;
+    const scale = effectiveScale(range, customRange);
+    const totals = SPEND_TOTALS_7D[dimension];
+
+    // Distribute each series's range-scaled total across N buckets via
+    // distributeSeries (trend + spike/dip noise). Each series gets its
+    // own seed so adjacent series don't sync into matching ripples —
+    // keeps stacked bars looking organic. Range-aware base seed so 1H
+    // and 7D (both 7 buckets) don't produce identical shapes.
+    const rangeSeed =
+      range === '1h'  ? 11 :
+      range === '24h' ? 47 :
+      range === '7d'  ? 77 :
+      range === '30d' ? 303 :
+      99;
+    const seriesBuckets: Record<string, number[]> = {};
+    let seedOffset = 0;
+    for (const [key, total7d] of Object.entries(totals)) {
+      seedOffset++;
+      seriesBuckets[key] = distributeSeries(
+        total7d * scale,
+        count,
+        rangeSeed * 31 + seedOffset,
+      );
+    }
+
+    // Per-bucket sum equals scaled 7d total by construction (distributeSeries
+    // sums each series exactly, then sums across series).
+    return Array.from({ length: count }, (_, i) => {
+      const row: Record<string, number | string> = { date: labels[i] ?? '' };
+      for (const [key, buckets] of Object.entries(seriesBuckets)) {
+        row[key] = buckets[i] ?? 0;
+      }
+      return row;
     });
   }, [dimension, range, customRange]);
+
+  const bucketLabel = getBucketLabel(range, customRange);
 
   const chartConfig: ChartConfig = useMemo(
     () =>
@@ -421,6 +594,7 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
         <CardTitle>Spend over time <span className="text-muted-foreground font-normal">(PAYG)</span></CardTitle>
         <CardDescription>
           Stacked by {DIMENSION_OPTIONS.find((d) => d.value === dimension)?.label.toLowerCase()}
+          {' · '}{bucketLabel}
         </CardDescription>
         <CardAction>
           <Select
@@ -486,6 +660,11 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
               tickMargin={8}
               height={24}
               tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
+              // Target ~7 visible labels regardless of bucket count:
+              //   7 bars  → interval 0 (show all)
+              //   12 bars → interval 1 (every other, ~6 visible)
+              //   30 bars → interval 4 (every 5th, ~6 visible)
+              interval={Math.max(0, Math.ceil(data.length / 7) - 1)}
             />
             <YAxis
               tickLine={false}
