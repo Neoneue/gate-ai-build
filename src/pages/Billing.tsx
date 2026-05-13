@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CreditCard, Plus, Sparkles, User } from 'lucide-react';
+import { CreditCard, History, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import {
@@ -322,7 +322,7 @@ function PaymentMethodCard() {
 
 function BillingContactCard() {
   return (
-    <Card className="min-w-0 pb-0!">
+    <Card className="min-w-0">
       <CardHeader>
         <Eyebrow as="div">Billing contact</Eyebrow>
       </CardHeader>
@@ -339,12 +339,6 @@ function BillingContactCard() {
           </p>
         </div>
       </CardContent>
-      <CardFooter className="justify-end gap-4 border-t border-ink-200">
-        <Button variant="secondary">
-          <User data-icon="inline-start" aria-hidden />
-          Edit contact
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
@@ -365,6 +359,15 @@ function HistorySection() {
           swap this for `<Table>` + rows. */}
       <EmptyState
         className="border-t border-ink-200 rounded-none shadow-none"
+        icon={
+          <div
+            aria-hidden
+            className="flex items-center justify-center rounded-md bg-ink-100"
+            style={{ width: 48, height: 48, flexShrink: 0 }}
+          >
+            <History className="text-ink-600" strokeWidth={1.5} style={{ width: 24, height: 24 }} />
+          </div>
+        }
         title="No history yet"
         body="Charges and credit top-ups will appear here once your workspace starts routing requests."
       />
