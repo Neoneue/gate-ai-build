@@ -268,12 +268,37 @@ function makeHeroBuckets(
       base = dailyShape * trend * weekend;
     }
     const r = rand();
-    // Heavy zero-bias + fewer-but-clearer spikes for low-volume views.
-    const spike = r > 0.90 ? 1 + r * 3 : r > 0.55 ? 0.2 + r * 0.5 : 0;
+    // Always-positive trace: low rolls get a small baseline ripple
+    // instead of flat zero, mid rolls get small bumps, high rolls get
+    // clear spikes. Prevents the chart from sitting on the x-axis for
+    // long stretches at views where zero-volume is implausible.
+    const spike = r > 0.90 ? 1 + r * 3 : r > 0.55 ? 0.4 + r * 0.6 : 0.15 + r * 0.2;
     weights.push(base * spike);
   }
   const sumW = weights.reduce((a, b) => a + b, 0) || 1;
-  return weights.map((w) => Math.max(0, Math.round((w / sumW) * totalTarget)));
+  const rounded = weights.map((w) => Math.max(0, Math.round((w / sumW) * totalTarget)));
+
+  // Floor pass: if the average bucket count is >= 1, no bucket should
+  // round to 0 — at that volume, "zero requests in this window" reads as
+  // a data error, not a quiet period. Bump each zero to 1 and decrement
+  // the tallest bucket to keep the total stable. Skipped for low-volume
+  // views (e.g. 24H 15-min buckets) where zeros are realistic.
+  const avg = totalTarget / count;
+  if (avg >= 1) {
+    for (let i = 0; i < rounded.length; i++) {
+      if (rounded[i] === 0) {
+        let maxIdx = 0;
+        for (let j = 1; j < rounded.length; j++) {
+          if (rounded[j] > rounded[maxIdx]) maxIdx = j;
+        }
+        if (rounded[maxIdx] > 1) {
+          rounded[maxIdx]--;
+          rounded[i] = 1;
+        }
+      }
+    }
+  }
+  return rounded;
 }
 
 // Anchor "now" for the mock = May 12 14:30 (today's date in fixtures).
@@ -376,7 +401,11 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '1h': {
     eyebrow: 'REQUESTS / 1H',
     total: HERO_1H_INCREMENTS.reduce((a, b) => a + b, 0),
-    success: 5,
+    // Three disjoint buckets that sum to total: fast successes, errors,
+    // slow (>10s) successes. "Success" in the breakdown means fast-success
+    // only — slow successes are pulled out into their own bucket so the
+    // numbers reconcile arithmetically with Total.
+    success: 3,
     errors: 1,
     slow: 2,
     delta: '+12.8%',
@@ -391,7 +420,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '24h': {
     eyebrow: 'REQUESTS / 24H',
     total: 48,
-    success: 46,
+    success: 24,
     errors: 2,
     slow: 22,
     delta: '+8.2%',
@@ -404,7 +433,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '7d': {
     eyebrow: 'REQUESTS / 7D',
     total: 468,
-    success: 455,
+    success: 237,
     errors: 13,
     slow: 218,
     delta: '+5.4%',
@@ -417,7 +446,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '30d': {
     eyebrow: 'REQUESTS / 30D',
     total: 2_248,
-    success: 2_188,
+    success: 1_116,
     errors: 60,
     slow: 1_072,
     delta: '+14.6%',
@@ -489,10 +518,11 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
     ticks.push(data[t]?.time ?? '');
   }
 
-  // Mocked-but-plausible breakdown: ~96% success, ~1% errors, ~45% slow.
-  const success = Math.round(total * 0.96);
-  const errors = Math.max(0, total - success);
+  // Three disjoint buckets summing to total: fast successes, errors, slow
+  // (>10s) successes. ~1% errors, ~45% slow, remainder fast.
+  const errors = Math.max(0, Math.round(total * 0.01));
   const slow = Math.round(total * 0.45);
+  const success = Math.max(0, total - errors - slow);
 
   return {
     eyebrow: 'REQUESTS / CUSTOM',
