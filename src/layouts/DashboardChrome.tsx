@@ -30,6 +30,10 @@ export interface DashboardChromeProps {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
   onNavigate?: (pageId: string) => void;
+  /** Hide the global "Documentation" button in the top bar. Used on
+   *  pages that surface their own docs entrypoint (e.g. ApiKeys' "Key
+   *  docs" button + inline link inside the Using your key section). */
+  hideDocsButton?: boolean;
   children: React.ReactNode;
 }
 
@@ -39,6 +43,7 @@ export function DashboardChrome({
   sidebarExpanded,
   onToggleSidebar,
   onNavigate,
+  hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
   return (
@@ -56,6 +61,7 @@ export function DashboardChrome({
             onToggleSidebar={onToggleSidebar}
             breadcrumbCurrent={breadcrumbCurrent}
             onNavigate={onNavigate}
+            hideDocsButton={hideDocsButton}
           />
           {/* Content pane scrolls internally; production frame stays
               fixed at 900px so every composed page has identical
@@ -78,11 +84,13 @@ function DashTopBar({
   onToggleSidebar,
   breadcrumbCurrent,
   onNavigate,
+  hideDocsButton = false,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
   breadcrumbCurrent: string;
   onNavigate?: (pageId: string) => void;
+  hideDocsButton?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between h-[49px] px-6 bg-white border-b border-ink-200 shrink-0">
@@ -160,9 +168,11 @@ function DashTopBar({
         </nav>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="outline" size="sm">
-          Documentation
-        </Button>
+        {hideDocsButton ? null : (
+          <Button variant="outline" size="sm">
+            Documentation
+          </Button>
+        )}
         {/* Skill: surfaces.md — promote to Button `icon-sm` so the hit
             target jumps from 24px to 32px without colliding with the
             adjacent Docs button (gap-1 = 4px) or the avatar span. */}
