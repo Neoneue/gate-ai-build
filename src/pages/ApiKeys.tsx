@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { BookOpen, Download, KeyRound, MoreHorizontal, Plus, Search, ShieldOff, Terminal } from 'lucide-react';
+import { BookOpen, Download, KeyRound, MoreHorizontal, Plus, Search, ShieldOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,9 +13,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
-import { CodeBlock, CodeCard, linesToString, type CodeLine } from '@/components/ui/code-card';
+import {
+  CodeBlock,
+  CodeCard,
+  CodeCardHeader,
+  CodeCardTabs,
+  linesToString,
+  type CodeLine,
+} from '@/components/ui/code-card';
 import { CopyButton } from '@/components/ui/copy-button';
-import { CompactSpark, DeltaTag } from '@/components/ui/compact-kpi';
+import { DeltaTag } from '@/components/ui/compact-kpi';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
@@ -24,7 +31,6 @@ import { Input } from '@/components/ui/input';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { Label } from '@/components/ui/label';
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
-import { cn } from '@/lib/utils';
 import { PageTitle } from '@/components/ui/page-title';
 import {
   Select,
@@ -46,15 +52,24 @@ import {
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * API Keys page
+ * API Access page (route: /api-keys, sidebar: "API Access")
  *
- * Empty state until the user creates a key via <CreateKeyDialog>; after
- * submission, the new key gets pushed into local state and the table
- * replaces the empty state. ENV column / Environment filter / hashing
- * footnote all removed per CTO direction — the page is intentionally
- * narrower than the prior reference design (one key, one routing mode,
- * no environment scoping).
+ * Manages the workspace's API keys. Seeded with 3 mock rows for the demo
+ * (see TEMP PREVIEW SEED in <ApiKeys>); replace with `[]` to exercise the
+ * empty state. Create flow lives in <CreateKeyDialog>; revoke is a row-
+ * menu action that flips `revoked: true` rather than deleting the row.
+ *
+ * Intentionally narrower than the prior reference: no ENV column, no
+ * Environment filter, no routing/billing-mode toggle — one key covers
+ * any action per CTO direction.
  * ───────────────────────────────────────────────────────────────────────── */
+
+// Three call sites: header "Key docs" button, empty-state "Read the
+// quickstart" button, and the inline TextLink in the Using your key
+// section. New tab so dashboard state survives the click.
+const API_KEYS_DOCS_URL = 'https://docs.constellationgate.ai/api-keys';
+const openDocs = () =>
+  window.open(API_KEYS_DOCS_URL, '_blank', 'noopener,noreferrer');
 
 type ApiKeyRow = {
   id: string;            // full id used for matching / dedup
@@ -66,6 +81,15 @@ type ApiKeyRow = {
   revoked?: boolean;     // greys out the row + disables actions when true
 };
 
+type SpendCapPeriod = 'day' | 'week' | 'month' | 'year';
+
+const SPEND_PERIOD_LABEL: Record<SpendCapPeriod, string> = {
+  day: 'per day',
+  week: 'per week',
+  month: 'per month',
+  year: 'per year',
+};
+
 export function ApiKeys() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -73,17 +97,27 @@ export function ApiKeys() {
     toggleSidebar: () => void;
   }>();
   const [createOpen, setCreateOpen] = useState(false);
-  // TEMP PREVIEW SEED — two mock rows so the populated-table state is
-  // visible without needing to submit the create flow. Delete the array
-  // literal (replace with `[]`) before testing the real add-key flow.
+  // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
+  // a revoked test-key. Delete the array literal (replace with `[]`)
+  // before testing the real add-key flow.
   const [keys, setKeys] = useState<ApiKeyRow[]>([
     {
       id: 'sk-gw-c4aeb3a8',
-      name: 'server · new-service',
+      name: 'prod-web',
       masked: 'sk-gw-…c4ae',
       spendCap: '$500 per month',
-      requests7d: [0, 0, 1, 0, 1, 2, 3],
+      // Steady climb — prod-web traffic grows day-over-day.
+      requests7d: [3, 5, 7, 6, 10, 9, 14],
       lastUsed: '1 day ago',
+    },
+    {
+      id: 'sk-gw-9f3064ce',
+      name: 'prod-agent',
+      masked: 'sk-gw-…9f30',
+      spendCap: 'Unlimited',
+      // Spiky — agent runs burst irregularly across the week.
+      requests7d: [1, 8, 2, 11, 3, 9, 4],
+      lastUsed: '2h ago',
     },
     {
       id: 'sk-gw-255e1d3a',
@@ -160,7 +194,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline">
+        <Button variant="outline" onClick={openDocs}>
           <BookOpen data-icon="inline-start" aria-hidden />
           Key docs
         </Button>
@@ -178,41 +212,21 @@ function KpiSummaryRail({ activeKeys, totalKeys }: { activeKeys: number; totalKe
     <KpiRail columns={4}>
       <KpiTile
         title="Active keys"
-        liveDot
         value={String(activeKeys)}
         valueSuffix={`/ ${totalKeys}`}
-        spark={
-          <CompactSpark
-            colorVar="var(--color-success-600)"
-            data={[0, 0, 0, 0, 0, 0, 1, 1]}
-          />
-        }
       />
       <KpiTile
         title="Requests / 24H"
-        value="4"
+        value="47"
         delta="+33.3%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-ink-500)"
-            data={[0, 0, 0, 0, 0, 0, 1, 4]}
-          />
-        }
       />
       <KpiTile
         title="Combined spend"
-        value="$0.0076"
+        value="$1.42"
         delta="-49%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-ink-500)"
-            data={[0, 0, 0, 0, 0, 0, 4, 1]}
-          />
-        }
       />
       <KpiTile
         title="Oldest key age"
-        liveDot
         value="1 day"
       />
     </KpiRail>
@@ -275,7 +289,7 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
             <Plus data-icon="inline-start" aria-hidden />
             Create your first key
           </Button>
-          <Button variant="ghost">
+          <Button variant="ghost" onClick={openDocs}>
             <BookOpen data-icon="inline-start" aria-hidden />
             Read the quickstart
           </Button>
@@ -287,21 +301,60 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 
 /* ─── Usage info ───────────────────────────────────────────────────────── */
 
-// Real-key placeholder — the `sk-gw-…YOUR_KEY` token is a stand-in. Never
-// hard-code an actual key into the snippet; users paste their own value
-// after copying. Two env-var pattern matches how Claude Code reads the
-// gateway URL + auth header from the shell environment.
-const USAGE_SNIPPET_LINES: CodeLine[] = [
+// `sk-gw-…YOUR_KEY` is a stand-in. Tones match the request/response modal's
+// JSON palette (property = blue, string = greenish-blue, variable = amber
+// for fill-in placeholders) so code surfaces across the dashboard share a
+// family. Three examples cover the most common ways to call the gateway:
+// raw HTTP (curl), the Claude Code env-var pattern, and the OpenAI SDK.
+// The gateway is provider-neutral — curl leads on purpose.
+
+const CURL_LINES: CodeLine[] = [
+  [
+    { text: 'curl', tone: 'property' },
+    { text: ' https://gateway-staging.constellationgate.ai/v1/chat/completions \\' },
+  ],
+  [
+    { text: '  -H', tone: 'property' },
+    { text: ' "X-Gateway-Api-Key: ', tone: 'string' },
+    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
+    { text: '" \\', tone: 'string' },
+  ],
+  [
+    { text: '  -H', tone: 'property' },
+    { text: ' "Content-Type: application/json"', tone: 'string' },
+    { text: ' \\' },
+  ],
+  [
+    { text: '  -d', tone: 'property' },
+    { text: ' \'{' },
+    { text: '"model"', tone: 'property' },
+    { text: ': ' },
+    { text: '"claude-sonnet-4.8"', tone: 'string' },
+    { text: ', ' },
+    { text: '"messages"', tone: 'property' },
+    { text: ': [{' },
+    { text: '"role"', tone: 'property' },
+    { text: ': ' },
+    { text: '"user"', tone: 'string' },
+    { text: ', ' },
+    { text: '"content"', tone: 'property' },
+    { text: ': ' },
+    { text: '"Hello"', tone: 'string' },
+    { text: '}]}\'' },
+  ],
+];
+
+const CLAUDE_CODE_LINES: CodeLine[] = [
   [{ text: '# Point Claude Code at the gateway instead of Anthropic directly', tone: 'muted' }],
   [
-    { text: 'export', tone: 'keyword' },
+    { text: 'export', tone: 'property' },
     { text: ' ANTHROPIC_BASE_URL=' },
     { text: '"https://gateway-staging.constellationgate.ai"', tone: 'string' },
   ],
   [{ text: '' }],
-  [{ text: '# Add your gateway key so the gateway can authenticate your requests', tone: 'muted' }],
+  [{ text: '# Add your gateway key so the gateway can authenticate requests', tone: 'muted' }],
   [
-    { text: 'export', tone: 'keyword' },
+    { text: 'export', tone: 'property' },
     { text: ' ANTHROPIC_CUSTOM_HEADERS=' },
     { text: '"X-Gateway-Api-Key: ', tone: 'string' },
     { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
@@ -309,46 +362,104 @@ const USAGE_SNIPPET_LINES: CodeLine[] = [
   ],
 ];
 
+const OPENAI_SDK_LINES: CodeLine[] = [
+  [
+    { text: 'import', tone: 'property' },
+    { text: ' OpenAI ' },
+    { text: 'from', tone: 'property' },
+    { text: ' ' },
+    { text: "'openai'", tone: 'string' },
+    { text: ';' },
+  ],
+  [{ text: '' }],
+  [
+    { text: 'const', tone: 'property' },
+    { text: ' client = ' },
+    { text: 'new', tone: 'property' },
+    { text: ' OpenAI({' },
+  ],
+  [
+    { text: '  baseURL: ' },
+    { text: "'https://gateway-staging.constellationgate.ai/v1'", tone: 'string' },
+    { text: ',' },
+  ],
+  [
+    { text: '  apiKey: ' },
+    { text: "'", tone: 'string' },
+    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
+    { text: "'", tone: 'string' },
+    { text: ',' },
+  ],
+  [{ text: '  defaultHeaders: {' }],
+  [
+    { text: '    ' },
+    { text: "'X-Gateway-Api-Key'", tone: 'property' },
+    { text: ': ' },
+    { text: "'", tone: 'string' },
+    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
+    { text: "'", tone: 'string' },
+    { text: ',' },
+  ],
+  [{ text: '  },' }],
+  [{ text: '});' }],
+];
+
+type ExampleTab = 'cURL' | 'Claude Code' | 'OpenAI SDK';
+
+const EXAMPLE_LINES: Record<ExampleTab, CodeLine[]> = {
+  cURL: CURL_LINES,
+  'Claude Code': CLAUDE_CODE_LINES,
+  'OpenAI SDK': OPENAI_SDK_LINES,
+};
+
+const EXAMPLE_TABS: ExampleTab[] = ['cURL', 'Claude Code', 'OpenAI SDK'];
+
 function UsageInfo() {
+  const [tab, setTab] = useState<ExampleTab>('cURL');
+  const activeLines = EXAMPLE_LINES[tab];
   return (
-    <section className="flex flex-col gap-3">
+    // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
+    // curl body line and the OpenAI SDK indentation both fit without
+    // wrapping, with breathing room on the right.
+    <section className="flex flex-col gap-3 max-w-3xl">
       <div className="flex flex-col gap-1">
         <h3 className="font-sans text-lg font-medium text-ink-900 m-0">
           Using your key
         </h3>
         <p className="font-sans text-sm text-ink-500 m-0">
-          Point your client at the gateway with two env vars: a base URL and an{' '}
+          Point your client at the gateway and send your key in the{' '}
           <code className="font-mono text-ink-800 bg-ink-100 rounded-xs px-1.5 py-0.5">X-Gateway-Api-Key</code>{' '}
-          header carrying your key. Works for Claude Code and any client that respects{' '}
-          <code className="font-mono text-ink-800 bg-ink-100 rounded-xs px-1.5 py-0.5">ANTHROPIC_BASE_URL</code>.
+          header. The gateway is provider-neutral — call it with curl, the OpenAI SDK, Anthropic SDK, or any other client that lets you override the base URL.
         </p>
         <p className="font-sans text-sm text-ink-500 m-0">
           To learn more about how to use your key, check out our{' '}
-          <TextLink>API key docs</TextLink>.
+          <TextLink
+            as="a"
+            href={API_KEYS_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            API key docs
+          </TextLink>
+          .
         </p>
       </div>
-      {/* Labeled-card pattern lifted from the Requests modal Messages tab
-          (`MessageBlock`): white header strip + bg-ink-50 body. Replaces
-          the prior CodeCard+CodeCardHeader's mono "SHELL" eyebrow with
-          plain-English "Environment setup" so the snippet's purpose is
-          obvious to a reader scanning the page. */}
-      <CodeCard className="border border-ink-100">
-        <div className="flex items-center gap-2 pl-3 pr-2 py-2 bg-white">
-          <Terminal aria-hidden className="size-4 text-ink-500" strokeWidth={1.75} />
-          <span className="font-sans text-sm font-medium text-ink-500">
-            Environment setup
-          </span>
+
+      <CodeCard>
+        <CodeCardHeader>
+          <CodeCardTabs
+            items={EXAMPLE_TABS}
+            active={tab}
+            onChange={(v) => setTab(v as ExampleTab)}
+          />
           <CopyButton
             mode="label"
             text="Copy code"
-            value={linesToString(USAGE_SNIPPET_LINES)}
-            label="environment setup snippet"
-            className="ml-auto"
+            value={linesToString(activeLines)}
+            label={`${tab} snippet`}
           />
-        </div>
-        <div className="border-t border-ink-200 bg-ink-50">
-          <CodeBlock lines={USAGE_SNIPPET_LINES} density="compact" />
-        </div>
+        </CodeCardHeader>
+        <CodeBlock lines={activeLines} density="compact" />
       </CodeCard>
     </section>
   );
@@ -388,6 +499,7 @@ function KeysTable({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             className="pl-9"
+            aria-label="Search keys by name or prefix"
           />
         </div>
         <Button variant="outline" size="sm" className="ml-auto">
@@ -409,15 +521,12 @@ function KeysTable({
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
-            <TableRow
-              key={row.id}
-              className={cn(row.revoked && 'hover:bg-transparent')}
-            >
-              {/* Dim cells live on each non-Status cell so the Status
-                  badge keeps full saturation. CSS opacity creates a
-                  stacking context that descendants can't escape — putting
-                  it on the row would dim the badge too. */}
-              <TableCell className={cn('whitespace-nowrap align-middle', row.revoked && 'opacity-50')}>
+            <TableRow key={row.id}>
+              {/* Revoked rows are flagged by the "Revoked" badge in the
+                  Status column — no opacity dim on the row. Dimming was
+                  retired after readability complaints at small mono
+                  sizes; the badge carries the state cleanly. */}
+              <TableCell className="whitespace-nowrap align-middle">
                 <div className="flex items-center gap-3 min-w-0">
                   <KeyRound aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={1.75} />
                   <div className="flex flex-col gap-0.5 min-w-0">
@@ -437,13 +546,13 @@ function KeysTable({
                   <Badge variant="success">Active</Badge>
                 )}
               </TableCell>
-              <TableCell className={cn('whitespace-nowrap font-mono text-sm tabular-nums text-ink-800', row.revoked && 'opacity-50')}>
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                 {row.spendCap}
               </TableCell>
-              <TableCell className={cn('whitespace-nowrap', row.revoked && 'opacity-50')}>
-                <Sparkline points={row.requests7d.every((v) => v === 0) ? [0, 0, 0, 0, 0, 0, 0] : row.requests7d} />
+              <TableCell className="whitespace-nowrap">
+                <Sparkline points={row.requests7d} width={96} />
               </TableCell>
-              <TableCell className={cn('whitespace-nowrap text-sm text-ink-500', row.revoked && 'opacity-50')}>
+              <TableCell className="whitespace-nowrap text-sm text-ink-500">
                 {row.lastUsed}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">
@@ -478,15 +587,6 @@ function KeysTable({
 }
 
 /* ─── Create API key dialog ────────────────────────────────────────────── */
-
-type SpendCapPeriod = 'day' | 'week' | 'month' | 'year';
-
-const SPEND_PERIOD_LABEL: Record<SpendCapPeriod, string> = {
-  day: 'per day',
-  week: 'per week',
-  month: 'per month',
-  year: 'per year',
-};
 
 function CreateKeyDialog({
   open,
