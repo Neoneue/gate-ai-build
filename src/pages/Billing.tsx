@@ -1,13 +1,25 @@
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { CreditCard, Plus, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
+import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { TextLink } from '@/components/ui/text-link';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page (route: /billing, sidebar: "Billing")
@@ -88,6 +100,7 @@ function PlanCard() {
 }
 
 function CreditsCard() {
+  const [addOpen, setAddOpen] = useState(false);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -106,12 +119,136 @@ function CreditsCard() {
       </CardContent>
       <CardFooter className="justify-between gap-4 border-t border-ink-200">
         <TextLink>Auto-recharge</TextLink>
-        <Button variant="secondary">
+        <Button variant="secondary" onClick={() => setAddOpen(true)}>
           <Plus data-icon="inline-start" aria-hidden />
           Add credits
         </Button>
       </CardFooter>
+      <AddCreditsDialog open={addOpen} onOpenChange={setAddOpen} />
     </Card>
+  );
+}
+
+/* ─── Add credits dialog ─────────────────────────────────────────────── */
+
+const CREDIT_PRESETS = [25, 50, 100, 500] as const;
+
+function AddCreditsDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(50);
+  const [custom, setCustom] = useState('');
+
+  const customNum = Number(custom);
+  const customValid = custom.length > 0 && Number.isFinite(customNum) && customNum >= 5 && customNum <= 1000;
+  const amount = custom.length > 0 ? (customValid ? customNum : null) : selected;
+  const canSubmit = amount !== null;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) {
+          setSelected(50);
+          setCustom('');
+        }
+      }}
+    >
+      <DialogContent
+        className="gap-4"
+        style={{ width: 500, minWidth: 500, maxWidth: 500 }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+            Add credits
+          </DialogTitle>
+          <DialogDescription>Min $5 · Max $1,000.</DialogDescription>
+        </DialogHeader>
+
+        {/* Preset tiles. Single-select; typing a custom amount clears
+            the preset selection. */}
+        <div
+          role="radiogroup"
+          aria-label="Credit amount"
+          className="grid grid-cols-4 gap-2"
+        >
+          {CREDIT_PRESETS.map((value) => {
+            const isSelected = custom.length === 0 && selected === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => {
+                  setSelected(value);
+                  setCustom('');
+                }}
+                className={cn(
+                  'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
+                  isSelected
+                    ? 'border-blue-500 bg-blue-100 text-ink-900'
+                    : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
+                )}
+              >
+                ${value}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Custom amount */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="add-credits-custom"
+            className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+          >
+            Custom amount (USD)
+          </label>
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none"
+            >
+              $
+            </span>
+            <Input
+              id="add-credits-custom"
+              type="number"
+              inputMode="decimal"
+              min="5"
+              max="1000"
+              step="1"
+              value={custom}
+              onChange={(e) => {
+                setCustom(e.target.value);
+                if (e.target.value.length > 0) setSelected(null);
+              }}
+              placeholder="e.g. 75"
+              className="pl-7 font-mono text-sm tabular-nums"
+            />
+          </div>
+        </div>
+
+        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          You&apos;ll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
+        </p>
+
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancel
+          </DialogClose>
+          <Button type="button" disabled={!canSubmit}>
+            Continue to checkout
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
