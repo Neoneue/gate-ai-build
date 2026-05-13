@@ -35,8 +35,8 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Gateway',
     items: [
       { id: 'models',        icon: Box,         label: 'Models', pageId: '/models' },
-      { id: 'token-savings', icon: Coins,       label: 'Token Savings' },
-      { id: 'guardrails',    icon: ShieldCheck, label: 'Guardrails' },
+      { id: 'token-savings', icon: Coins,       label: 'Token Savings', pageId: '/token-savings' },
+      { id: 'guardrails',    icon: ShieldCheck, label: 'Guardrails', pageId: '/guardrails' },
     ],
   },
   {
