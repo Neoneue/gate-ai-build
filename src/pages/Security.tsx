@@ -1,6 +1,6 @@
 import { useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Braces, Download, ExternalLink, FileText, KeyRound, Search, ShieldAlert, TriangleAlert, UserRound } from 'lucide-react';
+import { Download, ExternalLink, HeartPulse, KeyRound, Search, ShieldAlert, TriangleAlert, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,8 +28,8 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { RowActionButton } from '@/components/ui/row-action-button';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
-import { Sparkline } from '@/components/ui/sparkline';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -70,8 +70,8 @@ export function Security() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Threats"
-            activeNavId="security-threats"
+            breadcrumbCurrent="Overview"
+            activeNavId="security-overview"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
@@ -94,7 +94,7 @@ function PageHeader() {
         {/* h2 — see CMP012 PageHeader note. ArtboardHeader emits the outer
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
-        <PageTitle>Threats</PageTitle>
+        <PageTitle>Overview</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Real-time threat detection and policy enforcement across every request routed through the gateway.
         </p>
@@ -112,8 +112,12 @@ function PageHeader() {
 /* ─── KPI rail (4-up sparkline cards) ────────────────────────────────────── */
 
 function KpiRail() {
+  // Three-tile rail reads narratively left-to-right: we scanned X
+  // requests, found Y issues, at Z latency. Issues detected uses the
+  // danger ramp so the value pops as the "bad thing" signal at a
+  // glance; the AttackCategoriesCard below breaks the count out by type.
   return (
-    <KpiRailShell columns={4}>
+    <KpiRailShell columns={3}>
       <CompactKpi
         flat
         title="Requests scanned"
@@ -126,43 +130,31 @@ function KpiRail() {
         }
       />
       <CompactKpi
-          flat
-          title="Threats detected"
-          value="47"
-          delta="+13.4%"
-          spark={
-            <CompactSpark
-              colorVar="var(--color-chart-2)"
-              data={[3, 7, 4, 9, 5, 11, 6, 13, 9]}
-            />
-          }
-        />
+        flat
+        title="Issues detected"
+        value="47"
+        delta="+13.4%"
+        spark={
+          <CompactSpark
+            colorVar="var(--color-danger-600)"
+            data={[3, 7, 4, 9, 5, 11, 6, 13, 9]}
+          />
+        }
+      />
       <CompactKpi
-          flat
-          title="Detection accuracy"
-          value="99.8%"
-          delta="+0.4%"
-          spark={
-            <CompactSpark
-              colorVar="var(--color-chart-3)"
-              data={[12, 13, 14, 14, 15, 15, 16, 17, 18]}
-            />
-          }
-        />
-      <CompactKpi
-          flat
-          title="Avg scan latency"
-          value={"18 ms"}
-          delta="-8.6%"
-          deltaInverted
-          spark={
-            <CompactSpark
-              colorVar="var(--color-chart-7)"
-              data={[26, 24, 23, 22, 21, 20, 19, 18, 18]}
-              endDot
-            />
-          }
-        />
+        flat
+        title="Avg scan latency"
+        value={"18 ms"}
+        delta="-8.6%"
+        deltaInverted
+        spark={
+          <CompactSpark
+            colorVar="var(--color-chart-7)"
+            data={[26, 24, 23, 22, 21, 20, 19, 18, 18]}
+            endDot
+          />
+        }
+      />
     </KpiRailShell>
   );
 }
@@ -301,16 +293,20 @@ type RiskRow = {
   key: string;
   tier: RiskTier;
   tierLabel: string;
-  score: number;
   events: number;
-  trend: number[];
 };
 
 const RISK_ROWS: RiskRow[] = [
-  { key: 'sk-cg-…7a3', tier: 'critical', tierLabel: 'Critical', score: 62, events: 14, trend: [3, 4, 6, 9, 14, 22, 30, 38, 46] },
-  { key: 'sk-cg-…2f8', tier: 'elevated', tierLabel: 'Elevated', score: 12, events: 8,  trend: [2, 3, 4, 6, 7, 8, 10, 11, 12]   },
-  { key: 'sk-cg-…9c1', tier: 'normal',   tierLabel: 'Normal',   score: 3,  events: 2,  trend: [3, 1, 4, 1, 5, 2, 5, 3, 4]      },
-  { key: 'sk-cg-…1d4', tier: 'normal',   tierLabel: 'Normal',   score: 1,  events: 1,  trend: [1, 0, 2, 0, 3, 0, 2, 0, 1]      },
+  { key: 'sk-cg-…7a3', tier: 'critical', tierLabel: 'Critical', events: 14 },
+  { key: 'sk-cg-…2f8', tier: 'elevated', tierLabel: 'Elevated', events: 8  },
+  { key: 'sk-cg-…9c1', tier: 'normal',   tierLabel: 'Normal',   events: 2  },
+  { key: 'sk-cg-…1d4', tier: 'normal',   tierLabel: 'Normal',   events: 1  },
+];
+
+const RISK_RANGE_OPTIONS = [
+  { value: '1h',  label: '1H'  },
+  { value: '7d',  label: '7D'  },
+  { value: '30d', label: '30D' },
 ];
 
 const TIER_BADGE: Record<RiskTier, {
@@ -323,6 +319,13 @@ const TIER_BADGE: Record<RiskTier, {
 };
 
 function ApiKeyRiskScoresCard() {
+  // `range` drives the Events column header label. Mock data is static
+  // so the count itself doesn't recompute — a real implementation would
+  // re-fetch per range. Default `1h` matches the PRD's 1-hour half-life
+  // on the score decay; 7d / 30d show historical event count for the key.
+  const [range, setRange] = useState('1h');
+  const rangeLabel =
+    RISK_RANGE_OPTIONS.find((o) => o.value === range)?.label.toLowerCase() ?? '1h';
   return (
     <Card className="min-w-0 pb-0">
       <CardHeader>
@@ -333,21 +336,29 @@ function ApiKeyRiskScoresCard() {
           Decays on 1 h half-life · elevated keys get enhanced scanning
         </CardDescription>
         <CardAction>
-          <Select defaultValue="all">
-            <SelectTrigger
+          <div className="flex items-center gap-2">
+            <Select defaultValue="all">
+              <SelectTrigger
+                size="sm"
+                aria-label="Key filter"
+                className="border-ink-200 bg-white text-ink-900 font-normal"
+              >
+                <SelectValue placeholder="All keys" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All keys</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="elevated">Elevated</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+              </SelectContent>
+            </Select>
+            <SegmentedPill
               size="sm"
-              aria-label="Key filter"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
-            >
-              <SelectValue placeholder="All keys" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All keys</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="elevated">Elevated</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-            </SelectContent>
-          </Select>
+              options={RISK_RANGE_OPTIONS}
+              value={range}
+              onValueChange={setRange}
+            />
+          </div>
         </CardAction>
       </CardHeader>
 
@@ -356,9 +367,9 @@ function ApiKeyRiskScoresCard() {
             <TableRow className="hover:bg-transparent">
               <TableHead className="whitespace-nowrap">Key</TableHead>
               <TableHead className="whitespace-nowrap">Risk</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Score</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Events</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Trend</TableHead>
+              <TableHead className="text-right whitespace-nowrap">
+                Events ({rangeLabel})
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -385,18 +396,8 @@ function ApiKeyRiskScoresCard() {
                       {row.tierLabel}
                     </Badge>
                   </TableCell>
-                  <TableCell className={`text-right whitespace-nowrap font-mono tabular-nums ${row.score === 0 ? 'text-ink-400' : 'text-ink-800'}`}>
-                    {row.score}
-                  </TableCell>
                   <TableCell className={`text-right whitespace-nowrap font-mono tabular-nums ${row.events === 0 ? 'text-ink-400' : 'text-ink-800'}`}>
                     {row.events}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Sparkline
-                      points={row.trend}
-                      tone={row.tier}
-                      smooth={row.tier === 'normal'}
-                    />
                   </TableCell>
                 </TableRow>
               );
@@ -414,22 +415,49 @@ function ApiKeyRiskScoresCard() {
  * fits the surface. No drill-in modal yet (row-click is a placeholder).
  * ────────────────────────────────────────────────────────────────────── */
 
-type EventAction = 'blocked' | 'flagged';
-type EventCategory = 'injection' | 'pii' | 'credential' | 'content' | 'format' | 'toxicity';
+// `YYYY-MM-DD HH:MM:SS` → `Mon DD, HH:MM:SS`. Matches the Requests page
+// Time-cell format so timestamps read identically across the app. Date
+// parsing forces local midnight so the day rendered stays the day the
+// event was filed (no timezone offset surprises in the demo data).
+function formatEventTime(stored: string): string {
+  const [datePart, timePart] = stored.split(' ');
+  const date = new Date(`${datePart}T00:00:00`);
+  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${monthDay}, ${timePart}`;
+}
+
+type EventAction = 'blocked' | 'flagged' | 'redacted';
+// Types we actually enforce inline at the gateway (per Security PRD S1 +
+// S4 — the policies that actually ship): prompt injection on input;
+// PII, PHI, credential leak on output. PRD S9's event schema also lists
+// `content` and `format` but no policy spec'd in the PRD ships behind
+// them — kept out of the UI until a real policy exists.
+type EventCategory = 'injection' | 'pii' | 'phi' | 'credential';
 
 type EventRow = {
   time: string;
+  /** Human-friendly relative time. Cell renders this above `time` as the
+   *  primary scan target; the absolute datetime sits below as the qualifier. */
+  relative: string;
   type: EventCategory;
   key: string;
   action: EventAction;
+  /** Gateway request that produced this event. Drives the "Open request"
+   *  link in the detail dialog footer (navigates to /requests?open=<id>). */
+  requestId: string;
+  /** Conversation the request belongs to. Optional — not every event ties
+   *  to a multi-turn conversation. When present, the detail dialog footer
+   *  surfaces a second link to /conversations?open=<id>. */
+  conversationId?: string;
 };
 
 const ACTION_BADGE: Record<
   EventAction,
-  { variant: 'destructive' | 'warning'; label: string }
+  { variant: 'destructive' | 'warning' | 'info'; label: string }
 > = {
-  blocked: { variant: 'destructive', label: 'blocked' },
-  flagged: { variant: 'warning',     label: 'flagged' },
+  blocked:  { variant: 'destructive', label: 'blocked'  },
+  flagged:  { variant: 'warning',     label: 'flagged'  },
+  redacted: { variant: 'info',        label: 'redacted' },
 };
 
 // Per-type drill-in defaults consumed by the threat-event detail modal.
@@ -481,35 +509,17 @@ const TYPE_DETAILS: Record<
     sampleResponse:
       'Here is the example config:\n\nAWS_ACCESS_KEY_ID=<AWS_KEY>\nAWS_SECRET_ACCESS_KEY=<AWS_SECRET>\n\nRegion: us-east-1.',
   },
-  content: {
-    detection: 'Content policy match: restricted category',
+  phi: {
+    detection: 'PHI pattern in model output',
     detectors: [
-      { name: 'content_policy', verdict: 'flag', score: 0.88 },
-      { name: 'toxicity',       verdict: 'pass', score: 0.14 },
+      { name: 'phi',              verdict: 'flag', score: 0.96 },
+      { name: 'pii',              verdict: 'flag', score: 0.71 },
+      { name: 'prompt_injection', verdict: 'pass', score: 0.03 },
     ],
     samplePrompt:
-      'Generate detailed instructions for [restricted category — content omitted from log].',
-    sampleResponse: null,
-  },
-  format: {
-    detection: 'JSON schema mismatch on tool output',
-    detectors: [
-      { name: 'schema_validator', verdict: 'flag', score: 1.00 },
-    ],
-    samplePrompt:
-      'Run the lookup_transfer tool with id 0x4a3e and return the result as JSON.',
+      'Summarize patient encounter notes for case 0x4a3e and propose follow-up actions.',
     sampleResponse:
-      '{"id":"0x4a3e","amount":2840.12,"flagged":true,"reason":\n— invalid JSON: trailing comma at line 2, expected closing brace',
-  },
-  toxicity: {
-    detection: 'Harassment classifier triggered',
-    detectors: [
-      { name: 'toxicity',     verdict: 'flag', score: 0.87 },
-      { name: 'content_policy', verdict: 'pass', score: 0.32 },
-    ],
-    samplePrompt:
-      'Draft a reply telling the customer they are [content omitted].',
-    sampleResponse: null,
+      'Patient <NAME> (DOB <DATE>, MRN <MRN>) presents with <CONDITION>. Recommended follow-up: <PLAN>.',
   },
 };
 
@@ -530,16 +540,18 @@ function getEventDetail(row: EventRow, index: number) {
   };
 }
 
+// `color` mirrors the `AttackCategoriesCard` palette on this page so the
+// two cards agree on which color represents which threat category. Colors
+// are inline-styled on the icon (same idiom as VendorAvatar on Models /
+// Requests) — bare colored glyph, no chip background.
 const TYPE_META: Record<
   EventCategory,
-  { Icon: ComponentType<SVGProps<SVGSVGElement>>; label: string }
+  { Icon: ComponentType<SVGProps<SVGSVGElement>>; label: string; color: string }
 > = {
-  injection:  { Icon: ShieldAlert,   label: 'Injection'  },
-  pii:        { Icon: UserRound,     label: 'PII'        },
-  credential: { Icon: KeyRound,      label: 'Credential' },
-  content:    { Icon: FileText,      label: 'Content'    },
-  format:     { Icon: Braces,        label: 'Format'     },
-  toxicity:   { Icon: TriangleAlert, label: 'Toxicity'   },
+  injection:  { Icon: ShieldAlert, label: 'Injection',  color: 'var(--color-danger-600)' },
+  pii:        { Icon: UserRound,   label: 'PII',        color: 'var(--color-chart-3)' },
+  phi:        { Icon: HeartPulse,  label: 'PHI',        color: 'var(--color-chart-7)' },
+  credential: { Icon: KeyRound,    label: 'Credential', color: 'var(--color-chart-4)' },
 };
 
 const RANGE_OPTIONS = [
@@ -549,23 +561,23 @@ const RANGE_OPTIONS = [
 ];
 
 const EVENT_ROWS: EventRow[] = [
-  { time: '2026-05-11 14:19:35', type: 'injection',  key: 'sk-cg-...7a3c1f', action: 'blocked' },
-  { time: '2026-05-11 14:17:23', type: 'credential', key: 'sk-cg-...3d4f8b', action: 'blocked' },
-  { time: '2026-05-11 14:14:10', type: 'injection',  key: 'sk-cg-...f12a09', action: 'flagged' },
-  { time: '2026-05-11 14:13:26', type: 'content',    key: 'sk-cg-...e87b4d', action: 'blocked' },
-  { time: '2026-05-11 14:12:08', type: 'pii',        key: 'sk-cg-...da91e5', action: 'blocked' },
-  { time: '2026-05-11 14:11:44', type: 'injection',  key: 'sk-cg-...b2c0a7', action: 'blocked' },
-  { time: '2026-05-11 14:10:58', type: 'pii',        key: 'sk-cg-...a1fd62', action: 'flagged' },
-  { time: '2026-05-11 14:09:21', type: 'credential', key: 'sk-cg-...c45e3f', action: 'blocked' },
-  { time: '2026-05-11 14:07:33', type: 'content',    key: 'sk-cg-...d782b9', action: 'flagged' },
-  { time: '2026-05-11 14:05:42', type: 'pii',        key: 'sk-cg-...e29a4c', action: 'blocked' },
-  { time: '2026-05-11 14:03:18', type: 'pii',        key: 'sk-cg-...9bc3d8', action: 'blocked' },
-  { time: '2026-05-11 14:02:51', type: 'injection',  key: 'sk-cg-...1f2e57', action: 'flagged' },
-  { time: '2026-05-11 14:01:09', type: 'format',     key: 'sk-cg-...4ab712', action: 'flagged' },
-  { time: '2026-05-11 14:00:32', type: 'toxicity',   key: 'sk-cg-...5e7d8a', action: 'flagged' },
-  { time: '2026-05-11 13:58:14', type: 'credential', key: 'sk-cg-...8d24c6', action: 'blocked' },
-  { time: '2026-05-11 13:55:47', type: 'content',    key: 'sk-cg-...6fa83b', action: 'flagged' },
-  { time: '2026-05-11 13:52:09', type: 'pii',        key: 'sk-cg-...2bd591', action: 'flagged' },
+  { time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'sk-cg-...7a3c1f', action: 'blocked',  requestId: 'req_aurora_4200',  conversationId: 'cnv_aurora_42'    },
+  { time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'sk-cg-...3d4f8b', action: 'blocked',  requestId: 'req_orion_4203',   conversationId: 'cnv_orion_70'     },
+  { time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'sk-cg-...f12a09', action: 'flagged',  requestId: 'req_lyra_4207'                                          },
+  { time: '2026-05-12 09:42:26', relative: '8m ago',  type: 'injection',  key: 'sk-cg-...e87b4d', action: 'blocked',  requestId: 'req_meridian_4208', conversationId: 'cnv_meridian_07'  },
+  { time: '2026-05-12 09:41:08', relative: '9m ago',  type: 'pii',        key: 'sk-cg-...da91e5', action: 'redacted', requestId: 'req_skylark_4209', conversationId: 'cnv_skylark_18'   },
+  { time: '2026-05-12 09:40:44', relative: '9m ago',  type: 'injection',  key: 'sk-cg-...b2c0a7', action: 'blocked',  requestId: 'req_vela_4209',    conversationId: 'cnv_vela_21'      },
+  { time: '2026-05-12 09:39:58', relative: '10m ago', type: 'pii',        key: 'sk-cg-...a1fd62', action: 'flagged',  requestId: 'req_polaris_4210'                                       },
+  { time: '2026-05-12 09:38:21', relative: '12m ago', type: 'credential', key: 'sk-cg-...c45e3f', action: 'blocked',  requestId: 'req_aurora_4212',  conversationId: 'cnv_aurora_42'    },
+  { time: '2026-05-12 09:36:33', relative: '13m ago', type: 'phi',        key: 'sk-cg-...d782b9', action: 'flagged',  requestId: 'req_orion_4213'                                          },
+  { time: '2026-05-12 09:34:42', relative: '15m ago', type: 'pii',        key: 'sk-cg-...e29a4c', action: 'redacted', requestId: 'req_lyra_4215',    conversationId: 'cnv_lyra_92'      },
+  { time: '2026-05-12 09:32:18', relative: '18m ago', type: 'phi',        key: 'sk-cg-...9bc3d8', action: 'redacted', requestId: 'req_meridian_4218', conversationId: 'cnv_meridian_07' },
+  { time: '2026-05-12 09:31:51', relative: '18m ago', type: 'injection',  key: 'sk-cg-...1f2e57', action: 'flagged',  requestId: 'req_skylark_4218'                                       },
+  { time: '2026-05-12 09:30:09', relative: '20m ago', type: 'credential', key: 'sk-cg-...4ab712', action: 'flagged',  requestId: 'req_vela_4220',    conversationId: 'cnv_vela_21'      },
+  { time: '2026-05-12 09:29:32', relative: '21m ago', type: 'phi',        key: 'sk-cg-...5e7d8a', action: 'redacted', requestId: 'req_polaris_4221', conversationId: 'cnv_polaris_55'   },
+  { time: '2026-05-12 09:27:14', relative: '23m ago', type: 'credential', key: 'sk-cg-...8d24c6', action: 'blocked',  requestId: 'req_aurora_4223'                                        },
+  { time: '2026-05-12 09:24:47', relative: '25m ago', type: 'injection',  key: 'sk-cg-...6fa83b', action: 'flagged',  requestId: 'req_orion_4225',   conversationId: 'cnv_orion_70'     },
+  { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'sk-cg-...2bd591', action: 'flagged',  requestId: 'req_lyra_4229'                                          },
 ];
 
 function EventsTableSection() {
@@ -636,11 +648,9 @@ function EventsTableSection() {
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
             <SelectItem value="injection">Injection</SelectItem>
-            <SelectItem value="pii">PII / PHI</SelectItem>
+            <SelectItem value="pii">PII</SelectItem>
+            <SelectItem value="phi">PHI</SelectItem>
             <SelectItem value="credential">Credential</SelectItem>
-            <SelectItem value="content">Content</SelectItem>
-            <SelectItem value="format">Format</SelectItem>
-            <SelectItem value="toxicity">Toxicity</SelectItem>
           </SelectContent>
         </Select>
 
@@ -656,6 +666,7 @@ function EventsTableSection() {
             <SelectItem value="all">All actions</SelectItem>
             <SelectItem value="blocked">Blocked</SelectItem>
             <SelectItem value="flagged">Flagged</SelectItem>
+            <SelectItem value="redacted">Redacted</SelectItem>
           </SelectContent>
         </Select>
 
@@ -689,13 +700,29 @@ function EventsTableSection() {
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
                 onClick={() => setSelectedRow({ row, index: rowIndex })}
               >
-                <TableCell className="whitespace-nowrap font-mono tabular-nums tracking-snug text-ink-500">
-                  {row.time}
+                <TableCell className="whitespace-nowrap">
+                  {/* Single-line absolute datetime, relative on hover —
+                      matches the Requests page Time cell so the two
+                      timestamps read the same way across the app. */}
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={(props) => (
+                        <span
+                          {...props}
+                          className="font-mono text-sm tabular-nums tracking-tight text-ink-800"
+                        >
+                          {formatEventTime(row.time)}
+                        </span>
+                      )}
+                    />
+                    <TooltipContent>{row.relative}</TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="inline-flex items-center gap-2">
                     <TypeIcon
-                      className="size-4 shrink-0 text-ink-500"
+                      className="size-4 shrink-0"
+                      style={{ color: typeMeta.color }}
                       strokeWidth={1.75}
                       aria-hidden
                     />
@@ -762,20 +789,27 @@ function ThreatEventDetailDialog({
 }
 
 function ThreatEventDetailBody({ row, index }: { row: EventRow; index: number }) {
+  const navigate = useNavigate();
   const typeMeta = TYPE_META[row.type];
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row, index);
   const TypeIcon = typeMeta.Icon;
-  // request_id derived from the row so the modal stays addressable; mirrors
-  // CMP-013's req_*<conv>*<code> derivation pattern.
-  const requestId = `req_${row.key.slice(-6)}_${row.time.slice(-8).replace(/[: ]/g, '')}`;
+  // Real requestId from the row drives the modal title + the
+  // "Open request" link in the footer. Optional conversationId surfaces
+  // a second link when this event ties to a multi-turn conversation.
+  const requestId = row.requestId;
+  const conversationId = row.conversationId;
+  const openRequest = () => navigate(`/requests?open=${requestId}`);
+  const openConversation = conversationId
+    ? () => navigate(`/conversations?open=${conversationId}`)
+    : null;
 
   return (
     <>
       <DialogScrollHeader>
         <DialogTitleBlock
           titleAriaLabel={`${typeMeta.label} event ${requestId}`}
-          icon={<TypeIcon className="size-5 text-ink-500" strokeWidth={1.75} aria-hidden />}
+          icon={<TypeIcon className="size-5" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />}
           badge={<Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>}
           meta={
             <span className="font-mono tracking-snug">
@@ -870,7 +904,13 @@ function ThreatEventDetailBody({ row, index }: { row: EventRow; index: number })
 
       <DialogScrollFooter>
         <CopyButton mode="label" size="sm" text="Copy ID" value={requestId} label="request ID" />
-        <Button variant="default" size="sm">
+        {openConversation ? (
+          <Button variant="outline" size="sm" onClick={openConversation}>
+            Open conversation
+            <ExternalLink data-icon="inline-end" aria-hidden />
+          </Button>
+        ) : null}
+        <Button variant="default" size="sm" onClick={openRequest}>
           Open request
           <ExternalLink data-icon="inline-end" aria-hidden />
         </Button>

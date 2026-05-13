@@ -90,9 +90,7 @@ export function Team() {
 
 function TeamSurface() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [tab, setTab] = useState<'members' | 'invitations' | 'requests'>(
-    'members',
-  );
+  const [tab, setTab] = useState<'members' | 'invitations'>('members');
 
   return (
     <>
@@ -101,7 +99,6 @@ function TeamSurface() {
         <TabsList variant="line" className="px-0 -mt-2">
           <TeamTabsTrigger value="members" label="Members" count={MEMBER_ROWS.length} />
           <TeamTabsTrigger value="invitations" label="Invitations" count={INVITATION_ROWS.length} />
-          <TeamTabsTrigger value="requests" label="Requests" count={REQUEST_ROWS.length} />
         </TabsList>
 
         <TabsContent value="members">
@@ -109,9 +106,6 @@ function TeamSurface() {
         </TabsContent>
         <TabsContent value="invitations">
           <InvitationsPane onInvite={() => setInviteOpen(true)} />
-        </TabsContent>
-        <TabsContent value="requests">
-          <RequestsPane />
         </TabsContent>
       </Tabs>
 
@@ -489,77 +483,6 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
     </Card>
   );
 }
-
-/* ─── Requests pane ───────────────────────────────────────────────────── */
-
-type RequestRow = {
-  id: string;
-  email: string;
-  requested: string;
-  role: MemberRole;
-  reason: string;
-};
-
-const REQUEST_ROWS: RequestRow[] = [
-  { id: 'req_01', email: 'noah.gauthier@constellationnetwork.io', requested: 'May 09, 2026', role: 'member', reason: 'Joining the platform team — needs prod-web key access.' },
-];
-
-function RequestsPane() {
-  if (REQUEST_ROWS.length === 0) {
-    return (
-      <EmptyState
-        className="py-16"
-        title="No access requests"
-        body="People who’ve asked to join this workspace show up here. You’ll see their email, the role they want, and a short note."
-      />
-    );
-  }
-  return (
-    <Card density="flush">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[28%]">Email</TableHead>
-            <TableHead className="w-[15%]">Requested</TableHead>
-            <TableHead className="w-[13%]">Role</TableHead>
-            <TableHead className="w-[39%]">Reason</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {REQUEST_ROWS.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="font-mono text-sm text-ink-900 tracking-snug">
-                <span className="block truncate" title={row.email}>{row.email}</span>
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
-                {row.requested}
-              </TableCell>
-              <TableCell>
-                <Badge variant="neutral">{ROLE_LABEL[row.role]}</Badge>
-              </TableCell>
-              <TableCell className="font-sans text-sm text-ink-800 tracking-snug">
-                <span className="block truncate" title={row.reason}>
-                  {row.reason}
-                </span>
-              </TableCell>
-              <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
-                <RowActionsMenu
-                  label={`Open actions for ${row.email}`}
-                  items={[
-                    { id: 'approve', label: 'Approve request' },
-                    { id: 'decline', label: 'Decline request', destructive: true },
-                  ]}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
-  );
-}
-
 
 /* ─── Invite member dialog ────────────────────────────────────────────── */
 
