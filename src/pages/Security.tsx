@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -359,7 +358,7 @@ function CriticalRiskBanner() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="default" size="sm">
-            Quarantine key
+            Revoke key
           </Button>
         </div>
       </div>
@@ -410,7 +409,7 @@ function AttackCategoriesCard({ range, customRange }: { range: EventsRange; cust
         <CardDescription>Breakdown by detection type</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="flex flex-col gap-3">
         {scaled.map((cat) => {
           const pct = (cat.count / max) * 100;
           const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
@@ -488,23 +487,6 @@ function ApiKeyRiskScoresCard({ range, customRange }: { range: EventsRange; cust
         <CardDescription>
           Elevated keys get enhanced scanning
         </CardDescription>
-        <CardAction>
-          <Select defaultValue="all">
-            <SelectTrigger
-              size="sm"
-              aria-label="Key filter"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
-            >
-              <SelectValue placeholder="All keys" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All keys</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="elevated">Elevated</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardAction>
       </CardHeader>
 
       <Table className="w-full table-fixed">

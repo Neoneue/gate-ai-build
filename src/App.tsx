@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
+import { ApiKeys } from '@/pages/ApiKeys';
 import { Conversations } from '@/pages/Conversations';
 import { Models } from '@/pages/Models';
 import { Requests } from '@/pages/Requests';
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/activity" element={<Activity />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/api-keys" element={<ApiKeys />} />
           {/* Unknown routes fall back to Requests. */}
           <Route path="*" element={<Navigate to="/requests" replace />} />
         </Route>
