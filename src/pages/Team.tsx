@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import {
-  Info,
   MoreHorizontal,
   Search,
   Send,
@@ -48,7 +47,6 @@ import {
 } from '@/components/ui/tabs';
 import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
@@ -159,12 +157,6 @@ function TeamTabsTrigger({
 
 type MemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 type MemberStatus = 'active' | 'invited' | 'suspended';
-type MemberSeat = 'payg' | 'byok';
-
-const SEAT_BADGE: Record<MemberSeat, { variant: 'info' | 'neutral'; label: string }> = {
-  payg: { variant: 'info',    label: 'PAYG' },
-  byok: { variant: 'neutral', label: 'BYOK' },
-};
 
 const ROLE_LABEL: Record<MemberRole, string> = {
   owner: 'Owner',
@@ -193,16 +185,15 @@ type MemberRow = {
   avatarTone: AvatarTone;
   role: MemberRole;
   status: MemberStatus;
-  seat: MemberSeat;
   joined: string;
   isYou?: boolean;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',  seat: 'payg', joined: 'Apr 20, 2026', isYou: true },
-  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',  seat: 'payg', joined: 'Apr 22, 2026' },
-  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',  seat: 'byok', joined: 'May 01, 2026' },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'viewer', status: 'active',  seat: 'payg', joined: 'May 08, 2026' },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',  joined: 'Apr 20, 2026', isYou: true },
+  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',  joined: 'Apr 22, 2026' },
+  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',  joined: 'May 01, 2026' },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'viewer', status: 'active',  joined: 'May 08, 2026' },
 ];
 
 function MembersPane() {
@@ -286,12 +277,11 @@ function MembersPane() {
                 same. Member gets the largest share to fit avatar +
                 name + email; Actions gets the smallest because it's a
                 single icon button. */}
-            <TableHead className="w-[34%]">Member</TableHead>
-            <TableHead className="w-[14%]">Joined</TableHead>
-            <TableHead className="w-[15%]">Role</TableHead>
-            <TableHead className="w-[12%]">Seat</TableHead>
-            <TableHead className="w-[15%]">Status</TableHead>
-            <TableHead className="w-[10%] text-right pl-0 pr-4">Actions</TableHead>
+            <TableHead className="w-[38%]">Member</TableHead>
+            <TableHead className="w-[19%]">Joined</TableHead>
+            <TableHead className="w-[19%]">Role</TableHead>
+            <TableHead className="w-[19%]">Status</TableHead>
+            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -379,11 +369,6 @@ function MemberRowView({ row }: { row: MemberRow }) {
             </SelectContent>
           </Select>
         )}
-      </TableCell>
-      <TableCell className="whitespace-nowrap">
-        <Badge variant={SEAT_BADGE[row.seat].variant}>
-          {SEAT_BADGE[row.seat].label}
-        </Badge>
       </TableCell>
       <TableCell className="whitespace-nowrap">
         <Badge variant={badge.variant}>
@@ -508,7 +493,6 @@ function InviteMemberDialog({
 }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<MemberRole>('member');
-  const [seat, setSeat] = useState<MemberSeat>('byok');
 
   // Single-email validation: pragmatic regex (not RFC-strict; server
   // owns the canonical check). Empty ⇒ disabled; malformed ⇒ disabled.
@@ -524,7 +508,6 @@ function InviteMemberDialog({
         if (!next) {
           setEmail('');
           setRole('member');
-          setSeat('byok');
         }
       }}
     >
@@ -601,46 +584,6 @@ function InviteMemberDialog({
                 <SelectItem value="viewer" className="h-auto py-2 items-start">
                   <RoleItemBody label="Viewer" description="Read-only access. Cannot create, update, or delete." />
                 </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1">
-              <Label htmlFor="invite-seat" className="text-ink-600 font-medium text-sm">
-                Seat
-              </Label>
-              <Tooltip>
-                <TooltipTrigger
-                  render={(props) => (
-                    <span
-                      {...props}
-                      tabIndex={0}
-                      className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="About seat types"
-                    >
-                      <Info className="size-3.5" strokeWidth={1.75} aria-hidden />
-                    </span>
-                  )}
-                />
-                <TooltipContent className="max-w-sm text-left">
-                  Inviting a new paid (PAYG) member will increase the billing of that team.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Select value={seat} onValueChange={(v: string) => setSeat(v as MemberSeat)}>
-              <SelectTrigger
-                id="invite-seat"
-                size="default"
-                className="border-ink-200 bg-white text-ink-900 w-full"
-              >
-                <SelectValue>
-                  {(value) => SEAT_BADGE[value as MemberSeat]?.label ?? String(value)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="min-w-[var(--anchor-width)]">
-                <SelectItem value="byok">BYOK</SelectItem>
-                <SelectItem value="payg">PAYG</SelectItem>
               </SelectContent>
             </Select>
           </div>

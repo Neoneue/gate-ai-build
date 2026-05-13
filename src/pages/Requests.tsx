@@ -1,4 +1,4 @@
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
@@ -76,6 +76,31 @@ export function Requests() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
 
+  // Range state lifted from RequestsTableSection so PageHeader can also
+  // drive it (the data selector + Custom range button live in the top-
+  // right page-header chrome now). rangeStore stays the single source of
+  // truth for HeroMetricCard and other useRange()/useCustomRange()
+  // subscribers — the effects below keep it in lockstep.
+  const [range, setRange] = useState<RangeKey>('1h');
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+
+  useEffect(() => { rangeStore.set(range); }, [range]);
+  useEffect(() => { rangeStore.setCustom(customRange); }, [customRange]);
+
+  const handleRangeChange = (next: RangeKey) => {
+    setRange(next);
+    setCustomRange(null);
+  };
+  const handleCustomRangeChange = (next: CustomRange | null) => {
+    if (next) {
+      setCustomRange(next);
+      setRange('custom');
+    } else {
+      setCustomRange(null);
+      setRange('1h');
+    }
+  };
+
   return (
     <DashboardChrome
           breadcrumbCurrent="Requests"
@@ -84,16 +109,34 @@ export function Requests() {
           onToggleSidebar={toggleSidebar}
           onNavigate={(path: string) => navigate(path)}
         >
-          <PageHeader />
+          <PageHeader
+            range={range}
+            customRange={customRange}
+            onRangeChange={handleRangeChange}
+            onCustomRangeChange={handleCustomRangeChange}
+          />
           <HeroMetricCard />
-          <RequestsTableSection />
+          <RequestsTableSection
+            range={range}
+            customRange={customRange}
+          />
         </DashboardChrome>
   );
 }
 
-/* ─── Page header (eyebrow + title + actions) ────────────────────────────── */
+/* ─── Page header (title + range selector + custom date) ──────────────── */
 
-function PageHeader() {
+function PageHeader({
+  range,
+  customRange,
+  onRangeChange,
+  onCustomRangeChange,
+}: {
+  range: RangeKey;
+  customRange: CustomRange | null;
+  onRangeChange: (r: RangeKey) => void;
+  onCustomRangeChange: (r: CustomRange | null) => void;
+}) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -103,11 +146,20 @@ function PageHeader() {
           Every model call across your stack, captured in real-time.
         </p>
       </div>
-      <div className="flex items-center gap-4 shrink-0">
-        <Button variant="outline" size="default">
-          <Download data-icon="inline-start" aria-hidden />
-          Export CSV
-        </Button>
+      <div className="flex items-center gap-2 shrink-0">
+        <SegmentedPill
+          options={RANGE_OPTIONS}
+          // Empty string when a custom range is active so no preset reads
+          // as selected — see segmented-pill internal notes for why empty
+          // string deselects all items.
+          value={range === 'custom' ? '' : range}
+          onValueChange={(next) => onRangeChange(next as RangeKey)}
+        />
+        <DateRangePicker
+          value={customRange}
+          onChange={onCustomRangeChange}
+          size="default"
+        />
       </div>
     </div>
   );
@@ -685,11 +737,13 @@ type RequestRow = {
   guardrailReason?: GuardrailReason;
 };
 
-// Single source of truth for the BYOK predicate. A `byok-*` keyId means
-// the customer brought their own provider key, so we proxy without
-// owning the billing relationship — cost is whatever the provider
-// charges them directly, not something we can show accurately.
-const isByokKey = (keyId: string) => keyId.startsWith('byok-');
+// Single source of truth for the BYOK predicate. A BYOK key means the
+// customer brought their own provider key, so we proxy without owning
+// the billing relationship — cost is whatever the provider charges
+// them directly, not something we can show accurately. Set mirrors the
+// BYOK rows in Activity.tsx API_KEY_ROWS.
+const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'shadowfax-rag']);
+const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 
 // Low-traffic demo: 5 requests in the trailing hour. Timestamps match
 // the five spike minutes in HERO_1H_INCREMENTS so the chart and table
@@ -698,11 +752,11 @@ const isByokKey = (keyId: string) => keyId.startsWith('byok-');
 // (most recent first) to match the table's default sort.
 const REQUEST_ROWS_1H: RequestRow[] = [
   { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'byok-anthropic', inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842' },
+  { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'openclaw',      inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842' },
   { day: 'May 12', time: '14:02:55', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '480',   outTokens: '215',   latency: '2.50s',              cost: '$0.0050' },
   { day: 'May 12', time: '14:02:42', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '10.50s', slow: true, cost: '$0.0091' },
   { day: 'May 12', time: '13:48:11', relative: '42m ago',  status: 'error',   guardrail: 'block', code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '4,802', outTokens: '0',     latency: '2.10s',              cost: '$0.0336',       guardrailReason: 'injection' },
-  { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'byok-openai', inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
+  { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'nova-chat',     inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
 ];
 
 // 24H view — cumulative superset: contains the 1H rows plus older entries
@@ -711,7 +765,7 @@ const REQUEST_ROWS_1H: RequestRow[] = [
 // in a narrower one.
 const REQUEST_ROWS_24H: RequestRow[] = [
   ...REQUEST_ROWS_1H,
-  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'byok-openai', inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
+  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'shadowfax-rag', inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
   { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.80s', slow: true, cost: '$0.1842' },
   { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '13.60s', slow: true, cost: '$0.0124' },
   { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',   guardrail: 'allow',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '6,108', outTokens: '0',     latency: '1.40s',              cost: '$0.0428'       },
@@ -720,7 +774,7 @@ const REQUEST_ROWS_24H: RequestRow[] = [
   { day: 'May 12', time: '03:42:11', relative: '11h ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '3,840', outTokens: '0',     latency: '2.10s',              cost: '$0.0269',       guardrailReason: 'injection' },
   { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'success', guardrail: 'redacted', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '4.50s',              cost: '$0.0241', guardrailReason: 'pii' },
   { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '3,201', outTokens: '0',     latency: '0.80s',              cost: '$0.0224'       },
-  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'byok-anthropic', inTokens: '4,208', outTokens: '2,104', latency: '12.80s', slow: true, cost: '$0.0512' },
+  { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'hermes-agent',  inTokens: '4,208', outTokens: '2,104', latency: '12.80s', slow: true, cost: '$0.0512' },
   { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '3.40s',              cost: '$0.0094' },
   { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '13.20s', slow: true, cost: '$0.0098' },
 ];
@@ -730,14 +784,14 @@ const REQUEST_ROWS_24H: RequestRow[] = [
 // every event from the narrower one.
 const REQUEST_ROWS_7D: RequestRow[] = [
   ...REQUEST_ROWS_24H,
-  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'byok-openai', inTokens: '4,108', outTokens: '2,094', latency: '12.80s', slow: true, cost: '$0.0418' },
+  { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'nova-chat',     inTokens: '4,108', outTokens: '2,094', latency: '12.80s', slow: true, cost: '$0.0418' },
   { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '12.30s', slow: true, cost: '$0.2104' },
   { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'success', guardrail: 'flagged',   code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '5.20s',              cost: '$0.0148', guardrailReason: 'credential' },
   { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '8,420', outTokens: '0',     latency: '4.10s',              cost: '$0.0589'       },
   { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '13.40s', slow: true, cost: '$0.0086' },
   { day: 'May 9',  time: '16:08:42', relative: '3d ago',    status: 'error',   guardrail: 'block',  code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '2,418', outTokens: '0',     latency: '2.10s',              cost: '$0.0169',       guardrailReason: 'pii' },
   { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '14.60s', slow: true, cost: '$0.0228' },
-  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'byok-anthropic', inTokens: '3,118', outTokens: '1,564', latency: '11.80s', slow: true, cost: '$0.0382' },
+  { day: 'May 8',  time: '15:42:51', relative: '4d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'openclaw',      inTokens: '3,118', outTokens: '1,564', latency: '11.80s', slow: true, cost: '$0.0382' },
   { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '5,418', outTokens: '0',     latency: '0.60s',              cost: '$0.0379'       },
   { day: 'May 7',  time: '08:42:18', relative: '5d ago',    status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '5,108', outTokens: '0',     latency: '2.10s',              cost: '$0.0358',       guardrailReason: 'credential' },
   { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '5.40s',              cost: '$0.0118', guardrailReason: 'pii' },
@@ -750,16 +804,16 @@ const REQUEST_ROWS_7D: RequestRow[] = [
 // never removes.
 const REQUEST_ROWS_30D: RequestRow[] = [
   ...REQUEST_ROWS_7D,
-  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'byok-openai', inTokens: '3,608', outTokens: '1,812', latency: '12.20s', slow: true, cost: '$0.0368' },
-  { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'byok-anthropic', inTokens: '14,208',outTokens: '7,420', latency: '22.40s', slow: true, cost: '$0.2418' },
+  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'shadowfax-rag', inTokens: '3,608', outTokens: '1,812', latency: '12.20s', slow: true, cost: '$0.0368' },
+  { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'hermes-agent',  inTokens: '14,208',outTokens: '7,420', latency: '22.40s', slow: true, cost: '$0.2418' },
   { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '5.40s',              cost: '$0.0158', guardrailReason: 'pii' },
   { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '7,302', outTokens: '0',     latency: '3.90s',              cost: '$0.0511'       },
   { day: 'Apr 30', time: '11:32:48', relative: '12d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,924', outTokens: '0',     latency: '2.10s',              cost: '$0.0135',       guardrailReason: 'injection' },
   { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '13.40s', slow: true, cost: '$0.0098' },
   { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '14.80s', slow: true, cost: '$0.0264' },
-  { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'success', guardrail: 'flagged',   code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'byok-anthropic', inTokens: '3,408', outTokens: '1,718', latency: '3.90s',              cost: '$0.0418', guardrailReason: 'credential' },
+  { day: 'Apr 22', time: '14:18:08', relative: '20d ago',   status: 'success', guardrail: 'flagged',   code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'openclaw',      inTokens: '3,408', outTokens: '1,718', latency: '3.90s',              cost: '$0.0418', guardrailReason: 'credential' },
   { day: 'Apr 21', time: '09:14:32', relative: '21d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '2,608', outTokens: '0',     latency: '2.10s',              cost: '$0.0183',       guardrailReason: 'pii' },
-  { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'byok-openai', inTokens: '4,108', outTokens: '0',     latency: '0.90s',              cost: '$0.0288'       },
+  { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'nova-chat',     inTokens: '4,108', outTokens: '0',     latency: '0.90s',              cost: '$0.0288'       },
   { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '13.20s', slow: true, cost: '$0.0128' },
   { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '11.80s', slow: true, cost: '$0.0094' },
   { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '14.40s', slow: true, cost: '$0.0342' },
@@ -830,12 +884,14 @@ const RANGE_TOTALS: Record<string, number> = {
   custom: 0,
 };
 
-function RequestsTableSection() {
+function RequestsTableSection({
+  range,
+  customRange,
+}: {
+  range: RangeKey;
+  customRange: CustomRange | null;
+}) {
   const navigate = useNavigate();
-  const [range, setRange] = useState<RangeKey>('1h');
-  // Custom range is a sibling of `range` rather than a sub-state because
-  // both feed into the rangeStore — Hero needs to read them together.
-  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   // Looked up per render. Pill change → new rows + new total; page resets
   // so a deep-paged 30D state doesn't carry over into a 1H view that
   // doesn't have those pages. When the user picks a custom range, the
@@ -859,6 +915,13 @@ function RequestsTableSection() {
   // signal — `null` means closed, a row means open. Avoids carrying a
   // separate `open` flag.
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
+
+  // Range now lifted to the parent — when it (or the custom range) flips,
+  // reset to page 1 so a deep-paged 30D state doesn't carry over into a
+  // 1H view that doesn't have those pages.
+  useEffect(() => {
+    setPage(1);
+  }, [range, customRange]);
 
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
@@ -932,8 +995,10 @@ function RequestsTableSection() {
               <SelectItem value="prod-web">prod-web</SelectItem>
               <SelectItem value="prod-agent">prod-agent</SelectItem>
               <SelectItem value="dev">dev</SelectItem>
-              <SelectItem value="byok-anthropic">byok-anthropic</SelectItem>
-              <SelectItem value="byok-openai">byok-openai</SelectItem>
+              <SelectItem value="openclaw">openclaw</SelectItem>
+              <SelectItem value="hermes-agent">hermes-agent</SelectItem>
+              <SelectItem value="nova-chat">nova-chat</SelectItem>
+              <SelectItem value="shadowfax-rag">shadowfax-rag</SelectItem>
             </SelectContent>
           </Select>
 
@@ -970,48 +1035,10 @@ function RequestsTableSection() {
             </SelectContent>
           </Select>
 
-          <div className="ml-auto flex items-center gap-2">
-            <SegmentedPill
-              size="sm"
-              options={RANGE_OPTIONS}
-              // Empty string when a custom range is active so no preset
-              // reads as selected. SegmentedPill / ToggleGroup match on
-              // strict equality between `value` and each option's
-              // `value`; an empty string matches nothing, so neither the
-              // `aria-pressed` flag nor the sliding indicator activate.
-              // (Verified: segmented-pill.tsx maps the active item to
-              // `[value]` and the indicator measures only when a match
-              // exists — `indicator.ready` stays false otherwise.)
-              value={range === 'custom' ? '' : range}
-              onValueChange={(next) => {
-                setRange(next as RangeKey);
-                rangeStore.set(next as RangeKey);
-                // Preset + custom are mutually exclusive: picking a
-                // preset clears any active custom range so the Hero
-                // can't keep painting the custom view underneath.
-                setCustomRange(null);
-                rangeStore.setCustom(null);
-                setPage(1);
-              }}
-            />
-            <DateRangePicker
-              value={customRange}
-              onChange={(next) => {
-                if (next) {
-                  setCustomRange(next);
-                  rangeStore.setCustom(next);
-                  setRange('custom');
-                  rangeStore.set('custom');
-                } else {
-                  setCustomRange(null);
-                  rangeStore.setCustom(null);
-                  setRange('1h');
-                  rangeStore.set('1h');
-                }
-                setPage(1);
-              }}
-            />
-          </div>
+          <Button variant="outline" size="sm" className="ml-auto">
+            <Download data-icon="inline-start" aria-hidden />
+            Export CSV
+          </Button>
         </div>
 
         {/* Table */}
