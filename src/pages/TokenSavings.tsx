@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { CompactSpark, DeltaTag } from '@/components/ui/compact-kpi';
@@ -25,6 +27,8 @@ export function TokenSavings() {
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
+  const [lastSavedAt, setLastSavedAt] = useState<Date>(() => new Date());
+  const markSaved = () => setLastSavedAt(new Date());
 
   return (
     <DashboardChrome
@@ -34,24 +38,35 @@ export function TokenSavings() {
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
-      <PageHeader />
+      <PageHeader lastSavedAt={lastSavedAt} />
       <KpiRailSection />
-      <MechanismGrid />
+      <MechanismGrid onSaved={markSaved} />
     </DashboardChrome>
   );
 }
 
 /* ─── Page header ───────────────────────────────────────────────────── */
 
-function PageHeader() {
+function PageHeader({ lastSavedAt }: { lastSavedAt: Date }) {
   return (
-    <div className="flex flex-col gap-2 max-w-1/2">
-      <PageTitle>Token Savings</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between gap-6">
+        <PageTitle>Token Savings</PageTitle>
+        <Eyebrow>Saved · {formatClockTime(lastSavedAt)}</Eyebrow>
+      </div>
+      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
         Cache, compress and deduplicate to spend less per request. Every saved token is anchored on Constellation DE for verifiable cost reporting.
       </p>
     </div>
   );
+}
+
+function formatClockTime(d: Date) {
+  const hours24 = d.getHours();
+  const period = hours24 >= 12 ? 'PM' : 'AM';
+  const h12 = hours24 % 12 || 12;
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  return `${h12.toString().padStart(2, '0')}:${minutes} ${period}`;
 }
 
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
@@ -59,9 +74,9 @@ function PageHeader() {
 function KpiRailSection() {
   return (
     <KpiRail columns={4}>
-      <KpiTile title="Total saved" value="$0" caption="no savings yet" />
-      <KpiTile title="Caching" value="$0" caption="no hits yet" />
-      <KpiTile title="Compression" value="$0" caption="no compression yet" />
+      <KpiTile title="Total saved" value="$0" caption="No savings yet" />
+      <KpiTile title="Caching" value="$0" caption="No hits yet" />
+      <KpiTile title="Compression" value="$0" caption="No compression yet" />
       <SparkTile />
     </KpiRail>
   );
@@ -126,10 +141,10 @@ function SparkTile() {
 
 /* ─── Mechanism cards ───────────────────────────────────────────────── */
 
-function MechanismGrid() {
+function MechanismGrid({ onSaved }: { onSaved: () => void }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <CachingCard />
+      <CachingCard onSaved={onSaved} />
       <CompressionCard />
     </div>
   );
@@ -138,9 +153,11 @@ function MechanismGrid() {
 function CardChromeHeader({
   title,
   description,
+  enabled,
 }: {
   title: string;
   description: string;
+  enabled: boolean;
 }) {
   return (
     <CardHeader className="border-b border-ink-200">
@@ -151,28 +168,23 @@ function CardChromeHeader({
           </h3>
           <p className="font-sans text-sm text-ink-500 m-0">{description}</p>
         </div>
-        <LivePill />
+        <Badge variant={enabled ? 'success' : 'neutral'}>
+          {enabled ? 'ON' : 'OFF'}
+        </Badge>
       </div>
     </CardHeader>
   );
 }
 
-function LivePill() {
-  return (
-    <span className="inline-flex items-center h-6 px-2 rounded-full bg-success-100 text-success-700 font-sans text-xs font-medium shrink-0">
-      Live
-    </span>
-  );
-}
-
 const TTL_OPTIONS = [
   { value: '5m', label: '5m' },
-  { value: '15m', label: '15m' },
+  { value: '30m', label: '30m' },
   { value: '1h', label: '1h' },
-  { value: '1d', label: '1d' },
+  { value: '6h', label: '6h' },
+  { value: '24h', label: '24h' },
 ] as const;
 
-function CachingCard() {
+function CachingCard({ onSaved }: { onSaved: () => void }) {
   const [enabled, setEnabled] = useState(true);
   const [ttl, setTtl] = useState('1h');
 
@@ -181,6 +193,7 @@ function CachingCard() {
       <CardChromeHeader
         title="Caching"
         description="Reuse identical or semantically similar responses"
+        enabled={enabled}
       />
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
@@ -194,7 +207,11 @@ function CachingCard() {
           </div>
           <Switch
             checked={enabled}
-            onCheckedChange={setEnabled}
+            onCheckedChange={(next) => {
+              setEnabled(next);
+              toast.success('Response caching saved');
+              onSaved();
+            }}
             className="mt-1 shrink-0"
           />
         </div>
@@ -210,7 +227,14 @@ function CachingCard() {
               How long cached entries live before re-fetching.
             </p>
           </div>
-          <Select value={ttl} onValueChange={setTtl}>
+          <Select
+            value={ttl}
+            onValueChange={(next) => {
+              setTtl(next);
+              toast.success('Default TTL saved');
+              onSaved();
+            }}
+          >
             <SelectTrigger className="w-24 shrink-0">
               <SelectValue />
             </SelectTrigger>
@@ -241,6 +265,7 @@ function CompressionCard() {
       <CardChromeHeader
         title="Compression"
         description="Shrink prompts before they reach the provider"
+        enabled={enabled}
       />
       <CardContent className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
