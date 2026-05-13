@@ -9,12 +9,15 @@ import {
 import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
+import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
+import { Guardrails } from '@/pages/Guardrails';
 import { Models } from '@/pages/Models';
 import { Requests } from '@/pages/Requests';
 import { Security } from '@/pages/Security';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
+import { TokenSavings } from '@/pages/TokenSavings';
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -56,11 +59,14 @@ export default function App() {
           <Route path="/requests" element={<Requests />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
+          <Route path="/token-savings" element={<TokenSavings />} />
+          <Route path="/guardrails" element={<Guardrails />} />
           <Route path="/security" element={<Security />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/billing" element={<Billing />} />
           {/* Unknown routes fall back to Requests. */}
           <Route path="*" element={<Navigate to="/requests" replace />} />
         </Route>
