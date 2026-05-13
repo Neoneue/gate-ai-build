@@ -55,7 +55,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'activity', icon: Activity,   label: 'Activity', pageId: '/activity' },
       { id: 'team',     icon: Users,      label: 'Team',     pageId: '/team' },
-      { id: 'billing',  icon: CreditCard, label: 'Billing' },
+      { id: 'billing',  icon: CreditCard, label: 'Billing',  pageId: '/billing' },
       { id: 'api-keys', icon: KeyRound,   label: 'API Access', pageId: '/api-keys' },
       { id: 'settings', icon: Settings2,  label: 'Settings', pageId: '/settings' },
     ],

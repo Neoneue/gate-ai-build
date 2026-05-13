@@ -9,6 +9,7 @@ import {
 import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
+import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
 import { Models } from '@/pages/Models';
 import { Requests } from '@/pages/Requests';
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/billing" element={<Billing />} />
           {/* Unknown routes fall back to Requests. */}
           <Route path="*" element={<Navigate to="/requests" replace />} />
         </Route>
