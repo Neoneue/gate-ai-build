@@ -216,7 +216,7 @@ function CalloutCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-start gap-3 py-4">
+      <CardContent className="flex items-start gap-3 py-2">
         <div
           aria-hidden
           className="size-8 rounded-md bg-ink-100 flex items-center justify-center shrink-0"
