@@ -334,6 +334,10 @@ function BillingContactCard() {
           <p className="font-sans text-sm font-medium text-ink-900 m-0">
             Chad Ponticas
           </p>
+          <address className="font-sans text-sm not-italic text-ink-500 m-0">
+            1900 Lake Houston Drive<br />
+            Houston, TX 77302
+          </address>
           <p className="font-mono text-sm text-ink-500 m-0 truncate">
             chad@constellationnetwork.io
           </p>
