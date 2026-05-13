@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType, type SVGProps } from 'react';
+import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeftRight, Download, ExternalLink, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { RowActionButton } from '@/components/ui/row-action-button';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { TextLink } from '@/components/ui/text-link';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -65,9 +66,141 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  * danger / --destructive. No raw hex.
  * ───────────────────────────────────────────────────────────────────────── */
 
+type PresetRange = '1h' | '24h' | '7d' | '30d';
+type EventsRange = PresetRange | 'custom';
+type CustomRange = { from: Date; to: Date };
+
+/** Event-count multiplier applied to the 1h baseline so KpiRail / Attack
+ *  categories / Risk scores all scale together when the top selector
+ *  changes. Not a strict hours-per-window math — security events compress
+ *  overnight, so 24h ≈ 6× rather than 24×; longer windows compress
+ *  further. Real implementation would aggregate from the event stream. */
+const EVENTS_RANGE_SCALE: Record<PresetRange, number> = {
+  '1h':  1,
+  '24h': 6,
+  '7d':  28,
+  '30d': 100,
+};
+
+function eventsScale(range: EventsRange, customRange: CustomRange | null): number {
+  if (range === 'custom' && customRange) {
+    const days = Math.max(
+      1,
+      Math.round((customRange.to.getTime() - customRange.from.getTime()) / 86_400_000) + 1,
+    );
+    // ~3.3× per day, matching the 30d preset's day-rate (100/30 ≈ 3.3).
+    return Math.max(1, Math.round(days * 3.3));
+  }
+  return EVENTS_RANGE_SCALE[range === 'custom' ? '1h' : range];
+}
+
+const fmtCount = (n: number) => n.toLocaleString('en-US');
+
+/** Per-range sparkline shape. Distributes the actual event count across
+ *  time buckets weighted by an upward trend curve, so sparseness emerges
+ *  from the data: 2 redacted events at 1h = 2 spikes against zero; 200
+ *  redacted events at 30d = a noisy continuous trace. Seeded LCG so the
+ *  shape is deterministic across renders but flips per (range, tile). */
+function buildSpark(
+  range: EventsRange,
+  customRange: CustomRange | null,
+  count: number,
+  seedOffset: number,
+): number[] {
+  let buckets: number;
+  if (range === '1h')       buckets = 18;
+  else if (range === '24h') buckets = 24;
+  else if (range === '7d')  buckets = 14;
+  else if (range === '30d') buckets = 30;
+  else {
+    const days = customRange
+      ? Math.max(1, Math.round((customRange.to.getTime() - customRange.from.getTime()) / 86_400_000) + 1)
+      : 7;
+    buckets = Math.min(30, Math.max(7, days));
+  }
+
+  const rangeSeed = range === '1h' ? 11 : range === '24h' ? 47 : range === '7d' ? 77 : range === '30d' ? 303 : 99;
+  let s = (rangeSeed * 31 + seedOffset + buckets) >>> 0 || 1;
+  const rand = () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+
+  const out: number[] = new Array(buckets).fill(0);
+  if (count <= 0) return out;
+
+  // Upward trend so the right edge reads as "now-ish heavier" — matches
+  // the +deltas on the KPI tiles without going monotone.
+  const weights: number[] = [];
+  let totalWeight = 0;
+  for (let i = 0; i < buckets; i++) {
+    const w = 0.5 + (i / buckets) * 0.6 + rand() * 0.4;
+    weights.push(w);
+    totalWeight += w;
+  }
+
+  // Sparse regime: drop events one at a time into a weighted bucket. A
+  // count of 2 lands as exactly 2 spikes; rest stay flat zero.
+  if (count <= buckets * 4) {
+    for (let i = 0; i < count; i++) {
+      let r = rand() * totalWeight;
+      for (let j = 0; j < buckets; j++) {
+        r -= weights[j];
+        if (r <= 0) { out[j]++; break; }
+      }
+    }
+    return out;
+  }
+
+  // Dense regime: per-bucket expected count + sqrt-scale jitter. Faster
+  // than one-at-a-time placement when count is in the thousands.
+  for (let i = 0; i < buckets; i++) {
+    const expected = (count * weights[i]) / totalWeight;
+    const jitter = (rand() - 0.5) * 2 * Math.sqrt(expected);
+    out[i] = Math.max(0, Math.round(expected + jitter));
+  }
+  return out;
+}
+
+const RANGE_TITLE_SUFFIX: Record<EventsRange, string> = {
+  '1h':   '1h',
+  '24h':  '24h',
+  '7d':   '7d',
+  '30d':  '30d',
+  custom: 'custom',
+};
+const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
+  '1h':   'vs last hour',
+  '24h':  'vs prior day',
+  '7d':   'vs prior week',
+  '30d':  'vs prior month',
+  custom: 'vs prior range',
+};
+
 export function Security() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
+
+  // Range lifted so PageHeader can drive the data selector + custom range
+  // chrome in the top-right (matches Activity / Requests). EventsTableSection
+  // reads it as props; the static 17-row sample doesn't actually filter
+  // against it yet (real wiring is a follow-up).
+  const [range, setRange] = useState<EventsRange>('1h');
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+
+  const handleRangeChange = (next: PresetRange) => {
+    setRange(next);
+    setCustomRange(null);
+  };
+  const handleCustomRangeChange = (next: CustomRange | null) => {
+    if (next) {
+      setCustomRange(next);
+      setRange('custom');
+    } else {
+      setCustomRange(null);
+      setRange('1h');
+    }
+  };
 
   return (
     <DashboardChrome
@@ -77,18 +210,33 @@ export function Security() {
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
           >
-            <PageHeader />
-            <KpiRail />
+            <PageHeader
+              range={range}
+              customRange={customRange}
+              onRangeChange={handleRangeChange}
+              onCustomRangeChange={handleCustomRangeChange}
+            />
+            <KpiRail range={range} customRange={customRange} />
             <CriticalRiskBanner />
-            <MiddleRow />
-            <EventsTableSection />
+            <MiddleRow range={range} customRange={customRange} />
+            <EventsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
   );
 }
 
 /* ─── Page header ────────────────────────────────────────────────────────── */
 
-function PageHeader() {
+function PageHeader({
+  range,
+  customRange,
+  onRangeChange,
+  onCustomRangeChange,
+}: {
+  range: EventsRange;
+  customRange: CustomRange | null;
+  onRangeChange: (r: PresetRange) => void;
+  onCustomRangeChange: (r: CustomRange | null) => void;
+}) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -100,11 +248,17 @@ function PageHeader() {
           Real-time threat detection and policy enforcement across every request routed through the gateway.
         </p>
       </div>
-      <div className="flex items-center gap-4 shrink-0">
-        <Button variant="outline" size="default">
-          <Download data-icon="inline-start" aria-hidden />
-          Export CSV
-        </Button>
+      <div className="flex items-center gap-2 shrink-0">
+        <SegmentedPill
+          options={RANGE_OPTIONS}
+          value={range === 'custom' ? '' : range}
+          onValueChange={(v) => onRangeChange(v as PresetRange)}
+        />
+        <DateRangePicker
+          value={customRange}
+          onChange={onCustomRangeChange}
+          size="default"
+        />
       </div>
     </div>
   );
@@ -112,51 +266,68 @@ function PageHeader() {
 
 /* ─── KPI rail (3-up sparkline cards) ────────────────────────────────────── */
 
-function KpiRail() {
-  // Three-tile rail breaks the event count out by action so the rail
-  // shows what we caught + how we responded at a glance: Total events,
-  // then Blocked (hard-stop) and Flagged (logged-only) with their share
-  // of total. Redacted omitted — the two block/flag tiles together cover
-  // ~96% of events and the rail stays readable at 3 tiles.
+function KpiRail({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  // Four-tile rail: action components (Blocked / Flagged / Redacted) then
+  // the Total. Reads left-to-right as `sum + sum + sum = total`. Share
+  // percentages are scale-invariant so they don't change with range.
+  // 1h baselines: 31 blocked (66%) + 14 flagged (30%) + 2 redacted (4%)
+  // = 47 total.
+  const scale = eventsScale(range, customRange);
+  const total = 47 * scale;
+  const blocked = 31 * scale;
+  const flagged = 14 * scale;
+  const redacted = 2 * scale;
+  const suffix = RANGE_TITLE_SUFFIX[range];
+  const note = RANGE_DELTA_NOTE[range];
+
+  // Sparkline shapes change per range: different bucket count + different
+  // density per tile (Blocked spiky, Flagged moderate, Redacted sparse).
+  // Deterministic LCG seeded by range so the shape is stable across
+  // renders but flips when the user picks a different window. Total is
+  // the per-bucket sum of the three components.
+  const blockedSpark  = useMemo(() => buildSpark(range, customRange, blocked,  1), [range, customRange, blocked]);
+  const flaggedSpark  = useMemo(() => buildSpark(range, customRange, flagged,  2), [range, customRange, flagged]);
+  const redactedSpark = useMemo(() => buildSpark(range, customRange, redacted, 3), [range, customRange, redacted]);
+  const totalSpark    = useMemo(
+    () => blockedSpark.map((b, i) => b + (flaggedSpark[i] ?? 0) + (redactedSpark[i] ?? 0)),
+    [blockedSpark, flaggedSpark, redactedSpark],
+  );
   return (
-    <KpiRailShell columns={3}>
+    <KpiRailShell columns={4}>
       <CompactKpi
         flat
-        title="Total events"
-        value="47"
-        delta="+22.4%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-danger-600)"
-            data={[2, 4, 2, 3, 5, 3, 4, 6, 4, 5, 7, 5, 6, 8, 6, 9, 12, 14]}
-          />
-        }
-      />
-      <CompactKpi
-        flat
-        title="Blocked"
-        value="31"
+        title={`Blocked / ${suffix}`}
+        value={fmtCount(blocked)}
         valueSuffix="66%"
         delta="+18%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-danger-600)"
-            data={[2, 3, 2, 3, 4, 3, 4, 3, 4, 5, 6, 7, 8, 9, 11]}
-          />
-        }
+        deltaNote={note}
+        spark={<CompactSpark colorVar="var(--color-danger-600)"  data={blockedSpark}  />}
       />
       <CompactKpi
         flat
-        title="Flagged"
-        value="14"
+        title={`Flagged / ${suffix}`}
+        value={fmtCount(flagged)}
         valueSuffix="30%"
         delta="+4.2%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-warning-600)"
-            data={[1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 2, 2, 2]}
-          />
-        }
+        deltaNote={note}
+        spark={<CompactSpark colorVar="var(--color-warning-600)" data={flaggedSpark}  />}
+      />
+      <CompactKpi
+        flat
+        title={`Redacted / ${suffix}`}
+        value={fmtCount(redacted)}
+        valueSuffix="4%"
+        delta="+0.6%"
+        deltaNote={note}
+        spark={<CompactSpark colorVar="var(--color-ink-500)"     data={redactedSpark} />}
+      />
+      <CompactKpi
+        flat
+        title={`Total events / ${suffix}`}
+        value={fmtCount(total)}
+        delta="+22.4%"
+        deltaNote={note}
+        spark={<CompactSpark colorVar="var(--color-danger-600)"  data={totalSpark}    />}
       />
     </KpiRailShell>
   );
@@ -198,11 +369,11 @@ function CriticalRiskBanner() {
 
 /* ─── Middle row (Attack categories 2/3 + API key risk scores 1/3) ───────── */
 
-function MiddleRow() {
+function MiddleRow({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <ApiKeyRiskScoresCard />
-      <AttackCategoriesCard />
+      <ApiKeyRiskScoresCard range={range} customRange={customRange} />
+      <AttackCategoriesCard range={range} customRange={customRange} />
     </div>
   );
 }
@@ -216,24 +387,20 @@ type AttackCategory = {
   color: string;
 };
 
+// Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt injection,
+// PII / PHI (combined, since PHI is medical PII), Credential leak. No
+// Content Policy / Encoding / Jailbreak buckets: we don't ship those
+// detectors yet, so don't show counts we can't back.
 const ATTACK_CATEGORIES: AttackCategory[] = [
-  { label: 'Content Policy',        count: 24, color: 'var(--color-chart-2)' },
-  { label: 'PII in Output',         count: 6,  color: 'var(--color-chart-3)' },
-  { label: 'Direct Injection',      count: 5,  color: 'var(--color-chart-1)' },
-  { label: 'Credentials in Output', count: 3,  color: 'var(--color-chart-4)' },
-  { label: 'Encoding Attack',       count: 2,  color: 'var(--color-chart-5)' },
-  { label: 'Jailbreak Attempt',     count: 2,  color: 'var(--color-chart-8)' },
-  { label: 'PHI in Output',         count: 2,  color: 'var(--color-chart-7)' },
+  { label: 'PII / PHI',        count: 8, color: 'var(--color-chart-3)' },
+  { label: 'Prompt injection', count: 5, color: 'var(--color-chart-1)' },
+  { label: 'Credential leak',  count: 3, color: 'var(--color-chart-4)' },
 ];
 
-const ATTACK_CATEGORIES_RANGE_OPTIONS = [
-  { value: '24h', label: '24h' },
-  { value: '7d',  label: '7d'  },
-];
-
-function AttackCategoriesCard() {
-  const [range, setRange] = useState('7d');
-  const max = Math.max(...ATTACK_CATEGORIES.map((c) => c.count));
+function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  const scale = eventsScale(range, customRange);
+  const scaled = ATTACK_CATEGORIES.map((c) => ({ ...c, count: c.count * scale }));
+  const max = Math.max(...scaled.map((c) => c.count));
   return (
     <Card className="min-w-0">
       <CardHeader>
@@ -241,18 +408,10 @@ function AttackCategoriesCard() {
           Attack categories
         </CardTitle>
         <CardDescription>Breakdown by detection type</CardDescription>
-        <CardAction>
-          <SegmentedPill
-            size="sm"
-            options={ATTACK_CATEGORIES_RANGE_OPTIONS}
-            value={range}
-            onValueChange={setRange}
-          />
-        </CardAction>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2">
-        {ATTACK_CATEGORIES.map((cat) => {
+        {scaled.map((cat) => {
           const pct = (cat.count / max) * 100;
           const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
           return (
@@ -276,8 +435,8 @@ function AttackCategoriesCard() {
                   style={{ width: `${pct}%`, backgroundColor: cat.color }}
                 />
               </div>
-              <span className="w-6 shrink-0 font-mono text-sm tabular-nums text-ink-800 text-right">
-                {cat.count}
+              <span className="shrink-0 font-mono text-sm tabular-nums text-ink-800 text-right">
+                {fmtCount(cat.count)}
               </span>
             </div>
           );
@@ -305,12 +464,6 @@ const RISK_ROWS: RiskRow[] = [
   { key: 'sk-cg-…1d4', tier: 'normal',   tierLabel: 'Normal',   events: 1  },
 ];
 
-const RISK_RANGE_OPTIONS = [
-  { value: '1h',  label: '1H'  },
-  { value: '7d',  label: '7D'  },
-  { value: '30d', label: '30D' },
-];
-
 const TIER_BADGE: Record<RiskTier, {
   variant: 'destructive' | 'warning' | 'neutral';
   dot: 'danger' | 'warning' | 'neutral';
@@ -320,14 +473,12 @@ const TIER_BADGE: Record<RiskTier, {
   normal:   { variant: 'neutral',     dot: 'neutral'  },
 };
 
-function ApiKeyRiskScoresCard() {
-  // `range` drives the Events column header label. Mock data is static
-  // so the count itself doesn't recompute — a real implementation would
-  // re-fetch per range. Default `1h` matches the PRD's 1-hour half-life
-  // on the score decay; 7d / 30d show historical event count for the key.
-  const [range, setRange] = useState('1h');
-  const rangeLabel =
-    RISK_RANGE_OPTIONS.find((o) => o.value === range)?.label.toLowerCase() ?? '1h';
+function ApiKeyRiskScoresCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  // `range` drives both the Events column header label AND the per-key
+  // event counts (scaled from the 1h baseline). Sourced from the top-
+  // level page selector now.
+  const scale = eventsScale(range, customRange);
+  const rangeLabel = range;
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -338,29 +489,21 @@ function ApiKeyRiskScoresCard() {
           Elevated keys get enhanced scanning
         </CardDescription>
         <CardAction>
-          <div className="flex items-center gap-2">
-            <Select defaultValue="all">
-              <SelectTrigger
-                size="sm"
-                aria-label="Key filter"
-                className="border-ink-200 bg-white text-ink-900 font-normal"
-              >
-                <SelectValue placeholder="All keys" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All keys</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="elevated">Elevated</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-              </SelectContent>
-            </Select>
-            <SegmentedPill
+          <Select defaultValue="all">
+            <SelectTrigger
               size="sm"
-              options={RISK_RANGE_OPTIONS}
-              value={range}
-              onValueChange={setRange}
-            />
-          </div>
+              aria-label="Key filter"
+              className="border-ink-200 bg-white text-ink-900 font-normal"
+            >
+              <SelectValue placeholder="All keys" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All keys</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="elevated">Elevated</SelectItem>
+              <SelectItem value="normal">Normal</SelectItem>
+            </SelectContent>
+          </Select>
         </CardAction>
       </CardHeader>
 
@@ -399,7 +542,7 @@ function ApiKeyRiskScoresCard() {
                     </Badge>
                   </TableCell>
                   <TableCell className={`text-right whitespace-nowrap font-mono tabular-nums ${row.events === 0 ? 'text-ink-400' : 'text-ink-800'}`}>
-                    {row.events}
+                    {fmtCount(row.events * scale)}
                   </TableCell>
                 </TableRow>
               );
@@ -487,11 +630,13 @@ const ACTION_BADGE: Record<
 // 4-row Detection grid; the firing check(s) for the event type are marked
 // Flag, the rest Pass. Mirrors the Requests modal Security panel so the two
 // surfaces agree on what we detect.
-const DETECTION_CHECKS: { key: EventCategory; label: string }[] = [
-  { key: 'injection',  label: 'Prompt injection' },
-  { key: 'pii',        label: 'PII'              },
-  { key: 'credential', label: 'Credential leak'  },
-  { key: 'phi',        label: 'PHI'              },
+// PHI is medical PII — surfaced as one combined check row rather than
+// two separate rows. A PHI event flags both 'pii' and 'phi' in detail.flagged,
+// so either match firing means the combined row fires.
+const DETECTION_CHECKS: { keys: EventCategory[]; label: string }[] = [
+  { keys: ['injection'],  label: 'Prompt injection' },
+  { keys: ['pii', 'phi'], label: 'PII / PHI'        },
+  { keys: ['credential'], label: 'Credential leak'  },
 ];
 
 // PRD S9 event-schema fields per type. `policy / layer / reason` correspond
@@ -585,6 +730,7 @@ const TYPE_META: Record<
 
 const RANGE_OPTIONS = [
   { value: '1h',  label: '1H'  },
+  { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
 ];
@@ -621,12 +767,17 @@ const EVENT_ROWS: EventRow[] = [
   { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'sk-cg-...2bd591', action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
 ];
 
-function EventsTableSection() {
+function EventsTableSection({
+  range,
+  customRange,
+}: {
+  range: EventsRange;
+  customRange: CustomRange | null;
+}) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
   const [action, setAction] = useState('all');
-  const [range, setRange] = useState('1h');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
   // Row-click drill-in — selectedRow doubles as the dialog `open` signal.
@@ -634,10 +785,11 @@ function EventsTableSection() {
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
-  // Time-range filter is wired but a no-op against the static 17-row sample
-  // (all rows fall inside 1H). Reads as a visible toggle for the demo; real
-  // filtering would compare row timestamps against the chosen window.
-  void range;
+  // Page resets to 1 when the range / filters change so a deep-paged
+  // state doesn't carry over into a window with fewer rows.
+  useEffect(() => {
+    setPage(1);
+  }, [range, customRange, query, type, action]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -649,6 +801,12 @@ function EventsTableSection() {
     });
   }, [query, type, action]);
 
+  // Page-1 row count caps to the 17-row sample (all timestamps inside the
+  // ~40-min window of "now"). The pagination footer total scales with the
+  // selected window so the "of N" reading agrees with the KpiRail's Total
+  // events tile — rows past page 1 are the implied tail we don't render.
+  const scale = eventsScale(range, customRange);
+  const scaledTotal = filtered.length * scale;
   const perPage = Number(rowsPerPage);
   const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -712,13 +870,10 @@ function EventsTableSection() {
           </SelectContent>
         </Select>
 
-        <SegmentedPill
-          className="ml-auto"
-          size="sm"
-          options={RANGE_OPTIONS}
-          value={range}
-          onValueChange={setRange}
-        />
+        <Button variant="outline" size="sm" className="ml-auto">
+          <Download data-icon="inline-start" aria-hidden />
+          Export CSV
+        </Button>
       </div>
 
       <Table>
@@ -797,7 +952,7 @@ function EventsTableSection() {
       </Table>
 
       <TablePaginationFooter
-        total={filtered.length}
+        total={scaledTotal}
         page={page}
         rowsPerPage={rowsPerPage}
         onPageChange={setPage}
@@ -915,13 +1070,13 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             </SectionHeading>
             <div className="rounded-xs border border-ink-200 overflow-hidden">
               {DETECTION_CHECKS.map((check) => {
-                const firing = detail.flagged.includes(check.key);
+                const firing = check.keys.some((k) => detail.flagged.includes(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };
                 return (
                   <DetectorRow
-                    key={check.key}
+                    key={check.keys.join('-')}
                     label={check.label}
                     badge={badge}
                   />
