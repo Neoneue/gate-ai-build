@@ -86,6 +86,16 @@ type PresetRange = 'all' | '24h' | '7d' | '30d';
 type Range = PresetRange | 'custom';
 type CustomRange = { from: Date; to: Date };
 
+/** Page-level metric lens — drives the trend chart + the 3 Top-by-axis
+ *  cards (not the KPI rail, which always shows all metrics). Default is
+ *  `requests` per the 2026-05-14 spec. */
+type Metric = 'spend' | 'requests';
+
+const METRIC_OPTIONS: { value: Metric; label: string }[] = [
+  { value: 'spend',    label: 'Spend' },
+  { value: 'requests', label: 'Requests' },
+];
+
 const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: '24h', label: '24H' },
@@ -147,7 +157,7 @@ export function Activity() {
               }}
             />
             <KpiRail range={range} customRange={customRange} />
-            <SpendTrendCard range={range} customRange={customRange} />
+            <TrendCard range={range} customRange={customRange} />
             <TopByAxisRow range={range} customRange={customRange} />
             <UsageByKey range={range} customRange={customRange} />
           </DashboardChrome>
@@ -408,6 +418,64 @@ const SPEND_TOTALS_7D: Record<Dimension, Record<string, number>> = Object.fromEn
   ]),
 ) as Record<Dimension, Record<string, number>>;
 
+/** Scale a raw per-series split so it sums *exactly* to `target`, absorbing
+ *  the rounding remainder in the largest series. Used to anchor each
+ *  dimension's request totals to TOTAL_7D_BASE_REQUESTS — same single-
+ *  source-of-truth invariant the spend path gets from SPEND_BASE summing
+ *  to $927. */
+function rescaleToTotal(
+  raw: Record<string, number>,
+  target: number,
+): Record<string, number> {
+  const entries = Object.entries(raw);
+  const rawSum = entries.reduce((a, [, v]) => a + v, 0) || 1;
+  const scaled = entries.map(([k, v]) => [k, Math.round((v * target) / rawSum)] as const);
+  const scaledSum = scaled.reduce((a, [, v]) => a + v, 0);
+  // Largest series absorbs the remainder so the total lands exactly.
+  let maxIdx = 0;
+  for (let i = 1; i < scaled.length; i++) if (scaled[i]![1] > scaled[maxIdx]![1]) maxIdx = i;
+  const out: Record<string, number> = {};
+  scaled.forEach(([k, v], i) => { out[k] = i === maxIdx ? v + (target - scaledSum) : v; });
+  return out;
+}
+
+/** Per-series 7d *request* totals per dimension. Mirrors SPEND_TOTALS_7D
+ *  but for the requests metric. Every dimension's totals sum to exactly
+ *  TOTAL_7D_BASE_REQUESTS (= 63,793) via rescaleToTotal, so the chart-sum
+ *  = Total Requests KPI invariant holds under any dimension.
+ *
+ *  Splits are sourced from real per-entity request counts, NOT scaled from
+ *  spend — so the request distribution genuinely differs in shape:
+ *    • model  → from MODEL_ROWS.requests (Haiku leads on requests; Opus,
+ *               which leads on spend, is last — cheap-but-chatty vs.
+ *               expensive-but-sparse).
+ *    • apiKey → from API_KEY_ROWS.requests for the 6 charted Gate keys.
+ *    • provider → authored to be plausible (OpenAI/Anthropic request-heavy,
+ *               request ranking ≠ the spend ranking where Anthropic
+ *               dominates on Opus pricing). */
+const REQUESTS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
+  // MODEL_ROWS.requests: haiku 25030, sonnet 14900, gemini 8720, gpt 6670,
+  // llama 5280, opus 2500 — request ranking is the inverse-ish of spend.
+  model: rescaleToTotal(
+    { sonnet: 14900, gpt: 6670, gemini: 8720, opus: 2500, llama: 5280, haiku: 25030 },
+    TOTAL_7D_BASE_REQUESTS,
+  ),
+  // Authored provider splits: OpenAI + Anthropic carry the request volume,
+  // but the gap is far tighter than the spend gap (where Opus pricing
+  // makes Anthropic dominate). Google/Bedrock/OpenRouter trail.
+  provider: rescaleToTotal(
+    { anthropic: 24000, openai: 21000, google: 9500, bedrock: 6000, openrouter: 3500 },
+    TOTAL_7D_BASE_REQUESTS,
+  ),
+  // API_KEY_ROWS.requests for the 6 charted Gate keys: prod-web 22000,
+  // prod-agent 8400, dev 5893, staging-web 3800, ci-runner 2400,
+  // atlas-eval 1800. prod-web leads on requests (vs prod-agent on spend).
+  apiKey: rescaleToTotal(
+    { 'prod-agent': 8400, 'prod-web': 22000, 'staging-web': 3800, 'atlas-eval': 1800, dev: 5893, 'ci-runner': 2400 },
+    TOTAL_7D_BASE_REQUESTS,
+  ),
+};
+
 /** Distribute `total` across `count` buckets with a mild upward trend
  *  (0.7 → 1.3) and per-bucket noise that mimics real time-series:
  *    ~75% of buckets get moderate variation (±20% around trend)
@@ -539,15 +607,24 @@ function seriesColor(s: { slot: number; color?: string }): string {
   return s.color ?? paletteColor(s.slot);
 }
 
-function SpendTrendCard({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
+function TrendCard({
+  range,
+  customRange,
+}: {
+  range: Range;
+  customRange: CustomRange | null;
+}) {
   const [dimension, setDimension] = useState<Dimension>('model');
+  // Local metric lens — independent from the other three surfaces.
+  const [metric, setMetric] = useState<Metric>('requests');
   const series = SPEND_SERIES[dimension];
+  const isSpend = metric === 'spend';
 
   const data = useMemo(() => {
     const count = getBucketCount(range, customRange);
     const labels = getRangeLabels(range, customRange);
     const scale = effectiveScale(range, customRange);
-    const totals = SPEND_TOTALS_7D[dimension];
+    const totals = (isSpend ? SPEND_TOTALS_7D : REQUESTS_TOTALS_7D)[dimension];
 
     // Distribute each series's range-scaled total across N buckets via
     // distributeSeries (trend + spike/dip noise). Each series gets its
@@ -580,7 +657,7 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
       }
       return row;
     });
-  }, [dimension, range, customRange]);
+  }, [dimension, range, customRange, isSpend]);
 
   const bucketLabel = getBucketLabel(range, customRange);
 
@@ -592,34 +669,47 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
     [series],
   );
 
+  // Metric-aware value formatter — drives the tooltip rows. YAxis ticks use
+  // fmtCompact directly (no decimals; axis space is tight).
+  const valueFormatter = (v: number) =>
+    isSpend ? fmtUsd(v) : fmtInt(Math.round(v));
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Spend over time</CardTitle>
+        <CardTitle>{isSpend ? 'Spend over time' : 'Requests over time'}</CardTitle>
         <CardDescription>
           Stacked by {DIMENSION_OPTIONS.find((d) => d.value === dimension)?.label.toLowerCase()}
           {' · '}{bucketLabel}
         </CardDescription>
         <CardAction>
-          <Select
-            value={dimension}
-            onValueChange={(v: string) => setDimension(v as Dimension)}
-          >
-            <SelectTrigger
-              size="sm"
-              aria-label="Group spend by"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+          <div className="flex items-center gap-2">
+            <Select
+              value={dimension}
+              onValueChange={(v: string) => setDimension(v as Dimension)}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DIMENSION_OPTIONS.map((d) => (
-                <SelectItem key={d.value} value={d.value}>
-                  By {d.label.toLowerCase()}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger
+                size="sm"
+                aria-label="Group spend by"
+                className="border-ink-200 bg-white text-ink-900 font-normal"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DIMENSION_OPTIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    By {d.label.toLowerCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <SegmentedPill
+              size="sm"
+              options={METRIC_OPTIONS}
+              value={metric}
+              onValueChange={(v) => setMetric(v as Metric)}
+            />
+          </div>
         </CardAction>
       </CardHeader>
 
@@ -675,23 +765,29 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
               axisLine={false}
               tickMargin={0}
               width={60}
-              tick={(props: { y?: string | number; payload?: { value?: string | number } }) => (
+              tick={(props: { y?: string | number; payload?: { value?: string | number } }) => {
                 // Left-align every tick at x=0 of the chart container so the
-                // left edges of "$0", "$700", "$2800" all sit at the same x —
-                // and that x lines up with the title + legend left edges.
-                // Default recharts tick is right-anchored to the tick line,
-                // which makes "$0" sit visibly further right than "$2800".
-                <text
-                  x={0}
-                  y={props.y}
-                  dy={4}
-                  fontSize={11}
-                  fill="var(--color-ink-500)"
-                  textAnchor="start"
-                >
-                  ${props.payload?.value}
-                </text>
-              )}
+                // left edges of all ticks sit at the same x — and that x
+                // lines up with the title + legend left edges. Default
+                // recharts tick is right-anchored to the tick line, which
+                // makes "0" sit visibly further right than the max tick.
+                // Spend ticks get a `$` prefix; request ticks use a compact
+                // K/M integer with no currency symbol.
+                const raw = Number(props.payload?.value ?? 0);
+                const label = isSpend ? `$${props.payload?.value}` : fmtCompact(raw);
+                return (
+                  <text
+                    x={0}
+                    y={props.y}
+                    dy={4}
+                    fontSize={11}
+                    fill="var(--color-ink-500)"
+                    textAnchor="start"
+                  >
+                    {label}
+                  </text>
+                );
+              }}
             />
             <ChartTooltip
               cursor={false}
@@ -701,6 +797,24 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
                   labelFormatter={(_, payload) =>
                     String(payload?.[0]?.payload?.date ?? '')
                   }
+                  formatter={(value, name) => {
+                    const cfg = chartConfig[name as string];
+                    return (
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <span className="flex items-center gap-1.5">
+                          <span
+                            aria-hidden
+                            className="size-2.5 rounded-xs shrink-0"
+                            style={{ backgroundColor: cfg?.color }}
+                          />
+                          <span className="text-ink-500">{cfg?.label ?? name}</span>
+                        </span>
+                        <span className="font-mono tabular-nums text-ink-900">
+                          {valueFormatter(Number(value))}
+                        </span>
+                      </div>
+                    );
+                  }}
                 />
               }
             />
@@ -728,6 +842,14 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
 const fmtUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtInt = (n: number) => n.toLocaleString('en-US');
+/** Compact integer for chart axes — K/M abbreviated, no currency symbol.
+ *  Used by the trend chart's YAxis ticks under the `requests` metric. */
+const fmtCompact = (n: number) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000
+      ? `${Math.round(n / 1_000)}K`
+      : `${Math.round(n)}`;
 const fmtTokens = (n: number) =>
   n >= 1_000_000
     ? `${(n / 1_000_000).toFixed(2)}M`
@@ -809,16 +931,36 @@ type TopRow = {
   avatar: React.ReactNode;
 };
 
-function TopList({ title, subtitle, rows }: { title: string; subtitle: string; rows: TopRow[] }) {
+function TopList({
+  title,
+  subtitle,
+  rows,
+  metric,
+  onMetricChange,
+}: {
+  title: string;
+  subtitle: string;
+  rows: TopRow[];
+  metric: Metric;
+  onMetricChange: (m: Metric) => void;
+}) {
   return (
     <Card density="flush">
-      <div className="flex flex-col gap-1 p-4">
-        <h3 className="font-heading text-base leading-snug font-medium text-ink-900 m-0">
-          {title}
-        </h3>
-        <p className="font-sans text-sm/5 tracking-tight text-ink-500 m-0">
-          {subtitle}
-        </p>
+      <div className="flex items-start justify-between gap-2 p-4">
+        <div className="flex flex-col gap-1 min-w-0">
+          <h3 className="font-heading text-base leading-snug font-medium text-ink-900 m-0">
+            {title}
+          </h3>
+          <p className="font-sans text-sm/5 tracking-tight text-ink-500 m-0">
+            {subtitle}
+          </p>
+        </div>
+        <SegmentedPill
+          size="sm"
+          options={METRIC_OPTIONS}
+          value={metric}
+          onValueChange={(v) => onMetricChange(v as Metric)}
+        />
       </div>
       <div className="flex flex-col px-4 pb-4 gap-2.5">
         {rows.map((row) => (
@@ -840,66 +982,108 @@ function TopList({ title, subtitle, rows }: { title: string; subtitle: string; r
   );
 }
 
-function TopByAxisRow({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
+function TopByAxisRow({
+  range,
+  customRange,
+}: {
+  range: Range;
+  customRange: CustomRange | null;
+}) {
   const scale = effectiveScale(range, customRange);
 
-  const modelRows: TopRow[] = useMemo(
-    () =>
-      [...MODEL_ROWS]
-        .map((m) => ({ ...m, tokens: Math.round(m.tokens * scale) }))
-        .sort((a, b) => b.tokens - a.tokens)
-        .slice(0, 4)
-        .map((m) => ({
-          rowKey: m.key,
-          label: m.label,
-          value: fmtTokens(m.tokens),
-          avatar: <VendorAvatar vendor={m.vendor} />,
-        })),
-    [scale],
-  );
+  // Each card owns its own metric lens — no shared state across the three.
+  const [modelMetric, setModelMetric] = useState<Metric>('requests');
+  const [keyMetric, setKeyMetric] = useState<Metric>('requests');
+  const [userMetric, setUserMetric] = useState<Metric>('requests');
 
-  const keyRows: TopRow[] = useMemo(
-    () =>
-      [...API_KEY_ROWS]
-        .map((k) => ({ ...k, requests: Math.round(k.requests * scale) }))
-        .sort((a, b) => b.requests - a.requests)
-        .slice(0, 4)
-        .map((k) => ({
-          rowKey: k.key,
-          label: k.label,
-          labelClassName: 'font-mono tracking-tight',
-          value: fmtInt(k.requests),
-          avatar: <Key aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={2} />,
-        })),
-    [scale],
-  );
+  // Spend → fmtUsd, with 2dp scaled values; requests → fmtInt on rounded
+  // integers. Each card computes from its own metric.
+  const modelRows: TopRow[] = useMemo(() => {
+    const isSpend = modelMetric === 'spend';
+    return [...MODEL_ROWS]
+      .map((m) => ({
+        key: m.key,
+        label: m.label,
+        vendor: m.vendor,
+        axis: isSpend ? m.spend * scale : m.requests * scale,
+      }))
+      .sort((a, b) => b.axis - a.axis)
+      .slice(0, 4)
+      .map((m) => ({
+        rowKey: m.key,
+        label: m.label,
+        value: isSpend ? fmtUsd(+m.axis.toFixed(2)) : fmtInt(Math.round(m.axis)),
+        avatar: <VendorAvatar vendor={m.vendor} />,
+      }));
+  }, [scale, modelMetric]);
+
+  const keyRows: TopRow[] = useMemo(() => {
+    const isSpend = keyMetric === 'spend';
+    return [...API_KEY_ROWS]
+      .map((k) => ({
+        key: k.key,
+        label: k.label,
+        axis: isSpend ? k.spend * scale : k.requests * scale,
+      }))
+      .sort((a, b) => b.axis - a.axis)
+      .slice(0, 4)
+      .map((k) => ({
+        rowKey: k.key,
+        label: k.label,
+        labelClassName: 'font-mono tracking-tight',
+        value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtInt(Math.round(k.axis)),
+        avatar: <Key aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={2} />,
+      }));
+  }, [scale, keyMetric]);
 
   const userRows: TopRow[] = useMemo(() => {
+    const isSpend = userMetric === 'spend';
     // Gate-only — BYOK spend isn't tracked against the workspace total,
     // so users whose keys are all BYOK don't appear here.
-    const agg = new Map<string, { owner: string; spend: number }>();
+    const agg = new Map<string, { owner: string; axis: number }>();
     for (const k of API_KEY_ROWS) {
       if (k.path === 'BYOK') continue;
-      const existing = agg.get(k.owner) ?? { owner: k.owner, spend: 0 };
-      existing.spend += k.spend * scale;
+      const existing = agg.get(k.owner) ?? { owner: k.owner, axis: 0 };
+      existing.axis += (isSpend ? k.spend : k.requests) * scale;
       agg.set(k.owner, existing);
     }
     return [...agg.values()]
-      .sort((a, b) => b.spend - a.spend)
+      .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
       .map((u) => ({
         rowKey: u.owner,
         label: u.owner,
-        value: fmtUsd(+u.spend.toFixed(2)),
+        value: isSpend ? fmtUsd(+u.axis.toFixed(2)) : fmtInt(Math.round(u.axis)),
         avatar: <UserMonogram name={u.owner} tone={USER_TONE[u.owner] ?? 'ink'} />,
       }));
-  }, [scale]);
+  }, [scale, userMetric]);
+
+  const subtitleFor = (m: Metric) =>
+    m === 'spend' ? 'By total spend' : 'By total requests made';
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      <TopList title="Top models"   subtitle="By total tokens used"     rows={modelRows} />
-      <TopList title="Top API keys" subtitle="By total requests made"   rows={keyRows} />
-      <TopList title="Top users"    subtitle="By total spend"    rows={userRows} />
+      <TopList
+        title="Top models"
+        subtitle={subtitleFor(modelMetric)}
+        rows={modelRows}
+        metric={modelMetric}
+        onMetricChange={setModelMetric}
+      />
+      <TopList
+        title="Top API keys"
+        subtitle={subtitleFor(keyMetric)}
+        rows={keyRows}
+        metric={keyMetric}
+        onMetricChange={setKeyMetric}
+      />
+      <TopList
+        title="Top users"
+        subtitle={subtitleFor(userMetric)}
+        rows={userRows}
+        metric={userMetric}
+        onMetricChange={setUserMetric}
+      />
     </div>
   );
 }
@@ -941,6 +1125,24 @@ const API_KEY_ROWS: ApiKeyRow[] = [
   { key: 'atlas-eval',    label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'Gate', requests:  1800, tokensIn:   690_000, tokensOut:   230_000, spend:  42.00 },
   { key: 'shadowfax-rag', label: 'shadowfax-rag', owner: 'Mateus Silva',  path: 'BYOK', requests:  2100, tokensIn: 1_120_000, tokensOut:   280_000, spend:  76.00 },
 ];
+
+// Gateway-id suffix per key — same `name (sk-gw-NNN)` identity form the
+// Events (Security.tsx) and Requests tables render, so the Key column
+// reconciles across all three log surfaces. The seven shared keys carry
+// their Events suffixes verbatim; staging-web / ci-runner / atlas-eval
+// are Activity-only and get their own. Keep in sync if Events changes.
+const KEY_SUFFIX: Record<string, string> = {
+  'prod-web': 'sk-gw-438',
+  'prod-agent': 'sk-gw-930',
+  dev: 'sk-gw-7d2',
+  openclaw: 'sk-gw-1ab',
+  'hermes-agent': 'sk-gw-c60',
+  'nova-chat': 'sk-gw-e15',
+  'shadowfax-rag': 'sk-gw-9f4',
+  'staging-web': 'sk-gw-3c1',
+  'ci-runner': 'sk-gw-a07',
+  'atlas-eval': 'sk-gw-5d8',
+};
 
 type KeySortKey = 'spend' | 'requests' | 'tokens' | 'owner';
 
@@ -1088,10 +1290,14 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         <TableBody>
           {pageRows.map((row) => (
             <TableRow key={row.key} className="hover:bg-transparent">
-              <TableCell className="max-w-[280px] font-mono text-ink-800 tracking-tight">
-                <span className="block truncate" title={row.label}>
-                  {row.label}
-                </span>
+              <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                {/* `name (sk-gw-NNN)` — name in dark ink, the
+                    parenthetical gateway id dimmed to ink-600.
+                    Matches the Events and Requests tables. */}
+                <span className="text-ink-800">{row.label}</span>
+                {KEY_SUFFIX[row.key] ? (
+                  <span className="text-ink-600"> ({KEY_SUFFIX[row.key]})</span>
+                ) : null}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <span className="font-sans text-sm text-ink-800 tracking-snug">
