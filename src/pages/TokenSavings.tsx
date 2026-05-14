@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { CompactSpark, DeltaTag } from '@/components/ui/compact-kpi';
+import { DeltaTag } from '@/components/ui/compact-kpi';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { KpiRail } from '@/components/ui/kpi-rail';
@@ -27,9 +27,6 @@ export function TokenSavings() {
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
-  const [lastSavedAt, setLastSavedAt] = useState<Date>(() => new Date());
-  const markSaved = () => setLastSavedAt(new Date());
-
   return (
     <DashboardChrome
       breadcrumbCurrent="Token Savings"
@@ -38,22 +35,19 @@ export function TokenSavings() {
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
-      <PageHeader lastSavedAt={lastSavedAt} />
+      <PageHeader />
       <KpiRailSection />
-      <MechanismGrid onSaved={markSaved} />
+      <MechanismGrid />
     </DashboardChrome>
   );
 }
 
 /* ─── Page header ───────────────────────────────────────────────────── */
 
-function PageHeader({ lastSavedAt }: { lastSavedAt: Date }) {
+function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-6">
-        <PageTitle>Token Savings</PageTitle>
-        <Eyebrow>Saved · {formatClockTime(lastSavedAt)}</Eyebrow>
-      </div>
+      <PageTitle>Token Savings</PageTitle>
       <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
         Cache, compress and deduplicate to spend less per request. Every saved token is anchored on Constellation DE for verifiable cost reporting.
       </p>
@@ -61,23 +55,14 @@ function PageHeader({ lastSavedAt }: { lastSavedAt: Date }) {
   );
 }
 
-function formatClockTime(d: Date) {
-  const hours24 = d.getHours();
-  const period = hours24 >= 12 ? 'PM' : 'AM';
-  const h12 = hours24 % 12 || 12;
-  const minutes = d.getMinutes().toString().padStart(2, '0');
-  return `${h12.toString().padStart(2, '0')}:${minutes} ${period}`;
-}
-
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
 function KpiRailSection() {
   return (
-    <KpiRail columns={4}>
+    <KpiRail columns={3}>
       <KpiTile title="Total saved" value="$0" caption="No savings yet" />
-      <KpiTile title="Caching" value="$0" caption="No hits yet" />
-      <KpiTile title="Compression" value="$0" caption="No compression yet" />
-      <SparkTile />
+      <KpiTile title="Caching" value="0%" caption="No hits yet" />
+      <KpiTile title="Compression" value="0%" caption="No compression yet" />
     </KpiRail>
   );
 }
@@ -126,25 +111,12 @@ function KpiTile({
   );
 }
 
-function SparkTile() {
-  return (
-    <div className="flex flex-col gap-2 bg-white p-4">
-      <Eyebrow as="div">Last 30 days</Eyebrow>
-      <CompactSpark
-        colorVar="var(--color-ink-500)"
-        data={Array(14).fill(0)}
-        endDot={false}
-      />
-    </div>
-  );
-}
-
 /* ─── Mechanism cards ───────────────────────────────────────────────── */
 
-function MechanismGrid({ onSaved }: { onSaved: () => void }) {
+function MechanismGrid() {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <CachingCard onSaved={onSaved} />
+      <CachingCard />
       <CompressionCard />
     </div>
   );
@@ -184,7 +156,7 @@ const TTL_OPTIONS = [
   { value: '24h', label: '24h' },
 ] as const;
 
-function CachingCard({ onSaved }: { onSaved: () => void }) {
+function CachingCard() {
   const [enabled, setEnabled] = useState(true);
   const [ttl, setTtl] = useState('1h');
 
@@ -210,7 +182,6 @@ function CachingCard({ onSaved }: { onSaved: () => void }) {
             onCheckedChange={(next) => {
               setEnabled(next);
               toast.success('Response caching saved');
-              onSaved();
             }}
             className="mt-1 shrink-0"
           />
@@ -232,7 +203,6 @@ function CachingCard({ onSaved }: { onSaved: () => void }) {
             onValueChange={(next) => {
               setTtl(next);
               toast.success('Default TTL saved');
-              onSaved();
             }}
           >
             <SelectTrigger className="w-24 shrink-0">
