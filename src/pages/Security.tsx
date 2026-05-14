@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DeltaTag } from '@/components/ui/compact-kpi';
-import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
   DialogScrollBody,
@@ -774,10 +773,12 @@ const ACTION_BADGE: Record<
 // PHI is medical PII — surfaced as one combined check row rather than
 // two separate rows. A PHI event flags both 'pii' and 'phi' in detail.flagged,
 // so either match firing means the combined row fires.
-const DETECTION_CHECKS: { keys: EventCategory[]; label: string }[] = [
-  { keys: ['injection'],  label: 'Prompt injection' },
-  { keys: ['pii', 'phi'], label: 'PII / PHI'        },
-  { keys: ['credential'], label: 'Credential leak'  },
+// `passText` is the description shown when a check does NOT fire. Kept plain
+// and honest — no fabricated rule counts (cf. Requests' "0/247 matched").
+const DETECTION_CHECKS: { keys: EventCategory[]; label: string; passText: string }[] = [
+  { keys: ['injection'],  label: 'Prompt injection', passText: 'No injection patterns detected' },
+  { keys: ['pii', 'phi'], label: 'PII / PHI',        passText: 'No PII or PHI detected'         },
+  { keys: ['credential'], label: 'Credential leak',  passText: 'No credentials detected'        },
 ];
 
 // PRD S9 event-schema fields per type. `policy / layer / reason` correspond
@@ -806,7 +807,7 @@ const TYPE_DETAILS: Record<
   }
 > = {
   injection: {
-    detection: 'Direct prompt injection attempt',
+    detection: 'Prompt injection attempt',
     flagged: ['injection'],
     policy: 'Prompt injection (Strict)',
     layer: 'Layer 1 · Regex',
@@ -1138,7 +1139,7 @@ function ThreatEventDetailDialog({
 }) {
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
-      <DialogScrollContent className="sm:max-w-3xl">
+      <DialogScrollContent className="sm:max-w-[640px]">
         {selection ? <ThreatEventDetailBody row={selection} /> : null}
       </DialogScrollContent>
     </Dialog>
@@ -1162,33 +1163,20 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
         <DialogTitleBlock
           titleAriaLabel={`${typeMeta.label} event ${requestId}`}
           icon={<TypeIcon className="size-5" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />}
-          meta={
-            <span className="font-mono tracking-snug">
-              {row.time} UTC · part of conversation{' '}
-              <TextLink
-                onClick={openConversation}
-                aria-label={`Open conversation ${conversationId}`}
-              >
-                {conversationId}
-              </TextLink>
-            </span>
-          }
         >
-          {typeMeta.label}
-          <span className="text-ink-500"> · </span>
           {detail.detection}
         </DialogTitleBlock>
       </DialogScrollHeader>
 
       <DialogScrollBody>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           {/* Evidence — prompt + response. Reading flow follows Lakera/Helicone:
               content first, then reasoning, then metadata. Plain labeled
               blocks rather than chat bubbles with role chrome — this is
               captured evidence, not a conversation. The section heading
               "Evidence" frames the content; per-block "User"/"Assistant"
               labels are extra noise at single-event-detail scale. */}
-          <section className="flex flex-col gap-3">
+          <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
                 <FileText className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
@@ -1196,89 +1184,107 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               </span>
             </SectionHeading>
             <div className="flex flex-col gap-3">
-              <div className="rounded-sm border border-ink-200 px-3 py-2 text-sm text-ink-900 text-pretty">
+              <div className="rounded-md border border-ink-200 px-4 py-3 text-sm text-ink-900 text-pretty">
                 {detail.samplePrompt}
               </div>
               {detail.sampleResponse !== null ? (
-                <div className="rounded-sm border border-ink-200 px-3 py-2 text-sm text-ink-900 text-pretty">
+                <div className="rounded-md border border-ink-200 px-4 py-3 text-sm text-ink-900 text-pretty">
                   {detail.sampleResponse}
                 </div>
               ) : null}
             </div>
           </section>
 
-          {/* Detection — per-detector verdict list. Policy that fired
-              migrated to the Context section below as a ContextRow so it
-              joins the metadata block instead of orphan-bannering here. */}
-          <section className="flex flex-col gap-3">
+          {/* Detection — per-detector verdict list. Mirrors the Requests
+              modal Security panel: each check is its own bordered card with
+              title + description + verdict badge. */}
+          <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
                 Detection
               </span>
             </SectionHeading>
-            <div className="rounded-xs border border-ink-200 overflow-hidden">
+            <div className="flex flex-col gap-2">
               {DETECTION_CHECKS.map((check) => {
                 const firing = check.keys.some((k) => detail.flagged.includes(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };
                 return (
-                  <DetectorRow
+                  <div
                     key={check.keys.join('-')}
-                    label={check.label}
-                    badge={badge}
-                  />
+                    className="flex items-start justify-between gap-3 rounded-md border border-ink-200 p-4"
+                  >
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="font-sans text-sm font-medium text-ink-900">
+                        {check.label}
+                      </span>
+                      <span className="font-sans text-xs text-ink-500 text-pretty">
+                        {firing ? detail.reason : check.passText}
+                      </span>
+                    </div>
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                  </div>
                 );
               })}
             </div>
           </section>
 
-          {/* Request — info about the request that produced this event,
-              per CTO direction (2026-05-13): "should we use that space for
+          {/* Request — provenance of the event: when it happened, which
+              conversation it belongs to, and which API key was in use.
+              Per CTO direction (2026-05-13): "should we use that space for
               info about the request/conversation?" Model / Provider /
-              Endpoint dropped because — same CTO sentence — "the model
-              provider has nothing to do with the prompt injection attempt."
-              API key stays since it's actor identity, not model routing. */}
-          <section className="flex flex-col gap-3">
+              Endpoint dropped — "the model provider has nothing to do with
+              the prompt injection attempt." */}
+          <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
                 <ArrowLeftRight className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
                 Request
               </span>
             </SectionHeading>
-            <DetailList>
+            <DetailList className="rounded-md">
               <DetailRow
-                label="Status"
+                label="Timestamp"
                 value={
-                  <Badge variant={row.status === 'error' ? 'destructive' : 'success'}>
-                    {row.status}
-                  </Badge>
-                }
-              />
-              <DetailRow
-                label="Latency"
-                value={
-                  <span className="font-mono text-sm text-ink-900 tabular-nums tracking-snug">
-                    {row.latency}
-                  </span>
-                }
-              />
-              <DetailRow
-                label="Tokens"
-                value={
-                  <span className="font-mono text-sm text-ink-900 tabular-nums tracking-snug">
-                    {row.inTokens} in <span className="text-ink-500">·</span> {row.outTokens} out
+                  <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
+                    {row.time}
                   </span>
                 }
               />
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-sans text-sm text-ink-900">
-                    Turn {row.turn} of {row.totalTurns}
+                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <TextLink
+                      onClick={openConversation}
+                      aria-label={`Open conversation ${conversationId}`}
+                    >
+                      {conversationId}
+                    </TextLink>
                   </span>
                 }
+              />
+              <DetailRow
+                label="API key"
+                value={(() => {
+                  // Same name/paren split as the events table Key cell —
+                  // name in dark ink, the (sk-gw-NNN) string dimmed.
+                  const parenIdx = row.key.indexOf(' (');
+                  return (
+                    <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                      {parenIdx === -1 ? (
+                        <span className="text-ink-900">{row.key}</span>
+                      ) : (
+                        <>
+                          <span className="text-ink-900">{row.key.slice(0, parenIdx)}</span>
+                          <span className="text-ink-500">{row.key.slice(parenIdx)}</span>
+                        </>
+                      )}
+                    </span>
+                  );
+                })()}
               />
             </DetailList>
           </section>
@@ -1286,7 +1292,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
       </DialogScrollBody>
 
       <DialogScrollFooter>
-        <CopyButton mode="label" size="sm" text="Copy ID" value={requestId} label="request ID" />
         <Button variant="outline" size="sm" onClick={openConversation}>
           Open conversation
           <ExternalLink data-icon="inline-end" aria-hidden />
@@ -1300,17 +1305,3 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   );
 }
 
-function DetectorRow({
-  label,
-  badge,
-}: {
-  label: string;
-  badge: { variant: 'destructive' | 'warning' | 'info' | 'success'; label: string };
-}) {
-  return (
-    <div className="grid grid-cols-[1fr_auto] gap-4 items-center py-3 px-4 border-b border-ink-200 last:border-b-0">
-      <span className="font-sans text-sm text-ink-900">{label}</span>
-      <Badge variant={badge.variant}>{badge.label}</Badge>
-    </div>
-  );
-}
