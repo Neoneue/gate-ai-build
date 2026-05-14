@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { BookOpen, Download, KeyRound, MoreHorizontal, Plus, Search, ShieldOff } from 'lucide-react';
+import { BookOpen, KeyRound, MoreHorizontal, Plus, ShieldOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,13 +22,9 @@ import {
   type CodeLine,
 } from '@/components/ui/code-card';
 import { CopyButton } from '@/components/ui/copy-button';
-import { DeltaTag } from '@/components/ui/compact-kpi';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Input } from '@/components/ui/input';
-import { KpiRail } from '@/components/ui/kpi-rail';
 import { Label } from '@/components/ui/label';
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
 import { PageTitle } from '@/components/ui/page-title';
@@ -129,8 +125,6 @@ export function ApiKeys() {
       revoked: true,
     },
   ]);
-  const [query, setQuery] = useState('');
-
   const handleCreate = (input: { name: string; spendCap: string; period: SpendCapPeriod }) => {
     const suffix = randomHex(4);
     const idCore = randomHex(8);
@@ -153,12 +147,6 @@ export function ApiKeys() {
     setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, revoked: true } : k)));
   };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return keys;
-    return keys.filter((k) => k.name.toLowerCase().includes(q) || k.masked.toLowerCase().includes(q));
-  }, [keys, query]);
-
   return (
     <DashboardChrome
       breadcrumbCurrent="API Access"
@@ -166,19 +154,14 @@ export function ApiKeys() {
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
-      hideDocsButton
     >
       <PageHeader onCreate={() => setCreateOpen(true)} />
-      <KpiSummaryRail
-        activeKeys={keys.filter((k) => !k.revoked).length}
-        totalKeys={keys.length}
-      />
-      <UsageInfo />
       {keys.length === 0 ? (
         <KeysEmptyState onCreate={() => setCreateOpen(true)} />
       ) : (
-        <KeysTable rows={filtered} query={query} onQueryChange={setQuery} onRevoke={handleRevoke} />
+        <KeysTable rows={keys} onRevoke={handleRevoke} />
       )}
+      <UsageInfo />
       <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
     </DashboardChrome>
   );
@@ -194,78 +177,11 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline" onClick={openDocs}>
-          <BookOpen data-icon="inline-start" aria-hidden />
-          Key docs
-        </Button>
         <Button onClick={onCreate}>
           <Plus data-icon="inline-start" aria-hidden />
           Create key
         </Button>
       </div>
-    </div>
-  );
-}
-
-function KpiSummaryRail({ activeKeys, totalKeys }: { activeKeys: number; totalKeys: number }) {
-  return (
-    <KpiRail columns={4}>
-      <KpiTile
-        title="Active keys"
-        value={String(activeKeys)}
-        valueSuffix={`/ ${totalKeys}`}
-      />
-      <KpiTile
-        title="Requests / 24H"
-        value="47"
-        delta="+33.3%"
-      />
-      <KpiTile
-        title="Combined spend"
-        value="$1.42"
-        delta="-49%"
-      />
-      <KpiTile
-        title="Oldest key age"
-        value="1 day"
-      />
-    </KpiRail>
-  );
-}
-
-function KpiTile({
-  title,
-  liveDot,
-  value,
-  valueSuffix,
-  delta,
-  spark,
-}: {
-  title: string;
-  liveDot?: boolean;
-  value: string;
-  valueSuffix?: string;
-  delta?: string;
-  spark?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-white p-4">
-      <div className="flex items-center gap-2">
-        {liveDot ? (
-          <span aria-hidden className="size-2 rounded-full bg-success-600 shrink-0" />
-        ) : null}
-        <Eyebrow as="div">{title}</Eyebrow>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <HeroNumeric>{value}</HeroNumeric>
-        {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-ink-500 tracking-tight">
-            {valueSuffix}
-          </span>
-        ) : null}
-        {delta ? <DeltaTag delta={delta} /> : null}
-      </div>
-      {spark ? <div className="mt-1">{spark}</div> : null}
     </div>
   );
 }
@@ -469,45 +385,13 @@ function UsageInfo() {
 
 function KeysTable({
   rows,
-  query,
-  onQueryChange,
   onRevoke,
 }: {
   rows: ApiKeyRow[];
-  query: string;
-  onQueryChange: (next: string) => void;
   onRevoke: (id: string) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h3 className="font-sans text-lg font-medium text-ink-900 m-0">
-        API keys
-      </h3>
-      <Card density="flush">
-      {/* Toolbar — shape lifted from CMP-013 Requests. Single-row,
-          search left, Export right via ml-auto. */}
-      <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            aria-hidden
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
-            strokeWidth={1.75}
-          />
-          <Input
-            size="sm"
-            placeholder="Search by name or prefix…"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            className="pl-9"
-            aria-label="Search keys by name or prefix"
-          />
-        </div>
-        <Button variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden />
-          Export CSV
-        </Button>
-      </div>
-
+    <Card density="flush">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -581,8 +465,7 @@ function KeysTable({
           ))}
         </TableBody>
       </Table>
-      </Card>
-    </section>
+    </Card>
   );
 }
 
@@ -625,12 +508,9 @@ function CreateKeyDialog({
           className="flex flex-col gap-4"
         >
           <DialogHeader>
-            <div className="flex items-center gap-2">
-              <KeyRound className="size-4 text-ink-500" aria-hidden strokeWidth={1.75} />
-              <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
-                Create API key
-              </DialogTitle>
-            </div>
+            <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+              Create API key
+            </DialogTitle>
             <DialogDescription>
               Keys inherit all model access by default. Scope can be restricted after creation.
             </DialogDescription>

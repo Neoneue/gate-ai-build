@@ -20,10 +20,14 @@ export function DeltaTag({
   delta,
   note,
   inverted = false,
+  size = 'sm',
 }: {
   delta: string;
   note?: string;
   inverted?: boolean;
+  /** `sm` (default) for dense KPI rows; `md` bumps the value, note, and
+   *  arrow one step up for hero-scale cards. */
+  size?: 'sm' | 'md';
 }) {
   const trimmed = delta.trim();
   const negative = trimmed.startsWith('-');
@@ -34,16 +38,22 @@ export function DeltaTag({
   // arrow on its own, but the explicit sign reinforces the magnitude
   // direction and is the convention readers expect for tabular deltas.
   const display = trimmed;
+  const iconCls = size === 'md' ? 'size-4' : 'size-3.5';
+  const valueCls = size === 'md' ? 'text-sm' : 'text-xs/4';
+  const noteCls = size === 'md' ? 'text-sm' : 'text-xs';
   return (
     <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
-        <Icon className="size-3.5" />
-        <span className="font-mono text-xs/4 font-medium tabular-nums tracking-tight">
+        <Icon className={iconCls} />
+        <span className={`font-mono ${valueCls} font-medium tabular-nums tracking-tight`}>
           {display}
         </span>
       </span>
       {note ? (
-        <span className="text-xs tracking-tight text-ink-500">{note}</span>
+        <span className={`${noteCls} tracking-tight text-ink-500`}>
+          <span aria-hidden> · </span>
+          {note}
+        </span>
       ) : null}
     </div>
   );

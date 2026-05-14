@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Activity, ArrowRight, Download, Search, TriangleAlert, Wrench } from 'lucide-react';
+import { Activity, ArrowRight, Search, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { Input } from '@/components/ui/input';
@@ -107,12 +106,12 @@ function KpiRail() {
       <CompactKpi
         flat
         title="Conversations"
-        value="18,210"
+        value="100"
         delta="+6.4%"
         spark={
           <CompactSpark
             colorVar="var(--color-chart-7)"
-            data={[1740, 2120, 1680, 2040, 2380, 1820, 2240, 1960, 2230]}
+            data={[10, 12, 9, 11, 13, 10, 12, 11, 12]}
           />
         }
       />
@@ -159,6 +158,18 @@ const STATUS_BADGE: Record<
   failed:    { variant: 'destructive', dot: 'danger',  label: 'failed' },
 };
 
+type ModelId =
+  | 'claude-opus-4-7'
+  | 'claude-sonnet-4-5'
+  | 'claude-haiku-4-5'
+  | 'gpt-5'
+  | 'gpt-4o'
+  | 'gpt-4o-mini'
+  | 'gemini-3-pro'
+  | 'gemini-3-flash'
+  | 'gemini-3-flash-lite'
+  | 'llama-3-3-70b';
+
 type ConversationRow = {
   title: string;
   conversationId: string;
@@ -166,6 +177,7 @@ type ConversationRow = {
   turns: number;
   reqs: number;
   vendors: Vendor[];
+  models: ModelId[];
   tokens: string;
   cost: string;
   status: ConversationStatus;
@@ -175,25 +187,31 @@ type ConversationRow = {
 };
 
 const CONVERSATION_ROWS: ConversationRow[] = [
-  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'service-eu-payments',  turns:  3, reqs:  7, vendors: ['anthropic'],                      tokens: '4,051',   cost: '$0.1042', status: 'active',    updated: '14:28:04', duration: '3m 53s'  },
-  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'kira.tan@acme.io',     turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            tokens: '8,114',   cost: '$0.4218', status: 'active',    updated: '14:22:11', duration: '5m 12s'  },
-  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'service-kyc-bot',      turns:  3, reqs:  4, vendors: ['google'],                         tokens: '2,104',   cost: '$0.3104', status: 'active',    updated: '14:15:22', duration: '0m 47s'  },
-  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'mateus.silva@ebux.com',turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], tokens: '52,810',  cost: '$0.5841', status: 'completed', updated: '14:02:48', duration: '14m 06s' },
-  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'service.incident-bot', turns:  4, reqs:  7, vendors: ['anthropic'],                      tokens: '3,402',   cost: '$0.1102', status: 'active',    updated: '13:48:33', duration: '2m 18s'  },
-  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'service-support-bot',  turns: 14, reqs: 32, vendors: ['openai'],                         tokens: '12,608',  cost: '$0.0812', status: 'failed',    updated: '13:36:10', duration: '8m 41s'  },
-  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'pulja.shah@acme.io',   turns: 12, reqs: 26, vendors: ['anthropic'],                      tokens: '102,041', cost: '$0.1402', status: 'completed', updated: '13:18:55', duration: '11m 27s' },
+  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 tokens: '4,051',   cost: '$0.1042', status: 'active',    updated: '14:28:04', duration: '3m 53s'  },
+  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         tokens: '8,114',   cost: '$0.4218', status: 'active',    updated: '14:22:11', duration: '5m 12s'  },
+  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    tokens: '2,104',   cost: '$0.3104', status: 'active',    updated: '14:15:22', duration: '0m 47s'  },
+  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'prod-web',   turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], models: ['claude-opus-4-7', 'gpt-5', 'llama-3-3-70b'],         tokens: '52,810',  cost: '$0.5841', status: 'completed', updated: '14:02:48', duration: '14m 06s' },
+  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'prod-agent', turns:  4, reqs:  7, vendors: ['anthropic'],                      models: ['claude-haiku-4-5'],                                  tokens: '3,402',   cost: '$0.1102', status: 'active',    updated: '13:48:33', duration: '2m 18s'  },
+  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'prod-web',   turns: 14, reqs: 32, vendors: ['openai'],                         models: ['gpt-4o-mini'],                                       tokens: '12,608',  cost: '$0.0812', status: 'failed',    updated: '13:36:10', duration: '8m 41s'  },
+  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 tokens: '102,041', cost: '$0.1402', status: 'completed', updated: '13:18:55', duration: '11m 27s' },
 ];
 
 // Synthetic total — held at module scope so pagination math reconciles
-// with the KPI rail's "Conversations: 18,210" figure.
-const CONVERSATIONS_TOTAL = 18210;
+// with the KPI rail's "Conversations: 100" figure.
+const CONVERSATIONS_TOTAL = 100;
 
 function ConversationsTableSection() {
-  const [scope, setScope] = useState('all');
-  const [user, setUser] = useState('all');
   const [keyId, setKeyId] = useState('all');
+  const [model, setModel] = useState('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
+  const isFiltered = keyId !== 'all' || model !== 'all';
+  const visibleRows = CONVERSATION_ROWS.filter((row) => {
+    if (keyId !== 'all' && row.initiator !== keyId) return false;
+    if (model !== 'all' && !row.models.includes(model as ModelId)) return false;
+    return true;
+  });
+  const paginationTotal = isFiltered ? visibleRows.length : CONVERSATIONS_TOTAL;
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
   const [selectedRow, setSelectedRow] = useState<ConversationRow | null>(null);
@@ -241,35 +259,6 @@ function ConversationsTableSection() {
             className="pl-8 placeholder:text-ink-500"
           />
         </div>
-        <Select value={scope} onValueChange={setScope}>
-          <SelectTrigger
-            size="sm"
-            aria-label="Conversation scope"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
-          >
-            <SelectValue placeholder="Scope" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All conversations</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={user} onValueChange={setUser}>
-          <SelectTrigger
-            size="sm"
-            aria-label="User"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
-          >
-            <SelectValue placeholder="User" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All users</SelectItem>
-            <SelectItem value="service-eu-payments">service-eu-payments</SelectItem>
-            <SelectItem value="kira.tan@acme.io">kira.tan@acme.io</SelectItem>
-            <SelectItem value="mateus.silva@ebux.com">mateus.silva@ebux.com</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={keyId} onValueChange={setKeyId}>
           <SelectTrigger
             size="sm"
@@ -282,13 +271,31 @@ function ConversationsTableSection() {
             <SelectItem value="all">All keys</SelectItem>
             <SelectItem value="prod-web">prod-web</SelectItem>
             <SelectItem value="prod-agent">prod-agent</SelectItem>
-            <SelectItem value="dev">dev</SelectItem>
+            <SelectItem value="test-key">test-key</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden />
-          Export CSV
-        </Button>
+        <Select value={model} onValueChange={setModel}>
+          <SelectTrigger
+            size="sm"
+            aria-label="Model"
+            className="border-ink-200 bg-white text-ink-900 font-normal"
+          >
+            <SelectValue placeholder="Model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All models</SelectItem>
+            <SelectItem value="claude-opus-4-7">Claude Opus 4.7</SelectItem>
+            <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5</SelectItem>
+            <SelectItem value="claude-haiku-4-5">Claude Haiku 4.5</SelectItem>
+            <SelectItem value="gpt-5">GPT-5</SelectItem>
+            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+            <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
+            <SelectItem value="gemini-3-pro">Gemini 3 Pro</SelectItem>
+            <SelectItem value="gemini-3-flash">Gemini 3 Flash</SelectItem>
+            <SelectItem value="gemini-3-flash-lite">Gemini 3 Flash Lite</SelectItem>
+            <SelectItem value="llama-3-3-70b">Llama 3.3 70B</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -296,7 +303,7 @@ function ConversationsTableSection() {
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="whitespace-nowrap">Conversation</TableHead>
-            <TableHead className="whitespace-nowrap">Initiator</TableHead>
+            <TableHead className="whitespace-nowrap">Key name</TableHead>
             <TableHead className="text-right whitespace-nowrap">Turns</TableHead>
             <TableHead className="text-right whitespace-nowrap">Reqs</TableHead>
             <TableHead className="whitespace-nowrap">Models</TableHead>
@@ -306,7 +313,7 @@ function ConversationsTableSection() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {CONVERSATION_ROWS.map((row) => {
+          {visibleRows.map((row) => {
             return (
               <TableRow
                 key={row.conversationId}
@@ -368,7 +375,7 @@ function ConversationsTableSection() {
       </Table>
 
       <TablePaginationFooter
-        total={CONVERSATIONS_TOTAL}
+        total={paginationTotal}
         page={page}
         rowsPerPage={rowsPerPage}
         onPageChange={setPage}
