@@ -200,9 +200,11 @@ function LimitsSection({
                   >
                     {scopeName(limit.scope)}
                   </span>
-                  <span className="font-mono text-xs text-ink-500 truncate">
-                    {findScope(limit.scope)?.masked ?? ''}
-                  </span>
+                  {findScope(limit.scope)?.masked ? (
+                    <span className="font-mono text-xs text-ink-500 truncate">
+                      {findScope(limit.scope)!.masked}
+                    </span>
+                  ) : null}
                 </div>
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
@@ -314,11 +316,13 @@ const LIMIT_PERIODS = [
   { value: '1mo', label: '1 month' },
 ] as const;
 
-// Scope options — the workspace's *active* API keys. Key identities
-// mirror the seed list in ApiKeys.tsx (the canonical key source); keep
-// in sync if that seed changes. Revoked keys (e.g. test-key) are
-// intentionally excluded — a limit on a revoked key is meaningless.
+// Scope options — "Org-wide" plus the workspace's *active* API keys.
+// Key identities mirror the seed list in ApiKeys.tsx (the canonical key
+// source); keep in sync if that seed changes. Revoked keys (e.g.
+// test-key) are intentionally excluded — a limit on a revoked key is
+// meaningless.
 const LIMIT_SCOPES = [
+  { value: 'org', name: 'Org-wide (all keys)', masked: null },
   { value: 'sk-gw-c4aeb3a8', name: 'prod-web', masked: 'sk-gw-…c4ae' },
   { value: 'sk-gw-9f3064ce', name: 'prod-agent', masked: 'sk-gw-…9f30' },
 ] as const;
@@ -357,7 +361,7 @@ function CreateLimitDialog({
   const [type, setType] = useState('spend');
   const [threshold, setThreshold] = useState('');
   const [period, setPeriod] = useState('1d');
-  const [scope, setScope] = useState('sk-gw-c4aeb3a8');
+  const [scope, setScope] = useState('org');
 
   const thresholdNum = Number(threshold);
   const canSubmit =
@@ -388,7 +392,7 @@ function CreateLimitDialog({
           setType('spend');
           setThreshold('');
           setPeriod('1d');
-          setScope('sk-gw-c4aeb3a8');
+          setScope('org');
         }
       }}
     >
@@ -485,12 +489,16 @@ function CreateLimitDialog({
                   <SelectItem
                     key={s.value}
                     value={s.value}
-                    className="h-auto py-2 items-start"
+                    className={s.masked ? 'h-auto py-2 items-start' : undefined}
                   >
-                    <span className="flex flex-col">
-                      <span className="font-sans text-sm text-ink-900">{s.name}</span>
-                      <span className="font-mono text-xs text-ink-500">{s.masked}</span>
-                    </span>
+                    {s.masked ? (
+                      <span className="flex flex-col">
+                        <span className="font-sans text-sm text-ink-900">{s.name}</span>
+                        <span className="font-mono text-xs text-ink-500">{s.masked}</span>
+                      </span>
+                    ) : (
+                      s.name
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
