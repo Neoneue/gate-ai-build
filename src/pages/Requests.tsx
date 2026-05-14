@@ -5,7 +5,6 @@ import {
   Braces,
   ChevronDown,
   Download,
-  ExternalLink,
   Info,
   Search,
   Sparkles,
@@ -19,7 +18,6 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
@@ -930,7 +928,6 @@ function RequestsTableSection({
   range: RangeKey;
   customRange: CustomRange | null;
 }) {
-  const navigate = useNavigate();
   // Looked up per render. Pill change → new rows + new total; page resets
   // so a deep-paged All state doesn't carry over into a 24H view that
   // doesn't have those pages. When the user picks a custom range, the
@@ -1197,17 +1194,12 @@ function RequestsTableSection({
                     </RowActionButton>
                   </TableCell>
                   <TableCell className="max-w-[200px]">
-                    <TextLink
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/conversations?open=${row.conversation}`);
-                      }}
+                    <span
                       title={row.conversation}
-                      aria-label={`Open conversation ${row.conversation}`}
-                      className="font-mono text-sm tabular-nums tracking-tight truncate block max-w-full text-left"
+                      className="font-mono text-sm text-ink-900 tabular-nums tracking-tight truncate block max-w-full"
                     >
                       {row.conversation}
-                    </TextLink>
+                    </span>
                   </TableCell>
                   <TableCell className="max-w-[140px] font-mono text-ink-800 tracking-tight">
                     <span className="block truncate" title={row.keyId}>
@@ -1332,17 +1324,6 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               {responseLabel(row)}
             </Badge>
           }
-          meta={
-            <span className="font-mono tracking-snug">
-              {row.day}, 2026 · {row.time} UTC · part of conversation{' '}
-              <TextLink
-                onClick={openConversation}
-                aria-label={`Open conversation ${row.conversation}`}
-              >
-                {row.conversation}
-              </TextLink>
-            </span>
-          }
         >
           {requestId}
         </DialogTitleBlock>
@@ -1446,57 +1427,8 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           </TabsContent>
         </Tabs>
       </DialogScrollBody>
-
-      <DialogScrollFooter>
-        {activeTab === 'audit' ? (
-          <>
-            <CopyButton
-              mode="label"
-              size="sm"
-              text="Copy Proof"
-              value={`proof_${requestId}`}
-              label="audit proof"
-            />
-            <Button variant="default" size="sm">
-              View on DE
-              <ExternalLink data-icon="inline-end" aria-hidden />
-            </Button>
-          </>
-        ) : (
-          <>
-            <CopyButton
-              mode="label"
-              size="sm"
-              text="Copy ID"
-              value={requestId}
-              label="request ID"
-            />
-            <Button variant="default" size="sm" onClick={openConversation}>
-              Open Conversation
-              <ExternalLink data-icon="inline-end" aria-hidden />
-            </Button>
-          </>
-        )}
-      </DialogScrollFooter>
     </>
   );
-}
-
-/** Audit verdict for the KPI rail tile. Mirrors the row's guardrail
- *  action (the gateway-action axis is what the audit verdict reports):
- *  - `block`  guardrail -> "blocked"  (destructive)
- *  - `flag`   guardrail -> "flagged"  (warning)
- *  - `redact` guardrail -> "redacted" (neutral ink)
- *  - `allow`  guardrail -> "pass"     (success). Pure-provider errors
- *     still show "pass" here because the gateway's audit succeeded —
- *     the failure was upstream, not a policy violation. */
-function auditVerdict(row: RequestRow): { label: string; toneCls: string } {
-  switch (row.guardrail) {
-    case 'block':  return { label: 'blocked',  toneCls: 'text-destructive' };
-    case 'flagged':  return { label: 'flagged',  toneCls: 'text-warning-700' };
-    case 'redacted': return { label: 'redacted', toneCls: 'text-ink-700' };
-    case 'allow':  return { label: 'pass',     toneCls: 'text-success-700' };
-  }
 }
 
 /** Deterministic compression-ratio mock — bigger payloads compress better,
@@ -1510,22 +1442,13 @@ function compressionValue(row: RequestRow): string {
 }
 
 function KpiRail({ row }: { row: RequestRow }) {
-  const verdict = auditVerdict(row);
   return (
-    <KpiRailShell columns={6} className="border border-ink-200 shadow-none">
+    <KpiRailShell columns={5} className="border border-ink-200 shadow-none">
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />
       <KpiTile label="Tokens Out" value={row.outTokens} />
       <KpiTile label="Compression" value={compressionValue(row)} />
-      <div className="flex flex-col gap-1 p-4">
-        <Eyebrow>Security</Eyebrow>
-        <span
-          className={`font-mono text-lg font-medium tabular-nums -tracking-[0.5px] capitalize ${verdict.toneCls}`}
-        >
-          {verdict.label}
-        </span>
-      </div>
     </KpiRailShell>
   );
 }
