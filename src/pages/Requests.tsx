@@ -393,7 +393,7 @@ const HERO_30D_TICKS = [
 
 const HERO_VIEWS: Record<RangeKey, HeroView> = {
   all: {
-    eyebrow: 'REQUESTS / ALL',
+    eyebrow: 'REQUESTS',
     total: HERO_ALL_TOTAL,
     // Three disjoint buckets that sum to total: fast successes, errors,
     // slow (>10s) successes. "Success" in the breakdown means fast-success
@@ -411,7 +411,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     domainTop: Math.max(...HERO_ALL_BUCKETS, 1) + 1,
   },
   '24h': {
-    eyebrow: 'REQUESTS / 24H',
+    eyebrow: 'REQUESTS',
     total: 48,
     success: 24,
     errors: 2,
@@ -424,7 +424,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     domainTop: Math.max(...HERO_24H_BUCKETS, 1) + 1,
   },
   '7d': {
-    eyebrow: 'REQUESTS / 7D',
+    eyebrow: 'REQUESTS',
     total: 468,
     success: 237,
     errors: 13,
@@ -437,7 +437,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     domainTop: Math.max(...HERO_7D_BUCKETS, 1) + 1,
   },
   '30d': {
-    eyebrow: 'REQUESTS / 30D',
+    eyebrow: 'REQUESTS',
     total: 2_248,
     success: 1_116,
     errors: 60,
@@ -453,7 +453,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   // the active customRange via useMemo — the static entry exists only
   // so the `Record<RangeKey, HeroView>` type is total.
   custom: {
-    eyebrow: 'REQUESTS / CUSTOM',
+    eyebrow: 'REQUESTS',
     total: 0,
     success: 0,
     errors: 0,
@@ -518,7 +518,7 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
   const success = Math.max(0, total - errors - slow);
 
   return {
-    eyebrow: 'REQUESTS / CUSTOM',
+    eyebrow: 'REQUESTS',
     total,
     success,
     errors,
@@ -560,7 +560,7 @@ function HeroMetricCard() {
             <HeroNumeric size="lg">
               {view.total.toLocaleString()}
             </HeroNumeric>
-            <DeltaTag delta={view.delta} note={view.deltaNote} />
+            <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />
           </div>
         </div>
 
