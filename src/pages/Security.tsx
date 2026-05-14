@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeftRight, Download, ExternalLink, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +15,6 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogTitleBlock,
 } from '@/components/ui/dialog';
@@ -542,7 +541,7 @@ export function Security() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Events"
+            breadcrumbCurrent="Security events"
             activeNavId="security-events"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}
@@ -580,7 +579,7 @@ function PageHeader({
         {/* h2 — see CMP012 PageHeader note. ArtboardHeader emits the outer
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
-        <PageTitle>Events</PageTitle>
+        <PageTitle>Security events</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Real-time threat detection and policy enforcement across every request routed through the gateway.
         </p>
@@ -763,13 +762,12 @@ type EventRow = {
   type: EventCategory;
   key: string;
   action: EventAction;
-  /** Gateway request that produced this event. Drives the "Open request"
-   *  link in the detail dialog footer (navigates to /requests?open=<id>). */
+  /** Gateway request that produced this event. Used for the detail
+   *  dialog's title aria-label. */
   requestId: string;
   /** Conversation the request belongs to. Required — mirrors Requests'
-   *  data model where every row carries a conversation. Drives both the
-   *  table's Conversation cell and the detail dialog's "Open conversation"
-   *  footer link. */
+   *  data model where every row carries a conversation. Drives the
+   *  table's Conversation cell link. */
   conversationId: string;
   /** Per-key risk tier per Security PRD S6. Surfaced inline next to the
    *  API key in the detail-modal Event-details section so the team-lead
@@ -1219,7 +1217,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const TypeIcon = typeMeta.Icon;
   const requestId = row.requestId;
   const conversationId = row.conversationId;
-  const openRequest = () => navigate(`/requests?open=${requestId}`);
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
 
   return (
@@ -1355,17 +1352,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           </section>
         </div>
       </DialogScrollBody>
-
-      <DialogScrollFooter>
-        <Button variant="outline" size="sm" onClick={openConversation}>
-          Open conversation
-          <ExternalLink data-icon="inline-end" aria-hidden />
-        </Button>
-        <Button variant="default" size="sm" onClick={openRequest}>
-          Open request
-          <ExternalLink data-icon="inline-end" aria-hidden />
-        </Button>
-      </DialogScrollFooter>
     </>
   );
 }
