@@ -553,9 +553,9 @@ function HeroMetricCard() {
     <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
-          <span className="font-sans uppercase tracking-[0.1em] text-xs font-semibold text-ink-500">
+          <Eyebrow>
             {view.eyebrow}
-          </span>
+          </Eyebrow>
           <div className="flex items-baseline gap-3">
             <HeroNumeric size="lg">
               {view.total.toLocaleString()}

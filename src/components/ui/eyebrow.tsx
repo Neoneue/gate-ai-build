@@ -10,21 +10,25 @@ import { cn } from '@/lib/utils';
  * Extracted 2026-05-11 after the 5-agent audit found 13 hand-rolled
  * occurrences of the same recipe across CMP-013/14/15/16/18 + sidebar
  * + CompactKpi + Artboard.tsx + spec sheets. Current recipe:
- * `font-sans text-xs uppercase tracking-[0.1em] font-semibold
- * text-ink-500` (was font-mono / font-medium until 2026-05-14 — mono
- * is now reserved for data values only).
+ * `font-sans text-xs uppercase tracking-[0.1em] font-medium
+ * text-ink-500` (font-mono → font-sans on 2026-05-14, mono is now
+ * reserved for data values only; weight settled on font-medium).
  *
  * Recipe is locked at the primitive — consumers compose, never override
  * type sizes / weight / tracking. Layout-only className (`px-N`, etc.)
  * is forwarded so the eyebrow can sit inside tight containers.
  *
  * Element: `<span>` by default (inline label semantics). Pass `as="div"`
- * if a block element is needed (rare).
+ * for a block element, or `as="label"` (with `htmlFor`) when the eyebrow
+ * doubles as a form-control label.
  * ───────────────────────────────────────────────────────────────────── */
 
-export interface EyebrowProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface EyebrowProps extends React.HTMLAttributes<HTMLElement> {
   /** Element to render as. Defaults to `<span>` (inline). */
-  as?: 'span' | 'div';
+  as?: 'span' | 'div' | 'label';
+  /** Associates a `label` eyebrow with a form control. Only meaningful
+   *  when `as="label"`. */
+  htmlFor?: string;
 }
 
 export function Eyebrow({
@@ -37,7 +41,7 @@ export function Eyebrow({
     <Tag
       data-slot="eyebrow"
       className={cn(
-        'font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500',
+        'font-sans text-xs uppercase tracking-[0.1em] font-medium text-ink-500',
         className,
       )}
       {...props}

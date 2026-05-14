@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow } from '@/components/ui/eyebrow';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import {
@@ -254,12 +255,9 @@ function CreateLimitDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="create-limit-name"
-            className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
-          >
+          <Eyebrow as="label" htmlFor="create-limit-name">
             Name
-          </label>
+          </Eyebrow>
           <Input
             id="create-limit-name"
             value={name}
@@ -270,12 +268,9 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="create-limit-type"
-              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
-            >
+            <Eyebrow as="label" htmlFor="create-limit-type">
               Type
-            </label>
+            </Eyebrow>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger id="create-limit-type" className="w-full">
                 <SelectValue />
@@ -290,12 +285,9 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="create-limit-threshold"
-              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
-            >
+            <Eyebrow as="label" htmlFor="create-limit-threshold">
               Threshold
-            </label>
+            </Eyebrow>
             <Input
               id="create-limit-threshold"
               type="number"
@@ -311,12 +303,9 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="create-limit-period"
-              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
-            >
+            <Eyebrow as="label" htmlFor="create-limit-period">
               Period
-            </label>
+            </Eyebrow>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger id="create-limit-period" className="w-full">
                 <SelectValue />
@@ -331,12 +320,9 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="create-limit-scope"
-              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
-            >
+            <Eyebrow as="label" htmlFor="create-limit-scope">
               Scope
-            </label>
+            </Eyebrow>
             <Select value={scope} onValueChange={setScope}>
               <SelectTrigger id="create-limit-scope" className="w-full">
                 <SelectValue />
