@@ -513,7 +513,7 @@ function ActionHalf({
               key={opt.value}
               htmlFor={radioId}
               className={
-                'flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors duration-150 ease-out ' +
+                'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
                   ? 'border-ink-300 bg-ink-100'
                   : 'border-ink-200 bg-transparent hover:bg-ink-50')
@@ -521,7 +521,7 @@ function ActionHalf({
             >
               <RadioGroupItem id={radioId} value={opt.value} className="mt-1" />
               <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-sans text-sm font-medium text-ink-900">
                     {opt.name}
                   </span>
