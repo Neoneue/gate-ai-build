@@ -82,26 +82,28 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  * events is covered by Audit Trail PRD R12.
  * ───────────────────────────────────────────────────────────────────────── */
 
-type PresetRange = '1h' | '24h' | '7d' | '30d';
+type PresetRange = 'all' | '24h' | '7d' | '30d';
 type Range = PresetRange | 'custom';
 type CustomRange = { from: Date; to: Date };
 
 const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
-  { value: '1h',  label: '1H'  },
+  { value: 'all', label: 'All' },
   { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
 ];
 
 /** Multiplier applied to base (7d) values to fabricate plausible per-range
- *  totals on this static artboard. 1h = 1/168 of a week. Real implementation
- *  would aggregate from the gateway event stream per the PRD acceptance
- *  criterion (chart-by-key total === per-key-table total for the same range). */
+ *  totals on this static artboard. Real implementation would aggregate from
+ *  the gateway event stream per the PRD acceptance criterion (chart-by-key
+ *  total === per-key-table total for the same range). `all` is the lifetime
+ *  cumulative window — ~60 days of history for this mock workspace, so it
+ *  sits above 30d (8.5 ≈ 60/7 weeks, keeping the 7d day-rate consistent). */
 const RANGE_SCALE: Record<PresetRange, number> = {
-  '1h':  0.006,
   '24h': 0.16,
   '7d':  1,
   '30d': 4.2,
+  all:   8.5,
 };
 
 const MONTH_LABELS = [
@@ -122,7 +124,9 @@ export function Activity() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
 
-  const [range, setRange] = useState<Range>('24h');
+  // Defaults to `all` on load — the intended landing state for every page's
+  // range selector.
+  const [range, setRange] = useState<Range>('all');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   return (
@@ -139,7 +143,7 @@ export function Activity() {
               onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
               onCustomRangeChange={(r) => {
                 if (r) { setCustomRange(r); setRange('custom'); }
-                else   { setCustomRange(null); setRange('24h'); }
+                else   { setCustomRange(null); setRange('all'); }
               }}
             />
             <KpiRail range={range} customRange={customRange} />
@@ -200,10 +204,10 @@ type KpiSpec = {
 // so it cannot drift from the Spend over time chart. Kept in sync with the
 // computed value for readability if someone reads the source.
 const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens: KpiSpec }> = {
-  '1h': {
-    spend:    { value: '$5.56',     delta: '+2.1%',  spark: [2, 1, 2, 3, 2, 4, 3, 5, 4] },
-    requests: { value: '383',       delta: '+1.4%',  spark: [2, 3, 2, 4, 3, 5, 4, 6, 5] },
-    tokens:   { value: '147 K',     delta: '+1.7%',  spark: [3, 4, 3, 5, 4, 6, 5, 7, 6] },
+  all: {
+    spend:    { value: '$7,879.50', delta: '+24.8%', spark: [14, 16, 20, 24, 28, 30, 36, 34, 40] },
+    requests: { value: '542,241',   delta: '+19.3%', spark: [12, 16, 20, 24, 26, 30, 34, 34, 38] },
+    tokens:   { value: '208.3 M',   delta: '+17.6%', spark: [16, 18, 20, 24, 26, 28, 30, 32, 36] },
   },
   '24h': {
     spend:    { value: '$148.32',   delta: '+4.1%',  spark: [6, 8, 7, 10, 9, 11, 13, 12, 14] },
@@ -243,10 +247,10 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
   const tokensCount = TOTAL_7D_BASE_TOKENS * scale;
 
   // Each metric gets its own seed so adjacent sparklines in the rail
-  // don't share the same jitter pattern. Range-aware seed so 1H and 7D
-  // (both 7 buckets) don't produce identical shapes at different scales.
+  // don't share the same jitter pattern. Range-aware seed so ranges with
+  // matching bucket counts don't produce identical shapes at different scales.
   const rangeSeed =
-    range === '1h'  ? 11 :
+    range === 'all' ? 11 :
     range === '24h' ? 47 :
     range === '7d'  ? 77 :
     range === '30d' ? 303 :
@@ -266,14 +270,14 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
 // Title suffix + delta trailing copy tied to the active range. Mirrors
 // the Requests hero pattern (eyebrow "X / 24H", delta note "vs prior day").
 const RANGE_TITLE_SUFFIX: Record<Range, string> = {
-  '1h':     '1h',
+  all:      'all',
   '24h':    '24h',
   '7d':     '7d',
   '30d':    '30d',
   custom:   'custom',
 };
 const RANGE_DELTA_NOTE: Record<Range, string> = {
-  '1h':     'vs last hour',
+  all:      'all time',
   '24h':    'vs prior day',
   '7d':     'vs prior week',
   '30d':    'vs prior month',
@@ -455,10 +459,10 @@ function distributeSeries(total: number, count: number, seed: number): number[] 
  *  each, 30D = 30 daily bars, etc. Custom range derives count from the
  *  span (daily up to 30 days, then capped). */
 const BUCKET_COUNTS: Record<PresetRange, number> = {
-  '1h':  7,
   '24h': 12,
   '7d':  7,
   '30d': 30,
+  all:   30,
 };
 
 function getBucketCount(range: Range, customRange: CustomRange | null): number {
@@ -479,10 +483,10 @@ function getBucketLabel(range: Range, customRange: CustomRange | null): string {
     const perBucketDays = Math.max(1, Math.round(days / count));
     return perBucketDays === 1 ? 'per day' : `per ~${perBucketDays} days`;
   }
-  if (range === '1h')  return 'per 10 min';
   if (range === '24h') return 'per 2 hours';
   if (range === '7d')  return 'per day';
   if (range === '30d') return 'per day';
+  if (range === 'all') return 'per day';
   return 'per bucket';
 }
 
@@ -500,9 +504,18 @@ function getRangeLabels(range: Range, customRange: CustomRange | null): string[]
     }
     return labels;
   }
-  if (range === '1h') {
-    // 7 buckets at 10-min intervals ending at "Now". 13:30, 13:40, ..., 14:20, Now.
-    return ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', 'Now'];
+  if (range === 'all') {
+    // Lifetime cumulative window — 30 buckets spanning the ~60 days of mock
+    // history, ending today (Apr 27, per existing fixtures). Each bucket
+    // covers ~2 days; labels are the explicit date at the bucket start.
+    const labels: string[] = [];
+    const lastDay = new Date(2026, 3, 27);
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(lastDay);
+      d.setDate(d.getDate() - Math.round(((29 - i) * 59) / 29));
+      labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
+    }
+    return labels;
   }
   if (range === '24h') {
     // 12 buckets at 2-hour intervals on the calendar day. Trailing bucket
@@ -548,10 +561,10 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
     // Distribute each series's range-scaled total across N buckets via
     // distributeSeries (trend + spike/dip noise). Each series gets its
     // own seed so adjacent series don't sync into matching ripples —
-    // keeps stacked bars looking organic. Range-aware base seed so 1H
-    // and 7D (both 7 buckets) don't produce identical shapes.
+    // keeps stacked bars looking organic. Range-aware base seed so ranges
+    // with matching bucket counts don't produce identical shapes.
     const rangeSeed =
-      range === '1h'  ? 11 :
+      range === 'all' ? 11 :
       range === '24h' ? 47 :
       range === '7d'  ? 77 :
       range === '30d' ? 303 :

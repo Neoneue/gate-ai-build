@@ -81,7 +81,9 @@ export function Requests() {
   // right page-header chrome now). rangeStore stays the single source of
   // truth for HeroMetricCard and other useRange()/useCustomRange()
   // subscribers — the effects below keep it in lockstep.
-  const [range, setRange] = useState<RangeKey>('24h');
+  // Defaults to `all` on load — the intended landing state for every
+  // page's range selector (matches the Events page).
+  const [range, setRange] = useState<RangeKey>('all');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   useEffect(() => { rangeStore.set(range); }, [range]);
@@ -97,7 +99,7 @@ export function Requests() {
       setRange('custom');
     } else {
       setCustomRange(null);
-      setRange('24h');
+      setRange('all');
     }
   };
 
@@ -167,7 +169,7 @@ function PageHeader({
 
 /* ─── Hero metric (REQUESTS / range + line chart + breakdown) ────────────── */
 
-type RangeKey = '1h' | '24h' | '7d' | '30d' | 'custom';
+type RangeKey = 'all' | '24h' | '7d' | '30d' | 'custom';
 
 /** Concrete custom range payload — populated by RequestsTableSection's
  *  DateRangePicker and read by HeroMetricCard via useRange() / the store.
@@ -194,7 +196,7 @@ type HeroView = {
 // This keeps Requests() untouched (no state lifting) and avoids a context
 // Provider mismatch (Hero and Table are siblings, not ancestor/descendant).
 const rangeStore = {
-  current: '24h' as RangeKey,
+  current: 'all' as RangeKey,
   // Populated alongside `current = 'custom'` when the user applies a
   // custom range. Reading both from a single store keeps Hero and Table
   // pinned to the same source of truth.
@@ -321,35 +323,28 @@ function pad2(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
-// ── 1H view (kept visually identical to prior hardcoded fixture) ──────────
-// 61 minute-bucketed points spanning the trailing hour 13:30 → 14:30
-// inclusive. Each point is the per-minute request count (NOT a running
-// total). Low-traffic demo: 6 total requests in the hour, with one
-// minute (14:02) hosting 2 of them. The 2-request minute renders as a
-// spike twice as tall as the single-unit spikes. Timestamps reconcile
-// with REQUEST_ROWS_1H:
-//
-//   index   minute   value   notes
-//     5      13:35     1     one request
-//    18      13:48     1     one request (error)
-//    32      14:02     2     two requests in the same minute
-//    46      14:16     1     one request (slow)
-//    60      14:30     1     one request (just now)
-const HERO_1H_INCREMENTS = (() => {
-  const arr = Array<number>(61).fill(0);
-  arr[5] = 1;
-  arr[18] = 1;
-  arr[32] = 2;
-  arr[46] = 1;
-  arr[60] = 1;
-  return arr;
-})();
-const HERO_1H_DATA = HERO_1H_INCREMENTS.map((inc, i) => {
-  const minute = 30 + i;
-  const hh = Math.floor(13 + minute / 60);
-  const mm = minute % 60;
-  return { time: `${hh}:${pad2(mm)}`, requests: inc };
+// ── All-time view (240 × 6-hour buckets ≈ 60-day lifetime window) ─────────
+// The widest preset: the lifetime cumulative request volume for this mock
+// account. Sits above 30D — same 6-hour bucketing as 30D extended back to
+// ~60 days. `HERO_ALL_TOTAL` (4,860) is the single source of truth for
+// the all-time total; the breakdown and table pagination derive from it.
+const HERO_ALL_TOTAL = 4_860;
+const HERO_ALL_BUCKETS = makeHeroBuckets(240, HERO_ALL_TOTAL, 'monthly', 0xa11dcafe);
+const HERO_ALL_DATA = HERO_ALL_BUCKETS.map((requests, i) => {
+  // Bucket 239 = current 6h window (anchor); bucket 0 = 239*6h earlier.
+  const minutesAgo = (239 - i) * 360;
+  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
+  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
 });
+const HERO_ALL_TICKS = [
+  'Mar 14 00:00',
+  'Mar 24 00:00',
+  'Apr 3 00:00',
+  'Apr 13 00:00',
+  'Apr 23 00:00',
+  'May 3 00:00',
+  'May 12 00:00',
+];
 
 // ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
 const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, 'daily', 0xc57e11a7);
@@ -398,24 +393,23 @@ const HERO_30D_TICKS = [
 ];
 
 const HERO_VIEWS: Record<RangeKey, HeroView> = {
-  '1h': {
-    eyebrow: 'REQUESTS / 1H',
-    total: HERO_1H_INCREMENTS.reduce((a, b) => a + b, 0),
+  all: {
+    eyebrow: 'REQUESTS / ALL',
+    total: HERO_ALL_TOTAL,
     // Three disjoint buckets that sum to total: fast successes, errors,
     // slow (>10s) successes. "Success" in the breakdown means fast-success
     // only — slow successes are pulled out into their own bucket so the
-    // numbers reconcile arithmetically with Total.
-    success: 3,
-    errors: 1,
-    slow: 2,
-    delta: '+12.8%',
-    deltaNote: 'vs last hour',
-    data: HERO_1H_DATA,
-    ticks: ['13:30', '13:40', '13:50', '14:00', '14:10', '14:20', '14:30'],
-    bucketLabel: 'Requests/min',
-    // Dynamic domain: top is `max(values) + 1` so the tallest spike never
-    // touches the chart ceiling and the y-axis scales with the data.
-    domainTop: Math.max(...HERO_1H_INCREMENTS, 1) + 1,
+    // numbers reconcile arithmetically with Total (2,414 + 130 + 2,316 =
+    // 4,860 = HERO_ALL_TOTAL).
+    success: 2_414,
+    errors: 130,
+    slow: 2_316,
+    delta: '+18.2%',
+    deltaNote: 'all time',
+    data: HERO_ALL_DATA,
+    ticks: HERO_ALL_TICKS,
+    bucketLabel: 'Requests/6h',
+    domainTop: Math.max(...HERO_ALL_BUCKETS, 1) + 1,
   },
   '24h': {
     eyebrow: 'REQUESTS / 24H',
@@ -623,9 +617,9 @@ function HeroMetricCard() {
                 payload: { value: string };
               };
               const value = payload.value;
-              // 7D/30D tick values are full timestamps ('May 6 00:00');
-              // render just the date portion ('May 6'). 1H/24H values
-              // have no space — render as-is.
+              // 7D/30D/All tick values are full timestamps ('May 6
+              // 00:00'); render just the date portion ('May 6'). 24H
+              // values have no space — render as-is.
               const spaceIdx = value.indexOf(' ');
               const display = spaceIdx === -1
                 ? value
@@ -708,7 +702,7 @@ function BreakdownRow({
  * through the rows-per-page / page-nav strip — matches the reference. */
 
 const RANGE_OPTIONS = [
-  { value: '1h',  label: '1H'  },
+  { value: 'all', label: 'All' },
   { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
@@ -775,12 +769,12 @@ type RequestRow = {
 const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'shadowfax-rag']);
 const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 
-// Low-traffic demo: 5 requests in the trailing hour. Timestamps match
-// the five spike minutes in HERO_1H_INCREMENTS so the chart and table
-// reconcile (chart spikes at minutes 5, 18, 32, 46, 60 of the hour =
-// 13:35, 13:48, 14:02, 14:16, 14:30). Order is reverse-chronological
-// (most recent first) to match the table's default sort.
-const REQUEST_ROWS_1H: RequestRow[] = [
+// Recent-window anchor rows: the six most-recent requests (trailing hour).
+// Not a standalone preset anymore — the seed of the cumulative chain that
+// 24H → 7D → 30D → All each widen on top of, so a longer range never
+// "loses" a recent event. Order is reverse-chronological (most recent
+// first) to match the table's default sort.
+const REQUEST_ROWS_RECENT: RequestRow[] = [
   { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
   { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'openclaw',      inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842' },
   { day: 'May 12', time: '14:02:55', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '480',   outTokens: '215',   latency: '2.50s',              cost: '$0.0050' },
@@ -789,12 +783,12 @@ const REQUEST_ROWS_1H: RequestRow[] = [
   { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'nova-chat',     inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
 ];
 
-// 24H view — cumulative superset: contains the 1H rows plus older entries
-// spanning yesterday → ~1h ago. Widening the window retains the recent
-// rows; we never want a longer range to "lose" events that were visible
-// in a narrower one.
+// 24H view — cumulative superset: contains the recent-anchor rows plus
+// older entries spanning yesterday → ~1h ago. Widening the window retains
+// the recent rows; we never want a longer range to "lose" events that
+// were visible in a narrower one.
 const REQUEST_ROWS_24H: RequestRow[] = [
-  ...REQUEST_ROWS_1H,
+  ...REQUEST_ROWS_RECENT,
   { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'shadowfax-rag', inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
   { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.80s', slow: true, cost: '$0.1842' },
   { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '13.60s', slow: true, cost: '$0.0124' },
@@ -849,6 +843,20 @@ const REQUEST_ROWS_30D: RequestRow[] = [
   { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '14.40s', slow: true, cost: '$0.0342' },
 ];
 
+// All-time view — the widest cumulative superset: contains the 30D rows
+// plus older entries spanning back to mid-March (~60-day lifetime window
+// for this mock account). Same append-only rule as the narrower presets;
+// this is the lifetime row set the `all` preset lands on by default.
+const REQUEST_ROWS_ALL: RequestRow[] = [
+  ...REQUEST_ROWS_30D,
+  { day: 'Apr 10', time: '14:08:22', relative: '32d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '3,108', outTokens: '1,542', latency: '4.20s',              cost: '$0.0318' },
+  { day: 'Apr 6',  time: '09:42:18', relative: '36d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-agent', inTokens: '4,402', outTokens: '0',     latency: '2.10s',              cost: '$0.0308',       guardrailReason: 'credential' },
+  { day: 'Apr 2',  time: '18:14:51', relative: '40d ago',   status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '1,948', outTokens: '942',   latency: '5.60s',              cost: '$0.0148', guardrailReason: 'pii' },
+  { day: 'Mar 28', time: '11:32:09', relative: '45d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '7,210', outTokens: '3,608', latency: '13.80s', slow: true, cost: '$0.0098' },
+  { day: 'Mar 22', time: '15:48:42', relative: '51d ago',   status: 'success', guardrail: 'flagged',   code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '2,012', outTokens: '988',   latency: '6.20s',              cost: '$0.0064', guardrailReason: 'credential' },
+  { day: 'Mar 16', time: '08:14:08', relative: '57d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_meridian_07',keyId: 'nova-chat',     inTokens: '5,408', outTokens: '0',     latency: '3.40s',              cost: '$0.0158'       },
+];
+
 /** Response axis — HTTP outcome from the provider. Pure 2-value mapping;
  *  `slow` short-circuits this in `responseVariant` below. */
 const RESPONSE_BADGE: Record<ResponseStatus, { variant: 'success' | 'destructive' }> = {
@@ -892,7 +900,7 @@ function responseVariant(row: RequestRow): 'success' | 'warning' | 'destructive'
 // Rows shown are the head of the range; pagination represents the full
 // count.
 const RANGE_ROWS: Record<string, RequestRow[]> = {
-  '1h':  REQUEST_ROWS_1H,
+  all:   REQUEST_ROWS_ALL,
   '24h': REQUEST_ROWS_24H,
   '7d':  REQUEST_ROWS_7D,
   '30d': REQUEST_ROWS_30D,
@@ -901,11 +909,11 @@ const RANGE_ROWS: Record<string, RequestRow[]> = {
   // (from the custom hero view) when the user picks a range, so the
   // pagination footer stays plausible even though the rows themselves
   // aren't filtered.
-  custom: REQUEST_ROWS_30D,
+  custom: REQUEST_ROWS_ALL,
 };
 
 const RANGE_TOTALS: Record<string, number> = {
-  '1h':  HERO_VIEWS['1h'].total,
+  all:   HERO_VIEWS['all'].total,
   '24h': HERO_VIEWS['24h'].total,
   '7d':  HERO_VIEWS['7d'].total,
   '30d': HERO_VIEWS['30d'].total,
@@ -923,15 +931,15 @@ function RequestsTableSection({
 }) {
   const navigate = useNavigate();
   // Looked up per render. Pill change → new rows + new total; page resets
-  // so a deep-paged 30D state doesn't carry over into a 1H view that
+  // so a deep-paged All state doesn't carry over into a 24H view that
   // doesn't have those pages. When the user picks a custom range, the
   // total comes from buildCustomHeroView so the pagination footer stays
   // in lock-step with the hero card's headline number.
-  const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_1H;
+  const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_ALL;
   const total =
     range === 'custom'
       ? buildCustomHeroView(customRange).total
-      : RANGE_TOTALS[range] ?? HERO_VIEWS['1h'].total;
+      : RANGE_TOTALS[range] ?? HERO_VIEWS['all'].total;
   const [model, setModel] = useState('all');
   const [keyId, setKeyId] = useState('all');
   // Response + guardrail filters are independent (split out of the single
@@ -947,8 +955,8 @@ function RequestsTableSection({
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
 
   // Range now lifted to the parent — when it (or the custom range) flips,
-  // reset to page 1 so a deep-paged 30D state doesn't carry over into a
-  // 1H view that doesn't have those pages.
+  // reset to page 1 so a deep-paged All state doesn't carry over into a
+  // 24H view that doesn't have those pages.
   useEffect(() => {
     setPage(1);
   }, [range, customRange]);
