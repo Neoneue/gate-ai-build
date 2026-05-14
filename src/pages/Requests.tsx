@@ -1713,7 +1713,7 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
     // column edge — gives the shadow ring room to render around the
     // rounded corners without making the cards visually narrower than
     // the KPI rail / tabs above them.
-    <div className="flex flex-col gap-3 max-h-80 overflow-y-auto -mx-2 px-2 py-2">
+    <div className="flex flex-col gap-4 max-h-80 overflow-y-auto -mx-2 px-2 py-2">
       <MessageBlock
         label="User message"
         content={requestContent}
