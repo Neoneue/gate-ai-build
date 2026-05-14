@@ -1399,7 +1399,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Model"
                 value={
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     <VendorAvatar vendor={row.vendor} />
                     <span className="font-mono text-sm text-ink-900 tracking-tight">
                       {row.model}
@@ -1407,29 +1407,33 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                   </div>
                 }
               />
-              <DetailRow label="Provider" value={<span className="font-sans text-sm text-ink-900">{provider}</span>} />
+              <DetailRow label="Provider" value={<span className="block text-right font-sans text-sm text-ink-900">{provider}</span>} />
               <DetailRow
                 label="API Key"
-                value={<span className="font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
+                value={<span className="block text-right font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-sm text-ink-900 tracking-tight">
+                  <span className="block text-right font-mono text-sm text-ink-900 tracking-tight">
                     <span className="text-ink-500">POST</span> /v1/messages
                   </span>
                 }
               />
               <DetailRow
                 label="HTTP status"
-                value={<Badge variant={badge.variant}>{row.code}</Badge>}
+                value={
+                  <span className="flex justify-end">
+                    <Badge variant={badge.variant}>{row.code}</Badge>
+                  </span>
+                }
               />
               <DetailRow
                 label="Cache"
                 value={
-                  <Badge variant="info">
-                    miss
-                  </Badge>
+                  <span className="flex justify-end">
+                    <Badge variant="info">miss</Badge>
+                  </span>
                 }
               />
             </DetailList>
