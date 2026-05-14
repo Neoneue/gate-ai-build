@@ -272,15 +272,12 @@ function MembersPane() {
                 stacked email is the widest content), producing one
                 bloated column and a tightly-packed remainder. Fixed
                 layout reads widths off the header alone and gives every
-                column a deliberate share, so all five gaps look the
-                same. Member gets the largest share to fit avatar +
-                name + email; Actions gets the smallest because it's a
-                single icon button. */}
-            <TableHead className="w-[38%]">Member</TableHead>
-            <TableHead className="w-[19%]">Joined</TableHead>
-            <TableHead className="w-[19%]">Role</TableHead>
-            <TableHead className="w-[19%]">Status</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
+                column a deliberate share. Member gets the largest share
+                to fit avatar + name + email. */}
+            <TableHead className="w-[40%]">Member</TableHead>
+            <TableHead className="w-[20%]">Joined</TableHead>
+            <TableHead className="w-[20%]">Role</TableHead>
+            <TableHead className="w-[20%]">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -303,11 +300,6 @@ function MembersPane() {
 
 function MemberRowView({ row }: { row: MemberRow }) {
   const badge = STATUS_BADGE[row.status];
-  // Owner role is fixed — only one owner per workspace and demoting it
-  // requires a transfer flow we don't represent here. The Select renders
-  // disabled in that case so the affordance is still legible (mirrors the
-  // visual weight of editable rows) but won't open.
-  const isOwner = row.role === 'owner';
   return (
     <TableRow>
       <TableCell>
@@ -332,63 +324,13 @@ function MemberRowView({ row }: { row: MemberRow }) {
       <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
         {row.joined}
       </TableCell>
-      <TableCell>
-        {isOwner ? (
-          // Owner renders as a disabled Select rather than a static Badge —
-          // the SelectTrigger surface visually matches the editable rows
-          // (so the column reads uniformly) AND `aria-disabled` carries
-          // the "this can't be changed without a transfer" semantics to
-          // assistive tech. Demoting the owner requires the Transfer
-          // ownership flow in the row's kebab menu.
-          <Select value={row.role} disabled>
-            <SelectTrigger
-              size="sm"
-              aria-label={`Role for ${row.name} — locked, transfer ownership to change`}
-              className="border-ink-200 bg-white text-ink-900"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="owner">Owner</SelectItem>
-            </SelectContent>
-          </Select>
-        ) : (
-          <Select defaultValue={row.role} disabled>
-            <SelectTrigger
-              size="sm"
-              aria-label={`Role for ${row.name}`}
-              className="border-ink-200 bg-white text-ink-900"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+        {ROLE_LABEL[row.role]}
       </TableCell>
       <TableCell className="whitespace-nowrap">
         <Badge variant={badge.variant}>
           {badge.label}
         </Badge>
-      </TableCell>
-      <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
-        <RowActionsMenu
-          label={`Open actions for ${row.name}`}
-          items={
-            isOwner
-              ? [
-                  // Transfer is irreversible — destructive tone gives it
-                  // visual weight so it doesn't look like a casual default.
-                  { id: 'transfer', label: 'Transfer ownership', destructive: true },
-                ]
-              : [
-                  { id: 'reset',  label: 'Reset access' },
-                  { id: 'remove', label: 'Remove from workspace', destructive: true },
-                ]
-          }
-        />
       </TableCell>
     </TableRow>
   );
