@@ -81,10 +81,10 @@ type CustomRange = { from: Date; to: Date };
  *  for this mock account, so it sits above 30d. Real implementation would
  *  aggregate from the event stream. */
 const EVENTS_RANGE_SCALE: Record<PresetRange, number> = {
-  '24h': 6,
-  '7d':  28,
-  '30d': 100,
-  all:   200,
+  '24h': 2,
+  '7d':  7,
+  '30d': 25,
+  all:   50,
 };
 
 function eventsScale(range: EventsRange, customRange: CustomRange | null): number {
@@ -93,13 +93,21 @@ function eventsScale(range: EventsRange, customRange: CustomRange | null): numbe
       1,
       Math.round((customRange.to.getTime() - customRange.from.getTime()) / 86_400_000) + 1,
     );
-    // ~3.3× per day, matching the 30d preset's day-rate (100/30 ≈ 3.3).
-    return Math.max(1, Math.round(days * 3.3));
+    // ~0.83× per day, matching the 30d preset's day-rate (25/30 ≈ 0.83).
+    return Math.max(1, Math.round(days * 0.825));
   }
   return EVENTS_RANGE_SCALE[range === 'custom' ? '24h' : range];
 }
 
 const fmtCount = (n: number) => n.toLocaleString('en-US');
+
+// Single source of truth for event volume. The 1× baseline action mix —
+// everything that shows an event count (hero "Total events" KPI + its
+// breakdown + chart, the Action Categories card, the events table's
+// "of N") scales off these so the surfaces reconcile. `EVENT_MIX_TOTAL`
+// is the per-range total events; never hardcode 47 elsewhere.
+const EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 } as const;
+const EVENT_MIX_TOTAL = EVENT_MIX.blocked + EVENT_MIX.flagged + EVENT_MIX.redacted;
 
 /** Per-range sparkline shape. Distributes the actual event count across
  *  time buckets weighted by an upward trend curve, so sparseness emerges
@@ -242,9 +250,9 @@ type EventsChartView = {
  *  strips the trailing time segment down to "Mon D"). */
 function buildEventsChartView(range: EventsRange, customRange: CustomRange | null): EventsChartView {
   const scale = eventsScale(range, customRange);
-  const blockedSpark  = normalizeSparkTo(buildSpark(range, customRange, 31 * scale, 1), 31 * scale);
-  const flaggedSpark  = normalizeSparkTo(buildSpark(range, customRange, 14 * scale, 2), 14 * scale);
-  const redactedSpark = normalizeSparkTo(buildSpark(range, customRange, 2 * scale, 3), 2 * scale);
+  const blockedSpark  = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.blocked * scale, 1),  EVENT_MIX.blocked * scale);
+  const flaggedSpark  = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.flagged * scale, 2),  EVENT_MIX.flagged * scale);
+  const redactedSpark = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.redacted * scale, 3), EVENT_MIX.redacted * scale);
   const totalSpark = blockedSpark.map((b, i) => b + (flaggedSpark[i] ?? 0) + (redactedSpark[i] ?? 0));
   const buckets = totalSpark.length;
 
@@ -291,13 +299,13 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
 
 function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   // Header + breakdown are the "Total events" KPI surfaced at hero scale —
-  // driven by the page range selector. Same 1× baselines as KpiRail (47
-  // total = 31 blocked + 14 flagged + 2 redacted), scaled by the range.
+  // driven by the page range selector. Scales off the shared EVENT_MIX
+  // baseline so the number, breakdown, chart, and table all reconcile.
   const scale = eventsScale(range, customRange);
-  const total = 47 * scale;
-  const blocked = 31 * scale;
-  const flagged = 14 * scale;
-  const redacted = 2 * scale;
+  const total = EVENT_MIX_TOTAL * scale;
+  const blocked = EVENT_MIX.blocked * scale;
+  const flagged = EVENT_MIX.flagged * scale;
+  const redacted = EVENT_MIX.redacted * scale;
   const note = RANGE_DELTA_NOTE[range];
 
   // Chart: total-events trace + date/time axis, driven by the page range.
@@ -580,13 +588,13 @@ type AttackCategory = {
   color: string;
 };
 
-// Left card. Same 1h baselines as the KpiRail (31 / 14 / 2), scaled by the
-// page range selector. This is the KpiRail's Blocked / Flagged / Redacted
-// tiles reformatted as a horizontal bar breakdown — counts must reconcile.
+// Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown —
+// counts come from the shared EVENT_MIX baseline so they reconcile with
+// the hero "Total events" KPI and the events table.
 const ACTION_CATEGORIES: AttackCategory[] = [
-  { label: 'Blocked',  count: 31, color: 'var(--color-danger-500)'  },
-  { label: 'Flagged',  count: 14, color: 'var(--color-warning-500)' },
-  { label: 'Redacted', count: 2,  color: 'var(--color-blue-500)'    },
+  { label: 'Blocked',  count: EVENT_MIX.blocked,  color: 'var(--color-danger-500)'  },
+  { label: 'Flagged',  count: EVENT_MIX.flagged,  color: 'var(--color-warning-500)' },
+  { label: 'Redacted', count: EVENT_MIX.redacted, color: 'var(--color-blue-500)'    },
 ];
 
 // Right card. Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt
@@ -648,15 +656,16 @@ function CategoryBreakdownCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-3">
+      {/* 3-col grid: label (auto) · track (1fr, all flush) · count (auto —
+          sizes to the widest number, right-aligned against the card edge).
+          Each row is a `display:contents` wrapper so its three children
+          land directly in the shared grid tracks. */}
+      <CardContent className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3">
         {scaled.map((cat) => {
           const pct = (cat.count / max) * 100;
           const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
           return (
-            <div
-              key={cat.label}
-              className="flex items-center gap-3"
-            >
+            <div key={cat.label} className="contents">
               <span id={labelId} className="w-48 shrink-0 font-sans text-sm text-ink-900 truncate" title={cat.label}>
                 {cat.label}
               </span>
@@ -666,14 +675,14 @@ function CategoryBreakdownCard({
                 aria-valuemin={0}
                 aria-valuemax={max}
                 aria-labelledby={labelId}
-                className="flex-1 h-1.5 rounded-full bg-ink-100 overflow-hidden"
+                className="w-full h-1.5 rounded-full bg-ink-100 overflow-hidden"
               >
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${pct}%`, backgroundColor: cat.color }}
                 />
               </div>
-              <span className="w-14 shrink-0 ml-2 font-mono text-sm tabular-nums text-ink-800 text-right">
+              <span className="justify-self-end pl-2 whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                 {fmtCount(cat.count)}
               </span>
             </div>
@@ -933,11 +942,14 @@ function EventsTableSection({
   }, [query, type, action]);
 
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
-  // ~40-min window of "now"). The pagination footer total scales with the
-  // selected window so the "of N" reading agrees with the KpiRail's Total
-  // events tile — rows past page 1 are the implied tail we don't render.
+  // ~40-min window of "now"). The pagination footer "of N" reconciles with
+  // the hero "Total events" KPI: unfiltered, it's exactly EVENT_MIX_TOTAL ×
+  // scale; with filters active it scales by the filtered fraction of the
+  // sample. Rows past page 1 are the implied tail we don't render.
   const scale = eventsScale(range, customRange);
-  const scaledTotal = filtered.length * scale;
+  const scaledTotal = Math.round(
+    EVENT_MIX_TOTAL * scale * (filtered.length / EVENT_ROWS.length),
+  );
   const perPage = Number(rowsPerPage);
   const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
 
