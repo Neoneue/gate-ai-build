@@ -63,14 +63,13 @@ export function DashboardChrome({
             onNavigate={onNavigate}
             hideDocsButton={hideDocsButton}
           />
-          {/* Content pane scrolls internally; production frame stays
-              fixed at 900px so every composed page has identical
-              outer dimensions. `[&>*]:shrink-0` prevents direct
-              children from collapsing under flex's default shrink-1
-              when their natural total height exceeds the pane —
-              instead they keep their natural heights and the pane
-              scrolls. */}
-          <div className="flex flex-col gap-6 px-6 pt-6 pb-8 overflow-y-auto [&>*]:shrink-0">{children}</div>
+          {/* Content pane fills the remaining column height and scrolls
+              internally — `flex-1 min-h-0` makes it a bounded flex child
+              (without `min-h-0` a flex item won't shrink below its
+              content and the scroll container never forms). `[&>*]:shrink-0`
+              keeps direct children at their natural heights so the pane
+              scrolls instead of squashing them. */}
+          <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-8 overflow-y-auto [&>*]:shrink-0">{children}</div>
         </div>
       </div>
     </div>
@@ -188,7 +187,10 @@ function DashTopBar({
           <button
             type="button"
             aria-label="User menu"
-            className="inline-flex items-center justify-center size-6 ml-2 rounded-full bg-blue-700 text-white font-sans text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50 transition-[transform,box-shadow] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
+            // text-[11px] is an intentional one-off below the text-xs (12px)
+            // type-scale floor — the avatar badge is a tight 24px circle where
+            // 12px initials crowd the edges. Do not copy this elsewhere.
+            className="inline-flex items-center justify-center size-6 ml-2 rounded-full bg-blue-700 text-white font-sans text-[11px] font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 transition-[transform,box-shadow] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
           >
             <span aria-hidden>CP</span>
           </button>
