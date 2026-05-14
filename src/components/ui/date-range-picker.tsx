@@ -23,7 +23,8 @@ export interface DateRangePickerProps {
   onChange: (range: { from: Date; to: Date } | null) => void;
   className?: string;
   /** Trigger button height. Defaults to `sm` (h-8) to match the inline
-   *  toolbar usage on Requests; pass `default` for h-10 page-header chrome. */
+   *  toolbar usage on Requests; pass `default` for h-10 (40px) page-header
+   *  chrome — overridden up from Button's native h-9 default size. */
   size?: 'sm' | 'default';
 }
 
@@ -149,7 +150,9 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
           <Button
             variant="outline"
             size={size}
-            className={cn(value ? 'pr-2' : undefined, className)}
+            // Button's `default` size is h-9; the page-header trigger needs
+            // h-10 (40px) to match the SegmentedPill it sits beside.
+            className={cn(size === 'default' && 'h-10', value ? 'pr-2' : undefined, className)}
             aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
           >
             <CalendarIcon data-icon="inline-start" aria-hidden />
