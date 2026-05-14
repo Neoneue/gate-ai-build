@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeftRight, Download, ExternalLink, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react';
+import { ArrowLeftRight, Download, ExternalLink, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
+import { DeltaTag } from '@/components/ui/compact-kpi';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
@@ -23,9 +23,7 @@ import {
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { Input } from '@/components/ui/input';
-import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
-import { RowActionButton } from '@/components/ui/row-action-button';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
@@ -46,6 +44,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
+import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -56,29 +62,29 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  *
  * Sections:
  *   1. PageHeader               (title + actions)
- *   2. KpiRail                  (4 sparkline tiles in a single bordered row)
- *   3. CriticalRiskBanner       (inline danger-50 strip with actions)
- *   4. MiddleRow                (API key risk scores + Attack categories,
- *                                50/50 split)
+ *   2. HeroMetricCard           (Total events KPI — big number + area chart)
+ *   3. MiddleRow                (Attack categories ×2, 50/50 split)
  *
  * Color palette: only ink-* / blue-* / chart-1..8 / success / warning /
  * danger / --destructive. No raw hex.
  * ───────────────────────────────────────────────────────────────────────── */
 
-type PresetRange = '1h' | '24h' | '7d' | '30d';
+type PresetRange = 'all' | '24h' | '7d' | '30d';
 type EventsRange = PresetRange | 'custom';
 type CustomRange = { from: Date; to: Date };
 
-/** Event-count multiplier applied to the 1h baseline so KpiRail / Attack
- *  categories / Risk scores all scale together when the top selector
- *  changes. Not a strict hours-per-window math — security events compress
+/** Event-count multiplier applied to the 1× baseline so the hero card /
+ *  Attack categories all scale together when the top selector changes.
+ *  Not a strict hours-per-window math — security events compress
  *  overnight, so 24h ≈ 6× rather than 24×; longer windows compress
- *  further. Real implementation would aggregate from the event stream. */
+ *  further. `all` is the lifetime cumulative total — ~60 days of history
+ *  for this mock account, so it sits above 30d. Real implementation would
+ *  aggregate from the event stream. */
 const EVENTS_RANGE_SCALE: Record<PresetRange, number> = {
-  '1h':  1,
   '24h': 6,
   '7d':  28,
   '30d': 100,
+  all:   200,
 };
 
 function eventsScale(range: EventsRange, customRange: CustomRange | null): number {
@@ -90,7 +96,7 @@ function eventsScale(range: EventsRange, customRange: CustomRange | null): numbe
     // ~3.3× per day, matching the 30d preset's day-rate (100/30 ≈ 3.3).
     return Math.max(1, Math.round(days * 3.3));
   }
-  return EVENTS_RANGE_SCALE[range === 'custom' ? '1h' : range];
+  return EVENTS_RANGE_SCALE[range === 'custom' ? '24h' : range];
 }
 
 const fmtCount = (n: number) => n.toLocaleString('en-US');
@@ -107,7 +113,7 @@ function buildSpark(
   seedOffset: number,
 ): number[] {
   let buckets: number;
-  if (range === '1h')       buckets = 18;
+  if (range === 'all')      buckets = 30;
   else if (range === '24h') buckets = 24;
   else if (range === '7d')  buckets = 14;
   else if (range === '30d') buckets = 30;
@@ -118,7 +124,7 @@ function buildSpark(
     buckets = Math.min(30, Math.max(7, days));
   }
 
-  const rangeSeed = range === '1h' ? 11 : range === '24h' ? 47 : range === '7d' ? 77 : range === '30d' ? 303 : 99;
+  const rangeSeed = range === 'all' ? 11 : range === '24h' ? 47 : range === '7d' ? 77 : range === '30d' ? 303 : 99;
   let s = (rangeSeed * 31 + seedOffset + buckets) >>> 0 || 1;
   const rand = () => {
     s = (s * 1664525 + 1013904223) >>> 0;
@@ -161,20 +167,311 @@ function buildSpark(
   return out;
 }
 
-const RANGE_TITLE_SUFFIX: Record<EventsRange, string> = {
-  '1h':   '1h',
-  '24h':  '24h',
-  '7d':   '7d',
-  '30d':  '30d',
-  custom: 'custom',
-};
+/** Nudge a spark series so it sums to exactly `target`, preserving shape.
+ *  The dense regime of buildSpark() lands a few counts off `count` from
+ *  rounding/jitter; this distributes the ±1 corrections onto the largest
+ *  buckets first so the silhouette is visually unchanged. Applied to the
+ *  Blocked / Flagged / Redacted sparks so they — and their per-bucket sum
+ *  — reconcile exactly with the KpiRail tiles and the hero headline. */
+function normalizeSparkTo(spark: number[], target: number): number[] {
+  const out = [...spark];
+  const n = out.length;
+  if (n === 0) return out;
+  let diff = target - out.reduce((a, b) => a + b, 0);
+  // Largest buckets first — corrections ride the peaks, never the troughs.
+  const order = out.map((_, i) => i).sort((a, b) => out[b] - out[a]);
+  for (let k = 0; diff !== 0; k++) {
+    const i = order[k % n];
+    if (diff > 0) { out[i]++; diff--; }
+    else if (out[i] > 0) { out[i]--; diff++; }
+  }
+  return out;
+}
+
 const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
-  '1h':   'vs last hour',
+  all:    'All time',
   '24h':  'vs prior day',
   '7d':   'vs prior week',
   '30d':  'vs prior month',
   custom: 'vs prior range',
 };
+
+/* ─── Hero metric (Total events card) ────────────────────────────────────
+ * Hero-scale "Total events" KPI: big number + delta + Blocked/Flagged/
+ * Redacted breakdown + full-width area chart, all driven by the page
+ * range selector. The chart series is the per-bucket sum of the Blocked
+ * / Flagged / Redacted sparks — identical buildSpark() math to the
+ * KpiRail "Total events" tile, so the trace and the headline number
+ * reconcile. Date/time axis labels are generated per range, anchored at
+ * the mock "now".
+ * ────────────────────────────────────────────────────────────────────── */
+
+// Anchor "now" for the mock = May 12 14:30 (today's date in fixtures).
+// Stable constant — never use `new Date()` here, the chart must not drift
+// across renders or test runs.
+const ANCHOR = { month: 4 /* May, 0-indexed */, day: 12, hour: 14, minute: 30 };
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
+function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; hour: number; minute: number } {
+  // Use Date arithmetic with year 2026 as scaffolding only — we read the
+  // calendar fields back out, never the year. This handles month boundaries
+  // (e.g. Apr ↔ May) correctly without a hand-rolled days-per-month table.
+  const d = new Date(2026, ANCHOR.month, ANCHOR.day, ANCHOR.hour, ANCHOR.minute);
+  d.setMinutes(d.getMinutes() - minutesAgo);
+  return { month: d.getMonth(), day: d.getDate(), hour: d.getHours(), minute: d.getMinutes() };
+}
+
+function pad2(n: number): string {
+  return n.toString().padStart(2, '0');
+}
+
+type EventsChartView = {
+  data: Array<{ time: string; requests: number }>;
+  ticks: string[];
+  domainTop: number;
+};
+
+/** Total-events series + date/time axis for the hero chart, driven by the
+ *  page range selector. The series is the per-bucket sum of the Blocked /
+ *  Flagged / Redacted sparks — same buildSpark() math (and seeds) as the
+ *  KpiRail "Total events" tile, so the trace reconciles with the headline
+ *  number. Bucket count comes from buildSpark(); each bucket gets a
+ *  date/time label anchored at the mock "now" (ANCHOR), formatted per
+ *  range: "HH:MM" for 24h, "Mon D HH:00" otherwise (the XAxis renderer
+ *  strips the trailing time segment down to "Mon D"). */
+function buildEventsChartView(range: EventsRange, customRange: CustomRange | null): EventsChartView {
+  const scale = eventsScale(range, customRange);
+  const blockedSpark  = normalizeSparkTo(buildSpark(range, customRange, 31 * scale, 1), 31 * scale);
+  const flaggedSpark  = normalizeSparkTo(buildSpark(range, customRange, 14 * scale, 2), 14 * scale);
+  const redactedSpark = normalizeSparkTo(buildSpark(range, customRange, 2 * scale, 3), 2 * scale);
+  const totalSpark = blockedSpark.map((b, i) => b + (flaggedSpark[i] ?? 0) + (redactedSpark[i] ?? 0));
+  const buckets = totalSpark.length;
+
+  // Minutes spanned per bucket + label style, per range. `all` covers the
+  // ~60-day lifetime window; custom spans the picked range.
+  let totalMinutes: number;
+  let hourly: boolean; // true → "HH:MM" labels; false → "Mon D HH:00"
+  if (range === '24h')      { totalMinutes = 24 * 60;      hourly = true;  }
+  else if (range === '7d')  { totalMinutes = 7 * 24 * 60;  hourly = false; }
+  else if (range === '30d') { totalMinutes = 30 * 24 * 60; hourly = false; }
+  else if (range === 'all') { totalMinutes = 60 * 24 * 60; hourly = false; }
+  else {
+    const ms = customRange ? customRange.to.getTime() - customRange.from.getTime() : 7 * 86_400_000;
+    totalMinutes = Math.max(60, Math.round(ms / 60_000));
+    hourly = totalMinutes <= 24 * 60;
+  }
+  const bucketMinutes = totalMinutes / buckets;
+
+  // Bucket 0 = oldest, bucket `buckets - 1` = "now" (ANCHOR).
+  const data = totalSpark.map((requests, i) => {
+    const minutesAgo = Math.round((buckets - 1 - i) * bucketMinutes);
+    const { month, day, hour, minute } = minutesBeforeAnchor(minutesAgo);
+    const time = hourly
+      ? `${pad2(hour)}:${pad2(minute)}`
+      : `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`;
+    return { time, requests };
+  });
+
+  // 4–7 evenly spaced ticks across the series, de-duplicated.
+  const tickCount = Math.min(7, Math.max(4, Math.min(buckets, 7)));
+  const ticks: string[] = [];
+  for (let i = 0; i < tickCount; i++) {
+    const t = Math.round((i * (buckets - 1)) / (tickCount - 1));
+    const label = data[t]?.time;
+    if (label && !ticks.includes(label)) ticks.push(label);
+  }
+
+  return {
+    data,
+    ticks,
+    domainTop: Math.max(...totalSpark, 1) + 1,
+  };
+}
+
+function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  // Header + breakdown are the "Total events" KPI surfaced at hero scale —
+  // driven by the page range selector. Same 1× baselines as KpiRail (47
+  // total = 31 blocked + 14 flagged + 2 redacted), scaled by the range.
+  const scale = eventsScale(range, customRange);
+  const total = 47 * scale;
+  const blocked = 31 * scale;
+  const flagged = 14 * scale;
+  const redacted = 2 * scale;
+  const note = RANGE_DELTA_NOTE[range];
+
+  // Chart: total-events trace + date/time axis, driven by the page range.
+  // Same buildSpark() math as the KpiRail "Total events" tile.
+  const chart = useMemo(() => buildEventsChartView(range, customRange), [range, customRange]);
+  const config = {
+    requests: {
+      label: 'Events',
+      color: 'var(--color-danger-500)',
+    },
+  } satisfies ChartConfig;
+  const firstTick = chart.ticks[0];
+  const lastTick = chart.ticks[chart.ticks.length - 1];
+
+  return (
+    <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-2 shrink-0">
+          <span className="font-mono uppercase tracking-[0.1em] text-xs font-medium text-ink-500">
+            Total events
+          </span>
+          <div className="flex items-baseline gap-3">
+            <HeroNumeric size="lg">
+              {fmtCount(total)}
+            </HeroNumeric>
+            <DeltaTag delta="+22.4%" note={note} size="md" />
+          </div>
+        </div>
+
+        {/* Right-aligned mono breakdown — grid (not stacked flex) so all
+            three rows share the same label / dot / value column tracks.
+            Each BreakdownRow returns three grid cells; the dot column is
+            fixed-width so dots align across rows regardless of label or
+            value length. Maps to the Action categories: Blocked / Flagged
+            / Redacted. */}
+        <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
+          <BreakdownRow label="Blocked"  value={fmtCount(blocked)}  tone="danger" />
+          <BreakdownRow label="Flagged"  value={fmtCount(flagged)}  tone="warning" />
+          <BreakdownRow label="Redacted" value={fmtCount(redacted)} tone="info" />
+        </div>
+      </div>
+
+      {/* Full-width area chart with range-aware axis + per-point tooltip */}
+      <ChartContainer
+        config={config}
+        className="aspect-auto h-24 w-full"
+      >
+        <AreaChart
+          data={chart.data}
+          margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="cmp015-events-spark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-danger-500)" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="var(--color-danger-500)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {/* Dashed baseline + ceiling — `ticks` pinned to [0, domainTop]
+              so CartesianGrid draws exactly two horizontal lines (bottom
+              and top), matching the old KpiRail sparkline grid. */}
+          <CartesianGrid
+            horizontal
+            vertical={false}
+            stroke="var(--color-ink-200)"
+            strokeDasharray="2 3"
+          />
+          {/* Dynamic domain: top is `max(values) + 1` so the tallest
+              spike never touches the chart ceiling and the y-axis
+              scales with whatever data the gateway is producing. */}
+          <YAxis
+            width={0}
+            tick={false}
+            axisLine={false}
+            tickLine={false}
+            domain={[0, chart.domainTop]}
+            ticks={[0, chart.domainTop]}
+          />
+          <XAxis
+            dataKey="time"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            height={24}
+            ticks={chart.ticks}
+            interval={0}
+            tick={(tickProps) => {
+              const { x, y, payload } = tickProps as {
+                x: number;
+                y: number;
+                payload: { value: string };
+              };
+              const value = payload.value;
+              // Non-24h tick values are full timestamps ('May 6 00:00');
+              // render just the date portion ('May 6'). 24h values have
+              // no space — render as-is ('13:30').
+              const spaceIdx = value.indexOf(' ');
+              const display = spaceIdx === -1
+                ? value
+                : value.slice(0, value.lastIndexOf(' '));
+              const anchor =
+                value === firstTick
+                  ? 'start'
+                  : value === lastTick
+                    ? 'end'
+                    : 'middle';
+              return (
+                <text
+                  x={x}
+                  y={y}
+                  dy="0.71em"
+                  textAnchor={anchor}
+                  fontSize={11}
+                  fill="var(--color-ink-500)"
+                >
+                  {display}
+                </text>
+              );
+            }}
+          />
+          <ChartTooltip
+            cursor={{ stroke: 'var(--color-ink-400)', strokeDasharray: '2 3' }}
+            content={<ChartTooltipContent indicator="dot" />}
+          />
+          <Area
+            dataKey="requests"
+            type="linear"
+            stroke="var(--color-danger-500)"
+            strokeWidth={1.5}
+            fill="url(#cmp015-events-spark)"
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ChartContainer>
+    </div>
+  );
+}
+
+// Indicator dot colors — one stop lighter than the StatusDot defaults so
+// the Total events breakdown matches the lightened Action Categories bars.
+const BREAKDOWN_DOT: Record<'success' | 'danger' | 'warning' | 'info', string> = {
+  success: 'var(--color-success-500)',
+  danger:  'var(--color-danger-500)',
+  warning: 'var(--color-warning-500)',
+  info:    'var(--color-blue-500)',
+};
+
+function BreakdownRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'success' | 'danger' | 'warning' | 'info';
+}) {
+  // Returns three grid cells (no wrapper element). Parent is a 3-col grid
+  // so dots and values align across rows. `justify-self-end` right-aligns
+  // text-flow cells within their tracks.
+  return (
+    <>
+      <span className="font-sans text-xs font-medium text-ink-500 tracking-tight justify-self-end">
+        {label}
+      </span>
+      <span
+        aria-hidden
+        className="size-2 shrink-0 rounded-full"
+        style={{ backgroundColor: BREAKDOWN_DOT[tone] }}
+      />
+      <span className="font-mono text-xs font-medium tabular-nums text-ink-900 justify-self-end">
+        {value}
+      </span>
+    </>
+  );
+}
 
 export function Security() {
   const navigate = useNavigate();
@@ -183,8 +480,9 @@ export function Security() {
   // Range lifted so PageHeader can drive the data selector + custom range
   // chrome in the top-right (matches Activity / Requests). EventsTableSection
   // reads it as props; the static 17-row sample doesn't actually filter
-  // against it yet (real wiring is a follow-up).
-  const [range, setRange] = useState<EventsRange>('24h');
+  // against it yet (real wiring is a follow-up). Defaults to `all` on load
+  // — the intended landing state for every page's range selector.
+  const [range, setRange] = useState<EventsRange>('all');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const handleRangeChange = (next: PresetRange) => {
@@ -197,7 +495,7 @@ export function Security() {
       setRange('custom');
     } else {
       setCustomRange(null);
-      setRange('24h');
+      setRange('all');
     }
   };
 
@@ -215,8 +513,7 @@ export function Security() {
               onRangeChange={handleRangeChange}
               onCustomRangeChange={handleCustomRangeChange}
             />
-            <KpiRail range={range} customRange={customRange} />
-            <CriticalRiskBanner />
+            <HeroMetricCard range={range} customRange={customRange} />
             <MiddleRow range={range} customRange={customRange} />
             <EventsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
@@ -263,121 +560,18 @@ function PageHeader({
   );
 }
 
-/* ─── KPI rail (3-up sparkline cards) ────────────────────────────────────── */
-
-function KpiRail({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
-  // Four-tile rail: action components (Blocked / Flagged / Redacted) then
-  // the Total. Reads left-to-right as `sum + sum + sum = total`. Share
-  // percentages are scale-invariant so they don't change with range.
-  // 1h baselines: 31 blocked (66%) + 14 flagged (30%) + 2 redacted (4%)
-  // = 47 total.
-  const scale = eventsScale(range, customRange);
-  const total = 47 * scale;
-  const blocked = 31 * scale;
-  const flagged = 14 * scale;
-  const redacted = 2 * scale;
-  const suffix = RANGE_TITLE_SUFFIX[range];
-  const note = RANGE_DELTA_NOTE[range];
-
-  // Sparkline shapes change per range: different bucket count + different
-  // density per tile (Blocked spiky, Flagged moderate, Redacted sparse).
-  // Deterministic LCG seeded by range so the shape is stable across
-  // renders but flips when the user picks a different window. Total is
-  // the per-bucket sum of the three components.
-  const blockedSpark  = useMemo(() => buildSpark(range, customRange, blocked,  1), [range, customRange, blocked]);
-  const flaggedSpark  = useMemo(() => buildSpark(range, customRange, flagged,  2), [range, customRange, flagged]);
-  const redactedSpark = useMemo(() => buildSpark(range, customRange, redacted, 3), [range, customRange, redacted]);
-  const totalSpark    = useMemo(
-    () => blockedSpark.map((b, i) => b + (flaggedSpark[i] ?? 0) + (redactedSpark[i] ?? 0)),
-    [blockedSpark, flaggedSpark, redactedSpark],
-  );
-  return (
-    <KpiRailShell columns={4}>
-      <CompactKpi
-        flat
-        title={`Blocked / ${suffix}`}
-        value={fmtCount(blocked)}
-        valueSuffix="66%"
-        delta="+18%"
-        deltaNote={note}
-        spark={<CompactSpark colorVar="var(--color-danger-600)"  data={blockedSpark}  />}
-      />
-      <CompactKpi
-        flat
-        title={`Flagged / ${suffix}`}
-        value={fmtCount(flagged)}
-        valueSuffix="30%"
-        delta="+4.2%"
-        deltaNote={note}
-        spark={<CompactSpark colorVar="var(--color-warning-600)" data={flaggedSpark}  />}
-      />
-      <CompactKpi
-        flat
-        title={`Redacted / ${suffix}`}
-        value={fmtCount(redacted)}
-        valueSuffix="4%"
-        delta="+0.6%"
-        deltaNote={note}
-        spark={<CompactSpark colorVar="var(--color-ink-500)"     data={redactedSpark} />}
-      />
-      <CompactKpi
-        flat
-        title={`Total events / ${suffix}`}
-        value={fmtCount(total)}
-        delta="+22.4%"
-        deltaNote={note}
-        spark={<CompactSpark colorVar="var(--color-danger-600)"  data={totalSpark}    />}
-      />
-    </KpiRailShell>
-  );
-}
-
-/* ─── Critical risk banner ──────────────────────────────────────────────── */
-
-function CriticalRiskBanner() {
-  return (
-    <div
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-      className="rounded-sm bg-danger-50 border border-danger-200 p-4"
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0 max-w-2/3">
-          <span
-            className="inline-flex items-center justify-center size-8 shrink-0 rounded-full bg-danger-600 text-white"
-            aria-hidden="true"
-          >
-            <TriangleAlert className="size-4" strokeWidth={2} />
-          </span>
-          <p className="font-sans text-sm text-ink-900 -tracking-[0.14px] text-pretty m-0">
-            <span className="font-medium text-danger-700">Critical risk</span>
-            <span className="text-ink-500"> · </span>
-            <span className="font-mono">sk-cg-…7a3</span> exceeded detection threshold (14&nbsp;events&nbsp;/&nbsp;hr). All requests receiving enhanced scanning, rate-limited to 1&nbsp;req&nbsp;/&nbsp;10s.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="default" size="sm">
-            Revoke key
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Middle row (Attack categories 2/3 + API key risk scores 1/3) ───────── */
+/* ─── Middle row (Attack categories ×2) ──────────────────────────────────── */
 
 function MiddleRow({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <ApiKeyRiskScoresCard range={range} customRange={customRange} />
+      <ActionCategoriesCard range={range} customRange={customRange} />
       <AttackCategoriesCard range={range} customRange={customRange} />
     </div>
   );
 }
 
-/* ─── Attack categories card ────────────────────────────────────────────── */
+/* ─── Category breakdown cards ──────────────────────────────────────────── */
 
 type AttackCategory = {
   label: string;
@@ -386,27 +580,72 @@ type AttackCategory = {
   color: string;
 };
 
-// Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt injection,
-// PII / PHI (combined, since PHI is medical PII), Credential leak. No
-// Content Policy / Encoding / Jailbreak buckets: we don't ship those
-// detectors yet, so don't show counts we can't back.
+// Left card. Same 1h baselines as the KpiRail (31 / 14 / 2), scaled by the
+// page range selector. This is the KpiRail's Blocked / Flagged / Redacted
+// tiles reformatted as a horizontal bar breakdown — counts must reconcile.
+const ACTION_CATEGORIES: AttackCategory[] = [
+  { label: 'Blocked',  count: 31, color: 'var(--color-danger-500)'  },
+  { label: 'Flagged',  count: 14, color: 'var(--color-warning-500)' },
+  { label: 'Redacted', count: 2,  color: 'var(--color-blue-500)'    },
+];
+
+// Right card. Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt
+// injection, PII / PHI (combined, since PHI is medical PII), Credential
+// leak. No Content Policy / Encoding / Jailbreak buckets: we don't ship
+// those detectors yet, so don't show counts we can't back.
 const ATTACK_CATEGORIES: AttackCategory[] = [
   { label: 'PII / PHI',        count: 8, color: 'var(--color-chart-3)' },
   { label: 'Prompt injection', count: 5, color: 'var(--color-chart-1)' },
   { label: 'Credential leak',  count: 3, color: 'var(--color-chart-4)' },
 ];
 
+function ActionCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  return (
+    <CategoryBreakdownCard
+      title="Action Categories"
+      description="Breakdown by action type"
+      categories={ACTION_CATEGORIES}
+      range={range}
+      customRange={customRange}
+    />
+  );
+}
+
 function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  return (
+    <CategoryBreakdownCard
+      title="Attack categories"
+      description="Breakdown by detection type"
+      categories={ATTACK_CATEGORIES}
+      range={range}
+      customRange={customRange}
+    />
+  );
+}
+
+function CategoryBreakdownCard({
+  title,
+  description,
+  categories,
+  range,
+  customRange,
+}: {
+  title: string;
+  description: string;
+  categories: AttackCategory[];
+  range: EventsRange;
+  customRange: CustomRange | null;
+}) {
   const scale = eventsScale(range, customRange);
-  const scaled = ATTACK_CATEGORIES.map((c) => ({ ...c, count: c.count * scale }));
+  const scaled = categories.map((c) => ({ ...c, count: c.count * scale }));
   const max = Math.max(...scaled.map((c) => c.count));
   return (
     <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="font-sans text-base font-medium -tracking-[0.25px] text-ink-900">
-          Attack categories
+          {title}
         </CardTitle>
-        <CardDescription>Breakdown by detection type</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-3">
@@ -434,7 +673,7 @@ function AttackCategoriesCard({ range, customRange }: { range: EventsRange; cust
                   style={{ width: `${pct}%`, backgroundColor: cat.color }}
                 />
               </div>
-              <span className="shrink-0 font-mono text-sm tabular-nums text-ink-800 text-right">
+              <span className="w-14 shrink-0 ml-2 font-mono text-sm tabular-nums text-ink-800 text-right">
                 {fmtCount(cat.count)}
               </span>
             </div>
@@ -445,96 +684,7 @@ function AttackCategoriesCard({ range, customRange }: { range: EventsRange; cust
   );
 }
 
-/* ─── API key risk scores card ───────────────────────────────────────────── */
-
 type RiskTier = 'critical' | 'elevated' | 'normal';
-
-type RiskRow = {
-  key: string;
-  tier: RiskTier;
-  tierLabel: string;
-  events: number;
-};
-
-const RISK_ROWS: RiskRow[] = [
-  { key: 'sk-cg-…7a3', tier: 'critical', tierLabel: 'Critical', events: 14 },
-  { key: 'sk-cg-…2f8', tier: 'elevated', tierLabel: 'Elevated', events: 8  },
-  { key: 'sk-cg-…9c1', tier: 'normal',   tierLabel: 'Normal',   events: 2  },
-  { key: 'sk-cg-…1d4', tier: 'normal',   tierLabel: 'Normal',   events: 1  },
-];
-
-const TIER_BADGE: Record<RiskTier, {
-  variant: 'destructive' | 'warning' | 'neutral';
-  dot: 'danger' | 'warning' | 'neutral';
-}> = {
-  critical: { variant: 'destructive', dot: 'danger'   },
-  elevated: { variant: 'warning',     dot: 'warning'  },
-  normal:   { variant: 'neutral',     dot: 'neutral'  },
-};
-
-function ApiKeyRiskScoresCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
-  // `range` drives both the Events column header label AND the per-key
-  // event counts (scaled from the 1h baseline). Sourced from the top-
-  // level page selector now.
-  const scale = eventsScale(range, customRange);
-  const rangeLabel = range;
-  return (
-    <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <CardTitle className="font-sans text-base font-medium -tracking-[0.25px] text-ink-900">
-          API key risk scores
-        </CardTitle>
-        <CardDescription>
-          Elevated keys get enhanced scanning
-        </CardDescription>
-      </CardHeader>
-
-      <Table className="w-full table-fixed">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="whitespace-nowrap">Key</TableHead>
-              <TableHead className="whitespace-nowrap">Risk</TableHead>
-              <TableHead className="text-right whitespace-nowrap">
-                Events ({rangeLabel})
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {RISK_ROWS.map((row) => {
-              const badge = TIER_BADGE[row.tier];
-              return (
-                <TableRow
-                  key={row.key}
-                  className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
-                  onClick={() => { /* drill target — wire to detail panel */ }}
-                >
-                  <TableCell className="whitespace-nowrap">
-                    <RowActionButton
-                      layout="inline"
-                      onClick={() => { /* drill target — wire to detail panel */ }}
-                      aria-label={`Inspect ${row.key} (${row.tierLabel} risk)`}
-                      className="font-mono text-sm text-ink-900 -tracking-[0.14px]"
-                    >
-                      {row.key}
-                    </RowActionButton>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <Badge variant={badge.variant}>
-                      {row.tierLabel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={`text-right whitespace-nowrap font-mono tabular-nums ${row.events === 0 ? 'text-ink-400' : 'text-ink-800'}`}>
-                    {fmtCount(row.events * scale)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-    </Card>
-  );
-}
-
 
 /* ─── Recent security events table ────────────────────────────────────────
  * Mirrors the CMP-013 RequestsTableSection pattern: wrapper card +
@@ -711,7 +861,7 @@ const TYPE_META: Record<
 };
 
 const RANGE_OPTIONS = [
-  { value: '1h',  label: '1H'  },
+  { value: 'all', label: 'All' },
   { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
@@ -730,23 +880,23 @@ const EVENT_ROWS: EventRow[] = [
   //   cnv_skylark_18:  6 turns, 11 reqs,   8,114 tokens
   //   cnv_vela_21:    12 turns, 26 reqs, 102,041 tokens
   //   cnv_polaris_55:  4 turns,  7 reqs,   3,402 tokens
-  { time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'sk-cg-...7a3c1f', action: 'blocked',  requestId: 'req_aurora_4200',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '612',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
-  { time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'sk-cg-...3d4f8b', action: 'blocked',  requestId: 'req_orion_4203',    conversationId: 'cnv_orion_70',     keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,408', outTokens: '0',     latency: '2.10s',  turn: 5,  totalTurns: 18 },
-  { time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'sk-cg-...f12a09', action: 'flagged',  requestId: 'req_lyra_4207',     conversationId: 'cnv_lyra_92',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '412',   outTokens: '188',   latency: '3.20s',  turn: 8,  totalTurns: 14 },
-  { time: '2026-05-12 09:42:26', relative: '8m ago',  type: 'injection',  key: 'sk-cg-...e87b4d', action: 'blocked',  requestId: 'req_meridian_4208', conversationId: 'cnv_meridian_07',  keyTier: 'critical', status: 'error',   code: '403', inTokens: '548',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
-  { time: '2026-05-12 09:41:08', relative: '9m ago',  type: 'pii',        key: 'sk-cg-...da91e5', action: 'redacted', requestId: 'req_skylark_4209',  conversationId: 'cnv_skylark_18',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '742',   outTokens: '318',   latency: '3.80s',  turn: 3,  totalTurns: 6  },
-  { time: '2026-05-12 09:40:44', relative: '9m ago',  type: 'injection',  key: 'sk-cg-...b2c0a7', action: 'blocked',  requestId: 'req_vela_4209',     conversationId: 'cnv_vela_21',      keyTier: 'critical', status: 'error',   code: '403', inTokens: '3,902', outTokens: '0',     latency: '2.10s',  turn: 7,  totalTurns: 12 },
-  { time: '2026-05-12 09:39:58', relative: '10m ago', type: 'pii',        key: 'sk-cg-...a1fd62', action: 'flagged',  requestId: 'req_polaris_4210',  conversationId: 'cnv_polaris_55',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '484',   outTokens: '220',   latency: '5.20s',  turn: 2,  totalTurns: 4  },
-  { time: '2026-05-12 09:38:21', relative: '12m ago', type: 'credential', key: 'sk-cg-...c45e3f', action: 'blocked',  requestId: 'req_aurora_4212',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 2,  totalTurns: 3  },
-  { time: '2026-05-12 09:36:33', relative: '13m ago', type: 'phi',        key: 'sk-cg-...d782b9', action: 'flagged',  requestId: 'req_orion_4213',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,402', outTokens: '482',   latency: '6.40s',  turn: 11, totalTurns: 18 },
-  { time: '2026-05-12 09:34:42', relative: '15m ago', type: 'pii',        key: 'sk-cg-...e29a4c', action: 'redacted', requestId: 'req_lyra_4215',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '408',   outTokens: '196',   latency: '4.50s',  turn: 6,  totalTurns: 14 },
-  { time: '2026-05-12 09:32:18', relative: '18m ago', type: 'phi',        key: 'sk-cg-...9bc3d8', action: 'redacted', requestId: 'req_meridian_4218', conversationId: 'cnv_meridian_07',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '522',   outTokens: '234',   latency: '5.40s',  turn: 2,  totalTurns: 3  },
-  { time: '2026-05-12 09:31:51', relative: '18m ago', type: 'injection',  key: 'sk-cg-...1f2e57', action: 'flagged',  requestId: 'req_skylark_4218',  conversationId: 'cnv_skylark_18',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '728',   outTokens: '348',   latency: '13.40s', turn: 4,  totalTurns: 6  },
-  { time: '2026-05-12 09:30:09', relative: '20m ago', type: 'credential', key: 'sk-cg-...4ab712', action: 'flagged',  requestId: 'req_vela_4220',     conversationId: 'cnv_vela_21',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '3,892', outTokens: '1,718', latency: '3.90s',  turn: 9,  totalTurns: 12 },
-  { time: '2026-05-12 09:29:32', relative: '21m ago', type: 'phi',        key: 'sk-cg-...5e7d8a', action: 'redacted', requestId: 'req_polaris_4221',  conversationId: 'cnv_polaris_55',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '480',   outTokens: '232',   latency: '5.40s',  turn: 3,  totalTurns: 4  },
-  { time: '2026-05-12 09:27:14', relative: '23m ago', type: 'credential', key: 'sk-cg-...8d24c6', action: 'blocked',  requestId: 'req_aurora_4223',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
-  { time: '2026-05-12 09:24:47', relative: '25m ago', type: 'injection',  key: 'sk-cg-...6fa83b', action: 'flagged',  requestId: 'req_orion_4225',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,410', outTokens: '612',   latency: '14.60s', turn: 14, totalTurns: 18 },
-  { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'sk-cg-...2bd591', action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
+  { time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'blocked',  requestId: 'req_aurora_4200',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '612',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
+  { time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'prod-agent (sk-gw-930)', action: 'blocked',  requestId: 'req_orion_4203',    conversationId: 'cnv_orion_70',     keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,408', outTokens: '0',     latency: '2.10s',  turn: 5,  totalTurns: 18 },
+  { time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_lyra_4207',     conversationId: 'cnv_lyra_92',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '412',   outTokens: '188',   latency: '3.20s',  turn: 8,  totalTurns: 14 },
+  { time: '2026-05-12 09:42:26', relative: '8m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'blocked',  requestId: 'req_meridian_4208', conversationId: 'cnv_meridian_07',  keyTier: 'critical', status: 'error',   code: '403', inTokens: '548',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
+  { time: '2026-05-12 09:41:08', relative: '9m ago',  type: 'pii',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_skylark_4209',  conversationId: 'cnv_skylark_18',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '742',   outTokens: '318',   latency: '3.80s',  turn: 3,  totalTurns: 6  },
+  { time: '2026-05-12 09:40:44', relative: '9m ago',  type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'blocked',  requestId: 'req_vela_4209',     conversationId: 'cnv_vela_21',      keyTier: 'critical', status: 'error',   code: '403', inTokens: '3,902', outTokens: '0',     latency: '2.10s',  turn: 7,  totalTurns: 12 },
+  { time: '2026-05-12 09:39:58', relative: '10m ago', type: 'pii',        key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_polaris_4210',  conversationId: 'cnv_polaris_55',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '484',   outTokens: '220',   latency: '5.20s',  turn: 2,  totalTurns: 4  },
+  { time: '2026-05-12 09:38:21', relative: '12m ago', type: 'credential', key: 'prod-agent (sk-gw-930)', action: 'blocked',  requestId: 'req_aurora_4212',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 2,  totalTurns: 3  },
+  { time: '2026-05-12 09:36:33', relative: '13m ago', type: 'phi',        key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_orion_4213',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,402', outTokens: '482',   latency: '6.40s',  turn: 11, totalTurns: 18 },
+  { time: '2026-05-12 09:34:42', relative: '15m ago', type: 'pii',        key: 'prod-web (sk-gw-438)',   action: 'redacted', requestId: 'req_lyra_4215',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '408',   outTokens: '196',   latency: '4.50s',  turn: 6,  totalTurns: 14 },
+  { time: '2026-05-12 09:32:18', relative: '18m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_meridian_4218', conversationId: 'cnv_meridian_07',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '522',   outTokens: '234',   latency: '5.40s',  turn: 2,  totalTurns: 3  },
+  { time: '2026-05-12 09:31:51', relative: '18m ago', type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_skylark_4218',  conversationId: 'cnv_skylark_18',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '728',   outTokens: '348',   latency: '13.40s', turn: 4,  totalTurns: 6  },
+  { time: '2026-05-12 09:30:09', relative: '20m ago', type: 'credential', key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_vela_4220',     conversationId: 'cnv_vela_21',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '3,892', outTokens: '1,718', latency: '3.90s',  turn: 9,  totalTurns: 12 },
+  { time: '2026-05-12 09:29:32', relative: '21m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_polaris_4221',  conversationId: 'cnv_polaris_55',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '480',   outTokens: '232',   latency: '5.40s',  turn: 3,  totalTurns: 4  },
+  { time: '2026-05-12 09:27:14', relative: '23m ago', type: 'credential', key: 'test-key (sk-gw-255)',   action: 'blocked',  requestId: 'req_aurora_4223',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
+  { time: '2026-05-12 09:24:47', relative: '25m ago', type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_orion_4225',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,410', outTokens: '612',   latency: '14.60s', turn: 14, totalTurns: 18 },
+  { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'prod-agent (sk-gw-930)', action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
 ];
 
 function EventsTableSection({
@@ -756,7 +906,6 @@ function EventsTableSection({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
-  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
   const [action, setAction] = useState('all');
@@ -909,20 +1058,26 @@ function EventsTableSection({
                   </span>
                 </TableCell>
                 <TableCell className="max-w-[200px]">
-                  <TextLink
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/conversations?open=${row.conversationId}`);
-                    }}
+                  <span
                     title={row.conversationId}
-                    aria-label={`Open conversation ${row.conversationId}`}
-                    className="font-mono text-sm tabular-nums tracking-tight truncate block max-w-full text-left"
+                    className="font-mono text-sm tabular-nums tracking-tight text-ink-800 truncate block max-w-full"
                   >
                     {row.conversationId}
-                  </TextLink>
+                  </span>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-ink-800 tracking-snug">
-                  {row.key}
+                <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                  {(() => {
+                    // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
+                    // parenthetical key string dimmed to ink-600.
+                    const parenIdx = row.key.indexOf(' (');
+                    if (parenIdx === -1) return <span className="text-ink-800">{row.key}</span>;
+                    return (
+                      <>
+                        <span className="text-ink-800">{row.key.slice(0, parenIdx)}</span>
+                        <span className="text-ink-600">{row.key.slice(parenIdx)}</span>
+                      </>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>
