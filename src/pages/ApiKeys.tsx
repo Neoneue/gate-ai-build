@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { BookOpen, KeyRound, MoreHorizontal, Plus, ShieldOff } from 'lucide-react';
+import { BookOpen, CircleCheck, Copy, KeyRound, MoreHorizontal, Plus, ShieldOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
@@ -21,7 +22,7 @@ import {
   linesToString,
   type CodeLine,
 } from '@/components/ui/code-card';
-import { CopyButton } from '@/components/ui/copy-button';
+import { CopyButton, useCopyFeedback } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Input } from '@/components/ui/input';
@@ -93,6 +94,9 @@ export function ApiKeys() {
     toggleSidebar: () => void;
   }>();
   const [createOpen, setCreateOpen] = useState(false);
+  // Full key string for the step-2 "Key created" modal. Non-null while that
+  // modal is open; reset to null on close (the key is shown exactly once).
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
   // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
   // a revoked test-key. Delete the array literal (replace with `[]`)
   // before testing the real add-key flow.
@@ -128,6 +132,9 @@ export function ApiKeys() {
   const handleCreate = (input: { name: string; spendCap: string; period: SpendCapPeriod }) => {
     const suffix = randomHex(4);
     const idCore = randomHex(8);
+    // The one-time full key surfaced in the step-2 modal. Demo-only — real
+    // minting happens server-side; here the masked/id fields stay independent.
+    const fullKey = `sk-gw-${randomHex(64)}`;
     const next: ApiKeyRow = {
       id: `sk-gw-${idCore}`,
       name: input.name.trim(),
@@ -141,6 +148,7 @@ export function ApiKeys() {
     };
     setKeys((prev) => [...prev, next]);
     setCreateOpen(false);
+    setCreatedKey(fullKey);
   };
 
   const handleRevoke = (id: string) => {
@@ -163,6 +171,10 @@ export function ApiKeys() {
       )}
       <UsageInfo />
       <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
+      <KeyCreatedDialog
+        fullKey={createdKey}
+        onClose={() => setCreatedKey(null)}
+      />
     </DashboardChrome>
   );
 }
@@ -405,11 +417,7 @@ function KeysTable({
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.id}>
-              {/* Revoked rows are flagged by the "Revoked" badge in the
-                  Status column — no opacity dim on the row. Dimming was
-                  retired after readability complaints at small mono
-                  sizes; the badge carries the state cleanly. */}
+            <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
               {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                   to ink-600. Single-line two-tone form shared with the
                   Events / Requests / Activity Key columns. */}
@@ -601,6 +609,111 @@ function CreateKeyDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Key created dialog (step 2) ──────────────────────────────────────── */
+
+// Step 2 of the create flow: surfaces the full key exactly once. Opens when
+// `fullKey` is non-null (driven by `createdKey` in <ApiKeys>). No form — just
+// copy + a saved-it confirmation gate before the modal can be dismissed.
+function KeyCreatedDialog({
+  fullKey,
+  onClose,
+}: {
+  fullKey: string | null;
+  onClose: () => void;
+}) {
+  const [saved, setSaved] = useState(false);
+  const { copied, trigger } = useCopyFeedback({ value: fullKey ?? '', label: 'API key' });
+
+  return (
+    <Dialog
+      open={fullKey !== null}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+          // Reset the confirmation gate so reopening starts unchecked.
+          setSaved(false);
+        }
+      }}
+    >
+      <DialogContent className="sm:max-w-lg gap-4">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <CircleCheck
+              aria-hidden
+              className="size-5 shrink-0 text-success-600"
+              strokeWidth={1.75}
+            />
+            <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+              Key created — copy it now
+            </DialogTitle>
+          </div>
+          <DialogDescription>
+            This is the only time you will see the full key. We hash it at rest.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Key display — one merged surface: mono value + Copy split by a
+            hairline divider. Custom button chrome (via useCopyFeedback) so the
+            Copy segment sits flush inside the ink-100 well, no nested border. */}
+        <div className="flex items-stretch overflow-hidden rounded-md border border-ink-200 bg-ink-100">
+          <div className="flex-1 px-3 py-2 font-mono text-sm text-ink-800 break-all">
+            {fullKey}
+          </div>
+          <button
+            type="button"
+            onClick={trigger}
+            aria-label={copied ? 'Copied' : 'Copy API key'}
+            className="flex shrink-0 items-center gap-2 border-l border-ink-200 px-4 font-sans text-sm font-medium text-ink-600 transition-colors duration-150 ease-out hover:bg-ink-200 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+          >
+            {copied ? (
+              <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.8} />
+            ) : (
+              <Copy aria-hidden className="size-4" strokeWidth={1.8} />
+            )}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+
+        {/* Warning callout — same tinted-card recipe as <CreateKeyDialog>. */}
+        <div
+          role="note"
+          className="rounded-md bg-warning-50 border border-warning-200 px-4 py-3"
+        >
+          <p className="font-sans text-sm font-medium text-warning-700 m-0">
+            Store this somewhere safe
+          </p>
+          <p className="font-sans text-sm text-warning-700 m-0">
+            Paste it into your secret manager or .env before closing. Once you close, we can't show it again — you'd need to rotate the key.
+          </p>
+        </div>
+
+        {/* Confirmation gate — Done stays disabled until this is checked. */}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="apikey-saved-confirm"
+            checked={saved}
+            onCheckedChange={(next) => setSaved(next === true)}
+          />
+          <Label
+            htmlFor="apikey-saved-confirm"
+            className="text-ink-700 text-sm font-normal"
+          >
+            I've saved this key to a secret manager.
+          </Label>
+        </div>
+
+        <DialogFooter>
+          <DialogClose
+            render={<Button type="button" variant="default" disabled={!saved} />}
+          >
+            Done
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
