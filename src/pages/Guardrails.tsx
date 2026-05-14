@@ -3,7 +3,6 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Bell, BookOpen, Plus, Shield, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DeltaTag } from '@/components/ui/compact-kpi';
 import {
   Dialog,
   DialogClose,
@@ -14,10 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { Input } from '@/components/ui/input';
-import { KpiRail } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import {
   Select,
@@ -48,7 +44,6 @@ export function Guardrails() {
       onNavigate={(path: string) => navigate(path)}
     >
       <PageHeader onCreate={openCreate} />
-      <KpiRailSection />
       <TabsRow />
       <EmptyStateSection onCreate={openCreate} />
       <FooterCallouts />
@@ -78,56 +73,6 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
           Create limit
         </Button>
       </div>
-    </div>
-  );
-}
-
-/* ─── KPI rail ──────────────────────────────────────────────────────── */
-
-function KpiRailSection() {
-  return (
-    <KpiRail columns={4}>
-      <KpiTile title="MTD spend" value="$0" />
-      <KpiTile title="MTD spend / cap" value="0" valueSuffix="%" />
-      <KpiTile title="Active limits" value="0" valueSuffix="/ 0" />
-      <KpiTile title="Limit hits (24h)" value="0" />
-    </KpiRail>
-  );
-}
-
-function KpiTile({
-  title,
-  liveDot,
-  value,
-  valueSuffix,
-  delta,
-  spark,
-}: {
-  title: string;
-  liveDot?: boolean;
-  value: string;
-  valueSuffix?: string;
-  delta?: string;
-  spark?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-white p-4">
-      <div className="flex items-center gap-2">
-        {liveDot ? (
-          <span aria-hidden className="size-2 rounded-full bg-success-600 shrink-0" />
-        ) : null}
-        <Eyebrow as="div">{title}</Eyebrow>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <HeroNumeric>{value}</HeroNumeric>
-        {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-ink-500 tracking-tight">
-            {valueSuffix}
-          </span>
-        ) : null}
-        {delta ? <DeltaTag delta={delta} /> : null}
-      </div>
-      {spark ? <div className="mt-1">{spark}</div> : null}
     </div>
   );
 }

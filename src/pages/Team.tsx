@@ -155,14 +155,13 @@ function TeamTabsTrigger({
 
 /* ─── Members pane ────────────────────────────────────────────────────── */
 
-type MemberRole = 'owner' | 'admin' | 'member' | 'viewer';
+type MemberRole = 'owner' | 'admin' | 'member';
 type MemberStatus = 'active' | 'invited' | 'suspended';
 
 const ROLE_LABEL: Record<MemberRole, string> = {
   owner: 'Owner',
   admin: 'Admin',
   member: 'Member',
-  viewer: 'Viewer',
 };
 
 const STATUS_BADGE: Record<
@@ -193,7 +192,7 @@ const MEMBER_ROWS: MemberRow[] = [
   { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',  joined: 'Apr 20, 2026', isYou: true },
   { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',  joined: 'Apr 22, 2026' },
   { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',  joined: 'May 01, 2026' },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'viewer', status: 'active',  joined: 'May 08, 2026' },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', status: 'active',  joined: 'May 08, 2026' },
 ];
 
 function MembersPane() {
@@ -259,7 +258,6 @@ function MembersPane() {
             <SelectItem value="owner">Owners</SelectItem>
             <SelectItem value="admin">Admins</SelectItem>
             <SelectItem value="member">Members</SelectItem>
-            <SelectItem value="viewer">Viewers</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -365,7 +363,6 @@ function MemberRowView({ row }: { row: MemberRow }) {
             <SelectContent>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="viewer">Viewer</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -580,9 +577,6 @@ function InviteMemberDialog({
                 </SelectItem>
                 <SelectItem value="member" className="h-auto py-2 items-start">
                   <RoleItemBody label="Member" description="Create, update, share, and delete projects and resources." />
-                </SelectItem>
-                <SelectItem value="viewer" className="h-auto py-2 items-start">
-                  <RoleItemBody label="Viewer" description="Read-only access. Cannot create, update, or delete." />
                 </SelectItem>
               </SelectContent>
             </Select>
