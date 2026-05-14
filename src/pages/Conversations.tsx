@@ -196,12 +196,13 @@ const CONVERSATION_ROWS: ConversationRow[] = [
   { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 tokens: '102,041', cost: '$0.1402', status: 'completed', updated: '13:18:55', duration: '11m 27s' },
 ];
 
-// Masked key forms — reconcile with the API Keys page's display values so
-// the same key reads identically across surfaces.
-const KEY_MASKED: Record<string, string> = {
-  'prod-web': 'sk-gw-…c4ae',
-  'prod-agent': 'sk-gw-…9f30',
-  'test-key': 'sk-gw-…255e',
+// Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities used on
+// the Requests and Events log tables so the same key reads identically
+// across surfaces.
+const KEY_SUFFIX: Record<string, string> = {
+  'prod-web': 'sk-gw-438',
+  'prod-agent': 'sk-gw-930',
+  'test-key': 'sk-gw-255',
 };
 
 // Synthetic total — held at module scope so pagination math reconciles
@@ -345,18 +346,17 @@ function ConversationsTableSection() {
                     </span>
                   </RowActionButton>
                 </TableCell>
-                <TableCell className="max-w-[220px]">
-                  <div className="flex flex-col min-w-0">
-                    <span
-                      className="font-sans text-sm font-medium text-ink-900 truncate"
-                      title={row.initiator}
-                    >
-                      {row.initiator}
+                <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                  {/* `name (sk-gw-NNN)` — name in dark ink, the parenthetical
+                      gateway id dimmed to ink-600. Matches the Requests and
+                      Events Key columns. */}
+                  <span className="text-ink-800">{row.initiator}</span>
+                  {KEY_SUFFIX[row.initiator] ? (
+                    <span className="text-ink-600">
+                      {' '}
+                      ({KEY_SUFFIX[row.initiator]})
                     </span>
-                    <span className="font-mono text-xs text-ink-500 -tracking-[0.01em] truncate">
-                      {KEY_MASKED[row.initiator] ?? ''}
-                    </span>
-                  </div>
+                  ) : null}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                   {row.turns}
