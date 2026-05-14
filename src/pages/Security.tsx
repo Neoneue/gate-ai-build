@@ -909,6 +909,10 @@ const EVENT_ROWS: EventRow[] = [
   { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'prod-agent (sk-gw-930)', action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
 ];
 
+// Distinct API keys present in the sample — drives the toolbar Key filter
+// so its options reconcile with the rows instead of being hand-listed.
+const EVENT_KEYS = [...new Set(EVENT_ROWS.map((r) => r.key))];
+
 function EventsTableSection({
   range,
   customRange,
@@ -918,6 +922,7 @@ function EventsTableSection({
 }) {
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
+  const [keyFilter, setKeyFilter] = useState('all');
   const [action, setAction] = useState('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
@@ -930,17 +935,18 @@ function EventsTableSection({
   // state doesn't carry over into a window with fewer rows.
   useEffect(() => {
     setPage(1);
-  }, [range, customRange, query, type, action]);
+  }, [range, customRange, query, type, keyFilter, action]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return EVENT_ROWS.filter((r) => {
       if (type !== 'all' && r.type !== type) return false;
+      if (keyFilter !== 'all' && r.key !== keyFilter) return false;
       if (action !== 'all' && r.action !== action) return false;
       if (!q) return true;
       return r.key.toLowerCase().includes(q);
     });
-  }, [query, type, action]);
+  }, [query, type, keyFilter, action]);
 
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
   // ~40-min window of "now"). The pagination footer "of N" reconciles with
@@ -995,6 +1001,24 @@ function EventsTableSection({
             <SelectItem value="pii">PII</SelectItem>
             <SelectItem value="phi">PHI</SelectItem>
             <SelectItem value="credential">Credential</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={keyFilter} onValueChange={setKeyFilter}>
+          <SelectTrigger
+            size="sm"
+            aria-label="API key"
+            className="border-ink-200 bg-white text-ink-900 font-normal"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All keys</SelectItem>
+            {EVENT_KEYS.map((k) => (
+              <SelectItem key={k} value={k}>
+                {k}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -1249,7 +1273,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 label="Timestamp"
                 value={
                   <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
-                    {row.time}
+                    {formatEventTime(row.time)}
                   </span>
                 }
               />
