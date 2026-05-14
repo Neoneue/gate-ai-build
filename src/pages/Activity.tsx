@@ -157,15 +157,8 @@ export function Activity() {
               }}
             />
             <KpiRail range={range} customRange={customRange} />
-            {/* Grouped section — the trend chart + the 3 Top-by-axis cards
-                read as one block. Each of the four surfaces now owns its
-                own metric toggle (no shared page-level lens). Inner gap-4
-                (16px) sits tighter than the page's gap-6 (24px) outer
-                rhythm so the section coheres. */}
-            <section className="flex flex-col gap-4">
-              <TrendCard range={range} customRange={customRange} />
-              <TopByAxisRow range={range} customRange={customRange} />
-            </section>
+            <TrendCard range={range} customRange={customRange} />
+            <TopByAxisRow range={range} customRange={customRange} />
             <UsageByKey range={range} customRange={customRange} />
           </DashboardChrome>
   );
