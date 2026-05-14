@@ -158,7 +158,7 @@ function CreditsCard() {
           Used for requests routed through our gateway. Each call is charged at our per-model rate. Security and audit are included.
         </p>
         <dl className="flex flex-col gap-2 text-sm m-0 mt-3">
-          <CreditStatRow label="Used this month" value="$0" mono />
+          <CreditStatRow label="Used this month" value={payWithDag ? '0 DAG' : '$0'} mono />
           <CreditStatRow
             label="Auto-recharge"
             value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
