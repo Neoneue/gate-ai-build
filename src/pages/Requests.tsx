@@ -33,6 +33,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { CodeBlock, CodeCard, type CodeLine } from '@/components/ui/code-card';
+import { SectionHeading } from '@/components/ui/section-heading';
 import {
   Select,
   SelectContent,
@@ -1725,18 +1726,21 @@ function MessageBlock({
   content: string;
   icon?: ReactNode;
 }) {
+  // Section style mirrors the Events modal Evidence blocks: a plain
+  // icon + heading above a bordered content box (not a card with a
+  // header bar). Full request keeps its own BodySection drawer style.
   return (
-    <CodeCard className="shrink-0 border border-ink-100">
-      <div className="flex items-center gap-2 pl-3 pr-4 py-2 bg-white">
-        {icon}
-        <span className="font-sans text-sm font-medium text-ink-500">{label}</span>
+    <section className="shrink-0 flex flex-col gap-2">
+      <SectionHeading>
+        <span className="inline-flex items-center gap-2">
+          {icon}
+          {label}
+        </span>
+      </SectionHeading>
+      <div className="rounded-md border border-ink-200 px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
+        {content}
       </div>
-      <div className="border-t border-ink-200 bg-ink-50 px-4 py-3">
-        <p className="font-sans text-sm leading-6 text-ink-800 text-pretty whitespace-pre-wrap break-words">
-          {content}
-        </p>
-      </div>
-    </CodeCard>
+    </section>
   );
 }
 
