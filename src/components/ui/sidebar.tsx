@@ -332,18 +332,13 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         >
           CP
         </span>
-        <span className="flex flex-col min-w-0">
-          <span className="font-sans text-sm font-medium text-ink-900 truncate leading-tight">Chad</span>
-          <span className="font-sans text-xs text-ink-500 truncate leading-tight" title="chad@constellationnetwork.io">
-            chad@constellationnetwork.io
-          </span>
-        </span>
+        <span className="font-sans text-sm font-medium text-ink-900 truncate leading-tight">Chad</span>
       </div>
       <UserMenu onNavigate={onNavigate} side="right" align="end" sideOffset={12}>
         <button
           type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm text-ink-500 hover:text-ink-900 hover:bg-ink-100 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
+          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-ink-200 bg-white text-ink-500 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>
