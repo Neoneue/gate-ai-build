@@ -138,6 +138,7 @@ function CreditsCard() {
   const [addOpen, setAddOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
+  const [payWithDag, setPayWithDag] = useState(false);
 
   useEffect(() => {
     try {
@@ -152,7 +153,7 @@ function CreditsCard() {
         <Eyebrow as="div">Credits</Eyebrow>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3">
-        <HeroNumeric size="lg">$0</HeroNumeric>
+        <HeroNumeric size="lg">{payWithDag ? '0 DAG' : '$0'}</HeroNumeric>
         <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
           Used for requests routed through our gateway. Each call is charged at our per-model rate. Security and audit are included.
         </p>
@@ -165,14 +166,26 @@ function CreditsCard() {
           <CreditStatRow label="Last top-up" value="Never" />
         </dl>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-t border-ink-200">
-        <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus data-icon="inline-start" aria-hidden />
-          Add credits
-        </Button>
+      <CardFooter className="justify-between gap-3 border-t border-ink-200">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Switch checked={payWithDag} onCheckedChange={setPayWithDag} />
+          <span className="font-sans text-sm font-medium text-ink-900">
+            Pay with DAG
+          </span>
+        </label>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus data-icon="inline-start" aria-hidden />
+            Add credits
+          </Button>
+        </div>
       </CardFooter>
-      <AddCreditsDialog open={addOpen} onOpenChange={setAddOpen} />
+      {payWithDag ? (
+        <AddCreditsDagDialog open={addOpen} onOpenChange={setAddOpen} />
+      ) : (
+        <AddCreditsDialog open={addOpen} onOpenChange={setAddOpen} />
+      )}
       <AutoRechargeDialog
         open={autoOpen}
         onOpenChange={setAutoOpen}
@@ -249,7 +262,7 @@ function AddCreditsDialog({
                 className={cn(
                   'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
                   isSelected
-                    ? 'border-blue-500 bg-blue-100 text-ink-900'
+                    ? 'border-ink-500 bg-ink-100 text-ink-900'
                     : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
                 )}
               >
@@ -263,7 +276,7 @@ function AddCreditsDialog({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="add-credits-custom"
-            className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+            className="font-sans text-sm font-medium text-ink-500 m-0"
           >
             Custom amount (USD)
           </label>
@@ -302,6 +315,118 @@ function AddCreditsDialog({
           </DialogClose>
           <Button type="button" disabled={!canSubmit}>
             Continue to checkout
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Add credits (DAG) dialog ───────────────────────────────────────── */
+
+const CREDIT_DAG_PRESETS = [50, 100, 500, 1000] as const;
+
+function AddCreditsDagDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(50);
+  const [custom, setCustom] = useState('');
+
+  const customNum = Number(custom);
+  const customValid = custom.length > 0 && Number.isFinite(customNum) && customNum >= 25 && customNum <= 1000;
+  const amount = custom.length > 0 ? (customValid ? customNum : null) : selected;
+  const canSubmit = amount !== null;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) {
+          setSelected(50);
+          setCustom('');
+        }
+      }}
+    >
+      <DialogContent
+        className="gap-4"
+        style={{ width: 500, minWidth: 500, maxWidth: 500 }}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+            Add credits
+          </DialogTitle>
+          <DialogDescription>Min 25 DAG · Max 1000 DAG.</DialogDescription>
+        </DialogHeader>
+
+        <div
+          role="radiogroup"
+          aria-label="Credit amount"
+          className="grid grid-cols-4 gap-2"
+        >
+          {CREDIT_DAG_PRESETS.map((value) => {
+            const isSelected = custom.length === 0 && selected === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => {
+                  setSelected(value);
+                  setCustom('');
+                }}
+                className={cn(
+                  'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
+                  isSelected
+                    ? 'border-ink-500 bg-ink-100 text-ink-900'
+                    : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
+                )}
+              >
+                {value} DAG
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="add-credits-dag-custom"
+            className="font-sans text-sm font-medium text-ink-500 m-0"
+          >
+            Custom amount (DAG)
+          </label>
+          <Input
+            id="add-credits-dag-custom"
+            type="number"
+            inputMode="decimal"
+            min="25"
+            max="1000"
+            step="1"
+            value={custom}
+            onChange={(e) => {
+              setCustom(e.target.value);
+              if (e.target.value.length > 0) setSelected(null);
+            }}
+            placeholder="e.g. 250"
+            className="font-mono text-sm tabular-nums"
+          />
+        </div>
+
+        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          You&apos;ll be redirected to Stargazer Wallet. Your balance will update shortly after payment confirmation.
+        </p>
+
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancel
+          </DialogClose>
+          <Button type="button" disabled={!canSubmit}>
+            Open Stargazer wallet
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -500,7 +625,6 @@ function AutoRechargeDialog({
           </DialogClose>
           <Button
             type="button"
-            disabled={!enabled}
             onClick={() => onSave({ enabled, threshold, topUp, monthlyCap })}
           >
             Save changes
