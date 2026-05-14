@@ -43,7 +43,7 @@ export type SidebarItem = {
 };
 
 export type SidebarSection = {
-  /** Eyebrow group label (mono-uppercase). Omit for the top section
+  /** Eyebrow group label (sans-uppercase). Omit for the top section
    *  (no header) — collapsed rail uses a `<Separator />` between groups
    *  in either case. */
   label?: string;

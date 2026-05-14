@@ -105,7 +105,7 @@ function ProfileCard() {
             the second row because it's a workspace-scope value, not a
             personal one — the gap signals the shift. Form labels follow
             the codified pattern: sans, ink-600, font-medium, text-sm
-            (NOT mono uppercase). The form lives inside CardContent and
+            (NOT the uppercase eyebrow recipe). The form lives inside CardContent and
             the Save button in CardFooter associates via `form` attribute
             — this lets Enter from any input submit. Card.tsx applies
             `pb-0` automatically when a CardFooter slot is present, so
@@ -238,7 +238,7 @@ function SecurityCard() {
         />
 
         {/* Registered passkeys subsection — sub-eyebrow + empty body.
-            Eyebrow uses the same mono-uppercase recipe as section
+            Eyebrow uses the same sans-uppercase recipe as section
             headers across the spec sheets. The wrapping `<CardContent
             className="flex flex-col gap-4">` (L276) supplies the 16px
             rhythm between the Passkey row and this group; adding a

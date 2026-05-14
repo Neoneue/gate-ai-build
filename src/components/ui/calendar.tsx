@@ -49,7 +49,7 @@ export function Calendar({ className, classNames, components, ...props }: Calend
         month_grid: 'w-full border-collapse',
         weekdays: 'flex',
         weekday:
-          'flex-1 font-mono uppercase text-xs text-ink-500 font-normal pb-2',
+          'flex-1 font-sans uppercase text-xs text-ink-500 font-normal pb-2',
         weeks: 'flex flex-col gap-1',
         week: 'flex w-full',
         // Base cell — range fills land here as a continuous band. The
