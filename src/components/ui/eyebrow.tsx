@@ -3,15 +3,16 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Eyebrow — small mono-uppercase chrome label used above KPI values,
+ * Eyebrow — small sans-uppercase chrome label used above KPI values,
  * inside sidebar nav-section headers, atop CompactKpi titles, on
  * artboard / spec-sheet headers, and (formerly) on modal title blocks.
  *
  * Extracted 2026-05-11 after the 5-agent audit found 13 hand-rolled
  * occurrences of the same recipe across CMP-013/14/15/16/18 + sidebar
- * + CompactKpi + Artboard.tsx + spec sheets. Every prior occurrence
- * was a verbatim re-inline of `font-mono text-xs uppercase
- * tracking-[0.1em] font-medium text-ink-500`.
+ * + CompactKpi + Artboard.tsx + spec sheets. Current recipe:
+ * `font-sans text-xs uppercase tracking-[0.1em] font-semibold
+ * text-ink-500` (was font-mono / font-medium until 2026-05-14 — mono
+ * is now reserved for data values only).
  *
  * Recipe is locked at the primitive — consumers compose, never override
  * type sizes / weight / tracking. Layout-only className (`px-N`, etc.)

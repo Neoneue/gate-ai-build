@@ -86,7 +86,7 @@ function TableHead({ className, scope = "col", ...props }: React.ComponentProps<
       // every consumer gets it; can be overridden for row-headers.
       scope={scope}
       className={cn(
-        // Sans Title Case (not mono uppercase) so column heads stay distinct
+        // Sans Title Case (not uppercase) so column heads stay distinct
         // from section eyebrows. Mono is reserved for ID / value content in
         // the body cells; sans here keeps the voice split clean. font-medium
         // + ink-600 gives 12px sans enough presence to register as a header
