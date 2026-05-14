@@ -62,7 +62,7 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  *
  * Inline role editing via <Select> in the row (instead of a static badge)
  * mirrors how the inspirations let admins reassign without a row drill-in.
- * Status pills carry the canonical StatusDot. The "Invite member" Dialog
+ * The "Invite member" Dialog
  * folds the role-card detail from one inspiration into our existing
  * SelectItem (description line under the role name) — one less primitive
  * to invent, same semantic payload.
@@ -157,25 +157,11 @@ function TeamTabsTrigger({
 /* ─── Members pane ────────────────────────────────────────────────────── */
 
 type MemberRole = 'owner' | 'admin' | 'member';
-type MemberStatus = 'active' | 'invited' | 'suspended';
 
 const ROLE_LABEL: Record<MemberRole, string> = {
   owner: 'Owner',
   admin: 'Admin',
   member: 'Member',
-};
-
-const STATUS_BADGE: Record<
-  MemberStatus,
-  { variant: 'success' | 'info' | 'neutral'; dot: 'success' | 'info' | 'neutral'; label: string }
-> = {
-  active:    { variant: 'success', dot: 'success', label: 'active' },
-  invited:   { variant: 'info',    dot: 'info',    label: 'invited' },
-  // "Suspended" reads as a grayed-out steady state — the user account
-  // exists but is paused. Warning was the wrong register (transient
-  // alert, action-required); neutral matches the dimmed-but-present
-  // semantic without competing with active/invited for visual weight.
-  suspended: { variant: 'neutral', dot: 'neutral', label: 'suspended' },
 };
 
 type MemberRow = {
@@ -184,16 +170,15 @@ type MemberRow = {
   email: string;
   avatarTone: AvatarTone;
   role: MemberRole;
-  status: MemberStatus;
   joined: string;
   isYou?: boolean;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  status: 'active',  joined: 'Apr 20, 2026', isYou: true },
-  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  status: 'active',  joined: 'Apr 22, 2026' },
-  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', status: 'active',  joined: 'May 01, 2026' },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', status: 'active',  joined: 'May 08, 2026' },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: 'Apr 20, 2026', isYou: true },
+  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: 'Apr 22, 2026' },
+  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: 'May 01, 2026' },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: 'May 08, 2026' },
 ];
 
 function MembersPane() {
@@ -274,10 +259,9 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <TableHead className="w-[40%]">Member</TableHead>
-            <TableHead className="w-[20%]">Joined</TableHead>
-            <TableHead className="w-[20%]">Role</TableHead>
-            <TableHead className="w-[20%]">Status</TableHead>
+            <TableHead className="w-[50%]">Member</TableHead>
+            <TableHead className="w-[25%]">Joined</TableHead>
+            <TableHead className="w-[25%]">Role</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -299,7 +283,6 @@ function MembersPane() {
 }
 
 function MemberRowView({ row }: { row: MemberRow }) {
-  const badge = STATUS_BADGE[row.status];
   return (
     <TableRow>
       <TableCell>
@@ -326,11 +309,6 @@ function MemberRowView({ row }: { row: MemberRow }) {
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
         {ROLE_LABEL[row.role]}
-      </TableCell>
-      <TableCell className="whitespace-nowrap">
-        <Badge variant={badge.variant}>
-          {badge.label}
-        </Badge>
       </TableCell>
     </TableRow>
   );
