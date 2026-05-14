@@ -1107,7 +1107,7 @@ function RequestsTableSection({
                       )}
                     />
                     <TooltipContent className="max-w-sm text-left">
-                      <span className="font-medium">Pay-as-you-go (PAYG)</span> requests are billed by Gate AI and show
+                      <span className="font-medium">Gateway</span> requests are billed by Gate AI and show
                       the exact charge. <span className="font-medium">Bring-your-own-key (BYOK)</span> requests are
                       billed directly by your provider.
                     </TooltipContent>

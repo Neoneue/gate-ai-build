@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
  * Surface style mirrors the rest of the floating-popup ladder (white bg,
  * ink-200 border, --shadow-popup, 4px sub-element radius). Used for things
  * like column-header info icons that explain a domain term — "what's BYOK
- * vs PAYG?" — without taking permanent visual real estate.
+ * vs Gate?" — without taking permanent visual real estate.
  *
  * Wraps `@base-ui/react/tooltip`. For a single tooltip you don't need a
  * <TooltipProvider>; only wrap if multiple tooltips on the page need
