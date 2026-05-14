@@ -267,15 +267,7 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
   };
 }
 
-// Title suffix + delta trailing copy tied to the active range. Mirrors
-// the Requests hero pattern (eyebrow "X / 24H", delta note "vs prior day").
-const RANGE_TITLE_SUFFIX: Record<Range, string> = {
-  all:      'all',
-  '24h':    '24h',
-  '7d':     '7d',
-  '30d':    '30d',
-  custom:   'custom',
-};
+// Delta trailing copy tied to the active range.
 const RANGE_DELTA_NOTE: Record<Range, string> = {
   all:      'All time',
   '24h':    'vs prior day',
@@ -286,13 +278,12 @@ const RANGE_DELTA_NOTE: Record<Range, string> = {
 
 function KpiRail({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
   const k = getKpiSpec(range, customRange);
-  const suffix = RANGE_TITLE_SUFFIX[range];
   const note = RANGE_DELTA_NOTE[range];
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
         flat
-        title={`Total Spend / ${suffix}`}
+        title="Total Spend"
         value={k.spend.value}
         delta={k.spend.delta}
         deltaNote={note}
@@ -300,7 +291,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
       />
       <CompactKpi
         flat
-        title={`Total Requests / ${suffix}`}
+        title="Total Requests"
         value={k.requests.value}
         delta={k.requests.delta}
         deltaNote={note}
@@ -308,7 +299,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
       />
       <CompactKpi
         flat
-        title={`Tokens Used / ${suffix}`}
+        title="Tokens Used"
         value={k.tokens.value}
         delta={k.tokens.delta}
         deltaNote={note}
@@ -368,7 +359,7 @@ const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slo
  *  base × the active range's effectiveScale, so chart and KPI cannot drift.
  *  If you change any row, verify the per-dimension total still equals 927. */
 const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
-  // PAYG-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
+  // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
   // $927 so toggling Model / Provider / API key keeps the same workspace
   // total (and that total = the Total Spend KPI by construction).
   model: [
@@ -389,7 +380,7 @@ const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     { anthropic: 79, openai: 28, google: 19, bedrock: 18, openrouter: 13 },
     { anthropic: 83, openai: 29, google: 21, bedrock: 19, openrouter: 16 },
   ],
-  // Per-key 7d sums match the PAYG rows in API_KEY_ROWS:
+  // Per-key 7d sums match the Gate rows in API_KEY_ROWS:
   //   prod-agent 410, prod-web 385, staging-web 58, atlas-eval 42,
   //   dev 23, ci-runner 9. Total ≈ $927.
   apiKey: [
@@ -604,7 +595,7 @@ function SpendTrendCard({ range, customRange }: { range: Range; customRange: Cus
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Spend over time <span className="text-muted-foreground font-normal">(PAYG)</span></CardTitle>
+        <CardTitle>Spend over time</CardTitle>
         <CardDescription>
           Stacked by {DIMENSION_OPTIONS.find((d) => d.value === dimension)?.label.toLowerCase()}
           {' · '}{bucketLabel}
@@ -884,7 +875,7 @@ function TopByAxisRow({ range, customRange }: { range: Range; customRange: Custo
   );
 
   const userRows: TopRow[] = useMemo(() => {
-    // PAYG-only — BYOK spend isn't tracked against the workspace total,
+    // Gate-only — BYOK spend isn't tracked against the workspace total,
     // so users whose keys are all BYOK don't appear here.
     const agg = new Map<string, { owner: string; spend: number }>();
     for (const k of API_KEY_ROWS) {
@@ -908,7 +899,7 @@ function TopByAxisRow({ range, customRange }: { range: Range; customRange: Custo
     <div className="grid grid-cols-3 gap-4">
       <TopList title="Top models"   subtitle="By total tokens used"     rows={modelRows} />
       <TopList title="Top API keys" subtitle="By total requests made"   rows={keyRows} />
-      <TopList title="Top users"    subtitle="By total spend (PAYG)"    rows={userRows} />
+      <TopList title="Top users"    subtitle="By total spend"    rows={userRows} />
     </div>
   );
 }
@@ -919,10 +910,10 @@ type ApiKeyRow = {
   key: string;
   label: string;
   owner: string;
-  /** Gateway PRD R4/R5: BYOK vs PAYG is per-key. Material on this admin
+  /** Gateway PRD R4/R5: BYOK vs Gate is per-key. Material on this admin
    *  surface because the workspace owner reconciles prepaid balance vs.
    *  external provider charges across every user's keys. */
-  path: 'BYOK' | 'PAYG';
+  path: 'BYOK' | 'Gate';
   requests: number;
   tokensIn: number;
   tokensOut: number;
@@ -939,15 +930,15 @@ type ApiKeyRow = {
  *    Requests  → prod-web, prod-agent, openclaw, dev, hermes-agent
  *    Tokens    → prod-web, prod-agent, openclaw, hermes-agent, dev */
 const API_KEY_ROWS: ApiKeyRow[] = [
-  { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'PAYG', requests: 22000, tokensIn: 4_030_000, tokensOut: 2_170_000, spend: 385.00 },
-  { key: 'prod-agent',    label: 'prod-agent',    owner: 'Chad Ponticas', path: 'PAYG', requests:  8400, tokensIn: 3_190_000, tokensOut: 2_610_000, spend: 410.00 },
+  { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'Gate', requests: 22000, tokensIn: 4_030_000, tokensOut: 2_170_000, spend: 385.00 },
+  { key: 'prod-agent',    label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests:  8400, tokensIn: 3_190_000, tokensOut: 2_610_000, spend: 410.00 },
   { key: 'openclaw',      label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  6800, tokensIn: 2_040_000, tokensOut: 1_360_000, spend: 295.00 },
   { key: 'hermes-agent',  label: 'hermes-agent',  owner: 'Mateus Silva',  path: 'BYOK', requests:  5200, tokensIn: 1_320_000, tokensOut: 1_080_000, spend: 135.00 },
-  { key: 'dev',           label: 'dev',           owner: 'Jordan Lee',    path: 'PAYG', requests:  5893, tokensIn:   390_000, tokensOut:   210_000, spend:  22.82 },
-  { key: 'staging-web',   label: 'staging-web',   owner: 'Chad Ponticas', path: 'PAYG', requests:  3800, tokensIn:   910_000, tokensOut:   490_000, spend:  58.00 },
-  { key: 'ci-runner',     label: 'ci-runner',     owner: 'Jordan Lee',    path: 'PAYG', requests:  2400, tokensIn:   224_000, tokensOut:    56_000, spend:   9.00 },
+  { key: 'dev',           label: 'dev',           owner: 'Jordan Lee',    path: 'Gate', requests:  5893, tokensIn:   390_000, tokensOut:   210_000, spend:  22.82 },
+  { key: 'staging-web',   label: 'staging-web',   owner: 'Chad Ponticas', path: 'Gate', requests:  3800, tokensIn:   910_000, tokensOut:   490_000, spend:  58.00 },
+  { key: 'ci-runner',     label: 'ci-runner',     owner: 'Jordan Lee',    path: 'Gate', requests:  2400, tokensIn:   224_000, tokensOut:    56_000, spend:   9.00 },
   { key: 'nova-chat',     label: 'nova-chat',     owner: 'Kira Tan',      path: 'BYOK', requests:  5400, tokensIn: 1_260_000, tokensOut:   840_000, spend: 185.00 },
-  { key: 'atlas-eval',    label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'PAYG', requests:  1800, tokensIn:   690_000, tokensOut:   230_000, spend:  42.00 },
+  { key: 'atlas-eval',    label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'Gate', requests:  1800, tokensIn:   690_000, tokensOut:   230_000, spend:  42.00 },
   { key: 'shadowfax-rag', label: 'shadowfax-rag', owner: 'Mateus Silva',  path: 'BYOK', requests:  2100, tokensIn: 1_120_000, tokensOut:   280_000, spend:  76.00 },
 ];
 
@@ -1068,7 +1059,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                 <Tooltip>
                   <TooltipTrigger
                     render={<button type="button" />}
-                    aria-label="What's the difference between PAYG and BYOK?"
+                    aria-label="What's the difference between Gate and BYOK?"
                     className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-300"
                   >
                     <Info aria-hidden className="size-3.5" strokeWidth={2} />
@@ -1076,7 +1067,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                   <TooltipContent>
                     <div className="flex flex-col gap-1">
                       <div>
-                        <span className="font-mono font-medium text-ink-900">PAYG</span>
+                        <span className="font-mono font-medium text-ink-900">Gate</span>
                         {' '}— debits the workspace prepaid Gateway balance.
                       </div>
                       <div>
