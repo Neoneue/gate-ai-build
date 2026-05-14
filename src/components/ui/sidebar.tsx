@@ -255,8 +255,8 @@ function SidebarExpanded({
         ))}
       </nav>
 
-      {/* Bottom user area — hidden for now; preserved for re-enable. */}
-      <div className="hidden items-center justify-between gap-2 px-3 py-3 border-t border-ink-200 shrink-0">
+      {/* Bottom user area */}
+      <div className="flex items-center justify-between gap-2 px-3 py-3 border-t border-ink-200 shrink-0">
         {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
       </div>
     </div>

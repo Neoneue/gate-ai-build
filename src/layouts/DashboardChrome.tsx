@@ -2,19 +2,19 @@ import * as React from 'react';
 import {
   Bell,
   ChevronRight,
+  ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from '@/components/ui/sidebar';
-import { UserMenu } from '@/components/ui/user-menu';
 import { cn } from '@/lib/utils';
 import { SIDEBAR_SECTIONS } from './nav-sections';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
  * CMP-014 surfaces. Renders the primary <Sidebar> and the DashTopBar
- * (toggle + breadcrumb + Docs/Notifications/avatar). Page content is
+ * (toggle + breadcrumb + Docs/Notifications). Page content is
  * passed in via `children`.
  *
  * Single source of truth for the nav data lives in `./nav-sections`
@@ -60,7 +60,6 @@ export function DashboardChrome({
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={onToggleSidebar}
             breadcrumbCurrent={breadcrumbCurrent}
-            onNavigate={onNavigate}
             hideDocsButton={hideDocsButton}
           />
           {/* Content pane fills the remaining column height and scrolls
@@ -82,13 +81,11 @@ function DashTopBar({
   sidebarExpanded,
   onToggleSidebar,
   breadcrumbCurrent,
-  onNavigate,
   hideDocsButton = false,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
   breadcrumbCurrent: string;
-  onNavigate?: (pageId: string) => void;
   hideDocsButton?: boolean;
 }) {
   return (
@@ -169,32 +166,17 @@ function DashTopBar({
       <div className="flex items-center gap-1">
         {hideDocsButton ? null : (
           <Button variant="outline" size="sm">
-            Documentation
+            Docs
+            <ExternalLink data-icon="inline-end" aria-hidden />
           </Button>
         )}
-        {/* Skill: surfaces.md — promote to Button `icon-sm` so the hit
-            target jumps from 24px to 32px without colliding with the
-            adjacent Docs button (gap-1 = 4px) or the avatar span. */}
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon-sm"
           aria-label="Notifications"
-          className="text-ink-500 hover:text-ink-900"
         >
           <Bell className="size-4" strokeWidth={1.75} />
         </Button>
-        <UserMenu onNavigate={onNavigate} side="bottom" align="end" sideOffset={8}>
-          <button
-            type="button"
-            aria-label="User menu"
-            // text-[11px] is an intentional one-off below the text-xs (12px)
-            // type-scale floor — the avatar badge is a tight 24px circle where
-            // 12px initials crowd the edges. Do not copy this elsewhere.
-            className="inline-flex items-center justify-center size-6 ml-2 rounded-full bg-blue-700 text-white font-sans text-[11px] font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 transition-[transform,box-shadow] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
-          >
-            <span aria-hidden>CP</span>
-          </button>
-        </UserMenu>
       </div>
     </div>
   );
