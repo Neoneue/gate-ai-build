@@ -277,11 +277,11 @@ const RANGE_TITLE_SUFFIX: Record<Range, string> = {
   custom:   'custom',
 };
 const RANGE_DELTA_NOTE: Record<Range, string> = {
-  all:      'all time',
-  '24h':    'vs prior day',
-  '7d':     'vs prior week',
-  '30d':    'vs prior month',
-  custom:   'vs prior range',
+  all:      'All time',
+  '24h':    'Prior day',
+  '7d':     'Prior week',
+  '30d':    'Prior month',
+  custom:   'Prior range',
 };
 
 function KpiRail({ range, customRange }: { range: Range; customRange: CustomRange | null }) {

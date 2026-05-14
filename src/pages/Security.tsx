@@ -231,10 +231,10 @@ function normalizeSparkTo(spark: number[], target: number): number[] {
 
 const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
   all:    'All time',
-  '24h':  'vs prior day',
-  '7d':   'vs prior week',
-  '30d':  'vs prior month',
-  custom: 'vs prior range',
+  '24h':  'Prior day',
+  '7d':   'Prior week',
+  '30d':  'Prior month',
+  custom: 'Prior range',
 };
 
 /* ─── Hero metric (Total events card) ────────────────────────────────────
