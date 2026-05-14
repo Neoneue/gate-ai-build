@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Bell, BookOpen, Plus, Shield, Zap } from 'lucide-react';
+import { Bell, BookOpen, MoreHorizontal, Plus, Shield, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -13,8 +13,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow } from '@/components/ui/eyebrow';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
+} from '@/components/ui/menu';
 import { PageTitle } from '@/components/ui/page-title';
 import {
   Select,
@@ -23,6 +29,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TabsCount } from '@/components/ui/tabs-count';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
@@ -34,7 +48,11 @@ export function Guardrails() {
     toggleSidebar: () => void;
   }>();
   const [createOpen, setCreateOpen] = useState(false);
+  const [limits, setLimits] = useState<Limit[]>([]);
   const openCreate = () => setCreateOpen(true);
+  const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
+  const removeLimit = (id: string) =>
+    setLimits((prev) => prev.filter((l) => l.id !== id));
 
   return (
     <DashboardChrome
@@ -45,10 +63,18 @@ export function Guardrails() {
       onNavigate={(path: string) => navigate(path)}
     >
       <PageHeader onCreate={openCreate} />
-      <TabsRow />
-      <EmptyStateSection onCreate={openCreate} />
+      <TabsRow count={limits.length} />
+      <LimitsSection
+        limits={limits}
+        onCreate={openCreate}
+        onRemove={removeLimit}
+      />
       <FooterCallouts />
-      <CreateLimitDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <CreateLimitDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreate={addLimit}
+      />
     </DashboardChrome>
   );
 }
@@ -80,7 +106,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
 
 /* ─── Tabs row + reset cadence ──────────────────────────────────────── */
 
-function TabsRow() {
+function TabsRow({ count }: { count: number }) {
   const [tab, setTab] = useState('all');
   return (
     <div className="flex items-end justify-between gap-4 border-b border-ink-100">
@@ -88,11 +114,11 @@ function TabsRow() {
         <TabsList variant="line" className="px-0 border-b-0">
           <TabsTrigger value="all">
             All limits
-            <TabsCount>0</TabsCount>
+            <TabsCount>{count}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="active">
             Active
-            <TabsCount>0</TabsCount>
+            <TabsCount>{count}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="attention">
             Needs attention
@@ -107,28 +133,119 @@ function TabsRow() {
   );
 }
 
-/* ─── Empty state ───────────────────────────────────────────────────── */
+/* ─── Limits table / empty state ────────────────────────────────────── */
 
-function EmptyStateSection({ onCreate }: { onCreate: () => void }) {
+function LimitsSection({
+  limits,
+  onCreate,
+  onRemove,
+}: {
+  limits: Limit[];
+  onCreate: () => void;
+  onRemove: (id: string) => void;
+}) {
+  if (limits.length === 0) {
+    return (
+      <EmptyState
+        icon={
+          <div
+            aria-hidden
+            className="size-12 rounded-full bg-ink-100 flex items-center justify-center"
+          >
+            <Shield className="size-5 text-ink-700" />
+          </div>
+        }
+        title="No limits configured"
+        body="Create one to cap spend, throttle traffic, or shape usage per project or key."
+        action={
+          <Button onClick={onCreate}>
+            <Plus data-icon="inline-start" aria-hidden />
+            Create limit
+          </Button>
+        }
+      />
+    );
+  }
+
   return (
-    <EmptyState
-      icon={
-        <div
-          aria-hidden
-          className="size-12 rounded-full bg-ink-100 flex items-center justify-center"
-        >
-          <Shield className="size-5 text-ink-700" />
-        </div>
-      }
-      title="No limits configured"
-      body="Create one to cap spend, throttle traffic, or shape usage per project or key."
-      action={
-        <Button onClick={onCreate}>
-          <Plus data-icon="inline-start" aria-hidden />
-          Create limit
-        </Button>
-      }
-    />
+    <Card density="flush">
+      <Table className="table-fixed">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            {/* `table-fixed` + explicit widths keeps the column gaps
+                uniform regardless of cell content — same load-bearing
+                pattern as the Team and Activity tables. Five equal data
+                columns + a narrow actions column. */}
+            <TableHead className="w-[19%] whitespace-nowrap">Name</TableHead>
+            <TableHead className="w-[19%] whitespace-nowrap">Scope</TableHead>
+            <TableHead className="w-[19%] whitespace-nowrap">Type</TableHead>
+            <TableHead className="w-[19%] whitespace-nowrap">Threshold</TableHead>
+            <TableHead className="w-[19%] whitespace-nowrap">Period</TableHead>
+            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {limits.map((limit) => (
+            <TableRow key={limit.id}>
+              <TableCell className="font-sans text-sm font-medium text-ink-900">
+                <span className="block truncate" title={limit.name}>
+                  {limit.name}
+                </span>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col min-w-0">
+                  <span
+                    className="font-sans text-sm font-medium text-ink-900 truncate"
+                    title={scopeName(limit.scope)}
+                  >
+                    {scopeName(limit.scope)}
+                  </span>
+                  <span className="font-mono text-xs text-ink-500 truncate">
+                    {findScope(limit.scope)?.masked ?? ''}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+                {typeLabel(limit.type)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                {thresholdLabel(limit.type, limit.threshold)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+                {periodLabel(limit.period)}
+              </TableCell>
+              <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
+                <LimitActionsMenu onRemove={() => onRemove(limit.id)} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function LimitActionsMenu({ onRemove }: { onRemove: () => void }) {
+  return (
+    <Menu>
+      <MenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Limit actions"
+            className="text-ink-500 hover:text-ink-900"
+          />
+        }
+      >
+        <MoreHorizontal />
+      </MenuTrigger>
+      <MenuContent>
+        <MenuItem variant="destructive" onClick={onRemove}>
+          Remove limit
+        </MenuItem>
+      </MenuContent>
+    </Menu>
   );
 }
 
@@ -197,24 +314,50 @@ const LIMIT_PERIODS = [
   { value: '1mo', label: '1 month' },
 ] as const;
 
+// Scope options — the workspace's *active* API keys. Key identities
+// mirror the seed list in ApiKeys.tsx (the canonical key source); keep
+// in sync if that seed changes. Revoked keys (e.g. test-key) are
+// intentionally excluded — a limit on a revoked key is meaningless.
 const LIMIT_SCOPES = [
-  { value: 'org', label: 'Org-wide (all keys)' },
-  { value: 'sk-gw-c4aeb3', label: 'sk-gw-c4aeb3 — test1' },
-  { value: 'sk-gw-255e1d', label: 'sk-gw-255e1d — test-key' },
+  { value: 'sk-gw-c4aeb3a8', name: 'prod-web', masked: 'sk-gw-…c4ae' },
+  { value: 'sk-gw-9f3064ce', name: 'prod-agent', masked: 'sk-gw-…9f30' },
 ] as const;
+
+type Limit = {
+  id: string;
+  name: string;
+  type: string;
+  threshold: string;
+  period: string;
+  scope: string;
+};
+
+const typeLabel = (v: string) =>
+  LIMIT_TYPES.find((t) => t.value === v)?.label ?? v;
+const periodLabel = (v: string) =>
+  LIMIT_PERIODS.find((p) => p.value === v)?.label ?? v;
+const findScope = (v: string) => LIMIT_SCOPES.find((s) => s.value === v);
+const scopeName = (v: string) => findScope(v)?.name ?? v;
+const thresholdLabel = (type: string, threshold: string) => {
+  const n = Number(threshold);
+  const formatted = Number.isFinite(n) ? n.toLocaleString() : threshold;
+  return type === 'spend' ? `$${formatted}` : formatted;
+};
 
 function CreateLimitDialog({
   open,
   onOpenChange,
+  onCreate,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
+  onCreate: (limit: Limit) => void;
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState('spend');
   const [threshold, setThreshold] = useState('');
   const [period, setPeriod] = useState('1d');
-  const [scope, setScope] = useState('org');
+  const [scope, setScope] = useState('sk-gw-c4aeb3a8');
 
   const thresholdNum = Number(threshold);
   const canSubmit =
@@ -224,6 +367,14 @@ function CreateLimitDialog({
     thresholdNum > 0;
 
   const handleSubmit = () => {
+    onCreate({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      type,
+      threshold,
+      period,
+      scope,
+    });
     onOpenChange(false);
   };
 
@@ -237,7 +388,7 @@ function CreateLimitDialog({
           setType('spend');
           setThreshold('');
           setPeriod('1d');
-          setScope('org');
+          setScope('sk-gw-c4aeb3a8');
         }
       }}
     >
@@ -255,9 +406,9 @@ function CreateLimitDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <Eyebrow as="label" htmlFor="create-limit-name">
+          <Label htmlFor="create-limit-name" className="text-ink-600 font-medium text-sm">
             Name
-          </Eyebrow>
+          </Label>
           <Input
             id="create-limit-name"
             value={name}
@@ -268,9 +419,9 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Eyebrow as="label" htmlFor="create-limit-type">
+            <Label htmlFor="create-limit-type" className="text-ink-600 font-medium text-sm">
               Type
-            </Eyebrow>
+            </Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger id="create-limit-type" className="w-full">
                 <SelectValue />
@@ -285,9 +436,9 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Eyebrow as="label" htmlFor="create-limit-threshold">
+            <Label htmlFor="create-limit-threshold" className="text-ink-600 font-medium text-sm">
               Threshold
-            </Eyebrow>
+            </Label>
             <Input
               id="create-limit-threshold"
               type="number"
@@ -303,9 +454,9 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Eyebrow as="label" htmlFor="create-limit-period">
+            <Label htmlFor="create-limit-period" className="text-ink-600 font-medium text-sm">
               Period
-            </Eyebrow>
+            </Label>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger id="create-limit-period" className="w-full">
                 <SelectValue />
@@ -320,17 +471,26 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Eyebrow as="label" htmlFor="create-limit-scope">
+            <Label htmlFor="create-limit-scope" className="text-ink-600 font-medium text-sm">
               Scope
-            </Eyebrow>
+            </Label>
             <Select value={scope} onValueChange={setScope}>
               <SelectTrigger id="create-limit-scope" className="w-full">
-                <SelectValue />
+                {/* Function-child keeps the trigger single-line — the
+                    two-line key body is for the popup only. */}
+                <SelectValue>{(value) => scopeName(value as string)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {LIMIT_SCOPES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
+                  <SelectItem
+                    key={s.value}
+                    value={s.value}
+                    className="h-auto py-2 items-start"
+                  >
+                    <span className="flex flex-col">
+                      <span className="font-sans text-sm text-ink-900">{s.name}</span>
+                      <span className="font-mono text-xs text-ink-500">{s.masked}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
