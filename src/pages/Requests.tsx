@@ -768,6 +768,20 @@ type RequestRow = {
 const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'shadowfax-rag']);
 const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 
+// Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities the
+// Events table (Security.tsx EVENT_ROWS) renders, so the Key column
+// reads the same `name (sk-gw-NNN)` form across both log surfaces.
+// Keep in sync if Events' key identities change.
+const KEY_SUFFIX: Record<string, string> = {
+  'prod-web': 'sk-gw-438',
+  'prod-agent': 'sk-gw-930',
+  dev: 'sk-gw-7d2',
+  openclaw: 'sk-gw-1ab',
+  'hermes-agent': 'sk-gw-c60',
+  'nova-chat': 'sk-gw-e15',
+  'shadowfax-rag': 'sk-gw-9f4',
+};
+
 // Recent-window anchor rows: the six most-recent requests (trailing hour).
 // Not a standalone preset anymore — the seed of the cumulative chain that
 // 24H → 7D → 30D → All each widen on top of, so a longer range never
@@ -1201,10 +1215,17 @@ function RequestsTableSection({
                       {row.conversation}
                     </span>
                   </TableCell>
-                  <TableCell className="max-w-[140px] font-mono text-ink-800 tracking-tight">
-                    <span className="block truncate" title={row.keyId}>
-                      {row.keyId}
-                    </span>
+                  <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                    {/* `name (sk-gw-NNN)` — name in dark ink, the
+                        parenthetical gateway id dimmed to ink-600.
+                        Matches the Events table Key column. */}
+                    <span className="text-ink-800">{row.keyId}</span>
+                    {KEY_SUFFIX[row.keyId] ? (
+                      <span className="text-ink-600">
+                        {' '}
+                        ({KEY_SUFFIX[row.keyId]})
+                      </span>
+                    ) : null}
                   </TableCell>
                   <TableCell className={numericCls}>{row.inTokens}</TableCell>
                   <TableCell className={numericCls}>{row.outTokens}</TableCell>

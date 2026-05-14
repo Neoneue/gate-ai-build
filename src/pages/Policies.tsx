@@ -367,7 +367,6 @@ function PolicyCard({
   onActionChange: (value: string) => void;
 }) {
   const Icon = config.icon;
-  const switchId = `policy-switch-${config.id}`;
 
   return (
     // When expanded, the ink-50 body tray runs full-bleed to the card's
@@ -389,12 +388,11 @@ function PolicyCard({
             </h3>
             <Badge variant="neutral">{config.scanTag}</Badge>
           </div>
-          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
             {config.description}
           </p>
         </div>
         <Switch
-          id={switchId}
           checked={state.enabled}
           onCheckedChange={onToggle}
           aria-label={`${config.name} — ${state.enabled ? 'enabled' : 'disabled'}`}
@@ -442,13 +440,13 @@ function SettingsHalf({
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
           <SectionHeading as="h4">Sensitivity</SectionHeading>
-          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
             How aggressive to be when scoring inputs
           </p>
         </div>
         <Segmented
           variant="pill"
-          size="sm"
+          size="default"
           options={config.sensitivity.options}
           value={value}
           onChange={onSensitivityChange}
@@ -468,13 +466,13 @@ function SettingsHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4">Scan direction</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+        <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
           Which side of the request to scan
         </p>
       </div>
       <Segmented
         variant="pill"
-        size="sm"
+        size="default"
         options={scan.options}
         value={value}
         onChange={onScanDirectionChange}
@@ -502,7 +500,7 @@ function ActionHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4">Action on detection</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+        <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
           {config.action.helper}
         </p>
       </div>
@@ -518,7 +516,7 @@ function ActionHalf({
                 'flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
                   ? 'border-ink-300 bg-ink-100'
-                  : 'border-ink-200 bg-transparent hover:bg-ink-100')
+                  : 'border-ink-200 bg-transparent hover:bg-ink-50')
               }
             >
               <RadioGroupItem id={radioId} value={opt.value} className="mt-1" />
@@ -528,12 +526,12 @@ function ActionHalf({
                     {opt.name}
                   </span>
                   {opt.flag ? (
-                    <span className="font-sans text-[10px] font-medium uppercase tracking-[0.1em] text-ink-500">
+                    <span className="font-sans text-xs font-medium uppercase tracking-[0.1em] text-ink-500">
                       {opt.flag}
                     </span>
                   ) : null}
                 </div>
-                <span className="font-sans text-xs text-ink-500 text-pretty">
+                <span className="font-sans text-xs text-ink-500 tracking-tight text-pretty">
                   {opt.description}
                 </span>
               </div>
