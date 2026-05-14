@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { LogOut, Sparkles, UserRound } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import {
   Menu,
   MenuContent,
@@ -29,8 +28,8 @@ function UserMenu({
   return (
     <Menu>
       <MenuTrigger render={children} />
-      <MenuContent side={side} align={align} sideOffset={sideOffset} className="min-w-50">
-        <MenuLabel className="flex-row items-center gap-3">
+      <MenuContent side={side} align={align} sideOffset={sideOffset} className="w-54">
+        <MenuLabel className="flex-row items-center gap-2 py-3">
           <span
             className="size-7 shrink-0 inline-flex items-center justify-center rounded-full bg-blue-700 text-white font-mono text-xs font-medium"
             aria-hidden
@@ -41,7 +40,12 @@ function UserMenu({
             <span className="font-sans text-sm font-medium text-ink-900 truncate leading-tight">
               Chad Ponticas
             </span>
-            <Badge variant="info" className="self-start">Free plan</Badge>
+            <span
+              className="font-sans text-xs text-ink-500 truncate leading-tight"
+              title="chad@constellationnetwork.io"
+            >
+              chad@constellationnetwork.io
+            </span>
           </div>
         </MenuLabel>
         <MenuSeparator />
@@ -49,9 +53,9 @@ function UserMenu({
           <Sparkles strokeWidth={1.75} aria-hidden />
           Upgrade to Pro
         </MenuItem>
-        <MenuItem onClick={() => onNavigate?.('cmp-018')}>
+        <MenuItem onClick={() => onNavigate?.('/settings')}>
           <UserRound strokeWidth={1.75} aria-hidden />
-          Account
+          Settings
         </MenuItem>
         <MenuSeparator />
         <MenuItem variant="destructive">
