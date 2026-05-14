@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeftRight, Download, ExternalLink, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +15,11 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogTitleBlock,
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
+import { Eyebrow } from '@/components/ui/eyebrow';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
@@ -72,41 +72,75 @@ type PresetRange = 'all' | '24h' | '7d' | '30d';
 type EventsRange = PresetRange | 'custom';
 type CustomRange = { from: Date; to: Date };
 
-/** Event-count multiplier applied to the 1× baseline so the hero card /
- *  Attack categories all scale together when the top selector changes.
- *  Not a strict hours-per-window math — security events compress
- *  overnight, so 24h ≈ 6× rather than 24×; longer windows compress
- *  further. `all` is the lifetime cumulative total — ~60 days of history
- *  for this mock account, so it sits above 30d. Real implementation would
- *  aggregate from the event stream. */
-const EVENTS_RANGE_SCALE: Record<PresetRange, number> = {
-  '24h': 2,
-  '7d':  7,
-  '30d': 25,
-  all:   50,
+// Per-range event totals. Every security event is a guardrail action
+// fired ON a request, so the event volume is strictly a fraction of
+// request volume: total events = exactly 25% of the Requests page total
+// for the same range. The Requests totals live in Requests.tsx as
+// HERO_VIEWS[range].total — 24h=48, 7d=468, 30d=2,248, all=4,860 — so
+// these are 12 / 117 / 562 / 1,215. If the Requests totals change, these
+// must be re-derived (× 0.25). Do not hand-edit one without the other.
+const EVENTS_RANGE_TOTAL: Record<PresetRange, number> = {
+  '24h': 12,    // 0.25 × 48
+  '7d':  117,   // 0.25 × 468
+  '30d': 562,   // 0.25 × 2,248
+  all:   1_215, // 0.25 × 4,860
 };
 
-function eventsScale(range: EventsRange, customRange: CustomRange | null): number {
+// Per-day event rate for the custom-range estimate: derived from the 30d
+// total (562 ÷ 30 ≈ 18.73 events/day). Already includes the 25% coupling
+// since 562 is itself 25% of the 30d request total.
+const EVENTS_PER_DAY = 562 / 30;
+
+/** Total events for the active range. Presets read the explicit table;
+ *  custom approximates a proportional request estimate via the per-day
+ *  rate, then takes the same 25% (already baked into EVENTS_PER_DAY). */
+function eventsTotal(range: EventsRange, customRange: CustomRange | null): number {
   if (range === 'custom' && customRange) {
     const days = Math.max(
       1,
       Math.round((customRange.to.getTime() - customRange.from.getTime()) / 86_400_000) + 1,
     );
-    // ~0.83× per day, matching the 30d preset's day-rate (25/30 ≈ 0.83).
-    return Math.max(1, Math.round(days * 0.825));
+    return Math.max(1, Math.round(days * EVENTS_PER_DAY));
   }
-  return EVENTS_RANGE_SCALE[range === 'custom' ? '24h' : range];
+  return EVENTS_RANGE_TOTAL[range === 'custom' ? '24h' : range];
 }
 
 const fmtCount = (n: number) => n.toLocaleString('en-US');
 
-// Single source of truth for event volume. The 1× baseline action mix —
-// everything that shows an event count (hero "Total events" KPI + its
-// breakdown + chart, the Action Categories card, the events table's
-// "of N") scales off these so the surfaces reconcile. `EVENT_MIX_TOTAL`
-// is the per-range total events; never hardcode 47 elsewhere.
+// Action-mix ratio source. The Blocked:Flagged:Redacted proportion is
+// fixed at 31:14:2 (product decision); `splitEventMix` projects any
+// integer range total onto this ratio. `EVENT_MIX` is ONLY a ratio now —
+// never used as a raw count. Everything that shows an event count (hero
+// "Total events" KPI + breakdown + chart, the Action categories card, the
+// events table's "of N") derives from eventsTotal() + splitEventMix() so
+// the surfaces reconcile.
 const EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 } as const;
 const EVENT_MIX_TOTAL = EVENT_MIX.blocked + EVENT_MIX.flagged + EVENT_MIX.redacted;
+
+type EventMixSplit = { blocked: number; flagged: number; redacted: number };
+
+/** Largest-remainder split: projects an integer `total` onto the fixed
+ *  31:14:2 action-mix ratio, returning integer { blocked, flagged,
+ *  redacted } that (a) sum EXACTLY to `total` and (b) track the ratio as
+ *  closely as integer rounding allows. Floor each ideal share, then hand
+ *  the leftover units to the largest fractional remainders first.
+ *  Examples: 117 → 77/35/5, 562 → 371/167/24, 1215 → 801/362/52,
+ *  12 → 8/4/0. */
+function splitEventMix(total: number): EventMixSplit {
+  const keys = ['blocked', 'flagged', 'redacted'] as const;
+  const ideal = keys.map((k) => (total * EVENT_MIX[k]) / EVENT_MIX_TOTAL);
+  const floors = ideal.map((v) => Math.floor(v));
+  let remainder = total - floors.reduce((a, b) => a + b, 0);
+  // Distribute the leftover units onto the largest fractional parts.
+  const order = ideal
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (let k = 0; remainder > 0; k++, remainder--) {
+    out[order[k % order.length].i]++;
+  }
+  return { blocked: out[0], flagged: out[1], redacted: out[2] };
+}
 
 /** Per-range sparkline shape. Distributes the actual event count across
  *  time buckets weighted by an upward trend curve, so sparseness emerges
@@ -248,10 +282,10 @@ type EventsChartView = {
  *  range: "HH:MM" for 24h, "Mon D HH:00" otherwise (the XAxis renderer
  *  strips the trailing time segment down to "Mon D"). */
 function buildEventsChartView(range: EventsRange, customRange: CustomRange | null): EventsChartView {
-  const scale = eventsScale(range, customRange);
-  const blockedSpark  = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.blocked * scale, 1),  EVENT_MIX.blocked * scale);
-  const flaggedSpark  = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.flagged * scale, 2),  EVENT_MIX.flagged * scale);
-  const redactedSpark = normalizeSparkTo(buildSpark(range, customRange, EVENT_MIX.redacted * scale, 3), EVENT_MIX.redacted * scale);
+  const { blocked, flagged, redacted } = splitEventMix(eventsTotal(range, customRange));
+  const blockedSpark  = normalizeSparkTo(buildSpark(range, customRange, blocked, 1),  blocked);
+  const flaggedSpark  = normalizeSparkTo(buildSpark(range, customRange, flagged, 2),  flagged);
+  const redactedSpark = normalizeSparkTo(buildSpark(range, customRange, redacted, 3), redacted);
   const totalSpark = blockedSpark.map((b, i) => b + (flaggedSpark[i] ?? 0) + (redactedSpark[i] ?? 0));
   const buckets = totalSpark.length;
 
@@ -298,13 +332,13 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
 
 function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   // Header + breakdown are the "Total events" KPI surfaced at hero scale —
-  // driven by the page range selector. Scales off the shared EVENT_MIX
-  // baseline so the number, breakdown, chart, and table all reconcile.
-  const scale = eventsScale(range, customRange);
-  const total = EVENT_MIX_TOTAL * scale;
-  const blocked = EVENT_MIX.blocked * scale;
-  const flagged = EVENT_MIX.flagged * scale;
-  const redacted = EVENT_MIX.redacted * scale;
+  // driven by the page range selector. `total` is the explicit per-range
+  // total (25% of the Requests page total); the breakdown is the
+  // largest-remainder split onto the 31:14:2 ratio, so blocked + flagged +
+  // redacted sum EXACTLY to `total`. Chart, Action categories card, and
+  // table "of N" all derive from the same two functions, so they reconcile.
+  const total = eventsTotal(range, customRange);
+  const { blocked, flagged, redacted } = splitEventMix(total);
   const note = RANGE_DELTA_NOTE[range];
 
   // Chart: total-events trace + date/time axis, driven by the page range.
@@ -323,9 +357,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
     <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
-          <span className="font-sans uppercase tracking-[0.1em] text-xs font-semibold text-ink-500">
-            Total events
-          </span>
+          <Eyebrow>Total events</Eyebrow>
           <div className="flex items-baseline gap-3">
             <HeroNumeric size="lg">
               {fmtCount(total)}
@@ -508,7 +540,7 @@ export function Security() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Events"
+            breadcrumbCurrent="Security events"
             activeNavId="security-events"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}
@@ -546,7 +578,7 @@ function PageHeader({
         {/* h2 — see CMP012 PageHeader note. ArtboardHeader emits the outer
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
-        <PageTitle>Events</PageTitle>
+        <PageTitle>Security events</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Real-time threat detection and policy enforcement across every request routed through the gateway.
         </p>
@@ -587,45 +619,53 @@ type AttackCategory = {
   color: string;
 };
 
-// Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown —
-// counts come from the shared EVENT_MIX baseline so they reconcile with
-// the hero "Total events" KPI and the events table.
-const ACTION_CATEGORIES: AttackCategory[] = [
-  { label: 'Blocked',  count: EVENT_MIX.blocked,  color: 'var(--color-danger-500)'  },
-  { label: 'Flagged',  count: EVENT_MIX.flagged,  color: 'var(--color-warning-500)' },
-  { label: 'Redacted', count: EVENT_MIX.redacted, color: 'var(--color-blue-500)'    },
-];
-
 // Right card. Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt
 // injection, PII / PHI (combined, since PHI is medical PII), Credential
 // leak. No Content Policy / Encoding / Jailbreak buckets: we don't ship
-// those detectors yet, so don't show counts we can't back.
+// those detectors yet, so don't show counts we can't back. These are a
+// 1× baseline mix; the card scales them proportionally to the range total
+// the same way the old model did (per-baseline-unit share of the total).
 const ATTACK_CATEGORIES: AttackCategory[] = [
   { label: 'PII / PHI',        count: 8, color: 'var(--color-chart-3)' },
   { label: 'Prompt injection', count: 5, color: 'var(--color-chart-1)' },
   { label: 'Credential leak',  count: 3, color: 'var(--color-chart-4)' },
 ];
 
+// Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
+// Counts come straight from splitEventMix(eventsTotal(...)) so they are
+// the SAME integers as the hero "Total events" KPI breakdown — the two
+// surfaces reconcile exactly for every range.
 function ActionCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  const { blocked, flagged, redacted } = splitEventMix(eventsTotal(range, customRange));
+  const categories: AttackCategory[] = [
+    { label: 'Blocked',  count: blocked,  color: 'var(--color-danger-500)'  },
+    { label: 'Flagged',  count: flagged,  color: 'var(--color-warning-500)' },
+    { label: 'Redacted', count: redacted, color: 'var(--color-blue-500)'    },
+  ];
   return (
     <CategoryBreakdownCard
       title="Action events"
       description="Breakdown by action type"
-      categories={ACTION_CATEGORIES}
-      range={range}
-      customRange={customRange}
+      categories={categories}
     />
   );
 }
 
+// Right card. Attack-detection mix, scaled proportionally to the range
+// total: each baseline unit is worth (rangeTotal / EVENT_MIX_TOTAL) events,
+// matching the old `count × scale` behaviour now that scale is gone.
 function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
+  const total = eventsTotal(range, customRange);
+  const perUnit = total / EVENT_MIX_TOTAL;
+  const categories: AttackCategory[] = ATTACK_CATEGORIES.map((c) => ({
+    ...c,
+    count: Math.round(c.count * perUnit),
+  }));
   return (
     <CategoryBreakdownCard
       title="Attack events"
       description="Breakdown by detection type"
-      categories={ATTACK_CATEGORIES}
-      range={range}
-      customRange={customRange}
+      categories={categories}
     />
   );
 }
@@ -634,18 +674,12 @@ function CategoryBreakdownCard({
   title,
   description,
   categories,
-  range,
-  customRange,
 }: {
   title: string;
   description: string;
   categories: AttackCategory[];
-  range: EventsRange;
-  customRange: CustomRange | null;
 }) {
-  const scale = eventsScale(range, customRange);
-  const scaled = categories.map((c) => ({ ...c, count: c.count * scale }));
-  const max = Math.max(...scaled.map((c) => c.count));
+  const max = Math.max(...categories.map((c) => c.count), 1);
   return (
     <Card className="min-w-0">
       <CardHeader>
@@ -660,7 +694,7 @@ function CategoryBreakdownCard({
           Each row is a `display:contents` wrapper so its three children
           land directly in the shared grid tracks. */}
       <CardContent className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3">
-        {scaled.map((cat) => {
+        {categories.map((cat) => {
           const pct = (cat.count / max) * 100;
           const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
           return (
@@ -727,13 +761,12 @@ type EventRow = {
   type: EventCategory;
   key: string;
   action: EventAction;
-  /** Gateway request that produced this event. Drives the "Open request"
-   *  link in the detail dialog footer (navigates to /requests?open=<id>). */
+  /** Gateway request that produced this event. Used for the detail
+   *  dialog's title aria-label. */
   requestId: string;
   /** Conversation the request belongs to. Required — mirrors Requests'
-   *  data model where every row carries a conversation. Drives both the
-   *  table's Conversation cell and the detail dialog's "Open conversation"
-   *  footer link. */
+   *  data model where every row carries a conversation. Drives the
+   *  table's Conversation cell link. */
   conversationId: string;
   /** Per-key risk tier per Security PRD S6. Surfaced inline next to the
    *  API key in the detail-modal Event-details section so the team-lead
@@ -890,23 +923,23 @@ const EVENT_ROWS: EventRow[] = [
   //   cnv_skylark_18:  6 turns, 11 reqs,   8,114 tokens
   //   cnv_vela_21:    12 turns, 26 reqs, 102,041 tokens
   //   cnv_polaris_55:  4 turns,  7 reqs,   3,402 tokens
-  { time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'blocked',  requestId: 'req_aurora_4200',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '612',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
-  { time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'prod-agent (sk-gw-930)', action: 'blocked',  requestId: 'req_orion_4203',    conversationId: 'cnv_orion_70',     keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,408', outTokens: '0',     latency: '2.10s',  turn: 5,  totalTurns: 18 },
-  { time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_lyra_4207',     conversationId: 'cnv_lyra_92',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '412',   outTokens: '188',   latency: '3.20s',  turn: 8,  totalTurns: 14 },
-  { time: '2026-05-12 09:42:26', relative: '8m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'blocked',  requestId: 'req_meridian_4208', conversationId: 'cnv_meridian_07',  keyTier: 'critical', status: 'error',   code: '403', inTokens: '548',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
-  { time: '2026-05-12 09:41:08', relative: '9m ago',  type: 'pii',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_skylark_4209',  conversationId: 'cnv_skylark_18',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '742',   outTokens: '318',   latency: '3.80s',  turn: 3,  totalTurns: 6  },
-  { time: '2026-05-12 09:40:44', relative: '9m ago',  type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'blocked',  requestId: 'req_vela_4209',     conversationId: 'cnv_vela_21',      keyTier: 'critical', status: 'error',   code: '403', inTokens: '3,902', outTokens: '0',     latency: '2.10s',  turn: 7,  totalTurns: 12 },
-  { time: '2026-05-12 09:39:58', relative: '10m ago', type: 'pii',        key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_polaris_4210',  conversationId: 'cnv_polaris_55',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '484',   outTokens: '220',   latency: '5.20s',  turn: 2,  totalTurns: 4  },
-  { time: '2026-05-12 09:38:21', relative: '12m ago', type: 'credential', key: 'prod-agent (sk-gw-930)', action: 'blocked',  requestId: 'req_aurora_4212',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 2,  totalTurns: 3  },
-  { time: '2026-05-12 09:36:33', relative: '13m ago', type: 'phi',        key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_orion_4213',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,402', outTokens: '482',   latency: '6.40s',  turn: 11, totalTurns: 18 },
-  { time: '2026-05-12 09:34:42', relative: '15m ago', type: 'pii',        key: 'prod-web (sk-gw-438)',   action: 'redacted', requestId: 'req_lyra_4215',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '408',   outTokens: '196',   latency: '4.50s',  turn: 6,  totalTurns: 14 },
-  { time: '2026-05-12 09:32:18', relative: '18m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_meridian_4218', conversationId: 'cnv_meridian_07',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '522',   outTokens: '234',   latency: '5.40s',  turn: 2,  totalTurns: 3  },
-  { time: '2026-05-12 09:31:51', relative: '18m ago', type: 'injection',  key: 'test-key (sk-gw-255)',   action: 'flagged',  requestId: 'req_skylark_4218',  conversationId: 'cnv_skylark_18',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '728',   outTokens: '348',   latency: '13.40s', turn: 4,  totalTurns: 6  },
-  { time: '2026-05-12 09:30:09', relative: '20m ago', type: 'credential', key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_vela_4220',     conversationId: 'cnv_vela_21',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '3,892', outTokens: '1,718', latency: '3.90s',  turn: 9,  totalTurns: 12 },
-  { time: '2026-05-12 09:29:32', relative: '21m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)', action: 'redacted', requestId: 'req_polaris_4221',  conversationId: 'cnv_polaris_55',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '480',   outTokens: '232',   latency: '5.40s',  turn: 3,  totalTurns: 4  },
-  { time: '2026-05-12 09:27:14', relative: '23m ago', type: 'credential', key: 'test-key (sk-gw-255)',   action: 'blocked',  requestId: 'req_aurora_4223',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
-  { time: '2026-05-12 09:24:47', relative: '25m ago', type: 'injection',  key: 'prod-web (sk-gw-438)',   action: 'flagged',  requestId: 'req_orion_4225',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,410', outTokens: '612',   latency: '14.60s', turn: 14, totalTurns: 18 },
-  { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'prod-agent (sk-gw-930)', action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
+  { time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',      action: 'blocked',  requestId: 'req_aurora_4200',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '612',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
+  { time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'prod-agent (sk-gw-930)',    action: 'blocked',  requestId: 'req_orion_4203',    conversationId: 'cnv_orion_70',     keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,408', outTokens: '0',     latency: '2.10s',  turn: 5,  totalTurns: 18 },
+  { time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'dev (sk-gw-7d2)',           action: 'flagged',  requestId: 'req_lyra_4207',     conversationId: 'cnv_lyra_92',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '412',   outTokens: '188',   latency: '3.20s',  turn: 8,  totalTurns: 14 },
+  { time: '2026-05-12 09:42:26', relative: '8m ago',  type: 'injection',  key: 'openclaw (sk-gw-1ab)',      action: 'blocked',  requestId: 'req_meridian_4208', conversationId: 'cnv_meridian_07',  keyTier: 'critical', status: 'error',   code: '403', inTokens: '548',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
+  { time: '2026-05-12 09:41:08', relative: '9m ago',  type: 'pii',        key: 'hermes-agent (sk-gw-c60)',  action: 'redacted', requestId: 'req_skylark_4209',  conversationId: 'cnv_skylark_18',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '742',   outTokens: '318',   latency: '3.80s',  turn: 3,  totalTurns: 6  },
+  { time: '2026-05-12 09:40:44', relative: '9m ago',  type: 'injection',  key: 'nova-chat (sk-gw-e15)',     action: 'blocked',  requestId: 'req_vela_4209',     conversationId: 'cnv_vela_21',      keyTier: 'critical', status: 'error',   code: '403', inTokens: '3,902', outTokens: '0',     latency: '2.10s',  turn: 7,  totalTurns: 12 },
+  { time: '2026-05-12 09:39:58', relative: '10m ago', type: 'pii',        key: 'shadowfax-rag (sk-gw-9f4)', action: 'flagged',  requestId: 'req_polaris_4210',  conversationId: 'cnv_polaris_55',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '484',   outTokens: '220',   latency: '5.20s',  turn: 2,  totalTurns: 4  },
+  { time: '2026-05-12 09:38:21', relative: '12m ago', type: 'credential', key: 'prod-web (sk-gw-438)',      action: 'blocked',  requestId: 'req_aurora_4212',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 2,  totalTurns: 3  },
+  { time: '2026-05-12 09:36:33', relative: '13m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)',    action: 'flagged',  requestId: 'req_orion_4213',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,402', outTokens: '482',   latency: '6.40s',  turn: 11, totalTurns: 18 },
+  { time: '2026-05-12 09:34:42', relative: '15m ago', type: 'pii',        key: 'dev (sk-gw-7d2)',           action: 'redacted', requestId: 'req_lyra_4215',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '408',   outTokens: '196',   latency: '4.50s',  turn: 6,  totalTurns: 14 },
+  { time: '2026-05-12 09:32:18', relative: '18m ago', type: 'phi',        key: 'openclaw (sk-gw-1ab)',      action: 'redacted', requestId: 'req_meridian_4218', conversationId: 'cnv_meridian_07',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '522',   outTokens: '234',   latency: '5.40s',  turn: 2,  totalTurns: 3  },
+  { time: '2026-05-12 09:31:51', relative: '18m ago', type: 'injection',  key: 'hermes-agent (sk-gw-c60)',  action: 'flagged',  requestId: 'req_skylark_4218',  conversationId: 'cnv_skylark_18',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '728',   outTokens: '348',   latency: '13.40s', turn: 4,  totalTurns: 6  },
+  { time: '2026-05-12 09:30:09', relative: '20m ago', type: 'credential', key: 'nova-chat (sk-gw-e15)',     action: 'flagged',  requestId: 'req_vela_4220',     conversationId: 'cnv_vela_21',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '3,892', outTokens: '1,718', latency: '3.90s',  turn: 9,  totalTurns: 12 },
+  { time: '2026-05-12 09:29:32', relative: '21m ago', type: 'phi',        key: 'shadowfax-rag (sk-gw-9f4)', action: 'redacted', requestId: 'req_polaris_4221',  conversationId: 'cnv_polaris_55',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '480',   outTokens: '232',   latency: '5.40s',  turn: 3,  totalTurns: 4  },
+  { time: '2026-05-12 09:27:14', relative: '23m ago', type: 'credential', key: 'prod-web (sk-gw-438)',      action: 'blocked',  requestId: 'req_aurora_4223',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '588',   outTokens: '0',     latency: '2.10s',  turn: 1,  totalTurns: 3  },
+  { time: '2026-05-12 09:24:47', relative: '25m ago', type: 'injection',  key: 'prod-agent (sk-gw-930)',    action: 'flagged',  requestId: 'req_orion_4225',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,410', outTokens: '612',   latency: '14.60s', turn: 14, totalTurns: 18 },
+  { time: '2026-05-12 09:21:09', relative: '29m ago', type: 'pii',        key: 'prod-web (sk-gw-438)',      action: 'flagged',  requestId: 'req_lyra_4229',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '392',   outTokens: '196',   latency: '11.80s', turn: 4,  totalTurns: 14 },
 ];
 
 // Distinct API keys present in the sample — drives the toolbar Key filter
@@ -950,15 +983,20 @@ function EventsTableSection({
 
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
   // ~40-min window of "now"). The pagination footer "of N" reconciles with
-  // the hero "Total events" KPI: unfiltered, it's exactly EVENT_MIX_TOTAL ×
-  // scale; with filters active it scales by the filtered fraction of the
-  // sample. Rows past page 1 are the implied tail we don't render.
-  const scale = eventsScale(range, customRange);
+  // the hero "Total events" KPI: unfiltered, it's exactly the range total
+  // (eventsTotal); with filters active it scales by the filtered fraction
+  // of the sample. Rows past page 1 are the implied tail we don't render.
+  const rangeTotal = eventsTotal(range, customRange);
   const scaledTotal = Math.round(
-    EVENT_MIX_TOTAL * scale * (filtered.length / EVENT_ROWS.length),
+    rangeTotal * (filtered.length / EVENT_ROWS.length),
   );
   const perPage = Number(rowsPerPage);
-  const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
+  // Cap the rendered rows to `scaledTotal` — at low-volume ranges (e.g. 24H
+  // ≈ 12 events) the 16-row sample is larger than the actual total, so an
+  // uncapped slice would render more rows than the footer's "of N" claims.
+  const pageRows = filtered
+    .slice((page - 1) * perPage, page * perPage)
+    .slice(0, Math.max(0, scaledTotal - (page - 1) * perPage));
 
   return (
     <>
@@ -1178,7 +1216,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const TypeIcon = typeMeta.Icon;
   const requestId = row.requestId;
   const conversationId = row.conversationId;
-  const openRequest = () => navigate(`/requests?open=${requestId}`);
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
 
   return (
@@ -1314,17 +1351,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           </section>
         </div>
       </DialogScrollBody>
-
-      <DialogScrollFooter>
-        <Button variant="outline" size="sm" onClick={openConversation}>
-          Open conversation
-          <ExternalLink data-icon="inline-end" aria-hidden />
-        </Button>
-        <Button variant="default" size="sm" onClick={openRequest}>
-          Open request
-          <ExternalLink data-icon="inline-end" aria-hidden />
-        </Button>
-      </DialogScrollFooter>
     </>
   );
 }

@@ -5,7 +5,6 @@ import {
   Braces,
   ChevronDown,
   Download,
-  ExternalLink,
   Info,
   Search,
   Sparkles,
@@ -19,7 +18,6 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
@@ -33,6 +31,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { CodeBlock, CodeCard, type CodeLine } from '@/components/ui/code-card';
+import { SectionHeading } from '@/components/ui/section-heading';
 import {
   Select,
   SelectContent,
@@ -394,7 +393,7 @@ const HERO_30D_TICKS = [
 
 const HERO_VIEWS: Record<RangeKey, HeroView> = {
   all: {
-    eyebrow: 'REQUESTS / ALL',
+    eyebrow: 'REQUESTS',
     total: HERO_ALL_TOTAL,
     // Three disjoint buckets that sum to total: fast successes, errors,
     // slow (>10s) successes. "Success" in the breakdown means fast-success
@@ -405,14 +404,14 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     errors: 130,
     slow: 2_316,
     delta: '+18.2%',
-    deltaNote: 'all time',
+    deltaNote: 'All time',
     data: HERO_ALL_DATA,
     ticks: HERO_ALL_TICKS,
     bucketLabel: 'Requests/6h',
     domainTop: Math.max(...HERO_ALL_BUCKETS, 1) + 1,
   },
   '24h': {
-    eyebrow: 'REQUESTS / 24H',
+    eyebrow: 'REQUESTS',
     total: 48,
     success: 24,
     errors: 2,
@@ -425,7 +424,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     domainTop: Math.max(...HERO_24H_BUCKETS, 1) + 1,
   },
   '7d': {
-    eyebrow: 'REQUESTS / 7D',
+    eyebrow: 'REQUESTS',
     total: 468,
     success: 237,
     errors: 13,
@@ -438,7 +437,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     domainTop: Math.max(...HERO_7D_BUCKETS, 1) + 1,
   },
   '30d': {
-    eyebrow: 'REQUESTS / 30D',
+    eyebrow: 'REQUESTS',
     total: 2_248,
     success: 1_116,
     errors: 60,
@@ -454,7 +453,7 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   // the active customRange via useMemo — the static entry exists only
   // so the `Record<RangeKey, HeroView>` type is total.
   custom: {
-    eyebrow: 'REQUESTS / CUSTOM',
+    eyebrow: 'REQUESTS',
     total: 0,
     success: 0,
     errors: 0,
@@ -519,7 +518,7 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
   const success = Math.max(0, total - errors - slow);
 
   return {
-    eyebrow: 'REQUESTS / CUSTOM',
+    eyebrow: 'REQUESTS',
     total,
     success,
     errors,
@@ -554,14 +553,14 @@ function HeroMetricCard() {
     <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
-          <span className="font-sans uppercase tracking-[0.1em] text-xs font-semibold text-ink-500">
+          <Eyebrow>
             {view.eyebrow}
-          </span>
+          </Eyebrow>
           <div className="flex items-baseline gap-3">
             <HeroNumeric size="lg">
               {view.total.toLocaleString()}
             </HeroNumeric>
-            <DeltaTag delta={view.delta} note={view.deltaNote} />
+            <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />
           </div>
         </div>
 
@@ -929,7 +928,6 @@ function RequestsTableSection({
   range: RangeKey;
   customRange: CustomRange | null;
 }) {
-  const navigate = useNavigate();
   // Looked up per render. Pill change → new rows + new total; page resets
   // so a deep-paged All state doesn't carry over into a 24H view that
   // doesn't have those pages. When the user picks a custom range, the
@@ -1196,17 +1194,12 @@ function RequestsTableSection({
                     </RowActionButton>
                   </TableCell>
                   <TableCell className="max-w-[200px]">
-                    <TextLink
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/conversations?open=${row.conversation}`);
-                      }}
+                    <span
                       title={row.conversation}
-                      aria-label={`Open conversation ${row.conversation}`}
-                      className="font-mono text-sm tabular-nums tracking-tight truncate block max-w-full text-left"
+                      className="font-mono text-sm text-ink-900 tabular-nums tracking-tight truncate block max-w-full"
                     >
                       {row.conversation}
-                    </TextLink>
+                    </span>
                   </TableCell>
                   <TableCell className="max-w-[140px] font-mono text-ink-800 tracking-tight">
                     <span className="block truncate" title={row.keyId}>
@@ -1331,17 +1324,6 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               {responseLabel(row)}
             </Badge>
           }
-          meta={
-            <span className="font-mono tracking-snug">
-              {row.day}, 2026 · {row.time} UTC · part of conversation{' '}
-              <TextLink
-                onClick={openConversation}
-                aria-label={`Open conversation ${row.conversation}`}
-              >
-                {row.conversation}
-              </TextLink>
-            </span>
-          }
         >
           {requestId}
         </DialogTitleBlock>
@@ -1375,9 +1357,30 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           <TabsContent value="details" className="pt-2">
             <DetailList className="rounded-md">
               <DetailRow
+                label="Timestamp"
+                value={
+                  <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
+                    {row.day}, {row.time}
+                  </span>
+                }
+              />
+              <DetailRow
+                label="Conversation"
+                value={
+                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <TextLink
+                      onClick={openConversation}
+                      aria-label={`Open conversation ${row.conversation}`}
+                    >
+                      {row.conversation}
+                    </TextLink>
+                  </span>
+                }
+              />
+              <DetailRow
                 label="Model"
                 value={
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     <VendorAvatar vendor={row.vendor} />
                     <span className="font-mono text-sm text-ink-900 tracking-tight">
                       {row.model}
@@ -1385,37 +1388,33 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                   </div>
                 }
               />
-              <DetailRow label="Provider" value={<span className="font-sans text-sm text-ink-900">{provider}</span>} />
-              <DetailRow
-                label="Source"
-                value={
-                  <span className="font-sans text-sm text-ink-900">
-                    {isByokKey(row.keyId) ? 'BYOK · provider billed you directly' : 'Gateway routing'}
-                  </span>
-                }
-              />
+              <DetailRow label="Provider" value={<span className="block text-right font-sans text-sm text-ink-900">{provider}</span>} />
               <DetailRow
                 label="API Key"
-                value={<span className="font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
+                value={<span className="block text-right font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-sm text-ink-900 tracking-tight">
+                  <span className="block text-right font-mono text-sm text-ink-900 tracking-tight">
                     <span className="text-ink-500">POST</span> /v1/messages
                   </span>
                 }
               />
               <DetailRow
                 label="HTTP status"
-                value={<Badge variant={badge.variant}>{row.code}</Badge>}
+                value={
+                  <span className="flex justify-end">
+                    <Badge variant={badge.variant}>{row.code}</Badge>
+                  </span>
+                }
               />
               <DetailRow
                 label="Cache"
                 value={
-                  <Badge variant="info">
-                    miss
-                  </Badge>
+                  <span className="flex justify-end">
+                    <Badge variant="info">miss</Badge>
+                  </span>
                 }
               />
             </DetailList>
@@ -1428,57 +1427,8 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           </TabsContent>
         </Tabs>
       </DialogScrollBody>
-
-      <DialogScrollFooter>
-        {activeTab === 'audit' ? (
-          <>
-            <CopyButton
-              mode="label"
-              size="sm"
-              text="Copy Proof"
-              value={`proof_${requestId}`}
-              label="audit proof"
-            />
-            <Button variant="default" size="sm">
-              View on DE
-              <ExternalLink data-icon="inline-end" aria-hidden />
-            </Button>
-          </>
-        ) : (
-          <>
-            <CopyButton
-              mode="label"
-              size="sm"
-              text="Copy ID"
-              value={requestId}
-              label="request ID"
-            />
-            <Button variant="default" size="sm" onClick={openConversation}>
-              Open Conversation
-              <ExternalLink data-icon="inline-end" aria-hidden />
-            </Button>
-          </>
-        )}
-      </DialogScrollFooter>
     </>
   );
-}
-
-/** Audit verdict for the KPI rail tile. Mirrors the row's guardrail
- *  action (the gateway-action axis is what the audit verdict reports):
- *  - `block`  guardrail -> "blocked"  (destructive)
- *  - `flag`   guardrail -> "flagged"  (warning)
- *  - `redact` guardrail -> "redacted" (neutral ink)
- *  - `allow`  guardrail -> "pass"     (success). Pure-provider errors
- *     still show "pass" here because the gateway's audit succeeded —
- *     the failure was upstream, not a policy violation. */
-function auditVerdict(row: RequestRow): { label: string; toneCls: string } {
-  switch (row.guardrail) {
-    case 'block':  return { label: 'blocked',  toneCls: 'text-destructive' };
-    case 'flagged':  return { label: 'flagged',  toneCls: 'text-warning-700' };
-    case 'redacted': return { label: 'redacted', toneCls: 'text-ink-700' };
-    case 'allow':  return { label: 'pass',     toneCls: 'text-success-700' };
-  }
 }
 
 /** Deterministic compression-ratio mock — bigger payloads compress better,
@@ -1492,22 +1442,13 @@ function compressionValue(row: RequestRow): string {
 }
 
 function KpiRail({ row }: { row: RequestRow }) {
-  const verdict = auditVerdict(row);
   return (
-    <KpiRailShell columns={6} className="border border-ink-200 shadow-none">
+    <KpiRailShell columns={5} className="border border-ink-200 shadow-none">
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />
       <KpiTile label="Tokens Out" value={row.outTokens} />
       <KpiTile label="Compression" value={compressionValue(row)} />
-      <div className="flex flex-col gap-1 p-4">
-        <Eyebrow>Security</Eyebrow>
-        <span
-          className={`font-mono text-lg font-medium tabular-nums -tracking-[0.5px] capitalize ${verdict.toneCls}`}
-        >
-          {verdict.label}
-        </span>
-      </div>
     </KpiRailShell>
   );
 }
@@ -1725,18 +1666,21 @@ function MessageBlock({
   content: string;
   icon?: ReactNode;
 }) {
+  // Section style mirrors the Events modal Evidence blocks: a plain
+  // icon + heading above a bordered content box (not a card with a
+  // header bar). Full request keeps its own BodySection drawer style.
   return (
-    <CodeCard className="shrink-0 border border-ink-100">
-      <div className="flex items-center gap-2 pl-3 pr-4 py-2 bg-white">
-        {icon}
-        <span className="font-sans text-sm font-medium text-ink-500">{label}</span>
+    <section className="shrink-0 flex flex-col gap-2">
+      <SectionHeading>
+        <span className="inline-flex items-center gap-2">
+          {icon}
+          {label}
+        </span>
+      </SectionHeading>
+      <div className="rounded-md border border-ink-200 px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
+        {content}
       </div>
-      <div className="border-t border-ink-200 bg-ink-50 px-4 py-3">
-        <p className="font-sans text-sm leading-6 text-ink-800 text-pretty whitespace-pre-wrap break-words">
-          {content}
-        </p>
-      </div>
-    </CodeCard>
+    </section>
   );
 }
 

@@ -975,9 +975,9 @@ function ModelsTable({
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  <InlineCode size="sm" className="select-text">
+                  <span className="font-mono text-sm text-ink-800 select-text">
                     {model.defaultHandle}
-                  </InlineCode>
+                  </span>
                   <CopyButton
                     size="inline-xs"
                     value={model.defaultHandle}

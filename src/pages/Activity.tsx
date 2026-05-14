@@ -277,7 +277,7 @@ const RANGE_TITLE_SUFFIX: Record<Range, string> = {
   custom:   'custom',
 };
 const RANGE_DELTA_NOTE: Record<Range, string> = {
-  all:      'all time',
+  all:      'All time',
   '24h':    'vs prior day',
   '7d':     'vs prior week',
   '30d':    'vs prior month',
