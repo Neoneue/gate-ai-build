@@ -1376,6 +1376,27 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           <TabsContent value="details" className="pt-2">
             <DetailList className="rounded-md">
               <DetailRow
+                label="Timestamp"
+                value={
+                  <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
+                    {row.day}, {row.time}
+                  </span>
+                }
+              />
+              <DetailRow
+                label="Conversation"
+                value={
+                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <TextLink
+                      onClick={openConversation}
+                      aria-label={`Open conversation ${row.conversation}`}
+                    >
+                      {row.conversation}
+                    </TextLink>
+                  </span>
+                }
+              />
+              <DetailRow
                 label="Model"
                 value={
                   <div className="flex items-center gap-2">
@@ -1387,14 +1408,6 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 }
               />
               <DetailRow label="Provider" value={<span className="font-sans text-sm text-ink-900">{provider}</span>} />
-              <DetailRow
-                label="Source"
-                value={
-                  <span className="font-sans text-sm text-ink-900">
-                    {isByokKey(row.keyId) ? 'BYOK · provider billed you directly' : 'Gateway routing'}
-                  </span>
-                }
-              />
               <DetailRow
                 label="API Key"
                 value={<span className="font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
