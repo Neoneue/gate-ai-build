@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CreditCard, History, Plus, Sparkles } from 'lucide-react';
+import { CreditCard, History, Info, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import {
@@ -18,6 +18,11 @@ import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { cn } from '@/lib/utils';
 
@@ -189,7 +194,7 @@ function CreditsCard() {
 /* ─── Add credits dialog ─────────────────────────────────────────────── */
 
 const CREDIT_PRESETS = [25, 50, 100, 500] as const;
-const CREDIT_DAG_PRESETS = [50, 100, 500, 1000] as const;
+const CREDIT_DAG_PRESETS = [100, 500, 1000, 5000] as const;
 const DAG_TO_USD = 0.02;
 
 function AddCreditsDialog({
@@ -200,22 +205,23 @@ function AddCreditsDialog({
   onOpenChange: (next: boolean) => void;
 }) {
   const [payWithDag, setPayWithDag] = useState(false);
-  const [selected, setSelected] = useState<number | null>(50);
+  const [selected, setSelected] = useState<number | null>(25);
   const [custom, setCustom] = useState('');
 
-  // 50 is in both preset arrays, so it survives a mode switch.
-  const reset = () => {
-    setSelected(50);
+  // Default preset differs per mode — USD lands on 25, DAG on 100.
+  const reset = (dag: boolean) => {
+    setSelected(dag ? 100 : 25);
     setCustom('');
   };
 
   const presets = payWithDag ? CREDIT_DAG_PRESETS : CREDIT_PRESETS;
   const unit = payWithDag ? 'DAG' : 'USD';
-  const min = payWithDag ? 25 : 5;
+  const min = payWithDag ? 100 : 5;
+  const max = payWithDag ? 5000 : 1000;
 
   const customNum = Number(custom);
   const customValid =
-    custom.length > 0 && Number.isFinite(customNum) && customNum >= min && customNum <= 1000;
+    custom.length > 0 && Number.isFinite(customNum) && customNum >= min && customNum <= max;
   const amount = custom.length > 0 ? (customValid ? customNum : null) : selected;
   const canSubmit = amount !== null;
 
@@ -226,7 +232,7 @@ function AddCreditsDialog({
         onOpenChange(next);
         if (!next) {
           setPayWithDag(false);
-          reset();
+          reset(false);
         }
       }}
     >
@@ -239,7 +245,7 @@ function AddCreditsDialog({
             Add credits
           </DialogTitle>
           <DialogDescription>
-            {payWithDag ? 'Min 25 DAG · Max 1000 DAG.' : 'Min $5 · Max $1,000.'}
+            {payWithDag ? 'Min 100 DAG · Max 5,000 DAG.' : 'Min $5 · Max $1,000.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -258,7 +264,7 @@ function AddCreditsDialog({
             checked={payWithDag}
             onCheckedChange={(next) => {
               setPayWithDag(next);
-              reset();
+              reset(next);
             }}
             className="mt-1 shrink-0"
           />
@@ -290,7 +296,7 @@ function AddCreditsDialog({
                     : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
                 )}
               >
-                {payWithDag ? `${value} DAG` : `$${value}`}
+                {payWithDag ? `${value.toLocaleString()} DAG` : `$${value.toLocaleString()}`}
               </button>
             );
           })}
@@ -309,8 +315,8 @@ function AddCreditsDialog({
               id="add-credits-custom"
               type="number"
               inputMode="decimal"
-              min="25"
-              max="1000"
+              min="100"
+              max="5000"
               step="1"
               value={custom}
               onChange={(e) => {
@@ -347,16 +353,35 @@ function AddCreditsDialog({
           )}
         </div>
 
-        {/* DAG → USD conversion — tracks the selected preset or custom
-            amount. 1 DAG = $0.02. */}
+        {/* Total due — the USD amount that will be charged, shown only
+            in DAG mode where the converted total isn't obvious
+            (1 DAG = $0.02). */}
         {payWithDag && amount !== null ? (
-          <p className="font-sans text-sm text-ink-500 m-0 tabular-nums">
-            {amount.toLocaleString()} DAG ={' '}
-            <span className="font-medium text-ink-900">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              <span className="font-sans text-sm text-ink-500">Total due</span>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <span
+                      {...props}
+                      tabIndex={0}
+                      className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="How total due is calculated"
+                    >
+                      <Info className="size-4" strokeWidth={1.75} aria-hidden />
+                    </span>
+                  )}
+                />
+                <TooltipContent>
+                  Converted at 1 DAG = ${DAG_TO_USD.toFixed(2)} USD.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <span className="font-sans text-sm font-medium text-ink-900 tabular-nums">
               ${(amount * DAG_TO_USD).toFixed(2)}
-            </span>{' '}
-            USD
-          </p>
+            </span>
+          </div>
         ) : null}
 
         <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
