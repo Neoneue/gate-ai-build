@@ -256,7 +256,7 @@ function CreateLimitDialog({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="create-limit-name"
-            className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+            className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
           >
             Name
           </label>
@@ -272,7 +272,7 @@ function CreateLimitDialog({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="create-limit-type"
-              className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
             >
               Type
             </label>
@@ -292,7 +292,7 @@ function CreateLimitDialog({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="create-limit-threshold"
-              className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
             >
               Threshold
             </label>
@@ -313,7 +313,7 @@ function CreateLimitDialog({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="create-limit-period"
-              className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
             >
               Period
             </label>
@@ -333,7 +333,7 @@ function CreateLimitDialog({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="create-limit-scope"
-              className="font-mono text-xs uppercase tracking-[0.1em] font-medium text-ink-500"
+              className="font-sans text-xs uppercase tracking-[0.1em] font-semibold text-ink-500"
             >
               Scope
             </label>

@@ -324,7 +324,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
     <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
-          <span className="font-mono uppercase tracking-[0.1em] text-xs font-medium text-ink-500">
+          <span className="font-sans uppercase tracking-[0.1em] text-xs font-semibold text-ink-500">
             Total events
           </span>
           <div className="flex items-baseline gap-3">
@@ -610,7 +610,7 @@ const ATTACK_CATEGORIES: AttackCategory[] = [
 function ActionCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   return (
     <CategoryBreakdownCard
-      title="Action Categories"
+      title="Action events"
       description="Breakdown by action type"
       categories={ACTION_CATEGORIES}
       range={range}
@@ -622,7 +622,7 @@ function ActionCategoriesCard({ range, customRange }: { range: EventsRange; cust
 function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   return (
     <CategoryBreakdownCard
-      title="Attack categories"
+      title="Attack events"
       description="Breakdown by detection type"
       categories={ATTACK_CATEGORIES}
       range={range}
