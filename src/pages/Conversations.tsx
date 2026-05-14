@@ -196,6 +196,14 @@ const CONVERSATION_ROWS: ConversationRow[] = [
   { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 tokens: '102,041', cost: '$0.1402', status: 'completed', updated: '13:18:55', duration: '11m 27s' },
 ];
 
+// Masked key forms — reconcile with the API Keys page's display values so
+// the same key reads identically across surfaces.
+const KEY_MASKED: Record<string, string> = {
+  'prod-web': 'sk-gw-…c4ae',
+  'prod-agent': 'sk-gw-…9f30',
+  'test-key': 'sk-gw-…255e',
+};
+
 // Synthetic total — held at module scope so pagination math reconciles
 // with the KPI rail's "Conversations: 100" figure.
 const CONVERSATIONS_TOTAL = 100;
@@ -337,10 +345,18 @@ function ConversationsTableSection() {
                     </span>
                   </RowActionButton>
                 </TableCell>
-                <TableCell className="max-w-[220px] font-mono text-sm text-ink-800 -tracking-[0.14px]">
-                  <span className="block truncate" title={row.initiator}>
-                    {row.initiator}
-                  </span>
+                <TableCell className="max-w-[220px]">
+                  <div className="flex flex-col min-w-0">
+                    <span
+                      className="font-sans text-sm font-medium text-ink-900 truncate"
+                      title={row.initiator}
+                    >
+                      {row.initiator}
+                    </span>
+                    <span className="font-mono text-xs text-ink-500 -tracking-[0.01em] truncate">
+                      {KEY_MASKED[row.initiator] ?? ''}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                   {row.turns}

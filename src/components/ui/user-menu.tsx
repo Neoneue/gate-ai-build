@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { LogOut, Sparkles, UserRound } from 'lucide-react';
+import { LogOut, UserRound } from 'lucide-react';
 
 import {
   Menu,
@@ -49,10 +49,6 @@ function UserMenu({
           </div>
         </MenuLabel>
         <MenuSeparator />
-        <MenuItem>
-          <Sparkles strokeWidth={1.75} aria-hidden />
-          Upgrade to Pro
-        </MenuItem>
         <MenuItem onClick={() => onNavigate?.('/settings')}>
           <UserRound strokeWidth={1.75} aria-hidden />
           Settings

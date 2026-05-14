@@ -948,18 +948,18 @@ const KEY_SORT_OPTIONS: { value: KeySortKey; label: string }[] = [
   { value: 'spend',    label: 'Highest spend' },
   { value: 'requests', label: 'Most requests' },
   { value: 'tokens',   label: 'Most tokens' },
-  { value: 'owner',    label: 'Owner (A–Z)' },
+  { value: 'owner',    label: 'Member (A–Z)' },
 ];
 
 function UsageByKey({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
-  const [sort, setSort] = useState<KeySortKey>('owner');
+  const [sort, setSort] = useState<KeySortKey>('requests');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
 
   // Land on page 1 whenever the underlying ordering or window changes.
   // Without this you sit on page 3 of "Highest spend / 30d," switch to
-  // "Owner (A–Z) / 24h," and stare at page 3 of an entirely different
+  // "Member (A–Z) / 24h," and stare at page 3 of an entirely different
   // ranking — possibly past the last page. Rows-per-page already resets
   // inside TablePaginationFooter.
   useEffect(() => {
@@ -1026,7 +1026,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
             spellCheck={false}
-            placeholder="Search key or owner…"
+            placeholder="Search key or member…"
             className="pl-8"
             aria-label="Search keys"
           />
@@ -1052,7 +1052,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="whitespace-nowrap">Owner</TableHead>
+            <TableHead className="whitespace-nowrap">Member</TableHead>
             <TableHead className="whitespace-nowrap">
               <span className="inline-flex items-center gap-1.5">
                 Billing
