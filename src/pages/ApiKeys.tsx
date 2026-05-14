@@ -337,7 +337,7 @@ function UsageInfo() {
     // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
     // curl body line and the OpenAI SDK indentation both fit without
     // wrapping, with breathing room on the right.
-    <section className="flex flex-col gap-3 max-w-3xl">
+    <section className="flex flex-col gap-6 max-w-3xl">
       <div className="flex flex-col gap-1">
         <h3 className="font-sans text-lg font-medium text-ink-900 m-0">
           Using your key
@@ -410,18 +410,12 @@ function KeysTable({
                   Status column — no opacity dim on the row. Dimming was
                   retired after readability complaints at small mono
                   sizes; the badge carries the state cleanly. */}
-              <TableCell className="whitespace-nowrap align-middle">
-                <div className="flex items-center gap-3 min-w-0">
-                  <KeyRound aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={1.75} />
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="font-sans text-sm font-medium text-ink-900">
-                      {row.name}
-                    </span>
-                    <span className="font-mono text-xs text-ink-500">
-                      {row.masked}
-                    </span>
-                  </div>
-                </div>
+              {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
+                  to ink-600. Single-line two-tone form shared with the
+                  Events / Requests / Activity Key columns. */}
+              <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                <span className="text-ink-800">{row.name}</span>
+                <span className="text-ink-600"> ({row.masked})</span>
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {row.revoked ? (

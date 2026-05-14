@@ -43,7 +43,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Security',
     items: [
       { id: 'security-events', icon: TriangleAlert, label: 'Events', pageId: '/security' },
-      { id: 'policies',        icon: Shield,        label: 'Policies' },
+      { id: 'policies',        icon: Shield,        label: 'Policies', pageId: '/policies' },
     ],
   },
   {

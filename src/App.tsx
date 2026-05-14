@@ -13,6 +13,7 @@ import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
 import { Guardrails } from '@/pages/Guardrails';
 import { Models } from '@/pages/Models';
+import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
 import { Security } from '@/pages/Security';
 import { Settings } from '@/pages/Settings';
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/token-savings" element={<TokenSavings />} />
           <Route path="/guardrails" element={<Guardrails />} />
           <Route path="/security" element={<Security />} />
+          <Route path="/policies" element={<Policies />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
