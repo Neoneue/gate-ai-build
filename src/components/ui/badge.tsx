@@ -46,7 +46,7 @@ const badgeVariants = cva(
         info:
           "bg-blue-700/10 text-blue-600 [a]:hover:bg-blue-700/20",
         neutral:
-          "bg-ink-100 text-ink-700 [a]:hover:bg-ink-200",
+          "bg-ink-100 text-ink-600 [a]:hover:bg-ink-200",
       },
     },
     defaultVariants: {

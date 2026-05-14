@@ -124,7 +124,8 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
           Manage roles, invite teammates, and remove access from Chad Ponticas&rsquo;s workspace.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Invite member — hidden for now; preserved for re-enable. */}
+      <div className="hidden items-center gap-2 shrink-0">
         <Button variant="default" size="default" onClick={onInvite}>
           <UserPlus data-icon="inline-start" aria-hidden />
           Invite member
@@ -352,7 +353,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
             </SelectContent>
           </Select>
         ) : (
-          <Select defaultValue={row.role}>
+          <Select defaultValue={row.role} disabled>
             <SelectTrigger
               size="sm"
               aria-label={`Role for ${row.name}`}
@@ -646,6 +647,7 @@ function RowActionsMenu({
             variant="ghost"
             size="icon-sm"
             aria-label={label}
+            disabled
             className="text-ink-500 hover:text-ink-900"
           />
         }
