@@ -1224,6 +1224,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const requestId = row.requestId;
   const conversationId = row.conversationId;
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
+  const openRequest = () => navigate(`/requests?open=${requestId}`);
 
   return (
     <>
@@ -1354,14 +1355,19 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   </span>
                 }
               />
-              {/* Request — placeholder until the Requests-page deep-link
-                  lands. The event is tied to one specific request; the
-                  Conversation link alone isn't specific enough. */}
+              {/* Request — deep-links into the Requests page modal via
+                  ?open=req_*. The event is tied to one specific request;
+                  the Conversation link alone isn't specific enough. */}
               <DetailRow
                 label="Request"
                 value={
-                  <span className="block text-right font-mono text-sm text-ink-500 tabular-nums tracking-snug">
-                    —
+                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <TextLink
+                      onClick={openRequest}
+                      aria-label={`Open request ${requestId}`}
+                    >
+                      {requestId}
+                    </TextLink>
                   </span>
                 }
               />
