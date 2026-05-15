@@ -516,8 +516,8 @@ function ActionHalf({
               className={
                 'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
-                  ? 'border-border bg-card'
-                  : 'border-border bg-transparent hover:bg-card')
+                  ? 'border-foreground bg-ink-50'
+                  : 'border-border bg-transparent hover:bg-ink-50')
               }
             >
               <RadioGroupItem id={radioId} value={opt.value} className="mt-1" />
