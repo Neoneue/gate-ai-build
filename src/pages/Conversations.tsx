@@ -5,7 +5,9 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
+import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { MessageBlock, type MessageRole } from '@/components/ui/message-block';
 import { RowActionButton } from '@/components/ui/row-action-button';
@@ -51,9 +53,38 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  * KpiRail, ConversationsTableSection.
  * ───────────────────────────────────────────────────────────────────────── */
 
+type PresetRange = 'all' | '24h' | '7d' | '30d';
+type Range = PresetRange | 'custom';
+type CustomRange = { from: Date; to: Date };
+
+const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: '24h', label: '24H' },
+  { value: '7d',  label: '7D'  },
+  { value: '30d', label: '30D' },
+];
+
+const RANGE_SCALE: Record<PresetRange, number> = {
+  '24h': 0.16,
+  '7d':  1,
+  '30d': 4.2,
+  all:   8.5,
+};
+
+function daysInRange(r: CustomRange): number {
+  return Math.max(1, Math.round((r.to.getTime() - r.from.getTime()) / 86_400_000) + 1);
+}
+
+function effectiveScale(range: Range, customRange: CustomRange | null): number {
+  if (range === 'custom' && customRange) return daysInRange(customRange) / 7;
+  return RANGE_SCALE[range === 'custom' ? '7d' : range];
+}
+
 export function Conversations() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
+  const [range, setRange] = useState<Range>('all');
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   return (
     <DashboardChrome
@@ -63,16 +94,34 @@ export function Conversations() {
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
           >
-            <PageHeader />
-            <KpiRail />
-            <ConversationsTableSection />
+            <PageHeader
+              range={range}
+              customRange={customRange}
+              onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
+              onCustomRangeChange={(r) => {
+                if (r) { setCustomRange(r); setRange('custom'); }
+                else   { setCustomRange(null); setRange('all'); }
+              }}
+            />
+            <KpiRail range={range} customRange={customRange} />
+            <ConversationsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
   );
 }
 
 /* ─── Page header — eyebrow + title + description + actions ──────────────── */
 
-function PageHeader() {
+function PageHeader({
+  range,
+  customRange,
+  onRangeChange,
+  onCustomRangeChange,
+}: {
+  range: Range;
+  customRange: CustomRange | null;
+  onRangeChange: (r: PresetRange) => void;
+  onCustomRangeChange: (r: CustomRange | null) => void;
+}) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -82,13 +131,26 @@ function PageHeader() {
           A conversation is a chain of requests that share session context — agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
         </p>
       </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <SegmentedPill
+          options={RANGE_OPTIONS}
+          value={range === 'custom' ? '' : range}
+          onValueChange={(v) => onRangeChange(v as PresetRange)}
+        />
+        <DateRangePicker
+          value={customRange}
+          onChange={onCustomRangeChange}
+          size="default"
+        />
+      </div>
     </div>
   );
 }
 
 /* ─── KPI Rail (4 cards — Spend / 24h omitted per request) ────────────── */
 
-function KpiRail() {
+function KpiRail({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
+  const conversationsValue = Math.round(100 * effectiveScale(range, customRange)).toLocaleString('en-US');
   return (
     <KpiRailShell columns={4}>
       <CompactKpi
@@ -106,7 +168,7 @@ function KpiRail() {
       <CompactKpi
         flat
         title="Conversations"
-        value="100"
+        value={conversationsValue}
         delta="+6.4%"
         spark={
           <CompactSpark
@@ -210,7 +272,15 @@ const KEY_SUFFIX: Record<string, string> = {
 // with the KPI rail's "Conversations: 100" figure.
 const CONVERSATIONS_TOTAL = 100;
 
-function ConversationsTableSection() {
+function scaleTokenStr(s: string, scale: number): string {
+  return Math.round(Number(s.replace(/,/g, '')) * scale).toLocaleString('en-US');
+}
+function scaleCostStr(s: string, scale: number): string {
+  return '$' + (parseFloat(s.replace('$', '')) * scale).toFixed(4);
+}
+
+function ConversationsTableSection({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
+  const scale = effectiveScale(range, customRange);
   const [keyId, setKeyId] = useState('all');
   const [model, setModel] = useState('all');
   const [page, setPage] = useState(1);
@@ -221,7 +291,7 @@ function ConversationsTableSection() {
     if (model !== 'all' && !row.models.includes(model as ModelId)) return false;
     return true;
   });
-  const paginationTotal = isFiltered ? visibleRows.length : CONVERSATIONS_TOTAL;
+  const paginationTotal = isFiltered ? visibleRows.length : Math.round(CONVERSATIONS_TOTAL * scale);
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
   const [selectedRow, setSelectedRow] = useState<ConversationRow | null>(null);
@@ -238,14 +308,14 @@ function ConversationsTableSection() {
   // only, not state-driven.
   const [searchParams, setSearchParams] = useSearchParams();
   const openId = searchParams.get('open');
-  const lastProcessedOpenId = useRef<string | null>(null);
-  useEffect(() => {
-    if (openId === lastProcessedOpenId.current) return;
-    lastProcessedOpenId.current = openId;
-    if (!openId) return;
-    const match = CONVERSATION_ROWS.find((r) => r.conversationId === openId);
-    if (match) setSelectedRow(match);
-  }, [openId]);
+  const [prevOpenId, setPrevOpenId] = useState<string | null>(null);
+  if (openId !== prevOpenId) {
+    setPrevOpenId(openId);
+    if (openId) {
+      const match = CONVERSATION_ROWS.find((r) => r.conversationId === openId);
+      if (match) setSelectedRow(match);
+    }
+  }
 
   return (
     <>
@@ -312,15 +382,15 @@ function ConversationsTableSection() {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Conversation</TableHead>
-            <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Turns</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Reqs</TableHead>
-            <TableHead className="whitespace-nowrap">Models</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens in</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens out</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Cost</TableHead>
-            <TableHead className="whitespace-nowrap">Updated</TableHead>
+            <TableHead className="w-[24%] whitespace-nowrap">Conversation</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap">Key</TableHead>
+            <TableHead className="w-[5%] whitespace-nowrap">Models</TableHead>
+            <TableHead className="w-[5%] text-right whitespace-nowrap">Turns</TableHead>
+            <TableHead className="w-[5%] text-right whitespace-nowrap">Reqs</TableHead>
+            <TableHead className="w-[9%] text-right whitespace-nowrap">Tokens in</TableHead>
+            <TableHead className="w-[9%] text-right whitespace-nowrap">Tokens out</TableHead>
+            <TableHead className="w-[8%] text-right whitespace-nowrap">Cost</TableHead>
+            <TableHead className="w-[11%] text-right whitespace-nowrap">Updated</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -331,7 +401,7 @@ function ConversationsTableSection() {
                 onClick={() => setSelectedRow(row)}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
               >
-                <TableCell className="max-w-[360px]">
+                <TableCell className="whitespace-nowrap max-w-0">
                   <RowActionButton
                     layout="stack"
                     onClick={() => setSelectedRow(row)}
@@ -348,10 +418,7 @@ function ConversationsTableSection() {
                     </span>
                   </RowActionButton>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono tracking-snug">
-                  {/* `name (sk-gw-NNN)` — name in dark ink, the parenthetical
-                      gateway id dimmed to ink-600. Matches the Requests and
-                      Events Key columns. */}
+                <TableCell className="whitespace-nowrap font-mono text-sm tracking-snug">
                   <span className="text-ink-800">{row.initiator}</span>
                   {KEY_SUFFIX[row.initiator] ? (
                     <span className="text-ink-600">
@@ -360,13 +427,7 @@ function ConversationsTableSection() {
                     </span>
                   ) : null}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.turns}
-                </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.reqs}
-                </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <div
                     role="img"
                     aria-label={`Models: ${row.vendors.map((v) => VENDOR_META[v].label).join(', ')}`}
@@ -378,15 +439,21 @@ function ConversationsTableSection() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.inTokens}
+                  {row.turns}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.outTokens}
+                  {row.reqs}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.cost}
+                  {scaleTokenStr(row.inTokens, scale)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800 -tracking-[0.14px]">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                  {scaleTokenStr(row.outTokens, scale)}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                  {scaleCostStr(row.cost, scale)}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-500">
                   {row.updated}
                 </TableCell>
               </TableRow>
@@ -460,9 +527,11 @@ function ConversationDetailDialog({
   // close animation. Without this, the modal briefly renders empty chrome
   // between selectedRow → null and the unmount, which reads as a flicker.
   const [stickyRow, setStickyRow] = useState<ConversationRow | null>(row);
-  useEffect(() => {
+  const [prevRow, setPrevRow] = useState<ConversationRow | null>(row);
+  if (row !== prevRow) {
+    setPrevRow(row);
     if (row) setStickyRow(row);
-  }, [row]);
+  }
   return (
     <Dialog
       open={!!row}
@@ -586,19 +655,13 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
   );
 }
 
-// KPI rail shows one combined Tokens tile; the table splits in/out. Sum
-// the two comma-formatted strings so the tile reconciles with the table.
-function totalTokens(row: ConversationRow): string {
-  const parse = (s: string) => Number(s.replace(/,/g, ''));
-  return (parse(row.inTokens) + parse(row.outTokens)).toLocaleString('en-US');
-}
-
 function ConversationKpiRail({ row }: { row: ConversationRow }) {
   return (
-    <KpiRailShell columns={5}>
+    <KpiRailShell columns={6}>
       <ConversationKpiTile label="Requests" value={String(row.reqs)} />
       <ConversationKpiTile label="Turns" value={String(row.turns)} />
-      <ConversationKpiTile label="Tokens" value={totalTokens(row)} />
+      <ConversationKpiTile label="Tokens In" value={row.inTokens} />
+      <ConversationKpiTile label="Tokens Out" value={row.outTokens} />
       <ConversationKpiTile label="Cost" value={row.cost} />
       <ConversationKpiTile label="Duration" value={row.duration} />
     </KpiRailShell>
