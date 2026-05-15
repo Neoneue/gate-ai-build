@@ -29,13 +29,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
 import { PageTitle } from '@/components/ui/page-title';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Sparkline } from '@/components/ui/sparkline';
 import { TextLink } from '@/components/ui/text-link';
 import {
@@ -49,7 +42,7 @@ import {
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * API Access page (route: /api-keys, sidebar: "API Access")
+ * API Keys page (route: /api-keys, sidebar: "API Keys")
  *
  * Manages the workspace's API keys. Seeded with 3 mock rows for the demo
  * (see TEMP PREVIEW SEED in <ApiKeys>); replace with `[]` to exercise the
@@ -72,19 +65,9 @@ type ApiKeyRow = {
   id: string;            // full id used for matching / dedup
   name: string;          // user-supplied label
   masked: string;        // `sk-gw-…3a8f` display form
-  spendCap: string;      // "$500 per month" or "Unlimited"
   requests7d: number[];  // sparkline series; 7 daily buckets
   lastUsed: string;      // "1 day ago" / "Never"
   revoked?: boolean;     // greys out the row + disables actions when true
-};
-
-type SpendCapPeriod = 'day' | 'week' | 'month' | 'year';
-
-const SPEND_PERIOD_LABEL: Record<SpendCapPeriod, string> = {
-  day: 'per day',
-  week: 'per week',
-  month: 'per month',
-  year: 'per year',
 };
 
 export function ApiKeys() {
@@ -105,7 +88,6 @@ export function ApiKeys() {
       id: 'sk-gw-c4aeb3a8',
       name: 'prod-web',
       masked: 'sk-gw-…c4ae',
-      spendCap: '$500 per month',
       // Steady climb — prod-web traffic grows day-over-day.
       requests7d: [3, 5, 7, 6, 10, 9, 14],
       lastUsed: '1 day ago',
@@ -114,7 +96,6 @@ export function ApiKeys() {
       id: 'sk-gw-9f3064ce',
       name: 'prod-agent',
       masked: 'sk-gw-…9f30',
-      spendCap: 'Unlimited',
       // Spiky — agent runs burst irregularly across the week.
       requests7d: [1, 8, 2, 11, 3, 9, 4],
       lastUsed: '2h ago',
@@ -123,13 +104,12 @@ export function ApiKeys() {
       id: 'sk-gw-255e1d3a',
       name: 'test-key',
       masked: 'sk-gw-…255e',
-      spendCap: 'Unlimited',
       requests7d: [0, 0, 0, 0, 0, 0, 0],
       lastUsed: 'Never',
       revoked: true,
     },
   ]);
-  const handleCreate = (input: { name: string; spendCap: string; period: SpendCapPeriod }) => {
+  const handleCreate = (input: { name: string }) => {
     const suffix = randomHex(4);
     const idCore = randomHex(8);
     // The one-time full key surfaced in the step-2 modal. Demo-only — real
@@ -139,9 +119,6 @@ export function ApiKeys() {
       id: `sk-gw-${idCore}`,
       name: input.name.trim(),
       masked: `sk-gw-…${suffix}`,
-      spendCap: input.spendCap.trim()
-        ? `$${input.spendCap.trim()} ${SPEND_PERIOD_LABEL[input.period]}`
-        : 'Unlimited',
       // Zero-volume sparkline for a freshly-created key — no traffic yet.
       requests7d: [0, 0, 0, 0, 0, 0, 0],
       lastUsed: 'Never',
@@ -157,7 +134,7 @@ export function ApiKeys() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="API Access"
+      breadcrumbCurrent="API Keys"
       activeNavId="api-keys"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
@@ -183,7 +160,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
-        <PageTitle>API Access</PageTitle>
+        <PageTitle>API Keys</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
         </p>
@@ -409,7 +386,6 @@ function KeysTable({
           <TableRow className="hover:bg-transparent">
             <TableHead className="whitespace-nowrap">Key</TableHead>
             <TableHead className="whitespace-nowrap">Status</TableHead>
-            <TableHead className="whitespace-nowrap">Spend cap</TableHead>
             <TableHead className="whitespace-nowrap">7-day requests</TableHead>
             <TableHead className="whitespace-nowrap">Last used</TableHead>
             <TableHead aria-label="Actions" className="w-10" />
@@ -431,9 +407,6 @@ function KeysTable({
                 ) : (
                   <Badge variant="success">Active</Badge>
                 )}
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                {row.spendCap}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />
@@ -480,11 +453,9 @@ function CreateKeyDialog({
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
-  onCreate: (input: { name: string; spendCap: string; period: SpendCapPeriod }) => void;
+  onCreate: (input: { name: string }) => void;
 }) {
   const [name, setName] = useState('');
-  const [spendCap, setSpendCap] = useState('');
-  const [period, setPeriod] = useState<SpendCapPeriod>('month');
 
   const isValid = name.trim().length > 0;
 
@@ -495,8 +466,6 @@ function CreateKeyDialog({
         onOpenChange(next);
         if (!next) {
           setName('');
-          setSpendCap('');
-          setPeriod('month');
         }
       }}
     >
@@ -505,7 +474,7 @@ function CreateKeyDialog({
           onSubmit={(e) => {
             e.preventDefault();
             if (!isValid) return;
-            onCreate({ name, spendCap, period });
+            onCreate({ name });
           }}
           className="flex flex-col gap-4"
         >
@@ -539,54 +508,6 @@ function CreateKeyDialog({
               required
               className="font-mono text-sm"
             />
-          </div>
-
-          {/* Spend cap — amount + time range */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between gap-2">
-              <Label htmlFor="apikey-spend-cap" className="text-ink-600 font-medium text-sm">
-                Spend cap
-              </Label>
-              <span className="font-sans text-xs text-ink-500">
-                Key stops accepting requests at the cap. Leave blank for unlimited.
-              </span>
-            </div>
-            <div className="grid grid-cols-[1fr_auto] gap-2">
-              <div className="relative">
-                <span
-                  aria-hidden
-                  className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none"
-                >
-                  $
-                </span>
-                <Input
-                  id="apikey-spend-cap"
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="1"
-                  value={spendCap}
-                  onChange={(e) => setSpendCap(e.target.value)}
-                  placeholder="500"
-                  className="pl-7 font-mono text-sm tabular-nums"
-                />
-              </div>
-              <Select value={period} onValueChange={(v: string) => setPeriod(v as SpendCapPeriod)}>
-                <SelectTrigger
-                  size="default"
-                  aria-label="Spend cap period"
-                  className="border-ink-200 bg-white text-ink-900 font-normal"
-                >
-                  <SelectValue>{(v) => SPEND_PERIOD_LABEL[v as SpendCapPeriod] ?? 'per month'}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">per day</SelectItem>
-                  <SelectItem value="week">per week</SelectItem>
-                  <SelectItem value="month">per month</SelectItem>
-                  <SelectItem value="year">per year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           {/* Warning callout — tinted card, not inline-icon text. Modal-
