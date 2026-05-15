@@ -694,7 +694,7 @@ function TrendCard({
               <SelectTrigger
                 size="sm"
                 aria-label="Group spend by"
-                className="border-ink-200 bg-white text-ink-900 font-normal"
+                className="border-border bg-card text-ink-900 font-normal"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -1244,7 +1244,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           <SelectTrigger
             size="sm"
             aria-label="Sort keys by"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1269,7 +1269,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                   <TooltipTrigger
                     render={<button type="button" />}
                     aria-label="What's the difference between Gate and BYOK?"
-                    className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-300"
+                    className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Info aria-hidden className="size-3.5" strokeWidth={2} />
                   </TooltipTrigger>

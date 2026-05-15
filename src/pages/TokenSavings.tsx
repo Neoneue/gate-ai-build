@@ -83,7 +83,7 @@ function KpiTile({
   spark?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 bg-white p-4">
+    <div className="flex flex-col gap-2 bg-card p-4">
       <div className="flex items-center gap-2">
         {liveDot ? (
           <span aria-hidden className="size-2 rounded-full bg-success-600 shrink-0" />
@@ -130,7 +130,7 @@ function CardChromeHeader({
   enabled: boolean;
 }) {
   return (
-    <CardHeader className="border-b border-ink-200">
+    <CardHeader className="border-b border-border">
       <div className="flex items-start gap-3">
         <div className="flex flex-col gap-1 min-w-0 flex-1">
           <h3 className="font-sans text-base font-medium text-ink-900 m-0">
@@ -168,7 +168,7 @@ function CachingCard() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="caching-switch-label" className="font-sans text-sm font-medium text-ink-900 m-0">
               Enable response caching
             </p>
             <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
@@ -176,6 +176,7 @@ function CachingCard() {
             </p>
           </div>
           <Switch
+            aria-labelledby="caching-switch-label"
             checked={enabled}
             onCheckedChange={(next) => {
               setEnabled(next);
@@ -233,7 +234,7 @@ function CompressionCard() {
       <CardContent className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1 min-w-0">
-              <p className="font-sans text-sm font-medium text-ink-900 m-0">
+              <p id="compression-switch-label" className="font-sans text-sm font-medium text-ink-900 m-0">
                 Enable compression
               </p>
               <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
@@ -241,6 +242,7 @@ function CompressionCard() {
               </p>
             </div>
             <Switch
+              aria-labelledby="compression-switch-label"
               checked={enabled}
               onCheckedChange={setEnabled}
               className="mt-1 shrink-0"

@@ -354,7 +354,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   const lastTick = chart.ticks[chart.ticks.length - 1];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
+    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>Total events</Eyebrow>
@@ -708,7 +708,7 @@ function CategoryBreakdownCard({
                 aria-valuemin={0}
                 aria-valuemax={max}
                 aria-labelledby={labelId}
-                className="w-full h-1.5 rounded-full bg-ink-100 overflow-hidden"
+                className="w-full h-1.5 rounded-full bg-muted overflow-hidden"
               >
                 <div
                   className="h-full rounded-full"
@@ -1029,7 +1029,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Type"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1046,7 +1046,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="API key"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1064,7 +1064,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Action"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1076,7 +1076,7 @@ function EventsTableSection({
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="sm" className="ml-auto">
+        <Button type="button" variant="outline" size="sm" className="ml-auto">
           <Download data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
@@ -1102,6 +1102,13 @@ function EventsTableSection({
                 key={`${row.time}-${i}`}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
                 onClick={() => setSelectedRow(row)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRow(row);
+                  }
+                }}
               >
                 <TableCell className="whitespace-nowrap">
                   {/* Single-line absolute datetime, relative on hover —
@@ -1132,7 +1139,7 @@ function EventsTableSection({
                     <span className="font-sans text-sm text-ink-800">{typeMeta.label}</span>
                   </span>
                 </TableCell>
-                <TableCell className="max-w-[200px]">
+                <TableCell className="whitespace-nowrap max-w-[200px]">
                   <span
                     title={row.conversationId}
                     className="font-mono text-sm tabular-nums tracking-tight text-ink-800 truncate block max-w-full"
@@ -1217,6 +1224,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const requestId = row.requestId;
   const conversationId = row.conversationId;
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
+  const openRequest = () => navigate(`/requests?open=${requestId}`);
 
   return (
     <>
@@ -1245,11 +1253,11 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               </span>
             </SectionHeading>
             <div className="flex flex-col gap-3">
-              <div className="rounded-md border border-ink-200 px-4 py-3 text-sm text-ink-900 text-pretty">
+              <div className="rounded-md border border-border px-4 py-3 text-sm text-ink-900 text-pretty">
                 {detail.samplePrompt}
               </div>
               {detail.sampleResponse !== null ? (
-                <div className="rounded-md border border-ink-200 px-4 py-3 text-sm text-ink-900 text-pretty">
+                <div className="rounded-md border border-border px-4 py-3 text-sm text-ink-900 text-pretty">
                   {detail.sampleResponse}
                 </div>
               ) : null}
@@ -1275,7 +1283,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 return (
                   <div
                     key={check.keys.join('-')}
-                    className="flex items-start justify-between gap-3 rounded-md border border-ink-200 p-4"
+                    className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
                   >
                     <div className="flex flex-col gap-1 min-w-0">
                       <span className="font-sans text-sm font-medium text-ink-900">
@@ -1347,14 +1355,19 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   </span>
                 }
               />
-              {/* Request — placeholder until the Requests-page deep-link
-                  lands. The event is tied to one specific request; the
-                  Conversation link alone isn't specific enough. */}
+              {/* Request — deep-links into the Requests page modal via
+                  ?open=req_*. The event is tied to one specific request;
+                  the Conversation link alone isn't specific enough. */}
               <DetailRow
                 label="Request"
                 value={
-                  <span className="block text-right font-mono text-sm text-ink-500 tabular-nums tracking-snug">
-                    —
+                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <TextLink
+                      onClick={openRequest}
+                      aria-label={`Open request ${requestId}`}
+                    >
+                      {requestId}
+                    </TextLink>
                   </span>
                 }
               />

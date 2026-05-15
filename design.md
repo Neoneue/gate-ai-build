@@ -422,6 +422,29 @@ KPI rail sparklines also consume chart palette tokens (`--color-chart-1` blue, `
 
 Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthropic `#D97757` · OpenAI `#10A37F` · Meta `#0064E0` · DeepSeek `#4D6BFE` · xAI `#3D3D3D` · Google/Mistral/Cohere multi-color SVG fills (wrapper `style.color` ignored). Source: `src/components/icons/vendor-meta.tsx`.
 
+### Semantic token quick-reference
+
+**Hard rule: every Tailwind utility that targets a surface, border, ring, or foreground tone must bind to a semantic token — never a raw palette atom.** The `:root {}` semantic layer is the single reskin surface; components that bypass it (e.g. `border-ink-200`, `bg-ink-100`) couple themselves directly to the palette and break any future theme swap.
+
+| Use this class | Resolves to | Do NOT write |
+|---|---|---|
+| `bg-background` | white | `bg-white` on page / dialog surfaces |
+| `bg-card` | white | `bg-white` on Card / KpiRail / table containers |
+| `bg-popover` | white | `bg-white` on dropdown / Select / Tooltip surfaces |
+| `bg-muted` | ink-100 | `bg-ink-100` on secondary / count-chip / tag surfaces |
+| `bg-secondary` | ink-100 | `bg-ink-100` on interactive secondary fills |
+| `bg-accent` | ink-100 | `bg-ink-100` on hover/accent fills |
+| `border-border` | ink-200 | `border-ink-200` for dividers, table separators, list containers, form control edges |
+| `ring-ring` | ink-400 | `ring-ink-N` for focus rings |
+| `text-foreground` | ink-900 | `text-ink-900` for primary text, headlines, row identifiers |
+| `text-muted-foreground` | ink-500 | `text-ink-500` for secondary text, eyebrows, icon-action tints |
+
+**Known gap — `bg-ink-50`:** form-field surfaces (Input, Textarea, Select trigger, table header) use ink-50 as a wash. A `--input-bg: var(--color-ink-50)` semantic token has not yet been added to `:root {}`. Until it is, `bg-ink-50` is the **one permitted ramp-token exception** in component code. Do not introduce any other ramp-token background; add a semantic alias first.
+
+**Typography ramp tokens with no current semantic alias** (`text-ink-800` body-data, `text-ink-600` table-header, `text-ink-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
+
+**Chart runtime colors** — `style={{ backgroundColor }}` / `style={{ color }}` from the chart palette helper are runtime values, not Tailwind classes. No token violation.
+
 ### Do not use
 
 - Raw hex/oklch/rgba outside `@theme`.
@@ -430,6 +453,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 - Blue for inline links — use ink + faint underline (see §7).
 - `text-ink-600`/`text-ink-700` as table body-cell tones — collides with three-tier policy.
 - Vendor colors as chart series colors by default — charts use `--chart-1..8` by index.
+- **Raw ramp classes where a semantic token exists** — see the semantic token quick-reference table above. Exceptions: `bg-ink-50` (no `--input-bg` alias yet) and typography ramp tokens with no current alias (`text-ink-800/600/400`). Every other ramp surface/border/ring/foreground token has a semantic alias — use it.
 
 ---
 
@@ -803,6 +827,7 @@ When one section is the focal action, accent it with `bg-blue-50` (and the icon 
 - **Don't put cards at `rounded-sm` (6px).** Cards live at the new 8px (`rounded-md`) surface tier as of 2026-05-10; 6px is the button / chrome / menu tier. Reaching for `rounded-sm` on a new card class is a tell that this doc was read at an old snapshot.
 - **Don't put modals at `rounded-xl: 12px`.** The token resolves to **16px** as of 2026-05-10 (`--radius-xl: 1rem` in `@theme inline`). Don't reintroduce the 12px override or hand-roll a `rounded-[12px]` modal.
 - **Don't use `active:scale-[0.98]` for press affordance.** Use `active:translate-y-px motion-reduce:active:translate-y-0` everywhere. Scale-press caused popover anchor-reposition flicker.
+- **Don't use raw ramp tokens where a semantic token exists.** Surfaces: `bg-white` → `bg-card` / `bg-popover` / `bg-background`; `bg-ink-100` → `bg-muted`. Borders: `border-ink-N` → `border-border`. Rings: `ring-ink-N` → `ring-ring`. Text: `text-ink-900` → `text-foreground`; `text-ink-500` → `text-muted-foreground`. The only permitted ramp-token exceptions today are `bg-ink-50` (no `--input-bg` alias yet), `text-ink-800` / `text-ink-600` / `text-ink-400` (no semantic aliases yet). See §2 semantic token quick-reference.
 - **Don't pass arbitrary `-tracking-[Npx]` for body / title sub-pixel tightening.** Use `tracking-snug` (`-0.01em`). Heading `-tracking-[1px]` stays arbitrary — different optical tier.
 - **Don't hand-roll the user dropdown or workspace switcher.** Both surfaces (sidebar 3-dot, top-bar avatar) open the shared `<UserMenu>`. Adding a third surface = new `<UserMenu>` consumer, not a new local menu.
 - **Don't open a `<MenuContent>` without `origin-[var(--transform-origin)]`.** The base `<MenuContent>` already includes it; if you reach for raw Base UI `Menu.Popup`, copy the variable so the popup scales from the trigger.

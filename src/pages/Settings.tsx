@@ -153,7 +153,7 @@ function ProfileCard() {
             setEmail(saved.email);
             setOrganization(saved.organization);
           }}
-          className="border-ink-200 bg-white text-ink-900"
+          className="border-border bg-card text-ink-900"
         >
           Reset
         </Button>

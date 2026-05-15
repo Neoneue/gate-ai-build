@@ -234,7 +234,7 @@ function MembersPane() {
           <SelectTrigger
             size="sm"
             aria-label="Filter by role"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -258,9 +258,9 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <TableHead className="w-[40%]">Member</TableHead>
-            <TableHead className="w-[22%]">Joined</TableHead>
-            <TableHead className="w-[28%]">Role</TableHead>
+            <TableHead className="w-[40%] whitespace-nowrap">Member</TableHead>
+            <TableHead className="w-[22%] whitespace-nowrap">Joined</TableHead>
+            <TableHead className="w-[28%] whitespace-nowrap">Role</TableHead>
             <TableHead className="w-[10%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -286,7 +286,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
   const [role, setRole] = useState<MemberRole>(row.role);
   return (
     <TableRow>
-      <TableCell>
+      <TableCell className="whitespace-nowrap">
         <div className="flex items-center gap-3 min-w-0">
           <Avatar tone={row.avatarTone} initials={initialsOf(row.name)} />
           <div className="flex flex-col min-w-0 flex-1">
@@ -313,7 +313,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
           'Owner'
         ) : (
           <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" className="w-28 border-ink-200 bg-white text-ink-900 font-normal">
+            <SelectTrigger size="sm" className="w-28 border-border bg-card text-ink-900 font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -363,7 +363,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
             variant="outline"
             size="sm"
             onClick={onInvite}
-            className="border-ink-200 bg-white text-ink-900"
+            className="border-border bg-card text-ink-900"
           >
             <UserPlus data-icon="inline-start" aria-hidden />
             Invite member
@@ -377,21 +377,21 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[27%]">Email</TableHead>
-            <TableHead className="w-[25%]">Invited by</TableHead>
-            <TableHead className="w-[15%]">Sent</TableHead>
-            <TableHead className="w-[15%]">Role</TableHead>
-            <TableHead className="w-[15%]">Expires</TableHead>
-            <TableHead className="w-[3%] text-right pl-0 pr-4">Actions</TableHead>
+            <TableHead className="w-[27%] whitespace-nowrap">Email</TableHead>
+            <TableHead className="w-[25%] whitespace-nowrap">Invited by</TableHead>
+            <TableHead className="w-[15%] whitespace-nowrap">Sent</TableHead>
+            <TableHead className="w-[15%] whitespace-nowrap">Role</TableHead>
+            <TableHead className="w-[15%] whitespace-nowrap">Expires</TableHead>
+            <TableHead className="w-[3%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {INVITATION_ROWS.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="font-mono text-sm text-ink-900 tracking-snug">
+              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-900 tracking-snug">
                 <span className="block truncate" title={row.email}>{row.email}</span>
               </TableCell>
-              <TableCell className="font-sans text-sm text-ink-800 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
@@ -501,7 +501,7 @@ function InviteMemberDialog({
               <SelectTrigger
                 id="invite-role"
                 size="default"
-                className="border-ink-200 bg-white text-ink-900 w-full"
+                className="border-border bg-card text-ink-900 w-full"
               >
                 {/* Function-child so the trigger renders only the short
                     label — the rich two-line item body is for the popup,
@@ -598,8 +598,8 @@ function RowActionsMenu({
         <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
           <MenuPrimitive.Popup
             className={cn(
-              'min-w-32 overflow-hidden rounded-sm bg-white text-ink-900 border border-ink-200 shadow-(--shadow-popup) py-1 outline-none',
-              'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none motion-reduce:duration-0',
+              'min-w-32 overflow-hidden rounded-sm bg-popover text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none',
+              'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             )}
           >
             {items.map((item) => {
@@ -610,7 +610,7 @@ function RowActionsMenu({
                   onClick={item.onSelect}
                   className={cn(
                     'relative flex w-full cursor-pointer items-center gap-2 rounded-xs h-8 px-3 text-sm outline-none select-none',
-                    'data-[highlighted]:bg-ink-100 focus-visible:bg-ink-100',
+                    'data-[highlighted]:bg-muted focus-visible:bg-muted',
                     item.destructive
                       ? 'text-destructive data-[highlighted]:text-destructive'
                       : 'text-ink-900',

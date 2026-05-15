@@ -745,7 +745,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           // footer collapse to a centered EmptyState with a "Clear filters"
           // recovery action that resets every input.
           <EmptyState
-            className="border-t border-ink-200 rounded-none shadow-none"
+            className="border-t border-border rounded-none shadow-none"
             title="No models match these filters."
             body="Try a broader search, a different modality, or clear the filter pills to see every routable model."
             action={
@@ -753,7 +753,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                 variant="outline"
                 size="sm"
                 onClick={clearFilters}
-                className="border-ink-200 bg-white text-ink-900"
+                className="border-border bg-card text-ink-900"
               >
                 Clear filters
               </Button>
@@ -1314,7 +1314,7 @@ function PlatformPanel() {
             // No-op in the showcase; real impl wires to per-platform docs.
             onClick={() => undefined}
             aria-label={`Open ${p.name} integration guide`}
-            className="group flex items-start justify-between gap-3 bg-white rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <div className="flex flex-col gap-1 min-w-0">
               <span className="font-sans text-sm font-medium text-ink-900">{p.name}</span>
@@ -1450,7 +1450,7 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-ink-100 text-ink-400"
+      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-muted text-ink-400"
       title={PROVIDER_LABELS[provider]}
     >
       <span className="size-1.5 rounded-full bg-ink-400" />

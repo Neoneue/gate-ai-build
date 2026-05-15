@@ -377,7 +377,7 @@ export function TopKeysCard() {
       <CardContent className="flex flex-col gap-4">
         <HeroNumeric>$1,147.82</HeroNumeric>
 
-        <div className="flex flex-col gap-4 pt-4 border-t border-ink-200">
+        <div className="flex flex-col gap-4 pt-4 border-t border-border">
           {TOP_KEYS.map((k) => (
             <div key={k.label} className="flex items-center justify-between gap-3 min-w-0">
               <span
@@ -436,7 +436,7 @@ const STATUS_BADGE: Record<RequestStatus, {
 // dashboard's two surfaces read as the same depth tier.
 export function RecentRequestsCard() {
   return (
-    <div className="flex flex-col w-full rounded-md overflow-hidden bg-white shadow-(--shadow-border)">
+    <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
       <div className="flex items-center justify-between py-3 px-4">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
           Recent Requests
@@ -535,8 +535,8 @@ function QuickActionsRow() {
   const dividerCls =
     'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
   return (
-    <div className="rounded-md bg-white shadow-(--shadow-border) overflow-hidden">
-      <div className="flex items-center py-3 px-4 border-b border-ink-200">
+    <div className="rounded-md bg-card shadow-(--shadow-border) overflow-hidden">
+      <div className="flex items-center py-3 px-4 border-b border-border">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
           Quick Actions
         </h3>
@@ -560,10 +560,10 @@ function QuickActionsRow() {
 function QuickActionItem({ icon: Icon, title, subtitle, accent }: QuickAction) {
   const sectionCls = accent
     ? 'bg-blue-50 hover:bg-blue-100/70'
-    : 'bg-white hover:bg-ink-50';
+    : 'bg-card hover:bg-muted';
   const chipCls = accent
     ? 'bg-blue-100 text-blue-700'
-    : 'bg-ink-100 text-ink-700';
+    : 'bg-muted text-ink-700';
   return (
     <button
       type="button"

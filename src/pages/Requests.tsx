@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
   Braces,
@@ -550,7 +550,7 @@ function HeroMetricCard() {
   const lastTick = view.ticks[view.ticks.length - 1];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
+    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>
@@ -765,6 +765,11 @@ type RequestRow = {
    *  rows; absent for plain `allow`. Drives the matching check state on
    *  the modal's Audit tab so the row and the modal stay in lock-step. */
   guardrailReason?: GuardrailReason;
+  /** Canonical `req_*` id. Optional so legacy rows compile without
+   *  changes — when absent the modal computes a fallback from the
+   *  conversation + code so display still works. Set on rows that need
+   *  to be deep-linkable from Security events. */
+  requestId?: string;
 };
 
 // Single source of truth for the BYOK predicate. A BYOK key means the
@@ -821,6 +826,18 @@ const REQUEST_ROWS_24H: RequestRow[] = [
   { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'hermes-agent',  inTokens: '4,208', outTokens: '2,104', latency: '12.80s', slow: true, cost: '$0.0512' },
   { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '3.40s',              cost: '$0.0094' },
   { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '13.20s', slow: true, cost: '$0.0098' },
+  // Rows tied to Security event ids — these are the canonical req_* targets
+  // the Security event-detail modal deep-links into via ?open=req_*. Keep
+  // these in lock-step with EVENT_ROWS in Security.tsx; the timestamps and
+  // conversation ids mirror the 09:27–09:48 window of those events so the
+  // two pages tell the same story when a user pivots between them.
+  { day: 'May 12', time: '09:48:14', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',   keyId: 'prod-web',      inTokens: '612',   outTokens: '0',   latency: '2.10s', cost: '$0.0043', guardrailReason: 'injection',  requestId: 'req_aurora_4200'   },
+  { day: 'May 12', time: '09:46:23', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',    keyId: 'prod-agent',    inTokens: '1,408', outTokens: '0',   latency: '2.10s', cost: '$0.0099', guardrailReason: 'credential', requestId: 'req_orion_4203'    },
+  { day: 'May 12', time: '09:43:10', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',     keyId: 'dev',           inTokens: '412',   outTokens: '188', latency: '3.20s', cost: '$0.0036', guardrailReason: 'injection',  requestId: 'req_lyra_4207'     },
+  { day: 'May 12', time: '09:42:26', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07', keyId: 'openclaw',      inTokens: '548',   outTokens: '0',   latency: '2.10s', cost: '$0.0038', guardrailReason: 'injection',  requestId: 'req_meridian_4208' },
+  { day: 'May 12', time: '09:41:08', relative: '5h ago', status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18',  keyId: 'hermes-agent',  inTokens: '742',   outTokens: '318', latency: '3.80s', cost: '$0.0078', guardrailReason: 'pii',        requestId: 'req_skylark_4209'  },
+  { day: 'May 12', time: '09:40:44', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',     keyId: 'nova-chat',     inTokens: '3,902', outTokens: '0',   latency: '2.10s', cost: '$0.0273', guardrailReason: 'injection',  requestId: 'req_vela_4209'     },
+  { day: 'May 12', time: '09:39:58', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_polaris_55',  keyId: 'shadowfax-rag', inTokens: '484',   outTokens: '220', latency: '5.20s', cost: '$0.0048', guardrailReason: 'pii',        requestId: 'req_polaris_4210'  },
 ];
 
 // 7D view — cumulative superset: contains the 24H rows plus older entries
@@ -973,6 +990,23 @@ function RequestsTableSection({
   // separate `open` flag.
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
 
+  // Deep-link support: ?open=req_* opens the matching row's modal. Mirrors
+  // the Conversations page pattern — a useState guard (prevOpenId) gates the
+  // sync so the effect is URL-driven, not state-driven. Without the guard,
+  // closing the modal (which clears selectedRow) and the URL strip (which
+  // happens in onOpenChangeComplete) race on different renders and the modal
+  // re-opens itself.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openId = searchParams.get('open');
+  const [prevOpenId, setPrevOpenId] = useState<string | null>(null);
+  if (openId !== prevOpenId) {
+    setPrevOpenId(openId);
+    if (openId) {
+      const match = REQUEST_ROWS_ALL.find((r) => r.requestId === openId);
+      if (match) setSelectedRow(match);
+    }
+  }
+
   // Range now lifted to the parent — when it (or the custom range) flips,
   // reset to page 1 so a deep-paged All state doesn't carry over into a
   // 24H view that doesn't have those pages.
@@ -1024,7 +1058,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Model"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Model" />
             </SelectTrigger>
@@ -1043,7 +1077,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Key"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Key" />
             </SelectTrigger>
@@ -1063,7 +1097,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Response"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Response" />
             </SelectTrigger>
@@ -1079,7 +1113,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Guardrail"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Guardrail" />
             </SelectTrigger>
@@ -1092,7 +1126,7 @@ function RequestsTableSection({
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" className="ml-auto">
+          <Button type="button" variant="outline" size="sm" className="ml-auto">
             <Download data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
@@ -1163,6 +1197,13 @@ function RequestsTableSection({
                   key={`${row.time}-${i}`}
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
                   onClick={() => setSelectedRow(row)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedRow(row);
+                    }
+                  }}
                 >
                   <TableCell className="whitespace-nowrap w-48">
                     {/* Absolute timestamp is the primary scan target — relative
@@ -1214,7 +1255,7 @@ function RequestsTableSection({
                       </span>
                     </RowActionButton>
                   </TableCell>
-                  <TableCell className="max-w-[200px]">
+                  <TableCell className="whitespace-nowrap max-w-[200px]">
                     <span
                       title={row.conversation}
                       className="font-mono text-sm text-ink-900 tabular-nums tracking-tight truncate block max-w-full"
@@ -1293,6 +1334,17 @@ function RequestsTableSection({
       onOpenChange={(open) => {
         if (!open) setSelectedRow(null);
       }}
+      onOpenChangeComplete={(open) => {
+        // Strip ?open= AFTER the exit animation finishes — stripping it
+        // inside onOpenChange triggers a router re-render mid-animation,
+        // which reads as a flicker. Base UI fires this once the close
+        // transition has fully completed. Same pattern as Conversations.
+        if (!open && searchParams.has('open')) {
+          const next = new URLSearchParams(searchParams);
+          next.delete('open');
+          setSearchParams(next, { replace: true });
+        }
+      }}
     />
     </>
   );
@@ -1312,12 +1364,18 @@ function RequestsTableSection({
 function RequestDetailDialog({
   row,
   onOpenChange,
+  onOpenChangeComplete,
 }: {
   row: RequestRow | null;
   onOpenChange: (open: boolean) => void;
+  onOpenChangeComplete?: (open: boolean) => void;
 }) {
   return (
-    <Dialog open={!!row} onOpenChange={onOpenChange}>
+    <Dialog
+      open={!!row}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={onOpenChangeComplete}
+    >
       <DialogScrollContent className="sm:max-w-[800px]">
         {row ? <RequestDetailBody row={row} /> : null}
       </DialogScrollContent>
@@ -1330,7 +1388,10 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
   const openConversation = () =>
     navigate(`/conversations?open=${row.conversation}`);
   const badge = RESPONSE_BADGE[row.status];
-  const requestId = `req_${row.conversation.replace('cnv_', '').slice(0, 8)}${row.code}`;
+  // Prefer the explicit `requestId` on rows that carry one (Security deep-link
+  // targets). Older rows fall back to a synthesized id so display still works
+  // without forcing every legacy row to be backfilled.
+  const requestId = row.requestId ?? `req_${row.conversation.replace('cnv_', '').slice(0, 8)}${row.code}`;
   const provider = VENDOR_META[row.vendor].label;
   // Tabs is controlled so the panel footer can swap actions per active
   // tab (Audit gets Copy Proof / View on DE; everyone else gets Copy ID /
@@ -1471,7 +1532,7 @@ function compressionValue(row: RequestRow): string {
 
 function KpiRail({ row }: { row: RequestRow }) {
   return (
-    <KpiRailShell columns={5} className="border border-ink-200 shadow-none">
+    <KpiRailShell columns={5} className="border border-border shadow-none">
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />
@@ -1629,11 +1690,10 @@ function BodySection({
     // `shrink-0` so the section never gets squished by its flex parent
     // when sibling sections also expand. The outer panel's max-h handles
     // overflow via scroll; sticky headers stay pinned during scroll.
-    // Lighter `border-ink-100` instead of `ink-200` — the CodeCard's
-    // default shadow already provides a 1px ring, so pairing it with a
-    // softer real border keeps the edge crisp at scroll clip points
-    // without doubling the visual weight.
-    <CodeCard className="shrink-0 border border-ink-100">
+    // Border uses the semantic `border-border` token so the card edge
+    // tracks theme/contrast tokens; the CodeCard's default shadow still
+    // provides a 1px ring to keep the edge crisp at scroll clip points.
+    <CodeCard className="shrink-0 border border-border">
       {/* Sticky header so the section label stays pinned at the top of
           the scrollable area as you scroll through the body content
           underneath. Header sits on the card surface (white) so it reads
@@ -1644,7 +1704,7 @@ function BodySection({
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full pl-3 pr-4 py-2 text-left bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full pl-3 pr-4 py-2 text-left bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <span className="inline-flex items-center gap-2">
           {icon}
@@ -1658,14 +1718,14 @@ function BodySection({
       </button>
       {expanded && (
         <>
-          <div className="overflow-x-auto border-t border-ink-200 bg-ink-50">
+          <div className="overflow-x-auto border-t border-border bg-ink-50">
             <CodeBlock lines={lines} density="compact" />
           </div>
           {copyValue !== undefined && copyLabel !== undefined && (
             // Copy action lives in its own footer below the code well —
             // separates the toggle target (header) from the action target
             // (Copy) so tapping one never triggers the other.
-            <div className="flex items-center justify-end border-t border-ink-200 bg-white px-4 py-2">
+            <div className="flex items-center justify-end border-t border-border bg-card px-4 py-2">
               <CopyButton
                 mode="label"
                 size="compact"
@@ -1705,7 +1765,7 @@ function MessageBlock({
           {label}
         </span>
       </SectionHeading>
-      <div className="rounded-md border border-ink-200 px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
+      <div className="rounded-md border border-border px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
         {content}
       </div>
     </section>
@@ -1865,7 +1925,7 @@ function SecurityCheckRow({
   status: CheckStatus;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border border-ink-200 p-4">
+    <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex flex-col gap-1 min-w-0">
         <span className="font-sans text-sm font-medium text-ink-900">{title}</span>
         <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>

@@ -71,6 +71,14 @@ const RANGE_SCALE: Record<PresetRange, number> = {
   all:   8.5,
 };
 
+const SPARK: Record<Range, { activeNow: number[]; conversations: number[]; avgTurns: number[]; avgCost: number[] }> = {
+  all:    { activeNow: [160,195,210,230,215,248,225,242,247], conversations: [280,340,310,380,350,410,385,415,420], avgTurns: [11.2,12.8,11.6,13.4,12.9,14.1,13.5,14.0,14.2], avgCost: [0.101,0.095,0.098,0.091,0.093,0.087,0.089,0.083,0.082] },
+  '30d':  { activeNow: [218,230,240,228,245,235,250,240,247], conversations: [348,368,382,371,395,383,408,398,420], avgTurns: [13.1,13.6,13.4,13.8,13.6,14.1,13.9,14.1,14.2], avgCost: [0.091,0.088,0.090,0.086,0.088,0.084,0.086,0.083,0.082] },
+  '7d':   { activeNow: [238,252,230,244,256,234,248,240,247], conversations: [10,12,9,11,13,10,12,11,12],            avgTurns: [13.4,14.8,13.1,14.2,14.9,13.6,14.5,13.9,14.2], avgCost: [0.087,0.082,0.090,0.083,0.085,0.080,0.084,0.079,0.082] },
+  '24h':  { activeNow: [242,246,244,249,245,251,247,250,247], conversations: [11,13,10,12,14,11,13,12,12],           avgTurns: [14.0,14.5,13.8,14.3,14.7,14.1,14.4,14.0,14.2], avgCost: [0.083,0.081,0.084,0.082,0.080,0.083,0.081,0.082,0.082] },
+  custom: { activeNow: [230,242,238,245,240,248,244,250,247], conversations: [380,395,410,405,415,408,418,412,420],   avgTurns: [13.6,14.0,13.8,14.2,14.0,14.4,14.1,14.3,14.2], avgCost: [0.088,0.085,0.087,0.084,0.086,0.083,0.085,0.082,0.082] },
+};
+
 function daysInRange(r: CustomRange): number {
   return Math.max(1, Math.round((r.to.getTime() - r.from.getTime()) / 86_400_000) + 1);
 }
@@ -151,6 +159,7 @@ function PageHeader({
 
 function KpiRail({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
   const conversationsValue = Math.round(100 * effectiveScale(range, customRange)).toLocaleString('en-US');
+  const spark = SPARK[range];
   return (
     <KpiRailShell columns={4}>
       <CompactKpi
@@ -158,36 +167,21 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
         title="Active Now"
         value="247"
         delta="+12"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-ink-500)"
-            data={[238, 252, 230, 244, 256, 234, 248, 240, 247]}
-          />
-        }
+        spark={<CompactSpark colorVar="var(--color-ink-500)" data={spark.activeNow} />}
       />
       <CompactKpi
         flat
         title="Conversations"
         value={conversationsValue}
         delta="+6.4%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-chart-7)"
-            data={[10, 12, 9, 11, 13, 10, 12, 11, 12]}
-          />
-        }
+        spark={<CompactSpark colorVar="var(--color-chart-7)" data={spark.conversations} />}
       />
       <CompactKpi
         flat
         title="Avg Turns"
         value="14.2"
         delta="+1.8"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-chart-3)"
-            data={[13.4, 14.8, 13.1, 14.2, 14.9, 13.6, 14.5, 13.9, 14.2]}
-          />
-        }
+        spark={<CompactSpark colorVar="var(--color-chart-3)" data={spark.avgTurns} />}
       />
       <CompactKpi
         flat
@@ -195,13 +189,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
         value="$0.082"
         delta="-3.1%"
         deltaInverted
-        spark={
-          <CompactSpark
-            colorVar="var(--color-chart-1)"
-            data={[0.087, 0.082, 0.090, 0.083, 0.085, 0.080, 0.084, 0.079, 0.082]}
-            endDot
-          />
-        }
+        spark={<CompactSpark colorVar="var(--color-chart-1)" data={spark.avgCost} endDot />}
       />
     </KpiRailShell>
   );
@@ -335,7 +323,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <SelectTrigger
             size="sm"
             aria-label="Key"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue placeholder="Key" />
           </SelectTrigger>
@@ -350,7 +338,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <SelectTrigger
             size="sm"
             aria-label="Model"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue placeholder="Model" />
           </SelectTrigger>
@@ -391,6 +379,13 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
               <TableRow
                 key={row.conversationId}
                 onClick={() => setSelectedRow(row)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRow(row);
+                  }
+                }}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
               >
                 <TableCell className="whitespace-nowrap max-w-0">
@@ -798,7 +793,7 @@ function ConversationMessagesPanel({
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the trace panel. `flex-none` so
           it doesn't shrink when the body scrolls. */}
-      <div className="flex-none flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+      <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
         <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
           {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
@@ -932,7 +927,7 @@ function RequestTracePanel({
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
-      <div className="flex-none flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+      <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-ink-900">Request Trace</span>
         <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
           {SAMPLE_TRACE.length} requests
@@ -1044,7 +1039,7 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ink-400 focus-visible:ring-inset ${
+      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         selected ? '' : 'hover:bg-ink-50'
       } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-0.5 before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'
@@ -1062,7 +1057,7 @@ function TraceItem({
           track behind it reads as broken at the bead. Icon inside marks
           the step type. */}
       <div
-        className={`relative size-6 shrink-0 rounded-full border-2 bg-white flex items-center justify-center ${nodeBorder}`}
+        className={`relative size-6 shrink-0 rounded-full border-2 bg-card flex items-center justify-center ${nodeBorder}`}
       >
         <StepIcon
           className={`size-3 ${nodeIconTone} ${stepIconTransform}`}
