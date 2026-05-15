@@ -550,7 +550,7 @@ function HeroMetricCard() {
   const lastTick = view.ticks[view.ticks.length - 1];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
+    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>
@@ -1024,7 +1024,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Model"
-              className="border-border bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Model" />
             </SelectTrigger>
@@ -1043,7 +1043,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Key"
-              className="border-border bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Key" />
             </SelectTrigger>
@@ -1063,7 +1063,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Response"
-              className="border-border bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Response" />
             </SelectTrigger>
@@ -1079,7 +1079,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Guardrail"
-              className="border-border bg-white text-ink-900 font-normal"
+              className="border-border bg-card text-ink-900 font-normal"
             >
               <SelectValue placeholder="Guardrail" />
             </SelectTrigger>
@@ -1650,7 +1650,7 @@ function BodySection({
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full pl-3 pr-4 py-2 text-left bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full pl-3 pr-4 py-2 text-left bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <span className="inline-flex items-center gap-2">
           {icon}
@@ -1671,7 +1671,7 @@ function BodySection({
             // Copy action lives in its own footer below the code well —
             // separates the toggle target (header) from the action target
             // (Copy) so tapping one never triggers the other.
-            <div className="flex items-center justify-end border-t border-border bg-white px-4 py-2">
+            <div className="flex items-center justify-end border-t border-border bg-card px-4 py-2">
               <CopyButton
                 mode="label"
                 size="compact"

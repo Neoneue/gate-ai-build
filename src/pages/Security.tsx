@@ -354,7 +354,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   const lastTick = chart.ticks[chart.ticks.length - 1];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-white shadow-(--shadow-border) p-4">
+    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
       <div className="flex items-start justify-between gap-6">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>Total events</Eyebrow>
@@ -1029,7 +1029,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Type"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1046,7 +1046,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="API key"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1064,7 +1064,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Action"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>

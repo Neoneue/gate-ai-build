@@ -255,7 +255,7 @@ function AddCreditsDialog({
                   'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
                   isSelected
                     ? 'border-ink-500 bg-ink-100 text-ink-900'
-                    : 'border-border bg-white text-ink-900 hover:bg-ink-50',
+                    : 'border-border bg-card text-ink-900 hover:bg-ink-50',
                 )}
               >
                 ${value.toLocaleString()}

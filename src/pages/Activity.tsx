@@ -694,7 +694,7 @@ function TrendCard({
               <SelectTrigger
                 size="sm"
                 aria-label="Group spend by"
-                className="border-border bg-white text-ink-900 font-normal"
+                className="border-border bg-card text-ink-900 font-normal"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -1244,7 +1244,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           <SelectTrigger
             size="sm"
             aria-label="Sort keys by"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>

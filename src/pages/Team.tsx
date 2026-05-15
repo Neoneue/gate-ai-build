@@ -234,7 +234,7 @@ function MembersPane() {
           <SelectTrigger
             size="sm"
             aria-label="Filter by role"
-            className="border-border bg-white text-ink-900 font-normal"
+            className="border-border bg-card text-ink-900 font-normal"
           >
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -313,7 +313,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
           'Owner'
         ) : (
           <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" className="w-28 border-border bg-white text-ink-900 font-normal">
+            <SelectTrigger size="sm" className="w-28 border-border bg-card text-ink-900 font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -363,7 +363,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
             variant="outline"
             size="sm"
             onClick={onInvite}
-            className="border-border bg-white text-ink-900"
+            className="border-border bg-card text-ink-900"
           >
             <UserPlus data-icon="inline-start" aria-hidden />
             Invite member
@@ -501,7 +501,7 @@ function InviteMemberDialog({
               <SelectTrigger
                 id="invite-role"
                 size="default"
-                className="border-border bg-white text-ink-900 w-full"
+                className="border-border bg-card text-ink-900 w-full"
               >
                 {/* Function-child so the trigger renders only the short
                     label — the rich two-line item body is for the popup,
@@ -598,7 +598,7 @@ function RowActionsMenu({
         <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
           <MenuPrimitive.Popup
             className={cn(
-              'min-w-32 overflow-hidden rounded-sm bg-white text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none',
+              'min-w-32 overflow-hidden rounded-sm bg-popover text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none',
               'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             )}
           >

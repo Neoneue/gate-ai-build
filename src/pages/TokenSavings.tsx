@@ -83,7 +83,7 @@ function KpiTile({
   spark?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 bg-white p-4">
+    <div className="flex flex-col gap-2 bg-card p-4">
       <div className="flex items-center gap-2">
         {liveDot ? (
           <span aria-hidden className="size-2 rounded-full bg-success-600 shrink-0" />
