@@ -28,7 +28,7 @@ const tabsListVariants = cva(
       variant: {
         default:
           "w-fit justify-center rounded-sm p-1 group-data-horizontal/tabs:h-8 bg-muted",
-        line: "w-full justify-start gap-0 px-4 bg-transparent border-b border-ink-100",
+        line: "w-full justify-start gap-0 px-4 bg-transparent border-b border-border",
       },
     },
     defaultVariants: {

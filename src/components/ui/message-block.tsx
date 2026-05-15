@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 
 export type MessageRole = 'system' | 'user' | 'tool' | 'assistant';
 
-export const ROLE_LABEL: Record<MessageRole, string> = {
+const ROLE_LABEL: Record<MessageRole, string> = {
   system: 'System',
   user: 'User',
   tool: 'Tool',
@@ -80,19 +80,17 @@ export function MessageBlock({
   const baseBubbleBorder =
     tone === 'warn'
       ? 'border-warning-200 bg-warning-50'
-      : role === 'assistant'
-        ? 'border-blue-100'
-        : 'border-ink-200';
+      : 'border-border bg-ink-50';
   const bubbleClasses = cn(
-    'rounded-sm border px-3 py-2 text-sm text-ink-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
+    'rounded-md border p-4 text-sm text-ink-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
     selected
       ? // Selected — ring color tracks tone so the warn semantic stays
         // intact through the selection action layer. Warn-state selection
         // rings in warning-500 (not blue) to avoid two competing signals
         // on the same bubble; default-tone selection rings in blue.
         tone === 'warn'
-        ? 'border-warning-500 bg-warning-50 ring-2 ring-warning-500'
-        : 'border-blue-500 ring-2 ring-blue-500'
+        ? 'border-warning-500 bg-warning-50 ring-1 ring-warning-500'
+        : 'border-blue-500 ring-1 ring-blue-500'
       : baseBubbleBorder,
     onClick && !selected && 'hover:border-ink-400 cursor-pointer',
     onClick && 'text-left w-full',
@@ -109,7 +107,7 @@ export function MessageBlock({
       className={cn('flex flex-col gap-2', className)}
       data-request-id={requestId}
     >
-      <div className="flex items-center justify-between font-sans text-xs font-medium text-ink-600">
+      <div className="flex items-center justify-between font-sans text-xs font-medium text-ink-900">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (

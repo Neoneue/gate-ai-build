@@ -32,7 +32,7 @@
      #09090B for primary-button identity. Perceptually uniform between. */
   --color-ink-50:  oklch(0.985 0 0);
   --color-ink-100: oklch(0.960 0 0);
-  --color-ink-200: oklch(0.910 0 0);
+  --color-ink-200: oklch(0.935 0 0);
   --color-ink-300: oklch(0.820 0 0);
   --color-ink-400: oklch(0.680 0 0);
   --color-ink-500: oklch(0.530 0 0);
@@ -198,7 +198,7 @@
   --accent-foreground: var(--color-ink-900);
   --destructive: var(--color-danger-600);
   --border: var(--color-ink-200);
-  --input: var(--color-ink-200);
+  --input: var(--color-ink-300);
   --ring: var(--color-ink-400);
   /* Categorical chart palette — standalone, NOT tied to brand colors. Used
      for graph series across the app: each series picks a slot by index, in

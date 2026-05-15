@@ -55,7 +55,7 @@ export function KpiRail({
   return (
     <div
       className={cn(
-        'grid rounded-md bg-white shadow-(--shadow-border) overflow-hidden',
+        'grid rounded-md bg-white border border-border shadow-xs overflow-hidden',
         COLUMN_CLS[columns],
         className,
       )}

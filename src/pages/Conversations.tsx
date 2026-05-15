@@ -211,14 +211,6 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
 
 type ConversationStatus = 'active' | 'completed' | 'failed';
 
-const STATUS_BADGE: Record<
-  ConversationStatus,
-  { variant: 'success' | 'destructive' | 'info'; dot: 'success' | 'danger' | 'info'; label: string }
-> = {
-  active:    { variant: 'success',     dot: 'success', label: 'active' },
-  completed: { variant: 'info',        dot: 'info',    label: 'completed' },
-  failed:    { variant: 'destructive', dot: 'danger',  label: 'failed' },
-};
 
 type ModelId =
   | 'claude-opus-4-7'
@@ -343,7 +335,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <SelectTrigger
             size="sm"
             aria-label="Key"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-white text-ink-900 font-normal"
           >
             <SelectValue placeholder="Key" />
           </SelectTrigger>
@@ -358,7 +350,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <SelectTrigger
             size="sm"
             aria-label="Model"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-border bg-white text-ink-900 font-normal"
           >
             <SelectValue placeholder="Model" />
           </SelectTrigger>
@@ -553,7 +545,6 @@ function ConversationDetailDialog({
 }
 
 function ConversationDetailBody({ row }: { row: ConversationRow }) {
-  const badge = STATUS_BADGE[row.status];
   // Cross-link selection state — clicking a message bubble or trace step
   // sets the active requestId; both panels paint the matching item with
   // the selection treatment (blue ring on the bubble, blue left-bar +
@@ -591,9 +582,6 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
             Wraps on narrow viewports so the actions drop below the
             identity instead of colliding with the close button. */}
         <div className="flex items-center gap-3 flex-wrap">
-          <Badge variant={badge.variant}>
-            {badge.label}
-          </Badge>
           <span className="font-mono text-sm font-medium text-ink-900 -tracking-[0.2px]">
             {row.conversationId}
           </span>
@@ -671,12 +659,13 @@ function ConversationKpiRail({ row }: { row: ConversationRow }) {
 function ConversationKpiTile({ label, value }: { label: string; value: string }) {
   // Mono at text-lg (18px) — below the sans-hero threshold (≥24px), so
   // these stay in the data-tier mono register per the five-voice taxonomy.
+  // Label uses plain sans (Title Case, not Eyebrow caps): KPI tiles inside
+  // a modal sit closer to body metadata than to page eyebrows, so the
+  // uppercase-tracked register from <Eyebrow> overweighted the label.
   // Padding `p-4` matches the 16px card-padding rule (CompactKpi / ModelKpiTile).
   return (
     <div className="flex flex-col gap-1 p-4">
-      <Eyebrow>
-        {label}
-      </Eyebrow>
+      <Eyebrow>{label}</Eyebrow>
       <span className="font-mono text-lg font-medium tabular-nums -tracking-[0.5px] text-ink-900">
         {value}
       </span>
@@ -805,14 +794,12 @@ function ConversationMessagesPanel({
   }, [activeRequestId, selectionSource]);
 
   return (
-    <div className="flex flex-col rounded-sm border border-ink-200 overflow-hidden h-full min-h-0">
+    <div className="flex flex-col rounded-md border border-border overflow-hidden h-full min-h-0">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the trace panel. `flex-none` so
           it doesn't shrink when the body scrolls. */}
-      <div className="flex-none flex items-center justify-between px-4 py-3 bg-ink-50 border-b border-ink-200">
-        <Eyebrow id="conv-messages-eyebrow">
-          Messages
-        </Eyebrow>
+      <div className="flex-none flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+        <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
         <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
           {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
         </span>
@@ -890,13 +877,13 @@ type TraceEvent = {
 };
 
 const SAMPLE_TRACE: TraceEvent[] = [
-  { id: 't1', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'plan',                  kind: 'reason', status: 'success', inTokens: '1.2k', outTokens: '184', latency: '1240ms', cost: '$0.0142', time: '14:24:14', requestId: 'req_92cf2a' },
-  { id: 't2', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: lookup_transfer', kind: 'tool',   status: 'success', inTokens: '0.4k', outTokens: '92',  latency: '620ms',  cost: '$0.0008', time: '14:24:38', requestId: 'req_70a48a' },
-  { id: 't3', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'reason',                kind: 'reason', status: 'success', inTokens: '2.1k', outTokens: '312', latency: '1480ms', cost: '$0.0241', time: '14:24:54', requestId: 'req_2e1f9d' },
-  { id: 't4', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: pep_screen',      kind: 'tool',   status: 'warn',    warnNote: 'pep', inTokens: '0.5k', outTokens: '142', latency: '940ms',  cost: '$0.0014', time: '14:25:11', requestId: 'req_3a5fb8' },
-  { id: 't5', vendor: 'openai',    model: 'gpt-5.1',           label: 'reason',                kind: 'reason', status: 'success', inTokens: '1.8k', outTokens: '276', latency: '1160ms', cost: '$0.0184', time: '14:25:34', requestId: 'req_7f0218' },
-  { id: 't6', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'tool: route_dispute',   kind: 'tool',   status: 'success', inTokens: '2.4k', outTokens: '380', latency: '3120ms', cost: '$0.0260', time: '14:26:14', requestId: 'req_da46b8' },
-  { id: 't7', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: audit_write',     kind: 'tool',   status: 'success', inTokens: '0.7k', outTokens: '104', latency: '720ms',  cost: '$0.0060', time: '14:27:31', requestId: 'req_4c91a2' },
+  { id: 't1', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'plan',                  kind: 'reason', status: 'success', inTokens: '1.2k', outTokens: '184', latency: '1240ms', cost: '$0.0142', time: 'May 12, 14:24:14', requestId: 'req_92cf2a' },
+  { id: 't2', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: lookup_transfer', kind: 'tool',   status: 'success', inTokens: '0.4k', outTokens: '92',  latency: '620ms',  cost: '$0.0008', time: 'May 12, 14:24:38', requestId: 'req_70a48a' },
+  { id: 't3', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'reason',                kind: 'reason', status: 'success', inTokens: '2.1k', outTokens: '312', latency: '1480ms', cost: '$0.0241', time: 'May 12, 14:24:54', requestId: 'req_2e1f9d' },
+  { id: 't4', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: pep_screen',      kind: 'tool',   status: 'warn',    warnNote: 'pep', inTokens: '0.5k', outTokens: '142', latency: '940ms',  cost: '$0.0014', time: 'May 12, 14:25:11', requestId: 'req_3a5fb8' },
+  { id: 't5', vendor: 'openai',    model: 'gpt-5.1',           label: 'reason',                kind: 'reason', status: 'success', inTokens: '1.8k', outTokens: '276', latency: '1160ms', cost: '$0.0184', time: 'May 12, 14:25:34', requestId: 'req_7f0218' },
+  { id: 't6', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'tool: route_dispute',   kind: 'tool',   status: 'success', inTokens: '2.4k', outTokens: '380', latency: '3120ms', cost: '$0.0260', time: 'May 12, 14:26:14', requestId: 'req_da46b8' },
+  { id: 't7', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: audit_write',     kind: 'tool',   status: 'success', inTokens: '0.7k', outTokens: '104', latency: '720ms',  cost: '$0.0060', time: 'May 12, 14:27:31', requestId: 'req_4c91a2' },
 ];
 
 // Status → border color for the timeline node ring. Mirrors StatusDot's
@@ -941,14 +928,12 @@ function RequestTracePanel({
   }, [activeRequestId, selectionSource]);
 
   return (
-    <div className="flex flex-col rounded-sm border border-ink-200 overflow-hidden h-full min-h-0">
+    <div className="flex flex-col rounded-md border border-border overflow-hidden h-full min-h-0">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
-      <div className="flex-none flex items-center justify-between px-4 py-3 bg-ink-50 border-b border-ink-200">
-        <Eyebrow id="conv-trace-eyebrow">
-          Request Trace
-        </Eyebrow>
+      <div className="flex-none flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+        <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-ink-900">Request Trace</span>
         <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
           {SAMPLE_TRACE.length} requests
         </span>
@@ -1041,15 +1026,16 @@ function TraceItem({
 
   // Per-row track segment — rendered behind the node circle (DOM order
   // puts node after, so its bg-white masks the line where it crosses).
-  // First row: line starts at node center (top-6) and runs to row
-  // bottom. Last row: line starts at row top and runs h-6 (24px) to
+  // Node center sits at y = py-4 (16px) + node-half (12px) = 28px = top-7.
+  // First row: line starts at node center (top-7) and runs to row
+  // bottom. Last row: line starts at row top and runs h-7 (28px) to
   // node center. Middle rows: line spans the full row height. Within
   // TraceItem padding box, node center is at x=24 (pl-3 + node-half);
   // for a 2px line to center on x=24, left = 23px.
   const trackSegment = isFirst
-    ? 'top-6 bottom-0'
+    ? 'top-7 bottom-0'
     : isLast
-      ? 'top-0 h-6'
+      ? 'top-0 h-7'
       : 'inset-y-0';
 
   return (
@@ -1058,7 +1044,7 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-3 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ink-400 focus-visible:ring-inset ${
+      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ink-400 focus-visible:ring-inset ${
         selected ? '' : 'hover:bg-ink-50'
       } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-0.5 before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'
@@ -1102,7 +1088,7 @@ function TraceItem({
 
         {/* Row 2 — agent step label + optional warn badge + requestId. */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-xs text-ink-500 -tracking-[0.01em] truncate flex-1">
+          <span className="font-mono text-sm text-ink-500 -tracking-[0.01em] truncate flex-1">
             {event.label}
           </span>
           {event.status === 'warn' && event.warnNote ? (
@@ -1111,7 +1097,7 @@ function TraceItem({
               {event.warnNote}
             </Badge>
           ) : null}
-          <span className="font-mono text-xs text-ink-500 -tracking-[0.01em] shrink-0">
+          <span className="font-mono text-xs text-ink-400 -tracking-[0.01em] shrink-0">
             {event.requestId}
           </span>
         </div>
@@ -1119,18 +1105,19 @@ function TraceItem({
         {/* Row 3 — per-step economics. `tokens-in → tokens-out · latency ·
             cost`. Latency turns warning-700 on slow rows. Cost renders at
             ink-800 per the three-tier table ink policy — same body-data
-            weight as the other carriers in the row. */}
+            weight as the other carriers in the row. Separators drop to
+            ink-300 so they read as hairline scaffolding, not data. */}
         <div className="flex items-center gap-2 min-w-0 text-ink-500">
           <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums -tracking-[0.01em]">
             {event.inTokens}
             <ArrowRight className="size-3" strokeWidth={1.75} aria-hidden />
             {event.outTokens}
           </span>
-          <span className="text-ink-400" aria-hidden>·</span>
+          <span className="text-ink-300" aria-hidden>·</span>
           <span className={`font-mono text-xs tabular-nums -tracking-[0.01em] ${latencyTone}`}>
             {event.latency}
           </span>
-          <span className="text-ink-400" aria-hidden>·</span>
+          <span className="text-ink-300" aria-hidden>·</span>
           <span className="font-mono text-xs tabular-nums -tracking-[0.01em] text-ink-800">
             {event.cost}
           </span>
