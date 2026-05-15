@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Info, Key, Search } from 'lucide-react';
 import {
@@ -1168,11 +1168,11 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   // "Member (A–Z) / 24h," and stare at page 3 of an entirely different
   // ranking — possibly past the last page. Rows-per-page already resets
   // inside TablePaginationFooter.
-  const prevResetKey = useRef('');
+  const [prevResetKey, setPrevResetKey] = useState('');
   const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort}|${query}`;
-  if (prevResetKey.current !== resetKey) {
-    prevResetKey.current = resetKey;
-    if (page !== 1) setPage(1);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setPage(1);
   }
 
   const sortedRows = useMemo(() => {
