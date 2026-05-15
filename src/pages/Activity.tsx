@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Info, Key, Search } from 'lucide-react';
 import {
@@ -88,12 +88,12 @@ type CustomRange = { from: Date; to: Date };
 
 /** Page-level metric lens — drives the trend chart + the 3 Top-by-axis
  *  cards (not the KPI rail, which always shows all metrics). Default is
- *  `requests` per the 2026-05-14 spec. */
-type Metric = 'spend' | 'requests';
+ *  `tokens`. */
+type Metric = 'tokens' | 'spend';
 
 const METRIC_OPTIONS: { value: Metric; label: string }[] = [
-  { value: 'spend',    label: 'Spend' },
-  { value: 'requests', label: 'Requests' },
+  { value: 'tokens', label: 'Tokens' },
+  { value: 'spend',  label: 'Spend' },
 ];
 
 const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
@@ -240,9 +240,9 @@ const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens:
 // value AND sparkline shape are computed from these × effectiveScale, so
 // the KPIs reconcile with the underlying data and the spark shapes reflect
 // real per-bucket variation rather than hand-drawn arrays.
-const TOTAL_7D_BASE_DOLLARS = 927;
+const TOTAL_7D_BASE_DOLLARS = 238;
 const TOTAL_7D_BASE_REQUESTS = 63_793;
-const TOTAL_7D_BASE_TOKENS = 24_500_000;
+const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
 /** KPI spec for the active range. All three metrics computed: value from
  *  the canonical 7d base × scale; sparkline by distributing that scaled
@@ -367,47 +367,47 @@ const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slo
  *  INVARIANT: every dimension's 7d row sums equal $927 — this is the
  *  canonical workspace 7d spend. The Total Spend KPI is computed from this
  *  base × the active range's effectiveScale, so chart and KPI cannot drift.
- *  If you change any row, verify the per-dimension total still equals 927. */
+ *  If you change any row, verify the per-dimension total still equals 238. */
 const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
   // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
-  // $927 so toggling Model / Provider / API key keeps the same workspace
+  // $238 so toggling Model / Provider / API key keeps the same workspace
   // total (and that total = the Total Spend KPI by construction).
   model: [
-    { sonnet: 26, gpt: 20, gemini: 13, opus: 34, llama:  9, haiku: 6 },
-    { sonnet: 28, gpt: 21, gemini: 14, opus: 38, llama: 10, haiku: 6 },
-    { sonnet: 30, gpt: 22, gemini: 15, opus: 41, llama: 10, haiku: 7 },
-    { sonnet: 32, gpt: 23, gemini: 16, opus: 44, llama: 11, haiku: 7 },
-    { sonnet: 34, gpt: 24, gemini: 17, opus: 47, llama: 11, haiku: 7 },
-    { sonnet: 35, gpt: 26, gemini: 17, opus: 51, llama: 11, haiku: 8 },
-    { sonnet: 37, gpt: 26, gemini: 18, opus: 55, llama: 12, haiku: 8 },
+    { sonnet:  6.68, gpt: 5.14, gemini: 3.34, opus:  8.73, llama: 2.31, haiku: 1.54 },
+    { sonnet:  7.19, gpt: 5.39, gemini: 3.60, opus:  9.76, llama: 2.57, haiku: 1.54 },
+    { sonnet:  7.70, gpt: 5.65, gemini: 3.85, opus: 10.53, llama: 2.57, haiku: 1.80 },
+    { sonnet:  8.22, gpt: 5.91, gemini: 4.11, opus: 11.30, llama: 2.82, haiku: 1.80 },
+    { sonnet:  8.73, gpt: 6.16, gemini: 4.37, opus: 12.07, llama: 2.82, haiku: 1.80 },
+    { sonnet:  8.99, gpt: 6.68, gemini: 4.37, opus: 13.09, llama: 2.82, haiku: 2.05 },
+    { sonnet:  9.50, gpt: 6.68, gemini: 4.62, opus: 14.12, llama: 3.08, haiku: 2.05 },
   ],
   provider: [
-    { anthropic: 50, openai: 19, google: 12, bedrock: 10, openrouter:  6 },
-    { anthropic: 58, openai: 21, google: 14, bedrock: 11, openrouter:  7 },
-    { anthropic: 62, openai: 23, google: 13, bedrock: 13, openrouter:  8 },
-    { anthropic: 67, openai: 23, google: 16, bedrock: 14, openrouter: 10 },
-    { anthropic: 73, openai: 26, google: 18, bedrock: 16, openrouter: 12 },
-    { anthropic: 79, openai: 28, google: 19, bedrock: 18, openrouter: 13 },
-    { anthropic: 83, openai: 29, google: 21, bedrock: 19, openrouter: 16 },
+    { anthropic: 12.84, openai: 4.88, google: 3.08, bedrock: 2.57, openrouter: 1.54 },
+    { anthropic: 14.89, openai: 5.39, google: 3.59, bedrock: 2.82, openrouter: 1.80 },
+    { anthropic: 15.92, openai: 5.91, google: 3.34, bedrock: 3.34, openrouter: 2.05 },
+    { anthropic: 17.20, openai: 5.91, google: 4.11, bedrock: 3.59, openrouter: 2.57 },
+    { anthropic: 18.74, openai: 6.68, google: 4.62, bedrock: 4.11, openrouter: 3.08 },
+    { anthropic: 20.28, openai: 7.19, google: 4.88, bedrock: 4.62, openrouter: 3.34 },
+    { anthropic: 21.31, openai: 7.45, google: 5.39, bedrock: 4.88, openrouter: 4.11 },
   ],
   // Per-key 7d sums match the Gate rows in API_KEY_ROWS:
-  //   prod-agent 410, prod-web 385, staging-web 58, atlas-eval 42,
-  //   dev 23, ci-runner 9. Total ≈ $927.
+  //   prod-agent 92.31, prod-web 90.00, staging-web 21.00, atlas-eval 20.00,
+  //   dev 13.20, ci-runner 1.42. Total ≈ $238.
   apiKey: [
-    { 'prod-agent': 46, 'prod-web': 44, 'staging-web':  7, 'atlas-eval': 5, dev: 3, 'ci-runner': 1 },
-    { 'prod-agent': 53, 'prod-web': 49, 'staging-web':  7, 'atlas-eval': 5, dev: 3, 'ci-runner': 1 },
-    { 'prod-agent': 56, 'prod-web': 53, 'staging-web':  8, 'atlas-eval': 6, dev: 3, 'ci-runner': 1 },
-    { 'prod-agent': 58, 'prod-web': 55, 'staging-web':  8, 'atlas-eval': 6, dev: 3, 'ci-runner': 1 },
-    { 'prod-agent': 61, 'prod-web': 57, 'staging-web':  9, 'atlas-eval': 6, dev: 3, 'ci-runner': 1 },
-    { 'prod-agent': 65, 'prod-web': 60, 'staging-web':  9, 'atlas-eval': 7, dev: 4, 'ci-runner': 2 },
-    { 'prod-agent': 71, 'prod-web': 67, 'staging-web': 10, 'atlas-eval': 7, dev: 4, 'ci-runner': 2 },
+    { 'prod-agent': 10.36, 'prod-web': 10.29, 'staging-web': 2.53, 'atlas-eval': 2.38, dev: 1.72, 'ci-runner': 0.16 },
+    { 'prod-agent': 11.93, 'prod-web': 11.45, 'staging-web': 2.53, 'atlas-eval': 2.38, dev: 1.72, 'ci-runner': 0.16 },
+    { 'prod-agent': 12.61, 'prod-web': 12.39, 'staging-web': 2.90, 'atlas-eval': 2.86, dev: 1.72, 'ci-runner': 0.16 },
+    { 'prod-agent': 13.06, 'prod-web': 12.86, 'staging-web': 2.90, 'atlas-eval': 2.86, dev: 1.72, 'ci-runner': 0.16 },
+    { 'prod-agent': 13.73, 'prod-web': 13.32, 'staging-web': 3.26, 'atlas-eval': 2.86, dev: 1.72, 'ci-runner': 0.16 },
+    { 'prod-agent': 14.63, 'prod-web': 14.03, 'staging-web': 3.26, 'atlas-eval': 3.33, dev: 2.30, 'ci-runner': 0.32 },
+    { 'prod-agent': 15.99, 'prod-web': 15.66, 'staging-web': 3.62, 'atlas-eval': 3.33, dev: 2.30, 'ci-runner': 0.32 },
   ],
 };
 
 /** Per-series 7d totals, derived once from SPEND_BASE. These are the
  *  canonical "how much did series X spend across the workspace 7d"
  *  numbers; the chart distributes them across N buckets per range via
- *  distributeSeries(). Sum across series = TOTAL_7D_BASE_DOLLARS = $927. */
+ *  distributeSeries(). Sum across series = TOTAL_7D_BASE_DOLLARS = $238. */
 const SPEND_TOTALS_7D: Record<Dimension, Record<string, number>> = Object.fromEntries(
   Object.entries(SPEND_BASE).map(([dim, rows]) => [
     dim,
@@ -439,40 +439,42 @@ function rescaleToTotal(
   return out;
 }
 
-/** Per-series 7d *request* totals per dimension. Mirrors SPEND_TOTALS_7D
- *  but for the requests metric. Every dimension's totals sum to exactly
- *  TOTAL_7D_BASE_REQUESTS (= 63,793) via rescaleToTotal, so the chart-sum
- *  = Total Requests KPI invariant holds under any dimension.
+/** Per-series 7d *token* totals per dimension. Mirrors SPEND_TOTALS_7D
+ *  but for the tokens metric. Every dimension's totals sum to exactly
+ *  TOTAL_7D_BASE_TOKENS (= 24,500,000) via rescaleToTotal, so the chart-sum
+ *  = Tokens Used KPI invariant holds under any dimension.
  *
- *  Splits are sourced from real per-entity request counts, NOT scaled from
- *  spend — so the request distribution genuinely differs in shape:
- *    • model  → from MODEL_ROWS.requests (Haiku leads on requests; Opus,
- *               which leads on spend, is last — cheap-but-chatty vs.
- *               expensive-but-sparse).
- *    • apiKey → from API_KEY_ROWS.requests for the 6 charted Gate keys.
- *    • provider → authored to be plausible (OpenAI/Anthropic request-heavy,
- *               request ranking ≠ the spend ranking where Anthropic
- *               dominates on Opus pricing). */
-const REQUESTS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
-  // MODEL_ROWS.requests: haiku 25030, sonnet 14900, gemini 8720, gpt 6670,
-  // llama 5280, opus 2500 — request ranking is the inverse-ish of spend.
+ *  Splits are sourced from real per-entity token counts, NOT scaled from
+ *  spend — so the token distribution genuinely differs in shape:
+ *    • model  → from MODEL_ROWS.tokens (Sonnet leads on tokens; Opus,
+ *               which leads on spend, is near the bottom — high price per
+ *               token vs. high token volume).
+ *    • apiKey → from API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted
+ *               Gate keys.
+ *    • provider → authored to mirror the model breakdown's vendor
+ *               groupings (anthropic carries opus+sonnet+haiku token
+ *               volume; openai/google/bedrock pick up the rest). */
+const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
+  // MODEL_ROWS.tokens: sonnet 6_550_000, llama 4_840_000, haiku 4_460_000,
+  // gemini 4_050_000, gpt 2_860_000, opus 1_340_000 — Sonnet dominates on
+  // token volume; Opus' high price-per-token keeps it near the bottom.
   model: rescaleToTotal(
-    { sonnet: 14900, gpt: 6670, gemini: 8720, opus: 2500, llama: 5280, haiku: 25030 },
-    TOTAL_7D_BASE_REQUESTS,
+    { sonnet: 6_550_000, gpt: 2_860_000, gemini: 4_050_000, opus: 1_340_000, llama: 4_840_000, haiku: 4_460_000 },
+    TOTAL_7D_BASE_TOKENS,
   ),
-  // Authored provider splits: OpenAI + Anthropic carry the request volume,
-  // but the gap is far tighter than the spend gap (where Opus pricing
-  // makes Anthropic dominate). Google/Bedrock/OpenRouter trail.
+  // Provider splits mirror MODEL_ROWS vendor groupings: anthropic =
+  // opus+sonnet+haiku, openai = gpt, google = gemini, bedrock = llama,
+  // openrouter gets a small residual slice.
   provider: rescaleToTotal(
-    { anthropic: 24000, openai: 21000, google: 9500, bedrock: 6000, openrouter: 3500 },
-    TOTAL_7D_BASE_REQUESTS,
+    { anthropic: 12_350_000, openai: 2_860_000, google: 4_050_000, bedrock: 4_840_000, openrouter: 400_000 },
+    TOTAL_7D_BASE_TOKENS,
   ),
-  // API_KEY_ROWS.requests for the 6 charted Gate keys: prod-web 22000,
-  // prod-agent 8400, dev 5893, staging-web 3800, ci-runner 2400,
-  // atlas-eval 1800. prod-web leads on requests (vs prod-agent on spend).
+  // API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted Gate keys:
+  // prod-web 18_000_000, prod-agent 16_000_000, staging-web 4_200_000,
+  // atlas-eval 3_200_000, dev 2_200_000, ci-runner 850_000.
   apiKey: rescaleToTotal(
-    { 'prod-agent': 8400, 'prod-web': 22000, 'staging-web': 3800, 'atlas-eval': 1800, dev: 5893, 'ci-runner': 2400 },
-    TOTAL_7D_BASE_REQUESTS,
+    { 'prod-agent': 16_000_000, 'prod-web': 18_000_000, 'staging-web': 4_200_000, 'atlas-eval': 3_200_000, dev: 2_200_000, 'ci-runner': 850_000 },
+    TOTAL_7D_BASE_TOKENS,
   ),
 };
 
@@ -616,7 +618,7 @@ function TrendCard({
 }) {
   const [dimension, setDimension] = useState<Dimension>('model');
   // Local metric lens — independent from the other three surfaces.
-  const [metric, setMetric] = useState<Metric>('requests');
+  const [metric, setMetric] = useState<Metric>('tokens');
   const series = SPEND_SERIES[dimension];
   const isSpend = metric === 'spend';
 
@@ -624,7 +626,7 @@ function TrendCard({
     const count = getBucketCount(range, customRange);
     const labels = getRangeLabels(range, customRange);
     const scale = effectiveScale(range, customRange);
-    const totals = (isSpend ? SPEND_TOTALS_7D : REQUESTS_TOTALS_7D)[dimension];
+    const totals = (isSpend ? SPEND_TOTALS_7D : TOKENS_TOTALS_7D)[dimension];
 
     // Distribute each series's range-scaled total across N buckets via
     // distributeSeries (trend + spike/dip noise). Each series gets its
@@ -669,15 +671,16 @@ function TrendCard({
     [series],
   );
 
-  // Metric-aware value formatter — drives the tooltip rows. YAxis ticks use
-  // fmtCompact directly (no decimals; axis space is tight).
+  // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
+  // use fmtTokens directly under the tokens metric so the axis reads in
+  // "1 M" / "5 M" units that match the tooltip.
   const valueFormatter = (v: number) =>
-    isSpend ? fmtUsd(v) : fmtInt(Math.round(v));
+    isSpend ? fmtUsd(v) : fmtTokens(Math.round(v));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isSpend ? 'Spend over time' : 'Requests over time'}</CardTitle>
+        <CardTitle>{isSpend ? 'Spend over time' : 'Tokens over time'}</CardTitle>
         <CardDescription>
           Stacked by {DIMENSION_OPTIONS.find((d) => d.value === dimension)?.label.toLowerCase()}
           {' · '}{bucketLabel}
@@ -771,10 +774,10 @@ function TrendCard({
                 // lines up with the title + legend left edges. Default
                 // recharts tick is right-anchored to the tick line, which
                 // makes "0" sit visibly further right than the max tick.
-                // Spend ticks get a `$` prefix; request ticks use a compact
-                // K/M integer with no currency symbol.
+                // Spend ticks get a `$` prefix; token ticks use fmtTokens
+                // (compact "M"/"k") so the axis matches the tooltip rows.
                 const raw = Number(props.payload?.value ?? 0);
-                const label = isSpend ? `$${props.payload?.value}` : fmtCompact(raw);
+                const label = isSpend ? `$${props.payload?.value}` : fmtTokens(raw);
                 return (
                   <text
                     x={0}
@@ -842,14 +845,6 @@ function TrendCard({
 const fmtUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtInt = (n: number) => n.toLocaleString('en-US');
-/** Compact integer for chart axes — K/M abbreviated, no currency symbol.
- *  Used by the trend chart's YAxis ticks under the `requests` metric. */
-const fmtCompact = (n: number) =>
-  n >= 1_000_000
-    ? `${(n / 1_000_000).toFixed(1)}M`
-    : n >= 1_000
-      ? `${Math.round(n / 1_000)}K`
-      : `${Math.round(n)}`;
 const fmtTokens = (n: number) =>
   n >= 1_000_000
     ? `${(n / 1_000_000).toFixed(2)}M`
@@ -877,13 +872,13 @@ type ModelRow = {
  *    Requests  → Haiku, Sonnet, Gemini, GPT, Llama
  *    Tokens    → Sonnet, Llama, Haiku, Gemini, GPT */
 const MODEL_ROWS: ModelRow[] = [
-  { key: 'opus',    label: 'Claude Opus 4.7',   vendor: 'anthropic', requests:  2500, tokens: 1_340_000, spend: 532.00 },
-  { key: 'sonnet',  label: 'Claude Sonnet 4.5', vendor: 'anthropic', requests: 14900, tokens: 6_550_000, spend: 383.00 },
-  { key: 'gpt',     label: 'GPT-5.1',           vendor: 'openai',    requests:  6670, tokens: 2_860_000, spend: 279.00 },
-  { key: 'gemini',  label: 'Gemini 3 Pro',      vendor: 'google',    requests:  8720, tokens: 4_050_000, spend: 189.00 },
-  { key: 'llama',   label: 'Llama 4.2 405B',    vendor: 'meta',      requests:  5280, tokens: 4_840_000, spend: 127.00 },
-  { key: 'haiku',   label: 'Claude Haiku',      vendor: 'anthropic', requests: 25030, tokens: 4_460_000, spend:  85.00 },
-  { key: 'mistral', label: 'Mistral Large 3',   vendor: 'mistral',   requests:   690, tokens:   380_000, spend:  22.82 },
+  { key: 'opus',    label: 'Claude Opus 4.7',   vendor: 'anthropic', requests: 34400, tokens: 13_400_000, spend: 120.60 },
+  { key: 'sonnet',  label: 'Claude Sonnet 4.5', vendor: 'anthropic', requests: 14900, tokens:  6_550_000, spend:  35.40 },
+  { key: 'haiku',   label: 'Claude Haiku',      vendor: 'anthropic', requests: 25030, tokens:  4_460_000, spend:   8.50 },
+  { key: 'gpt',     label: 'GPT-5.1',           vendor: 'openai',    requests:  6670, tokens:  2_860_000, spend:  14.00 },
+  { key: 'gemini',  label: 'Gemini 3 Pro',      vendor: 'google',    requests:  8720, tokens:  4_050_000, spend:   9.50 },
+  { key: 'llama',   label: 'Llama 4.2 405B',    vendor: 'meta',      requests:  5280, tokens:  1_200_000, spend:   6.00 },
+  { key: 'mistral', label: 'Mistral Large 3',   vendor: 'mistral',   requests:   690, tokens:    380_000, spend:   2.30 },
 ];
 
 /* Three cards, one per entity — CTO 2026-05-13: "no reason to have 3 stat
@@ -992,12 +987,12 @@ function TopByAxisRow({
   const scale = effectiveScale(range, customRange);
 
   // Each card owns its own metric lens — no shared state across the three.
-  const [modelMetric, setModelMetric] = useState<Metric>('requests');
-  const [keyMetric, setKeyMetric] = useState<Metric>('requests');
-  const [userMetric, setUserMetric] = useState<Metric>('requests');
+  const [modelMetric, setModelMetric] = useState<Metric>('tokens');
+  const [keyMetric, setKeyMetric] = useState<Metric>('tokens');
+  const [userMetric, setUserMetric] = useState<Metric>('tokens');
 
-  // Spend → fmtUsd, with 2dp scaled values; requests → fmtInt on rounded
-  // integers. Each card computes from its own metric.
+  // Spend → fmtUsd, with 2dp scaled values; tokens → fmtTokens (compact
+  // "M"/"k") on rounded integers. Each card computes from its own metric.
   const modelRows: TopRow[] = useMemo(() => {
     const isSpend = modelMetric === 'spend';
     return [...MODEL_ROWS]
@@ -1005,14 +1000,14 @@ function TopByAxisRow({
         key: m.key,
         label: m.label,
         vendor: m.vendor,
-        axis: isSpend ? m.spend * scale : m.requests * scale,
+        axis: isSpend ? m.spend * scale : m.tokens * scale,
       }))
       .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
       .map((m) => ({
         rowKey: m.key,
         label: m.label,
-        value: isSpend ? fmtUsd(+m.axis.toFixed(2)) : fmtInt(Math.round(m.axis)),
+        value: isSpend ? fmtUsd(+m.axis.toFixed(2)) : fmtTokens(Math.round(m.axis)),
         avatar: <VendorAvatar vendor={m.vendor} />,
       }));
   }, [scale, modelMetric]);
@@ -1023,7 +1018,7 @@ function TopByAxisRow({
       .map((k) => ({
         key: k.key,
         label: k.label,
-        axis: isSpend ? k.spend * scale : k.requests * scale,
+        axis: isSpend ? k.spend * scale : (k.tokensIn + k.tokensOut) * scale,
       }))
       .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
@@ -1031,20 +1026,29 @@ function TopByAxisRow({
         rowKey: k.key,
         label: k.label,
         labelClassName: 'font-mono tracking-tight',
-        value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtInt(Math.round(k.axis)),
+        value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtTokens(Math.round(k.axis)),
         avatar: <Key aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={2} />,
       }));
   }, [scale, keyMetric]);
 
   const userRows: TopRow[] = useMemo(() => {
     const isSpend = userMetric === 'spend';
-    // Gate-only — BYOK spend isn't tracked against the workspace total,
-    // so users whose keys are all BYOK don't appear here.
+    // Spend leaderboard counts workspace ("Gate") spend only. A member who
+    // owns ANY BYOK key isn't a workspace spender — their token usage runs
+    // on their own provider keys, so excluding them from Spend is the
+    // honest read. Token volume aggregates across every key the member
+    // owns (Gate + BYOK), so all four members appear under Tokens.
+    const memberHasByok = new Set<string>();
+    if (isSpend) {
+      for (const k of API_KEY_ROWS) {
+        if (k.path === 'BYOK') memberHasByok.add(k.owner);
+      }
+    }
     const agg = new Map<string, { owner: string; axis: number }>();
     for (const k of API_KEY_ROWS) {
-      if (k.path === 'BYOK') continue;
+      if (isSpend && memberHasByok.has(k.owner)) continue;
       const existing = agg.get(k.owner) ?? { owner: k.owner, axis: 0 };
-      existing.axis += (isSpend ? k.spend : k.requests) * scale;
+      existing.axis += (isSpend ? k.spend : k.tokensIn + k.tokensOut) * scale;
       agg.set(k.owner, existing);
     }
     return [...agg.values()]
@@ -1053,13 +1057,13 @@ function TopByAxisRow({
       .map((u) => ({
         rowKey: u.owner,
         label: u.owner,
-        value: isSpend ? fmtUsd(+u.axis.toFixed(2)) : fmtInt(Math.round(u.axis)),
+        value: isSpend ? fmtUsd(+u.axis.toFixed(2)) : fmtTokens(Math.round(u.axis)),
         avatar: <UserMonogram name={u.owner} tone={USER_TONE[u.owner] ?? 'ink'} />,
       }));
   }, [scale, userMetric]);
 
   const subtitleFor = (m: Metric) =>
-    m === 'spend' ? 'By total spend' : 'By total requests made';
+    m === 'spend' ? 'By total spend' : 'By total tokens used';
 
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -1114,16 +1118,16 @@ type ApiKeyRow = {
  *    Requests  → prod-web, prod-agent, openclaw, dev, hermes-agent
  *    Tokens    → prod-web, prod-agent, openclaw, hermes-agent, dev */
 const API_KEY_ROWS: ApiKeyRow[] = [
-  { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'Gate', requests: 22000, tokensIn: 4_030_000, tokensOut: 2_170_000, spend: 385.00 },
-  { key: 'prod-agent',    label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests:  8400, tokensIn: 3_190_000, tokensOut: 2_610_000, spend: 410.00 },
-  { key: 'openclaw',      label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  6800, tokensIn: 2_040_000, tokensOut: 1_360_000, spend: 295.00 },
-  { key: 'hermes-agent',  label: 'hermes-agent',  owner: 'Mateus Silva',  path: 'BYOK', requests:  5200, tokensIn: 1_320_000, tokensOut: 1_080_000, spend: 135.00 },
-  { key: 'dev',           label: 'dev',           owner: 'Jordan Lee',    path: 'Gate', requests:  5893, tokensIn:   390_000, tokensOut:   210_000, spend:  22.82 },
-  { key: 'staging-web',   label: 'staging-web',   owner: 'Chad Ponticas', path: 'Gate', requests:  3800, tokensIn:   910_000, tokensOut:   490_000, spend:  58.00 },
-  { key: 'ci-runner',     label: 'ci-runner',     owner: 'Jordan Lee',    path: 'Gate', requests:  2400, tokensIn:   224_000, tokensOut:    56_000, spend:   9.00 },
-  { key: 'nova-chat',     label: 'nova-chat',     owner: 'Kira Tan',      path: 'BYOK', requests:  5400, tokensIn: 1_260_000, tokensOut:   840_000, spend: 185.00 },
-  { key: 'atlas-eval',    label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'Gate', requests:  1800, tokensIn:   690_000, tokensOut:   230_000, spend:  42.00 },
-  { key: 'shadowfax-rag', label: 'shadowfax-rag', owner: 'Mateus Silva',  path: 'BYOK', requests:  2100, tokensIn: 1_120_000, tokensOut:   280_000, spend:  76.00 },
+  { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'Gate', requests: 60000, tokensIn: 15_000_000, tokensOut:  3_000_000, spend: 90.00 },
+  { key: 'prod-agent',   label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests: 12000, tokensIn: 15_384_615, tokensOut:    615_385, spend: 92.31 },
+  { key: 'openclaw',     label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  8000, tokensIn: 10_096_154, tokensOut:    403_846, spend:  0.00 },
+  { key: 'hermes-agent', label: 'hermes-agent',  owner: 'Mateus Silva',  path: 'BYOK', requests:  5500, tokensIn:  6_923_077, tokensOut:    276_923, spend:  0.00 },
+  { key: 'dev',          label: 'dev',           owner: 'Jordan Lee',    path: 'Gate', requests: 15000, tokensIn:  1_650_000, tokensOut:    550_000, spend: 13.20 },
+  { key: 'staging-web',  label: 'staging-web',   owner: 'Chad Ponticas', path: 'Gate', requests: 13000, tokensIn:  3_500_000, tokensOut:    700_000, spend: 21.00 },
+  { key: 'ci-runner',    label: 'ci-runner',     owner: 'Jordan Lee',    path: 'Gate', requests:  6500, tokensIn:    708_333, tokensOut:    141_667, spend:  1.42 },
+  { key: 'nova-chat',    label: 'nova-chat',     owner: 'Kira Tan',      path: 'BYOK', requests: 18000, tokensIn:  5_416_667, tokensOut:  1_083_333, spend:  0.00 },
+  { key: 'atlas-eval',   label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'Gate', requests:  2000, tokensIn:  3_000_000, tokensOut:    200_000, spend: 20.00 },
+  { key: 'shadowfax-rag',label: 'shadowfax-rag', owner: 'Mateus Silva',  path: 'BYOK', requests:  2800, tokensIn:  4_571_429, tokensOut:    228_571, spend:  0.00 },
 ];
 
 // Gateway-id suffix per key — same `name (sk-gw-NNN)` identity form the
@@ -1164,9 +1168,12 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   // "Member (A–Z) / 24h," and stare at page 3 of an entirely different
   // ranking — possibly past the last page. Rows-per-page already resets
   // inside TablePaginationFooter.
-  useEffect(() => {
-    setPage(1);
-  }, [range, customRange, sort, query]);
+  const prevResetKey = useRef('');
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort}|${query}`;
+  if (prevResetKey.current !== resetKey) {
+    prevResetKey.current = resetKey;
+    if (page !== 1) setPage(1);
+  }
 
   const sortedRows = useMemo(() => {
     const scale = effectiveScale(range, customRange);

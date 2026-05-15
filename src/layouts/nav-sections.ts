@@ -26,7 +26,7 @@ import type { SidebarSection } from '@/components/ui/sidebar';
 export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     items: [
-      { id: 'overview',      icon: Home,           label: 'Overview' },
+      { id: 'overview',      icon: Home,           label: 'Overview',      pageId: '/overview' },
       { id: 'requests',      icon: ArrowLeftRight, label: 'Requests',      pageId: '/requests' },
       { id: 'conversations', icon: MessageSquare,  label: 'Conversations', pageId: '/conversations' },
     ],

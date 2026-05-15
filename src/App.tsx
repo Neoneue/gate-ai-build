@@ -11,6 +11,7 @@ import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
 import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
+import { Dashboard } from '@/pages/Dashboard';
 import { Guardrails } from '@/pages/Guardrails';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
@@ -57,6 +58,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/requests" replace />} />
+          <Route path="/overview" element={<Dashboard />} />
           <Route path="/requests" element={<Requests />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
