@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CreditCard, History, Info, Plus, Sparkles } from 'lucide-react';
+import { CreditCard, History, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import {
@@ -18,11 +18,6 @@ import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { cn } from '@/lib/utils';
 
@@ -111,16 +106,17 @@ type AutoRechargeConfig = {
   enabled: boolean;
   threshold: number;
   topUp: number;
-  monthlyCap: number;
+  monthlyCap: number | null;
 };
 
-const AUTO_RECHARGE_STORAGE_KEY = 'billing.autoRecharge';
+const AUTO_RECHARGE_STORAGE_KEY = 'billing.autoRecharge.v2';
 const AUTO_RECHARGE_DEFAULTS: AutoRechargeConfig = {
   enabled: false,
-  threshold: 20,
-  topUp: 50,
-  monthlyCap: 200,
+  threshold: 0,
+  topUp: 0,
+  monthlyCap: null,
 };
+
 
 function readAutoRecharge(): AutoRechargeConfig {
   if (typeof window === 'undefined') return AUTO_RECHARGE_DEFAULTS;
@@ -132,7 +128,7 @@ function readAutoRecharge(): AutoRechargeConfig {
       enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : AUTO_RECHARGE_DEFAULTS.enabled,
       threshold: typeof parsed.threshold === 'number' ? parsed.threshold : AUTO_RECHARGE_DEFAULTS.threshold,
       topUp: typeof parsed.topUp === 'number' ? parsed.topUp : AUTO_RECHARGE_DEFAULTS.topUp,
-      monthlyCap: typeof parsed.monthlyCap === 'number' ? parsed.monthlyCap : AUTO_RECHARGE_DEFAULTS.monthlyCap,
+      monthlyCap: typeof parsed.monthlyCap === 'number' ? parsed.monthlyCap : null,
     };
   } catch {
     return AUTO_RECHARGE_DEFAULTS;
@@ -194,8 +190,6 @@ function CreditsCard() {
 /* ─── Add credits dialog ─────────────────────────────────────────────── */
 
 const CREDIT_PRESETS = [25, 50, 100, 500] as const;
-const CREDIT_DAG_PRESETS = [100, 500, 1000, 5000] as const;
-const DAG_TO_USD = 0.02;
 
 function AddCreditsDialog({
   open,
@@ -204,24 +198,12 @@ function AddCreditsDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const [payWithDag, setPayWithDag] = useState(false);
-  const [selected, setSelected] = useState<number | null>(25);
+  const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
-
-  // Default preset differs per mode — USD lands on 25, DAG on 100.
-  const reset = (dag: boolean) => {
-    setSelected(dag ? 100 : 25);
-    setCustom('');
-  };
-
-  const presets = payWithDag ? CREDIT_DAG_PRESETS : CREDIT_PRESETS;
-  const unit = payWithDag ? 'DAG' : 'USD';
-  const min = payWithDag ? 100 : 5;
-  const max = payWithDag ? 5000 : 1000;
 
   const customNum = Number(custom);
   const customValid =
-    custom.length > 0 && Number.isFinite(customNum) && customNum >= min && customNum <= max;
+    custom.length > 0 && Number.isFinite(customNum) && customNum >= 5 && customNum <= 1000;
   const amount = custom.length > 0 ? (customValid ? customNum : null) : selected;
   const canSubmit = amount !== null;
 
@@ -231,8 +213,8 @@ function AddCreditsDialog({
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setPayWithDag(false);
-          reset(false);
+          setSelected(null);
+          setCustom('');
         }
       }}
     >
@@ -245,30 +227,9 @@ function AddCreditsDialog({
             Add credits
           </DialogTitle>
           <DialogDescription>
-            {payWithDag ? 'Min 100 DAG · Max 5,000 DAG.' : 'Min $5 · Max $1,000.'}
+            Min $5 · Max $1,000.
           </DialogDescription>
         </DialogHeader>
-
-        {/* Pay-with-DAG toggle — switches presets, limits, and the
-            checkout destination between USD (Stripe) and DAG (Stargazer). */}
-        <label className="flex items-start justify-between gap-4 rounded-md border border-ink-200 bg-ink-50 p-4 cursor-pointer">
-          <div className="flex flex-col gap-1 min-w-0">
-            <p className="font-sans text-sm font-medium text-ink-900 m-0">
-              Pay with DAG
-            </p>
-            <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
-              Top up with DAG via Stargazer Wallet instead of a card.
-            </p>
-          </div>
-          <Switch
-            checked={payWithDag}
-            onCheckedChange={(next) => {
-              setPayWithDag(next);
-              reset(next);
-            }}
-            className="mt-1 shrink-0"
-          />
-        </label>
 
         {/* Preset tiles. Single-select; typing a custom amount clears
             the preset selection. */}
@@ -277,7 +238,7 @@ function AddCreditsDialog({
           aria-label="Credit amount"
           className="grid grid-cols-4 gap-2"
         >
-          {presets.map((value) => {
+          {CREDIT_PRESETS.map((value) => {
             const isSelected = custom.length === 0 && selected === value;
             return (
               <button
@@ -296,7 +257,7 @@ function AddCreditsDialog({
                     : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
                 )}
               >
-                {payWithDag ? `${value.toLocaleString()} DAG` : `$${value.toLocaleString()}`}
+                ${value.toLocaleString()}
               </button>
             );
           })}
@@ -308,86 +269,35 @@ function AddCreditsDialog({
             htmlFor="add-credits-custom"
             className="font-sans text-sm font-medium text-ink-500 m-0"
           >
-            Custom amount ({unit})
+            Amount (USD)
           </label>
-          {payWithDag ? (
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none"
+            >
+              $
+            </span>
             <Input
               id="add-credits-custom"
               type="number"
               inputMode="decimal"
-              min="100"
-              max="5000"
+              min="5"
+              max="1000"
               step="1"
               value={custom}
               onChange={(e) => {
                 setCustom(e.target.value);
                 if (e.target.value.length > 0) setSelected(null);
               }}
-              placeholder="e.g. 250"
-              className="font-mono text-sm tabular-nums"
+              placeholder="0"
+              className="pl-7 font-mono text-sm tabular-nums"
             />
-          ) : (
-            <div className="relative">
-              <span
-                aria-hidden
-                className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none"
-              >
-                $
-              </span>
-              <Input
-                id="add-credits-custom"
-                type="number"
-                inputMode="decimal"
-                min="5"
-                max="1000"
-                step="1"
-                value={custom}
-                onChange={(e) => {
-                  setCustom(e.target.value);
-                  if (e.target.value.length > 0) setSelected(null);
-                }}
-                placeholder="e.g. 75"
-                className="pl-7 font-mono text-sm tabular-nums"
-              />
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Total due — the USD amount that will be charged, shown only
-            in DAG mode where the converted total isn't obvious
-            (1 DAG = $0.02). */}
-        {payWithDag && amount !== null ? (
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
-              <span className="font-sans text-sm text-ink-500">Total due</span>
-              <Tooltip>
-                <TooltipTrigger
-                  render={(props) => (
-                    <span
-                      {...props}
-                      tabIndex={0}
-                      className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="How total due is calculated"
-                    >
-                      <Info className="size-4" strokeWidth={1.75} aria-hidden />
-                    </span>
-                  )}
-                />
-                <TooltipContent>
-                  Converted at 1 DAG = ${DAG_TO_USD.toFixed(2)} USD.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <span className="font-sans text-sm font-medium text-ink-900 tabular-nums">
-              ${(amount * DAG_TO_USD).toFixed(2)}
-            </span>
-          </div>
-        ) : null}
-
         <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
-          {payWithDag
-            ? "You'll be redirected to Stargazer Wallet. Your balance will update shortly after payment confirmation."
-            : "You'll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation."}
+          You'll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
         </p>
 
         <DialogFooter>
@@ -395,7 +305,7 @@ function AddCreditsDialog({
             Cancel
           </DialogClose>
           <Button type="button" disabled={!canSubmit}>
-            {payWithDag ? 'Open Stargazer wallet' : 'Continue to checkout'}
+            Continue to checkout
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -404,9 +314,6 @@ function AddCreditsDialog({
 }
 
 /* ─── Auto-recharge dialog ───────────────────────────────────────────── */
-
-const THRESHOLD_PRESETS = [10, 20, 50, 100] as const;
-const TOPUP_PRESETS = [20, 50, 100, 250, 500] as const;
 
 function AutoRechargeDialog({
   open,
@@ -420,18 +327,27 @@ function AutoRechargeDialog({
   onSave: (next: AutoRechargeConfig) => void;
 }) {
   const [enabled, setEnabled] = useState(initial.enabled);
-  const [threshold, setThreshold] = useState<number>(initial.threshold);
-  const [topUp, setTopUp] = useState<number>(initial.topUp);
-  const [monthlyCap, setMonthlyCap] = useState<number>(initial.monthlyCap);
+  const [thresholdStr, setThresholdStr] = useState(initial.threshold === 0 ? '' : String(initial.threshold));
+  const [topUpStr, setTopUpStr] = useState(initial.topUp === 0 ? '' : String(initial.topUp));
+  const [capStr, setCapStr] = useState(initial.monthlyCap !== null ? String(initial.monthlyCap) : '');
 
   useEffect(() => {
     if (open) {
       setEnabled(initial.enabled);
-      setThreshold(initial.threshold);
-      setTopUp(initial.topUp);
-      setMonthlyCap(initial.monthlyCap);
+      setThresholdStr(initial.threshold === 0 ? '' : String(initial.threshold));
+      setTopUpStr(initial.topUp === 0 ? '' : String(initial.topUp));
+      setCapStr(initial.monthlyCap !== null ? String(initial.monthlyCap) : '');
     }
   }, [open, initial]);
+
+  const threshold = Number(thresholdStr);
+  const topUp = Number(topUpStr);
+  const monthlyCap = capStr.trim() === '' ? null : Number(capStr);
+
+  const thresholdValid = thresholdStr.length > 0 && Number.isFinite(threshold) && threshold > 0;
+  const topUpValid = topUpStr.length > 0 && Number.isFinite(topUp) && topUp > 0;
+  const capValid = monthlyCap === null || (Number.isFinite(monthlyCap) && monthlyCap > 0);
+  const canSave = !enabled || (thresholdValid && topUpValid && capValid);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -465,128 +381,87 @@ function AutoRechargeDialog({
           />
         </div>
 
-        {/* When balance drops below */}
-        <div className="flex flex-col gap-2">
-          <p className="font-sans text-sm font-medium text-ink-500 m-0">
-            When balance drops below
-          </p>
-          <div
-            role="radiogroup"
-            aria-label="Recharge threshold"
-            className="grid grid-cols-4 gap-2"
-          >
-            {THRESHOLD_PRESETS.map((value) => {
-              const isSelected = threshold === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  disabled={!enabled}
-                  onClick={() => setThreshold(value)}
-                  className={cn(
-                    'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors disabled:opacity-50 disabled:pointer-events-none',
-                    isSelected
-                      ? 'border-ink-500 bg-ink-100 text-ink-900'
-                      : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
-                  )}
-                >
-                  ${value}
-                </button>
-              );
-            })}
+        <div className="grid grid-cols-2 gap-4">
+          {/* When balance drops below */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ar-threshold" className="font-sans text-sm font-medium text-ink-500 m-0">
+              When balance drops below
+            </label>
+            <div className="relative">
+              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+              <Input
+                id="ar-threshold"
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="1"
+                value={thresholdStr}
+                onChange={(e) => setThresholdStr(e.target.value)}
+                disabled={!enabled}
+                placeholder="0"
+                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Top-up amount */}
-        <div className="flex flex-col gap-2">
-          <p className="font-sans text-sm font-medium text-ink-500 m-0">
-            Top-up amount
-          </p>
-          <div
-            role="radiogroup"
-            aria-label="Top-up amount"
-            className="grid grid-cols-5 gap-2"
-          >
-            {TOPUP_PRESETS.map((value) => {
-              const isSelected = topUp === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  disabled={!enabled}
-                  onClick={() => setTopUp(value)}
-                  className={cn(
-                    'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors disabled:opacity-50 disabled:pointer-events-none',
-                    isSelected
-                      ? 'border-ink-500 bg-ink-100 text-ink-900'
-                      : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
-                  )}
-                >
-                  ${value}
-                </button>
-              );
-            })}
+          {/* Top-up amount */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ar-topup" className="font-sans text-sm font-medium text-ink-500 m-0">
+              Top-up amount
+            </label>
+            <div className="relative">
+              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+              <Input
+                id="ar-topup"
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="1"
+                value={topUpStr}
+                onChange={(e) => setTopUpStr(e.target.value)}
+                disabled={!enabled}
+                placeholder="0"
+                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+              />
+            </div>
           </div>
         </div>
 
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
-          <p className="font-sans text-sm font-medium text-ink-500 m-0">
-            Monthly cap
-          </p>
-          <div
-            className={cn(
-              'font-sans text-xl/7 font-medium tabular-nums tracking-tight text-ink-900 transition-opacity',
-              !enabled && 'opacity-50',
-            )}
-          >
-            ${monthlyCap}
+          <label htmlFor="ar-cap" className="font-sans text-sm font-medium text-ink-500 m-0">
+            Monthly cap <span className="font-normal text-ink-400">(leave blank for no cap)</span>
+          </label>
+          <div className="relative">
+            <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+            <Input
+              id="ar-cap"
+              type="number"
+              inputMode="decimal"
+              min="1"
+              step="1"
+              value={capStr}
+              onChange={(e) => setCapStr(e.target.value)}
+              disabled={!enabled}
+              placeholder="0"
+              className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+            />
           </div>
-          <input
-            type="range"
-            min={50}
-            max={1000}
-            step={10}
-            value={monthlyCap}
-            onChange={(e) => setMonthlyCap(Number(e.target.value))}
-            aria-label="Monthly cap"
-            disabled={!enabled}
-            style={{
-              background: `linear-gradient(to right, var(--color-ink-900) 0%, var(--color-ink-900) ${((monthlyCap - 50) / (1000 - 50)) * 100}%, var(--color-ink-200) ${((monthlyCap - 50) / (1000 - 50)) * 100}%, var(--color-ink-200) 100%)`,
-            }}
-            className={cn(
-              'w-full h-[6px] appearance-none rounded-full cursor-pointer',
-              'outline-none focus:outline-none focus-visible:outline-none',
-              '[&::-webkit-slider-runnable-track]:appearance-none [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-runnable-track]:border-0',
-              '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-ink-900 [&::-webkit-slider-thumb]:[margin-top:-5px] [&::-webkit-slider-thumb]:cursor-pointer',
-              '[&::-moz-range-track]:bg-transparent [&::-moz-range-track]:border-0',
-              '[&::-moz-range-progress]:bg-transparent',
-              '[&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-ink-900 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer',
-              'disabled:opacity-50 disabled:pointer-events-none',
-            )}
-          />
         </div>
 
-        <div
-          className={cn(
-            'flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3 transition-opacity',
-            !enabled && 'opacity-50',
-          )}
-        >
-          <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
-            When your balance drops below{' '}
-            <span className="font-medium text-ink-900">${threshold}</span>, we&apos;ll add{' '}
-            <span className="font-medium text-ink-900">${topUp}</span> to your account, up to{' '}
-            <span className="font-medium text-ink-900">${monthlyCap}/month</span>.
-          </p>
-          <p className="font-sans text-xs text-ink-500 m-0 text-pretty">
-            We&apos;ll never charge more than this in a calendar month, even if balance drops.
-          </p>
-        </div>
+        {enabled && thresholdValid && topUpValid && (
+          <div className="flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
+            <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
+              When your balance drops below{' '}
+              <span className="font-medium text-ink-900">${threshold}</span>, we&apos;ll add{' '}
+              <span className="font-medium text-ink-900">${topUp}</span> to your account
+              {monthlyCap !== null && capValid
+                ? <>, up to <span className="font-medium text-ink-900">${monthlyCap}/month</span></>
+                : <> with <span className="font-medium text-ink-900">no monthly cap</span></>}
+              .
+            </p>
+          </div>
+        )}
 
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>
@@ -594,7 +469,8 @@ function AutoRechargeDialog({
           </DialogClose>
           <Button
             type="button"
-            onClick={() => onSave({ enabled, threshold, topUp, monthlyCap })}
+            disabled={!canSave}
+            onClick={() => onSave({ enabled, threshold: thresholdValid ? threshold : initial.threshold, topUp: topUpValid ? topUp : initial.topUp, monthlyCap })}
           >
             Save changes
           </Button>
