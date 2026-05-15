@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Bell, BookOpen, MoreHorizontal, Plus, Shield, Zap } from 'lucide-react';
+import { MoreHorizontal, Plus, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -69,7 +69,6 @@ export function Guardrails() {
         onCreate={openCreate}
         onRemove={removeLimit}
       />
-      <FooterCallouts />
       <CreateLimitDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -91,10 +90,6 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline">
-          <BookOpen data-icon="inline-start" aria-hidden />
-          Limit cookbook
-        </Button>
         <Button onClick={onCreate}>
           <Plus data-icon="inline-start" aria-hidden />
           Create limit
@@ -126,9 +121,6 @@ function TabsRow({ count }: { count: number }) {
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      <span className="font-sans text-xs text-ink-500 tracking-tight pb-3">
-        Resets: monthly @ 00:00 UTC, daily @ 00:00 UTC
-      </span>
     </div>
   );
 }
@@ -176,11 +168,13 @@ function LimitsSection({
                 uniform regardless of cell content — same load-bearing
                 pattern as the Team and Activity tables. Five equal data
                 columns + a narrow actions column. */}
-            <TableHead className="w-[19%] whitespace-nowrap">Name</TableHead>
-            <TableHead className="w-[19%] whitespace-nowrap">Scope</TableHead>
-            <TableHead className="w-[19%] whitespace-nowrap">Type</TableHead>
-            <TableHead className="w-[19%] whitespace-nowrap">Threshold</TableHead>
-            <TableHead className="w-[19%] whitespace-nowrap">Period</TableHead>
+            <TableHead className="w-[16%] whitespace-nowrap">Name</TableHead>
+            <TableHead className="w-[16%] whitespace-nowrap">Scope</TableHead>
+            <TableHead className="w-[12%] whitespace-nowrap">Type</TableHead>
+            <TableHead className="whitespace-nowrap">Threshold</TableHead>
+            <TableHead className="w-[16%] whitespace-nowrap">Used</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap">Period</TableHead>
+            <TableHead className="w-[16%] whitespace-nowrap">Resets on</TableHead>
             <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -195,7 +189,7 @@ function LimitsSection({
               <TableCell>
                 <div className="flex flex-col min-w-0">
                   <span
-                    className="font-sans text-sm font-medium text-ink-900 truncate"
+                    className="font-sans text-sm text-ink-900 truncate"
                     title={scopeName(limit.scope)}
                   >
                     {scopeName(limit.scope)}
@@ -213,8 +207,14 @@ function LimitsSection({
               <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                 {thresholdLabel(limit.type, limit.threshold)}
               </TableCell>
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                {usedLabel(limit.type, limit.used, limit.threshold)}
+              </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 {periodLabel(limit.period)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-500">
+                {resetsAt(limit.period)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
                 <LimitActionsMenu onRemove={() => onRemove(limit.id)} />
@@ -251,56 +251,6 @@ function LimitActionsMenu({ onRemove }: { onRemove: () => void }) {
   );
 }
 
-/* ─── Footer callouts ───────────────────────────────────────────────── */
-
-function FooterCallouts() {
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <CalloutCard
-        icon={<Zap className="size-4 text-ink-700" aria-hidden />}
-        heading="On-chain audit"
-        body="Every limit decision is anchored to Constellation DE. Tamper-evident audit trail comes free with every limit you set."
-      />
-      <CalloutCard
-        icon={<Bell className="size-4 text-ink-700" aria-hidden />}
-        heading="Threshold alerts"
-        body="Get notified at 50%, 80%, 95% via Slack, PagerDuty, or webhook before a limit blocks production."
-      />
-    </div>
-  );
-}
-
-function CalloutCard({
-  icon,
-  heading,
-  body,
-}: {
-  icon: React.ReactNode;
-  heading: string;
-  body: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start gap-3 py-2">
-        <div
-          aria-hidden
-          className="size-8 rounded-md bg-ink-100 flex items-center justify-center shrink-0"
-        >
-          {icon}
-        </div>
-        <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="font-sans text-sm font-medium text-ink-900 m-0">
-            {heading}
-          </h3>
-          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
-            {body}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 /* ─── Create limit dialog ───────────────────────────────────────────── */
 
 const LIMIT_TYPES = [
@@ -334,6 +284,7 @@ type Limit = {
   threshold: string;
   period: string;
   scope: string;
+  used: string;
 };
 
 const typeLabel = (v: string) =>
@@ -346,6 +297,46 @@ const thresholdLabel = (type: string, threshold: string) => {
   const n = Number(threshold);
   const formatted = Number.isFinite(n) ? n.toLocaleString() : threshold;
   return type === 'spend' ? `$${formatted}` : formatted;
+};
+const usedLabel = (type: string, used: string, threshold: string) => {
+  const uNum = Number(used);
+  const tNum = Number(threshold);
+  const u = Number.isFinite(uNum) ? uNum.toLocaleString() : '0';
+  const t = Number.isFinite(tNum) ? tNum.toLocaleString() : '0';
+  const prefix = type === 'spend' ? '$' : '';
+  return `${prefix}${u} / ${prefix}${t}`;
+};
+const fmtResetDate = (d: Date) => {
+  const mon = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const day = d.getUTCDate();
+  const hh  = String(d.getUTCHours()).padStart(2, '0');
+  const mm  = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${mon} ${day}, ${hh}:${mm} UTC`;
+};
+const resetsAt = (period: string) => {
+  const now = new Date();
+  switch (period) {
+    case '1h': {
+      const next = new Date(now);
+      next.setUTCMinutes(0, 0, 0);
+      next.setUTCHours(next.getUTCHours() + 1);
+      return fmtResetDate(next);
+    }
+    case '1d': {
+      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+      return fmtResetDate(next);
+    }
+    case '1w': {
+      const daysUntilMon = (8 - now.getUTCDay()) % 7 || 7;
+      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilMon));
+      return fmtResetDate(next);
+    }
+    case '1mo': {
+      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      return fmtResetDate(next);
+    }
+    default: return '—';
+  }
 };
 
 function CreateLimitDialog({
@@ -378,6 +369,7 @@ function CreateLimitDialog({
       threshold,
       period,
       scope,
+      used: String(Math.floor(Math.random() * (thresholdNum + 1))),
     });
     onOpenChange(false);
   };
