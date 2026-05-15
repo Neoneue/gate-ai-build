@@ -258,10 +258,10 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <TableHead className="w-[45%]">Member</TableHead>
+            <TableHead className="w-[40%]">Member</TableHead>
             <TableHead className="w-[22%]">Joined</TableHead>
-            <TableHead className="w-[23%]">Role</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
+            <TableHead className="w-[28%]">Role</TableHead>
+            <TableHead className="w-[10%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -377,12 +377,12 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[26%]">Email</TableHead>
-            <TableHead className="w-[26%]">Invited by</TableHead>
+            <TableHead className="w-[27%]">Email</TableHead>
+            <TableHead className="w-[25%]">Invited by</TableHead>
             <TableHead className="w-[15%]">Sent</TableHead>
-            <TableHead className="w-[13%]">Role</TableHead>
+            <TableHead className="w-[15%]">Role</TableHead>
             <TableHead className="w-[15%]">Expires</TableHead>
-            <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
+            <TableHead className="w-[3%] text-right pl-0 pr-4">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -397,8 +397,8 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
                 {row.sent}
               </TableCell>
-              <TableCell>
-                <Badge variant="neutral">{ROLE_LABEL[row.role]}</Badge>
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+                {ROLE_LABEL[row.role]}
               </TableCell>
               <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
                 {row.expires}

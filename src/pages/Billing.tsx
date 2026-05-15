@@ -175,6 +175,7 @@ function CreditsCard() {
       </CardFooter>
       <AddCreditsDialog open={addOpen} onOpenChange={setAddOpen} />
       <AutoRechargeDialog
+        key={autoOpen ? 'open' : 'closed'}
         open={autoOpen}
         onOpenChange={setAutoOpen}
         initial={auto}
@@ -330,15 +331,6 @@ function AutoRechargeDialog({
   const [thresholdStr, setThresholdStr] = useState(initial.threshold === 0 ? '' : String(initial.threshold));
   const [topUpStr, setTopUpStr] = useState(initial.topUp === 0 ? '' : String(initial.topUp));
   const [capStr, setCapStr] = useState(initial.monthlyCap !== null ? String(initial.monthlyCap) : '');
-
-  useEffect(() => {
-    if (open) {
-      setEnabled(initial.enabled);
-      setThresholdStr(initial.threshold === 0 ? '' : String(initial.threshold));
-      setTopUpStr(initial.topUp === 0 ? '' : String(initial.topUp));
-      setCapStr(initial.monthlyCap !== null ? String(initial.monthlyCap) : '');
-    }
-  }, [open, initial]);
 
   const threshold = Number(thresholdStr);
   const topUp = Number(topUpStr);
