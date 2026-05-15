@@ -404,7 +404,7 @@ function PolicyCard({
           ink-50 tray + nested white Cards group the two columns so they
           read as panels, not free-floating controls. */}
       {state.enabled ? (
-        <div className="grid grid-cols-2 items-start gap-4 border-t border-ink-100 bg-ink-50 p-4">
+        <div className="grid grid-cols-2 items-start gap-4 border-t border-border bg-card p-4">
           <Card className="shadow-none border border-ink-800/6 bg-transparent">
             <CardContent>
               <SettingsHalf config={config} state={state} onSensitivityChange={onSensitivityChange} onScanDirectionChange={onScanDirectionChange} />
@@ -515,8 +515,8 @@ function ActionHalf({
               className={
                 'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
-                  ? 'border-ink-300 bg-ink-100'
-                  : 'border-ink-200 bg-transparent hover:bg-ink-50')
+                  ? 'border-border bg-card'
+                  : 'border-border bg-transparent hover:bg-card')
               }
             >
               <RadioGroupItem id={radioId} value={opt.value} className="mt-1" />
