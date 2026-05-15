@@ -124,8 +124,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
           Manage roles, invite teammates, and remove access from Chad Ponticas&rsquo;s workspace.
         </p>
       </div>
-      {/* Invite member — hidden for now; preserved for re-enable. */}
-      <div className="hidden items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <Button variant="default" size="default" onClick={onInvite}>
           <UserPlus data-icon="inline-start" aria-hidden />
           Invite member
@@ -259,9 +258,10 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <TableHead className="w-[50%]">Member</TableHead>
-            <TableHead className="w-[25%]">Joined</TableHead>
-            <TableHead className="w-[25%]">Role</TableHead>
+            <TableHead className="w-[45%]">Member</TableHead>
+            <TableHead className="w-[22%]">Joined</TableHead>
+            <TableHead className="w-[23%]">Role</TableHead>
+            <TableHead className="w-[5%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -283,6 +283,7 @@ function MembersPane() {
 }
 
 function MemberRowView({ row }: { row: MemberRow }) {
+  const [role, setRole] = useState<MemberRole>(row.role);
   return (
     <TableRow>
       <TableCell>
@@ -308,7 +309,27 @@ function MemberRowView({ row }: { row: MemberRow }) {
         {row.joined}
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
-        {ROLE_LABEL[row.role]}
+        {row.role === 'owner' ? (
+          'Owner'
+        ) : (
+          <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
+            <SelectTrigger size="sm" className="w-28 border-ink-200 bg-white text-ink-900 font-normal">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="member">Member</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </TableCell>
+      <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
+        {row.role !== 'owner' ? (
+          <RowActionsMenu
+            label={`Open actions for ${row.name}`}
+            items={[{ id: 'remove', label: 'Remove member', destructive: true }]}
+          />
+        ) : null}
       </TableCell>
     </TableRow>
   );
@@ -567,7 +588,6 @@ function RowActionsMenu({
             variant="ghost"
             size="icon-sm"
             aria-label={label}
-            disabled
             className="text-ink-500 hover:text-ink-900"
           />
         }
