@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { DeltaTag } from '@/components/ui/compact-kpi';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
@@ -60,9 +58,9 @@ function PageHeader() {
 function KpiRailSection() {
   return (
     <KpiRail columns={3}>
-      <KpiTile title="Total saved" value="$0" caption="No savings yet" />
-      <KpiTile title="Caching" value="0%" caption="No hits yet" />
-      <KpiTile title="Compression" value="0%" caption="No compression yet" />
+      <KpiTile title="Total saved" value="0%" caption="$0 saved" />
+      <KpiTile title="Caching" value="0%" caption="$0 · No hits yet" />
+      <KpiTile title="Compression" value="0%" caption="$0 · No compression yet" />
     </KpiRail>
   );
 }
@@ -192,7 +190,7 @@ function CachingCard() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
             <p className="font-sans text-sm font-medium text-ink-900 m-0">
-              Default TTL
+              TTL
             </p>
             <p className="font-sans text-sm text-ink-500 m-0">
               How long cached entries live before re-fetching.
@@ -202,7 +200,7 @@ function CachingCard() {
             value={ttl}
             onValueChange={(next) => {
               setTtl(next);
-              toast.success('Default TTL saved');
+              toast.success('TTL saved');
             }}
           >
             <SelectTrigger className="w-24 shrink-0">
@@ -218,11 +216,6 @@ function CachingCard() {
           </Select>
         </div>
       </CardContent>
-      <CardFooter className="border-t border-ink-200 justify-between">
-        <p className="font-sans text-sm text-ink-500 m-0">
-          Saved <span className="text-ink-900 font-medium">$0</span> · 30d · 0.0% hit rate · 0.0% effective discount
-        </p>
-      </CardFooter>
     </Card>
   );
 }
@@ -254,15 +247,6 @@ function CompressionCard() {
             />
           </div>
         </CardContent>
-        <CardFooter className="border-t border-ink-200 justify-between">
-          <p className="font-sans text-sm text-ink-500 m-0">
-            Saved <span className="text-ink-900 font-medium">$0</span> · 30d · −0.0% real (0.0% effective discount)
-          </p>
-          <Button variant="outline">
-            View eval log
-            <ExternalLink data-icon="inline-end" aria-hidden />
-          </Button>
-        </CardFooter>
     </Card>
   );
 }
