@@ -745,7 +745,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           // footer collapse to a centered EmptyState with a "Clear filters"
           // recovery action that resets every input.
           <EmptyState
-            className="border-t border-ink-200 rounded-none shadow-none"
+            className="border-t border-border rounded-none shadow-none"
             title="No models match these filters."
             body="Try a broader search, a different modality, or clear the filter pills to see every routable model."
             action={
@@ -753,7 +753,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                 variant="outline"
                 size="sm"
                 onClick={clearFilters}
-                className="border-ink-200 bg-card text-ink-900"
+                className="border-border bg-card text-ink-900"
               >
                 Clear filters
               </Button>
@@ -1450,7 +1450,7 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-ink-100 text-ink-400"
+      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-muted text-ink-400"
       title={PROVIDER_LABELS[provider]}
     >
       <span className="size-1.5 rounded-full bg-ink-400" />

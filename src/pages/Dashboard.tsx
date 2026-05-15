@@ -563,7 +563,7 @@ function QuickActionItem({ icon: Icon, title, subtitle, accent }: QuickAction) {
     : 'bg-card hover:bg-muted';
   const chipCls = accent
     ? 'bg-blue-100 text-blue-700'
-    : 'bg-ink-100 text-ink-700';
+    : 'bg-muted text-ink-700';
   return (
     <button
       type="button"

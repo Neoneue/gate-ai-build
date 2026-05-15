@@ -708,7 +708,7 @@ function CategoryBreakdownCard({
                 aria-valuemin={0}
                 aria-valuemax={max}
                 aria-labelledby={labelId}
-                className="w-full h-1.5 rounded-full bg-ink-100 overflow-hidden"
+                className="w-full h-1.5 rounded-full bg-muted overflow-hidden"
               >
                 <div
                   className="h-full rounded-full"

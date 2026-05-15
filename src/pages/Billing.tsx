@@ -254,7 +254,7 @@ function AddCreditsDialog({
                 className={cn(
                   'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
                   isSelected
-                    ? 'border-ink-500 bg-ink-100 text-ink-900'
+                    ? 'border-ink-500 bg-muted text-ink-900'
                     : 'border-border bg-card text-ink-900 hover:bg-ink-50',
                 )}
               >
@@ -587,7 +587,7 @@ function HistorySection() {
         icon={
           <div
             aria-hidden
-            className="flex items-center justify-center rounded-md bg-ink-100"
+            className="flex items-center justify-center rounded-md bg-muted"
             style={{ width: 48, height: 48, flexShrink: 0 }}
           >
             <History className="text-ink-600" strokeWidth={1.5} style={{ width: 24, height: 24 }} />

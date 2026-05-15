@@ -1269,7 +1269,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                   <TooltipTrigger
                     render={<button type="button" />}
                     aria-label="What's the difference between Gate and BYOK?"
-                    className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-300"
+                    className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Info aria-hidden className="size-3.5" strokeWidth={2} />
                   </TooltipTrigger>

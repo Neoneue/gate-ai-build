@@ -104,7 +104,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
 function TabsRow({ count }: { count: number }) {
   const [tab, setTab] = useState('all');
   return (
-    <div className="flex items-end justify-between gap-4 border-b border-ink-100">
+    <div className="flex items-end justify-between gap-4 border-b border-border">
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList variant="line" className="px-0 border-b-0">
           <TabsTrigger value="all">
@@ -142,7 +142,7 @@ function LimitsSection({
         icon={
           <div
             aria-hidden
-            className="size-12 rounded-full bg-ink-100 flex items-center justify-center"
+            className="size-12 rounded-full bg-muted flex items-center justify-center"
           >
             <Shield className="size-5 text-ink-700" />
           </div>

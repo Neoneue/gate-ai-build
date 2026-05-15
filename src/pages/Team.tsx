@@ -610,7 +610,7 @@ function RowActionsMenu({
                   onClick={item.onSelect}
                   className={cn(
                     'relative flex w-full cursor-pointer items-center gap-2 rounded-xs h-8 px-3 text-sm outline-none select-none',
-                    'data-[highlighted]:bg-ink-100 focus-visible:bg-ink-100',
+                    'data-[highlighted]:bg-muted focus-visible:bg-muted',
                     item.destructive
                       ? 'text-destructive data-[highlighted]:text-destructive'
                       : 'text-ink-900',
