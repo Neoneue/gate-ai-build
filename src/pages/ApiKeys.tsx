@@ -581,7 +581,7 @@ function KeyCreatedDialog({
         {/* Key display — one merged surface: mono value + Copy split by a
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the ink-100 well, no nested border. */}
-        <div className="flex items-stretch overflow-hidden rounded-md border border-ink-200 bg-ink-100">
+        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-ink-100">
           <div className="flex-1 px-3 py-2 font-mono text-sm text-ink-800 break-all">
             {fullKey}
           </div>
@@ -589,7 +589,7 @@ function KeyCreatedDialog({
             type="button"
             onClick={trigger}
             aria-label={copied ? 'Copied' : 'Copy API key'}
-            className="flex shrink-0 items-center gap-2 border-l border-ink-200 px-4 font-sans text-sm font-medium text-ink-600 transition-colors duration-150 ease-out hover:bg-ink-200 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-ink-600 transition-colors duration-150 ease-out hover:bg-ink-200 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
           >
             {copied ? (
               <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.8} />

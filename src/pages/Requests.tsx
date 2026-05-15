@@ -1024,7 +1024,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Model"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-white text-ink-900 font-normal"
             >
               <SelectValue placeholder="Model" />
             </SelectTrigger>
@@ -1043,7 +1043,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Key"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-white text-ink-900 font-normal"
             >
               <SelectValue placeholder="Key" />
             </SelectTrigger>
@@ -1063,7 +1063,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Response"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-white text-ink-900 font-normal"
             >
               <SelectValue placeholder="Response" />
             </SelectTrigger>
@@ -1079,7 +1079,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Guardrail"
-              className="border-ink-200 bg-white text-ink-900 font-normal"
+              className="border-border bg-white text-ink-900 font-normal"
             >
               <SelectValue placeholder="Guardrail" />
             </SelectTrigger>
@@ -1092,7 +1092,7 @@ function RequestsTableSection({
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" className="ml-auto">
+          <Button type="button" variant="outline" size="sm" className="ml-auto">
             <Download data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
@@ -1163,6 +1163,13 @@ function RequestsTableSection({
                   key={`${row.time}-${i}`}
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
                   onClick={() => setSelectedRow(row)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedRow(row);
+                    }
+                  }}
                 >
                   <TableCell className="whitespace-nowrap w-48">
                     {/* Absolute timestamp is the primary scan target — relative
@@ -1214,7 +1221,7 @@ function RequestsTableSection({
                       </span>
                     </RowActionButton>
                   </TableCell>
-                  <TableCell className="max-w-[200px]">
+                  <TableCell className="whitespace-nowrap max-w-[200px]">
                     <span
                       title={row.conversation}
                       className="font-mono text-sm text-ink-900 tabular-nums tracking-tight truncate block max-w-full"
@@ -1471,7 +1478,7 @@ function compressionValue(row: RequestRow): string {
 
 function KpiRail({ row }: { row: RequestRow }) {
   return (
-    <KpiRailShell columns={5} className="border border-ink-200 shadow-none">
+    <KpiRailShell columns={5} className="border border-border shadow-none">
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />
@@ -1629,11 +1636,10 @@ function BodySection({
     // `shrink-0` so the section never gets squished by its flex parent
     // when sibling sections also expand. The outer panel's max-h handles
     // overflow via scroll; sticky headers stay pinned during scroll.
-    // Lighter `border-ink-100` instead of `ink-200` — the CodeCard's
-    // default shadow already provides a 1px ring, so pairing it with a
-    // softer real border keeps the edge crisp at scroll clip points
-    // without doubling the visual weight.
-    <CodeCard className="shrink-0 border border-ink-100">
+    // Border uses the semantic `border-border` token so the card edge
+    // tracks theme/contrast tokens; the CodeCard's default shadow still
+    // provides a 1px ring to keep the edge crisp at scroll clip points.
+    <CodeCard className="shrink-0 border border-border">
       {/* Sticky header so the section label stays pinned at the top of
           the scrollable area as you scroll through the body content
           underneath. Header sits on the card surface (white) so it reads
@@ -1658,14 +1664,14 @@ function BodySection({
       </button>
       {expanded && (
         <>
-          <div className="overflow-x-auto border-t border-ink-200 bg-ink-50">
+          <div className="overflow-x-auto border-t border-border bg-ink-50">
             <CodeBlock lines={lines} density="compact" />
           </div>
           {copyValue !== undefined && copyLabel !== undefined && (
             // Copy action lives in its own footer below the code well —
             // separates the toggle target (header) from the action target
             // (Copy) so tapping one never triggers the other.
-            <div className="flex items-center justify-end border-t border-ink-200 bg-white px-4 py-2">
+            <div className="flex items-center justify-end border-t border-border bg-white px-4 py-2">
               <CopyButton
                 mode="label"
                 size="compact"
@@ -1705,7 +1711,7 @@ function MessageBlock({
           {label}
         </span>
       </SectionHeading>
-      <div className="rounded-md border border-ink-200 px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
+      <div className="rounded-md border border-border px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
         {content}
       </div>
     </section>
@@ -1865,7 +1871,7 @@ function SecurityCheckRow({
   status: CheckStatus;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border border-ink-200 p-4">
+    <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex flex-col gap-1 min-w-0">
         <span className="font-sans text-sm font-medium text-ink-900">{title}</span>
         <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>

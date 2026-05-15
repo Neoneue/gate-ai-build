@@ -496,15 +496,16 @@ function ActionHalf({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const headingId = `action-heading-${config.id}`;
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4">Action on detection</SectionHeading>
+        <SectionHeading as="h4" id={headingId}>Action on detection</SectionHeading>
         <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
           {config.action.helper}
         </p>
       </div>
-      <RadioGroup value={value} onValueChange={onChange} className="mt-4 gap-2">
+      <RadioGroup aria-labelledby={headingId} value={value} onValueChange={onChange} className="mt-4 gap-2">
         {config.action.options.map((opt) => {
           const selected = opt.value === value;
           const radioId = `action-${config.id}-${opt.value}`;

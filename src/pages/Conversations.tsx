@@ -391,6 +391,13 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
               <TableRow
                 key={row.conversationId}
                 onClick={() => setSelectedRow(row)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRow(row);
+                  }
+                }}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
               >
                 <TableCell className="whitespace-nowrap max-w-0">
@@ -1044,7 +1051,7 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ink-400 focus-visible:ring-inset ${
+      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ink-400 focus-visible:ring-offset-1 ${
         selected ? '' : 'hover:bg-ink-50'
       } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-0.5 before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'

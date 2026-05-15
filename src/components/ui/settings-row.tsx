@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
  *
  * Rhythm:
  *   first        first row in the list — no top border.
- *   default      subsequent rows get `border-t border-ink-200` so the
+ *   default      subsequent rows get `border-t border-border` so the
  *                rhythm reads as a list of independent settings.
  *
  * Vertical alignment:
@@ -86,7 +86,7 @@ export function SettingsRow({
       className={cn(
         'flex justify-between gap-6 py-4',
         alignTop ? 'items-start' : 'items-center',
-        first ? '' : 'border-t border-ink-200',
+        first ? '' : 'border-t border-border',
         className,
       )}
     >

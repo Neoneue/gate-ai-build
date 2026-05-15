@@ -92,7 +92,7 @@ function PlanCard() {
         </p>
         <p className="font-sans text-sm text-ink-500 m-0">Free plan — no renewal</p>
       </CardContent>
-      <CardFooter className="justify-end gap-4 border-t border-ink-200">
+      <CardFooter className="justify-end gap-4 border-t border-border">
         <Button>
           <Sparkles data-icon="inline-start" aria-hidden />
           Upgrade to Pro
@@ -166,7 +166,7 @@ function CreditsCard() {
           <CreditStatRow label="Last top-up" value="Never" />
         </dl>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-t border-ink-200">
+      <CardFooter className="justify-end gap-2 border-t border-border">
         <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
         <Button onClick={() => setAddOpen(true)}>
           <Plus data-icon="inline-start" aria-hidden />
@@ -255,7 +255,7 @@ function AddCreditsDialog({
                   'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
                   isSelected
                     ? 'border-ink-500 bg-ink-100 text-ink-900'
-                    : 'border-ink-200 bg-white text-ink-900 hover:bg-ink-50',
+                    : 'border-border bg-white text-ink-900 hover:bg-ink-50',
                 )}
               >
                 ${value.toLocaleString()}
@@ -357,9 +357,9 @@ function AutoRechargeDialog({
         </DialogHeader>
 
         {/* Enable card */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-ink-200 bg-ink-50 p-4">
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-ink-50 p-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="ar-enable-label" className="font-sans text-sm font-medium text-ink-900 m-0">
               Enable auto-recharge
             </p>
             <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
@@ -367,6 +367,7 @@ function AutoRechargeDialog({
             </p>
           </div>
           <Switch
+            aria-labelledby="ar-enable-label"
             checked={enabled}
             onCheckedChange={setEnabled}
             className="mt-1 shrink-0"
@@ -442,7 +443,7 @@ function AutoRechargeDialog({
         </div>
 
         {enabled && thresholdValid && topUpValid && (
-          <div className="flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
+          <div className="flex flex-col gap-2 rounded-md border border-border bg-ink-50 px-4 py-3">
             <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
               When your balance drops below{' '}
               <span className="font-medium text-ink-900">${threshold}</span>, we&apos;ll add{' '}
@@ -518,7 +519,7 @@ function PaymentMethodCard() {
         <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
           Charged for subscription renewals and credit top-ups.
         </p>
-        <div className="flex items-center gap-3 rounded-md border border-ink-200 bg-ink-50 px-4 py-3 min-w-0">
+        <div className="flex items-center gap-3 rounded-md border border-border bg-ink-50 px-4 py-3 min-w-0">
           <span
             aria-hidden
             className="inline-flex items-center justify-center h-6 px-2 rounded-xs border border-ink-700 text-ink-700 font-mono text-xs font-medium tracking-wider shrink-0"
@@ -530,7 +531,7 @@ function PaymentMethodCard() {
           </span>
         </div>
       </CardContent>
-      <CardFooter className="justify-end gap-4 border-t border-ink-200">
+      <CardFooter className="justify-end gap-4 border-t border-border">
         <Button variant="secondary">
           <CreditCard data-icon="inline-start" aria-hidden />
           Add payment method
@@ -582,7 +583,7 @@ function HistorySection() {
       {/* Empty branch — fresh workspace has no charges. When data lands,
           swap this for `<Table>` + rows. */}
       <EmptyState
-        className="border-t border-ink-200 rounded-none shadow-none"
+        className="border-t border-border rounded-none shadow-none"
         icon={
           <div
             aria-hidden

@@ -377,7 +377,7 @@ export function TopKeysCard() {
       <CardContent className="flex flex-col gap-4">
         <HeroNumeric>$1,147.82</HeroNumeric>
 
-        <div className="flex flex-col gap-4 pt-4 border-t border-ink-200">
+        <div className="flex flex-col gap-4 pt-4 border-t border-border">
           {TOP_KEYS.map((k) => (
             <div key={k.label} className="flex items-center justify-between gap-3 min-w-0">
               <span
@@ -536,7 +536,7 @@ function QuickActionsRow() {
     'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
   return (
     <div className="rounded-md bg-white shadow-(--shadow-border) overflow-hidden">
-      <div className="flex items-center py-3 px-4 border-b border-ink-200">
+      <div className="flex items-center py-3 px-4 border-b border-border">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
           Quick Actions
         </h3>
