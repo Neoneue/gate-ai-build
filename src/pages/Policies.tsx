@@ -35,7 +35,7 @@ type ActionOption = {
   value: string;
   name: string;
   /** Small all-caps qualifier rendered beside the option name. */
-  flag?: 'RECOMMENDED' | 'DEFAULT';
+  flag?: 'DEFAULT';
   description: string;
 };
 
@@ -87,7 +87,7 @@ const POLICIES: PolicyConfig[] = [
           return 'Flags only high-confidence attacks. Fewest false positives.';
         if (value === 'high')
           return 'Catches subtle, obfuscated attacks. Expect more false positives.';
-        return 'Balanced detection for typical production traffic. Recommended.';
+        return 'Balanced detection for typical production traffic. Default.';
       },
     },
     action: {
@@ -96,7 +96,7 @@ const POLICIES: PolicyConfig[] = [
         {
           value: 'block',
           name: 'Block',
-          flag: 'RECOMMENDED',
+          flag: 'DEFAULT',
           description: 'Reject the request before it reaches the model.',
         },
         {
