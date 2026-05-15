@@ -56,7 +56,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Area, AreaChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -601,6 +601,13 @@ function HeroMetricCard() {
             tickLine={false}
             domain={[0, view.domainTop]}
           />
+          {/* Dashed horizontal gridlines — matches the Security events chart. */}
+          <CartesianGrid
+            horizontal
+            vertical={false}
+            stroke="var(--color-ink-200)"
+            strokeDasharray="2 3"
+          />
           <XAxis
             dataKey="time"
             tickLine={false}
@@ -1097,7 +1104,7 @@ function RequestsTableSection({
             <TableRow className="hover:bg-transparent">
               <TableHead className="whitespace-nowrap">Time</TableHead>
               <TableHead className="whitespace-nowrap">Status</TableHead>
-              <TableHead className="whitespace-nowrap">Guardrail</TableHead>
+              <TableHead className="whitespace-nowrap">Security</TableHead>
               <TableHead className="whitespace-nowrap">Model</TableHead>
               <TableHead className="whitespace-nowrap">Conversation</TableHead>
               <TableHead className="whitespace-nowrap">Key</TableHead>
