@@ -601,6 +601,12 @@ const OTHERS_KEY = '__others';
  *  Others rollup bar segment and panel swatch. */
 const OTHERS_COLOR = 'var(--color-ink-300)';
 
+/** Hoisted BarChart prop literals. Recharts treats inline objects as new
+ *  props each render and re-runs layout/style work it could otherwise skip.
+ *  Module-level constants keep referential identity stable across renders. */
+const TREND_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
+const TREND_CHART_XAXIS_TICK = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
+
 /** Right-panel breakdown: renders up to 6 pre-sorted rows. Caller is
  *  responsible for sorting and injecting the synthetic "Others" entry. */
 function TrendBreakdownPanel({
@@ -850,7 +856,7 @@ function TrendCard({
             <BarChart
               accessibilityLayer
               data={dataWithOthers}
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              margin={TREND_CHART_MARGIN}
               barCategoryGap="20%"
             >
               <CartesianGrid
@@ -865,7 +871,7 @@ function TrendCard({
                 axisLine={false}
                 tickMargin={8}
                 height={24}
-                tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
+                tick={TREND_CHART_XAXIS_TICK}
                 // Target ~7 visible labels regardless of bucket count:
                 //   7 bars  → interval 0 (show all)
                 //   12 bars → interval 1 (every other, ~6 visible)
@@ -893,7 +899,7 @@ function TrendCard({
                       y={props.y}
                       dy={4}
                       fontSize={11}
-                      fill="var(--color-ink-500)"
+                      fill="var(--muted-foreground)"
                       textAnchor="start"
                     >
                       {label}
@@ -1103,6 +1109,12 @@ function TopList({
   );
 }
 
+/** Hoisted: identical for every keyRow. Avoids re-creating the same JSX
+ *  element inside the keyRows useMemo on every metric/scale change. */
+const KEY_AVATAR = (
+  <Key aria-hidden className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+);
+
 function TopByAxisRow({
   range,
   customRange,
@@ -1121,7 +1133,7 @@ function TopByAxisRow({
   // "M"/"k") on rounded integers. Each card computes from its own metric.
   const modelRows: TopRow[] = useMemo(() => {
     const isSpend = modelMetric === 'spend';
-    return [...MODEL_ROWS]
+    return MODEL_ROWS
       .map((m) => ({
         key: m.key,
         label: m.label,
@@ -1140,7 +1152,7 @@ function TopByAxisRow({
 
   const keyRows: TopRow[] = useMemo(() => {
     const isSpend = keyMetric === 'spend';
-    return [...API_KEY_ROWS]
+    return API_KEY_ROWS
       .map((k) => ({
         key: k.key,
         label: k.label,
@@ -1153,7 +1165,7 @@ function TopByAxisRow({
         label: k.label,
         labelClassName: 'font-mono tracking-tight',
         value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtTokens(Math.round(k.axis)),
-        avatar: <Key aria-hidden className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />,
+        avatar: KEY_AVATAR,
       }));
   }, [scale, keyMetric]);
 
