@@ -37,8 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TabsCount } from '@/components/ui/tabs-count';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 export function Guardrails() {
@@ -56,17 +54,14 @@ export function Guardrails() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="Guardrails"
       activeNavId="guardrails"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
       <PageHeader onCreate={openCreate} />
-      <TabsRow count={limits.length} />
       <LimitsSection
         limits={limits}
-        onCreate={openCreate}
         onRemove={removeLimit}
       />
       <CreateLimitDialog
@@ -99,41 +94,13 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-/* ─── Tabs row + reset cadence ──────────────────────────────────────── */
-
-function TabsRow({ count }: { count: number }) {
-  const [tab, setTab] = useState('all');
-  return (
-    <div className="flex items-end justify-between gap-4 border-b border-border">
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList variant="line" className="px-0 border-b-0">
-          <TabsTrigger value="all">
-            All limits
-            <TabsCount>{count}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="active">
-            Active
-            <TabsCount>{count}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="attention">
-            Needs attention
-            <TabsCount>0</TabsCount>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-    </div>
-  );
-}
-
 /* ─── Limits table / empty state ────────────────────────────────────── */
 
 function LimitsSection({
   limits,
-  onCreate,
   onRemove,
 }: {
   limits: Limit[];
-  onCreate: () => void;
   onRemove: (id: string) => void;
 }) {
   if (limits.length === 0) {
@@ -149,12 +116,6 @@ function LimitsSection({
         }
         title="No limits configured"
         body="Create one to cap spend, throttle traffic, or shape usage per project or key."
-        action={
-          <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden />
-            Create limit
-          </Button>
-        }
       />
     );
   }

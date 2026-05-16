@@ -251,7 +251,6 @@ export function Policies() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="Policies"
       activeNavId="policies"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}

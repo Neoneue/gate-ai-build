@@ -141,7 +141,6 @@ export function Activity() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="Usage analytics"
       activeNavId="activity"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}

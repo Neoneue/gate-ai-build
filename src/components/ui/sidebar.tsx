@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { Check, ChevronsUpDown, MoreHorizontal, Plus } from 'lucide-react';
+import { Check, ChevronsUpDown, MoreHorizontal } from 'lucide-react';
 import {
   Menu,
   MenuContent,
   MenuItem,
-  MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu';
 import { Badge } from '@/components/ui/badge';
@@ -311,11 +310,6 @@ function DefaultWorkspaceSwitcher() {
         </MenuItem>
         <MenuItem>
           <span className="flex-1 text-left truncate min-w-0">OpenClaw org</span>
-        </MenuItem>
-        <MenuSeparator />
-        <MenuItem>
-          <span className="flex-1 text-left">Create new org</span>
-          <Plus strokeWidth={1.75} aria-hidden />
         </MenuItem>
       </MenuContent>
     </Menu>

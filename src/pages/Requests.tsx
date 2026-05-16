@@ -104,7 +104,6 @@ export function Requests() {
 
   return (
     <DashboardChrome
-          breadcrumbCurrent="Requests"
           activeNavId="requests"
           sidebarExpanded={sidebarExpanded}
           onToggleSidebar={toggleSidebar}

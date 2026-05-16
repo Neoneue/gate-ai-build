@@ -27,7 +27,6 @@ export function TokenSavings() {
   }>();
   return (
     <DashboardChrome
-      breadcrumbCurrent="Token Savings"
       activeNavId="token-savings"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
