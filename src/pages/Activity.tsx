@@ -141,26 +141,26 @@ export function Activity() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Usage analytics"
-            activeNavId="activity"
-            sidebarExpanded={sidebarExpanded}
-            onToggleSidebar={toggleSidebar}
-            onNavigate={(path: string) => navigate(path)}
-          >
-            <PageHeader
-              range={range}
-              customRange={customRange}
-              onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
-              onCustomRangeChange={(r) => {
-                if (r) { setCustomRange(r); setRange('custom'); }
-                else   { setCustomRange(null); setRange('all'); }
-              }}
-            />
-            <KpiRail range={range} customRange={customRange} />
-            <TrendCard range={range} customRange={customRange} />
-            <TopByAxisRow range={range} customRange={customRange} />
-            <UsageByKey range={range} customRange={customRange} />
-          </DashboardChrome>
+      breadcrumbCurrent="Usage analytics"
+      activeNavId="activity"
+      sidebarExpanded={sidebarExpanded}
+      onToggleSidebar={toggleSidebar}
+      onNavigate={(path: string) => navigate(path)}
+    >
+      <PageHeader
+        range={range}
+        customRange={customRange}
+        onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
+        onCustomRangeChange={(r) => {
+          if (r) { setCustomRange(r); setRange('custom'); }
+          else   { setCustomRange(null); setRange('all'); }
+        }}
+      />
+      <KpiRail range={range} customRange={customRange} />
+      <TrendCard range={range} customRange={customRange} />
+      <TopByAxisRow range={range} customRange={customRange} />
+      <UsageByKey range={range} customRange={customRange} />
+    </DashboardChrome>
   );
 }
 
@@ -181,7 +181,7 @@ function PageHeader({
     <div className="flex items-start justify-between gap-6">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Activity</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
           Cost, requests, and tokens across the workspace.
         </p>
       </div>
@@ -203,37 +203,16 @@ function PageHeader({
 
 /* ─── KPI rail (3-up, range-aware) ──────────────────────────────────────── */
 
-type KpiSpec = {
-  value: string;
-  delta: string;
-  spark: number[];
-};
+// Only `delta` is hand-authored per range; the KPI value and sparkline are
+// both computed in getKpiSpec from TOTAL_7D_BASE_* × effectiveScale, so the
+// KPI rail cannot drift from the Spend / Requests / Tokens over-time charts.
+type KpiSpec = { delta: string };
 
-// Note: `.spend.value` strings here are informational only — actual spend
-// KPI is computed in getKpiSpec from TOTAL_7D_BASE_DOLLARS × effectiveScale,
-// so it cannot drift from the Spend over time chart. Kept in sync with the
-// computed value for readability if someone reads the source.
 const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens: KpiSpec }> = {
-  all: {
-    spend:    { value: '$7,879.50', delta: '+24.8%', spark: [14, 16, 20, 24, 28, 30, 36, 34, 40] },
-    requests: { value: '542,241',   delta: '+19.3%', spark: [12, 16, 20, 24, 26, 30, 34, 34, 38] },
-    tokens:   { value: '208.3 M',   delta: '+17.6%', spark: [16, 18, 20, 24, 26, 28, 30, 32, 36] },
-  },
-  '24h': {
-    spend:    { value: '$148.32',   delta: '+4.1%',  spark: [6, 8, 7, 10, 9, 11, 13, 12, 14] },
-    requests: { value: '10,207',    delta: '+2.6%',  spark: [5, 6, 6, 8, 9, 8, 10, 11, 12] },
-    tokens:   { value: '3.92 M',    delta: '+3.2%',  spark: [7, 8, 9, 9, 10, 11, 11, 12, 12] },
-  },
-  '7d': {
-    spend:    { value: '$927.00',   delta: '+12.6%', spark: [8, 10, 12, 16, 18, 20, 25, 22, 24] },
-    requests: { value: '63,793',    delta: '+8.2%',  spark: [6, 12, 10, 16, 20, 18, 26, 24, 28] },
-    tokens:   { value: '24.5 M',    delta: '+8.7%',  spark: [10, 11, 13, 14, 16, 15, 17, 18, 18] },
-  },
-  '30d': {
-    spend:    { value: '$3,893.40', delta: '+18.4%', spark: [12, 14, 18, 22, 24, 28, 32, 30, 34] },
-    requests: { value: '267,931',   delta: '+14.7%', spark: [10, 14, 18, 22, 24, 26, 30, 30, 34] },
-    tokens:   { value: '102.9 M',   delta: '+13.2%', spark: [14, 16, 18, 20, 22, 22, 24, 26, 28] },
-  },
+  all:   { spend: { delta: '+24.8%' }, requests: { delta: '+19.3%' }, tokens: { delta: '+17.6%' } },
+  '24h': { spend: { delta: '+4.1%'  }, requests: { delta: '+2.6%'  }, tokens: { delta: '+3.2%'  } },
+  '7d':  { spend: { delta: '+12.6%' }, requests: { delta: '+8.2%'  }, tokens: { delta: '+8.7%'  } },
+  '30d': { spend: { delta: '+18.4%' }, requests: { delta: '+14.7%' }, tokens: { delta: '+13.2%' } },
 };
 
 // Canonical 7d totals — single source of truth for each KPI. Every range's
@@ -446,17 +425,19 @@ function rescaleToTotal(
  *
  *  Splits are sourced from real per-entity token counts, NOT scaled from
  *  spend — so the token distribution genuinely differs in shape:
- *    • model  → from MODEL_ROWS.tokens (Sonnet leads on tokens; Opus,
- *               which leads on spend, is near the bottom — high price per
- *               token vs. high token volume).
+ *    • model  → from MODEL_ROWS (tokensIn + tokensOut). Sonnet leads on
+ *               token volume; Opus, which leads on spend, is near the
+ *               bottom — high price per token vs. high token volume.
  *    • apiKey → from API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted
  *               Gate keys.
  *    • provider → authored to mirror the model breakdown's vendor
  *               groupings (anthropic carries opus+sonnet+haiku token
  *               volume; openai/google/bedrock pick up the rest). */
 const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
-  // MODEL_ROWS.tokens: sonnet 6_550_000, llama 4_840_000, haiku 4_460_000,
-  // gemini 4_050_000, gpt 2_860_000, opus 1_340_000 — Sonnet dominates on
+  // 7d window token totals (independent from the workspace-lifetime numbers
+  // in MODEL_ROWS — Llama's 7d rate and Opus' 7d rate are tuned for this
+  // window only): sonnet 6_550_000, llama 4_840_000, haiku 4_460_000,
+  // gemini 4_050_000, gpt 2_860_000, opus 1_340_000. Sonnet dominates on
   // token volume; Opus' high price-per-token keeps it near the bottom.
   model: rescaleToTotal(
     { sonnet: 6_550_000, gpt: 2_860_000, gemini: 4_050_000, opus: 1_340_000, llama: 4_840_000, haiku: 4_460_000 },
@@ -609,6 +590,81 @@ function seriesColor(s: { slot: number; color?: string }): string {
   return s.color ?? paletteColor(s.slot);
 }
 
+/** Synthetic key used for the "Others" rollup series when a dimension has
+ *  more than 6 real series. This value must never collide with a real series
+ *  key — the double-underscore prefix keeps it isolated from any workspace
+ *  entity key. */
+const OTHERS_KEY = '__others';
+
+/** Ink-300 — visually subordinate to the saturated CHART_PALETTE slots but
+ *  still clearly distinguishable from the card background. Used for the
+ *  Others rollup bar segment and panel swatch. */
+const OTHERS_COLOR = 'var(--color-ink-300)';
+
+/** Right-panel breakdown: renders up to 6 pre-sorted rows. Caller is
+ *  responsible for sorting and injecting the synthetic "Others" entry. */
+function TrendBreakdownPanel({
+  metric,
+  series,
+  seriesTotals,
+}: {
+  metric: Metric;
+  series: readonly { key: string; label: string; slot: number; color?: string }[];
+  /** Aggregated totals for this range — keyed by series key. */
+  seriesTotals: Record<string, number>;
+}) {
+  const isSpend = metric === 'spend';
+  const grandTotal = Object.values(seriesTotals).reduce((a, b) => a + b, 0) || 1;
+  const fmtValue = isSpend ? fmtUsd : (n: number) => fmtTokens(Math.round(n));
+
+  const fmtPct = (frac: number) => {
+    const pct = frac * 100;
+    return pct < 10 ? `${pct.toFixed(1)}%` : `${Math.round(pct)}%`;
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      {series.map((s) => {
+        const total = seriesTotals[s.key] ?? 0;
+        const pctStr = fmtPct(total / grandTotal);
+        const color = s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s);
+
+        // Right-side value cluster: cumulative value · pct. Tokens in/out
+        // live in the UsageByKey table below — duplicating the split here
+        // adds noise without information. Single shape for both metrics so
+        // toggling the lens doesn't reflow the panel.
+        return (
+          <div
+            key={s.key}
+            className="flex items-center gap-2 py-1 px-2 rounded-xs hover:bg-muted transition-colors duration-100 min-w-0"
+          >
+            <span
+              aria-hidden
+              className="size-2 rounded-xs shrink-0"
+              style={{ backgroundColor: color }}
+            />
+            <span className="font-sans text-sm text-foreground truncate min-w-0 flex-1">
+              {s.label}
+            </span>
+            <div
+              className="font-mono tabular-nums text-sm shrink-0 grid items-center gap-x-2"
+              style={{ gridTemplateColumns: '9ch min-content 4ch' }}
+            >
+              <span className="text-foreground text-right">{fmtValue(total)}</span>
+              <span className="text-ink-400">·</span>
+              <span className="text-foreground text-right">{pctStr}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Maximum number of individually-named series in the trend chart/panel.
+ *  When a dimension has more entries, the remainder collapse into "Others". */
+const TREND_SERIES_CAP = 6;
+
 function TrendCard({
   range,
   customRange,
@@ -619,7 +675,7 @@ function TrendCard({
   const [dimension, setDimension] = useState<Dimension>('model');
   // Local metric lens — independent from the other three surfaces.
   const [metric, setMetric] = useState<Metric>('tokens');
-  const series = SPEND_SERIES[dimension];
+  const rawSeries = SPEND_SERIES[dimension];
   const isSpend = metric === 'spend';
 
   const data = useMemo(() => {
@@ -661,14 +717,76 @@ function TrendCard({
     });
   }, [dimension, range, customRange, isSpend]);
 
+  /** Aggregate each raw series's total across all buckets in the active range.
+   *  Derived from `data` so it's always in sync with what the chart shows. */
+  const rawSeriesTotals = useMemo<Record<string, number>>(() => {
+    const acc: Record<string, number> = {};
+    for (const row of data) {
+      for (const s of rawSeries) {
+        acc[s.key] = (acc[s.key] ?? 0) + (Number(row[s.key]) || 0);
+      }
+    }
+    return acc;
+  }, [data, rawSeries]);
+
+  /** Sort raw series desc by aggregate total, then apply the 6-series cap.
+   *  This is the single source of truth for both the chart render loop and
+   *  the breakdown panel. When rawSeries.length > TREND_SERIES_CAP:
+   *    - visible = top (TREND_SERIES_CAP - 1) real series
+   *    - 6th entry = synthetic __others rollup
+   *  Otherwise all real series pass through unchanged. */
+  const { cappedSeries, cappedTotals, dataWithOthers } = useMemo(() => {
+    // Sort desc by aggregate total in the active metric.
+    const sorted = [...rawSeries].sort(
+      (a, b) => (rawSeriesTotals[b.key] ?? 0) - (rawSeriesTotals[a.key] ?? 0),
+    );
+
+    if (sorted.length <= TREND_SERIES_CAP) {
+      return {
+        cappedSeries: sorted,
+        cappedTotals: rawSeriesTotals,
+        dataWithOthers: data,
+      };
+    }
+
+    // Split: top (CAP-1) named + everything else rolls into Others.
+    const namedCount = TREND_SERIES_CAP - 1;
+    const named = sorted.slice(0, namedCount);
+    const overflow = sorted.slice(namedCount);
+
+    // Synthetic Others entry — no slot (uses OTHERS_COLOR directly).
+    const othersSeries = { key: OTHERS_KEY, label: 'Others', slot: 0, color: OTHERS_COLOR } as const;
+    const series = [...named, othersSeries];
+
+    // Totals: named keys unchanged; __others = sum of overflow keys.
+    const totals: Record<string, number> = {};
+    for (const s of named) totals[s.key] = rawSeriesTotals[s.key] ?? 0;
+    totals[OTHERS_KEY] = overflow.reduce((sum, s) => sum + (rawSeriesTotals[s.key] ?? 0), 0);
+
+    // Project __others into each data row = sum of overflow series values.
+    const overflowKeys = overflow.map((s) => s.key);
+    const projected = data.map((row) => {
+      const othersVal = overflowKeys.reduce((sum, k) => sum + (Number(row[k]) || 0), 0);
+      return { ...row, [OTHERS_KEY]: +othersVal.toFixed(2) };
+    });
+
+    return { cappedSeries: series, cappedTotals: totals, dataWithOthers: projected };
+  }, [rawSeries, rawSeriesTotals, data]);
+
   const bucketLabel = getBucketLabel(range, customRange);
 
   const chartConfig: ChartConfig = useMemo(
     () =>
       Object.fromEntries(
-        series.map((s) => [s.key, { label: s.label, color: seriesColor(s) }]),
+        cappedSeries.map((s) => [
+          s.key,
+          {
+            label: s.label,
+            color: s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s),
+          },
+        ]),
       ) as ChartConfig,
-    [series],
+    [cappedSeries],
   );
 
   // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
@@ -694,7 +812,7 @@ function TrendCard({
               <SelectTrigger
                 size="sm"
                 aria-label="Group spend by"
-                className="border-border bg-card text-ink-900 font-normal"
+                className="border-border bg-card text-foreground font-normal"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -716,125 +834,126 @@ function TrendCard({
         </CardAction>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-5">
-        <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
-          {series.map((s) => (
-            <div key={s.key} className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="size-2.5 rounded-xs shrink-0"
-                style={{ backgroundColor: seriesColor(s) }}
+      {/* Two-pane layout: chart left (8/12 cols), breakdown panel right (4/12 cols).
+          Collapses to single column below md breakpoint (panel below chart). */}
+      <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        {/* Left pane — chart */}
+        <div className="md:col-span-8">
+          {/* 184px gives the stacked layers enough vertical room to read as
+              distinct bands without the chart taking over the page. YAxis
+              ticks are left-aligned (custom tick renderer below) so they
+              share their left edge with the title. */}
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[184px] w-full"
+          >
+            <BarChart
+              accessibilityLayer
+              data={dataWithOthers}
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid
+                horizontal
+                vertical={false}
+                stroke="var(--color-ink-200)"
+                strokeDasharray="3 3"
               />
-              <span className="font-sans text-xs text-ink-900">{s.label}</span>
-            </div>
-          ))}
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                height={24}
+                tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
+                // Target ~7 visible labels regardless of bucket count:
+                //   7 bars  → interval 0 (show all)
+                //   12 bars → interval 1 (every other, ~6 visible)
+                //   30 bars → interval 4 (every 5th, ~6 visible)
+                interval={Math.max(0, Math.ceil(data.length / 7) - 1)}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={0}
+                width={44}
+                tick={(props: { y?: string | number; payload?: { value?: string | number } }) => {
+                  // Left-align every tick at x=0 of the chart container so the
+                  // left edges of all ticks sit at the same x — and that x
+                  // lines up with the title left edge. Default recharts tick is
+                  // right-anchored to the tick line, which makes "0" sit
+                  // visibly further right than the max tick.
+                  // Spend ticks get a `$` prefix; token ticks use fmtTokens
+                  // (compact "M"/"k") so the axis matches the tooltip rows.
+                  const raw = Number(props.payload?.value ?? 0);
+                  const label = isSpend ? `$${props.payload?.value}` : fmtTokens(raw);
+                  return (
+                    <text
+                      x={0}
+                      y={props.y}
+                      dy={4}
+                      fontSize={11}
+                      fill="var(--color-ink-500)"
+                      textAnchor="start"
+                    >
+                      {label}
+                    </text>
+                  );
+                }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    indicator="dot"
+                    labelFormatter={(_, payload) =>
+                      String(payload?.[0]?.payload?.date ?? '')
+                    }
+                    formatter={(value, name) => {
+                      const cfg = chartConfig[name as string];
+                      return (
+                        <div className="flex w-full items-center justify-between gap-3">
+                          <span className="flex items-center gap-1">
+                            <span
+                              aria-hidden
+                              className="size-2 rounded-xs shrink-0"
+                              style={{ backgroundColor: cfg?.color }}
+                            />
+                            <span className="text-muted-foreground">{cfg?.label ?? name}</span>
+                          </span>
+                          <span className="font-mono tabular-nums text-foreground">
+                            {valueFormatter(Number(value))}
+                          </span>
+                        </div>
+                      );
+                    }}
+                  />
+                }
+              />
+              {cappedSeries.map((s) => {
+                const color = s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s);
+                return (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    stackId="spend"
+                    fill={color}
+                    isAnimationActive={false}
+                  />
+                );
+              })}
+            </BarChart>
+          </ChartContainer>
         </div>
 
-        {/* 184px gives the stacked layers enough vertical room to read as
-            distinct bands without the chart taking over the page. YAxis
-            ticks are left-aligned (custom tick renderer below) so they
-            share their left edge with the title and legend. */}
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[184px] w-full"
-        >
-          <BarChart
-            accessibilityLayer
-            data={data}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            barCategoryGap="20%"
-          >
-            <CartesianGrid
-              horizontal
-              vertical={false}
-              stroke="var(--color-ink-200)"
-              strokeDasharray="3 3"
-            />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              height={24}
-              tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
-              // Target ~7 visible labels regardless of bucket count:
-              //   7 bars  → interval 0 (show all)
-              //   12 bars → interval 1 (every other, ~6 visible)
-              //   30 bars → interval 4 (every 5th, ~6 visible)
-              interval={Math.max(0, Math.ceil(data.length / 7) - 1)}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={0}
-              width={60}
-              tick={(props: { y?: string | number; payload?: { value?: string | number } }) => {
-                // Left-align every tick at x=0 of the chart container so the
-                // left edges of all ticks sit at the same x — and that x
-                // lines up with the title + legend left edges. Default
-                // recharts tick is right-anchored to the tick line, which
-                // makes "0" sit visibly further right than the max tick.
-                // Spend ticks get a `$` prefix; token ticks use fmtTokens
-                // (compact "M"/"k") so the axis matches the tooltip rows.
-                const raw = Number(props.payload?.value ?? 0);
-                const label = isSpend ? `$${props.payload?.value}` : fmtTokens(raw);
-                return (
-                  <text
-                    x={0}
-                    y={props.y}
-                    dy={4}
-                    fontSize={11}
-                    fill="var(--color-ink-500)"
-                    textAnchor="start"
-                  >
-                    {label}
-                  </text>
-                );
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  indicator="dot"
-                  labelFormatter={(_, payload) =>
-                    String(payload?.[0]?.payload?.date ?? '')
-                  }
-                  formatter={(value, name) => {
-                    const cfg = chartConfig[name as string];
-                    return (
-                      <div className="flex w-full items-center justify-between gap-3">
-                        <span className="flex items-center gap-1.5">
-                          <span
-                            aria-hidden
-                            className="size-2.5 rounded-xs shrink-0"
-                            style={{ backgroundColor: cfg?.color }}
-                          />
-                          <span className="text-ink-500">{cfg?.label ?? name}</span>
-                        </span>
-                        <span className="font-mono tabular-nums text-ink-900">
-                          {valueFormatter(Number(value))}
-                        </span>
-                      </div>
-                    );
-                  }}
-                />
-              }
-            />
-            {series.map((s) => {
-              const color = seriesColor(s);
-              return (
-                <Bar
-                  key={s.key}
-                  dataKey={s.key}
-                  stackId="spend"
-                  fill={color}
-                  isAnimationActive={false}
-                />
-              );
-            })}
-          </BarChart>
-        </ChartContainer>
+        {/* Right pane — breakdown panel */}
+        <div className="md:col-span-4 md:border-l md:border-border md:pl-3">
+          <TrendBreakdownPanel
+            metric={metric}
+            series={cappedSeries}
+            seriesTotals={cappedTotals}
+          />
+        </div>
       </CardContent>
     </Card>
   );
@@ -857,7 +976,8 @@ type ModelRow = {
   label: string;
   vendor: Vendor;
   requests: number;
-  tokens: number;
+  tokensIn: number;
+  tokensOut: number;
   spend: number;
 };
 
@@ -871,14 +991,20 @@ type ModelRow = {
  *    Spend     → Opus, Sonnet, GPT, Gemini, Llama
  *    Requests  → Haiku, Sonnet, Gemini, GPT, Llama
  *    Tokens    → Sonnet, Llama, Haiku, Gemini, GPT */
+// MODEL_ROWS is the source of truth for the Top Models card. tokensIn /
+// tokensOut are the per-model workspace aggregates; the card computes total
+// tokens at the call site (tokensIn + tokensOut). The trend breakdown panel
+// no longer reads in/out — cumulative only; see TrendBreakdownPanel. The
+// table at the bottom (UsageByKey) is where in/out lives. Production reads
+// these from real traffic; replace the rows.
 const MODEL_ROWS: ModelRow[] = [
-  { key: 'opus',    label: 'Claude Opus 4.7',   vendor: 'anthropic', requests: 34400, tokens: 13_400_000, spend: 120.60 },
-  { key: 'sonnet',  label: 'Claude Sonnet 4.5', vendor: 'anthropic', requests: 14900, tokens:  6_550_000, spend:  35.40 },
-  { key: 'haiku',   label: 'Claude Haiku',      vendor: 'anthropic', requests: 25030, tokens:  4_460_000, spend:   8.50 },
-  { key: 'gpt',     label: 'GPT-5.1',           vendor: 'openai',    requests:  6670, tokens:  2_860_000, spend:  14.00 },
-  { key: 'gemini',  label: 'Gemini 3 Pro',      vendor: 'google',    requests:  8720, tokens:  4_050_000, spend:   9.50 },
-  { key: 'llama',   label: 'Llama 4.2 405B',    vendor: 'meta',      requests:  5280, tokens:  1_200_000, spend:   6.00 },
-  { key: 'mistral', label: 'Mistral Large 3',   vendor: 'mistral',   requests:   690, tokens:    380_000, spend:   2.30 },
+  { key: 'opus',    label: 'Claude Opus 4.7',   vendor: 'anthropic', requests: 34400, tokensIn:  7_370_000, tokensOut:  6_030_000, spend: 120.60 },
+  { key: 'sonnet',  label: 'Claude Sonnet 4.5', vendor: 'anthropic', requests: 14900, tokensIn:  5_371_000, tokensOut:  1_179_000, spend:  35.40 },
+  { key: 'haiku',   label: 'Claude Haiku',      vendor: 'anthropic', requests: 25030, tokensIn:  2_676_000, tokensOut:  1_784_000, spend:   8.50 },
+  { key: 'gpt',     label: 'GPT-5.1',           vendor: 'openai',    requests:  6670, tokensIn:  1_859_000, tokensOut:  1_001_000, spend:  14.00 },
+  { key: 'gemini',  label: 'Gemini 3 Pro',      vendor: 'google',    requests:  8720, tokensIn:  2_835_000, tokensOut:  1_215_000, spend:   9.50 },
+  { key: 'llama',   label: 'Llama 4.2 405B',    vendor: 'meta',      requests:  5280, tokensIn:    936_000, tokensOut:    264_000, spend:   6.00 },
+  { key: 'mistral', label: 'Mistral Large 3',   vendor: 'mistral',   requests:   690, tokensIn:    247_000, tokensOut:    133_000, spend:   2.30 },
 ];
 
 /* Three cards, one per entity — CTO 2026-05-13: "no reason to have 3 stat
@@ -943,10 +1069,10 @@ function TopList({
     <Card density="flush">
       <div className="flex items-start justify-between gap-2 p-4">
         <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="font-heading text-base leading-snug font-medium text-ink-900 m-0">
+          <h3 className="font-heading text-base leading-snug font-medium text-foreground m-0">
             {title}
           </h3>
-          <p className="font-sans text-sm/5 tracking-tight text-ink-500 m-0">
+          <p className="font-sans text-sm/5 tracking-tight text-muted-foreground m-0">
             {subtitle}
           </p>
         </div>
@@ -957,17 +1083,17 @@ function TopList({
           onValueChange={(v) => onMetricChange(v as Metric)}
         />
       </div>
-      <div className="flex flex-col px-4 pb-4 gap-2.5">
+      <div className="flex flex-col px-4 pb-4 gap-3">
         {rows.map((row) => (
           <div key={row.rowKey} className="flex items-center gap-2 min-w-0">
             {row.avatar}
             <span
-              className={`text-sm text-ink-900 tracking-snug truncate flex-1 min-w-0 ${row.labelClassName ?? 'font-sans'}`}
+              className={`text-sm text-foreground tracking-snug truncate flex-1 min-w-0 ${row.labelClassName ?? 'font-sans'}`}
               title={row.label}
             >
               {row.label}
             </span>
-            <span className="font-mono tabular-nums text-sm text-ink-900 whitespace-nowrap">
+            <span className="font-mono tabular-nums text-sm text-foreground whitespace-nowrap">
               {row.value}
             </span>
           </div>
@@ -1000,7 +1126,7 @@ function TopByAxisRow({
         key: m.key,
         label: m.label,
         vendor: m.vendor,
-        axis: isSpend ? m.spend * scale : m.tokens * scale,
+        axis: isSpend ? m.spend * scale : (m.tokensIn + m.tokensOut) * scale,
       }))
       .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
@@ -1027,7 +1153,7 @@ function TopByAxisRow({
         label: k.label,
         labelClassName: 'font-mono tracking-tight',
         value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtTokens(Math.round(k.axis)),
-        avatar: <Key aria-hidden className="size-4 shrink-0 text-ink-500" strokeWidth={2} />,
+        avatar: <Key aria-hidden className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />,
       }));
   }, [scale, keyMetric]);
 
@@ -1219,11 +1345,11 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   );
 
   return (
-    <Card density="flush">
+    <Card id="usage-by-key" density="flush">
       <div className="flex items-center gap-2 p-4">
         <div className="relative w-72 min-w-0 shrink-0">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground"
             strokeWidth={1.75}
             aria-hidden
           />
@@ -1244,7 +1370,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           <SelectTrigger
             size="sm"
             aria-label="Sort keys by"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1263,7 +1389,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
             <TableHead className="whitespace-nowrap">Key</TableHead>
             <TableHead className="whitespace-nowrap">Member</TableHead>
             <TableHead className="whitespace-nowrap">
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1">
                 Billing
                 <Tooltip>
                   <TooltipTrigger
@@ -1276,12 +1402,12 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                   <TooltipContent>
                     <div className="flex flex-col gap-1">
                       <div>
-                        <span className="font-mono font-medium text-ink-900">Gate</span>
-                        {' '}— debits the workspace prepaid Gateway balance.
+                        <span className="font-mono font-medium text-foreground">Gate</span>
+                        {': '}debits the workspace prepaid Gateway balance.
                       </div>
                       <div>
-                        <span className="font-mono font-medium text-ink-900">BYOK</span>
-                        {' '}— bills the customer's own provider account directly; Gateway sees $0.
+                        <span className="font-mono font-medium text-foreground">BYOK</span>
+                        {': '}bills the customer's own provider account directly; Gateway sees $0.
                       </div>
                     </div>
                   </TooltipContent>
@@ -1298,12 +1424,13 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           {pageRows.map((row) => (
             <TableRow key={row.key} className="hover:bg-transparent">
               <TableCell className="whitespace-nowrap font-mono tracking-snug">
-                {/* `name (sk-gw-NNN)` — name in dark ink, the
-                    parenthetical gateway id dimmed to ink-600.
-                    Matches the Events and Requests tables. */}
+                {/* `name (sk-gw-NNN)` — name in the data tier (ink-800), the
+                    parenthetical gateway id dimmed to muted-foreground (ink-500).
+                    Three-tier table policy is 500/800/900; ink-600 would
+                    violate it. Matches Security.tsx:1338. */}
                 <span className="text-ink-800">{row.label}</span>
                 {KEY_SUFFIX[row.key] ? (
-                  <span className="text-ink-600"> ({KEY_SUFFIX[row.key]})</span>
+                  <span className="text-muted-foreground"> ({KEY_SUFFIX[row.key]})</span>
                 ) : null}
               </TableCell>
               <TableCell className="whitespace-nowrap">
@@ -1312,9 +1439,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                 </span>
               </TableCell>
               <TableCell className="whitespace-nowrap">
-                <Badge variant="outline" className="font-mono text-ink-500">
-                  {row.path}
-                </Badge>
+                <Badge variant="outline">{row.path}</Badge>
               </TableCell>
               <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-800">
                 {fmtInt(row.requests)}
@@ -1325,8 +1450,13 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
               <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-800">
                 {fmtTokens(row.tokensOut)}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-900">
-                {row.path === 'BYOK' ? <span className="text-ink-400">—</span> : fmtUsd(row.spend)}
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-foreground">
+                {row.path === 'BYOK' ? (
+                  <>
+                    <span aria-hidden className="text-ink-400">—</span>
+                    <span className="sr-only">No Gateway spend (BYOK)</span>
+                  </>
+                ) : fmtUsd(row.spend)}
               </TableCell>
             </TableRow>
           ))}

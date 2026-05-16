@@ -368,6 +368,7 @@ components:
 4. **Brand colors as chart series colors** → 8-slot OKLCH categorical palette picked by series index. Per-series `slot?: number` override only for brand-mnemonic exceptions (Anthropic→orange, OpenAI→blue).
 5. **Solid 1px card borders** → three-layer `shadow-as-border` (1px ring + 1px lift + 2px ambient, `color-mix` from ink-800).
 6. **All numerics mono** → five-voice taxonomy. Hero summary numerics ≥24px sans tabular via `<HeroNumeric>`; data numerics <20px stay mono.
+7. **WCAG 2.5.5 AAA 44×44 touch targets** → 32px (`h-8` / `size="sm"`) for Select / Input / SegmentedPill / IconActionButton chrome on dense filter rows. This is an operator dashboard on desktop (`Who: human operator running an AI gateway in production`), not a touch surface. WCAG 2.5.8 Level AA (24×24 minimum) is the target we hold — every chrome control clears it. If we ever ship a mobile / tablet surface, raise to AAA or wrap critical actions in `IconActionButton`'s `after:-inset-2` hit-target expansion. Until then, dense controls are correct and AAA touch findings should be marked "register carve-out" not "fix."
 
 ---
 
