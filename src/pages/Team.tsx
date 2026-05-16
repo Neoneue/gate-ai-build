@@ -8,10 +8,9 @@ import {
   Send,
   UserPlus,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import {
   Dialog,
   DialogClose,
@@ -169,11 +168,10 @@ type MemberRow = {
   avatarTone: AvatarTone;
   role: MemberRole;
   joined: string;
-  isYou?: boolean;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: 'Apr 20, 2026', isYou: true },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: 'Apr 20, 2026' },
   { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: 'Apr 22, 2026' },
   { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: 'May 01, 2026' },
   { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: 'May 08, 2026' },
@@ -195,12 +193,15 @@ function MembersPane() {
     );
   });
 
+  const isEmpty = visible.length === 0;
+
   return (
     <Card density="flush">
       {/* Toolbar — search + role filter. Sits as direct child of Card
           (density="flush"); paddings cascade from the toolbar's own
           px-4/py-3 plus Card's edge-flush contract. Filter pills follow
           the codified no-leading-icon rule for dense table toolbars. */}
+      {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
         <div className="relative w-72 min-w-0 shrink-0">
           <Search
@@ -245,7 +246,15 @@ function MembersPane() {
           </SelectContent>
         </Select>
       </div>
+      )}
 
+      {isEmpty ? (
+        <TableEmptyState
+          title="No members"
+          body="Workspace members and their roles will appear here."
+        />
+      ) : (
+        <>
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -277,6 +286,8 @@ function MembersPane() {
         onPageChange={setPage}
         onRowsPerPageChange={setRowsPerPage}
       />
+        </>
+      )}
     </Card>
   );
 }
@@ -289,22 +300,19 @@ function MemberRowView({ row }: { row: MemberRow }) {
         <div className="flex items-center gap-3 min-w-0">
           <Avatar tone={row.avatarTone} initials={initialsOf(row.name)} />
           <div className="flex flex-col min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                title={row.name}
-                className="font-sans text-sm font-medium text-ink-900 tracking-snug truncate"
-              >
-                {row.name}
-              </span>
-              {row.isYou ? <Badge variant="neutral">You</Badge> : null}
-            </div>
+            <span
+              title={row.name}
+              className="font-sans text-sm font-medium text-ink-900 tracking-snug truncate"
+            >
+              {row.name}
+            </span>
             <span className="font-mono text-xs text-ink-500 tracking-snug truncate" title={row.email}>
               {row.email}
             </span>
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
+      <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
         {row.joined}
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
@@ -353,22 +361,23 @@ const INVITATION_ROWS: InvitationRow[] = [
 function InvitationsPane({ onInvite }: { onInvite: () => void }) {
   if (INVITATION_ROWS.length === 0) {
     return (
-      <EmptyState
-        className="py-16"
-        title="No pending invitations"
-        body="Invitations you’ve sent that haven’t been accepted yet show up here. They expire after 7 days."
-        action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onInvite}
-            className="border-border bg-card text-ink-900"
-          >
-            <UserPlus data-icon="inline-start" aria-hidden />
-            Invite member
-          </Button>
-        }
-      />
+      <Card density="flush">
+        <TableEmptyState
+          title="No pending invitations"
+          body="Invitations you’ve sent that haven’t been accepted yet show up here. They expire after 7 days."
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onInvite}
+              className="border-border bg-card text-ink-900"
+            >
+              <UserPlus data-icon="inline-start" aria-hidden />
+              Invite member
+            </Button>
+          }
+        />
+      </Card>
     );
   }
   return (
@@ -393,13 +402,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
                 {row.sent}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-500 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
                 {row.expires}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">

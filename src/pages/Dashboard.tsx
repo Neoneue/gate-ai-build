@@ -468,7 +468,7 @@ export function RecentRequestsCard() {
               : 'text-right whitespace-nowrap font-mono tabular-nums text-ink-800';
             return (
               <TableRow key={`${row.time}-${i}`} className="hover:bg-transparent">
-                <TableCell className="whitespace-nowrap font-mono tabular-nums tracking-snug text-ink-500">
+                <TableCell className="whitespace-nowrap font-mono tabular-nums tracking-snug text-ink-800">
                   {row.time}
                 </TableCell>
                 <TableCell className="max-w-[260px]">
