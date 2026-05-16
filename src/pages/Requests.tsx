@@ -29,6 +29,7 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { RowActionButton } from '@/components/ui/row-action-button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { CodeBlock, CodeCard, type CodeLine } from '@/components/ui/code-card';
 import { SectionHeading } from '@/components/ui/section-heading';
@@ -1028,12 +1029,15 @@ function RequestsTableSection({
     return matchesResponse && matchesGuardrail;
   });
 
+  const isEmpty = filteredRows.length === 0;
+
   return (
     <>
     <Card density="flush">
         {/* Toolbar — shape lifted from CMP-011.1. No flex-wrap: the
             sortable-table convention is single-row, and the filter set
             fits in the gray well at this width. */}
+        {isEmpty ? null : (
         <div className="flex items-center gap-2 p-4">
           <div className="relative w-72 min-w-0 shrink-0">
             <Search
@@ -1130,7 +1134,15 @@ function RequestsTableSection({
             Export CSV
           </Button>
         </div>
+        )}
 
+        {isEmpty ? (
+          <TableEmptyState
+            title="No requests"
+            body="Individual API requests routed through the gateway will appear here."
+          />
+        ) : (
+          <>
         {/* Table */}
         <Table>
           <TableHeader>
@@ -1327,6 +1339,8 @@ function RequestsTableSection({
           onPageChange={setPage}
           onRowsPerPageChange={setRowsPerPage}
         />
+          </>
+        )}
     </Card>
     <RequestDetailDialog
       row={selectedRow}

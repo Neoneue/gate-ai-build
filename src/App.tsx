@@ -9,6 +9,7 @@ import {
 import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
+import { AuditTrail } from '@/pages/AuditTrail';
 import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
 import { Dashboard } from '@/pages/Dashboard';
@@ -66,6 +67,7 @@ export default function App() {
           <Route path="/guardrails" element={<Guardrails />} />
           <Route path="/security" element={<Security />} />
           <Route path="/policies" element={<Policies />} />
+          <Route path="/audit-trail" element={<AuditTrail />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />

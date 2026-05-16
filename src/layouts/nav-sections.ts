@@ -48,7 +48,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   },
   {
     label: 'Audit',
-    items: [{ id: 'audit-trail', icon: Lock, label: 'Audit Trail' }],
+    items: [{ id: 'audit-trail', icon: Lock, label: 'Audit Trail', pageId: '/audit-trail' }],
   },
   {
     label: 'Workspace Admin',

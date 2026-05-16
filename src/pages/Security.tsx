@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { TextLink } from '@/components/ui/text-link';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -980,6 +981,8 @@ function EventsTableSection({
     });
   }, [query, type, keyFilter, action]);
 
+  const isEmpty = filtered.length === 0;
+
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
   // ~40-min window of "now"). The pagination footer "of N" reconciles with
   // the hero "Total events" KPI: unfiltered, it's exactly the range total
@@ -1003,6 +1006,7 @@ function EventsTableSection({
       {/* Toolbar — Search + 3 filter pills, count summary right-aligned.
           Same shape as CMP-013's RequestsTableSection. No leading category
           icons on the filter pills (project rule for dense toolbars). */}
+      {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
         <div className="relative w-72 min-w-0 shrink-0">
           <Search
@@ -1080,7 +1084,15 @@ function EventsTableSection({
           Export CSV
         </Button>
       </div>
+      )}
 
+      {isEmpty ? (
+        <TableEmptyState
+          title="No security events"
+          body="Prompt injection, PII, and credential leak events flagged by your policies will appear here."
+        />
+      ) : (
+        <>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -1176,6 +1188,8 @@ function EventsTableSection({
         onPageChange={setPage}
         onRowsPerPageChange={setRowsPerPage}
       />
+        </>
+      )}
     </Card>
     <ThreatEventDetailDialog
       selection={selectedRow}

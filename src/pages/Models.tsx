@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -715,6 +715,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         </TabsList>
 
       <Card density="flush">
+        {isEmpty ? null : (
         <Toolbar
           search={search}
           onSearchChange={(v) => {
@@ -737,15 +738,11 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             resetToFirstPage();
           }}
         />
+        )}
 
         {isEmpty ? (
-          // Empty-state branch — the toolbar stays visible above so the
-          // user can recover by changing a filter; the table + pagination
-          // footer collapse to a centered EmptyState with a "Clear filters"
-          // recovery action that resets every input.
-          <EmptyState
-            className="border-t border-border rounded-none shadow-none"
-            title="No models match these filters."
+          <TableEmptyState
+            title="No models match these filters"
             body="Try a broader search, a different modality, or clear the filter pills to see every routable model."
             action={
               <Button

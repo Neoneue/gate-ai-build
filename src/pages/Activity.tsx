@@ -29,6 +29,7 @@ import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import {
   Select,
@@ -1355,8 +1356,11 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
     [filteredRows, page, perPage],
   );
 
+  const isEmpty = filteredRows.length === 0;
+
   return (
     <Card id="usage-by-key" density="flush">
+      {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
         <div className="relative w-72 min-w-0 shrink-0">
           <Search
@@ -1394,6 +1398,15 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           </SelectContent>
         </Select>
       </div>
+      )}
+
+      {isEmpty ? (
+        <TableEmptyState
+          title="No keys to show"
+          body="Per-key spend, requests, and token totals will appear here as your workspace routes traffic."
+        />
+      ) : (
+        <>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -1480,6 +1493,8 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         onPageChange={setPage}
         onRowsPerPageChange={setRowsPerPage}
       />
+        </>
+      )}
     </Card>
   );
 }

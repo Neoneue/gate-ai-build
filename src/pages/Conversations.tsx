@@ -11,6 +11,7 @@ import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { MessageBlock, type MessageRole } from '@/components/ui/message-block';
 import { RowActionButton } from '@/components/ui/row-action-button';
+import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { ToolResultCode } from '@/components/ui/tool-result-code';
 import {
@@ -271,6 +272,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
     return true;
   });
   const paginationTotal = isFiltered ? visibleRows.length : Math.round(CONVERSATIONS_TOTAL * scale);
+  const isEmpty = visibleRows.length === 0;
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
   const [selectedRow, setSelectedRow] = useState<ConversationRow | null>(null);
@@ -300,6 +302,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
     <>
     <Card density="flush">
       {/* Toolbar */}
+      {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
         <div className="relative w-72 min-w-0 shrink-0">
           <Search
@@ -356,7 +359,15 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           </SelectContent>
         </Select>
       </div>
+      )}
 
+      {isEmpty ? (
+        <TableEmptyState
+          title="No conversations"
+          body="Multi-turn conversations grouped by key and model will appear here as your workspace routes traffic."
+        />
+      ) : (
+        <>
       {/* Table */}
       <Table>
         <TableHeader>
@@ -439,7 +450,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                   {scaleCostStr(row.cost, scale)}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-500">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                   {row.updated}
                 </TableCell>
               </TableRow>
@@ -455,6 +466,8 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
         onPageChange={setPage}
         onRowsPerPageChange={setRowsPerPage}
       />
+        </>
+      )}
     </Card>
     <ConversationDetailDialog
       row={selectedRow}
