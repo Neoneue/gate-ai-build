@@ -540,7 +540,6 @@ export function Security() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Security events"
             activeNavId="security-events"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}
@@ -1217,10 +1216,8 @@ function ThreatEventDetailDialog({
 
 function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const navigate = useNavigate();
-  const typeMeta = TYPE_META[row.type];
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row);
-  const TypeIcon = typeMeta.Icon;
   const requestId = row.requestId;
   const conversationId = row.conversationId;
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
@@ -1229,11 +1226,12 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   return (
     <>
       <DialogScrollHeader>
-        <DialogTitleBlock
-          titleAriaLabel={`${typeMeta.label} event ${requestId}`}
-          icon={<TypeIcon className="size-5" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />}
-        >
-          {detail.detection}
+        {/* Static title — a single event may carry multiple detection signals
+            (injection + PII + credential), so a per-event title misrepresents
+            the event. The Detection section below carries the per-check
+            verdicts. */}
+        <DialogTitleBlock titleAriaLabel={`Security event ${requestId}`}>
+          Security event
         </DialogTitleBlock>
       </DialogScrollHeader>
 

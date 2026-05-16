@@ -77,7 +77,6 @@ export function Dashboard() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Overview"
             activeNavId="overview"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}

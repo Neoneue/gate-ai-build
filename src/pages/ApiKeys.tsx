@@ -134,7 +134,6 @@ export function ApiKeys() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="API Keys"
       activeNavId="api-keys"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}

@@ -74,7 +74,6 @@ export function Team() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Team"
             activeNavId="team"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}

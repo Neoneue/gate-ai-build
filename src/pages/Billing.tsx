@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CreditCard, History, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -12,23 +12,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page (route: /billing, sidebar: "Billing")
  *
- * Four sections stacked: plan + credits row (3/2 split), payment method,
- * history. No eyebrow above the page title. History uses the canonical
- * Table primitive when populated; empty state stands in until charges
- * exist. Mock data assumes a fresh workspace: Free plan, $0 credits,
- * nothing used, no payment method, no history.
+ * Three sections stacked: plan + credits row (50/50), and the History
+ * table. Mock data assumes a fresh workspace with one $25 top-up and two
+ * gateway-request debits — reconciles with the Credits hero ($24.98 = the
+ * running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Billing() {
@@ -40,7 +45,6 @@ export function Billing() {
 
   return (
     <DashboardChrome
-      breadcrumbCurrent="Billing"
       activeNavId="billing"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
@@ -48,10 +52,6 @@ export function Billing() {
     >
       <PageHeader />
       <PlanCreditsRow />
-      {/* Payment method + Billing contact — hidden for now; preserved for re-enable. */}
-      <div className="hidden">
-        <PaymentBillingRow />
-      </div>
       <HistorySection />
     </DashboardChrome>
   );
@@ -83,7 +83,7 @@ function PlanCard() {
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
-        <Eyebrow as="div">Plan</Eyebrow>
+        <CardTitle>Plan</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
@@ -150,20 +150,20 @@ function CreditsCard() {
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
-        <Eyebrow as="div">Credits</Eyebrow>
+        <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3">
-        <HeroNumeric size="lg">$0</HeroNumeric>
+        <HeroNumeric size="lg">$24.98</HeroNumeric>
         <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
           Used for requests routed through our gateway. Each call is charged at our per-model rate. Security and audit are included.
         </p>
         <dl className="flex flex-col gap-2 text-sm m-0 mt-3">
-          <CreditStatRow label="Used this month" value="$0" mono />
+          <CreditStatRow label="Used this month" value="$0.02" mono />
           <CreditStatRow
             label="Auto-recharge"
             value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
           />
-          <CreditStatRow label="Last top-up" value="Never" />
+          <CreditStatRow label="Last top-up" value="May 12, 2026" />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t border-border">
@@ -498,104 +498,68 @@ function CreditStatRow({
   );
 }
 
-/* ─── Payment method + Billing contact (50/50) ───────────────────────── */
-
-function PaymentBillingRow() {
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <PaymentMethodCard />
-      <BillingContactCard />
-    </div>
-  );
-}
-
-function PaymentMethodCard() {
-  return (
-    <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <Eyebrow as="div">Payment method</Eyebrow>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-3">
-        <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
-          Charged for subscription renewals and credit top-ups.
-        </p>
-        <div className="flex items-center gap-3 rounded-md border border-border bg-ink-50 px-4 py-3 min-w-0">
-          <span
-            aria-hidden
-            className="inline-flex items-center justify-center h-6 px-2 rounded-xs border border-ink-700 text-ink-700 font-mono text-xs font-medium tracking-wider shrink-0"
-          >
-            CARD
-          </span>
-          <span className="font-sans text-sm text-ink-500 truncate">
-            No payment method on file.
-          </span>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-4 border-t border-border">
-        <Button variant="secondary">
-          <CreditCard data-icon="inline-start" aria-hidden />
-          Add payment method
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
-function BillingContactCard() {
-  return (
-    <Card className="min-w-0">
-      <CardHeader>
-        <Eyebrow as="div">Billing contact</Eyebrow>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-3">
-        <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
-          Receipts and renewal notices route to this address.
-        </p>
-        <div className="flex flex-col gap-1">
-          <p className="font-sans text-sm font-medium text-ink-900 m-0">
-            Chad Ponticas
-          </p>
-          <address className="font-sans text-sm not-italic text-ink-500 m-0">
-            1900 Lake Houston Drive<br />
-            Houston, TX 77302
-          </address>
-          <p className="font-mono text-sm text-ink-500 m-0 truncate">
-            chad@constellationnetwork.io
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 /* ─── History ────────────────────────────────────────────────────────── */
+
+type HistoryRow = {
+  id: string;
+  date: string;
+  type: 'Gateway request' | 'Credits added';
+  amount: number; // positive = credit, negative = debit
+  balanceAfter: number;
+};
+
+// Newest first. Credits-added rows render the amount in success-700 to mark
+// the inflow; debits use the default foreground tone.
+const HISTORY_ROWS: HistoryRow[] = [
+  { id: 'h-3', date: 'May 12, 2026', type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
+  { id: 'h-2', date: 'May 12, 2026', type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
+  { id: 'h-1', date: 'May 12, 2026', type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
+];
+
+const fmtAmount = (n: number): string => {
+  const abs = Math.abs(n).toFixed(2);
+  if (n > 0) return `+$${abs}`;
+  if (n < 0) return `-$${abs}`;
+  return `$${abs}`;
+};
+
+const fmtUsd = (n: number): string => `$${n.toFixed(2)}`;
 
 function HistorySection() {
   return (
     <Card density="flush">
-      <div className="flex flex-col gap-1 p-4 min-w-0">
-        <Eyebrow as="div">History</Eyebrow>
-        <p className="font-sans text-sm/5 tracking-tight text-ink-500 text-pretty m-0">
-          Past charges and credit top-ups.
-        </p>
-      </div>
-
-      {/* Empty branch — fresh workspace has no charges. When data lands,
-          swap this for `<Table>` + rows. */}
-      <EmptyState
-        className="border-t border-border rounded-none shadow-none"
-        icon={
-          <div
-            aria-hidden
-            className="flex items-center justify-center rounded-md bg-muted"
-            style={{ width: 48, height: 48, flexShrink: 0 }}
-          >
-            <History className="text-ink-600" strokeWidth={1.5} style={{ width: 24, height: 24 }} />
-          </div>
-        }
-        title="No history yet"
-        body="Charges and credit top-ups will appear here once your workspace starts routing requests."
-      />
+      <CardHeader className="py-3">
+        <CardTitle>History</CardTitle>
+      </CardHeader>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="whitespace-nowrap">Date</TableHead>
+            <TableHead className="whitespace-nowrap">Type</TableHead>
+            <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
+            <TableHead className="text-right whitespace-nowrap">Balance after</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {HISTORY_ROWS.map((row) => (
+            <TableRow key={row.id} className="hover:bg-transparent">
+              <TableCell className="whitespace-nowrap text-ink-800">{row.date}</TableCell>
+              <TableCell className="whitespace-nowrap text-ink-800">{row.type}</TableCell>
+              <TableCell
+                className={cn(
+                  'text-right whitespace-nowrap font-mono tabular-nums',
+                  row.amount > 0 ? 'text-success-700' : 'text-ink-800',
+                )}
+              >
+                {fmtAmount(row.amount)}
+              </TableCell>
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-foreground">
+                {fmtUsd(row.balanceAfter)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </Card>
   );
 }

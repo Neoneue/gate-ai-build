@@ -86,13 +86,12 @@ export function Models() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
 
-  // selectedModel lives at the top so DashboardChrome's breadcrumbCurrent can
-  // track the active view (list vs. detail) without the chrome re-mounting.
+  // selectedModel lives at the top so list ↔ detail view switching doesn't
+  // re-mount DashboardChrome.
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
 
   return (
     <DashboardChrome
-            breadcrumbCurrent={selectedModel ? selectedModel.name : 'Models'}
             activeNavId="models"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}

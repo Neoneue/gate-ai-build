@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Bell,
-  ChevronRight,
   ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
@@ -14,8 +13,7 @@ import { SIDEBAR_SECTIONS } from './nav-sections';
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
  * CMP-014 surfaces. Renders the primary <Sidebar> and the DashTopBar
- * (toggle + breadcrumb + Docs/Notifications). Page content is
- * passed in via `children`.
+ * (toggle + Docs/Notifications). Page content is passed in via `children`.
  *
  * Single source of truth for the nav data lives in `./nav-sections`
  * (no longer duplicated 3×). Active state is derived from `activeNavId`,
@@ -23,8 +21,6 @@ import { SIDEBAR_SECTIONS } from './nav-sections';
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface DashboardChromeProps {
-  /** Last (current-page) breadcrumb crumb. */
-  breadcrumbCurrent: string;
   /** id of the active sidebar item. */
   activeNavId: string;
   sidebarExpanded: boolean;
@@ -38,7 +34,6 @@ export interface DashboardChromeProps {
 }
 
 export function DashboardChrome({
-  breadcrumbCurrent,
   activeNavId,
   sidebarExpanded,
   onToggleSidebar,
@@ -59,7 +54,6 @@ export function DashboardChrome({
           <DashTopBar
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={onToggleSidebar}
-            breadcrumbCurrent={breadcrumbCurrent}
             hideDocsButton={hideDocsButton}
           />
           {/* Content pane fills the remaining column height and scrolls
@@ -75,17 +69,15 @@ export function DashboardChrome({
   );
 }
 
-/* ─── Top bar (toggle + breadcrumb + actions) ──────────────────────────── */
+/* ─── Top bar (toggle + actions) ───────────────────────────────────────── */
 
 function DashTopBar({
   sidebarExpanded,
   onToggleSidebar,
-  breadcrumbCurrent,
   hideDocsButton = false,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
-  breadcrumbCurrent: string;
   hideDocsButton?: boolean;
 }) {
   return (
@@ -127,41 +119,6 @@ function DashTopBar({
             />
           </span>
         </Button>
-        <nav aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2">
-            <li>
-              {/* Buttons not anchors — this app has no router, so cmd/middle-
-                  click on an anchor would lead nowhere. Same conversion as
-                  PaginationLink. Visual contract = link styling, semantics
-                  = button. */}
-              <button
-                type="button"
-                className="font-sans text-xs text-ink-500 outline-none hover:text-ink-700 hover:underline focus-visible:text-ink-700 focus-visible:underline decoration-ink-500 underline-offset-2"
-              >
-                All Projects
-              </button>
-            </li>
-            <li className="flex items-center" aria-hidden>
-              <ChevronRight className="size-3 text-ink-400" strokeWidth={1.75} />
-            </li>
-            <li>
-              <button
-                type="button"
-                className="font-sans text-xs text-ink-500 outline-none hover:text-ink-700 hover:underline focus-visible:text-ink-700 focus-visible:underline decoration-ink-500 underline-offset-2"
-              >
-                Constellation Gate AI
-              </button>
-            </li>
-            <li className="flex items-center" aria-hidden>
-              <ChevronRight className="size-3 text-ink-400" strokeWidth={1.75} />
-            </li>
-            <li>
-              <span aria-current="page" className="font-sans text-xs font-medium text-ink-900">
-                {breadcrumbCurrent}
-              </span>
-            </li>
-          </ol>
-        </nav>
       </div>
       <div className="flex items-center gap-1">
         {hideDocsButton ? null : (

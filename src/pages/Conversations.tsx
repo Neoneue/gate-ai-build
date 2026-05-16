@@ -96,7 +96,6 @@ export function Conversations() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Conversations"
             activeNavId="conversations"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}

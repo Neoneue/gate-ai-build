@@ -33,7 +33,6 @@ export function Settings() {
 
   return (
     <DashboardChrome
-            breadcrumbCurrent="Settings"
             activeNavId="settings"
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={toggleSidebar}
