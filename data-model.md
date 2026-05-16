@@ -43,6 +43,7 @@ graph LR
     LAYOUT --> GRD["/guardrails → Guardrails.tsx"]
     LAYOUT --> SEC["/security → Security.tsx"]
     LAYOUT --> POL["/policies → Policies.tsx"]
+    LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/team → Team.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
@@ -63,7 +64,7 @@ Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 | _(unnamed)_ | overview → `/overview`, requests → `/requests`, conversations → `/conversations` |
 | Gateway | models → `/models`, token-savings → `/token-savings`, guardrails → `/guardrails` |
 | Security | security-events → `/security`, policies → `/policies` |
-| Audit | audit-trail _(inert, no path)_ |
+| Audit | audit-trail → `/audit-trail` _(stub page; full surface in flight)_ |
 | Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
@@ -553,6 +554,18 @@ page, rowsPerPage: number
 **State:** `policies: PolicyState[]`
 
 **POLICIES seed:** 3 `PolicyConfig` objects with nested sensitivity / scan-direction / action options. Each policy card expands when enabled.
+
+---
+
+### Audit Trail page (`/audit-trail` → `AuditTrail.tsx`)
+
+**Purpose:** Tamper-evident, cryptographically verifiable log of every routed request — anchored to Constellation's Digital Evidence layer. Hero differentiator of the H1 narrative.
+
+**State:** none (stub page).
+
+**Status:** Stub. PageHeader + EmptyState placeholder ("Audit Trail surface in progress"). Full surface in flight; when it lands, migrate the DE / "tamper-evident" / "Digital Evidence" copy off `TokenSavings.tsx:50` onto this page's header.
+
+**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class."
 
 ---
 
