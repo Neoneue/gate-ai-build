@@ -1078,42 +1078,30 @@ function TraceItem({
         />
       </div>
 
-      {/* Content column — three stacked rows: (1) vendor + model + time,
-          (2) label + warn badge + requestId, (3) tokens · latency · cost. */}
+      {/* Content column — two stacked rows by default; warn events get a
+          third row below for the warn badge (left-aligned). Model
+          deprioritized — repeated across every step's row added scan
+          noise without information.
+          (1) step label + time as the primary identifier,
+          (2) tokens · latency · cost + requestId on the right,
+          (3) warn badge (only when status === 'warn'). */}
       <div className="flex flex-col gap-1 min-w-0 flex-1">
-        {/* Row 1 — primary identity. Vendor avatar + model name on the left;
-            timestamp right-aligned. */}
+        {/* Row 1 — primary. Agent step label takes the slot the model
+            previously occupied; timestamp right-aligned. */}
         <div className="flex items-center gap-2 min-w-0">
-          <VendorAvatar vendor={event.vendor} />
           <span className="font-mono text-sm text-ink-900 -tracking-[0.2px] truncate flex-1">
-            {event.model}
+            {event.label}
           </span>
           <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em] shrink-0">
             {event.time}
           </span>
         </div>
 
-        {/* Row 2 — agent step label + optional warn badge + requestId. */}
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-sm text-ink-500 -tracking-[0.01em] truncate flex-1">
-            {event.label}
-          </span>
-          {event.status === 'warn' && event.warnNote ? (
-            <Badge variant="warning" aria-label={`Warning: ${event.warnNote} match`}>
-              <TriangleAlert className="size-3" strokeWidth={1.75} aria-hidden />
-              {event.warnNote}
-            </Badge>
-          ) : null}
-          <span className="font-mono text-xs text-ink-400 -tracking-[0.01em] shrink-0">
-            {event.requestId}
-          </span>
-        </div>
-
-        {/* Row 3 — per-step economics. `tokens-in → tokens-out · latency ·
-            cost`. Latency turns warning-700 on slow rows. Cost renders at
-            ink-800 per the three-tier table ink policy — same body-data
-            weight as the other carriers in the row. Separators drop to
-            ink-300 so they read as hairline scaffolding, not data. */}
+        {/* Row 2 — per-step economics + requestId. `tokens-in → tokens-out ·
+            latency · cost` on the left; requestId right-aligned. Latency
+            turns warning-700 on slow rows. Cost renders at ink-800 per the
+            three-tier table ink policy. Separators drop to ink-300 so they
+            read as hairline scaffolding, not data. */}
         <div className="flex items-center gap-2 min-w-0 text-ink-500">
           <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums -tracking-[0.01em]">
             {event.inTokens}
@@ -1125,10 +1113,25 @@ function TraceItem({
             {event.latency}
           </span>
           <span className="text-ink-300" aria-hidden>·</span>
-          <span className="font-mono text-xs tabular-nums -tracking-[0.01em] text-ink-800">
+          <span className="font-mono text-xs tabular-nums -tracking-[0.01em] text-ink-800 flex-1">
             {event.cost}
           </span>
+          <span className="font-mono text-xs text-ink-400 -tracking-[0.01em] shrink-0">
+            {event.requestId}
+          </span>
         </div>
+
+        {/* Row 3 — warn badge, only when this step carries a policy warn.
+            Left-aligned on its own row so the signal is unmissable without
+            crowding the primary identifier line. */}
+        {event.status === 'warn' && event.warnNote ? (
+          <div className="flex items-center">
+            <Badge variant="warning" aria-label={`Warning: ${event.warnNote} match`}>
+              <TriangleAlert className="size-3" strokeWidth={1.75} aria-hidden />
+              {event.warnNote}
+            </Badge>
+          </div>
+        ) : null}
       </div>
     </button>
   );
