@@ -678,10 +678,10 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 | Tone | Use |
 |---|---|
-| `text-ink-500` | Context (timestamps, sub-IDs) |
-| `text-ink-800` | Body data (IDs, keys, numerics, initiators) |
-| `text-ink-900` | Row's primary identifier (model name with VendorAvatar, row title) |
-| `text-ink-400` | Missing-data dashes (`—`) |
+| `text-ink-500` | Context-only fragments: sub-IDs nested under a larger identifier (e.g. `(sk-gw-NNN)` parenthetical), gateway-id suffixes, separators. **Not timestamps.** |
+| `text-ink-800` | Body data (IDs, keys, numerics, initiators, **dates / times / relative-ago / countdowns**). Date/time cells live here — they're row payload, not scaffolding, even when they read as "context." Locked 2026-05-16 after un-muting Conversations / Team / Dashboard / AuditTrail date columns. |
+| `text-ink-900` | Row's primary identifier (model name with VendorAvatar, row title, member name) |
+| `text-ink-400` | Missing-data dashes (`—`) — always paired with an `sr-only` semantic for screen reader users (see Activity `:1611`, AuditTrail `:273` Anchor cell). |
 
 **No `ink-600` / `ink-700` body-cell tones** — middle-tier neutrals collide with the three-tier policy.
 
