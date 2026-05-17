@@ -83,12 +83,12 @@ export const PROVIDER_ORDER: Vendor[] = [
  *
  * Iteration history (kept here so future sessions don't re-prosecute):
  * (1) brand chip everywhere → too rainbow on stacked tables.
- * (2) mono ink-800 icon-only → felt heavy.
+ * (2) mono neutral-800 icon-only → felt heavy.
  * (3) brand-tinted bare icon → contrast too low at the time.
  * (4) split treatment (neutral table / brand standalone) → too much
  *     black in tables.
  * (5) brand chip everywhere again — locked for a stretch.
- * (6) mono ink-600 icon-only — quieter, but lost brand identity.
+ * (6) mono neutral-600 icon-only — quieter, but lost brand identity.
  * (7) brand-tinted bare icon — current state. Same shape as (3) with
  *     a clear reference (Stacklane competitor table) showing this is
  *     the convention for product/competitor lists. Trade-off accepted:

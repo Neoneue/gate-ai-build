@@ -126,7 +126,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Team</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Manage roles, invite teammates, and remove access from Chad Ponticas&rsquo;s workspace.
         </p>
       </div>
@@ -292,25 +292,25 @@ function MemberRowView({ row }: { row: MemberRow }) {
           <div className="flex flex-col min-w-0 flex-1">
             <span
               title={row.name}
-              className="font-sans text-sm font-medium text-ink-900 truncate"
+              className="font-sans text-sm font-medium text-neutral-900 truncate"
             >
               {row.name}
             </span>
-            <span className="font-sans text-xs text-ink-500 tracking-snug truncate" title={row.email}>
+            <span className="font-sans text-xs text-neutral-500 tracking-snug truncate" title={row.email}>
               {row.email}
             </span>
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
         {formatDate(row.joined)}
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
         {row.role === 'owner' ? (
           'Owner'
         ) : (
           <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" className="w-28 border-border bg-card text-ink-900 font-normal">
+            <SelectTrigger size="sm" className="w-28 border-border bg-card text-neutral-900 font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -360,7 +360,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               variant="outline"
               size="sm"
               onClick={onInvite}
-              className="border-border bg-card text-ink-900"
+              className="border-border bg-card text-neutral-900"
             >
               <UserPlus data-icon="inline-start" aria-hidden />
               Invite member
@@ -386,19 +386,19 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {INVITATION_ROWS.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-900">
                 <span className="block truncate" title={row.email}>{row.email}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
                 {formatDate(row.sent)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
                 {formatRelative(row.expires, NOW)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
@@ -460,7 +460,7 @@ function InviteMemberDialog({
           className="flex flex-col gap-4"
         >
           <DialogHeader>
-            <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
               Invite member
             </DialogTitle>
             <DialogDescription>
@@ -469,7 +469,7 @@ function InviteMemberDialog({
           </DialogHeader>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-email" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="invite-email" className="text-neutral-600 font-medium text-sm">
               Email
             </Label>
             <Input
@@ -492,14 +492,14 @@ function InviteMemberDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-role" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="invite-role" className="text-neutral-600 font-medium text-sm">
               Role
             </Label>
             <Select value={role} onValueChange={(v: string) => setRole(v as MemberRole)}>
               <SelectTrigger
                 id="invite-role"
                 size="default"
-                className="border-border bg-card text-ink-900 w-full"
+                className="border-border bg-card text-neutral-900 w-full"
               >
                 {/* Function-child so the trigger renders only the short
                     label — the rich two-line item body is for the popup,
@@ -548,8 +548,8 @@ function InviteMemberDialog({
 function RoleItemBody({ label, description }: { label: string; description: string }) {
   return (
     <span className="flex flex-col gap-1 text-left">
-      <span className="font-sans text-sm font-medium text-ink-900">{label}</span>
-      <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>
+      <span className="font-sans text-sm font-medium text-neutral-900">{label}</span>
+      <span className="font-sans text-xs text-neutral-500 text-pretty">{description}</span>
     </span>
   );
 }
@@ -560,7 +560,7 @@ function RoleItemBody({ label, description }: { label: string; description: stri
  * Base UI's `Menu` primitive directly because this codebase doesn't ship
  * a `dropdown-menu.tsx` wrapper yet — when a second consumer appears,
  * lift this into `components/ui/`. Visual treatment mirrors SelectContent
- * (white popup, ink-200 border, --shadow-popup, ink-100 highlight) so
+ * (white popup, neutral-200 border, --shadow-popup, neutral-100 highlight) so
  * the menu reads as part of the same chrome family. */
 
 type RowActionItem = {
@@ -586,7 +586,7 @@ function RowActionsMenu({
             variant="ghost"
             size="icon-sm"
             aria-label={label}
-            className="text-ink-500 hover:text-ink-900"
+            className="text-neutral-500 hover:text-neutral-900"
           />
         }
       >
@@ -596,7 +596,7 @@ function RowActionsMenu({
         <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
           <MenuPrimitive.Popup
             className={cn(
-              'min-w-32 overflow-hidden rounded-sm bg-popover text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none origin-[var(--transform-origin)]',
+              'min-w-32 overflow-hidden rounded-sm bg-popover text-neutral-900 border border-border shadow-(--shadow-popup) py-1 outline-none origin-[var(--transform-origin)]',
               'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             )}
           >
@@ -611,7 +611,7 @@ function RowActionsMenu({
                     'data-[highlighted]:bg-muted focus-visible:bg-muted',
                     item.destructive
                       ? 'text-destructive data-[highlighted]:text-destructive'
-                      : 'text-ink-900',
+                      : 'text-neutral-900',
                     '[&_svg]:size-4 [&_svg]:shrink-0',
                   )}
                 >

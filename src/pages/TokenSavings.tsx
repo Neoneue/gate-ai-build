@@ -43,7 +43,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
+      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
         Cache, compress and deduplicate to spend less per request. Every saved token is anchored on Constellation DE for verifiable cost reporting.
       </p>
     </div>
@@ -86,10 +86,10 @@ function CardChromeHeader({
     <CardHeader className="border-b border-border">
       <div className="flex items-start gap-3">
         <div className="flex flex-col gap-1 min-w-0 flex-1">
-          <h3 className="font-sans text-base font-medium text-ink-900 m-0">
+          <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
             {title}
           </h3>
-          <p className="font-sans text-sm text-ink-500 m-0">{description}</p>
+          <p className="font-sans text-sm text-neutral-500 m-0">{description}</p>
         </div>
         <Badge variant={enabled ? 'success' : 'neutral'}>
           {enabled ? 'ON' : 'OFF'}
@@ -121,10 +121,10 @@ function CachingCard() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p id="caching-switch-label" className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="caching-switch-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
               Enable response caching
             </p>
-            <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+            <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
               Serve cached responses instead of round-tripping to providers. Identical concurrent requests are deduplicated automatically.
             </p>
           </div>
@@ -143,10 +143,10 @@ function CachingCard() {
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p id="ttl-label" className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="ttl-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
               TTL
             </p>
-            <p className="font-sans text-sm text-ink-500 m-0">
+            <p className="font-sans text-sm text-neutral-500 m-0">
               How long cached entries live before re-fetching.
             </p>
           </div>
@@ -187,10 +187,10 @@ function CompressionCard() {
       <CardContent className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1 min-w-0">
-              <p id="compression-switch-label" className="font-sans text-sm font-medium text-ink-900 m-0">
+              <p id="compression-switch-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
                 Enable compression
               </p>
-              <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+              <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
                 Strip envelopes, condense embedded tool output (git diff, cargo, pytest…), and apply lossless prose heuristics. Deterministic and cache-friendly.
               </p>
             </div>

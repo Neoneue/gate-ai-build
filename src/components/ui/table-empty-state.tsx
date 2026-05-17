@@ -58,7 +58,7 @@ const DEFAULT_ICON = (
     aria-hidden
     className="size-12 rounded-md bg-muted flex items-center justify-center"
   >
-    <FileText className="size-5 text-ink-700" strokeWidth={1.75} />
+    <FileText className="size-5 text-neutral-700" strokeWidth={1.75} />
   </div>
 );
 

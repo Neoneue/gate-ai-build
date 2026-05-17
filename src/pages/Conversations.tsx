@@ -141,7 +141,7 @@ function PageHeader({
       <div className="flex flex-col gap-2 max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           A conversation is a chain of requests that share session context: agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
         </p>
       </div>
@@ -173,7 +173,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
         title="Active Now"
         value="247"
         delta="+12"
-        spark={<CompactSpark colorVar="var(--color-ink-500)" data={spark.activeNow} />}
+        spark={<CompactSpark colorVar="var(--color-neutral-500)" data={spark.activeNow} />}
       />
       <CompactKpi
         flat
@@ -218,7 +218,7 @@ type ModelId =
   | 'gemini-3-flash-lite'
   | 'llama-3-3-70b';
 
-type ConversationRow = {
+export type ConversationRow = {
   title: string;
   conversationId: string;
   initiator: string;
@@ -235,7 +235,7 @@ type ConversationRow = {
   duration: string;
 };
 
-const CONVERSATION_ROWS: ConversationRow[] = [
+export const CONVERSATION_ROWS: ConversationRow[] = [
   { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: new Date(2026, 4, 12, 14, 28, 4),  duration: '3m 53s'  },
   { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: new Date(2026, 4, 12, 14, 22, 11), duration: '5m 12s'  },
   { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: new Date(2026, 4, 12, 14, 15, 22), duration: '0m 47s'  },
@@ -248,7 +248,7 @@ const CONVERSATION_ROWS: ConversationRow[] = [
 // Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities used on
 // the Requests and Events log tables so the same key reads identically
 // across surfaces.
-const KEY_SUFFIX: Record<string, string> = {
+export const KEY_SUFFIX: Record<string, string> = {
   'prod-web': 'sk-gw-438',
   'prod-agent': 'sk-gw-930',
   'test-key': 'sk-gw-255',
@@ -379,7 +379,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
               <TableRow
                 key={row.conversationId}
                 onClick={() => setSelectedRow(row)}
-                className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-ink-50"
+                className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
               >
                 <TableCell className="whitespace-nowrap max-w-0">
                   <RowActionButton
@@ -389,19 +389,19 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   >
                     <span
                       title={row.title}
-                      className="font-sans text-sm text-ink-900 truncate"
+                      className="font-sans text-sm text-neutral-900 truncate"
                     >
                       {row.title}
                     </span>
-                    <span className="font-mono text-xs text-ink-500">
+                    <span className="font-mono text-xs text-neutral-500">
                       {row.conversationId}
                     </span>
                   </RowActionButton>
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono text-sm">
-                  <span className="text-ink-800">{row.initiator}</span>
+                  <span className="text-neutral-800">{row.initiator}</span>
                   {KEY_SUFFIX[row.initiator] ? (
-                    <span className="text-ink-600">
+                    <span className="text-neutral-600">
                       {' '}
                       ({KEY_SUFFIX[row.initiator]})
                     </span>
@@ -418,22 +418,22 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                     ))}
                   </div>
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {row.turns}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {row.reqs}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {scaleTokenStr(row.inTokens, scale)}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {scaleTokenStr(row.outTokens, scale)}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {scaleCostStr(row.cost, scale)}
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                   {formatDateTime(row.updated)}
                 </TableCell>
               </TableRow>
@@ -569,10 +569,10 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
             footer-right; the header carries identity only. */}
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono text-sm font-medium text-ink-900">
+          <span className="font-mono text-sm font-medium text-neutral-900">
             {row.conversationId}
           </span>
-          <span className="font-mono text-xs text-ink-500">
+          <span className="font-mono text-xs text-neutral-500">
             {row.initiator}
           </span>
         </div>
@@ -608,9 +608,9 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the footer's default `justify-end` since this footer
           carries informational copy on the leading edge as well. */}
       <DialogScrollFooter className="justify-between flex-wrap">
-        <span className="font-mono text-xs text-ink-500">
-          Key <span className="text-ink-800">{row.initiator}</span>{' '}
-          · started <span className="text-ink-800">{formatDateTime(row.updated)}</span>
+        <span className="font-mono text-xs text-neutral-500">
+          Key <span className="text-neutral-800">{row.initiator}</span>{' '}
+          · started <span className="text-neutral-800">{formatDateTime(row.updated)}</span>
         </span>
         <CopyButton
           mode="label"
@@ -647,7 +647,7 @@ function ConversationKpiTile({ label, value }: { label: string; value: string })
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-neutral-900">
         {value}
       </span>
     </div>
@@ -779,8 +779,8 @@ function ConversationMessagesPanel({
           Matches the framing pattern in the trace panel. `flex-none` so
           it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums">
+        <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-neutral-900">Messages</span>
+        <span className="font-mono text-xs text-neutral-500 tabular-nums">
           {ASSISTANT_TURN_COUNT} {ASSISTANT_TURN_COUNT === 1 ? 'turn' : 'turns'}
         </span>
       </div>
@@ -910,8 +910,8 @@ function RequestTracePanel({
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-ink-900">Request Trace</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums">
+        <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-neutral-900">Request Trace</span>
+        <span className="font-mono text-xs text-neutral-500 tabular-nums">
           {SAMPLE_TRACE.length} requests
         </span>
       </div>
@@ -980,7 +980,7 @@ function TraceItem({
   const latencyMs = parseInt(event.latency, 10);
   const isSlowLatency = latencyMs > 1000;
   const isVerySlow = latencyMs > 2000;
-  const latencyTone = isSlowLatency ? 'text-warning-700' : 'text-ink-500';
+  const latencyTone = isSlowLatency ? 'text-warning-700' : 'text-neutral-500';
 
   // Node ring color — slow takes priority over status-success. Warn/danger
   // status still wins (a slow warn step would still read as warn-amber on
@@ -1022,7 +1022,7 @@ function TraceItem({
       aria-pressed={selected}
       data-request-id={event.requestId}
       className={`relative flex gap-3 py-3 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
-        selected ? '' : 'hover-fine:bg-ink-50'
+        selected ? '' : 'hover-fine:bg-neutral-50'
       } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-[2px] before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'
       }`}
@@ -1033,7 +1033,7 @@ function TraceItem({
           the line where it crosses. */}
       <span
         aria-hidden
-        className={`absolute left-[23px] w-[2px] bg-ink-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
       />
       {/* Timeline node — circular, status-bordered, white-filled so the
           track behind it reads as broken at the bead. Icon inside marks
@@ -1059,34 +1059,34 @@ function TraceItem({
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-sm text-ink-900 truncate flex-1">
+          <span className="font-mono text-sm text-neutral-900 truncate flex-1">
             {event.label}
           </span>
-          <span className="font-mono text-xs text-ink-500 tabular-nums shrink-0">
+          <span className="font-mono text-xs text-neutral-500 tabular-nums shrink-0">
             {event.time}
           </span>
         </div>
 
         {/* Row 2 — per-step economics + requestId. `tokens-in → tokens-out ·
             latency · cost` on the left; requestId right-aligned. Latency
-            turns warning-700 on slow rows. Cost renders at ink-800 per the
-            three-tier table ink policy. Separators drop to ink-300 so they
+            turns warning-700 on slow rows. Cost renders at neutral-800 per the
+            three-tier table ink policy. Separators drop to neutral-300 so they
             read as hairline scaffolding, not data. */}
-        <div className="flex items-center gap-2 min-w-0 text-ink-500">
+        <div className="flex items-center gap-2 min-w-0 text-neutral-500">
           <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
             {event.inTokens}
             <ArrowRight className="size-3" strokeWidth={1.75} aria-hidden />
             {event.outTokens}
           </span>
-          <span className="text-ink-300" aria-hidden>·</span>
+          <span className="text-neutral-300" aria-hidden>·</span>
           <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
             {event.latency}
           </span>
-          <span className="text-ink-300" aria-hidden>·</span>
-          <span className="font-mono text-xs tabular-nums text-ink-800 flex-1">
+          <span className="text-neutral-300" aria-hidden>·</span>
+          <span className="font-mono text-xs tabular-nums text-neutral-800 flex-1">
             {event.cost}
           </span>
-          <span className="font-mono text-xs text-ink-400 shrink-0">
+          <span className="font-mono text-xs text-neutral-400 shrink-0">
             {event.requestId}
           </span>
         </div>

@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * the same recipe across Requests / Conversations / Activity / Security /
  * AuditTrail / Models / Team toolbars. Locked recipe:
  *   wrapper:  `relative w-96 min-w-0 shrink-0`
- *   icon:     Lucide `Search`, `size-3.5 text-ink-500 strokeWidth={1.75}`,
+ *   icon:     Lucide `Search`, `size-3.5 text-neutral-500 strokeWidth={1.75}`,
  *             absolutely positioned at `left-3 top-1/2 -translate-y-1/2`.
  *   input:    `size="sm" type="search" autoComplete="off" spellCheck={false}
  *             className="pl-8"` plus `name`, `placeholder`, `aria-label`.
@@ -48,7 +48,7 @@ export function SearchInput({
       <Search
         aria-hidden
         strokeWidth={1.75}
-        className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
+        className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-neutral-500"
       />
       <Input
         size="sm"

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { MoreHorizontal, Plus, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -53,6 +53,25 @@ export function Guardrails() {
   const removeLimit = (id: string) =>
     setLimits((prev) => prev.filter((l) => l.id !== id));
 
+  // Deep-link support: `?create=1` opens the Create Limit dialog on mount.
+  // Used by Overview's "Set a spend limit" quick action so a single click
+  // lands the user in the form. Param is stripped when the dialog closes
+  // so the URL reflects state and re-mounts don't re-open the dialog.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setCreateOpen(true);
+    }
+  }, [searchParams]);
+  const handleCreateOpenChange = (next: boolean) => {
+    setCreateOpen(next);
+    if (!next && searchParams.has('create')) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('create');
+      setSearchParams(params, { replace: true });
+    }
+  };
+
   return (
     <DashboardChrome
       activeNavId="guardrails"
@@ -67,7 +86,7 @@ export function Guardrails() {
       />
       <CreateLimitDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={handleCreateOpenChange}
         onCreate={addLimit}
       />
     </DashboardChrome>
@@ -81,7 +100,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Enforce spend, token, and request rate caps at the org, project, or key level. Limits run inline with no separate billing system to wire up.
         </p>
       </div>
@@ -121,7 +140,7 @@ function LimitsSection({
             aria-hidden
             className="size-12 rounded-full bg-muted flex items-center justify-center"
           >
-            <Shield className="size-5 text-ink-700" />
+            <Shield className="size-5 text-neutral-700" />
           </div>
         }
         title="No limits configured"
@@ -155,7 +174,7 @@ function LimitsSection({
             const scopeNameText = scope?.name ?? limit.scope;
             return (
             <TableRow key={limit.id}>
-              <TableCell className="font-sans text-sm font-medium text-ink-900">
+              <TableCell className="font-sans text-sm font-medium text-neutral-900">
                 <span className="block truncate" title={limit.name}>
                   {limit.name}
                 </span>
@@ -163,31 +182,31 @@ function LimitsSection({
               <TableCell>
                 <div className="flex flex-col min-w-0">
                   <span
-                    className="font-sans text-sm text-ink-900 truncate"
+                    className="font-sans text-sm text-neutral-900 truncate"
                     title={scopeNameText}
                   >
                     {scopeNameText}
                   </span>
                   {scope?.masked ? (
-                    <span className="font-mono text-xs text-ink-500 truncate">
+                    <span className="font-mono text-xs text-neutral-500 truncate">
                       {scope.masked}
                     </span>
                   ) : null}
                 </div>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {typeLabel(limit.type)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {thresholdLabel(limit.type, limit.threshold)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {usedLabel(limit.type, limit.used, limit.threshold)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {periodLabel(limit.period)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-500">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-500">
                 {resetsAtMap.get(limit.id) ?? '—'}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
@@ -211,7 +230,7 @@ function LimitActionsMenu({ limitName, onRemove }: { limitName: string; onRemove
             variant="ghost"
             size="icon-sm"
             aria-label={`Actions for ${limitName}`}
-            className="text-ink-500 hover:text-ink-900"
+            className="text-neutral-500 hover:text-neutral-900"
           />
         }
       >
@@ -397,7 +416,7 @@ function CreateLimitDialog({
     >
       <DialogContent className="gap-4 w-full sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
             Create limit
           </DialogTitle>
           <DialogDescription>
@@ -406,7 +425,7 @@ function CreateLimitDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="create-limit-name" className="text-ink-600 font-medium text-sm">
+          <Label htmlFor="create-limit-name" className="text-neutral-600 font-medium text-sm">
             Name
           </Label>
           <Input
@@ -419,7 +438,7 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="create-limit-type" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="create-limit-type" className="text-neutral-600 font-medium text-sm">
               Type
             </Label>
             <Select value={type} onValueChange={setType}>
@@ -436,7 +455,7 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="create-limit-threshold" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="create-limit-threshold" className="text-neutral-600 font-medium text-sm">
               Threshold
             </Label>
             <Input
@@ -453,7 +472,7 @@ function CreateLimitDialog({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="create-limit-period" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="create-limit-period" className="text-neutral-600 font-medium text-sm">
               Period
             </Label>
             <Select value={period} onValueChange={setPeriod}>
@@ -470,7 +489,7 @@ function CreateLimitDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="create-limit-scope" className="text-ink-600 font-medium text-sm">
+            <Label htmlFor="create-limit-scope" className="text-neutral-600 font-medium text-sm">
               Scope
             </Label>
             <Select value={scope} onValueChange={setScope}>
@@ -488,8 +507,8 @@ function CreateLimitDialog({
                   >
                     {s.masked ? (
                       <span className="flex flex-col">
-                        <span className="font-sans text-sm text-ink-900">{s.name}</span>
-                        <span className="font-mono text-xs text-ink-500">{s.masked}</span>
+                        <span className="font-sans text-sm text-neutral-900">{s.name}</span>
+                        <span className="font-mono text-xs text-neutral-500">{s.masked}</span>
                       </span>
                     ) : (
                       s.name

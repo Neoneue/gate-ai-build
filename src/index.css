@@ -29,19 +29,11 @@
        800–900  text on white (high-contrast)
        950      deepest (rare — extreme contrast, dark-mode anchors) */
 
-  /* Ink (neutral) — pure neutral chroma. ink-900 anchored near current
-     #09090B for primary-button identity. Perceptually uniform between. */
-  --color-ink-50:  oklch(0.985 0 0);
-  --color-ink-100: oklch(0.960 0 0);
-  --color-ink-200: oklch(0.935 0 0);
-  --color-ink-300: oklch(0.820 0 0);
-  --color-ink-400: oklch(0.680 0 0);
-  --color-ink-500: oklch(0.500 0 0);
-  --color-ink-600: oklch(0.380 0 0);
-  --color-ink-700: oklch(0.260 0 0);
-  --color-ink-800: oklch(0.165 0 0);
-  --color-ink-900: oklch(0.090 0 0);
-  --color-ink-950: oklch(0.045 0 0);
+  /* Neutral — Tailwind v4 default neutral ramp (chroma 0). Definitions
+     intentionally absent so Tailwind's built-in `--color-neutral-N` values
+     apply; the semantic aliases below resolve through them. Renamed from
+     the custom `ink-*` ramp on 2026-05-17 to drop bespoke-ramp maintenance
+     and align with Tailwind defaults. */
 
   /* Blue (brand) — anchored to brand mark at blue-700. logomark.svg is the
      source of truth; the rest of the ramp is derived around it. */
@@ -120,30 +112,30 @@
   /* Shadow-as-border tokens (skill: surfaces.md — prefer layered shadows
      over solid borders for depth). Three-layer light-mode shadow:
      1px ring + subtle lift + ambient depth. The shadow color is mixed
-     from `--color-ink-800` rather than inlined as rgba so the shadow
+     from `--color-neutral-800` rather than inlined as rgba so the shadow
      family tracks the ink ramp. */
   --shadow-border:
-    0 0 0 1px color-mix(in oklch, var(--color-ink-800) 6%, transparent),
-    0 1px 2px -1px color-mix(in oklch, var(--color-ink-800) 6%, transparent),
-    0 2px 4px 0 color-mix(in oklch, var(--color-ink-800) 4%, transparent);
+    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent),
+    0 1px 2px -1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent),
+    0 2px 4px 0 color-mix(in oklch, var(--color-neutral-800) 4%, transparent);
   --shadow-border-hover:
-    0 0 0 1px color-mix(in oklch, var(--color-ink-800) 8%, transparent),
-    0 1px 2px -1px color-mix(in oklch, var(--color-ink-800) 8%, transparent),
-    0 2px 4px 0 color-mix(in oklch, var(--color-ink-800) 6%, transparent);
+    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
+    0 1px 2px -1px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
+    0 2px 4px 0 color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
   /* Floating-surface elevation — two-tier ladder aligned to Vercel Geist's
      material system (menu tier sits close to the page; modal tier separates).
-     Each tier pairs lift + 1px ring; both colors mixed from --color-ink-800
+     Each tier pairs lift + 1px ring; both colors mixed from --color-neutral-800
      so the shadow family tracks the ink ramp.
        Menu (selects, popovers)    → 6px radius (rounded-sm) + --shadow-popup
        Card / surface              → 8px radius (rounded-md) + --shadow-border
        Modal (dialogs, drill-ins)  → 16px radius (rounded-xl) + --shadow-modal */
   --shadow-popup:
-    0 4px 12px -2px color-mix(in oklch, var(--color-ink-800) 8%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-ink-800) 4%, transparent);
+    0 4px 12px -2px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 4%, transparent);
   --shadow-modal:
-    0 16px 32px -4px color-mix(in oklch, var(--color-ink-800) 12%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-ink-800) 6%, transparent);
+    0 16px 32px -4px color-mix(in oklch, var(--color-neutral-800) 12%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
   /* Typescale overrides — align Tailwind's named sizes to Vercel Geist's
      heading scale (even-numbered, larger increments at the top). Sizes not
@@ -186,30 +178,30 @@
  * is the single source of truth for color values. */
 :root {
   --canvas-bg:   var(--color-canvas);
-  --canvas-grid: color-mix(in oklch, var(--color-ink-800) 6%, transparent);
+  --canvas-grid: color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
-  --background: var(--color-white);
-  --foreground: var(--color-ink-900);
+  --background: var(--color-neutral-100);
+  --foreground: var(--color-neutral-900);
   --card: var(--color-white);
-  --card-foreground: var(--color-ink-900);
+  --card-foreground: var(--color-neutral-900);
   --popover: var(--color-white);
-  --popover-foreground: var(--color-ink-900);
-  --primary: var(--color-ink-900);
+  --popover-foreground: var(--color-neutral-900);
+  --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Gray-spectrum semantic tokens trace to the ink palette so `bg-muted`,
      `bg-secondary`, `bg-accent`, `border-border`, etc. cascade onto one
      gray family. Step numbers shifted up one position vs. the legacy
-     hex ramp — ink-100 (was) ≈ ink-200 (now), ink-50 (was) ≈ ink-100 (now). */
-  --secondary: var(--color-ink-100);
-  --secondary-foreground: var(--color-ink-900);
-  --muted: var(--color-ink-100);
-  --muted-foreground: var(--color-ink-500);
-  --accent: var(--color-ink-100);
-  --accent-foreground: var(--color-ink-900);
+     hex ramp — neutral-100 (was) ≈ neutral-200 (now), neutral-50 (was) ≈ neutral-100 (now). */
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-neutral-900);
+  --muted: var(--color-neutral-100);
+  --muted-foreground: var(--color-neutral-500);
+  --accent: var(--color-neutral-100);
+  --accent-foreground: var(--color-neutral-900);
   --destructive: var(--color-danger-600);
-  --border: var(--color-ink-200);
-  --input: var(--color-ink-300);
-  --ring: var(--color-ink-400);
+  --border: var(--color-neutral-200);
+  --input: var(--color-neutral-300);
+  --ring: var(--color-neutral-400);
   /* Categorical chart palette — standalone, NOT tied to brand colors. Used
      for graph series across the app: each series picks a slot by index, in
      stable order, regardless of what the data represents. Per PM call
@@ -235,13 +227,13 @@
   --chart-8: oklch(0.68 0.20 335);  /* magenta — fills the 290°→18° hue gap */
   --radius: 0.625rem;
   --sidebar: var(--color-white);
-  --sidebar-foreground: var(--color-ink-900);
-  --sidebar-primary: var(--color-ink-900);
+  --sidebar-foreground: var(--color-neutral-900);
+  --sidebar-primary: var(--color-neutral-900);
   --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: var(--color-ink-100);
-  --sidebar-accent-foreground: var(--color-ink-900);
-  --sidebar-border: var(--color-ink-200);
-  --sidebar-ring: var(--color-ink-400);
+  --sidebar-accent: var(--color-neutral-100);
+  --sidebar-accent-foreground: var(--color-neutral-900);
+  --sidebar-border: var(--color-neutral-200);
+  --sidebar-ring: var(--color-neutral-400);
 }
 
 /* App shell: left nav + scrollable main area. */
@@ -256,8 +248,8 @@ body,
 
 body {
   font-family: var(--font-sans);
-  color: var(--color-ink-800);
-  background: var(--color-white);
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none;

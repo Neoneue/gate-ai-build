@@ -61,10 +61,10 @@ export function SegmentedPill({
       aria-label={ariaLabel}
       className={cn(
         // Paper spec WW0-0: h-10 container, py-px px-1, rounded-md (8px),
-        // bg ink-100, border ink-100 (effectively borderless track).
+        // bg neutral-100, border neutral-100 (effectively borderless track).
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
-        'relative bg-ink-100 border border-ink-100 py-px px-1 rounded-sm gap-0',
+        'relative bg-neutral-100 border border-neutral-100 py-px px-1 rounded-sm gap-0',
         size === 'sm' ? 'h-8' : 'h-10',
         className,
       )}
@@ -98,10 +98,10 @@ export function SegmentedPill({
             // Paper spec WW7-0: h-8, px-3 (12px), text 12px/16px Geist medium.
             'relative z-10 px-3 min-w-0 rounded-xs! text-xs leading-4 font-sans font-medium',
             size === 'sm' ? 'h-6' : 'h-8',
-            'text-ink-600 bg-transparent border-0',
-            'hover:text-ink-900 hover:bg-transparent',
-            'data-[pressed]:text-ink-900 data-[pressed]:bg-transparent',
-            'aria-pressed:text-ink-900 aria-pressed:bg-transparent',
+            'text-neutral-600 bg-transparent border-0',
+            'hover:text-neutral-900 hover:bg-transparent',
+            'data-[pressed]:text-neutral-900 data-[pressed]:bg-transparent',
+            'aria-pressed:text-neutral-900 aria-pressed:bg-transparent',
           )}
         >
           {opt.label}

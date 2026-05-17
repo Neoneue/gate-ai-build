@@ -50,7 +50,7 @@ export function DeltaTag({
         </span>
       </span>
       {note ? (
-        <span className={`${noteCls} text-ink-500`}>
+        <span className={`${noteCls} text-neutral-500`}>
           <span aria-hidden> · </span>
           {note}
         </span>
@@ -71,34 +71,50 @@ export function CompactKpi({
   delta,
   deltaNote,
   deltaInverted = false,
+  deltaSize = 'sm',
   noteLine,
   spark,
   flat = false,
+  onClick,
+  ariaLabel,
 }: {
   title: string;
   value: string;
   /** Subordinate metric rendered between value and delta (e.g. share of
-   *  total like "66%"). Rendered as muted ink-500 text aligned to the
+   *  total like "66%"). Rendered as muted neutral-500 text aligned to the
    *  value baseline. */
   valueSuffix?: React.ReactNode;
   delta?: string;
   deltaNote?: string;
   /** Pass-through to DeltaTag for lower-is-better metrics. */
   deltaInverted?: boolean;
+  /** Pass-through to DeltaTag size. `md` is one type-step up — used on the
+   *  Overview rail where delta + note carry more weight than in the dense
+   *  KPI grids. */
+  deltaSize?: 'sm' | 'md';
   noteLine?: string;
   spark: React.ReactNode;
   flat?: boolean;
+  /** Whole-tile click handler. When set, the tile renders as a button with
+   *  hover/focus state — used on Overview to navigate from the rail into
+   *  the relevant detail page (Activity / Security). */
+  onClick?: () => void;
+  /** Optional aria-label for the interactive form; otherwise the visual
+   *  title + value is the implicit label. */
+  ariaLabel?: string;
 }) {
-  const containerCls = flat
+  const baseCls = flat
     ? 'flex flex-col gap-2 bg-white p-4'
     : 'flex flex-col rounded-md gap-2 bg-white shadow-(--shadow-border) p-4';
-  return (
-    <div className={containerCls}>
+  const interactiveCls =
+    'group/kpi w-full text-left cursor-pointer outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset motion-reduce:transition-none';
+  const inner = (
+    <>
       <Eyebrow as="div">{title}</Eyebrow>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="inline-flex items-center text-ink-500">
+          <span className="inline-flex items-center text-neutral-500">
             <span aria-hidden className="inline-block h-3.5 w-0" />
             <span className="font-mono text-xs/4 font-medium tabular-nums">
               {valueSuffix}
@@ -106,14 +122,22 @@ export function CompactKpi({
           </span>
         ) : null}
         {delta ? (
-          <DeltaTag delta={delta} note={deltaNote} inverted={deltaInverted} />
+          <DeltaTag delta={delta} note={deltaNote} inverted={deltaInverted} size={deltaSize} />
         ) : (
-          <span className="text-sm text-ink-500">{noteLine}</span>
+          <span className="text-sm text-neutral-500">{noteLine}</span>
         )}
       </div>
       <div className="mt-1">{spark}</div>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} aria-label={ariaLabel} className={`${baseCls} ${interactiveCls}`}>
+        {inner}
+      </button>
+    );
+  }
+  return <div className={baseCls}>{inner}</div>;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -161,7 +185,7 @@ export function CompactSpark({
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
+            stroke="var(--color-neutral-200)"
             strokeDasharray="3 3"
           />
         )}

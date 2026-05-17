@@ -64,7 +64,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Settings</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Profile, security, logging, and integrations.
         </p>
       </div>
@@ -114,7 +114,7 @@ function ProfileCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-sans text-base font-medium text-ink-900">
+        <CardTitle className="font-sans text-base font-medium text-neutral-900">
           Profile &amp; workspace
         </CardTitle>
       </CardHeader>
@@ -123,7 +123,7 @@ function ProfileCard() {
             row (canonical "who you are" pair); Organization sits alone on
             the second row because it's a workspace-scope value, not a
             personal one — the gap signals the shift. Form labels follow
-            the codified pattern: sans, ink-600, font-medium, text-sm
+            the codified pattern: sans, neutral-600, font-medium, text-sm
             (NOT the uppercase eyebrow recipe). The form lives inside CardContent and
             the Save button in CardFooter associates via `form` attribute
             — this lets Enter from any input submit. Card.tsx applies
@@ -173,7 +173,7 @@ function ProfileCard() {
             setEmail(saved.email);
             setOrganization(saved.organization);
           }}
-          className="border-border bg-card text-ink-900"
+          className="border-border bg-card text-neutral-900"
         >
           Reset
         </Button>
@@ -212,7 +212,7 @@ function FormField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id} className="text-ink-600 font-medium text-sm">
+      <Label htmlFor={id} className="text-neutral-600 font-medium text-sm">
         {label}
       </Label>
       <Input
@@ -233,10 +233,10 @@ function SecurityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-sans text-base font-medium text-ink-900">
+        <CardTitle className="font-sans text-base font-medium text-neutral-900">
           Security
         </CardTitle>
-        <CardDescription className="font-sans text-sm text-ink-500">
+        <CardDescription className="font-sans text-sm text-neutral-500">
           Passkeys — phishing-resistant, no password required.
         </CardDescription>
       </CardHeader>
@@ -268,7 +268,7 @@ function SecurityCard() {
             rhythms (whitespace + hairline) for the same visual job. */}
         <div className="flex flex-col gap-2">
           <SectionHeading as="h4">Registered passkeys</SectionHeading>
-          <p className="font-sans text-sm text-ink-500 m-0">
+          <p className="font-sans text-sm text-neutral-500 m-0">
             No passkeys registered yet.
           </p>
         </div>

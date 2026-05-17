@@ -42,7 +42,7 @@ export type CopyButtonMode = 'icon' | 'label';
 /** Icon-mode size variants — match the existing footprints these replace. */
 export type CopyIconSize =
   | 'icon-sm'    // 32×32 ghost — default; mirrors `<Button size="icon-sm">`.
-  | 'inline-xs'; // 20×20 ink-500 ghost — used inline inside running text
+  | 'inline-xs'; // 20×20 neutral-500 ghost — used inline inside running text
                  //                       next to <code> chips (CMP-016 base URL).
 
 interface CopyButtonBaseProps {
@@ -154,7 +154,7 @@ export function CopyButton(props: CopyButtonProps) {
         aria-label={copied ? 'Copied' : restingText}
         className={cn(
           labelSize === 'compact' &&
-            'h-6 gap-1 px-2 font-medium text-ink-600 hover:text-ink-900',
+            'h-6 gap-1 px-2 font-medium text-neutral-600 hover:text-neutral-900',
           className,
         )}
       >
@@ -190,7 +190,7 @@ export function CopyButton(props: CopyButtonProps) {
         onClick={trigger}
         aria-label={ariaLabel}
         className={cn(
-          'relative inline-flex items-center justify-center size-5 rounded-xs text-ink-500 hover:text-ink-900 transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 before:absolute before:inset-[-2px] before:content-[""]',
+          'relative inline-flex items-center justify-center size-5 rounded-xs text-neutral-500 hover:text-neutral-900 transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 before:absolute before:inset-[-2px] before:content-[""]',
           copied && 'text-success-600 hover:text-success-600',
           className,
         )}

@@ -154,7 +154,7 @@ function PageHeader({
       <div className="flex flex-col gap-2 max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every model call across your stack, inspected for injection, PII, and credentials before it reaches the model.
         </p>
       </div>
@@ -558,7 +558,7 @@ function ChartXAxisTick(props: {
     value === firstTick ? 'start' :
     value === lastTick ? 'end' : 'middle';
   return (
-    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-ink-500)">
+    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-neutral-500)">
       {display}
     </text>
   );
@@ -642,7 +642,7 @@ function HeroMetricCard() {
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
+            stroke="var(--color-neutral-200)"
             strokeDasharray="8 3"
           />
           <XAxis
@@ -656,7 +656,7 @@ function HeroMetricCard() {
             tick={renderTick}
           />
           <ChartTooltip
-            cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
+            cursor={{ stroke: 'var(--color-neutral-500)', strokeDasharray: '3 3' }}
             content={<ChartTooltipContent indicator="dot" />}
           />
           <Area
@@ -687,11 +687,11 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="font-sans text-xs font-medium text-ink-500 tracking-tight justify-self-end">
+      <span className="font-sans text-xs font-medium text-neutral-500 tracking-tight justify-self-end">
         {label}
       </span>
       <StatusDot kind={tone} size="md" />
-      <span className="font-mono text-xs font-medium tabular-nums text-ink-900 justify-self-end">
+      <span className="font-mono text-xs font-medium tabular-nums text-neutral-900 justify-self-end">
         {value}
       </span>
     </>
@@ -1168,7 +1168,7 @@ function RequestsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-500 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label="About the Cost column"
                         >
                           <Info className="size-4" strokeWidth={1.75} aria-hidden />
@@ -1189,10 +1189,10 @@ function RequestsTableSection({
             {filteredRows.map((row, i) => {
               const isMissing = row.inTokens === '—';
               const numericCls = isMissing
-                ? 'text-right whitespace-nowrap font-mono tabular-nums text-ink-400'
-                : 'text-right whitespace-nowrap font-mono tabular-nums text-ink-800';
-              // Slow rows: leading amber TriangleAlert + ink-900 (one step
-              // darker than the ink-800 default). Same weight as non-slow rows
+                ? 'text-right whitespace-nowrap font-mono tabular-nums text-neutral-400'
+                : 'text-right whitespace-nowrap font-mono tabular-nums text-neutral-800';
+              // Slow rows: leading amber TriangleAlert + neutral-900 (one step
+              // darker than the neutral-800 default). Same weight as non-slow rows
               // so `tabular-nums` keeps the column tracks aligned — font-medium
               // would widen the digits and leave the column ragged. The icon
               // sits in a fixed-width slot reserved on every row (slow or not)
@@ -1202,14 +1202,14 @@ function RequestsTableSection({
               const isSlow = row.slow && row.latency !== '—';
               const latencyTextCls =
                 row.latency === '—'
-                  ? 'text-ink-400'
+                  ? 'text-neutral-400'
                   : isSlow
-                    ? 'text-ink-900'
-                    : 'text-ink-800';
+                    ? 'text-neutral-900'
+                    : 'text-neutral-800';
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
-                  className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-ink-50"
+                  className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
                   onClick={() => setSelectedRow(row)}
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -1233,7 +1233,7 @@ function RequestsTableSection({
                         render={(props) => (
                           <span
                             {...props}
-                            className="font-mono text-sm tabular-nums text-ink-800"
+                            className="font-mono text-sm tabular-nums text-neutral-800"
                           >
                             {row.day}, {row.time}
                           </span>
@@ -1262,7 +1262,7 @@ function RequestsTableSection({
                     >
                       <VendorAvatar vendor={row.vendor} />
                       <span
-                        className="font-mono text-sm text-ink-900 truncate"
+                        className="font-mono text-sm text-neutral-900 truncate"
                         title={row.model}
                       >
                         {row.model}
@@ -1272,18 +1272,18 @@ function RequestsTableSection({
                   <TableCell className="whitespace-nowrap max-w-[200px]">
                     <span
                       title={row.conversation}
-                      className="font-mono text-sm text-ink-900 tabular-nums truncate block max-w-full"
+                      className="font-mono text-sm text-neutral-900 tabular-nums truncate block max-w-full"
                     >
                       {row.conversation}
                     </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
                     {/* `name (sk-gw-NNN)` — name in dark ink, the
-                        parenthetical gateway id dimmed to ink-600.
+                        parenthetical gateway id dimmed to neutral-600.
                         Matches the Events table Key column. */}
-                    <span className="text-ink-800">{row.keyId}</span>
+                    <span className="text-neutral-800">{row.keyId}</span>
                     {KEY_SUFFIX[row.keyId] ? (
-                      <span className="text-ink-600">
+                      <span className="text-neutral-600">
                         {' '}
                         ({KEY_SUFFIX[row.keyId]})
                       </span>
@@ -1313,7 +1313,7 @@ function RequestsTableSection({
                           render={(props) => (
                             <span
                               {...props}
-                              className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               aria-label="Cost not shown for BYOK requests"
                             >
                               —
@@ -1323,7 +1323,7 @@ function RequestsTableSection({
                         <TooltipContent>Billed by your provider (BYOK)</TooltipContent>
                       </Tooltip>
                     ) : (
-                      <span className={isMissing ? 'text-ink-400' : 'text-ink-800'}>
+                      <span className={isMissing ? 'text-neutral-400' : 'text-neutral-800'}>
                         {row.cost}
                       </span>
                     )}
@@ -1464,7 +1464,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-ink-900 tabular-nums">
+                  <span className="font-mono text-neutral-900 tabular-nums">
                     {row.day}, {row.time}
                   </span>
                 }
@@ -1487,22 +1487,22 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 value={
                   <div className="flex items-center gap-2">
                     <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-ink-900">
+                    <span className="font-mono text-neutral-900">
                       {row.model}
                     </span>
                   </div>
                 }
               />
-              <DetailRow label="Provider" value={<span className="text-ink-900">{provider}</span>} />
+              <DetailRow label="Provider" value={<span className="text-neutral-900">{provider}</span>} />
               <DetailRow
                 label="API Key"
-                value={<span className="font-mono text-ink-900">{row.keyId}</span>}
+                value={<span className="font-mono text-neutral-900">{row.keyId}</span>}
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-ink-900">
-                    <span className="text-ink-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
+                  <span className="font-mono text-neutral-900">
+                    <span className="text-neutral-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
                   </span>
                 }
               />
@@ -1556,7 +1556,7 @@ function KpiTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-neutral-900">
         {value}
       </span>
     </div>
@@ -1705,7 +1705,7 @@ function BodySection({
       {/* Sticky header so the section label stays pinned at the top of
           the scrollable area as you scroll through the body content
           underneath. Header sits on the card surface (white) so it reads
-          as part of the chrome; the code well below is ink-50 to set the
+          as part of the chrome; the code well below is neutral-50 to set the
           payload visually apart. No hover treatment — header is a toggle,
           not a row affordance. */}
       <button
@@ -1716,17 +1716,17 @@ function BodySection({
       >
         <span className="inline-flex items-center gap-2">
           {icon}
-          <span className="font-sans text-sm font-medium text-ink-500">{label}</span>
+          <span className="font-sans text-sm font-medium text-neutral-500">{label}</span>
         </span>
         <ChevronDown
-          className={`size-4 text-ink-500 transition-transform duration-150 ease-out motion-reduce:transition-none ${expanded ? '' : '-rotate-90'}`}
+          className={`size-4 text-neutral-500 transition-transform duration-150 ease-out motion-reduce:transition-none ${expanded ? '' : '-rotate-90'}`}
           strokeWidth={1.75}
           aria-hidden
         />
       </button>
       {expanded && (
         <>
-          <div className="overflow-x-auto border-t border-border bg-ink-50">
+          <div className="overflow-x-auto border-t border-border bg-neutral-50">
             <CodeBlock lines={lines} density="compact" />
           </div>
           {copyValue !== undefined && copyLabel !== undefined && (
@@ -1773,7 +1773,7 @@ function MessageBlock({
           {label}
         </span>
       </SectionHeading>
-      <div className="rounded-md border border-border px-4 py-3 font-sans text-sm text-ink-900 text-pretty whitespace-pre-wrap break-words">
+      <div className="rounded-md border border-border px-4 py-3 font-sans text-sm text-neutral-900 text-pretty whitespace-pre-wrap break-words">
         {content}
       </div>
     </section>
@@ -1817,13 +1817,13 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
       <MessageBlock
         label="User message"
         content={requestContent}
-        icon={<User className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />}
+        icon={<User className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
       />
       {hasResponse && (
         <MessageBlock
           label="Assistant response"
           content={responseContent}
-          icon={<Sparkles className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />}
+          icon={<Sparkles className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
         />
       )}
       <BodySection
@@ -1832,7 +1832,7 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
         defaultExpanded={false}
         copyValue={requestPayload}
         copyLabel="request"
-        icon={<Braces className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />}
+        icon={<Braces className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
       />
     </div>
   );
@@ -1939,8 +1939,8 @@ function SecurityCheckRow({
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="font-sans text-sm font-medium text-ink-900">{title}</span>
-        <span className="font-sans text-xs text-ink-500 text-pretty">{description}</span>
+        <span className="font-sans text-sm font-medium text-neutral-900">{title}</span>
+        <span className="font-sans text-xs text-neutral-500 text-pretty">{description}</span>
       </div>
       <Badge variant={CHECK_BADGE_VARIANT[status]}>
         {status}

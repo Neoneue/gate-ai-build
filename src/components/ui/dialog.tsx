@@ -34,7 +34,7 @@ function DialogOverlay({
         // back to opacity 1 (its base style) and flashes the backdrop
         // while waiting for the popup's longer 200ms exit to complete —
         // a clearly visible flicker on dismiss.
-        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+        "fixed inset-0 isolate z-50 bg-neutral-900/40 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       {...props}
@@ -64,7 +64,7 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-ink-900 border border-border shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-[120ms] data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-neutral-900 border border-border shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-[120ms] data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
         {...props}
@@ -317,7 +317,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
 //                threat type icon).
 //   - `badge`:   optional pill placed to the right of the title (status
 //                badge, action badge).
-//   - `meta`:    optional meta line below the title — text-xs ink-500
+//   - `meta`:    optional meta line below the title — text-xs neutral-500
 //                wrapper; content classes (font-mono, etc.) come from
 //                the consumer to match content kind (timestamp/ID vs
 //                prose).
@@ -350,7 +350,7 @@ function DialogTitleBlock({
 }) {
   const titleClassName = cn(
     titleFont === "mono" ? "font-mono" : "font-sans",
-    "text-lg leading-none font-medium text-ink-900 m-0",
+    "text-lg leading-none font-medium text-neutral-900 m-0",
   )
   const titleNode =
     mode === "static" ? (
@@ -388,7 +388,7 @@ function DialogTitleBlock({
         {titleRow}
       </div>
       {meta ? (
-        <div className="text-xs text-ink-500 text-pretty m-0">{meta}</div>
+        <div className="text-xs text-neutral-500 text-pretty m-0">{meta}</div>
       ) : null}
     </div>
   )
@@ -402,7 +402,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-sm text-ink-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-ink-900",
+        "text-sm text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
         className
       )}
       {...props}

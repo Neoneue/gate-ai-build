@@ -5,7 +5,7 @@ const statusColors = {
   warning: 'bg-warning-600',
   danger: 'bg-destructive',
   info: 'bg-blue-600',
-  neutral: 'bg-ink-500',
+  neutral: 'bg-neutral-500',
 } as const;
 
 export type StatusDotKind = keyof typeof statusColors;

@@ -68,8 +68,8 @@ export function Sparkline({
     ` L ${last.x.toFixed(1)},${h} Z`;
 
   // Chart palette only — sparklines and charts share `--color-chart-1..8`
-  // (plus `--color-ink-500` for neutral). Don't mix in semantic ramps
-  // (`destructive`, `warning-*`, `blue-*`, `ink-700`) — that breaks the
+  // (plus `--color-neutral-500` for neutral). Don't mix in semantic ramps
+  // (`destructive`, `warning-*`, `blue-*`, `neutral-700`) — that breaks the
   // "one palette per project" rule.
   let stroke: string;
   let fill: string;
@@ -81,8 +81,8 @@ export function Sparkline({
     stroke = 'var(--color-chart-2)';
     fill = 'var(--color-chart-2)';
   } else if (tone === 'normal') {
-    stroke = 'var(--color-ink-500)';
-    fill = 'var(--color-ink-500)';
+    stroke = 'var(--color-neutral-500)';
+    fill = 'var(--color-neutral-500)';
   } else {
     stroke = 'var(--color-chart-1)';
     fill = 'var(--color-chart-1)';

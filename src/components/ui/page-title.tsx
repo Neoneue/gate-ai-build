@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * PageTitle — top-of-surface heading on composed pages (CMP-012 through
- * CMP-018). Recipe: `font-sans font-medium text-ink-900 text-3xl/9
+ * CMP-018). Recipe: `font-sans font-medium text-neutral-900 text-3xl/9
  * -tracking-[1px] text-balance m-0`.
  *
  * Extracted 2026-05-11 after the 5-agent audit found this exact recipe
@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
  *
  * Recipe is locked at the primitive. Type size / weight / tracking /
  * balance / margin are not overridable. Spec-sheet ArtboardHeader
- * (which uses `text-ink-800` not 900) is a separate surface and
+ * (which uses `text-neutral-800` not 900) is a separate surface and
  * doesn't compose this primitive.
  * ───────────────────────────────────────────────────────────────────── */
 
@@ -40,7 +40,7 @@ export function PageTitle({
     <Tag
       data-slot="page-title"
       className={cn(
-        'font-sans font-medium text-ink-900 text-3xl/9 -tracking-[1px] text-balance m-0',
+        'font-sans font-medium text-neutral-900 text-3xl/9 -tracking-[1px] text-balance m-0',
         className,
       )}
       {...props}

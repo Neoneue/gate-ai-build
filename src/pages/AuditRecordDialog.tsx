@@ -67,11 +67,11 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Description */}
-      <p className="text-sm text-ink-800 m-0">
+      <p className="text-sm text-neutral-800 m-0">
         Highlighted path proves{' '}
-        <span className="font-mono text-ink-900">{eventPrefix}</span> is included
+        <span className="font-mono text-neutral-900">{eventPrefix}</span> is included
         in anchor root{' '}
-        <span className="font-mono text-ink-900">{anchorShort}</span>.
+        <span className="font-mono text-neutral-900">{anchorShort}</span>.
         Verifiable from the leaf with 1 sibling hash.
       </p>
 
@@ -89,7 +89,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
             dominantBaseline="middle"
             fontSize="11"
             fontFamily="inherit"
-            fill="var(--color-ink-500)"
+            fill="var(--color-neutral-500)"
           >
             L0 · Anchor root
           </text>
@@ -99,7 +99,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
             dominantBaseline="middle"
             fontSize="11"
             fontFamily="inherit"
-            fill="var(--color-ink-500)"
+            fill="var(--color-neutral-500)"
           >
             L1
           </text>
@@ -109,7 +109,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           <line
             x1={SIB_CX}  y1={SIB_CY  - SIB_R}
             x2={ROOT_CX} y2={ROOT_CY + ROOT_R}
-            stroke="var(--color-ink-300)"
+            stroke="var(--color-neutral-300)"
             strokeWidth="1.5"
           />
           {/* Event leaf → ROOT (highlighted path, blue) */}
@@ -123,7 +123,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           {/* ROOT node */}
           <circle
             cx={ROOT_CX} cy={ROOT_CY} r={ROOT_R}
-            fill="var(--color-ink-900)"
+            fill="var(--color-neutral-900)"
           />
           <text
             x={ROOT_CX} y={ROOT_CY}
@@ -141,7 +141,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           <circle
             cx={SIB_CX} cy={SIB_CY} r={SIB_R}
             fill="var(--color-white)"
-            stroke="var(--color-ink-300)"
+            stroke="var(--color-neutral-300)"
             strokeWidth="1.5"
           />
 
@@ -154,10 +154,10 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-ink-500">
+      <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>
-          <span className="text-ink-400">Path:</span>{' '}
-          <span className="font-mono text-ink-700">leaf &rarr; L1.2 &rarr; ROOT</span>
+          <span className="text-neutral-400">Path:</span>{' '}
+          <span className="font-mono text-neutral-700">leaf &rarr; L1.2 &rarr; ROOT</span>
         </span>
         <span>Tree depth: 1 &middot; Sibling hashes needed: 1</span>
       </div>
@@ -192,7 +192,7 @@ const HOW_STEPS = [
 
 function NumberChip({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-ink-100 text-ink-700 font-mono text-xs font-medium shrink-0">
+    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-neutral-100 text-neutral-700 font-mono text-xs font-medium shrink-0">
       {children}
     </span>
   );
@@ -210,9 +210,9 @@ function HowItWorksPanel() {
           >
             <div className="flex items-center gap-2">
               <NumberChip>{step.id}</NumberChip>
-              <h3 className="text-sm font-medium text-ink-900 m-0">{step.title}</h3>
+              <h3 className="text-sm font-medium text-neutral-900 m-0">{step.title}</h3>
             </div>
-            <p className="text-sm text-ink-700 text-pretty m-0">{step.body}</p>
+            <p className="text-sm text-neutral-700 text-pretty m-0">{step.body}</p>
           </div>
         ))}
       </div>
@@ -225,21 +225,21 @@ function HowItWorksPanel() {
         href="https://digitalevidence.constellationnetwork.io/"
         target="_blank"
         rel="noopener noreferrer"
-        className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-ink-50 motion-reduce:transition-none"
+        className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
       >
         <span className="flex items-center gap-3 min-w-0">
-          <span className="size-8 rounded-xs bg-ink-100 inline-flex items-center justify-center shrink-0">
-            <BookOpen className="size-4 text-ink-700" aria-hidden />
+          <span className="size-8 rounded-xs bg-neutral-100 inline-flex items-center justify-center shrink-0">
+            <BookOpen className="size-4 text-neutral-700" aria-hidden />
           </span>
           <span className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-ink-900">Digital Evidence docs</span>
-            <span className="text-sm text-ink-700 text-pretty">
+            <span className="text-sm font-medium text-neutral-900">Digital Evidence docs</span>
+            <span className="text-sm text-neutral-700 text-pretty">
               How Constellation's tamper-evident layer makes every event in this log independently verifiable.
             </span>
           </span>
         </span>
         <ExternalLink
-          className="size-4 text-ink-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-ink-900 motion-reduce:transition-none"
+          className="size-4 text-neutral-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-neutral-900 motion-reduce:transition-none"
           aria-hidden
         />
       </a>
@@ -275,16 +275,16 @@ export function AuditRecordDialog({
 
             {/* Description */}
             <div className="min-w-0">
-              <p className="text-sm text-ink-800 m-0">
+              <p className="text-sm text-neutral-800 m-0">
                 This event is anchored to{' '}
-                <span className="font-medium text-ink-900">
+                <span className="font-medium text-neutral-900">
                   Constellation's Digital Evidence
                 </span>{' '}
                 layer.
               </p>
-              <p className="text-xs text-ink-500 mt-1 m-0">
+              <p className="text-xs text-neutral-500 mt-1 m-0">
                 Anchored &middot;{' '}
-                <span className="font-mono text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>{' '}
+                <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>{' '}
                 &middot; {fmtRelative(row.at)}
               </p>
             </div>
@@ -305,12 +305,12 @@ export function AuditRecordDialog({
               <DetailList>
                 <DetailRow
                   label="Time"
-                  value={<span className="font-mono text-ink-800">{fmtTime(row.at)}</span>}
+                  value={<span className="font-mono text-neutral-800">{fmtTime(row.at)}</span>}
                 />
                 <DetailRow
                   label="Event ID"
                   value={
-                    <span className="font-mono break-all text-ink-800">{row.eventId}</span>
+                    <span className="font-mono break-all text-neutral-800">{row.eventId}</span>
                   }
                 />
                 <DetailRow
@@ -319,11 +319,11 @@ export function AuditRecordDialog({
                 />
                 <DetailRow
                   label="Description"
-                  value={<span className="text-ink-900">{row.description}</span>}
+                  value={<span className="text-neutral-900">{row.description}</span>}
                 />
                 <DetailRow
                   label="Member"
-                  value={<span className="text-ink-800">{row.member}</span>}
+                  value={<span className="text-neutral-800">{row.member}</span>}
                 />
                 <DetailRow
                   label="Anchor"
@@ -335,7 +335,7 @@ export function AuditRecordDialog({
                         aria-hidden
                       />
                       <span className="sr-only">Verified anchor</span>
-                      <span className="font-mono whitespace-nowrap text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>
+                      <span className="font-mono whitespace-nowrap text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
                     </span>
                   }
                 />

@@ -30,7 +30,7 @@ export const AVATAR_TONE_CLS: Record<AvatarTone, string> = {
   rose:    'bg-danger-700 text-white',
   emerald: 'bg-success-700 text-white',
   amber:   'bg-warning-700 text-white',
-  ink:     'bg-ink-700 text-white',
+  ink:     'bg-neutral-700 text-white',
 };
 
 export interface MonogramProps {

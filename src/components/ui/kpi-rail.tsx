@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
  *              grid grid-cols-{columns}
  *   divider    on every child after the first — a wrapper <div> with a
  *              `before:` pseudo-element drawing a 1px hairline at
- *              `inset-y-4 left-0 w-px bg-ink-200`. The inset keeps the
+ *              `inset-y-4 left-0 w-px bg-neutral-200`. The inset keeps the
  *              hairline off the rounded corners and away from the spark's
  *              lower edge, reading as "section break inside one
  *              container" rather than spreadsheet ruling.
@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const DIVIDER_CLS =
-  'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
+  'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-neutral-200';
 
 /* Responsive column ladder. At narrow viewports (≤sm = 640px) KPI tiles
  * need at least ~180px each to read; below that the eyebrow + hero +

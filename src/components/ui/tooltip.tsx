@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * Tooltip — short hover/focus explanation for inline affordances.
  *
  * Surface style mirrors the rest of the floating-popup ladder (white bg,
- * ink-200 border, --shadow-popup, 4px sub-element radius). Used for things
+ * neutral-200 border, --shadow-popup, 4px sub-element radius). Used for things
  * like column-header info icons that explain a domain term — "what's BYOK
  * vs Gate?" — without taking permanent visual real estate.
  *
@@ -57,7 +57,7 @@ function TooltipContent({
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            'max-w-xs rounded-xs border border-border bg-white px-2 py-1 text-xs leading-snug text-ink-700 shadow-(--shadow-popup) origin-[var(--transform-origin)]',
+            'max-w-xs rounded-xs border border-border bg-white px-2 py-1 text-xs leading-snug text-neutral-700 shadow-(--shadow-popup) origin-[var(--transform-origin)]',
             'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-100 data-[instant]:duration-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             className,
           )}

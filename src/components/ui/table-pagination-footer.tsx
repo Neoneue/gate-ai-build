@@ -78,17 +78,17 @@ export function TablePaginationFooter({
   const atLastPage = safePage >= totalPages;
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-ink-200">
+    <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-neutral-200">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-xs text-ink-500 tabular-nums">
+        <span className="font-mono text-xs text-neutral-500 tabular-nums">
           Showing{' '}
           <span className="font-medium">
             {start.toLocaleString()}–{end.toLocaleString()}
           </span>{' '}
           of <span className="font-medium">{total.toLocaleString()}</span>
         </span>
-        <span className="text-ink-400" aria-hidden>·</span>
-        <span className="font-mono text-xs font-medium text-ink-500">
+        <span className="text-neutral-400" aria-hidden>·</span>
+        <span className="font-mono text-xs font-medium text-neutral-500">
           Rows
         </span>
         <Select
@@ -101,7 +101,7 @@ export function TablePaginationFooter({
           <SelectTrigger
             size="sm"
             aria-label="Rows per page"
-            className="border-ink-200 bg-white text-ink-900 font-normal"
+            className="border-neutral-200 bg-white text-neutral-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>

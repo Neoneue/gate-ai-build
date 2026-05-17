@@ -509,28 +509,28 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   }
                 }}
               >
-                <TableCell className="whitespace-nowrap text-ink-800">
+                <TableCell className="whitespace-nowrap text-neutral-800">
                   {fmtTime(row.at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-ink-800">
+                <TableCell className="whitespace-nowrap font-mono text-neutral-800">
                   {truncateHex(row.eventId)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
                 </TableCell>
-                <TableCell className="text-ink-800">
+                <TableCell className="text-neutral-800">
                   <span className="line-clamp-2 break-words" title={row.description}>
                     {row.description}
                   </span>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-sans text-ink-800">
+                <TableCell className="whitespace-nowrap font-sans text-neutral-800">
                   {row.member}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="inline-flex items-center gap-2">
                     <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
                     <span className="sr-only">Verified anchor</span>
-                    <span className="font-mono text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>
+                    <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
                   </span>
                 </TableCell>
               </TableRow>

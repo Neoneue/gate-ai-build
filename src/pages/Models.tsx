@@ -753,7 +753,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                 variant="outline"
                 size="sm"
                 onClick={clearFilters}
-                className="border-border bg-card text-ink-900"
+                className="border-border bg-card text-neutral-900"
               >
                 Clear filters
               </Button>
@@ -778,7 +778,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       </Card>
       </Tabs>
 
-      <p className="font-sans text-xs text-ink-500 tracking-snug m-0">
+      <p className="font-sans text-xs text-neutral-500 tracking-snug m-0">
         Pass{' '}
         <InlineCode size="sm">claude-haiku-4-5</InlineCode>{' '}
         to use the preferred provider, or{' '}
@@ -795,11 +795,11 @@ function PageHeader({ modelCount, providerCount }: { modelCount: number; provide
   return (
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Models</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
         Route to{' '}
-        <span className="text-ink-800 tabular-nums">{modelCount}</span>{' '}
+        <span className="text-neutral-800 tabular-nums">{modelCount}</span>{' '}
         models across{' '}
-        <span className="text-ink-800 tabular-nums">{providerCount}</span>{' '}
+        <span className="text-neutral-800 tabular-nums">{providerCount}</span>{' '}
         providers, with per-provider pricing and code samples on every detail page.
       </p>
     </div>
@@ -936,7 +936,7 @@ function ModelsTable({
           return (
             <TableRow
               key={model.id}
-              className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-ink-50"
+              className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
               onClick={() => onSelect(model)}
             >
               <TableCell className="max-w-[280px]">
@@ -946,7 +946,7 @@ function ModelsTable({
                 >
                   <VendorAvatar vendor={model.vendor} />
                   <span
-                    className="font-sans text-sm text-ink-900 truncate"
+                    className="font-sans text-sm text-neutral-900 truncate"
                     title={model.name}
                   >
                     {model.name}
@@ -963,7 +963,7 @@ function ModelsTable({
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-mono text-sm text-ink-800 select-text">
+                  <span className="font-mono text-sm text-neutral-800 select-text">
                     {model.defaultHandle}
                   </span>
                   <CopyButton
@@ -974,17 +974,17 @@ function ModelsTable({
                   />
                 </span>
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-800">
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-800">
                 {context}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-800">
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-800">
                 {inputPrice}
               </TableCell>
               <TableCell
                 className={
                   outputPrice === '—'
-                    ? 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-400'
-                    : 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-800'
+                    ? 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-400'
+                    : 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-800'
                 }
               >
                 {outputPrice}
@@ -1005,7 +1005,7 @@ function ModelsTable({
 
 function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   if (capabilities.length === 0) {
-    return <span className="text-ink-400 font-mono text-xs">—</span>;
+    return <span className="text-neutral-400 font-mono text-xs">—</span>;
   }
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Vision is always leftmost when present). Each icon
@@ -1025,7 +1025,7 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
         return (
           <span key={c} className="inline-flex shrink-0">
             <Icon
-              className="size-4 text-ink-500 shrink-0"
+              className="size-4 text-neutral-500 shrink-0"
               strokeWidth={1.75}
               aria-label={meta.label}
               role="img"
@@ -1097,7 +1097,7 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
         // glyph height; inline-flex centers the text inside h-4.
         <span
           aria-hidden
-          className="inline-flex h-4 items-center font-mono text-xs leading-none text-ink-500 tabular-nums"
+          className="inline-flex h-4 items-center font-mono text-xs leading-none text-neutral-500 tabular-nums"
         >
           +{overflow}
         </span>
@@ -1160,13 +1160,13 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
                 page-level h1 ("Models") on ArtboardHeader and the
                 breadcrumb already carry the model name, so a third
                 32px appearance over-anchors identity. */}
-            <h2 className="font-sans text-xl font-medium text-ink-900 m-0">
+            <h2 className="font-sans text-xl font-medium text-neutral-900 m-0">
               {model.name}
             </h2>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm text-ink-900">{model.defaultHandle}</span>
+            <span className="font-mono text-sm text-neutral-900">{model.defaultHandle}</span>
             <CopyButton
               size="inline-xs"
               value={model.defaultHandle}
@@ -1199,7 +1199,7 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
               // (line-clamp uses -webkit-box, which short-circuits text-wrap).
               // Apply it conditionally so the rule is only present where it
               // can actually do work.
-              'font-sans text-base text-ink-800 m-0',
+              'font-sans text-base text-neutral-800 m-0',
               !showFullDesc ? 'line-clamp-3' : 'text-pretty',
             )}
           >
@@ -1209,12 +1209,12 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
             onClick={() => setShowFullDesc((v) => !v)}
             aria-expanded={showFullDesc}
             aria-controls="model-description"
-            className="group inline-flex items-center gap-1 w-fit font-sans text-sm hover:text-ink-900 focus-visible:text-ink-900"
+            className="group inline-flex items-center gap-1 w-fit font-sans text-sm hover:text-neutral-900 focus-visible:text-neutral-900"
           >
             {showFullDesc ? 'Show less' : 'Show more'}
             <ChevronDown
               className={cn(
-                'size-3.5 text-ink-500 shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none group-hover:text-ink-800',
+                'size-3.5 text-neutral-500 shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800',
                 showFullDesc && 'rotate-180',
               )}
               strokeWidth={1.75}
@@ -1230,10 +1230,10 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
       {/* Providers */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="font-sans text-base font-medium text-ink-900 m-0">
+          <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
             Providers
           </h3>
-          <p className="font-sans text-sm text-ink-500 m-0">
+          <p className="font-sans text-sm text-neutral-500 m-0">
             Route requests across multiple providers. Copy a provider handle to pin a specific one.
           </p>
         </div>
@@ -1245,10 +1245,10 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
           the integration affordances for primary-row weight. */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="font-sans text-base font-medium text-ink-900 m-0">
+          <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
             Quick start
           </h3>
-          <p className="font-sans text-sm text-ink-500 text-pretty m-0">
+          <p className="font-sans text-sm text-neutral-500 text-pretty m-0">
             Paste this model ID into the model field of any OpenAI-compatible client. Point your client&rsquo;s base URL at{' '}
             <span className="inline-flex items-center gap-1 align-middle">
               <InlineCode size="sm">https://gateway.constellationgate.ai/v1</InlineCode>
@@ -1262,10 +1262,10 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="font-sans text-base font-medium text-ink-900 m-0">
+          <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
             Example request
           </h3>
-          <p className="font-sans text-sm text-ink-500 m-0">
+          <p className="font-sans text-sm text-neutral-500 m-0">
             Sample request against the gateway. Copy a snippet and adapt the message body for your use case.
           </p>
         </div>
@@ -1301,11 +1301,11 @@ function PlatformPanel() {
             className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <div className="flex flex-col gap-1 min-w-0">
-              <span className="font-sans text-sm font-medium text-ink-900">{p.name}</span>
-              <span className="font-sans text-xs text-ink-500 text-pretty">{p.note}</span>
+              <span className="font-sans text-sm font-medium text-neutral-900">{p.name}</span>
+              <span className="font-sans text-xs text-neutral-500 text-pretty">{p.note}</span>
             </div>
             <SquareArrowOutUpRight
-              className="size-4 text-ink-500 shrink-0 mt-1 transition-colors duration-150 ease-out motion-reduce:transition-none group-hover:text-ink-800"
+              className="size-4 text-neutral-500 shrink-0 mt-1 transition-colors duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800"
               strokeWidth={1.75}
               aria-hidden="true"
             />
@@ -1349,7 +1349,7 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
       {isMissing ? (
-        <HeroNumeric className="text-ink-400">
+        <HeroNumeric className="text-neutral-400">
           <span aria-hidden="true">—</span>
           <span className="sr-only">Not available</span>
         </HeroNumeric>
@@ -1382,7 +1382,7 @@ function ProvidersTable({ model }: { model: Model }) {
               <TableCell>
                 <div className="flex items-center gap-2 min-w-0">
                   <ProviderMark provider={o.provider} />
-                  <span className="font-sans text-sm text-ink-900 truncate" title={PROVIDER_LABELS[o.provider]}>
+                  <span className="font-sans text-sm text-neutral-900 truncate" title={PROVIDER_LABELS[o.provider]}>
                     {PROVIDER_LABELS[o.provider]}
                   </span>
                   <CopyButton
@@ -1428,16 +1428,16 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
     return <MarketplaceAvatar provider={provider as MarketplaceProvider} decorative />;
   }
   // Fallback for providers that aren't yet mapped in either meta table.
-  // Renders an ink-400 placeholder dot so the row keeps its leading-glyph
+  // Renders an neutral-400 placeholder dot so the row keeps its leading-glyph
   // slot (cross-row scanning lands on the same x position) and the
   // PROVIDER_LABELS text still anchors identification.
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-muted text-ink-400"
+      className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-muted text-neutral-400"
       title={PROVIDER_LABELS[provider]}
     >
-      <span className="size-2 rounded-full bg-ink-400" />
+      <span className="size-2 rounded-full bg-neutral-400" />
     </span>
   );
 }
@@ -1448,8 +1448,8 @@ function ProviderNumeric({ value }: { value: string }) {
     <TableCell
       className={
         isMissing
-          ? 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-400'
-          : 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-ink-800'
+          ? 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-400'
+          : 'text-right whitespace-nowrap font-mono tabular-nums text-sm text-neutral-800'
       }
     >
       {isMissing ? (
