@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { MoreHorizontal, Plus, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -77,14 +77,14 @@ export function Guardrails() {
 
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Enforce spend, token, and request rate caps at the org, project, or key level. Limits run inline — no separate billing system to wire up.
+          Enforce spend, token, and request rate caps at the org, project, or key level. Limits run inline with no separate billing system to wire up.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onCreate}>
           <Plus data-icon="inline-start" aria-hidden />
           Create limit
@@ -103,6 +103,15 @@ function LimitsSection({
   limits: Limit[];
   onRemove: (id: string) => void;
 }) {
+  // Snapshot `now` once per limits change. Without this, calling
+  // `resetsAt(new Date(), ...)` per row in the JSX recomputes on every
+  // re-render and the resets-on column flickers as time advances during
+  // hover / focus / open-dialog interactions.
+  const resetsAtMap = useMemo(() => {
+    const now = new Date();
+    return new Map(limits.map((l) => [l.id, resetsAt(now, l.period)]));
+  }, [limits]);
+
   if (limits.length === 0) {
     return (
       <EmptyState
@@ -175,7 +184,7 @@ function LimitsSection({
                 {periodLabel(limit.period)}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-500">
-                {resetsAt(limit.period)}
+                {resetsAtMap.get(limit.id) ?? '—'}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
                 <LimitActionsMenu limitName={limit.name} onRemove={() => onRemove(limit.id)} />
@@ -274,8 +283,12 @@ const fmtResetDate = (d: Date) => {
   const mm  = String(d.getUTCMinutes()).padStart(2, '0');
   return `${mon} ${day}, ${hh}:${mm} UTC`;
 };
-const resetsAt = (period: string) => {
-  const now = new Date();
+/** Computes the next reset boundary for a limit period. Takes `now` as a
+ *  parameter so callers can share a single timestamp across rows — calling
+ *  `new Date()` at render time per row caused the column to flicker on
+ *  every re-render. See `resetsAtMap` in LimitsSection for the memoized
+ *  call pattern. */
+const resetsAt = (now: Date, period: string) => {
   switch (period) {
     case '1h': {
       const next = new Date(now);
@@ -330,7 +343,7 @@ function CreateLimitDialog({
       threshold,
       period,
       scope,
-      used: String(Math.floor(Math.random() * (thresholdNum + 1))),
+      used: '0',
     });
     onOpenChange(false);
   };
@@ -349,10 +362,7 @@ function CreateLimitDialog({
         }
       }}
     >
-      <DialogContent
-        className="gap-4"
-        style={{ width: 500, minWidth: 500, maxWidth: 500 }}
-      >
+      <DialogContent className="gap-4 w-full sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
             Create limit

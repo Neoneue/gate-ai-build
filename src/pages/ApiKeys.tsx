@@ -157,14 +157,14 @@ export function ApiKeys() {
 
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>API Keys</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onCreate}>
           <Plus data-icon="inline-start" aria-hidden />
           Create key
@@ -608,7 +608,7 @@ function KeyCreatedDialog({
             Store this somewhere safe
           </p>
           <p className="font-sans text-sm text-warning-700 m-0">
-            Paste it into your secret manager or .env before closing. Once you close, we can't show it again — you'd need to rotate the key.
+            Paste it into your secret manager or .env before closing. Once you close, we can't show it again. You'll need to rotate the key to get a new one.
           </p>
         </div>
 

@@ -115,14 +115,14 @@ function TeamSurface() {
 
 function PageHeader({ onInvite }: { onInvite: () => void }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Team</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Manage roles, invite teammates, and remove access from Chad Ponticas&rsquo;s workspace.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant="default" size="default" onClick={onInvite}>
           <UserPlus data-icon="inline-start" aria-hidden />
           Invite member
@@ -232,8 +232,8 @@ function MembersPane() {
 
       {isEmpty ? (
         <TableEmptyState
-          title="No members"
-          body="Workspace members and their roles will appear here."
+          title="No members match"
+          body="No members match your search or filter. Try a different name or email."
         />
       ) : (
         <>

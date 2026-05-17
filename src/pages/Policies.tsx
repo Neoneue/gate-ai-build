@@ -103,7 +103,7 @@ const POLICIES: PolicyConfig[] = [
           value: 'flag',
           name: 'Flag',
           description:
-            'Forward the request, attach detection metadata to response headers.',
+            'Request proceeds. Trace is annotated with the detection. Alert fired.',
         },
       ],
     },
@@ -138,7 +138,7 @@ const POLICIES: PolicyConfig[] = [
           value: 'flag',
           name: 'Flag',
           description:
-            'Forward as-is, attach detection metadata to response.',
+            'Response proceeds. Trace is annotated with the detection. Alert fired.',
         },
         {
           value: 'block',
@@ -179,7 +179,7 @@ const POLICIES: PolicyConfig[] = [
           value: 'flag',
           name: 'Flag',
           description:
-            'Forward as-is; emit a security event for the audit trail.',
+            'Response proceeds. Trace is annotated with the detection. Alert fired.',
         },
         {
           value: 'block',

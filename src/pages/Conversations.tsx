@@ -131,15 +131,15 @@ function PageHeader({
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          A conversation is a chain of requests that share session context — agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
+          A conversation is a chain of requests that share session context: agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
           options={RANGE_OPTIONS}
           value={range === 'custom' ? '' : range}
@@ -520,7 +520,7 @@ function ConversationDetailDialog({
         // behind reads as context. The shared scroll-shell primitive
         // provides max-h-[90vh] / flex-col / overflow-hidden; the inner
         // panels scroll independently inside the body.
-        className="sm:max-w-[900px] max-h-[calc(90vh-96px)]"
+        className="sm:max-w-[860px] max-h-[calc(90vh-96px)] [@media(max-height:800px)]:max-h-[90vh]"
       >
         {stickyRow ? <ConversationDetailBody row={stickyRow} /> : null}
       </DialogScrollContent>

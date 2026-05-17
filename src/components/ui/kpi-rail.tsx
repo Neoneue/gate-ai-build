@@ -32,12 +32,21 @@ import { cn } from '@/lib/utils';
 const DIVIDER_CLS =
   'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
 
+/* Responsive column ladder. At narrow viewports (≤sm = 640px) KPI tiles
+ * need at least ~180px each to read; below that the eyebrow + hero +
+ * delta + spark crowd. The ladder stays single-row above md (768px) so
+ * the canonical horizontal rail shape is preserved on every laptop +
+ * desktop viewport. The divider hairline geometry is row-correct only;
+ * at narrow widths where the grid wraps to multiple rows the leftmost
+ * hairline on row 2+ children draws a faint edge line that's visible
+ * but not load-bearing. Acceptable trade for keeping the primitive
+ * single-axis. */
 const COLUMN_CLS: Record<number, string> = {
-  2: 'grid-cols-2',
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
-  5: 'grid-cols-5',
-  6: 'grid-cols-6',
+  2: 'grid-cols-1 sm:grid-cols-2',
+  3: 'grid-cols-1 sm:grid-cols-3',
+  4: 'grid-cols-2 md:grid-cols-4',
+  5: 'grid-cols-3 lg:grid-cols-5',
+  6: 'grid-cols-3 lg:grid-cols-6',
 };
 
 export interface KpiRailProps extends React.HTMLAttributes<HTMLDivElement> {

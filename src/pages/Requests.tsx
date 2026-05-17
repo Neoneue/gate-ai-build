@@ -138,7 +138,7 @@ function PageHeader({
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
@@ -146,7 +146,7 @@ function PageHeader({
           Every model call across your stack, inspected for injection, PII, and credentials before it reaches the model.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
           options={RANGE_OPTIONS}
           // Empty string when a custom range is active so no preset reads
@@ -550,7 +550,7 @@ function HeroMetricCard() {
 
   return (
     <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>
             {view.eyebrow}

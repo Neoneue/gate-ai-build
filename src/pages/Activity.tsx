@@ -178,14 +178,14 @@ function PageHeader({
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Activity</PageTitle>
         <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
           Cost, requests, and tokens across the workspace.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
           options={RANGE_OPTIONS}
           value={range === 'custom' ? '' : range}
@@ -1389,8 +1389,8 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
 
       {isEmpty ? (
         <TableEmptyState
-          title="No keys to show"
-          body="Per-key spend, requests, and token totals will appear here as your workspace routes traffic."
+          title="No keys match"
+          body="No keys match your search or filter. Try a different name or clear the filter."
         />
       ) : (
         <>

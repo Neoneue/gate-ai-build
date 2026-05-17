@@ -95,7 +95,7 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         {/* h2 (not h1) — the artboard's ArtboardHeader already emits the
             outer h1; this is the in-surface page title and reads as h2
@@ -109,7 +109,7 @@ function PageHeader() {
       <div className="flex items-center gap-3">
         <Button variant="default" size="default">
           <Plus data-icon="inline-start" aria-hidden />
-          Create Key
+          Create key
         </Button>
       </div>
     </div>
@@ -438,10 +438,10 @@ export function RecentRequestsCard() {
     <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
       <div className="flex items-center justify-between py-3 px-4">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
-          Recent Requests
+          Recent requests
         </h3>
         <Button variant="ghost" size="sm" className="text-ink-500 hover:text-ink-900 -mr-2">
-          View All
+          View all
           <ChevronRight data-icon="inline-end" aria-hidden />
         </Button>
       </div>
@@ -537,7 +537,7 @@ function QuickActionsRow() {
     <div className="rounded-md bg-card shadow-(--shadow-border) overflow-hidden">
       <div className="flex items-center py-3 px-4 border-b border-border">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
-          Quick Actions
+          Quick actions
         </h3>
       </div>
       <div className="grid grid-cols-4">

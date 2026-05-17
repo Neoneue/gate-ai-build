@@ -795,7 +795,7 @@ function PageHeader({ modelCount, providerCount }: { modelCount: number; provide
         <span className="text-ink-800 tabular-nums">{modelCount}</span>{' '}
         models across{' '}
         <span className="text-ink-800 tabular-nums">{providerCount}</span>{' '}
-        providers — capabilities, per-provider pricing, and code samples on every detail page.
+        providers, with per-provider pricing and code samples on every detail page.
       </p>
     </div>
   );
