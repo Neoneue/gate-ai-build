@@ -103,12 +103,7 @@ export function AuditRecordDialog({
               <DetailList>
                 <DetailRow
                   label="Time"
-                  value={
-                    <>
-                      <span className="font-mono text-ink-800">{fmtTime(row.at)}</span>
-                      <span className="text-ink-500"> &middot; {fmtRelative(row.at)}</span>
-                    </>
-                  }
+                  value={<span className="font-mono text-ink-800">{fmtTime(row.at)}</span>}
                 />
                 <DetailRow
                   label="Event ID"
