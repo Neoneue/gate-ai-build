@@ -192,7 +192,7 @@ const HOW_STEPS = [
 
 function NumberChip({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-ink-100 text-ink-700 font-mono text-xs font-medium shrink-0">
+    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-ink-100 text-ink-600 font-mono text-xs shrink-0">
       {children}
     </span>
   );
