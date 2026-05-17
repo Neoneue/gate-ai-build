@@ -746,7 +746,7 @@ type RiskTier = 'critical' | 'elevated' | 'normal';
 // Time-cell format so timestamps read identically across the app. Date
 // parsing forces local midnight so the day rendered stays the day the
 // event was filed (no timezone offset surprises in the demo data).
-function formatEventTime(stored: string): string {
+export function formatEventTime(stored: string): string {
   const [datePart, timePart] = stored.split(' ');
   const date = new Date(`${datePart}T${timePart}`);
   return formatDateTime(date);
@@ -760,7 +760,7 @@ type EventAction = 'blocked' | 'flagged' | 'redacted';
 // them — kept out of the UI until a real policy exists.
 type EventCategory = 'injection' | 'pii' | 'phi' | 'credential';
 
-type EventRow = {
+export type EventRow = {
   time: string;
   /** Human-friendly relative time. Cell renders this above `time` as the
    *  primary scan target; the absolute datetime sits below as the qualifier. */
@@ -793,7 +793,7 @@ type EventRow = {
   totalTurns: number;
 };
 
-const ACTION_BADGE: Record<
+export const ACTION_BADGE: Record<
   EventAction,
   { variant: 'destructive' | 'warning' | 'info'; label: string }
 > = {
@@ -900,7 +900,7 @@ function getEventDetail(row: EventRow) {
 // two cards agree on which color represents which threat category. Colors
 // are inline-styled on the icon (same idiom as VendorAvatar on Models /
 // Requests) — bare colored glyph, no chip background.
-const TYPE_META: Record<
+export const TYPE_META: Record<
   EventCategory,
   { Icon: ComponentType<SVGProps<SVGSVGElement>>; label: string; color: string }
 > = {
@@ -917,7 +917,7 @@ const RANGE_OPTIONS = [
   { value: '30d', label: '30D' },
 ];
 
-const EVENT_ROWS: EventRow[] = [
+export const EVENT_ROWS: EventRow[] = [
   // Token/turn/latency values are reconciled against the Conversations
   // mock (Conversations.tsx CONVERSATION_ROWS): per-row inTokens+outTokens
   // stays under the per-request average for the parent conversation, and
@@ -1209,7 +1209,7 @@ function EventsTableSection({
  *   - KPI tile rail across the top (CMP-013 / CMP-014 pattern)
  * ────────────────────────────────────────────────────────────────────── */
 
-function ThreatEventDetailDialog({
+export function ThreatEventDetailDialog({
   selection,
   onOpenChange,
 }: {

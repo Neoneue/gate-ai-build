@@ -46,11 +46,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  VendorAvatar,
-  type Vendor,
-} from '@/components/icons/vendor-meta';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { type Vendor } from '@/components/icons/vendor-meta';
 import { CHART_PALETTE } from '@/lib/chart-palette';
+import {
+  type EventRow,
+  ACTION_BADGE,
+  TYPE_META,
+  EVENT_ROWS,
+  formatEventTime,
+  ThreatEventDetailDialog,
+} from '@/pages/Security';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -85,7 +91,7 @@ export function Dashboard() {
             <PageHeader />
             <KpiRail />
             <MiddleRow />
-            <RecentRequestsCard />
+            <RecentSecurityEventsCard />
             <QuickActionsRow />
           </DashboardChrome>
   );
@@ -396,112 +402,131 @@ export function TopKeysCard() {
   );
 }
 
-/* ─── Recent Requests (live-feed table) ──────────────────────────────────── */
+/* ─── Recent Security Events (preview table) ─────────────────────────────── */
 
-type RequestStatus = 'success' | 'warn' | 'danger';
+// Top 10 blocked events descending by time; fill with flagged if fewer than
+// 10 blocked exist. EVENT_ROWS time format is 'YYYY-MM-DD HH:MM:SS' —
+// lexicographic sort matches chronological order.
+const RECENT_SECURITY_EVENTS: EventRow[] = (() => {
+  const sorted = [...EVENT_ROWS].sort((a, b) => b.time.localeCompare(a.time));
+  const blocked = sorted.filter((r) => r.action === 'blocked');
+  if (blocked.length >= 10) return blocked.slice(0, 10);
+  const flagged = sorted.filter((r) => r.action === 'flagged');
+  return [...blocked, ...flagged].slice(0, 10);
+})();
 
-const RECENT_REQUESTS: {
-  time: string;
-  vendor: Vendor;
-  model: string;
-  status: RequestStatus;
-  code: string;
-  tokens: string;
-  latency: string;
-  cost: string;
-}[] = [
-  { time: '14:28:04', vendor: 'anthropic', model: 'claude-sonnet-4.8', status: 'success', code: '200',  tokens: '4,051', latency: '1.21s', cost: '$0.028' },
-  { time: '14:27:52', vendor: 'openai',    model: 'gpt-5.1',           status: 'success', code: '200',  tokens: '2,847', latency: '0.89s', cost: '$0.019' },
-  { time: '14:27:41', vendor: 'xai',       model: 'grok-4.1-fast',     status: 'success', code: '200',  tokens: '6,120', latency: '2.14s', cost: '$0.012' },
-  { time: '14:27:30', vendor: 'google',    model: 'gemini-3-pro',      status: 'warn',    code: '408',  tokens: '1,892', latency: '4.08s', cost: '$0.009' },
-  { time: '14:27:18', vendor: 'anthropic', model: 'claude-opus-4.7',   status: 'danger',  code: '500',  tokens: '—',     latency: '—',     cost: '—'      },
-  { time: '14:26:54', vendor: 'meta',      model: 'llama-4.2-405b',    status: 'success', code: '200',  tokens: '3,204', latency: '1.65s', cost: '$0.006' },
-  { time: '14:26:32', vendor: 'mistral',   model: 'mistral-large-3',   status: 'success', code: '200',  tokens: '2,517', latency: '0.94s', cost: '$0.005' },
-  { time: '14:26:08', vendor: 'cohere',    model: 'command-r-plus',    status: 'success', code: '200',  tokens: '1,842', latency: '0.71s', cost: '$0.004' },
-];
+function RecentSecurityEventsCard() {
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
-const STATUS_BADGE: Record<RequestStatus, {
-  variant: 'success' | 'warning' | 'destructive';
-  dot: 'success' | 'warning' | 'danger';
-}> = {
-  success: { variant: 'success',     dot: 'success' },
-  warn:    { variant: 'warning',     dot: 'warning' },
-  danger:  { variant: 'destructive', dot: 'danger'  },
-};
-
-// Skill: surfaces.md — RecentRequestsCard is hand-rolled (the table needs
-// no card padding so we don't use <Card>) but it should still wear the
-// hairline shadow + border that the Card primitive now ships with so the
-// dashboard's two surfaces read as the same depth tier.
-export function RecentRequestsCard() {
   return (
-    <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
-      <div className="flex items-center justify-between py-3 px-4">
-        <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
-          Recent requests
-        </h3>
-        <Button variant="ghost" size="sm" className="text-ink-500 hover:text-ink-900 -mr-2">
-          View all
-          <ChevronRight data-icon="inline-end" aria-hidden />
-        </Button>
-      </div>
+    <>
+      <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
+        <div className="flex items-center justify-between py-3 px-4">
+          <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
+            Recent security events
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-ink-500 hover:text-ink-900 -mr-2"
+            onClick={() => navigate('/security')}
+          >
+            View all
+            <ChevronRight data-icon="inline-end" aria-hidden />
+          </Button>
+        </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Time</TableHead>
-            <TableHead className="whitespace-nowrap">Model</TableHead>
-            <TableHead className="whitespace-nowrap">Status</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Latency</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Cost</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {RECENT_REQUESTS.map((row, i) => {
-            const badge = STATUS_BADGE[row.status];
-            // Missing-data tone — match CMP-013 policy. 5xx rows render
-            // numerics as `—` in ink-400; populated rows stay ink-800.
-            const isMissing = row.tokens === '—';
-            const numericCls = isMissing
-              ? 'text-right whitespace-nowrap font-mono tabular-nums text-ink-400'
-              : 'text-right whitespace-nowrap font-mono tabular-nums text-ink-800';
-            return (
-              <TableRow key={`${row.time}-${i}`} className="hover:bg-transparent">
-                <TableCell className="whitespace-nowrap font-mono tabular-nums text-ink-800">
-                  {row.time}
-                </TableCell>
-                <TableCell className="max-w-[260px]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <VendorAvatar vendor={row.vendor} />
-                    <span
-                      className="font-mono text-sm text-ink-900 truncate"
-                      title={row.model}
-                    >
-                      {row.model}
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="whitespace-nowrap">Time</TableHead>
+              <TableHead className="whitespace-nowrap">Type</TableHead>
+              <TableHead className="whitespace-nowrap">Conversation</TableHead>
+              <TableHead className="whitespace-nowrap">Key</TableHead>
+              <TableHead className="whitespace-nowrap">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {RECENT_SECURITY_EVENTS.map((row, i) => {
+              const typeMeta = TYPE_META[row.type];
+              const actionMeta = ACTION_BADGE[row.action];
+              const TypeIcon = typeMeta.Icon;
+              return (
+                <TableRow
+                  key={`${row.time}-${i}`}
+                  className="cursor-pointer hover-fine:bg-ink-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
+                  onClick={() => setSelectedRow(row)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedRow(row);
+                    }
+                  }}
+                >
+                  <TableCell className="whitespace-nowrap">
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={(props) => (
+                          <span
+                            {...props}
+                            className="font-mono text-sm tabular-nums text-ink-800"
+                          >
+                            {formatEventTime(row.time)}
+                          </span>
+                        )}
+                      />
+                      <TooltipContent>{row.relative}</TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
+                      <TypeIcon
+                        className="size-4 shrink-0"
+                        style={{ color: typeMeta.color }}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="font-sans text-sm text-ink-800">{typeMeta.label}</span>
                     </span>
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge variant={badge.variant}>
-                    {row.code}
-                  </Badge>
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.tokens}
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.latency}
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.cost}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[200px]">
+                    <span
+                      title={row.conversationId}
+                      className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
+                    >
+                      {row.conversationId}
+                    </span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap font-mono">
+                    {(() => {
+                      const parenIdx = row.key.indexOf(' (');
+                      if (parenIdx === -1) return <span className="text-ink-800">{row.key}</span>;
+                      return (
+                        <>
+                          <span className="text-ink-800">{row.key.slice(0, parenIdx)}</span>
+                          <span className="text-ink-600">{row.key.slice(parenIdx)}</span>
+                        </>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+      <ThreatEventDetailDialog
+        selection={selectedRow}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRow(null);
+        }}
+      />
+    </>
   );
 }
 
