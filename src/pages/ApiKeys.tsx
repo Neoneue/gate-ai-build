@@ -395,17 +395,14 @@ function KeysTable({
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            {/* Explicit widths so the six columns get the breathing room
-             *  their content needs instead of every cell auto-sizing to
-             *  roughly the same width. Key carries the longest string
-             *  (name + masked id), so it gets the largest share; Actions
-             *  is icon-only, so it gets the smallest. */}
-            <TableHead className="w-[32%] whitespace-nowrap">Key</TableHead>
-            <TableHead className="w-[10%] whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">7-day requests</TableHead>
-            <TableHead className="w-[14%] text-right whitespace-nowrap">7-day usage</TableHead>
-            <TableHead className="w-[18%] whitespace-nowrap">Last used</TableHead>
-            <TableHead aria-label="Actions" className="w-[10%]" />
+            {/* Six equal columns — every header gets the same 1/6 share so
+             *  the grid reads as a uniform rhythm. */}
+            <TableHead className="w-[16.6667%] whitespace-nowrap">Key</TableHead>
+            <TableHead className="w-[16.6667%] whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-[16.6667%] whitespace-nowrap">7-day requests</TableHead>
+            <TableHead className="w-[16.6667%] text-right whitespace-nowrap">7-day usage</TableHead>
+            <TableHead className="w-[16.6667%] whitespace-nowrap">Last used</TableHead>
+            <TableHead aria-label="Actions" className="w-[16.6667%]" />
           </TableRow>
         </TableHeader>
         <TableBody>
