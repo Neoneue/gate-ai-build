@@ -229,7 +229,7 @@ function HowItWorksPanel() {
           <span className="size-8 rounded-xs bg-ink-100 inline-flex items-center justify-center shrink-0">
             <BookOpen className="size-4 text-ink-700" aria-hidden />
           </span>
-          <span className="flex flex-col gap-1 min-w-0">
+          <span className="flex flex-col min-w-0">
             <span className="text-sm font-medium text-ink-900">Read the whitepaper</span>
             <span className="text-sm text-ink-700 text-pretty">
               Full technical spec for the Constellation Digital Evidence layer.
