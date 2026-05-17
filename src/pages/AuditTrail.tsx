@@ -4,10 +4,9 @@ import { CircleCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail } from '@/components/ui/kpi-rail';
+import { KpiTile } from '@/components/ui/kpi-tile';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import {
@@ -204,30 +203,6 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
       />
       <KpiTile title="Last anchor" value={mostRecent ? fmtRelative(mostRecent) : '—'} />
     </KpiRail>
-  );
-}
-
-function KpiTile({
-  title,
-  value,
-  valueSuffix,
-}: {
-  title: string;
-  value: string;
-  valueSuffix?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-card p-4">
-      <Eyebrow as="div">{title}</Eyebrow>
-      <div className="flex items-baseline gap-2">
-        <HeroNumeric>{value}</HeroNumeric>
-        {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-muted-foreground">
-            {valueSuffix}
-          </span>
-        ) : null}
-      </div>
-    </div>
   );
 }
 
