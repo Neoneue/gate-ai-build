@@ -48,6 +48,9 @@ import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatDate, formatRelative } from '@/lib/formatters';
+
+const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-017 — Team (Workspace Admin)
@@ -167,14 +170,14 @@ type MemberRow = {
   email: string;
   avatarTone: AvatarTone;
   role: MemberRole;
-  joined: string;
+  joined: Date;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: 'Apr 20, 2026' },
-  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: 'Apr 22, 2026' },
-  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: 'May 01, 2026' },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: 'May 08, 2026' },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: new Date(2026, 3, 20) },
+  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: new Date(2026, 3, 22) },
+  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: new Date(2026, 4,  1) },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: new Date(2026, 4,  8) },
 ];
 
 function MembersPane() {
@@ -295,7 +298,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
         </div>
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
-        {row.joined}
+        {formatDate(row.joined)}
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
         {row.role === 'owner' ? (
@@ -330,14 +333,14 @@ type InvitationRow = {
   id: string;
   email: string;
   invitedBy: string;
-  sent: string;
+  sent: Date;
   role: MemberRole;
-  expires: string;
+  expires: Date;
 };
 
 const INVITATION_ROWS: InvitationRow[] = [
-  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: 'May 07, 2026', role: 'member', expires: 'in 6 days' },
-  { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: 'May 06, 2026', role: 'admin',  expires: 'in 5 days' },
+  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: new Date(2026, 4, 7), role: 'member', expires: new Date(NOW.getTime() + 6 * 24 * 60 * 60 * 1000) },
+  { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: new Date(2026, 4, 6), role: 'admin',  expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000) },
 ];
 
 function InvitationsPane({ onInvite }: { onInvite: () => void }) {
@@ -385,13 +388,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
-                {row.sent}
+                {formatDate(row.sent)}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
-                {row.expires}
+                {formatRelative(row.expires, NOW)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
                 <RowActionsMenu

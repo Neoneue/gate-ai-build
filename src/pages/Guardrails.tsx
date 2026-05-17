@@ -38,6 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatNumber, formatDateTime } from '@/lib/formatters';
 
 export function Guardrails() {
   const navigate = useNavigate();
@@ -265,24 +266,26 @@ const findScope = (v: string) => LIMIT_SCOPES.find((s) => s.value === v);
 const scopeName = (v: string) => findScope(v)?.name ?? v;
 const thresholdLabel = (type: string, threshold: string) => {
   const n = Number(threshold);
-  const formatted = Number.isFinite(n) ? n.toLocaleString() : threshold;
+  const formatted = Number.isFinite(n) ? formatNumber(n) : threshold;
   return type === 'spend' ? `$${formatted}` : formatted;
 };
 const usedLabel = (type: string, used: string, threshold: string) => {
   const uNum = Number(used);
   const tNum = Number(threshold);
-  const u = Number.isFinite(uNum) ? uNum.toLocaleString() : '0';
-  const t = Number.isFinite(tNum) ? tNum.toLocaleString() : '0';
+  const u = Number.isFinite(uNum) ? formatNumber(uNum) : '0';
+  const t = Number.isFinite(tNum) ? formatNumber(tNum) : '0';
   const prefix = type === 'spend' ? '$' : '';
   return `${prefix}${u} / ${prefix}${t}`;
 };
-const fmtResetDate = (d: Date) => {
-  const mon = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
-  const day = d.getUTCDate();
-  const hh  = String(d.getUTCHours()).padStart(2, '0');
-  const mm  = String(d.getUTCMinutes()).padStart(2, '0');
-  return `${mon} ${day}, ${hh}:${mm} UTC`;
-};
+const fmtResetDate = (d: Date) =>
+  `${formatDateTime(d, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  })} UTC`;
 /** Computes the next reset boundary for a limit period. Takes `now` as a
  *  parameter so callers can share a single timestamp across rows — calling
  *  `new Date()` at render time per row caused the column to flicker on

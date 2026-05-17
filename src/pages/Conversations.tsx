@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/table';
 import { VENDOR_META, VendorAvatar, type Vendor } from '@/components/icons/vendor-meta';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatDateTime } from '@/lib/formatters';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-014 — Conversations (Observability)
@@ -224,19 +225,19 @@ type ConversationRow = {
   outTokens: string;
   cost: string;
   status: ConversationStatus;
-  updated: string;
+  updated: Date;
   /** Conversation duration ("3m 53s") — surfaced in the detail sheet KPI rail. */
   duration: string;
 };
 
 const CONVERSATION_ROWS: ConversationRow[] = [
-  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: 'May 12, 14:28:04', duration: '3m 53s'  },
-  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: 'May 12, 14:22:11', duration: '5m 12s'  },
-  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: 'May 12, 14:15:22', duration: '0m 47s'  },
-  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'prod-web',   turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], models: ['claude-opus-4-7', 'gpt-5', 'llama-3-3-70b'],         inTokens: '44,889', outTokens: '7,921',  cost: '$0.5841', status: 'completed', updated: 'May 12, 14:02:48', duration: '14m 06s' },
-  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'prod-agent', turns:  4, reqs:  7, vendors: ['anthropic'],                      models: ['claude-haiku-4-5'],                                  inTokens: '2,892',  outTokens: '510',    cost: '$0.1102', status: 'active',    updated: 'May 12, 13:48:33', duration: '2m 18s'  },
-  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'prod-web',   turns: 14, reqs: 32, vendors: ['openai'],                         models: ['gpt-4o-mini'],                                       inTokens: '10,717', outTokens: '1,891',  cost: '$0.0812', status: 'failed',    updated: 'May 12, 13:36:10', duration: '8m 41s'  },
-  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '86,735', outTokens: '15,306', cost: '$0.1402', status: 'completed', updated: 'May 12, 13:18:55', duration: '11m 27s' },
+  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: new Date(2026, 4, 12, 14, 28, 4),  duration: '3m 53s'  },
+  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: new Date(2026, 4, 12, 14, 22, 11), duration: '5m 12s'  },
+  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: new Date(2026, 4, 12, 14, 15, 22), duration: '0m 47s'  },
+  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'prod-web',   turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], models: ['claude-opus-4-7', 'gpt-5', 'llama-3-3-70b'],         inTokens: '44,889', outTokens: '7,921',  cost: '$0.5841', status: 'completed', updated: new Date(2026, 4, 12, 14,  2, 48), duration: '14m 06s' },
+  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'prod-agent', turns:  4, reqs:  7, vendors: ['anthropic'],                      models: ['claude-haiku-4-5'],                                  inTokens: '2,892',  outTokens: '510',    cost: '$0.1102', status: 'active',    updated: new Date(2026, 4, 12, 13, 48, 33), duration: '2m 18s'  },
+  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'prod-web',   turns: 14, reqs: 32, vendors: ['openai'],                         models: ['gpt-4o-mini'],                                       inTokens: '10,717', outTokens: '1,891',  cost: '$0.0812', status: 'failed',    updated: new Date(2026, 4, 12, 13, 36, 10), duration: '8m 41s'  },
+  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '86,735', outTokens: '15,306', cost: '$0.1402', status: 'completed', updated: new Date(2026, 4, 12, 13, 18, 55), duration: '11m 27s' },
 ];
 
 // Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities used on
@@ -428,7 +429,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   {scaleCostStr(row.cost, scale)}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.updated}
+                  {formatDateTime(row.updated)}
                 </TableCell>
               </TableRow>
             );
@@ -604,7 +605,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
       <DialogScrollFooter className="justify-between flex-wrap">
         <span className="font-mono text-xs text-ink-500">
           Key <span className="text-ink-800">{row.initiator}</span>{' '}
-          · started <span className="text-ink-800">{row.updated}</span>
+          · started <span className="text-ink-800">{formatDateTime(row.updated)}</span>
         </span>
         <CopyButton
           mode="label"

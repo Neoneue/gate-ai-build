@@ -29,6 +29,7 @@ import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { AuditRecordDialog } from './AuditRecordDialog';
+import { formatDateTime, formatNumber } from '@/lib/formatters';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -71,11 +72,8 @@ function isWithinRange(at: Date, range: Range, customRange: CustomRange | null):
   return at >= cutoff;
 }
 
-const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const pad2 = (n: number) => String(n).padStart(2, '0');
-
 export function fmtTime(d: Date): string {
-  return `${MONTH_LABELS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  return formatDateTime(d);
 }
 
 export function fmtRelative(at: Date): string {
@@ -192,8 +190,8 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
 
   return (
     <KpiRail columns={4}>
-      <KpiTile title="Events logged" value={eventsLogged.toLocaleString()} />
-      <KpiTile title="Anchors" value={distinctAnchors.toLocaleString()} />
+      <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
+      <KpiTile title="Anchors" value={formatNumber(distinctAnchors)} />
       <KpiTile
         title="Verified rate"
         value={verifiedRate === null ? '—' : verifiedRate.toFixed(1)}

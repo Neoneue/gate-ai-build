@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/chart';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-015 — Security
@@ -106,7 +107,7 @@ function eventsTotal(range: EventsRange, customRange: CustomRange | null): numbe
   return EVENTS_RANGE_TOTAL[range === 'custom' ? '24h' : range];
 }
 
-const fmtCount = (n: number) => n.toLocaleString('en-US');
+const fmtCount = (n: number) => formatNumber(n);
 
 // Action-mix ratio source. The Blocked:Flagged:Redacted proportion is
 // fixed at 31:14:2 (product decision); `splitEventMix` projects any
@@ -252,8 +253,6 @@ const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
 // Stable constant — never use `new Date()` here, the chart must not drift
 // across renders or test runs.
 const ANCHOR = { month: 4 /* May, 0-indexed */, day: 12, hour: 14, minute: 30 };
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 // Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
 function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; hour: number; minute: number } {
   // Use Date arithmetic with year 2026 as scaffolding only — we read the
@@ -262,10 +261,6 @@ function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; 
   const d = new Date(2026, ANCHOR.month, ANCHOR.day, ANCHOR.hour, ANCHOR.minute);
   d.setMinutes(d.getMinutes() - minutesAgo);
   return { month: d.getMonth(), day: d.getDate(), hour: d.getHours(), minute: d.getMinutes() };
-}
-
-function pad2(n: number): string {
-  return n.toString().padStart(2, '0');
 }
 
 type EventsChartView = {
@@ -309,9 +304,10 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
   const data = totalSpark.map((requests, i) => {
     const minutesAgo = Math.round((buckets - 1 - i) * bucketMinutes);
     const { month, day, hour, minute } = minutesBeforeAnchor(minutesAgo);
+    const d = new Date(2026, month, day, hour, minute);
     const time = hourly
-      ? `${pad2(hour)}:${pad2(minute)}`
-      : `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`;
+      ? formatTime(d, { hour: '2-digit', minute: '2-digit', hour12: false })
+      : formatDateTime(d, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
     return { time, requests };
   });
 
@@ -740,9 +736,8 @@ type RiskTier = 'critical' | 'elevated' | 'normal';
 // event was filed (no timezone offset surprises in the demo data).
 function formatEventTime(stored: string): string {
   const [datePart, timePart] = stored.split(' ');
-  const date = new Date(`${datePart}T00:00:00`);
-  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${monthDay}, ${timePart}`;
+  const date = new Date(`${datePart}T${timePart}`);
+  return formatDateTime(date);
 }
 
 type EventAction = 'blocked' | 'flagged' | 'redacted';
