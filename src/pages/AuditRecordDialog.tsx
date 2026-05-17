@@ -217,12 +217,14 @@ function HowItWorksPanel() {
         ))}
       </div>
 
-      {/* Go-deeper CTA — single primary resource. Drops the secondary
-          "DE docs" link to force a real ranking: whitepaper is the
-          canonical reference; everything else is noise inside this drill-in. */}
-      <button
-        type="button"
-        onClick={() => {}}
+      {/* Go-deeper CTA — single primary resource. Links straight to the
+          Digital Evidence product surface (no separate /docs path in the
+          knowledge graph yet). Copy uses the approved tamper-evident /
+          cryptographic-proof vocabulary from the DE product record. */}
+      <a
+        href="https://digitalevidence.constellationnetwork.io/"
+        target="_blank"
+        rel="noopener noreferrer"
         className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-ink-50 motion-reduce:transition-none"
       >
         <span className="flex items-center gap-3 min-w-0">
@@ -230,9 +232,9 @@ function HowItWorksPanel() {
             <BookOpen className="size-4 text-ink-700" aria-hidden />
           </span>
           <span className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-ink-900">Read the whitepaper</span>
+            <span className="text-sm font-medium text-ink-900">Digital Evidence docs</span>
             <span className="text-sm text-ink-700 text-pretty">
-              Full technical spec for the Constellation Digital Evidence layer.
+              How Constellation's tamper-evident layer makes every event in this log independently verifiable.
             </span>
           </span>
         </span>
@@ -240,7 +242,7 @@ function HowItWorksPanel() {
           className="size-4 text-ink-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-ink-900 motion-reduce:transition-none"
           aria-hidden
         />
-      </button>
+      </a>
     </div>
   );
 }
@@ -312,7 +314,7 @@ export function AuditRecordDialog({
                   }
                 />
                 <DetailRow
-                  label="Kind"
+                  label="Event type"
                   value={<Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>}
                 />
                 <DetailRow

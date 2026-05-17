@@ -419,7 +419,7 @@ export const EVENT_ROWS: EventRow[] = [
 type FilterValue = '__all' | 'REQUEST' | 'POLICY' | 'LIMITS' | 'AUDIT';
 
 const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
-  { value: '__all',   label: 'All' },
+  { value: '__all',   label: 'All events' },
   { value: 'REQUEST', label: 'Requests' },
   { value: 'POLICY',  label: 'Policy' },
   { value: 'LIMITS',  label: 'Limits' },
@@ -481,7 +481,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
           <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
             <SelectTrigger
               size="sm"
-              aria-label="Filter by kind"
+              aria-label="Filter by event type"
               className="border-border bg-card text-foreground font-normal"
             >
               <SelectValue />
@@ -513,7 +513,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   their content. */}
               <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
               <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
-              <TableHead className="w-[9%] whitespace-nowrap">Kind</TableHead>
+              <TableHead className="w-[9%] whitespace-nowrap">Event type</TableHead>
               <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
               <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
               <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
