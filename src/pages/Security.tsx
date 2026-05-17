@@ -1221,7 +1221,7 @@ function ThreatEventDetailDialog({
 }) {
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
-      <DialogScrollContent className="sm:max-w-[640px]">
+      <DialogScrollContent className="sm:max-w-[592px]">
         {selection ? <ThreatEventDetailBody row={selection} /> : null}
       </DialogScrollContent>
     </Dialog>
@@ -1325,11 +1325,11 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 Request
               </span>
             </SectionHeading>
-            <DetailList className="rounded-md">
+            <DetailList>
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
+                  <span className="font-mono text-ink-900 tabular-nums tracking-snug">
                     {formatEventTime(row.time)}
                   </span>
                 }
@@ -1341,7 +1341,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   // name in dark ink, the (sk-gw-NNN) string dimmed.
                   const parenIdx = row.key.indexOf(' (');
                   return (
-                    <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                    <span className="font-mono tabular-nums tracking-snug">
                       {parenIdx === -1 ? (
                         <span className="text-ink-900">{row.key}</span>
                       ) : (
@@ -1357,7 +1357,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums tracking-snug">
                     <TextLink
                       onClick={openConversation}
                       aria-label={`Open conversation ${conversationId}`}
@@ -1373,7 +1373,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Request"
                 value={
-                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums tracking-snug">
                     <TextLink
                       onClick={openRequest}
                       aria-label={`Open request ${requestId}`}

@@ -561,11 +561,63 @@ page, rowsPerPage: number
 
 **Purpose:** Tamper-evident, cryptographically verifiable log of every routed request — anchored to Constellation's Digital Evidence layer. Hero differentiator of the H1 narrative.
 
-**State:** none (stub page).
+**Status:** Built (2026-05-16). Title + subtitle + range selector + 4-tile KPI rail + paginated event log with toolbar. Per-row drill-in (cryptographic-proof side panel) lands in a follow-up.
 
-**Status:** Stub. PageHeader + EmptyState placeholder ("Audit Trail surface in progress"). Full surface in flight; when it lands, migrate the DE / "tamper-evident" / "Digital Evidence" copy off `TokenSavings.tsx:50` onto this page's header.
+**Page-level state:**
+```typescript
+const [range, setRange] = useState<Range>('all');           // 'all' | '24h' | '7d' | '30d' | 'custom'
+const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+const rangeRows = useMemo(
+  () => EVENT_ROWS.filter((r) => isWithinRange(r.at, range, customRange)),
+  [range, customRange],
+);
+```
 
-**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class."
+`rangeRows` is the load-bearing pipe — both `<KpiRailSection rows={rangeRows} />` and `<EventLog rows={rangeRows} />` read from it. EventLog further narrows via kind filter + search query before paginating.
+
+**EventRow type:**
+```typescript
+type EventKind = 'AUDIT' | 'REQUEST' | 'POLICY' | 'EVENT' | 'LIMITS';
+
+type EventRow = {
+  id: string;
+  at: Date;            // canonical timestamp; visible time string is computed via fmtTime
+  eventId: string;     // mono short hash e.g. "cc8ae1...3b5cac"
+  kind: EventKind;
+  description: string;
+  member: string;      // workspace member name (Team.tsx MEMBER_ROWS roster)
+  anchor: string;      // mono short anchor hash; CircleCheck "verified" affordance with sr-only label
+};
+```
+
+**Mock data anchor:**
+```typescript
+const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
+```
+Fixed anchor for relative-time formatting and range cutoffs — keeps the mock from going stale as wall-clock time advances. Same technique to use whenever a mock page renders relative timestamps. When real data lands, replace `NOW` with `new Date()`.
+
+**Range filter:** `isWithinRange(at, range, customRange)` — `'all'` returns everything; presets compute `cutoff = NOW - HOURS_PER_PRESET[range] * 1h`; `'custom'` returns rows in `[customRange.from, customRange.to]`.
+
+**KPI tiles (derive from `rangeRows`):**
+- **Events logged:** `rangeRows.length`
+- **Anchors:** `new Set(rangeRows.map(r => r.anchor)).size` — distinct anchor hashes (events batch under one anchor; mock data has two batched groups of 3 and 2)
+- **Verified rate:** `100.0%` when any rows; `—` when empty (no fabricated rate over zero events)
+- **Last anchor:** `fmtRelative(mostRecent.at)` — "5h ago", "2d ago", etc.; `—` when empty
+
+**EventLog table (six columns, `table-fixed` with percentage widths):** Time 14% · Event ID 13% · Kind 9% · Description 30% · Member 16% · Anchor 18%. Description column uses `line-clamp-2 break-words` for two-line wrap with ellipsis on overflow. TableRow has `[&_td]:align-top` so single-line cells align with the first line of a wrapped Description.
+
+**Empty state:** `<TableEmptyState>` primitive (canonical site). Toolbar hides when empty. Fires identically for fresh-workspace (zero data ever) and over-filtered (zero matches in range/kind/query).
+
+**Kind badge variant mapping:**
+```
+AUDIT   → 'warning'      (amber)
+REQUEST → 'info'         (blue)
+POLICY  → 'destructive'  (red)
+LIMITS  → 'secondary'    (gray-ish; no LIMITS rows in mock yet)
+EVENT   → 'neutral'      (gray; one row in mock)
+```
+
+**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page uses "anchored on a public ledger" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
 
 ---
 

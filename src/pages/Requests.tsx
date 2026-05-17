@@ -1389,7 +1389,7 @@ function RequestDetailDialog({
       onOpenChange={onOpenChange}
       onOpenChangeComplete={onOpenChangeComplete}
     >
-      <DialogScrollContent className="sm:max-w-[800px]">
+      <DialogScrollContent className="sm:max-w-[672px]">
         {row ? <RequestDetailBody row={row} /> : null}
       </DialogScrollContent>
     </Dialog>
@@ -1440,9 +1440,9 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
       <DialogScrollBody>
         {/* Tabs default to Messages so the prompt/response — the load-bearing
             content of any request inspection — is visible on first open. */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-2">
-          <TabsList className="group-data-horizontal/tabs:h-10">
-            <TabsTrigger value="messages">Message</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList variant="line" className="mb-4 px-0">
+            <TabsTrigger value="messages" className="pl-0">Message</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="audit">Security</TabsTrigger>
           </TabsList>
@@ -1457,11 +1457,11 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               no chrome, so without the extra 8px the table's top border
               reads as touching the tabs. */}
           <TabsContent value="details" className="pt-2">
-            <DetailList className="rounded-md">
+            <DetailList>
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="block text-right font-mono text-sm text-ink-900 tabular-nums tracking-snug">
+                  <span className="font-mono text-ink-900 tabular-nums tracking-snug">
                     {row.day}, {row.time}
                   </span>
                 }
@@ -1469,7 +1469,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="block text-right font-mono text-sm tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums tracking-snug">
                     <TextLink
                       onClick={openConversation}
                       aria-label={`Open conversation ${row.conversation}`}
@@ -1482,42 +1482,34 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Model"
                 value={
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center gap-2">
                     <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-sm text-ink-900 tracking-tight">
+                    <span className="font-mono text-ink-900 tracking-tight">
                       {row.model}
                     </span>
                   </div>
                 }
               />
-              <DetailRow label="Provider" value={<span className="block text-right font-sans text-sm text-ink-900">{provider}</span>} />
+              <DetailRow label="Provider" value={<span className="text-ink-900">{provider}</span>} />
               <DetailRow
                 label="API Key"
-                value={<span className="block text-right font-mono text-sm text-ink-900 tracking-tight">{row.keyId}</span>}
+                value={<span className="font-mono text-ink-900 tracking-tight">{row.keyId}</span>}
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="block text-right font-mono text-sm text-ink-900 tracking-tight">
+                  <span className="font-mono text-ink-900 tracking-tight">
                     <span className="text-ink-500">POST</span> /v1/messages
                   </span>
                 }
               />
               <DetailRow
                 label="HTTP status"
-                value={
-                  <span className="flex justify-end">
-                    <Badge variant={badge.variant}>{row.code}</Badge>
-                  </span>
-                }
+                value={<Badge variant={badge.variant}>{row.code}</Badge>}
               />
               <DetailRow
                 label="Cache"
-                value={
-                  <span className="flex justify-end">
-                    <Badge variant="info">miss</Badge>
-                  </span>
-                }
+                value={<Badge variant="info">miss</Badge>}
               />
             </DetailList>
           </TabsContent>
@@ -1561,7 +1553,7 @@ function KpiTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums -tracking-[0.5px] text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums text-ink-900">
         {value}
       </span>
     </div>
