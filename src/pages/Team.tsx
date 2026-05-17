@@ -306,7 +306,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
             >
               {row.name}
             </span>
-            <span className="font-mono text-xs text-ink-500 tracking-snug truncate" title={row.email}>
+            <span className="font-sans text-xs text-ink-500 tracking-snug truncate" title={row.email}>
               {row.email}
             </span>
           </div>
@@ -396,7 +396,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {INVITATION_ROWS.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-900 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900 tracking-snug">
                 <span className="block truncate" title={row.email}>{row.email}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
@@ -492,7 +492,7 @@ function InviteMemberDialog({
               autoComplete="off"
               aria-invalid={showInvalid || undefined}
               aria-describedby={showInvalid ? 'invite-email-error' : undefined}
-              className="font-mono text-sm"
+              className="font-sans text-sm"
             />
             {showInvalid ? (
               <p id="invite-email-error" className="font-sans text-xs text-destructive">

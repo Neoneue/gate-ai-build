@@ -292,7 +292,7 @@ export function RequestVolumeCard() {
             <CartesianGrid
               horizontal
               vertical={false}
-              stroke="var(--color-ink-200)"
+              stroke="var(--color-ink-300)"
               strokeDasharray="3 3"
             />
             <XAxis

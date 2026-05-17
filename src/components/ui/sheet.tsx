@@ -57,7 +57,7 @@ function SheetOverlay({
         // can revert to its resting opacity for the remaining tail of the
         // panel's slide-out, producing a visible flicker. Matching them
         // keeps the dim and the panel leaving in lockstep.
-        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-300 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none motion-reduce:duration-0",
+        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-300 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       {...props}
@@ -101,7 +101,7 @@ function SheetContent({
           // wider inspector surfaces than centered modals (which ship gap-4),
           // so the section rhythm wants more air. Tightening at the call
           // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-white border-l border-ink-200 shadow-(--shadow-modal) p-4 text-sm text-ink-900 outline-none overscroll-contain",
+          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-white border-l border-border shadow-(--shadow-modal) p-4 text-sm text-ink-900 outline-none overscroll-contain",
           // Slide animation. Uses tw-animate keyframes (same plugin Dialog
           // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
           // Mixing tw-animate keyframes for the backdrop with CSS transitions
@@ -112,7 +112,7 @@ function SheetContent({
           // shadcn Sheet's open duration. `will-change-transform` keeps the
           // panel on its own compositor layer so the GPU doesn't allocate
           // mid-slide.
-          "will-change-transform data-open:animate-in data-closed:animate-out data-open:slide-in-from-right data-closed:slide-out-to-right duration-300 ease-out motion-reduce:animate-none motion-reduce:duration-0",
+          "will-change-transform data-open:animate-in data-closed:animate-out data-open:slide-in-from-right data-closed:slide-out-to-right data-closed:fill-mode-forwards duration-300 ease-out motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
         {...props}
@@ -165,7 +165,7 @@ function SheetFooter({
     <div
       data-slot="sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-ink-200 pt-3 -mx-4 px-4 -mb-4 pb-3",
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-border pt-3 -mx-4 px-4 -mb-4 pb-3",
         className
       )}
       {...props}

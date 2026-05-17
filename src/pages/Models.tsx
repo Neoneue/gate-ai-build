@@ -1449,7 +1449,7 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
       className="inline-flex items-center justify-center size-4 shrink-0 rounded-full bg-muted text-ink-400"
       title={PROVIDER_LABELS[provider]}
     >
-      <span className="size-1.5 rounded-full bg-ink-400" />
+      <span className="size-2 rounded-full bg-ink-400" />
     </span>
   );
 }

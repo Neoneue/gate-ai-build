@@ -161,8 +161,8 @@ export function CompactSpark({
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
-            strokeDasharray="2 3"
+            stroke="var(--color-ink-300)"
+            strokeDasharray="3 3"
           />
         )}
         <Area

@@ -54,7 +54,7 @@ function PaginationLink({
       variant="outline"
       size={size}
       className={cn(
-        "border-ink-100 text-ink-600 font-normal tabular-nums -tracking-[0.01em]",
+        "border-border text-ink-600 font-normal tabular-nums -tracking-[0.01em]",
         "hover:bg-ink-50 hover:text-ink-900",
         isActive &&
           "bg-ink-800 border-ink-800 text-white font-medium hover:bg-ink-800 hover:text-white",

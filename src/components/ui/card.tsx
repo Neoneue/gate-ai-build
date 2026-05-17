@@ -45,7 +45,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
         // their leading already supplies enough air. gap-x-2 keeps 8px
         // between the title column and any CardAction so a long title
         // doesn't butt against the action button.
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-x-2 gap-y-0 rounded-t-sm px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-x-2 gap-y-0 px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
         className
       )}
       {...props}
@@ -109,7 +109,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
       // DialogFooter and the rest of the action-zone pattern work in
       // this system. Surfaces that want a divider can opt in via className.
       className={cn(
-        "flex items-center rounded-b-sm p-4 group-data-[size=sm]/card:p-3",
+        "flex items-center p-4 group-data-[size=sm]/card:p-3",
         className
       )}
       {...props}

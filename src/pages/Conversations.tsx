@@ -1044,7 +1044,7 @@ function TraceItem({
       data-request-id={event.requestId}
       className={`relative flex gap-3 py-3 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         selected ? '' : 'hover:bg-ink-50'
-      } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-0.5 before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
+      } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-[2px] before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'
       }`}
     >
@@ -1054,7 +1054,7 @@ function TraceItem({
           the line where it crosses. */}
       <span
         aria-hidden
-        className={`absolute left-[23px] w-0.5 bg-ink-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-ink-200 ${trackSegment}`}
       />
       {/* Timeline node — circular, status-bordered, white-filled so the
           track behind it reads as broken at the bead. Icon inside marks

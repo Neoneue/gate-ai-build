@@ -145,43 +145,49 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            size={size}
-            // Button's `default` size is h-9; the page-header trigger needs
-            // h-10 (40px) to match the SegmentedPill it sits beside.
-            className={cn(size === 'default' && 'h-10', value ? 'pr-2' : undefined, className)}
-            aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
+      {/* A11y: the trigger surface is split into two sibling <button> elements
+          so there is no button-in-button (WCAG 4.1.2 / HTML validity). The
+          outer div carries the visual Button styling; PopoverTrigger wraps only
+          the calendar-open button. The clear ✕ is a fully independent button
+          with its own focus stop, keyboard handler, and stopPropagation so it
+          does NOT open the popover. */}
+      <div
+        className={cn(
+          // Mirror buttonVariants({ variant: 'outline', size }) exactly so
+          // the composite looks identical to the old single Button trigger.
+          'group/button inline-flex shrink-0 items-center rounded-sm border border-border bg-background text-sm font-medium whitespace-nowrap select-none',
+          size === 'sm' ? 'h-8' : 'h-9',
+          size === 'default' && 'h-10',
+          className,
+        )}
+      >
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
+              className={cn(
+                'inline-flex items-center gap-2 h-full rounded-sm px-3 text-sm font-medium transition-[colors,box-shadow] duration-150 ease-out outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
+                // When a value is set, shrink right padding to seat the clear ✕ tightly
+                value ? 'pr-1' : 'pr-3',
+              )}
+            />
+          }
+        >
+          <CalendarIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span>{value ? formatRange(value) : 'Custom'}</span>
+        </PopoverTrigger>
+        {value ? (
+          <button
+            type="button"
+            aria-label="Clear custom range"
+            onClick={handleClear}
+            className="inline-flex items-center justify-center size-5 mr-2 shrink-0 rounded-xs text-ink-500 hover:text-ink-900 hover:bg-ink-100 transition-colors duration-100 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
-            <CalendarIcon data-icon="inline-start" aria-hidden />
-            <span>{value ? formatRange(value) : 'Custom'}</span>
-            {value ? (
-              // Inline reset affordance. Rendered as a non-button span so
-              // it doesn't nest a <button> inside the trigger button (a11y);
-              // the parent button stays the single interactive node and
-              // we stopPropagation to prevent it from opening the popover.
-              <span
-                role="button"
-                tabIndex={0}
-                aria-label="Clear custom range"
-                onClick={handleClear}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onChange(null);
-                  }
-                }}
-                className="inline-flex items-center justify-center size-4 rounded-xs text-ink-500 hover:text-ink-900 hover:bg-ink-100 transition-colors duration-100 ease-out motion-reduce:transition-none"
-              >
-                <XIcon className="size-3" strokeWidth={1.75} aria-hidden />
-              </span>
-            ) : null}
-          </Button>
-        }
-      />
+            <XIcon className="size-3" strokeWidth={1.75} aria-hidden />
+          </button>
+        ) : null}
+      </div>
       <PopoverContent side="bottom" align="end" sideOffset={6} className="w-auto">
         <Calendar
           mode="range"
@@ -193,7 +199,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
           // matches the user's expectation of "where am I starting".
           defaultMonth={draft?.from ?? value?.from}
         />
-        <div className="grid grid-cols-2 gap-3 border-t border-ink-200 p-3">
+        <div className="grid grid-cols-2 gap-3 border-t border-border p-3">
           <div className="flex flex-col gap-1">
             <span className="font-sans text-xs font-medium text-ink-600">
               Start time
@@ -291,7 +297,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-ink-200 p-3">
+        <div className="flex items-center justify-end gap-2 border-t border-border p-3">
           <Button variant="ghost" size="sm" onClick={handleCancel}>
             Cancel
           </Button>

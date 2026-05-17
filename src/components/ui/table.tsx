@@ -13,7 +13,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-t [&:not(:first-child)>table>thead>tr]:border-ink-200"
+      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-t [&:not(:first-child)>table>thead>tr]:border-border"
     >
       <table
         data-slot="table"
@@ -55,7 +55,7 @@ function TableFooter({
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "border-t border-ink-200 bg-ink-50 font-medium [&>tr]:last:border-b-0",
+        "border-t border-border bg-ink-50 font-medium [&>tr]:last:border-b-0",
         className,
       )}
       {...props}
@@ -68,7 +68,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-ink-200 transition-colors motion-reduce:transition-none hover:bg-ink-50 data-[state=selected]:bg-ink-50",
+        "border-b border-border transition-colors motion-reduce:transition-none hover:bg-ink-50 data-[state=selected]:bg-ink-50",
         className,
       )}
       {...props}
