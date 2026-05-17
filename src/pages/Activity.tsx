@@ -862,7 +862,7 @@ function TrendCard({
               <CartesianGrid
                 horizontal
                 vertical={false}
-                stroke="var(--color-ink-200)"
+                stroke="var(--color-ink-300)"
                 strokeDasharray="3 3"
               />
               <XAxis
@@ -1043,7 +1043,7 @@ function UserMonogram({ name, tone }: { name: string; tone: AvatarTone }) {
   return (
     <span
       aria-hidden
-      className={`inline-flex items-center justify-center size-4 shrink-0 rounded-full font-sans text-[9px] font-medium ${AVATAR_TONE_CLS[tone]}`}
+      className={`inline-flex items-center justify-center size-4 shrink-0 rounded-full font-sans text-[10px] font-medium ${AVATAR_TONE_CLS[tone]}`}
     >
       {initial}
     </span>
@@ -1417,9 +1417,14 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                 Billing
                 <Tooltip>
                   <TooltipTrigger
-                    render={<button type="button" />}
-                    aria-label="What's the difference between Gate and BYOK?"
-                    className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    render={(props) => (
+                      <button
+                        {...props}
+                        type="button"
+                        aria-label="What's the difference between Gate and BYOK?"
+                        className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    )}
                   >
                     <Info aria-hidden className="size-3.5" strokeWidth={2} />
                   </TooltipTrigger>

@@ -401,8 +401,8 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
-            strokeDasharray="2 3"
+            stroke="var(--color-ink-300)"
+            strokeDasharray="3 3"
           />
           {/* Dynamic domain: top is `max(values) + 1` so the tallest
               spike never touches the chart ceiling and the y-axis
@@ -458,7 +458,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             }}
           />
           <ChartTooltip
-            cursor={{ stroke: 'var(--color-ink-400)', strokeDasharray: '2 3' }}
+            cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
             content={<ChartTooltipContent indicator="dot" />}
           />
           <Area

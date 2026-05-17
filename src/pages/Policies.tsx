@@ -404,12 +404,12 @@ function PolicyCard({
           read as panels, not free-floating controls. */}
       {state.enabled ? (
         <div className="grid grid-cols-2 items-start gap-4 border-t border-border bg-card p-4">
-          <Card className="shadow-none border border-ink-800/6 bg-transparent">
+          <Card className="shadow-none border border-border bg-transparent">
             <CardContent>
               <SettingsHalf config={config} state={state} onSensitivityChange={onSensitivityChange} onScanDirectionChange={onScanDirectionChange} />
             </CardContent>
           </Card>
-          <Card className="shadow-none border border-ink-800/6 bg-transparent">
+          <Card className="shadow-none border border-border bg-transparent">
             <CardContent>
               <ActionHalf config={config} value={state.action} onChange={onActionChange} />
             </CardContent>

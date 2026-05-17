@@ -64,7 +64,7 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-ink-900 border border-ink-200 shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-white p-6 text-sm text-ink-900 border border-border shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
         {...props}
@@ -159,7 +159,7 @@ function DialogStaticContent({
     <div
       data-slot="dialog-static-content"
       className={cn(
-        "relative flex flex-col rounded-xl bg-white border border-ink-200 shadow-(--shadow-modal) overflow-clip",
+        "relative flex flex-col rounded-xl bg-white border border-border shadow-(--shadow-modal) overflow-clip",
         className,
       )}
       {...props}
@@ -235,7 +235,7 @@ function DialogScrollFooter({ className, ...props }: React.ComponentProps<"div">
       // top edge — the hairline visually anchors the action band so it
       // reads as chrome, not as more content.
       className={cn(
-        "shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-ink-200",
+        "shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-border",
         className,
       )}
       {...props}

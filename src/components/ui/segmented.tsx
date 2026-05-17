@@ -9,6 +9,9 @@ export interface SegmentedProps {
   /** Mirrors button conventions — `sm` for inline header chrome, `default` for standalone use. */
   size?: 'sm' | 'default';
   className?: string;
+  /** Accessible label for the option group (WCAG 1.3.1). Required when there
+   *  is no adjacent visible label that describes the segmented control's purpose. */
+  'aria-label'?: string;
 }
 
 /**
@@ -16,24 +19,25 @@ export interface SegmentedProps {
  *  - "pill": gray container, selected gets a sliding white pill
  *  - "group": adjacent borders, selected gets ink-900 fill
  */
-export function Segmented({ options, value, onChange, variant = 'pill', size = 'default', className }: SegmentedProps) {
+export function Segmented({ options, value, onChange, variant = 'pill', size = 'default', className, 'aria-label': ariaLabel }: SegmentedProps) {
   if (variant === 'group') {
     return (
-      <div className={cn('inline-flex self-start rounded-sm overflow-clip', className)}>
+      <div role="group" aria-label={ariaLabel} className={cn('inline-flex self-start rounded-sm overflow-clip', className)}>
         {options.map((opt, i) => {
           const selected = opt.value === value;
           return (
             <button
               key={opt.value}
               type="button"
+              aria-pressed={selected}
               onClick={() => onChange?.(opt.value)}
               className={cn(
                 // Skill: emil-design-eng — color/border-only transition (never `transition-all`).
-                'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out',
+                'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                 size === 'sm' ? 'h-7' : 'h-8',
                 selected
                   ? 'bg-ink-900 text-white border border-ink-900'
-                  : 'bg-white text-ink-900 border-t border-b border-r border-ink-200',
+                  : 'bg-white text-ink-900 border-t border-b border-r border-border',
                 i === 0 && !selected && 'border-l',
               )}
             >
@@ -45,7 +49,7 @@ export function Segmented({ options, value, onChange, variant = 'pill', size = '
     );
   }
 
-  return <SegmentedPillVariant options={options} value={value} onChange={onChange} size={size} className={className} />;
+  return <SegmentedPillVariant options={options} value={value} onChange={onChange} size={size} className={className} ariaLabel={ariaLabel} />;
 }
 
 /**
@@ -62,12 +66,14 @@ function SegmentedPillVariant({
   onChange,
   size,
   className,
+  ariaLabel,
 }: {
   options: { value: string; label: string }[];
   value: string;
   onChange?: (value: string) => void;
   size: 'sm' | 'default';
   className?: string;
+  ariaLabel?: string;
 }) {
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [indicator, setIndicator] = useState<{
@@ -92,8 +98,10 @@ function SegmentedPillVariant({
 
   return (
     <div
+      role="group"
+      aria-label={ariaLabel}
       className={cn(
-        'relative inline-flex self-start rounded-sm p-1 bg-ink-100 border border-ink-200',
+        'relative inline-flex self-start rounded-sm p-1 bg-ink-100 border border-border',
         className,
       )}
     >
@@ -121,6 +129,7 @@ function SegmentedPillVariant({
           <button
             key={opt.value}
             type="button"
+            aria-pressed={selected}
             ref={(el) => {
               itemRefs.current[opt.value] = el;
             }}
@@ -128,7 +137,7 @@ function SegmentedPillVariant({
             className={cn(
               // z-10 keeps text above the indicator. Color-only transition
               // (skill: performance.md — never `transition-all`).
-              'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out',
+              'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
               size === 'sm' ? 'py-1 px-3' : 'py-2 px-4',
               selected ? 'text-ink-900' : 'text-ink-600 hover:text-ink-900',
             )}

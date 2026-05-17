@@ -83,7 +83,7 @@ export function Sidebar({
       aria-label="Primary navigation"
       style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-white border-r border-ink-200 transition-[width] duration-300 motion-reduce:transition-none',
+        'relative shrink-0 overflow-hidden bg-white border-r border-border transition-[width] duration-300 motion-reduce:transition-none',
         expanded ? 'w-60' : 'w-16',
       )}
     >
@@ -167,10 +167,10 @@ function SidebarCollapsed({
                   // matches the project's Button primitive press feel.
                   className={
                     isActive
-                      ? 'flex items-center justify-center size-9 rounded-sm bg-ink-200 text-ink-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                      ? 'flex items-center justify-center size-9 rounded-sm bg-ink-200 text-ink-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
-                        ? 'flex items-center justify-center size-9 rounded-sm text-ink-300 cursor-not-allowed'
-                        : 'flex items-center justify-center size-9 rounded-sm text-ink-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-ink-700 hover:bg-ink-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                        ? 'flex items-center justify-center size-9 rounded-sm text-ink-300 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center justify-center size-9 rounded-sm text-ink-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-ink-700 hover:bg-ink-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon className="size-[18px]" strokeWidth={1.5} />
@@ -208,12 +208,12 @@ function SidebarExpanded({
     <div className="flex flex-col w-60 h-full shrink-0">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-ink-200 shrink-0">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0">
         {brand ?? <DefaultBrand />}
       </div>
 
       {/* Workspace switcher */}
-      <div className="px-3 py-3 border-b border-ink-200 shrink-0">
+      <div className="px-3 py-3 border-b border-border shrink-0">
         {workspaceSwitcher ?? <DefaultWorkspaceSwitcher />}
       </div>
 
@@ -239,10 +239,10 @@ function SidebarExpanded({
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-ink-200 bg-ink-100 text-ink-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-ink-100 text-ink-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
-                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-400 cursor-not-allowed'
-                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-700 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0'
+                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-700 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon className="size-4 shrink-0" strokeWidth={1.75} />
@@ -255,7 +255,7 @@ function SidebarExpanded({
       </nav>
 
       {/* Bottom user area */}
-      <div className="flex items-center justify-between gap-2 px-3 py-3 border-t border-ink-200 shrink-0">
+      <div className="flex items-center justify-between gap-2 px-3 py-3 border-t border-border shrink-0">
         {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
       </div>
     </div>
@@ -285,8 +285,7 @@ function DefaultWorkspaceSwitcher() {
         render={
           <button
             type="button"
-            aria-label="Switch workspace"
-            className="flex items-center justify-between gap-2 w-full p-2 rounded-sm border border-ink-200 bg-white outline-none hover:bg-ink-50 aria-expanded:bg-ink-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
+            className="flex items-center justify-between gap-2 w-full p-2 rounded-sm border border-border bg-white outline-none hover:bg-ink-50 aria-expanded:bg-ink-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
           />
         }
       >
@@ -332,7 +331,7 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         <button
           type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-ink-200 bg-white text-ink-500 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
+          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-white text-ink-500 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>

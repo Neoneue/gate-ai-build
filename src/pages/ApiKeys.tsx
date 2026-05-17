@@ -332,7 +332,7 @@ function UsageInfo() {
         </h3>
         <p className="font-sans text-sm text-ink-500 m-0">
           Point your client at the gateway and send your key in the{' '}
-          <code className="font-mono text-ink-800 bg-ink-100 rounded-xs px-1.5 py-0.5">X-Gateway-Api-Key</code>{' '}
+          <code className="font-mono text-ink-800 bg-ink-100 rounded-xs px-2 py-1">X-Gateway-Api-Key</code>{' '}
           header. The gateway is provider-neutral — call it with curl, the OpenAI SDK, Anthropic SDK, or any other client that lets you override the base URL.
         </p>
         <p className="font-sans text-sm text-ink-500 m-0">
@@ -591,9 +591,9 @@ function KeyCreatedDialog({
             className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-ink-600 transition-colors duration-150 ease-out hover:bg-ink-200 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
           >
             {copied ? (
-              <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.8} />
+              <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
             ) : (
-              <Copy aria-hidden className="size-4" strokeWidth={1.8} />
+              <Copy aria-hidden className="size-4" strokeWidth={1.75} />
             )}
             {copied ? 'Copied!' : 'Copy'}
           </button>

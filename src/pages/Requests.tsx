@@ -605,8 +605,8 @@ function HeroMetricCard() {
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
-            strokeDasharray="2 3"
+            stroke="var(--color-ink-300)"
+            strokeDasharray="3 3"
           />
           <XAxis
             dataKey="time"
@@ -651,7 +651,7 @@ function HeroMetricCard() {
             }}
           />
           <ChartTooltip
-            cursor={{ stroke: 'var(--color-ink-400)', strokeDasharray: '2 3' }}
+            cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
             content={<ChartTooltipContent indicator="dot" />}
           />
           <Area
@@ -1164,7 +1164,6 @@ function RequestsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          tabIndex={0}
                           className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-500 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label="About the Cost column"
                         >
@@ -1310,7 +1309,6 @@ function RequestsTableSection({
                           render={(props) => (
                             <span
                               {...props}
-                              tabIndex={0}
                               className="inline-flex cursor-help p-1 -m-1 rounded-sm text-ink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               aria-label="Cost not shown for BYOK requests"
                             >
