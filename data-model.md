@@ -440,17 +440,36 @@ function buildSpark(total: number, seed: number): number[]
 
 ### Overview page (`/overview` → `Dashboard.tsx`)
 
-**Purpose:** Traffic, spend, and latency rollup across all models.
+**Purpose:** Cost, security, and audit anchor rollup across the workspace. Lead surface for both H1 personas (Olivia + Devon); audit feed serves H2 wedge (Grace).
 
-**Sections:** KpiRail (4 tiles) → RequestVolumeCard (stacked bar) + TopKeysCard → RecentRequestsCard → QuickActionsRow
+**Sections (top → bottom):**
+1. `PageHeader` — title + subtitle sourced from Notion H1 Narrative & Positioning ("Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.")
+2. `KpiRail` (4 tiles, all click-through):
+   - Daily spend → `/activity?range=24h`
+   - Monthly spend → `/activity?range=30d`
+   - Threats detected → `/security`
+   - Events anchored → `/audit-trail`
+3. `QuickActionsRow` — 4 evenly-styled tiles: Set a spend limit (`/guardrails?create=1`) · Review Security Events · Rotate API Key · Read Integration Guide
+4. `RecentConversationsCard` — top 8 conversations preview (columns mirror Conversations page)
+5. `RecentSecurityEventsCard` — top 8 blocked/flagged events (preview of Security page log)
+6. `RecentAnchoredEventsCard` — top 8 audit-trail entries (columns mirror AuditTrail page; row click opens `AuditRecordDialog`)
 
 **State:** None beyond sidebar context.
 
 **Data:**
-- `VOLUME_DATA`: 7-day bars with keys `{ sonnet, gpt, haiku, llama, mistral, gemini }`
-- `MODEL_LEGEND`: 6 series with slot-based chart color mapping
-- `TOP_KEYS`: top keys by cost
-- `RECENT_REQUESTS`: 8 summary request rows
+- `THREATS_DETECTED_COUNT` = `EVENT_ROWS.length` (from `Security.tsx`)
+- `ANCHORED_EVENTS_COUNT` = `AUDIT_EVENT_ROWS.length` (from `AuditTrail.tsx`)
+- `MONTHLY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS * 4.2` (reconciles to Activity 30d window)
+- `DAILY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS / 7`
+- Sparklines: every spark derives from its tile's canonical total via `distributeSeries(total, count, seed)` (exported from `Activity.tsx`). Bucket sums equal the KPI value by construction (single source of truth: total → spark → tile).
+- Preview tables sort by `at`/`updated`/`time` desc and `.slice(0, 8)` for the canonical 8-row glance cap.
+
+**Cross-page imports:**
+- `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
+- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime`, `ThreatEventDetailDialog`
+- `AuditTrail.tsx` → `EVENT_ROWS as AUDIT_EVENT_ROWS`, `EventRow as AuditEventRow`, `KIND_BADGE_VARIANT`, `fmtTime`, `truncateHex`
+- `Conversations.tsx` → `CONVERSATION_ROWS`, `KEY_SUFFIX`, `ConversationRow`
+- `AuditRecordDialog.tsx` → `AuditRecordDialog`
 
 ---
 
@@ -703,6 +722,10 @@ sequenceDiagram
 3. `setSelectedRow(matched)` opens the detail modal
 4. URL cleaned via `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker
 
+**Other deep-link params (one-way, read-once on mount):**
+- `Activity.tsx?range=24h|7d|30d|all` — Overview KPI tiles call into Activity scoped to a range. Read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
+- `Guardrails.tsx?create=1` — Overview "Set a spend limit" Quick Action opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+
 ---
 
 ## 8. Design System
@@ -714,7 +737,7 @@ Two layers live in `src/index.css`:
 ```mermaid
 graph TB
     subgraph Theme["@theme {} — Palette atoms (design-system primitives)"]
-        INK["--color-ink-50 … --color-ink-950 (11 steps, OKLCH)"]
+        NEUTRAL["--color-neutral-50 … --color-neutral-950 (Tailwind v4 default, NOT redeclared)"]
         BLUE["--color-blue-50 … --color-blue-950 (11 steps, anchored at #1F2FCE)"]
         SUCCESS["--color-success-50 … -950"]
         WARNING["--color-warning-50 … -950"]
@@ -726,23 +749,30 @@ graph TB
     end
 
     subgraph Root[":root {} — Semantic layer (shadcn vocab)"]
-        BG["--background → white"]
-        FG["--foreground → ink-900"]
-        PRIMARY["--primary → ink-900 (NOT blue)"]
-        MUTED["--muted → ink-100 / --muted-foreground → ink-500"]
-        BORDER["--border → ink-200"]
-        RING["--ring → ink-400"]
+        BG["--background → neutral-100 (page canvas)"]
+        CARD["--card → white (elevated surface)"]
+        POPOVER["--popover → white"]
+        FG["--foreground → neutral-900"]
+        PRIMARY["--primary → neutral-900 (NOT blue)"]
+        MUTED["--muted → neutral-100 / --muted-foreground → neutral-500"]
+        BORDER["--border → neutral-200"]
+        RING["--ring → neutral-400"]
         SIDEBAR["--sidebar-* tokens"]
         SHADOW["--shadow-border / --shadow-popup / --shadow-modal"]
     end
 
-    INK --> PRIMARY
-    INK --> FG
-    INK --> MUTED
-    INK --> BORDER
+    NEUTRAL --> PRIMARY
+    NEUTRAL --> FG
+    NEUTRAL --> MUTED
+    NEUTRAL --> BORDER
+    NEUTRAL --> BG
 ```
 
-**Hard rule:** No raw hex/rgba/oklch outside `@theme`. Every component binds to a semantic token. `bg-ink-50` is the only permitted exception (no `--input-bg` token yet).
+**Neutral ramp = Tailwind v4 defaults.** As of 2026-05-17, the custom `ink-*` ramp was renamed to `neutral-*` and the `@theme` block no longer redeclares `--color-neutral-*` — Tailwind's built-in values resolve through the semantic aliases. Do not reintroduce the declarations.
+
+**Page canvas vs surface.** `--background` resolves to `var(--color-neutral-100)` so the page reads as a faintly-gray canvas with white cards lifting via shadow. Components that should remain white (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome) bind to `bg-card`, NOT `bg-background`. `bg-background` is the canvas color and renders as neutral-100.
+
+**Hard rule:** No raw hex/rgba/oklch outside `@theme`. Every component binds to a semantic token. `bg-neutral-50` is the only permitted exception for input surfaces (no `--input-bg` token yet).
 
 ### 8.2 Radius system (three-tier material ladder)
 
@@ -763,7 +793,7 @@ Concentric rule: item radius < container radius. 2× ratios between tiers.
 | `--shadow-popup` | Menus and popovers (4px lift + 1px ring) |
 | `--shadow-modal` | Dialogs (16px lift + 1px ring) |
 
-All shadows are `color-mix` from `ink-800` — no raw `rgba`.
+All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 
 ### 8.4 Typography voices
 
@@ -803,7 +833,11 @@ All shadows are `color-mix` from `ink-800` — no raw `rgba`.
 | `Menu` | `@base-ui/react/menu` | 100ms ease-out item highlight (keyboard no-snap). `origin-[var(--transform-origin)]` required |
 | `KpiRail` | custom div | Divided grid of `CompactKpi` tiles. `rounded-md shadow-(--shadow-border)` |
 | `HeroNumeric` | custom div | Single source for sans tabular numerics ≥24px. Sizes: default (24px) / lg (32px) |
-| `CompactKpi` | `HeroNumeric` + `DeltaTag` | Standalone or `flat` (no card chrome) |
+| `CompactKpi` | `HeroNumeric` + `DeltaTag` | Standalone or `flat` (no card chrome). `onClick` + `ariaLabel` props render as interactive `<button>` with ChevronRight in title row, hover + focus ring (used on Overview rail for deep-link tiles). `deltaSize` prop (`sm`/`md`) controls delta type-step. |
+| `KpiTile` | `Eyebrow` + `HeroNumeric` | Shared hero-numeric KPI tile (AuditTrail, TokenSavings). Props: title / value / valueSuffix (sized to HeroNumeric, muted) / liveDot / delta / caption / spark. Extracted 2026-05-17 from 3 duplicates. |
+| `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Requests, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
+| `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
+| `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900 |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
 | `Badge` | custom div | `font-mono text-xs`. No icons inside. Symmetric padding locked |
