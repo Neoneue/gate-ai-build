@@ -61,7 +61,7 @@ function SettingsSurface() {
 
 function PageHeader() {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Settings</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">

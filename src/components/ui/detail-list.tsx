@@ -3,21 +3,21 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * DetailList / DetailRow — bordered label/value list for modal body
- * "Details" / "Context" sections.
+ * DetailList / DetailRow — bordered label/value list for modal "Details"
+ * sections (Requests, Security threat events, Audit record).
  *
- * Extracted 2026-05-11 after the third occurrence of the same recipe
- * (CMP-013 Request detail / CMP-015 Threat event / CMP-007 generation
- * details). Three sites, two visual implementations — the CMP-007
- * `DetailGrid` was drifting from the CMP-013/15 `grid-cols-4 + border-b`
- * shape. Canonicalize on the CMP-013/15 recipe.
+ * Universal pattern (2026-05-16): label left, value left-aligned in a fixed
+ * 2nd column. Replaces the prior right-aligned recipe — left-align absorbs
+ * every value shape (prose, badge, icon-prefixed, mono hex, short atoms)
+ * without forcing consumers to negotiate a right edge. Reads as a record
+ * being read top-to-bottom, not a table being compared row-to-row.
  *
  * Recipe:
- *   list   rounded-xs border border-ink-200 overflow-hidden
- *   row    grid grid-cols-4 gap-4 items-center py-3
- *          border-b border-ink-200 last:border-b-0
- *   label  col-span-1 pl-4 font-sans text-sm font-medium text-ink-500
- *   value  col-span-3 pr-4 (consumer styles the inner content)
+ *   list   rounded-md border border-border overflow-hidden
+ *   row    flex items-start gap-4 px-4 py-3
+ *          border-b border-border last:border-b-0
+ *   label  w-32 shrink-0 text-sm text-ink-500
+ *   value  flex-1 min-w-0 text-sm (consumer styles inner content)
  * ───────────────────────────────────────────────────────────────────── */
 
 export function DetailList({
@@ -28,7 +28,7 @@ export function DetailList({
     <div
       data-slot="detail-list"
       className={cn(
-        'rounded-xs border border-ink-200 overflow-hidden',
+        'rounded-md border border-border overflow-hidden',
         className,
       )}
       {...props}
@@ -52,15 +52,13 @@ export function DetailRow({
     <div
       data-slot="detail-row"
       className={cn(
-        'grid grid-cols-4 gap-4 items-center py-3 border-b border-ink-200 last:border-b-0',
+        'flex items-start gap-4 px-4 py-3 border-b border-border last:border-b-0',
         className,
       )}
       {...props}
     >
-      <span className="pl-4 font-sans text-sm font-medium text-ink-500">
-        {label}
-      </span>
-      <div className="col-span-3 pr-4">{value}</div>
+      <span className="w-32 shrink-0 text-sm text-ink-500">{label}</span>
+      <div className="flex-1 min-w-0 text-sm">{value}</div>
     </div>
   );
 }

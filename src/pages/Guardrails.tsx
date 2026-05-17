@@ -77,14 +77,14 @@ export function Guardrails() {
 
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
           Enforce spend, token, and request rate caps at the org, project, or key level. Limits run inline with no separate billing system to wire up.
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onCreate}>
           <Plus data-icon="inline-start" aria-hidden />
           Create limit
@@ -343,7 +343,7 @@ function CreateLimitDialog({
       threshold,
       period,
       scope,
-      used: String(Math.floor(Math.random() * (thresholdNum + 1))),
+      used: '0',
     });
     onOpenChange(false);
   };
