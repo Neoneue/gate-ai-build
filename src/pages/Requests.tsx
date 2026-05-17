@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { RowActionButton } from '@/components/ui/row-action-button';
@@ -586,7 +587,7 @@ function HeroMetricCard() {
   );
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
+    <Card className="px-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>
@@ -668,7 +669,7 @@ function HeroMetricCard() {
           />
         </AreaChart>
       </ChartContainer>
-    </div>
+    </Card>
   );
 }
 
@@ -1057,14 +1058,14 @@ function RequestsTableSection({
             sortable-table convention is single-row, and the filter set
             fits in the gray well at this width. */}
         {isEmpty ? null : (
-        <div className="flex items-center gap-2 p-4">
+        <FilterToolbar>
           <SearchInput placeholder="Search request…" ariaLabel="Search requests" />
 
           <Select value={model} onValueChange={setModel}>
             <SelectTrigger
               size="sm"
               aria-label="Model"
-              className="border-border bg-card text-ink-900 font-normal"
+              className="border-border bg-card text-foreground font-normal"
             >
               <SelectValue placeholder="Model" />
             </SelectTrigger>
@@ -1083,7 +1084,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Key"
-              className="border-border bg-card text-ink-900 font-normal"
+              className="border-border bg-card text-foreground font-normal"
             >
               <SelectValue placeholder="Key" />
             </SelectTrigger>
@@ -1103,7 +1104,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Response"
-              className="border-border bg-card text-ink-900 font-normal"
+              className="border-border bg-card text-foreground font-normal"
             >
               <SelectValue placeholder="Response" />
             </SelectTrigger>
@@ -1119,7 +1120,7 @@ function RequestsTableSection({
             <SelectTrigger
               size="sm"
               aria-label="Guardrail"
-              className="border-border bg-card text-ink-900 font-normal"
+              className="border-border bg-card text-foreground font-normal"
             >
               <SelectValue placeholder="Guardrail" />
             </SelectTrigger>
@@ -1136,7 +1137,7 @@ function RequestsTableSection({
             <Download data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
-        </div>
+        </FilterToolbar>
         )}
 
         {isEmpty ? (

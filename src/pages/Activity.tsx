@@ -28,6 +28,7 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
@@ -55,6 +56,7 @@ import {
   VendorAvatar,
   type Vendor,
 } from '@/components/icons/vendor-meta';
+import { Monogram, type AvatarTone } from '@/components/ui/monogram';
 import { CHART_PALETTE } from '@/lib/chart-palette';
 import { formatCurrency, formatDate, formatNumber, formatTime } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
@@ -1028,16 +1030,6 @@ const MODEL_ROWS: ModelRow[] = [
  * users by spend. User aggregation groups API_KEY_ROWS by owner — owners
  * mirror Team.tsx MEMBER_ROWS so the workspace user list reconciles. */
 
-type AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink';
-
-const AVATAR_TONE_CLS: Record<AvatarTone, string> = {
-  blue:    'bg-blue-700 text-white',
-  rose:    'bg-danger-700 text-white',
-  emerald: 'bg-success-700 text-white',
-  amber:   'bg-warning-700 text-white',
-  ink:     'bg-ink-700 text-white',
-};
-
 /** Matches Team.tsx MEMBER_ROWS. Workspace users come from the team roster. */
 const USER_TONE: Record<string, AvatarTone> = {
   'Chad Ponticas': 'blue',
@@ -1045,18 +1037,6 @@ const USER_TONE: Record<string, AvatarTone> = {
   'Mateus Silva':  'emerald',
   'Jordan Lee':    'amber',
 };
-
-function UserMonogram({ name, tone }: { name: string; tone: AvatarTone }) {
-  const initial = (name.trim().split(/\s+/)[0]?.[0] ?? '?').toUpperCase();
-  return (
-    <span
-      aria-hidden
-      className={`inline-flex items-center justify-center size-4 shrink-0 rounded-full font-sans text-[10px] font-medium ${AVATAR_TONE_CLS[tone]}`}
-    >
-      {initial}
-    </span>
-  );
-}
 
 type TopRow = {
   rowKey: string;
@@ -1204,7 +1184,7 @@ function TopByAxisRow({
         rowKey: u.owner,
         label: u.owner,
         value: isSpend ? fmtUsd(+u.axis.toFixed(2)) : fmtTokens(Math.round(u.axis)),
-        avatar: <UserMonogram name={u.owner} tone={USER_TONE[u.owner] ?? 'ink'} />,
+        avatar: <Monogram size="sm" tone={USER_TONE[u.owner] ?? 'ink'} initials={(u.owner.trim().split(/\s+/)[0]?.[0] ?? '?').toUpperCase()} />,
       }));
   }, [scale, userMetric]);
 
@@ -1369,7 +1349,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   return (
     <Card id="usage-by-key" density="flush">
       {isEmpty ? null : (
-      <div className="flex items-center gap-2 p-4">
+      <FilterToolbar>
         <SearchInput
           placeholder="Search key or member…"
           ariaLabel="Search keys"
@@ -1392,7 +1372,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FilterToolbar>
       )}
 
       {isEmpty ? (

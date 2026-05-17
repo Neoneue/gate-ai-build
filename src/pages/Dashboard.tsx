@@ -345,7 +345,7 @@ export function RequestVolumeCard() {
                 dataKey={m.key}
                 fill={seriesColor(m, i)}
                 radius={2}
-                maxBarSize={14}
+                maxBarSize={18}
                 isAnimationActive={false}
               />
             ))}
@@ -513,7 +513,7 @@ function QuickActionsRow() {
   const dividerCls =
     'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
   return (
-    <div className="rounded-md bg-card shadow-(--shadow-border) overflow-hidden">
+    <Card density="flush">
       <div className="flex items-center py-3 px-4 border-b border-border">
         <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
           Quick actions
@@ -531,7 +531,7 @@ function QuickActionsRow() {
           <QuickActionItem {...QUICK_ACTIONS[3]} />
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

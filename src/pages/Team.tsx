@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Monogram, type AvatarTone } from '@/components/ui/monogram';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import {
   Dialog,
@@ -20,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { Label } from '@/components/ui/label';
 import { PageTitle } from '@/components/ui/page-title';
@@ -208,7 +210,7 @@ function MembersPane() {
           px-4/py-3 plus Card's edge-flush contract. Filter pills follow
           the codified no-leading-icon rule for dense table toolbars. */}
       {isEmpty ? null : (
-      <div className="flex items-center gap-2 p-4">
+      <FilterToolbar>
         <SearchInput
           placeholder="Search by name or email…"
           ariaLabel="Search members"
@@ -222,7 +224,7 @@ function MembersPane() {
           <SelectTrigger
             size="sm"
             aria-label="Filter by role"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -233,7 +235,7 @@ function MembersPane() {
             <SelectItem value="member">Members</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </FilterToolbar>
       )}
 
       {isEmpty ? (
@@ -286,7 +288,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
     <TableRow>
       <TableCell className="whitespace-nowrap">
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar tone={row.avatarTone} initials={initialsOf(row.name)} />
+          <Monogram size="md" tone={row.avatarTone} initials={initialsOf(row.name)} />
           <div className="flex flex-col min-w-0 flex-1">
             <span
               title={row.name}
@@ -622,37 +624,6 @@ function RowActionsMenu({
         </MenuPrimitive.Positioner>
       </MenuPrimitive.Portal>
     </MenuPrimitive.Root>
-  );
-}
-
-/* ─── Avatar (monogram circle) ────────────────────────────────────────── */
-
-type AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink';
-
-const AVATAR_TONE_CLS: Record<AvatarTone, string> = {
-  // Each tone uses a saturated 700-step bg + white fg — same recipe as
-  // DashTopBar's `CP` monogram. Tones cycle through the existing 700-step
-  // ramps (no chart-palette borrowing — those are reserved for series
-  // color; no raw OKLCH — palette atoms only) so adjacent rows in the
-  // Members table read as distinct people without leaning on photos.
-  blue:    'bg-blue-700 text-white',
-  rose:    'bg-danger-700 text-white',
-  emerald: 'bg-success-700 text-white',
-  amber:   'bg-warning-700 text-white',
-  ink:     'bg-ink-700 text-white',
-};
-
-function Avatar({ tone, initials }: { tone: AvatarTone; initials: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'inline-flex items-center justify-center size-7 shrink-0 rounded-full font-sans text-xs font-medium',
-        AVATAR_TONE_CLS[tone],
-      )}
-    >
-      {initials}
-    </span>
   );
 }
 

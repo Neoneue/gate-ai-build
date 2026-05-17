@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import {
   Select,
@@ -827,7 +828,7 @@ function Toolbar({
   onSortChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 p-4">
+    <FilterToolbar>
       <SearchInput
         placeholder="Search by name or handle…"
         ariaLabel="Search models"
@@ -897,7 +898,7 @@ function Toolbar({
           <SelectItem value="largest-context">Largest context</SelectItem>
         </SelectContent>
       </Select>
-    </div>
+    </FilterToolbar>
   );
 }
 

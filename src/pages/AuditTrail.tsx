@@ -4,6 +4,7 @@ import { CircleCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { KpiTile } from '@/components/ui/kpi-tile';
@@ -446,7 +447,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
     <>
       <Card density="flush">
         {isEmpty ? null : (
-        <div className="flex items-center gap-2 p-4">
+        <FilterToolbar>
           <SearchInput
             placeholder="Search events, users, hashes…"
             ariaLabel="Search audit events"
@@ -469,7 +470,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FilterToolbar>
         )}
 
         {isEmpty ? (
