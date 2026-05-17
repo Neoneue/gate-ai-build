@@ -138,7 +138,7 @@ export function AuditRecordDialog({
                         aria-hidden
                       />
                       <span className="sr-only">Verified anchor</span>
-                      <span className="font-mono whitespace-nowrap text-ink-800">{truncateHex(row.anchor)}</span>
+                      <span className="font-mono whitespace-nowrap text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>
                     </span>
                   }
                 />
