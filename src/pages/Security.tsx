@@ -21,6 +21,7 @@ import {
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { SectionHeading } from '@/components/ui/section-heading';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -380,7 +381,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   );
 
   return (
-    <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
+    <Card className="px-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2 shrink-0">
           <Eyebrow>Total events</Eyebrow>
@@ -464,7 +465,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
           />
         </AreaChart>
       </ChartContainer>
-    </div>
+    </Card>
   );
 }
 
@@ -1017,7 +1018,7 @@ function EventsTableSection({
           Same shape as CMP-013's RequestsTableSection. No leading category
           icons on the filter pills (project rule for dense toolbars). */}
       {isEmpty ? null : (
-      <div className="flex items-center gap-2 p-4">
+      <FilterToolbar>
         <SearchInput
           placeholder="Search events…"
           ariaLabel="Search events"
@@ -1029,7 +1030,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Type"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1046,7 +1047,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="API key"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1064,7 +1065,7 @@ function EventsTableSection({
           <SelectTrigger
             size="sm"
             aria-label="Action"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue />
           </SelectTrigger>
@@ -1080,7 +1081,7 @@ function EventsTableSection({
           <Download data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
-      </div>
+      </FilterToolbar>
       )}
 
       {isEmpty ? (

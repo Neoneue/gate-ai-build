@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
@@ -308,13 +309,13 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
     <Card density="flush">
       {/* Toolbar */}
       {isEmpty ? null : (
-      <div className="flex items-center gap-2 p-4">
+      <FilterToolbar>
         <SearchInput placeholder="Search by id, prompt, user, key…" ariaLabel="Search conversations" />
         <Select value={keyId} onValueChange={setKeyId}>
           <SelectTrigger
             size="sm"
             aria-label="Key"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue placeholder="Key" />
           </SelectTrigger>
@@ -329,7 +330,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <SelectTrigger
             size="sm"
             aria-label="Model"
-            className="border-border bg-card text-ink-900 font-normal"
+            className="border-border bg-card text-foreground font-normal"
           >
             <SelectValue placeholder="Model" />
           </SelectTrigger>
@@ -347,7 +348,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
             <SelectItem value="llama-3-3-70b">Llama 3.3 70B</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </FilterToolbar>
       )}
 
       {isEmpty ? (
