@@ -324,6 +324,28 @@ const resetsAt = (now: Date, period: string) => {
   }
 };
 
+// Strip everything except digits and at most one decimal point. Lets users
+// paste "$5,000,000" or "1.5M" and recover a clean numeric string.
+const normalizeThresholdInput = (raw: string): string => {
+  const cleaned = raw.replace(/[^\d.]/g, '');
+  const firstDot = cleaned.indexOf('.');
+  if (firstDot === -1) return cleaned;
+  return cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+};
+
+// Show the integer part with locale-aware thousands separators while the
+// user types. Preserves a trailing "." or "5." mid-entry so the field
+// doesn't fight the keyboard. Decimal digits pass through unformatted —
+// only the integer part gets the grouping treatment.
+const formatThresholdDisplay = (raw: string): string => {
+  if (raw === '') return '';
+  const [intPart, decPart] = raw.split('.');
+  const intNum = Number(intPart);
+  const intFormatted = Number.isFinite(intNum) && intPart !== '' ? formatNumber(intNum) : intPart ?? '';
+  if (raw.includes('.')) return `${intFormatted}.${decPart ?? ''}`;
+  return intFormatted;
+};
+
 function CreateLimitDialog({
   open,
   onOpenChange,
@@ -419,11 +441,10 @@ function CreateLimitDialog({
             </Label>
             <Input
               id="create-limit-threshold"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="0"
-              value={threshold}
-              onChange={(e) => setThreshold(e.target.value)}
+              value={formatThresholdDisplay(threshold)}
+              onChange={(e) => setThreshold(normalizeThresholdInput(e.target.value))}
               placeholder="e.g. 250"
               className="font-mono text-sm tabular-nums"
             />
