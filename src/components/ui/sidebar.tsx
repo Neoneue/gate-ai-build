@@ -60,9 +60,6 @@ export interface SidebarProps {
    *  via the `brandCollapsed` prop OR — when undefined — falls back to a
    *  `<BrandMark className="size-8 text-blue-700" />`). */
   brand?: React.ReactNode;
-  /** Workspace switcher slot (expanded variant only). Defaults to the
-   *  "Chad's project / Pro" button. */
-  workspaceSwitcher?: React.ReactNode;
   /** Bottom user area slot (expanded variant only). Defaults to "CP avatar
    *  + Chad + MoreHorizontal user-menu button". The collapsed rail always
    *  renders just a CP monogram. */
@@ -75,7 +72,6 @@ export function Sidebar({
   expanded,
   onNavigate,
   brand,
-  workspaceSwitcher,
   userArea,
 }: SidebarProps) {
   return (
@@ -116,7 +112,6 @@ export function Sidebar({
           activeId={activeId}
           onNavigate={onNavigate}
           brand={brand}
-          workspaceSwitcher={workspaceSwitcher}
           userArea={userArea}
         />
       </div>
@@ -194,14 +189,12 @@ function SidebarExpanded({
   activeId,
   onNavigate,
   brand,
-  workspaceSwitcher,
   userArea,
 }: {
   sections: SidebarSection[];
   activeId: string;
   onNavigate?: (pageId: string) => void;
   brand?: React.ReactNode;
-  workspaceSwitcher?: React.ReactNode;
   userArea?: React.ReactNode;
 }) {
   return (
@@ -210,11 +203,6 @@ function SidebarExpanded({
           Gate AI title with "AI" in brand-blue). */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0">
         {brand ?? <DefaultBrand />}
-      </div>
-
-      {/* Workspace switcher */}
-      <div className="px-3 py-3 border-b border-border shrink-0">
-        {workspaceSwitcher ?? <DefaultWorkspaceSwitcher />}
       </div>
 
       {/* Nav sections */}
@@ -239,13 +227,16 @@ function SidebarExpanded({
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-neutral-100 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
                         ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                         : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
-                  <Icon className="size-4 shrink-0" strokeWidth={1.75} />
+                  <Icon
+                    className={cn('size-4 shrink-0', isActive && 'text-foreground')}
+                    strokeWidth={1.75}
+                  />
                   <span className="font-sans text-sm">{item.label}</span>
                 </button>
               );
@@ -278,30 +269,32 @@ function DefaultBrand() {
   );
 }
 
-function DefaultWorkspaceSwitcher() {
+/* Workspace switcher — formerly slotted into the sidebar, promoted to the
+ * top bar on 2026-05-17 so the sidebar reads as pure navigation. Styled
+ * for the top bar's compact h-8 chrome (auto-sized to content; no
+ * truncation since the top bar has room). */
+export function WorkspaceSwitcher() {
   return (
     <Menu>
       <MenuTrigger
         render={
           <button
             type="button"
-            className="flex items-center justify-between gap-2 w-full p-2 rounded-sm border border-border bg-white outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
+            className="inline-flex items-center gap-2 h-8 px-2 rounded-sm border border-border bg-card outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
           />
         }
       >
-        <span className="font-sans text-sm font-medium text-neutral-900 truncate min-w-0">
+        <span className="font-sans text-sm text-neutral-900">
           Chad's workspace
         </span>
-        <div className="shrink-0 flex items-center gap-2">
-          <Badge variant="info">Free</Badge>
-          <ChevronsUpDown className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
-        </div>
+        <Badge variant="neutral">Free</Badge>
+        <ChevronsUpDown className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
       </MenuTrigger>
       <MenuContent
         side="bottom"
         align="start"
         sideOffset={8}
-        className="w-[var(--anchor-width)] p-2"
+        className="min-w-[var(--anchor-width)] p-2"
       >
         <MenuItem className="bg-neutral-100 data-[highlighted]:bg-neutral-100">
           <span className="flex-1 text-left truncate min-w-0">Chad's workspace</span>

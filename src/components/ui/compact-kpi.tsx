@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Line, XAxis } from 'recharts';
 import {
   ChartContainer,
@@ -110,7 +110,16 @@ export function CompactKpi({
     'group/kpi w-full text-left cursor-pointer outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset motion-reduce:transition-none';
   const inner = (
     <>
-      <Eyebrow as="div">{title}</Eyebrow>
+      <div className="flex items-center justify-between gap-2">
+        <Eyebrow as="div">{title}</Eyebrow>
+        {onClick ? (
+          <ChevronRight
+            className="shrink-0 size-4 text-neutral-500"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+        ) : null}
+      </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
@@ -127,7 +136,7 @@ export function CompactKpi({
           <span className="text-sm text-neutral-500">{noteLine}</span>
         )}
       </div>
-      <div className="mt-1">{spark}</div>
+      <div className="mt-3">{spark}</div>
     </>
   );
   if (onClick) {
