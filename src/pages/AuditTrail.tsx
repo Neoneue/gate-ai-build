@@ -251,7 +251,7 @@ export type EventRow = {
 // roster (Team.tsx MEMBER_ROWS): Chad Ponticas owns key lifecycle, Jordan
 // Lee runs dev request batches, Mateus Silva carries admin / inspect
 // actions, Kira Tan is the newly-added member.
-const EVENT_ROWS: EventRow[] = [
+export const EVENT_ROWS: EventRow[] = [
   {
     id: 'e-01',
     at: new Date(2026, 4, 14, 13, 42, 21),

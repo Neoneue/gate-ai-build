@@ -57,7 +57,19 @@ import {
   formatEventTime,
   ThreatEventDetailDialog,
 } from '@/pages/Security';
+import { EVENT_ROWS as AUDIT_EVENT_ROWS } from '@/pages/AuditTrail';
+import { formatNumber } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+
+// KPI-rail values derived from the canonical security + audit seeds so the
+// numbers reconcile with the Security and Audit Trail pages instead of
+// drifting away as separate constants. "Threats stopped" is the count of
+// security events (every event represents a blocked / flagged / redacted
+// threat); "Events anchored" is the count of audit-trail entries (every
+// entry is DE-anchored by the gateway pipeline). Deltas + sparks stay
+// hand-authored — there's no historical mock data to derive trend from.
+const THREATS_STOPPED_COUNT = EVENT_ROWS.length;
+const ANCHORED_EVENTS_COUNT = AUDIT_EVENT_ROWS.length;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -127,15 +139,23 @@ function PageHeader() {
 function KpiRail() {
   return (
     <KpiRailShell columns={4}>
+      {/* Tile order optimized for the H1 primary ICP (Olivia, agent
+       *  operator). Slot 1 is the trophy stat she screenshots — total
+       *  threats caught inline by the gateway. Slot 4 is the load-bearing
+       *  differentiator from Narrative & Positioning — DE-anchored audit
+       *  presence on the first surface she hits. Total Cost + Avg Latency
+       *  keep their mid-rail slots; Total Requests + Total Tokens were
+       *  dropped (volume vanity that doesn't map to either persona's
+       *  anxiety). */}
       <CompactKpi
         flat
-        title="Total Requests"
-        value="48,293"
-        delta="+8.2%"
+        title="Threats stopped"
+        value={formatNumber(THREATS_STOPPED_COUNT)}
+        delta="+12.4%"
         spark={
           <CompactSpark
-            colorVar="var(--color-ink-500)"
-            data={[6, 12, 10, 16, 20, 18, 26, 24, 28]}
+            colorVar="var(--color-chart-5)"
+            data={[2, 3, 4, 6, 7, 9, 10, 11, 13]}
           />
         }
       />
@@ -167,12 +187,12 @@ function KpiRail() {
       />
       <CompactKpi
         flat
-        title="Total Tokens"
-        value="18.4 M"
+        title="Events anchored"
+        value={formatNumber(ANCHORED_EVENTS_COUNT)}
         delta="+8.7%"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-3)"
+            colorVar="var(--color-success-600)"
             data={[10, 11, 13, 14, 16, 15, 17, 18, 18]}
           />
         }
