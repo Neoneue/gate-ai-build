@@ -538,12 +538,12 @@ function ConversationDetailDialog({
       onOpenChangeComplete={onOpenChangeComplete}
     >
       <DialogScrollContent
-        // sm:max-w-5xl ≈ 1024px — wide enough for the two-column body to
-        // breathe at typical desktop viewports, narrow enough that the
-        // dimmed page behind reads as context. The shared scroll-shell
-        // primitive provides max-h-[90vh] / flex-col / overflow-hidden;
-        // the inner panels scroll independently inside the body.
-        className="sm:max-w-5xl"
+        // 900px — wide enough for the two-column body to breathe at
+        // typical desktop viewports, narrow enough that the dimmed page
+        // behind reads as context. The shared scroll-shell primitive
+        // provides max-h-[90vh] / flex-col / overflow-hidden; the inner
+        // panels scroll independently inside the body.
+        className="sm:max-w-[900px] max-h-[calc(90vh-96px)]"
       >
         {stickyRow ? <ConversationDetailBody row={stickyRow} /> : null}
       </DialogScrollContent>
@@ -583,11 +583,8 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Messages + request trace
         </DialogTitleBlock>
 
-        {/* Identity row — status + cnv_id + initiator on the left, action
-            buttons (Copy ID / Audit anchor) on the right. Sits as a sibling
-            of the title block; the parent header's gap-3 provides rhythm.
-            Wraps on narrow viewports so the actions drop below the
-            identity instead of colliding with the close button. */}
+        {/* Identity row — cnv_id + initiator. Copy ID lives in the
+            footer-right; the header carries identity only. */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono text-sm font-medium text-ink-900 -tracking-[0.2px]">
             {row.conversationId}
@@ -595,14 +592,6 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
             {row.initiator}
           </span>
-          <CopyButton
-            mode="label"
-            size="sm"
-            text="Copy ID"
-            value={row.conversationId}
-            label="conversation ID"
-            className="ml-auto"
-          />
         </div>
       </DialogScrollHeader>
 
@@ -632,19 +621,21 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
         </div>
       </DialogScrollBody>
 
-      {/* Footer — cross-link affordance hint LEFT, conversation
-          provenance RIGHT. Both ambient at ink-400 so they read as
-          modal chrome, not heading-weight content. Override the
-          footer's default `justify-end` since this footer carries
-          informational copy on both edges, not just trailing actions. */}
+      {/* Footer — conversation provenance LEFT, Copy ID action RIGHT.
+          Override the footer's default `justify-end` since this footer
+          carries informational copy on the leading edge as well. */}
       <DialogScrollFooter className="justify-between flex-wrap">
-        <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
-          Click a message or trace step — they’re linked.
-        </span>
         <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
           Key <span className="text-ink-800">prod-web</span>{' '}
           · started <span className="text-ink-800">{row.updated}</span>
         </span>
+        <CopyButton
+          mode="label"
+          size="sm"
+          text="Copy ID"
+          value={row.conversationId}
+          label="conversation ID"
+        />
       </DialogScrollFooter>
     </>
   );
@@ -673,7 +664,7 @@ function ConversationKpiTile({ label, value }: { label: string; value: string })
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums -tracking-[0.5px] text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums text-ink-900">
         {value}
       </span>
     </div>
@@ -1033,16 +1024,16 @@ function TraceItem({
 
   // Per-row track segment — rendered behind the node circle (DOM order
   // puts node after, so its bg-white masks the line where it crosses).
-  // Node center sits at y = py-4 (16px) + node-half (12px) = 28px = top-7.
-  // First row: line starts at node center (top-7) and runs to row
-  // bottom. Last row: line starts at row top and runs h-7 (28px) to
+  // Node center sits at y = py-3 (12px) + node-half (12px) = 24px = top-6.
+  // First row: line starts at node center (top-6) and runs to row
+  // bottom. Last row: line starts at row top and runs h-6 (24px) to
   // node center. Middle rows: line spans the full row height. Within
   // TraceItem padding box, node center is at x=24 (pl-3 + node-half);
   // for a 2px line to center on x=24, left = 23px.
   const trackSegment = isFirst
-    ? 'top-7 bottom-0'
+    ? 'top-6 bottom-0'
     : isLast
-      ? 'top-0 h-7'
+      ? 'top-0 h-6'
       : 'inset-y-0';
 
   return (
@@ -1051,7 +1042,7 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-4 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
+      className={`relative flex gap-3 py-3 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
         selected ? '' : 'hover:bg-ink-50'
       } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-0.5 before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
         selected ? 'before:opacity-100' : 'before:opacity-0'
