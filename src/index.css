@@ -6,6 +6,7 @@
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant hover-fine ((@media (hover: hover) and (pointer: fine)) and (&:hover));
 
 /* ─── Design tokens (Constellation Gate AI) ────────────────── */
 @theme {
@@ -169,6 +170,14 @@
      -tracking-[1px] (PageTitle / artboard h2) stay arbitrary —
      that's a different optical tier. */
   --tracking-snug: -0.01em;
+
+  /* ─── Motion easing — strong custom curves per emil-design-eng skill.
+     Tailwind v4: defining --ease-* in @theme makes the bare `ease-out`
+     utility resolve to the strong curve site-wide. Drawer is named
+     separately for slide-in surfaces (Sheet, sidebar). */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* ─── Semantic token layer ──────────────────────────────────────────────

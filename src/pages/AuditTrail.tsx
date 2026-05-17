@@ -91,11 +91,13 @@ export function fmtRelative(at: Date): string {
   return `${months}mo ago`;
 }
 
-/** Truncates a hex string or UUID for display in a table cell.
- *  Uses three ASCII dots matching the glyph in the original seed data. */
+/** Truncates a hex string or UUID for display in a table cell. Uses a
+ *  single horizontal-ellipsis glyph (…, U+2026) so the middle reads as one
+ *  character at any font weight; the prior ASCII ".." trio rendered as a
+ *  spaced ".. ." in mono at certain sizes. */
 export function truncateHex(s: string, start = 6, end = 6): string {
-  if (s.length <= start + end + 3) return s;
-  return `${s.slice(0, start)}...${s.slice(-end)}`;
+  if (s.length <= start + end + 1) return s;
+  return `${s.slice(0, start)}…${s.slice(-end)}`;
 }
 
 export function AuditTrail() {
@@ -552,7 +554,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   <span className="inline-flex items-center gap-2">
                     <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
                     <span className="sr-only">Verified anchor</span>
-                    <span className="font-mono text-ink-800">{truncateHex(row.anchor)}</span>
+                    <span className="font-mono text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>
                   </span>
                 </TableCell>
               </TableRow>

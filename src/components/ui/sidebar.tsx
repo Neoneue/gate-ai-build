@@ -81,9 +81,9 @@ export function Sidebar({
   return (
     <aside
       aria-label="Primary navigation"
-      style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
+      style={{ transitionTimingFunction: 'var(--ease-drawer)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-white border-r border-border transition-[width] duration-300 motion-reduce:transition-none',
+        'relative shrink-0 overflow-hidden bg-white border-r border-border transition-[width] duration-150 motion-reduce:transition-none',
         expanded ? 'w-60' : 'w-16',
       )}
     >

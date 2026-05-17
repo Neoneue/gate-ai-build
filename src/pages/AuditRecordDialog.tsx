@@ -1,4 +1,4 @@
-import { CircleCheck, Copy, ExternalLink } from 'lucide-react';
+import { BookOpen, CircleCheck, Copy, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +45,206 @@ function VerifiedBySeal() {
   );
 }
 
+/* ─── Merkle path panel ───────────────────────────────────────────────── */
+
+/** Renders a two-level Merkle inclusion proof for a single audit event.
+ *
+ *  Layout:
+ *    - Description sentence (prose + mono spans)
+ *    - Bordered card containing an inline SVG tree (ROOT + two L1 nodes)
+ *    - Footer: path notation left, tree metadata right
+ *
+ *  All SVG fills/strokes reference CSS custom properties — no raw hex. */
+function MerklePathPanel({ row }: { row: EventRow }) {
+  const eventPrefix = row.eventId.slice(0, 10); // "e_cc8ae185"
+  const anchorShort = truncateHex(row.anchor, 4, 4);
+
+  // SVG layout constants (viewBox "0 0 600 200")
+  const ROOT_CX = 300; const ROOT_CY = 48;  const ROOT_R = 22;
+  const SIB_CX  = 120; const SIB_CY  = 160; const SIB_R  = 14;
+  const LEAF_CX = 480; const LEAF_CY = 160; const LEAF_R = 14;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Description */}
+      <p className="text-sm text-ink-800 m-0">
+        Highlighted path proves{' '}
+        <span className="font-mono text-ink-900">{eventPrefix}</span> is included
+        in anchor root{' '}
+        <span className="font-mono text-ink-900">{anchorShort}</span>.
+        Verifiable from the leaf with 1 sibling hash.
+      </p>
+
+      {/* Tree card */}
+      <div className="relative rounded-md border border-border bg-card p-4">
+        <svg
+          viewBox="0 0 600 200"
+          className="w-full h-auto"
+          aria-hidden
+        >
+          {/* Layer labels — left margin */}
+          <text
+            x="20" y="56"
+            textAnchor="start"
+            dominantBaseline="middle"
+            fontSize="11"
+            fontFamily="inherit"
+            fill="var(--color-ink-500)"
+          >
+            L0 · Anchor root
+          </text>
+          <text
+            x="20" y="160"
+            textAnchor="start"
+            dominantBaseline="middle"
+            fontSize="11"
+            fontFamily="inherit"
+            fill="var(--color-ink-500)"
+          >
+            L1
+          </text>
+
+          {/* Lines drawn before nodes so circles paint over endpoints */}
+          {/* Sibling → ROOT (gray) */}
+          <line
+            x1={SIB_CX}  y1={SIB_CY  - SIB_R}
+            x2={ROOT_CX} y2={ROOT_CY + ROOT_R}
+            stroke="var(--color-ink-300)"
+            strokeWidth="1.5"
+          />
+          {/* Event leaf → ROOT (highlighted path, blue) */}
+          <line
+            x1={LEAF_CX} y1={LEAF_CY  - LEAF_R}
+            x2={ROOT_CX} y2={ROOT_CY + ROOT_R}
+            stroke="var(--color-blue-500)"
+            strokeWidth="2"
+          />
+
+          {/* ROOT node */}
+          <circle
+            cx={ROOT_CX} cy={ROOT_CY} r={ROOT_R}
+            fill="var(--color-ink-900)"
+          />
+          <text
+            x={ROOT_CX} y={ROOT_CY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="10"
+            fontWeight="500"
+            fontFamily="inherit"
+            fill="var(--color-white)"
+          >
+            ROOT
+          </text>
+
+          {/* Sibling node (L1.1) — hollow */}
+          <circle
+            cx={SIB_CX} cy={SIB_CY} r={SIB_R}
+            fill="var(--color-white)"
+            stroke="var(--color-ink-300)"
+            strokeWidth="1.5"
+          />
+
+          {/* Event leaf node (L1.2) — filled blue */}
+          <circle
+            cx={LEAF_CX} cy={LEAF_CY} r={LEAF_R}
+            fill="var(--color-blue-500)"
+          />
+        </svg>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-xs text-ink-500">
+        <span>
+          <span className="text-ink-400">Path:</span>{' '}
+          <span className="font-mono text-ink-700">leaf &rarr; L1.2 &rarr; ROOT</span>
+        </span>
+        <span>Tree depth: 1 &middot; Sibling hashes needed: 1</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── How it works panel ─────────────────────────────────────────────── */
+
+const HOW_STEPS = [
+  {
+    id: '01',
+    title: 'Hash',
+    body: 'Each request, policy decision, and limit check is hashed at the gateway edge using SHA-256.',
+  },
+  {
+    id: '02',
+    title: 'Batch',
+    body: 'Hashes are batched into a Merkle tree every 5 minutes, or 64 events, whichever comes first.',
+  },
+  {
+    id: '03',
+    title: 'Anchor',
+    body: 'The Merkle root is submitted to Constellation Digital Evidence with a 3-of-3 validator quorum.',
+  },
+  {
+    id: '04',
+    title: 'Verify',
+    body: 'Anyone with the leaf, root, and sibling hashes can re-derive the root locally. No trust in us required.',
+  },
+] as const;
+
+function NumberChip({ children }: { children: string }) {
+  return (
+    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-ink-100 text-ink-700 font-mono text-xs font-medium shrink-0">
+      {children}
+    </span>
+  );
+}
+
+function HowItWorksPanel() {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* 2×2 step grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {HOW_STEPS.map((step) => (
+          <div
+            key={step.id}
+            className="rounded-md border border-border bg-card p-4 flex flex-col gap-2"
+          >
+            <div className="flex items-center gap-2">
+              <NumberChip>{step.id}</NumberChip>
+              <h3 className="text-sm font-medium text-ink-900 m-0">{step.title}</h3>
+            </div>
+            <p className="text-sm text-ink-700 text-pretty m-0">{step.body}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Go-deeper CTA — single primary resource. Drops the secondary
+          "DE docs" link to force a real ranking: whitepaper is the
+          canonical reference; everything else is noise inside this drill-in. */}
+      <button
+        type="button"
+        onClick={() => {}}
+        className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-ink-50 motion-reduce:transition-none"
+      >
+        <span className="flex items-center gap-3 min-w-0">
+          <span className="size-8 rounded-xs bg-ink-100 inline-flex items-center justify-center shrink-0">
+            <BookOpen className="size-4 text-ink-700" aria-hidden />
+          </span>
+          <span className="flex flex-col min-w-0">
+            <span className="text-sm font-medium text-ink-900">Read the whitepaper</span>
+            <span className="text-sm text-ink-700 text-pretty">
+              Full technical spec for the Constellation Digital Evidence layer.
+            </span>
+          </span>
+        </span>
+        <ExternalLink
+          className="size-4 text-ink-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-ink-900 motion-reduce:transition-none"
+          aria-hidden
+        />
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main export ─────────────────────────────────────────────────────── */
 
 export function AuditRecordDialog({
@@ -69,6 +269,8 @@ export function AuditRecordDialog({
         {/* ── Verification banner ── */}
         <DialogScrollSummary>
           <div className="rounded-md border border-border bg-card flex flex-col items-start gap-3 p-4">
+            <VerifiedBySeal />
+
             {/* Description */}
             <div className="min-w-0">
               <p className="text-sm text-ink-800 m-0">
@@ -84,15 +286,13 @@ export function AuditRecordDialog({
                 &middot; {fmtRelative(row.at)}
               </p>
             </div>
-
-            <VerifiedBySeal />
           </div>
         </DialogScrollSummary>
 
         {/* ── Tabbed body ── */}
         <DialogScrollBody className="pt-2">
           <Tabs defaultValue="event">
-            <TabsList variant="line" className="mb-4 px-0">
+            <TabsList variant="line" className="mb-2 px-0">
               <TabsTrigger value="event" className="pl-0">Event</TabsTrigger>
               <TabsTrigger value="merkle">Merkle path</TabsTrigger>
               <TabsTrigger value="how">How it works</TabsTrigger>
@@ -103,12 +303,7 @@ export function AuditRecordDialog({
               <DetailList>
                 <DetailRow
                   label="Time"
-                  value={
-                    <>
-                      <span className="font-mono text-ink-800">{fmtTime(row.at)}</span>
-                      <span className="text-ink-500"> &middot; {fmtRelative(row.at)}</span>
-                    </>
-                  }
+                  value={<span className="font-mono text-ink-800">{fmtTime(row.at)}</span>}
                 />
                 <DetailRow
                   label="Event ID"
@@ -138,21 +333,21 @@ export function AuditRecordDialog({
                         aria-hidden
                       />
                       <span className="sr-only">Verified anchor</span>
-                      <span className="font-mono whitespace-nowrap text-ink-800">{truncateHex(row.anchor)}</span>
+                      <span className="font-mono whitespace-nowrap text-ink-800">{truncateHex(row.anchor, 4, 4)}</span>
                     </span>
                   }
                 />
               </DetailList>
             </TabsContent>
 
-            {/* Merkle path placeholder */}
+            {/* Merkle path panel */}
             <TabsContent value="merkle">
-              <div className="py-12 text-center text-sm text-ink-500">Coming next</div>
+              <MerklePathPanel row={row} />
             </TabsContent>
 
-            {/* How it works placeholder */}
+            {/* How it works panel */}
             <TabsContent value="how">
-              <div className="py-12 text-center text-sm text-ink-500">Coming next</div>
+              <HowItWorksPanel />
             </TabsContent>
           </Tabs>
         </DialogScrollBody>

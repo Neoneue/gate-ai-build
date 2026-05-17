@@ -52,12 +52,13 @@ function SheetOverlay({
       data-slot="sheet-overlay"
       className={cn(
         // Fade-only on the backdrop — the panel owns the slide motion.
-        // Duration MUST match the panel's slide duration (300ms). On close,
-        // a shorter backdrop fade finishes early and the keyframe element
-        // can revert to its resting opacity for the remaining tail of the
-        // panel's slide-out, producing a visible flicker. Matching them
-        // keeps the dim and the panel leaving in lockstep.
-        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-300 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+        // Durations stay in lockstep with the panel: 300ms enter, 200ms exit
+        // (asymmetric per the emil-design-eng skill — exits snappier than
+        // enters). On close, a shorter backdrop fade than the panel slide
+        // produces a visible flicker as the keyframe element reverts to its
+        // resting opacity early; matching the panel keeps the dim leaving
+        // alongside it.
+        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-300 data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       {...props}
@@ -112,7 +113,7 @@ function SheetContent({
           // shadcn Sheet's open duration. `will-change-transform` keeps the
           // panel on its own compositor layer so the GPU doesn't allocate
           // mid-slide.
-          "will-change-transform data-open:animate-in data-closed:animate-out data-open:slide-in-from-right data-closed:slide-out-to-right data-closed:fill-mode-forwards duration-300 ease-out motion-reduce:animate-none motion-reduce:duration-0",
+          "will-change-transform data-open:animate-in data-closed:animate-out data-open:slide-in-from-right data-closed:slide-out-to-right data-closed:duration-200 data-closed:fill-mode-forwards duration-300 ease-out motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
         {...props}

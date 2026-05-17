@@ -594,7 +594,7 @@ function RowActionsMenu({
         <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
           <MenuPrimitive.Popup
             className={cn(
-              'min-w-32 overflow-hidden rounded-sm bg-popover text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none',
+              'min-w-32 overflow-hidden rounded-sm bg-popover text-ink-900 border border-border shadow-(--shadow-popup) py-1 outline-none origin-[var(--transform-origin)]',
               'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             )}
           >
