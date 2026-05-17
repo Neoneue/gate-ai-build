@@ -1,4 +1,4 @@
-import { CircleCheck, Copy, ExternalLink } from 'lucide-react';
+import { BookOpen, CircleCheck, Copy, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -217,25 +217,30 @@ function HowItWorksPanel() {
         ))}
       </div>
 
-      {/* Footer link row */}
-      <div className="flex items-center gap-6">
-        <button
-          type="button"
-          onClick={() => {}}
-          className="inline-flex items-center gap-2 text-sm text-ink-700 hover:text-ink-900 transition-colors duration-150 ease-out motion-reduce:transition-none"
-        >
-          <ExternalLink className="size-4" aria-hidden />
-          Read whitepaper
-        </button>
-        <button
-          type="button"
-          onClick={() => {}}
-          className="inline-flex items-center gap-2 text-sm text-ink-700 hover:text-ink-900 transition-colors duration-150 ease-out motion-reduce:transition-none"
-        >
-          <ExternalLink className="size-4" aria-hidden />
-          Constellation DE docs
-        </button>
-      </div>
+      {/* Go-deeper CTA — single primary resource. Drops the secondary
+          "DE docs" link to force a real ranking: whitepaper is the
+          canonical reference; everything else is noise inside this drill-in. */}
+      <button
+        type="button"
+        onClick={() => {}}
+        className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-ink-50 motion-reduce:transition-none"
+      >
+        <span className="flex items-center gap-3 min-w-0">
+          <span className="size-8 rounded-xs bg-ink-100 inline-flex items-center justify-center shrink-0">
+            <BookOpen className="size-4 text-ink-700" aria-hidden />
+          </span>
+          <span className="flex flex-col gap-1 min-w-0">
+            <span className="text-sm font-medium text-ink-900">Read the whitepaper</span>
+            <span className="text-sm text-ink-700 text-pretty">
+              Full technical spec for the Constellation Digital Evidence layer.
+            </span>
+          </span>
+        </span>
+        <ExternalLink
+          className="size-4 text-ink-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-ink-900 motion-reduce:transition-none"
+          aria-hidden
+        />
+      </button>
     </div>
   );
 }
