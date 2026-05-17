@@ -244,10 +244,13 @@ export function Policies() {
       prev.map((p) => (p.id === id ? { ...p, action: value } : p)),
     );
 
-  const visiblePolicies = POLICIES.map((cfg) => ({
-    cfg,
-    state: policies.find((p) => p.id === cfg.id)!,
-  }));
+  const visiblePolicies = (() => {
+    const byId = new Map(policies.map((p) => [p.id, p]));
+    return POLICIES.map((cfg) => ({
+      cfg,
+      state: byId.get(cfg.id)!,
+    }));
+  })();
 
   return (
     <DashboardChrome

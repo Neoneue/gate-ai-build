@@ -177,16 +177,19 @@ function PageHeader({
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
 function KpiRailSection({ rows }: { rows: EventRow[] }) {
-  const eventsLogged = rows.length;
-  const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
-  const mostRecent = rows.reduce<Date | null>(
-    (latest, r) => (!latest || r.at > latest ? r.at : latest),
-    null,
-  );
-  // Every seeded row is verified in this mock — when real data lands, derive
-  // from row.verified booleans. Empty-range state falls back to "—" so we
-  // don't pretend to assert a rate over zero events.
-  const verifiedRate = eventsLogged === 0 ? null : 100.0;
+  const { eventsLogged, distinctAnchors, mostRecent, verifiedRate } = useMemo(() => {
+    const eventsLogged = rows.length;
+    const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
+    const mostRecent = rows.reduce<Date | null>(
+      (latest, r) => (!latest || r.at > latest ? r.at : latest),
+      null,
+    );
+    // Every seeded row is verified in this mock — when real data lands, derive
+    // from row.verified booleans. Empty-range state falls back to "—" so we
+    // don't pretend to assert a rate over zero events.
+    const verifiedRate = eventsLogged === 0 ? null : 100.0;
+    return { eventsLogged, distinctAnchors, mostRecent, verifiedRate };
+  }, [rows]);
 
   return (
     <KpiRail columns={4}>
@@ -458,10 +461,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
   }, [rows, filter, query]);
 
   const perPage = parseInt(rowsPerPage, 10);
-  const pageRows = useMemo(
-    () => filteredRows.slice((page - 1) * perPage, page * perPage),
-    [filteredRows, page, perPage],
-  );
+  const pageRows = filteredRows.slice((page - 1) * perPage, page * perPage);
 
   const isEmpty = filteredRows.length === 0;
 

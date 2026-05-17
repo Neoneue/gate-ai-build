@@ -1012,7 +1012,10 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   // sighted-mouse users get the capability name on hover — without
   // introducing a Tooltip primitive (the showcase doesn't ship one yet
   // and a single-purpose addition would be a primitive proliferation).
-  const ordered = CAPABILITY_ORDER.filter((c) => capabilities.includes(c));
+  const ordered = (() => {
+    const have = new Set(capabilities);
+    return CAPABILITY_ORDER.filter((c) => have.has(c));
+  })();
   return (
     <div className="flex items-center gap-1">
       {ordered.map((c) => {
@@ -1038,11 +1041,13 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
   // counted in the +n overflow). First three vendor-glyphs render as an
   // overlapping stack; remainder collapses to a +N chip.
   const vendors: Vendor[] = [];
+  const vendorSet = new Set<Vendor>();
   const unmappedNames: string[] = [];
   for (const o of offerings) {
     const v = PROVIDER_VENDOR[o.provider];
-    if (v && !vendors.includes(v)) {
+    if (v && !vendorSet.has(v)) {
       vendors.push(v);
+      vendorSet.add(v);
     } else if (!v) {
       const meta = o.provider in MARKETPLACE_META
         ? MARKETPLACE_META[o.provider as keyof typeof MARKETPLACE_META]
@@ -1471,6 +1476,13 @@ function endpointFor(modality: Modality): string {
 
 type Lang = 'ts' | 'py' | 'bash';
 
+const STRING_TOKEN_RE   = /^(['"`])((?:\\.|(?!\1).)*)\1/;
+const TMPL_TOKEN_RE     = /^\$\{[^}]+\}/;
+const ENV_VAR_RE        = /^\$[A-Z_][A-Z0-9_]*/;
+const WORD_BOUNDARY_RE  = /\w/;
+const NUMBER_TOKEN_RE   = /^\d+(\.\d+)?/;
+const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/;
+
 const KEYWORDS: Record<Lang, RegExp> = {
   ts: /^(import|from|const|let|var|new|await|return|function|null|true|false)\b/,
   py: /^(import|from|with|as|def|return|None|True|False|in|not|and|or|is|for|if|else)\b/,
@@ -1495,7 +1507,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     const sub = line.slice(i);
 
     // Strings — single, double, backtick — greedy through closing quote.
-    const stringMatch = /^(['"`])((?:\\.|(?!\1).)*)\1/.exec(sub);
+    const stringMatch = STRING_TOKEN_RE.exec(sub);
     if (stringMatch) {
       flushPending();
       tokens.push({ text: stringMatch[0], tone: 'string' });
@@ -1504,7 +1516,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Variable substitution `${...}` (TS template).
-    const tmplMatch = /^\$\{[^}]+\}/.exec(sub);
+    const tmplMatch = TMPL_TOKEN_RE.exec(sub);
     if (tmplMatch) {
       flushPending();
       tokens.push({ text: tmplMatch[0], tone: 'variable' });
@@ -1513,7 +1525,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Bash $VAR.
-    const envMatch = /^\$[A-Z_][A-Z0-9_]*/.exec(sub);
+    const envMatch = ENV_VAR_RE.exec(sub);
     if (envMatch) {
       flushPending();
       tokens.push({ text: envMatch[0], tone: 'variable' });
@@ -1524,7 +1536,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     // Keyword (must be at a word boundary — only fire when previous char is
     // non-word).
     const prev = i === 0 ? '' : line[i - 1];
-    if (!/\w/.test(prev)) {
+    if (!WORD_BOUNDARY_RE.test(prev)) {
       const kwMatch = KEYWORDS[lang].exec(sub);
       if (kwMatch) {
         flushPending();
@@ -1535,8 +1547,8 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Number literal at word boundary.
-    if (!/\w/.test(prev)) {
-      const numMatch = /^\d+(\.\d+)?/.exec(sub);
+    if (!WORD_BOUNDARY_RE.test(prev)) {
+      const numMatch = NUMBER_TOKEN_RE.exec(sub);
       if (numMatch) {
         flushPending();
         tokens.push({ text: numMatch[0], tone: 'number' });
@@ -1548,8 +1560,8 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     // JSON / JS object property — identifier directly before `:` followed by
     // space or end. Excludes URL schemes (`https://…`) since `:` is followed
     // by `/`.
-    if (!/\w/.test(prev)) {
-      const propMatch = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/.exec(sub);
+    if (!WORD_BOUNDARY_RE.test(prev)) {
+      const propMatch = PROP_TOKEN_RE.exec(sub);
       if (propMatch) {
         flushPending();
         tokens.push({ text: propMatch[0], tone: 'property' });

@@ -52,6 +52,9 @@ import { formatDate, formatRelative } from '@/lib/formatters';
 
 const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WHITESPACE_RE = /\s+/;
+
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-017 — Team (Workspace Admin)
  *
@@ -429,7 +432,7 @@ function InviteMemberDialog({
   // Single-email validation: pragmatic regex (not RFC-strict; server
   // owns the canonical check). Empty ⇒ disabled; malformed ⇒ disabled.
   const trimmed = email.trim();
-  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  const isValid = EMAIL_REGEX.test(trimmed);
   const showInvalid = trimmed.length > 0 && !isValid;
 
   return (
@@ -654,7 +657,7 @@ function Avatar({ tone, initials }: { tone: AvatarTone; initials: string }) {
 }
 
 function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/);
+  const parts = name.trim().split(WHITESPACE_RE);
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }

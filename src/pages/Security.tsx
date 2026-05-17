@@ -55,6 +55,8 @@ import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
 
+const WHITESPACE_GLOBAL_RE = /\s+/g;
+
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-015 — Security
  *
@@ -702,7 +704,7 @@ function CategoryBreakdownCard({
       <CardContent className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3">
         {categories.map((cat) => {
           const pct = (cat.count / max) * 100;
-          const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
+          const labelId = `cmp015-attack-${cat.label.replace(WHITESPACE_GLOBAL_RE, '-').toLowerCase()}`;
           return (
             <div key={cat.label} className="contents">
               <span id={labelId} className="w-48 shrink-0 font-sans text-sm text-ink-900 truncate" title={cat.label}>
@@ -1231,6 +1233,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const conversationId = row.conversationId;
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
   const openRequest = () => navigate(`/requests?open=${requestId}`);
+  const flaggedSet = new Set(detail.flagged);
 
   return (
     <>
@@ -1283,7 +1286,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             </SectionHeading>
             <div className="flex flex-col gap-2">
               {DETECTION_CHECKS.map((check) => {
-                const firing = check.keys.some((k) => detail.flagged.includes(k));
+                const firing = check.keys.some((k) => flaggedSet.has(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };

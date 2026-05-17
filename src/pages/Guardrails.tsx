@@ -150,7 +150,10 @@ function LimitsSection({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {limits.map((limit) => (
+          {limits.map((limit) => {
+            const scope = findScope(limit.scope);
+            const scopeNameText = scope?.name ?? limit.scope;
+            return (
             <TableRow key={limit.id}>
               <TableCell className="font-sans text-sm font-medium text-ink-900">
                 <span className="block truncate" title={limit.name}>
@@ -161,13 +164,13 @@ function LimitsSection({
                 <div className="flex flex-col min-w-0">
                   <span
                     className="font-sans text-sm text-ink-900 truncate"
-                    title={scopeName(limit.scope)}
+                    title={scopeNameText}
                   >
-                    {scopeName(limit.scope)}
+                    {scopeNameText}
                   </span>
-                  {findScope(limit.scope)?.masked ? (
+                  {scope?.masked ? (
                     <span className="font-mono text-xs text-ink-500 truncate">
-                      {findScope(limit.scope)!.masked}
+                      {scope.masked}
                     </span>
                   ) : null}
                 </div>
@@ -191,7 +194,8 @@ function LimitsSection({
                 <LimitActionsMenu limitName={limit.name} onRemove={() => onRemove(limit.id)} />
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </Card>
@@ -258,11 +262,15 @@ type Limit = {
   used: string;
 };
 
+const LIMIT_TYPE_BY_VALUE = new Map<string, (typeof LIMIT_TYPES)[number]>(LIMIT_TYPES.map((t) => [t.value, t]));
+const LIMIT_PERIOD_BY_VALUE = new Map<string, (typeof LIMIT_PERIODS)[number]>(LIMIT_PERIODS.map((p) => [p.value, p]));
+const LIMIT_SCOPE_BY_VALUE = new Map<string, (typeof LIMIT_SCOPES)[number]>(LIMIT_SCOPES.map((s) => [s.value, s]));
+
 const typeLabel = (v: string) =>
-  LIMIT_TYPES.find((t) => t.value === v)?.label ?? v;
+  LIMIT_TYPE_BY_VALUE.get(v)?.label ?? v;
 const periodLabel = (v: string) =>
-  LIMIT_PERIODS.find((p) => p.value === v)?.label ?? v;
-const findScope = (v: string) => LIMIT_SCOPES.find((s) => s.value === v);
+  LIMIT_PERIOD_BY_VALUE.get(v)?.label ?? v;
+const findScope = (v: string) => LIMIT_SCOPE_BY_VALUE.get(v);
 const scopeName = (v: string) => findScope(v)?.name ?? v;
 const thresholdLabel = (type: string, threshold: string) => {
   const n = Number(threshold);

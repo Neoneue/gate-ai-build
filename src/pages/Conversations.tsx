@@ -44,6 +44,10 @@ import { VENDOR_META, VendorAvatar, type Vendor } from '@/components/icons/vendo
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatDateTime } from '@/lib/formatters';
 
+const REDUCE_MOTION =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-014 — Conversations (Observability)
  *
@@ -765,10 +769,7 @@ function ConversationMessagesPanel({
     const el = scrollRef.current.querySelector(
       `[data-request-id="${activeRequestId}"]`,
     );
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+    el?.scrollIntoView({ block: 'nearest', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   }, [activeRequestId, selectionSource]);
 
   return (
@@ -899,10 +900,7 @@ function RequestTracePanel({
     const el = scrollRef.current.querySelector(
       `[data-request-id="${activeRequestId}"]`,
     );
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+    el?.scrollIntoView({ block: 'nearest', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   }, [activeRequestId, selectionSource]);
 
   return (
