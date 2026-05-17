@@ -157,7 +157,7 @@ function PageHeader({
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Audit trail</PageTitle>
         <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
-          Every request, policy decision, and limit check is logged here. Each entry is hashed and anchored on a public ledger — independently verifiable, tamper-evident by construction.
+          Every request, policy decision, and limit check is logged here. Each entry is hashed and anchored to Constellation's Digital Evidence layer, independently verifiable and tamper-evident by construction.
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">

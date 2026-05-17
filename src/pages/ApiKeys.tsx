@@ -608,7 +608,7 @@ function KeyCreatedDialog({
             Store this somewhere safe
           </p>
           <p className="font-sans text-sm text-warning-700 m-0">
-            Paste it into your secret manager or .env before closing. Once you close, we can't show it again — you'd need to rotate the key.
+            Paste it into your secret manager or .env before closing. Once you close, we can't show it again. You'll need to rotate the key to get a new one.
           </p>
         </div>
 
