@@ -69,6 +69,8 @@ export function AuditRecordDialog({
         {/* ── Verification banner ── */}
         <DialogScrollSummary>
           <div className="rounded-md border border-border bg-card flex flex-col items-start gap-3 p-4">
+            <VerifiedBySeal />
+
             {/* Description */}
             <div className="min-w-0">
               <p className="text-sm text-ink-800 m-0">
@@ -84,8 +86,6 @@ export function AuditRecordDialog({
                 &middot; {fmtRelative(row.at)}
               </p>
             </div>
-
-            <VerifiedBySeal />
           </div>
         </DialogScrollSummary>
 
