@@ -57,9 +57,9 @@ function PageHeader() {
 function KpiRailSection() {
   return (
     <KpiRail columns={3}>
-      <KpiTile title="Total saved" value="0%" caption="$0 saved" />
-      <KpiTile title="Caching" value="0%" caption="$0 · No hits yet" />
-      <KpiTile title="Compression" value="0%" caption="$0 · No compression yet" />
+      <KpiTile title="Total saved" value="0%" />
+      <KpiTile title="Caching" value="0%" />
+      <KpiTile title="Compression" value="0%" />
     </KpiRail>
   );
 }
@@ -189,7 +189,7 @@ function CachingCard() {
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="ttl-label" className="font-sans text-sm font-medium text-ink-900 m-0">
               TTL
             </p>
             <p className="font-sans text-sm text-ink-500 m-0">
@@ -203,7 +203,7 @@ function CachingCard() {
               toast.success('TTL saved');
             }}
           >
-            <SelectTrigger className="w-24 shrink-0">
+            <SelectTrigger className="w-24 shrink-0" aria-labelledby="ttl-label">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

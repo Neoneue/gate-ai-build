@@ -88,7 +88,7 @@ function PlanCard() {
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
-          BYOK gateway + audit trail, no security pipeline. Upgrade to Pro to unlock prompt-injection scans, PII redaction, and the full Constellation Gate audit trail.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail anchored to Constellation's Digital Evidence layer.
         </p>
         <p className="font-sans text-sm text-ink-500 m-0">Free plan — no renewal</p>
       </CardContent>

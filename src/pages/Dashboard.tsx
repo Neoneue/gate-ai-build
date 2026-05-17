@@ -293,7 +293,7 @@ export function RequestVolumeCard() {
               horizontal
               vertical={false}
               stroke="var(--color-ink-200)"
-              strokeDasharray="5 3"
+              strokeDasharray="8 3"
             />
             <XAxis
               dataKey="date"
@@ -523,7 +523,7 @@ type QuickAction = {
 
 const QUICK_ACTIONS: QuickAction[] = [
   { icon: RefreshCw,  title: 'Rotate API Key',         subtitle: 'Last rotated 6 days ago' },
-  { icon: Sparkles,   title: 'Upgrade to Enterprise',  subtitle: 'Unlock custom rate limits', accent: true },
+  { icon: Sparkles,   title: 'Upgrade to Pro',         subtitle: 'Unlock custom rate limits', accent: true },
   { icon: Shield,     title: 'Review Security Events', subtitle: '3 events in the last hour' },
   { icon: BookOpen,   title: 'Read Integration Guide', subtitle: 'SDK quickstart' },
 ];

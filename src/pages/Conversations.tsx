@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Activity, ArrowRight, Search, TriangleAlert, Wrench } from 'lucide-react';
+import { Activity, ArrowRight, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { MessageBlock, type MessageRole } from '@/components/ui/message-block';
@@ -304,23 +304,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
       {/* Toolbar */}
       {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
-            strokeWidth={1.75}
-            aria-hidden
-          />
-          <Input
-            size="sm"
-            type="search"
-            name="q"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="Search by id, prompt, user, key…"
-            aria-label="Search conversations"
-            className="pl-8 placeholder:text-ink-500"
-          />
-        </div>
+        <SearchInput placeholder="Search by id, prompt, user, key…" ariaLabel="Search conversations" />
         <Select value={keyId} onValueChange={setKeyId}>
           <SelectTrigger
             size="sm"
@@ -389,13 +373,6 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
               <TableRow
                 key={row.conversationId}
                 onClick={() => setSelectedRow(row)}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setSelectedRow(row);
-                  }
-                }}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
               >
                 <TableCell className="whitespace-nowrap max-w-0">
@@ -626,7 +603,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           carries informational copy on the leading edge as well. */}
       <DialogScrollFooter className="justify-between flex-wrap">
         <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
-          Key <span className="text-ink-800">prod-web</span>{' '}
+          Key <span className="text-ink-800">{row.initiator}</span>{' '}
           · started <span className="text-ink-800">{row.updated}</span>
         </span>
         <CopyButton

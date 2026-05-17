@@ -96,7 +96,25 @@ export const PROVIDER_ORDER: Vendor[] = [
  *     high-contrast ones (xAI #3D3D3D); the brand identity is the
  *     payoff.
  */
-export function VendorAvatar({ vendor, decorative = false }: { vendor: Vendor; decorative?: boolean }) {
+/** Avatar size keys. `sm` (size-4 = 16px) is the default in tables / row
+ *  cells. `md` (size-5 = 20px) pairs with `text-xl` titles. `lg` (size-6
+ *  = 24px) pairs with `text-2xl` titles. Stay on the icon ladder. */
+type VendorAvatarSize = 'sm' | 'md' | 'lg';
+const VENDOR_AVATAR_SIZE: Record<VendorAvatarSize, string> = {
+  sm: 'size-4',
+  md: 'size-5',
+  lg: 'size-6',
+};
+
+export function VendorAvatar({
+  vendor,
+  decorative = false,
+  size = 'sm',
+}: {
+  vendor: Vendor;
+  decorative?: boolean;
+  size?: VendorAvatarSize;
+}) {
   const meta = VENDOR_META[vendor];
   const Icon = meta.icon;
   // Wrapper carries `shrink-0` so flex parents behave the same as when the
@@ -108,7 +126,7 @@ export function VendorAvatar({ vendor, decorative = false }: { vendor: Vendor; d
   return (
     <span className="inline-flex shrink-0 items-center">
       <Icon
-        className="size-4"
+        className={VENDOR_AVATAR_SIZE[size]}
         style={{ color: meta.color }}
         aria-hidden="true"
       />

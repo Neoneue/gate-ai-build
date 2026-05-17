@@ -7,7 +7,6 @@ import {
   Database,
   Eye,
   Globe,
-  Search,
   SquareArrowOutUpRight,
   Wrench,
   Zap,
@@ -16,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Select,
   SelectContent,
@@ -774,7 +773,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       </Card>
       </Tabs>
 
-      <p className="font-mono text-xs text-ink-500 tracking-snug m-0">
+      <p className="font-sans text-xs text-ink-500 tracking-snug m-0">
         Pass{' '}
         <InlineCode size="sm">claude-haiku-4-5</InlineCode>{' '}
         to use the preferred provider, or{' '}
@@ -825,25 +824,13 @@ function Toolbar({
 }) {
   return (
     <div className="flex items-center gap-2 p-4">
-      <div className="relative w-72 min-w-0 shrink-0">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-ink-500"
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
-        <Input
-          size="sm"
-          type="search"
-          name="model-search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Search by name or handle…"
-          className="pl-8"
-          aria-label="Search models"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        placeholder="Search by name or handle…"
+        ariaLabel="Search models"
+        name="model-search"
+        value={search}
+        onChange={onSearchChange}
+      />
 
       <Select value={vendor} onValueChange={onVendorChange}>
         <SelectTrigger size="sm" aria-label="Filter by vendor">
@@ -1028,11 +1015,7 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
         const meta = CAPABILITY_META[c];
         const Icon = meta.icon;
         return (
-          <span
-            key={c}
-            title={meta.label}
-            className="inline-flex shrink-0"
-          >
+          <span key={c} className="inline-flex shrink-0">
             <Icon
               className="size-4 text-ink-500 shrink-0"
               strokeWidth={1.75}
@@ -1128,7 +1111,6 @@ const PLATFORM_LINKS: { name: string; note: string }[] = [
 ];
 
 function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }) {
-  const vendorMeta = VENDOR_META[model.vendor];
   // Default offering anchors the KPI strip + hero code preview — same pattern
   // as the table row's pricing.
   const head = model.offerings[0];
@@ -1155,27 +1137,24 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
         </TextLink>
       </div>
 
-      {/* Hero — vendor eyebrow / H2 / handle / capabilities / description. */}
+      {/* Hero — logo + H2 inline, then handle / capabilities / description.
+          The old vendor-eyebrow tier was removed 2026-05-16 (Eyebrow rule:
+          only nav + KPI tiles); the model handle below (`anthropic/claude-sonnet-4.8`)
+          still encodes the vendor for anyone scanning, and the avatar's
+          sr-only label fires now that there's no adjacent eyebrow text
+          to double-announce. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            {/* `decorative` suppresses the avatar's sr-only label so the
-                adjacent visible text ("Anthropic") doesn't double-announce
-                as "Anthropic logo, Anthropic" — semantics are carried by
-                the eyebrow text alone. */}
-            <VendorAvatar vendor={model.vendor} decorative />
-            <Eyebrow>{vendorMeta.label}</Eyebrow>
+            <VendorAvatar vendor={model.vendor} size="md" />
+            {/* Scaled down from text-3xl/9 (32px) → text-xl (20px). The
+                page-level h1 ("Models") on ArtboardHeader and the
+                breadcrumb already carry the model name, so a third
+                32px appearance over-anchors identity. */}
+            <h2 className="font-sans text-xl font-medium text-ink-900 m-0">
+              {model.name}
+            </h2>
           </div>
-
-          {/* Scaled down from text-3xl/9 (32px) → text-xl (20px). The
-              page-level h1 ("Models") on ArtboardHeader and the
-              breadcrumb already carry the model name, so a third
-              32px appearance over-anchors identity. The vendor avatar +
-              eyebrow + handle chip below still make the model legible
-              at a glance. */}
-          <h2 className="font-sans text-xl font-medium text-ink-900 m-0">
-            {model.name}
-          </h2>
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-sm text-ink-900 -tracking-[0.01em]">{model.defaultHandle}</span>

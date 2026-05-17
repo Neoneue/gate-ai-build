@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Info, Key, Search } from 'lucide-react';
+import { Info, Key } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -28,7 +28,7 @@ import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import {
@@ -642,7 +642,7 @@ function TrendBreakdownPanel({
         return (
           <div
             key={s.key}
-            className="flex items-center gap-2 py-1 px-2 rounded-xs hover:bg-muted transition-colors duration-100 min-w-0"
+            className="flex items-center gap-2 py-1 px-2 rounded-xs min-w-0"
           >
             <span
               aria-hidden
@@ -863,7 +863,7 @@ function TrendCard({
                 horizontal
                 vertical={false}
                 stroke="var(--color-ink-200)"
-                strokeDasharray="5 3"
+                strokeDasharray="8 3"
               />
               <XAxis
                 dataKey="date"
@@ -1362,25 +1362,12 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
     <Card id="usage-by-key" density="flush">
       {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground"
-            strokeWidth={1.75}
-            aria-hidden
-          />
-          <Input
-            size="sm"
-            type="search"
-            name="q"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="Search key or member…"
-            className="pl-8"
-            aria-label="Search keys"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search key or member…"
+          ariaLabel="Search keys"
+          value={query}
+          onChange={setQuery}
+        />
         <Select value={sort} onValueChange={(v: string) => setSort(v as KeySortKey)}>
           <SelectTrigger
             size="sm"

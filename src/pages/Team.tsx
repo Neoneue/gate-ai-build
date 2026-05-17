@@ -4,7 +4,6 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import {
   MoreHorizontal,
-  Search,
   Send,
   UserPlus,
 } from 'lucide-react';
@@ -21,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { Label } from '@/components/ui/label';
 import { PageTitle } from '@/components/ui/page-title';
 import {
@@ -203,30 +203,12 @@ function MembersPane() {
           the codified no-leading-icon rule for dense table toolbars. */}
       {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-ink-500"
-            strokeWidth={1.75}
-            aria-hidden
-          />
-          <Input
-            size="sm"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email…"
-            aria-label="Search members"
-            autoComplete="off"
-            spellCheck={false}
-            // `pl-8` consumes the leading-icon convention — the absolutely
-            // positioned Search glyph above sits at left-3 (12px) at
-            // size-4, so the text needs 32px (8 * 4px) of left padding
-            // to clear it. Not a primitive override worth lifting at
-            // current scale; this composition is repeated in CMP-013,
-            // CMP-014, CMP-016 with the same recipe.
-            className="pl-8 placeholder:text-ink-500"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search by name or email…"
+          ariaLabel="Search members"
+          value={query}
+          onChange={setQuery}
+        />
         <Select
           value={roleFilter}
           onValueChange={(v: string) => setRoleFilter(v as 'all' | MemberRole)}
@@ -312,7 +294,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
         {row.joined}
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
@@ -402,13 +384,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
                 {row.sent}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm text-ink-800 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
                 {row.expires}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
