@@ -165,6 +165,81 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   );
 }
 
+/* ─── How it works panel ─────────────────────────────────────────────── */
+
+const HOW_STEPS = [
+  {
+    id: '01',
+    title: 'Hash',
+    body: 'Each request, policy decision, and limit check is hashed at the gateway edge using SHA-256.',
+  },
+  {
+    id: '02',
+    title: 'Batch',
+    body: 'Hashes are batched into a Merkle tree every 5 minutes, or 64 events, whichever comes first.',
+  },
+  {
+    id: '03',
+    title: 'Anchor',
+    body: 'The Merkle root is submitted to Constellation Digital Evidence with a 3-of-3 validator quorum.',
+  },
+  {
+    id: '04',
+    title: 'Verify',
+    body: 'Anyone with the leaf, root, and sibling hashes can re-derive the root locally. No trust in us required.',
+  },
+] as const;
+
+function NumberChip({ children }: { children: string }) {
+  return (
+    <span className="inline-flex items-center justify-center size-6 rounded-xs bg-ink-900 text-white font-mono text-xs font-medium shrink-0">
+      {children}
+    </span>
+  );
+}
+
+function HowItWorksPanel() {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* 2×2 step grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {HOW_STEPS.map((step) => (
+          <div
+            key={step.id}
+            className="rounded-md border border-border bg-card p-4 flex flex-col gap-2"
+          >
+            <div className="flex items-center gap-2">
+              <NumberChip>{step.id}</NumberChip>
+              <h3 className="text-sm font-medium text-ink-900 m-0">{step.title}</h3>
+            </div>
+            <p className="text-sm text-ink-700 text-pretty m-0">{step.body}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer link row */}
+      <div className="flex items-center gap-6">
+        <button
+          type="button"
+          onClick={() => {}}
+          className="inline-flex items-center gap-2 text-sm text-ink-700 hover:text-ink-900 transition-colors duration-150 ease-out motion-reduce:transition-none"
+        >
+          <ExternalLink className="size-4" aria-hidden />
+          Read whitepaper
+        </button>
+        <button
+          type="button"
+          onClick={() => {}}
+          className="inline-flex items-center gap-2 text-sm text-ink-700 hover:text-ink-900 transition-colors duration-150 ease-out motion-reduce:transition-none"
+        >
+          <ExternalLink className="size-4" aria-hidden />
+          Constellation DE docs
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main export ─────────────────────────────────────────────────────── */
 
 export function AuditRecordDialog({
@@ -265,9 +340,9 @@ export function AuditRecordDialog({
               <MerklePathPanel row={row} />
             </TabsContent>
 
-            {/* How it works placeholder */}
+            {/* How it works panel */}
             <TabsContent value="how">
-              <div className="py-12 text-center text-sm text-ink-500">Coming next</div>
+              <HowItWorksPanel />
             </TabsContent>
           </Tabs>
         </DialogScrollBody>
