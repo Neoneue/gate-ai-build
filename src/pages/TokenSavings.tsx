@@ -57,9 +57,9 @@ function PageHeader() {
 function KpiRailSection() {
   return (
     <KpiRail columns={3}>
-      <KpiTile title="Total saved" value="0%" caption="$0 saved" />
-      <KpiTile title="Caching" value="0%" caption="$0 · No hits yet" />
-      <KpiTile title="Compression" value="0%" caption="$0 · No compression yet" />
+      <KpiTile title="Total saved" value="0%" />
+      <KpiTile title="Caching" value="0%" />
+      <KpiTile title="Compression" value="0%" />
     </KpiRail>
   );
 }

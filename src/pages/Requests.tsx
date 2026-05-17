@@ -144,7 +144,7 @@ function PageHeader({
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Every model call across your stack, captured in real-time.
+          Every model call across your stack, inspected for injection, PII, and credentials before it reaches the model.
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -606,7 +606,7 @@ function HeroMetricCard() {
             horizontal
             vertical={false}
             stroke="var(--color-ink-200)"
-            strokeDasharray="5 3"
+            strokeDasharray="8 3"
           />
           <XAxis
             dataKey="time"
@@ -925,6 +925,21 @@ function responseLabel(row: RequestRow): string {
   if (row.slow) return 'slow';
   return row.status;
 }
+
+/** Provider wire-format endpoint for a given model vendor. Surfaces in the
+ *  modal Details tab so a `gpt-5.1` row doesn't read as if it went through
+ *  Anthropic's `/v1/messages`. Anchor strings sit here; the principle of
+ *  "derive from row" is anchored in CLAUDE.md's no-synthetic-data rule. */
+const VENDOR_ENDPOINT: Record<Vendor, string> = {
+  anthropic: '/v1/messages',
+  openai:    '/v1/chat/completions',
+  google:    '/v1beta/models/{model}:generateContent',
+  xai:       '/v1/chat/completions',
+  meta:      '/v1/chat/completions',
+  mistral:   '/v1/chat/completions',
+  deepseek:  '/v1/chat/completions',
+  cohere:    '/v2/chat',
+};
 
 function responseVariant(row: RequestRow): 'success' | 'warning' | 'destructive' {
   if (row.slow) return 'warning';
@@ -1497,7 +1512,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 label="Endpoint"
                 value={
                   <span className="font-mono text-ink-900 tracking-tight">
-                    <span className="text-ink-500">POST</span> /v1/messages
+                    <span className="text-ink-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
                   </span>
                 }
               />

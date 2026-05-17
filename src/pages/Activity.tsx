@@ -863,7 +863,7 @@ function TrendCard({
                 horizontal
                 vertical={false}
                 stroke="var(--color-ink-200)"
-                strokeDasharray="5 3"
+                strokeDasharray="8 3"
               />
               <XAxis
                 dataKey="date"

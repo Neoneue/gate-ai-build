@@ -402,7 +402,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             horizontal
             vertical={false}
             stroke="var(--color-ink-200)"
-            strokeDasharray="5 3"
+            strokeDasharray="8 3"
           />
           {/* Dynamic domain: top is `max(values) + 1` so the tallest
               spike never touches the chart ceiling and the y-axis
@@ -580,7 +580,7 @@ function PageHeader({
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
         <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Real-time threat detection and policy enforcement across every request routed through the gateway.
+          Every threat we caught on your traffic. Blocked, flagged, or redacted. Each event is anchored to a tamper-evident audit log.
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
