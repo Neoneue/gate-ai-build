@@ -6,7 +6,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sidebar } from '@/components/ui/sidebar';
+import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { SIDEBAR_SECTIONS } from './nav-sections';
 
@@ -119,6 +119,10 @@ function DashTopBar({
             />
           </span>
         </Button>
+        {/* Workspace switcher promoted from the sidebar (2026-05-17) — global
+         *  scope chrome belongs in the top bar alongside other account-level
+         *  controls (Docs, notifications), not in the navigation pane. */}
+        <WorkspaceSwitcher />
       </div>
       <div className="flex items-center gap-1">
         {hideDocsButton ? null : (

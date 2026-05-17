@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   BookOpen,
   ChevronRight,
+  CircleCheck,
   Gauge,
   RefreshCw,
   Shield,
@@ -32,28 +33,38 @@ import {
   ThreatEventDetailDialog,
 } from '@/pages/Security';
 import { TOTAL_7D_BASE_DOLLARS, distributeSeries } from '@/pages/Activity';
+import {
+  EVENT_ROWS as AUDIT_EVENT_ROWS,
+  type EventRow as AuditEventRow,
+  KIND_BADGE_VARIANT as AUDIT_KIND_BADGE_VARIANT,
+  fmtTime as fmtAuditTime,
+  truncateHex,
+} from '@/pages/AuditTrail';
+import { AuditRecordDialog } from '@/pages/AuditRecordDialog';
 import { CONVERSATION_ROWS, KEY_SUFFIX as CONVERSATION_KEY_SUFFIX, type ConversationRow } from '@/pages/Conversations';
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
-// KPI-rail values derived from the canonical security + spend seeds so the
-// numbers reconcile with Security and Activity instead of drifting as
-// separate constants. "Threats detected" is the count of security events
-// (every event represents a blocked / flagged / redacted threat). Deltas
-// and sparks stay hand-authored — there's no historical mock data to derive
-// trend from.
+// KPI-rail values derived from the canonical security + spend + audit seeds
+// so the numbers reconcile with Security, Activity, and Audit Trail instead
+// of drifting as separate constants. "Threats detected" is the count of
+// security events (every event represents a blocked / flagged / redacted
+// threat); "Events anchored" is the count of audit-trail entries (every
+// entry is DE-anchored by the gateway pipeline). Deltas stay hand-authored
+// — there's no historical mock data to derive trend from.
 const THREATS_DETECTED_COUNT = EVENT_ROWS.length;
-// "Spend this month" reuses Activity's canonical 7d baseline scaled to
-// 30d (Activity's internal scale for the '30d' preset is 4.2 — see the
-// SCALE map at line ~110 of Activity.tsx). Keeping the multiplier
-// inline reconciles the Overview tile with Activity for the same
-// window. When real spend data lands, the constant evaporates.
-const SPEND_THIS_MONTH_DOLLARS = TOTAL_7D_BASE_DOLLARS * 4.2;
+const ANCHORED_EVENTS_COUNT = AUDIT_EVENT_ROWS.length;
+// "Monthly spend" reuses Activity's canonical 7d baseline scaled to 30d
+// (Activity's internal scale for the '30d' preset is 4.2 — see the SCALE
+// map at line ~110 of Activity.tsx). Keeping the multiplier inline
+// reconciles the Overview tile with Activity for the same window. When
+// real spend data lands, the constant evaporates.
+const MONTHLY_SPEND_DOLLARS = TOTAL_7D_BASE_DOLLARS * 4.2;
 // "Daily spend" is the 7d baseline averaged across days — single source of
 // truth shared with Activity.
 const DAILY_SPEND_DOLLARS = TOTAL_7D_BASE_DOLLARS / 7;
 
-// Sparkline series for the KPI rail. All three derive from the tile's
+// Sparkline series for the KPI rail. All four derive from the tile's
 // canonical total via Activity's distributeSeries() — the same generator the
 // Spend over time chart uses. Bucket sums equal the KPI value by
 // construction (single source of truth: total → spark → tile). Seeds are
@@ -62,7 +73,8 @@ const DAILY_SPEND_DOLLARS = TOTAL_7D_BASE_DOLLARS / 7;
 // consistent. When real historical mock data lands, swap for actual
 // bucketed history and derive deltas from last-vs-prior period.
 const DAILY_SPEND_SPARK = distributeSeries(DAILY_SPEND_DOLLARS * 7, 7, 101);
-const MONTH_SPEND_SPARK = distributeSeries(SPEND_THIS_MONTH_DOLLARS, 30, 103);
+const MONTH_SPEND_SPARK = distributeSeries(MONTHLY_SPEND_DOLLARS, 30, 103);
+const ANCHORED_EVENTS_SPARK = distributeSeries(ANCHORED_EVENTS_COUNT, 9, 109);
 const THREATS_DETECTED_SPARK = distributeSeries(THREATS_DETECTED_COUNT, 9, 107);
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -99,6 +111,7 @@ export function Dashboard() {
             <QuickActionsRow />
             <RecentConversationsCard />
             <RecentSecurityEventsCard />
+            <RecentAnchoredEventsCard />
           </DashboardChrome>
   );
 }
@@ -114,7 +127,7 @@ function PageHeader() {
           create a level skip. */}
       <PageTitle>Overview</PageTitle>
       <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-        Traffic, spend and latency across every model on the gateway.
+        Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.
       </p>
     </div>
   );
@@ -125,15 +138,14 @@ function PageHeader() {
 function KpiRail() {
   const navigate = useNavigate();
   return (
-    <KpiRailShell columns={3}>
+    <KpiRailShell columns={4}>
       {/* Tile order leads with cost-control (Olivia's #1 anxiety per
        *  Gate-AI-personas.md). Daily comes before Monthly so the actionable
        *  number sits left of the broader picture; Threats detected anchors
-       *  the rail in our distinctive value prop (inline scanning), the
-       *  signal OpenRouter and other gateways don't have. Avg Latency and
-       *  Events anchored were dropped — latency is abstract for Olivia,
-       *  Events anchored belongs as the hero metric on the Audit Trail
-       *  page when that surface gets built. */}
+       *  the security side; Events anchored carries the H1 differentiator
+       *  from Narrative & Positioning (DE-anchored audit) on the landing
+       *  surface — closes the audit §1.1 gap that dropping it briefly
+       *  opened. Avg Latency stays out (abstract for Olivia). */}
       <CompactKpi
         flat
         title="Daily spend"
@@ -150,18 +162,18 @@ function KpiRail() {
           />
         }
       />
-      {/* Spend this month: anchored to Activity's 30d window (no separate
+      {/* Monthly spend: anchored to Activity's 30d window (no separate
        *  range picker on Overview). Delta tracks Activity's 30d delta so
        *  the two surfaces agree. */}
       <CompactKpi
         flat
-        title="Spend this month"
-        value={formatCurrency(SPEND_THIS_MONTH_DOLLARS)}
+        title="Monthly spend"
+        value={formatCurrency(MONTHLY_SPEND_DOLLARS)}
         delta="+18.4%"
         deltaNote="vs last month"
         deltaSize="md"
         onClick={() => navigate('/activity?range=30d')}
-        ariaLabel="Spend this month — open Activity for the last 30 days"
+        ariaLabel="Monthly spend — open Activity for the last 30 days"
         spark={
           <CompactSpark
             colorVar="var(--color-success-600)"
@@ -174,6 +186,7 @@ function KpiRail() {
         title="Threats detected"
         value={formatNumber(THREATS_DETECTED_COUNT)}
         delta="+12.4%"
+        deltaNote="vs last week"
         deltaSize="md"
         onClick={() => navigate('/security')}
         ariaLabel="Threats detected — open the Security event log"
@@ -181,6 +194,26 @@ function KpiRail() {
           <CompactSpark
             colorVar="var(--color-chart-5)"
             data={THREATS_DETECTED_SPARK}
+          />
+        }
+      />
+      {/* Events anchored: count of audit-trail entries (every entry is
+       *  DE-anchored by the gateway pipeline). Carries the H1 differentiator
+       *  from Narrative & Positioning on the landing surface; click goes to
+       *  the Audit Trail page so Grace + Devon can verify any record. */}
+      <CompactKpi
+        flat
+        title="Events anchored"
+        value={formatNumber(ANCHORED_EVENTS_COUNT)}
+        delta="+8.7%"
+        deltaNote="vs last week"
+        deltaSize="md"
+        onClick={() => navigate('/audit-trail')}
+        ariaLabel="Events anchored — open the Audit Trail"
+        spark={
+          <CompactSpark
+            colorVar="var(--color-chart-1)"
+            data={ANCHORED_EVENTS_SPARK}
           />
         }
       />
@@ -197,12 +230,13 @@ function KpiRail() {
  * /conversations?open=<id> — the existing modal trigger on that page.
  * ───────────────────────────────────────────────────────────────────────── */
 
-// Top 10 conversations descending by `updated`. Conversations source is
+// Top 8 conversations descending by `updated`. Conversations source is
 // canonical — single source of truth for "what's been happening" across
-// Overview and the Conversations page itself.
+// Overview and the Conversations page itself. Preview tables on Overview
+// are capped at 8 rows so the page reads as a glance, not a full log.
 const RECENT_CONVERSATIONS: ConversationRow[] = [...CONVERSATION_ROWS]
   .sort((a, b) => b.updated.getTime() - a.updated.getTime())
-  .slice(0, 10);
+  .slice(0, 8);
 
 function RecentConversationsCard() {
   const navigate = useNavigate();
@@ -318,15 +352,16 @@ function RecentConversationsCard() {
 
 /* ─── Recent Security Events (preview table) ─────────────────────────────── */
 
-// Top 10 blocked events descending by time; fill with flagged if fewer than
-// 10 blocked exist. EVENT_ROWS time format is 'YYYY-MM-DD HH:MM:SS' —
-// lexicographic sort matches chronological order.
+// Top 8 blocked events descending by time; fill with flagged if fewer than
+// 8 blocked exist. EVENT_ROWS time format is 'YYYY-MM-DD HH:MM:SS' —
+// lexicographic sort matches chronological order. Preview cap of 8 matches
+// the rest of Overview's tables.
 const RECENT_SECURITY_EVENTS: EventRow[] = (() => {
   const sorted = [...EVENT_ROWS].sort((a, b) => b.time.localeCompare(a.time));
   const blocked = sorted.filter((r) => r.action === 'blocked');
-  if (blocked.length >= 10) return blocked.slice(0, 10);
+  if (blocked.length >= 8) return blocked.slice(0, 8);
   const flagged = sorted.filter((r) => r.action === 'flagged');
-  return [...blocked, ...flagged].slice(0, 10);
+  return [...blocked, ...flagged].slice(0, 8);
 })();
 
 function RecentSecurityEventsCard() {
@@ -444,6 +479,104 @@ function RecentSecurityEventsCard() {
   );
 }
 
+/* ─── Recent Anchored Events (preview table) ───────────────────────────────
+ *
+ * The third feed on Overview, alongside Recent Conversations and Recent
+ * Security Events. Surfaces the H1 differentiator (DE-anchored audit) on the
+ * landing surface so Grace's "tamper-evident audit trail" claim has a live
+ * ledger backing it. Rows mirror the AuditTrail page's columns; click opens
+ * the AuditRecordDialog directly. View all → /audit-trail.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+const RECENT_ANCHORED_EVENTS: AuditEventRow[] = [...AUDIT_EVENT_ROWS]
+  .sort((a, b) => b.at.getTime() - a.at.getTime())
+  .slice(0, 8);
+
+function RecentAnchoredEventsCard() {
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState<AuditEventRow | null>(null);
+
+  return (
+    <>
+      <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
+        <div className="flex items-center justify-between py-3 px-4">
+          <h3 className="font-sans text-base/5 font-medium tracking-snug text-neutral-900 m-0">
+            Recent anchored events
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-neutral-500 hover:text-neutral-900 -mr-2"
+            onClick={() => navigate('/audit-trail')}
+          >
+            View all
+            <ChevronRight data-icon="inline-end" aria-hidden />
+          </Button>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="whitespace-nowrap">Time</TableHead>
+              <TableHead className="whitespace-nowrap">Event ID</TableHead>
+              <TableHead className="whitespace-nowrap">Event type</TableHead>
+              <TableHead className="whitespace-nowrap">Description</TableHead>
+              <TableHead className="whitespace-nowrap">Member</TableHead>
+              <TableHead className="whitespace-nowrap">Anchor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {RECENT_ANCHORED_EVENTS.map((row) => (
+              <TableRow
+                key={row.id}
+                className="cursor-pointer hover-fine:bg-neutral-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
+                onClick={() => setSelectedRow(row)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRow(row);
+                  }
+                }}
+              >
+                <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {fmtAuditTime(row.at)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-sm text-neutral-800">
+                  {truncateHex(row.eventId)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Badge variant={AUDIT_KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
+                </TableCell>
+                <TableCell className="whitespace-nowrap max-w-[360px] text-sm text-neutral-800">
+                  <span className="truncate block max-w-full" title={row.description}>
+                    {row.description}
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
+                  {row.member}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <span className="inline-flex items-center gap-2">
+                    <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
+                    <span className="sr-only">Verified anchor</span>
+                    <span className="font-mono text-sm text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <AuditRecordDialog
+        row={selectedRow}
+        open={!!selectedRow}
+        onOpenChange={(open) => { if (!open) setSelectedRow(null); }}
+      />
+    </>
+  );
+}
+
 /* ─── Quick Actions card ─────────────────────────────────────────────────
  * Single bordered card with a "Quick actions" header and 4 task items
  * inside, divided by hairline `before:` pseudo-elements (same pattern
@@ -461,9 +594,9 @@ type QuickAction = {
 };
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { icon: RefreshCw,  title: 'Rotate API Key',         subtitle: 'Last rotated 6 days ago' },
   { icon: Gauge,      title: 'Set a spend limit',      subtitle: 'Cap runaway costs',          href: '/guardrails?create=1' },
   { icon: Shield,     title: 'Review Security Events', subtitle: '3 events in the last hour' },
+  { icon: RefreshCw,  title: 'Rotate API Key',         subtitle: 'Last rotated 6 days ago' },
   { icon: BookOpen,   title: 'Read Integration Guide', subtitle: 'SDK quickstart' },
 ];
 
