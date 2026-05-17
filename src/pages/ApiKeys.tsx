@@ -40,6 +40,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
+import { formatCurrency } from '@/lib/formatters';
+
+// 7-day usage lookup keyed by the user-facing key name. Activity's
+// API_KEY_ROWS is the canonical per-key spend source for the workspace —
+// importing it here means the ApiKeys Usage column reconciles with the
+// Activity UsageByKey table for the same window instead of drifting as
+// a separate constant. Keys not present in Activity (newly-created keys
+// with no traffic yet, one-off test keys) fall back to 0.
+const USAGE_BY_KEY: Map<string, number> = new Map(
+  ACTIVITY_KEY_ROWS.map((r) => [r.key, r.spend]),
+);
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -380,14 +392,18 @@ function KeysTable({
 }) {
   return (
     <Card density="flush">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="whitespace-nowrap">Status</TableHead>
-            <TableHead className="whitespace-nowrap">7-day requests</TableHead>
-            <TableHead className="whitespace-nowrap">Last used</TableHead>
-            <TableHead aria-label="Actions" className="w-10" />
+            {/* Six equal columns — every header gets the same 1/6 share so
+             *  the grid reads as a uniform rhythm. Usage sits left of the
+             *  sparkline so it isn't pressed against the Last used cell. */}
+            <TableHead className="w-1/5 whitespace-nowrap">Key</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">7-day usage</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">7-day requests</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">Last used</TableHead>
+            <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -406,6 +422,9 @@ function KeysTable({
                 ) : (
                   <Badge variant="success">Active</Badge>
                 )}
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />

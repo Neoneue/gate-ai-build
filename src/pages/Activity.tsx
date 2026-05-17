@@ -215,7 +215,7 @@ const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens:
 // value AND sparkline shape are computed from these × effectiveScale, so
 // the KPIs reconcile with the underlying data and the spark shapes reflect
 // real per-bucket variation rather than hand-drawn arrays.
-const TOTAL_7D_BASE_DOLLARS = 238;
+export const TOTAL_7D_BASE_DOLLARS = 238;
 const TOTAL_7D_BASE_REQUESTS = 63_793;
 const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
@@ -1263,7 +1263,7 @@ type ApiKeyRow = {
  *    Spend     → prod-agent, prod-web, openclaw, hermes-agent, dev
  *    Requests  → prod-web, prod-agent, openclaw, dev, hermes-agent
  *    Tokens    → prod-web, prod-agent, openclaw, hermes-agent, dev */
-const API_KEY_ROWS: ApiKeyRow[] = [
+export const API_KEY_ROWS: ApiKeyRow[] = [
   { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'Gate', requests: 60000, tokensIn: 15_000_000, tokensOut:  3_000_000, spend: 90.00 },
   { key: 'prod-agent',   label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests: 12000, tokensIn: 15_384_615, tokensOut:    615_385, spend: 92.31 },
   { key: 'openclaw',     label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  8000, tokensIn: 10_096_154, tokensOut:    403_846, spend:  0.00 },

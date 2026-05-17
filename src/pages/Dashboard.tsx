@@ -3,8 +3,6 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   BookOpen,
   ChevronRight,
-  MoreHorizontal,
-  Plus,
   RefreshCw,
   Shield,
   Sparkles,
@@ -33,8 +31,6 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
-import { IconActionButton } from '@/components/ui/icon-action-button';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -46,12 +42,37 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  VendorAvatar,
-  type Vendor,
-} from '@/components/icons/vendor-meta';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { type Vendor } from '@/components/icons/vendor-meta';
 import { CHART_PALETTE } from '@/lib/chart-palette';
+import {
+  type EventRow,
+  ACTION_BADGE,
+  TYPE_META,
+  EVENT_ROWS,
+  formatEventTime,
+  ThreatEventDetailDialog,
+} from '@/pages/Security';
+import { EVENT_ROWS as AUDIT_EVENT_ROWS } from '@/pages/AuditTrail';
+import { TOTAL_7D_BASE_DOLLARS } from '@/pages/Activity';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+
+// KPI-rail values derived from the canonical security + audit seeds so the
+// numbers reconcile with the Security and Audit Trail pages instead of
+// drifting away as separate constants. "Threats stopped" is the count of
+// security events (every event represents a blocked / flagged / redacted
+// threat); "Events anchored" is the count of audit-trail entries (every
+// entry is DE-anchored by the gateway pipeline). Deltas + sparks stay
+// hand-authored — there's no historical mock data to derive trend from.
+const THREATS_STOPPED_COUNT = EVENT_ROWS.length;
+const ANCHORED_EVENTS_COUNT = AUDIT_EVENT_ROWS.length;
+// "Spend this month" reuses Activity's canonical 7d baseline scaled to
+// 30d (Activity's internal scale for the '30d' preset is 4.2 — see the
+// SCALE map at line ~110 of Activity.tsx). Keeping the multiplier
+// inline reconciles the Overview tile with Activity for the same
+// window. When real spend data lands, the constant evaporates.
+const SPEND_THIS_MONTH_DOLLARS = TOTAL_7D_BASE_DOLLARS * 4.2;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -84,9 +105,9 @@ export function Dashboard() {
           >
             <PageHeader />
             <KpiRail />
-            <MiddleRow />
-            <RecentRequestsCard />
             <QuickActionsRow />
+            <RequestVolumeCard />
+            <RecentSecurityEventsCard />
           </DashboardChrome>
   );
 }
@@ -95,23 +116,15 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        {/* h2 (not h1) — the artboard's ArtboardHeader already emits the
-            outer h1; this is the in-surface page title and reads as h2
-            in the document outline so RecentRequestsCard h3 doesn't
-            create a level skip. */}
-        <PageTitle>Overview</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Traffic, spend and latency across every model on the gateway.
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <Button variant="default" size="default">
-          <Plus data-icon="inline-start" aria-hidden />
-          Create key
-        </Button>
-      </div>
+    <div className="flex flex-col gap-2 max-w-1/2">
+      {/* h2 (not h1) — the artboard's ArtboardHeader already emits the
+          outer h1; this is the in-surface page title and reads as h2
+          in the document outline so RecentRequestsCard h3 doesn't
+          create a level skip. */}
+      <PageTitle>Overview</PageTitle>
+      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        Traffic, spend and latency across every model on the gateway.
+      </p>
     </div>
   );
 }
@@ -121,26 +134,39 @@ function PageHeader() {
 function KpiRail() {
   return (
     <KpiRailShell columns={4}>
+      {/* Tile order optimized for the H1 primary ICP (Olivia, agent
+       *  operator). Slot 1 is the trophy stat she screenshots — total
+       *  threats caught inline by the gateway. Slot 4 is the load-bearing
+       *  differentiator from Narrative & Positioning — DE-anchored audit
+       *  presence on the first surface she hits. Total Cost + Avg Latency
+       *  keep their mid-rail slots; Total Requests + Total Tokens were
+       *  dropped (volume vanity that doesn't map to either persona's
+       *  anxiety). */}
       <CompactKpi
         flat
-        title="Total Requests"
-        value="48,293"
-        delta="+8.2%"
+        title="Threats stopped"
+        value={formatNumber(THREATS_STOPPED_COUNT)}
+        delta="+12.4%"
         spark={
           <CompactSpark
-            colorVar="var(--color-ink-500)"
-            data={[6, 12, 10, 16, 20, 18, 26, 24, 28]}
+            colorVar="var(--color-chart-5)"
+            data={[2, 3, 4, 6, 7, 9, 10, 11, 13]}
           />
         }
       />
+      {/* Spend this month: anchored to Activity's 30d window (no separate
+       *  range picker on Overview). Delta tracks Activity's 30d delta so
+       *  the two surfaces agree. Limit pairing (e.g. "of $X cap" + progress
+       *  strip) lands when Guardrails workspace-spend limits are wired
+       *  through to read from. */}
       <CompactKpi
         flat
-        title="Total Cost"
-        value="$1,247.82"
-        delta="+12.6%"
+        title="Spend this month"
+        value={formatCurrency(SPEND_THIS_MONTH_DOLLARS)}
+        delta="+18.4%"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-1)"
+            colorVar="var(--color-success-600)"
             data={[8, 10, 12, 16, 18, 20, 25, 22, 24]}
           />
         }
@@ -161,28 +187,17 @@ function KpiRail() {
       />
       <CompactKpi
         flat
-        title="Total Tokens"
-        value="18.4 M"
+        title="Events anchored"
+        value={formatNumber(ANCHORED_EVENTS_COUNT)}
         delta="+8.7%"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-3)"
+            colorVar="var(--color-chart-1)"
             data={[10, 11, 13, 14, 16, 15, 17, 18, 18]}
           />
         }
       />
     </KpiRailShell>
-  );
-}
-
-/* ─── Middle row (Request Volume bar chart + Top Keys panel) ─────────────── */
-
-function MiddleRow() {
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      <RequestVolumeCard />
-      <TopKeysCard />
-    </div>
   );
 }
 
@@ -249,7 +264,7 @@ const RANGE_OPTIONS = [
 export function RequestVolumeCard() {
   const [range, setRange] = useState('7d');
   return (
-    <Card className="col-span-2 min-w-0">
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="font-sans text-base font-medium tracking-snug text-ink-900">
           Request Volume
@@ -286,8 +301,8 @@ export function RequestVolumeCard() {
             accessibilityLayer
             data={VOLUME_DATA}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            barCategoryGap="12%"
-            barGap={2}
+            barCategoryGap="6%"
+            barGap={0}
           >
             <CartesianGrid
               horizontal
@@ -330,7 +345,7 @@ export function RequestVolumeCard() {
                 dataKey={m.key}
                 fill={seriesColor(m, i)}
                 radius={2}
-                maxBarSize={8}
+                maxBarSize={14}
                 isAnimationActive={false}
               />
             ))}
@@ -341,167 +356,131 @@ export function RequestVolumeCard() {
   );
 }
 
-/* ─── Top Keys panel ─────────────────────────────────────────────────────── */
+/* ─── Recent Security Events (preview table) ─────────────────────────────── */
 
-const TOP_KEYS: { label: string; model: string; cost: string; vendor: Vendor }[] = [
-  { label: 'Production', model: 'Claude Sonnet 4.5', cost: '$412.30', vendor: 'anthropic' },
-  { label: 'Macro Analyst', model: 'GPT-4o', cost: '$287.14', vendor: 'openai' },
-  { label: 'Risk Pipeline', model: 'Llama 3.3', cost: '$198.41', vendor: 'meta' },
-  { label: 'Development', model: 'Claude Haiku', cost: '$152.88', vendor: 'anthropic' },
-  { label: 'Eval Harness', model: 'Gemini 3 Pro', cost: '$89.16', vendor: 'google' },
-];
+// Top 10 blocked events descending by time; fill with flagged if fewer than
+// 10 blocked exist. EVENT_ROWS time format is 'YYYY-MM-DD HH:MM:SS' —
+// lexicographic sort matches chronological order.
+const RECENT_SECURITY_EVENTS: EventRow[] = (() => {
+  const sorted = [...EVENT_ROWS].sort((a, b) => b.time.localeCompare(a.time));
+  const blocked = sorted.filter((r) => r.action === 'blocked');
+  if (blocked.length >= 10) return blocked.slice(0, 10);
+  const flagged = sorted.filter((r) => r.action === 'flagged');
+  return [...blocked, ...flagged].slice(0, 10);
+})();
 
-/**
- * TopKeysCard — metric + list pattern.
- *
- * Exported so CMP-008c (Cards) can import the same instance. Built from the
- * shadcn `<Card>` family: header (title + subtitle + overflow action) →
- * body (metric hero + divider + row list).
- */
-export function TopKeysCard() {
+function RecentSecurityEventsCard() {
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
+
   return (
-    <Card className="min-w-0 gap-2">
-      <CardHeader>
-        <CardTitle className="font-sans text-base/5 font-medium tracking-snug text-ink-900">
-          Top Keys
-        </CardTitle>
-        <CardDescription>By spend · Last 7d</CardDescription>
-        <CardAction>
-          <IconActionButton aria-label="More options for Top Keys">
-            <MoreHorizontal className="size-4" strokeWidth={1.75} aria-hidden />
-          </IconActionButton>
-        </CardAction>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4">
-        <HeroNumeric>$1,147.82</HeroNumeric>
-
-        <div className="flex flex-col gap-4 pt-4 border-t border-border">
-          {TOP_KEYS.map((k) => (
-            <div key={k.label} className="flex items-center justify-between gap-3 min-w-0">
-              <span
-                className="font-sans text-sm text-ink-900 truncate min-w-0 flex-1"
-                title={k.label}
-              >
-                {k.label}
-              </span>
-              <span className="font-mono text-sm tabular-nums text-ink-900 shrink-0">
-                {k.cost}
-              </span>
-            </div>
-          ))}
+    <>
+      <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
+        <div className="flex items-center justify-between py-3 px-4">
+          <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
+            Recent security events
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-ink-500 hover:text-ink-900 -mr-2"
+            onClick={() => navigate('/security')}
+          >
+            View all
+            <ChevronRight data-icon="inline-end" aria-hidden />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
 
-/* ─── Recent Requests (live-feed table) ──────────────────────────────────── */
-
-type RequestStatus = 'success' | 'warn' | 'danger';
-
-const RECENT_REQUESTS: {
-  time: string;
-  vendor: Vendor;
-  model: string;
-  status: RequestStatus;
-  code: string;
-  tokens: string;
-  latency: string;
-  cost: string;
-}[] = [
-  { time: '14:28:04', vendor: 'anthropic', model: 'claude-sonnet-4.8', status: 'success', code: '200',  tokens: '4,051', latency: '1.21s', cost: '$0.028' },
-  { time: '14:27:52', vendor: 'openai',    model: 'gpt-5.1',           status: 'success', code: '200',  tokens: '2,847', latency: '0.89s', cost: '$0.019' },
-  { time: '14:27:41', vendor: 'xai',       model: 'grok-4.1-fast',     status: 'success', code: '200',  tokens: '6,120', latency: '2.14s', cost: '$0.012' },
-  { time: '14:27:30', vendor: 'google',    model: 'gemini-3-pro',      status: 'warn',    code: '408',  tokens: '1,892', latency: '4.08s', cost: '$0.009' },
-  { time: '14:27:18', vendor: 'anthropic', model: 'claude-opus-4.7',   status: 'danger',  code: '500',  tokens: '—',     latency: '—',     cost: '—'      },
-  { time: '14:26:54', vendor: 'meta',      model: 'llama-4.2-405b',    status: 'success', code: '200',  tokens: '3,204', latency: '1.65s', cost: '$0.006' },
-  { time: '14:26:32', vendor: 'mistral',   model: 'mistral-large-3',   status: 'success', code: '200',  tokens: '2,517', latency: '0.94s', cost: '$0.005' },
-  { time: '14:26:08', vendor: 'cohere',    model: 'command-r-plus',    status: 'success', code: '200',  tokens: '1,842', latency: '0.71s', cost: '$0.004' },
-];
-
-const STATUS_BADGE: Record<RequestStatus, {
-  variant: 'success' | 'warning' | 'destructive';
-  dot: 'success' | 'warning' | 'danger';
-}> = {
-  success: { variant: 'success',     dot: 'success' },
-  warn:    { variant: 'warning',     dot: 'warning' },
-  danger:  { variant: 'destructive', dot: 'danger'  },
-};
-
-// Skill: surfaces.md — RecentRequestsCard is hand-rolled (the table needs
-// no card padding so we don't use <Card>) but it should still wear the
-// hairline shadow + border that the Card primitive now ships with so the
-// dashboard's two surfaces read as the same depth tier.
-export function RecentRequestsCard() {
-  return (
-    <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
-      <div className="flex items-center justify-between py-3 px-4">
-        <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
-          Recent requests
-        </h3>
-        <Button variant="ghost" size="sm" className="text-ink-500 hover:text-ink-900 -mr-2">
-          View all
-          <ChevronRight data-icon="inline-end" aria-hidden />
-        </Button>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Time</TableHead>
-            <TableHead className="whitespace-nowrap">Model</TableHead>
-            <TableHead className="whitespace-nowrap">Status</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Latency</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Cost</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {RECENT_REQUESTS.map((row, i) => {
-            const badge = STATUS_BADGE[row.status];
-            // Missing-data tone — match CMP-013 policy. 5xx rows render
-            // numerics as `—` in ink-400; populated rows stay ink-800.
-            const isMissing = row.tokens === '—';
-            const numericCls = isMissing
-              ? 'text-right whitespace-nowrap font-mono tabular-nums text-ink-400'
-              : 'text-right whitespace-nowrap font-mono tabular-nums text-ink-800';
-            return (
-              <TableRow key={`${row.time}-${i}`} className="hover:bg-transparent">
-                <TableCell className="whitespace-nowrap font-mono tabular-nums text-ink-800">
-                  {row.time}
-                </TableCell>
-                <TableCell className="max-w-[260px]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <VendorAvatar vendor={row.vendor} />
-                    <span
-                      className="font-mono text-sm text-ink-900 truncate"
-                      title={row.model}
-                    >
-                      {row.model}
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="whitespace-nowrap">Time</TableHead>
+              <TableHead className="whitespace-nowrap">Type</TableHead>
+              <TableHead className="whitespace-nowrap">Conversation</TableHead>
+              <TableHead className="whitespace-nowrap">Key</TableHead>
+              <TableHead className="whitespace-nowrap">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {RECENT_SECURITY_EVENTS.map((row, i) => {
+              const typeMeta = TYPE_META[row.type];
+              const actionMeta = ACTION_BADGE[row.action];
+              const TypeIcon = typeMeta.Icon;
+              return (
+                <TableRow
+                  key={`${row.time}-${i}`}
+                  className="cursor-pointer hover-fine:bg-ink-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
+                  onClick={() => setSelectedRow(row)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedRow(row);
+                    }
+                  }}
+                >
+                  <TableCell className="whitespace-nowrap">
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={(props) => (
+                          <span
+                            {...props}
+                            className="font-mono text-sm tabular-nums text-ink-800"
+                          >
+                            {formatEventTime(row.time)}
+                          </span>
+                        )}
+                      />
+                      <TooltipContent>{row.relative}</TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
+                      <TypeIcon
+                        className="size-4 shrink-0"
+                        style={{ color: typeMeta.color }}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="font-sans text-sm text-ink-800">{typeMeta.label}</span>
                     </span>
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge variant={badge.variant}>
-                    {row.code}
-                  </Badge>
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.tokens}
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.latency}
-                </TableCell>
-                <TableCell className={numericCls}>
-                  {row.cost}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[200px]">
+                    <span
+                      title={row.conversationId}
+                      className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
+                    >
+                      {row.conversationId}
+                    </span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap font-mono">
+                    {(() => {
+                      const parenIdx = row.key.indexOf(' (');
+                      if (parenIdx === -1) return <span className="text-ink-800">{row.key}</span>;
+                      return (
+                        <>
+                          <span className="text-ink-800">{row.key.slice(0, parenIdx)}</span>
+                          <span className="text-ink-600">{row.key.slice(parenIdx)}</span>
+                        </>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+      <ThreatEventDetailDialog
+        selection={selectedRow}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRow(null);
+        }}
+      />
+    </>
   );
 }
 
