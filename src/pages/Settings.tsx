@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,18 +91,25 @@ function ProfileCard() {
     email !== saved.email ||
     organization !== saved.organization;
 
+  // Keep a ref so the handler always reads the latest dirty state without
+  // re-subscribing on every change. Subscribes exactly once (mount) and
+  // removes on unmount.
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+
   // Warn on tab close / reload when there are unsaved changes. Does NOT
   // catch in-app navigation (sidebar clicks); a react-router useBlocker
   // would cover that, but adding it touches more surface than this fix
   // is scoped to.
   useEffect(() => {
-    if (!dirty) return;
     const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
+      if (dirtyRef.current) {
+        e.preventDefault();
+      }
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [dirty]);
+  }, []);
 
   return (
     <Card>

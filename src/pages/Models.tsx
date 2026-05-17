@@ -50,6 +50,7 @@ import { InlineCode } from '@/components/ui/inline-code';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { TextLink } from '@/components/ui/text-link';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import {
   MARKETPLACE_META,
@@ -570,15 +571,15 @@ function formatContext(contextK: number, modality: Modality): string {
 function formatPrice(amount: number, modality: Modality): string {
   if (amount === 0) return '—';
   // Audio pricing is per minute (per spec); rerank is per 1k searches.
-  if (modality === 'audio') return `$${amount.toFixed(3)}/min`;
-  if (modality === 'rerank') return `$${amount.toFixed(2)}/1k`;
+  if (modality === 'audio') return formatCurrency(amount, { minFrac: 3, maxFrac: 3 }) + '/min';
+  if (modality === 'rerank') return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + '/1k';
   // 0.05 → "$0.05/M", 15 → "$15.00/M"
-  return `$${amount.toFixed(2)}/M`;
+  return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + '/M';
 }
 
 function formatNumeric(value: number | undefined, suffix: string): string {
   if (value === undefined || value === 0) return '—';
-  return `${value.toLocaleString('en-US')}${suffix}`;
+  return `${formatNumber(value)}${suffix}`;
 }
 
 function formatPriceCell(amount: number | undefined, modality: Modality): string {
@@ -627,6 +628,20 @@ function maxContextK(model: Model): number {
   return max;
 }
 
+// Static derivations from the module-level MODELS constant — computed once at
+// module load, no hook overhead.
+const TOTAL_PROVIDERS = (() => {
+  const set = new Set<ProviderId>();
+  for (const m of MODELS) for (const o of m.offerings) set.add(o.provider);
+  return set.size;
+})();
+
+const MODALITY_COUNTS: Record<Modality, number> = (() => {
+  const counts: Record<Modality, number> = { text: 0, embeddings: 0, audio: 0, rerank: 0 };
+  for (const m of MODELS) counts[m.modality]++;
+  return counts;
+})();
+
 /* ─── Surface ────────────────────────────────────────────────────────────── */
 
 function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
@@ -652,17 +667,6 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
   const resetToFirstPage = () => setPage(1);
 
-  const totalProviders = useMemo(() => {
-    const set = new Set<ProviderId>();
-    for (const m of MODELS) for (const o of m.offerings) set.add(o.provider);
-    return set.size;
-  }, []);
-
-  const modalityCounts = useMemo(() => {
-    const counts: Record<Modality, number> = { text: 0, embeddings: 0, audio: 0, rerank: 0 };
-    for (const m of MODELS) counts[m.modality]++;
-    return counts;
-  }, []);
 
   const isEmpty = filtered.length === 0;
 
@@ -676,7 +680,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
   return (
     <>
-      <PageHeader modelCount={MODELS.length} providerCount={totalProviders} />
+      <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
       {/* Modality tabs — promoted out of the filter-pill row so each
           modality is a visible peer scope. Underline `line` variant
@@ -697,19 +701,19 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           </TabsTrigger>
           <TabsTrigger value="text">
             Text
-            <TabsCount>{modalityCounts.text}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="embeddings">
             Embeddings
-            <TabsCount>{modalityCounts.embeddings}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.embeddings}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="audio">
             Audio
-            <TabsCount>{modalityCounts.audio}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.audio}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="rerank">
             Rerank
-            <TabsCount>{modalityCounts.rerank}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.rerank}</TabsCount>
           </TabsTrigger>
         </TabsList>
 
@@ -1008,7 +1012,10 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   // sighted-mouse users get the capability name on hover — without
   // introducing a Tooltip primitive (the showcase doesn't ship one yet
   // and a single-purpose addition would be a primitive proliferation).
-  const ordered = CAPABILITY_ORDER.filter((c) => capabilities.includes(c));
+  const ordered = (() => {
+    const have = new Set(capabilities);
+    return CAPABILITY_ORDER.filter((c) => have.has(c));
+  })();
   return (
     <div className="flex items-center gap-1">
       {ordered.map((c) => {
@@ -1034,11 +1041,13 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
   // counted in the +n overflow). First three vendor-glyphs render as an
   // overlapping stack; remainder collapses to a +N chip.
   const vendors: Vendor[] = [];
+  const vendorSet = new Set<Vendor>();
   const unmappedNames: string[] = [];
   for (const o of offerings) {
     const v = PROVIDER_VENDOR[o.provider];
-    if (v && !vendors.includes(v)) {
+    if (v && !vendorSet.has(v)) {
       vendors.push(v);
+      vendorSet.add(v);
     } else if (!v) {
       const meta = o.provider in MARKETPLACE_META
         ? MARKETPLACE_META[o.provider as keyof typeof MARKETPLACE_META]
@@ -1116,12 +1125,11 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
   const head = model.offerings[0];
   const [lang, setLang] = useState<'TypeScript' | 'Python' | 'cURL'>('TypeScript');
   const [showFullDesc, setShowFullDesc] = useState(false);
-  const activeLines =
-    lang === 'TypeScript'
-      ? tsSnippet(model.defaultHandle, model.modality)
-      : lang === 'Python'
-      ? pySnippet(model.defaultHandle, model.modality)
-      : curlSnippet(model.defaultHandle, model.modality);
+  const activeLines = useMemo(() => {
+    if (lang === 'TypeScript') return tsSnippet(model.defaultHandle, model.modality);
+    if (lang === 'Python')     return pySnippet(model.defaultHandle, model.modality);
+    return curlSnippet(model.defaultHandle, model.modality);
+  }, [lang, model.defaultHandle, model.modality]);
 
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -1157,7 +1165,7 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm text-ink-900 -tracking-[0.01em]">{model.defaultHandle}</span>
+            <span className="font-mono text-sm text-ink-900">{model.defaultHandle}</span>
             <CopyButton
               size="inline-xs"
               value={model.defaultHandle}
@@ -1390,7 +1398,7 @@ function ProvidersTable({ model }: { model: Model }) {
                 value={
                   o.throughputTps === undefined || o.throughputTps === 0
                     ? '—'
-                    : `${o.throughputTps.toLocaleString('en-US')} t/s`
+                    : `${formatNumber(o.throughputTps)} t/s`
                 }
               />
               <ProviderNumeric value={formatPrice(o.inputPricePerM, model.modality)} />
@@ -1468,6 +1476,13 @@ function endpointFor(modality: Modality): string {
 
 type Lang = 'ts' | 'py' | 'bash';
 
+const STRING_TOKEN_RE   = /^(['"`])((?:\\.|(?!\1).)*)\1/;
+const TMPL_TOKEN_RE     = /^\$\{[^}]+\}/;
+const ENV_VAR_RE        = /^\$[A-Z_][A-Z0-9_]*/;
+const WORD_BOUNDARY_RE  = /\w/;
+const NUMBER_TOKEN_RE   = /^\d+(\.\d+)?/;
+const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/;
+
 const KEYWORDS: Record<Lang, RegExp> = {
   ts: /^(import|from|const|let|var|new|await|return|function|null|true|false)\b/,
   py: /^(import|from|with|as|def|return|None|True|False|in|not|and|or|is|for|if|else)\b/,
@@ -1492,7 +1507,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     const sub = line.slice(i);
 
     // Strings — single, double, backtick — greedy through closing quote.
-    const stringMatch = /^(['"`])((?:\\.|(?!\1).)*)\1/.exec(sub);
+    const stringMatch = STRING_TOKEN_RE.exec(sub);
     if (stringMatch) {
       flushPending();
       tokens.push({ text: stringMatch[0], tone: 'string' });
@@ -1501,7 +1516,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Variable substitution `${...}` (TS template).
-    const tmplMatch = /^\$\{[^}]+\}/.exec(sub);
+    const tmplMatch = TMPL_TOKEN_RE.exec(sub);
     if (tmplMatch) {
       flushPending();
       tokens.push({ text: tmplMatch[0], tone: 'variable' });
@@ -1510,7 +1525,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Bash $VAR.
-    const envMatch = /^\$[A-Z_][A-Z0-9_]*/.exec(sub);
+    const envMatch = ENV_VAR_RE.exec(sub);
     if (envMatch) {
       flushPending();
       tokens.push({ text: envMatch[0], tone: 'variable' });
@@ -1521,7 +1536,7 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     // Keyword (must be at a word boundary — only fire when previous char is
     // non-word).
     const prev = i === 0 ? '' : line[i - 1];
-    if (!/\w/.test(prev)) {
+    if (!WORD_BOUNDARY_RE.test(prev)) {
       const kwMatch = KEYWORDS[lang].exec(sub);
       if (kwMatch) {
         flushPending();
@@ -1532,8 +1547,8 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     }
 
     // Number literal at word boundary.
-    if (!/\w/.test(prev)) {
-      const numMatch = /^\d+(\.\d+)?/.exec(sub);
+    if (!WORD_BOUNDARY_RE.test(prev)) {
+      const numMatch = NUMBER_TOKEN_RE.exec(sub);
       if (numMatch) {
         flushPending();
         tokens.push({ text: numMatch[0], tone: 'number' });
@@ -1545,8 +1560,8 @@ function tokenizeLine(line: string, lang: Lang): CodeLine {
     // JSON / JS object property — identifier directly before `:` followed by
     // space or end. Excludes URL schemes (`https://…`) since `:` is followed
     // by `/`.
-    if (!/\w/.test(prev)) {
-      const propMatch = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/.exec(sub);
+    if (!WORD_BOUNDARY_RE.test(prev)) {
+      const propMatch = PROP_TOKEN_RE.exec(sub);
       if (propMatch) {
         flushPending();
         tokens.push({ text: propMatch[0], tone: 'property' });

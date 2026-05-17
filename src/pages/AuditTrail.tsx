@@ -29,6 +29,7 @@ import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { AuditRecordDialog } from './AuditRecordDialog';
+import { formatDateTime, formatNumber } from '@/lib/formatters';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -71,11 +72,8 @@ function isWithinRange(at: Date, range: Range, customRange: CustomRange | null):
   return at >= cutoff;
 }
 
-const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const pad2 = (n: number) => String(n).padStart(2, '0');
-
 export function fmtTime(d: Date): string {
-  return `${MONTH_LABELS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  return formatDateTime(d);
 }
 
 export function fmtRelative(at: Date): string {
@@ -179,21 +177,24 @@ function PageHeader({
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
 function KpiRailSection({ rows }: { rows: EventRow[] }) {
-  const eventsLogged = rows.length;
-  const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
-  const mostRecent = rows.reduce<Date | null>(
-    (latest, r) => (!latest || r.at > latest ? r.at : latest),
-    null,
-  );
-  // Every seeded row is verified in this mock — when real data lands, derive
-  // from row.verified booleans. Empty-range state falls back to "—" so we
-  // don't pretend to assert a rate over zero events.
-  const verifiedRate = eventsLogged === 0 ? null : 100.0;
+  const { eventsLogged, distinctAnchors, mostRecent, verifiedRate } = useMemo(() => {
+    const eventsLogged = rows.length;
+    const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
+    const mostRecent = rows.reduce<Date | null>(
+      (latest, r) => (!latest || r.at > latest ? r.at : latest),
+      null,
+    );
+    // Every seeded row is verified in this mock — when real data lands, derive
+    // from row.verified booleans. Empty-range state falls back to "—" so we
+    // don't pretend to assert a rate over zero events.
+    const verifiedRate = eventsLogged === 0 ? null : 100.0;
+    return { eventsLogged, distinctAnchors, mostRecent, verifiedRate };
+  }, [rows]);
 
   return (
     <KpiRail columns={4}>
-      <KpiTile title="Events logged" value={eventsLogged.toLocaleString()} />
-      <KpiTile title="Anchors" value={distinctAnchors.toLocaleString()} />
+      <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
+      <KpiTile title="Anchors" value={formatNumber(distinctAnchors)} />
       <KpiTile
         title="Verified rate"
         value={verifiedRate === null ? '—' : verifiedRate.toFixed(1)}
@@ -219,7 +220,7 @@ function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-muted-foreground tracking-tight">
+          <span className="font-sans text-sm font-medium text-muted-foreground">
             {valueSuffix}
           </span>
         ) : null}
@@ -460,10 +461,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
   }, [rows, filter, query]);
 
   const perPage = parseInt(rowsPerPage, 10);
-  const pageRows = useMemo(
-    () => filteredRows.slice((page - 1) * perPage, page * perPage),
-    [filteredRows, page, perPage],
-  );
+  const pageRows = filteredRows.slice((page - 1) * perPage, page * perPage);
 
   const isEmpty = filteredRows.length === 0;
 

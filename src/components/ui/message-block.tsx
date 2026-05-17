@@ -118,7 +118,7 @@ export function MessageBlock({
           ) : null}
         </span>
         {time ? (
-          <span className="font-mono font-normal text-ink-500 tabular-nums -tracking-[0.01em] shrink-0 ml-2">
+          <span className="font-mono font-normal text-ink-500 tabular-nums shrink-0 ml-2">
             {time}
           </span>
         ) : null}
@@ -132,7 +132,7 @@ export function MessageBlock({
         {body}
       </Bubble>
       {requestId ? (
-        <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500">
           <span className="text-ink-400" aria-hidden>↳ </span>
           {requestId}
         </span>

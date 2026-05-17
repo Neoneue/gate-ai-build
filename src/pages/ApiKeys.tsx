@@ -396,7 +396,7 @@ function KeysTable({
               {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                   to ink-600. Single-line two-tone form shared with the
                   Events / Requests / Activity Key columns. */}
-              <TableCell className="whitespace-nowrap font-mono tracking-snug">
+              <TableCell className="whitespace-nowrap font-mono">
                 <span className="text-ink-800">{row.name}</span>
                 <span className="text-ink-600"> ({row.masked})</span>
               </TableCell>

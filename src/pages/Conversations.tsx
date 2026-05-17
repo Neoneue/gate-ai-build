@@ -42,6 +42,11 @@ import {
 } from '@/components/ui/table';
 import { VENDOR_META, VendorAvatar, type Vendor } from '@/components/icons/vendor-meta';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatDateTime } from '@/lib/formatters';
+
+const REDUCE_MOTION =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-014 — Conversations (Observability)
@@ -224,19 +229,19 @@ type ConversationRow = {
   outTokens: string;
   cost: string;
   status: ConversationStatus;
-  updated: string;
+  updated: Date;
   /** Conversation duration ("3m 53s") — surfaced in the detail sheet KPI rail. */
   duration: string;
 };
 
 const CONVERSATION_ROWS: ConversationRow[] = [
-  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: 'May 12, 14:28:04', duration: '3m 53s'  },
-  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: 'May 12, 14:22:11', duration: '5m 12s'  },
-  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: 'May 12, 14:15:22', duration: '0m 47s'  },
-  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'prod-web',   turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], models: ['claude-opus-4-7', 'gpt-5', 'llama-3-3-70b'],         inTokens: '44,889', outTokens: '7,921',  cost: '$0.5841', status: 'completed', updated: 'May 12, 14:02:48', duration: '14m 06s' },
-  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'prod-agent', turns:  4, reqs:  7, vendors: ['anthropic'],                      models: ['claude-haiku-4-5'],                                  inTokens: '2,892',  outTokens: '510',    cost: '$0.1102', status: 'active',    updated: 'May 12, 13:48:33', duration: '2m 18s'  },
-  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'prod-web',   turns: 14, reqs: 32, vendors: ['openai'],                         models: ['gpt-4o-mini'],                                       inTokens: '10,717', outTokens: '1,891',  cost: '$0.0812', status: 'failed',    updated: 'May 12, 13:36:10', duration: '8m 41s'  },
-  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '86,735', outTokens: '15,306', cost: '$0.1402', status: 'completed', updated: 'May 12, 13:18:55', duration: '11m 27s' },
+  { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: new Date(2026, 4, 12, 14, 28, 4),  duration: '3m 53s'  },
+  { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: new Date(2026, 4, 12, 14, 22, 11), duration: '5m 12s'  },
+  { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: new Date(2026, 4, 12, 14, 15, 22), duration: '0m 47s'  },
+  { title: 'Investigate the variance in YOY revenue between segments',       conversationId: 'cnv_orion_70',   initiator: 'prod-web',   turns: 18, reqs: 38, vendors: ['anthropic', 'openai', 'mistral'], models: ['claude-opus-4-7', 'gpt-5', 'llama-3-3-70b'],         inTokens: '44,889', outTokens: '7,921',  cost: '$0.5841', status: 'completed', updated: new Date(2026, 4, 12, 14,  2, 48), duration: '14m 06s' },
+  { title: 'Draft a postmortem for incident INC-2026-04-1107',               conversationId: 'cnv_polaris_55', initiator: 'prod-agent', turns:  4, reqs:  7, vendors: ['anthropic'],                      models: ['claude-haiku-4-5'],                                  inTokens: '2,892',  outTokens: '510',    cost: '$0.1102', status: 'active',    updated: new Date(2026, 4, 12, 13, 48, 33), duration: '2m 18s'  },
+  { title: 'Customer requesting a refund on order ORD-89412',                conversationId: 'cnv_lyra_92',    initiator: 'prod-web',   turns: 14, reqs: 32, vendors: ['openai'],                         models: ['gpt-4o-mini'],                                       inTokens: '10,717', outTokens: '1,891',  cost: '$0.0812', status: 'failed',    updated: new Date(2026, 4, 12, 13, 36, 10), duration: '8m 41s'  },
+  { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '86,735', outTokens: '15,306', cost: '$0.1402', status: 'completed', updated: new Date(2026, 4, 12, 13, 18, 55), duration: '11m 27s' },
 ];
 
 // Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities used on
@@ -383,16 +388,16 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   >
                     <span
                       title={row.title}
-                      className="font-sans text-sm text-ink-900 -tracking-[0.14px] truncate"
+                      className="font-sans text-sm text-ink-900 truncate"
                     >
                       {row.title}
                     </span>
-                    <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+                    <span className="font-mono text-xs text-ink-500">
                       {row.conversationId}
                     </span>
                   </RowActionButton>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-sm tracking-snug">
+                <TableCell className="whitespace-nowrap font-mono text-sm">
                   <span className="text-ink-800">{row.initiator}</span>
                   {KEY_SUFFIX[row.initiator] ? (
                     <span className="text-ink-600">
@@ -428,7 +433,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   {scaleCostStr(row.cost, scale)}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
-                  {row.updated}
+                  {formatDateTime(row.updated)}
                 </TableCell>
               </TableRow>
             );
@@ -563,10 +568,10 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
             footer-right; the header carries identity only. */}
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono text-sm font-medium text-ink-900 -tracking-[0.2px]">
+          <span className="font-mono text-sm font-medium text-ink-900">
             {row.conversationId}
           </span>
-          <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+          <span className="font-mono text-xs text-ink-500">
             {row.initiator}
           </span>
         </div>
@@ -583,7 +588,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the body's default `overflow-y-auto` to `overflow-hidden`
           and add `flex flex-col` so the inner grid manages overflow per
           panel rather than scrolling the whole body. */}
-      <DialogScrollBody className="overflow-hidden flex flex-col">
+      <DialogScrollBody className="pt-2 overflow-hidden flex flex-col">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
           <ConversationMessagesPanel
             activeRequestId={activeRequestId}
@@ -602,9 +607,9 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the footer's default `justify-end` since this footer
           carries informational copy on the leading edge as well. */}
       <DialogScrollFooter className="justify-between flex-wrap">
-        <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500">
           Key <span className="text-ink-800">{row.initiator}</span>{' '}
-          · started <span className="text-ink-800">{row.updated}</span>
+          · started <span className="text-ink-800">{formatDateTime(row.updated)}</span>
         </span>
         <CopyButton
           mode="label"
@@ -641,7 +646,7 @@ function ConversationKpiTile({ label, value }: { label: string; value: string })
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-ink-900">
         {value}
       </span>
     </div>
@@ -736,6 +741,9 @@ const CONVERSATION_MESSAGES: {
   },
 ];
 
+// Static derivation — computed once at module load from the fixed message list.
+const ASSISTANT_TURN_COUNT = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
+
 function ConversationMessagesPanel({
   activeRequestId,
   selectionSource,
@@ -747,8 +755,7 @@ function ConversationMessagesPanel({
 }) {
   // Count = assistant turns. Tool/user/system don't count as "turns" — a
   // turn is a model response. Mirrors the convention used in the table
-  // (row.turns is assistant-only).
-  const turnCount = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
+  // (row.turns is assistant-only). Computed at module level (static data).
 
   // Auto-scroll the matching message into view ONLY when the selection
   // came from the counterpart (trace) panel. Selections that originated
@@ -762,10 +769,7 @@ function ConversationMessagesPanel({
     const el = scrollRef.current.querySelector(
       `[data-request-id="${activeRequestId}"]`,
     );
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+    el?.scrollIntoView({ block: 'nearest', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   }, [activeRequestId, selectionSource]);
 
   return (
@@ -775,8 +779,8 @@ function ConversationMessagesPanel({
           it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
-          {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
+        <span className="font-mono text-xs text-ink-500 tabular-nums">
+          {ASSISTANT_TURN_COUNT} {ASSISTANT_TURN_COUNT === 1 ? 'turn' : 'turns'}
         </span>
       </div>
       <div
@@ -896,10 +900,7 @@ function RequestTracePanel({
     const el = scrollRef.current.querySelector(
       `[data-request-id="${activeRequestId}"]`,
     );
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+    el?.scrollIntoView({ block: 'nearest', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   }, [activeRequestId, selectionSource]);
 
   return (
@@ -909,7 +910,7 @@ function RequestTracePanel({
           so it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-ink-900">Request Trace</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500 tabular-nums">
           {SAMPLE_TRACE.length} requests
         </span>
       </div>
@@ -1057,10 +1058,10 @@ function TraceItem({
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-sm text-ink-900 -tracking-[0.2px] truncate flex-1">
+          <span className="font-mono text-sm text-ink-900 truncate flex-1">
             {event.label}
           </span>
-          <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em] shrink-0">
+          <span className="font-mono text-xs text-ink-500 tabular-nums shrink-0">
             {event.time}
           </span>
         </div>
@@ -1071,20 +1072,20 @@ function TraceItem({
             three-tier table ink policy. Separators drop to ink-300 so they
             read as hairline scaffolding, not data. */}
         <div className="flex items-center gap-2 min-w-0 text-ink-500">
-          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums -tracking-[0.01em]">
+          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
             {event.inTokens}
             <ArrowRight className="size-3" strokeWidth={1.75} aria-hidden />
             {event.outTokens}
           </span>
           <span className="text-ink-300" aria-hidden>·</span>
-          <span className={`font-mono text-xs tabular-nums -tracking-[0.01em] ${latencyTone}`}>
+          <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
             {event.latency}
           </span>
           <span className="text-ink-300" aria-hidden>·</span>
-          <span className="font-mono text-xs tabular-nums -tracking-[0.01em] text-ink-800 flex-1">
+          <span className="font-mono text-xs tabular-nums text-ink-800 flex-1">
             {event.cost}
           </span>
-          <span className="font-mono text-xs text-ink-400 -tracking-[0.01em] shrink-0">
+          <span className="font-mono text-xs text-ink-400 shrink-0">
             {event.requestId}
           </span>
         </div>

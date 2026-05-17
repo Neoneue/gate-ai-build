@@ -48,6 +48,12 @@ import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatDate, formatRelative } from '@/lib/formatters';
+
+const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WHITESPACE_RE = /\s+/;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-017 — Team (Workspace Admin)
@@ -167,14 +173,14 @@ type MemberRow = {
   email: string;
   avatarTone: AvatarTone;
   role: MemberRole;
-  joined: string;
+  joined: Date;
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: 'Apr 20, 2026' },
-  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: 'Apr 22, 2026' },
-  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: 'May 01, 2026' },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: 'May 08, 2026' },
+  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: new Date(2026, 3, 20) },
+  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: new Date(2026, 3, 22) },
+  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: new Date(2026, 4,  1) },
+  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: new Date(2026, 4,  8) },
 ];
 
 function MembersPane() {
@@ -284,7 +290,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
           <div className="flex flex-col min-w-0 flex-1">
             <span
               title={row.name}
-              className="font-sans text-sm font-medium text-ink-900 tracking-snug truncate"
+              className="font-sans text-sm font-medium text-ink-900 truncate"
             >
               {row.name}
             </span>
@@ -294,10 +300,10 @@ function MemberRowView({ row }: { row: MemberRow }) {
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
-        {row.joined}
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+        {formatDate(row.joined)}
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
         {row.role === 'owner' ? (
           'Owner'
         ) : (
@@ -330,14 +336,14 @@ type InvitationRow = {
   id: string;
   email: string;
   invitedBy: string;
-  sent: string;
+  sent: Date;
   role: MemberRole;
-  expires: string;
+  expires: Date;
 };
 
 const INVITATION_ROWS: InvitationRow[] = [
-  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: 'May 07, 2026', role: 'member', expires: 'in 6 days' },
-  { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: 'May 06, 2026', role: 'admin',  expires: 'in 5 days' },
+  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: new Date(2026, 4, 7), role: 'member', expires: new Date(NOW.getTime() + 6 * 24 * 60 * 60 * 1000) },
+  { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: new Date(2026, 4, 6), role: 'admin',  expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000) },
 ];
 
 function InvitationsPane({ onInvite }: { onInvite: () => void }) {
@@ -378,20 +384,20 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {INVITATION_ROWS.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900">
                 <span className="block truncate" title={row.email}>{row.email}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
-                {row.sent}
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+                {formatDate(row.sent)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
-                {row.expires}
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
+                {formatRelative(row.expires, NOW)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
                 <RowActionsMenu
@@ -426,7 +432,7 @@ function InviteMemberDialog({
   // Single-email validation: pragmatic regex (not RFC-strict; server
   // owns the canonical check). Empty ⇒ disabled; malformed ⇒ disabled.
   const trimmed = email.trim();
-  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  const isValid = EMAIL_REGEX.test(trimmed);
   const showInvalid = trimmed.length > 0 && !isValid;
 
   return (
@@ -651,7 +657,7 @@ function Avatar({ tone, initials }: { tone: AvatarTone; initials: string }) {
 }
 
 function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/);
+  const parts = name.trim().split(WHITESPACE_RE);
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }

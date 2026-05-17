@@ -38,6 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatNumber, formatDateTime } from '@/lib/formatters';
 
 export function Guardrails() {
   const navigate = useNavigate();
@@ -149,7 +150,10 @@ function LimitsSection({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {limits.map((limit) => (
+          {limits.map((limit) => {
+            const scope = findScope(limit.scope);
+            const scopeNameText = scope?.name ?? limit.scope;
+            return (
             <TableRow key={limit.id}>
               <TableCell className="font-sans text-sm font-medium text-ink-900">
                 <span className="block truncate" title={limit.name}>
@@ -160,13 +164,13 @@ function LimitsSection({
                 <div className="flex flex-col min-w-0">
                   <span
                     className="font-sans text-sm text-ink-900 truncate"
-                    title={scopeName(limit.scope)}
+                    title={scopeNameText}
                   >
-                    {scopeName(limit.scope)}
+                    {scopeNameText}
                   </span>
-                  {findScope(limit.scope)?.masked ? (
+                  {scope?.masked ? (
                     <span className="font-mono text-xs text-ink-500 truncate">
-                      {findScope(limit.scope)!.masked}
+                      {scope.masked}
                     </span>
                   ) : null}
                 </div>
@@ -190,7 +194,8 @@ function LimitsSection({
                 <LimitActionsMenu limitName={limit.name} onRemove={() => onRemove(limit.id)} />
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </Card>
@@ -257,32 +262,38 @@ type Limit = {
   used: string;
 };
 
+const LIMIT_TYPE_BY_VALUE = new Map<string, (typeof LIMIT_TYPES)[number]>(LIMIT_TYPES.map((t) => [t.value, t]));
+const LIMIT_PERIOD_BY_VALUE = new Map<string, (typeof LIMIT_PERIODS)[number]>(LIMIT_PERIODS.map((p) => [p.value, p]));
+const LIMIT_SCOPE_BY_VALUE = new Map<string, (typeof LIMIT_SCOPES)[number]>(LIMIT_SCOPES.map((s) => [s.value, s]));
+
 const typeLabel = (v: string) =>
-  LIMIT_TYPES.find((t) => t.value === v)?.label ?? v;
+  LIMIT_TYPE_BY_VALUE.get(v)?.label ?? v;
 const periodLabel = (v: string) =>
-  LIMIT_PERIODS.find((p) => p.value === v)?.label ?? v;
-const findScope = (v: string) => LIMIT_SCOPES.find((s) => s.value === v);
+  LIMIT_PERIOD_BY_VALUE.get(v)?.label ?? v;
+const findScope = (v: string) => LIMIT_SCOPE_BY_VALUE.get(v);
 const scopeName = (v: string) => findScope(v)?.name ?? v;
 const thresholdLabel = (type: string, threshold: string) => {
   const n = Number(threshold);
-  const formatted = Number.isFinite(n) ? n.toLocaleString() : threshold;
+  const formatted = Number.isFinite(n) ? formatNumber(n) : threshold;
   return type === 'spend' ? `$${formatted}` : formatted;
 };
 const usedLabel = (type: string, used: string, threshold: string) => {
   const uNum = Number(used);
   const tNum = Number(threshold);
-  const u = Number.isFinite(uNum) ? uNum.toLocaleString() : '0';
-  const t = Number.isFinite(tNum) ? tNum.toLocaleString() : '0';
+  const u = Number.isFinite(uNum) ? formatNumber(uNum) : '0';
+  const t = Number.isFinite(tNum) ? formatNumber(tNum) : '0';
   const prefix = type === 'spend' ? '$' : '';
   return `${prefix}${u} / ${prefix}${t}`;
 };
-const fmtResetDate = (d: Date) => {
-  const mon = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
-  const day = d.getUTCDate();
-  const hh  = String(d.getUTCHours()).padStart(2, '0');
-  const mm  = String(d.getUTCMinutes()).padStart(2, '0');
-  return `${mon} ${day}, ${hh}:${mm} UTC`;
-};
+const fmtResetDate = (d: Date) =>
+  `${formatDateTime(d, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  })} UTC`;
 /** Computes the next reset boundary for a limit period. Takes `now` as a
  *  parameter so callers can share a single timestamp across rows — calling
  *  `new Date()` at render time per row caused the column to flicker on
@@ -311,6 +322,28 @@ const resetsAt = (now: Date, period: string) => {
     }
     default: return '—';
   }
+};
+
+// Strip everything except digits and at most one decimal point. Lets users
+// paste "$5,000,000" or "1.5M" and recover a clean numeric string.
+const normalizeThresholdInput = (raw: string): string => {
+  const cleaned = raw.replace(/[^\d.]/g, '');
+  const firstDot = cleaned.indexOf('.');
+  if (firstDot === -1) return cleaned;
+  return cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+};
+
+// Show the integer part with locale-aware thousands separators while the
+// user types. Preserves a trailing "." or "5." mid-entry so the field
+// doesn't fight the keyboard. Decimal digits pass through unformatted —
+// only the integer part gets the grouping treatment.
+const formatThresholdDisplay = (raw: string): string => {
+  if (raw === '') return '';
+  const [intPart, decPart] = raw.split('.');
+  const intNum = Number(intPart);
+  const intFormatted = Number.isFinite(intNum) && intPart !== '' ? formatNumber(intNum) : intPart ?? '';
+  if (raw.includes('.')) return `${intFormatted}.${decPart ?? ''}`;
+  return intFormatted;
 };
 
 function CreateLimitDialog({
@@ -408,11 +441,10 @@ function CreateLimitDialog({
             </Label>
             <Input
               id="create-limit-threshold"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="0"
-              value={threshold}
-              onChange={(e) => setThreshold(e.target.value)}
+              value={formatThresholdDisplay(threshold)}
+              onChange={(e) => setThreshold(normalizeThresholdInput(e.target.value))}
               placeholder="e.g. 250"
               className="font-mono text-sm tabular-nums"
             />

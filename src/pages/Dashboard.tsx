@@ -380,12 +380,12 @@ export function TopKeysCard() {
           {TOP_KEYS.map((k) => (
             <div key={k.label} className="flex items-center justify-between gap-3 min-w-0">
               <span
-                className="font-sans text-sm tracking-snug text-ink-900 truncate min-w-0 flex-1"
+                className="font-sans text-sm text-ink-900 truncate min-w-0 flex-1"
                 title={k.label}
               >
                 {k.label}
               </span>
-              <span className="font-mono text-sm tabular-nums tracking-snug text-ink-900 shrink-0">
+              <span className="font-mono text-sm tabular-nums text-ink-900 shrink-0">
                 {k.cost}
               </span>
             </div>
@@ -468,14 +468,14 @@ export function RecentRequestsCard() {
               : 'text-right whitespace-nowrap font-mono tabular-nums text-ink-800';
             return (
               <TableRow key={`${row.time}-${i}`} className="hover:bg-transparent">
-                <TableCell className="whitespace-nowrap font-mono tabular-nums tracking-snug text-ink-800">
+                <TableCell className="whitespace-nowrap font-mono tabular-nums text-ink-800">
                   {row.time}
                 </TableCell>
                 <TableCell className="max-w-[260px]">
                   <div className="flex items-center gap-2 min-w-0">
                     <VendorAvatar vendor={row.vendor} />
                     <span
-                      className="font-mono text-sm text-ink-900 tracking-snug truncate"
+                      className="font-mono text-sm text-ink-900 truncate"
                       title={row.model}
                     >
                       {row.model}

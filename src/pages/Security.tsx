@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
+import { useCallback, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,9 @@ import {
 } from '@/components/ui/chart';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
+
+const WHITESPACE_GLOBAL_RE = /\s+/g;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-015 — Security
@@ -106,7 +109,7 @@ function eventsTotal(range: EventsRange, customRange: CustomRange | null): numbe
   return EVENTS_RANGE_TOTAL[range === 'custom' ? '24h' : range];
 }
 
-const fmtCount = (n: number) => n.toLocaleString('en-US');
+const fmtCount = (n: number) => formatNumber(n);
 
 // Action-mix ratio source. The Blocked:Flagged:Redacted proportion is
 // fixed at 31:14:2 (product decision); `splitEventMix` projects any
@@ -252,8 +255,6 @@ const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
 // Stable constant — never use `new Date()` here, the chart must not drift
 // across renders or test runs.
 const ANCHOR = { month: 4 /* May, 0-indexed */, day: 12, hour: 14, minute: 30 };
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 // Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
 function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; hour: number; minute: number } {
   // Use Date arithmetic with year 2026 as scaffolding only — we read the
@@ -262,10 +263,6 @@ function minutesBeforeAnchor(minutesAgo: number): { month: number; day: number; 
   const d = new Date(2026, ANCHOR.month, ANCHOR.day, ANCHOR.hour, ANCHOR.minute);
   d.setMinutes(d.getMinutes() - minutesAgo);
   return { month: d.getMonth(), day: d.getDate(), hour: d.getHours(), minute: d.getMinutes() };
-}
-
-function pad2(n: number): string {
-  return n.toString().padStart(2, '0');
 }
 
 type EventsChartView = {
@@ -309,9 +306,10 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
   const data = totalSpark.map((requests, i) => {
     const minutesAgo = Math.round((buckets - 1 - i) * bucketMinutes);
     const { month, day, hour, minute } = minutesBeforeAnchor(minutesAgo);
+    const d = new Date(2026, month, day, hour, minute);
     const time = hourly
-      ? `${pad2(hour)}:${pad2(minute)}`
-      : `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`;
+      ? formatTime(d, { hour: '2-digit', minute: '2-digit', hour12: false })
+      : formatDateTime(d, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
     return { time, requests };
   });
 
@@ -331,6 +329,34 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
   };
 }
 
+function ChartXAxisTick(props: {
+  x: string | number;
+  y: string | number;
+  payload: { value: string };
+  firstTick: string;
+  lastTick: string;
+}) {
+  const { x, y, payload, firstTick, lastTick } = props;
+  const value = payload.value;
+  const spaceIdx = value.indexOf(' ');
+  const display = spaceIdx === -1 ? value : value.slice(0, value.lastIndexOf(' '));
+  const anchor =
+    value === firstTick ? 'start' :
+    value === lastTick ? 'end' : 'middle';
+  return (
+    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-ink-500)">
+      {display}
+    </text>
+  );
+}
+
+const HERO_CHART_CONFIG = {
+  requests: {
+    label: 'Events',
+    color: 'var(--color-danger-500)',
+  },
+} satisfies ChartConfig;
+
 function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   // Header + breakdown are the "Total events" KPI surfaced at hero scale —
   // driven by the page range selector. `total` is the explicit per-range
@@ -345,14 +371,13 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   // Chart: total-events trace + date/time axis, driven by the page range.
   // Same buildSpark() math as the KpiRail "Total events" tile.
   const chart = useMemo(() => buildEventsChartView(range, customRange), [range, customRange]);
-  const config = {
-    requests: {
-      label: 'Events',
-      color: 'var(--color-danger-500)',
-    },
-  } satisfies ChartConfig;
   const firstTick = chart.ticks[0];
   const lastTick = chart.ticks[chart.ticks.length - 1];
+  const renderTick = useCallback(
+    (tickProps: { x: string | number; y: string | number; payload: { value: string } }) =>
+      <ChartXAxisTick {...tickProps} firstTick={firstTick} lastTick={lastTick} />,
+    [firstTick, lastTick],
+  );
 
   return (
     <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
@@ -382,7 +407,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
 
       {/* Full-width area chart with range-aware axis + per-point tooltip */}
       <ChartContainer
-        config={config}
+        config={HERO_CHART_CONFIG}
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
@@ -423,39 +448,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             height={24}
             ticks={chart.ticks}
             interval={0}
-            tick={(tickProps) => {
-              const { x, y, payload } = tickProps as {
-                x: number;
-                y: number;
-                payload: { value: string };
-              };
-              const value = payload.value;
-              // Non-24h tick values are full timestamps ('May 6 00:00');
-              // render just the date portion ('May 6'). 24h values have
-              // no space — render as-is ('13:30').
-              const spaceIdx = value.indexOf(' ');
-              const display = spaceIdx === -1
-                ? value
-                : value.slice(0, value.lastIndexOf(' '));
-              const anchor =
-                value === firstTick
-                  ? 'start'
-                  : value === lastTick
-                    ? 'end'
-                    : 'middle';
-              return (
-                <text
-                  x={x}
-                  y={y}
-                  dy="0.71em"
-                  textAnchor={anchor}
-                  fontSize={11}
-                  fill="var(--color-ink-500)"
-                >
-                  {display}
-                </text>
-              );
-            }}
+            tick={renderTick}
           />
           <ChartTooltip
             cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
@@ -631,17 +624,27 @@ const ATTACK_CATEGORIES: AttackCategory[] = [
   { label: 'Credential leak',  count: 3, color: 'var(--color-chart-4)' },
 ];
 
+// Static label + color metadata — counts are range-dependent and injected at
+// render time via useMemo.
+const ACTION_CATEGORY_META = [
+  { label: 'Blocked',  color: 'var(--color-danger-500)'  },
+  { label: 'Flagged',  color: 'var(--color-warning-500)' },
+  { label: 'Redacted', color: 'var(--color-blue-500)'    },
+] as const;
+
 // Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
 // Counts come straight from splitEventMix(eventsTotal(...)) so they are
 // the SAME integers as the hero "Total events" KPI breakdown — the two
 // surfaces reconcile exactly for every range.
 function ActionCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   const { blocked, flagged, redacted } = splitEventMix(eventsTotal(range, customRange));
-  const categories: AttackCategory[] = [
-    { label: 'Blocked',  count: blocked,  color: 'var(--color-danger-500)'  },
-    { label: 'Flagged',  count: flagged,  color: 'var(--color-warning-500)' },
-    { label: 'Redacted', count: redacted, color: 'var(--color-blue-500)'    },
-  ];
+  const categories = useMemo<AttackCategory[]>(
+    () => {
+      const counts = [blocked, flagged, redacted];
+      return ACTION_CATEGORY_META.map((meta, i) => ({ ...meta, count: counts[i]! }));
+    },
+    [blocked, flagged, redacted],
+  );
   return (
     <CategoryBreakdownCard
       title="Action types"
@@ -656,11 +659,16 @@ function ActionCategoriesCard({ range, customRange }: { range: EventsRange; cust
 // matching the old `count × scale` behaviour now that scale is gone.
 function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   const total = eventsTotal(range, customRange);
-  const perUnit = total / EVENT_MIX_TOTAL;
-  const categories: AttackCategory[] = ATTACK_CATEGORIES.map((c) => ({
-    ...c,
-    count: Math.round(c.count * perUnit),
-  }));
+  const categories = useMemo<AttackCategory[]>(
+    () => {
+      const perUnit = total / EVENT_MIX_TOTAL;
+      return ATTACK_CATEGORIES.map((c) => ({
+        ...c,
+        count: Math.round(c.count * perUnit),
+      }));
+    },
+    [total],
+  );
   return (
     <CategoryBreakdownCard
       title="Attack types"
@@ -696,7 +704,7 @@ function CategoryBreakdownCard({
       <CardContent className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3">
         {categories.map((cat) => {
           const pct = (cat.count / max) * 100;
-          const labelId = `cmp015-attack-${cat.label.replace(/\s+/g, '-').toLowerCase()}`;
+          const labelId = `cmp015-attack-${cat.label.replace(WHITESPACE_GLOBAL_RE, '-').toLowerCase()}`;
           return (
             <div key={cat.label} className="contents">
               <span id={labelId} className="w-48 shrink-0 font-sans text-sm text-ink-900 truncate" title={cat.label}>
@@ -740,9 +748,8 @@ type RiskTier = 'critical' | 'elevated' | 'normal';
 // event was filed (no timezone offset surprises in the demo data).
 function formatEventTime(stored: string): string {
   const [datePart, timePart] = stored.split(' ');
-  const date = new Date(`${datePart}T00:00:00`);
-  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${monthDay}, ${timePart}`;
+  const date = new Date(`${datePart}T${timePart}`);
+  return formatDateTime(date);
 }
 
 type EventAction = 'blocked' | 'flagged' | 'redacted';
@@ -964,11 +971,14 @@ function EventsTableSection({
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
-  // Page resets to 1 when the range / filters change so a deep-paged
-  // state doesn't carry over into a window with fewer rows.
-  useEffect(() => {
+  // Reset to page 1 whenever filters or range change — render-time pattern,
+  // not useEffect (see Activity UsageByKey for the canonical shape).
+  const [prevResetKey, setPrevResetKey] = useState('');
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${query}|${type}|${keyFilter}|${action}`;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setPage(1);
-  }, [range, customRange, query, type, keyFilter, action]);
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1117,7 +1127,7 @@ function EventsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          className="font-mono text-sm tabular-nums tracking-tight text-ink-800"
+                          className="font-mono text-sm tabular-nums text-ink-800"
                         >
                           {formatEventTime(row.time)}
                         </span>
@@ -1140,12 +1150,12 @@ function EventsTableSection({
                 <TableCell className="whitespace-nowrap max-w-[200px]">
                   <span
                     title={row.conversationId}
-                    className="font-mono text-sm tabular-nums tracking-tight text-ink-800 truncate block max-w-full"
+                    className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
                   >
                     {row.conversationId}
                   </span>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                <TableCell className="whitespace-nowrap font-mono">
                   {(() => {
                     // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
                     // parenthetical key string dimmed to ink-600.
@@ -1223,6 +1233,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const conversationId = row.conversationId;
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
   const openRequest = () => navigate(`/requests?open=${requestId}`);
+  const flaggedSet = new Set(detail.flagged);
 
   return (
     <>
@@ -1275,7 +1286,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             </SectionHeading>
             <div className="flex flex-col gap-2">
               {DETECTION_CHECKS.map((check) => {
-                const firing = check.keys.some((k) => detail.flagged.includes(k));
+                const firing = check.keys.some((k) => flaggedSet.has(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };
@@ -1316,7 +1327,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-ink-900 tabular-nums tracking-snug">
+                  <span className="font-mono text-ink-900 tabular-nums">
                     {formatEventTime(row.time)}
                   </span>
                 }
@@ -1328,7 +1339,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   // name in dark ink, the (sk-gw-NNN) string dimmed.
                   const parenIdx = row.key.indexOf(' (');
                   return (
-                    <span className="font-mono tabular-nums tracking-snug">
+                    <span className="font-mono tabular-nums">
                       {parenIdx === -1 ? (
                         <span className="text-ink-900">{row.key}</span>
                       ) : (
@@ -1344,7 +1355,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-mono tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums">
                     <TextLink
                       onClick={openConversation}
                       aria-label={`Open conversation ${conversationId}`}
@@ -1360,7 +1371,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Request"
                 value={
-                  <span className="font-mono tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums">
                     <TextLink
                       onClick={openRequest}
                       aria-label={`Open request ${requestId}`}

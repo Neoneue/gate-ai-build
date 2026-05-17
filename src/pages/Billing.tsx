@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { formatCurrency, formatDate } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -140,13 +141,6 @@ function CreditsCard() {
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(AUTO_RECHARGE_STORAGE_KEY, JSON.stringify(auto));
-    } catch {
-      /* storage unavailable — drop silently */
-    }
-  }, [auto]);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -163,7 +157,7 @@ function CreditsCard() {
             label="Auto-recharge"
             value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
           />
-          <CreditStatRow label="Last top-up" value="May 12, 2026" />
+          <CreditStatRow label="Last top-up" value={formatDate(LAST_TOPUP_DATE)} />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t border-border">
@@ -181,6 +175,11 @@ function CreditsCard() {
         initial={auto}
         onSave={(next) => {
           setAuto(next);
+          try {
+            window.localStorage.setItem(AUTO_RECHARGE_STORAGE_KEY, JSON.stringify(next));
+          } catch {
+            /* storage unavailable — drop silently */
+          }
           setAutoOpen(false);
         }}
       />
@@ -228,7 +227,7 @@ function AddCreditsDialog({
             Add credits
           </DialogTitle>
           <DialogDescription>
-            Min $5 · Max $1,000.
+            Min {formatCurrency(MIN_TOPUP, { minFrac: 0, maxFrac: 0 })} · Max {formatCurrency(MAX_TOPUP, { minFrac: 0, maxFrac: 0 })}.
           </DialogDescription>
         </DialogHeader>
 
@@ -258,7 +257,7 @@ function AddCreditsDialog({
                     : 'border-border bg-card text-ink-900 hover:bg-ink-50',
                 )}
               >
-                ${value.toLocaleString()}
+                {formatCurrency(value, { minFrac: 0, maxFrac: 0 })}
               </button>
             );
           })}
@@ -500,9 +499,13 @@ function CreditStatRow({
 
 /* ─── History ────────────────────────────────────────────────────────── */
 
+const LAST_TOPUP_DATE = new Date(2026, 4, 12);
+const MIN_TOPUP = 5;
+const MAX_TOPUP = 1000;
+
 type HistoryRow = {
   id: string;
-  date: string;
+  date: Date;
   type: 'Gateway request' | 'Credits added';
   amount: number; // positive = credit, negative = debit
   balanceAfter: number;
@@ -511,19 +514,13 @@ type HistoryRow = {
 // Newest first. Credits-added rows render the amount in success-700 to mark
 // the inflow; debits use the default foreground tone.
 const HISTORY_ROWS: HistoryRow[] = [
-  { id: 'h-3', date: 'May 12, 2026', type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
-  { id: 'h-2', date: 'May 12, 2026', type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
-  { id: 'h-1', date: 'May 12, 2026', type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
+  { id: 'h-3', date: new Date(2026, 4, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
+  { id: 'h-2', date: new Date(2026, 4, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
+  { id: 'h-1', date: new Date(2026, 4, 12), type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
 ];
 
-const fmtAmount = (n: number): string => {
-  const abs = Math.abs(n).toFixed(2);
-  if (n > 0) return `+$${abs}`;
-  if (n < 0) return `-$${abs}`;
-  return `$${abs}`;
-};
-
-const fmtUsd = (n: number): string => `$${n.toFixed(2)}`;
+const fmtAmount = (n: number) => formatCurrency(n, { signDisplay: 'exceptZero' });
+const fmtUsd = (n: number) => formatCurrency(n);
 
 function HistorySection() {
   return (
@@ -543,7 +540,7 @@ function HistorySection() {
         <TableBody>
           {HISTORY_ROWS.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap text-ink-800">{row.date}</TableCell>
+              <TableCell className="whitespace-nowrap text-ink-800">{formatDate(row.date)}</TableCell>
               <TableCell className="whitespace-nowrap text-ink-800">{row.type}</TableCell>
               <TableCell
                 className={cn(

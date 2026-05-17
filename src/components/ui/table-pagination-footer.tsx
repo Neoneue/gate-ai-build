@@ -80,7 +80,7 @@ export function TablePaginationFooter({
   return (
     <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-ink-200">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500 tabular-nums">
           Showing{' '}
           <span className="font-medium">
             {start.toLocaleString()}–{end.toLocaleString()}
@@ -88,7 +88,7 @@ export function TablePaginationFooter({
           of <span className="font-medium">{total.toLocaleString()}</span>
         </span>
         <span className="text-ink-400" aria-hidden>·</span>
-        <span className="font-mono text-xs font-medium text-ink-500 -tracking-[0.01em]">
+        <span className="font-mono text-xs font-medium text-ink-500">
           Rows
         </span>
         <Select

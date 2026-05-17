@@ -45,12 +45,12 @@ export function DeltaTag({
     <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
         <Icon className={iconCls} />
-        <span className={`font-mono ${valueCls} font-medium tabular-nums tracking-tight`}>
+        <span className={`font-mono ${valueCls} font-medium tabular-nums`}>
           {display}
         </span>
       </span>
       {note ? (
-        <span className={`${noteCls} tracking-tight text-ink-500`}>
+        <span className={`${noteCls} text-ink-500`}>
           <span aria-hidden> · </span>
           {note}
         </span>
@@ -100,7 +100,7 @@ export function CompactKpi({
         {valueSuffix ? (
           <span className="inline-flex items-center text-ink-500">
             <span aria-hidden className="inline-block h-3.5 w-0" />
-            <span className="font-mono text-xs/4 font-medium tabular-nums tracking-tight">
+            <span className="font-mono text-xs/4 font-medium tabular-nums">
               {valueSuffix}
             </span>
           </span>
@@ -108,7 +108,7 @@ export function CompactKpi({
         {delta ? (
           <DeltaTag delta={delta} note={deltaNote} inverted={deltaInverted} />
         ) : (
-          <span className="text-sm tracking-tight text-ink-500">{noteLine}</span>
+          <span className="text-sm text-ink-500">{noteLine}</span>
         )}
       </div>
       <div className="mt-1">{spark}</div>
