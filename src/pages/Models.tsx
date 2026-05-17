@@ -935,7 +935,7 @@ function ModelsTable({
           return (
             <TableRow
               key={model.id}
-              className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
+              className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-ink-50"
               onClick={() => onSelect(model)}
             >
               <TableCell className="max-w-[280px]">

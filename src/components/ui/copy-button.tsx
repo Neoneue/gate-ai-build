@@ -23,10 +23,13 @@ import { cn } from '@/lib/utils';
  * point. Don't keep parallel `setCopiedKey` / `setTimeout` boilerplate in
  * artboards; consume this primitive instead.
  *
- * Motion: the icon swap is a direct render swap (no animated cross-fade) so
- * the transition is instant on click. Only the icon's `color` transitions
- * (default ink → success-600) — explicit `transition-colors`, not
- * `transition-all`, with `motion-reduce:transition-none`.
+ * Motion: icon modes (icon-sm, inline-xs) use a CSS opacity cross-fade —
+ * both Copy and CircleCheck are rendered in a stacked grid slot; the
+ * inactive icon sits at opacity-0. `transition-opacity duration-150
+ * ease-out motion-reduce:transition-none` drives the swap. Label mode
+ * retains a color-only transition because the text label also changes
+ * ("Copy" → "Copied!") and the width shift makes a clean cross-fade
+ * impractical without layout animation.
  *
  * Modern clipboard API only — no `document.execCommand` fallback. The app
  * targets evergreen browsers.
@@ -131,9 +134,8 @@ export function CopyButton(props: CopyButtonProps) {
   const { value, label, className } = props;
   const { copied, trigger } = useCopyFeedback({ value, label });
 
-  // Icon swap is a direct render swap — no cross-fade. The colour transition
-  // on the resting Copy icon (ink-500 → ink-900 on hover) handles the only
-  // moving piece.
+  // Label mode uses a direct icon swap (text also changes, so cross-fade
+  // is impractical). Icon modes use CopyIconSwap for an opacity cross-fade.
   const Icon = copied ? CircleCheck : Copy;
 
   if (props.mode === 'label') {
@@ -193,7 +195,7 @@ export function CopyButton(props: CopyButtonProps) {
           className,
         )}
       >
-        <Icon className="size-3" strokeWidth={1.75} aria-hidden="true" />
+        <CopyIconSwap copied={copied} className="size-3" strokeWidth={1.75} />
       </button>
     );
   }
@@ -212,7 +214,41 @@ export function CopyButton(props: CopyButtonProps) {
         className,
       )}
     >
-      <Icon aria-hidden="true" />
+      <CopyIconSwap copied={copied} />
     </Button>
+  );
+}
+
+/* ─── CopyIconSwap ────────────────────────────────────────────────────────
+ * Renders Copy and CircleCheck stacked in a CSS grid cell. The active icon
+ * is opacity-1; the inactive is opacity-0. A 150ms opacity transition
+ * produces the cross-fade. Both icons are always present in the DOM so
+ * the container's intrinsic size doesn't change on swap.
+ * Used by icon-sm and inline-xs modes of CopyButton.
+ * Label mode retains a direct swap because its text label also changes. */
+function CopyIconSwap({
+  copied,
+  className,
+  strokeWidth,
+}: {
+  copied: boolean;
+  className?: string;
+  strokeWidth?: number;
+}) {
+  const shared = cn(
+    '[grid-area:1/1] transition-opacity duration-150 ease-out motion-reduce:transition-none',
+    className,
+  );
+  return (
+    <span className="grid" aria-hidden="true">
+      <Copy
+        strokeWidth={strokeWidth}
+        className={cn(shared, copied ? 'opacity-0' : 'opacity-100')}
+      />
+      <CircleCheck
+        strokeWidth={strokeWidth}
+        className={cn(shared, copied ? 'opacity-100' : 'opacity-0')}
+      />
+    </span>
   );
 }

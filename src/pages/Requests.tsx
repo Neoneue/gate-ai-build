@@ -1208,7 +1208,7 @@ function RequestsTableSection({
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
-                  className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
+                  className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-ink-50"
                   onClick={() => setSelectedRow(row)}
                   tabIndex={0}
                   onKeyDown={(e) => {
