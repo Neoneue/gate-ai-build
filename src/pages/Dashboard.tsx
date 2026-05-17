@@ -178,7 +178,7 @@ function KpiRail() {
         delta="+18.4%"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-1)"
+            colorVar="var(--color-success-600)"
             data={[8, 10, 12, 16, 18, 20, 25, 22, 24]}
           />
         }
@@ -204,7 +204,7 @@ function KpiRail() {
         delta="+8.7%"
         spark={
           <CompactSpark
-            colorVar="var(--color-success-600)"
+            colorVar="var(--color-chart-1)"
             data={[10, 11, 13, 14, 16, 15, 17, 18, 18]}
           />
         }
