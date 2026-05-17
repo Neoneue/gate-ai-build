@@ -423,11 +423,11 @@ function KeysTable({
                   <Badge variant="success">Active</Badge>
                 )}
               </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <Sparkline points={row.requests7d} width={96} />
-              </TableCell>
               <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                 {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <Sparkline points={row.requests7d} width={96} />
               </TableCell>
               <TableCell className="whitespace-nowrap text-sm text-ink-500">
                 {row.lastUsed}

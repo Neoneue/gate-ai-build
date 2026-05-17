@@ -109,9 +109,9 @@ export function Dashboard() {
           >
             <PageHeader />
             <KpiRail />
+            <QuickActionsRow />
             <MiddleRow />
             <RecentSecurityEventsCard />
-            <QuickActionsRow />
           </DashboardChrome>
   );
 }
