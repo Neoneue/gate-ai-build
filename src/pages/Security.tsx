@@ -401,7 +401,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-300)"
+            stroke="var(--color-ink-200)"
             strokeDasharray="3 3"
           />
           {/* Dynamic domain: top is `max(values) + 1` so the tallest
