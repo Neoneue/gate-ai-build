@@ -1117,7 +1117,7 @@ function EventsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          className="font-mono text-sm tabular-nums tracking-tight text-ink-800"
+                          className="font-mono text-sm tabular-nums text-ink-800"
                         >
                           {formatEventTime(row.time)}
                         </span>
@@ -1140,12 +1140,12 @@ function EventsTableSection({
                 <TableCell className="whitespace-nowrap max-w-[200px]">
                   <span
                     title={row.conversationId}
-                    className="font-mono text-sm tabular-nums tracking-tight text-ink-800 truncate block max-w-full"
+                    className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
                   >
                     {row.conversationId}
                   </span>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                <TableCell className="whitespace-nowrap font-mono">
                   {(() => {
                     // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
                     // parenthetical key string dimmed to ink-600.
@@ -1316,7 +1316,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-ink-900 tabular-nums tracking-snug">
+                  <span className="font-mono text-ink-900 tabular-nums">
                     {formatEventTime(row.time)}
                   </span>
                 }
@@ -1328,7 +1328,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   // name in dark ink, the (sk-gw-NNN) string dimmed.
                   const parenIdx = row.key.indexOf(' (');
                   return (
-                    <span className="font-mono tabular-nums tracking-snug">
+                    <span className="font-mono tabular-nums">
                       {parenIdx === -1 ? (
                         <span className="text-ink-900">{row.key}</span>
                       ) : (
@@ -1344,7 +1344,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-mono tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums">
                     <TextLink
                       onClick={openConversation}
                       aria-label={`Open conversation ${conversationId}`}
@@ -1360,7 +1360,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Request"
                 value={
-                  <span className="font-mono tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums">
                     <TextLink
                       onClick={openRequest}
                       aria-label={`Open request ${requestId}`}

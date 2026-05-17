@@ -92,14 +92,14 @@ function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-ink-500 tracking-tight">
+          <span className="font-sans text-sm font-medium text-ink-500">
             {valueSuffix}
           </span>
         ) : null}
         {delta ? <DeltaTag delta={delta} /> : null}
       </div>
       {caption ? (
-        <p className="font-sans text-sm text-ink-500 tracking-tight m-0">
+        <p className="font-sans text-sm text-ink-500 m-0">
           {caption}
         </p>
       ) : null}

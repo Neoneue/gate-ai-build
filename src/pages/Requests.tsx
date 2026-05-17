@@ -1227,7 +1227,7 @@ function RequestsTableSection({
                         render={(props) => (
                           <span
                             {...props}
-                            className="font-mono text-sm tabular-nums tracking-tight text-ink-800"
+                            className="font-mono text-sm tabular-nums text-ink-800"
                           >
                             {row.day}, {row.time}
                           </span>
@@ -1256,7 +1256,7 @@ function RequestsTableSection({
                     >
                       <VendorAvatar vendor={row.vendor} />
                       <span
-                        className="font-mono text-sm text-ink-900 tracking-tight truncate"
+                        className="font-mono text-sm text-ink-900 truncate"
                         title={row.model}
                       >
                         {row.model}
@@ -1266,12 +1266,12 @@ function RequestsTableSection({
                   <TableCell className="whitespace-nowrap max-w-[200px]">
                     <span
                       title={row.conversation}
-                      className="font-mono text-sm text-ink-900 tabular-nums tracking-tight truncate block max-w-full"
+                      className="font-mono text-sm text-ink-900 tabular-nums truncate block max-w-full"
                     >
                       {row.conversation}
                     </span>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap font-mono tracking-snug">
+                  <TableCell className="whitespace-nowrap font-mono">
                     {/* `name (sk-gw-NNN)` — name in dark ink, the
                         parenthetical gateway id dimmed to ink-600.
                         Matches the Events table Key column. */}
@@ -1432,8 +1432,9 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
         <KpiRail row={row} />
       </DialogScrollSummary>
 
-      {/* Scrollable tabbed body. */}
-      <DialogScrollBody>
+      {/* Scrollable tabbed body. `pt-2` tightens the gap below the
+          KPI rail above (matches AuditRecordDialog). */}
+      <DialogScrollBody className="pt-2">
         {/* Tabs default to Messages so the prompt/response — the load-bearing
             content of any request inspection — is visible on first open. */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1457,7 +1458,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-ink-900 tabular-nums tracking-snug">
+                  <span className="font-mono text-ink-900 tabular-nums">
                     {row.day}, {row.time}
                   </span>
                 }
@@ -1465,7 +1466,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-mono tabular-nums tracking-snug">
+                  <span className="font-mono tabular-nums">
                     <TextLink
                       onClick={openConversation}
                       aria-label={`Open conversation ${row.conversation}`}
@@ -1480,7 +1481,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 value={
                   <div className="flex items-center gap-2">
                     <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-ink-900 tracking-tight">
+                    <span className="font-mono text-ink-900">
                       {row.model}
                     </span>
                   </div>
@@ -1489,12 +1490,12 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow label="Provider" value={<span className="text-ink-900">{provider}</span>} />
               <DetailRow
                 label="API Key"
-                value={<span className="font-mono text-ink-900 tracking-tight">{row.keyId}</span>}
+                value={<span className="font-mono text-ink-900">{row.keyId}</span>}
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-ink-900 tracking-tight">
+                  <span className="font-mono text-ink-900">
                     <span className="text-ink-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
                   </span>
                 }
@@ -1549,7 +1550,7 @@ function KpiTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-ink-900">
         {value}
       </span>
     </div>

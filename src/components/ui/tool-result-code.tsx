@@ -13,18 +13,15 @@ import { cn } from '@/lib/utils';
  * Recipe (locked):
  *   <code> element (semantic — these blobs ARE machine output)
  *   font-mono text-sm text-ink-900
- *   -tracking-[0.14px]   (matches the data-tier mono tracking used in
- *                         table cells / TopKeys / IDs throughout the
- *                         operational surfaces; not invented here)
  *   break-all            (long JSON one-liners must break inside tokens
  *                         to fit a message bubble's content width)
  *
- * If a wider tracking review touches the data-tier mono register, update
- * the primitive once — every consumer follows.
+ * Tracking is `normal` — mono never gets sub-pixel tightening on this
+ * site (the monospace grid carries its own optical density).
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TOOL_RESULT_CODE_BASE =
-  'font-mono text-sm text-ink-900 -tracking-[0.14px] break-all';
+  'font-mono text-sm text-ink-900 break-all';
 
 export type ToolResultCodeProps = React.HTMLAttributes<HTMLElement>;
 

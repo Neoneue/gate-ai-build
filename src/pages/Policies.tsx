@@ -387,7 +387,7 @@ function PolicyCard({
             </h3>
             <Badge variant="neutral">{config.scanTag}</Badge>
           </div>
-          <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
+          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
             {config.description}
           </p>
         </div>
@@ -439,7 +439,7 @@ function SettingsHalf({
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
           <SectionHeading as="h4">Sensitivity</SectionHeading>
-          <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
+          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
             How aggressive to be when scoring inputs
           </p>
         </div>
@@ -465,7 +465,7 @@ function SettingsHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4">Scan direction</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
+        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
           Which side of the request to scan
         </p>
       </div>
@@ -500,7 +500,7 @@ function ActionHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4" id={headingId}>Action on detection</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 tracking-tight text-pretty">
+        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
           {config.action.helper}
         </p>
       </div>

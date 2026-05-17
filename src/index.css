@@ -158,15 +158,16 @@
   --text-6xl: 4rem;
   --text-6xl--line-height: 1;
 
-  /* Tracking token — single source for the body/title sub-pixel tightening
-     scattered across composed surfaces. Replaces the prior cluster of
-     arbitrary values (`-tracking-[0.14px]`, `-tracking-[0.2px]`,
-     `-tracking-[0.25px]`) which were all targeting roughly the same
-     optical correction. At 16px, -0.01em ≈ -0.16px; at 14px ≈ -0.14px.
-     Tailwind's built-in `tracking-tight` (-0.025em) is too aggressive
-     for body/title use; `tracking-snug` slots between `normal` and
-     `tight`. Headings using -tracking-[1px] (cross-file artboard h2
-     pattern) stay arbitrary — that's a different optical tier. */
+  /* Tracking token — sub-pixel tightening for two specific tiers:
+       1. Small sans titles — CardTitle / in-card h3 at
+          `text-base` or `text-base/5` `font-medium`.
+       2. Large mono KPI numerics — `font-mono text-lg font-medium
+          tabular-nums` (modal KpiTile / ConversationKpiTile).
+     14px sans body (`text-sm`) is `tracking-normal`. Mono at
+     `text-sm` and below is `tracking-normal` — the monospace grid
+     carries its own optical density at small sizes. Headings using
+     -tracking-[1px] (PageTitle / artboard h2) stay arbitrary —
+     that's a different optical tier. */
   --tracking-snug: -0.01em;
 }
 

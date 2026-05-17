@@ -284,7 +284,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
           <div className="flex flex-col min-w-0 flex-1">
             <span
               title={row.name}
-              className="font-sans text-sm font-medium text-ink-900 tracking-snug truncate"
+              className="font-sans text-sm font-medium text-ink-900 truncate"
             >
               {row.name}
             </span>
@@ -294,10 +294,10 @@ function MemberRowView({ row }: { row: MemberRow }) {
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
         {row.joined}
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+      <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
         {row.role === 'owner' ? (
           'Owner'
         ) : (
@@ -378,19 +378,19 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {INVITATION_ROWS.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-900">
                 <span className="block truncate" title={row.email}>{row.email}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
                 {row.sent}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums tracking-snug">
+              <TableCell className="whitespace-nowrap font-sans text-sm text-ink-800 tabular-nums">
                 {row.expires}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">

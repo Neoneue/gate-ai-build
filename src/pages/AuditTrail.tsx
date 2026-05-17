@@ -219,7 +219,7 @@ function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-sans text-sm font-medium text-muted-foreground tracking-tight">
+          <span className="font-sans text-sm font-medium text-muted-foreground">
             {valueSuffix}
           </span>
         ) : null}

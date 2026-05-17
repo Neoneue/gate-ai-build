@@ -1157,7 +1157,7 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm text-ink-900 -tracking-[0.01em]">{model.defaultHandle}</span>
+            <span className="font-mono text-sm text-ink-900">{model.defaultHandle}</span>
             <CopyButton
               size="inline-xs"
               value={model.defaultHandle}

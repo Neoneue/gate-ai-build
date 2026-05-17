@@ -383,16 +383,16 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   >
                     <span
                       title={row.title}
-                      className="font-sans text-sm text-ink-900 -tracking-[0.14px] truncate"
+                      className="font-sans text-sm text-ink-900 truncate"
                     >
                       {row.title}
                     </span>
-                    <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+                    <span className="font-mono text-xs text-ink-500">
                       {row.conversationId}
                     </span>
                   </RowActionButton>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-sm tracking-snug">
+                <TableCell className="whitespace-nowrap font-mono text-sm">
                   <span className="text-ink-800">{row.initiator}</span>
                   {KEY_SUFFIX[row.initiator] ? (
                     <span className="text-ink-600">
@@ -563,10 +563,10 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
             footer-right; the header carries identity only. */}
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono text-sm font-medium text-ink-900 -tracking-[0.2px]">
+          <span className="font-mono text-sm font-medium text-ink-900">
             {row.conversationId}
           </span>
-          <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+          <span className="font-mono text-xs text-ink-500">
             {row.initiator}
           </span>
         </div>
@@ -583,7 +583,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the body's default `overflow-y-auto` to `overflow-hidden`
           and add `flex flex-col` so the inner grid manages overflow per
           panel rather than scrolling the whole body. */}
-      <DialogScrollBody className="overflow-hidden flex flex-col">
+      <DialogScrollBody className="pt-2 overflow-hidden flex flex-col">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
           <ConversationMessagesPanel
             activeRequestId={activeRequestId}
@@ -602,7 +602,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the footer's default `justify-end` since this footer
           carries informational copy on the leading edge as well. */}
       <DialogScrollFooter className="justify-between flex-wrap">
-        <span className="font-mono text-xs text-ink-500 -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500">
           Key <span className="text-ink-800">{row.initiator}</span>{' '}
           · started <span className="text-ink-800">{row.updated}</span>
         </span>
@@ -641,7 +641,7 @@ function ConversationKpiTile({ label, value }: { label: string; value: string })
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-mono text-lg font-medium tabular-nums text-ink-900">
+      <span className="font-mono text-lg font-medium tabular-nums tracking-snug text-ink-900">
         {value}
       </span>
     </div>
@@ -775,7 +775,7 @@ function ConversationMessagesPanel({
           it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500 tabular-nums">
           {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
         </span>
       </div>
@@ -909,7 +909,7 @@ function RequestTracePanel({
           so it doesn't shrink when the body scrolls. */}
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-ink-900">Request Trace</span>
-        <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em]">
+        <span className="font-mono text-xs text-ink-500 tabular-nums">
           {SAMPLE_TRACE.length} requests
         </span>
       </div>
@@ -1057,10 +1057,10 @@ function TraceItem({
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-sm text-ink-900 -tracking-[0.2px] truncate flex-1">
+          <span className="font-mono text-sm text-ink-900 truncate flex-1">
             {event.label}
           </span>
-          <span className="font-mono text-xs text-ink-500 tabular-nums -tracking-[0.01em] shrink-0">
+          <span className="font-mono text-xs text-ink-500 tabular-nums shrink-0">
             {event.time}
           </span>
         </div>
@@ -1071,20 +1071,20 @@ function TraceItem({
             three-tier table ink policy. Separators drop to ink-300 so they
             read as hairline scaffolding, not data. */}
         <div className="flex items-center gap-2 min-w-0 text-ink-500">
-          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums -tracking-[0.01em]">
+          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
             {event.inTokens}
             <ArrowRight className="size-3" strokeWidth={1.75} aria-hidden />
             {event.outTokens}
           </span>
           <span className="text-ink-300" aria-hidden>·</span>
-          <span className={`font-mono text-xs tabular-nums -tracking-[0.01em] ${latencyTone}`}>
+          <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
             {event.latency}
           </span>
           <span className="text-ink-300" aria-hidden>·</span>
-          <span className="font-mono text-xs tabular-nums -tracking-[0.01em] text-ink-800 flex-1">
+          <span className="font-mono text-xs tabular-nums text-ink-800 flex-1">
             {event.cost}
           </span>
-          <span className="font-mono text-xs text-ink-400 -tracking-[0.01em] shrink-0">
+          <span className="font-mono text-xs text-ink-400 shrink-0">
             {event.requestId}
           </span>
         </div>

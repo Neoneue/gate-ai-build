@@ -1078,7 +1078,7 @@ function TopList({
           <h3 className="font-heading text-base leading-snug font-medium text-foreground m-0">
             {title}
           </h3>
-          <p className="font-sans text-sm/5 tracking-tight text-muted-foreground m-0">
+          <p className="font-sans text-sm/5 text-muted-foreground m-0">
             {subtitle}
           </p>
         </div>
@@ -1094,7 +1094,7 @@ function TopList({
           <div key={row.rowKey} className="flex items-center gap-2 min-w-0">
             {row.avatar}
             <span
-              className={`text-sm text-foreground tracking-snug truncate flex-1 min-w-0 ${row.labelClassName ?? 'font-sans'}`}
+              className={`text-sm text-foreground truncate flex-1 min-w-0 ${row.labelClassName ?? 'font-sans'}`}
               title={row.label}
             >
               {row.label}
@@ -1163,7 +1163,7 @@ function TopByAxisRow({
       .map((k) => ({
         rowKey: k.key,
         label: k.label,
-        labelClassName: 'font-mono tracking-tight',
+        labelClassName: 'font-mono',
         value: isSpend ? fmtUsd(+k.axis.toFixed(2)) : fmtTokens(Math.round(k.axis)),
         avatar: KEY_AVATAR,
       }));
@@ -1439,7 +1439,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         <TableBody>
           {pageRows.map((row) => (
             <TableRow key={row.key} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap font-mono tracking-snug">
+              <TableCell className="whitespace-nowrap font-mono">
                 {/* `name (sk-gw-NNN)` — name in the data tier (ink-800), the
                     parenthetical gateway id dimmed to muted-foreground (ink-500).
                     Three-tier table policy is 500/800/900; ink-600 would
@@ -1450,7 +1450,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                 ) : null}
               </TableCell>
               <TableCell className="whitespace-nowrap">
-                <span className="font-sans text-sm text-ink-800 tracking-snug">
+                <span className="font-sans text-sm text-ink-800">
                   {row.owner}
                 </span>
               </TableCell>
