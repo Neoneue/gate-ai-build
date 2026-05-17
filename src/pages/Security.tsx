@@ -402,7 +402,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             horizontal
             vertical={false}
             stroke="var(--color-ink-200)"
-            strokeDasharray="3 3"
+            strokeDasharray="5 3"
           />
           {/* Dynamic domain: top is `max(values) + 1` so the tallest
               spike never touches the chart ceiling and the y-axis
