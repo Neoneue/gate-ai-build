@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, Search, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +21,7 @@ import {
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { SectionHeading } from '@/components/ui/section-heading';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -1008,25 +1008,12 @@ function EventsTableSection({
           icons on the filter pills (project rule for dense toolbars). */}
       {isEmpty ? null : (
       <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-ink-500"
-            strokeWidth={1.75}
-            aria-hidden
-          />
-          <Input
-            size="sm"
-            type="search"
-            name="q"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="Search events…"
-            className="pl-8"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search events"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search events…"
+          ariaLabel="Search events"
+          value={query}
+          onChange={setQuery}
+        />
 
         <Select value={type} onValueChange={setType}>
           <SelectTrigger

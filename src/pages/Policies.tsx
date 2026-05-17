@@ -507,11 +507,11 @@ function ActionHalf({
       <RadioGroup aria-labelledby={headingId} value={value} onValueChange={onChange} className="mt-4 gap-2">
         {config.action.options.map((opt) => {
           const selected = opt.value === value;
-          const radioId = `action-${config.id}-${opt.value}`;
+          const nameId = `action-${config.id}-${opt.value}-name`;
+          const descId = `action-${config.id}-${opt.value}-desc`;
           return (
             <label
               key={opt.value}
-              htmlFor={radioId}
               className={
                 'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
@@ -519,10 +519,15 @@ function ActionHalf({
                   : 'border-border bg-transparent hover:bg-ink-50')
               }
             >
-              <RadioGroupItem id={radioId} value={opt.value} className="mt-1" />
+              <RadioGroupItem
+                value={opt.value}
+                aria-labelledby={nameId}
+                aria-describedby={descId}
+                className="mt-1"
+              />
               <div className="flex flex-col gap-1 min-w-0">
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-sans text-sm font-medium text-ink-900">
+                  <span id={nameId} className="font-sans text-sm font-medium text-ink-900">
                     {opt.name}
                   </span>
                   {opt.flag ? (
@@ -531,7 +536,7 @@ function ActionHalf({
                     </span>
                   ) : null}
                 </div>
-                <span className="font-sans text-xs text-ink-500 tracking-tight text-pretty">
+                <span id={descId} className="font-sans text-xs text-ink-500 tracking-tight text-pretty">
                   {opt.description}
                 </span>
               </div>

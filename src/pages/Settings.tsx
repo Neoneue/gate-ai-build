@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eyebrow } from '@/components/ui/eyebrow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageTitle } from '@/components/ui/page-title';
+import { SectionHeading } from '@/components/ui/section-heading';
 import { SettingsRow } from '@/components/ui/settings-row';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
@@ -91,6 +91,19 @@ function ProfileCard() {
     email !== saved.email ||
     organization !== saved.organization;
 
+  // Warn on tab close / reload when there are unsaved changes. Does NOT
+  // catch in-app navigation (sidebar clicks); a react-router useBlocker
+  // would cover that, but adding it touches more surface than this fix
+  // is scoped to.
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
   return (
     <Card>
       <CardHeader>
@@ -131,6 +144,7 @@ function ProfileCard() {
             value={email}
             onChange={setEmail}
             autoComplete="email"
+            spellCheck={false}
           />
           <FormField
             id="settings-organization"
@@ -177,6 +191,7 @@ function FormField({
   onChange,
   type = 'text',
   autoComplete,
+  spellCheck,
 }: {
   id: string;
   label: string;
@@ -184,6 +199,9 @@ function FormField({
   onChange: (v: string) => void;
   type?: string;
   autoComplete?: string;
+  /** Default undefined — let the browser decide. Set `false` on email /
+   *  username / code fields where spellcheck is noise. */
+  spellCheck?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -196,7 +214,7 @@ function FormField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
-        spellCheck={false}
+        spellCheck={spellCheck}
       />
     </div>
   );
@@ -236,15 +254,13 @@ function SecurityCard() {
           }
         />
 
-        {/* Registered passkeys subsection — sub-eyebrow + empty body.
-            Eyebrow uses the same sans-uppercase recipe as section
-            headers across the spec sheets. The wrapping `<CardContent
-            className="flex flex-col gap-4">` (L276) supplies the 16px
-            rhythm between the Passkey row and this group; adding a
-            border-t + pt-4 here would double-up two rhythms (whitespace
-            + hairline) for the same visual job. */}
+        {/* Registered passkeys subsection — h4 heading + empty body.
+            The wrapping `<CardContent className="flex flex-col gap-4">`
+            supplies the 16px rhythm between the Passkey row and this
+            group; adding a border-t + pt-4 here would double-up two
+            rhythms (whitespace + hairline) for the same visual job. */}
         <div className="flex flex-col gap-2">
-          <Eyebrow>Registered passkeys</Eyebrow>
+          <SectionHeading as="h4">Registered passkeys</SectionHeading>
           <p className="font-sans text-sm text-ink-500 m-0">
             No passkeys registered yet.
           </p>

@@ -569,7 +569,7 @@ function KeyCreatedDialog({
               strokeWidth={1.75}
             />
             <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
-              Key created — copy it now
+              Key created. Copy it now.
             </DialogTitle>
           </div>
           <DialogDescription>

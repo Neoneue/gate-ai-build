@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CircleCheck, Search } from 'lucide-react';
+import { CircleCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -28,6 +28,7 @@ import {
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { AuditRecordDialog } from './AuditRecordDialog';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -36,7 +37,6 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
  * toolbar + pagination. Range selector wired to state but doesn't yet
  * filter the static mock data — when the real event stream lands, the KPI
  * tiles and event log will scope to the active range.
- * Cryptographic-proof side panel and per-row drill-in lands in a follow-up.
  * ───────────────────────────────────────────────────────────────────────── */
 
 type PresetRange = 'all' | '24h' | '7d' | '30d';
@@ -74,11 +74,11 @@ function isWithinRange(at: Date, range: Range, customRange: CustomRange | null):
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-function fmtTime(d: Date): string {
+export function fmtTime(d: Date): string {
   return `${MONTH_LABELS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
-function fmtRelative(at: Date): string {
+export function fmtRelative(at: Date): string {
   const seconds = Math.max(0, Math.floor((NOW.getTime() - at.getTime()) / 1000));
   if (seconds < 60)      return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
@@ -91,6 +91,13 @@ function fmtRelative(at: Date): string {
   if (weeks < 5)         return `${weeks}w ago`;
   const months = Math.floor(days / 30);
   return `${months}mo ago`;
+}
+
+/** Truncates a hex string or UUID for display in a table cell.
+ *  Uses three ASCII dots matching the glyph in the original seed data. */
+export function truncateHex(s: string, start = 6, end = 6): string {
+  if (s.length <= start + end + 3) return s;
+  return `${s.slice(0, start)}...${s.slice(-end)}`;
 }
 
 export function AuditTrail() {
@@ -223,9 +230,9 @@ function KpiTile({
 
 /* ─── Event log table ───────────────────────────────────────────────── */
 
-type EventKind = 'AUDIT' | 'REQUEST' | 'POLICY' | 'EVENT' | 'LIMITS';
+export type EventKind = 'AUDIT' | 'REQUEST' | 'POLICY' | 'EVENT' | 'LIMITS';
 
-type EventRow = {
+export type EventRow = {
   id: string;
   at: Date;
   eventId: string;
@@ -235,32 +242,175 @@ type EventRow = {
   anchor: string;
 };
 
-// 18 seed rows transcribed from the Audit Trail mock (2026-05-16). `at` is
-// the canonical timestamp; the visible time string is computed via fmtTime,
-// and the KPI / table range filters key off `at`. Member names map to the
-// canonical workspace roster (Team.tsx MEMBER_ROWS): Chad Ponticas owns key
-// lifecycle, Jordan Lee runs dev request batches, Mateus Silva carries admin
-// / inspect actions, Kira Tan is the newly-added member. When the real
-// surface ships, swap for live data from the gateway event stream.
+// 18 seed rows. `eventId` and `anchor` are now full strings; table cells
+// render truncated via truncateHex(). Full values appear in the drill-in
+// modal (AuditRecordDialog). Member names map to the canonical workspace
+// roster (Team.tsx MEMBER_ROWS): Chad Ponticas owns key lifecycle, Jordan
+// Lee runs dev request batches, Mateus Silva carries admin / inspect
+// actions, Kira Tan is the newly-added member.
 const EVENT_ROWS: EventRow[] = [
-  { id: 'e-01', at: new Date(2026, 4, 14, 13, 42, 21), eventId: 'cc8ae1...3b5cac', kind: 'AUDIT',   description: 'API key "design-agent" created', member: 'Chad Ponticas', anchor: '9fa072...462e23' },
-  { id: 'e-02', at: new Date(2026, 4, 14,  9, 44, 58), eventId: 'ac2525...afe59',  kind: 'REQUEST', description: 'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.', member: 'Chad Ponticas', anchor: 'ab40eb...7f0b42' },
-  { id: 'e-03', at: new Date(2026, 4, 14,  9, 43, 13), eventId: '5ea003...cbfc55', kind: 'REQUEST', description: 'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.', member: 'Chad Ponticas', anchor: 'a96fc5...1d967a' },
-  { id: 'e-04', at: new Date(2026, 4, 13,  7, 49,  6), eventId: '5ec325...52a5f7', kind: 'REQUEST', description: 'Streaming proxy request completed: POST /v1/messages?beta=true', member: 'Jordan Lee', anchor: 'e5c4f2...116544' },
-  { id: 'e-05', at: new Date(2026, 4, 13,  7, 49,  2), eventId: 'f390ab...b7abc2', kind: 'REQUEST', description: 'Streaming proxy request completed: POST /v1/messages?beta=true', member: 'Jordan Lee', anchor: 'e5c4f2...116544' },
-  { id: 'e-06', at: new Date(2026, 4, 13,  7, 48, 59), eventId: '38508b...c8a045', kind: 'REQUEST', description: 'Streaming proxy request completed: POST /v1/messages?beta=true', member: 'Jordan Lee', anchor: 'e5c4f2...116544' },
-  { id: 'e-07', at: new Date(2026, 4, 13,  7, 47, 29), eventId: '7e0402...067e63', kind: 'REQUEST', description: 'Streaming proxy request completed: POST /v1/messages?beta=true', member: 'Jordan Lee', anchor: '36c1b2...2192cc' },
-  { id: 'e-08', at: new Date(2026, 4, 12,  9, 23, 49), eventId: '644008...8581d9', kind: 'POLICY',  description: 'Request blocked by security policy', member: 'Jordan Lee', anchor: '53b6a5...5cfd97' },
-  { id: 'e-09', at: new Date(2026, 4, 12,  9, 21,  7), eventId: 'eccc67...4baba9', kind: 'REQUEST', description: 'Proxy request completed: POST /v1/messages', member: 'Jordan Lee', anchor: 'b8d5af...57dd92' },
-  { id: 'e-10', at: new Date(2026, 4, 12,  9, 18, 12), eventId: 'e77116...b318ae', kind: 'AUDIT',   description: 'API key 47b14b0a-43cc-4738-928d-b0fc94c635f2 revoked', member: 'Chad Ponticas', anchor: 'a0eb4a...9fe5bf' },
-  { id: 'e-11', at: new Date(2026, 4, 12,  9, 16, 57), eventId: '9e0d73...cee5d1', kind: 'REQUEST', description: 'Proxy request completed: POST /v1/messages', member: 'Jordan Lee', anchor: 'eb8126...855ab1' },
-  { id: 'e-12', at: new Date(2026, 4, 12,  9, 16, 11), eventId: 'a707dd...a3837b', kind: 'AUDIT',   description: 'API key "test1" created', member: 'Chad Ponticas', anchor: 'daa135...73735f' },
-  { id: 'e-13', at: new Date(2026, 4, 12,  9, 13, 54), eventId: '6a58e5...418752', kind: 'AUDIT',   description: 'API key "test-key" created', member: 'Chad Ponticas', anchor: '7c1dda...2e8737' },
-  { id: 'e-14', at: new Date(2026, 4, 12,  9,  8,  9), eventId: '9bb46b...18a027', kind: 'AUDIT',   description: 'Admin inspected workspace orgs', member: 'Mateus Silva', anchor: '8d4fa5...8388f8' },
-  { id: 'e-15', at: new Date(2026, 4, 12,  9,  3, 22), eventId: '6b544c...ec522e', kind: 'AUDIT',   description: 'Admin inspected workspace orgs', member: 'Mateus Silva', anchor: 'd00ed9...0cf402' },
-  { id: 'e-16', at: new Date(2026, 4, 12,  9,  1, 14), eventId: '921bcd...b4954e', kind: 'AUDIT',   description: 'Admin inspected workspace orgs', member: 'Mateus Silva', anchor: '02d0e2...16b025' },
-  { id: 'e-17', at: new Date(2026, 4, 12,  9,  1,  4), eventId: '4e92b8...479d54', kind: 'AUDIT',   description: 'Admin inspected workspace orgs', member: 'Mateus Silva', anchor: '02d0e2...16b025' },
-  { id: 'e-18', at: new Date(2026, 4,  9, 15, 16, 13), eventId: 'a54fac...2a636c', kind: 'EVENT',   description: 'Kira Tan added to the workspace as a member', member: 'Kira Tan', anchor: '4f3382...12bec3' },
+  {
+    id: 'e-01',
+    at: new Date(2026, 4, 14, 13, 42, 21),
+    eventId: 'e_cc8ae185-a267-4b1c-ae7b-a618713b5cac',
+    kind: 'AUDIT',
+    description: 'API key "design-agent" created',
+    member: 'Chad Ponticas',
+    anchor: '9fa072b3c41d85e2f7a630d194bc58e07f2c9a1d3e46b05821f7893d04c62e23',
+  },
+  {
+    id: 'e-02',
+    at: new Date(2026, 4, 14, 9, 44, 58),
+    eventId: 'e_ac2525f1-3b74-4d92-bf1e-9c03d78afe59',
+    kind: 'REQUEST',
+    description: 'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
+    member: 'Chad Ponticas',
+    anchor: 'ab40eb92c5f17d034a9b82e1c06d3f45b8712e9a4c0d56f873b2190a687f0b42',
+  },
+  {
+    id: 'e-03',
+    at: new Date(2026, 4, 14, 9, 43, 13),
+    eventId: 'e_5ea003d8-c92f-4a17-b836-e501d4cbfc55',
+    kind: 'REQUEST',
+    description: 'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
+    member: 'Chad Ponticas',
+    anchor: 'a96fc5e214b873d0f591c4a82e3070b6d19f25c8a7e43d961b20847531d967a',
+  },
+  {
+    id: 'e-04',
+    at: new Date(2026, 4, 13, 7, 49, 6),
+    eventId: 'e_5ec325a9-7b31-4e08-9d2f-c8413852a5f7',
+    kind: 'REQUEST',
+    description: 'Streaming proxy request completed: POST /v1/messages?beta=true',
+    member: 'Jordan Lee',
+    anchor: 'e5c4f2a10d738b2965f401c7e8920a3b56d14f8c7291e30b4d85762a01116544',
+  },
+  {
+    id: 'e-05',
+    at: new Date(2026, 4, 13, 7, 49, 2),
+    eventId: 'e_f390ab62-1d4e-4c83-a075-b219e53b7abc2',
+    kind: 'REQUEST',
+    description: 'Streaming proxy request completed: POST /v1/messages?beta=true',
+    member: 'Jordan Lee',
+    anchor: 'e5c4f2a10d738b2965f401c7e8920a3b56d14f8c7291e30b4d85762a01116544',
+  },
+  {
+    id: 'e-06',
+    at: new Date(2026, 4, 13, 7, 48, 59),
+    eventId: 'e_38508b47-9e2a-4f61-bc93-d72058c8a045',
+    kind: 'REQUEST',
+    description: 'Streaming proxy request completed: POST /v1/messages?beta=true',
+    member: 'Jordan Lee',
+    anchor: 'e5c4f2a10d738b2965f401c7e8920a3b56d14f8c7291e30b4d85762a01116544',
+  },
+  {
+    id: 'e-07',
+    at: new Date(2026, 4, 13, 7, 47, 29),
+    eventId: 'e_7e0402c8-5a93-4b72-d81f-e046f3067e63',
+    kind: 'REQUEST',
+    description: 'Streaming proxy request completed: POST /v1/messages?beta=true',
+    member: 'Jordan Lee',
+    anchor: '36c1b2d7a4e95f0c8310b6274d82a93f15e6c4810d927b53f48120691012192cc',
+  },
+  {
+    id: 'e-08',
+    at: new Date(2026, 4, 12, 9, 23, 49),
+    eventId: 'e_644008f2-2c57-4d1a-93be-7f10628581d9',
+    kind: 'POLICY',
+    description: 'Request blocked by security policy',
+    member: 'Jordan Lee',
+    anchor: '53b6a5c9f2e0178d4b3960a7c825e14f93d07b261f4a8e5d9c130247805cfd97',
+  },
+  {
+    id: 'e-09',
+    at: new Date(2026, 4, 12, 9, 21, 7),
+    eventId: 'e_eccc67b1-8f4d-4e29-a153-c09715baba9',
+    kind: 'REQUEST',
+    description: 'Proxy request completed: POST /v1/messages',
+    member: 'Jordan Lee',
+    anchor: 'b8d5af3e76c2190d4b05f8a13e92c647d30f819a25b7e40c16834d09257dd92',
+  },
+  {
+    id: 'e-10',
+    at: new Date(2026, 4, 12, 9, 18, 12),
+    eventId: 'e_e77116a3-d058-4b7f-9c21-e3a540b318ae',
+    kind: 'AUDIT',
+    description: 'API key 47b14b0a-43cc-4738-928d-b0fc94c635f2 revoked',
+    member: 'Chad Ponticas',
+    anchor: 'a0eb4a27f91c5083b6d24e17a39c850f72d68b14c30e9f5a28461b073d9fe5bf',
+  },
+  {
+    id: 'e-11',
+    at: new Date(2026, 4, 12, 9, 16, 57),
+    eventId: 'e_9e0d73c4-6b12-4f85-a047-b83294cee5d1',
+    kind: 'REQUEST',
+    description: 'Proxy request completed: POST /v1/messages',
+    member: 'Jordan Lee',
+    anchor: 'eb81261c7d4a93f0b285e6c40917d58a32f0c19b674e20d83a95b047f1855ab1',
+  },
+  {
+    id: 'e-12',
+    at: new Date(2026, 4, 12, 9, 16, 11),
+    eventId: 'e_a707dd59-3e8c-4a06-b172-940c51a3837b',
+    kind: 'AUDIT',
+    description: 'API key "test1" created',
+    member: 'Chad Ponticas',
+    anchor: 'daa135e72b4c09f1836d57a0e29b4c80f16a3d72e85c14b097f43621873735f',
+  },
+  {
+    id: 'e-13',
+    at: new Date(2026, 4, 12, 9, 13, 54),
+    eventId: 'e_6a58e5d7-4b21-4f93-a860-c73921418752',
+    kind: 'AUDIT',
+    description: 'API key "test-key" created',
+    member: 'Chad Ponticas',
+    anchor: '7c1ddaf3b8260e94a15c072d38b91e450c2897f6a13d48b025e79c3041e2e8737',
+  },
+  {
+    id: 'e-14',
+    at: new Date(2026, 4, 12, 9, 8, 9),
+    eventId: 'e_9bb46bf0-7c35-4d18-b092-5e1a3118a027',
+    kind: 'AUDIT',
+    description: 'Admin inspected workspace orgs',
+    member: 'Mateus Silva',
+    anchor: '8d4fa5c3b70e192d46a8f01e37c984b25d71f3609e2a58b1c04d376029388f8',
+  },
+  {
+    id: 'e-15',
+    at: new Date(2026, 4, 12, 9, 3, 22),
+    eventId: 'e_6b544c2a-91f7-4e53-bc80-d4372aec522e',
+    kind: 'AUDIT',
+    description: 'Admin inspected workspace orgs',
+    member: 'Mateus Silva',
+    anchor: 'd00ed9f1b3a82c4075e96d31b87f05c29a4e16d30b72f58c19043a8750cf402',
+  },
+  {
+    id: 'e-16',
+    at: new Date(2026, 4, 12, 9, 1, 14),
+    eventId: 'e_921bcd37-2e04-4c61-a895-f18360b4954e',
+    kind: 'AUDIT',
+    description: 'Admin inspected workspace orgs',
+    member: 'Mateus Silva',
+    anchor: '02d0e2c7f4b9310a58e72d46b01c93f85a17d24e6930b78c5f219a047016b025',
+  },
+  {
+    id: 'e-17',
+    at: new Date(2026, 4, 12, 9, 1, 4),
+    eventId: 'e_4e92b8f6-c031-4d7a-b259-a07185479d54',
+    kind: 'AUDIT',
+    description: 'Admin inspected workspace orgs',
+    member: 'Mateus Silva',
+    anchor: '02d0e2c7f4b9310a58e72d46b01c93f85a17d24e6930b78c5f219a047016b025',
+  },
+  {
+    id: 'e-18',
+    at: new Date(2026, 4, 9, 15, 16, 13),
+    eventId: 'e_a54fac81-b0d6-4e39-9c72-f83410a2636c',
+    kind: 'EVENT',
+    description: 'Kira Tan added to the workspace as a member',
+    member: 'Kira Tan',
+    anchor: '4f3382d6e91c07b2a543f08c7d25e3b94a10f6812c97d30e4b586291a12bec3',
+  },
 ];
 
 type FilterValue = '__all' | 'REQUEST' | 'POLICY' | 'LIMITS' | 'AUDIT';
@@ -273,7 +423,7 @@ const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
   { value: 'AUDIT',   label: 'Audit' },
 ];
 
-const KIND_BADGE_VARIANT: Record<EventKind, 'warning' | 'info' | 'destructive' | 'secondary' | 'neutral'> = {
+export const KIND_BADGE_VARIANT: Record<EventKind, 'warning' | 'info' | 'destructive' | 'secondary' | 'neutral'> = {
   AUDIT:   'warning',
   REQUEST: 'info',
   POLICY:  'destructive',
@@ -286,6 +436,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
+  const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
   // Reset to page 1 whenever the range-scoped row set, filter, or query
   // changes — render-time pattern, not useEffect (see Activity UsageByKey
@@ -317,109 +468,116 @@ function EventLog({ rows }: { rows: EventRow[] }) {
   const isEmpty = filteredRows.length === 0;
 
   return (
-    <Card density="flush">
-      {isEmpty ? null : (
-      <div className="flex items-center gap-2 p-4">
-        <div className="relative w-72 min-w-0 shrink-0">
-          <Search
-            aria-hidden
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground"
-            strokeWidth={1.75}
-          />
-          <Input
-            size="sm"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
+    <>
+      <Card density="flush">
+        {isEmpty ? null : (
+        <div className="flex items-center gap-2 p-4">
+          <SearchInput
             placeholder="Search events, users, hashes…"
-            className="pl-8"
-            aria-label="Search audit events"
+            ariaLabel="Search audit events"
+            value={query}
+            onChange={setQuery}
           />
+          <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
+            <SelectTrigger
+              size="sm"
+              aria-label="Filter by kind"
+              className="border-border bg-card text-foreground font-normal"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTER_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
-          <SelectTrigger
-            size="sm"
-            aria-label="Filter by kind"
-            className="border-border bg-card text-foreground font-normal"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FILTER_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      )}
+        )}
 
-      {isEmpty ? (
-        <TableEmptyState
-          title="No audit events"
-          body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
-        />
-      ) : (
-        <>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {/* `table-fixed` + percentage widths is the canonical pattern
-                (Team, Guardrails, Activity). Description gets the largest
-                share since it's the wrap-tolerant column; the rest hold
-                their content. */}
-            <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
-            <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
-            <TableHead className="w-[9%] whitespace-nowrap">Kind</TableHead>
-            <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
-            <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pageRows.map((row) => (
-            <TableRow key={row.id} className="hover:bg-transparent [&_td]:align-top">
-              <TableCell className="whitespace-nowrap text-ink-800">
-                {fmtTime(row.at)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-ink-800">
-                {row.eventId}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
-              </TableCell>
-              <TableCell className="text-ink-800">
-                <span className="line-clamp-2 break-words" title={row.description}>
-                  {row.description}
-                </span>
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-ink-800">
-                {row.member}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <span className="inline-flex items-center gap-2">
-                  <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
-                  <span className="sr-only">Verified anchor</span>
-                  <span className="font-mono text-ink-800">{row.anchor}</span>
-                </span>
-              </TableCell>
+        {isEmpty ? (
+          <TableEmptyState
+            title="No audit events"
+            body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
+          />
+        ) : (
+          <>
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              {/* `table-fixed` + percentage widths is the canonical pattern
+                  (Team, Guardrails, Activity). Description gets the largest
+                  share since it's the wrap-tolerant column; the rest hold
+                  their content. */}
+              <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
+              <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
+              <TableHead className="w-[9%] whitespace-nowrap">Kind</TableHead>
+              <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
+              <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
+              <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {pageRows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="cursor-pointer [&_td]:align-top"
+                tabIndex={0}
+                onClick={() => setSelectedRow(row)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRow(row);
+                  }
+                }}
+              >
+                <TableCell className="whitespace-nowrap text-ink-800">
+                  {fmtTime(row.at)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-ink-800">
+                  {truncateHex(row.eventId)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
+                </TableCell>
+                <TableCell className="text-ink-800">
+                  <span className="line-clamp-2 break-words" title={row.description}>
+                    {row.description}
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-sans text-ink-800">
+                  {row.member}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <span className="inline-flex items-center gap-2">
+                    <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
+                    <span className="sr-only">Verified anchor</span>
+                    <span className="font-mono text-ink-800">{truncateHex(row.anchor)}</span>
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
-      <TablePaginationFooter
-        total={filteredRows.length}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setPage}
-        onRowsPerPageChange={setRowsPerPage}
+        <TablePaginationFooter
+          total={filteredRows.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={setRowsPerPage}
+        />
+          </>
+        )}
+      </Card>
+
+      <AuditRecordDialog
+        row={selectedRow}
+        open={!!selectedRow}
+        onOpenChange={(open) => { if (!open) setSelectedRow(null); }}
       />
-        </>
-      )}
-    </Card>
+    </>
   );
 }

@@ -178,7 +178,7 @@ function LimitsSection({
                 {resetsAt(limit.period)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
-                <LimitActionsMenu onRemove={() => onRemove(limit.id)} />
+                <LimitActionsMenu limitName={limit.name} onRemove={() => onRemove(limit.id)} />
               </TableCell>
             </TableRow>
           ))}
@@ -188,7 +188,7 @@ function LimitsSection({
   );
 }
 
-function LimitActionsMenu({ onRemove }: { onRemove: () => void }) {
+function LimitActionsMenu({ limitName, onRemove }: { limitName: string; onRemove: () => void }) {
   return (
     <Menu>
       <MenuTrigger
@@ -196,12 +196,12 @@ function LimitActionsMenu({ onRemove }: { onRemove: () => void }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Limit actions"
+            aria-label={`Actions for ${limitName}`}
             className="text-ink-500 hover:text-ink-900"
           />
         }
       >
-        <MoreHorizontal />
+        <MoreHorizontal aria-hidden />
       </MenuTrigger>
       <MenuContent>
         <MenuItem variant="destructive" onClick={onRemove}>
