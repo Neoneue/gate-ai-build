@@ -31,7 +31,7 @@ function TableHeader({
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-ink-50", className)}
+      className={cn("bg-neutral-50", className)}
       {...props}
     />
   )
@@ -55,7 +55,7 @@ function TableFooter({
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "border-t border-border bg-ink-50 font-medium [&>tr]:last:border-b-0",
+        "border-t border-border bg-neutral-50 font-medium [&>tr]:last:border-b-0",
         className,
       )}
       {...props}
@@ -68,7 +68,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-border transition-colors motion-reduce:transition-none hover:bg-ink-50 data-[state=selected]:bg-ink-50",
+        "border-b border-border transition-colors motion-reduce:transition-none hover:bg-neutral-50 data-[state=selected]:bg-neutral-50",
         className,
       )}
       {...props}
@@ -89,9 +89,9 @@ function TableHead({ className, scope = "col", ...props }: React.ComponentProps<
         // Sans Title Case (not uppercase) so column heads stay distinct
         // from section eyebrows. Mono is reserved for ID / value content in
         // the body cells; sans here keeps the voice split clean. font-medium
-        // + ink-600 gives 12px sans enough presence to register as a header
+        // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "h-9 px-4 text-left align-middle text-xs font-medium text-ink-500 [&:has([role=checkbox])]:pr-0",
+        "h-9 px-4 text-left align-middle text-xs font-medium text-neutral-500 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -104,7 +104,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-4 py-3 align-middle text-sm text-ink-900 [&:has([role=checkbox])]:pr-0",
+        "px-4 py-3 align-middle text-sm text-neutral-900 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -119,7 +119,7 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-sm text-ink-500", className)}
+      className={cn("mt-4 text-sm text-neutral-500", className)}
       {...props}
     />
   )

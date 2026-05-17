@@ -37,11 +37,11 @@ function UserMenu({
             CP
           </span>
           <div className="flex flex-col gap-1 min-w-0">
-            <span className="font-sans text-sm font-medium text-ink-900 truncate leading-tight">
+            <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">
               Chad Ponticas
             </span>
             <span
-              className="font-sans text-xs text-ink-500 truncate leading-tight"
+              className="font-sans text-xs text-neutral-500 truncate leading-tight"
               title="chad@constellationnetwork.io"
             >
               chad@constellationnetwork.io

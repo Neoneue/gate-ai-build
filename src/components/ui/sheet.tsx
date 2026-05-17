@@ -58,7 +58,7 @@ function SheetOverlay({
         // produces a visible flicker as the keyframe element reverts to its
         // resting opacity early; matching the panel keeps the dim leaving
         // alongside it.
-        "fixed inset-0 isolate z-50 bg-ink-900/40 duration-300 data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+        "fixed inset-0 isolate z-50 bg-neutral-900/40 duration-300 data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       {...props}
@@ -102,7 +102,7 @@ function SheetContent({
           // wider inspector surfaces than centered modals (which ship gap-4),
           // so the section rhythm wants more air. Tightening at the call
           // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-white border-l border-border shadow-(--shadow-modal) p-4 text-sm text-ink-900 outline-none overscroll-contain",
+          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-white border-l border-border shadow-(--shadow-modal) p-4 text-sm text-neutral-900 outline-none overscroll-contain",
           // Slide animation. Uses tw-animate keyframes (same plugin Dialog
           // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
           // Mixing tw-animate keyframes for the backdrop with CSS transitions
@@ -202,7 +202,7 @@ function SheetDescription({
     <DialogPrimitive.Description
       data-slot="sheet-description"
       className={cn(
-        "text-sm text-ink-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-ink-900",
+        "text-sm text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
         className
       )}
       {...props}

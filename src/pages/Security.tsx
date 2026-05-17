@@ -345,7 +345,7 @@ function ChartXAxisTick(props: {
     value === firstTick ? 'start' :
     value === lastTick ? 'end' : 'middle';
   return (
-    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-ink-500)">
+    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-neutral-500)">
       {display}
     </text>
   );
@@ -427,7 +427,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
           <CartesianGrid
             horizontal
             vertical={false}
-            stroke="var(--color-ink-200)"
+            stroke="var(--color-neutral-200)"
             strokeDasharray="8 3"
           />
           {/* Dynamic domain: top is `max(values) + 1` so the tallest
@@ -452,7 +452,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             tick={renderTick}
           />
           <ChartTooltip
-            cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
+            cursor={{ stroke: 'var(--color-neutral-500)', strokeDasharray: '3 3' }}
             content={<ChartTooltipContent indicator="dot" />}
           />
           <Area
@@ -492,7 +492,7 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="font-sans text-xs font-medium text-ink-500 tracking-tight justify-self-end">
+      <span className="font-sans text-xs font-medium text-neutral-500 tracking-tight justify-self-end">
         {label}
       </span>
       <span
@@ -500,7 +500,7 @@ function BreakdownRow({
         className="size-2 shrink-0 rounded-full"
         style={{ backgroundColor: BREAKDOWN_DOT[tone] }}
       />
-      <span className="font-mono text-xs font-medium tabular-nums text-ink-900 justify-self-end">
+      <span className="font-mono text-xs font-medium tabular-nums text-neutral-900 justify-self-end">
         {value}
       </span>
     </>
@@ -573,7 +573,7 @@ function PageHeader({
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every injection, PII, and credential event your policies caught, anchored to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
         </p>
       </div>
@@ -692,7 +692,7 @@ function CategoryBreakdownCard({
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="font-sans text-base font-medium -tracking-[0.25px] text-ink-900">
+        <CardTitle className="font-sans text-base font-medium -tracking-[0.25px] text-neutral-900">
           {title}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -708,7 +708,7 @@ function CategoryBreakdownCard({
           const labelId = `cmp015-attack-${cat.label.replace(WHITESPACE_GLOBAL_RE, '-').toLowerCase()}`;
           return (
             <div key={cat.label} className="contents">
-              <span id={labelId} className="w-48 shrink-0 font-sans text-sm text-ink-900 truncate" title={cat.label}>
+              <span id={labelId} className="w-48 shrink-0 font-sans text-sm text-neutral-900 truncate" title={cat.label}>
                 {cat.label}
               </span>
               <div
@@ -724,7 +724,7 @@ function CategoryBreakdownCard({
                   style={{ width: `${pct}%`, backgroundColor: cat.color }}
                 />
               </div>
-              <span className="justify-self-end pl-2 whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+              <span className="justify-self-end pl-2 whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {fmtCount(cat.count)}
               </span>
             </div>
@@ -1109,7 +1109,7 @@ function EventsTableSection({
             return (
               <TableRow
                 key={`${row.time}-${i}`}
-                className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-ink-50"
+                className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-neutral-50"
                 onClick={() => setSelectedRow(row)}
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -1128,7 +1128,7 @@ function EventsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          className="font-mono text-sm tabular-nums text-ink-800"
+                          className="font-mono text-sm tabular-nums text-neutral-800"
                         >
                           {formatEventTime(row.time)}
                         </span>
@@ -1145,13 +1145,13 @@ function EventsTableSection({
                       strokeWidth={1.75}
                       aria-hidden
                     />
-                    <span className="font-sans text-sm text-ink-800">{typeMeta.label}</span>
+                    <span className="font-sans text-sm text-neutral-800">{typeMeta.label}</span>
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap max-w-[200px]">
                   <span
                     title={row.conversationId}
-                    className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
+                    className="font-mono text-sm tabular-nums text-neutral-800 truncate block max-w-full"
                   >
                     {row.conversationId}
                   </span>
@@ -1159,13 +1159,13 @@ function EventsTableSection({
                 <TableCell className="whitespace-nowrap font-mono">
                   {(() => {
                     // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
-                    // parenthetical key string dimmed to ink-600.
+                    // parenthetical key string dimmed to neutral-600.
                     const parenIdx = row.key.indexOf(' (');
-                    if (parenIdx === -1) return <span className="text-ink-800">{row.key}</span>;
+                    if (parenIdx === -1) return <span className="text-neutral-800">{row.key}</span>;
                     return (
                       <>
-                        <span className="text-ink-800">{row.key.slice(0, parenIdx)}</span>
-                        <span className="text-ink-600">{row.key.slice(parenIdx)}</span>
+                        <span className="text-neutral-800">{row.key.slice(0, parenIdx)}</span>
+                        <span className="text-neutral-600">{row.key.slice(parenIdx)}</span>
                       </>
                     );
                   })()}
@@ -1259,16 +1259,16 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
-                <FileText className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
+                <FileText className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Message
               </span>
             </SectionHeading>
             <div className="flex flex-col gap-3">
-              <div className="rounded-md border border-border px-4 py-3 text-sm text-ink-900 text-pretty">
+              <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
                 {detail.samplePrompt}
               </div>
               {detail.sampleResponse !== null ? (
-                <div className="rounded-md border border-border px-4 py-3 text-sm text-ink-900 text-pretty">
+                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
                   {detail.sampleResponse}
                 </div>
               ) : null}
@@ -1281,7 +1281,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
+                <ShieldCheck className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Detection
               </span>
             </SectionHeading>
@@ -1297,10 +1297,10 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                     className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
                   >
                     <div className="flex flex-col gap-1 min-w-0">
-                      <span className="font-sans text-sm font-medium text-ink-900">
+                      <span className="font-sans text-sm font-medium text-neutral-900">
                         {check.label}
                       </span>
-                      <span className="font-sans text-xs text-ink-500 text-pretty">
+                      <span className="font-sans text-xs text-neutral-500 text-pretty">
                         {firing ? detail.reason : check.passText}
                       </span>
                     </div>
@@ -1320,7 +1320,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
+                <ArrowLeftRight className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Request
               </span>
             </SectionHeading>
@@ -1328,7 +1328,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-ink-900 tabular-nums">
+                  <span className="font-mono text-neutral-900 tabular-nums">
                     {formatEventTime(row.time)}
                   </span>
                 }
@@ -1342,11 +1342,11 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   return (
                     <span className="font-mono tabular-nums">
                       {parenIdx === -1 ? (
-                        <span className="text-ink-900">{row.key}</span>
+                        <span className="text-neutral-900">{row.key}</span>
                       ) : (
                         <>
-                          <span className="text-ink-900">{row.key.slice(0, parenIdx)}</span>
-                          <span className="text-ink-500">{row.key.slice(parenIdx)}</span>
+                          <span className="text-neutral-900">{row.key.slice(0, parenIdx)}</span>
+                          <span className="text-neutral-500">{row.key.slice(parenIdx)}</span>
                         </>
                       )}
                     </span>

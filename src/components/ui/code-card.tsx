@@ -36,8 +36,8 @@ import { cn } from '@/lib/utils';
 /* ── Token model ─────────────────────────────────────────────────────────── */
 
 export type CodeTone =
-  | 'default'   // ink-900 light · ink-100 (faint white) on dark
-  | 'muted'     // ink-500 light · ink-400 on dark — comments, slashes, dividers
+  | 'default'   // neutral-900 light · neutral-100 (faint white) on dark
+  | 'muted'     // neutral-500 light · neutral-400 on dark — comments, slashes, dividers
   | 'keyword'   // syntax-keyword — curl, -H, -d, export, npm
   | 'string'    // success-2 — quoted strings
   | 'variable'  // syntax-variable — $KEY, interpolated values
@@ -53,8 +53,8 @@ export interface CodeToken {
 export type CodeLine = CodeToken[];
 
 const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
-  default:  'text-ink-900',
-  muted:    'text-ink-500',
+  default:  'text-neutral-900',
+  muted:    'text-neutral-500',
   keyword:  'text-[var(--color-syntax-keyword)]',
   // Brand palette: keys = blue-700 (--color-syntax-property), all literal
   // values = success-700 green (--color-syntax-terminal-blue). One hue per
@@ -68,8 +68,8 @@ const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
-  default:  'text-ink-100',
-  muted:    'text-ink-400',
+  default:  'text-neutral-100',
+  muted:    'text-neutral-400',
   keyword:  'text-[var(--color-syntax-variable)]', // dark terminal: keywords render as amber, matches Paper
   string:   'text-success-500',
   variable: 'text-[var(--color-syntax-variable)]',
@@ -113,7 +113,7 @@ export function CodeCardHeader({
     <div
       data-slot="code-card-header"
       className={cn(
-        'flex items-center justify-between gap-3 px-4 py-2 bg-ink-100 border-b border-ink-100',
+        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-neutral-100',
         className,
       )}
       {...props}
@@ -153,9 +153,9 @@ export function CodeCardTabs({
           // family's lift instead of inlining its own rgba shadow.
           'inline-flex items-center h-6 rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out',
           isActive
-            ? 'bg-white text-ink-900 font-medium border border-ink-200 shadow-xs'
-            : 'text-ink-600 font-medium border border-transparent',
-          interactive && !isActive && 'hover:text-ink-900 hover:bg-white/60',
+            ? 'bg-white text-neutral-900 font-medium border border-neutral-200 shadow-xs'
+            : 'text-neutral-600 font-medium border border-transparent',
+          interactive && !isActive && 'hover:text-neutral-900 hover:bg-white/60',
         );
         if (interactive) {
           return (
@@ -282,11 +282,11 @@ export function TerminalCard({
     <div
       data-slot="terminal-card"
       className={cn(
-        'flex flex-col overflow-hidden rounded-md bg-ink-800',
+        'flex flex-col overflow-hidden rounded-md bg-neutral-800',
         className,
       )}
     >
-      <div className="flex items-center gap-2 px-4 py-2 bg-ink-700 border-b border-ink-900/60">
+      <div className="flex items-center gap-2 px-4 py-2 bg-neutral-700 border-b border-neutral-900/60">
         {/* macOS traffic-light affordances live in their own token family
             (--color-traffic-red/amber/green) so we don't reuse the semantic
             danger/warning/success ramps for chrome decoration. */}
@@ -295,7 +295,7 @@ export function TerminalCard({
           <span className="size-2 rounded-full bg-traffic-amber" />
           <span className="size-2 rounded-full bg-traffic-green" />
         </div>
-        <span className="ml-auto font-mono text-xs/4 text-ink-400">
+        <span className="ml-auto font-mono text-xs/4 text-neutral-400">
           {title}
         </span>
       </div>

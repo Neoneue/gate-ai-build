@@ -25,10 +25,10 @@ function Card({
       data-density={density}
       className={cn(
         // Skill: surfaces.md — `--shadow-border` provides a layered ring
-        // (1px ink-800/6%) plus subtle ambient lift in one token, replacing
+        // (1px neutral-800/6%) plus subtle ambient lift in one token, replacing
         // the old hard `border + shadow-xs` combo. Adapts to any background
         // without re-tinting the edge.
-        "group/card flex flex-col overflow-hidden rounded-md bg-white border border-border shadow-xs text-sm text-ink-900 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[density=default]:gap-4 data-[density=default]:py-4 data-[density=flush]:gap-0 data-[density=flush]:py-0 data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        "group/card flex flex-col overflow-hidden rounded-md bg-white border border-border shadow-xs text-sm text-neutral-900 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[density=default]:gap-4 data-[density=default]:py-4 data-[density=flush]:gap-0 data-[density=flush]:py-0 data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         className
       )}
       {...props}
@@ -70,7 +70,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("font-sans text-sm/5 text-ink-500", className)}
+      className={cn("font-sans text-sm/5 text-neutral-500", className)}
       {...props}
     />
   )

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Info, Key } from 'lucide-react';
 import {
   Bar,
@@ -137,6 +137,20 @@ export function Activity() {
   // range selector.
   const [range, setRange] = useState<Range>('all');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+
+  // Deep-link support: `?range=24h|7d|30d|all` lets Overview's KPI tiles
+  // drop the user into the right slice in one click. Read on mount, then
+  // ignore — manual range changes don't sync back to the URL (one-way),
+  // mirroring the Conversations `?open=` pattern.
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const r = searchParams.get('range');
+    if (r === '24h' || r === '7d' || r === '30d' || r === 'all') {
+      setRange(r);
+      setCustomRange(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <DashboardChrome
@@ -282,7 +296,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
         value={k.requests.value}
         delta={k.requests.delta}
         deltaNote={note}
-        spark={<CompactSpark colorVar="var(--color-ink-500)" data={k.requests.spark} />}
+        spark={<CompactSpark colorVar="var(--color-neutral-500)" data={k.requests.spark} />}
       />
       <CompactKpi
         flat
@@ -310,7 +324,7 @@ const DIMENSION_OPTIONS: { value: Dimension; label: string }[] = [
  *  cardinality in MVP). API keys fall back to "top 5 + Other" since key
  *  cardinality is unbounded — a 100-key workspace can't be honestly stacked.
  *
- *  `color` overrides the palette slot — Other recedes to ink-300 so the
+ *  `color` overrides the palette slot — Other recedes to neutral-300 so the
  *  named series carry the visual weight. */
 const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slot: number; color?: string }[]> = {
   model: [
@@ -465,7 +479,7 @@ const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
  *  Seeded LCG so the shape is deterministic across renders. Last bucket
  *  absorbs floating-point remainder so per-series sum exactly equals
  *  `total` — required for the chart-sum = KPI invariant. */
-function distributeSeries(total: number, count: number, seed: number): number[] {
+export function distributeSeries(total: number, count: number, seed: number): number[] {
   let s = (seed * 2654435769) >>> 0 || 1;
   const rand = () => {
     s = (s * 1664525 + 1013904223) >>> 0;
@@ -610,7 +624,7 @@ const OTHERS_KEY = '__others';
 /** Ink-300 — visually subordinate to the saturated CHART_PALETTE slots but
  *  still clearly distinguishable from the card background. Used for the
  *  Others rollup bar segment and panel swatch. */
-const OTHERS_COLOR = 'var(--color-ink-300)';
+const OTHERS_COLOR = 'var(--color-neutral-300)';
 
 /** Hoisted BarChart prop literals. Recharts treats inline objects as new
  *  props each render and re-runs layout/style work it could otherwise skip.
@@ -664,7 +678,7 @@ function TrendBreakdownPanel({
               style={{ gridTemplateColumns: '9ch min-content 4ch' }}
             >
               <span className="text-foreground text-right">{fmtValue(total)}</span>
-              <span className="text-ink-400">·</span>
+              <span className="text-neutral-400">·</span>
               <span className="text-foreground text-right">{pctStr}</span>
             </div>
           </div>
@@ -869,7 +883,7 @@ function TrendCard({
               <CartesianGrid
                 horizontal
                 vertical={false}
-                stroke="var(--color-ink-200)"
+                stroke="var(--color-neutral-200)"
                 strokeDasharray="8 3"
               />
               <XAxis
@@ -1397,7 +1411,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                         {...props}
                         type="button"
                         aria-label="What's the difference between Gate and BYOK?"
-                        className="inline-flex items-center justify-center rounded-xs text-ink-400 hover:text-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex items-center justify-center rounded-xs text-neutral-400 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                     )}
                   >
@@ -1428,36 +1442,36 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           {pageRows.map((row) => (
             <TableRow key={row.key} className="hover:bg-transparent">
               <TableCell className="whitespace-nowrap font-mono">
-                {/* `name (sk-gw-NNN)` — name in the data tier (ink-800), the
-                    parenthetical gateway id dimmed to muted-foreground (ink-500).
-                    Three-tier table policy is 500/800/900; ink-600 would
+                {/* `name (sk-gw-NNN)` — name in the data tier (neutral-800), the
+                    parenthetical gateway id dimmed to muted-foreground (neutral-500).
+                    Three-tier table policy is 500/800/900; neutral-600 would
                     violate it. Matches Security.tsx:1338. */}
-                <span className="text-ink-800">{row.label}</span>
+                <span className="text-neutral-800">{row.label}</span>
                 {KEY_SUFFIX[row.key] ? (
                   <span className="text-muted-foreground"> ({KEY_SUFFIX[row.key]})</span>
                 ) : null}
               </TableCell>
               <TableCell className="whitespace-nowrap">
-                <span className="font-sans text-sm text-ink-800">
+                <span className="font-sans text-sm text-neutral-800">
                   {row.owner}
                 </span>
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Badge variant="outline">{row.path}</Badge>
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-800">
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-neutral-800">
                 {fmtInt(row.requests)}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-800">
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-neutral-800">
                 {fmtTokens(row.tokensIn)}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-ink-800">
+              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-neutral-800">
                 {fmtTokens(row.tokensOut)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-foreground">
                 {row.path === 'BYOK' ? (
                   <>
-                    <span aria-hidden className="text-ink-400">—</span>
+                    <span aria-hidden className="text-neutral-400">—</span>
                     <span className="sr-only">No Gateway spend (BYOK)</span>
                   </>
                 ) : fmtUsd(row.spend)}

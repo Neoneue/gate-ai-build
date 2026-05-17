@@ -4,6 +4,7 @@ import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import { IconActionButton } from '@/components/ui/icon-action-button';
 import {
   Popover,
   PopoverContent,
@@ -145,47 +146,32 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      {/* A11y: the trigger surface is split into two sibling <button> elements
-          so there is no button-in-button (WCAG 4.1.2 / HTML validity). The
-          outer div carries the visual Button styling; PopoverTrigger wraps only
-          the calendar-open button. The clear ✕ is a fully independent button
-          with its own focus stop, keyboard handler, and stopPropagation so it
-          does NOT open the popover. */}
-      <div
-        className={cn(
-          // Mirror buttonVariants({ variant: 'outline', size }) exactly so
-          // the composite looks identical to the old single Button trigger.
-          'group/button inline-flex shrink-0 items-center rounded-sm border border-border bg-background text-sm font-medium whitespace-nowrap select-none',
-          size === 'sm' ? 'h-8' : 'h-9',
-          size === 'default' && 'h-10',
-          className,
-        )}
-      >
+      {/* Trigger = real Button (outline variant) consuming the primitive's
+          recipe. Clear ✕ sits as a sibling IconActionButton — independent
+          focus stop, own aria-label, stopPropagation on click so it does
+          not also open the popover. No shared border, no hand-rolled
+          chrome; the two clickable surfaces are visually adjacent with a
+          small gap. */}
+      <div className={cn('inline-flex shrink-0 items-center gap-1', className)}>
         <PopoverTrigger
           render={
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size={size === 'sm' ? 'sm' : 'lg'}
               aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
-              className={cn(
-                'inline-flex items-center gap-2 h-full rounded-sm px-3 text-sm font-medium transition-[colors,box-shadow] duration-150 ease-out outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
-                // When a value is set, shrink right padding to seat the clear ✕ tightly
-                value ? 'pr-1' : 'pr-3',
-              )}
-            />
+            >
+              <CalendarIcon data-icon="inline-start" aria-hidden />
+              <span>{value ? formatRange(value) : 'Custom'}</span>
+            </Button>
           }
-        >
-          <CalendarIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <span>{value ? formatRange(value) : 'Custom'}</span>
-        </PopoverTrigger>
+        />
         {value ? (
-          <button
-            type="button"
+          <IconActionButton
             aria-label="Clear custom range"
             onClick={handleClear}
-            className="inline-flex items-center justify-center size-5 mr-2 shrink-0 rounded-xs text-ink-500 hover:text-ink-900 hover:bg-ink-100 transition-colors duration-100 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <XIcon className="size-3" strokeWidth={1.75} aria-hidden />
-          </button>
+          </IconActionButton>
         ) : null}
       </div>
       <PopoverContent side="bottom" align="end" sideOffset={6} className="w-auto">
@@ -201,7 +187,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
         />
         <div className="grid grid-cols-2 gap-3 border-t border-border p-3">
           <div className="flex flex-col gap-1">
-            <span className="font-sans text-xs font-medium text-ink-600">
+            <span className="font-sans text-xs font-medium text-neutral-600">
               Start time
             </span>
             <div className="flex items-center gap-1">
@@ -224,7 +210,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
                   ))}
                 </SelectContent>
               </Select>
-              <span className="font-mono text-xs text-ink-400" aria-hidden>
+              <span className="font-mono text-xs text-neutral-400" aria-hidden>
                 :
               </span>
               <Select
@@ -249,7 +235,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="font-sans text-xs font-medium text-ink-600">
+            <span className="font-sans text-xs font-medium text-neutral-600">
               End time
             </span>
             <div className="flex items-center gap-1">
@@ -272,7 +258,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
                   ))}
                 </SelectContent>
               </Select>
-              <span className="font-mono text-xs text-ink-400" aria-hidden>
+              <span className="font-mono text-xs text-neutral-400" aria-hidden>
                 :
               </span>
               <Select

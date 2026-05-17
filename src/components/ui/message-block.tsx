@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  * identifier). The two halves on one metadata line carry different voices
  * for different jobs.
  *
- * Bubble border-only (no fill). Earlier tone-tinted fills (bg-ink-100 /
+ * Bubble border-only (no fill). Earlier tone-tinted fills (bg-neutral-100 /
  * bg-blue-50) were too heavy and read as a chat-app aesthetic. Outline
  * keeps per-message container shape without the visual weight. Assistant
  * gets a blue-100 border to separate model output from user/tool input.
@@ -80,9 +80,9 @@ export function MessageBlock({
   const baseBubbleBorder =
     tone === 'warn'
       ? 'border-warning-200 bg-warning-50'
-      : 'border-border bg-ink-50';
+      : 'border-border bg-neutral-50';
   const bubbleClasses = cn(
-    'rounded-md border p-4 text-sm text-ink-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
+    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
     selected
       ? // Selected — ring color tracks tone so the warn semantic stays
         // intact through the selection action layer. Warn-state selection
@@ -92,7 +92,7 @@ export function MessageBlock({
         ? 'border-warning-500 bg-warning-50 ring-1 ring-warning-500'
         : 'border-blue-500 ring-1 ring-blue-500'
       : baseBubbleBorder,
-    onClick && !selected && 'hover:border-ink-400 cursor-pointer',
+    onClick && !selected && 'hover:border-neutral-400 cursor-pointer',
     onClick && 'text-left w-full',
   );
 
@@ -107,18 +107,18 @@ export function MessageBlock({
       className={cn('flex flex-col gap-2', className)}
       data-request-id={requestId}
     >
-      <div className="flex items-center justify-between font-sans text-xs font-medium text-ink-900">
+      <div className="flex items-center justify-between font-sans text-xs font-medium text-neutral-900">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (
             <>
-              <span className="text-ink-400"> · </span>
-              <span className="font-mono font-normal text-ink-700">{tool}</span>
+              <span className="text-neutral-400"> · </span>
+              <span className="font-mono font-normal text-neutral-700">{tool}</span>
             </>
           ) : null}
         </span>
         {time ? (
-          <span className="font-mono font-normal text-ink-500 tabular-nums shrink-0 ml-2">
+          <span className="font-mono font-normal text-neutral-500 tabular-nums shrink-0 ml-2">
             {time}
           </span>
         ) : null}
@@ -132,8 +132,8 @@ export function MessageBlock({
         {body}
       </Bubble>
       {requestId ? (
-        <span className="font-mono text-xs text-ink-500">
-          <span className="text-ink-400" aria-hidden>↳ </span>
+        <span className="font-mono text-xs text-neutral-500">
+          <span className="text-neutral-400" aria-hidden>↳ </span>
           {requestId}
         </span>
       ) : null}

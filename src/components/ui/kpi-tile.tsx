@@ -31,14 +31,14 @@ export function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-sans text-2xl/8 font-medium text-ink-500">
+          <span className="font-sans text-2xl/8 font-medium text-neutral-500">
             {valueSuffix}
           </span>
         ) : null}
         {delta ? <DeltaTag delta={delta} /> : null}
       </div>
       {caption ? (
-        <p className="font-sans text-sm text-ink-500 m-0">{caption}</p>
+        <p className="font-sans text-sm text-neutral-500 m-0">{caption}</p>
       ) : null}
       {spark ? <div className="mt-1">{spark}</div> : null}
     </div>

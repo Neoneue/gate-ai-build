@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
  *
  * Recipe (locked):
  *   <code> element (semantic — these blobs ARE machine output)
- *   font-mono text-sm text-ink-900
+ *   font-mono text-sm text-neutral-900
  *   break-all            (long JSON one-liners must break inside tokens
  *                         to fit a message bubble's content width)
  *
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TOOL_RESULT_CODE_BASE =
-  'font-mono text-sm text-ink-900 break-all';
+  'font-mono text-sm text-neutral-900 break-all';
 
 export type ToolResultCodeProps = React.HTMLAttributes<HTMLElement>;
 

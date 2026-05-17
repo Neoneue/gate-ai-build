@@ -49,10 +49,10 @@ export function EmptyState({
       )}
     >
       {icon}
-      <h3 className="font-sans text-base font-medium text-ink-900 m-0">
+      <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
         {title}
       </h3>
-      <p className="font-sans text-sm text-ink-500 max-w-md text-pretty m-0">
+      <p className="font-sans text-sm text-neutral-500 max-w-md text-pretty m-0">
         {body}
       </p>
       {action ? <div className="mt-1">{action}</div> : null}

@@ -138,16 +138,16 @@ export function Canvas({ children }: { children: ReactNode }) {
 function CanvasControls({ scale, onReset }: { scale: number; onReset: () => void }) {
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-sm bg-white border border-ink-200 shadow-[0_4px_16px_rgba(17,20,23,0.10)] px-2 py-1"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-sm bg-white border border-neutral-200 shadow-[0_4px_16px_rgba(17,20,23,0.10)] px-2 py-1"
       onWheel={(e) => e.stopPropagation()}
     >
-      <span className="font-mono text-xs tabular-nums text-ink-500 px-1">
+      <span className="font-mono text-xs tabular-nums text-neutral-500 px-1">
         {Math.round(scale * 100)}%
       </span>
       <button
         type="button"
         onClick={onReset}
-        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-ink-600 hover:text-ink-900 hover:bg-ink-50 font-mono text-xs"
+        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs"
       >
         Reset
       </button>

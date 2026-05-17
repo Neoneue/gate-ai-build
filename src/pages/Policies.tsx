@@ -284,7 +284,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Policies</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to
         respond.
@@ -371,7 +371,7 @@ function PolicyCard({
   const Icon = config.icon;
 
   return (
-    // When expanded, the ink-50 body tray runs full-bleed to the card's
+    // When expanded, the neutral-50 body tray runs full-bleed to the card's
     // bottom edge — drop the Card's bottom padding so there's no white
     // gutter below the tray. Must match the `data-[density=default]:`
     // variant or tailwind-merge won't override the Card's `py-4`.
@@ -382,15 +382,15 @@ function PolicyCard({
       {/* Header row — always visible. */}
       <div className="flex items-start gap-3 px-4">
         {/* Bare lucide icon — no wrapper box. */}
-        <Icon className="size-5 text-ink-700 mt-1 shrink-0" aria-hidden />
+        <Icon className="size-5 text-neutral-700 mt-1 shrink-0" aria-hidden />
         <div className="flex flex-col gap-1 min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-sans text-base/6 font-medium text-ink-900 m-0">
+            <h3 className="font-sans text-base/6 font-medium text-neutral-900 m-0">
               {config.name}
             </h3>
             <Badge variant="neutral">{config.scanTag}</Badge>
           </div>
-          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
             {config.description}
           </p>
         </div>
@@ -403,7 +403,7 @@ function PolicyCard({
       </div>
 
       {/* Expanded settings body — only when the policy is enabled. The
-          ink-50 tray + nested white Cards group the two columns so they
+          neutral-50 tray + nested white Cards group the two columns so they
           read as panels, not free-floating controls. */}
       {state.enabled ? (
         <div className="grid grid-cols-2 items-start gap-4 border-t border-border bg-card p-4">
@@ -442,7 +442,7 @@ function SettingsHalf({
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
           <SectionHeading as="h4">Sensitivity</SectionHeading>
-          <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+          <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
             How aggressive to be when scoring inputs
           </p>
         </div>
@@ -454,7 +454,7 @@ function SettingsHalf({
           onChange={onSensitivityChange}
           className="mt-4"
         />
-        <p className="font-sans text-xs text-ink-500 m-0 mt-3 tracking-tight text-pretty">
+        <p className="font-sans text-xs text-neutral-500 m-0 mt-3 tracking-tight text-pretty">
           {config.sensitivity.caption(value)}
         </p>
       </div>
@@ -468,7 +468,7 @@ function SettingsHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4">Scan direction</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
           Which side of the request to scan
         </p>
       </div>
@@ -480,7 +480,7 @@ function SettingsHalf({
         onChange={onScanDirectionChange}
         className="mt-4"
       />
-      <p className="font-sans text-xs text-ink-500 m-0 mt-3 tracking-tight text-pretty">
+      <p className="font-sans text-xs text-neutral-500 m-0 mt-3 tracking-tight text-pretty">
         {scan.caption}
       </p>
     </div>
@@ -503,7 +503,7 @@ function ActionHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4" id={headingId}>Action on detection</SectionHeading>
-        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
           {config.action.helper}
         </p>
       </div>
@@ -518,8 +518,8 @@ function ActionHalf({
               className={
                 'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
                 (selected
-                  ? 'border-foreground bg-ink-50'
-                  : 'border-border bg-transparent hover:bg-ink-50')
+                  ? 'border-foreground bg-neutral-50'
+                  : 'border-border bg-transparent hover:bg-neutral-50')
               }
             >
               <RadioGroupItem
@@ -530,16 +530,16 @@ function ActionHalf({
               />
               <div className="flex flex-col gap-1 min-w-0">
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span id={nameId} className="font-sans text-sm font-medium text-ink-900">
+                  <span id={nameId} className="font-sans text-sm font-medium text-neutral-900">
                     {opt.name}
                   </span>
                   {opt.flag ? (
-                    <span className="font-sans text-xs font-medium uppercase tracking-wide text-ink-500">
+                    <span className="font-sans text-xs font-medium uppercase tracking-wide text-neutral-500">
                       {opt.flag}
                     </span>
                   ) : null}
                 </div>
-                <span id={descId} className="font-sans text-xs text-ink-500 tracking-tight text-pretty">
+                <span id={descId} className="font-sans text-xs text-neutral-500 tracking-tight text-pretty">
                   {opt.description}
                 </span>
               </div>

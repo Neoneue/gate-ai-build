@@ -17,7 +17,7 @@ export interface SegmentedProps {
 /**
  * Two visual modes (matches CMP-001.5):
  *  - "pill": gray container, selected gets a sliding white pill
- *  - "group": adjacent borders, selected gets ink-900 fill
+ *  - "group": adjacent borders, selected gets neutral-900 fill
  */
 export function Segmented({ options, value, onChange, variant = 'pill', size = 'default', className, 'aria-label': ariaLabel }: SegmentedProps) {
   if (variant === 'group') {
@@ -36,8 +36,8 @@ export function Segmented({ options, value, onChange, variant = 'pill', size = '
                 'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                 size === 'sm' ? 'h-7' : 'h-8',
                 selected
-                  ? 'bg-ink-900 text-white border border-ink-900'
-                  : 'bg-white text-ink-900 border-t border-b border-r border-border',
+                  ? 'bg-neutral-900 text-white border border-neutral-900'
+                  : 'bg-white text-neutral-900 border-t border-b border-r border-border',
                 i === 0 && !selected && 'border-l',
               )}
             >
@@ -101,7 +101,7 @@ function SegmentedPillVariant({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        'relative inline-flex self-start rounded-sm p-1 bg-ink-100 border border-border',
+        'relative inline-flex self-start rounded-sm p-1 bg-neutral-100 border border-border',
         className,
       )}
     >
@@ -139,7 +139,7 @@ function SegmentedPillVariant({
               // (skill: performance.md — never `transition-all`).
               'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
               size === 'sm' ? 'py-1 px-3' : 'py-2 px-4',
-              selected ? 'text-ink-900' : 'text-ink-600 hover:text-ink-900',
+              selected ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900',
             )}
           >
             {opt.label}

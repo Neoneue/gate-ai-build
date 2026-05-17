@@ -81,7 +81,7 @@ function SelectValue({ className, children, ...props }: SelectPrimitive.Value.Pr
 const selectTriggerVariants = cva(
   // Surface mirrors <Input /> so triggers and inputs share a row.
   // Skill: performance.md — only colors + focus-ring shadow animate; never `transition-all`.
-  "flex w-fit items-center justify-between rounded-sm border border-border bg-ink-50 text-ink-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-ink-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "flex w-fit items-center justify-between rounded-sm border border-border bg-neutral-50 text-neutral-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-neutral-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       size: {
@@ -186,7 +186,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-xs h-8 py-0 pr-8 pl-3 text-sm outline-hidden select-none data-[highlighted]:bg-ink-100 focus:bg-ink-100 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex w-full cursor-pointer items-center gap-2 rounded-xs h-8 py-0 pr-8 pl-3 text-sm outline-hidden select-none data-[highlighted]:bg-neutral-100 focus:bg-neutral-100 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

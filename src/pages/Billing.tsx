@@ -62,7 +62,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Billing</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
         Plan, payment method, and invoice history.
       </p>
     </div>
@@ -88,10 +88,10 @@ function PlanCard() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
-        <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
+        <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
           BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail anchored to Constellation's Digital Evidence layer.
         </p>
-        <p className="font-sans text-sm text-ink-500 m-0">Free plan — no renewal</p>
+        <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
       <CardFooter className="justify-end gap-4 border-t border-border">
         <Button>
@@ -148,7 +148,7 @@ function CreditsCard() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">$24.98</HeroNumeric>
-        <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
+        <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
           Used for requests routed through our gateway. Each call is charged at our per-model rate. Security and audit are included.
         </p>
         <dl className="flex flex-col gap-2 text-sm m-0 mt-3">
@@ -223,7 +223,7 @@ function AddCreditsDialog({
         style={{ width: 500, minWidth: 500, maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
             Add credits
           </DialogTitle>
           <DialogDescription>
@@ -253,8 +253,8 @@ function AddCreditsDialog({
                 className={cn(
                   'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
                   isSelected
-                    ? 'border-border bg-muted text-ink-900'
-                    : 'border-border bg-card text-ink-900 hover:bg-ink-50',
+                    ? 'border-border bg-muted text-neutral-900'
+                    : 'border-border bg-card text-neutral-900 hover:bg-neutral-50',
                 )}
               >
                 {formatCurrency(value, { minFrac: 0, maxFrac: 0 })}
@@ -267,14 +267,14 @@ function AddCreditsDialog({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="add-credits-custom"
-            className="font-sans text-sm font-medium text-ink-500 m-0"
+            className="font-sans text-sm font-medium text-neutral-500 m-0"
           >
             Amount (USD)
           </label>
           <div className="relative">
             <span
               aria-hidden
-              className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none"
             >
               $
             </span>
@@ -296,7 +296,7 @@ function AddCreditsDialog({
           </div>
         </div>
 
-        <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
           You'll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
         </p>
 
@@ -347,7 +347,7 @@ function AutoRechargeDialog({
         style={{ width: 500, minWidth: 500, maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
             Auto-recharge
           </DialogTitle>
           <DialogDescription>
@@ -356,12 +356,12 @@ function AutoRechargeDialog({
         </DialogHeader>
 
         {/* Enable card */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-ink-50 p-4">
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <p id="ar-enable-label" className="font-sans text-sm font-medium text-ink-900 m-0">
+            <p id="ar-enable-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
               Enable auto-recharge
             </p>
-            <p className="font-sans text-sm text-ink-500 m-0 text-pretty">
+            <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
               We&apos;ll charge your default card to top up.
             </p>
           </div>
@@ -376,11 +376,11 @@ function AutoRechargeDialog({
         <div className="grid grid-cols-2 gap-4">
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="ar-threshold" className="font-sans text-sm font-medium text-ink-500 m-0">
+            <label htmlFor="ar-threshold" className="font-sans text-sm font-medium text-neutral-500 m-0">
               When balance drops below
             </label>
             <div className="relative">
-              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
               <Input
                 id="ar-threshold"
                 type="number"
@@ -398,11 +398,11 @@ function AutoRechargeDialog({
 
           {/* Top-up amount */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="ar-topup" className="font-sans text-sm font-medium text-ink-500 m-0">
+            <label htmlFor="ar-topup" className="font-sans text-sm font-medium text-neutral-500 m-0">
               Top-up amount
             </label>
             <div className="relative">
-              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
               <Input
                 id="ar-topup"
                 type="number"
@@ -421,11 +421,11 @@ function AutoRechargeDialog({
 
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="ar-cap" className="font-sans text-sm font-medium text-ink-500 m-0">
-            Monthly cap <span className="font-normal text-ink-400">(leave blank for no cap)</span>
+          <label htmlFor="ar-cap" className="font-sans text-sm font-medium text-neutral-500 m-0">
+            Monthly cap <span className="font-normal text-neutral-400">(leave blank for no cap)</span>
           </label>
           <div className="relative">
-            <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-500 pointer-events-none">$</span>
+            <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
             <Input
               id="ar-cap"
               type="number"
@@ -442,14 +442,14 @@ function AutoRechargeDialog({
         </div>
 
         {enabled && thresholdValid && topUpValid && (
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-ink-50 px-4 py-3">
-            <p className="font-sans text-sm text-ink-800 m-0 text-pretty">
+          <div className="flex flex-col gap-2 rounded-md border border-border bg-neutral-50 px-4 py-3">
+            <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
               When your balance drops below{' '}
-              <span className="font-medium text-ink-900">${threshold}</span>, we&apos;ll add{' '}
-              <span className="font-medium text-ink-900">${topUp}</span> to your account
+              <span className="font-medium text-neutral-900">${threshold}</span>, we&apos;ll add{' '}
+              <span className="font-medium text-neutral-900">${topUp}</span> to your account
               {monthlyCap !== null && capValid
-                ? <>, up to <span className="font-medium text-ink-900">${monthlyCap}/month</span></>
-                : <> with <span className="font-medium text-ink-900">no monthly cap</span></>}
+                ? <>, up to <span className="font-medium text-neutral-900">${monthlyCap}/month</span></>
+                : <> with <span className="font-medium text-neutral-900">no monthly cap</span></>}
               .
             </p>
           </div>
@@ -483,12 +483,12 @@ function CreditStatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="text-ink-500">{label}</dt>
+      <dt className="text-neutral-500">{label}</dt>
       <dd
         className={
           mono
-            ? 'font-mono tabular-nums text-ink-900 m-0'
-            : 'text-ink-900 m-0'
+            ? 'font-mono tabular-nums text-neutral-900 m-0'
+            : 'text-neutral-900 m-0'
         }
       >
         {value}
@@ -540,12 +540,12 @@ function HistorySection() {
         <TableBody>
           {HISTORY_ROWS.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap text-ink-800">{formatDate(row.date)}</TableCell>
-              <TableCell className="whitespace-nowrap text-ink-800">{row.type}</TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800">{formatDate(row.date)}</TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>
               <TableCell
                 className={cn(
                   'text-right whitespace-nowrap font-mono tabular-nums',
-                  row.amount > 0 ? 'text-success-700' : 'text-ink-800',
+                  row.amount > 0 ? 'text-success-700' : 'text-neutral-800',
                 )}
               >
                 {fmtAmount(row.amount)}

@@ -172,7 +172,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>API Keys</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
         </p>
       </div>
@@ -339,15 +339,15 @@ function UsageInfo() {
     // wrapping, with breathing room on the right.
     <section className="flex flex-col gap-6 max-w-3xl">
       <div className="flex flex-col gap-1">
-        <h3 className="font-sans text-lg font-medium text-ink-900 m-0">
+        <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
           Using your key
         </h3>
-        <p className="font-sans text-sm text-ink-500 m-0">
+        <p className="font-sans text-sm text-neutral-500 m-0">
           Point your client at the gateway and send your key in the{' '}
-          <code className="font-mono text-ink-800 bg-ink-100 rounded-xs px-2 py-1">X-Gateway-Api-Key</code>{' '}
+          <code className="font-mono text-neutral-800 bg-neutral-100 rounded-xs px-2 py-1">X-Gateway-Api-Key</code>{' '}
           header. The gateway is provider-neutral — call it with curl, the OpenAI SDK, Anthropic SDK, or any other client that lets you override the base URL.
         </p>
-        <p className="font-sans text-sm text-ink-500 m-0">
+        <p className="font-sans text-sm text-neutral-500 m-0">
           To learn more about how to use your key, check out our{' '}
           <TextLink
             as="a"
@@ -410,11 +410,11 @@ function KeysTable({
           {rows.map((row) => (
             <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
               {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
-                  to ink-600. Single-line two-tone form shared with the
+                  to neutral-600. Single-line two-tone form shared with the
                   Events / Requests / Activity Key columns. */}
               <TableCell className="whitespace-nowrap font-mono">
-                <span className="text-ink-800">{row.name}</span>
-                <span className="text-ink-600"> ({row.masked})</span>
+                <span className="text-neutral-800">{row.name}</span>
+                <span className="text-neutral-600"> ({row.masked})</span>
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {row.revoked ? (
@@ -423,13 +423,13 @@ function KeysTable({
                   <Badge variant="success">Active</Badge>
                 )}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />
               </TableCell>
-              <TableCell className="whitespace-nowrap text-sm text-ink-500">
+              <TableCell className="whitespace-nowrap text-sm text-neutral-500">
                 {row.lastUsed}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">
@@ -497,7 +497,7 @@ function CreateKeyDialog({
           className="flex flex-col gap-4"
         >
           <DialogHeader>
-            <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
               Create API key
             </DialogTitle>
             <DialogDescription>
@@ -508,10 +508,10 @@ function CreateKeyDialog({
           {/* Name — required */}
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
-              <Label htmlFor="apikey-name" className="text-ink-600 font-medium text-sm">
+              <Label htmlFor="apikey-name" className="text-neutral-600 font-medium text-sm">
                 Name
               </Label>
-              <span className="font-sans text-xs text-ink-500">
+              <span className="font-sans text-xs text-neutral-500">
                 Shown in logs and audit events.
               </span>
             </div>
@@ -587,7 +587,7 @@ function KeyCreatedDialog({
               className="size-5 shrink-0 text-success-600"
               strokeWidth={1.75}
             />
-            <DialogTitle className="font-sans text-lg/6 font-medium text-ink-900">
+            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
               Key created. Copy it now.
             </DialogTitle>
           </div>
@@ -598,16 +598,16 @@ function KeyCreatedDialog({
 
         {/* Key display — one merged surface: mono value + Copy split by a
             hairline divider. Custom button chrome (via useCopyFeedback) so the
-            Copy segment sits flush inside the ink-100 well, no nested border. */}
-        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-ink-100">
-          <div className="flex-1 px-3 py-2 font-mono text-sm text-ink-800 break-all">
+            Copy segment sits flush inside the neutral-100 well, no nested border. */}
+        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-neutral-100">
+          <div className="flex-1 px-3 py-2 font-mono text-sm text-neutral-800 break-all">
             {fullKey}
           </div>
           <button
             type="button"
             onClick={trigger}
             aria-label={copied ? 'Copied' : 'Copy API key'}
-            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-ink-600 transition-colors duration-150 ease-out hover:bg-ink-200 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-colors duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
           >
             {copied ? (
               <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
@@ -640,7 +640,7 @@ function KeyCreatedDialog({
           />
           <Label
             htmlFor="apikey-saved-confirm"
-            className="text-ink-700 text-sm font-normal"
+            className="text-neutral-700 text-sm font-normal"
           >
             I've saved this key to a secret manager.
           </Label>

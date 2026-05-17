@@ -50,7 +50,7 @@ export function DashboardChrome({
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
         />
-        <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-ink-50">
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-neutral-50">
           <DashTopBar
             sidebarExpanded={sidebarExpanded}
             onToggleSidebar={onToggleSidebar}
@@ -89,7 +89,7 @@ function DashTopBar({
           aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           aria-expanded={sidebarExpanded}
           onClick={onToggleSidebar}
-          className="-ml-2 text-ink-500 hover:text-ink-700 aria-expanded:bg-transparent aria-expanded:text-ink-500 hover:aria-expanded:text-ink-700"
+          className="-ml-2 text-neutral-500 hover:text-neutral-700 aria-expanded:bg-transparent aria-expanded:text-neutral-500 hover:aria-expanded:text-neutral-700"
         >
           {/* Contextual icon cross-fade. Both icons stay in DOM,
               absolute-positioned; toggle scale/opacity/blur. The skill's

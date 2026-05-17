@@ -3,37 +3,16 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   BookOpen,
   ChevronRight,
+  Gauge,
   RefreshCw,
   Shield,
-  Sparkles,
 } from 'lucide-react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
+import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
-import { SegmentedPill } from '@/components/ui/segmented-pill';
 import {
   Table,
   TableBody,
@@ -43,8 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { type Vendor } from '@/components/icons/vendor-meta';
-import { CHART_PALETTE } from '@/lib/chart-palette';
+import { VendorAvatar, VENDOR_META } from '@/components/icons/vendor-meta';
 import {
   type EventRow,
   ACTION_BADGE,
@@ -53,26 +31,39 @@ import {
   formatEventTime,
   ThreatEventDetailDialog,
 } from '@/pages/Security';
-import { EVENT_ROWS as AUDIT_EVENT_ROWS } from '@/pages/AuditTrail';
-import { TOTAL_7D_BASE_DOLLARS } from '@/pages/Activity';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { TOTAL_7D_BASE_DOLLARS, distributeSeries } from '@/pages/Activity';
+import { CONVERSATION_ROWS, KEY_SUFFIX as CONVERSATION_KEY_SUFFIX, type ConversationRow } from '@/pages/Conversations';
+import { formatCurrency, formatDateTime, formatNumber } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
-// KPI-rail values derived from the canonical security + audit seeds so the
-// numbers reconcile with the Security and Audit Trail pages instead of
-// drifting away as separate constants. "Threats stopped" is the count of
-// security events (every event represents a blocked / flagged / redacted
-// threat); "Events anchored" is the count of audit-trail entries (every
-// entry is DE-anchored by the gateway pipeline). Deltas + sparks stay
-// hand-authored — there's no historical mock data to derive trend from.
-const THREATS_STOPPED_COUNT = EVENT_ROWS.length;
-const ANCHORED_EVENTS_COUNT = AUDIT_EVENT_ROWS.length;
+// KPI-rail values derived from the canonical security + spend seeds so the
+// numbers reconcile with Security and Activity instead of drifting as
+// separate constants. "Threats detected" is the count of security events
+// (every event represents a blocked / flagged / redacted threat). Deltas
+// and sparks stay hand-authored — there's no historical mock data to derive
+// trend from.
+const THREATS_DETECTED_COUNT = EVENT_ROWS.length;
 // "Spend this month" reuses Activity's canonical 7d baseline scaled to
 // 30d (Activity's internal scale for the '30d' preset is 4.2 — see the
 // SCALE map at line ~110 of Activity.tsx). Keeping the multiplier
 // inline reconciles the Overview tile with Activity for the same
 // window. When real spend data lands, the constant evaporates.
 const SPEND_THIS_MONTH_DOLLARS = TOTAL_7D_BASE_DOLLARS * 4.2;
+// "Daily spend" is the 7d baseline averaged across days — single source of
+// truth shared with Activity.
+const DAILY_SPEND_DOLLARS = TOTAL_7D_BASE_DOLLARS / 7;
+
+// Sparkline series for the KPI rail. All three derive from the tile's
+// canonical total via Activity's distributeSeries() — the same generator the
+// Spend over time chart uses. Bucket sums equal the KPI value by
+// construction (single source of truth: total → spark → tile). Seeds are
+// distinct primes so adjacent tiles don't share a shape. distributeSeries
+// has a built-in upward trend so positive-delta tiles read visually
+// consistent. When real historical mock data lands, swap for actual
+// bucketed history and derive deltas from last-vs-prior period.
+const DAILY_SPEND_SPARK = distributeSeries(DAILY_SPEND_DOLLARS * 7, 7, 101);
+const MONTH_SPEND_SPARK = distributeSeries(SPEND_THIS_MONTH_DOLLARS, 30, 103);
+const THREATS_DETECTED_SPARK = distributeSeries(THREATS_DETECTED_COUNT, 9, 107);
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -106,7 +97,7 @@ export function Dashboard() {
             <PageHeader />
             <KpiRail />
             <QuickActionsRow />
-            <RequestVolumeCard />
+            <RecentConversationsCard />
             <RecentSecurityEventsCard />
           </DashboardChrome>
   );
@@ -122,7 +113,7 @@ function PageHeader() {
           in the document outline so RecentRequestsCard h3 doesn't
           create a level skip. */}
       <PageTitle>Overview</PageTitle>
-      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
         Traffic, spend and latency across every model on the gateway.
       </p>
     </div>
@@ -132,68 +123,64 @@ function PageHeader() {
 /* ─── KPI rail (3-up sparkline cards) ────────────────────────────────────── */
 
 function KpiRail() {
+  const navigate = useNavigate();
   return (
-    <KpiRailShell columns={4}>
-      {/* Tile order optimized for the H1 primary ICP (Olivia, agent
-       *  operator). Slot 1 is the trophy stat she screenshots — total
-       *  threats caught inline by the gateway. Slot 4 is the load-bearing
-       *  differentiator from Narrative & Positioning — DE-anchored audit
-       *  presence on the first surface she hits. Total Cost + Avg Latency
-       *  keep their mid-rail slots; Total Requests + Total Tokens were
-       *  dropped (volume vanity that doesn't map to either persona's
-       *  anxiety). */}
+    <KpiRailShell columns={3}>
+      {/* Tile order leads with cost-control (Olivia's #1 anxiety per
+       *  Gate-AI-personas.md). Daily comes before Monthly so the actionable
+       *  number sits left of the broader picture; Threats detected anchors
+       *  the rail in our distinctive value prop (inline scanning), the
+       *  signal OpenRouter and other gateways don't have. Avg Latency and
+       *  Events anchored were dropped — latency is abstract for Olivia,
+       *  Events anchored belongs as the hero metric on the Audit Trail
+       *  page when that surface gets built. */}
       <CompactKpi
         flat
-        title="Threats stopped"
-        value={formatNumber(THREATS_STOPPED_COUNT)}
-        delta="+12.4%"
+        title="Daily spend"
+        value={formatCurrency(DAILY_SPEND_DOLLARS)}
+        delta="+6.2%"
+        deltaNote="vs yesterday"
+        deltaSize="md"
+        onClick={() => navigate('/activity?range=24h')}
+        ariaLabel="Daily spend — open Activity for the last 24 hours"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-5)"
-            data={[2, 3, 4, 6, 7, 9, 10, 11, 13]}
+            colorVar="var(--color-success-600)"
+            data={DAILY_SPEND_SPARK}
           />
         }
       />
       {/* Spend this month: anchored to Activity's 30d window (no separate
        *  range picker on Overview). Delta tracks Activity's 30d delta so
-       *  the two surfaces agree. Limit pairing (e.g. "of $X cap" + progress
-       *  strip) lands when Guardrails workspace-spend limits are wired
-       *  through to read from. */}
+       *  the two surfaces agree. */}
       <CompactKpi
         flat
         title="Spend this month"
         value={formatCurrency(SPEND_THIS_MONTH_DOLLARS)}
         delta="+18.4%"
+        deltaNote="vs last month"
+        deltaSize="md"
+        onClick={() => navigate('/activity?range=30d')}
+        ariaLabel="Spend this month — open Activity for the last 30 days"
         spark={
           <CompactSpark
             colorVar="var(--color-success-600)"
-            data={[8, 10, 12, 16, 18, 20, 25, 22, 24]}
+            data={MONTH_SPEND_SPARK}
           />
         }
       />
       <CompactKpi
         flat
-        title="Avg Latency"
-        value="1.24 s"
-        delta="-3.2%"
-        deltaInverted
+        title="Threats detected"
+        value={formatNumber(THREATS_DETECTED_COUNT)}
+        delta="+12.4%"
+        deltaSize="md"
+        onClick={() => navigate('/security')}
+        ariaLabel="Threats detected — open the Security event log"
         spark={
           <CompactSpark
-            colorVar="var(--color-chart-7)"
-            data={[18, 16, 17, 15, 14, 13, 12, 11, 10]}
-            endDot
-          />
-        }
-      />
-      <CompactKpi
-        flat
-        title="Events anchored"
-        value={formatNumber(ANCHORED_EVENTS_COUNT)}
-        delta="+8.7%"
-        spark={
-          <CompactSpark
-            colorVar="var(--color-chart-1)"
-            data={[10, 11, 13, 14, 16, 15, 17, 18, 18]}
+            colorVar="var(--color-chart-5)"
+            data={THREATS_DETECTED_SPARK}
           />
         }
       />
@@ -201,158 +188,131 @@ function KpiRail() {
   );
 }
 
-/* ─── Request Volume — grouped bars by model ─────────────────────────────── */
-
-const VOLUME_DATA = [
-  { date: 'Apr 21', sonnet: 30, gpt: 24, haiku: 36, llama: 16, mistral: 9,  gemini: 22 },
-  { date: 'Apr 22', sonnet: 33, gpt: 27, haiku: 40, llama: 19, mistral: 11, gemini: 25 },
-  { date: 'Apr 23', sonnet: 38, gpt: 31, haiku: 47, llama: 22, mistral: 14, gemini: 29 },
-  { date: 'Apr 24', sonnet: 36, gpt: 33, haiku: 45, llama: 25, mistral: 17, gemini: 27 },
-  { date: 'Apr 25', sonnet: 46, gpt: 38, haiku: 53, llama: 29, mistral: 20, gemini: 33 },
-  { date: 'Apr 26', sonnet: 50, gpt: 42, haiku: 56, llama: 31, mistral: 22, gemini: 36 },
-  { date: 'Apr 27', sonnet: 45, gpt: 36, haiku: 49, llama: 28, mistral: 19, gemini: 31 },
-];
-
-/* Chart series order. Each entry picks a slot from the standalone
- * categorical chart palette (`--color-chart-1..8` in index.css). Default
- * is positional — series N gets slot N — but a per-series `slot` override
- * lets us pin specific series to specific colors when there's a brand
- * mnemonic worth honoring (Anthropic to orange, OpenAI to blue) without
- * reverting to per-vendor coupling for the rest. */
-type ModelSeries = {
-  key: 'sonnet' | 'gpt' | 'haiku' | 'llama' | 'mistral' | 'gemini';
-  label: string;
-  vendor: Vendor;
-  /** Optional 1-based slot override into the chart palette (1..8). When
-   *  set, this series uses `--color-chart-{slot}` regardless of its
-   *  position in MODEL_LEGEND. Don't repeat slots — uniqueness is the
-   *  caller's responsibility. */
-  slot?: number;
-};
-
-const MODEL_LEGEND: readonly ModelSeries[] = [
-  { key: 'sonnet',  label: 'Claude Sonnet 4.5', vendor: 'anthropic', slot: 2 },  // orange
-  { key: 'gpt',     label: 'GPT-4o',            vendor: 'openai',    slot: 1 },  // blue
-  { key: 'haiku',   label: 'Claude Haiku',      vendor: 'anthropic' },           // chart-3 (green) by index
-  { key: 'llama',   label: 'Llama 3.3',         vendor: 'meta',      slot: 6 },  // teal
-  { key: 'mistral', label: 'Mistral Large',     vendor: 'mistral'   },           // chart-5 (coral) by index
-  { key: 'gemini',  label: 'Gemini 3 Pro',      vendor: 'google',    slot: 4 },  // purple
-] as const;
-
-function seriesColor(series: ModelSeries, index: number): string {
-  if (series.slot) return CHART_PALETTE[(series.slot - 1) % CHART_PALETTE.length]!;
-  return CHART_PALETTE[index % CHART_PALETTE.length]!;
-}
-
-const volumeChartConfig: ChartConfig = Object.fromEntries(
-  MODEL_LEGEND.map((m, i) => [m.key, { label: m.label, color: seriesColor(m, i) }]),
-) as ChartConfig;
-
-const RANGE_OPTIONS = [
-  { value: '7d', label: '7D' },
-  { value: '30d', label: '30D' },
-  { value: '60d', label: '60D' },
-];
-
-/**
- * RequestVolumeCard — chart-card pattern.
+/* ─── Recent Conversations (preview table) ───────────────────────────────
  *
- * Exported so CMP-008c (Cards) can import the same instance — single source
- * of truth, no copy-paste. Built entirely from the shadcn `<Card>` family:
- * header (title + subtitle + range action) → body (legend + bar chart).
- */
-export function RequestVolumeCard() {
-  const [range, setRange] = useState('7d');
+ * Olivia's working surface promoted to Overview. Conversations are how she
+ * thinks about agent work ("the Q2 report agent, 8 turns, $0.43"), so a
+ * preview here turns the page from four numbers into a glanceable feed of
+ * what her agents have been doing. Row click deep-links to
+ * /conversations?open=<id> — the existing modal trigger on that page.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+// Top 10 conversations descending by `updated`. Conversations source is
+// canonical — single source of truth for "what's been happening" across
+// Overview and the Conversations page itself.
+const RECENT_CONVERSATIONS: ConversationRow[] = [...CONVERSATION_ROWS]
+  .sort((a, b) => b.updated.getTime() - a.updated.getTime())
+  .slice(0, 10);
+
+function RecentConversationsCard() {
+  const navigate = useNavigate();
   return (
-    <Card className="min-w-0">
-      <CardHeader>
-        <CardTitle className="font-sans text-base font-medium tracking-snug text-ink-900">
-          Request Volume
-        </CardTitle>
-        <CardDescription>Grouped by model</CardDescription>
-        <CardAction>
-          <SegmentedPill
-            options={RANGE_OPTIONS}
-            value={range}
-            onValueChange={setRange}
-          />
-        </CardAction>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4 flex-1 min-h-0">
-        <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
-          {MODEL_LEGEND.map((m, i) => (
-            <div key={m.key} className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="size-3 rounded-xs shrink-0"
-                style={{ backgroundColor: seriesColor(m, i) }}
-              />
-              <span className="font-sans text-xs text-ink-900">{m.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <ChartContainer
-          config={volumeChartConfig}
-          className="aspect-auto h-[176px] w-full mt-auto"
+    <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
+      <div className="flex items-center justify-between py-3 px-4">
+        <h3 className="font-sans text-base/5 font-medium tracking-snug text-neutral-900 m-0">
+          Recent conversations
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-neutral-500 hover:text-neutral-900 -mr-2"
+          onClick={() => navigate('/conversations')}
         >
-          <BarChart
-            accessibilityLayer
-            data={VOLUME_DATA}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            barCategoryGap="6%"
-            barGap={0}
-          >
-            <CartesianGrid
-              horizontal
-              vertical={false}
-              stroke="var(--color-ink-200)"
-              strokeDasharray="8 3"
-            />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              height={28}
-              tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              domain={[0, 60]}
-              ticks={[0, 30, 60]}
-              tickFormatter={(v) => `${v}K`}
-              tick={{ fontSize: 11, fill: 'var(--color-ink-500)' }}
-              width={36}
-            />
-            <ChartTooltip
-              cursor={{ fill: 'transparent' }}
-              content={
-                <ChartTooltipContent
-                  indicator="dot"
-                  labelFormatter={(_, payload) =>
-                    payload?.[0]?.payload?.date ?? ''
+          View all
+          <ChevronRight data-icon="inline-end" aria-hidden />
+        </Button>
+      </div>
+
+      {/* Column widths mirror the Conversations page exactly so the two
+       *  surfaces read as the same table at different scales. Auto layout
+       *  (no table-fixed) — matches the source page's flex behavior. */}
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[24%] whitespace-nowrap">Conversation</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap pr-2">Key</TableHead>
+            <TableHead className="w-[5%]  whitespace-nowrap">Models</TableHead>
+            <TableHead className="w-[5%]  text-right whitespace-nowrap">Turns</TableHead>
+            <TableHead className="w-[5%]  text-right whitespace-nowrap">Reqs</TableHead>
+            <TableHead className="w-[9%]  text-right whitespace-nowrap">Tokens in</TableHead>
+            <TableHead className="w-[9%]  text-right whitespace-nowrap">Tokens out</TableHead>
+            <TableHead className="w-[8%]  text-right whitespace-nowrap">Cost</TableHead>
+            <TableHead className="w-[11%] text-right whitespace-nowrap">Updated</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {RECENT_CONVERSATIONS.map((row) => {
+            const openRow = () => navigate(`/conversations?open=${row.conversationId}`);
+            return (
+              <TableRow
+                key={row.conversationId}
+                className="cursor-pointer hover-fine:bg-neutral-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
+                onClick={openRow}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openRow();
                   }
-                />
-              }
-            />
-            {MODEL_LEGEND.map((m, i) => (
-              <Bar
-                key={m.key}
-                dataKey={m.key}
-                fill={seriesColor(m, i)}
-                radius={2}
-                maxBarSize={18}
-                isAnimationActive={false}
-              />
-            ))}
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+                }}
+              >
+                <TableCell className="whitespace-nowrap">
+                  <span className="flex flex-col min-w-0">
+                    <span
+                      title={row.title}
+                      className="font-sans text-sm text-neutral-900 truncate"
+                    >
+                      {row.title}
+                    </span>
+                    <span className="font-mono text-xs text-neutral-500">
+                      {row.conversationId}
+                    </span>
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-sm pr-2">
+                  <span className="text-neutral-800">{row.initiator}</span>
+                  {CONVERSATION_KEY_SUFFIX[row.initiator] ? (
+                    <span className="text-neutral-600">
+                      {' '}
+                      ({CONVERSATION_KEY_SUFFIX[row.initiator]})
+                    </span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {row.vendors[0] ? (
+                    <div
+                      role="img"
+                      aria-label={`Model: ${VENDOR_META[row.vendors[0]].label}`}
+                      className="flex items-center gap-1"
+                    >
+                      <VendorAvatar vendor={row.vendors[0]} decorative />
+                    </div>
+                  ) : null}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {row.turns}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {row.reqs}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {row.inTokens}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {row.outTokens}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {row.cost}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {formatDateTime(row.updated)}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -377,13 +337,13 @@ function RecentSecurityEventsCard() {
     <>
       <div className="flex flex-col w-full rounded-md overflow-hidden bg-card shadow-(--shadow-border)">
         <div className="flex items-center justify-between py-3 px-4">
-          <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
+          <h3 className="font-sans text-base/5 font-medium tracking-snug text-neutral-900 m-0">
             Recent security events
           </h3>
           <Button
             variant="ghost"
             size="sm"
-            className="text-ink-500 hover:text-ink-900 -mr-2"
+            className="text-neutral-500 hover:text-neutral-900 -mr-2"
             onClick={() => navigate('/security')}
           >
             View all
@@ -409,7 +369,7 @@ function RecentSecurityEventsCard() {
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
-                  className="cursor-pointer hover-fine:bg-ink-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
+                  className="cursor-pointer hover-fine:bg-neutral-50 transition-colors duration-150 ease-out motion-reduce:transition-none"
                   onClick={() => setSelectedRow(row)}
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -425,7 +385,7 @@ function RecentSecurityEventsCard() {
                         render={(props) => (
                           <span
                             {...props}
-                            className="font-mono text-sm tabular-nums text-ink-800"
+                            className="font-mono text-sm tabular-nums text-neutral-800"
                           >
                             {formatEventTime(row.time)}
                           </span>
@@ -442,13 +402,13 @@ function RecentSecurityEventsCard() {
                         strokeWidth={1.75}
                         aria-hidden
                       />
-                      <span className="font-sans text-sm text-ink-800">{typeMeta.label}</span>
+                      <span className="font-sans text-sm text-neutral-800">{typeMeta.label}</span>
                     </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap max-w-[200px]">
                     <span
                       title={row.conversationId}
-                      className="font-mono text-sm tabular-nums text-ink-800 truncate block max-w-full"
+                      className="font-mono text-sm tabular-nums text-neutral-800 truncate block max-w-full"
                     >
                       {row.conversationId}
                     </span>
@@ -456,11 +416,11 @@ function RecentSecurityEventsCard() {
                   <TableCell className="whitespace-nowrap font-mono">
                     {(() => {
                       const parenIdx = row.key.indexOf(' (');
-                      if (parenIdx === -1) return <span className="text-ink-800">{row.key}</span>;
+                      if (parenIdx === -1) return <span className="text-neutral-800">{row.key}</span>;
                       return (
                         <>
-                          <span className="text-ink-800">{row.key.slice(0, parenIdx)}</span>
-                          <span className="text-ink-600">{row.key.slice(parenIdx)}</span>
+                          <span className="text-neutral-800">{row.key.slice(0, parenIdx)}</span>
+                          <span className="text-neutral-600">{row.key.slice(parenIdx)}</span>
                         </>
                       );
                     })()}
@@ -494,73 +454,76 @@ type QuickAction = {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
   subtitle: string;
-  /** Subtle brand-blue accent for the focal action (e.g. Upgrade). Tints
-   *  the section bg + icon chip without going fully inverted — keeps the
-   *  page's operator-tool register quiet rather than marketing-loud. */
-  accent?: boolean;
+  /** Internal route for the action. When set, clicking the tile navigates
+   *  via react-router; tiles without `href` stay as visual placeholders
+   *  until their workflow lands. */
+  href?: string;
 };
 
 const QUICK_ACTIONS: QuickAction[] = [
   { icon: RefreshCw,  title: 'Rotate API Key',         subtitle: 'Last rotated 6 days ago' },
-  { icon: Sparkles,   title: 'Upgrade to Pro',         subtitle: 'Unlock custom rate limits', accent: true },
+  { icon: Gauge,      title: 'Set a spend limit',      subtitle: 'Cap runaway costs',          href: '/guardrails?create=1' },
   { icon: Shield,     title: 'Review Security Events', subtitle: '3 events in the last hour' },
   { icon: BookOpen,   title: 'Read Integration Guide', subtitle: 'SDK quickstart' },
 ];
 
 function QuickActionsRow() {
+  const navigate = useNavigate();
   // Inset divider — hairline doesn't reach top/bottom edges; reads
-  // lighter than a `divide-x`. Matches the KPI rail treatment.
+  // lighter than a `divide-x`. Matches the KPI rail treatment. `z-10` on
+  // the pseudo-element keeps the line above the button's `bg-card`
+  // (the button creates a stacking context via its `relative`).
   const dividerCls =
-    'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-ink-200';
+    'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-border before:z-10 before:pointer-events-none';
+  const onAction = (action: QuickAction) =>
+    action.href ? () => navigate(action.href!) : undefined;
   return (
     <Card density="flush">
       <div className="flex items-center py-3 px-4 border-b border-border">
-        <h3 className="font-sans text-base/5 font-medium tracking-snug text-ink-900 m-0">
+        <h3 className="font-sans text-base/5 font-medium tracking-snug text-neutral-900 m-0">
           Quick actions
         </h3>
       </div>
       <div className="grid grid-cols-4">
-        <QuickActionItem {...QUICK_ACTIONS[0]} />
+        <QuickActionItem {...QUICK_ACTIONS[0]} onClick={onAction(QUICK_ACTIONS[0])} />
         <div className={dividerCls}>
-          <QuickActionItem {...QUICK_ACTIONS[1]} />
+          <QuickActionItem {...QUICK_ACTIONS[1]} onClick={onAction(QUICK_ACTIONS[1])} />
         </div>
         <div className={dividerCls}>
-          <QuickActionItem {...QUICK_ACTIONS[2]} />
+          <QuickActionItem {...QUICK_ACTIONS[2]} onClick={onAction(QUICK_ACTIONS[2])} />
         </div>
         <div className={dividerCls}>
-          <QuickActionItem {...QUICK_ACTIONS[3]} />
+          <QuickActionItem {...QUICK_ACTIONS[3]} onClick={onAction(QUICK_ACTIONS[3])} />
         </div>
       </div>
     </Card>
   );
 }
 
-function QuickActionItem({ icon: Icon, title, subtitle, accent }: QuickAction) {
-  const sectionCls = accent
-    ? 'bg-blue-50 hover:bg-blue-100/70'
-    : 'bg-card hover:bg-muted';
-  const chipCls = accent
-    ? 'bg-blue-100 text-blue-700'
-    : 'bg-muted text-ink-700';
+function QuickActionItem({
+  icon: Icon,
+  title,
+  subtitle,
+  onClick,
+}: QuickAction & { onClick?: () => void }) {
   return (
     <button
       type="button"
-      className={`relative w-full flex items-center gap-3 p-4 text-left outline-none touch-manipulation transition-[background-color,transform,box-shadow] duration-150 ease-out focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 ${sectionCls}`}
+      onClick={onClick}
+      className="relative w-full flex items-center gap-3 p-4 text-left outline-none touch-manipulation transition-[background-color,transform,box-shadow] duration-150 ease-out focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 bg-card hover:bg-neutral-100"
     >
-      <span
-        className={`shrink-0 size-8 inline-flex items-center justify-center rounded-xs ${chipCls}`}
-      >
+      <span className="shrink-0 size-8 inline-flex items-center justify-center rounded-xs bg-muted text-neutral-700">
         <Icon className="size-4" strokeWidth={1.75} aria-hidden />
       </span>
       <div className="flex flex-col gap-1 min-w-0 flex-1">
-        <span className="font-sans text-sm font-medium text-ink-900 truncate">
+        <span className="font-sans text-sm font-medium text-neutral-900 truncate">
           {title}
         </span>
-        <span className="font-sans text-xs text-ink-500 truncate">
+        <span className="font-sans text-xs text-neutral-500 truncate">
           {subtitle}
         </span>
       </div>
-      <ChevronRight className="shrink-0 size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
+      <ChevronRight className="shrink-0 size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
     </button>
   );
 }

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
  * TextLink — inline link affordance, button-by-default.
  *
  * Codified 2026-05-10. The repo's link visual contract is "ink + permanent
- * faint underline" (decoration-ink-200, bumps to ink-500 on hover/focus).
+ * faint underline" (decoration-neutral-200, bumps to neutral-500 on hover/focus).
  * Blue is reserved for info/completed/active-tab/focus and is NOT used for
  * links. See feedback_link-affordance.md.
  *
@@ -17,9 +17,9 @@ import { cn } from '@/lib/utils';
  *   as="a" + href    renders an <a> for real navigation.
  *
  * Visual recipe (locked):
- *   text-ink-800 bg-transparent p-0 outline-none rounded-xs
- *   underline decoration-ink-200 underline-offset-2
- *   hover:decoration-ink-500 focus-visible:decoration-ink-500
+ *   text-neutral-800 bg-transparent p-0 outline-none rounded-xs
+ *   underline decoration-neutral-200 underline-offset-2
+ *   hover:decoration-neutral-500 focus-visible:decoration-neutral-500
  *   focus-visible:ring-3 focus-visible:ring-ring/50
  *
  * Pass `className` for typography overrides (font-mono, text-sm, etc.).
@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TEXT_LINK_BASE =
-  'text-ink-800 bg-transparent p-0 outline-none rounded-xs underline decoration-ink-200 underline-offset-2 hover:decoration-ink-500 focus-visible:decoration-ink-500 focus-visible:ring-3 focus-visible:ring-ring/50';
+  'text-neutral-800 bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50';
 
 type ButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

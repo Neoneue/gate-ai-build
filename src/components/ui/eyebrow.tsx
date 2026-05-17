@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  * occurrences of the same recipe across CMP-013/14/15/16/18 + sidebar
  * + CompactKpi + Artboard.tsx + spec sheets. Current recipe:
  * `font-sans text-xs uppercase tracking-wide font-medium
- * text-ink-500` (font-mono → font-sans on 2026-05-14, mono is now
+ * text-neutral-500` (font-mono → font-sans on 2026-05-14, mono is now
  * reserved for data values only; weight settled on font-medium;
  * tracking 0.1em → normal → tracking-wide (0.025em) on 2026-05-16 —
  * gives uppercase air without reading as spec-sheet chrome).
@@ -43,7 +43,7 @@ export function Eyebrow({
     <Tag
       data-slot="eyebrow"
       className={cn(
-        'font-sans text-xs uppercase tracking-wide font-medium text-ink-500',
+        'font-sans text-xs uppercase tracking-wide font-medium text-neutral-500',
         className,
       )}
       {...props}

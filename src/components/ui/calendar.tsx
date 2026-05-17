@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 /* ─────────────────────────────────────────────────────────────────────────
  * Calendar — thin wrapper over react-day-picker styled to the project's
  * design tokens. Day cells are 32px (4px grid), font-mono tabular-nums
- * for digit alignment, selected = ink-900 / white, range middle =
- * ink-100 / ink-900. Today is hinted with a ring rather than a fill so
+ * for digit alignment, selected = neutral-900 / white, range middle =
+ * neutral-100 / neutral-900. Today is hinted with a ring rather than a fill so
  * it never competes visually with a selection.
  *
  * RDP applies each entry of the `classNames` prop to its matching DOM
@@ -32,24 +32,24 @@ export function Calendar({ className, classNames, components, ...props }: Calend
         months: 'flex flex-col gap-4',
         month: 'flex flex-col gap-3',
         month_caption: 'relative flex items-center justify-center h-8',
-        caption_label: 'font-sans text-sm font-medium text-ink-900',
+        caption_label: 'font-sans text-sm font-medium text-neutral-900',
         nav: 'absolute inset-x-0 top-0 flex items-center justify-between h-8 pointer-events-none',
         button_previous: cn(
           'pointer-events-auto inline-flex items-center justify-center size-7 rounded-xs',
-          'text-ink-600 hover:text-ink-900 hover:bg-ink-100',
+          'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100',
           'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           'disabled:pointer-events-none disabled:opacity-40',
         ),
         button_next: cn(
           'pointer-events-auto inline-flex items-center justify-center size-7 rounded-xs',
-          'text-ink-600 hover:text-ink-900 hover:bg-ink-100',
+          'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100',
           'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           'disabled:pointer-events-none disabled:opacity-40',
         ),
         month_grid: 'w-full border-collapse',
         weekdays: 'flex',
         weekday:
-          'flex-1 font-sans uppercase text-xs text-ink-500 font-normal pb-2',
+          'flex-1 font-sans uppercase text-xs text-neutral-500 font-normal pb-2',
         weeks: 'flex flex-col gap-1',
         week: 'flex w-full',
         // Base cell — range fills land here as a continuous band. The
@@ -62,24 +62,24 @@ export function Calendar({ className, classNames, components, ...props }: Calend
         // reads as a soft swatch instead of a circle.
         day_button: cn(
           'inline-flex items-center justify-center size-8 rounded-xs mx-auto',
-          'text-ink-800 hover:bg-ink-100 hover:text-ink-900',
+          'text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900',
           'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           'transition-colors duration-100 ease-out motion-reduce:transition-none',
         ),
         // Range fills land on the <td>; end-caps round only the outer
         // edge so consecutive cells visually flow into each other.
-        range_start: 'bg-ink-100 rounded-l-xs',
-        range_end: 'bg-ink-100 rounded-r-xs',
-        range_middle: 'bg-ink-100',
+        range_start: 'bg-neutral-100 rounded-l-xs',
+        range_end: 'bg-neutral-100 rounded-r-xs',
+        range_middle: 'bg-neutral-100',
         // End caps repaint the button so the selected day reads as
         // the anchor of the band. `aria-selected:` reaches the button
         // through RDP's per-day `aria-selected` attribute on the <td>.
         selected:
-          '[&_button]:bg-ink-900 [&_button]:text-white [&_button]:hover:bg-ink-900 [&_button]:hover:text-white',
+          '[&_button]:bg-neutral-900 [&_button]:text-white [&_button]:hover:bg-neutral-900 [&_button]:hover:text-white',
         // Today: subtle ring on the button, no fill — so it never
         // outranks a real selection.
-        today: '[&_button]:font-medium [&_button]:ring-1 [&_button]:ring-ink-300',
-        outside: '[&_button]:text-ink-300',
+        today: '[&_button]:font-medium [&_button]:ring-1 [&_button]:ring-neutral-300',
+        outside: '[&_button]:text-neutral-300',
         disabled: '[&_button]:opacity-40 [&_button]:pointer-events-none',
         hidden: 'invisible',
         ...classNames,

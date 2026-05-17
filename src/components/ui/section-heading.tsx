@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * ("Evidence", "Detection", "Context", "Details", "Security scan").
  *
  * Extracted 2026-05-11 after the 5-agent audit found the same recipe
- * (`font-sans text-sm font-medium text-ink-900 m-0`) hand-rolled in 5
+ * (`font-sans text-sm font-medium text-neutral-900 m-0`) hand-rolled in 5
  * modal body sections across CMP-007 + CMP-015.
  *
  * Renders an `<h3>` by default — modal body sections sit inside a
@@ -34,7 +34,7 @@ export function SectionHeading({
     <Tag
       data-slot="section-heading"
       className={cn(
-        'font-sans text-sm font-medium text-ink-900 m-0',
+        'font-sans text-sm font-medium text-neutral-900 m-0',
         className,
       )}
       {...props}

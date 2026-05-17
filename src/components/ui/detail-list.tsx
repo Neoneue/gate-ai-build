@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
  *   list   rounded-md border border-border overflow-hidden
  *   row    flex items-start gap-4 px-4 py-3
  *          border-b border-border last:border-b-0
- *   label  w-32 shrink-0 text-sm text-ink-500
+ *   label  w-32 shrink-0 text-sm text-neutral-500
  *   value  flex-1 min-w-0 text-sm (consumer styles inner content)
  * ───────────────────────────────────────────────────────────────────── */
 
@@ -57,7 +57,7 @@ export function DetailRow({
       )}
       {...props}
     >
-      <span className="w-32 shrink-0 text-sm text-ink-500">{label}</span>
+      <span className="w-32 shrink-0 text-sm text-neutral-500">{label}</span>
       <div className="flex-1 min-w-0 text-sm">{value}</div>
     </div>
   );

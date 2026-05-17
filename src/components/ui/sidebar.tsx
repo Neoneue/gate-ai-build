@@ -167,10 +167,10 @@ function SidebarCollapsed({
                   // matches the project's Button primitive press feel.
                   className={
                     isActive
-                      ? 'flex items-center justify-center size-9 rounded-sm bg-ink-200 text-ink-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? 'flex items-center justify-center size-9 rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
-                        ? 'flex items-center justify-center size-9 rounded-sm text-ink-300 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center justify-center size-9 rounded-sm text-ink-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-ink-700 hover:bg-ink-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        ? 'flex items-center justify-center size-9 rounded-sm text-neutral-300 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center justify-center size-9 rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-neutral-700 hover:bg-neutral-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon className="size-[18px]" strokeWidth={1.5} />
@@ -239,10 +239,10 @@ function SidebarExpanded({
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-ink-100 text-ink-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-neutral-100 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
-                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-ink-700 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon className="size-4 shrink-0" strokeWidth={1.75} />
@@ -270,7 +270,7 @@ function DefaultBrand() {
       <BrandMark className="size-8 shrink-0 text-blue-700" />
       <div className="flex flex-col leading-tight min-w-0">
         <Eyebrow>Constellation</Eyebrow>
-        <span className="font-sans text-base font-medium text-ink-900">
+        <span className="font-sans text-base font-medium text-neutral-900">
           Gate <span className="text-blue-700">AI</span>
         </span>
       </div>
@@ -285,16 +285,16 @@ function DefaultWorkspaceSwitcher() {
         render={
           <button
             type="button"
-            className="flex items-center justify-between gap-2 w-full p-2 rounded-sm border border-border bg-white outline-none hover:bg-ink-50 aria-expanded:bg-ink-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
+            className="flex items-center justify-between gap-2 w-full p-2 rounded-sm border border-border bg-white outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
           />
         }
       >
-        <span className="font-sans text-sm font-medium text-ink-900 truncate min-w-0">
+        <span className="font-sans text-sm font-medium text-neutral-900 truncate min-w-0">
           Chad's workspace
         </span>
         <div className="shrink-0 flex items-center gap-2">
           <Badge variant="info">Free</Badge>
-          <ChevronsUpDown className="size-4 text-ink-500" strokeWidth={1.75} aria-hidden />
+          <ChevronsUpDown className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
         </div>
       </MenuTrigger>
       <MenuContent
@@ -303,7 +303,7 @@ function DefaultWorkspaceSwitcher() {
         sideOffset={8}
         className="w-[var(--anchor-width)] p-2"
       >
-        <MenuItem className="bg-ink-100 data-[highlighted]:bg-ink-100">
+        <MenuItem className="bg-neutral-100 data-[highlighted]:bg-neutral-100">
           <span className="flex-1 text-left truncate min-w-0">Chad's workspace</span>
           <Check strokeWidth={1.75} aria-hidden />
         </MenuItem>
@@ -325,13 +325,13 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         >
           CP
         </span>
-        <span className="font-sans text-sm font-medium text-ink-900 truncate leading-tight">Chad</span>
+        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad</span>
       </div>
       <UserMenu onNavigate={onNavigate} side="right" align="end" sideOffset={12}>
         <button
           type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-white text-ink-500 hover:text-ink-900 hover:bg-ink-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
+          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>

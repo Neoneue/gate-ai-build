@@ -18,8 +18,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Skill: emil-design-eng — no hardcoded hex; route through the
           // theme background var so the toast surface tracks light/dark.
           "--normal-bg": "var(--background)",
-          "--normal-text": "var(--color-ink-900)",
-          "--normal-border": "var(--color-ink-200)",
+          "--normal-text": "var(--color-neutral-900)",
+          "--normal-border": "var(--color-neutral-200)",
           "--border-radius": "var(--radius-md)",
         } as React.CSSProperties
       }
