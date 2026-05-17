@@ -58,7 +58,8 @@ import {
   ThreatEventDetailDialog,
 } from '@/pages/Security';
 import { EVENT_ROWS as AUDIT_EVENT_ROWS } from '@/pages/AuditTrail';
-import { formatNumber } from '@/lib/formatters';
+import { TOTAL_7D_BASE_DOLLARS } from '@/pages/Activity';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 // KPI-rail values derived from the canonical security + audit seeds so the
@@ -70,6 +71,12 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 // hand-authored — there's no historical mock data to derive trend from.
 const THREATS_STOPPED_COUNT = EVENT_ROWS.length;
 const ANCHORED_EVENTS_COUNT = AUDIT_EVENT_ROWS.length;
+// "Spend this month" reuses Activity's canonical 7d baseline scaled to
+// 30d (Activity's internal scale for the '30d' preset is 4.2 — see the
+// SCALE map at line ~110 of Activity.tsx). Keeping the multiplier
+// inline reconciles the Overview tile with Activity for the same
+// window. When real spend data lands, the constant evaporates.
+const SPEND_THIS_MONTH_DOLLARS = TOTAL_7D_BASE_DOLLARS * 4.2;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -159,11 +166,16 @@ function KpiRail() {
           />
         }
       />
+      {/* Spend this month: anchored to Activity's 30d window (no separate
+       *  range picker on Overview). Delta tracks Activity's 30d delta so
+       *  the two surfaces agree. Limit pairing (e.g. "of $X cap" + progress
+       *  strip) lands when Guardrails workspace-spend limits are wired
+       *  through to read from. */}
       <CompactKpi
         flat
-        title="Total Cost"
-        value="$1,247.82"
-        delta="+12.6%"
+        title="Spend this month"
+        value={formatCurrency(SPEND_THIS_MONTH_DOLLARS)}
+        delta="+18.4%"
         spark={
           <CompactSpark
             colorVar="var(--color-chart-1)"
