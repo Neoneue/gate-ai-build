@@ -212,7 +212,7 @@ export function AuditRecordDialog({
         {/* ── Tabbed body ── */}
         <DialogScrollBody className="pt-2">
           <Tabs defaultValue="event">
-            <TabsList variant="line" className="mb-4 px-0">
+            <TabsList variant="line" className="mb-2 px-0">
               <TabsTrigger value="event" className="pl-0">Event</TabsTrigger>
               <TabsTrigger value="merkle">Merkle path</TabsTrigger>
               <TabsTrigger value="how">How it works</TabsTrigger>
