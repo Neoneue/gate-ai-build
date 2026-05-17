@@ -3,8 +3,6 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   BookOpen,
   ChevronRight,
-  MoreHorizontal,
-  Plus,
   RefreshCw,
   Shield,
   Sparkles,
@@ -33,8 +31,6 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
-import { IconActionButton } from '@/components/ui/icon-action-button';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -110,7 +106,7 @@ export function Dashboard() {
             <PageHeader />
             <KpiRail />
             <QuickActionsRow />
-            <MiddleRow />
+            <RequestVolumeCard />
             <RecentSecurityEventsCard />
           </DashboardChrome>
   );
@@ -120,23 +116,15 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        {/* h2 (not h1) — the artboard's ArtboardHeader already emits the
-            outer h1; this is the in-surface page title and reads as h2
-            in the document outline so RecentRequestsCard h3 doesn't
-            create a level skip. */}
-        <PageTitle>Overview</PageTitle>
-        <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
-          Traffic, spend and latency across every model on the gateway.
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <Button variant="default" size="default">
-          <Plus data-icon="inline-start" aria-hidden />
-          Create key
-        </Button>
-      </div>
+    <div className="flex flex-col gap-2 max-w-1/2">
+      {/* h2 (not h1) — the artboard's ArtboardHeader already emits the
+          outer h1; this is the in-surface page title and reads as h2
+          in the document outline so RecentRequestsCard h3 doesn't
+          create a level skip. */}
+      <PageTitle>Overview</PageTitle>
+      <p className="font-sans text-ink-500 text-base tracking-tight text-pretty m-0">
+        Traffic, spend and latency across every model on the gateway.
+      </p>
     </div>
   );
 }
@@ -213,17 +201,6 @@ function KpiRail() {
   );
 }
 
-/* ─── Middle row (Request Volume bar chart + Top Keys panel) ─────────────── */
-
-function MiddleRow() {
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      <RequestVolumeCard />
-      <TopKeysCard />
-    </div>
-  );
-}
-
 /* ─── Request Volume — grouped bars by model ─────────────────────────────── */
 
 const VOLUME_DATA = [
@@ -287,7 +264,7 @@ const RANGE_OPTIONS = [
 export function RequestVolumeCard() {
   const [range, setRange] = useState('7d');
   return (
-    <Card className="col-span-2 min-w-0">
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="font-sans text-base font-medium tracking-snug text-ink-900">
           Request Volume
@@ -324,8 +301,8 @@ export function RequestVolumeCard() {
             accessibilityLayer
             data={VOLUME_DATA}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            barCategoryGap="12%"
-            barGap={2}
+            barCategoryGap="6%"
+            barGap={0}
           >
             <CartesianGrid
               horizontal
@@ -368,67 +345,12 @@ export function RequestVolumeCard() {
                 dataKey={m.key}
                 fill={seriesColor(m, i)}
                 radius={2}
-                maxBarSize={8}
+                maxBarSize={14}
                 isAnimationActive={false}
               />
             ))}
           </BarChart>
         </ChartContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ─── Top Keys panel ─────────────────────────────────────────────────────── */
-
-const TOP_KEYS: { label: string; model: string; cost: string; vendor: Vendor }[] = [
-  { label: 'Production', model: 'Claude Sonnet 4.5', cost: '$412.30', vendor: 'anthropic' },
-  { label: 'Macro Analyst', model: 'GPT-4o', cost: '$287.14', vendor: 'openai' },
-  { label: 'Risk Pipeline', model: 'Llama 3.3', cost: '$198.41', vendor: 'meta' },
-  { label: 'Development', model: 'Claude Haiku', cost: '$152.88', vendor: 'anthropic' },
-  { label: 'Eval Harness', model: 'Gemini 3 Pro', cost: '$89.16', vendor: 'google' },
-];
-
-/**
- * TopKeysCard — metric + list pattern.
- *
- * Exported so CMP-008c (Cards) can import the same instance. Built from the
- * shadcn `<Card>` family: header (title + subtitle + overflow action) →
- * body (metric hero + divider + row list).
- */
-export function TopKeysCard() {
-  return (
-    <Card className="min-w-0 gap-2">
-      <CardHeader>
-        <CardTitle className="font-sans text-base/5 font-medium tracking-snug text-ink-900">
-          Top Keys
-        </CardTitle>
-        <CardDescription>By spend · Last 7d</CardDescription>
-        <CardAction>
-          <IconActionButton aria-label="More options for Top Keys">
-            <MoreHorizontal className="size-4" strokeWidth={1.75} aria-hidden />
-          </IconActionButton>
-        </CardAction>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4">
-        <HeroNumeric>$1,147.82</HeroNumeric>
-
-        <div className="flex flex-col gap-4 pt-4 border-t border-border">
-          {TOP_KEYS.map((k) => (
-            <div key={k.label} className="flex items-center justify-between gap-3 min-w-0">
-              <span
-                className="font-sans text-sm text-ink-900 truncate min-w-0 flex-1"
-                title={k.label}
-              >
-                {k.label}
-              </span>
-              <span className="font-mono text-sm tabular-nums text-ink-900 shrink-0">
-                {k.cost}
-              </span>
-            </div>
-          ))}
-        </div>
       </CardContent>
     </Card>
   );
