@@ -45,6 +45,126 @@ function VerifiedBySeal() {
   );
 }
 
+/* ─── Merkle path panel ───────────────────────────────────────────────── */
+
+/** Renders a two-level Merkle inclusion proof for a single audit event.
+ *
+ *  Layout:
+ *    - Description sentence (prose + mono spans)
+ *    - Bordered card containing an inline SVG tree (ROOT + two L1 nodes)
+ *    - Footer: path notation left, tree metadata right
+ *
+ *  All SVG fills/strokes reference CSS custom properties — no raw hex. */
+function MerklePathPanel({ row }: { row: EventRow }) {
+  const eventPrefix = row.eventId.slice(0, 10); // "e_cc8ae185"
+  const anchorShort = truncateHex(row.anchor, 4, 4);
+
+  // SVG layout constants (viewBox "0 0 600 200")
+  const ROOT_CX = 300; const ROOT_CY = 48;  const ROOT_R = 22;
+  const SIB_CX  = 120; const SIB_CY  = 160; const SIB_R  = 14;
+  const LEAF_CX = 480; const LEAF_CY = 160; const LEAF_R = 14;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Description */}
+      <p className="text-sm text-ink-800 m-0">
+        Highlighted path proves{' '}
+        <span className="font-mono text-ink-900">{eventPrefix}</span> is included
+        in anchor root{' '}
+        <span className="font-mono text-ink-900">{anchorShort}</span>.
+        Verifiable from the leaf with 1 sibling hash.
+      </p>
+
+      {/* Tree card */}
+      <div className="relative rounded-md border border-border bg-card p-4">
+        <svg
+          viewBox="0 0 600 200"
+          className="w-full h-auto"
+          aria-hidden
+        >
+          {/* Layer labels — left margin */}
+          <text
+            x="20" y="56"
+            textAnchor="start"
+            dominantBaseline="middle"
+            fontSize="11"
+            fontFamily="inherit"
+            fill="var(--color-ink-500)"
+          >
+            L0 · Anchor root
+          </text>
+          <text
+            x="20" y="160"
+            textAnchor="start"
+            dominantBaseline="middle"
+            fontSize="11"
+            fontFamily="inherit"
+            fill="var(--color-ink-500)"
+          >
+            L1
+          </text>
+
+          {/* Lines drawn before nodes so circles paint over endpoints */}
+          {/* Sibling → ROOT (gray) */}
+          <line
+            x1={SIB_CX}  y1={SIB_CY  - SIB_R}
+            x2={ROOT_CX} y2={ROOT_CY + ROOT_R}
+            stroke="var(--color-ink-300)"
+            strokeWidth="1.5"
+          />
+          {/* Event leaf → ROOT (highlighted path, blue) */}
+          <line
+            x1={LEAF_CX} y1={LEAF_CY  - LEAF_R}
+            x2={ROOT_CX} y2={ROOT_CY + ROOT_R}
+            stroke="var(--color-blue-500)"
+            strokeWidth="2"
+          />
+
+          {/* ROOT node */}
+          <circle
+            cx={ROOT_CX} cy={ROOT_CY} r={ROOT_R}
+            fill="var(--color-ink-900)"
+          />
+          <text
+            x={ROOT_CX} y={ROOT_CY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="10"
+            fontWeight="500"
+            fontFamily="inherit"
+            fill="var(--color-white)"
+          >
+            ROOT
+          </text>
+
+          {/* Sibling node (L1.1) — hollow */}
+          <circle
+            cx={SIB_CX} cy={SIB_CY} r={SIB_R}
+            fill="var(--color-white)"
+            stroke="var(--color-ink-300)"
+            strokeWidth="1.5"
+          />
+
+          {/* Event leaf node (L1.2) — filled blue */}
+          <circle
+            cx={LEAF_CX} cy={LEAF_CY} r={LEAF_R}
+            fill="var(--color-blue-500)"
+          />
+        </svg>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-xs text-ink-500">
+        <span>
+          <span className="text-ink-400">Path:</span>{' '}
+          <span className="font-mono text-ink-700">leaf &rarr; L1.2 &rarr; ROOT</span>
+        </span>
+        <span>Tree depth: 1 &middot; Sibling hashes needed: 1</span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main export ─────────────────────────────────────────────────────── */
 
 export function AuditRecordDialog({
@@ -140,9 +260,9 @@ export function AuditRecordDialog({
               </DetailList>
             </TabsContent>
 
-            {/* Merkle path placeholder */}
+            {/* Merkle path panel */}
             <TabsContent value="merkle">
-              <div className="py-12 text-center text-sm text-ink-500">Coming next</div>
+              <MerklePathPanel row={row} />
             </TabsContent>
 
             {/* How it works placeholder */}
