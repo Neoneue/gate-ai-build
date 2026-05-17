@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -141,13 +141,6 @@ function CreditsCard() {
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(AUTO_RECHARGE_STORAGE_KEY, JSON.stringify(auto));
-    } catch {
-      /* storage unavailable — drop silently */
-    }
-  }, [auto]);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -182,6 +175,11 @@ function CreditsCard() {
         initial={auto}
         onSave={(next) => {
           setAuto(next);
+          try {
+            window.localStorage.setItem(AUTO_RECHARGE_STORAGE_KEY, JSON.stringify(next));
+          } catch {
+            /* storage unavailable — drop silently */
+          }
           setAutoOpen(false);
         }}
       />

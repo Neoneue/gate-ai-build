@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
@@ -85,20 +85,31 @@ export function Requests() {
   const [range, setRange] = useState<RangeKey>('all');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
-  useEffect(() => { rangeStore.set(range); }, [range]);
-  useEffect(() => { rangeStore.setCustom(customRange); }, [customRange]);
+  // Hydrate the store with the initial state once on mount. After that
+  // the handlers below keep the store in lockstep — no effect-as-event.
+  useEffect(() => {
+    rangeStore.set(range);
+    rangeStore.setCustom(customRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRangeChange = (next: RangeKey) => {
     setRange(next);
     setCustomRange(null);
+    rangeStore.set(next);
+    rangeStore.setCustom(null);
   };
   const handleCustomRangeChange = (next: CustomRange | null) => {
     if (next) {
       setCustomRange(next);
       setRange('custom');
+      rangeStore.set('custom');
+      rangeStore.setCustom(next);
     } else {
       setCustomRange(null);
       setRange('all');
+      rangeStore.set('all');
+      rangeStore.setCustom(null);
     }
   };
 
@@ -531,6 +542,27 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
   };
 }
 
+function ChartXAxisTick(props: {
+  x: string | number;
+  y: string | number;
+  payload: { value: string };
+  firstTick: string;
+  lastTick: string;
+}) {
+  const { x, y, payload, firstTick, lastTick } = props;
+  const value = payload.value;
+  const spaceIdx = value.indexOf(' ');
+  const display = spaceIdx === -1 ? value : value.slice(0, value.lastIndexOf(' '));
+  const anchor =
+    value === firstTick ? 'start' :
+    value === lastTick ? 'end' : 'middle';
+  return (
+    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-ink-500)">
+      {display}
+    </text>
+  );
+}
+
 function HeroMetricCard() {
   const range = useRange();
   const customRange = useCustomRange();
@@ -547,6 +579,11 @@ function HeroMetricCard() {
   } satisfies ChartConfig;
   const firstTick = view.ticks[0];
   const lastTick = view.ticks[view.ticks.length - 1];
+  const renderTick = useCallback(
+    (tickProps: { x: string | number; y: string | number; payload: { value: string } }) =>
+      <ChartXAxisTick {...tickProps} firstTick={firstTick} lastTick={lastTick} />,
+    [firstTick, lastTick],
+  );
 
   return (
     <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
@@ -615,39 +652,7 @@ function HeroMetricCard() {
             height={24}
             ticks={view.ticks}
             interval={0}
-            tick={(tickProps) => {
-              const { x, y, payload } = tickProps as {
-                x: number;
-                y: number;
-                payload: { value: string };
-              };
-              const value = payload.value;
-              // 7D/30D/All tick values are full timestamps ('May 6
-              // 00:00'); render just the date portion ('May 6'). 24H
-              // values have no space — render as-is.
-              const spaceIdx = value.indexOf(' ');
-              const display = spaceIdx === -1
-                ? value
-                : value.slice(0, value.lastIndexOf(' '));
-              const anchor =
-                value === firstTick
-                  ? 'start'
-                  : value === lastTick
-                    ? 'end'
-                    : 'middle';
-              return (
-                <text
-                  x={x}
-                  y={y}
-                  dy="0.71em"
-                  textAnchor={anchor}
-                  fontSize={11}
-                  fill="var(--color-ink-500)"
-                >
-                  {display}
-                </text>
-              );
-            }}
+            tick={renderTick}
           />
           <ChartTooltip
             cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
@@ -1782,20 +1787,24 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
   const hasResponse = row.guardrail !== 'block' && row.status !== 'error';
   const requestContent = sampleRequestContent(row);
   const responseContent = sampleResponseText(row);
-  const requestLines = buildRequestBodyLines(row);
+  const requestLines = useMemo(() => buildRequestBodyLines(row), [row]);
   // Clipboard payload mirrors the tokenized JSON the drawer renders so
   // the user can paste it directly into curl / a debugger without
   // hand-editing. Shape matches `buildRequestBodyLines`.
-  const requestPayload = JSON.stringify(
-    {
-      model: `${row.vendor}/${row.model}`,
-      messages: [{ role: 'user', content: requestContent }],
-      max_tokens: 1024,
-      temperature: 0.7,
-      stream: false,
-    },
-    null,
-    2,
+  // `requestContent` derives solely from `row`, so `[row]` covers both.
+  const requestPayload = useMemo(
+    () => JSON.stringify(
+      {
+        model: `${row.vendor}/${row.model}`,
+        messages: [{ role: 'user', content: requestContent }],
+        max_tokens: 1024,
+        temperature: 0.7,
+        stream: false,
+      },
+      null,
+      2,
+    ),
+    [row],
   );
   return (
     // `-mx-2 px-2 py-2`: extend the scroll viewport 8px beyond the modal

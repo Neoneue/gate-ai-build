@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from 'react';
+import { useCallback, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -327,6 +327,27 @@ function buildEventsChartView(range: EventsRange, customRange: CustomRange | nul
   };
 }
 
+function ChartXAxisTick(props: {
+  x: string | number;
+  y: string | number;
+  payload: { value: string };
+  firstTick: string;
+  lastTick: string;
+}) {
+  const { x, y, payload, firstTick, lastTick } = props;
+  const value = payload.value;
+  const spaceIdx = value.indexOf(' ');
+  const display = spaceIdx === -1 ? value : value.slice(0, value.lastIndexOf(' '));
+  const anchor =
+    value === firstTick ? 'start' :
+    value === lastTick ? 'end' : 'middle';
+  return (
+    <text x={x} y={y} dy="0.71em" textAnchor={anchor} fontSize={11} fill="var(--color-ink-500)">
+      {display}
+    </text>
+  );
+}
+
 function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   // Header + breakdown are the "Total events" KPI surfaced at hero scale —
   // driven by the page range selector. `total` is the explicit per-range
@@ -349,6 +370,11 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   } satisfies ChartConfig;
   const firstTick = chart.ticks[0];
   const lastTick = chart.ticks[chart.ticks.length - 1];
+  const renderTick = useCallback(
+    (tickProps: { x: string | number; y: string | number; payload: { value: string } }) =>
+      <ChartXAxisTick {...tickProps} firstTick={firstTick} lastTick={lastTick} />,
+    [firstTick, lastTick],
+  );
 
   return (
     <div className="flex flex-col gap-4 rounded-md bg-card shadow-(--shadow-border) p-4">
@@ -419,39 +445,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
             height={24}
             ticks={chart.ticks}
             interval={0}
-            tick={(tickProps) => {
-              const { x, y, payload } = tickProps as {
-                x: number;
-                y: number;
-                payload: { value: string };
-              };
-              const value = payload.value;
-              // Non-24h tick values are full timestamps ('May 6 00:00');
-              // render just the date portion ('May 6'). 24h values have
-              // no space — render as-is ('13:30').
-              const spaceIdx = value.indexOf(' ');
-              const display = spaceIdx === -1
-                ? value
-                : value.slice(0, value.lastIndexOf(' '));
-              const anchor =
-                value === firstTick
-                  ? 'start'
-                  : value === lastTick
-                    ? 'end'
-                    : 'middle';
-              return (
-                <text
-                  x={x}
-                  y={y}
-                  dy="0.71em"
-                  textAnchor={anchor}
-                  fontSize={11}
-                  fill="var(--color-ink-500)"
-                >
-                  {display}
-                </text>
-              );
-            }}
+            tick={renderTick}
           />
           <ChartTooltip
             cursor={{ stroke: 'var(--color-ink-500)', strokeDasharray: '3 3' }}
@@ -959,11 +953,14 @@ function EventsTableSection({
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
-  // Page resets to 1 when the range / filters change so a deep-paged
-  // state doesn't carry over into a window with fewer rows.
-  useEffect(() => {
+  // Reset to page 1 whenever filters or range change — render-time pattern,
+  // not useEffect (see Activity UsageByKey for the canonical shape).
+  const [prevResetKey, setPrevResetKey] = useState('');
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${query}|${type}|${keyFilter}|${action}`;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setPage(1);
-  }, [range, customRange, query, type, keyFilter, action]);
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

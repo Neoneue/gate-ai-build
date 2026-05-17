@@ -1117,12 +1117,11 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
   const head = model.offerings[0];
   const [lang, setLang] = useState<'TypeScript' | 'Python' | 'cURL'>('TypeScript');
   const [showFullDesc, setShowFullDesc] = useState(false);
-  const activeLines =
-    lang === 'TypeScript'
-      ? tsSnippet(model.defaultHandle, model.modality)
-      : lang === 'Python'
-      ? pySnippet(model.defaultHandle, model.modality)
-      : curlSnippet(model.defaultHandle, model.modality);
+  const activeLines = useMemo(() => {
+    if (lang === 'TypeScript') return tsSnippet(model.defaultHandle, model.modality);
+    if (lang === 'Python')     return pySnippet(model.defaultHandle, model.modality);
+    return curlSnippet(model.defaultHandle, model.modality);
+  }, [lang, model.defaultHandle, model.modality]);
 
   return (
     <div className="flex flex-col gap-8 pb-8">
