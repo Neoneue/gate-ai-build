@@ -628,6 +628,20 @@ function maxContextK(model: Model): number {
   return max;
 }
 
+// Static derivations from the module-level MODELS constant — computed once at
+// module load, no hook overhead.
+const TOTAL_PROVIDERS = (() => {
+  const set = new Set<ProviderId>();
+  for (const m of MODELS) for (const o of m.offerings) set.add(o.provider);
+  return set.size;
+})();
+
+const MODALITY_COUNTS: Record<Modality, number> = (() => {
+  const counts: Record<Modality, number> = { text: 0, embeddings: 0, audio: 0, rerank: 0 };
+  for (const m of MODELS) counts[m.modality]++;
+  return counts;
+})();
+
 /* ─── Surface ────────────────────────────────────────────────────────────── */
 
 function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
@@ -653,17 +667,6 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
   const resetToFirstPage = () => setPage(1);
 
-  const totalProviders = useMemo(() => {
-    const set = new Set<ProviderId>();
-    for (const m of MODELS) for (const o of m.offerings) set.add(o.provider);
-    return set.size;
-  }, []);
-
-  const modalityCounts = useMemo(() => {
-    const counts: Record<Modality, number> = { text: 0, embeddings: 0, audio: 0, rerank: 0 };
-    for (const m of MODELS) counts[m.modality]++;
-    return counts;
-  }, []);
 
   const isEmpty = filtered.length === 0;
 
@@ -677,7 +680,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
   return (
     <>
-      <PageHeader modelCount={MODELS.length} providerCount={totalProviders} />
+      <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
       {/* Modality tabs — promoted out of the filter-pill row so each
           modality is a visible peer scope. Underline `line` variant
@@ -698,19 +701,19 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           </TabsTrigger>
           <TabsTrigger value="text">
             Text
-            <TabsCount>{modalityCounts.text}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="embeddings">
             Embeddings
-            <TabsCount>{modalityCounts.embeddings}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.embeddings}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="audio">
             Audio
-            <TabsCount>{modalityCounts.audio}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.audio}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="rerank">
             Rerank
-            <TabsCount>{modalityCounts.rerank}</TabsCount>
+            <TabsCount>{MODALITY_COUNTS.rerank}</TabsCount>
           </TabsTrigger>
         </TabsList>
 

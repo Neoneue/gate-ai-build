@@ -348,6 +348,13 @@ function ChartXAxisTick(props: {
   );
 }
 
+const HERO_CHART_CONFIG = {
+  requests: {
+    label: 'Events',
+    color: 'var(--color-danger-500)',
+  },
+} satisfies ChartConfig;
+
 function HeroMetricCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   // Header + breakdown are the "Total events" KPI surfaced at hero scale —
   // driven by the page range selector. `total` is the explicit per-range
@@ -362,12 +369,6 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
   // Chart: total-events trace + date/time axis, driven by the page range.
   // Same buildSpark() math as the KpiRail "Total events" tile.
   const chart = useMemo(() => buildEventsChartView(range, customRange), [range, customRange]);
-  const config = {
-    requests: {
-      label: 'Events',
-      color: 'var(--color-danger-500)',
-    },
-  } satisfies ChartConfig;
   const firstTick = chart.ticks[0];
   const lastTick = chart.ticks[chart.ticks.length - 1];
   const renderTick = useCallback(
@@ -404,7 +405,7 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
 
       {/* Full-width area chart with range-aware axis + per-point tooltip */}
       <ChartContainer
-        config={config}
+        config={HERO_CHART_CONFIG}
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
@@ -621,17 +622,27 @@ const ATTACK_CATEGORIES: AttackCategory[] = [
   { label: 'Credential leak',  count: 3, color: 'var(--color-chart-4)' },
 ];
 
+// Static label + color metadata — counts are range-dependent and injected at
+// render time via useMemo.
+const ACTION_CATEGORY_META = [
+  { label: 'Blocked',  color: 'var(--color-danger-500)'  },
+  { label: 'Flagged',  color: 'var(--color-warning-500)' },
+  { label: 'Redacted', color: 'var(--color-blue-500)'    },
+] as const;
+
 // Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
 // Counts come straight from splitEventMix(eventsTotal(...)) so they are
 // the SAME integers as the hero "Total events" KPI breakdown — the two
 // surfaces reconcile exactly for every range.
 function ActionCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   const { blocked, flagged, redacted } = splitEventMix(eventsTotal(range, customRange));
-  const categories: AttackCategory[] = [
-    { label: 'Blocked',  count: blocked,  color: 'var(--color-danger-500)'  },
-    { label: 'Flagged',  count: flagged,  color: 'var(--color-warning-500)' },
-    { label: 'Redacted', count: redacted, color: 'var(--color-blue-500)'    },
-  ];
+  const categories = useMemo<AttackCategory[]>(
+    () => {
+      const counts = [blocked, flagged, redacted];
+      return ACTION_CATEGORY_META.map((meta, i) => ({ ...meta, count: counts[i]! }));
+    },
+    [blocked, flagged, redacted],
+  );
   return (
     <CategoryBreakdownCard
       title="Action types"
@@ -646,11 +657,16 @@ function ActionCategoriesCard({ range, customRange }: { range: EventsRange; cust
 // matching the old `count × scale` behaviour now that scale is gone.
 function AttackCategoriesCard({ range, customRange }: { range: EventsRange; customRange: CustomRange | null }) {
   const total = eventsTotal(range, customRange);
-  const perUnit = total / EVENT_MIX_TOTAL;
-  const categories: AttackCategory[] = ATTACK_CATEGORIES.map((c) => ({
-    ...c,
-    count: Math.round(c.count * perUnit),
-  }));
+  const categories = useMemo<AttackCategory[]>(
+    () => {
+      const perUnit = total / EVENT_MIX_TOTAL;
+      return ATTACK_CATEGORIES.map((c) => ({
+        ...c,
+        count: Math.round(c.count * perUnit),
+      }));
+    },
+    [total],
+  );
   return (
     <CategoryBreakdownCard
       title="Attack types"

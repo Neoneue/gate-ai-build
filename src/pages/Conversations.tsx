@@ -737,6 +737,9 @@ const CONVERSATION_MESSAGES: {
   },
 ];
 
+// Static derivation — computed once at module load from the fixed message list.
+const ASSISTANT_TURN_COUNT = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
+
 function ConversationMessagesPanel({
   activeRequestId,
   selectionSource,
@@ -748,8 +751,7 @@ function ConversationMessagesPanel({
 }) {
   // Count = assistant turns. Tool/user/system don't count as "turns" — a
   // turn is a model response. Mirrors the convention used in the table
-  // (row.turns is assistant-only).
-  const turnCount = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
+  // (row.turns is assistant-only). Computed at module level (static data).
 
   // Auto-scroll the matching message into view ONLY when the selection
   // came from the counterpart (trace) panel. Selections that originated
@@ -777,7 +779,7 @@ function ConversationMessagesPanel({
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-ink-900">Messages</span>
         <span className="font-mono text-xs text-ink-500 tabular-nums">
-          {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
+          {ASSISTANT_TURN_COUNT} {ASSISTANT_TURN_COUNT === 1 ? 'turn' : 'turns'}
         </span>
       </div>
       <div

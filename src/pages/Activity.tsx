@@ -632,10 +632,6 @@ function TrendBreakdownPanel({
   const grandTotal = Object.values(seriesTotals).reduce((a, b) => a + b, 0) || 1;
   const fmtValue = isSpend ? fmtUsd : (n: number) => fmtTokens(Math.round(n));
 
-  const fmtPct = (frac: number) => {
-    const pct = frac * 100;
-    return pct < 10 ? `${pct.toFixed(1)}%` : `${Math.round(pct)}%`;
-  };
 
   return (
     <div className="flex flex-col gap-1">
@@ -978,6 +974,10 @@ function TrendCard({
 
 const fmtUsd = (n: number) => formatCurrency(n);
 const fmtInt = (n: number) => formatNumber(n);
+const fmtPct = (frac: number) => {
+  const pct = frac * 100;
+  return pct < 10 ? `${pct.toFixed(1)}%` : `${Math.round(pct)}%`;
+};
 const fmtTokens = (n: number) =>
   n >= 1_000_000
     ? `${(n / 1_000_000).toFixed(2)}M`
