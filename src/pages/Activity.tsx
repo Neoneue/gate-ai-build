@@ -56,6 +56,7 @@ import {
   type Vendor,
 } from '@/components/icons/vendor-meta';
 import { CHART_PALETTE } from '@/lib/chart-palette';
+import { formatCurrency, formatDate, formatNumber, formatTime } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -116,11 +117,6 @@ const RANGE_SCALE: Record<PresetRange, number> = {
   '30d': 4.2,
   all:   8.5,
 };
-
-const MONTH_LABELS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
 
 function daysInRange(r: CustomRange): number {
   return Math.max(1, Math.round((r.to.getTime() - r.from.getTime()) / 86_400_000) + 1);
@@ -542,7 +538,7 @@ function getRangeLabels(range: Range, customRange: CustomRange | null): string[]
     const span = customRange.to.getTime() - customRange.from.getTime();
     for (let i = 0; i < count; i++) {
       const d = new Date(customRange.from.getTime() + (span * i) / (count - 1));
-      labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
+      labels.push(formatDate(d, { month: 'short', day: 'numeric' }));
     }
     return labels;
   }
@@ -555,19 +551,32 @@ function getRangeLabels(range: Range, customRange: CustomRange | null): string[]
     for (let i = 0; i < 30; i++) {
       const d = new Date(lastDay);
       d.setDate(d.getDate() - Math.round(((29 - i) * 59) / 29));
-      labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
+      labels.push(formatDate(d, { month: 'short', day: 'numeric' }));
     }
     return labels;
   }
   if (range === '24h') {
     // 12 buckets at 2-hour intervals on the calendar day. Trailing bucket
     // labeled "Now" since it ends at the anchor 14:30 rather than 14:00.
-    return ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', 'Now'];
+    const anchor = new Date(2026, 3, 27, 0, 0);
+    const labels: string[] = [];
+    for (let i = 0; i < 11; i++) {
+      const d = new Date(anchor.getTime() + i * 2 * 60 * 60 * 1000);
+      labels.push(formatTime(d, { hour: '2-digit', minute: '2-digit', hour12: false }));
+    }
+    labels.push('Now');
+    return labels;
   }
   if (range === '7d') {
-    // 7 daily buckets ending today (May 12). Anchor day labels back from
-    // May 12 by (count - 1 - i) days.
-    return ['Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26', 'Apr 27'];
+    // 7 daily buckets ending Apr 27. Going back 6 days from the anchor.
+    const anchor = new Date(2026, 3, 27);
+    const labels: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(anchor);
+      d.setDate(d.getDate() - i);
+      labels.push(formatDate(d, { month: 'short', day: 'numeric' }));
+    }
+    return labels;
   }
   // 30D — 30 daily labels ending Apr 27 (today, per existing fixtures).
   // Going back 29 days: Mar 29 → Apr 27 inclusive. Last label is the
@@ -577,7 +586,7 @@ function getRangeLabels(range: Range, customRange: CustomRange | null): string[]
   for (let i = 0; i < 30; i++) {
     const d = new Date(lastDay);
     d.setDate(d.getDate() - (29 - i));
-    labels.push(`${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`);
+    labels.push(formatDate(d, { month: 'short', day: 'numeric' }));
   }
   return labels;
 }
@@ -967,9 +976,8 @@ function TrendCard({
 
 /* ─── Top X models — 3-up, one card per axis (no sort dropdown) ─────────── */
 
-const fmtUsd = (n: number) =>
-  `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const fmtInt = (n: number) => n.toLocaleString('en-US');
+const fmtUsd = (n: number) => formatCurrency(n);
+const fmtInt = (n: number) => formatNumber(n);
 const fmtTokens = (n: number) =>
   n >= 1_000_000
     ? `${(n / 1_000_000).toFixed(2)}M`

@@ -50,6 +50,7 @@ import { InlineCode } from '@/components/ui/inline-code';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { PageTitle } from '@/components/ui/page-title';
 import { TextLink } from '@/components/ui/text-link';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import {
   MARKETPLACE_META,
@@ -570,15 +571,15 @@ function formatContext(contextK: number, modality: Modality): string {
 function formatPrice(amount: number, modality: Modality): string {
   if (amount === 0) return '—';
   // Audio pricing is per minute (per spec); rerank is per 1k searches.
-  if (modality === 'audio') return `$${amount.toFixed(3)}/min`;
-  if (modality === 'rerank') return `$${amount.toFixed(2)}/1k`;
+  if (modality === 'audio') return formatCurrency(amount, { minFrac: 3, maxFrac: 3 }) + '/min';
+  if (modality === 'rerank') return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + '/1k';
   // 0.05 → "$0.05/M", 15 → "$15.00/M"
-  return `$${amount.toFixed(2)}/M`;
+  return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + '/M';
 }
 
 function formatNumeric(value: number | undefined, suffix: string): string {
   if (value === undefined || value === 0) return '—';
-  return `${value.toLocaleString('en-US')}${suffix}`;
+  return `${formatNumber(value)}${suffix}`;
 }
 
 function formatPriceCell(amount: number | undefined, modality: Modality): string {
@@ -1390,7 +1391,7 @@ function ProvidersTable({ model }: { model: Model }) {
                 value={
                   o.throughputTps === undefined || o.throughputTps === 0
                     ? '—'
-                    : `${o.throughputTps.toLocaleString('en-US')} t/s`
+                    : `${formatNumber(o.throughputTps)} t/s`
                 }
               />
               <ProviderNumeric value={formatPrice(o.inputPricePerM, model.modality)} />
