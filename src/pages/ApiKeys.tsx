@@ -396,13 +396,14 @@ function KeysTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {/* Six equal columns — every header gets the same 1/6 share so
-             *  the grid reads as a uniform rhythm. */}
-            <TableHead className="w-[16.6667%] whitespace-nowrap">Key</TableHead>
-            <TableHead className="w-[16.6667%] whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-[16.6667%] whitespace-nowrap">7-day requests</TableHead>
-            <TableHead className="w-[16.6667%] text-right whitespace-nowrap">7-day usage</TableHead>
-            <TableHead className="w-[16.6667%] whitespace-nowrap">Last used</TableHead>
-            <TableHead aria-label="Actions" className="w-[16.6667%]" />
+             *  the grid reads as a uniform rhythm. Usage sits left of the
+             *  sparkline so it isn't pressed against the Last used cell. */}
+            <TableHead className="w-1/5 whitespace-nowrap">Key</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">7-day usage</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">7-day requests</TableHead>
+            <TableHead className="w-1/5 whitespace-nowrap">Last used</TableHead>
+            <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -425,7 +426,7 @@ function KeysTable({
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
                 {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
               </TableCell>
               <TableCell className="whitespace-nowrap text-sm text-ink-500">
