@@ -1263,7 +1263,7 @@ type ApiKeyRow = {
  *    Spend     → prod-agent, prod-web, openclaw, hermes-agent, dev
  *    Requests  → prod-web, prod-agent, openclaw, dev, hermes-agent
  *    Tokens    → prod-web, prod-agent, openclaw, hermes-agent, dev */
-const API_KEY_ROWS: ApiKeyRow[] = [
+export const API_KEY_ROWS: ApiKeyRow[] = [
   { key: 'prod-web',      label: 'prod-web',      owner: 'Chad Ponticas', path: 'Gate', requests: 60000, tokensIn: 15_000_000, tokensOut:  3_000_000, spend: 90.00 },
   { key: 'prod-agent',   label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests: 12000, tokensIn: 15_384_615, tokensOut:    615_385, spend: 92.31 },
   { key: 'openclaw',     label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  8000, tokensIn: 10_096_154, tokensOut:    403_846, spend:  0.00 },

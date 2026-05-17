@@ -40,6 +40,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
+import { formatCurrency } from '@/lib/formatters';
+
+// 7-day usage lookup keyed by the user-facing key name. Activity's
+// API_KEY_ROWS is the canonical per-key spend source for the workspace —
+// importing it here means the ApiKeys Usage column reconciles with the
+// Activity UsageByKey table for the same window instead of drifting as
+// a separate constant. Keys not present in Activity (newly-created keys
+// with no traffic yet, one-off test keys) fall back to 0.
+const USAGE_BY_KEY: Map<string, number> = new Map(
+  ACTIVITY_KEY_ROWS.map((r) => [r.key, r.spend]),
+);
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -386,6 +398,7 @@ function KeysTable({
             <TableHead className="whitespace-nowrap">Key</TableHead>
             <TableHead className="whitespace-nowrap">Status</TableHead>
             <TableHead className="whitespace-nowrap">7-day requests</TableHead>
+            <TableHead className="text-right whitespace-nowrap">7-day usage</TableHead>
             <TableHead className="whitespace-nowrap">Last used</TableHead>
             <TableHead aria-label="Actions" className="w-10" />
           </TableRow>
@@ -409,6 +422,9 @@ function KeysTable({
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />
+              </TableCell>
+              <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-ink-800">
+                {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
               </TableCell>
               <TableCell className="whitespace-nowrap text-sm text-ink-500">
                 {row.lastUsed}
