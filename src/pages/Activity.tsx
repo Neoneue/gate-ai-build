@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Info, Key } from 'lucide-react';
+import { Download, Info, Key } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
@@ -1386,6 +1387,11 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
             ))}
           </SelectContent>
         </Select>
+
+        <Button type="button" variant="outline" size="sm" className="ml-auto">
+          <Download data-icon="inline-start" aria-hidden />
+          Export CSV
+        </Button>
       </FilterToolbar>
       )}
 

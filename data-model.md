@@ -638,6 +638,19 @@ EVENT   → 'neutral'      (gray; one row in mock)
 
 **Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page uses "anchored on a public ledger" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
 
+**AuditRecordDialog drill-in modal** (`src/pages/AuditRecordDialog.tsx`, also opened from Overview's `RecentAnchoredEventsCard`):
+
+Structure (post-2026-05-18 trim):
+1. `DialogScrollHeader` → `DialogTitleBlock` with title "Audit record" (no badge slot)
+2. `DialogScrollSummary` → standalone `<VerifiedBySeal />` (no card chrome, no descriptive copy — info is duplicated by the Event detail rows below and the badge alt-text)
+3. `DialogScrollBody` → `<Tabs variant="line">` with three triggers:
+   - **Event** — `<DetailList>` with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Anchor (CircleCheck + truncateHex(anchor, 4, 4))
+   - **Merkle path** — `<MerklePathPanel>` inline SVG tree (ROOT + sibling + leaf) with mono path notation
+   - **How it works** — `<HowItWorksPanel>` four-step explainer + "Digital Evidence docs" link
+4. `DialogScrollFooter` → `Copy proof JSON` (outline) and `Open DE Explorer` (default)
+
+The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h-6 w-auto`. Sits standalone (no card wrapper) as a trust stamp between the header title and the tabbed body.
+
 ---
 
 ### Activity page (`/activity` → `Activity.tsx`)
