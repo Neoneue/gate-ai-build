@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, Sparkles } from 'lucide-react';
@@ -25,7 +26,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatCurrency, formatDateNumeric, formatTimestamp } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/formatters';
+import { Timestamp } from '@/components/ui/timestamp';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -157,7 +159,7 @@ function CreditsCard() {
             label="Auto-recharge"
             value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
           />
-          <CreditStatRow label="Last top-up" value={formatDateNumeric(LAST_TOPUP_DATE)} />
+          <CreditStatRow label="Last top-up" value={<Timestamp date={LAST_TOPUP_DATE} format="dateNumeric" />} />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t border-border">
@@ -478,7 +480,7 @@ function CreditStatRow({
   mono = false,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   mono?: boolean;
 }) {
   return (
@@ -540,7 +542,7 @@ function HistorySection() {
         <TableBody>
           {HISTORY_ROWS.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap text-neutral-800">{formatTimestamp(row.date)}</TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800"><Timestamp date={row.date} /></TableCell>
               <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>
               <TableCell
                 className={cn(

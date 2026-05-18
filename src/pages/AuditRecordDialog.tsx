@@ -15,9 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   type EventRow,
   KIND_BADGE_VARIANT,
-  fmtTime,
   truncateHex,
 } from './AuditTrail';
+import { Timestamp } from '@/components/ui/timestamp';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditRecordDialog — drill-in modal for a single audit event row.
@@ -291,7 +291,7 @@ export function AuditRecordDialog({
               <DetailList>
                 <DetailRow
                   label="Time"
-                  value={<span className="font-mono text-neutral-800">{fmtTime(row.at)}</span>}
+                  value={<Timestamp date={row.at} className="font-mono text-neutral-800" />}
                 />
                 <DetailRow
                   label="Event ID"

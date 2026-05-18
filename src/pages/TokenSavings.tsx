@@ -44,7 +44,7 @@ function PageHeader() {
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
       <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
-        Cache, compress and deduplicate to spend less per request. Every saved token is anchored on Constellation DE for verifiable cost reporting.
+        Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
   );

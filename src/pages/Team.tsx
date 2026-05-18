@@ -50,7 +50,7 @@ import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatDateNumeric, formatRelative } from '@/lib/formatters';
+import { Timestamp } from '@/components/ui/timestamp';
 
 const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
 
@@ -190,6 +190,7 @@ function MembersPane() {
   const [roleFilter, setRoleFilter] = useState<'all' | MemberRole>('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [pendingRemove, setPendingRemove] = useState<MemberRow | null>(null);
 
   const visible = MEMBER_ROWS.filter((r) => {
     if (roleFilter !== 'all' && r.role !== roleFilter) return false;
@@ -204,6 +205,7 @@ function MembersPane() {
   const isEmpty = visible.length === 0;
 
   return (
+    <>
     <Card density="flush">
       {/* Toolbar — search + role filter. Sits as direct child of Card
           (density="flush"); paddings cascade from the toolbar's own
@@ -264,7 +266,7 @@ function MembersPane() {
         </TableHeader>
         <TableBody>
           {visible.map((row) => (
-            <MemberRowView key={row.id} row={row} />
+            <MemberRowView key={row.id} row={row} onRemove={setPendingRemove} />
           ))}
         </TableBody>
       </Table>
@@ -279,10 +281,43 @@ function MembersPane() {
         </>
       )}
     </Card>
+
+    <Dialog
+      open={pendingRemove !== null}
+      onOpenChange={(open) => {
+        if (!open) setPendingRemove(null);
+      }}
+    >
+      <DialogContent className="sm:max-w-sm p-4">
+        <DialogHeader>
+          <DialogTitle>Remove {pendingRemove?.name}?</DialogTitle>
+          <DialogDescription>
+            {pendingRemove?.name} will lose access to this workspace immediately. You can re-invite them later.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>
+            Cancel
+          </DialogClose>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => {
+              // Mock-only: the seeded MEMBER_ROWS constant isn't mutated.
+              // Wire to a real mutation handler when the backend lands.
+              setPendingRemove(null);
+            }}
+          >
+            Remove member
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
-function MemberRowView({ row }: { row: MemberRow }) {
+function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: MemberRow) => void }) {
   const [role, setRole] = useState<MemberRole>(row.role);
   return (
     <TableRow>
@@ -303,7 +338,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
         </div>
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-        {formatDateNumeric(row.joined)}
+        <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
         {row.role === 'owner' ? (
@@ -324,7 +359,12 @@ function MemberRowView({ row }: { row: MemberRow }) {
         {row.role !== 'owner' ? (
           <RowActionsMenu
             label={`Open actions for ${row.name}`}
-            items={[{ id: 'remove', label: 'Remove member', destructive: true }]}
+            items={[{
+              id: 'remove',
+              label: 'Remove member',
+              destructive: true,
+              onSelect: () => onRemove(row),
+            }]}
           />
         ) : null}
       </TableCell>
@@ -393,13 +433,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-                {formatDateNumeric(row.sent)}
+                <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-                {formatRelative(row.expires, NOW)}
+                <Timestamp date={row.expires} format="relative" anchor={NOW} />
               </TableCell>
               <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
                 <RowActionsMenu

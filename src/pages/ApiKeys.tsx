@@ -40,7 +40,8 @@ import {
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
-import { formatCurrency, formatTimestamp } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/formatters';
+import { Timestamp } from '@/components/ui/timestamp';
 
 // 7-day usage lookup keyed by the user-facing key name. Activity's
 // API_KEY_ROWS is the canonical per-key spend source for the workspace —
@@ -438,10 +439,10 @@ function KeysTable({
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-neutral-800">
-                  {formatTimestamp(row.createdAt)}
+                  <Timestamp date={row.createdAt} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-neutral-800">
-                  {formatTimestamp(row.lastUsed)}
+                  <Timestamp date={row.lastUsed} />
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
                   {row.revoked ? null : (
@@ -465,7 +466,7 @@ function KeysTable({
           if (!open) setPendingRevoke(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm p-4">
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
