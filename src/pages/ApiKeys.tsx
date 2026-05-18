@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { BookOpen, CircleCheck, Copy, KeyRound, MoreHorizontal, Plus, ShieldOff } from 'lucide-react';
+import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,7 +27,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
 import { PageTitle } from '@/components/ui/page-title';
 import { Sparkline } from '@/components/ui/sparkline';
 import { TextLink } from '@/components/ui/text-link';
@@ -41,7 +40,24 @@ import {
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatDateTime } from '@/lib/formatters';
+
+// LangChain-style timestamp: "5/11/2026, 3:59:41 PM" — numeric date, 12h
+// clock with seconds. Used for both Created and Last used columns in the
+// keys table. Date/time goes in the data tier (text-neutral-800) per the
+// design system rule — these are row payload, not scaffolding.
+const TIMESTAMP_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: 'numeric',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+};
+function formatTimestamp(d: Date | null): string {
+  return d ? formatDateTime(d, TIMESTAMP_OPTIONS) : 'Never';
+}
 
 // 7-day usage lookup keyed by the user-facing key name. Activity's
 // API_KEY_ROWS is the canonical per-key spend source for the workspace —
@@ -78,7 +94,8 @@ type ApiKeyRow = {
   name: string;          // user-supplied label
   masked: string;        // `sk-gw-…3a8f` display form
   requests7d: number[];  // sparkline series; 7 daily buckets
-  lastUsed: string;      // "1 day ago" / "Never"
+  createdAt: Date;       // when the key was minted
+  lastUsed: Date | null; // null = never used (freshly-minted or revoked-untouched)
   revoked?: boolean;     // greys out the row + disables actions when true
 };
 
@@ -102,7 +119,8 @@ export function ApiKeys() {
       masked: 'sk-gw-…c4ae',
       // Steady climb — prod-web traffic grows day-over-day.
       requests7d: [3, 5, 7, 6, 10, 9, 14],
-      lastUsed: '1 day ago',
+      createdAt: new Date(2026, 3, 28, 10, 14, 22), // 2026-04-28 10:14:22
+      lastUsed: new Date(2026, 4, 17, 9, 41, 6),    // 2026-05-17 09:41:06
     },
     {
       id: 'sk-gw-9f3064ce',
@@ -110,14 +128,16 @@ export function ApiKeys() {
       masked: 'sk-gw-…9f30',
       // Spiky — agent runs burst irregularly across the week.
       requests7d: [1, 8, 2, 11, 3, 9, 4],
-      lastUsed: '2h ago',
+      createdAt: new Date(2026, 4, 8, 16, 2, 51),   // 2026-05-08 16:02:51
+      lastUsed: new Date(2026, 4, 18, 10, 12, 33),  // 2026-05-18 10:12:33
     },
     {
       id: 'sk-gw-255e1d3a',
       name: 'test-key',
       masked: 'sk-gw-…255e',
       requests7d: [0, 0, 0, 0, 0, 0, 0],
-      lastUsed: 'Never',
+      createdAt: new Date(2026, 3, 18, 9, 0, 0),    // 2026-04-18 09:00:00
+      lastUsed: null,
       revoked: true,
     },
   ]);
@@ -133,7 +153,8 @@ export function ApiKeys() {
       masked: `sk-gw-…${suffix}`,
       // Zero-volume sparkline for a freshly-created key — no traffic yet.
       requests7d: [0, 0, 0, 0, 0, 0, 0],
-      lastUsed: 'Never',
+      createdAt: new Date(),
+      lastUsed: null,
     };
     setKeys((prev) => [...prev, next]);
     setCreateOpen(false);
@@ -395,14 +416,15 @@ function KeysTable({
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            {/* Six equal columns — every header gets the same 1/6 share so
-             *  the grid reads as a uniform rhythm. Usage sits left of the
-             *  sparkline so it isn't pressed against the Last used cell. */}
-            <TableHead className="w-1/5 whitespace-nowrap">Key</TableHead>
-            <TableHead className="w-1/5 whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-1/5 whitespace-nowrap">7-day usage</TableHead>
-            <TableHead className="w-1/5 whitespace-nowrap">7-day requests</TableHead>
-            <TableHead className="w-1/5 whitespace-nowrap">Last used</TableHead>
+            {/* Six data columns at w-1/6 + a fixed-width Actions column.
+             *  Created and Last used sit at the right of the row — the date
+             *  pair is the row's "freshness" data, so they cluster. */}
+            <TableHead className="w-1/6 whitespace-nowrap">Key</TableHead>
+            <TableHead className="w-1/6 whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-1/6 whitespace-nowrap">7-day usage</TableHead>
+            <TableHead className="w-1/6 whitespace-nowrap">7-day requests</TableHead>
+            <TableHead className="w-1/6 whitespace-nowrap">Created</TableHead>
+            <TableHead className="w-1/6 whitespace-nowrap">Last used</TableHead>
             <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
@@ -429,29 +451,20 @@ function KeysTable({
               <TableCell className="whitespace-nowrap">
                 <Sparkline points={row.requests7d} width={96} />
               </TableCell>
-              <TableCell className="whitespace-nowrap text-sm text-neutral-500">
-                {row.lastUsed}
+              <TableCell className="whitespace-nowrap text-neutral-800">
+                {formatTimestamp(row.createdAt)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800">
+                {formatTimestamp(row.lastUsed)}
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">
                 {row.revoked ? null : (
-                  <Menu>
-                    <MenuTrigger
-                      render={
-                        <IconActionButton aria-label={`Actions for ${row.name}`}>
-                          <MoreHorizontal aria-hidden strokeWidth={1.75} />
-                        </IconActionButton>
-                      }
-                    />
-                    <MenuContent align="end" sideOffset={4}>
-                      <MenuItem
-                        variant="destructive"
-                        onClick={() => onRevoke(row.id)}
-                      >
-                        <ShieldOff aria-hidden strokeWidth={1.75} />
-                        Revoke key
-                      </MenuItem>
-                    </MenuContent>
-                  </Menu>
+                  <IconActionButton
+                    aria-label={`Revoke ${row.name}`}
+                    onClick={() => onRevoke(row.id)}
+                  >
+                    <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
+                  </IconActionButton>
                 )}
               </TableCell>
             </TableRow>
