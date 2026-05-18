@@ -42,7 +42,7 @@ import {
 } from '@/pages/AuditTrail';
 import { AuditRecordDialog } from '@/pages/AuditRecordDialog';
 import { CONVERSATION_ROWS, KEY_SUFFIX as CONVERSATION_KEY_SUFFIX, type ConversationRow } from '@/pages/Conversations';
-import { formatCurrency, formatDateTime, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 // KPI-rail values derived from the canonical security + spend + audit seeds
@@ -339,7 +339,7 @@ function RecentConversationsCard() {
                   {row.cost}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {formatDateTime(row.updated)}
+                  {formatTimestamp(row.updated)}
                 </TableCell>
               </TableRow>
             );
