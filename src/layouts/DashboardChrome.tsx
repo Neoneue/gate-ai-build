@@ -81,7 +81,7 @@ function DashTopBar({
   hideDocsButton?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between h-[49px] px-6 bg-white border-b border-border shrink-0">
+    <div className="flex items-center justify-between h-14 px-6 bg-white border-b border-border shrink-0">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
