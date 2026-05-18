@@ -40,24 +40,7 @@ import {
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
-import { formatCurrency, formatDateTime } from '@/lib/formatters';
-
-// LangChain-style timestamp: "5/11/2026, 3:59:41 PM" — numeric date, 12h
-// clock with seconds. Used for both Created and Last used columns in the
-// keys table. Date/time goes in the data tier (text-neutral-800) per the
-// design system rule — these are row payload, not scaffolding.
-const TIMESTAMP_OPTIONS: Intl.DateTimeFormatOptions = {
-  month: 'numeric',
-  day: 'numeric',
-  year: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: true,
-};
-function formatTimestamp(d: Date | null): string {
-  return d ? formatDateTime(d, TIMESTAMP_OPTIONS) : 'Never';
-}
+import { formatCurrency, formatTimestamp } from '@/lib/formatters';
 
 // 7-day usage lookup keyed by the user-facing key name. Activity's
 // API_KEY_ROWS is the canonical per-key spend source for the workspace —
@@ -411,67 +394,102 @@ function KeysTable({
   rows: ApiKeyRow[];
   onRevoke: (id: string) => void;
 }) {
+  const [pendingRevoke, setPendingRevoke] = useState<ApiKeyRow | null>(null);
+
   return (
-    <Card density="flush">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {/* Six data columns at w-1/6 + a fixed-width Actions column.
-             *  Created and Last used sit at the right of the row — the date
-             *  pair is the row's "freshness" data, so they cluster. */}
-            <TableHead className="w-1/6 whitespace-nowrap">Key</TableHead>
-            <TableHead className="w-1/6 whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-1/6 whitespace-nowrap">7-day usage</TableHead>
-            <TableHead className="w-1/6 whitespace-nowrap">7-day requests</TableHead>
-            <TableHead className="w-1/6 whitespace-nowrap">Created</TableHead>
-            <TableHead className="w-1/6 whitespace-nowrap">Last used</TableHead>
-            <TableHead aria-label="Actions" className="w-12" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
-              {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
-                  to neutral-600. Single-line two-tone form shared with the
-                  Events / Requests / Activity Key columns. */}
-              <TableCell className="whitespace-nowrap font-mono">
-                <span className="text-neutral-800">{row.name}</span>
-                <span className="text-neutral-600"> ({row.masked})</span>
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {row.revoked ? (
-                  <Badge variant="neutral">Revoked</Badge>
-                ) : (
-                  <Badge variant="success">Active</Badge>
-                )}
-              </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <Sparkline points={row.requests7d} width={96} />
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                {formatTimestamp(row.createdAt)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                {formatTimestamp(row.lastUsed)}
-              </TableCell>
-              <TableCell className="text-right whitespace-nowrap">
-                {row.revoked ? null : (
-                  <IconActionButton
-                    aria-label={`Revoke ${row.name}`}
-                    onClick={() => onRevoke(row.id)}
-                  >
-                    <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
-                  </IconActionButton>
-                )}
-              </TableCell>
+    <>
+      <Card density="flush">
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              {/* Six data columns at w-1/6 + a fixed-width Actions column.
+               *  Created and Last used sit at the right of the row — the date
+               *  pair is the row's "freshness" data, so they cluster. */}
+              <TableHead className="w-1/6 whitespace-nowrap">Key</TableHead>
+              <TableHead className="w-1/6 whitespace-nowrap">Status</TableHead>
+              <TableHead className="w-1/6 whitespace-nowrap">7-day usage</TableHead>
+              <TableHead className="w-1/6 whitespace-nowrap">7-day requests</TableHead>
+              <TableHead className="w-1/6 whitespace-nowrap">Created</TableHead>
+              <TableHead className="w-1/6 whitespace-nowrap">Last used</TableHead>
+              <TableHead aria-label="Actions" className="w-12" />
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
+                {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
+                    to neutral-600. Single-line two-tone form shared with the
+                    Events / Requests / Activity Key columns. */}
+                <TableCell className="whitespace-nowrap font-mono">
+                  <span className="text-neutral-800">{row.name}</span>
+                  <span className="text-neutral-600"> ({row.masked})</span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {row.revoked ? (
+                    <Badge variant="neutral">Revoked</Badge>
+                  ) : (
+                    <Badge variant="success">Active</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+                  {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Sparkline points={row.requests7d} width={96} />
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-neutral-800">
+                  {formatTimestamp(row.createdAt)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-neutral-800">
+                  {formatTimestamp(row.lastUsed)}
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap">
+                  {row.revoked ? null : (
+                    <IconActionButton
+                      aria-label={`Revoke ${row.name}`}
+                      onClick={() => setPendingRevoke(row)}
+                    >
+                      <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
+                    </IconActionButton>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog
+        open={pendingRevoke !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevoke(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
+            <DialogDescription>
+              This key will stop authenticating requests immediately. Revocation can't be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (pendingRevoke) onRevoke(pendingRevoke.id);
+                setPendingRevoke(null);
+              }}
+            >
+              Revoke key
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
