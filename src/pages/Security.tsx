@@ -54,7 +54,7 @@ import {
 } from '@/components/ui/chart';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
+import { formatNumber, formatTime, formatDateTime, formatTimestamp } from '@/lib/formatters';
 
 const WHITESPACE_GLOBAL_RE = /\s+/g;
 
@@ -750,7 +750,7 @@ type RiskTier = 'critical' | 'elevated' | 'normal';
 export function formatEventTime(stored: string): string {
   const [datePart, timePart] = stored.split(' ');
   const date = new Date(`${datePart}T${timePart}`);
-  return formatDateTime(date);
+  return formatTimestamp(date);
 }
 
 type EventAction = 'blocked' | 'flagged' | 'redacted';

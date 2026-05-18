@@ -25,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDateNumeric, formatTimestamp } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ function PageHeader() {
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Billing</PageTitle>
       <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-        Plan, payment method, and invoice history.
+        Plan, credits, and transaction history.
       </p>
     </div>
   );
@@ -157,7 +157,7 @@ function CreditsCard() {
             label="Auto-recharge"
             value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
           />
-          <CreditStatRow label="Last top-up" value={formatDate(LAST_TOPUP_DATE)} />
+          <CreditStatRow label="Last top-up" value={formatDateNumeric(LAST_TOPUP_DATE)} />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t border-border">
@@ -514,9 +514,9 @@ type HistoryRow = {
 // Newest first. Credits-added rows render the amount in success-700 to mark
 // the inflow; debits use the default foreground tone.
 const HISTORY_ROWS: HistoryRow[] = [
-  { id: 'h-3', date: new Date(2026, 4, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
-  { id: 'h-2', date: new Date(2026, 4, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
-  { id: 'h-1', date: new Date(2026, 4, 12), type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
+  { id: 'h-3', date: new Date(2026, 4, 12, 16, 47, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
+  { id: 'h-2', date: new Date(2026, 4, 12, 14, 22, 5),  type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
+  { id: 'h-1', date: new Date(2026, 4, 12, 9, 14, 38),  type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
 ];
 
 const fmtAmount = (n: number) => formatCurrency(n, { signDisplay: 'exceptZero' });
@@ -540,7 +540,7 @@ function HistorySection() {
         <TableBody>
           {HISTORY_ROWS.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap text-neutral-800">{formatDate(row.date)}</TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800">{formatTimestamp(row.date)}</TableCell>
               <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>
               <TableCell
                 className={cn(

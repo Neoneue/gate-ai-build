@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/table';
 import { VENDOR_META, VendorAvatar, type Vendor } from '@/components/icons/vendor-meta';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatDateTime } from '@/lib/formatters';
+import { formatTimestamp } from '@/lib/formatters';
 
 const REDUCE_MOTION =
   typeof window !== 'undefined' &&
@@ -434,7 +434,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                   {scaleCostStr(row.cost, scale)}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {formatDateTime(row.updated)}
+                  {formatTimestamp(row.updated)}
                 </TableCell>
               </TableRow>
             );
@@ -610,7 +610,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
       <DialogScrollFooter className="justify-between flex-wrap">
         <span className="font-mono text-xs text-neutral-500">
           Key <span className="text-neutral-800">{row.initiator}</span>{' '}
-          · started <span className="text-neutral-800">{formatDateTime(row.updated)}</span>
+          · started <span className="text-neutral-800">{formatTimestamp(row.updated)}</span>
         </span>
         <CopyButton
           mode="label"

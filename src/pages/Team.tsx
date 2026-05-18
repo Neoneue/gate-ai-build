@@ -50,7 +50,7 @@ import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { cn } from '@/lib/utils';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatDate, formatRelative } from '@/lib/formatters';
+import { formatDateNumeric, formatRelative } from '@/lib/formatters';
 
 const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
 
@@ -303,7 +303,7 @@ function MemberRowView({ row }: { row: MemberRow }) {
         </div>
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-        {formatDate(row.joined)}
+        {formatDateNumeric(row.joined)}
       </TableCell>
       <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
         {row.role === 'owner' ? (
@@ -393,7 +393,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                 <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-                {formatDate(row.sent)}
+                {formatDateNumeric(row.sent)}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {ROLE_LABEL[row.role]}

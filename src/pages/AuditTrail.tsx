@@ -29,7 +29,7 @@ import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { AuditRecordDialog } from './AuditRecordDialog';
-import { formatDateTime, formatNumber } from '@/lib/formatters';
+import { formatNumber, formatTimestamp } from '@/lib/formatters';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -73,7 +73,7 @@ function isWithinRange(at: Date, range: Range, customRange: CustomRange | null):
 }
 
 export function fmtTime(d: Date): string {
-  return formatDateTime(d);
+  return formatTimestamp(d);
 }
 
 export function fmtRelative(at: Date): string {
