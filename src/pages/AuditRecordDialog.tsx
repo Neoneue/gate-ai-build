@@ -16,7 +16,6 @@ import {
   type EventRow,
   KIND_BADGE_VARIANT,
   fmtTime,
-  fmtRelative,
   truncateHex,
 } from './AuditTrail';
 
@@ -268,27 +267,14 @@ export function AuditRecordDialog({
           <DialogTitleBlock>Audit record</DialogTitleBlock>
         </DialogScrollHeader>
 
-        {/* ── Verification banner ── */}
+        {/* ── Verification stamp ──
+         *
+         * Standalone trust stamp where the banner card used to live. The
+         * descriptive copy + anchor reference were dropped on 2026-05-18
+         * as redundant — the badge alt-text carries the claim and the
+         * Event detail rows below carry the hash + timestamp. */}
         <DialogScrollSummary>
-          <div className="rounded-md border border-border bg-card flex flex-col items-start gap-3 p-4">
-            <VerifiedBySeal />
-
-            {/* Description */}
-            <div className="min-w-0">
-              <p className="text-sm text-neutral-800 m-0">
-                This event is anchored to{' '}
-                <span className="font-medium text-neutral-900">
-                  Constellation's Digital Evidence
-                </span>{' '}
-                layer.
-              </p>
-              <p className="text-xs text-neutral-500 mt-1 m-0">
-                Anchored &middot;{' '}
-                <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>{' '}
-                &middot; {fmtRelative(row.at)}
-              </p>
-            </div>
-          </div>
+          <VerifiedBySeal />
         </DialogScrollSummary>
 
         {/* ── Tabbed body ── */}
@@ -362,7 +348,7 @@ export function AuditRecordDialog({
           </Button>
           <Button size="sm" onClick={() => {}}>
             <ExternalLink className="size-3.5" />
-            Open on DE explorer
+            Open DE Explorer
           </Button>
         </DialogScrollFooter>
       </DialogScrollContent>
