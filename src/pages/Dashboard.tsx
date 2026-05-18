@@ -22,14 +22,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VendorAvatar, VENDOR_META } from '@/components/icons/vendor-meta';
 import {
   type EventRow,
   ACTION_BADGE,
   TYPE_META,
   EVENT_ROWS,
-  formatEventTime,
+  parseEventTime,
   ThreatEventDetailDialog,
 } from '@/pages/Security';
 import { TOTAL_7D_BASE_DOLLARS, distributeSeries } from '@/pages/Activity';
@@ -37,12 +36,12 @@ import {
   EVENT_ROWS as AUDIT_EVENT_ROWS,
   type EventRow as AuditEventRow,
   KIND_BADGE_VARIANT as AUDIT_KIND_BADGE_VARIANT,
-  fmtTime as fmtAuditTime,
   truncateHex,
 } from '@/pages/AuditTrail';
 import { AuditRecordDialog } from '@/pages/AuditRecordDialog';
 import { CONVERSATION_ROWS, KEY_SUFFIX as CONVERSATION_KEY_SUFFIX, type ConversationRow } from '@/pages/Conversations';
-import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { Timestamp } from '@/components/ui/timestamp';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 
 // KPI-rail values derived from the canonical security + spend + audit seeds
@@ -339,7 +338,7 @@ function RecentConversationsCard() {
                   {row.cost}
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {formatTimestamp(row.updated)}
+                  <Timestamp date={row.updated} />
                 </TableCell>
               </TableRow>
             );
@@ -415,19 +414,10 @@ function RecentSecurityEventsCard() {
                   }}
                 >
                   <TableCell className="whitespace-nowrap">
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={(props) => (
-                          <span
-                            {...props}
-                            className="font-mono text-sm tabular-nums text-neutral-800"
-                          >
-                            {formatEventTime(row.time)}
-                          </span>
-                        )}
-                      />
-                      <TooltipContent>{row.relative}</TooltipContent>
-                    </Tooltip>
+                    <Timestamp
+                      date={parseEventTime(row.time)}
+                      className="font-mono text-sm tabular-nums text-neutral-800"
+                    />
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <span className="inline-flex items-center gap-2">
@@ -540,7 +530,7 @@ function RecentAnchoredEventsCard() {
                 }}
               >
                 <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {fmtAuditTime(row.at)}
+                  <Timestamp date={row.at} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono text-sm text-neutral-800">
                   {truncateHex(row.eventId)}

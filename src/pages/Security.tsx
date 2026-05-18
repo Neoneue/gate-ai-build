@@ -29,7 +29,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { TextLink } from '@/components/ui/text-link';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Timestamp } from '@/components/ui/timestamp';
 import {
   Select,
   SelectContent,
@@ -748,9 +748,15 @@ type RiskTier = 'critical' | 'elevated' | 'normal';
 // parsing forces local midnight so the day rendered stays the day the
 // event was filed (no timezone offset surprises in the demo data).
 export function formatEventTime(stored: string): string {
+  return formatTimestamp(parseEventTime(stored));
+}
+
+// Same parsing as formatEventTime but returns the underlying Date so the
+// shared <Timestamp> primitive can render the absolute value and compute
+// its relative-time tooltip from the same instant.
+export function parseEventTime(stored: string): Date {
   const [datePart, timePart] = stored.split(' ');
-  const date = new Date(`${datePart}T${timePart}`);
-  return formatTimestamp(date);
+  return new Date(`${datePart}T${timePart}`);
 }
 
 type EventAction = 'blocked' | 'flagged' | 'redacted';
@@ -1120,22 +1126,10 @@ function EventsTableSection({
                 }}
               >
                 <TableCell className="whitespace-nowrap">
-                  {/* Single-line absolute datetime, relative on hover —
-                      matches the Requests page Time cell so the two
-                      timestamps read the same way across the app. */}
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={(props) => (
-                        <span
-                          {...props}
-                          className="font-mono text-sm tabular-nums text-neutral-800"
-                        >
-                          {formatEventTime(row.time)}
-                        </span>
-                      )}
-                    />
-                    <TooltipContent>{row.relative}</TooltipContent>
-                  </Tooltip>
+                  <Timestamp
+                    date={parseEventTime(row.time)}
+                    className="font-mono text-sm tabular-nums text-neutral-800"
+                  />
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="inline-flex items-center gap-2">
@@ -1328,9 +1322,10 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-neutral-900 tabular-nums">
-                    {formatEventTime(row.time)}
-                  </span>
+                  <Timestamp
+                    date={parseEventTime(row.time)}
+                    className="font-mono text-neutral-900 tabular-nums"
+                  />
                 }
               />
               <DetailRow

@@ -29,7 +29,8 @@ import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { AuditRecordDialog } from './AuditRecordDialog';
-import { formatNumber, formatTimestamp } from '@/lib/formatters';
+import { formatNumber } from '@/lib/formatters';
+import { Timestamp } from '@/components/ui/timestamp';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -70,10 +71,6 @@ function isWithinRange(at: Date, range: Range, customRange: CustomRange | null):
   }
   const cutoff = new Date(NOW.getTime() - HOURS_PER_PRESET[range] * 3600 * 1000);
   return at >= cutoff;
-}
-
-export function fmtTime(d: Date): string {
-  return formatTimestamp(d);
 }
 
 export function fmtRelative(at: Date): string {
@@ -510,7 +507,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                 }}
               >
                 <TableCell className="whitespace-nowrap text-neutral-800">
-                  {fmtTime(row.at)}
+                  <Timestamp date={row.at} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono text-neutral-800">
                   {truncateHex(row.eventId)}
