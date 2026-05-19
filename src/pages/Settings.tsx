@@ -11,19 +11,12 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-018 — Settings (Workspace Admin)
  *
- * Profile / security configuration surface. Same production-frame chrome
- * as CMP-012 / CMP-013 / CMP-014 / CMP-017.
+ * Profile / security configuration surface.
  *
- * Composition: four cards stacked in a `flex flex-col gap-4` container.
- *   1. Display name  — SettingsFieldCard (one field, own Save/Reset)
- *   2. Email         — SettingsFieldCard (one field, own Save/Reset)
- *   3. Organization  — SettingsFieldCard (one field, own Save/Reset)
- *   4. Passkey       — SecurityCard (static, no dirty state)
- *
- * The three editable cards share the local `SettingsFieldCard` helper
- * (defined below) instead of inlining the pattern three times. Each card
- * manages its own dirty state — editing one card does NOT affect the
- * Save/Reset state of the others.
+ * Composition: two cards stacked in a `flex flex-col gap-4` container.
+ *   1. ProfileCard   — three fields (display name, email, org) with a single
+ *                      unified dirty state and shared Save / Reset footer.
+ *   2. SecurityCard  — passkey registration (static, no dirty state).
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Settings() {
@@ -49,36 +42,14 @@ function SettingsSurface() {
     <>
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <SettingsFieldCard
-          id="settings-display-name"
-          title="Display name"
-          description="The name shown to teammates on this workspace."
-          initialValue="Chad Ponticas"
-          autoComplete="name"
-        />
-        <SettingsFieldCard
-          id="settings-email"
-          title="Email"
-          description="Used to sign in and receive workspace notifications."
-          initialValue="chad@constellationnetwork.io"
-          type="email"
-          autoComplete="email"
-          spellCheck={false}
-        />
-        <SettingsFieldCard
-          id="settings-organization"
-          title="Organization"
-          description="Your workspace name. Appears across billing, members, and audit records."
-          initialValue="Chad Ponticas's workspace"
-          autoComplete="organization"
-        />
+        <ProfileCard />
         <SecurityCard />
       </div>
     </>
   );
 }
 
-/* ─── Page header — no eyebrow per spec, just title + subtitle ────────── */
+/* ─── Page header ───────────────────────────────────────────────────────── */
 
 function PageHeader() {
   return (
@@ -93,50 +64,30 @@ function PageHeader() {
   );
 }
 
-/* ─── Local helper — one-field settings card ────────────────────────────
- * Encapsulates the repeated pattern: single input, dirty detection,
- * per-card Save + Reset, beforeunload guard. Do NOT extract to a shared
- * file — this pattern is Settings-specific. */
+/* ─── Profile & organization card ──────────────────────────────────────────
+ * Three fields share a single dirty state. Dirty = any field differs from
+ * its last-saved value. Save commits all three; Reset reverts all three. */
 
-type SettingsFieldCardProps = {
-  /** Stable id for the input + form. Used as prefix: `${id}-form`. */
-  id: string;
-  /** Card title — also serves as the input's accessible name. */
-  title: string;
-  /** Short factual description shown under the title. */
-  description: string;
-  /** Initial value. The card seeds its current + saved state from this. */
-  initialValue: string;
-  /** Input type. Default 'text'. */
-  type?: string;
-  autoComplete?: string;
-  /** Pass `false` to suppress browser spellcheck (e.g. email). */
-  spellCheck?: boolean;
+const PROFILE_DEFAULTS = {
+  displayName: 'Chad Ponticas',
+  email: 'chad@constellationnetwork.io',
+  organization: "Chad Ponticas's workspace",
 };
 
-function SettingsFieldCard({
-  id,
-  title,
-  description,
-  initialValue,
-  type = 'text',
-  autoComplete,
-  spellCheck,
-}: SettingsFieldCardProps) {
-  const [value, setValue] = useState(initialValue);
-  const [saved, setSaved] = useState(initialValue);
-  const dirty = value !== saved;
+function ProfileCard() {
+  const [saved, setSaved] = useState(PROFILE_DEFAULTS);
+  const [displayName, setDisplayName] = useState(PROFILE_DEFAULTS.displayName);
+  const [email, setEmail] = useState(PROFILE_DEFAULTS.email);
+  const [organization, setOrganization] = useState(PROFILE_DEFAULTS.organization);
 
-  // Keep a ref so the handler always reads the latest dirty state without
-  // re-subscribing on every change. Subscribes exactly once (mount) and
-  // removes on unmount.
+  const dirty =
+    displayName !== saved.displayName ||
+    email !== saved.email ||
+    organization !== saved.organization;
+
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
 
-  // Warn on tab close / reload when there are unsaved changes. Does NOT
-  // catch in-app navigation (sidebar clicks); a react-router useBlocker
-  // would cover that, but adding it touches more surface than this fix
-  // is scoped to.
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (dirtyRef.current) {
@@ -147,36 +98,70 @@ function SettingsFieldCard({
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
 
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaved({ displayName, email, organization });
+  }
+
+  function handleReset() {
+    setDisplayName(saved.displayName);
+    setEmail(saved.email);
+    setOrganization(saved.organization);
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-sans text-base font-medium text-neutral-900">
-          {title}
-        </CardTitle>
-        <CardDescription className="font-sans text-sm text-neutral-500">
-          {description}
-        </CardDescription>
+        <CardTitle>Profile &amp; organization</CardTitle>
       </CardHeader>
-      <CardContent className="pb-2">
-        <form
-          id={`${id}-form`}
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSaved(value);
-          }}
-        >
-          {/* Card title is the visual label — drop the redundant inline Label.
-              Use aria-label so the input still has an accessible name. */}
-          <Input
-            id={id}
-            type={type}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            autoComplete={autoComplete}
-            spellCheck={spellCheck}
-            aria-label={title}
-            className="max-w-md"
-          />
+      <CardContent>
+        <form id="profile-form" onSubmit={handleSave}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="settings-display-name"
+                className="text-sm font-medium text-neutral-700 block mb-1"
+              >
+                Display name
+              </label>
+              <Input
+                id="settings-display-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                autoComplete="name"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="settings-email"
+                className="text-sm font-medium text-neutral-700 block mb-1"
+              >
+                Email
+              </label>
+              <Input
+                id="settings-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                spellCheck={false}
+                autoComplete="email"
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label
+              htmlFor="settings-organization"
+              className="text-sm font-medium text-neutral-700 block mb-1"
+            >
+              Organization
+            </label>
+            <Input
+              id="settings-organization"
+              value={organization}
+              onChange={(e) => setOrganization(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
         </form>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t border-border">
@@ -185,14 +170,13 @@ function SettingsFieldCard({
           variant="outline"
           size="sm"
           disabled={!dirty}
-          onClick={() => setValue(saved)}
-          className="border-border bg-card text-neutral-900"
+          onClick={handleReset}
         >
           Reset
         </Button>
         <Button
           type="submit"
-          form={`${id}-form`}
+          form="profile-form"
           variant="default"
           size="sm"
           disabled={!dirty}
@@ -204,31 +188,35 @@ function SettingsFieldCard({
   );
 }
 
-/* ─── General · Security ───────────────────────────────────────────────── */
+/* ─── Security card ─────────────────────────────────────────────────────── */
 
 function SecurityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-sans text-base font-medium text-neutral-900">
-          Passkey
-        </CardTitle>
-        <CardDescription className="font-sans text-sm text-neutral-500">
-          Sign in with Touch ID, Windows Hello, or a hardware key.
+        <CardTitle>Security</CardTitle>
+        <CardDescription>
+          Passkeys — phishing-resistant, no password required.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 pb-2">
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex items-center">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-neutral-900 m-0">Passkey</p>
+            <p className="text-sm text-neutral-500 m-0">
+              Sign in with Touch ID, Windows Hello, or a hardware key.
+            </p>
+          </div>
+          <Button variant="default" size="sm" className="ml-auto">
+            <KeyRound data-icon="inline-start" aria-hidden />
+            Add a passkey
+          </Button>
+        </div>
         <SectionHeading as="h4">Registered passkeys</SectionHeading>
         <p className="font-sans text-sm text-neutral-500 m-0">
           No passkeys registered yet.
         </p>
       </CardContent>
-      <CardFooter className="justify-end border-t border-border">
-        <Button variant="default" size="sm">
-          <KeyRound data-icon="inline-start" aria-hidden />
-          Add a passkey
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
