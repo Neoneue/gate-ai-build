@@ -740,7 +740,7 @@ type GuardrailAction = 'allow' | 'flagged' | 'redacted' | 'block';
  *  guardrail action and the failing/flagging check stay in lock-step. */
 type GuardrailReason = 'injection' | 'pii' | 'credential';
 
-type RequestRow = {
+export type RequestRow = {
   /** Compact month/day for the cell ("May 12"); modal pairs it with 2026
    *  for the full header. Per-row so 24H/7D/30D ranges that span multiple
    *  days render the correct date next to each timestamp. */
@@ -804,13 +804,13 @@ const KEY_SUFFIX: Record<string, string> = {
 // 24H → 7D → 30D → All each widen on top of, so a longer range never
 // "loses" a recent event. Order is reverse-chronological (most recent
 // first) to match the table's default sort.
-const REQUEST_ROWS_RECENT: RequestRow[] = [
-  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284' },
-  { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'openclaw',      inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842' },
-  { day: 'May 12', time: '14:02:55', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '480',   outTokens: '215',   latency: '2.50s',              cost: '$0.0050' },
-  { day: 'May 12', time: '14:02:42', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '10.50s', slow: true, cost: '$0.0091' },
-  { day: 'May 12', time: '13:48:11', relative: '42m ago',  status: 'error',   guardrail: 'block', code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '4,802', outTokens: '0',     latency: '2.10s',              cost: '$0.0336',       guardrailReason: 'injection' },
-  { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'nova-chat',     inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192' },
+export const REQUEST_ROWS_RECENT: RequestRow[] = [
+  { day: 'May 12', time: '14:30:14', relative: 'just now', status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,847', outTokens: '1,204', latency: '4.20s',              cost: '$0.0284', requestId: 'req_aurora_1430'   },
+  { day: 'May 12', time: '14:16:08', relative: '14m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'openclaw',      inTokens: '8,210', outTokens: '4,512', latency: '14.20s', slow: true, cost: '$0.1842', requestId: 'req_orion_1416'    },
+  { day: 'May 12', time: '14:02:55', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '480',   outTokens: '215',   latency: '2.50s',              cost: '$0.0050', requestId: 'req_lyra_1402'     },
+  { day: 'May 12', time: '14:02:42', relative: '28m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,204', outTokens: '688',   latency: '10.50s', slow: true, cost: '$0.0091', requestId: 'req_skylark_1402'  },
+  { day: 'May 12', time: '13:48:11', relative: '42m ago',  status: 'error',   guardrail: 'block', code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '4,802', outTokens: '0',     latency: '2.10s',              cost: '$0.0336',       guardrailReason: 'injection',  requestId: 'req_meridian_1348' },
+  { day: 'May 12', time: '13:35:24', relative: '55m ago',  status: 'success', guardrail: 'allow', code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_aurora_42',  keyId: 'nova-chat',     inTokens: '1,892', outTokens: '955',   latency: '3.80s',              cost: '$0.0192', requestId: 'req_aurora_1335'   },
 ];
 
 // 24H view — cumulative superset: contains the recent-anchor rows plus

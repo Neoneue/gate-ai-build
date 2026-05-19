@@ -58,28 +58,26 @@ export function formatTime(
   return new Intl.DateTimeFormat(LOCALE, options).format(date);
 }
 
-/** LangChain-style absolute timestamp: "5/8/2026, 4:02:51 PM". For null
- *  inputs (e.g., key never used) returns 'Never'. Use in table cells where
- *  a precise timestamp is more useful than a relative ("2h ago") hint. */
+/** Absolute timestamp: "May 12, 09:23:49". For null inputs (e.g., key never
+ *  used) returns 'Never'. Use in table cells where a precise timestamp is more
+ *  useful than a relative ("2h ago") hint. */
 export function formatTimestamp(date: Date | null): string {
   if (date === null) return 'Never';
-  return new Intl.DateTimeFormat(LOCALE, {
-    month: 'numeric',
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
     day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true,
+    hour12: false,
   }).format(date);
 }
 
-/** Numeric date only: "5/8/2026". Matches the date portion of formatTimestamp.
- *  Use in table cells with date-only fields (joined date, transaction date)
- *  where adding a synthetic 00:00:00 time would be misleading. */
+/** Date only: "May 12, 2026". Use in table cells with date-only fields
+ *  (joined date, transaction date) where time would be misleading. */
 export function formatDateNumeric(date: Date): string {
-  return new Intl.DateTimeFormat(LOCALE, {
-    month: 'numeric',
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
     day: 'numeric',
     year: 'numeric',
   }).format(date);

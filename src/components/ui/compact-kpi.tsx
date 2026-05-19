@@ -77,6 +77,7 @@ export function CompactKpi({
   flat = false,
   onClick,
   ariaLabel,
+  trailing,
 }: {
   title: string;
   value: string;
@@ -102,6 +103,9 @@ export function CompactKpi({
   /** Optional aria-label for the interactive form; otherwise the visual
    *  title + value is the implicit label. */
   ariaLabel?: string;
+  /** Custom content rendered in the header's right slot, replacing the
+   *  chevron. Use for inline controls (e.g. a dimension selector). */
+  trailing?: React.ReactNode;
 }) {
   const baseCls = flat
     ? 'flex flex-col gap-2 bg-white p-4'
@@ -112,13 +116,13 @@ export function CompactKpi({
     <>
       <div className="flex items-center justify-between gap-2">
         <Eyebrow as="div">{title}</Eyebrow>
-        {onClick ? (
+        {trailing ?? (onClick ? (
           <ChevronRight
             className="shrink-0 size-4 text-neutral-500"
             strokeWidth={1.75}
             aria-hidden
           />
-        ) : null}
+        ) : null)}
       </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
