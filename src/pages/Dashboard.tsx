@@ -503,7 +503,7 @@ function RecentConversationsTable() {
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium text-neutral-900">Recent conversations</span>
+        <span className="text-sm font-medium text-neutral-900">Latest conversations</span>
         <button
           type="button"
           onClick={() => navigate('/conversations')}
@@ -552,7 +552,7 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium text-neutral-900">Security events</span>
+        <span className="text-sm font-medium text-neutral-900">Latest security events</span>
         <button
           type="button"
           onClick={() => navigate('/security')}
