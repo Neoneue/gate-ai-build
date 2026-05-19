@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ComponentType, type SVGProps } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -978,6 +978,18 @@ function EventsTableSection({
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
+  // Deep-link support: ?open=req_* opens the matching event's modal.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openId = searchParams.get('open');
+  const [prevOpenId, setPrevOpenId] = useState<string | null>(null);
+  if (openId !== prevOpenId) {
+    setPrevOpenId(openId);
+    if (openId) {
+      const match = EVENT_ROWS.find((r) => r.requestId === openId);
+      if (match) setSelectedRow(match);
+    }
+  }
+
   // Reset to page 1 whenever filters or range change — render-time pattern,
   // not useEffect (see Activity UsageByKey for the canonical shape).
   const [prevResetKey, setPrevResetKey] = useState('');
@@ -1186,7 +1198,14 @@ function EventsTableSection({
     <ThreatEventDetailDialog
       selection={selectedRow}
       onOpenChange={(open) => {
-        if (!open) setSelectedRow(null);
+        if (!open) {
+          setSelectedRow(null);
+          if (searchParams.has('open')) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('open');
+            setSearchParams(next, { replace: true });
+          }
+        }
       }}
     />
     </>
