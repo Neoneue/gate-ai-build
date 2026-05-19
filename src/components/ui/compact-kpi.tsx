@@ -93,7 +93,7 @@ export function CompactKpi({
    *  KPI grids. */
   deltaSize?: 'sm' | 'md';
   noteLine?: string;
-  spark: React.ReactNode;
+  spark?: React.ReactNode;
   flat?: boolean;
   /** Whole-tile click handler. When set, the tile renders as a button with
    *  hover/focus state — used on Overview to navigate from the rail into
@@ -136,7 +136,7 @@ export function CompactKpi({
           <span className="text-sm text-neutral-500">{noteLine}</span>
         )}
       </div>
-      <div className="mt-3">{spark}</div>
+      {spark != null ? <div className="mt-3">{spark}</div> : null}
     </>
   );
   if (onClick) {
