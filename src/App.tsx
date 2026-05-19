@@ -13,6 +13,7 @@ import { AuditTrail } from '@/pages/AuditTrail';
 import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
 import { Dashboard } from '@/pages/Dashboard';
+import { DashboardDefault } from '@/pages/DashboardDefault';
 import { Guardrails } from '@/pages/Guardrails';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
@@ -62,6 +63,7 @@ export default function App() {
           <Route index element={<Navigate to="/requests" replace />} />
           <Route path="/get-started" element={<GetStarted />} />
           <Route path="/overview" element={<Dashboard />} />
+          <Route path="/overview-default" element={<DashboardDefault />} />
           <Route path="/requests" element={<Requests />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
