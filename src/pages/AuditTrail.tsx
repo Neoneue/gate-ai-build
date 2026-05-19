@@ -176,29 +176,20 @@ function PageHeader({
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
 function KpiRailSection({ rows }: { rows: EventRow[] }) {
-  const { eventsLogged, distinctAnchors, mostRecent, verifiedRate } = useMemo(() => {
+  const { eventsLogged, distinctAnchors, mostRecent } = useMemo(() => {
     const eventsLogged = rows.length;
     const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
     const mostRecent = rows.reduce<Date | null>(
       (latest, r) => (!latest || r.at > latest ? r.at : latest),
       null,
     );
-    // Every seeded row is verified in this mock — when real data lands, derive
-    // from row.verified booleans. Empty-range state falls back to "—" so we
-    // don't pretend to assert a rate over zero events.
-    const verifiedRate = eventsLogged === 0 ? null : 100.0;
-    return { eventsLogged, distinctAnchors, mostRecent, verifiedRate };
+    return { eventsLogged, distinctAnchors, mostRecent };
   }, [rows]);
 
   return (
-    <KpiRail columns={4}>
+    <KpiRail columns={3}>
       <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
       <KpiTile title="Anchors" value={formatNumber(distinctAnchors)} />
-      <KpiTile
-        title="Verified rate"
-        value={verifiedRate === null ? '—' : verifiedRate.toFixed(1)}
-        valueSuffix={verifiedRate === null ? undefined : '%'}
-      />
       <KpiTile title="Last anchor" value={mostRecent ? fmtRelative(mostRecent) : '—'} />
     </KpiRail>
   );
