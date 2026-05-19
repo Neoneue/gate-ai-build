@@ -233,8 +233,8 @@ const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens:
 // the KPIs reconcile with the underlying data and the spark shapes reflect
 // real per-bucket variation rather than hand-drawn arrays.
 export const TOTAL_7D_BASE_DOLLARS = 238;
-const TOTAL_7D_BASE_REQUESTS = 63_793;
-const TOTAL_7D_BASE_TOKENS = 73_450_000;
+export const TOTAL_7D_BASE_REQUESTS = 63_793;
+export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
 /** KPI spec for the active range. All three metrics computed: value from
  *  the canonical 7d base × scale; sparkline by distributing that scaled
