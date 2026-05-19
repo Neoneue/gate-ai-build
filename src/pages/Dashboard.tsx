@@ -150,7 +150,7 @@ function PageHeader() {
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Overview</PageTitle>
       <p className="font-sans text-neutral-600 text-base tracking-tight text-pretty m-0">
-        Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.
+        Monitor request volume, token usage, spend, and security signals across your gateway.
       </p>
     </div>
   );
@@ -440,15 +440,6 @@ function TokenSavingsStrip() {
     <KpiRail columns={3}>
       <CompactKpi
         flat
-        title="Threats detected"
-        value={formatNumber(THREATS_DETECTED_COUNT)}
-        delta="+22.4%"
-        deltaNote="vs last week"
-        deltaInverted
-        spark={<CompactSpark colorVar="var(--color-destructive)" data={THREATS_SPARK} />}
-      />
-      <CompactKpi
-        flat
         title="Requests"
         value={formatNumber(TOTAL_7D_BASE_REQUESTS, { notation: 'compact', maximumFractionDigits: 1 })}
         delta="+8.2%"
@@ -462,6 +453,15 @@ function TokenSavingsStrip() {
         delta="+8.7%"
         deltaNote="vs last week"
         spark={<CompactSpark colorVar="var(--color-success-500)" data={SAVINGS_SPARK} />}
+      />
+      <CompactKpi
+        flat
+        title="Threats detected"
+        value={formatNumber(THREATS_DETECTED_COUNT)}
+        delta="+22.4%"
+        deltaNote="vs last week"
+        deltaInverted
+        spark={<CompactSpark colorVar="var(--color-destructive)" data={THREATS_SPARK} />}
       />
     </KpiRail>
   );
