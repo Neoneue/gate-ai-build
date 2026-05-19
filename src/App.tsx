@@ -60,7 +60,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<Navigate to="/requests" replace />} />
+          <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/get-started" element={<GetStarted />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/overview-default" element={<DashboardDefault />} />
@@ -78,7 +78,7 @@ export default function App() {
           <Route path="/api-keys" element={<ApiKeys />} />
           <Route path="/billing" element={<Billing />} />
           {/* Unknown routes fall back to Requests. */}
-          <Route path="*" element={<Navigate to="/requests" replace />} />
+          <Route path="*" element={<Navigate to="/overview" replace />} />
         </Route>
       </Routes>
       <Toaster position="bottom-right" />
