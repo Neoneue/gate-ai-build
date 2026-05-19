@@ -233,8 +233,8 @@ const KPI_DATA: Record<PresetRange, { spend: KpiSpec; requests: KpiSpec; tokens:
 // the KPIs reconcile with the underlying data and the spark shapes reflect
 // real per-bucket variation rather than hand-drawn arrays.
 export const TOTAL_7D_BASE_DOLLARS = 238;
-const TOTAL_7D_BASE_REQUESTS = 63_793;
-const TOTAL_7D_BASE_TOKENS = 73_450_000;
+export const TOTAL_7D_BASE_REQUESTS = 63_793;
+export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
 /** KPI spec for the active range. All three metrics computed: value from
  *  the canonical 7d base × scale; sparkline by distributing that scaled
@@ -327,7 +327,7 @@ const DIMENSION_OPTIONS: { value: Dimension; label: string }[] = [
  *
  *  `color` overrides the palette slot — Other recedes to neutral-300 so the
  *  named series carry the visual weight. */
-const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slot: number; color?: string }[]> = {
+export const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slot: number; color?: string }[]> = {
   model: [
     { key: 'sonnet', label: 'Claude Sonnet 4.5', slot: 2 },
     { key: 'gpt',    label: 'GPT-5.1',           slot: 1 },
@@ -360,7 +360,7 @@ const SPEND_SERIES: Record<Dimension, readonly { key: string; label: string; slo
  *  canonical workspace 7d spend. The Total Spend KPI is computed from this
  *  base × the active range's effectiveScale, so chart and KPI cannot drift.
  *  If you change any row, verify the per-dimension total still equals 238. */
-const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
+export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
   // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
   // $238 so toggling Model / Provider / API key keeps the same workspace
   // total (and that total = the Total Spend KPI by construction).
@@ -400,7 +400,7 @@ const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
  *  canonical "how much did series X spend across the workspace 7d"
  *  numbers; the chart distributes them across N buckets per range via
  *  distributeSeries(). Sum across series = TOTAL_7D_BASE_DOLLARS = $238. */
-const SPEND_TOTALS_7D: Record<Dimension, Record<string, number>> = Object.fromEntries(
+export const SPEND_TOTALS_7D: Record<Dimension, Record<string, number>> = Object.fromEntries(
   Object.entries(SPEND_BASE).map(([dim, rows]) => [
     dim,
     rows.reduce((acc, row) => {
@@ -446,7 +446,7 @@ function rescaleToTotal(
  *    • provider → authored to mirror the model breakdown's vendor
  *               groupings (anthropic carries opus+sonnet+haiku token
  *               volume; openai/google/bedrock pick up the rest). */
-const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
+export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
   // 7d window token totals (independent from the workspace-lifetime numbers
   // in MODEL_ROWS — Llama's 7d rate and Opus' 7d rate are tuned for this
   // window only): sonnet 6_550_000, llama 4_840_000, haiku 4_460_000,
@@ -608,11 +608,11 @@ function getRangeLabels(range: Range, customRange: CustomRange | null): string[]
   return labels;
 }
 
-function paletteColor(slot: number): string {
+export function paletteColor(slot: number): string {
   return CHART_PALETTE[(slot - 1) % CHART_PALETTE.length]!;
 }
 
-function seriesColor(s: { slot: number; color?: string }): string {
+export function seriesColor(s: { slot: number; color?: string }): string {
   return s.color ?? paletteColor(s.slot);
 }
 

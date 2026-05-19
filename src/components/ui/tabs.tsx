@@ -90,7 +90,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // Default variant active text only — bg + shadow now live on
         // the sliding TabsIndicator.
         "group-data-[variant=default]/tabs-list:data-active:text-foreground dark:group-data-[variant=default]/tabs-list:data-active:text-foreground",
-        "group-data-[variant=line]/tabs-list:px-4 group-data-[variant=line]/tabs-list:pt-4 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:text-neutral-600 group-data-[variant=line]/tabs-list:hover:text-neutral-900 group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:text-neutral-900 group-data-[variant=line]/tabs-list:data-active:font-medium",
+        "group-data-[variant=line]/tabs-list:px-4 group-data-[variant=line]/tabs-list:pt-4 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:text-neutral-600 group-data-[variant=line]/tabs-list:hover:bg-neutral-100 group-data-[variant=line]/tabs-list:hover:text-neutral-900 group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:text-neutral-900 group-data-[variant=line]/tabs-list:data-active:font-medium",
         // Per-trigger `after:` pseudo retained ONLY for the default variant
         // vertical orientation (right-edge underline on a vertical pill list,
         // not driven by Base UI's --active-tab vars). Line variant's underline

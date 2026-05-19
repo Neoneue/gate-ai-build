@@ -20,6 +20,7 @@ import { Requests } from '@/pages/Requests';
 import { Security } from '@/pages/Security';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
+import { GetStarted } from '@/pages/GetStarted';
 import { TokenSavings } from '@/pages/TokenSavings';
 
 /** Outlet context shape — every page reads sidebar state from here via
@@ -59,6 +60,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/requests" replace />} />
+          <Route path="/get-started" element={<GetStarted />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/requests" element={<Requests />} />
           <Route path="/conversations" element={<Conversations />} />
