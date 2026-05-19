@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { PageTitle } from '@/components/ui/page-title';
 import {
@@ -20,6 +20,7 @@ import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import {
+  TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
   TOTAL_7D_BASE_TOKENS,
   distributeSeries,
@@ -28,6 +29,8 @@ import {
   TOKENS_TOTALS_7D,
   seriesColor,
 } from '@/pages/Activity';
+import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
+import { KpiRail } from '@/components/ui/kpi-rail';
 import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { REQUEST_ROWS_RECENT, type RequestRow } from '@/pages/Requests';
@@ -35,6 +38,20 @@ import { CONVERSATION_ROWS, type ConversationRow } from '@/pages/Conversations';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
 
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
+
+/* ─── Token savings — derived from 7d spend + token totals ───────────────
+ * Rates are fixed product constants (what the gateway achieved via caching
+ * and compression). Dollar equivalent derives from the canonical spend
+ * baseline so Overview, Activity, and the strip all reconcile. */
+
+const TOTAL_SAVED_RATE  = 0.23; // slight overlap between the two mechanisms
+const DOLLARS_SAVED_7D  = Math.round(TOTAL_SAVED_RATE * TOTAL_7D_BASE_DOLLARS);
+// Per-day averages derived from the same seeds the Activity KPI rail uses,
+// so the sparkline reflects real daily variation rather than seeded noise.
+const _REQUESTS_7D_SERIES = distributeSeries(TOTAL_7D_BASE_REQUESTS, 7, 77 * 31 + 2);
+const SAVINGS_SPARK     = distributeSeries(DOLLARS_SAVED_7D, 7, 211);
+
+const THREATS_SPARK     = distributeSeries(THREATS_DETECTED_COUNT, 7, 144);
 
 type Dimension = 'model' | 'provider' | 'apiKey';
 
@@ -82,12 +99,6 @@ export const fmtTokens = (n: number) =>
   : n >= 1_000   ? `${(n / 1_000).toFixed(1)}K`
   : `${n}`;
 
-export const REQUEST_STATUS_SERIES = [
-  { key: 'success', label: 'Success',   slot: 0, color: 'var(--color-success-500)' },
-  { key: 'errors',  label: 'Errors',    slot: 1, color: 'var(--color-danger-500)'  },
-  { key: 'slow',    label: 'Slow >10s', slot: 2, color: 'var(--color-warning-500)' },
-] as const satisfies StackedSeries;
-
 export const THREATS_STATUS_SERIES = [
   { key: 'blocked',  label: 'Blocked',  slot: 0, color: 'var(--color-danger-500)'  },
   { key: 'flagged',  label: 'Flagged',  slot: 1, color: 'var(--color-warning-500)' },
@@ -117,13 +128,13 @@ export function Dashboard() {
     >
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <h3 className="font-sans text-lg/6 font-medium tracking-snug text-neutral-900 m-0">
-          Activity this week{' '}
-          <span className="text-neutral-400 font-normal">(May 17–23, 2026)</span>
-        </h3>
+        <h2 className="font-sans text-lg/6 font-medium tracking-snug text-neutral-900 text-balance m-0">
+          Activity This Week
+        </h2>
+        <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />
@@ -138,7 +149,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2 max-w-1/2">
       <PageTitle>Overview</PageTitle>
-      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
+      <p className="font-sans text-neutral-600 text-base tracking-tight text-pretty m-0">
         Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.
       </p>
     </div>
@@ -154,7 +165,7 @@ function make7dLabels(): string[] {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
   }
   return labels;
 }
@@ -195,23 +206,6 @@ export function makeStackedThreatsRows(): Array<Record<string, number | string>>
     blocked:  buckets.blocked[i]  ?? 0,
     flagged:  buckets.flagged[i]  ?? 0,
     redacted: buckets.redacted[i] ?? 0,
-  }));
-}
-
-export function makeStackedRequestRows(): Array<Record<string, number | string>> {
-  const errors  = Math.round(TOTAL_7D_BASE_REQUESTS * 0.01);
-  const slow    = Math.round(TOTAL_7D_BASE_REQUESTS * 0.45);
-  const success = TOTAL_7D_BASE_REQUESTS - errors - slow;
-  const buckets = {
-    success: distributeSeries(success, 7, 131),
-    errors:  distributeSeries(errors,  7, 132),
-    slow:    distributeSeries(slow,    7, 133),
-  };
-  return Array.from({ length: 7 }, (_, i) => ({
-    date:    KPI_7D_LABELS[i] ?? '',
-    success: buckets.success[i] ?? 0,
-    errors:  buckets.errors[i]  ?? 0,
-    slow:    buckets.slow[i]    ?? 0,
   }));
 }
 
@@ -314,10 +308,9 @@ export function HorizontalLegend({ series }: { series: StackedSeries }) {
 }
 
 // Pre-compute static chart data for the outcome tiles (never change dimension).
-export const REQUESTS_STACKED_ROWS = makeStackedRequestRows();
 export const THREATS_STACKED_ROWS  = makeStackedThreatsRows();
 
-type Metric = 'spend' | 'tokens' | 'requests';
+type Metric = 'spend' | 'tokens';
 
 function DimSelector({ dim, onDimChange }: { dim: Dimension; onDimChange: (d: Dimension) => void }) {
   return (
@@ -337,9 +330,8 @@ function DimSelector({ dim, onDimChange }: { dim: Dimension; onDimChange: (d: Di
 /* ─── Overview usage chart (full-width) ──────────────────────────────────── */
 
 const OVERVIEW_METRIC_OPTIONS = [
-  { value: 'tokens',   label: 'Tokens'   },
-  { value: 'requests', label: 'Requests' },
-  { value: 'spend',    label: 'Spend'    },
+  { value: 'tokens', label: 'Tokens' },
+  { value: 'spend',  label: 'Spend'  },
 ];
 
 
@@ -348,24 +340,36 @@ const fmtSpend = (v: number) => formatCurrency(v, { minFrac: 0, maxFrac: 0 });
 const fmtPct = (frac: number) => `${(frac * 100).toFixed(1)}%`;
 
 function OverviewUsageChart() {
-  const [metric, setMetric] = useState<Metric>('tokens');
-  const [dim, setDim] = useState<Dimension>('model');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [metric, setMetric] = useState<Metric>(
+    (['tokens', 'spend'] as const).includes(searchParams.get('metric') as Metric)
+      ? (searchParams.get('metric') as Metric)
+      : 'tokens',
+  );
+  const [dim, setDim] = useState<Dimension>(
+    (['model', 'provider', 'apiKey'] as const).includes(searchParams.get('dim') as Dimension)
+      ? (searchParams.get('dim') as Dimension)
+      : 'model',
+  );
+
+  const handleMetricChange = (v: Metric) => {
+    setMetric(v);
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('metric', v); return n; }, { replace: true });
+  };
+  const handleDimChange = (d: Dimension) => {
+    setDim(d);
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('dim', d); return n; }, { replace: true });
+  };
 
   const { series, data } = useMemo(() => {
-    if (metric === 'requests') {
-      return { series: REQUEST_STATUS_SERIES as StackedSeries, data: REQUESTS_STACKED_ROWS };
-    }
     const rawSeries = SPEND_SERIES[dim];
     const rawData = metric === 'spend' ? makeStackedSpendRows(dim) : makeStackedTokenRows(dim);
     return capWithOthers(rawSeries, rawData);
   }, [metric, dim]);
 
-  const yFormatter = metric === 'spend' ? fmtSpend : metric === 'tokens' ? fmtTokens : formatNumber;
+  const yFormatter = metric === 'spend' ? fmtSpend : fmtTokens;
 
-  const title =
-    metric === 'spend'    ? 'Total spent'    :
-    metric === 'tokens'   ? 'Tokens used'    :
-                            'Requests sent';
+  const title = metric === 'spend' ? 'Total spent' : 'Tokens used';
 
   const seriesTotals = useMemo(() => {
     const acc: Record<string, number> = {};
@@ -385,12 +389,12 @@ function OverviewUsageChart() {
         <CardTitle>{title}</CardTitle>
         <CardAction>
           <div className="flex items-center gap-2">
-            {metric !== 'requests' && <DimSelector dim={dim} onDimChange={setDim} />}
+            <DimSelector dim={dim} onDimChange={handleDimChange} />
             <SegmentedPill
               size="sm"
               options={OVERVIEW_METRIC_OPTIONS}
               value={metric}
-              onValueChange={(v) => setMetric(v as Metric)}
+              onValueChange={(v) => handleMetricChange(v as Metric)}
             />
           </div>
         </CardAction>
@@ -429,8 +433,41 @@ function OverviewUsageChart() {
   );
 }
 
-/* ─── Shared pill helper ─────────────────────────────────────────────────── */
+/* ─── Token savings strip ────────────────────────────────────────────────── */
 
+function TokenSavingsStrip() {
+  return (
+    <KpiRail columns={3}>
+      <CompactKpi
+        flat
+        title="Threats detected"
+        value={formatNumber(THREATS_DETECTED_COUNT)}
+        delta="+22.4%"
+        deltaNote="vs last week"
+        deltaInverted
+        spark={<CompactSpark colorVar="var(--color-destructive)" data={THREATS_SPARK} />}
+      />
+      <CompactKpi
+        flat
+        title="Requests"
+        value={formatNumber(TOTAL_7D_BASE_REQUESTS, { notation: 'compact', maximumFractionDigits: 1 })}
+        delta="+8.2%"
+        deltaNote="vs last week"
+        spark={<CompactSpark colorVar="var(--color-blue-500)" data={_REQUESTS_7D_SERIES} />}
+      />
+      <CompactKpi
+        flat
+        title="Tokens saved"
+        value={`${(TOTAL_SAVED_RATE * 100).toFixed(0)}%`}
+        delta="+8.7%"
+        deltaNote="vs last week"
+        spark={<CompactSpark colorVar="var(--color-success-500)" data={SAVINGS_SPARK} />}
+      />
+    </KpiRail>
+  );
+}
+
+/* ─── Shared pill helper ─────────────────────────────────────────────────── */
 
 const GUARDRAIL_BADGE: Record<
   'allow' | 'flagged' | 'redacted' | 'block',
@@ -451,16 +488,15 @@ function LatestRequestsTable() {
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium text-neutral-900">Latest requests</span>
-        <button
-          type="button"
-          onClick={() => navigate('/requests')}
-          className="text-xs text-neutral-500 hover:text-neutral-700 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm"
+        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest requests</h3>
+        <Link
+          to="/requests"
+          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
-        </button>
+        </Link>
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Latest requests">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
             <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Time</th>
@@ -472,18 +508,21 @@ function LatestRequestsTable() {
         <tbody className="divide-y divide-border">
           {rows.map((row, i) => (
             <tr
-              key={i}
-              className="h-12 cursor-pointer hover:bg-neutral-50 transition-colors duration-100"
+              key={row.requestId ?? i}
+              tabIndex={0}
+              aria-label={row.requestId ? `Open request ${row.requestId}` : 'Open request'}
+              className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
               onClick={() => row.requestId && navigate(`/requests?open=${row.requestId}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
             >
-              <td className="whitespace-nowrap px-4 py-2.5 text-xs text-neutral-800 font-mono">{row.day} {row.time}</td>
-              <td className="whitespace-nowrap px-4 py-2.5 text-xs text-neutral-800">{row.model}</td>
-              <td className="whitespace-nowrap px-4 py-2.5">
+              <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{row.day} {row.time}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800">{row.model}</td>
+              <td className="whitespace-nowrap px-4 py-3">
                 <Badge variant={row.slow ? 'warning' : row.status === 'success' ? 'success' : 'destructive'}>
                   {row.slow ? 'slow' : row.status}
                 </Badge>
               </td>
-              <td className="whitespace-nowrap px-4 py-2.5">
+              <td className="whitespace-nowrap px-4 py-3">
                 <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>{row.guardrail}</Badge>
               </td>
             </tr>
@@ -503,19 +542,18 @@ function RecentConversationsTable() {
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium text-neutral-900">Latest conversations</span>
-        <button
-          type="button"
-          onClick={() => navigate('/conversations')}
-          className="text-xs text-neutral-500 hover:text-neutral-700 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm"
+        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest conversations</h3>
+        <Link
+          to="/conversations"
+          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
-        </button>
+        </Link>
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Latest conversations">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
-            <th className="px-4 py-2 text-left text-xs font-medium text-neutral-500">Conversation</th>
+            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Conversation</th>
             <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Updated</th>
             <th className="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-neutral-500">Turns</th>
             <th className="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-neutral-500">Reqs</th>
@@ -525,15 +563,18 @@ function RecentConversationsTable() {
           {rows.map((row) => (
             <tr
               key={row.conversationId}
-              className="h-12 cursor-pointer hover:bg-neutral-50 transition-colors duration-100"
+              tabIndex={0}
+              aria-label={`Open conversation: ${row.title}`}
+              className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
               onClick={() => navigate(`/conversations?open=${row.conversationId}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
             >
-              <td className="px-4 py-2.5 overflow-hidden max-w-0 w-full">
+              <td className="px-4 py-3 overflow-hidden max-w-0 w-full">
                 <span className="block truncate text-xs text-neutral-800">{row.title}</span>
               </td>
-              <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-neutral-800">{formatTimestamp(row.updated)}</td>
-              <td className="whitespace-nowrap px-4 py-2.5 font-mono text-right text-xs text-neutral-800">{row.turns}</td>
-              <td className="whitespace-nowrap px-4 py-2.5 font-mono text-right text-xs text-neutral-800">{row.reqs}</td>
+              <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-neutral-800">{formatTimestamp(row.updated)}</td>
+              <td className="whitespace-nowrap px-4 py-3 font-mono text-right text-xs text-neutral-800">{row.turns}</td>
+              <td className="whitespace-nowrap px-4 py-3 font-mono text-right text-xs text-neutral-800">{row.reqs}</td>
             </tr>
           ))}
         </tbody>
@@ -544,7 +585,6 @@ function RecentConversationsTable() {
 
 /* ─── Security Events preview table ─────────────────────────────────────── */
 
-
 function SecurityEventsTable() {
   const navigate = useNavigate();
   const rows: EventRow[] = EVENT_ROWS.slice(0, 5);
@@ -552,16 +592,15 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm font-medium text-neutral-900">Latest security events</span>
-        <button
-          type="button"
-          onClick={() => navigate('/security')}
-          className="text-xs text-neutral-500 hover:text-neutral-700 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm"
+        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
+        <Link
+          to="/security"
+          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
-        </button>
+        </Link>
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Latest security events">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
             <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Time</th>
@@ -577,21 +616,24 @@ function SecurityEventsTable() {
             const TypeIcon = typeMeta.Icon;
             return (
               <tr
-                key={i}
-                className="h-12 cursor-pointer hover:bg-neutral-50 transition-colors duration-100"
+                key={row.requestId ?? i}
+                tabIndex={0}
+                aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
+                className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
                 onClick={() => navigate(`/security?open=${row.requestId}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
               >
-                <td className="whitespace-nowrap px-4 py-2.5 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
-                <td className="whitespace-nowrap px-4 py-2.5">
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
+                <td className="whitespace-nowrap px-4 py-3">
                   <span className="inline-flex items-center gap-2">
                     <TypeIcon className="size-4 shrink-0" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />
                     <span className="text-xs text-neutral-800">{typeMeta.label}</span>
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-2.5">
+                <td className="whitespace-nowrap px-4 py-3">
                   <Badge variant={badge.variant}>{badge.label}</Badge>
                 </td>
-                <td className="whitespace-nowrap px-4 py-2.5 text-xs text-neutral-500 font-mono">{row.key.split(' (')[0]}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-500 font-mono">{row.key.split(' (')[0]}</td>
               </tr>
             );
           })}

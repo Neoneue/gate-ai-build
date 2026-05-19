@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, ChevronRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Line, XAxis } from 'recharts';
 import {
   ChartContainer,
@@ -75,9 +75,6 @@ export function CompactKpi({
   noteLine,
   spark,
   flat = false,
-  onClick,
-  ariaLabel,
-  trailing,
 }: {
   title: string;
   value: string;
@@ -96,33 +93,14 @@ export function CompactKpi({
   noteLine?: string;
   spark?: React.ReactNode;
   flat?: boolean;
-  /** Whole-tile click handler. When set, the tile renders as a button with
-   *  hover/focus state — used on Overview to navigate from the rail into
-   *  the relevant detail page (Activity / Security). */
-  onClick?: () => void;
-  /** Optional aria-label for the interactive form; otherwise the visual
-   *  title + value is the implicit label. */
-  ariaLabel?: string;
-  /** Custom content rendered in the header's right slot, replacing the
-   *  chevron. Use for inline controls (e.g. a dimension selector). */
-  trailing?: React.ReactNode;
 }) {
   const baseCls = flat
     ? 'flex flex-col gap-2 bg-white p-4'
     : 'flex flex-col rounded-md gap-2 bg-white shadow-(--shadow-border) p-4';
-  const interactiveCls =
-    'group/kpi w-full text-left cursor-pointer outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset motion-reduce:transition-none';
-  const inner = (
-    <>
+  return (
+    <div className={baseCls}>
       <div className="flex items-center justify-between gap-2">
         <Eyebrow as="div">{title}</Eyebrow>
-        {trailing ?? (onClick ? (
-          <ChevronRight
-            className="shrink-0 size-4 text-neutral-500"
-            strokeWidth={1.75}
-            aria-hidden
-          />
-        ) : null)}
       </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
@@ -141,16 +119,8 @@ export function CompactKpi({
         )}
       </div>
       {spark != null ? <div className="mt-3">{spark}</div> : null}
-    </>
+    </div>
   );
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} aria-label={ariaLabel} className={`${baseCls} ${interactiveCls}`}>
-        {inner}
-      </button>
-    );
-  }
-  return <div className={baseCls}>{inner}</div>;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -199,7 +169,7 @@ export function CompactSpark({
             horizontal
             vertical={false}
             stroke="var(--color-neutral-200)"
-            strokeDasharray="3 3"
+            strokeDasharray="6 3"
           />
         )}
         <Area

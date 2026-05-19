@@ -257,15 +257,12 @@ function SidebarExpanded({
 
 function DefaultBrand() {
   return (
-    <>
-      <BrandMark className="size-8 shrink-0 text-blue-700" />
-      <div className="flex flex-col leading-tight min-w-0">
-        <Eyebrow>Constellation</Eyebrow>
-        <span className="font-sans text-base font-medium text-neutral-900">
-          Gate <span className="text-blue-700">AI</span>
-        </span>
-      </div>
-    </>
+    <img
+      src="/gate-ai-logo.png"
+      alt="Constellation Gate AI"
+      className="h-9 w-auto"
+      draggable={false}
+    />
   );
 }
 
