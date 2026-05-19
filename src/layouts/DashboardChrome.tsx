@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
+import { FeedbackFab } from '@/components/ui/feedback-fab';
 import { cn } from '@/lib/utils';
 import { SIDEBAR_SECTIONS } from './nav-sections';
 
@@ -65,6 +66,11 @@ export function DashboardChrome({
           <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-8 overflow-y-auto [&>*]:shrink-0">{children}</div>
         </div>
       </div>
+      {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
+          not to this scroll container — placing it here as a sibling keeps
+          the stacking context clean while the `fixed` rule escapes any
+          overflow clipping from the scrollable content pane above. */}
+      <FeedbackFab />
     </div>
   );
 }
