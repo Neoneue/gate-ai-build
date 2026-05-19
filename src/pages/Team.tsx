@@ -5,10 +5,12 @@ import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import {
   MoreHorizontal,
   Send,
+  Trash2,
   UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Monogram, type AvatarTone } from '@/components/ui/monogram';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import {
@@ -357,15 +359,12 @@ function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: Memb
       </TableCell>
       <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
         {row.role !== 'owner' ? (
-          <RowActionsMenu
-            label={`Open actions for ${row.name}`}
-            items={[{
-              id: 'remove',
-              label: 'Remove member',
-              destructive: true,
-              onSelect: () => onRemove(row),
-            }]}
-          />
+          <IconActionButton
+            aria-label={`Remove ${row.name}`}
+            onClick={() => onRemove(row)}
+          >
+            <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
+          </IconActionButton>
         ) : null}
       </TableCell>
     </TableRow>
