@@ -27,21 +27,21 @@ type CalendarProps = DayPickerProps & {
 export function Calendar({ className, classNames, components, ...props }: CalendarProps) {
   return (
     <DayPicker
-      className={cn('flex flex-col gap-3 p-3', className)}
+      className={cn('flex flex-col gap-3 p-4', className)}
       classNames={{
         months: 'flex flex-col gap-4',
         month: 'flex flex-col gap-3',
-        month_caption: 'relative flex items-center justify-center h-8',
+        month_caption: 'relative flex items-center justify-center h-10',
         caption_label: 'font-sans text-sm font-medium text-neutral-900',
-        nav: 'absolute inset-x-0 top-0 flex items-center justify-between h-8 pointer-events-none',
+        nav: 'absolute inset-x-2 top-1 flex items-center justify-between h-8 pointer-events-none',
         button_previous: cn(
-          'pointer-events-auto inline-flex items-center justify-center size-7 rounded-xs',
+          'pointer-events-auto relative z-10 flex shrink-0 items-center justify-center size-8 rounded-xs cursor-pointer',
           'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100',
           'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           'disabled:pointer-events-none disabled:opacity-40',
         ),
         button_next: cn(
-          'pointer-events-auto inline-flex items-center justify-center size-7 rounded-xs',
+          'pointer-events-auto relative z-10 flex shrink-0 items-center justify-center size-8 rounded-xs cursor-pointer',
           'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100',
           'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           'disabled:pointer-events-none disabled:opacity-40',
@@ -89,7 +89,7 @@ export function Calendar({ className, classNames, components, ...props }: Calend
           const Icon = orientation === 'right' ? ChevronRight : ChevronLeft;
           return (
             <Icon
-              className={cn('size-4', chevClassName)}
+              className={cn('size-4 pointer-events-none', chevClassName)}
               strokeWidth={1.75}
               aria-hidden
             />
