@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   type EventRow,
   KIND_BADGE_VARIANT,
+  fmtRelative,
   truncateHex,
 } from './AuditTrail';
 import { Timestamp } from '@/components/ui/timestamp';
@@ -264,17 +265,29 @@ export function AuditRecordDialog({
       <DialogScrollContent className="sm:max-w-2xl">
         {/* ── Header ── */}
         <DialogScrollHeader>
-          <DialogTitleBlock>Audit record</DialogTitleBlock>
+          <DialogTitleBlock badge={<VerifiedBySeal />}>Audit record</DialogTitleBlock>
         </DialogScrollHeader>
 
-        {/* ── Verification stamp ──
+        {/* ── Anchor banner ──
          *
-         * Standalone trust stamp where the banner card used to live. The
-         * descriptive copy + anchor reference were dropped on 2026-05-18
-         * as redundant — the badge alt-text carries the claim and the
-         * Event detail rows below carry the hash + timestamp. */}
+         * Restored 2026-05-18 with the seal moved to the title row. The
+         * banner now carries the differentiator claim in plain prose plus
+         * the anchor + relative-time footer so the user reads the proof
+         * statement before the tabbed detail. */}
         <DialogScrollSummary>
-          <VerifiedBySeal />
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-neutral-900 m-0">
+              This event is anchored to{' '}
+              <span className="font-medium">Constellation's Digital Evidence</span>{' '}
+              layer.
+            </p>
+            <p className="text-xs text-neutral-500 m-0">
+              Anchored ·{' '}
+              <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
+              {' · '}
+              {fmtRelative(row.at)}
+            </p>
+          </div>
         </DialogScrollSummary>
 
         {/* ── Tabbed body ── */}
