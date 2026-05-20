@@ -1473,7 +1473,7 @@ function ThreatEventDetailBody({
                 htmlFor="mark-event-note"
                 className="font-sans text-sm font-medium text-neutral-900"
               >
-                Note
+                Reason
               </label>
               <Textarea
                 id="mark-event-note"
