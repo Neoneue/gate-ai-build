@@ -192,7 +192,6 @@ type HeroView = {
   total: number;
   success: number;
   errors: number;
-  slow: number;
   delta: string;
   deltaNote: string;
   data: Array<{ time: string; requests: number }>;
@@ -406,14 +405,13 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   all: {
     eyebrow: 'REQUESTS',
     total: HERO_ALL_TOTAL,
-    // Three disjoint buckets that sum to total: fast successes, errors,
-    // slow (>10s) successes. "Success" in the breakdown means fast-success
-    // only — slow successes are pulled out into their own bucket so the
-    // numbers reconcile arithmetically with Total (2,414 + 130 + 2,316 =
-    // 4,860 = HERO_ALL_TOTAL).
-    success: 2_414,
+    // Two disjoint buckets summing to total: Success (HTTP-success, slow
+    // and fast pooled) + Errors. Slow rows display Status = Success in the
+    // table per CTO direction (2026-05-20); the breakdown rolls slow into
+    // Success accordingly so Total = Success + Errors (4,730 + 130 = 4,860).
+    // The Latency-cell TriangleAlert is the surface for spotting slow rows.
+    success: 4_730,
     errors: 130,
-    slow: 2_316,
     delta: '+18.2%',
     deltaNote: 'All time',
     data: HERO_ALL_DATA,
@@ -424,9 +422,8 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '24h': {
     eyebrow: 'REQUESTS',
     total: 48,
-    success: 24,
+    success: 46,
     errors: 2,
-    slow: 22,
     delta: '+8.2%',
     deltaNote: 'vs prior day',
     data: HERO_24H_DATA,
@@ -437,9 +434,8 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '7d': {
     eyebrow: 'REQUESTS',
     total: 468,
-    success: 237,
+    success: 455,
     errors: 13,
-    slow: 218,
     delta: '+5.4%',
     deltaNote: 'vs prior week',
     data: HERO_7D_DATA,
@@ -450,9 +446,8 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
   '30d': {
     eyebrow: 'REQUESTS',
     total: 2_248,
-    success: 1_116,
+    success: 2_188,
     errors: 60,
-    slow: 1_072,
     delta: '+14.6%',
     deltaNote: 'vs prior month',
     data: HERO_30D_DATA,
@@ -468,7 +463,6 @@ const HERO_VIEWS: Record<RangeKey, HeroView> = {
     total: 0,
     success: 0,
     errors: 0,
-    slow: 0,
     delta: '+0.0%',
     deltaNote: 'vs prior range',
     data: [],
@@ -522,18 +516,18 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
     ticks.push(data[t]?.time ?? '');
   }
 
-  // Three disjoint buckets summing to total: fast successes, errors, slow
-  // (>10s) successes. ~1% errors, ~45% slow, remainder fast.
+  // Two disjoint buckets summing to total: Success (HTTP-success, slow
+  // and fast pooled) + Errors. ~1% errors, remainder success. Slow rows
+  // are no longer broken out in the breakdown per CTO direction
+  // (2026-05-20); they're still flagged per-row via the latency cell.
   const errors = Math.max(0, Math.round(total * 0.01));
-  const slow = Math.round(total * 0.45);
-  const success = Math.max(0, total - errors - slow);
+  const success = Math.max(0, total - errors);
 
   return {
     eyebrow: 'REQUESTS',
     total,
     success,
     errors,
-    slow,
     delta: '+0.0%',
     deltaNote: 'vs prior range',
     data,
@@ -601,15 +595,16 @@ function HeroMetricCard() {
           </div>
         </div>
 
-        {/* Right-aligned mono breakdown — grid (not stacked flex) so all
-            three rows share the same label / dot / value column tracks.
-            Each BreakdownRow returns three grid cells; the dot column is
+        {/* Right-aligned mono breakdown — grid (not stacked flex) so the
+            rows share the same label / dot / value column tracks. Each
+            BreakdownRow returns three grid cells; the dot column is
             fixed-width so dots align across rows regardless of label or
-            value length. */}
+            value length. Slow row removed 2026-05-20 per CTO direction:
+            slow successes now roll into Success so Success + Errors =
+            Total reconciles; surface for slow is the latency cell. */}
         <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
           <BreakdownRow label="Success" value={view.success.toLocaleString()} tone="success" />
           <BreakdownRow label="Errors"  value={view.errors.toLocaleString()}  tone="danger" />
-          <BreakdownRow label={'Slow > 10s'} value={view.slow.toLocaleString()} tone="warning" />
         </div>
       </div>
 
@@ -922,12 +917,12 @@ const GUARDRAIL_BADGE: Record<GuardrailAction, {
   block:    { variant: 'destructive' },
 };
 
-/** Status cell label. `slow` overrides the underlying response status
- *  per Marcus's signed-off convention; the raw `row.status` still
- *  drives the modal Audit tab so investigators see the actual HTTP
- *  outcome. Guardrail badge is untouched by `slow`. */
+/** Status cell label. Returns the raw HTTP outcome (success / error) —
+ *  slow rows show Success here per CTO direction (2026-05-20). Slow is
+ *  surfaced separately via the latency-cell TriangleAlert + ink tint,
+ *  and the underlying `row.slow` boolean still drives that visual + the
+ *  Response filter's "Slow > 10s" option. */
 function responseLabel(row: RequestRow): string {
-  if (row.slow) return 'slow';
   return row.status;
 }
 
@@ -946,8 +941,7 @@ const VENDOR_ENDPOINT: Record<Vendor, string> = {
   cohere:    '/v2/chat',
 };
 
-function responseVariant(row: RequestRow): 'success' | 'warning' | 'destructive' {
-  if (row.slow) return 'warning';
+function responseVariant(row: RequestRow): 'success' | 'destructive' {
   return RESPONSE_BADGE[row.status].variant;
 }
 
