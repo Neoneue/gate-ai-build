@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState, type ComponentType, type SVGProps } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowLeftRight, Download, FileText, Flag, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +16,7 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
+  DialogScrollFooter,
   DialogScrollHeader,
   DialogTitleBlock,
 } from '@/components/ui/dialog';
@@ -27,6 +29,7 @@ import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
+import { Textarea } from '@/components/ui/textarea';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { TextLink } from '@/components/ui/text-link';
 import { Timestamp } from '@/components/ui/timestamp';
@@ -1233,13 +1236,19 @@ export function ThreatEventDetailDialog({
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
       <DialogScrollContent className="sm:max-w-[592px]">
-        {selection ? <ThreatEventDetailBody row={selection} /> : null}
+        {selection ? (
+          <ThreatEventDetailBody row={selection} />
+        ) : null}
       </DialogScrollContent>
     </Dialog>
   );
 }
 
-function ThreatEventDetailBody({ row }: { row: EventRow }) {
+function ThreatEventDetailBody({
+  row,
+}: {
+  row: EventRow;
+}) {
   const navigate = useNavigate();
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row);
@@ -1249,157 +1258,256 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const openRequest = () => navigate(`/requests?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
 
+  // In-modal view state — slides between 'detail' and 'mark' without
+  // closing the dialog. State resets naturally on unmount when the dialog
+  // closes (selection → null unmounts this component).
+  const [view, setView] = useState<'detail' | 'mark'>('detail');
+  const [note, setNote] = useState('');
+  const [marked, setMarked] = useState(false);
+
+  // Measure both panels once on mount so we can animate the clip container's
+  // height when switching views. Both panels are in the DOM from the start
+  // (in the 200% track), so offsetHeight is available synchronously.
+  const detailRef = useRef<HTMLDivElement>(null);
+  const markRef = useRef<HTMLDivElement>(null);
+  const [heights, setHeights] = useState<{ detail?: number; mark?: number }>({});
+  useLayoutEffect(() => {
+    setHeights({
+      detail: detailRef.current?.offsetHeight,
+      mark: markRef.current?.offsetHeight,
+    });
+  }, []);
+
+  const handleSubmit = () => {
+    setMarked(true);
+    setView('detail');
+    toast.success('Event marked');
+  };
+
   return (
     <>
+      {/* Fixed header — DialogScrollContent needs these shrink-0 siblings
+          to establish intrinsic height so the flex-1 sliding area below
+          resolves to a real measured value rather than collapsing to 0.
+          Title switches instantly on view change; the body slide is the
+          primary navigation signal so the instant title swap is fine. */}
       <DialogScrollHeader>
-        {/* Static title — a single event may carry multiple detection signals
-            (injection + PII + credential), so a per-event title misrepresents
-            the event. The Detection section below carries the per-check
-            verdicts. */}
-        <DialogTitleBlock titleAriaLabel={`Security event ${requestId}`}>
-          Security event
+        <DialogTitleBlock
+          titleAriaLabel={view === 'detail' ? `Security event ${requestId}` : 'Mark PIJ event'}
+          badge={marked ? <Badge variant="destructive">Marked false</Badge> : undefined}
+        >
+          {view === 'detail' ? 'Security event' : 'Mark PIJ event'}
         </DialogTitleBlock>
       </DialogScrollHeader>
 
-      <DialogScrollBody>
-        <div className="flex flex-col gap-4">
-          {/* Message — prompt + response. Reading flow follows Lakera/Helicone:
-              content first, then reasoning, then metadata. Plain labeled
-              blocks rather than chat bubbles with role chrome — this is
-              captured evidence, not a conversation. Per-block "User"/
-              "Assistant" labels are extra noise at single-event-detail
-              scale. */}
-          <section className="flex flex-col gap-2">
-            <SectionHeading>
-              <span className="inline-flex items-center gap-2">
-                <FileText className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
-                Message
-              </span>
-            </SectionHeading>
-            <div className="flex flex-col gap-3">
-              <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                {detail.samplePrompt}
-              </div>
-              {detail.sampleResponse !== null ? (
-                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                  {detail.sampleResponse}
-                </div>
-              ) : null}
-            </div>
-          </section>
+      {/* Sliding body area — overflow-hidden clips the off-screen panel.
+          The track is 200% wide and translates to reveal each panel.
+          Normal-flow panels let the modal auto-size to content height. */}
+      <div
+        className="overflow-hidden"
+        style={{
+          height: heights.detail !== undefined
+            ? `${view === 'detail' ? heights.detail : heights.mark}px`
+            : undefined,
+          transition: heights.detail !== undefined
+            ? 'height 260ms cubic-bezier(0.4,0,0.2,1)'
+            : undefined,
+        }}
+      >
+        <div
+          className="flex items-start transition-transform duration-[260ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{ width: '200%', transform: view === 'detail' ? 'translateX(0)' : 'translateX(-50%)' }}
+        >
 
-          {/* Detection — per-detector verdict list. Mirrors the Requests
-              modal Security panel: each check is its own bordered card with
-              title + description + verdict badge. */}
-          <section className="flex flex-col gap-2">
-            <SectionHeading>
-              <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
-                Detection
-              </span>
-            </SectionHeading>
-            <div className="flex flex-col gap-2">
-              {DETECTION_CHECKS.map((check) => {
-                const firing = check.keys.some((k) => flaggedSet.has(k));
-                const badge = firing
-                  ? actionMeta
-                  : { variant: 'success' as const, label: 'pass' };
-                return (
-                  <div
-                    key={check.keys.join('-')}
-                    className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
-                  >
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="font-sans text-sm font-medium text-neutral-900">
-                        {check.label}
-                      </span>
-                      <span className="font-sans text-xs text-neutral-500 text-pretty">
-                        {firing ? detail.reason : check.passText}
-                      </span>
-                    </div>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
+        {/* ── Detail panel ──────────────────────────────────────────────── */}
+        <div
+          ref={detailRef}
+          className="w-1/2 shrink-0"
+          {...(view !== 'detail' ? { inert: '' as unknown as boolean } : {})}
+        >
+          <DialogScrollBody>
+            <div className="flex flex-col gap-4">
+              {/* Message — prompt + response. Reading flow follows
+                  Lakera/Helicone: content first, then reasoning, then
+                  metadata. Plain labeled blocks rather than chat bubbles
+                  with role chrome — this is captured evidence, not a
+                  conversation. Per-block "User"/"Assistant" labels are
+                  extra noise at single-event-detail scale. */}
+              <section className="flex flex-col gap-2">
+                <SectionHeading>
+                  <span className="inline-flex items-center gap-2">
+                    <FileText className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                    Message
+                  </span>
+                </SectionHeading>
+                <div className="flex flex-col gap-3">
+                  <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                    {detail.samplePrompt}
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                  {detail.sampleResponse !== null ? (
+                    <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                      {detail.sampleResponse}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
 
-          {/* Request — provenance of the event: when it happened, which
-              conversation it belongs to, and which API key was in use.
-              Per CTO direction (2026-05-13): "should we use that space for
-              info about the request/conversation?" Model / Provider /
-              Endpoint dropped — "the model provider has nothing to do with
-              the prompt injection attempt." */}
-          <section className="flex flex-col gap-2">
-            <SectionHeading>
-              <span className="inline-flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
-                Request
-              </span>
-            </SectionHeading>
-            <DetailList>
-              <DetailRow
-                label="Timestamp"
-                value={
-                  <Timestamp
-                    date={parseEventTime(row.time)}
-                    className="font-mono text-neutral-900 tabular-nums"
+              {/* Detection — per-detector verdict list. Mirrors the Requests
+                  modal Security panel: each check is its own bordered card
+                  with title + description + verdict badge. */}
+              <section className="flex flex-col gap-2">
+                <SectionHeading>
+                  <span className="inline-flex items-center gap-2">
+                    <ShieldCheck className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                    Detection
+                  </span>
+                </SectionHeading>
+                <div className="flex flex-col gap-2">
+                  {DETECTION_CHECKS.map((check) => {
+                    const firing = check.keys.some((k) => flaggedSet.has(k));
+                    const badge = firing
+                      ? actionMeta
+                      : { variant: 'success' as const, label: 'pass' };
+                    return (
+                      <div
+                        key={check.keys.join('-')}
+                        className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
+                      >
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <span className="font-sans text-sm font-medium text-neutral-900">
+                            {check.label}
+                          </span>
+                          <span className="font-sans text-xs text-neutral-500 text-pretty">
+                            {firing ? detail.reason : check.passText}
+                          </span>
+                        </div>
+                        <Badge variant={badge.variant}>{badge.label}</Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Request — provenance of the event: when it happened, which
+                  conversation it belongs to, and which API key was in use.
+                  Per CTO direction (2026-05-13): "should we use that space
+                  for info about the request/conversation?" Model / Provider /
+                  Endpoint dropped — "the model provider has nothing to do
+                  with the prompt injection attempt." */}
+              <section className="flex flex-col gap-2">
+                <SectionHeading>
+                  <span className="inline-flex items-center gap-2">
+                    <ArrowLeftRight className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                    Request
+                  </span>
+                </SectionHeading>
+                <DetailList>
+                  <DetailRow
+                    label="Timestamp"
+                    value={
+                      <Timestamp
+                        date={parseEventTime(row.time)}
+                        className="font-mono text-neutral-900 tabular-nums"
+                      />
+                    }
                   />
-                }
-              />
-              <DetailRow
-                label="API key"
-                value={(() => {
-                  // Same name/paren split as the events table Key cell —
-                  // name in dark ink, the (sk-gw-NNN) string dimmed.
-                  const parenIdx = row.key.indexOf(' (');
-                  return (
-                    <span className="font-mono tabular-nums">
-                      {parenIdx === -1 ? (
-                        <span className="text-neutral-900">{row.key}</span>
-                      ) : (
-                        <>
-                          <span className="text-neutral-900">{row.key.slice(0, parenIdx)}</span>
-                          <span className="text-neutral-500">{row.key.slice(parenIdx)}</span>
-                        </>
-                      )}
-                    </span>
-                  );
-                })()}
-              />
-              <DetailRow
-                label="Conversation"
-                value={
-                  <span className="font-mono tabular-nums">
-                    <TextLink
-                      onClick={openConversation}
-                      aria-label={`Open conversation ${conversationId}`}
-                    >
-                      {conversationId}
-                    </TextLink>
-                  </span>
-                }
-              />
-              {/* Request — deep-links into the Requests page modal via
-                  ?open=req_*. The event is tied to one specific request;
-                  the Conversation link alone isn't specific enough. */}
-              <DetailRow
-                label="Request"
-                value={
-                  <span className="font-mono tabular-nums">
-                    <TextLink
-                      onClick={openRequest}
-                      aria-label={`Open request ${requestId}`}
-                    >
-                      {requestId}
-                    </TextLink>
-                  </span>
-                }
-              />
-            </DetailList>
-          </section>
+                  <DetailRow
+                    label="API key"
+                    value={(() => {
+                      const parenIdx = row.key.indexOf(' (');
+                      return (
+                        <span className="font-mono tabular-nums">
+                          {parenIdx === -1 ? (
+                            <span className="text-neutral-900">{row.key}</span>
+                          ) : (
+                            <>
+                              <span className="text-neutral-900">{row.key.slice(0, parenIdx)}</span>
+                              <span className="text-neutral-500">{row.key.slice(parenIdx)}</span>
+                            </>
+                          )}
+                        </span>
+                      );
+                    })()}
+                  />
+                  <DetailRow
+                    label="Conversation"
+                    value={
+                      <span className="font-mono tabular-nums">
+                        <TextLink
+                          onClick={openConversation}
+                          aria-label={`Open conversation ${conversationId}`}
+                        >
+                          {conversationId}
+                        </TextLink>
+                      </span>
+                    }
+                  />
+                  <DetailRow
+                    label="Request"
+                    value={
+                      <span className="font-mono tabular-nums">
+                        <TextLink
+                          onClick={openRequest}
+                          aria-label={`Open request ${requestId}`}
+                        >
+                          {requestId}
+                        </TextLink>
+                      </span>
+                    }
+                  />
+                </DetailList>
+              </section>
+            </div>
+          </DialogScrollBody>
         </div>
-      </DialogScrollBody>
+
+        {/* ── Mark panel ────────────────────────────────────────────────── */}
+        <div
+          ref={markRef}
+          className="w-1/2 shrink-0"
+          {...(view !== 'mark' ? { inert: '' as unknown as boolean } : {})}
+        >
+          <DialogScrollBody>
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="mark-event-note"
+                className="font-sans text-sm font-medium text-neutral-900"
+              >
+                Note
+              </label>
+              <Textarea
+                id="mark-event-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Describe why this detection wasn't a genuine injection attempt..."
+                className="resize-none h-48"
+              />
+            </div>
+          </DialogScrollBody>
+        </div>
+
+        </div>{/* end track */}
+      </div>{/* end clip */}
+
+      {!marked && (
+        <DialogScrollFooter>
+          {view === 'detail' ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => setView('mark')}>
+              <Flag data-icon="inline-start" aria-hidden />
+              Mark event
+            </Button>
+          ) : (
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={() => setView('detail')}>
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={handleSubmit}>
+                Submit
+              </Button>
+            </>
+          )}
+        </DialogScrollFooter>
+      )}
     </>
   );
 }
