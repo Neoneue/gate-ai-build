@@ -1276,7 +1276,7 @@ function ThreatEventDetailBody({
                 aria-label="Mark event invalid"
                 onClick={() => {
                   setMarked(true);
-                  toast.success('Marked invalid');
+                  toast.success('Event marked as invalid');
                 }}
                 className="group/mark inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
               >
