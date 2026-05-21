@@ -534,7 +534,7 @@ function ActionHalf({
                     {opt.name}
                   </span>
                   {opt.flag ? (
-                    <span className="font-sans text-xs font-medium uppercase tracking-wide text-neutral-500">
+                    <span className="font-mono text-xs font-medium uppercase tracking-wide text-neutral-500">
                       {opt.flag}
                     </span>
                   ) : null}
