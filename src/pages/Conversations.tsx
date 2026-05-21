@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Activity, ArrowRight, TriangleAlert, Wrench } from 'lucide-react';
+import { Activity, ArrowRight, ExternalLink, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -15,6 +16,7 @@ import { RowActionButton } from '@/components/ui/row-action-button';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { ToolResultCode } from '@/components/ui/tool-result-code';
+import { REQUEST_ROWS_RECENT } from './Requests';
 import {
   Dialog,
   DialogScrollBody,
@@ -528,6 +530,7 @@ function ConversationDetailDialog({
 }
 
 function ConversationDetailBody({ row }: { row: ConversationRow }) {
+  const navigate = useNavigate();
   // Cross-link selection state — clicking a message bubble or trace step
   // sets the active requestId; both panels paint the matching item with
   // the selection treatment (blue ring on the bubble, blue left-bar +
@@ -605,13 +608,32 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Key <span className="text-neutral-800">{row.initiator}</span>{' '}
           · started <Timestamp date={row.updated} className="text-neutral-800" />
         </span>
-        <CopyButton
-          mode="label"
-          size="sm"
-          text="Copy ID"
-          value={row.conversationId}
-          label="conversation ID"
-        />
+        <div className="flex items-center gap-2">
+          <CopyButton
+            mode="label"
+            size="sm"
+            text="Copy ID"
+            value={row.conversationId}
+            label="conversation ID"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              const linkedRequest = REQUEST_ROWS_RECENT.find(
+                (r) => r.conversation === row.conversationId && !!r.requestId,
+              );
+              if (linkedRequest?.requestId) {
+                navigate(`/requests?open=${linkedRequest.requestId}`);
+              } else {
+                navigate('/requests');
+              }
+            }}
+          >
+            View Request
+            <ExternalLink data-icon="inline-end" aria-hidden />
+          </Button>
+        </div>
       </DialogScrollFooter>
     </>
   );

@@ -5,6 +5,7 @@ import {
   Braces,
   ChevronDown,
   Download,
+  ExternalLink,
   Info,
   Sparkles,
   TriangleAlert,
@@ -17,6 +18,7 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
+  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
@@ -1518,6 +1520,17 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           </TabsContent>
         </Tabs>
       </DialogScrollBody>
+
+      <DialogScrollFooter>
+        <Button
+          type="button"
+          size="sm"
+          onClick={openConversation}
+        >
+          View Conversation
+          <ExternalLink data-icon="inline-end" aria-hidden />
+        </Button>
+      </DialogScrollFooter>
     </>
   );
 }
