@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ComponentType, type SVGProps } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { ArrowLeftRight, Download, FileText, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
+import { toast } from 'sonner';
+import { ArrowLeftRight, Download, FileText, Flag, HeartPulse, KeyRound, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -1233,13 +1234,19 @@ export function ThreatEventDetailDialog({
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
       <DialogScrollContent className="sm:max-w-[592px]">
-        {selection ? <ThreatEventDetailBody row={selection} /> : null}
+        {selection ? (
+          <ThreatEventDetailBody row={selection} />
+        ) : null}
       </DialogScrollContent>
     </Dialog>
   );
 }
 
-function ThreatEventDetailBody({ row }: { row: EventRow }) {
+function ThreatEventDetailBody({
+  row,
+}: {
+  row: EventRow;
+}) {
   const navigate = useNavigate();
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row);
@@ -1249,26 +1256,52 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const openRequest = () => navigate(`/requests?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
 
+  // Marked state — flips the dialog badge to "Marked false" and converts
+  // the footer button to a disabled "Event marked" confirmation in place.
+  // State resets naturally on unmount when the dialog closes (selection →
+  // null unmounts this component).
+  const [marked, setMarked] = useState(false);
+
   return (
     <>
       <DialogScrollHeader>
-        {/* Static title — a single event may carry multiple detection signals
-            (injection + PII + credential), so a per-event title misrepresents
-            the event. The Detection section below carries the per-check
-            verdicts. */}
-        <DialogTitleBlock titleAriaLabel={`Security event ${requestId}`}>
+        <DialogTitleBlock
+          titleAriaLabel={`Security event ${requestId}`}
+          badge={
+            marked ? (
+              <Badge variant="secondary" className="h-8 px-3">Invalid</Badge>
+            ) : (
+              <button
+                type="button"
+                aria-label="Mark event invalid"
+                onClick={() => {
+                  setMarked(true);
+                  toast.success('Marked invalid');
+                }}
+                className="group/mark inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+              >
+                <span className="inline-flex items-center justify-center size-8 shrink-0">
+                  <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />
+                </span>
+                <span className="opacity-0 group-hover/mark:opacity-100 group-focus-visible/mark:opacity-100 transition-opacity duration-200 ease-out pr-3">
+                  Mark invalid
+                </span>
+              </button>
+            )
+          }
+        >
           Security event
         </DialogTitleBlock>
       </DialogScrollHeader>
 
       <DialogScrollBody>
         <div className="flex flex-col gap-4">
-          {/* Message — prompt + response. Reading flow follows Lakera/Helicone:
-              content first, then reasoning, then metadata. Plain labeled
-              blocks rather than chat bubbles with role chrome — this is
-              captured evidence, not a conversation. Per-block "User"/
-              "Assistant" labels are extra noise at single-event-detail
-              scale. */}
+          {/* Message — prompt + response. Reading flow follows
+              Lakera/Helicone: content first, then reasoning, then
+              metadata. Plain labeled blocks rather than chat bubbles
+              with role chrome — this is captured evidence, not a
+              conversation. Per-block "User"/"Assistant" labels are
+              extra noise at single-event-detail scale. */}
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
@@ -1289,8 +1322,8 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           </section>
 
           {/* Detection — per-detector verdict list. Mirrors the Requests
-              modal Security panel: each check is its own bordered card with
-              title + description + verdict badge. */}
+              modal Security panel: each check is its own bordered card
+              with title + description + verdict badge. */}
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
@@ -1326,10 +1359,10 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
 
           {/* Request — provenance of the event: when it happened, which
               conversation it belongs to, and which API key was in use.
-              Per CTO direction (2026-05-13): "should we use that space for
-              info about the request/conversation?" Model / Provider /
-              Endpoint dropped — "the model provider has nothing to do with
-              the prompt injection attempt." */}
+              Per CTO direction (2026-05-13): "should we use that space
+              for info about the request/conversation?" Model / Provider /
+              Endpoint dropped — "the model provider has nothing to do
+              with the prompt injection attempt." */}
           <section className="flex flex-col gap-2">
             <SectionHeading>
               <span className="inline-flex items-center gap-2">
@@ -1350,8 +1383,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="API key"
                 value={(() => {
-                  // Same name/paren split as the events table Key cell —
-                  // name in dark ink, the (sk-gw-NNN) string dimmed.
                   const parenIdx = row.key.indexOf(' (');
                   return (
                     <span className="font-mono tabular-nums">
@@ -1380,9 +1411,6 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                   </span>
                 }
               />
-              {/* Request — deep-links into the Requests page modal via
-                  ?open=req_*. The event is tied to one specific request;
-                  the Conversation link alone isn't specific enough. */}
               <DetailRow
                 label="Request"
                 value={
@@ -1400,6 +1428,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           </section>
         </div>
       </DialogScrollBody>
+
     </>
   );
 }

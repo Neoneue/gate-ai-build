@@ -22,6 +22,8 @@ import { Security } from '@/pages/Security';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
 import { GetStarted } from '@/pages/GetStarted';
+import { SignIn } from '@/pages/SignIn';
+import { SignUp } from '@/pages/SignUp';
 import { TokenSavings } from '@/pages/TokenSavings';
 
 /** Outlet context shape — every page reads sidebar state from here via
@@ -59,6 +61,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-up" element={<SignUp />} />
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/get-started" element={<GetStarted />} />
