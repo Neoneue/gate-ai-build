@@ -22,6 +22,7 @@ import { Security } from '@/pages/Security';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
 import { GetStarted } from '@/pages/GetStarted';
+import { AuthLayout } from '@/layouts/AuthLayout';
 import { SignIn } from '@/pages/SignIn';
 import { SignUp } from '@/pages/SignUp';
 import { TokenSavings } from '@/pages/TokenSavings';
@@ -62,8 +63,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
-        <Route path="/sign-in" element={<SignIn />} />
-        <Route path="/sign-up" element={<SignUp />} />
+        <Route element={<AuthLayout />}>
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/sign-up" element={<SignUp />} />
+        </Route>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/get-started" element={<GetStarted />} />

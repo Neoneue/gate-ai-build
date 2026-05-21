@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight } from "lucide-react"
 
-import { AuthLayout } from "@/layouts/AuthLayout"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -27,8 +26,7 @@ export function SignUp() {
   }
 
   return (
-    <AuthLayout>
-      <Card className="w-100 rounded-xl shadow-(--shadow-modal) data-[density=default]:py-6">
+    <Card className="w-100 rounded-xl shadow-(--shadow-modal) data-[density=default]:py-6">
         <CardHeader className="gap-y-2 px-6">
           <CardTitle className="text-xl">Enter your invite code</CardTitle>
           <CardDescription>
@@ -96,6 +94,5 @@ export function SignUp() {
           </p>
         </CardFooter>
       </Card>
-    </AuthLayout>
   )
 }
