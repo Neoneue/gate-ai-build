@@ -1,4 +1,4 @@
-import { BookOpen, CircleCheck, Copy, Expand, ExternalLink, Minus, Plus } from 'lucide-react';
+import { BookOpen, CircleCheck, Copy, Expand, ExternalLink, Maximize2, Minus, Plus } from 'lucide-react';
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -383,25 +383,16 @@ function MerkleSvgNode({
 
   return (
     <g
-      style={
-        isAnimated
-          ? {
-              opacity: visible ? 1 : 0,
-              transform: visible ? 'scale(1)' : 'scale(0.96)',
-              transformOrigin: `${node.cx}px ${node.cy}px`,
-              // motion-reduce: transition-none is applied via class below;
-              // the inline style handles the delay for the normal case.
-              transition: visible
-                ? `opacity 200ms ease-out ${delayMs}ms, transform 200ms ease-out ${delayMs}ms`
-                : 'none',
-            }
-          : {
-              // Scaffolding: ambient fade-in at t=0, before the proof cascade.
-              opacity: visible ? 1 : 0,
-              transition: visible ? 'opacity 200ms ease-out' : 'none',
-            }
-      }
-      className="motion-reduce:!opacity-100 motion-reduce:![transform:scale(1)] motion-reduce:!transition-none"
+      // Outer group: opacity-only fade. Labels live here so they don't
+      // ride the scale transform on the rect below.
+      style={{
+        opacity: visible ? 1 : 0,
+        willChange: 'opacity',
+        transition: visible
+          ? `opacity 200ms ease-out ${isAnimated ? delayMs : 0}ms`
+          : 'none',
+      }}
+      className="motion-reduce:!opacity-100 motion-reduce:!transition-none"
     >
       {/* Binary first-byte label above rect (12px visible gap) */}
       <text
@@ -417,19 +408,38 @@ function MerkleSvgNode({
         {node.binary}
       </text>
 
-      {/* Rounded rect */}
-      <rect
-        x={x}
-        y={y}
-        width={w}
-        height={NODE_H}
-        rx={NODE_RX}
-        fill={colors.fill}
-        stroke={colors.stroke ?? undefined}
-        strokeWidth={colors.strokeWidth}
-      />
+      {/* Inner group: scale transform on the rect ONLY (no labels). The
+          group is centered on the node so the scale "pops" the block
+          without moving any text. */}
+      <g
+        style={
+          isAnimated
+            ? {
+                transform: visible ? 'scale(1)' : 'scale(0.96)',
+                transformOrigin: `${node.cx}px ${node.cy}px`,
+                transition: visible
+                  ? `transform 200ms ease-out ${delayMs}ms`
+                  : 'none',
+              }
+            : undefined
+        }
+        className="motion-reduce:![transform:scale(1)] motion-reduce:!transition-none"
+      >
+        <rect
+          x={x}
+          y={y}
+          width={w}
+          height={NODE_H}
+          rx={NODE_RX}
+          fill={colors.fill}
+          stroke={colors.stroke ?? undefined}
+          strokeWidth={colors.strokeWidth}
+        />
+      </g>
 
-      {/* Role label inside rect */}
+      {/* Role label inside rect (rendered AFTER rect so it paints on top
+          of the filled background; sits outside the scaling group so it
+          stays at full size and doesn't drift during the pop). */}
       <text
         x={node.cx}
         y={node.cy}
@@ -621,11 +631,17 @@ function MerkleTreeViewer({
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 4;
   const ZOOM_STEP = 0.25;
-  // Pan clamp: half the canvas in each axis, scaled by inverse zoom so
-  // the tree can't be dragged completely out of view.
+  // Pan clamp: half the canvas in each axis. Past the boundary the
+  // gesture damps to 30% of further drag (linear friction) rather than
+  // hard-stopping — matches the emil-design-eng "friction over hard
+  // stops" guidance.
   const panClampX = VB_W / 2;
   const panClampY = VB_H / 2;
-  const clamp = (v: number, max: number) => Math.max(-max, Math.min(max, v));
+  const dampedClamp = (v: number, max: number) => {
+    if (v > max) return max + (v - max) * 0.3;
+    if (v < -max) return -max + (v + max) * 0.3;
+    return v;
+  };
 
   const [zoom, setZoom] = React.useState(1);
   const [pan, setPan] = React.useState({ x: 0, y: 0 });
@@ -634,6 +650,8 @@ function MerkleTreeViewer({
 
   const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, +(z + ZOOM_STEP).toFixed(2)));
   const zoomOut = () => setZoom((z) => Math.max(MIN_ZOOM, +(z - ZOOM_STEP).toFixed(2)));
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+  const isDefaultView = zoom === 1 && pan.x === 0 && pan.y === 0;
 
   const onMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // primary button only
@@ -648,10 +666,10 @@ function MerkleTreeViewer({
       const dx = (e.clientX - dragStart.current.clientX) / zoom;
       const dy = (e.clientY - dragStart.current.clientY) / zoom;
       // Dragging right pans content right → viewBox origin moves left.
-      // Clamp so the tree can't drift fully off-canvas.
+      // Damped past the boundary so the tree resists rather than hard-stops.
       setPan({
-        x: clamp(dragStart.current.panX - dx, panClampX),
-        y: clamp(dragStart.current.panY - dy, panClampY),
+        x: dampedClamp(dragStart.current.panX - dx, panClampX),
+        y: dampedClamp(dragStart.current.panY - dy, panClampY),
       });
     };
     const onUp = () => setIsDragging(false);
@@ -699,7 +717,7 @@ function MerkleTreeViewer({
           aria-label="Zoom in"
           onClick={zoomIn}
           disabled={zoom >= MAX_ZOOM}
-          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Plus className="size-4" aria-hidden />
         </button>
@@ -709,9 +727,19 @@ function MerkleTreeViewer({
           aria-label="Zoom out"
           onClick={zoomOut}
           disabled={zoom <= MIN_ZOOM}
-          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Minus className="size-4" aria-hidden />
+        </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          aria-label="Reset view"
+          onClick={resetView}
+          disabled={isDefaultView}
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <Maximize2 className="size-4" aria-hidden />
         </button>
       </div>
     </div>
@@ -726,7 +754,7 @@ function ProofStepsList({ steps }: { steps: ProofStep[] }) {
       <div className="flex flex-col gap-2">
         {steps.map((step) => (
           <div key={step.stepNum} className="flex items-start gap-2">
-            <span className="font-mono text-xs text-neutral-400 shrink-0 w-4">
+            <span className="font-mono text-xs text-neutral-500 shrink-0 w-4">
               {step.stepNum}.
             </span>
             <span className="font-mono text-xs text-neutral-700 break-all">
@@ -794,7 +822,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           type="button"
           aria-label="Expand Merkle tree"
           onClick={() => setExpandOpen(true)}
-          className="absolute top-2 right-2 inline-flex items-center justify-center size-8 rounded-sm border border-border bg-card text-neutral-700 hover:bg-neutral-50 transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="absolute top-2 right-2 inline-flex items-center justify-center size-8 rounded-sm border border-border bg-card text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.97] transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Expand className="size-4" aria-hidden />
         </button>
