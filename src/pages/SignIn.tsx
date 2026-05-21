@@ -35,9 +35,9 @@ export function SignIn() {
 
   return (
     <AuthLayout>
-      <Card className="w-100 data-[density=default]:py-6">
+      <Card className="w-100 rounded-xl shadow-(--shadow-modal) data-[density=default]:py-6">
         <CardHeader className="gap-y-2 px-6">
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle className="text-xl">Sign in</CardTitle>
           <CardDescription>
             Welcome back. Pick any of the methods below to continue.
           </CardDescription>

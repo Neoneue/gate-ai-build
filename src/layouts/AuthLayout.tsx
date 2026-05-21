@@ -39,7 +39,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="col-span-5 col-start-1 row-start-2 self-center">
-          <h1 className="text-5xl font-semibold leading-tight tracking-tight text-white">
+          <h1 className="text-5xl font-medium leading-tight tracking-tight text-white">
             Prove every agent call.
           </h1>
           <p className="mt-4 text-lg/8 text-neutral-400">

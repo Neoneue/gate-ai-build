@@ -28,9 +28,9 @@ export function SignUp() {
 
   return (
     <AuthLayout>
-      <Card className="w-100 data-[density=default]:py-6">
+      <Card className="w-100 rounded-xl shadow-(--shadow-modal) data-[density=default]:py-6">
         <CardHeader className="gap-y-2 px-6">
-          <CardTitle>Enter your invite code</CardTitle>
+          <CardTitle className="text-xl">Enter your invite code</CardTitle>
           <CardDescription>
             Sign-ups are currently invite-only. Drop your code in to continue.
           </CardDescription>
