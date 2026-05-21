@@ -649,6 +649,10 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 ### Selectors
 
 - **Tabs** (`tabs.tsx`) — sliding white indicator on active trigger (200ms ease-out, transform+width). Two variants: `default` (pill-on-well, `bg-muted rounded-sm h-8 p-1`, active trigger `bg-background rounded-xs`) and `line` (underline, transparent track, active trigger gets a 2px neutral-900 underline). Vertical orientation supported on the default variant.
+
+**Rule (`line` variant — trigger contract):**
+- **Trigger vertical padding is `pt-2 pb-3`** (8px top, 12px bottom). Codified 2026-05-21 — earlier `pt-4 pb-3` was disproportionate for the page-level register where most line tabs live (dialog headers, page sub-nav). Every line-variant tab strip site-wide uses this rhythm; no usage-site overrides needed.
+- **Active trigger never gets a hover background.** The trigger's height is `calc(100%-1px)` (1px short of the TabsList) and the indicator (`bottom-[-1px] h-0.5`) overlaps the trigger's bottom 1px by one pixel — so any `hover:bg-*` on the active trigger would clip the indicator from 2px to 1px on rollover. The primitive applies `data-active:hover:bg-transparent` for `variant="line"` to lock this; the indicator stays full height. Hover affordance still fires on non-active triggers (`bg-neutral-100`) because those don't carry an indicator. Codified 2026-05-21 after the Audit-record modal regression.
 - **Segmented** (`segmented.tsx`) — pill-style selector, same sliding-indicator idiom as Tabs default. `bg-muted rounded-sm overflow-clip`. Sizes: default `h-8`, sm `h-7`. Variants: `pill` (default) and `group` (adjacent borders, neutral-900 fill on selected — rare).
 - **SegmentedPill** (`segmented-pill.tsx`) — view-scope toggles in toolbars. **Don't add as an extra row** — view-scope controls live in the existing toolbar. Requests uses `<SegmentedPill size="sm">` (1H / 24H / 7D / 30D) anchored right via `ml-auto` so the toolbar splits cleanly into facets-left + time-scope-right. Pairs with a custom-range `<DateRangePicker>` (Base UI Popover + react-day-picker v10) for ranges outside the preset window; selecting one clears the other.
 

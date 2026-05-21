@@ -71,12 +71,6 @@ function fnv32HexLong(input: string): string {
   return fnv32Hex(input) + fnv32Hex(input + '_b');
 }
 
-// Binary string from the first byte of a hex string (e.g. "a3" → "10100011")
-function hexFirstByteBinary(hex: string): string {
-  const byte = parseInt(hex.slice(0, 2), 16);
-  return byte.toString(2).padStart(8, '0');
-}
-
 // ── Tree constants ────────────────────────────────────────────────────
 const TREE_DEPTH = 3; // L0=ROOT, L1, L2, L3 (leaves)
 // Derived: 2^TREE_DEPTH leaves, TREE_DEPTH hash operations in a proof
@@ -89,7 +83,11 @@ const NODE_W = 64;
 const NODE_H = 32;
 const NODE_RX = 6;
 const ROOT_W = 80;
-const Y: Record<number, number> = { 0: 48, 1: 148, 2: 238, 3: 332 };
+// Y centers shifted up 14px from the original layout (which had a binary
+// label above each rect that needed top breathing room). Without those
+// labels, ROOT's rect now sits 18px from the viewBox top and the leaf
+// hex baseline sits 18px from the bottom — symmetric.
+const Y: Record<number, number> = { 0: 34, 1: 134, 2: 224, 3: 318 };
 const LEAF_PITCH = 88; // horizontal spacing between leaf centers
 
 // Leaf centers (8 leaves, centered in VB_W)
@@ -124,7 +122,6 @@ interface MerkleNodeData {
   cy: number;
   hex8: string;       // 8-char hex for under-node label
   hexLong: string;    // 16-char hex for tooltip
-  binary: string;     // 8-bit binary from first byte
 }
 
 // ── Build the full tree from a single EventRow ────────────────────────
@@ -162,7 +159,6 @@ function buildMerkleTree(row: EventRow): {
       cy: Y[3],
       hex8: leafHex,
       hexLong: isTarget ? strippedId.slice(0, 16).padEnd(16, '0') : fnv32HexLong(row.anchor + '_leaf_' + i),
-      binary: hexFirstByteBinary(leafHex),
     });
   }
 
@@ -186,7 +182,6 @@ function buildMerkleTree(row: EventRow): {
       cy: Y[2],
       hex8: l2Hex,
       hexLong: fnv32HexLong(row.anchor + '_l2_' + i),
-      binary: hexFirstByteBinary(l2Hex),
     });
   }
 
@@ -203,7 +198,6 @@ function buildMerkleTree(row: EventRow): {
       cy: Y[1],
       hex8: l1Hex,
       hexLong: fnv32HexLong(row.anchor + '_l1_' + i),
-      binary: hexFirstByteBinary(l1Hex),
     });
   }
 
@@ -216,7 +210,6 @@ function buildMerkleTree(row: EventRow): {
     cy: Y[0],
     hex8: anchorHex8,
     hexLong: row.anchor.slice(0, 16),
-    binary: hexFirstByteBinary(anchorHex8),
   };
 
   const nodes = [rootNode, ...l1Nodes, ...l2Nodes, ...leafNodes];
@@ -232,86 +225,11 @@ function buildMerkleTree(row: EventRow): {
   return { nodes, targetIndex, onPathIds };
 }
 
-// ── Build proof steps list ────────────────────────────────────────────
-interface ProofStep {
-  stepNum: number;
-  leafLabel: string;
-  sibLabel: string;
-  resultHex: string;
-  isRoot: boolean;
-  sibSide: 'left' | 'right';
-  levelLabel: string;
-}
-
-function buildProofSteps(row: EventRow, targetIndex: number): ProofStep[] {
-  const strippedId = row.eventId.replace(/^e_/, '').replace(/-/g, '');
-  const targetLeafHex = strippedId.slice(0, 8).padEnd(8, '0');
-
-  const steps: ProofStep[] = [];
-
-  // Level 2 (L3→L2): sibling at L2 level (a leaf sibling)
-  const sibL2Index = targetIndex % 2 === 0 ? targetIndex + 1 : targetIndex - 1;
-  const sibL2Hex = fnv32Hex(row.anchor + '_leaf_' + sibL2Index);
-  const parentL2Hex = fnv32Hex(row.anchor + '_l2_' + Math.floor(targetIndex / 2));
-  const sibL2Side: 'left' | 'right' = (targetIndex & 1) === 0 ? 'right' : 'left';
-  const l2LeafLabel = `D${targetIndex + 1}`;
-  const sibL2Label = `D${sibL2Index + 1}`;
-
-  steps.push({
-    stepNum: 1,
-    leafLabel: sibL2Side === 'right' ? `${l2LeafLabel} ‖ ${sibL2Label}` : `${sibL2Label} ‖ ${l2LeafLabel}`,
-    sibLabel: `sibling at L3 (${sibL2Side})`,
-    resultHex: parentL2Hex,
-    isRoot: false,
-    sibSide: sibL2Side,
-    levelLabel: 'L3',
-  });
-
-  // Level 1 (L2→L1): sibling at L1 level (L2 node sibling)
-  const onPathL2Index = Math.floor(targetIndex / 2);
-  const sibL1Index = onPathL2Index % 2 === 0 ? onPathL2Index + 1 : onPathL2Index - 1;
-  const sibL1Hex = fnv32Hex(row.anchor + '_l2_' + sibL1Index);
-  const parentL1Hex = fnv32Hex(row.anchor + '_l1_' + Math.floor(targetIndex / 4));
-  const sibL1Side: 'left' | 'right' = (onPathL2Index & 1) === 0 ? 'right' : 'left';
-  const l2ParentLabel = `H${onPathL2Index + 1}`;
-  const sibL1Label = `H${sibL1Index + 1}`;
-
-  steps.push({
-    stepNum: 2,
-    leafLabel: sibL1Side === 'right' ? `${l2ParentLabel} ‖ ${sibL1Label}` : `${sibL1Label} ‖ ${l2ParentLabel}`,
-    sibLabel: `sibling at L2 (${sibL1Side})`,
-    resultHex: parentL1Hex,
-    isRoot: false,
-    sibSide: sibL1Side,
-    levelLabel: 'L2',
-  });
-
-  // Level 0 (L1→ROOT): sibling at root level (L1 node sibling)
-  const onPathL1Index = Math.floor(targetIndex / 4);
-  const sibRootIndex = onPathL1Index === 0 ? 1 : 0;
-  const sibRootHex = fnv32Hex(row.anchor + '_l1_' + sibRootIndex);
-  const sibRootSide: 'left' | 'right' = (onPathL1Index & 1) === 0 ? 'right' : 'left';
-  const l1ParentLabel = `H${onPathL1Index + 5}`;
-  const sibRootLabel = `H${sibRootIndex + 5}`;
-
-  steps.push({
-    stepNum: 3,
-    leafLabel: sibRootSide === 'right' ? `${l1ParentLabel} ‖ ${sibRootLabel}` : `${sibRootLabel} ‖ ${l1ParentLabel}`,
-    sibLabel: `sibling at L1 (${sibRootSide})`,
-    resultHex: row.anchor.slice(0, 8),
-    isRoot: true,
-    sibSide: sibRootSide,
-    levelLabel: 'L1',
-  });
-
-  // Suppress unused variable warning — these are used in the step objects above
-  void targetLeafHex;
-  void sibL2Hex;
-  void sibL1Hex;
-  void sibRootHex;
-
-  return steps;
-}
+// Proof-steps builder + ProofStepsList component were removed when the
+// CTO scoped this section out. See git history (commit 87611a1 and
+// earlier) for the previous implementation, which derived a 3-step
+// directional proof (`H(D1 ‖ D2) = … · sibling at L3 (right)` etc.)
+// from the same FNV-1a hashes that label the tree nodes.
 
 // ── Visual fill/stroke per node state ────────────────────────────────
 function nodeColors(state: NodeState): {
@@ -320,7 +238,6 @@ function nodeColors(state: NodeState): {
   strokeWidth: number;
   labelFill: string;
   hexFill: string;
-  binaryFill: string;
 } {
   switch (state) {
     case 'root':
@@ -330,7 +247,6 @@ function nodeColors(state: NodeState): {
         strokeWidth: 0,
         labelFill: 'var(--color-white)',
         hexFill: 'var(--color-neutral-900)',
-        binaryFill: 'var(--color-neutral-900)',
       };
     case 'on-path':
       return {
@@ -339,7 +255,6 @@ function nodeColors(state: NodeState): {
         strokeWidth: 0,
         labelFill: 'var(--color-white)',
         hexFill: 'var(--color-neutral-900)',
-        binaryFill: 'var(--color-neutral-900)',
       };
     case 'off-leaf':
       return {
@@ -348,7 +263,6 @@ function nodeColors(state: NodeState): {
         strokeWidth: 1.5,
         labelFill: 'var(--color-neutral-900)',
         hexFill: 'var(--color-neutral-500)',
-        binaryFill: 'var(--color-neutral-500)',
       };
     case 'off-intermediate':
       return {
@@ -357,7 +271,6 @@ function nodeColors(state: NodeState): {
         strokeWidth: 1,
         labelFill: 'var(--color-neutral-500)',
         hexFill: 'var(--color-neutral-500)',
-        binaryFill: 'var(--color-neutral-500)',
       };
   }
 }
@@ -394,20 +307,6 @@ function MerkleSvgNode({
       }}
       className="motion-reduce:!opacity-100 motion-reduce:!transition-none"
     >
-      {/* Binary first-byte label above rect (12px visible gap) */}
-      <text
-        x={node.cx}
-        y={node.cy - NODE_H / 2 - 12}
-        textAnchor="middle"
-        dominantBaseline="auto"
-        fontSize="10"
-        fontFamily="var(--font-mono)"
-        letterSpacing="0.08em"
-        fill={colors.binaryFill}
-      >
-        {node.binary}
-      </text>
-
       {/* Inner group: scale transform on the rect ONLY (no labels). The
           group is centered on the node so the scale "pops" the block
           without moving any text. */}
@@ -564,7 +463,7 @@ function MerkleEdges({
 //
 // SVG is exposed as a presentational image (`role="img"`) with a
 // descriptive label. The canonical AT-accessible representation of the
-// proof is the ProofStepsList below the tree — that's where the
+// proof was previously surfaced via the ProofStepsList below the tree;
 // step-by-step hash operations and direction flags live in plain text.
 function MerkleTreeSvg({
   nodes,
@@ -746,31 +645,6 @@ function MerkleTreeViewer({
   );
 }
 
-// ── Proof steps list ──────────────────────────────────────────────────
-function ProofStepsList({ steps }: { steps: ProofStep[] }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium text-neutral-900 m-0">Proof steps</h3>
-      <div className="flex flex-col gap-2">
-        {steps.map((step) => (
-          <div key={step.stepNum} className="flex items-start gap-2">
-            <span className="font-mono text-xs text-neutral-500 shrink-0 w-4">
-              {step.stepNum}.
-            </span>
-            <span className="font-mono text-xs text-neutral-700 break-all">
-              H({step.leafLabel}) = {step.resultHex}
-              {step.isRoot ? (
-                <span className="text-neutral-900 font-medium"> ← ROOT</span>
-              ) : null}
-              <span className="text-neutral-500"> · {step.sibLabel}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /** Renders a depth-3 Merkle inclusion proof for a single audit event.
  *
  *  Layout:
@@ -781,14 +655,12 @@ function ProofStepsList({ steps }: { steps: ProofStep[] }) {
  *
  *  All SVG fills/strokes reference CSS custom properties. */
 function MerklePathPanel({ row }: { row: EventRow }) {
-  const { nodes, targetIndex, onPathIds } = React.useMemo(
+  const { nodes, onPathIds } = React.useMemo(
     () => buildMerkleTree(row),
     [row],
   );
-  const proofSteps = React.useMemo(
-    () => buildProofSteps(row, targetIndex),
-    [row, targetIndex],
-  );
+  // Proof-steps list scoped out — CTO didn't request it. See the note
+  // above `buildMerkleTree` for the prior shape if re-introduced.
 
   // Sequential reveal animation on mount
   const [visibleOnPath, setVisibleOnPath] = React.useState(false);
@@ -803,7 +675,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   const anchorShort = truncateHex(row.anchor, 4, 4);
   const strippedId = row.eventId.replace(/^e_/, '').replace(/-/g, '');
   const leafHex = strippedId.slice(0, 8).padEnd(8, '0');
-  const treeAriaLabel = `Merkle inclusion proof: leaf ${leafHex} verified against anchor root ${anchorShort} in ${TREE_DEPTH} hash operations. Full step-by-step proof is listed below the diagram.`;
+  const treeAriaLabel = `Merkle inclusion proof: leaf ${leafHex} verified against anchor root ${anchorShort} in ${TREE_DEPTH} hash operations.`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -835,8 +707,9 @@ function MerklePathPanel({ row }: { row: EventRow }) {
         />
       </div>
 
-      {/* Proof steps */}
-      <ProofStepsList steps={proofSteps} />
+      {/* Proof-steps section deliberately omitted — CTO didn't request
+          it. To re-add, recover the builder + component from git
+          history (commit 87611a1 and earlier) and render here. */}
 
       {/* Footer */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
@@ -999,7 +872,7 @@ export function AuditRecordDialog({
         </DialogScrollSummary>
 
         {/* ── Tabbed body ── */}
-        <DialogScrollBody className="pt-2">
+        <DialogScrollBody className="pt-4">
           <Tabs defaultValue="event">
             <TabsList variant="line" className="mb-2 px-0">
               <TabsTrigger value="event" className="pl-0">Event</TabsTrigger>
