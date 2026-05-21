@@ -16,7 +16,6 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogTitleBlock,
 } from '@/components/ui/dialog';
@@ -1268,7 +1267,28 @@ function ThreatEventDetailBody({
       <DialogScrollHeader>
         <DialogTitleBlock
           titleAriaLabel={`Security event ${requestId}`}
-          badge={marked ? <Badge variant="destructive">Marked false</Badge> : undefined}
+          badge={
+            marked ? (
+              <Badge variant="secondary" className="h-8 px-3">Invalid</Badge>
+            ) : (
+              <button
+                type="button"
+                aria-label="Mark event invalid"
+                onClick={() => {
+                  setMarked(true);
+                  toast.success('Marked invalid');
+                }}
+                className="group/mark inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+              >
+                <span className="inline-flex items-center justify-center size-8 shrink-0">
+                  <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />
+                </span>
+                <span className="opacity-0 group-hover/mark:opacity-100 group-focus-visible/mark:opacity-100 transition-opacity duration-200 ease-out pr-3">
+                  Mark invalid
+                </span>
+              </button>
+            )
+          }
         >
           Security event
         </DialogTitleBlock>
@@ -1409,26 +1429,6 @@ function ThreatEventDetailBody({
         </div>
       </DialogScrollBody>
 
-      {/* Footer hides once the event is marked — the title-block "Marked
-          false" Badge carries the durable state and a toast fires the
-          action-confirmation signal at the click moment. No re-mark path
-          from inside the modal; closing + reopening resets state. */}
-      {!marked && (
-        <DialogScrollFooter>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setMarked(true);
-              toast.success('Event marked');
-            }}
-          >
-            <Flag data-icon="inline-start" aria-hidden />
-            Mark event
-          </Button>
-        </DialogScrollFooter>
-      )}
     </>
   );
 }
