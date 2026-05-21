@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Activity, ArrowRight, TriangleAlert, Wrench } from 'lucide-react';
+import { Activity, ArrowRight, ExternalLink, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -15,6 +16,7 @@ import { RowActionButton } from '@/components/ui/row-action-button';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { ToolResultCode } from '@/components/ui/tool-result-code';
+import { REQUEST_ROWS_RECENT } from './Requests';
 import {
   Dialog,
   DialogScrollBody,
@@ -78,12 +80,12 @@ const RANGE_SCALE: Record<PresetRange, number> = {
   all:   8.5,
 };
 
-const SPARK: Record<Range, { activeNow: number[]; conversations: number[]; avgTurns: number[]; avgCost: number[] }> = {
-  all:    { activeNow: [160,195,210,230,215,248,225,242,247], conversations: [280,340,310,380,350,410,385,415,420], avgTurns: [11.2,12.8,11.6,13.4,12.9,14.1,13.5,14.0,14.2], avgCost: [0.101,0.095,0.098,0.091,0.093,0.087,0.089,0.083,0.082] },
-  '30d':  { activeNow: [218,230,240,228,245,235,250,240,247], conversations: [348,368,382,371,395,383,408,398,420], avgTurns: [13.1,13.6,13.4,13.8,13.6,14.1,13.9,14.1,14.2], avgCost: [0.091,0.088,0.090,0.086,0.088,0.084,0.086,0.083,0.082] },
-  '7d':   { activeNow: [238,252,230,244,256,234,248,240,247], conversations: [10,12,9,11,13,10,12,11,12],            avgTurns: [13.4,14.8,13.1,14.2,14.9,13.6,14.5,13.9,14.2], avgCost: [0.087,0.082,0.090,0.083,0.085,0.080,0.084,0.079,0.082] },
-  '24h':  { activeNow: [242,246,244,249,245,251,247,250,247], conversations: [11,13,10,12,14,11,13,12,12],           avgTurns: [14.0,14.5,13.8,14.3,14.7,14.1,14.4,14.0,14.2], avgCost: [0.083,0.081,0.084,0.082,0.080,0.083,0.081,0.082,0.082] },
-  custom: { activeNow: [230,242,238,245,240,248,244,250,247], conversations: [380,395,410,405,415,408,418,412,420],   avgTurns: [13.6,14.0,13.8,14.2,14.0,14.4,14.1,14.3,14.2], avgCost: [0.088,0.085,0.087,0.084,0.086,0.083,0.085,0.082,0.082] },
+const SPARK: Record<Range, { conversations: number[]; avgTurns: number[]; avgCost: number[] }> = {
+  all:    { conversations: [280,340,310,380,350,410,385,415,420], avgTurns: [11.2,12.8,11.6,13.4,12.9,14.1,13.5,14.0,14.2], avgCost: [0.101,0.095,0.098,0.091,0.093,0.087,0.089,0.083,0.082] },
+  '30d':  { conversations: [348,368,382,371,395,383,408,398,420], avgTurns: [13.1,13.6,13.4,13.8,13.6,14.1,13.9,14.1,14.2], avgCost: [0.091,0.088,0.090,0.086,0.088,0.084,0.086,0.083,0.082] },
+  '7d':   { conversations: [10,12,9,11,13,10,12,11,12],            avgTurns: [13.4,14.8,13.1,14.2,14.9,13.6,14.5,13.9,14.2], avgCost: [0.087,0.082,0.090,0.083,0.085,0.080,0.084,0.079,0.082] },
+  '24h':  { conversations: [11,13,10,12,14,11,13,12,12],           avgTurns: [14.0,14.5,13.8,14.3,14.7,14.1,14.4,14.0,14.2], avgCost: [0.083,0.081,0.084,0.082,0.080,0.083,0.081,0.082,0.082] },
+  custom: { conversations: [380,395,410,405,415,408,418,412,420],   avgTurns: [13.6,14.0,13.8,14.2,14.0,14.4,14.1,14.3,14.2], avgCost: [0.088,0.085,0.087,0.084,0.086,0.083,0.085,0.082,0.082] },
 };
 
 function daysInRange(r: CustomRange): number {
@@ -167,14 +169,7 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
   const conversationsValue = Math.round(100 * effectiveScale(range, customRange)).toLocaleString('en-US');
   const spark = SPARK[range];
   return (
-    <KpiRailShell columns={4}>
-      <CompactKpi
-        flat
-        title="Active Now"
-        value="247"
-        delta="+12"
-        spark={<CompactSpark colorVar="var(--color-neutral-500)" data={spark.activeNow} />}
-      />
+    <KpiRailShell columns={3}>
       <CompactKpi
         flat
         title="Conversations"
@@ -535,6 +530,7 @@ function ConversationDetailDialog({
 }
 
 function ConversationDetailBody({ row }: { row: ConversationRow }) {
+  const navigate = useNavigate();
   // Cross-link selection state — clicking a message bubble or trace step
   // sets the active requestId; both panels paint the matching item with
   // the selection treatment (blue ring on the bubble, blue left-bar +
@@ -612,13 +608,32 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Key <span className="text-neutral-800">{row.initiator}</span>{' '}
           · started <Timestamp date={row.updated} className="text-neutral-800" />
         </span>
-        <CopyButton
-          mode="label"
-          size="sm"
-          text="Copy ID"
-          value={row.conversationId}
-          label="conversation ID"
-        />
+        <div className="flex items-center gap-2">
+          <CopyButton
+            mode="label"
+            size="sm"
+            text="Copy ID"
+            value={row.conversationId}
+            label="conversation ID"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              const linkedRequest = REQUEST_ROWS_RECENT.find(
+                (r) => r.conversation === row.conversationId && !!r.requestId,
+              );
+              if (linkedRequest?.requestId) {
+                navigate(`/requests?open=${linkedRequest.requestId}`);
+              } else {
+                navigate('/requests');
+              }
+            }}
+          >
+            View Request
+            <ExternalLink data-icon="inline-end" aria-hidden />
+          </Button>
+        </div>
       </DialogScrollFooter>
     </>
   );

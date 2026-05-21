@@ -5,6 +5,7 @@ import {
   Braces,
   ChevronDown,
   Download,
+  ExternalLink,
   Info,
   Sparkles,
   TriangleAlert,
@@ -17,6 +18,7 @@ import {
   Dialog,
   DialogScrollBody,
   DialogScrollContent,
+  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
@@ -1434,11 +1436,11 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
 
       {/* Scrollable tabbed body. `pt-2` tightens the gap below the
           KPI rail above (matches AuditRecordDialog). */}
-      <DialogScrollBody className="pt-2">
+      <DialogScrollBody className="pt-4 pb-4">
         {/* Tabs default to Messages so the prompt/response — the load-bearing
             content of any request inspection — is visible on first open. */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList variant="line" className="mb-4 px-0">
+          <TabsList variant="line" className="mb-2 px-0">
             <TabsTrigger value="messages" className="pl-0">Message</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="audit">Security</TabsTrigger>
@@ -1518,6 +1520,17 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           </TabsContent>
         </Tabs>
       </DialogScrollBody>
+
+      <DialogScrollFooter>
+        <Button
+          type="button"
+          size="sm"
+          onClick={openConversation}
+        >
+          View Conversation
+          <ExternalLink data-icon="inline-end" aria-hidden />
+        </Button>
+      </DialogScrollFooter>
     </>
   );
 }
