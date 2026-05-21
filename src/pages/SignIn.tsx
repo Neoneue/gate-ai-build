@@ -33,7 +33,7 @@ export function SignIn() {
   }
 
   return (
-    <Card className="w-100 rounded-xl shadow-(--shadow-modal) data-[density=default]:py-6">
+    <Card className="w-100 rounded-lg shadow-(--shadow-modal) data-[density=default]:py-6">
         <CardHeader className="gap-y-2 px-6">
           <CardTitle className="text-xl">Sign in</CardTitle>
           <CardDescription>
@@ -57,10 +57,7 @@ export function SignIn() {
               </Field>
 
               <Field>
-                <div className="flex items-center justify-between">
-                  <FieldLabel htmlFor="password" className="text-neutral-600">Password</FieldLabel>
-                  <TextLink className="text-xs">Forgot password?</TextLink>
-                </div>
+                <FieldLabel htmlFor="password" className="text-neutral-600">Password</FieldLabel>
                 <InputGroup>
                   <InputGroupInput
                     id="password"
