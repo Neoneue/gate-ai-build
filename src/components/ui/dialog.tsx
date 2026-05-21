@@ -44,15 +44,38 @@ function DialogOverlay({
 
 function DialogContent({
   className,
+  overlayClassName,
+  nestedBackdrop = false,
   children,
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** Optional override for the backdrop (e.g. darker scrim on nested dialogs). */
+  overlayClassName?: string
+  /** Render a manual (non-deduped) backdrop. Base UI's Dialog.Backdrop
+   *  dedups when dialogs nest — only the outermost backdrop reaches the
+   *  DOM, leaving inner dialogs without a scrim over the parent surface.
+   *  Set this on the *inner* dialog when nesting. */
+  nestedBackdrop?: boolean
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      {nestedBackdrop ? (
+        // Manual scrim — sits in the child's portal AFTER the parent's
+        // popup in DOM order, same z-50, so it paints above the parent
+        // and dims it. No dedup.
+        <div
+          aria-hidden
+          data-open=""
+          className={cn(
+            "fixed inset-0 z-50 bg-neutral-900/40 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 motion-reduce:animate-none",
+            overlayClassName
+          )}
+        />
+      ) : (
+        <DialogOverlay className={overlayClassName} />
+      )}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
