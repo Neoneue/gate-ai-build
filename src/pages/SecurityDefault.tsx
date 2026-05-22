@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowRight, ShieldAlert, EyeOff, KeyRound, Gauge, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +9,44 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
 import { formatTimestamp } from '@/lib/formatters';
 
+const ROW_HEIGHT = 48;
+const TICK_MS = 3000;
+const SLIDE_MS = 900;
+const VISIBLE_ROWS = 6;
+
 function SecurityEventsTable() {
   const navigate = useNavigate();
-  const rows: EventRow[] = EVENT_ROWS.slice(0, 6);
+  // data[0] is the incoming row, mounted hidden above the header.
+  // data[1..VISIBLE_ROWS] are the 6 visible rows.
+  const cursorRef = useRef(VISIBLE_ROWS + 1);
+  const [data, setData] = useState<EventRow[]>(() => EVENT_ROWS.slice(0, VISIBLE_ROWS + 1));
+  const [playing, setPlaying] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      const id = setInterval(() => {
+        const next = EVENT_ROWS[cursorRef.current % EVENT_ROWS.length];
+        cursorRef.current += 1;
+        setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
+      }, TICK_MS);
+      return () => clearInterval(id);
+    }
+    const id = setInterval(() => setPlaying(true), TICK_MS);
+    return () => clearInterval(id);
+  }, [reducedMotion]);
+
+  const handleTransitionEnd = () => {
+    if (!playing) return;
+    const next = EVENT_ROWS[cursorRef.current % EVENT_ROWS.length];
+    cursorRef.current += 1;
+    setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
+    setPlaying(false);
+  };
 
   return (
     <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
@@ -23,23 +59,32 @@ function SecurityEventsTable() {
           View all →
         </Link>
       </div>
-      <table className="w-full text-sm" aria-label="Latest security events">
-        <thead>
-          <tr className="border-b border-border bg-neutral-50">
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Time</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Type</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Action</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Key</th>
+      <div className="overflow-hidden">
+        <table className="w-full text-sm border-separate" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
+        <thead className="relative z-10">
+          <tr>
+            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500 bg-neutral-50 border-b border-border">Time</th>
+            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500 bg-neutral-50 border-b border-border">Type</th>
+            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500 bg-neutral-50 border-b border-border">Action</th>
+            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500 bg-neutral-50 border-b border-border">Key</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((row, i) => {
+        <tbody
+          className="[&>tr>td]:border-t [&>tr>td]:border-border"
+          style={{
+            transform: playing ? 'translateY(-1px)' : `translateY(-${ROW_HEIGHT + 1}px)`,
+            transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ease-out` : 'none',
+          }}
+          onTransitionEnd={handleTransitionEnd}
+          aria-live="polite"
+        >
+          {data.map((row, idx) => {
             const badge = ACTION_BADGE[row.action];
             const typeMeta = TYPE_META[row.type];
             const TypeIcon = typeMeta.Icon;
             return (
               <tr
-                key={row.requestId ?? i}
+                key={`row-${idx}`}
                 tabIndex={0}
                 aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
                 className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
@@ -62,6 +107,7 @@ function SecurityEventsTable() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
