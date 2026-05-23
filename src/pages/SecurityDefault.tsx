@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Sparkles, ShieldAlert, EyeOff, KeyRound, Gauge, type LucideIcon } from 'lucide-react';
+import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,8 +12,9 @@ import { formatTimestamp } from '@/lib/formatters';
 const ROW_HEIGHT = 48;
 const TICK_MS = 3000;
 const SLIDE_MS = 600;
-const FADE_DELAY = 200;
+const FADE_DELAY = 0;
 const FADE_DURATION = 360;
+const SLIDE_DELAY = 100;
 const VISIBLE_ROWS = 6;
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
@@ -31,11 +32,29 @@ const EXTRA_FEED: EventRow[] = [
   { time: '2026-05-12 09:20:01', relative: '30m ago', type: 'credential', key: 'prod-web (sk-gw-438)',      action: 'flagged',  requestId: 'req_aurora_4166',   conversationId: 'cnv_aurora_42',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '602',   outTokens: '288',   latency: '3.90s',  turn: 1,  totalTurns: 3  },
 ];
 
-// 24-event feed in chronological ASC order: the 8 extras above, then the
-// last 16 EVENT_ROWS (reversed to be chronological). The rotation walks the
-// full array before looping, so each new top row is strictly later in time
-// than the previous one.
-const SECURITY_FEED: EventRow[] = [...EXTRA_FEED, ...[...EVENT_ROWS].slice(-16).reverse()];
+// 8 more mock events with times AFTER EVENT_ROWS' newest (09:48:14),
+// chronological ASC, so the feed extends past the live Security data.
+// Times march from 09:49:* up to 09:56:*.
+const POST_EXTRA_FEED: EventRow[] = [
+  { time: '2026-05-12 09:49:33', relative: '1m ago',  type: 'pii',        key: 'hermes-agent (sk-gw-c60)',  action: 'flagged',  requestId: 'req_skylark_4233',  conversationId: 'cnv_skylark_18',   keyTier: 'normal',   status: 'success', code: '200', inTokens: '702',   outTokens: '316',   latency: '3.40s',  turn: 5,  totalTurns: 6  },
+  { time: '2026-05-12 09:50:48', relative: '1m ago',  type: 'phi',        key: 'openclaw (sk-gw-1ab)',      action: 'redacted', requestId: 'req_meridian_4235', conversationId: 'cnv_meridian_07',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '514',   outTokens: '224',   latency: '4.90s',  turn: 3,  totalTurns: 3  },
+  { time: '2026-05-12 09:51:52', relative: 'just now',type: 'injection',  key: 'prod-web (sk-gw-438)',      action: 'blocked',  requestId: 'req_aurora_4237',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '604',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
+  { time: '2026-05-12 09:52:41', relative: 'just now',type: 'credential', key: 'nova-chat (sk-gw-e15)',     action: 'flagged',  requestId: 'req_vela_4239',     conversationId: 'cnv_vela_21',      keyTier: 'elevated', status: 'success', code: '200', inTokens: '3,914', outTokens: '1,728', latency: '4.20s',  turn: 10, totalTurns: 12 },
+  { time: '2026-05-12 09:53:30', relative: 'just now',type: 'pii',        key: 'development (sk-gw-7d2)',   action: 'redacted', requestId: 'req_lyra_4241',     conversationId: 'cnv_lyra_92',      keyTier: 'normal',   status: 'success', code: '200', inTokens: '418',   outTokens: '198',   latency: '5.10s',  turn: 9,  totalTurns: 14 },
+  { time: '2026-05-12 09:54:18', relative: 'just now',type: 'phi',        key: 'prod-agent (sk-gw-930)',    action: 'flagged',  requestId: 'req_orion_4243',    conversationId: 'cnv_orion_70',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '1,422', outTokens: '506',   latency: '7.80s',  turn: 13, totalTurns: 18 },
+  { time: '2026-05-12 09:55:07', relative: 'just now',type: 'injection',  key: 'test-key (sk-gw-9f4)',      action: 'flagged',  requestId: 'req_polaris_4245',  conversationId: 'cnv_polaris_55',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '488',   outTokens: '226',   latency: '5.60s',  turn: 4,  totalTurns: 4  },
+  { time: '2026-05-12 09:56:02', relative: 'just now',type: 'credential', key: 'prod-web (sk-gw-438)',      action: 'blocked',  requestId: 'req_aurora_4248',   conversationId: 'cnv_aurora_42',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '596',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
+];
+
+// 32-event feed in chronological ASC order: 8 pre-extras, all 16 mid events
+// from EVENT_ROWS (slice reversed to chronological), then 8 post-extras. The
+// rotation walks the full array before looping, so each new top row is
+// strictly later in time than the previous one until a single wrap.
+const SECURITY_FEED: EventRow[] = [
+  ...EXTRA_FEED,
+  ...[...EVENT_ROWS].slice(-16).reverse(),
+  ...POST_EXTRA_FEED,
+];
 
 function SecurityEventsTable() {
   // data[0] is the incoming row, mounted hidden above the header.
@@ -84,12 +103,18 @@ function SecurityEventsTable() {
   };
 
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-[0_4px_8px_-1px_rgb(0_0_0_/_0.056),0_2px_6px_-2px_rgb(0_0_0_/_0.056)] overflow-hidden">
+    <div className="flex flex-col rounded-md border border-border bg-card shadow-card-soft overflow-hidden">
       <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
         <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
       </div>
       <div className="overflow-hidden">
-        <table className="w-full text-sm border-separate" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
+        <table className="w-full text-sm border-separate table-fixed" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
+        <colgroup>
+          <col className="w-[30%]" />
+          <col className="w-[22%]" />
+          <col className="w-[20%]" />
+          <col className="w-[28%]" />
+        </colgroup>
         <thead className="relative z-10">
           <tr>
             <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500 bg-neutral-50 border-b border-border">Time</th>
@@ -102,7 +127,7 @@ function SecurityEventsTable() {
           className="[&>tr>td]:border-t [&>tr>td]:border-border"
           style={{
             transform: playing ? 'translateY(-1px)' : `translateY(-${ROW_HEIGHT + 1}px)`,
-            transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ${EASE_OUT}` : 'none',
+            transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ${EASE_OUT} ${SLIDE_DELAY}ms` : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
           aria-hidden
@@ -118,10 +143,13 @@ function SecurityEventsTable() {
                 className="h-12"
                 style={isLast && !reducedMotion ? {
                   opacity: playing ? 0 : 1,
-                  transition: playing ? `opacity ${FADE_DURATION}ms ${EASE_OUT} ${FADE_DELAY}ms` : 'none',
+                  filter: playing ? 'blur(3px)' : 'blur(0)',
+                  transition: playing
+                    ? `opacity ${FADE_DURATION}ms ${EASE_OUT} ${FADE_DELAY}ms, filter ${FADE_DURATION}ms ${EASE_OUT} ${FADE_DELAY}ms`
+                    : 'none',
                 } : undefined}
               >
-                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono tabular-nums">{formatTimestamp(parseEventTime(row.time))}</td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <span className="inline-flex items-center gap-2">
                     <TypeIcon className="size-4 shrink-0" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />
@@ -144,8 +172,29 @@ function SecurityEventsTable() {
 
 function HeroCard() {
   const navigate = useNavigate();
+  // First-mount cascade. `cardMounted` drives the parent card fade-up; once
+  // that's underway, `itemsMounted` releases the per-item stagger so the
+  // list visibly follows the card in.
+  const [cardMounted, setCardMounted] = useState(false);
+  const [itemsMounted, setItemsMounted] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setCardMounted(true));
+    const timeout = setTimeout(() => setItemsMounted(true), 200);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timeout);
+    };
+  }, []);
 
   return (
+    <div
+      className="motion-reduce:transition-none"
+      style={{
+        opacity: cardMounted ? 1 : 0,
+        transform: cardMounted ? 'translateY(0)' : 'translateY(8px)',
+        transition: `opacity 480ms ${EASE_OUT}, transform 480ms ${EASE_OUT}`,
+      }}
+    >
     <Card density="flush">
       <div className="flex">
         {/* Left panel */}
@@ -159,7 +208,7 @@ function HeroCard() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
+              <h2 className="text-2xl font-medium tracking-tight text-balance text-neutral-900 m-0">
                 See <span className="text-blue-600">every</span> threat. Inspect <span className="text-blue-600">every</span> detection.
               </h2>
             </div>
@@ -173,9 +222,17 @@ function HeroCard() {
                 { Icon: ShieldAlert, title: 'Real-time prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
                 { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Inline scrub with an evidence record per match' },
                 { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
-                { Icon: Gauge,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
-              ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }) => (
-                <li key={title} className="flex items-center gap-4">
+                { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
+              ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }, idx) => (
+                <li
+                  key={title}
+                  className="flex items-center gap-4 motion-reduce:transition-none"
+                  style={{
+                    opacity: itemsMounted ? 1 : 0,
+                    transform: itemsMounted ? 'translateY(0)' : 'translateY(8px)',
+                    transition: `opacity 320ms ${EASE_OUT} ${idx * 80}ms, transform 320ms ${EASE_OUT} ${idx * 80}ms`,
+                  }}
+                >
                   <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted bg-linear-to-b from-white/10 to-transparent flex items-center justify-center">
                     <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
                   </span>
@@ -205,6 +262,7 @@ function HeroCard() {
         </div>
       </div>
     </Card>
+    </div>
   );
 }
 
