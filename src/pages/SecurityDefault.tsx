@@ -11,8 +11,11 @@ import { formatTimestamp } from '@/lib/formatters';
 
 const ROW_HEIGHT = 48;
 const TICK_MS = 3000;
-const SLIDE_MS = 900;
+const SLIDE_MS = 600;
+const FADE_DELAY = 200;
+const FADE_DURATION = 360;
 const VISIBLE_ROWS = 6;
+const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
 // 8 additional mock events with times earlier than EVENT_ROWS' oldest
 // (09:21:09), chronological ASC, so the feed extends to 24 events before
@@ -50,16 +53,25 @@ function SecurityEventsTable() {
   }, []);
 
   useEffect(() => {
-    if (reducedMotion) {
-      const id = setInterval(() => {
-        const next = SECURITY_FEED[cursorRef.current % SECURITY_FEED.length];
-        cursorRef.current += 1;
-        setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
-      }, TICK_MS);
-      return () => clearInterval(id);
-    }
-    const id = setInterval(() => setPlaying(true), TICK_MS);
-    return () => clearInterval(id);
+    // Pause the ticker when the tab/window isn't visible — decorative motion
+    // shouldn't burn paint/battery off-screen.
+    let id: ReturnType<typeof setInterval> | null = null;
+    const tick = reducedMotion
+      ? () => {
+          const next = SECURITY_FEED[cursorRef.current % SECURITY_FEED.length];
+          cursorRef.current += 1;
+          setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
+        }
+      : () => setPlaying(true);
+    const start = () => { if (id == null) id = setInterval(tick, TICK_MS); };
+    const stop = () => { if (id != null) { clearInterval(id); id = null; } };
+    const onVisibility = () => { document.visibilityState === 'visible' ? start() : stop(); };
+    if (document.visibilityState === 'visible') start();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [reducedMotion]);
 
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLTableSectionElement>) => {
@@ -90,10 +102,10 @@ function SecurityEventsTable() {
           className="[&>tr>td]:border-t [&>tr>td]:border-border"
           style={{
             transform: playing ? 'translateY(-1px)' : `translateY(-${ROW_HEIGHT + 1}px)`,
-            transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ease-out` : 'none',
+            transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ${EASE_OUT}` : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
-          aria-live="polite"
+          aria-hidden
         >
           {data.map((row, idx) => {
             const badge = ACTION_BADGE[row.action];
@@ -103,10 +115,10 @@ function SecurityEventsTable() {
             return (
               <tr
                 key={`row-${idx}`}
-                className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 transition-colors duration-100 motion-reduce:transition-none"
+                className="h-12"
                 style={isLast && !reducedMotion ? {
                   opacity: playing ? 0 : 1,
-                  transition: playing ? `opacity ${SLIDE_MS - 400}ms ease-out 300ms` : 'none',
+                  transition: playing ? `opacity ${FADE_DURATION}ms ${EASE_OUT} ${FADE_DELAY}ms` : 'none',
                 } : undefined}
               >
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
@@ -180,7 +192,7 @@ function HeroCard() {
               <Button onClick={() => navigate('/billing')}>
                 <Sparkles className="size-4" /> Upgrade to Pro
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => navigate('/billing')}>
                 Compare plans
               </Button>
             </div>
