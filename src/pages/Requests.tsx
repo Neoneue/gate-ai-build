@@ -779,7 +779,7 @@ export type RequestRow = {
 // the billing relationship — cost is whatever the provider charges
 // them directly, not something we can show accurately. Set mirrors the
 // BYOK rows in Activity.tsx API_KEY_ROWS.
-const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'shadowfax-rag']);
+const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'test-key']);
 const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 
 // Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities the
@@ -789,11 +789,11 @@ const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 const KEY_SUFFIX: Record<string, string> = {
   'prod-web': 'sk-gw-438',
   'prod-agent': 'sk-gw-930',
-  dev: 'sk-gw-7d2',
+  development: 'sk-gw-7d2',
   openclaw: 'sk-gw-1ab',
   'hermes-agent': 'sk-gw-c60',
   'nova-chat': 'sk-gw-e15',
-  'shadowfax-rag': 'sk-gw-9f4',
+  'test-key': 'sk-gw-9f4',
 };
 
 // Recent-window anchor rows: the six most-recent requests (trailing hour).
@@ -816,18 +816,18 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
 // were visible in a narrower one.
 const REQUEST_ROWS_24H: RequestRow[] = [
   ...REQUEST_ROWS_RECENT,
-  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'shadowfax-rag', inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
+  { day: 'May 12', time: '13:18:42', relative: '1h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'test-key', inTokens: '3,402', outTokens: '1,718', latency: '11.40s', slow: true, cost: '$0.0346' },
   { day: 'May 12', time: '11:42:08', relative: '3h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_vela_21',    keyId: 'prod-agent', inTokens: '8,210', outTokens: '4,512', latency: '14.80s', slow: true, cost: '$0.1842' },
   { day: 'May 12', time: '09:55:31', relative: '5h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,604', outTokens: '722',   latency: '13.60s', slow: true, cost: '$0.0124' },
-  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',   guardrail: 'allow',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '6,108', outTokens: '0',     latency: '1.40s',              cost: '$0.0428'       },
+  { day: 'May 12', time: '08:11:04', relative: '6h ago',    status: 'error',   guardrail: 'allow',  code: '503', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'development',        inTokens: '6,108', outTokens: '0',     latency: '1.40s',              cost: '$0.0428'       },
   { day: 'May 12', time: '06:38:19', relative: '8h ago',    status: 'success', guardrail: 'flagged',   code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '942',   outTokens: '481',   latency: '6.40s',              cost: '$0.0058', guardrailReason: 'credential' },
   { day: 'May 12', time: '04:20:48', relative: '10h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '5,810', outTokens: '2,944', latency: '14.20s', slow: true, cost: '$0.0172' },
-  { day: 'May 12', time: '03:42:11', relative: '11h ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '3,840', outTokens: '0',     latency: '2.10s',              cost: '$0.0269',       guardrailReason: 'injection' },
+  { day: 'May 12', time: '03:42:11', relative: '11h ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'development',        inTokens: '3,840', outTokens: '0',     latency: '2.10s',              cost: '$0.0269',       guardrailReason: 'injection' },
   { day: 'May 12', time: '02:04:11', relative: '12h ago',   status: 'success', guardrail: 'redacted', code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,012', latency: '4.50s',              cost: '$0.0241', guardrailReason: 'pii' },
   { day: 'May 11', time: '23:52:09', relative: '14h ago',   status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '3,201', outTokens: '0',     latency: '0.80s',              cost: '$0.0224'       },
   { day: 'May 11', time: '21:14:46', relative: '17h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',    keyId: 'hermes-agent',  inTokens: '4,208', outTokens: '2,104', latency: '12.80s', slow: true, cost: '$0.0512' },
   { day: 'May 11', time: '18:43:22', relative: '20h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '1,318', outTokens: '602',   latency: '3.40s',              cost: '$0.0094' },
-  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'dev',        inTokens: '7,440', outTokens: '3,820', latency: '13.20s', slow: true, cost: '$0.0098' },
+  { day: 'May 11', time: '16:08:55', relative: '22h ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_orion_70',   keyId: 'development',        inTokens: '7,440', outTokens: '3,820', latency: '13.20s', slow: true, cost: '$0.0098' },
   // Rows tied to Security event ids — these are the canonical req_* targets
   // the Security event-detail modal deep-links into via ?open=req_*. Keep
   // these in lock-step with EVENT_ROWS in Security.tsx; the timestamps and
@@ -835,11 +835,11 @@ const REQUEST_ROWS_24H: RequestRow[] = [
   // two pages tell the same story when a user pivots between them.
   { day: 'May 12', time: '09:48:14', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',   keyId: 'prod-web',      inTokens: '612',   outTokens: '0',   latency: '2.10s', cost: '$0.0043', guardrailReason: 'injection',  requestId: 'req_aurora_4200'   },
   { day: 'May 12', time: '09:46:23', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',    keyId: 'prod-agent',    inTokens: '1,408', outTokens: '0',   latency: '2.10s', cost: '$0.0099', guardrailReason: 'credential', requestId: 'req_orion_4203'    },
-  { day: 'May 12', time: '09:43:10', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',     keyId: 'dev',           inTokens: '412',   outTokens: '188', latency: '3.20s', cost: '$0.0036', guardrailReason: 'injection',  requestId: 'req_lyra_4207'     },
+  { day: 'May 12', time: '09:43:10', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'anthropic', model: 'claude-haiku-4.5',  conversation: 'cnv_lyra_92',     keyId: 'development',           inTokens: '412',   outTokens: '188', latency: '3.20s', cost: '$0.0036', guardrailReason: 'injection',  requestId: 'req_lyra_4207'     },
   { day: 'May 12', time: '09:42:26', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07', keyId: 'openclaw',      inTokens: '548',   outTokens: '0',   latency: '2.10s', cost: '$0.0038', guardrailReason: 'injection',  requestId: 'req_meridian_4208' },
   { day: 'May 12', time: '09:41:08', relative: '5h ago', status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_skylark_18',  keyId: 'hermes-agent',  inTokens: '742',   outTokens: '318', latency: '3.80s', cost: '$0.0078', guardrailReason: 'pii',        requestId: 'req_skylark_4209'  },
   { day: 'May 12', time: '09:40:44', relative: '5h ago', status: 'error',   guardrail: 'block',    code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_vela_21',     keyId: 'nova-chat',     inTokens: '3,902', outTokens: '0',   latency: '2.10s', cost: '$0.0273', guardrailReason: 'injection',  requestId: 'req_vela_4209'     },
-  { day: 'May 12', time: '09:39:58', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_polaris_55',  keyId: 'shadowfax-rag', inTokens: '484',   outTokens: '220', latency: '5.20s', cost: '$0.0048', guardrailReason: 'pii',        requestId: 'req_polaris_4210'  },
+  { day: 'May 12', time: '09:39:58', relative: '5h ago', status: 'success', guardrail: 'flagged',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_polaris_55',  keyId: 'test-key', inTokens: '484',   outTokens: '220', latency: '5.20s', cost: '$0.0048', guardrailReason: 'pii',        requestId: 'req_polaris_4210'  },
 ];
 
 // 7D view — cumulative superset: contains the 24H rows plus older entries
@@ -850,7 +850,7 @@ const REQUEST_ROWS_7D: RequestRow[] = [
   { day: 'May 12', time: '08:14:02', relative: '6h ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_vela_21',    keyId: 'nova-chat',     inTokens: '4,108', outTokens: '2,094', latency: '12.80s', slow: true, cost: '$0.0418' },
   { day: 'May 11', time: '19:42:38', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'prod-agent', inTokens: '12,408',outTokens: '6,820', latency: '12.30s', slow: true, cost: '$0.2104' },
   { day: 'May 10', time: '14:08:21', relative: '2d ago',    status: 'success', guardrail: 'flagged',   code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,012', outTokens: '988',   latency: '5.20s',              cost: '$0.0148', guardrailReason: 'credential' },
-  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '8,420', outTokens: '0',     latency: '4.10s',              cost: '$0.0589'       },
+  { day: 'May 10', time: '03:51:09', relative: '2d ago',    status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'development',        inTokens: '8,420', outTokens: '0',     latency: '4.10s',              cost: '$0.0589'       },
   { day: 'May 9',  time: '21:24:48', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,628', outTokens: '742',   latency: '13.40s', slow: true, cost: '$0.0086' },
   { day: 'May 9',  time: '16:08:42', relative: '3d ago',    status: 'error',   guardrail: 'block',  code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '2,418', outTokens: '0',     latency: '2.10s',              cost: '$0.0169',       guardrailReason: 'pii' },
   { day: 'May 9',  time: '09:18:32', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '8,442', outTokens: '4,210', latency: '14.60s', slow: true, cost: '$0.0228' },
@@ -858,7 +858,7 @@ const REQUEST_ROWS_7D: RequestRow[] = [
   { day: 'May 8',  time: '04:08:11', relative: '4d ago',    status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'prod-web',   inTokens: '5,418', outTokens: '0',     latency: '0.60s',              cost: '$0.0379'       },
   { day: 'May 7',  time: '08:42:18', relative: '5d ago',    status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_aurora_42',  keyId: 'prod-web',   inTokens: '5,108', outTokens: '0',     latency: '2.10s',              cost: '$0.0358',       guardrailReason: 'credential' },
   { day: 'May 7',  time: '17:31:22', relative: '5d ago',    status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,448', outTokens: '702',   latency: '5.40s',              cost: '$0.0118', guardrailReason: 'pii' },
-  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,210', outTokens: '3,108', latency: '14.80s', slow: true, cost: '$0.0084' },
+  { day: 'May 6',  time: '23:14:08', relative: '6d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'development',        inTokens: '6,210', outTokens: '3,108', latency: '14.80s', slow: true, cost: '$0.0084' },
   { day: 'May 6',  time: '09:14:42', relative: '6d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,514', outTokens: '1,248', latency: '12.40s', slow: true, cost: '$0.0298' },
 ];
 
@@ -867,10 +867,10 @@ const REQUEST_ROWS_7D: RequestRow[] = [
 // never removes.
 const REQUEST_ROWS_30D: RequestRow[] = [
   ...REQUEST_ROWS_7D,
-  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'shadowfax-rag', inTokens: '3,608', outTokens: '1,812', latency: '12.20s', slow: true, cost: '$0.0368' },
+  { day: 'May 11', time: '18:42:08', relative: 'yesterday', status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_lyra_92',    keyId: 'test-key', inTokens: '3,608', outTokens: '1,812', latency: '12.20s', slow: true, cost: '$0.0368' },
   { day: 'May 9',  time: '12:14:42', relative: '3d ago',    status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_orion_70',   keyId: 'hermes-agent',  inTokens: '14,208',outTokens: '7,420', latency: '22.40s', slow: true, cost: '$0.2418' },
   { day: 'May 6',  time: '09:18:31', relative: '6d ago',    status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '2,108', outTokens: '1,042', latency: '5.40s',              cost: '$0.0158', guardrailReason: 'pii' },
-  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'dev',        inTokens: '7,302', outTokens: '0',     latency: '3.90s',              cost: '$0.0511'       },
+  { day: 'May 2',  time: '21:08:14', relative: '10d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_meridian_07',keyId: 'development',        inTokens: '7,302', outTokens: '0',     latency: '3.90s',              cost: '$0.0511'       },
   { day: 'Apr 30', time: '11:32:48', relative: '12d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,924', outTokens: '0',     latency: '2.10s',              cost: '$0.0135',       guardrailReason: 'injection' },
   { day: 'Apr 28', time: '15:42:51', relative: '14d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '1,808', outTokens: '892',   latency: '13.40s', slow: true, cost: '$0.0098' },
   { day: 'Apr 25', time: '08:14:22', relative: '17d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '9,442', outTokens: '4,820', latency: '14.80s', slow: true, cost: '$0.0264' },
@@ -878,7 +878,7 @@ const REQUEST_ROWS_30D: RequestRow[] = [
   { day: 'Apr 21', time: '09:14:32', relative: '21d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_lyra_92',    keyId: 'prod-web',   inTokens: '2,608', outTokens: '0',     latency: '2.10s',              cost: '$0.0183',       guardrailReason: 'pii' },
   { day: 'Apr 20', time: '03:52:41', relative: '22d ago',   status: 'error',   guardrail: 'allow',  code: '429', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_meridian_07',keyId: 'nova-chat',     inTokens: '4,108', outTokens: '0',     latency: '0.90s',              cost: '$0.0288'       },
   { day: 'Apr 17', time: '17:31:14', relative: '25d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '1,548', outTokens: '742',   latency: '13.20s', slow: true, cost: '$0.0128' },
-  { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '6,810', outTokens: '3,408', latency: '11.80s', slow: true, cost: '$0.0094' },
+  { day: 'Apr 15', time: '11:14:08', relative: '27d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'development',        inTokens: '6,810', outTokens: '3,408', latency: '11.80s', slow: true, cost: '$0.0094' },
   { day: 'Apr 13', time: '22:48:42', relative: '29d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'anthropic', model: 'claude-sonnet-4.8', conversation: 'cnv_polaris_55', keyId: 'prod-agent', inTokens: '2,814', outTokens: '1,408', latency: '14.40s', slow: true, cost: '$0.0342' },
 ];
 
@@ -891,7 +891,7 @@ const REQUEST_ROWS_ALL: RequestRow[] = [
   { day: 'Apr 10', time: '14:08:22', relative: '32d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '3,108', outTokens: '1,542', latency: '4.20s',              cost: '$0.0318' },
   { day: 'Apr 6',  time: '09:42:18', relative: '36d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-agent', inTokens: '4,402', outTokens: '0',     latency: '2.10s',              cost: '$0.0308',       guardrailReason: 'credential' },
   { day: 'Apr 2',  time: '18:14:51', relative: '40d ago',   status: 'success', guardrail: 'redacted', code: '200', vendor: 'google',    model: 'gemini-3-pro',      conversation: 'cnv_polaris_55', keyId: 'prod-web',   inTokens: '1,948', outTokens: '942',   latency: '5.60s',              cost: '$0.0148', guardrailReason: 'pii' },
-  { day: 'Mar 28', time: '11:32:09', relative: '45d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'dev',        inTokens: '7,210', outTokens: '3,608', latency: '13.80s', slow: true, cost: '$0.0098' },
+  { day: 'Mar 28', time: '11:32:09', relative: '45d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'meta',      model: 'llama-4.2-405b',    conversation: 'cnv_vela_21',    keyId: 'development',        inTokens: '7,210', outTokens: '3,608', latency: '13.80s', slow: true, cost: '$0.0098' },
   { day: 'Mar 22', time: '15:48:42', relative: '51d ago',   status: 'success', guardrail: 'flagged',   code: '200', vendor: 'mistral',   model: 'mistral-large-3',   conversation: 'cnv_skylark_18', keyId: 'prod-agent', inTokens: '2,012', outTokens: '988',   latency: '6.20s',              cost: '$0.0064', guardrailReason: 'credential' },
   { day: 'Mar 16', time: '08:14:08', relative: '57d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_meridian_07',keyId: 'nova-chat',     inTokens: '5,408', outTokens: '0',     latency: '3.40s',              cost: '$0.0158'       },
 ];
@@ -1088,11 +1088,11 @@ function RequestsTableSection({
               <SelectItem value="all">All keys</SelectItem>
               <SelectItem value="prod-web">prod-web</SelectItem>
               <SelectItem value="prod-agent">prod-agent</SelectItem>
-              <SelectItem value="dev">dev</SelectItem>
+              <SelectItem value="development">development</SelectItem>
               <SelectItem value="openclaw">openclaw</SelectItem>
               <SelectItem value="hermes-agent">hermes-agent</SelectItem>
               <SelectItem value="nova-chat">nova-chat</SelectItem>
-              <SelectItem value="shadowfax-rag">shadowfax-rag</SelectItem>
+              <SelectItem value="test-key">test-key</SelectItem>
             </SelectContent>
           </Select>
 

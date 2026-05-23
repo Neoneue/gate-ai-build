@@ -14,14 +14,27 @@ const TICK_MS = 3000;
 const SLIDE_MS = 900;
 const VISIBLE_ROWS = 6;
 
-// Reversed slice of the Security page's events so the preview walks forward
-// in time (each new top row is later than the one before it). Drops the
-// freshest event so the feed lands on a fresh top row after one cycle
-// instead of repeating immediately.
-const SECURITY_FEED: EventRow[] = [...EVENT_ROWS].slice(-16).reverse();
+// 8 additional mock events with times earlier than EVENT_ROWS' oldest
+// (09:21:09), chronological ASC, so the feed extends to 24 events before
+// looping. Times march from 09:09:* up to 09:20:*.
+const EXTRA_FEED: EventRow[] = [
+  { time: '2026-05-12 09:09:42', relative: '40m ago', type: 'pii',        key: 'test-key (sk-gw-9f4)', action: 'redacted', requestId: 'req_polaris_4140',  conversationId: 'cnv_polaris_55',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '396',   outTokens: '184',   latency: '4.20s',  turn: 1,  totalTurns: 4  },
+  { time: '2026-05-12 09:10:55', relative: '39m ago', type: 'injection',  key: 'nova-chat (sk-gw-e15)',     action: 'flagged',  requestId: 'req_vela_4144',     conversationId: 'cnv_vela_21',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '2,810', outTokens: '1,206', latency: '4.10s',  turn: 4,  totalTurns: 12 },
+  { time: '2026-05-12 09:12:17', relative: '38m ago', type: 'credential', key: 'prod-agent (sk-gw-930)',    action: 'blocked',  requestId: 'req_orion_4148',    conversationId: 'cnv_orion_70',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,322', outTokens: '0',     latency: '2.10s',  turn: 2,  totalTurns: 18 },
+  { time: '2026-05-12 09:14:02', relative: '36m ago', type: 'phi',        key: 'openclaw (sk-gw-1ab)',      action: 'flagged',  requestId: 'req_meridian_4152', conversationId: 'cnv_meridian_07', keyTier: 'elevated', status: 'success', code: '200', inTokens: '510',   outTokens: '236',   latency: '5.80s',  turn: 1,  totalTurns: 3  },
+  { time: '2026-05-12 09:15:38', relative: '35m ago', type: 'pii',        key: 'hermes-agent (sk-gw-c60)',  action: 'redacted', requestId: 'req_skylark_4155',  conversationId: 'cnv_skylark_18',  keyTier: 'normal',   status: 'success', code: '200', inTokens: '710',   outTokens: '302',   latency: '3.60s',  turn: 1,  totalTurns: 6  },
+  { time: '2026-05-12 09:17:11', relative: '33m ago', type: 'injection',  key: 'development (sk-gw-7d2)',           action: 'flagged',  requestId: 'req_lyra_4158',     conversationId: 'cnv_lyra_92',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '402',   outTokens: '180',   latency: '3.40s',  turn: 1,  totalTurns: 14 },
+  { time: '2026-05-12 09:18:46', relative: '32m ago', type: 'phi',        key: 'prod-agent (sk-gw-930)',    action: 'redacted', requestId: 'req_orion_4162',    conversationId: 'cnv_orion_70',    keyTier: 'normal',   status: 'success', code: '200', inTokens: '1,378', outTokens: '498',   latency: '6.10s',  turn: 3,  totalTurns: 18 },
+  { time: '2026-05-12 09:20:01', relative: '30m ago', type: 'credential', key: 'prod-web (sk-gw-438)',      action: 'flagged',  requestId: 'req_aurora_4166',   conversationId: 'cnv_aurora_42',   keyTier: 'elevated', status: 'success', code: '200', inTokens: '602',   outTokens: '288',   latency: '3.90s',  turn: 1,  totalTurns: 3  },
+];
+
+// 24-event feed in chronological ASC order: the 8 extras above, then the
+// last 16 EVENT_ROWS (reversed to be chronological). The rotation walks the
+// full array before looping, so each new top row is strictly later in time
+// than the previous one.
+const SECURITY_FEED: EventRow[] = [...EXTRA_FEED, ...[...EVENT_ROWS].slice(-16).reverse()];
 
 function SecurityEventsTable() {
-  const navigate = useNavigate();
   // data[0] is the incoming row, mounted hidden above the header.
   // data[1..VISIBLE_ROWS] are the 6 visible rows.
   const cursorRef = useRef(VISIBLE_ROWS + 1);
@@ -49,8 +62,9 @@ function SecurityEventsTable() {
     return () => clearInterval(id);
   }, [reducedMotion]);
 
-  const handleTransitionEnd = () => {
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLTableSectionElement>) => {
     if (!playing) return;
+    if (e.target !== e.currentTarget || e.propertyName !== 'transform') return;
     const next = SECURITY_FEED[cursorRef.current % SECURITY_FEED.length];
     cursorRef.current += 1;
     setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
@@ -95,15 +109,11 @@ function SecurityEventsTable() {
             return (
               <tr
                 key={`row-${idx}`}
-                tabIndex={0}
-                aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
-                className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+                className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 transition-colors duration-100 motion-reduce:transition-none"
                 style={isLast && !reducedMotion ? {
                   opacity: playing ? 0 : 1,
                   transition: playing ? `opacity ${SLIDE_MS - 400}ms ease-out 300ms` : 'none',
                 } : undefined}
-                onClick={() => navigate(`/security?open=${row.requestId}`)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
               >
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
                 <td className="whitespace-nowrap px-4 py-3">
