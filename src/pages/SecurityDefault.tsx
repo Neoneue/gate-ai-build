@@ -14,12 +14,21 @@ const TICK_MS = 3000;
 const SLIDE_MS = 900;
 const VISIBLE_ROWS = 6;
 
+// Reversed slice of the Security page's events so the preview walks forward
+// in time (each new top row is later than the one before it). Drops the
+// freshest event so the feed lands on a fresh top row after one cycle
+// instead of repeating immediately.
+const SECURITY_FEED: EventRow[] = [...EVENT_ROWS].slice(-16).reverse();
+
 function SecurityEventsTable() {
   const navigate = useNavigate();
   // data[0] is the incoming row, mounted hidden above the header.
   // data[1..VISIBLE_ROWS] are the 6 visible rows.
   const cursorRef = useRef(VISIBLE_ROWS + 1);
-  const [data, setData] = useState<EventRow[]>(() => EVENT_ROWS.slice(0, VISIBLE_ROWS + 1));
+  // Visible window shows newest at top, oldest at bottom. Take the first 7
+  // chronological events (the oldest of the pool) and reverse so data[0] is
+  // the incoming "next newest" and data[6] is the oldest of the visible six.
+  const [data, setData] = useState<EventRow[]>(() => SECURITY_FEED.slice(0, VISIBLE_ROWS + 1).reverse());
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -30,7 +39,7 @@ function SecurityEventsTable() {
   useEffect(() => {
     if (reducedMotion) {
       const id = setInterval(() => {
-        const next = EVENT_ROWS[cursorRef.current % EVENT_ROWS.length];
+        const next = SECURITY_FEED[cursorRef.current % SECURITY_FEED.length];
         cursorRef.current += 1;
         setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
       }, TICK_MS);
@@ -42,7 +51,7 @@ function SecurityEventsTable() {
 
   const handleTransitionEnd = () => {
     if (!playing) return;
-    const next = EVENT_ROWS[cursorRef.current % EVENT_ROWS.length];
+    const next = SECURITY_FEED[cursorRef.current % SECURITY_FEED.length];
     cursorRef.current += 1;
     setData((d) => [next, ...d.slice(0, VISIBLE_ROWS)]);
     setPlaying(false);
@@ -82,12 +91,17 @@ function SecurityEventsTable() {
             const badge = ACTION_BADGE[row.action];
             const typeMeta = TYPE_META[row.type];
             const TypeIcon = typeMeta.Icon;
+            const isLast = idx === data.length - 1;
             return (
               <tr
                 key={`row-${idx}`}
                 tabIndex={0}
                 aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
                 className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+                style={isLast && !reducedMotion ? {
+                  opacity: playing ? 0 : 1,
+                  transition: playing ? `opacity ${SLIDE_MS - 400}ms ease-out 300ms` : 'none',
+                } : undefined}
                 onClick={() => navigate(`/security?open=${row.requestId}`)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
               >
