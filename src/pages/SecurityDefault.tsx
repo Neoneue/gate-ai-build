@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowRight, ShieldAlert, EyeOff, KeyRound, Gauge, type LucideIcon } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Sparkles, ShieldAlert, EyeOff, KeyRound, Gauge, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -72,15 +72,9 @@ function SecurityEventsTable() {
   };
 
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+    <div className="flex flex-col rounded-md border border-border bg-card shadow-[0_4px_8px_-1px_rgb(0_0_0_/_0.056),0_2px_6px_-2px_rgb(0_0_0_/_0.056)] overflow-hidden">
+      <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
         <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
-        <Link
-          to="/security"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
-        >
-          View all →
-        </Link>
       </div>
       <div className="overflow-hidden">
         <table className="w-full text-sm border-separate" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
@@ -144,33 +138,34 @@ function HeroCard() {
       <div className="flex">
         {/* Left panel */}
         <div className="flex-1 flex flex-col">
-          <div className="p-8 flex flex-col gap-6 flex-1">
+          <div className="p-4 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
               <Badge variant="info">PRO PLAN</Badge>
-              <span className="font-mono text-xs uppercase tracking-wider text-neutral-500">
-                $30 / MO · 14-DAY TRIAL
+              <span className="text-xs text-neutral-500">
+                $30 per month with a 14-day trial
               </span>
             </div>
 
             <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
+              <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
                 See every threat. Inspect every detection.
               </h2>
-              <p className="text-sm text-neutral-600 text-pretty max-w-md m-0">
-                Security Events is a forensics-grade log of every scan Constellation Gate ran on your behalf, with the exact prompt, model, detection rationale, and audit anchor for each row.
-              </p>
             </div>
 
-            <ul className="flex flex-col gap-4 m-0 p-0 list-none">
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-medium text-neutral-900 m-0">
+                What you&rsquo;ll get going Pro:
+              </p>
+              <ul className="flex flex-col gap-4 m-0 p-4 list-none rounded-md border border-border bg-card">
               {([
-                { Icon: ShieldAlert, title: 'Real-time prompt injection scanning', detail: '12 attack patterns · indirect & unicode' },
-                { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'GDPR · HIPAA · SOC2-aligned' },
-                { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'AWS, OpenAI, GitHub & 40+ providers' },
-                { Icon: Gauge,       title: 'Per-key risk scoring',                detail: 'Quarantine compromised keys automatically' },
+                { Icon: ShieldAlert, title: 'Real-time prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
+                { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Inline scrub with an evidence record per match' },
+                { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
+                { Icon: Gauge,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
               ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }) => (
                 <li key={title} className="flex items-center gap-4">
-                  <span aria-hidden className="shrink-0 size-10 rounded-md bg-muted bg-linear-to-b from-white/10 to-transparent flex items-center justify-center">
-                    <Icon className="size-5 text-neutral-700" strokeWidth={1.75} />
+                  <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted bg-linear-to-b from-white/10 to-transparent flex items-center justify-center">
+                    <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
                   </span>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-neutral-900">{title}</span>
@@ -178,11 +173,12 @@ function HeroCard() {
                   </div>
                 </li>
               ))}
-            </ul>
+              </ul>
+            </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-2">
               <Button onClick={() => navigate('/billing')}>
-                Upgrade to Pro <ArrowRight className="size-4" />
+                <Sparkles className="size-4" /> Upgrade to Pro
               </Button>
               <Button variant="outline">
                 Compare plans
@@ -192,7 +188,7 @@ function HeroCard() {
         </div>
 
         {/* Right panel — latest security events preview */}
-        <div className="flex-1 border-l border-border bg-neutral-50 flex flex-col justify-center p-12">
+        <div className="flex-1 border-l border-border bg-neutral-50 flex flex-col justify-center p-8">
           <SecurityEventsTable />
         </div>
       </div>
@@ -217,7 +213,7 @@ export function SecurityDefault() {
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Security events</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Every injection, PII, and credential event your policies caught, anchored to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
+          See every injection, PII, PHI, and credential event your policies caught, with the prompt, model, and per-key risk tier behind each call. Anchored to Constellation's Digital Evidence layer so every detection is auditable, not just logged.
         </p>
       </div>
       <HeroCard />
