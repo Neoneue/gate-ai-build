@@ -138,17 +138,17 @@ function HeroCard() {
       <div className="flex">
         {/* Left panel */}
         <div className="flex-1 flex flex-col">
-          <div className="p-4 flex flex-col gap-4 flex-1">
+          <div className="p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
               <Badge variant="info">PRO PLAN</Badge>
-              <span className="text-xs text-neutral-500">
-                $30 per month with a 14-day trial
+              <span className="text-xs font-medium text-neutral-500">
+                $30 / month after your 14-day trial ends
               </span>
             </div>
 
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
-                See every threat. Inspect every detection.
+                See <span className="text-blue-600">every</span> threat. Inspect <span className="text-blue-600">every</span> detection.
               </h2>
             </div>
 
@@ -168,7 +168,7 @@ function HeroCard() {
                     <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-neutral-900">{title}</span>
+                    <span className="text-sm text-neutral-900">{title}</span>
                     <span className="text-sm text-neutral-500 text-pretty">{detail}</span>
                   </div>
                 </li>
