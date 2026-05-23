@@ -128,6 +128,7 @@ function SecurityEventsTable() {
           style={{
             transform: playing ? 'translateY(-1px)' : `translateY(-${ROW_HEIGHT + 1}px)`,
             transition: playing && !reducedMotion ? `transform ${SLIDE_MS}ms ${EASE_OUT} ${SLIDE_DELAY}ms` : 'none',
+            willChange: reducedMotion ? undefined : 'transform',
           }}
           onTransitionEnd={handleTransitionEnd}
           aria-hidden
@@ -201,7 +202,7 @@ function HeroCard() {
         <div className="flex-1 flex flex-col">
           <div className="p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
-              <Badge variant="info">PRO PLAN</Badge>
+              <Badge variant="neutral" className="border border-border">PRO PLAN</Badge>
               <span className="text-xs font-medium text-neutral-500">
                 $30 / month after your 14-day trial ends
               </span>
@@ -233,7 +234,7 @@ function HeroCard() {
                     transition: `opacity 320ms ${EASE_OUT} ${idx * 80}ms, transform 320ms ${EASE_OUT} ${idx * 80}ms`,
                   }}
                 >
-                  <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted bg-linear-to-b from-white/10 to-transparent flex items-center justify-center">
+                  <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted flex items-center justify-center">
                     <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
                   </span>
                   <div className="flex flex-col">
@@ -283,7 +284,7 @@ export function SecurityDefault() {
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Security events</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          See every injection, PII, PHI, and credential event your policies caught, with the prompt, model, and per-key risk tier behind each call. Anchored to Constellation's Digital Evidence layer so every detection is auditable, not just logged.
+          See every threat event your policies caught, with the prompt, model, and per-key risk tier behind each call. Anchored to Constellation's Digital Evidence layer so every detection is auditable, not just logged.
         </p>
       </div>
       <HeroCard />
