@@ -221,7 +221,7 @@ function HeroCard() {
               <ul className="flex flex-col gap-4 m-0 p-4 list-none rounded-md border border-border bg-card">
               {([
                 { Icon: ShieldAlert, title: 'Real-time prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
-                { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Inline scrub with an evidence record per match' },
+                { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Detect and redact before sensitive data reaches the model' },
                 { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
                 { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
               ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }, idx) => (
