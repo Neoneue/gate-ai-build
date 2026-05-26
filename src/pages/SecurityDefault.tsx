@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -180,30 +182,27 @@ function SecurityEventsTable() {
 
 function HeroCard() {
   const navigate = useNavigate();
-  // First-mount cascade. `cardMounted` drives the parent card fade-up; once
-  // that's underway, `itemsMounted` releases the per-item stagger so the
-  // list visibly follows the card in.
-  const [cardMounted, setCardMounted] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
-  const [itemsMounted, setItemsMounted] = useState(false);
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setCardMounted(true));
-    const timeout = setTimeout(() => setItemsMounted(true), 200);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(timeout);
-    };
-  }, []);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  // First-mount cascade. GSAP timeline runs once: parent card fades up, then
+  // the four feature items cascade with an 80ms stagger. `useGSAP` handles
+  // cleanup on unmount and respects `gsap.matchMedia`-style reduced motion
+  // semantics if the user prefers reduced motion.
+  useGSAP(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.set([heroRef.current, '[data-hero-item]'], { opacity: 1, y: 0 });
+      return;
+    }
+    gsap.set(heroRef.current, { opacity: 0, y: 8 });
+    gsap.set('[data-hero-item]', { opacity: 0, y: 8 });
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.to(heroRef.current, { opacity: 1, y: 0, duration: 0.48 })
+      .to('[data-hero-item]', { opacity: 1, y: 0, duration: 0.32, stagger: 0.08 }, 0.2);
+  }, { scope: heroRef });
 
   return (
-    <div
-      className="motion-reduce:transition-none"
-      style={{
-        opacity: cardMounted ? 1 : 0,
-        transform: cardMounted ? 'translateY(0)' : 'translateY(8px)',
-        transition: `opacity 480ms ${EASE_OUT}, transform 480ms ${EASE_OUT}`,
-      }}
-    >
+    <div ref={heroRef}>
     <Card density="flush">
       <div className="flex">
         {/* Left panel */}
@@ -232,15 +231,11 @@ function HeroCard() {
                 { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Detect and redact before sensitive data reaches the model' },
                 { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
                 { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
-              ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }, idx) => (
+              ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }) => (
                 <li
                   key={title}
-                  className="flex items-center gap-4 motion-reduce:transition-none"
-                  style={{
-                    opacity: itemsMounted ? 1 : 0,
-                    transform: itemsMounted ? 'translateY(0)' : 'translateY(8px)',
-                    transition: `opacity 320ms ${EASE_OUT} ${idx * 80}ms, transform 320ms ${EASE_OUT} ${idx * 80}ms`,
-                  }}
+                  data-hero-item
+                  className="flex items-center gap-4"
                 >
                   <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted flex items-center justify-center">
                     <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
@@ -305,7 +300,7 @@ const PRO_PLAN: PlanCardData = {
   badge: { label: 'PRO PLAN', tone: 'pro' },
   price: '$30 / month after your 14-day trial ends',
   headline: (
-    <>Inspect <span className="text-blue-600">every</span> detection, gate <span className="text-blue-600">every</span> threat.</>
+    <>Inspect and gate <span className="text-blue-600">every</span> threat.</>
   ),
   benefitsLabel: "What you'll get going Pro:",
   features: [
