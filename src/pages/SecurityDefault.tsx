@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -95,11 +94,11 @@ function SecurityEventsTable() {
   // the incoming "next newest" and data[6] is the oldest of the visible six.
   const [data, setData] = useState<EventRow[]>(() => SECURITY_FEED.slice(0, VISIBLE_ROWS + 1).reverse());
   const [playing, setPlaying] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
+  // Lazy init reads matchMedia once on mount — avoids the cascading render
+  // that a useEffect setState would trigger.
+  const [reducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   useEffect(() => {
     // Pause the ticker when the tab/window isn't visible — decorative motion
@@ -114,7 +113,10 @@ function SecurityEventsTable() {
       : () => setPlaying(true);
     const start = () => { if (id == null) id = setInterval(tick, TICK_MS); };
     const stop = () => { if (id != null) { clearInterval(id); id = null; } };
-    const onVisibility = () => { document.visibilityState === 'visible' ? start() : stop(); };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') start();
+      else stop();
+    };
     if (document.visibilityState === 'visible') start();
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -204,33 +206,16 @@ function SecurityEventsTable() {
 function HeroCard() {
   const navigate = useNavigate();
   const [compareOpen, setCompareOpen] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
-
-  // First-mount cascade. GSAP timeline runs once: parent card fades up, then
-  // the four feature items cascade with an 80ms stagger. `useGSAP` handles
-  // cleanup on unmount and respects `gsap.matchMedia`-style reduced motion
-  // semantics if the user prefers reduced motion.
-  useGSAP(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      gsap.set([heroRef.current, '[data-hero-item]'], { opacity: 1, y: 0 });
-      return;
-    }
-    gsap.set(heroRef.current, { opacity: 0, y: 8 });
-    gsap.set('[data-hero-item]', { opacity: 0, y: 8 });
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.to(heroRef.current, { opacity: 1, y: 0, duration: 0.48 })
-      .to('[data-hero-item]', { opacity: 1, y: 0, duration: 0.32, stagger: 0.08 }, 0.2);
-  }, { scope: heroRef });
 
   return (
-    <div ref={heroRef}>
+    <div>
     <Card density="flush">
       <div className="flex">
         {/* Left panel */}
         <div className="flex-1 flex flex-col">
           <div className="p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
-              <Badge variant="neutral" className="border border-border">PRO PLAN</Badge>
+              <Badge variant="info">PRO PLAN</Badge>
               <span className="text-xs font-medium text-neutral-500">
                 $30 / month after your 14-day trial ends
               </span>
@@ -255,7 +240,6 @@ function HeroCard() {
               ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }) => (
                 <li
                   key={title}
-                  data-hero-item
                   className="flex items-center gap-4"
                 >
                   <span aria-hidden className="shrink-0 size-8 rounded-md bg-muted flex items-center justify-center">
@@ -297,32 +281,29 @@ type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
 type PlanCardData = {
   badge: { label: string; tone: 'neutral' | 'pro' };
   price: string;
-  headline: React.ReactNode;
   benefitsLabel: string;
   features: PlanFeature[];
-  cta: { label: string; variant: 'default' | 'outline'; icon?: LucideIcon; onClick?: () => void; disabled?: boolean };
+  featured?: boolean;
+  cta: { label: string; variant: 'default' | 'outline'; icon?: LucideIcon; onClick?: () => void; disabled?: boolean; ariaLabel?: string };
 };
 
 const FREE_PLAN: PlanCardData = {
   badge: { label: 'FREE', tone: 'neutral' },
-  price: '$0 / month',
-  headline: 'All your AI traffic, in one place.',
-  benefitsLabel: "What's included in your Free plan",
+  price: '$0',
+  benefitsLabel: "What's included in your Free plan:",
   features: [
-    { Icon: Route,             title: 'Drop-in gateway',          detail: 'One base URL for OpenAI, Anthropic, and more' },
-    { Icon: Anchor,            title: 'Tamper-evident audit',     detail: 'Every request anchored to Digital Evidence, 30-day retention' },
-    { Icon: BarChart3,         title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
-    { Icon: SlidersHorizontal, title: 'Limits & quotas',          detail: 'Spend, token, and request-rate caps per key' },
+    { Icon: Route,          title: 'Multi-provider routing',   detail: 'One base URL for OpenAI, Anthropic, and more' },
+    { Icon: Anchor,         title: 'Tamper-evident audit',     detail: 'Every request anchored to Constellation Digital Evidence' },
+    { Icon: BarChart3,      title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
+    { Icon: MessagesSquare, title: 'Conversation threading',   detail: 'Requests are grouped into agent runs and multi-turn threads' },
   ],
-  cta: { label: 'Current plan', variant: 'outline', disabled: true },
+  cta: { label: 'Current plan', variant: 'outline', disabled: true, ariaLabel: 'Free plan is your current plan' },
 };
 
 const PRO_PLAN: PlanCardData = {
+  featured: true,
   badge: { label: 'PRO PLAN', tone: 'pro' },
-  price: '$30 / month after your 14-day trial ends',
-  headline: (
-    <>Inspect and gate <span className="text-blue-600">every</span> threat.</>
-  ),
+  price: '$30',
   benefitsLabel: "What you'll get going Pro:",
   features: [
     { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
@@ -336,16 +317,20 @@ const PRO_PLAN: PlanCardData = {
 function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => void }) {
   const CtaIcon = plan.cta.icon;
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-border bg-card p-4">
-      <div className="flex flex-col gap-2">
-        <Badge variant="neutral" className="self-start border border-border">
-          {plan.badge.label}
-        </Badge>
-        <span className="text-xs font-medium text-neutral-500">{plan.price}</span>
-      </div>
+    <div
+      data-plan-card
+      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? 'border-blue-600/30 ring-1 ring-blue-600/20' : 'border-border'}`}
+    >
+      <Badge
+        variant={plan.badge.tone === 'pro' ? 'info' : 'neutral'}
+        className={`self-start ${plan.badge.tone === 'pro' ? '' : 'border border-border'}`}
+      >
+        {plan.badge.label}
+      </Badge>
 
-      <h3 className="text-lg font-medium tracking-tight text-wrap text-neutral-900 m-0">
-        {plan.headline}
+      <h3 className="text-2xl font-medium tracking-tight text-neutral-900 tabular-nums m-0">
+        {plan.price}
+        <span className="text-lg text-muted-foreground"> per month</span>
       </h3>
 
       <div className="flex flex-col gap-2">
@@ -369,6 +354,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
         <Button
           variant={plan.cta.variant}
           disabled={plan.cta.disabled}
+          aria-label={plan.cta.ariaLabel}
           onClick={plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)}
           className="w-full"
         >
@@ -389,19 +375,33 @@ function PlanComparisonDialog({
   onOpenChange: (next: boolean) => void;
   onUpgrade: () => void;
 }) {
+  const cardsRef = useRef<HTMLDivElement>(null);
+
+  // Stagger the plan cards in just after the Dialog primitive's own
+  // enter animation, scoped to this content so cleanup is automatic.
+  useGSAP(() => {
+    if (!open || !cardsRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cards = cardsRef.current.querySelectorAll('[data-plan-card]');
+    gsap.fromTo(
+      cards,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.32, stagger: 0.08, ease: 'power3.out', delay: 0.12 },
+    );
+  }, { scope: cardsRef, dependencies: [open] });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-4 gap-4">
+      <DialogContent className="sm:max-w-[720px] p-4 gap-4">
         <DialogHeader>
           <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
             Compare plans
           </DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4">
+        <div ref={cardsRef} className="grid grid-cols-2 gap-4">
           <PlanCard plan={FREE_PLAN} onUpgrade={onUpgrade} />
           <PlanCard plan={PRO_PLAN} onUpgrade={() => { onOpenChange(false); onUpgrade(); }} />
         </div>
-        <DialogClose className="sr-only">Close</DialogClose>
       </DialogContent>
     </Dialog>
   );
