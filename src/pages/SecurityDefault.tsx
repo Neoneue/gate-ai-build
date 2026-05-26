@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, SlidersHorizontal, type LucideIcon } from 'lucide-react';
+import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -281,7 +281,6 @@ type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
 type PlanCardData = {
   badge: { label: string; tone: 'neutral' | 'pro' };
   price: string;
-  headline: React.ReactNode;
   benefitsLabel: string;
   features: PlanFeature[];
   featured?: boolean;
@@ -291,13 +290,12 @@ type PlanCardData = {
 const FREE_PLAN: PlanCardData = {
   badge: { label: 'FREE', tone: 'neutral' },
   price: '$0 / month',
-  headline: 'All your AI traffic, in one place.',
   benefitsLabel: "What's included in your Free plan:",
   features: [
-    { Icon: Route,             title: 'Drop-in gateway',          detail: 'One base URL for OpenAI, Anthropic, and more' },
-    { Icon: Anchor,            title: 'Tamper-evident audit',     detail: 'Every request anchored to Digital Evidence, 30-day retention' },
-    { Icon: BarChart3,         title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
-    { Icon: SlidersHorizontal, title: 'Limits & quotas',          detail: 'Spend, token, and request-rate caps per key' },
+    { Icon: Route,          title: 'Multi-provider routing',   detail: 'One base URL for OpenAI, Anthropic, and more' },
+    { Icon: Anchor,         title: 'Tamper-evident audit',     detail: 'Every request anchored to Constellation Digital Evidence, 30-day retention' },
+    { Icon: BarChart3,      title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
+    { Icon: MessagesSquare, title: 'Conversation threading',   detail: 'Requests are grouped into agent runs and multi-turn threads' },
   ],
   cta: { label: 'Current plan', variant: 'outline', disabled: true, ariaLabel: 'Free plan is your current plan' },
 };
@@ -306,9 +304,6 @@ const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: 'PRO PLAN', tone: 'pro' },
   price: '$30 / month',
-  headline: (
-    <>Inspect and gate <span className="text-blue-600">every</span> threat.</>
-  ),
   benefitsLabel: "What you'll get going Pro:",
   features: [
     { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
@@ -326,22 +321,19 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
       data-plan-card
       className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? 'border-blue-600/30 ring-1 ring-blue-600/20' : 'border-border'}`}
     >
-      <div className="flex items-center gap-2">
-        <Badge
-          variant={plan.badge.tone === 'pro' ? 'info' : 'neutral'}
-          className={plan.badge.tone === 'pro' ? undefined : 'border border-border'}
-        >
-          {plan.badge.label}
-        </Badge>
-        <span className="text-xs font-medium text-neutral-500 tabular-nums">{plan.price}</span>
-      </div>
+      <Badge
+        variant={plan.badge.tone === 'pro' ? 'info' : 'neutral'}
+        className={`self-start ${plan.badge.tone === 'pro' ? '' : 'border border-border'}`}
+      >
+        {plan.badge.label}
+      </Badge>
 
-      <h3 className="text-lg font-medium tracking-tight text-wrap text-neutral-900 m-0">
-        {plan.headline}
+      <h3 className="text-2xl font-medium tracking-tight text-neutral-900 tabular-nums m-0">
+        {plan.price}
       </h3>
 
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-neutral-900 mb-1">{plan.benefitsLabel}</p>
+        <p className="text-xs font-medium text-neutral-900 m-0">{plan.benefitsLabel}</p>
         <ul className="flex flex-col gap-3 m-0 p-0 list-none">
           {plan.features.map(({ Icon, title, detail }) => (
             <li key={title} className="flex items-start gap-3">
@@ -399,9 +391,9 @@ function PlanComparisonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-4 gap-4">
+      <DialogContent className="sm:max-w-[720px] p-4 gap-4">
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+          <DialogTitle className="font-sans text-2xl font-medium tracking-tight text-neutral-900">
             Compare plans
           </DialogTitle>
         </DialogHeader>
