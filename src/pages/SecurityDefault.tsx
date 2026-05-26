@@ -289,11 +289,11 @@ type PlanCardData = {
 
 const FREE_PLAN: PlanCardData = {
   badge: { label: 'FREE', tone: 'neutral' },
-  price: '$0 / month',
+  price: '$0',
   benefitsLabel: "What's included in your Free plan:",
   features: [
     { Icon: Route,          title: 'Multi-provider routing',   detail: 'One base URL for OpenAI, Anthropic, and more' },
-    { Icon: Anchor,         title: 'Tamper-evident audit',     detail: 'Every request anchored to Constellation Digital Evidence, 30-day retention' },
+    { Icon: Anchor,         title: 'Tamper-evident audit',     detail: 'Every request anchored to Constellation Digital Evidence' },
     { Icon: BarChart3,      title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
     { Icon: MessagesSquare, title: 'Conversation threading',   detail: 'Requests are grouped into agent runs and multi-turn threads' },
   ],
@@ -303,7 +303,7 @@ const FREE_PLAN: PlanCardData = {
 const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: 'PRO PLAN', tone: 'pro' },
-  price: '$30 / month',
+  price: '$30',
   benefitsLabel: "What you'll get going Pro:",
   features: [
     { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
@@ -330,6 +330,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
 
       <h3 className="text-2xl font-medium tracking-tight text-neutral-900 tabular-nums m-0">
         {plan.price}
+        <span className="text-lg text-muted-foreground"> per month</span>
       </h3>
 
       <div className="flex flex-col gap-2">
@@ -393,7 +394,7 @@ function PlanComparisonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[720px] p-4 gap-4">
         <DialogHeader>
-          <DialogTitle className="font-sans text-2xl font-medium tracking-tight text-neutral-900">
+          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
             Compare plans
           </DialogTitle>
         </DialogHeader>
