@@ -29,8 +29,8 @@ const FEATURES = [
 const SPACING = 24
 const BASE_R = 1
 const PEAK_R = 2
-const FALLOFF = 64
-const PULSE_DURATION = 4
+const FALLOFF = 80
+const PULSE_DURATION = 3
 const BASE_MIX_PCT = 5
 const PEAK_MIX_PCT = 25
 const WRITE_EPSILON = 0.005
@@ -198,10 +198,10 @@ export function AuthLayout() {
         </div>
 
         <div className="hidden self-center md:col-span-5 md:col-start-1 md:row-start-2 md:block">
-          <h1 className="text-5xl font-medium leading-tight tracking-tight text-white">
+          <h1 className="text-6xl font-medium leading-tight tracking-tight text-white">
             <span data-scramble>Gate</span>{" "}
             <span data-scramble className="text-blue-400">every</span>{" "}
-            <span data-scramble>agent call.</span>
+            <span data-scramble>agent call</span>
           </h1>
           <p data-anim className="mt-4 font-mono text-lg/8 text-neutral-400">
             Catch prompt injection and credential leaks, contain runaway

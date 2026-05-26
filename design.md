@@ -100,7 +100,9 @@ colors:
 
 typography:
   # Tailwind named scale only. Three sizes overridden in @theme to Geist's even-numbered
-  # heading scale (text-3xl: 32px, text-4xl: 40px, text-6xl: 64px — index.css:156–161).
+  # heading scale (text-3xl: 32px, text-4xl: 40px, text-6xl: 56px — index.css:147–152).
+  # text-6xl override tuned 2026-05-21 from 64px → 56px (line-height: 1) for the auth-page
+  # hero; sole consumer is AuthLayout's h1. Bump back to 64px if other hero surfaces land.
   # Floor is text-xs (12px) — sub-12px sizes are out of scale by policy. Arbitrary
   # text-[Npx] is banned. font-medium minimum on sans labels — font-normal reads as
   # ambient body, not structure.

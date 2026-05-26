@@ -204,7 +204,7 @@ type PolicyState = {
 };
 
 const INITIAL_POLICIES: PolicyState[] = [
-  { id: 'prompt-injection', enabled: true, sensitivity: 'medium', action: 'block' },
+  { id: 'prompt-injection', enabled: true, sensitivity: 'medium', action: 'flag' },
   { id: 'pii', enabled: true, scanDirection: 'output', action: 'redact' },
   { id: 'secrets', enabled: true, scanDirection: 'output', action: 'redact' },
 ];
