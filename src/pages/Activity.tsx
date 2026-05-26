@@ -348,7 +348,7 @@ export const SPEND_SERIES: Record<Dimension, readonly { key: string; label: stri
     { key: 'prod-web',    label: 'prod-web',    slot: 2 },
     { key: 'staging-web', label: 'staging-web', slot: 3 },
     { key: 'atlas-eval',  label: 'atlas-eval',  slot: 4 },
-    { key: 'dev',         label: 'dev',         slot: 5 },
+    { key: 'development', label: 'development',         slot: 5 },
     { key: 'ci-runner',   label: 'ci-runner',   slot: 6 },
   ],
 };
@@ -1263,12 +1263,12 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
   { key: 'prod-agent',   label: 'prod-agent',    owner: 'Chad Ponticas', path: 'Gate', requests: 12000, tokensIn: 15_384_615, tokensOut:    615_385, spend: 92.31 },
   { key: 'openclaw',     label: 'openclaw',      owner: 'Kira Tan',      path: 'BYOK', requests:  8000, tokensIn: 10_096_154, tokensOut:    403_846, spend:  0.00 },
   { key: 'hermes-agent', label: 'hermes-agent',  owner: 'Mateus Silva',  path: 'BYOK', requests:  5500, tokensIn:  6_923_077, tokensOut:    276_923, spend:  0.00 },
-  { key: 'dev',          label: 'dev',           owner: 'Jordan Lee',    path: 'Gate', requests: 15000, tokensIn:  1_650_000, tokensOut:    550_000, spend: 13.20 },
+  { key: 'development', label: 'development',           owner: 'Jordan Lee',    path: 'Gate', requests: 15000, tokensIn:  1_650_000, tokensOut:    550_000, spend: 13.20 },
   { key: 'staging-web',  label: 'staging-web',   owner: 'Chad Ponticas', path: 'Gate', requests: 13000, tokensIn:  3_500_000, tokensOut:    700_000, spend: 21.00 },
   { key: 'ci-runner',    label: 'ci-runner',     owner: 'Jordan Lee',    path: 'Gate', requests:  6500, tokensIn:    708_333, tokensOut:    141_667, spend:  1.42 },
   { key: 'nova-chat',    label: 'nova-chat',     owner: 'Kira Tan',      path: 'BYOK', requests: 18000, tokensIn:  5_416_667, tokensOut:  1_083_333, spend:  0.00 },
   { key: 'atlas-eval',   label: 'atlas-eval',    owner: 'Mateus Silva',  path: 'Gate', requests:  2000, tokensIn:  3_000_000, tokensOut:    200_000, spend: 20.00 },
-  { key: 'shadowfax-rag',label: 'shadowfax-rag', owner: 'Mateus Silva',  path: 'BYOK', requests:  2800, tokensIn:  4_571_429, tokensOut:    228_571, spend:  0.00 },
+  { key: 'test-key',label: 'test-key', owner: 'Mateus Silva',  path: 'BYOK', requests:  2800, tokensIn:  4_571_429, tokensOut:    228_571, spend:  0.00 },
 ];
 
 // Gateway-id suffix per key — same `name (sk-gw-NNN)` identity form the
@@ -1279,11 +1279,11 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
 const KEY_SUFFIX: Record<string, string> = {
   'prod-web': 'sk-gw-438',
   'prod-agent': 'sk-gw-930',
-  dev: 'sk-gw-7d2',
+  development: 'sk-gw-7d2',
   openclaw: 'sk-gw-1ab',
   'hermes-agent': 'sk-gw-c60',
   'nova-chat': 'sk-gw-e15',
-  'shadowfax-rag': 'sk-gw-9f4',
+  'test-key': 'sk-gw-9f4',
   'staging-web': 'sk-gw-3c1',
   'ci-runner': 'sk-gw-a07',
   'atlas-eval': 'sk-gw-5d8',

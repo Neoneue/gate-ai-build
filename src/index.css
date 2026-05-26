@@ -137,18 +137,25 @@
     0 16px 32px -4px color-mix(in oklch, var(--color-neutral-800) 12%, transparent),
     0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
+  /* Soft card lift — used on upsell hero surfaces where the card sits inside
+     a coloured panel and needs a hint of elevation without competing with
+     the bordered chrome. Sits below --shadow-popup on the elevation ladder. */
+  --shadow-card-soft:
+    0 4px 8px -1px color-mix(in oklch, var(--color-neutral-800) 5%, transparent),
+    0 2px 6px -2px color-mix(in oklch, var(--color-neutral-800) 5%, transparent);
+
   /* Typescale overrides — align Tailwind's named sizes to Vercel Geist's
      heading scale (even-numbered, larger increments at the top). Sizes not
      listed (xs/sm/base/lg/xl/2xl/5xl/7xl) already match Geist values.
      Floor is text-xs (12px) — sub-12px sizes are out of scale by policy.
        text-3xl: 30 → 32   (Geist heading-32)
        text-4xl: 36 → 40   (Geist heading-40)
-       text-6xl: 60 → 64   (Geist heading-64) */
+       text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1) */
   --text-3xl: 2rem;
   --text-3xl--line-height: 2.5rem;
   --text-4xl: 2.5rem;
   --text-4xl--line-height: 3rem;
-  --text-6xl: 4rem;
+  --text-6xl: 3.5rem;
   --text-6xl--line-height: 1;
 
   /* Tracking token — sub-pixel tightening for two specific tiers:
