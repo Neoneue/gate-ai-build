@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, type LucideIcon } from 'lucide-react';
+import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar, BarChart3, Route, Anchor, SlidersHorizontal, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
@@ -177,6 +184,7 @@ function HeroCard() {
   // that's underway, `itemsMounted` releases the per-item stagger so the
   // list visibly follows the card in.
   const [cardMounted, setCardMounted] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [itemsMounted, setItemsMounted] = useState(false);
   useEffect(() => {
     const raf = requestAnimationFrame(() => setCardMounted(true));
@@ -210,7 +218,7 @@ function HeroCard() {
 
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-medium tracking-tight text-balance text-neutral-900 m-0">
-                See <span className="text-blue-600">every</span> threat. Inspect <span className="text-blue-600">every</span> detection.
+                Inspect <span className="text-blue-600">every</span> detection, gate <span className="text-blue-600">every</span> threat.
               </h2>
             </div>
 
@@ -220,7 +228,7 @@ function HeroCard() {
               </p>
               <ul className="flex flex-col gap-4 m-0 p-4 list-none rounded-md border border-border bg-card">
               {([
-                { Icon: ShieldAlert, title: 'Real-time prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
+                { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
                 { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Detect and redact before sensitive data reaches the model' },
                 { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
                 { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
@@ -250,7 +258,7 @@ function HeroCard() {
               <Button onClick={() => navigate('/billing')}>
                 <Sparkles className="size-4" /> Upgrade to Pro
               </Button>
-              <Button variant="outline" onClick={() => navigate('/billing')}>
+              <Button variant="outline" onClick={() => setCompareOpen(true)}>
                 Compare plans
               </Button>
             </div>
@@ -263,7 +271,123 @@ function HeroCard() {
         </div>
       </div>
     </Card>
+    <PlanComparisonDialog open={compareOpen} onOpenChange={setCompareOpen} onUpgrade={() => navigate('/billing')} />
     </div>
+  );
+}
+
+type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
+
+type PlanCardData = {
+  badge: { label: string; tone: 'neutral' | 'pro' };
+  price: string;
+  headline: React.ReactNode;
+  benefitsLabel: string;
+  features: PlanFeature[];
+  cta: { label: string; variant: 'default' | 'outline'; icon?: LucideIcon; onClick?: () => void; disabled?: boolean };
+};
+
+const FREE_PLAN: PlanCardData = {
+  badge: { label: 'FREE', tone: 'neutral' },
+  price: '$0 / month',
+  headline: 'All your AI traffic, in one place.',
+  benefitsLabel: "What's included in your Free plan",
+  features: [
+    { Icon: Route,             title: 'Drop-in gateway',          detail: 'One base URL for OpenAI, Anthropic, and more' },
+    { Icon: Anchor,            title: 'Tamper-evident audit',     detail: 'Every request anchored to Digital Evidence, 30-day retention' },
+    { Icon: BarChart3,         title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
+    { Icon: SlidersHorizontal, title: 'Limits & quotas',          detail: 'Spend, token, and request-rate caps per key' },
+  ],
+  cta: { label: 'Current plan', variant: 'outline', disabled: true },
+};
+
+const PRO_PLAN: PlanCardData = {
+  badge: { label: 'PRO PLAN', tone: 'pro' },
+  price: '$30 / month after your 14-day trial ends',
+  headline: (
+    <>Inspect <span className="text-blue-600">every</span> detection, gate <span className="text-blue-600">every</span> threat.</>
+  ),
+  benefitsLabel: "What you'll get going Pro:",
+  features: [
+    { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
+    { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Detect and redact before sensitive data reaches the model' },
+    { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
+    { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
+  ],
+  cta: { label: 'Upgrade to Pro', variant: 'default', icon: Sparkles },
+};
+
+function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => void }) {
+  const CtaIcon = plan.cta.icon;
+  return (
+    <div className="flex flex-col gap-4 rounded-md border border-border bg-card p-4">
+      <div className="flex flex-col gap-2">
+        <Badge variant="neutral" className="self-start border border-border">
+          {plan.badge.label}
+        </Badge>
+        <span className="text-xs font-medium text-neutral-500">{plan.price}</span>
+      </div>
+
+      <h3 className="text-lg font-medium tracking-tight text-wrap text-neutral-900 m-0">
+        {plan.headline}
+      </h3>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-neutral-900 m-0">{plan.benefitsLabel}</p>
+        <ul className="flex flex-col gap-3 m-0 p-0 list-none">
+          {plan.features.map(({ Icon, title, detail }) => (
+            <li key={title} className="flex items-start gap-3">
+              <span aria-hidden className="shrink-0 size-7 rounded-sm bg-muted flex items-center justify-center mt-0.5">
+                <Icon className="size-3.5 text-neutral-700" strokeWidth={1.75} />
+              </span>
+              <div className="flex flex-col">
+                <span className="text-sm text-neutral-900">{title}</span>
+                <span className="text-xs text-neutral-500 text-pretty">{detail}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-auto pt-2">
+        <Button
+          variant={plan.cta.variant}
+          disabled={plan.cta.disabled}
+          onClick={plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)}
+          className="w-full"
+        >
+          {CtaIcon ? <CtaIcon className="size-4" /> : null}
+          {plan.cta.label}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PlanComparisonDialog({
+  open,
+  onOpenChange,
+  onUpgrade,
+}: {
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+  onUpgrade: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[700px] p-4 gap-4">
+        <DialogHeader>
+          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+            Compare plans
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <PlanCard plan={FREE_PLAN} onUpgrade={onUpgrade} />
+          <PlanCard plan={PRO_PLAN} onUpgrade={() => { onOpenChange(false); onUpgrade(); }} />
+        </div>
+        <DialogClose className="sr-only">Close</DialogClose>
+      </DialogContent>
+    </Dialog>
   );
 }
 
