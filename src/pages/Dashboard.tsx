@@ -28,7 +28,7 @@ import {
   SPEND_SERIES,
   TOKENS_TOTALS_7D,
   seriesColor,
-} from '@/pages/Activity';
+} from '@/pages/activity-data';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
