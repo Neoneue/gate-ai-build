@@ -577,6 +577,7 @@ Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popu
 | **Card / Surface** | **`border border-border shadow-xs`** (migrated 2026-05-15) | **`rounded-md` (8px)** | **Card, KpiRail, Tabs `line` variant border-b, MessageBlock outline** |
 | Hover (card) | `border-border` + `hover:shadow-sm` where interactive (most cards are static) | (same as card) | Hovered card variant — rare in operator surfaces |
 | Modal | `--shadow-modal` token (16px lift 12% + 1px ring 6%) | `rounded-xl` (**16px LOCKED**) | Dialog, AlertDialog, Sheet (right-docked = `rounded-none` left edge) |
+| Soft card (in colored panel) | `--shadow-card-soft` token (8/6px lift 5% — two layers, same `color-mix` family) | `rounded-md` (8px) | Cards sitting inside a non-white panel where standard chrome would compete with the panel bg (canonical: SecurityDefault events ticker inside the right `bg-neutral-50` panel). Added 2026-05-26 — defined in `index.css` alongside `--shadow-popup`/`--shadow-modal`. |
 
 **Legacy `--shadow-border` token.** Still defined in `index.css:117–120`. No primitive currently consumes it after the 2026-05-15 migration. Don't re-introduce it on new Cards or KpiRails — they take the `border + shadow-xs` recipe. Keep the token for the rare case where a surface genuinely wants a ring-only edge (none today).
 

@@ -42,6 +42,7 @@ graph LR
     LAYOUT --> TOK["/token-savings → TokenSavings.tsx"]
     LAYOUT --> GRD["/guardrails → Guardrails.tsx"]
     LAYOUT --> SEC["/security → Security.tsx"]
+    LAYOUT --> SECDEF["/events-default → SecurityDefault.tsx (Pro upsell)"]
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
@@ -526,6 +527,22 @@ searchParams: URLSearchParams       // for ?open= deep-link
 - `/requests?open=${requestId}`
 
 **Data:** `EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 }` ratio applied via `splitEventMix()` to `EVENTS_RANGE_TOTAL`.
+
+---
+
+### Security Default page (`/events-default` → `SecurityDefault.tsx`)
+
+**Purpose:** Pro upsell teaser shown to Free-tier workspaces in place of the real Security Events page. Hero left = headline + benefits + CTAs; hero right = decorative rotating events ticker.
+
+**Self-contained data:** `SECURITY_FEED` is a local flat 48-event `EventRow[]` array in chronological ASC order — Early (09:09–09:20, 8) + Mid (09:21–09:46, 16) + Late (09:49–09:56, 8) + Trail (09:57–10:28, 16). **No import dependency on `EVENT_ROWS` from `Security.tsx`** — the dev rebuilding this animation can lift the array wholesale. Decision made 2026-05-26.
+
+**Ticker mechanics:** `<tbody>` translates `-(ROW_HEIGHT+1) → -1px` over `SLIDE_MS` (600ms) with `SLIDE_DELAY` (100ms) so the bottom row begins fading/blurring before the rest of the rows move. Bottom row gets `opacity 1→0` + `filter blur(0)→3px` over `FADE_DURATION` (360ms). On `transitionend` (guarded to `target===currentTarget && propertyName==='transform'`) data shifts: prepend next event, drop oldest. Cursor wraps with modulo. Visibility-pause via `visibilitychange` listener. `aria-hidden` on `<tbody>` — decorative motion, not an a11y feed.
+
+**`reducedMotion`:** read once via `useState` lazy initializer (`window.matchMedia('(prefers-reduced-motion: reduce)').matches`) — avoids cascading-render warning that a `useEffect` setState would trigger.
+
+**Compare plans modal (`PlanComparisonDialog`):** 720px `Dialog` with `grid-cols-2 gap-4`, two `PlanCard`s. Free + Pro plan structure is data-driven via `PlanCardData` (`badge`, `price`, `benefitsLabel`, `features[]`, `featured?`, `cta`). Pro card gets `border-primary/30 ring-1 ring-primary/20` emphasis. Cards GSAP-stagger in (320ms duration, 80ms stagger, 120ms delay) keyed off `open` via `useGSAP`. Disabled Free CTA carries `aria-label="Free plan is your current plan"`.
+
+**Hero card animation:** static (no entry animation). Removed 2026-05-26 after the GSAP timeline was deemed unnecessary for this surface.
 
 ---
 
