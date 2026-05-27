@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/select';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { HeroCard, type PlanFeature } from '@/pages/SecurityDefault';
+import { HeroCard } from '@/pages/SecurityDefault';
+import { type PlanFeature } from '@/pages/plan-comparison-dialog';
 
 const EASE_OUT = 'power3.out';
 const FOCUS_RING = 'border-ring ring-[3px] ring-ring/50';

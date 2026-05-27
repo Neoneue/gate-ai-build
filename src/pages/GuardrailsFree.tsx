@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatDateTime } from '@/lib/formatters';
-import { PlanComparisonDialog } from '@/pages/SecurityDefault';
+import { PlanComparisonDialog } from '@/pages/plan-comparison-dialog';
 
 export function GuardrailsFree() {
   const navigate = useNavigate();
