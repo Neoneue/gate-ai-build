@@ -314,7 +314,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
   );
 }
 
-function PlanComparisonDialog({
+export function PlanComparisonDialog({
   open,
   onOpenChange,
   onUpgrade,
