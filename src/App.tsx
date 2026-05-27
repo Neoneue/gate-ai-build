@@ -16,6 +16,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { DashboardDefault } from '@/pages/DashboardDefault';
 import { Guardrails } from '@/pages/Guardrails';
 import { GuardrailsDefault } from '@/pages/GuardrailsDefault';
+import { Upgrade } from '@/pages/Upgrade';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/token-savings-default" element={<TokenSavingsDefault />} />
           <Route path="/guardrails" element={<Guardrails />} />
           <Route path="/guardrails-default" element={<GuardrailsDefault />} />
+  <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/security" element={<Security />} />
           <Route path="/events-default" element={<SecurityDefault />} />
           <Route path="/policies" element={<Policies />} />
