@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -203,7 +203,17 @@ function SecurityEventsTable() {
   );
 }
 
-function HeroCard() {
+// Default "What you'll get going Pro" list — the Security feature set. Pages
+// that gate different Pro surfaces can pass their own `features` to HeroCard;
+// omitting the prop renders this security list unchanged.
+const DEFAULT_PRO_FEATURES: PlanFeature[] = [
+  { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
+  { Icon: EyeOff,      title: 'PII & PHI redaction',        detail: 'Detect and redact before sensitive data reaches the model' },
+  { Icon: KeyRound,    title: 'Credential leak prevention', detail: 'Catch provider tokens in prompts and completions' },
+  { Icon: Radar,       title: 'Per-key risk scoring',       detail: 'Normal, elevated, or critical tier on every event' },
+];
+
+export function HeroCard({ features = DEFAULT_PRO_FEATURES, preview }: { features?: PlanFeature[]; preview?: ReactNode } = {}) {
   const navigate = useNavigate();
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -232,12 +242,7 @@ function HeroCard() {
                 What you&rsquo;ll get going Pro:
               </p>
               <ul className="flex flex-col gap-4 m-0 p-4 list-none rounded-md border border-border bg-card">
-              {([
-                { Icon: ShieldAlert, title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
-                { Icon: EyeOff,      title: 'PII & PHI redaction',                 detail: 'Detect and redact before sensitive data reaches the model' },
-                { Icon: KeyRound,    title: 'Credential leak prevention',          detail: 'Catch provider tokens in prompts and completions' },
-                { Icon: Radar,       title: 'Per-key risk scoring',                detail: 'Normal, elevated, or critical tier on every event' },
-              ] as { Icon: LucideIcon; title: string; detail: string }[]).map(({ Icon, title, detail }) => (
+              {features.map(({ Icon, title, detail }) => (
                 <li
                   key={title}
                   className="flex items-center gap-4"
@@ -267,7 +272,7 @@ function HeroCard() {
 
         {/* Right panel — latest security events preview */}
         <div className="flex-1 border-l border-border bg-neutral-50 flex flex-col justify-center p-8">
-          <SecurityEventsTable />
+          {preview ?? <SecurityEventsTable />}
         </div>
       </div>
     </Card>
@@ -276,7 +281,7 @@ function HeroCard() {
   );
 }
 
-type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
+export type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
 
 type PlanCardData = {
   badge: { label: string; tone: 'neutral' | 'pro' };
