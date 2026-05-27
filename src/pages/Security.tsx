@@ -1144,8 +1144,8 @@ function EventsTableSection({
                     className="font-mono text-sm tabular-nums text-neutral-800"
                   />
                 </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <span className="inline-flex items-center gap-2">
+                <TableCell className="whitespace-nowrap align-middle">
+                  <span className="inline-flex items-center gap-2 align-middle">
                     <TypeIcon
                       className="size-4 shrink-0"
                       style={{ color: typeMeta.color }}

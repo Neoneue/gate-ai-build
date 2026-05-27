@@ -183,8 +183,8 @@ function SecurityEventsTable() {
                 } : undefined}
               >
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono tabular-nums">{formatTimestamp(parseEventTime(row.time))}</td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <span className="inline-flex items-center gap-2">
+                <td className="whitespace-nowrap px-4 py-3 align-middle">
+                  <span className="inline-flex items-center gap-2 align-middle">
                     <TypeIcon className="size-4 shrink-0" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />
                     <span className="text-xs text-neutral-800">{typeMeta.label}</span>
                   </span>
@@ -290,12 +290,12 @@ type PlanCardData = {
 const FREE_PLAN: PlanCardData = {
   badge: { label: 'FREE', tone: 'neutral' },
   price: '$0',
-  benefitsLabel: "What's included in your Free plan:",
+  benefitsLabel: "Included in your Free plan:",
   features: [
     { Icon: Route,          title: 'Multi-provider routing',   detail: 'One base URL for OpenAI, Anthropic, and more' },
     { Icon: Anchor,         title: 'Tamper-evident audit',     detail: 'Every request anchored to Constellation Digital Evidence' },
     { Icon: BarChart3,      title: 'Activity & request logs',  detail: 'Cost, tokens, and latency across the workspace' },
-    { Icon: MessagesSquare, title: 'Conversation threading',   detail: 'Requests are grouped into agent runs and multi-turn threads' },
+    { Icon: MessagesSquare, title: 'Conversation threading',   detail: 'Follow agent runs and chats end-to-end' },
   ],
   cta: { label: 'Current plan', variant: 'outline', disabled: true, ariaLabel: 'Free plan is your current plan' },
 };
@@ -319,7 +319,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
   return (
     <div
       data-plan-card
-      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? 'border-blue-600/30 ring-1 ring-blue-600/20' : 'border-border'}`}
+      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? 'border-primary/30 ring-1 ring-primary/20' : 'border-border'}`}
     >
       <Badge
         variant={plan.badge.tone === 'pro' ? 'info' : 'neutral'}
