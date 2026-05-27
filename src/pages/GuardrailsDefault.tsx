@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ShieldAlert, EyeOff, KeyRound, SlidersHorizontal, Coins, Shield, Plus, MousePointer2 } from 'lucide-react';
+import { ShieldAlert, EyeOff, KeyRound, SlidersHorizontal, Coins, Shield, Plus, MousePointer2, Check } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,11 @@ const SCOPE_OPTS = [
   { v: 'key', l: 'Key' },
 ];
 
+type LimitRow = { name: string; type: string; threshold: string; period: string; scope: string };
+const ROW1: LimitRow = { name: 'Test limit', type: 'Spend ($)', threshold: '$500', period: '1 day', scope: 'Org-wide (all keys)' };
+const ROW2: LimitRow = { name: 'Test limit 2', type: 'Tokens', threshold: '1,000,000', period: '1 day', scope: 'Org-wide (all keys)' };
+const ROW3: LimitRow = { name: 'Test limit 3', type: 'Requests', threshold: '10,000', period: '1 day', scope: 'Org-wide (all keys)' };
+
 // Animated preview for the Guardrails upsell hero's right panel — the whole
 // create-a-limit experience minified into the window. Sequence:
 //  1. empty-state card fades + scales in from center
@@ -66,12 +71,19 @@ function GuardrailsLimitPreview() {
   const scope = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const iconRef = useRef<SVGSVGElement>(null);
+  const pingRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
   const amountRef = useRef<HTMLDivElement>(null);
   const createRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const tableCtaRef = useRef<HTMLDivElement>(null);
+  const typeTriggerRef = useRef<HTMLDivElement>(null);
+  const typeMenuRef = useRef<HTMLDivElement>(null);
+  const tokensOptRef = useRef<HTMLDivElement>(null);
+  const requestsOptRef = useRef<HTMLDivElement>(null);
 
   const [ctaHover, setCtaHover] = useState(false);
   const [nameVal, setNameVal] = useState('');
@@ -79,28 +91,42 @@ function GuardrailsLimitPreview() {
   const [nameFocus, setNameFocus] = useState(false);
   const [amountFocus, setAmountFocus] = useState(false);
   const [createHover, setCreateHover] = useState(false);
+  const [rows, setRows] = useState<LimitRow[]>([]);
+  const [tableCtaHover, setTableCtaHover] = useState(false);
+  const [typeVal, setTypeVal] = useState('spend');
+  const [hoveredOpt, setHoveredOpt] = useState<string | null>(null);
 
   useGSAP(() => {
     const card = cardRef.current;
     const cursor = cursorRef.current;
+    const icon = iconRef.current;
+    const ping = pingRef.current;
     const cta = ctaRef.current;
     const dialog = dialogRef.current;
     const nameEl = nameRef.current;
     const amountEl = amountRef.current;
     const createEl = createRef.current;
     const table = tableRef.current;
-    if (!card || !cursor || !cta || !dialog || !nameEl || !amountEl || !createEl || !table) return;
+    const tableCta = tableCtaRef.current;
+    const typeTrigger = typeTriggerRef.current;
+    const typeMenu = typeMenuRef.current;
+    const tokensOpt = tokensOptRef.current;
+  const requestsOpt = requestsOptRef.current;
+    if (!card || !cursor || !icon || !ping || !cta || !dialog || !nameEl || !amountEl || !createEl || !table || !tableCta || !typeTrigger || !typeMenu || !tokensOpt || !requestsOpt) return;
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // Reduced motion → land on the end state: the created-limit table.
-      gsap.set([card, dialog, cursor], { opacity: 0 });
+      // Reduced motion → land on the end state: the table with both limits.
+      gsap.set([card, dialog, cursor, ping], { opacity: 0 });
       gsap.set(table, { opacity: 1 });
+      setRows([ROW1, ROW2, ROW3]);
+      setTypeVal('requests');
       return;
     }
 
-    // Measure everything at natural layout (scale 1) before any gsap.set, so
-    // cursor destinations are accurate. All deltas are absolute translations
-    // from the cursor's origin (its transform-0 position).
+    // Measure every target at natural layout (scale 1) before any gsap.set so
+    // cursor destinations are accurate. Deltas are absolute translations from
+    // the cursor's origin. The table is top-anchored so adding rows doesn't
+    // shift the header CTA we measured here.
     const origin = cursor.getBoundingClientRect();
     const target = (el: Element) => {
       const r = el.getBoundingClientRect();
@@ -110,24 +136,36 @@ function GuardrailsLimitPreview() {
     const nameT = target(nameEl);
     const amountT = target(amountEl);
     const createT = target(createEl);
+    const tableCtaT = target(tableCta);
+    const typeT = target(typeTrigger);
+    const tokensT = target(tokensOpt);
+  const requestsT = target(requestsOpt);
 
-    gsap.set(card, { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', filter: 'blur(0px)' });
-    gsap.set(cursor, { opacity: 0 });
-    gsap.set(dialog, { opacity: 0, scale: 0.96, transformOrigin: '50% 50%' });
-    gsap.set(table, { opacity: 0 });
 
-    // Cursor-only press — for clicking into inputs (focus, no element scale).
+    // Radial click pulse from the pointer tip. Independent of the icon press
+  // scale (ping is a sibling of the icon), so it reads as a clean ring.
+  const firePing = () =>
+    gsap.fromTo(
+      ping,
+      { scale: 0.3, opacity: 0.6 },
+      { scale: 1.6, opacity: 0, duration: 0.4, ease: 'power2.out', transformOrigin: '50% 50%' }
+    );
+  // Cursor-only press — clicking into inputs/options (no element scale).
     const clickInput = (tl: gsap.core.Timeline) => {
-      tl.to(cursor, { scale: 0.85, duration: 0.09, ease: 'power2.out' }, '+=0.1')
-        .to(cursor, { scale: 1, duration: 0.18 });
-    };
+    tl.to(icon, { scale: 0.85, duration: 0.09, ease: 'power2.out' }, '+=0.1')
+      .add(firePing, '<')
+      .to(icon, { scale: 1, duration: 0.18 });
+  };
     // Button press — cursor blip + the element scales down, like a real press.
     const clickButton = (tl: gsap.core.Timeline, el: Element) => {
-      tl.to(cursor, { scale: 0.85, duration: 0.09, ease: 'power2.out' }, '+=0.1')
-        .to(el, { scale: 0.96, duration: 0.09, ease: 'power2.out' }, '<')
-        .to(cursor, { scale: 1, duration: 0.18 })
-        .to(el, { scale: 1, duration: 0.18 }, '<');
-    };
+    tl.to(icon, { scale: 0.85, duration: 0.09, ease: 'power2.out' }, '+=0.1')
+      .to(el, { scale: 0.96, duration: 0.09, ease: 'power2.out' }, '<')
+      .add(firePing, '<')
+      .to(icon, { scale: 1, duration: 0.18 })
+      .to(el, { scale: 1, duration: 0.18 }, '<');
+  };
+    const moveTo = (tl: gsap.core.Timeline, t: { x: number; y: number }, dur = 0.45) =>
+      tl.to(cursor, { x: t.x, y: t.y, duration: dur, ease: 'power2.inOut' }, '+=0.15');
     const type = (tl: gsap.core.Timeline, text: string, setter: (s: string) => void) => {
       const p = { i: 0 };
       tl.to(p, {
@@ -138,40 +176,147 @@ function GuardrailsLimitPreview() {
       });
     };
 
-    const tl = gsap.timeline({ defaults: { ease: EASE_OUT } });
+    const tl = gsap.timeline({ repeat: -1, defaults: { ease: EASE_OUT } });
+    // t=0 reset: runs at the start of every loop iteration. All elements are already
+    // invisible (the prior loop's outro faded everything out), so these instant sets
+    // produce no visible flash.
+    tl.set(card, { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', filter: 'blur(0px)' })
+      .set(cursor, { opacity: 0, x: 0, y: 0, scale: 1 })
+    .set(icon, { scale: 1 })
+    .set(ping, { opacity: 0, scale: 0.3, transformOrigin: '50% 50%' })
+      .set(dialog, { opacity: 0, scale: 0.96, transformOrigin: '50% 50%' })
+      .set(table, { opacity: 0, filter: 'blur(0px)' })
+      .set(tableCta, { opacity: 1 })
+      .set(typeMenu, { opacity: 0 })
+      .add(() => {
+        setRows([]);
+        setNameVal('');
+        setAmountVal('');
+        setTypeVal('spend');
+        setHoveredOpt(null);
+        setCtaHover(false);
+        setTableCtaHover(false);
+        setCreateHover(false);
+        setNameFocus(false);
+        setAmountFocus(false);
+      });
     // 1–2: card in, cursor in
     tl.to(card, { opacity: 1, scale: 1, duration: 0.5 })
-      .to(cursor, { opacity: 1, duration: 0.3 }, '+=0.15')
-      // 3: → CTA, hover, click
-      .to(cursor, { x: ctaT.x, y: ctaT.y, duration: 0.7, ease: 'power2.inOut' }, '+=0.2')
-      .add(() => setCtaHover(true));
+      .to(cursor, { opacity: 1, duration: 0.3 }, '+=0.15');
+    // 3: → CTA, hover, click
+    moveTo(tl, ctaT, 0.7).add(() => setCtaHover(true));
     clickButton(tl, cta);
     // 4: spawn dialog over the blurred card
     tl.add(() => setCtaHover(false))
       .to(card, { filter: 'blur(2.5px)', duration: 0.3 }, '+=0.05')
       .to(dialog, { opacity: 1, scale: 1, duration: 0.35 }, '<');
-    // 5: → Name, focus, type
-    tl.to(cursor, { x: nameT.x, y: nameT.y, duration: 0.5, ease: 'power2.inOut' }, '+=0.15')
-      .add(() => setNameFocus(true));
+    // 5–7: fill Name / Amount, click Create
+    moveTo(tl, nameT, 0.5).add(() => setNameFocus(true));
     clickInput(tl);
     type(tl, 'Test limit', setNameVal);
-    // 6: → Amount, focus, type
-    tl.add(() => { setNameFocus(false); })
-      .to(cursor, { x: amountT.x, y: amountT.y, duration: 0.45, ease: 'power2.inOut' }, '+=0.15')
-      .add(() => setAmountFocus(true));
+    tl.add(() => setNameFocus(false));
+    moveTo(tl, amountT).add(() => setAmountFocus(true));
     clickInput(tl);
     type(tl, '500', setAmountVal);
-    // 7: → Create, hover, click
-    tl.add(() => { setAmountFocus(false); })
-      .to(cursor, { x: createT.x, y: createT.y, duration: 0.45, ease: 'power2.inOut' }, '+=0.15')
-      .add(() => setCreateHover(true));
+    tl.add(() => setAmountFocus(false));
+    moveTo(tl, createT).add(() => setCreateHover(true));
     clickButton(tl, createEl);
-    // 8: limit created — swap the empty card for the table behind the dialog,
-    // then close the dialog and retire the cursor to reveal the result.
-    tl.to(card, { opacity: 0, duration: 0.25 }, '+=0.2')
+    // 8: row 1 created — swap empty card → table behind the dialog, close dialog
+    tl.add(() => setRows([ROW1]))
+      .to(card, { opacity: 0, duration: 0.25 }, '+=0.2')
       .to(table, { opacity: 1, duration: 0.25 }, '<')
       .to(dialog, { opacity: 0, scale: 0.96, duration: 0.3 }, '+=0.05')
-      .to(cursor, { opacity: 0, duration: 0.3 }, '<');
+      .add(() => setCreateHover(false));
+    // 9: 1-second beat
+    tl.to({}, { duration: 1 });
+    // 10: → table's add CTA, click
+    moveTo(tl, tableCtaT, 0.6).add(() => setTableCtaHover(true));
+    clickButton(tl, tableCta);
+    // 11: reopen dialog over blurred table, with fields reset
+    tl.add(() => { setTableCtaHover(false); setNameVal(''); setAmountVal(''); setTypeVal('spend'); })
+      .to(table, { filter: 'blur(2.5px)', duration: 0.3 }, '+=0.05')
+      .to(dialog, { opacity: 1, scale: 1, duration: 0.35 }, '<');
+    // 12: Name "Test limit 2"
+    moveTo(tl, nameT, 0.5).add(() => setNameFocus(true));
+    clickInput(tl);
+    type(tl, 'Test limit 2', setNameVal);
+    tl.add(() => setNameFocus(false));
+    // 13: open Type dropdown
+    moveTo(tl, typeT);
+    clickInput(tl);
+    tl.to(typeMenu, { opacity: 1, duration: 0.2 });
+    // 14: → Tokens option, select, close dropdown
+    moveTo(tl, tokensT, 0.4).add(() => setHoveredOpt('tokens'));
+    clickInput(tl);
+    tl.add(() => setTypeVal('tokens'))
+      .to(typeMenu, { opacity: 0, duration: 0.2 })
+      .add(() => setHoveredOpt(null));
+    // 15: Amount "1000000"
+    moveTo(tl, amountT).add(() => setAmountFocus(true));
+    clickInput(tl);
+    type(tl, '1000000', setAmountVal);
+    tl.add(() => setAmountFocus(false));
+    // 16: Create
+    moveTo(tl, createT).add(() => setCreateHover(true));
+    clickButton(tl, createEl);
+    // 17: row 2 added — close dialog, un-blur table (cursor stays for entry 3)
+    tl.add(() => setRows([ROW1, ROW2]))
+      .to(table, { filter: 'blur(0px)', duration: 0.3 }, '+=0.05')
+      .to(dialog, { opacity: 0, scale: 0.96, duration: 0.3 }, '<')
+      .add(() => setCreateHover(false))
+      .add(() => {});
+  // 18: 1-second beat
+  tl.to({}, { duration: 1 });
+  // 19: cursor to the Create-limit button, click
+  moveTo(tl, tableCtaT, 0.6).add(() => setTableCtaHover(true));
+  clickButton(tl, tableCta);
+  // 20: reopen dialog over blurred table, fields reset
+  tl.add(() => { setTableCtaHover(false); setNameVal(''); setAmountVal(''); setTypeVal('spend'); })
+  .to(table, { filter: 'blur(2.5px)', duration: 0.3 }, '+=0.05')
+  .to(dialog, { opacity: 1, scale: 1, duration: 0.35 }, '<');
+  // 21: Name "Test limit 3"
+  moveTo(tl, nameT, 0.5).add(() => setNameFocus(true));
+  clickInput(tl);
+  type(tl, 'Test limit 3', setNameVal);
+  tl.add(() => setNameFocus(false));
+  // 22: open Type dropdown
+  moveTo(tl, typeT);
+  clickInput(tl);
+  tl.to(typeMenu, { opacity: 1, duration: 0.2 });
+  // 23: cursor to Requests option, select, close dropdown
+  moveTo(tl, requestsT, 0.4).add(() => setHoveredOpt('requests'));
+  clickInput(tl);
+  tl.add(() => setTypeVal('requests'))
+  .to(typeMenu, { opacity: 0, duration: 0.2 })
+  .add(() => setHoveredOpt(null));
+  // 24: Threshold "10000"
+  moveTo(tl, amountT).add(() => setAmountFocus(true));
+  clickInput(tl);
+  type(tl, '10000', setAmountVal);
+  tl.add(() => setAmountFocus(false));
+  // 25: Create
+  moveTo(tl, createT).add(() => setCreateHover(true));
+  clickButton(tl, createEl);
+  // 26: row 3 added, close dialog, un-blur table, retire cursor
+  tl.add(() => setRows([ROW1, ROW2, ROW3]))
+  .to(table, { filter: 'blur(0px)', duration: 0.3 }, '+=0.05')
+  .to(dialog, { opacity: 0, scale: 0.96, duration: 0.3 }, '<')
+  .add(() => setCreateHover(false))
+  .to(cursor, { opacity: 0, duration: 0.3 }, '+=0.25')
+  // Loop outro: hold 1 s, fade Create-limit button, stagger rows out, fade table
+  .to({}, { duration: 1 })
+  .to(tableCta, { opacity: 0, duration: 0.22 })
+  .add(() => {
+    // Row stagger targets live DOM nodes — rows are React state and don't exist
+    // at timeline build time, so we query inside the callback.
+    const liveRows = scope.current?.querySelectorAll('tbody tr');
+    if (liveRows && liveRows.length > 0) {
+      gsap.to(liveRows, { opacity: 0, y: 6, stagger: 0.08, duration: 0.22, ease: EASE_OUT });
+    }
+  })
+  // Wait for the nested stagger to finish before collapsing the table wrapper
+  .to({}, { duration: 0.22 + 2 * 0.08 + 0.05 })
+  .to(table, { opacity: 0, duration: 0.22 });
   }, { scope });
 
   return (
@@ -196,28 +341,39 @@ function GuardrailsLimitPreview() {
         />
       </div>
 
-      {/* Result table — the limit the dialog creates. Mounted hidden behind
-          the dialog; revealed after Create as the empty card fades out. */}
-      <div ref={tableRef} className="absolute inset-0 flex items-center" aria-hidden>
+      {/* Result table — top-anchored so adding rows grows downward and the
+          Add-limit button (above the table) stays put. Mounted hidden;
+          revealed after Create. */}
+      <div ref={tableRef} className="absolute inset-0 flex flex-col items-stretch justify-start gap-3" aria-hidden>
+        <div className="flex justify-end">
+          <div ref={tableCtaRef} className="inline-block" style={{ transformOrigin: '50% 50%' }}>
+            <Button size="sm" tabIndex={-1} className={cn(tableCtaHover && 'bg-primary/85')}>
+              <Plus data-icon="inline-start" aria-hidden />
+  Create limit
+            </Button>
+          </div>
+        </div>
         <Card density="flush" className="w-full shadow-card-soft overflow-hidden">
           <Table className="table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[26%] whitespace-nowrap">Name</TableHead>
                 <TableHead className="w-[18%] whitespace-nowrap">Type</TableHead>
-                <TableHead className="w-[18%] whitespace-nowrap">Amount</TableHead>
+                <TableHead className="w-[18%] whitespace-nowrap">Threshold</TableHead>
                 <TableHead className="w-[16%] whitespace-nowrap">Period</TableHead>
                 <TableHead className="w-[22%] whitespace-nowrap">Scope</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell className="whitespace-nowrap text-neutral-900">Test limit</TableCell>
-                <TableCell className="whitespace-nowrap text-neutral-800">Spend</TableCell>
-                <TableCell className="whitespace-nowrap font-mono tabular-nums text-neutral-800">$500</TableCell>
-                <TableCell className="whitespace-nowrap text-neutral-800">1 day</TableCell>
-                <TableCell className="whitespace-nowrap text-neutral-800">Org-wide</TableCell>
-              </TableRow>
+              {rows.map((r) => (
+                <TableRow key={r.name}>
+                  <TableCell className="whitespace-nowrap text-neutral-900">{r.name}</TableCell>
+                  <TableCell className="whitespace-nowrap text-neutral-800">{r.type}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono tabular-nums text-neutral-800">{r.threshold}</TableCell>
+                  <TableCell className="whitespace-nowrap text-neutral-800">{r.period}</TableCell>
+                  <TableCell className="truncate text-neutral-800" title={r.scope}>{r.scope}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </Card>
@@ -245,15 +401,34 @@ function GuardrailsLimitPreview() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label className="text-neutral-600 font-medium text-sm">Type</Label>
-              <Select value="spend">
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {TYPE_OPTS.map((o) => <SelectItem key={o.v} value={o.v}>{o.l}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div ref={typeTriggerRef} className="relative">
+                <Select value={typeVal}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TYPE_OPTS.map((o) => <SelectItem key={o.v} value={o.v}>{o.l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {/* Fake dropdown — the real Select can't open for a fake cursor.
+                    Always mounted (for measurement), revealed by the timeline. */}
+                <div ref={typeMenuRef} className="absolute left-0 top-full z-30 mt-1 w-full rounded-sm border border-border bg-white shadow-(--shadow-popup) p-1">
+                  {TYPE_OPTS.map((o) => (
+                    <div
+                      key={o.v}
+                      ref={o.v === 'tokens' ? tokensOptRef : o.v === 'requests' ? requestsOptRef : undefined}
+                      className={cn(
+                        'flex h-8 items-center justify-between rounded-xs px-2 text-sm text-neutral-900',
+                        o.v === hoveredOpt && 'bg-muted',
+                      )}
+                    >
+                      {o.l}
+                      {typeVal === o.v ? <Check className="size-4 text-neutral-500" /> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="text-neutral-600 font-medium text-sm">Amount</Label>
+              <Label className="text-neutral-600 font-medium text-sm">Threshold</Label>
               <div ref={amountRef}>
                 <Input readOnly inputMode="decimal" value={amountVal} placeholder="e.g. 250" className={cn('font-mono text-sm tabular-nums', amountFocus && FOCUS_RING)} />
               </div>
@@ -292,7 +467,14 @@ function GuardrailsLimitPreview() {
 
       {/* Cursor — drives the whole sequence, painted above everything. */}
       <div ref={cursorRef} aria-hidden className="absolute bottom-2 right-2">
-        <MousePointer2 className="size-6 fill-neutral-900 text-neutral-900" strokeWidth={1.5} />
+        {/* Ping anchored at the pointer tip (top-left of the icon). Independent of
+            the press scale so it reads as a clean radial pulse. */}
+        <div
+          ref={pingRef}
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary opacity-0"
+        />
+        <MousePointer2 ref={iconRef} className="size-6 fill-neutral-900 text-neutral-900" strokeWidth={1.5} />
       </div>
     </div>
   );
