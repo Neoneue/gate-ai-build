@@ -28,6 +28,7 @@ import {
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
+import { PlanComparisonDialog } from '@/pages/plan-comparison-dialog';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ function PlanCreditsRow() {
 }
 
 function PlanCard() {
+  const [compareOpen, setCompareOpen] = useState(false);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -96,11 +98,15 @@ function PlanCard() {
         <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
       <CardFooter className="justify-end gap-4 border-t border-border">
+        <Button variant="outline" onClick={() => setCompareOpen(true)}>
+          Compare plans
+        </Button>
         <Button>
           <Sparkles data-icon="inline-start" aria-hidden />
           Upgrade to Pro
         </Button>
       </CardFooter>
+      <PlanComparisonDialog open={compareOpen} onOpenChange={setCompareOpen} onUpgrade={() => setCompareOpen(false)} />
     </Card>
   );
 }
