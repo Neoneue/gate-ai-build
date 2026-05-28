@@ -1,4 +1,4 @@
-import { type EventRow } from '@/pages/Security';
+import { type EventRow } from '@/pages/security-data';
 
 // Self-contained 48-event feed in chronological ASC order. No external data
 // dependency — every event needed to drive the rotation animation lives here.

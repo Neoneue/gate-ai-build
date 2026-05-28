@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
+import { ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/security-data';
 import { SECURITY_FEED } from '@/pages/security-feed';
 import { PlanComparisonDialog, type PlanFeature } from '@/pages/plan-comparison-dialog';
 import { formatTimestamp } from '@/lib/formatters';

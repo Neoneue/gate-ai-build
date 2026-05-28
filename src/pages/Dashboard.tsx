@@ -35,7 +35,7 @@ import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters'
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { REQUEST_ROWS_RECENT, type RequestRow } from '@/pages/Requests';
 import { CONVERSATION_ROWS, type ConversationRow } from '@/pages/Conversations';
-import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
+import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/security-data';
 
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
 
