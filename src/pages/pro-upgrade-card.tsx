@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, type LucideIcon } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PlanComparisonDialog } from '@/pages/plan-comparison-dialog';
@@ -36,7 +36,7 @@ export function ProUpgradeCard({
 				body={body}
 				action={
 					<div className="flex items-center gap-2 pt-4">
-						<Button onClick={() => navigate('/billing')}><Sparkles className="size-4" aria-hidden /> Upgrade to Pro</Button>
+						<Button onClick={() => navigate('/billing')}>Go to Billing</Button>
 						<Button variant="outline" onClick={() => setCompareOpen(true)}>Compare plans</Button>
 					</div>
 				}

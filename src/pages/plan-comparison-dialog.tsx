@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Sparkles, ShieldAlert, EyeOff, Recycle, SlidersHorizontal, BarChart3, Route, Fingerprint, MessagesSquare, type LucideIcon } from 'lucide-react';
+import { ShieldAlert, EyeOff, Recycle, SlidersHorizontal, BarChart3, Route, Fingerprint, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +46,7 @@ const PRO_PLAN: PlanCardData = {
 		{ Icon: SlidersHorizontal,	title: 'Spend, token & rate limits',	detail: 'Caps at the org, project, or key level.' },
 		{ Icon: Recycle,		title: 'Token savings',					detail: '20%+ tokens saved per request via lossless compression and cache injection.' },
 	],
-	cta: { label: 'Upgrade to Pro', variant: 'default', icon: Sparkles },
+	cta: { label: 'Go to Billing', variant: 'default' },
 };
 
 function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => void }) {

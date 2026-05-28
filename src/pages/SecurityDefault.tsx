@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Sparkles, ShieldAlert, EyeOff, KeyRound, Radar } from 'lucide-react';
+import { ShieldAlert, EyeOff, KeyRound, Radar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -196,9 +196,7 @@ export function HeroCard({ features = DEFAULT_PRO_FEATURES, preview }: { feature
             </div>
 
             <div className="flex items-center gap-2 mt-2">
-              <Button onClick={() => navigate('/billing')}>
-                <Sparkles className="size-4" /> Upgrade to Pro
-              </Button>
+              <Button onClick={() => navigate('/billing')}>Go to Billing</Button>
               <Button variant="outline" onClick={() => setCompareOpen(true)}>
                 Compare plans
               </Button>
