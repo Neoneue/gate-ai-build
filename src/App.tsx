@@ -30,7 +30,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { SignIn } from '@/pages/SignIn';
 import { SignUp } from '@/pages/SignUp';
 import { TokenSavings } from '@/pages/TokenSavings';
-import { TokenSavingsDefault } from '@/pages/TokenSavingsDefault';
+import { TokenSavingsFree } from '@/pages/TokenSavingsFree';
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -81,7 +81,7 @@ export default function App() {
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
           <Route path="/token-savings" element={<TokenSavings />} />
-          <Route path="/token-savings-default" element={<TokenSavingsDefault />} />
+          <Route path="/token-savings-free" element={<TokenSavingsFree />} />
           <Route path="/guardrails" element={<Guardrails />} />
           <Route path="/guardrails-default" element={<GuardrailsDefault />} />
           <Route path="/guardrails-free" element={<GuardrailsFree />} />

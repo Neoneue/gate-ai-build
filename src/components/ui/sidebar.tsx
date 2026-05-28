@@ -315,7 +315,7 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         >
           CP
         </span>
-        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad</span>
+        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad Ponticas</span>
       </div>
       <UserMenu onNavigate={onNavigate} side="right" align="end" sideOffset={12}>
         <button

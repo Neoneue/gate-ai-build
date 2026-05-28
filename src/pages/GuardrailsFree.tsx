@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { MoreHorizontal, Shield, Sparkles } from 'lucide-react';
+import { MoreHorizontal, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -39,7 +38,7 @@ import {
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatDateTime } from '@/lib/formatters';
-import { PlanComparisonDialog } from '@/pages/plan-comparison-dialog';
+import { ProUpgradeCard } from '@/pages/pro-upgrade-card';
 
 export function GuardrailsFree() {
   const navigate = useNavigate();
@@ -48,7 +47,6 @@ export function GuardrailsFree() {
     toggleSidebar: () => void;
   }>();
   const [createOpen, setCreateOpen] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
   const [limits, setLimits] = useState<Limit[]>([]);
   const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
   const removeLimit = (id: string) =>
@@ -84,19 +82,12 @@ export function GuardrailsFree() {
       <LimitsSection
         limits={limits}
         onRemove={removeLimit}
-				action={
-					<div className="flex items-center gap-2">
-						<Button onClick={() => navigate('/billing')}><Sparkles className="size-4" /> Upgrade to Pro</Button>
-						<Button variant="outline" onClick={() => setCompareOpen(true)}>Compare plans</Button>
-					</div>
-				}
 			/>
       <CreateLimitDialog
         open={createOpen}
         onOpenChange={handleCreateOpenChange}
         onCreate={addLimit}
       />
-			<PlanComparisonDialog open={compareOpen} onOpenChange={setCompareOpen} onUpgrade={() => navigate('/billing')} />
     </DashboardChrome>
   );
 }
@@ -121,11 +112,9 @@ function PageHeader() {
 function LimitsSection({
   limits,
   onRemove,
-	action,
 }: {
   limits: Limit[];
   onRemove: (id: string) => void;
-	action?: ReactNode;
 }) {
   // Snapshot `now` once per limits change. Without this, calling
   // `resetsAt(new Date(), ...)` per row in the JSX recomputes on every
@@ -138,19 +127,7 @@ function LimitsSection({
 
   if (limits.length === 0) {
     return (
-      <EmptyState
-        icon={
-          <div
-            aria-hidden
-            className="size-12 rounded-full bg-muted flex items-center justify-center"
-          >
-            <Shield className="size-5 text-neutral-700" />
-          </div>
-        }
-        title="Unlock to use this feature"
-        body="Limits & quotas are a Pro feature. Upgrade in Billing to cap spend, throttle traffic, and shape usage per project or key."
-				action={action}
-      />
+      <ProUpgradeCard icon={ShieldCheck} body="Limits & quotas are a Pro feature. Upgrade in Billing to cap spend, throttle traffic, and shape usage per project or key." />
     );
   }
 

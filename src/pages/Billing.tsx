@@ -97,7 +97,7 @@ function PlanCard() {
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
-      <CardFooter className="justify-end gap-4 border-t border-border">
+      <CardFooter className="justify-end gap-2 border-t border-border">
         <Button variant="outline" onClick={() => setCompareOpen(true)}>
           Compare plans
         </Button>
