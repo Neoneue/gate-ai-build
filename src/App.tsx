@@ -23,6 +23,7 @@ import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
 import { Security } from '@/pages/Security';
 import { SecurityDefault } from '@/pages/SecurityDefault';
+import { SecurityFree } from '@/pages/SecurityFree';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
 import { GetStarted } from '@/pages/GetStarted';
@@ -88,6 +89,7 @@ export default function App() {
   <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/security" element={<Security />} />
           <Route path="/events-default" element={<SecurityDefault />} />
+  <Route path="/security-free" element={<SecurityFree />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/audit-trail" element={<AuditTrail />} />
           <Route path="/activity" element={<Activity />} />
