@@ -77,4 +77,4 @@ export function RowActionButton({
   );
 }
 
-export { rowActionButtonVariants };
+// rowActionButtonVariants: internal use only — not exported

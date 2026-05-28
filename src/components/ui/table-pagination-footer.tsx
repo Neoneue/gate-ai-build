@@ -37,7 +37,7 @@ const ROWS_PER_PAGE_OPTIONS = ['10', '25', '50', '100'];
  * page; otherwise returns [1, optional left ellipsis, current ± 1 clipped,
  * optional right ellipsis, last page]. 1-based.
  */
-export function buildPageWindow(
+function buildPageWindow(
   current: number,
   totalPages: number,
 ): (number | 'ellipsis-l' | 'ellipsis-r')[] {

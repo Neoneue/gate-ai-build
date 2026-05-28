@@ -53,4 +53,4 @@ export function HeroNumeric({
   );
 }
 
-export { heroNumericVariants };
+// heroNumericVariants: internal use only — not exported

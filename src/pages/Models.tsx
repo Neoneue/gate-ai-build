@@ -1482,7 +1482,7 @@ const TMPL_TOKEN_RE     = /^\$\{[^}]+\}/;
 const ENV_VAR_RE        = /^\$[A-Z_][A-Z0-9_]*/;
 const WORD_BOUNDARY_RE  = /\w/;
 const NUMBER_TOKEN_RE   = /^\d+(\.\d+)?/;
-const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/;
+const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'[{])/;
 
 const KEYWORDS: Record<Lang, RegExp> = {
   ts: /^(import|from|const|let|var|new|await|return|function|null|true|false)\b/,

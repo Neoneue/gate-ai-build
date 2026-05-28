@@ -73,7 +73,7 @@ export function Sparkline({
   // "one palette per project" rule.
   let stroke: string;
   let fill: string;
-  let fillOpacity = 0.12;
+  const fillOpacity = 0.12;
   if (tone === 'critical') {
     stroke = 'var(--color-chart-5)';
     fill = 'var(--color-chart-5)';

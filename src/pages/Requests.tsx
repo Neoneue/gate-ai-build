@@ -263,7 +263,7 @@ function makeHeroBuckets(
   const weights: number[] = [];
   for (let i = 0; i < count; i++) {
     const t = i / count;
-    let base = 1;
+    let base: number;
     if (shape === 'daily') {
       base = 0.15 + 0.85 * Math.exp(-Math.pow((t - 0.55) * 2.2, 2));
     } else if (shape === 'weekly') {
