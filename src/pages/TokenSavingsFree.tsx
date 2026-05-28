@@ -20,7 +20,7 @@ export function TokenSavingsFree() {
 			<PageHeader />
 			<ProUpgradeCard
 				icon={Coins}
-				body="Token savings are a Pro feature. Upgrade in Billing to cache responses, compress prompts, and deduplicate calls to spend less per request."
+				body="Token savings are a Pro feature. Upgrade in Billing to save 20%+ on every request, automatically."
 			/>
 		</DashboardChrome>
 	);
