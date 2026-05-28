@@ -22,20 +22,19 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import {
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
-  TOTAL_7D_BASE_TOKENS,
   distributeSeries,
   SPEND_BASE,
   SPEND_SERIES,
   TOKENS_TOTALS_7D,
   seriesColor,
-} from '@/pages/Activity';
+} from '@/pages/activity-data';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { REQUEST_ROWS_RECENT, type RequestRow } from '@/pages/Requests';
 import { CONVERSATION_ROWS, type ConversationRow } from '@/pages/Conversations';
-import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/Security';
+import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/security-data';
 
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
 
@@ -94,16 +93,10 @@ function capWithOthers(
   return { series: cappedSeries, data: cappedData };
 }
 
-export const fmtTokens = (n: number) =>
+const fmtTokens = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M`
   : n >= 1_000   ? `${(n / 1_000).toFixed(1)}K`
   : `${n}`;
-
-export const THREATS_STATUS_SERIES = [
-  { key: 'blocked',  label: 'Blocked',  slot: 0, color: 'var(--color-danger-500)'  },
-  { key: 'flagged',  label: 'Flagged',  slot: 1, color: 'var(--color-warning-500)' },
-  { key: 'redacted', label: 'Redacted', slot: 2, color: 'var(--color-blue-500)'    },
-] as const satisfies StackedSeries;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -172,14 +165,14 @@ function make7dLabels(): string[] {
 
 const KPI_7D_LABELS = make7dLabels();
 
-export function makeStackedSpendRows(dim: Dimension): Array<Record<string, number | string>> {
+function makeStackedSpendRows(dim: Dimension): Array<Record<string, number | string>> {
   return SPEND_BASE[dim].map((row, i) => ({
     date: KPI_7D_LABELS[i] ?? '',
     ...row,
   }));
 }
 
-export function makeStackedTokenRows(dim: Dimension): Array<Record<string, number | string>> {
+function makeStackedTokenRows(dim: Dimension): Array<Record<string, number | string>> {
   const dimSeries = SPEND_SERIES[dim];
   const totals = TOKENS_TOTALS_7D[dim];
   const buckets: Record<string, number[]> = {};
@@ -193,20 +186,6 @@ export function makeStackedTokenRows(dim: Dimension): Array<Record<string, numbe
     for (const s of dimSeries) row[s.key] = buckets[s.key]?.[i] ?? 0;
     return row;
   });
-}
-
-export function makeStackedThreatsRows(): Array<Record<string, number | string>> {
-  const buckets = {
-    blocked:  distributeSeries(77, 7, 141),
-    flagged:  distributeSeries(35, 7, 142),
-    redacted: distributeSeries(5,  7, 143),
-  };
-  return Array.from({ length: 7 }, (_, i) => ({
-    date:     KPI_7D_LABELS[i] ?? '',
-    blocked:  buckets.blocked[i]  ?? 0,
-    flagged:  buckets.flagged[i]  ?? 0,
-    redacted: buckets.redacted[i] ?? 0,
-  }));
 }
 
 /** Stacked-by-model bar chart used in the Spend and Tokens tiles. */
@@ -306,9 +285,6 @@ export function HorizontalLegend({ series }: { series: StackedSeries }) {
     </div>
   );
 }
-
-// Pre-compute static chart data for the outcome tiles (never change dimension).
-export const THREATS_STACKED_ROWS  = makeStackedThreatsRows();
 
 type Metric = 'spend' | 'tokens';
 
@@ -643,10 +619,3 @@ function SecurityEventsTable() {
   );
 }
 
-// Retain these exports — used by future Tokens/Requests/Security tiles.
-export {
-  TOTAL_7D_BASE_REQUESTS,
-  TOTAL_7D_BASE_TOKENS,
-  THREATS_DETECTED_COUNT,
-  formatNumber,
-};

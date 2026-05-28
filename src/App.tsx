@@ -15,6 +15,9 @@ import { Conversations } from '@/pages/Conversations';
 import { Dashboard } from '@/pages/Dashboard';
 import { DashboardDefault } from '@/pages/DashboardDefault';
 import { Guardrails } from '@/pages/Guardrails';
+import { GuardrailsDefault } from '@/pages/GuardrailsDefault';
+import { GuardrailsFree } from '@/pages/GuardrailsFree';
+import { Upgrade } from '@/pages/Upgrade';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
@@ -27,6 +30,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { SignIn } from '@/pages/SignIn';
 import { SignUp } from '@/pages/SignUp';
 import { TokenSavings } from '@/pages/TokenSavings';
+import { TokenSavingsFree } from '@/pages/TokenSavingsFree';
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -77,7 +81,11 @@ export default function App() {
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
           <Route path="/token-savings" element={<TokenSavings />} />
+          <Route path="/token-savings-free" element={<TokenSavingsFree />} />
           <Route path="/guardrails" element={<Guardrails />} />
+          <Route path="/guardrails-default" element={<GuardrailsDefault />} />
+          <Route path="/guardrails-free" element={<GuardrailsFree />} />
+  <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/security" element={<Security />} />
           <Route path="/events-default" element={<SecurityDefault />} />
           <Route path="/policies" element={<Policies />} />

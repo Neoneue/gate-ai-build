@@ -39,7 +39,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './Activity';
+import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './activity-data';
 import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
 

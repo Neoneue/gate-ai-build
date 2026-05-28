@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, ChevronsUpDown, MoreHorizontal } from 'lucide-react';
+import { Check, ChevronsUpDown, Lock, MoreHorizontal } from 'lucide-react';
 import {
   Menu,
   MenuContent,
@@ -39,6 +39,9 @@ export type SidebarItem = {
   /** When set, clicking the item calls the surface's `onNavigate(pageId)`
    *  so the inner sidebar can drive the outer App router. */
   pageId?: string;
+ /** Show a muted, right-flush lock icon on this row — used to mark
+  * Pro-gated features in the free-tier sidebar. */
+ locked?: boolean;
 };
 
 export type SidebarSection = {
@@ -238,6 +241,13 @@ function SidebarExpanded({
                     strokeWidth={1.75}
                   />
                   <span className="font-sans text-sm">{item.label}</span>
+                  {item.locked ? (
+                  	<Lock
+                  		className="ml-auto size-4 shrink-0 text-muted-foreground/60"
+                  		strokeWidth={1.75}
+                  		aria-hidden
+                  	/>
+                  ) : null}
                 </button>
               );
             })}
@@ -315,7 +325,7 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         >
           CP
         </span>
-        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad</span>
+        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad Ponticas</span>
       </div>
       <UserMenu onNavigate={onNavigate} side="right" align="end" sideOffset={12}>
         <button
