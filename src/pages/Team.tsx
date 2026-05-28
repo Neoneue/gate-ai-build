@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { IconActionButton } from '@/components/ui/icon-action-button';
-import { Monogram, type AvatarTone } from '@/components/ui/monogram';
+import { Monogram } from '@/components/ui/monogram';
+import { type AvatarTone } from '@/components/ui/monogram-types';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import {
   Dialog,

@@ -57,7 +57,8 @@ import {
   VendorAvatar,
   type Vendor,
 } from '@/components/icons/vendor-meta';
-import { Monogram, type AvatarTone } from '@/components/ui/monogram';
+import { Monogram } from '@/components/ui/monogram';
+import { type AvatarTone } from '@/components/ui/monogram-types';
 import { type Dimension, TOTAL_7D_BASE_DOLLARS, TOTAL_7D_BASE_REQUESTS, TOTAL_7D_BASE_TOKENS, SPEND_SERIES, SPEND_TOTALS_7D, TOKENS_TOTALS_7D, distributeSeries, seriesColor, API_KEY_ROWS } from '@/pages/activity-data';
 import { formatCurrency, formatDate, formatNumber, formatTime } from '@/lib/formatters';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
