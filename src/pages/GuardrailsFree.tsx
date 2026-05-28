@@ -127,7 +127,7 @@ function LimitsSection({
 
   if (limits.length === 0) {
     return (
-      <ProUpgradeCard icon={ShieldCheck} body="Limits & quotas are a Pro feature. Upgrade in Billing to cap spend, tokens, and request rates at the org, project, or key level." />
+      <ProUpgradeCard icon={ShieldCheck} body="Limits & quotas are a Pro feature. Upgrade in Billing to catch a runaway agent in the act, not at month-end." />
     );
   }
 
