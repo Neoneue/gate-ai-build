@@ -20,6 +20,7 @@ type PlanCardData = {
 	features: PlanFeature[];
 	featured?: boolean;
 	cta: { label: string; variant: 'default' | 'outline'; icon?: LucideIcon; onClick?: () => void; disabled?: boolean; ariaLabel?: string };
+	ctaCaption: string;
 };
 
 const FREE_PLAN: PlanCardData = {
@@ -33,6 +34,7 @@ const FREE_PLAN: PlanCardData = {
 		{ Icon: MessagesSquare,	title: 'Conversation threading',		detail: 'Follow agent runs and chats end-to-end' },
 	],
 	cta: { label: 'Your current plan', variant: 'outline', disabled: true, ariaLabel: 'Free plan is your current plan' },
+	ctaCaption: 'Free to use, forever',
 };
 
 const PRO_PLAN: PlanCardData = {
@@ -47,6 +49,7 @@ const PRO_PLAN: PlanCardData = {
 		{ Icon: Recycle,		title: 'Token savings',					detail: '20%+ tokens saved per request via lossless compression and cache injection.' },
 	],
 	cta: { label: 'Go to Billing', variant: 'default' },
+	ctaCaption: '$30/month after your 14 day trial ends',
 };
 
 function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => void }) {
@@ -85,7 +88,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
 				</ul>
 			</div>
 
-			<div className="mt-auto pt-2">
+			<div className="mt-auto pt-2 flex flex-col gap-4">
 				<Button
 					variant={plan.cta.variant}
 					disabled={plan.cta.disabled}
@@ -96,6 +99,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
 					{CtaIcon ? <CtaIcon className="size-4" /> : null}
 					{plan.cta.label}
 				</Button>
+				<p className="text-xs text-neutral-500 text-center m-0">{plan.ctaCaption}</p>
 			</div>
 		</div>
 	);
