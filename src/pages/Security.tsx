@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeftRight, Download, FileText, Flag, ShieldCheck } from 'lucide-react';
@@ -373,14 +373,19 @@ function HeroMetricCard({ range, customRange }: { range: EventsRange; customRang
 
   // Chart: total-events trace + date/time axis, driven by the page range.
   // Same buildSpark() math as the KpiRail "Total events" tile.
-const chart = useMemo(() => buildEventsChartView(range, customRange), [range, customRange]);
-const firstTick = chart.ticks[0];
-const lastTick = chart.ticks[chart.ticks.length - 1];
-const renderTick = useCallback(
-(tickProps: { x: string | number; y: string | number; payload: { value: string } }) =>
-<ChartXAxisTick {...tickProps} firstTick={firstTick} lastTick={lastTick} />,
-[firstTick, lastTick],
-);
+// chart + renderTick share one memo boundary keyed on [range, customRange] so
+// the compiler can trace the full derivation chain (the firstTick/lastTick
+// reads happen inside the memo, not as a leak between useMemo and useCallback).
+const { chart, renderTick } = useMemo(() => {
+const view = buildEventsChartView(range, customRange);
+const ft = view.ticks[0];
+const lt = view.ticks[view.ticks.length - 1];
+return {
+chart: view,
+renderTick: (tickProps: { x: string | number; y: string | number; payload: { value: string } }) =>
+<ChartXAxisTick {...tickProps} firstTick={ft} lastTick={lt} />,
+};
+}, [range, customRange]);
 
   return (
     <Card className="px-4">
