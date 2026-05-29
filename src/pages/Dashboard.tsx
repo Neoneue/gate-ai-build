@@ -472,6 +472,7 @@ function LatestRequestsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest requests">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -506,6 +507,7 @@ function LatestRequestsTable() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -527,6 +529,7 @@ function RecentConversationsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest conversations">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -557,6 +560,7 @@ function RecentConversationsTable() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -578,6 +582,7 @@ function SecurityEventsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest security events">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -618,6 +623,7 @@ function SecurityEventsTable() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
