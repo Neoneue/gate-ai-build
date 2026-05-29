@@ -1305,7 +1305,7 @@ function PlatformPanel() {
               <span className="font-sans text-xs text-neutral-500 text-pretty">{p.note}</span>
             </div>
             <SquareArrowOutUpRight
-              className="size-4 text-neutral-500 shrink-0 mt-1 transition-colors duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800"
+              className="size-4 text-neutral-500 shrink-0 mt-1 transition-[color,transform] duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800 group-hover:translate-x-px group-hover:-translate-y-px motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
               strokeWidth={1.75}
               aria-hidden="true"
             />

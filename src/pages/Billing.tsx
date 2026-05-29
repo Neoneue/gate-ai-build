@@ -171,7 +171,7 @@ function CreditsCard() {
       <CardFooter className="justify-end gap-2 border-t border-border">
         <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
         <Button onClick={() => setAddOpen(true)}>
-          <Plus data-icon="inline-start" aria-hidden />
+          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
           Add credits
         </Button>
       </CardFooter>

@@ -1138,7 +1138,7 @@ function RequestsTableSection({
           </Select>
 
           <Button type="button" variant="outline" size="sm" className="ml-auto">
-            <Download data-icon="inline-start" aria-hidden />
+            <Download data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-y-0" />
             Export CSV
           </Button>
         </FilterToolbar>
@@ -1537,7 +1537,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           onClick={openConversation}
         >
           View Conversation
-          <ExternalLink data-icon="inline-end" aria-hidden />
+          <ExternalLink data-icon="inline-end" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
         </Button>
       </DialogScrollFooter>
     </>

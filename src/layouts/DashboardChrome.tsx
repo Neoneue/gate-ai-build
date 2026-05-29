@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {
   Bell,
-  ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnimatedExternalLink } from '@/components/ui/animated-external-link';
 import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
 import { FeedbackFab } from '@/components/ui/feedback-fab';
 import { cn } from '@/lib/utils';
@@ -134,7 +134,7 @@ function DashTopBar({
         {hideDocsButton ? null : (
           <Button variant="outline" size="sm">
             Docs
-            <ExternalLink data-icon="inline-end" aria-hidden />
+            <AnimatedExternalLink data-icon="inline-end" aria-hidden className="relative -top-px" />
           </Button>
         )}
         <Button

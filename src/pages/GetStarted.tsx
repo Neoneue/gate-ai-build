@@ -116,7 +116,7 @@ export function GetStarted() {
               variant="outline"
               onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
             >
-              Open docs <ExternalLink className="size-4" />
+              Open docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
             </Button>
           </div>
         </QuickStepCard>

@@ -149,13 +149,13 @@ function HeroCard() {
             </div>
             <div className="flex items-center gap-3">
               <Button onClick={() => navigate('/api-keys')}>
-                <Plus className="size-4" data-icon="inline-start" /> Create key
+                <Plus className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" data-icon="inline-start" /> Create key
               </Button>
               <Button
                 variant="outline"
                 onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
               >
-                Read API docs <ExternalLink className="size-4" />
+                Read API docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
               </Button>
             </div>
           </div>

@@ -990,7 +990,7 @@ function EventsTableSection({
         </Select>
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden />
+          <Download data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-y-0" />
           Export CSV
         </Button>
       </FilterToolbar>
