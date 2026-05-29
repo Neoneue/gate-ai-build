@@ -1,10 +1,10 @@
 import * as React from 'react';
 import {
-  Bell,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnimatedBell } from '@/components/ui/animated-bell';
 import { AnimatedExternalLink } from '@/components/ui/animated-external-link';
 import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
 import { FeedbackFab } from '@/components/ui/feedback-fab';
@@ -142,7 +142,7 @@ function DashTopBar({
           size="icon-sm"
           aria-label="Notifications"
         >
-          <Bell className="size-4" strokeWidth={1.75} />
+          <AnimatedBell className="size-4" strokeWidth={1.75} aria-hidden />
         </Button>
       </div>
     </div>

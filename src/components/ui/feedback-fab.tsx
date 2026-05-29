@@ -76,8 +76,8 @@ function FeedbackFab() {
           "inline-flex items-center gap-2 rounded-full px-4 h-10",
           "bg-neutral-900 text-white text-sm font-medium whitespace-nowrap",
           "shadow-(--shadow-popup)",
-          "transition-colors duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer hover:bg-neutral-800",
+          "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
+          "cursor-pointer hover:bg-neutral-800 hover:-translate-y-px motion-reduce:hover:translate-y-0",
           "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring",
           "select-none",
         )}

@@ -4,13 +4,13 @@ import { CopyButton } from '@/components/ui/copy-button';
 import {
   Braces,
   ChevronDown,
-  Download,
   ExternalLink,
   Info,
   Sparkles,
   TriangleAlert,
   User,
 } from 'lucide-react';
+import { AnimatedDownload } from '@/components/ui/animated-download';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -1138,7 +1138,7 @@ function RequestsTableSection({
           </Select>
 
           <Button type="button" variant="outline" size="sm" className="ml-auto">
-            <Download data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-y-0" />
+            <AnimatedDownload data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
         </FilterToolbar>

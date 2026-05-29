@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeftRight, Download, FileText, Flag, ShieldCheck } from 'lucide-react';
+import { ArrowLeftRight, FileText, Flag, ShieldCheck } from 'lucide-react';
+import { AnimatedDownload } from '@/components/ui/animated-download';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -990,7 +991,7 @@ function EventsTableSection({
         </Select>
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-y-0" />
+          <AnimatedDownload data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
       </FilterToolbar>

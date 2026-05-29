@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { Download, Info, Key } from 'lucide-react';
+import { Info, Key } from 'lucide-react';
+import { AnimatedDownload } from '@/components/ui/animated-download';
 import {
   Bar,
   BarChart,
@@ -1144,7 +1145,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         </Select>
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-y-0" />
+          <AnimatedDownload data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
       </FilterToolbar>
