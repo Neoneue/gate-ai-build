@@ -23,7 +23,7 @@ export function ProUpgradeCard({
 	return (
 		<>
 			<EmptyState
-				className="[&_h3]:text-lg [&_h3]:text-balance"
+				className="[&_h3]:text-balance"
 				icon={
 					<div
 						aria-hidden

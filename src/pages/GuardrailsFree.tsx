@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { MoreHorizontal, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,8 @@ export function GuardrailsFree() {
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
-  const [createOpen, setCreateOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === '1');
   const [limits, setLimits] = useState<Limit[]>([]);
   const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
   const removeLimit = (id: string) =>
@@ -56,12 +57,6 @@ export function GuardrailsFree() {
   // Used by Overview's "Set a spend limit" quick action so a single click
   // lands the user in the form. Param is stripped when the dialog closes
   // so the URL reflects state and re-mounts don't re-open the dialog.
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    if (searchParams.get('create') === '1') {
-      setCreateOpen(true);
-    }
-  }, [searchParams]);
   const handleCreateOpenChange = (next: boolean) => {
     setCreateOpen(next);
     if (!next && searchParams.has('create')) {

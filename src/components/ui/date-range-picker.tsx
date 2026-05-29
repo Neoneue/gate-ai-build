@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Calendar as CalendarIcon, XIcon } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
@@ -108,18 +108,18 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
   const [fromTime, setFromTime] = useState('00:00');
   const [toTime, setToTime] = useState('23:55');
 
-  // When the popover opens, seed the drafts from the current applied value.
-  // The effect runs only on `open` transitions so a parent-side value
-  // change while the popover is closed doesn't stomp an in-progress draft.
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (next: boolean) => {
+    // Seed drafts exactly when the popover opens so parent changes while
+    // closed never stomp an in-progress edit session.
+    if (next) {
       setDraft(value ? { from: value.from, to: value.to } : undefined);
       // timeOf() snaps the minute to the 5-minute grid, so a parent value
       // with an off-grid minute (e.g. :48) still maps to a real option.
       setFromTime(value ? timeOf(value.from) : '00:00');
       setToTime(value ? timeOf(value.to) : '23:55');
     }
-  }, [open, value]);
+    setOpen(next);
+  };
 
   const handleApply = () => {
     if (draft?.from && draft?.to) {
@@ -145,7 +145,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
   const canApply = Boolean(draft?.from && draft?.to);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       {/* Trigger = real Button (outline variant) consuming the primitive's
           recipe. Clear ✕ sits as a sibling IconActionButton — independent
           focus stop, own aria-label, stopPropagation on click so it does
