@@ -179,9 +179,10 @@ are representative samples** (the per-pattern instance list was capped at 12 dur
 | `mt-3` | 4 | |
 
 ### Spacing - half-step values (forbidden `*.5`)
+Note: the icon `size-*` ladder (14/16/20/24 = `size-3.5`/`size-4`/`size-5`/`size-6`) is **explicitly exempt** from the no-`*.5` rule per design.md:609 and the project grid convention. Icon sizes below were a sweep over-flag, not violations.
 | Pattern | Count | Notes |
 |---|---|---|
-| `size-3.5` (14px) | 22 | pervasive icon size in `button.tsx`, `checkbox.tsx`, `pagination.tsx`, `toggle-variants.ts`, etc. **Decide deliberately:** this is the de-facto small-icon size - either grant it an explicit exemption or migrate all 22 to `size-4`/`size-3`. |
+| `size-3.5` (14px) | 22 | **OK - sanctioned.** Icon-ladder exemption (design.md:609). 14px icons pair only with 12px `text-xs` in xs/sm controls; the icon never sits beside 14/20 `text-sm` (default/lg use 16px `size-4`). No change. |
 | `h-0.5`/`w-0.5` | 3 | `tabs.tsx` underline, `chart.tsx` |
 | `h-2.5`/`w-2.5` | 2 | `chart.tsx` legend dots |
 | `mt-0.5` | 2 | `Upgrade.tsx:82`, `plan-comparison-dialog.tsx:79` optical nudge |
