@@ -385,7 +385,7 @@ function GuardrailsLimitPreview() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
         <div
           ref={dialogRef}
-          className="w-3/4 rounded-xl border border-border bg-white shadow-(--shadow-modal) p-4 flex flex-col gap-3 text-left"
+          className="w-3/4 rounded-xl border border-border bg-card shadow-(--shadow-modal) p-4 flex flex-col gap-3 text-left"
         >
           <div className="flex flex-col gap-1">
             <h3 className="font-sans text-base font-medium text-neutral-900 m-0">Create limit</h3>
@@ -411,7 +411,7 @@ function GuardrailsLimitPreview() {
                 </Select>
                 {/* Fake dropdown — the real Select can't open for a fake cursor.
                     Always mounted (for measurement), revealed by the timeline. */}
-                <div ref={typeMenuRef} className="absolute left-0 top-full z-30 mt-1 w-full rounded-sm border border-border bg-white shadow-(--shadow-popup) p-1">
+                <div ref={typeMenuRef} className="absolute left-0 top-full z-30 mt-1 w-full rounded-sm border border-border bg-card shadow-(--shadow-popup) p-1">
                   {TYPE_OPTS.map((o) => (
                     <div
                       key={o.v}

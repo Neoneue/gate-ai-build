@@ -1101,7 +1101,7 @@ function TraceItem({
           <span className="font-mono text-xs tabular-nums text-neutral-800 flex-1">
             {event.cost}
           </span>
-          <span className="font-mono text-xs text-neutral-400 shrink-0">
+          <span className="font-mono text-xs text-neutral-500 shrink-0">
             {event.requestId}
           </span>
         </div>

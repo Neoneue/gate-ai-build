@@ -43,7 +43,7 @@ export function DashboardChrome({
   children,
 }: DashboardChromeProps) {
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-white">
+    <div className="flex flex-col w-full h-screen overflow-hidden bg-card">
       <div className="flex flex-row flex-1 min-h-0">
         <Sidebar
           sections={SIDEBAR_SECTIONS}
@@ -87,7 +87,7 @@ function DashTopBar({
   hideDocsButton?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between h-14 px-6 bg-white border-b border-border shrink-0">
+    <div className="flex items-center justify-between h-14 px-6 bg-card border-b border-border shrink-0">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"

@@ -616,6 +616,7 @@ function HeroMetricCard() {
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
+          accessibilityLayer
           data={view.data}
           margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
         >
@@ -999,8 +1000,22 @@ function RequestsTableSection({
   // alias for `row.slow === true` rather than a status value.
   const [responseFilter, setResponseFilter] = useState('all');
   const [guardrailFilter, setGuardrailFilter] = useState('all');
-  const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
+  const pageScopeKey =
+    range === 'custom'
+      ? `${range}:${customRange?.from.getTime() ?? 'none'}:${customRange?.to.getTime() ?? 'none'}`
+      : range;
+  const [paging, setPaging] = useState<{ scopeKey: string; page: number }>(() => ({
+    scopeKey: pageScopeKey,
+    page: 1,
+  }));
+  const page = paging.scopeKey === pageScopeKey ? paging.page : 1;
+  const setPage = useCallback(
+    (next: number) => {
+      setPaging({ scopeKey: pageScopeKey, page: next });
+    },
+    [pageScopeKey],
+  );
   // Row-click drill-in. `selectedRow` doubles as the dialog's `open`
   // signal — `null` means closed, a row means open. Avoids carrying a
   // separate `open` flag.
@@ -1022,13 +1037,6 @@ function RequestsTableSection({
       if (match) setSelectedRow(match);
     }
   }
-
-  // Range now lifted to the parent — when it (or the custom range) flips,
-  // reset to page 1 so a deep-paged All state doesn't carry over into a
-  // 24H view that doesn't have those pages.
-  useEffect(() => {
-    setPage(1);
-  }, [range, customRange]);
 
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
@@ -1205,6 +1213,7 @@ function RequestsTableSection({
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
+                  role="button"
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
                   onClick={() => setSelectedRow(row)}
                   tabIndex={0}
@@ -1795,24 +1804,21 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
   const hasResponse = row.guardrail !== 'block' && row.status !== 'error';
   const requestContent = sampleRequestContent(row);
   const responseContent = sampleResponseText(row);
-  const requestLines = useMemo(() => buildRequestBodyLines(row), [row]);
+  const requestLines = buildRequestBodyLines(row);
   // Clipboard payload mirrors the tokenized JSON the drawer renders so
   // the user can paste it directly into curl / a debugger without
   // hand-editing. Shape matches `buildRequestBodyLines`.
   // `requestContent` derives solely from `row`, so `[row]` covers both.
-  const requestPayload = useMemo(
-    () => JSON.stringify(
-      {
-        model: `${row.vendor}/${row.model}`,
-        messages: [{ role: 'user', content: requestContent }],
-        max_tokens: 1024,
-        temperature: 0.7,
-        stream: false,
-      },
-      null,
-      2,
-    ),
-    [row],
+  const requestPayload = JSON.stringify(
+    {
+      model: `${row.vendor}/${row.model}`,
+      messages: [{ role: 'user', content: requestContent }],
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: false,
+    },
+    null,
+    2,
   );
   return (
     // `-mx-2 px-2 py-2`: extend the scroll viewport 8px beyond the modal
@@ -1955,4 +1961,3 @@ function SecurityCheckRow({
     </div>
   );
 }
-

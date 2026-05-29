@@ -419,6 +419,7 @@ renderTick: (tickProps: { x: string | number; y: string | number; payload: { val
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
+          accessibilityLayer
           data={chart.data}
           margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
         >
@@ -1020,6 +1021,7 @@ function EventsTableSection({
             return (
               <TableRow
                 key={`${row.time}-${i}`}
+                role="button"
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-neutral-50"
                 onClick={() => setSelectedRow(row)}
                 tabIndex={0}
@@ -1170,7 +1172,7 @@ function ThreatEventDetailBody({
                   setMarked(true);
                   toast.success('Event marked as invalid');
                 }}
-                className="group/mark inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
               >
                 <span className="inline-flex items-center justify-center size-8 shrink-0">
                   <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />

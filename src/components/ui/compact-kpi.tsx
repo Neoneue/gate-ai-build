@@ -44,7 +44,7 @@ export function DeltaTag({
   return (
     <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
-        <Icon className={iconCls} />
+        <Icon className={iconCls} aria-hidden />
         <span className={`font-mono ${valueCls} font-medium tabular-nums`}>
           {display}
         </span>
@@ -95,8 +95,8 @@ export function CompactKpi({
   flat?: boolean;
 }) {
   const baseCls = flat
-    ? 'flex flex-col gap-2 bg-white p-4'
-    : 'flex flex-col rounded-md gap-2 bg-white shadow-(--shadow-border) p-4';
+    ? 'flex flex-col gap-2 bg-card p-4'
+    : 'flex flex-col rounded-md gap-2 bg-card shadow-(--shadow-border) p-4';
   return (
     <div className={baseCls}>
       <div className="flex items-center justify-between gap-2">

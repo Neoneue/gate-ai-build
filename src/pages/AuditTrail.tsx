@@ -496,7 +496,8 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             {pageRows.map((row) => (
               <TableRow
                 key={row.id}
-                className="cursor-pointer [&_td]:align-top"
+                role="button"
+                className="cursor-pointer [&_td]:align-top focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 tabIndex={0}
                 onClick={() => setSelectedRow(row)}
                 onKeyDown={(e) => {

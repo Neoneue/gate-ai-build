@@ -76,7 +76,7 @@ function SecurityEventsTable() {
         <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
       </div>
       <div className="overflow-hidden">
-        <table className="w-full text-sm border-separate table-fixed" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
+        <table className="w-full text-sm border-separate table-fixed" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-hidden>
         <colgroup>
           <col className="w-[30%]" />
           <col className="w-[22%]" />

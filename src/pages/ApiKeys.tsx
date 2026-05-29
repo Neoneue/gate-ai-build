@@ -436,6 +436,7 @@ function KeysTable({
                   {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
+                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-neutral-800">

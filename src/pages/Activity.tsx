@@ -1172,7 +1172,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                         {...props}
                         type="button"
                         aria-label="What's the difference between Gate and BYOK?"
-                        className="inline-flex items-center justify-center rounded-xs text-neutral-400 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center justify-center rounded-xs text-neutral-400 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                     )}
                   >

@@ -64,7 +64,7 @@ export function SegmentedPill({
         // bg neutral-100, border neutral-100 (effectively borderless track).
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
-        'relative bg-neutral-100 border border-neutral-100 py-px px-1 rounded-sm gap-0',
+        'relative bg-neutral-100 border border-transparent py-px px-1 rounded-sm gap-0',
         size === 'sm' ? 'h-8' : 'h-10',
         className,
       )}
@@ -75,7 +75,7 @@ export function SegmentedPill({
           // Paper spec WW9-0: rounded-[4px], white, shadow #11141714 0 1 2.
           // The hardcoded shadow has been replaced with `shadow-xs`, which
           // collapses to the same 1px/2px rgba(17,20,23) ramp.
-          'absolute top-0 left-0 bg-white rounded-xs shadow-xs',
+          'absolute top-0 left-0 bg-card rounded-xs shadow-xs',
           indicator.ready ? 'opacity-100' : 'opacity-0',
         )}
         style={{

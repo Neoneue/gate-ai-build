@@ -447,6 +447,7 @@ function SettingsHalf({
           </p>
         </div>
         <Segmented
+          aria-label="Sensitivity"
           variant="pill"
           size="default"
           options={config.sensitivity.options}
@@ -473,6 +474,7 @@ function SettingsHalf({
         </p>
       </div>
       <Segmented
+        aria-label="Scan direction"
         variant="pill"
         size="default"
         options={scan.options}

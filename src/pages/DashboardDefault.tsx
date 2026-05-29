@@ -174,7 +174,7 @@ function HeroCard() {
                 <span className="text-sm text-neutral-700">{name}</span>
               </div>
             ))}
-            <span className="text-sm text-neutral-400 italic">+ many more</span>
+            <span className="text-sm text-neutral-500 italic">+ many more</span>
           </div>
         </div>
 
@@ -233,19 +233,19 @@ function OverviewUsageChart() {
 function TokenSavingsStrip() {
   return (
     <KpiRail columns={3}>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
         <span className="text-sm text-neutral-500">No requests yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
         <span className="text-sm text-neutral-500">No token savings yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>

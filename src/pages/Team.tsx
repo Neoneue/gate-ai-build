@@ -348,7 +348,7 @@ function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: Memb
           'Owner'
         ) : (
           <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" className="w-28 border-border bg-card text-neutral-900 font-normal">
+            <SelectTrigger size="sm" aria-label={`Role for ${row.name}`} className="w-28 border-border bg-card text-neutral-900 font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

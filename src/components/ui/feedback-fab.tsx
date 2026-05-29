@@ -139,8 +139,8 @@ function FeedbackFab() {
           </div>
 
           {/* Screenshot */}
-          <div className="flex flex-col gap-2">
-            <Label>Screenshot</Label>
+          <div className="flex flex-col gap-2" role="group" aria-labelledby="ff-screenshot-label">
+            <Label id="ff-screenshot-label">Screenshot</Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"

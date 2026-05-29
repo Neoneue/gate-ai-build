@@ -33,11 +33,11 @@ export function Segmented({ options, value, onChange, variant = 'pill', size = '
               onClick={() => onChange?.(opt.value)}
               className={cn(
                 // Skill: emil-design-eng — color/border-only transition (never `transition-all`).
-                'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
                 size === 'sm' ? 'h-7' : 'h-8',
                 selected
                   ? 'bg-neutral-900 text-white border border-neutral-900'
-                  : 'bg-white text-neutral-900 border-t border-b border-r border-border',
+                  : 'bg-card text-neutral-900 border-t border-b border-r border-border',
                 i === 0 && !selected && 'border-l',
               )}
             >
@@ -108,7 +108,7 @@ function SegmentedPillVariant({
       <div
         aria-hidden
         className={cn(
-          'absolute top-0 left-0 bg-white rounded-xs shadow-xs',
+          'absolute top-0 left-0 bg-card rounded-xs shadow-xs',
           indicator.ready ? 'opacity-100' : 'opacity-0',
           // Transition lives in a class so `motion-reduce:transition-none`
           // can override it. Gated on `indicator.ready` to skip the
@@ -137,7 +137,7 @@ function SegmentedPillVariant({
             className={cn(
               // z-10 keeps text above the indicator. Color-only transition
               // (skill: performance.md — never `transition-all`).
-              'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
               size === 'sm' ? 'py-1 px-3' : 'py-2 px-4',
               selected ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900',
             )}

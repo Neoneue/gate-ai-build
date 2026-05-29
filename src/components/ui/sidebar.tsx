@@ -82,7 +82,7 @@ export function Sidebar({
       aria-label="Primary navigation"
       style={{ transitionTimingFunction: 'var(--ease-drawer)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-white border-r border-border transition-[width] duration-150 motion-reduce:transition-none',
+        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-150 motion-reduce:transition-none',
         expanded ? 'w-60' : 'w-16',
       )}
     >
@@ -242,11 +242,14 @@ function SidebarExpanded({
                   />
                   <span className="font-sans text-sm">{item.label}</span>
                   {item.locked ? (
-                  	<Lock
-                  		className="ml-auto size-4 shrink-0 text-muted-foreground/60"
-                  		strokeWidth={1.75}
-                  		aria-hidden
-                  	/>
+                  	<>
+                  		<Lock
+                  			className="ml-auto size-4 shrink-0 text-muted-foreground/60"
+                  			strokeWidth={1.75}
+                  			aria-hidden
+                  		/>
+                  		<span className="sr-only">(Pro feature)</span>
+                  	</>
                   ) : null}
                 </button>
               );
@@ -331,7 +334,7 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         <button
           type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
+          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-card text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>

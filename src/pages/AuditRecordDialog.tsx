@@ -86,7 +86,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       {/* Footer */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>
-          <span className="text-neutral-400">Path:</span>{" "}
+          <span className="text-neutral-500">Path:</span>{" "}
           <span className="font-mono text-neutral-700">
             leaf → L2 → L1 → ROOT
           </span>
