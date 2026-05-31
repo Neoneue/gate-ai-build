@@ -42,6 +42,12 @@ export function DashboardChrome({
   hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
+  // Document h1 lives here so every composed page has exactly one — the
+  // in-surface PageTitle renders h2 (child sections use h3 without a skip).
+  // Visually hidden; sourced from the active nav label so it's page-specific.
+  const activePageLabel =
+    SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)?.label ??
+    'Constellation Gate AI';
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden bg-card">
       <div className="flex flex-row flex-1 min-h-0">
@@ -63,7 +69,10 @@ export function DashboardChrome({
               content and the scroll container never forms). `[&>*]:shrink-0`
               keeps direct children at their natural heights so the pane
               scrolls instead of squashing them. */}
-          <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">{children}</div>
+          <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">
+            <h1 className="sr-only">{activePageLabel}</h1>
+            {children}
+          </div>
         </div>
       </div>
       {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,

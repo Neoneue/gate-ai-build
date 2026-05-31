@@ -4,7 +4,6 @@ import { CircleCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { KpiTile } from '@/components/ui/kpi-tile';
@@ -126,22 +125,52 @@ export function AuditTrail() {
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
-      <PageHeader
-        range={range}
-        customRange={customRange}
-        onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
-        onCustomRangeChange={(r) => {
-          if (r) { setCustomRange(r); setRange('custom'); }
-          else   { setCustomRange(null); setRange('all'); }
-        }}
-      />
-      <KpiRailSection rows={rangeRows} />
+      <PageHeader />
+      {/* Overview label + range controls group with the KPI rail (gap-4
+          internal) rather than floating equidistant between sections — the
+          chrome content pane spaces its direct children at gap-6, so wrapping
+          the bar + rail in one tighter-gapped child reads the "Overview"
+          heading as the label FOR the rail it sits above. */}
+      <div className="flex flex-col gap-4">
+        <OverviewBar
+          range={range}
+          customRange={customRange}
+          onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
+          onCustomRangeChange={(r) => {
+            if (r) { setCustomRange(r); setRange('custom'); }
+            else   { setCustomRange(null); setRange('all'); }
+          }}
+        />
+        <KpiRailSection rows={rangeRows} />
+      </div>
       <EventLog rows={rangeRows} />
     </DashboardChrome>
   );
 }
 
-function PageHeader({
+function PageHeader() {
+  return (
+    <div className="flex flex-col gap-2 max-w-1/2">
+      <PageTitle>Audit trail</PageTitle>
+      <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
+        Every model call gets a cryptographic receipt. Receipts are anchored to Constellation's Digital Evidence layer on a public chain, so anyone can verify a record existed and was unmodified, including after retention. No trust in Constellation required.
+      </p>
+    </div>
+  );
+}
+
+/* ─── Overview bar (section label + range controls) ─────────────────────── */
+
+/* Section label for the KPI rail on the left; range controls inline on the
+ * right. PageTitle renders an h2, so this heading is h3 to keep the outline
+ * valid (h1 = document title owned by DashboardChrome → h2 page title → h3
+ * section). Visual size is text-xl/7 (20/28) — a section-label tier one step
+ * under the design-system h2 "Section title" token (text-2xl/24) so it doesn't
+ * match the 24px KPI hero values directly below — NOT the text-sm
+ * `SectionHeading` primitive, whose tier is modal body-section labels. Range
+ * state lives in AuditTrail(); the moved SegmentedPill + DateRangePicker are
+ * wired verbatim to the same handlers the header used. */
+function OverviewBar({
   range,
   customRange,
   onRangeChange,
@@ -153,15 +182,12 @@ function PageHeader({
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        <PageTitle>Audit trail</PageTitle>
-        <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
-          Every request, policy decision, and limit check is logged here. Each entry is hashed and anchored to Constellation's Digital Evidence layer, independently verifiable and tamper-evident by construction.
-        </p>
-      </div>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
+          size="sm"
+          aria-label="Time range"
           options={RANGE_OPTIONS}
           value={range === 'custom' ? '' : range}
           onValueChange={(v) => onRangeChange(v as PresetRange)}
@@ -169,7 +195,7 @@ function PageHeader({
         <DateRangePicker
           value={customRange}
           onChange={onCustomRangeChange}
-          size="default"
+          size="sm"
         />
       </div>
     </div>
@@ -442,110 +468,133 @@ function EventLog({ rows }: { rows: EventRow[] }) {
 
   return (
     <>
-      <Card density="flush">
-        {isEmpty ? null : (
-        <FilterToolbar>
-          <SearchInput
-            placeholder="Search events, users, hashes…"
-            ariaLabel="Search audit events"
-            value={query}
-            onChange={setQuery}
-          />
-          <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
-            <SelectTrigger
-              size="sm"
-              aria-label="Filter by event type"
-              className="border-border bg-card text-foreground font-normal"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FILTER_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterToolbar>
-        )}
-
-        {isEmpty ? (
-          <TableEmptyState
-            title="No audit events"
-            body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
-          />
-        ) : (
-          <>
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              {/* `table-fixed` + percentage widths is the canonical pattern
-                  (Team, Guardrails, Activity). Description gets the largest
-                  share since it's the wrap-tolerant column; the rest hold
-                  their content. */}
-              <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
-              <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
-              <TableHead className="w-[9%] whitespace-nowrap">Event type</TableHead>
-              <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
-              <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
-              <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pageRows.map((row) => (
-              <TableRow
-                key={row.id}
-                role="button"
-                className="cursor-pointer [&_td]:align-top focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                tabIndex={0}
-                onClick={() => setSelectedRow(row)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setSelectedRow(row);
-                  }
-                }}
+      {/* "Audit events" section bar groups with the table Card (gap-4
+          internal) the same way OverviewBar groups with the KPI rail above.
+          PageTitle is the page h2, so this is h3 to keep the outline valid.
+          Search + filter live here on the page background as page-level
+          section-header controls — and therefore always render, so a query
+          that returns zero results never hides the search box and traps the
+          user (the prior FilterToolbar was gated on isEmpty inside the Card).
+          isEmpty now governs only the Card interior. */}
+      {/* mt-2 adds 8px on top of the chrome content pane's gap-6 (24px) so the
+          Audit events section sits 32px below the KPI rail — a touch more air
+          than the other inter-section gaps. */}
+      <div className="mt-2 flex flex-col gap-4">
+        {/* 12-col grid (md+) aligns the search cluster to the 3rd KPI column:
+            the KpiRail is a gapless grid-cols-3, so the 3rd tile starts at 2/3
+            of the content width. Title takes cols 1-8 (col-span-8); the search
+            + "All events" filter share cols 9-12 (col-span-4) as a flex cluster
+            (search flex-1, filter after, 8px gap), so the search's left edge
+            lands on the 3rd KPI tile within ~one grid gap. Below md the
+            controls drop onto their own row (grid-cols-1) so the row never
+            crushes on narrow screens. */}
+        <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-12">
+          <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0 md:col-span-8">Audit events</h3>
+          <div className="flex items-center gap-2 md:col-span-4">
+            <SearchInput
+              placeholder="Search events, users, hashes…"
+              ariaLabel="Search audit events"
+              value={query}
+              onChange={setQuery}
+              className="flex-1 min-w-0 shrink"
+            />
+            <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
+              <SelectTrigger
+                size="sm"
+                aria-label="Filter by event type"
+                className="border-border bg-card text-foreground font-normal"
               >
-                <TableCell className="whitespace-nowrap text-neutral-800">
-                  <Timestamp date={row.at} />
-                </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-neutral-800">
-                  {truncateHex(row.eventId)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
-                </TableCell>
-                <TableCell className="text-neutral-800">
-                  <span className="line-clamp-2 break-words" title={row.description}>
-                    {row.description}
-                  </span>
-                </TableCell>
-                <TableCell className="whitespace-nowrap font-sans text-neutral-800">
-                  {row.member}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <span className="inline-flex items-center gap-2">
-                    <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
-                    <span className="sr-only">Verified anchor</span>
-                    <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FILTER_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-        <TablePaginationFooter
-          total={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={setPage}
-          onRowsPerPageChange={setRowsPerPage}
-        />
-          </>
-        )}
-      </Card>
+        <Card density="flush">
+          {isEmpty ? (
+            <TableEmptyState
+              title="No audit events"
+              body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
+            />
+          ) : (
+            <>
+              <Table className="table-fixed">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    {/* `table-fixed` + percentage widths is the canonical pattern
+                        (Team, Limits, Activity). Description gets the largest
+                        share since it's the wrap-tolerant column; the rest hold
+                        their content. */}
+                    <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
+                    <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
+                    <TableHead className="w-[9%] whitespace-nowrap">Event type</TableHead>
+                    <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
+                    <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
+                    <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pageRows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      role="button"
+                      className="cursor-pointer [&_td]:align-top focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      tabIndex={0}
+                      onClick={() => setSelectedRow(row)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedRow(row);
+                        }
+                      }}
+                    >
+                      <TableCell className="whitespace-nowrap text-neutral-800">
+                        <Timestamp date={row.at} />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap font-mono text-neutral-800">
+                        {truncateHex(row.eventId)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>
+                      </TableCell>
+                      <TableCell className="text-neutral-800">
+                        <span className="line-clamp-2 break-words" title={row.description}>
+                          {row.description}
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap font-sans text-neutral-800">
+                        {row.member}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className="inline-flex items-center gap-2">
+                          <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
+                          <span className="sr-only">Verified anchor</span>
+                          <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <TablePaginationFooter
+                total={filteredRows.length}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                onPageChange={setPage}
+                onRowsPerPageChange={setRowsPerPage}
+              />
+            </>
+          )}
+        </Card>
+      </div>
 
       <AuditRecordDialog
         row={selectedRow}
