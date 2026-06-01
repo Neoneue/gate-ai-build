@@ -61,10 +61,13 @@ export function SegmentedPill({
       aria-label={ariaLabel}
       className={cn(
         // Paper spec WW0-0: h-10 container, py-px px-1, rounded-md (8px),
-        // bg neutral-100, border neutral-100 (effectively borderless track).
+        // bg neutral-100, with a `border-border` hairline so the pill reads as a
+ // bordered container consistent with adjacent Select triggers and outline
+ // Buttons (e.g. the "Custom" range button) and the segmented.tsx pill. The
+ // border slot was always reserved (previously transparent) — no layout shift.
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
-        'relative bg-neutral-100 border border-transparent py-px px-1 rounded-sm gap-0',
+        'relative bg-neutral-100 border border-border py-px px-1 rounded-sm gap-0',
         size === 'sm' ? 'h-8' : 'h-10',
         className,
       )}
