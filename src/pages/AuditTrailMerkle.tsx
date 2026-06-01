@@ -165,7 +165,7 @@ function PageHeader() {
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Audit trail</PageTitle>
         <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
-          Every model call gets a cryptographic receipt. Receipts are anchored to Constellation's Digital Evidence layer on a public chain, so anyone can verify a record existed and was unmodified, including after retention. No trust in Constellation required.
+          Every model call gets a cryptographic receipt. Receipts are fingerprinted to Constellation's Digital Evidence layer on a public chain, so anyone can verify a record existed and was unmodified, including after retention. No trust in Constellation required.
         </p>
       </div>
       {/* TODO: wire page-level Verify / Export actions per the Audit Trail review doc.
@@ -243,11 +243,11 @@ function KpiRailSection({ rows, range }: { rows: EventRow[]; range: Range }) {
   return (
     <KpiRail columns={4}>
       <KpiTile title="Events logged" value={formatNumber(eventsLogged)} delta="+12.4%" deltaNote={RANGE_DELTA_NOTE[range]} deltaRow />
-      <KpiTile title="Anchors" value={formatNumber(distinctAnchors)} delta="+9.1%" deltaNote={RANGE_DELTA_NOTE[range]} deltaRow />
+      <KpiTile title="Fingerprints" value={formatNumber(distinctAnchors)} delta="+9.1%" deltaNote={RANGE_DELTA_NOTE[range]} deltaRow />
   {/* Hand-authored stat: every mock anchor verifies (derived = 100%); 92.4% is product-set. */}
   <KpiTile title="Verified rate" value="92.4%" delta="+0.6%" deltaNote={RANGE_DELTA_NOTE[range]} deltaRow />
       <KpiTile
-        title="Last anchor"
+        title="Last fingerprint"
         value={mostRecent ? fmtRelative(mostRecent) : '—'}
         href="https://digitalevidence.constellationnetwork.io/"
         linkLabel="Open in DE Explorer"
@@ -375,7 +375,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                     <TableHead className="w-[9%] whitespace-nowrap">Event type</TableHead>
                     <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
                     <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
-                    <TableHead className="w-[18%] whitespace-nowrap">Anchor</TableHead>
+                    <TableHead className="w-[18%] whitespace-nowrap">Fingerprint</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -413,7 +413,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       <TableCell className="whitespace-nowrap">
                         <span className="inline-flex items-center gap-2">
                           <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
-                          <span className="sr-only">Verified anchor</span>
+                          <span className="sr-only">Verified fingerprint</span>
                           <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
                         </span>
                       </TableCell>

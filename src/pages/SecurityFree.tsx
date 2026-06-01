@@ -33,7 +33,7 @@ function PageHeader() {
 		<div className="flex flex-col gap-2 max-w-1/2">
 			<PageTitle>Security events</PageTitle>
 			<p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-				Every injection, PII, and credential event your policies caught, anchored to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
+				Every injection, PII, and credential event your policies caught, fingerprinted to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
 			</p>
 		</div>
 	);

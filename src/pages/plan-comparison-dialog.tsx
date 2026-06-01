@@ -29,7 +29,7 @@ const FREE_PLAN: PlanCardData = {
 	benefitsLabel: "Included in your Free plan:",
 	features: [
 		{ Icon: Route,			title: 'Multi-provider routing',		detail: 'One base URL for OpenAI, Anthropic, and more' },
-		{ Icon: Fingerprint,			title: 'Immutable audit trail',			detail: 'Every request anchored to Constellation Digital Evidence (30 day retention)' },
+		{ Icon: Fingerprint,			title: 'Immutable audit trail',			detail: 'Every request fingerprinted to Constellation Digital Evidence (30 day retention)' },
 		{ Icon: BarChart3,		title: 'Activity & request logs',		detail: 'Cost, tokens, and latency across the workspace' },
 		{ Icon: MessagesSquare,	title: 'Conversation threading',		detail: 'Follow agent runs and chats end-to-end' },
 	],

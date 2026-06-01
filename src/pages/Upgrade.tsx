@@ -1,7 +1,7 @@
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Route,
-  Anchor,
+  Fingerprint,
   BarChart3,
   MessagesSquare,
   ShieldAlert,
@@ -34,7 +34,7 @@ const FREE_PLAN: PlanCardData = {
   benefitsLabel: 'Included in your Free plan:',
   features: [
     { Icon: Route, title: 'Multi-provider routing', detail: 'One base URL for OpenAI, Anthropic, and more' },
-    { Icon: Anchor, title: 'Tamper-evident audit', detail: 'Every request anchored to Constellation Digital Evidence' },
+    { Icon: Fingerprint, title: 'Tamper-evident audit', detail: 'Every request fingerprinted to Constellation Digital Evidence' },
     { Icon: BarChart3, title: 'Activity & request logs', detail: 'Cost, tokens, and latency across the workspace' },
     { Icon: MessagesSquare, title: 'Conversation threading', detail: 'Follow agent runs and chats end-to-end' },
   ],
