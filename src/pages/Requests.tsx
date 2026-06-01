@@ -1182,10 +1182,25 @@ function RequestsTableSection({
                         </span>
                       )}
                     />
-                    <TooltipContent className="max-w-sm text-left">
-                      <span className="font-medium">Gateway</span> requests are billed by Gate AI and show
-                      the exact charge. <span className="font-medium">Bring-your-own-key (BYOK)</span> requests are
-                      billed directly by your provider.
+                    <TooltipContent className="max-w-sm text-left p-2">
+                      <span className="flex flex-col gap-2">
+                        <span className="flex items-start gap-2">
+                          <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                            <CreditCard className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span>
+                            <span className="font-medium">Gateway</span> - Billed by Gate AI; shows the exact charge.
+                          </span>
+                        </span>
+                        <span className="flex items-start gap-2">
+                          <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                            <KeyRound className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span>
+                            <span className="font-medium">BYOK</span> (Bring-your-own-key) - Billed directly by your provider.
+                          </span>
+                        </span>
+                      </span>
                     </TooltipContent>
                   </Tooltip>
                 </span>

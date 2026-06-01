@@ -19,17 +19,21 @@ import { cn } from '@/lib/utils';
 function TooltipProvider(
   props: React.ComponentProps<typeof TooltipPrimitive.Provider>,
 ) {
-  return <TooltipPrimitive.Provider delay={250} {...props} />;
+  return <TooltipPrimitive.Provider delay={200} {...props} />;
 }
 
 function Tooltip(props: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root {...props} />;
 }
 
-function TooltipTrigger(
-  props: React.ComponentProps<typeof TooltipPrimitive.Trigger>,
-) {
-  return <TooltipPrimitive.Trigger {...props} />;
+function TooltipTrigger({
+  delay = 200,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  // Snappy 200ms global open delay so every inline tooltip across the app
+  // shows quickly (no <TooltipProvider> required). Override per-instance
+  // via the `delay` prop.
+  return <TooltipPrimitive.Trigger delay={delay} {...props} />;
 }
 
 type TooltipContentProps = React.ComponentProps<typeof TooltipPrimitive.Popup> & {
