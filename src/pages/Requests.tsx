@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { RowActionButton } from '@/components/ui/row-action-button';
@@ -140,13 +139,35 @@ export function Requests() {
           onToggleSidebar={toggleSidebar}
           onNavigate={(path: string) => navigate(path)}
         >
-          <PageHeader
-            range={range}
-            customRange={customRange}
-            onRangeChange={handleRangeChange}
-            onCustomRangeChange={handleCustomRangeChange}
-          />
-          <HeroMetricCard />
+          <PageHeader />
+          {/* Overview label + range controls group with the hero card
+              (gap-4 internal) rather than floating equidistant between
+              sections — the chrome content pane spaces its direct children
+              at gap-6, so wrapping the bar + card in one tighter-gapped
+              child reads the "Overview" heading as the label FOR the card it
+              sits above. Mirrors AuditTrail's OverviewBar + KPI rail. */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <SegmentedPill
+                  size="sm"
+                  options={RANGE_OPTIONS}
+                  // Empty string when a custom range is active so no preset
+                  // reads as selected — see segmented-pill internal notes for
+                  // why empty string deselects all items.
+                  value={range === 'custom' ? '' : range}
+                  onValueChange={(next) => handleRangeChange(next as RangeKey)}
+                />
+                <DateRangePicker
+                  value={customRange}
+                  onChange={handleCustomRangeChange}
+                  size="sm"
+                />
+              </div>
+            </div>
+            <HeroMetricCard />
+          </div>
           <RequestsTableSection
             range={range}
             customRange={customRange}
@@ -157,17 +178,7 @@ export function Requests() {
 
 /* ─── Page header (title + range selector + custom date) ──────────────── */
 
-function PageHeader({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: RangeKey;
-  customRange: CustomRange | null;
-  onRangeChange: (r: RangeKey) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -176,21 +187,6 @@ function PageHeader({
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every model call across your stack, inspected for injection, PII, and credentials before it reaches the model.
         </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          options={RANGE_OPTIONS}
-          // Empty string when a custom range is active so no preset reads
-          // as selected — see segmented-pill internal notes for why empty
-          // string deselects all items.
-          value={range === 'custom' ? '' : range}
-          onValueChange={(next) => onRangeChange(next as RangeKey)}
-        />
-        <DateRangePicker
-          value={customRange}
-          onChange={onCustomRangeChange}
-          size="default"
-        />
       </div>
     </div>
   );
@@ -1060,13 +1056,16 @@ function RequestsTableSection({
 
   return (
     <>
-    <Card density="flush">
-        {/* Toolbar — shape lifted from CMP-011.1. No flex-wrap: the
-            sortable-table convention is single-row, and the filter set
-            fits in the gray well at this width. */}
-        {isEmpty ? null : (
-        <FilterToolbar>
-          <SearchInput placeholder="Search request…" ariaLabel="Search requests" />
+    <div className="mt-2 flex flex-col gap-4">
+      {/* Recent requests — section header on the page background, mirroring
+          AuditTrail's EventLog. The search + filter set live here as
+          page-level section controls, so they always render (a query that
+          returns zero results never hides them). isEmpty governs only the
+          Card interior below. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Recent requests</h3>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SearchInput placeholder="Search request…" ariaLabel="Search requests" surface="background" className="flex-1 min-w-0 shrink" />
 
           <Select value={model} onValueChange={setModel}>
             <SelectTrigger
@@ -1144,9 +1143,10 @@ function RequestsTableSection({
             <AnimatedDownload data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
-        </FilterToolbar>
-        )}
+        </div>
+      </div>
 
+      <Card density="flush">
         {isEmpty ? (
           <TableEmptyState
             title="No requests"
@@ -1390,6 +1390,7 @@ function RequestsTableSection({
           </>
         )}
     </Card>
+    </div>
     <RequestDetailDialog
       row={selectedRow}
       onOpenChange={(open) => {
