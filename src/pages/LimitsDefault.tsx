@@ -32,7 +32,7 @@ import { type PlanFeature } from '@/pages/plan-comparison-dialog';
 const EASE_OUT = 'power3.out';
 const FOCUS_RING = 'border-ring ring-[3px] ring-ring/50';
 
-// Local option sets mirroring the real Create Limit dialog (Guardrails.tsx).
+// Local option sets mirroring the real Create Limit dialog (Limits.tsx).
 const TYPE_OPTS = [
   { v: 'spend', l: 'Spend ($)' },
   { v: 'tokens', l: 'Tokens' },
@@ -55,7 +55,7 @@ const ROW1: LimitRow = { name: 'Test limit', type: 'Spend ($)', threshold: '$500
 const ROW2: LimitRow = { name: 'Test limit 2', type: 'Tokens', threshold: '1,000,000', period: '1 day', scope: 'Org-wide (all keys)' };
 const ROW3: LimitRow = { name: 'Test limit 3', type: 'Requests', threshold: '10,000', period: '1 day', scope: 'Org-wide (all keys)' };
 
-// Animated preview for the Guardrails upsell hero's right panel — the whole
+// Animated preview for the Limits upsell hero's right panel — the whole
 // create-a-limit experience minified into the window. Sequence:
 //  1. empty-state card fades + scales in from center
 //  2. cursor fades in bottom-right
@@ -68,7 +68,7 @@ const ROW3: LimitRow = { name: 'Test limit 3', type: 'Requests', threshold: '10,
 // CSS :hover/:focus, so those states are driven by React state, and motion is
 // driven by a single GSAP timeline. Positions are measured once at natural
 // layout so the card's entry scale doesn't skew the cursor's destinations.
-function GuardrailsLimitPreview() {
+function LimitsPreview() {
   const scope = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -481,11 +481,11 @@ function GuardrailsLimitPreview() {
   );
 }
 
-// Guardrails Pro benefits — the shared Security feature set plus the two
+// Limits Pro benefits — the shared Security feature set plus the two
 // surfaces Pro now also gates (Limits & quotas, Token Savings), minus
 // per-key risk scoring. Passed to the shared HeroCard so only this page's
 // list changes; SecurityDefault / TokenSavings keep the default list.
-const GUARDRAILS_PRO_FEATURES: PlanFeature[] = [
+const LIMITS_PRO_FEATURES: PlanFeature[] = [
   { Icon: ShieldAlert,       title: 'Prompt injection scanning', detail: 'Block or flag before tokens reach the model' },
   { Icon: EyeOff,            title: 'PII & PHI redaction',        detail: 'Detect and redact before sensitive data reaches the model' },
   { Icon: KeyRound,          title: 'Credential leak prevention', detail: 'Stop API keys and secrets from leaking in requests or responses' },
@@ -493,9 +493,9 @@ const GUARDRAILS_PRO_FEATURES: PlanFeature[] = [
   { Icon: Coins,             title: 'Token savings',              detail: 'Cache and compression per request to cut excess token costs' },
 ];
 
-// Pro-upsell default for the Guardrails surface, mirroring SecurityDefault.
-// Reuses SecurityDefault's HeroCard with a Guardrails-specific feature list.
-export function GuardrailsDefault() {
+// Pro-upsell default for the Limits surface, mirroring SecurityDefault.
+// Reuses SecurityDefault's HeroCard with a Limits-specific feature list.
+export function LimitsDefault() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -504,7 +504,7 @@ export function GuardrailsDefault() {
 
   return (
     <DashboardChrome
-      activeNavId="guardrails"
+      activeNavId="limits"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
@@ -516,8 +516,8 @@ export function GuardrailsDefault() {
         </p>
       </div>
       <HeroCard
-        features={GUARDRAILS_PRO_FEATURES}
-        preview={<GuardrailsLimitPreview />}
+        features={LIMITS_PRO_FEATURES}
+        preview={<LimitsPreview />}
       />
     </DashboardChrome>
   );

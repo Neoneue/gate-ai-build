@@ -1027,24 +1027,6 @@ function TopByAxisRow({
 /* ─── Usage by key — org-wide admin table, sortable ─────────────────────── */
 
 
-// Gateway-id suffix per key — same `name (sk-gw-NNN)` identity form the
-// Events (Security.tsx) and Requests tables render, so the Key column
-// reconciles across all three log surfaces. The seven shared keys carry
-// their Events suffixes verbatim; staging-web / ci-runner / atlas-eval
-// are Activity-only and get their own. Keep in sync if Events changes.
-const KEY_SUFFIX: Record<string, string> = {
-  'prod-web': 'sk-gw-438',
-  'prod-agent': 'sk-gw-930',
-  development: 'sk-gw-7d2',
-  openclaw: 'sk-gw-1ab',
-  'hermes-agent': 'sk-gw-c60',
-  'nova-chat': 'sk-gw-e15',
-  'test-key': 'sk-gw-9f4',
-  'staging-web': 'sk-gw-3c1',
-  'ci-runner': 'sk-gw-a07',
-  'atlas-eval': 'sk-gw-5d8',
-};
-
 type KeySortKey = 'spend' | 'requests' | 'tokens' | 'owner';
 
 const KEY_SORT_OPTIONS: { value: KeySortKey; label: string }[] = [
@@ -1204,14 +1186,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           {pageRows.map((row) => (
             <TableRow key={row.key} className="hover:bg-transparent">
               <TableCell className="whitespace-nowrap font-mono">
-                {/* `name (sk-gw-NNN)` — name in the data tier (neutral-800), the
-                    parenthetical gateway id dimmed to muted-foreground (neutral-500).
-                    Three-tier table policy is 500/800/900; neutral-600 would
-                    violate it. Matches Security.tsx:1338. */}
                 <span className="text-neutral-800">{row.label}</span>
-                {KEY_SUFFIX[row.key] ? (
-                  <span className="text-muted-foreground"> ({KEY_SUFFIX[row.key]})</span>
-                ) : null}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <span className="font-sans text-sm text-neutral-800">

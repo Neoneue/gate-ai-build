@@ -4,8 +4,10 @@ import { CopyButton } from '@/components/ui/copy-button';
 import {
   Braces,
   ChevronDown,
+  CreditCard,
   ExternalLink,
   Info,
+  KeyRound,
   Sparkles,
   TriangleAlert,
   User,
@@ -71,6 +73,21 @@ import { DeltaTag } from '@/components/ui/compact-kpi';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { CONVERSATION_ROWS } from './Conversations';
+
+// Conversation titles, sourced from CONVERSATION_ROWS (single source of truth).
+// Looked up lazily at render time only: Conversations.tsx imports
+// REQUEST_ROWS_RECENT from this module, so reading CONVERSATION_ROWS during
+// module evaluation would race the import cycle. First call lands on render,
+// after both modules have initialized.
+let _conversationTitles: Record<string, string> | null = null;
+function conversationTitle(id: string): string | undefined {
+  if (!_conversationTitles) {
+    _conversationTitles = {};
+    for (const c of CONVERSATION_ROWS) _conversationTitles[c.conversationId] = c.title;
+  }
+  return _conversationTitles[id];
+}
 
 /* CMP-013 — Requests (Observability) */
 
@@ -783,20 +800,6 @@ export type RequestRow = {
 const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'test-key']);
 const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
 
-// Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities the
-// Events table (Security.tsx EVENT_ROWS) renders, so the Key column
-// reads the same `name (sk-gw-NNN)` form across both log surfaces.
-// Keep in sync if Events' key identities change.
-const KEY_SUFFIX: Record<string, string> = {
-  'prod-web': 'sk-gw-438',
-  'prod-agent': 'sk-gw-930',
-  development: 'sk-gw-7d2',
-  openclaw: 'sk-gw-1ab',
-  'hermes-agent': 'sk-gw-c60',
-  'nova-chat': 'sk-gw-e15',
-  'test-key': 'sk-gw-9f4',
-};
-
 // Recent-window anchor rows: the six most-recent requests (trailing hour).
 // Not a standalone preset anymore — the seed of the cumulative chain that
 // 24H → 7D → 30D → All each widen on top of, so a longer range never
@@ -1210,6 +1213,7 @@ function RequestsTableSection({
                   : isSlow
                     ? 'text-neutral-900'
                     : 'text-neutral-800';
+              const conversationName = conversationTitle(row.conversation);
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
@@ -1274,25 +1278,28 @@ function RequestsTableSection({
                       </span>
                     </RowActionButton>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap max-w-[200px]">
-                    <span
-                      title={row.conversation}
-                      className="font-mono text-sm text-neutral-900 tabular-nums truncate block max-w-full"
-                    >
-                      {row.conversation}
-                    </span>
+                  <TableCell className="whitespace-nowrap max-w-[320px]">
+                    {conversationName ? (
+                      <>
+                      <span
+                        title={conversationName}
+                        className="block truncate font-sans text-sm text-neutral-900"
+                      >
+                        {conversationName}
+                      </span>
+                      <span className="block font-mono text-xs text-neutral-500">{row.conversation}</span>
+                    </>
+                    ) : (
+                      <span
+                        title={row.conversation}
+                        className="font-mono text-sm text-neutral-900 tabular-nums truncate block max-w-full"
+                      >
+                        {row.conversation}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
-                    {/* `name (sk-gw-NNN)` — name in dark ink, the
-                        parenthetical gateway id dimmed to neutral-600.
-                        Matches the Events table Key column. */}
                     <span className="text-neutral-800">{row.keyId}</span>
-                    {KEY_SUFFIX[row.keyId] ? (
-                      <span className="text-neutral-600">
-                        {' '}
-                        ({KEY_SUFFIX[row.keyId]})
-                      </span>
-                    ) : null}
                   </TableCell>
                   <TableCell className={numericCls}>{row.inTokens}</TableCell>
                   <TableCell className={numericCls}>{row.outTokens}</TableCell>
@@ -1300,12 +1307,12 @@ function RequestsTableSection({
                     <span className="inline-flex items-center justify-end gap-1">
                       {isSlow ? (
                         <TriangleAlert
-                          className="size-3 shrink-0 text-warning-600"
+                          className="size-3.5 shrink-0 text-warning-600"
                           strokeWidth={1.75}
                           aria-hidden
                         />
                       ) : (
-                        <span className="size-3 shrink-0" aria-hidden />
+                        <span className="size-3.5 shrink-0" aria-hidden />
                       )}
                       {isSlow ? <span className="sr-only">slow</span> : null}
                       <span className={latencyTextCls}>{row.latency}</span>
@@ -1313,23 +1320,42 @@ function RequestsTableSection({
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap font-mono tabular-nums">
                     {isByokKey(row.keyId) ? (
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={(props) => (
-                            <span
-                              {...props}
-                              className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              aria-label="Cost not shown for BYOK requests"
-                            >
-                              —
-                            </span>
-                          )}
-                        />
-                        <TooltipContent>Billed by your provider (BYOK)</TooltipContent>
-                      </Tooltip>
+                      <span className="inline-flex items-center justify-end gap-2">
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Billed by your provider (BYOK)"
+                              >
+                                <KeyRound className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>Billed by your provider (BYOK)</TooltipContent>
+                        </Tooltip>
+                        <span className="text-neutral-400">—</span>
+                      </span>
                     ) : (
-                      <span className={isMissing ? 'text-neutral-400' : 'text-neutral-800'}>
-                        {row.cost}
+                      <span className="inline-flex items-center justify-end gap-2">
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Billed by Gate (PAYG)"
+                              >
+                                <CreditCard className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>Billed by Gate (PAYG)</TooltipContent>
+                        </Tooltip>
+                        <span className={isMissing ? 'text-neutral-400' : 'text-neutral-800'}>
+                          {row.cost}
+                        </span>
                       </span>
                     )}
                   </TableCell>

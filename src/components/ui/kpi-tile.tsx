@@ -15,6 +15,8 @@ export function KpiTile({
   spark,
   href,
   linkLabel,
+  deltaRow,
+  deltaNote,
 }: {
   title: string;
   value: string;
@@ -25,7 +27,26 @@ export function KpiTile({
   spark?: ReactNode;
   href?: string;
   linkLabel?: string;
+  /** Opt-in: render the delta tag / link on a dedicated third row below the
+   *  value (instead of inline beside it) so a rail's cards share a meta row.
+   *  Off by default — existing inline layout is preserved for all other rails. */
+  deltaRow?: boolean;
+  /** Trailing comparison copy for the delta tag, e.g. "vs last 7d". */
+  deltaNote?: string;
 }) {
+  const deltaEl = delta ? <DeltaTag delta={delta} note={deltaNote} /> : null;
+  const linkEl = href ? (
+    <TextLink
+      as="a"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-sm shrink-0"
+    >
+      {linkLabel}
+      <ArrowUpRight aria-hidden className="size-3.5" />
+    </TextLink>
+  ) : null;
   return (
     <div className="flex flex-col gap-2 bg-card p-4">
       <div className="flex items-center gap-2">
@@ -41,20 +62,15 @@ export function KpiTile({
             {valueSuffix}
           </span>
         ) : null}
-        {delta ? <DeltaTag delta={delta} /> : null}
-        {href ? (
-          <TextLink
-            as="a"
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm shrink-0"
-          >
-            {linkLabel}
-            <ArrowUpRight aria-hidden className="size-3.5" />
-          </TextLink>
-        ) : null}
+        {!deltaRow ? deltaEl : null}
+        {!deltaRow ? linkEl : null}
       </div>
+      {deltaRow && (deltaEl || linkEl) ? (
+        <div className="flex items-center gap-2">
+          {deltaEl}
+          {linkEl}
+        </div>
+      ) : null}
       {caption ? (
         <p className="font-sans text-sm text-neutral-500 m-0">{caption}</p>
       ) : null}

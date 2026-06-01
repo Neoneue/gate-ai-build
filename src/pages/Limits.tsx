@@ -40,7 +40,7 @@ import {
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatDateTime } from '@/lib/formatters';
 
-export function Guardrails() {
+export function Limits() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -69,7 +69,7 @@ export function Guardrails() {
 
   return (
     <DashboardChrome
-      activeNavId="guardrails"
+      activeNavId="limits"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}

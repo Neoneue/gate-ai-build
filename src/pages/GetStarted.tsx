@@ -168,10 +168,10 @@ export function GetStarted() {
         <QuickStepCard
           number={4}
           title="Set a spend limit"
-          description="Add a guardrail to cap monthly spend and prevent runaway costs."
+          description="Add a limit to cap monthly spend and prevent runaway costs."
         >
           <div>
-            <Button size="sm" variant="outline" onClick={() => navigate('/guardrails?create=1')}>
+            <Button size="sm" variant="outline" onClick={() => navigate('/limits?create=1')}>
               Set limit
             </Button>
           </div>

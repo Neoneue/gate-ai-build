@@ -116,7 +116,7 @@ export function Upgrade() {
 
   return (
     <DashboardChrome
-      activeNavId="guardrails"
+      activeNavId="limits"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}

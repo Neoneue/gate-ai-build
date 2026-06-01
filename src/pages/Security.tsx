@@ -1059,18 +1059,7 @@ function EventsTableSection({
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono">
-                  {(() => {
-                    // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
-                    // parenthetical key string dimmed to neutral-600.
-                    const parenIdx = row.key.indexOf(' (');
-                    if (parenIdx === -1) return <span className="text-neutral-800">{row.key}</span>;
-                    return (
-                      <>
-                        <span className="text-neutral-800">{row.key.slice(0, parenIdx)}</span>
-                        <span className="text-neutral-600">{row.key.slice(parenIdx)}</span>
-                      </>
-                    );
-                  })()}
+                  <span className="text-neutral-800">{row.key.split(' (')[0]}</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>
