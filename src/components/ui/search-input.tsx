@@ -18,6 +18,10 @@ import { cn } from '@/lib/utils';
  * Controlled (`value` + `onChange`) and uncontrolled (no props) are both
  * supported. The wrapper width is locked at `w-96` (384px) — override via
  * `className` only when a specific toolbar needs a different shape.
+ *
+ * `surface` forwards to the inner <Input>: `'card'` (default, bg-neutral-50)
+ * for toolbars on white/card surfaces; `'background'` (bg-neutral-100) when the
+ * search field sits directly on the page background layer.
  * ───────────────────────────────────────────────────────────────────── */
 
 export interface SearchInputProps {
@@ -33,6 +37,8 @@ export interface SearchInputProps {
   name?: string;
   /** Wrapper-level className override. Layout-only; do not pass `w-*` */
   className?: string;
+  /** Inner input resting fill. `'card'` (default) on white/card surfaces; `'background'` on the page background layer. */
+  surface?: 'card' | 'background';
 }
 
 export function SearchInput({
@@ -42,6 +48,7 @@ export function SearchInput({
   onChange,
   name = 'q',
   className,
+  surface = 'card',
 }: SearchInputProps) {
   return (
     <div className={cn('relative w-96 min-w-0 shrink-0', className)}>
@@ -52,6 +59,7 @@ export function SearchInput({
       />
       <Input
         size="sm"
+        surface={surface}
         type="search"
         name={name}
         autoComplete="off"

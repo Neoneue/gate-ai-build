@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { CircleCheck } from 'lucide-react';
+import { BadgeCheck, CircleCheck, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { SearchInput } from '@/components/ui/search-input';
@@ -150,11 +151,25 @@ export function AuditTrail() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-col gap-2 max-w-1/2">
-      <PageTitle>Audit trail</PageTitle>
-      <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
-        Every model call gets a cryptographic receipt. Receipts are anchored to Constellation's Digital Evidence layer on a public chain, so anyone can verify a record existed and was unmodified, including after retention. No trust in Constellation required.
-      </p>
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col gap-2 max-w-1/2">
+        <PageTitle>Audit trail</PageTitle>
+        <p className="font-sans text-muted-foreground text-base tracking-tight m-0">
+          Every model call gets a cryptographic receipt. Receipts are anchored to Constellation's Digital Evidence layer on a public chain, so anyone can verify a record existed and was unmodified, including after retention. No trust in Constellation required.
+        </p>
+      </div>
+      {/* TODO: wire page-level Verify / Export actions per the Audit Trail review doc.
+          Verify-a-hash dialog and Export view are not built yet — no onClick handlers. */}
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" size="lg">
+          <BadgeCheck />
+          Verify a hash
+        </Button>
+        <Button type="button" variant="outline" size="lg">
+          <Download />
+          Export view
+        </Button>
+      </div>
     </div>
   );
 }
@@ -219,7 +234,12 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
     <KpiRail columns={3}>
       <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
       <KpiTile title="Anchors" value={formatNumber(distinctAnchors)} />
-      <KpiTile title="Last anchor" value={mostRecent ? fmtRelative(mostRecent) : '—'} />
+      <KpiTile
+        title="Last anchor"
+        value={mostRecent ? fmtRelative(mostRecent) : '—'}
+        href="https://digitalevidence.constellationnetwork.io/"
+        linkLabel="Open in DE Explorer"
+      />
     </KpiRail>
   );
 }
@@ -497,6 +517,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               value={query}
               onChange={setQuery}
               className="flex-1 min-w-0 shrink"
+              surface="background"
             />
             <Select value={filter} onValueChange={(v: string) => setFilter(v as FilterValue)}>
               <SelectTrigger

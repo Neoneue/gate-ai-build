@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 const inputVariants = cva(
   // Surface mirrors <SelectTrigger /> so inputs and triggers share a row.
-  "w-full min-w-0 rounded-sm border border-border bg-neutral-50 text-neutral-800 transition-colors motion-reduce:transition-none outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-100 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+  "w-full min-w-0 rounded-sm border border-border text-neutral-800 transition-colors motion-reduce:transition-none outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-100 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
   {
     variants: {
       size: {
@@ -15,9 +15,18 @@ const inputVariants = cva(
         default: "h-9 px-4 text-sm",
         lg: "h-10 px-4 text-sm",
       },
+      // Resting fill = one step darker than the surrounding surface so the
+      // control reads as recessed. `card` sits on white/card/modal surfaces;
+      // `background` sits directly on the page background layer (bg-neutral-50)
+      // and matches the SegmentedPill track (bg-neutral-100).
+      surface: {
+        card: "bg-neutral-50",
+        background: "bg-neutral-100",
+      },
     },
     defaultVariants: {
       size: "default",
+      surface: "card",
     },
   }
 )
@@ -26,6 +35,7 @@ function Input({
   className,
   type,
   size = "default",
+  surface = "card",
   ...props
 }: Omit<React.ComponentProps<"input">, "size"> &
   VariantProps<typeof inputVariants>) {
@@ -33,7 +43,7 @@ function Input({
     <input
       type={type}
       data-slot="input"
-      className={cn(inputVariants({ size, className }))}
+      className={cn(inputVariants({ size, surface, className }))}
       {...props}
     />
   )
