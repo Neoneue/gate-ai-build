@@ -22,7 +22,7 @@ const FEATURES = [
   {
     Icon: ShieldCheck,
     title: "Tamper-evident audit trail",
-    sub: "Every prompt, response, and policy decision cryptographically anchored to Constellation's Digital Evidence layer.",
+    sub: "Every prompt, response, and policy decision cryptographically fingerprinted to Constellation's Digital Evidence layer.",
   },
 ] as const
 

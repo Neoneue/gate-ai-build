@@ -102,7 +102,7 @@ function SheetContent({
           // wider inspector surfaces than centered modals (which ship gap-4),
           // so the section rhythm wants more air. Tightening at the call
           // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-white border-l border-border shadow-(--shadow-modal) p-4 text-sm text-neutral-900 outline-none overscroll-contain",
+          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-card border-l border-border shadow-(--shadow-modal) p-4 text-sm text-neutral-900 outline-none overscroll-contain",
           // Slide animation. Uses tw-animate keyframes (same plugin Dialog
           // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
           // Mixing tw-animate keyframes for the backdrop with CSS transitions

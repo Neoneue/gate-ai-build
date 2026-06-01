@@ -10,13 +10,14 @@ import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
 import { AuditTrail } from '@/pages/AuditTrail';
+import { AuditTrailMerkle } from '@/pages/AuditTrailMerkle';
 import { Billing } from '@/pages/Billing';
 import { Conversations } from '@/pages/Conversations';
 import { Dashboard } from '@/pages/Dashboard';
 import { DashboardDefault } from '@/pages/DashboardDefault';
-import { Guardrails } from '@/pages/Guardrails';
-import { GuardrailsDefault } from '@/pages/GuardrailsDefault';
-import { GuardrailsFree } from '@/pages/GuardrailsFree';
+import { Limits } from '@/pages/Limits';
+import { LimitsDefault } from '@/pages/LimitsDefault';
+import { LimitsFree } from '@/pages/LimitsFree';
 import { Upgrade } from '@/pages/Upgrade';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
@@ -83,15 +84,16 @@ export default function App() {
           <Route path="/models" element={<Models />} />
           <Route path="/token-savings" element={<TokenSavings />} />
           <Route path="/token-savings-free" element={<TokenSavingsFree />} />
-          <Route path="/guardrails" element={<Guardrails />} />
-          <Route path="/guardrails-default" element={<GuardrailsDefault />} />
-          <Route path="/guardrails-free" element={<GuardrailsFree />} />
+          <Route path="/limits" element={<Limits />} />
+          <Route path="/limits-default" element={<LimitsDefault />} />
+          <Route path="/limits-free" element={<LimitsFree />} />
   <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/security" element={<Security />} />
           <Route path="/events-default" element={<SecurityDefault />} />
   <Route path="/security-free" element={<SecurityFree />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/audit-trail" element={<AuditTrail />} />
+   <Route path="/audit-trail-merkle" element={<AuditTrailMerkle />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />

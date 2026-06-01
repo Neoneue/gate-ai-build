@@ -76,7 +76,7 @@ function SecurityEventsTable() {
         <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
       </div>
       <div className="overflow-hidden">
-        <table className="w-full text-sm border-separate table-fixed" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-label="Latest security events">
+        <table className="w-full text-sm border-separate table-fixed" style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }} aria-hidden>
         <colgroup>
           <col className="w-[30%]" />
           <col className="w-[22%]" />
@@ -232,7 +232,7 @@ export function SecurityDefault() {
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Security events</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          See every threat event your policies caught, with the prompt, model, and per-key risk tier behind each call. Anchored to Constellation's Digital Evidence layer so every detection is auditable, not just logged.
+          See every threat event your policies caught, with the prompt, model, and per-key risk tier behind each call. Fingerprinted to Constellation's Digital Evidence layer so every detection is auditable, not just logged.
         </p>
       </div>
       <HeroCard />

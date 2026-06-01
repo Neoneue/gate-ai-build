@@ -183,7 +183,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onCreate}>
-          <Plus data-icon="inline-start" aria-hidden />
+          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
           Create key
         </Button>
       </div>
@@ -207,7 +207,7 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
       action={
         <div className="flex items-center gap-2">
           <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden />
+            <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
             Create your first key
           </Button>
           <Button variant="ghost" onClick={openDocs}>
@@ -436,6 +436,7 @@ function KeysTable({
                   {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
+                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-neutral-800">

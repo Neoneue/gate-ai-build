@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {
-  Bell,
-  ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnimatedBell } from '@/components/ui/animated-bell';
+import { AnimatedExternalLink } from '@/components/ui/animated-external-link';
 import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
 import { FeedbackFab } from '@/components/ui/feedback-fab';
 import { cn } from '@/lib/utils';
@@ -42,8 +42,14 @@ export function DashboardChrome({
   hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
+  // Document h1 lives here so every composed page has exactly one — the
+  // in-surface PageTitle renders h2 (child sections use h3 without a skip).
+  // Visually hidden; sourced from the active nav label so it's page-specific.
+  const activePageLabel =
+    SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)?.label ??
+    'Constellation Gate AI';
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-white">
+    <div className="flex flex-col w-full h-screen overflow-hidden bg-card">
       <div className="flex flex-row flex-1 min-h-0">
         <Sidebar
           sections={SIDEBAR_SECTIONS}
@@ -63,7 +69,10 @@ export function DashboardChrome({
               content and the scroll container never forms). `[&>*]:shrink-0`
               keeps direct children at their natural heights so the pane
               scrolls instead of squashing them. */}
-          <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">{children}</div>
+          <div className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">
+            <h1 className="sr-only">{activePageLabel}</h1>
+            {children}
+          </div>
         </div>
       </div>
       {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
@@ -87,7 +96,7 @@ function DashTopBar({
   hideDocsButton?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between h-14 px-6 bg-white border-b border-border shrink-0">
+    <div className="flex items-center justify-between h-14 px-6 bg-card border-b border-border shrink-0">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
@@ -134,7 +143,7 @@ function DashTopBar({
         {hideDocsButton ? null : (
           <Button variant="outline" size="sm">
             Docs
-            <ExternalLink data-icon="inline-end" aria-hidden />
+            <AnimatedExternalLink data-icon="inline-end" aria-hidden className="relative -top-px" />
           </Button>
         )}
         <Button
@@ -142,7 +151,7 @@ function DashTopBar({
           size="icon-sm"
           aria-label="Notifications"
         >
-          <Bell className="size-4" strokeWidth={1.75} />
+          <AnimatedBell className="size-4" strokeWidth={1.75} aria-hidden />
         </Button>
       </div>
     </div>

@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { LogOut, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
+
+import { AnimatedLogOut } from '@/components/ui/animated-log-out';
 
 import {
   Menu,
@@ -55,7 +57,7 @@ function UserMenu({
         </MenuItem>
         <MenuSeparator />
         <MenuItem variant="destructive">
-          <LogOut strokeWidth={1.75} aria-hidden />
+          <AnimatedLogOut strokeWidth={1.75} aria-hidden />
           Sign out
         </MenuItem>
       </MenuContent>

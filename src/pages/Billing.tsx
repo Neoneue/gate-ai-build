@@ -93,7 +93,7 @@ function PlanCard() {
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail anchored to Constellation's Digital Evidence layer.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation's Digital Evidence layer.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
@@ -171,7 +171,7 @@ function CreditsCard() {
       <CardFooter className="justify-end gap-2 border-t border-border">
         <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
         <Button onClick={() => setAddOpen(true)}>
-          <Plus data-icon="inline-start" aria-hidden />
+          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
           Add credits
         </Button>
       </CardFooter>

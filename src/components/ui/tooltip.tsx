@@ -19,17 +19,21 @@ import { cn } from '@/lib/utils';
 function TooltipProvider(
   props: React.ComponentProps<typeof TooltipPrimitive.Provider>,
 ) {
-  return <TooltipPrimitive.Provider delay={250} {...props} />;
+  return <TooltipPrimitive.Provider delay={200} {...props} />;
 }
 
 function Tooltip(props: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root {...props} />;
 }
 
-function TooltipTrigger(
-  props: React.ComponentProps<typeof TooltipPrimitive.Trigger>,
-) {
-  return <TooltipPrimitive.Trigger {...props} />;
+function TooltipTrigger({
+  delay = 200,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  // Snappy 200ms global open delay so every inline tooltip across the app
+  // shows quickly (no <TooltipProvider> required). Override per-instance
+  // via the `delay` prop.
+  return <TooltipPrimitive.Trigger delay={delay} {...props} />;
 }
 
 type TooltipContentProps = React.ComponentProps<typeof TooltipPrimitive.Popup> & {
@@ -57,7 +61,7 @@ function TooltipContent({
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            'max-w-xs rounded-xs border border-border bg-white px-2 py-1 text-xs leading-snug text-neutral-700 shadow-(--shadow-popup) origin-[var(--transform-origin)]',
+            'max-w-xs rounded-xs border border-border bg-card px-2 py-1 text-xs leading-snug text-neutral-700 shadow-(--shadow-popup) origin-[var(--transform-origin)]',
             'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-100 data-[instant]:duration-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
             className,
           )}

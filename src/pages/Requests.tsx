@@ -4,13 +4,15 @@ import { CopyButton } from '@/components/ui/copy-button';
 import {
   Braces,
   ChevronDown,
-  Download,
+  CreditCard,
   ExternalLink,
   Info,
+  KeyRound,
   Sparkles,
   TriangleAlert,
   User,
 } from 'lucide-react';
+import { AnimatedDownload } from '@/components/ui/animated-download';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +27,6 @@ import {
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
 import { RowActionButton } from '@/components/ui/row-action-button';
@@ -71,6 +72,21 @@ import { DeltaTag } from '@/components/ui/compact-kpi';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { CONVERSATION_ROWS } from './Conversations';
+
+// Conversation titles, sourced from CONVERSATION_ROWS (single source of truth).
+// Looked up lazily at render time only: Conversations.tsx imports
+// REQUEST_ROWS_RECENT from this module, so reading CONVERSATION_ROWS during
+// module evaluation would race the import cycle. First call lands on render,
+// after both modules have initialized.
+let _conversationTitles: Record<string, string> | null = null;
+function conversationTitle(id: string): string | undefined {
+  if (!_conversationTitles) {
+    _conversationTitles = {};
+    for (const c of CONVERSATION_ROWS) _conversationTitles[c.conversationId] = c.title;
+  }
+  return _conversationTitles[id];
+}
 
 /* CMP-013 — Requests (Observability) */
 
@@ -123,13 +139,35 @@ export function Requests() {
           onToggleSidebar={toggleSidebar}
           onNavigate={(path: string) => navigate(path)}
         >
-          <PageHeader
-            range={range}
-            customRange={customRange}
-            onRangeChange={handleRangeChange}
-            onCustomRangeChange={handleCustomRangeChange}
-          />
-          <HeroMetricCard />
+          <PageHeader />
+          {/* Overview label + range controls group with the hero card
+              (gap-4 internal) rather than floating equidistant between
+              sections — the chrome content pane spaces its direct children
+              at gap-6, so wrapping the bar + card in one tighter-gapped
+              child reads the "Overview" heading as the label FOR the card it
+              sits above. Mirrors AuditTrail's OverviewBar + KPI rail. */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <SegmentedPill
+                  size="sm"
+                  options={RANGE_OPTIONS}
+                  // Empty string when a custom range is active so no preset
+                  // reads as selected — see segmented-pill internal notes for
+                  // why empty string deselects all items.
+                  value={range === 'custom' ? '' : range}
+                  onValueChange={(next) => handleRangeChange(next as RangeKey)}
+                />
+                <DateRangePicker
+                  value={customRange}
+                  onChange={handleCustomRangeChange}
+                  size="sm"
+                />
+              </div>
+            </div>
+            <HeroMetricCard />
+          </div>
           <RequestsTableSection
             range={range}
             customRange={customRange}
@@ -140,17 +178,7 @@ export function Requests() {
 
 /* ─── Page header (title + range selector + custom date) ──────────────── */
 
-function PageHeader({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: RangeKey;
-  customRange: CustomRange | null;
-  onRangeChange: (r: RangeKey) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -159,21 +187,6 @@ function PageHeader({
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every model call across your stack, inspected for injection, PII, and credentials before it reaches the model.
         </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          options={RANGE_OPTIONS}
-          // Empty string when a custom range is active so no preset reads
-          // as selected — see segmented-pill internal notes for why empty
-          // string deselects all items.
-          value={range === 'custom' ? '' : range}
-          onValueChange={(next) => onRangeChange(next as RangeKey)}
-        />
-        <DateRangePicker
-          value={customRange}
-          onChange={onCustomRangeChange}
-          size="default"
-        />
       </div>
     </div>
   );
@@ -263,7 +276,7 @@ function makeHeroBuckets(
   const weights: number[] = [];
   for (let i = 0; i < count; i++) {
     const t = i / count;
-    let base = 1;
+    let base: number;
     if (shape === 'daily') {
       base = 0.15 + 0.85 * Math.exp(-Math.pow((t - 0.55) * 2.2, 2));
     } else if (shape === 'weekly') {
@@ -616,6 +629,7 @@ function HeroMetricCard() {
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
+          accessibilityLayer
           data={view.data}
           margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
         >
@@ -781,20 +795,6 @@ export type RequestRow = {
 // BYOK rows in Activity.tsx API_KEY_ROWS.
 const BYOK_KEYS = new Set(['openclaw', 'hermes-agent', 'nova-chat', 'test-key']);
 const isByokKey = (keyId: string) => BYOK_KEYS.has(keyId);
-
-// Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities the
-// Events table (Security.tsx EVENT_ROWS) renders, so the Key column
-// reads the same `name (sk-gw-NNN)` form across both log surfaces.
-// Keep in sync if Events' key identities change.
-const KEY_SUFFIX: Record<string, string> = {
-  'prod-web': 'sk-gw-438',
-  'prod-agent': 'sk-gw-930',
-  development: 'sk-gw-7d2',
-  openclaw: 'sk-gw-1ab',
-  'hermes-agent': 'sk-gw-c60',
-  'nova-chat': 'sk-gw-e15',
-  'test-key': 'sk-gw-9f4',
-};
 
 // Recent-window anchor rows: the six most-recent requests (trailing hour).
 // Not a standalone preset anymore — the seed of the cumulative chain that
@@ -999,8 +999,22 @@ function RequestsTableSection({
   // alias for `row.slow === true` rather than a status value.
   const [responseFilter, setResponseFilter] = useState('all');
   const [guardrailFilter, setGuardrailFilter] = useState('all');
-  const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
+  const pageScopeKey =
+    range === 'custom'
+      ? `${range}:${customRange?.from.getTime() ?? 'none'}:${customRange?.to.getTime() ?? 'none'}`
+      : range;
+  const [paging, setPaging] = useState<{ scopeKey: string; page: number }>(() => ({
+    scopeKey: pageScopeKey,
+    page: 1,
+  }));
+  const page = paging.scopeKey === pageScopeKey ? paging.page : 1;
+  const setPage = useCallback(
+    (next: number) => {
+      setPaging({ scopeKey: pageScopeKey, page: next });
+    },
+    [pageScopeKey],
+  );
   // Row-click drill-in. `selectedRow` doubles as the dialog's `open`
   // signal — `null` means closed, a row means open. Avoids carrying a
   // separate `open` flag.
@@ -1023,13 +1037,6 @@ function RequestsTableSection({
     }
   }
 
-  // Range now lifted to the parent — when it (or the custom range) flips,
-  // reset to page 1 so a deep-paged All state doesn't carry over into a
-  // 24H view that doesn't have those pages.
-  useEffect(() => {
-    setPage(1);
-  }, [range, customRange]);
-
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
   // `row.status` directly. Guardrail filter matches `row.guardrail`.
@@ -1049,13 +1056,16 @@ function RequestsTableSection({
 
   return (
     <>
-    <Card density="flush">
-        {/* Toolbar — shape lifted from CMP-011.1. No flex-wrap: the
-            sortable-table convention is single-row, and the filter set
-            fits in the gray well at this width. */}
-        {isEmpty ? null : (
-        <FilterToolbar>
-          <SearchInput placeholder="Search request…" ariaLabel="Search requests" />
+    <div className="mt-2 flex flex-col gap-4">
+      {/* Recent requests — section header on the page background, mirroring
+          AuditTrail's EventLog. The search + filter set live here as
+          page-level section controls, so they always render (a query that
+          returns zero results never hides them). isEmpty governs only the
+          Card interior below. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Recent requests</h3>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SearchInput placeholder="Search request…" ariaLabel="Search requests" surface="background" className="flex-1 min-w-0 shrink" />
 
           <Select value={model} onValueChange={setModel}>
             <SelectTrigger
@@ -1130,12 +1140,13 @@ function RequestsTableSection({
           </Select>
 
           <Button type="button" variant="outline" size="sm" className="ml-auto">
-            <Download data-icon="inline-start" aria-hidden />
+            <AnimatedDownload data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
-        </FilterToolbar>
-        )}
+        </div>
+      </div>
 
+      <Card density="flush">
         {isEmpty ? (
           <TableEmptyState
             title="No requests"
@@ -1171,10 +1182,25 @@ function RequestsTableSection({
                         </span>
                       )}
                     />
-                    <TooltipContent className="max-w-sm text-left">
-                      <span className="font-medium">Gateway</span> requests are billed by Gate AI and show
-                      the exact charge. <span className="font-medium">Bring-your-own-key (BYOK)</span> requests are
-                      billed directly by your provider.
+                    <TooltipContent className="max-w-sm text-left p-2">
+                      <span className="flex flex-col gap-2">
+                        <span className="flex items-start gap-2">
+                          <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                            <CreditCard className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span>
+                            <span className="font-medium">Gateway</span> - Billed by Gate AI; shows the exact charge.
+                          </span>
+                        </span>
+                        <span className="flex items-start gap-2">
+                          <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                            <KeyRound className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                          </span>
+                          <span>
+                            <span className="font-medium">BYOK</span> (Bring-your-own-key) - Billed directly by your provider.
+                          </span>
+                        </span>
+                      </span>
                     </TooltipContent>
                   </Tooltip>
                 </span>
@@ -1202,9 +1228,11 @@ function RequestsTableSection({
                   : isSlow
                     ? 'text-neutral-900'
                     : 'text-neutral-800';
+              const conversationName = conversationTitle(row.conversation);
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
+                  role="button"
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
                   onClick={() => setSelectedRow(row)}
                   tabIndex={0}
@@ -1265,25 +1293,28 @@ function RequestsTableSection({
                       </span>
                     </RowActionButton>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap max-w-[200px]">
-                    <span
-                      title={row.conversation}
-                      className="font-mono text-sm text-neutral-900 tabular-nums truncate block max-w-full"
-                    >
-                      {row.conversation}
-                    </span>
+                  <TableCell className="whitespace-nowrap max-w-[320px]">
+                    {conversationName ? (
+                      <>
+                      <span
+                        title={conversationName}
+                        className="block truncate font-sans text-sm text-neutral-900"
+                      >
+                        {conversationName}
+                      </span>
+                      <span className="block font-mono text-xs text-neutral-500">{row.conversation}</span>
+                    </>
+                    ) : (
+                      <span
+                        title={row.conversation}
+                        className="font-mono text-sm text-neutral-900 tabular-nums truncate block max-w-full"
+                      >
+                        {row.conversation}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
-                    {/* `name (sk-gw-NNN)` — name in dark ink, the
-                        parenthetical gateway id dimmed to neutral-600.
-                        Matches the Events table Key column. */}
                     <span className="text-neutral-800">{row.keyId}</span>
-                    {KEY_SUFFIX[row.keyId] ? (
-                      <span className="text-neutral-600">
-                        {' '}
-                        ({KEY_SUFFIX[row.keyId]})
-                      </span>
-                    ) : null}
                   </TableCell>
                   <TableCell className={numericCls}>{row.inTokens}</TableCell>
                   <TableCell className={numericCls}>{row.outTokens}</TableCell>
@@ -1291,12 +1322,12 @@ function RequestsTableSection({
                     <span className="inline-flex items-center justify-end gap-1">
                       {isSlow ? (
                         <TriangleAlert
-                          className="size-3 shrink-0 text-warning-600"
+                          className="size-3.5 shrink-0 text-warning-600"
                           strokeWidth={1.75}
                           aria-hidden
                         />
                       ) : (
-                        <span className="size-3 shrink-0" aria-hidden />
+                        <span className="size-3.5 shrink-0" aria-hidden />
                       )}
                       {isSlow ? <span className="sr-only">slow</span> : null}
                       <span className={latencyTextCls}>{row.latency}</span>
@@ -1304,23 +1335,42 @@ function RequestsTableSection({
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap font-mono tabular-nums">
                     {isByokKey(row.keyId) ? (
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={(props) => (
-                            <span
-                              {...props}
-                              className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              aria-label="Cost not shown for BYOK requests"
-                            >
-                              —
-                            </span>
-                          )}
-                        />
-                        <TooltipContent>Billed by your provider (BYOK)</TooltipContent>
-                      </Tooltip>
+                      <span className="inline-flex items-center justify-end gap-2">
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Billed by your provider (BYOK)"
+                              >
+                                <KeyRound className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>Billed by your provider (BYOK)</TooltipContent>
+                        </Tooltip>
+                        <span className="text-neutral-400">—</span>
+                      </span>
                     ) : (
-                      <span className={isMissing ? 'text-neutral-400' : 'text-neutral-800'}>
-                        {row.cost}
+                      <span className="inline-flex items-center justify-end gap-2">
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Billed by Gate (PAYG)"
+                              >
+                                <CreditCard className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>Billed by Gate (PAYG)</TooltipContent>
+                        </Tooltip>
+                        <span className={isMissing ? 'text-neutral-400' : 'text-neutral-800'}>
+                          {row.cost}
+                        </span>
                       </span>
                     )}
                   </TableCell>
@@ -1340,6 +1390,7 @@ function RequestsTableSection({
           </>
         )}
     </Card>
+    </div>
     <RequestDetailDialog
       row={selectedRow}
       onOpenChange={(open) => {
@@ -1528,7 +1579,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
           onClick={openConversation}
         >
           View Conversation
-          <ExternalLink data-icon="inline-end" aria-hidden />
+          <ExternalLink data-icon="inline-end" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
         </Button>
       </DialogScrollFooter>
     </>
@@ -1795,24 +1846,21 @@ function RequestBodyPanel({ row }: { row: RequestRow }) {
   const hasResponse = row.guardrail !== 'block' && row.status !== 'error';
   const requestContent = sampleRequestContent(row);
   const responseContent = sampleResponseText(row);
-  const requestLines = useMemo(() => buildRequestBodyLines(row), [row]);
+  const requestLines = buildRequestBodyLines(row);
   // Clipboard payload mirrors the tokenized JSON the drawer renders so
   // the user can paste it directly into curl / a debugger without
   // hand-editing. Shape matches `buildRequestBodyLines`.
   // `requestContent` derives solely from `row`, so `[row]` covers both.
-  const requestPayload = useMemo(
-    () => JSON.stringify(
-      {
-        model: `${row.vendor}/${row.model}`,
-        messages: [{ role: 'user', content: requestContent }],
-        max_tokens: 1024,
-        temperature: 0.7,
-        stream: false,
-      },
-      null,
-      2,
-    ),
-    [row],
+  const requestPayload = JSON.stringify(
+    {
+      model: `${row.vendor}/${row.model}`,
+      messages: [{ role: 'user', content: requestContent }],
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: false,
+    },
+    null,
+    2,
   );
   return (
     // `-mx-2 px-2 py-2`: extend the scroll viewport 8px beyond the modal
@@ -1955,4 +2003,3 @@ function SecurityCheckRow({
     </div>
   );
 }
-

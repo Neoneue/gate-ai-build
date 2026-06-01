@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { MoreHorizontal, Plus, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,13 +40,14 @@ import {
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatDateTime } from '@/lib/formatters';
 
-export function Guardrails() {
+export function Limits() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
-  const [createOpen, setCreateOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === '1');
   const [limits, setLimits] = useState<Limit[]>([]);
   const openCreate = () => setCreateOpen(true);
   const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
@@ -57,12 +58,6 @@ export function Guardrails() {
   // Used by Overview's "Set a spend limit" quick action so a single click
   // lands the user in the form. Param is stripped when the dialog closes
   // so the URL reflects state and re-mounts don't re-open the dialog.
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    if (searchParams.get('create') === '1') {
-      setCreateOpen(true);
-    }
-  }, [searchParams]);
   const handleCreateOpenChange = (next: boolean) => {
     setCreateOpen(next);
     if (!next && searchParams.has('create')) {
@@ -74,7 +69,7 @@ export function Guardrails() {
 
   return (
     <DashboardChrome
-      activeNavId="guardrails"
+      activeNavId="limits"
       sidebarExpanded={sidebarExpanded}
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
@@ -106,7 +101,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onCreate}>
-          <Plus data-icon="inline-start" aria-hidden />
+          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
           Create limit
         </Button>
       </div>

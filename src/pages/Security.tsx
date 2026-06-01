@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeftRight, Download, FileText, Flag, ShieldCheck } from 'lucide-react';
+import { ArrowLeftRight, FileText, Flag, ShieldCheck } from 'lucide-react';
+import { AnimatedDownload } from '@/components/ui/animated-download';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -419,6 +420,7 @@ renderTick: (tickProps: { x: string | number; y: string | number; payload: { val
         className="aspect-auto h-24 w-full"
       >
         <AreaChart
+          accessibilityLayer
           data={chart.data}
           margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
         >
@@ -581,7 +583,7 @@ function PageHeader({
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Every injection, PII, and credential event your policies caught, anchored to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
+          Every injection, PII, and credential event your policies caught, fingerprinted to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -989,7 +991,7 @@ function EventsTableSection({
         </Select>
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <Download data-icon="inline-start" aria-hidden />
+          <AnimatedDownload data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
       </FilterToolbar>
@@ -1020,6 +1022,7 @@ function EventsTableSection({
             return (
               <TableRow
                 key={`${row.time}-${i}`}
+                role="button"
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-neutral-50"
                 onClick={() => setSelectedRow(row)}
                 tabIndex={0}
@@ -1056,18 +1059,7 @@ function EventsTableSection({
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono">
-                  {(() => {
-                    // `key` is `{name} (sk-gw-NNN)` — name in dark ink, the
-                    // parenthetical key string dimmed to neutral-600.
-                    const parenIdx = row.key.indexOf(' (');
-                    if (parenIdx === -1) return <span className="text-neutral-800">{row.key}</span>;
-                    return (
-                      <>
-                        <span className="text-neutral-800">{row.key.slice(0, parenIdx)}</span>
-                        <span className="text-neutral-600">{row.key.slice(parenIdx)}</span>
-                      </>
-                    );
-                  })()}
+                  <span className="text-neutral-800">{row.key.split(' (')[0]}</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={actionMeta.variant}>{actionMeta.label}</Badge>
@@ -1170,7 +1162,7 @@ function ThreatEventDetailBody({
                   setMarked(true);
                   toast.success('Event marked as invalid');
                 }}
-                className="group/mark inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
               >
                 <span className="inline-flex items-center justify-center size-8 shrink-0">
                   <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />

@@ -16,7 +16,7 @@ export function Tag({ children, onRemove, className }: TagProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center h-6 rounded-full bg-neutral-100 border border-neutral-200',
+        'inline-flex items-center h-6 rounded-full bg-neutral-100 border border-border',
         'text-neutral-900 font-sans text-xs gap-2',
         onRemove ? 'pr-1 pl-2' : 'px-3',
         className,

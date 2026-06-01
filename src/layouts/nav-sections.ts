@@ -21,7 +21,7 @@ import type { SidebarSection } from '@/components/ui/sidebar';
  * derived from the page's `activeNavId` matched against `SidebarItem.id`.
  * The `pageId` field holds the URL path navigated to on click — the page
  * passes it straight to react-router's navigate(). Items without a path
- * are inert affordances (Token Savings, Guardrails, etc.) pending real
+ * are inert affordances (Token Savings, Limits, etc.) pending real
  * surfaces. */
 
 export const SIDEBAR_SECTIONS: SidebarSection[] = [
@@ -37,7 +37,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'models',        icon: Box,         label: 'Models', pageId: '/models' },
       { id: 'token-savings', icon: Coins,       label: 'Token Savings', pageId: '/token-savings', locked: true },
-      { id: 'guardrails',    icon: ShieldCheck, label: 'Guardrails', pageId: '/guardrails', locked: true },
+      { id: 'limits',    icon: ShieldCheck, label: 'Limits', pageId: '/limits', locked: true },
     ],
   },
   {

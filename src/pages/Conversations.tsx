@@ -240,15 +240,6 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
   { title: 'Summarize Q1 2026 earnings call for top 10 holdings',            conversationId: 'cnv_vela_21',    initiator: 'test-key',   turns: 12, reqs: 26, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '86,735', outTokens: '15,306', cost: '$0.1402', status: 'completed', updated: new Date(2026, 4, 12, 13, 18, 55), duration: '11m 27s' },
 ];
 
-// Gateway-id suffix per key — mirrors the `(sk-gw-NNN)` identities used on
-// the Requests and Events log tables so the same key reads identically
-// across surfaces.
-export const KEY_SUFFIX: Record<string, string> = {
-  'prod-web': 'sk-gw-438',
-  'prod-agent': 'sk-gw-930',
-  'test-key': 'sk-gw-255',
-};
-
 // Synthetic total — held at module scope so pagination math reconciles
 // with the KPI rail's "Conversations: 100" figure.
 const CONVERSATIONS_TOTAL = 100;
@@ -395,12 +386,6 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-mono text-sm">
                   <span className="text-neutral-800">{row.initiator}</span>
-                  {KEY_SUFFIX[row.initiator] ? (
-                    <span className="text-neutral-600">
-                      {' '}
-                      ({KEY_SUFFIX[row.initiator]})
-                    </span>
-                  ) : null}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <div
@@ -1101,7 +1086,7 @@ function TraceItem({
           <span className="font-mono text-xs tabular-nums text-neutral-800 flex-1">
             {event.cost}
           </span>
-          <span className="font-mono text-xs text-neutral-400 shrink-0">
+          <span className="font-mono text-xs text-neutral-500 shrink-0">
             {event.requestId}
           </span>
         </div>

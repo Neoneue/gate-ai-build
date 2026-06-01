@@ -149,13 +149,13 @@ function HeroCard() {
             </div>
             <div className="flex items-center gap-3">
               <Button onClick={() => navigate('/api-keys')}>
-                <Plus className="size-4" data-icon="inline-start" /> Create key
+                <Plus className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" data-icon="inline-start" /> Create key
               </Button>
               <Button
                 variant="outline"
                 onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
               >
-                Read API docs <ExternalLink className="size-4" />
+                Read API docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
               </Button>
             </div>
           </div>
@@ -174,7 +174,7 @@ function HeroCard() {
                 <span className="text-sm text-neutral-700">{name}</span>
               </div>
             ))}
-            <span className="text-sm text-neutral-400 italic">+ many more</span>
+            <span className="text-sm text-neutral-500 italic">+ many more</span>
           </div>
         </div>
 
@@ -233,19 +233,19 @@ function OverviewUsageChart() {
 function TokenSavingsStrip() {
   return (
     <KpiRail columns={3}>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
         <span className="text-sm text-neutral-500">No requests yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
         <span className="text-sm text-neutral-500">No token savings yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-white p-6 min-h-[120px]">
+      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
         <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
           <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>

@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { IconActionButton } from '@/components/ui/icon-action-button';
-import { Monogram, type AvatarTone } from '@/components/ui/monogram';
+import { Monogram } from '@/components/ui/monogram';
+import { type AvatarTone } from '@/components/ui/monogram-types';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import {
   Dialog,
@@ -347,7 +348,7 @@ function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: Memb
           'Owner'
         ) : (
           <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" className="w-28 border-border bg-card text-neutral-900 font-normal">
+            <SelectTrigger size="sm" aria-label={`Role for ${row.name}`} className="w-28 border-border bg-card text-neutral-900 font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -37,7 +37,7 @@ const ROWS_PER_PAGE_OPTIONS = ['10', '25', '50', '100'];
  * page; otherwise returns [1, optional left ellipsis, current ± 1 clipped,
  * optional right ellipsis, last page]. 1-based.
  */
-export function buildPageWindow(
+function buildPageWindow(
   current: number,
   totalPages: number,
 ): (number | 'ellipsis-l' | 'ellipsis-r')[] {
@@ -78,7 +78,7 @@ export function TablePaginationFooter({
   const atLastPage = safePage >= totalPages;
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-neutral-200">
+    <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-border">
       <div className="flex items-center gap-3">
         <span className="font-mono text-xs text-neutral-500 tabular-nums">
           Showing{' '}
@@ -101,7 +101,7 @@ export function TablePaginationFooter({
           <SelectTrigger
             size="sm"
             aria-label="Rows per page"
-            className="border-neutral-200 bg-white text-neutral-900 font-normal"
+            className="border-border bg-card text-neutral-900 font-normal"
           >
             <SelectValue />
           </SelectTrigger>

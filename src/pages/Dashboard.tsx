@@ -211,7 +211,7 @@ function StackedKpiChart({
 
   return (
     <ChartContainer config={config} className={className ?? 'h-[180px] w-full'}>
-      <BarChart data={data} margin={STACKED_CHART_MARGIN} barCategoryGap="20%">
+      <BarChart accessibilityLayer data={data} margin={STACKED_CHART_MARGIN} barCategoryGap="20%">
         <CartesianGrid horizontal vertical={false} stroke="var(--color-neutral-200)" strokeDasharray="8 3" />
         <XAxis
           dataKey="date"
@@ -472,6 +472,7 @@ function LatestRequestsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest requests">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -486,6 +487,7 @@ function LatestRequestsTable() {
             <tr
               key={row.requestId ?? i}
               tabIndex={0}
+              role="link"
               aria-label={row.requestId ? `Open request ${row.requestId}` : 'Open request'}
               className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
               onClick={() => row.requestId && navigate(`/requests?open=${row.requestId}`)}
@@ -505,6 +507,7 @@ function LatestRequestsTable() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -526,6 +529,7 @@ function RecentConversationsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest conversations">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -540,6 +544,7 @@ function RecentConversationsTable() {
             <tr
               key={row.conversationId}
               tabIndex={0}
+              role="link"
               aria-label={`Open conversation: ${row.title}`}
               className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
               onClick={() => navigate(`/conversations?open=${row.conversationId}`)}
@@ -555,6 +560,7 @@ function RecentConversationsTable() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -576,6 +582,7 @@ function SecurityEventsTable() {
           View all →
         </Link>
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm" aria-label="Latest security events">
         <thead>
           <tr className="border-b border-border bg-neutral-50">
@@ -594,6 +601,7 @@ function SecurityEventsTable() {
               <tr
                 key={row.requestId ?? i}
                 tabIndex={0}
+                role="link"
                 aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
                 className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
                 onClick={() => navigate(`/security?open=${row.requestId}`)}
@@ -615,6 +623,7 @@ function SecurityEventsTable() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -116,7 +116,7 @@ export function GetStarted() {
               variant="outline"
               onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
             >
-              Open docs <ExternalLink className="size-4" />
+              Open docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
             </Button>
           </div>
         </QuickStepCard>
@@ -168,10 +168,10 @@ export function GetStarted() {
         <QuickStepCard
           number={4}
           title="Set a spend limit"
-          description="Add a guardrail to cap monthly spend and prevent runaway costs."
+          description="Add a limit to cap monthly spend and prevent runaway costs."
         >
           <div>
-            <Button size="sm" variant="outline" onClick={() => navigate('/guardrails?create=1')}>
+            <Button size="sm" variant="outline" onClick={() => navigate('/limits?create=1')}>
               Set limit
             </Button>
           </div>

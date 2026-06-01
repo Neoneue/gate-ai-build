@@ -1298,14 +1298,14 @@ function PlatformPanel() {
             // No-op in the showcase; real impl wires to per-platform docs.
             onClick={() => undefined}
             aria-label={`Open ${p.name} integration guide`}
-            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px motion-reduce:active:translate-y-0"
           >
             <div className="flex flex-col gap-1 min-w-0">
               <span className="font-sans text-sm font-medium text-neutral-900">{p.name}</span>
               <span className="font-sans text-xs text-neutral-500 text-pretty">{p.note}</span>
             </div>
             <SquareArrowOutUpRight
-              className="size-4 text-neutral-500 shrink-0 mt-1 transition-colors duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800"
+              className="size-4 text-neutral-500 shrink-0 mt-1 transition-[color,transform] duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800 group-hover:translate-x-px group-hover:-translate-y-px motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
               strokeWidth={1.75}
               aria-hidden="true"
             />
@@ -1482,7 +1482,7 @@ const TMPL_TOKEN_RE     = /^\$\{[^}]+\}/;
 const ENV_VAR_RE        = /^\$[A-Z_][A-Z0-9_]*/;
 const WORD_BOUNDARY_RE  = /\w/;
 const NUMBER_TOKEN_RE   = /^\d+(\.\d+)?/;
-const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'\[\{])/;
+const PROP_TOKEN_RE     = /^[A-Za-z_]\w*(?=:[\s"'[{])/;
 
 const KEYWORDS: Record<Lang, RegExp> = {
   ts: /^(import|from|const|let|var|new|await|return|function|null|true|false)\b/,

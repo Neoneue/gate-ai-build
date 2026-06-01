@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const rowActionButtonVariants = cva(
-  'text-left bg-transparent p-0 outline-none rounded-xs focus-visible:ring-3 focus-visible:ring-ring/50',
+  'text-left bg-transparent p-0 outline-none rounded-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
   {
     variants: {
       layout: {
@@ -77,4 +77,4 @@ export function RowActionButton({
   );
 }
 
-export { rowActionButtonVariants };
+// rowActionButtonVariants: internal use only — not exported

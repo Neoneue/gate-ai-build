@@ -86,7 +86,10 @@ function ProfileCard() {
     organization !== saved.organization;
 
   const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  });
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {

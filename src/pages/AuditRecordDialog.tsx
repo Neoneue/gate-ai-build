@@ -67,7 +67,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       <p className="text-sm text-neutral-800 m-0">
         Highlighted path cryptographically proves{" "}
         <span className="font-mono text-neutral-900">{leafHex}</span> is included
-        in anchor root{" "}
+        in fingerprint root{" "}
         <span className="font-mono text-neutral-900">{anchorShort}</span>.
       </p>
 
@@ -78,7 +78,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       <div className="rounded-md border border-border overflow-hidden">
         <img
           src="/icons/merkle-tree.svg"
-          alt={`Merkle inclusion proof: leaf ${leafHex} verified against anchor root ${anchorShort} in ${TREE_DEPTH} hash operations.`}
+          alt={`Merkle inclusion proof: leaf ${leafHex} verified against fingerprint root ${anchorShort} in ${TREE_DEPTH} hash operations.`}
           className="block w-full h-auto"
         />
       </div>
@@ -86,7 +86,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       {/* Footer */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
         <span>
-          <span className="text-neutral-400">Path:</span>{" "}
+          <span className="text-neutral-500">Path:</span>{" "}
           <span className="font-mono text-neutral-700">
             leaf → L2 → L1 → ROOT
           </span>
@@ -115,7 +115,7 @@ const HOW_STEPS = [
   },
   {
     id: '03',
-    title: 'Anchor',
+    title: 'Fingerprint',
     body: 'The Merkle root is submitted to Constellation Digital Evidence with a 3-of-3 validator quorum.',
   },
   {
@@ -212,12 +212,12 @@ export function AuditRecordDialog({
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
             <p className="text-sm text-neutral-900 m-0">
-              This event is anchored to{' '}
+              This event is fingerprinted to{' '}
               <span className="font-medium">Constellation's Digital Evidence</span>{' '}
               layer.
             </p>
             <p className="text-xs text-neutral-500 m-0">
-              Anchored ·{' '}
+              Fingerprinted ·{' '}
               <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
               {' · '}
               {fmtRelative(row.at)}
@@ -260,7 +260,7 @@ export function AuditRecordDialog({
                   value={<span className="text-neutral-800">{row.member}</span>}
                 />
                 <DetailRow
-                  label="Anchor"
+                  label="Fingerprint"
                   value={
                     <span className="inline-flex items-center gap-2">
                       <CircleCheck
@@ -268,7 +268,7 @@ export function AuditRecordDialog({
                         strokeWidth={1.75}
                         aria-hidden
                       />
-                      <span className="sr-only">Verified anchor</span>
+                      <span className="sr-only">Verified fingerprint</span>
                       <span className="font-mono whitespace-nowrap text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
                     </span>
                   }

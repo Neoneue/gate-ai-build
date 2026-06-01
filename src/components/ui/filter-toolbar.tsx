@@ -24,8 +24,7 @@ import { cn } from '@/lib/utils';
  *   </FilterToolbar>
  * ─────────────────────────────────────────────────────────────────────── */
 
-export interface FilterToolbarProps
-  extends React.ComponentProps<'div'> {}
+export type FilterToolbarProps = React.ComponentProps<'div'>;
 
 export function FilterToolbar({
   className,

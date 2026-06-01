@@ -21,7 +21,7 @@ export function Artboard({ id, name, top, left, children }: ArtboardProps) {
         {id} · {name}
       </Eyebrow>
       <div
-        className="artboard-shell bg-white rounded-sm overflow-hidden"
+        className="artboard-shell bg-card rounded-sm overflow-hidden"
         style={{
           boxShadow:
             '0 1px 2px rgba(17,20,23,0.06), 0 8px 24px -8px rgba(17,20,23,0.10)',
@@ -58,9 +58,12 @@ export function Canvas({ children }: { children: ReactNode }) {
   const txRef = useRef(tx);
   const tyRef = useRef(ty);
   const scaleRef = useRef(scale);
-  txRef.current = tx;
-  tyRef.current = ty;
-  scaleRef.current = scale;
+
+  useEffect(() => {
+    txRef.current = tx;
+    tyRef.current = ty;
+    scaleRef.current = scale;
+  }, [tx, ty, scale]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -138,7 +141,7 @@ export function Canvas({ children }: { children: ReactNode }) {
 function CanvasControls({ scale, onReset }: { scale: number; onReset: () => void }) {
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-sm bg-white border border-neutral-200 shadow-[0_4px_16px_rgba(17,20,23,0.10)] px-2 py-1"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-sm bg-card border border-border shadow-[0_4px_16px_rgba(17,20,23,0.10)] px-2 py-1"
       onWheel={(e) => e.stopPropagation()}
     >
       <span className="font-mono text-xs tabular-nums text-neutral-500 px-1">
@@ -147,7 +150,7 @@ function CanvasControls({ scale, onReset }: { scale: number; onReset: () => void
       <button
         type="button"
         onClick={onReset}
-        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs"
+        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         Reset
       </button>

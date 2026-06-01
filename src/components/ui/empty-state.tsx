@@ -44,12 +44,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-3 py-12 px-6 rounded-md bg-white shadow-(--shadow-border) text-center',
+        'flex flex-col items-center justify-center gap-3 py-12 px-6 rounded-md bg-card shadow-(--shadow-border) text-center',
         className,
       )}
     >
       {icon}
-      <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
+      <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
         {title}
       </h3>
       <p className="font-sans text-sm text-neutral-500 max-w-md text-pretty m-0">
