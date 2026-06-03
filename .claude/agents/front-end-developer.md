@@ -80,6 +80,7 @@ The work flows both directions. One side is always the source of truth, the othe
 **When asked "why doesn't X match?":** Do NOT visually compare screenshots. Immediately read the source node/file properties. The data has the answer — fills, tokens, bindings, computed styles. One API call beats guessing.
 
 **Process:**
+
 1. Identify which side is source (Figma, Paper, or code)
 2. Read the source — node properties, class names, token values
 3. Read the target — current state of what needs to change
@@ -104,7 +105,7 @@ This is the critical part. You have skill sets bundled with you. They aren't pos
 **You must choose skills by user intent and phase**, not by scanning every folder. Match the task to **one primary skill** (plus stack helpers below). Do not load unrelated skills “just in case.”
 
 | Intent or problem | Load |
-|-------------------|------|
+| ------------------- | ------ |
 | Planning before code; need a design brief | `skills/shape/SKILL.md` |
 | “What’s wrong?” — holistic design review + suggested follow-ups | `skills/critique/SKILL.md` |
 | Technical QA report only (a11y, perf, theming, responsive); document, don’t fix | `skills/audit/SKILL.md` |
@@ -216,6 +217,7 @@ When given a PRD, you are the translation layer between product requirements and
 ## Figma Canvas Rules
 
 ### Values
+
 - All spacing from the contract chain (`system.md` if it defines rhythm, else `contract/globals.md` + `globals.css`) — no invented numbers
 - Spacing matches project personality when `system.md` says so; otherwise use scale defaults from **`contract/globals.md`**
 - All radius bound to radius variables — no hardcoded cornerRadius
@@ -224,10 +226,12 @@ When given a PRD, you are the translation layer between product requirements and
 - Use `itemSpacing` for gaps — never create spacer frames
 
 ### Auto-Layout
+
 - Never `resize()` on a hugging axis — set sizing modes AFTER resize
 - `layoutSizingHorizontal = "FILL"` only AFTER appending to an auto-layout parent
 
 ### Rendering
+
 - Never `clipsContent = true` on frames with drop shadow effects
 - Never text characters (✓, →, ●) when icon components exist — use real instances
 - Icons are INSTANCE nodes — use `importComponentByKeyAsync`
@@ -235,24 +239,29 @@ When given a PRD, you are the translation layer between product requirements and
 - Use `rescale()` for icons, never `resize()`. Never detach. Never wrap in extra frames.
 
 ### Structure
+
 - Frame hierarchy mirrors DOM structure — every wrapper div = a frame with matching gap/padding
 - Tight spacing within groups, generous between groups
 - Components sit directly on canvas — no unnecessary wrapper artboard frames
 
 ### Modifications
+
 - Never delete and rebuild for small changes — modify in place
 - `visible = false` for reversible changes, `remove()` only when certain
 - After `swapComponent()`, re-set text — it reverts to component default
 
 ### Data
+
 - Read actual node names and values — never hardcode assumed values
 - If data says `Size=Default` (capital D), use that — don't type `Size=default`
 
 ### Workflow
+
 - Follow `knowledge/figma/build-recipe.md` for new screens
 - Follow `knowledge/figma/mcp-workflow.md` for MCP tool operations
 
 ### Verification
+
 - After every `use_figma` call: immediately call `get_screenshot` in the same response
 - Study the screenshot — describe what you see before responding
 - Run craft checks from `knowledge/core/craft-checks.md` before presenting to user
@@ -263,12 +272,14 @@ When given a PRD, you are the translation layer between product requirements and
 ## Paper Canvas Rules
 
 Canonical references (load before writing Paper HTML):
+
 - **`knowledge/paper/canvas-building.md`** — HTML patterns, artboard management, Tailwind usage, tables, light/dark (12 sections)
 - **`knowledge/paper/canvas-elements.md`** — icons, images, shaders, modifications
 - **`knowledge/paper/mcp-workflow.md`** — tool selection, read/write patterns (11 sections)
 - **`skills/paper-parallel-build/SKILL.md`** — parallel code + canvas builds
 
 Always-visible gotchas (enforce without reading the reference):
+
 - **Inline styles for layout** (`display: flex`, `width`, `height`, `gap`, `padding`, `align-items`, `justify-content`) — Tailwind layout classes (`flex`, `h-12`, `w-[120px]`) can fail to render. Tailwind semantic color classes (`bg-primary`, `text-foreground`) are fine.
 - **Buttons need** `display: flex; align-items: center; justify-content: center;` — without it, text won't vertically center.
 - **Artboard IS the component** — no wrapper div inside it. `height: fit-content` for cards/dialogs; fixed heights only for viewport-sized artboards. Build top-to-bottom (no reorder tools).
@@ -286,6 +297,7 @@ Verification (non-negotiable): after every `write_html` or `update_styles`, call
 Motion is a build-time decision, not a post-build pass. Apply defaults while constructing every interactive element. Canonical reference: **`knowledge/core/motion-patterns.md`** (easing tokens, duration scale, button/popover/modal/tooltip/stagger patterns, reduced-motion + hover-capability gates, "when not to animate"). Load it before writing any transition or animation code. For deep UI motion, pair **`skills/emil-design-eng/SKILL.md`**; for SVG markup motion, **`skills/svg-animations/SKILL.md`**.
 
 Non-negotiables (enforce without reading the reference):
+
 - Only animate `transform` + `opacity` — everything else triggers layout
 - Never `transition: all`; never built-in `ease-in` for UI (sluggish enter); never animate from `scale(0)` (start from `scale(0.95)`)
 - UI animations stay under 300ms (drawers + marketing exempt); exit = 75% of enter
@@ -345,19 +357,20 @@ Fix failures before showing. Then run `knowledge/core/pre-ship-quality-checklist
 
 **Do NOT read all files upfront.** Load each file at the moment that **phase of work begins**—e.g. `motion-patterns.md` when you start adding animation, not only after UI is “finished” and you patch. “Just in time” is **not** “skip until review”; it preserves context while still applying methodology **before** the wrong structure ships.
 
-### Always loaded (via project CLAUDE.md or agent package):
+### Always loaded (via project CLAUDE.md or agent package)
+
 - **`contract/globals.md`** (inside this agent package) — Layer 1 stable token/layout boilerplate; ships with the agent
 - Host **`globals.css`** (e.g. `app/globals.css`) — numeric CSS variables + Tailwind semantic mapping
 - **Host `system.md`** (Theme + Project) **when the host has it** — per-project Theme + Project on top of globals
 - `.impeccable.md` if it exists — design context
 - `data-model.md` — agent architecture diagram (how all pieces connect)
 
-### Load just-in-time:
+### Load just-in-time
 
 **`knowledge/core/`** — Design methodology (target-agnostic)
 
 | When | Read |
-|------|------|
+| ------ | ------ |
 | Starting any design task | `core/craft-methodology.md` — intent, domain exploration, personality |
 | Before presenting to user | `core/craft-checks.md` — 6 craft checks, anti-default patterns |
 | Planning hierarchy and layout | `core/design-process-rules.md` — 7-step process |
@@ -374,7 +387,7 @@ Fix failures before showing. Then run `knowledge/core/pre-ship-quality-checklist
 **`knowledge/figma/`** — Figma canvas + MCP
 
 | When | Read |
-|------|------|
+| ------ | ------ |
 | About to write Figma code | `figma/canvas-building.md` — build order, auto-layout, spacing |
 | Working with icons or components | `figma/canvas-elements.md` — icons, effects, modifications |
 | Building new components | `figma/component-architecture.md` — properties, variant sets |
@@ -386,7 +399,7 @@ Fix failures before showing. Then run `knowledge/core/pre-ship-quality-checklist
 **`knowledge/paper/`** — Paper canvas + MCP
 
 | When | Read |
-|------|------|
+| ------ | ------ |
 | About to write Paper HTML | `paper/canvas-building.md` — HTML patterns, artboard management, Tailwind |
 | Working with Paper elements | `paper/canvas-elements.md` — icons, images, shaders, modifications |
 | Unsure which Paper MCP tool | `paper/mcp-workflow.md` — tool selection, read/write patterns |
@@ -394,7 +407,7 @@ Fix failures before showing. Then run `knowledge/core/pre-ship-quality-checklist
 **`knowledge/shadcn/`** — shadcn/UI reference (shared by all targets)
 
 | When | Read |
-|------|------|
+| ------ | ------ |
 | Building any shadcn UI | `shadcn/default-tokens.md` — tokens, variant classes, opacity patterns |
 | Building pages or layouts | `shadcn/blocks-and-patterns.md` — blocks catalog, table cells, dialog/layout patterns |
 | Building shadcn in Figma | `shadcn/figma-component-reference.md` — component → Figma frame mapping |
@@ -405,6 +418,7 @@ Fix failures before showing. Then run `knowledge/core/pre-ship-quality-checklist
 ## Hooks
 
 The agent ships with five hooks in `hooks/`:
+
 - `post-edit-typecheck.sh` — TypeScript type checking after file edits
 - `pre-figma-check.sh` — preflight verification before Figma MCP design calls
 - `post-figma-verify.sh` — forces visual verification after Figma MCP builds

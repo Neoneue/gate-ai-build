@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { KpiRail as KpiRailShell } from '@/components/ui/kpi-rail';
@@ -110,24 +109,29 @@ export function Conversations() {
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
           >
-            <PageHeader
-              range={range}
-              customRange={customRange}
-              onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
-              onCustomRangeChange={(r) => {
-                if (r) { setCustomRange(r); setRange('custom'); }
-                else   { setCustomRange(null); setRange('all'); }
-              }}
-            />
-            <KpiRail range={range} customRange={customRange} />
+            <PageHeader />
+            <div className="flex flex-col gap-4">
+              <OverviewBar
+                range={range}
+                customRange={customRange}
+                onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
+                onCustomRangeChange={(r) => {
+                  if (r) { setCustomRange(r); setRange('custom'); }
+                  else   { setCustomRange(null); setRange('all'); }
+                }}
+              />
+              <KpiRail range={range} customRange={customRange} />
+            </div>
             <ConversationsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
   );
 }
 
-/* ─── Page header — eyebrow + title + description + actions ──────────────── */
-
-function PageHeader({
+/* ─── Overview bar — heading + range controls, label FOR the KPI rail ─────
+ * Mirrors AuditTrail's OverviewBar verbatim. The range state lives in
+ * Conversations(); the SegmentedPill + DateRangePicker are wired to the same
+ * handlers, sized sm (32px) to sit tight above the rail. */
+function OverviewBar({
   range,
   customRange,
   onRangeChange,
@@ -139,16 +143,12 @@ function PageHeader({
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        {/* h2 — see CMP012 PageHeader note. */}
-        <PageTitle>Conversations</PageTitle>
-        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          A conversation is a chain of requests that share session context: agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
-        </p>
-      </div>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
+          size="sm"
+          aria-label="Time range"
           options={RANGE_OPTIONS}
           value={range === 'custom' ? '' : range}
           onValueChange={(v) => onRangeChange(v as PresetRange)}
@@ -156,8 +156,24 @@ function PageHeader({
         <DateRangePicker
           value={customRange}
           onChange={onCustomRangeChange}
-          size="default"
+          size="sm"
         />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Page header — eyebrow + title + description + actions ──────────────── */
+
+function PageHeader() {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col gap-2 max-w-1/2">
+        {/* h2 — see CMP012 PageHeader note. */}
+        <PageTitle>Conversations</PageTitle>
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
+          A conversation is a chain of requests that share session context: agent runs, multi-turn chats, tool-calling loops. Click any row to see its message thread.
+        </p>
       </div>
     </div>
   );
@@ -292,50 +308,57 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
 
   return (
     <>
-    <Card density="flush">
-      {/* Toolbar */}
-      {isEmpty ? null : (
-      <FilterToolbar>
-        <SearchInput placeholder="Search by id, prompt, user, key…" ariaLabel="Search conversations" />
-        <Select value={keyId} onValueChange={setKeyId}>
-          <SelectTrigger
-            size="sm"
-            aria-label="Key"
-            className="border-border bg-card text-foreground font-normal"
-          >
-            <SelectValue placeholder="Key" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All keys</SelectItem>
-            <SelectItem value="prod-web">prod-web</SelectItem>
-            <SelectItem value="prod-agent">prod-agent</SelectItem>
-            <SelectItem value="test-key">test-key</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={model} onValueChange={setModel}>
-          <SelectTrigger
-            size="sm"
-            aria-label="Model"
-            className="border-border bg-card text-foreground font-normal"
-          >
-            <SelectValue placeholder="Model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All models</SelectItem>
-            <SelectItem value="claude-opus-4-7">Claude Opus 4.7</SelectItem>
-            <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5</SelectItem>
-            <SelectItem value="claude-haiku-4-5">Claude Haiku 4.5</SelectItem>
-            <SelectItem value="gpt-5">GPT-5</SelectItem>
-            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-            <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
-            <SelectItem value="gemini-3-pro">Gemini 3 Pro</SelectItem>
-            <SelectItem value="gemini-3-flash">Gemini 3 Flash</SelectItem>
-            <SelectItem value="gemini-3-flash-lite">Gemini 3 Flash Lite</SelectItem>
-            <SelectItem value="llama-3-3-70b">Llama 3.3 70B</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterToolbar>
-      )}
+    <div className="mt-2 flex flex-col gap-4">
+      {/* Recent conversations — section header on the page background,
+          mirroring Requests' "Recent requests". The search + filter set
+          live here as page-level section controls, so they always render
+          (a query that returns zero results never hides them). isEmpty
+          governs only the Card interior below. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Recent conversations</h3>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SearchInput placeholder="Search by id, prompt, user, key…" ariaLabel="Search conversations" surface="background" className="flex-1 min-w-0 shrink" />
+          <Select value={keyId} onValueChange={setKeyId}>
+            <SelectTrigger
+              size="sm"
+              aria-label="Key"
+              className="border-border bg-card text-foreground font-normal"
+            >
+              <SelectValue placeholder="Key" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All keys</SelectItem>
+              <SelectItem value="prod-web">prod-web</SelectItem>
+              <SelectItem value="prod-agent">prod-agent</SelectItem>
+              <SelectItem value="test-key">test-key</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger
+              size="sm"
+              aria-label="Model"
+              className="border-border bg-card text-foreground font-normal"
+            >
+              <SelectValue placeholder="Model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All models</SelectItem>
+              <SelectItem value="claude-opus-4-7">Claude Opus 4.7</SelectItem>
+              <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5</SelectItem>
+              <SelectItem value="claude-haiku-4-5">Claude Haiku 4.5</SelectItem>
+              <SelectItem value="gpt-5">GPT-5</SelectItem>
+              <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+              <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
+              <SelectItem value="gemini-3-pro">Gemini 3 Pro</SelectItem>
+              <SelectItem value="gemini-3-flash">Gemini 3 Flash</SelectItem>
+              <SelectItem value="gemini-3-flash-lite">Gemini 3 Flash Lite</SelectItem>
+              <SelectItem value="llama-3-3-70b">Llama 3.3 70B</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Card density="flush">
 
       {isEmpty ? (
         <TableEmptyState
@@ -432,6 +455,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
         </>
       )}
     </Card>
+    </div>
     <ConversationDetailDialog
       row={selectedRow}
       onOpenChange={(open) => {
@@ -570,7 +594,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the body's default `overflow-y-auto` to `overflow-hidden`
           and add `flex flex-col` so the inner grid manages overflow per
           panel rather than scrolling the whole body. */}
-      <DialogScrollBody className="pt-2 overflow-hidden flex flex-col">
+      <DialogScrollBody className="pt-6 overflow-hidden flex flex-col">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
           <ConversationMessagesPanel
             activeRequestId={activeRequestId}

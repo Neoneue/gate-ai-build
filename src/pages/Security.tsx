@@ -23,7 +23,6 @@ import {
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { SectionHeading } from '@/components/ui/section-heading';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -549,14 +548,31 @@ export function Security() {
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
           >
-            <PageHeader
-              range={range}
-              customRange={customRange}
-              onRangeChange={handleRangeChange}
-              onCustomRangeChange={handleCustomRangeChange}
-            />
-            <HeroMetricCard range={range} customRange={customRange} />
-            <MiddleRow range={range} customRange={customRange} />
+            <PageHeader />
+            {/* Overview — range controls group with the two card rows (gap-4
+                internal) rather than floating in the PageHeader; mirrors
+                AuditTrail / Requests. */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SegmentedPill
+                    size="sm"
+                    aria-label="Time range"
+                    options={RANGE_OPTIONS}
+                    value={range === 'custom' ? '' : range}
+                    onValueChange={(v) => handleRangeChange(v as PresetRange)}
+                  />
+                  <DateRangePicker
+                    value={customRange}
+                    onChange={handleCustomRangeChange}
+                    size="sm"
+                  />
+                </div>
+              </div>
+              <HeroMetricCard range={range} customRange={customRange} />
+              <MiddleRow range={range} customRange={customRange} />
+            </div>
             <EventsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
   );
@@ -564,17 +580,7 @@ export function Security() {
 
 /* ─── Page header ────────────────────────────────────────────────────────── */
 
-function PageHeader({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: EventsRange;
-  customRange: CustomRange | null;
-  onRangeChange: (r: PresetRange) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -585,18 +591,6 @@ function PageHeader({
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every injection, PII, and credential event your policies caught, fingerprinted to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
         </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          options={RANGE_OPTIONS}
-          value={range === 'custom' ? '' : range}
-          onValueChange={(v) => onRangeChange(v as PresetRange)}
-        />
-        <DateRangePicker
-          value={customRange}
-          onChange={onCustomRangeChange}
-          size="default"
-        />
       </div>
     </div>
   );
@@ -926,17 +920,22 @@ function EventsTableSection({
 
   return (
     <>
-    <Card density="flush">
-      {/* Toolbar — Search + 3 filter pills, count summary right-aligned.
-          Same shape as CMP-013's RequestsTableSection. No leading category
-          icons on the filter pills (project rule for dense toolbars). */}
-      {isEmpty ? null : (
-      <FilterToolbar>
+    <div className="mt-2 flex flex-col gap-4">
+      {/* Recent events — section header on the page background, mirroring
+          Requests / AuditTrail. Search + filters + Export live here as
+          page-level section controls, so they always render (a query that
+          returns zero results never hides them). isEmpty governs only the
+          Card interior below. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Recent events</h3>
+        <div className="flex flex-wrap items-center justify-end gap-2">
         <SearchInput
           placeholder="Search events…"
           ariaLabel="Search events"
           value={query}
           onChange={setQuery}
+          surface="background"
+          className="flex-1 min-w-0 shrink"
         />
 
         <Select value={type} onValueChange={setType}>
@@ -990,13 +989,14 @@ function EventsTableSection({
           </SelectContent>
         </Select>
 
-        <Button type="button" variant="outline" size="sm" className="ml-auto">
+        <Button type="button" variant="outline" size="sm">
           <AnimatedDownload data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
-      </FilterToolbar>
-      )}
+        </div>
+      </div>
 
+      <Card density="flush">
       {isEmpty ? (
         <TableEmptyState
           title="No security events"
@@ -1079,7 +1079,8 @@ function EventsTableSection({
       />
         </>
       )}
-    </Card>
+      </Card>
+    </div>
     <ThreatEventDetailDialog
       selection={selectedRow}
       onOpenChange={(open) => {

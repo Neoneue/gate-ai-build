@@ -7,7 +7,7 @@
 ## 1. Stack
 
 | Layer | Tech | Version |
-|---|---|---|
+| --- | --- | --- |
 | Framework | React + Vite | 19.2.5 / 8.0.10 |
 | Routing | react-router-dom | 7.3.0 |
 | Styling | Tailwind v4 (`@tailwindcss/vite`) | 4.2.4 |
@@ -40,11 +40,12 @@ graph LR
     LAYOUT --> CONV["/conversations → Conversations.tsx"]
     LAYOUT --> MOD["/models → Models.tsx"]
     LAYOUT --> TOK["/token-savings → TokenSavings.tsx"]
-    LAYOUT --> GRD["/guardrails → Guardrails.tsx"]
+    LAYOUT --> LIM["/limits → Limits.tsx"]
     LAYOUT --> SEC["/security → Security.tsx"]
     LAYOUT --> SECDEF["/events-default → SecurityDefault.tsx (Pro upsell)"]
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
+  LAYOUT --> AUDM["/audit-trail-merkle → AuditTrailMerkle.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/team → Team.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
@@ -61,11 +62,11 @@ graph LR
 Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 
 | Section | Nav items (id → path) |
-|---|---|
+| --- | --- |
 | _(unnamed)_ | overview → `/overview`, requests → `/requests`, conversations → `/conversations` |
-| Gateway | models → `/models`, token-savings → `/token-savings`, guardrails → `/guardrails` |
+| Gateway | models → `/models`, token-savings → `/token-savings`, limits → `/limits` |
 | Security | security-events → `/security`, policies → `/policies` |
-| Audit | audit-trail → `/audit-trail` _(stub page; full surface in flight)_ |
+| Audit | audit-trail → `/audit-trail` _(built; `/audit-trail-merkle` is a route-only variant with the live Merkle viewer, not in nav)_ |
 | Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
@@ -215,7 +216,7 @@ interface Model {
 
 25 models across 8 vendors seeded in `MODELS`. Each model lists all provider offerings (e.g., Claude Opus 4.7 available via anthropic, bedrock, vertex).
 
-### 3.7 Policies & Guardrails
+### 3.7 Policies & Limits
 
 ```typescript
 // Defined in: src/pages/Policies.tsx
@@ -245,7 +246,7 @@ interface PolicyState {
   action:         string
 }
 
-// Defined in: src/pages/Guardrails.tsx
+// Defined in: src/pages/Limits.tsx
 interface Limit {
   id:        string
   name:      string
@@ -356,6 +357,7 @@ erDiagram
 ```
 
 **Key coupling rules:**
+
 - `EventRow` is a subset of `RequestRow` — security events are exactly 0.25× request volume across all ranges (24h: 12 = 0.25×48; 7d: 117 ≈ 0.25×468; 30d: 562 ≈ 0.25×2,248; all: 1215 ≈ 0.25×4,860).
 - `ConversationRow.reqs` counts how many `RequestRow` entries reference that `conversationId`.
 - `ApiKeyRow.requests7d` sparkline must stay consistent with `API_KEY_ROWS` in Activity.
@@ -373,7 +375,7 @@ The app has no backend. All data is seeded in-file. The three rules:
 ### 5.1 Canonical totals
 
 | Page | Constant | Value |
-|---|---|---|
+| --- | --- | --- |
 | Requests | `HERO_ALL_TOTAL` | 4,860 |
 | Requests | `HERO_24H_TOTAL` | 48 |
 | Requests | `HERO_7D_TOTAL` | 468 |
@@ -420,7 +422,7 @@ function buildSpark(total: number, seed: number): number[]
 ### 5.4 Seed arrays
 
 | Array | Page | Shape | Count |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `REQUEST_ROWS` | Requests | `RequestRow[]` | 17 (cumulative: 24h ⊂ 7d ⊂ 30d ⊂ all) |
 | `EVENT_ROWS` | Security | `EventRow[]` | 17 |
 | `CONVERSATION_ROWS` | Conversations | `ConversationRow[]` | 8 |
@@ -444,13 +446,14 @@ function buildSpark(total: number, seed: number): number[]
 **Purpose:** Cost, security, and audit anchor rollup across the workspace. Lead surface for both H1 personas (Olivia + Devon); audit feed serves H2 wedge (Grace).
 
 **Sections (top → bottom):**
+
 1. `PageHeader` — title + subtitle sourced from Notion H1 Narrative & Positioning ("Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.")
 2. `KpiRail` (4 tiles, all click-through):
    - Daily spend → `/activity?range=24h`
    - Monthly spend → `/activity?range=30d`
    - Threats detected → `/security`
    - Events anchored → `/audit-trail`
-3. `QuickActionsRow` — 4 evenly-styled tiles: Set a spend limit (`/guardrails?create=1`) · Review Security Events · Rotate API Key · Read Integration Guide
+3. `QuickActionsRow` — 4 evenly-styled tiles: Set a spend limit (`/limits?create=1`) · Review Security Events · Rotate API Key · Read Integration Guide
 4. `RecentConversationsCard` — top 8 conversations preview (columns mirror Conversations page)
 5. `RecentSecurityEventsCard` — top 8 blocked/flagged events (preview of Security page log)
 6. `RecentAnchoredEventsCard` — top 8 audit-trail entries (columns mirror AuditTrail page; row click opens `AuditRecordDialog`)
@@ -458,6 +461,7 @@ function buildSpark(total: number, seed: number): number[]
 **State:** None beyond sidebar context.
 
 **Data:**
+
 - `THREATS_DETECTED_COUNT` = `EVENT_ROWS.length` (from `Security.tsx`)
 - `ANCHORED_EVENTS_COUNT` = `AUDIT_EVENT_ROWS.length` (from `AuditTrail.tsx`)
 - `MONTHLY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS * 4.2` (reconciles to Activity 30d window)
@@ -466,6 +470,7 @@ function buildSpark(total: number, seed: number): number[]
 - Preview tables sort by `at`/`updated`/`time` desc and `.slice(0, 8)` for the canonical 8-row glance cap.
 
 **Cross-page imports:**
+
 - `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
 - `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime`, `ThreatEventDetailDialog`
 - `AuditTrail.tsx` → `EVENT_ROWS as AUDIT_EVENT_ROWS`, `EventRow as AuditEventRow`, `KIND_BADGE_VARIANT`, `fmtTime`, `truncateHex`
@@ -479,6 +484,7 @@ function buildSpark(total: number, seed: number): number[]
 **Purpose:** Full request log with drill-in detail modal.
 
 **State:**
+
 ```typescript
 range:       PresetRange         // default 'all'
 customRange: CustomRange | null
@@ -523,6 +529,7 @@ searchParams: URLSearchParams       // for ?open= deep-link
 **No incoming deep-link** (Security does not accept `?open=`).
 
 **Outbound links from modal:**
+
 - `/conversations?open=${conversationId}`
 - `/requests?open=${requestId}`
 
@@ -551,6 +558,7 @@ searchParams: URLSearchParams       // for ?open= deep-link
 **Purpose:** Routable model catalog with multi-provider offerings and code samples.
 
 **State:**
+
 ```typescript
 selectedModel: Model | null        // list ↔ detail toggle (no URL change)
 modality:      'all' | Modality
@@ -573,9 +581,9 @@ page, rowsPerPage: number
 
 ---
 
-### Guardrails page (`/guardrails` → `Guardrails.tsx`)
+### Limits page (`/limits` → `Limits.tsx`)
 
-**Purpose:** Spend / token / request rate caps.
+**Purpose:** Spend / token / request rate caps. (Renamed from "Guardrails" 2026-06-01; the Requests `GuardrailAction` axis in §3.1 is a separate concept and was not touched.)
 
 **State:** `createOpen: boolean`, `limits: Limit[]`
 
@@ -595,11 +603,12 @@ page, rowsPerPage: number
 
 ### Audit Trail page (`/audit-trail` → `AuditTrail.tsx`)
 
-**Purpose:** Tamper-evident, cryptographically verifiable log of every routed request — anchored to Constellation's Digital Evidence layer. Hero differentiator of the H1 narrative.
+**Purpose:** Tamper-evident, cryptographically verifiable log of every routed request — fingerprinted to Constellation's Digital Evidence layer. Hero differentiator of the H1 narrative.
 
 **Status:** Built (2026-05-16). Title + subtitle + range selector + 4-tile KPI rail + paginated event log with toolbar. Per-row drill-in (cryptographic-proof side panel) lands in a follow-up.
 
 **Page-level state:**
+
 ```typescript
 const [range, setRange] = useState<Range>('all');           // 'all' | '24h' | '7d' | '30d' | 'custom'
 const [customRange, setCustomRange] = useState<CustomRange | null>(null);
@@ -612,6 +621,7 @@ const rangeRows = useMemo(
 `rangeRows` is the load-bearing pipe — both `<KpiRailSection rows={rangeRows} />` and `<EventLog rows={rangeRows} />` read from it. EventLog further narrows via kind filter + search query before paginating.
 
 **EventRow type:**
+
 ```typescript
 type EventKind = 'AUDIT' | 'REQUEST' | 'POLICY' | 'EVENT' | 'LIMITS';
 
@@ -622,30 +632,34 @@ type EventRow = {
   kind: EventKind;
   description: string;
   member: string;      // workspace member name (Team.tsx MEMBER_ROWS roster)
-  anchor: string;      // mono short anchor hash; CircleCheck "verified" affordance with sr-only label
+  anchor: string;      // field name kept; UI label renamed Anchor -> Fingerprint 2026-06-01; mono short anchor hash; CircleCheck "verified" affordance with sr-only label
 };
 ```
 
 **Mock data anchor:**
+
 ```typescript
 const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
 ```
+
 Fixed anchor for relative-time formatting and range cutoffs — keeps the mock from going stale as wall-clock time advances. Same technique to use whenever a mock page renders relative timestamps. When real data lands, replace `NOW` with `new Date()`.
 
 **Range filter:** `isWithinRange(at, range, customRange)` — `'all'` returns everything; presets compute `cutoff = NOW - HOURS_PER_PRESET[range] * 1h`; `'custom'` returns rows in `[customRange.from, customRange.to]`.
 
-**KPI tiles (derive from `rangeRows`):**
-- **Events logged:** `rangeRows.length`
-- **Anchors:** `new Set(rangeRows.map(r => r.anchor)).size` — distinct anchor hashes (events batch under one anchor; mock data has two batched groups of 3 and 2)
-- **Verified rate:** `100.0%` when any rows; `—` when empty (no fabricated rate over zero events)
-- **Last anchor:** `fmtRelative(mostRecent.at)` — "5h ago", "2d ago", etc.; `—` when empty
+**KPI tiles (derive from `rangeRows`; tiles render a delta row via `KpiTile` `deltaRow` + `deltaNote={RANGE_DELTA_NOTE[range]}` as of 2026-06-01):**
 
-**EventLog table (six columns, `table-fixed` with percentage widths):** Time 14% · Event ID 13% · Kind 9% · Description 30% · Member 16% · Anchor 18%. Description column uses `line-clamp-2 break-words` for two-line wrap with ellipsis on overflow. TableRow has `[&_td]:align-top` so single-line cells align with the first line of a wrapped Description.
+- **Events logged:** `rangeRows.length`
+- **Fingerprints:** `new Set(rangeRows.map(r => r.anchor)).size` — distinct fingerprint hashes (events batch under one fingerprint; mock data has two batched groups of 3 and 2). Code field stays `anchor`; only the UI label was renamed.
+- **Verified rate:** `100.0%` when any rows; `—` when empty (no fabricated rate over zero events)
+- **Last fingerprint:** `fmtRelative(mostRecent.at)` — "5h ago", "2d ago", etc.; `—` when empty
+
+**EventLog table (six columns, `table-fixed` with percentage widths):** Time 14% · Event ID 13% · Kind 9% · Description 30% · Member 16% · Fingerprint 18%. Description column uses `line-clamp-2 break-words` for two-line wrap with ellipsis on overflow. TableRow has `[&_td]:align-top` so single-line cells align with the first line of a wrapped Description.
 
 **Empty state:** `<TableEmptyState>` primitive (canonical site). Toolbar hides when empty. Fires identically for fresh-workspace (zero data ever) and over-filtered (zero matches in range/kind/query).
 
 **Kind badge variant mapping:**
-```
+
+```text
 AUDIT   → 'warning'      (amber)
 REQUEST → 'info'         (blue)
 POLICY  → 'destructive'  (red)
@@ -653,15 +667,16 @@ LIMITS  → 'secondary'    (gray-ish; no LIMITS rows in mock yet)
 EVENT   → 'neutral'      (gray; one row in mock)
 ```
 
-**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page uses "anchored on a public ledger" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
+**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "fingerprinted to Constellation's Digital Evidence layer." The Digital Evidence verb was renamed from "anchored" to "fingerprinted" in UI copy on 2026-06-01; code identifiers (the `anchor` field, `ANCHORED_EVENTS_COUNT`, `RecentAnchoredEventsCard`) intentionally keep the old name, so do not blind find-replace. Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page references "a public chain" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
 
 **AuditRecordDialog drill-in modal** (`src/pages/AuditRecordDialog.tsx`, also opened from Overview's `RecentAnchoredEventsCard`):
 
 Structure (post-2026-05-18 trim):
+
 1. `DialogScrollHeader` → `DialogTitleBlock` with title "Audit record" (no badge slot)
 2. `DialogScrollSummary` → standalone `<VerifiedBySeal />` (no card chrome, no descriptive copy — info is duplicated by the Event detail rows below and the badge alt-text)
 3. `DialogScrollBody` → `<Tabs variant="line">` with three triggers:
-   - **Event** — `<DetailList>` with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Anchor (CircleCheck + truncateHex(anchor, 4, 4))
+   - **Event** — `<DetailList>` with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Fingerprint (CircleCheck + truncateHex(anchor, 4, 4))
    - **Merkle path** — `<MerklePathPanel>` inline SVG tree (ROOT + sibling + leaf) with mono path notation
    - **How it works** — `<HowItWorksPanel>` four-step explainer + "Digital Evidence docs" link
 4. `DialogScrollFooter` → `Copy proof JSON` (outline) and `Open DE Explorer` (default)
@@ -670,11 +685,31 @@ The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h
 
 ---
 
+### Audit Trail, Merkle variant (`/audit-trail-merkle` → `AuditTrailMerkle.tsx`)
+
+**Status:** Built (2026-06-01). Route-only evolution of the Audit Trail page; NOT in the sidebar nav. Reuses the same data: imports `EVENT_ROWS`, `KIND_BADGE_VARIANT`, and the `EventRow` type from `AuditTrail.tsx` (no separate feed). Same `NOW = 2026-05-16 16:00` mock anchor and `isWithinRange` range logic.
+
+**New vs. `/audit-trail`:**
+
+- `OverviewBar`: section-bar header treatment above the KPI rail.
+- `RANGE_DELTA_NOTE: Record<Range, string>`: per-range comparison copy ("vs last 7d", etc.) passed to `KpiTile` via the new `deltaNote` + `deltaRow` props.
+- `KpiRailSection({ rows, range })`: takes `range` so each tile renders its range-keyed delta row.
+- Drill-in opens `AuditRecordDialogMerkle` instead of `AuditRecordDialog`.
+
+**`AuditRecordDialogMerkle` (`src/pages/AuditRecordDialogMerkle.tsx`):** Same tabbed shell as `AuditRecordDialog`, but the **Merkle path** tab renders a _live_ tree instead of the static `MerklePathPanel`:
+
+- Deterministic FNV-32 hashing (`fnv32` / `fnv32Hex` / `fnv32HexLong`) computes the tree from the record; no hardcoded hashes.
+- `TREE_DEPTH = 3` gives `LEAF_COUNT = 8` (2^3): a full depth-3, 8-leaf binary Merkle tree (L0 ROOT down to L3 leaves).
+- Rendered as an inline SVG (`viewBox` 760 x 372, `NODE_W` 64) with an interactive zoom viewer; the highlighted inclusion path (leaf, siblings, root) is the verifiable proof.
+
+---
+
 ### Activity page (`/activity` → `Activity.tsx`)
 
 **Purpose:** Workspace usage analytics — cost, requests, tokens across model / provider / API-key dimensions.
 
 **State:**
+
 ```typescript
 range, customRange
 dimension: 'model' | 'provider' | 'apiKey'
@@ -703,7 +738,7 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 **State:** `displayName`, `email`, `organization` with dirty-tracking for Save/Reset.
 
-**Mock identity:** Chad Ponticas / chad@constellationnetwork.io
+**Mock identity:** Chad Ponticas / <chad@constellationnetwork.io>
 
 ---
 
@@ -747,14 +782,16 @@ sequenceDiagram
 ```
 
 **Pattern (canonical, all 3 deep-link pages):**
+
 1. `useSearchParams()` reads `"open"` param on mount
 2. Match against seed array by `requestId` / `conversationId`
 3. `setSelectedRow(matched)` opens the detail modal
 4. URL cleaned via `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker
 
 **Other deep-link params (one-way, read-once on mount):**
+
 - `Activity.tsx?range=24h|7d|30d|all` — Overview KPI tiles call into Activity scoped to a range. Read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
-- `Guardrails.tsx?create=1` — Overview "Set a spend limit" Quick Action opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+- `Limits.tsx?create=1` — Overview "Set a spend limit" Quick Action opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
 
 ---
 
@@ -807,7 +844,7 @@ graph TB
 ### 8.2 Radius system (three-tier material ladder)
 
 | Tier | Token | px | Usage |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Sub-element | `rounded-xs` | 4px | Badge, MenuItem, TabsTrigger, SelectItem |
 | Button/chrome | `rounded-sm` | 6px | Button, Input, Select trigger, Menu popup, Toast |
 | Card/surface | `rounded-md` | 8px | Card, KpiRail, table containers |
@@ -818,7 +855,7 @@ Concentric rule: item radius < container radius. 2× ratios between tiers.
 ### 8.3 Shadow system
 
 | Token | Usage |
-|---|---|
+| --- | --- |
 | `--shadow-border` | Cards and surface-tier containers (1px ring + lift + ambient) |
 | `--shadow-popup` | Menus and popovers (4px lift + 1px ring) |
 | `--shadow-modal` | Dialogs (16px lift + 1px ring) |
@@ -828,7 +865,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 ### 8.4 Typography voices
 
 | Voice | Classes | Usage |
-|---|---|---|
+| --- | --- | --- |
 | Display / hero numeric | `font-sans font-medium tabular-nums tracking-tight` via `<HeroNumeric>` | Page titles, KPI values ≥24px |
 | Body / label | `font-sans font-medium` minimum | Card titles, button labels, form labels |
 | Eyebrow | `font-mono uppercase tracking-[0.1em] font-medium` via `<Eyebrow>` | Section labels, KPI eyebrows, nav section headers |
@@ -846,6 +883,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 - Default: `transition-[colors,box-shadow] duration-150 ease-out`
 - Press affordance: `active:translate-y-px` (NOT `active:scale-[0.98]`)
 - Modal dismiss: every Dialog, Tooltip, Popover popup AND overlay needs `data-closed:fill-mode-forwards` alongside `animate-out` classes
+- Tooltip open: 200ms global default delay; popup padding 8px (`p-2`). Cost-column legend tooltip added on Requests 2026-06-01
 
 ---
 
@@ -854,7 +892,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 54 components in `src/components/ui/`. Key primitives:
 
 | Component | Base primitive | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `Button` | `@base-ui/react/button` | Variants: default/outline/secondary/ghost/destructive/link. Sizes: xs/sm/default/lg/icon*. Press: `active:translate-y-px` |
 | `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline) |
 | `Select` | `@base-ui/react/select` | `rounded-sm` trigger, `rounded-sm` popup, `rounded-xs` items |
@@ -864,7 +902,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `KpiRail` | custom div | Divided grid of `CompactKpi` tiles. `rounded-md shadow-(--shadow-border)` |
 | `HeroNumeric` | custom div | Single source for sans tabular numerics ≥24px. Sizes: default (24px) / lg (32px) |
 | `CompactKpi` | `HeroNumeric` + `DeltaTag` | Standalone or `flat` (no card chrome). `onClick` + `ariaLabel` props render as interactive `<button>` with ChevronRight in title row, hover + focus ring (used on Overview rail for deep-link tiles). `deltaSize` prop (`sm`/`md`) controls delta type-step. |
-| `KpiTile` | `Eyebrow` + `HeroNumeric` | Shared hero-numeric KPI tile (AuditTrail, TokenSavings). Props: title / value / valueSuffix (sized to HeroNumeric, muted) / liveDot / delta / caption / spark. Extracted 2026-05-17 from 3 duplicates. |
+| `KpiTile` | `Eyebrow` + `HeroNumeric` | Shared hero-numeric KPI tile (AuditTrail, TokenSavings). Props: title / value / valueSuffix (sized to HeroNumeric, muted) / liveDot / delta / deltaRow (opt-in: delta tag on a dedicated third row) / deltaNote (trailing comparison copy, e.g. "vs last 7d") / caption / spark. Extracted 2026-05-17 from 3 duplicates; deltaRow + deltaNote added 2026-06-01. |
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Requests, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
@@ -885,7 +923,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 ## 10. Icon System
 
 | File | What it provides |
-|---|---|
+| --- | --- |
 | `src/components/icons/brand-mark.tsx` | `<BrandMark>` — 7-path constellation. `fill="currentColor"`. Default size-8 at `text-blue-700` |
 | `src/components/icons/vendor-meta.tsx` | `VENDOR_META: Record<Vendor, VendorMeta>`, `PROVIDER_ORDER`, `<VendorAvatar>` |
 | `src/components/icons/model-providers.tsx` | 8 SVG components: AnthropicIcon, GrokIcon, GeminiIcon, OpenAIIcon, MetaIcon, MistralIcon, DeepSeekIcon, CohereIcon |
@@ -899,7 +937,7 @@ All provider SVGs moved to `public/icons/providers/` for standalone rendering. C
 
 `src/lib/chart-palette.ts` — 8-slot OKLCH categorical palette:
 
-```
+```text
 slot 1: oklch(0.62 0.18 255) — blue
 slot 2: oklch(0.72 0.17 50)  — orange
 slot 3: oklch(0.72 0.20 145) — green
@@ -917,7 +955,7 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 ## 12. Files to Read First (for new agents)
 
 | File | Why |
-|---|---|
+| --- | --- |
 | `design.md` | Full design system contract — token architecture, do/don't rules, component-specific specs |
 | `src/index.css` | All CSS custom properties — palette, semantic layer, radius, shadows, fonts |
 | `src/layouts/DashboardChrome.tsx` | Layout shell — sidebar, breadcrumb, nav active state |
@@ -934,20 +972,25 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 ## 13. How to Update This File
 
 **When adding a page:**
+
 - Add a route entry to §2 route map diagram
 - Add to the sidebar nav table if it has a nav item
 - Add a page-inventory entry to §6
 
 **When adding a type:**
+
 - Add to the appropriate §3 section
 - If it has cross-entity relationships, update the ER diagram in §4
 
 **When adding mock data:**
+
 - Document the seed array in §5.4
 - If it introduces a new canonical total, add it to §5.1
 
 **When adding a UI component:**
+
 - Add to §9 component table
 
 **When the design system changes (new token, new radius rule, new component spec):**
+
 - Update §8 and `design.md`

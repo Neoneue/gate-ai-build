@@ -402,7 +402,7 @@ Two layers: **palette atoms** (5 OKLCH ramps × 11 steps + atomic surfaces + 8-s
 ### Step roles (apply across all 5 ramps)
 
 | Step | Role |
-|---|---|
+| --- | --- |
 | 50–100 | Subtle backgrounds, washes, hover-bg |
 | 200 | Borders, dividers (`--border`, `--input` resolve to neutral-200) |
 | 300 | Strong borders, ghost-button hover-bg, dashed gridlines |
@@ -438,7 +438,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 **Hard rule: every Tailwind utility that targets a surface, border, ring, or foreground tone must bind to a semantic token — never a raw palette atom.** The `:root {}` semantic layer is the single reskin surface; components that bypass it (e.g. `border-neutral-200`, `bg-neutral-100`) couple themselves directly to the palette and break any future theme swap.
 
 | Use this class | Resolves to | Do NOT write |
-|---|---|---|
+| --- | --- | --- |
 | `bg-background` | white | `bg-white` on page / dialog surfaces |
 | `bg-card` | white | `bg-white` on Card / KpiRail / table containers |
 | `bg-popover` | white | `bg-white` on dropdown / Select / Tooltip surfaces |
@@ -482,7 +482,7 @@ Loaded via Google Fonts CDN + `@fontsource-variable/geist` fallback. Geist serve
 Tailwind named scale only. Three sizes overridden in `@theme` to Geist's heading scale (even-numbered, larger increments at top); other sizes match Geist defaults. **Arbitrary `text-[Npx]` is banned.**
 
 | Role (YAML key) | Font | Size | Weight | Line Height | Letter Spacing | Rule | Notes |
-|---|---|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- | --- | --- |
 | `hero-numeric-lg` | Geist | 32 | 500 | 36 | tight | Full-page hero metric only (Requests page hero, `8,241`). One per page. | sans + `tabular-nums` — presentation tier. |
 | `hero-numeric-default` | Geist | 24 | 500 | 32 | tight | KPI rail value, panel hero (Top Keys total). | sans + `tabular-nums`. |
 | `h1` | Geist | 32 | 500 | 40 | tight | Page title (artboard h1). | overridden text-3xl (Geist 32). |
@@ -502,7 +502,7 @@ Tailwind named scale only. Three sizes overridden in `@theme` to Geist's heading
 Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
 
 | Voice | Recipe | Use |
-|-------|--------|-----|
+| ------- | -------- | ----- |
 | **Display headline / hero numeric** | `font-sans tabular-nums font-medium tracking-tight` (via `<HeroNumeric>`) | Page titles, KPI hero values (24px), full-page hero metrics (32px), panel heroes — *summary, look at this* |
 | **Body / label** | `font-sans` (regular or `font-medium`) | Card titles, page subtitles, button labels, key/project names, table column headers, **form / input labels** (`<Label>` primitive) — *human, read this* |
 | **Eyebrow** | `font-mono uppercase tracking-[0.1em] font-medium` | Section eyebrows, KPI labels, segmented control labels, chrome strips — *what is this*. **Never use this for form/input labels** — those go in the Body/label row above. Mono UPPERCASE on a field label reads as a chrome strip, not as something the user is meant to fill in. |
@@ -542,7 +542,7 @@ Within a primitive's row/group: between icon + label, badge + text, label + cont
 #### Token roles
 
 | Token | Value | Tier | Uses |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `spacing.1` | 4px | compound | Micro gap (icon adjacency, internal grouping) |
 | `spacing.2` | 8px | surface OK | Badge gap, button icon gap, between dense siblings |
 | `spacing.3` | 12px | compound only | Button px-3 (sm/xs), Input px-3, inner table cells |
@@ -571,7 +571,7 @@ Whitespace carries hierarchy. Cards never touch — shadow-as-border does the se
 Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popup`, `--shadow-border`, `--shadow-border-hover`, `--shadow-modal`) still live in `index.css:117–138` and remain the source of truth for menus, popovers, and modals; and **the Card / KpiRail / Tabs-line family** which migrated 2026-05-15 onto an explicit `border border-border shadow-xs` recipe (1px neutral-200 stroke + Tailwind's built-in `shadow-xs` for subtle lift). The migration trades ring-only edges for an honest border that survives any backdrop, any zoom — operator-tool surfaces look brittle at >1× zoom when the only edge is a ring shadow.
 
 | Tier | Recipe | Radius | Surfaces |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Sub-element | none | `rounded-xs` (4px) | Tabs trigger, Segmented item, SelectItem, Badge, MenuItem |
 | Menu / Chrome | `--shadow-popup` token (4px lift 8% + 1px ring 4%) | `rounded-sm` (6px) | Select content, Menu popup, Popover, Tooltip, Toast, Button, Input |
 | **Card / Surface** | **`border border-border shadow-xs`** (migrated 2026-05-15) | **`rounded-md` (8px)** | **Card, KpiRail, Tabs `line` variant border-b, MessageBlock outline** |
@@ -596,7 +596,7 @@ Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popu
 Driven by `--radius` (0.625rem = 10px base) plus a **locked override** at `--radius-xl: 1rem` (16px) for modals. Revised 2026-05-10 from a two-tier ladder (6 / 12) to a **three-tier ladder** that opens a discrete card / surface tier.
 
 | Token | Value | Tier | Use |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `rounded.xs` | 4px | Sub-element | Tabs trigger, Segmented item, SelectItem, Badge, MenuItem |
 | `rounded.sm` | 6px | Button / chrome / menu | Button, Input, Select trigger, Menu popup, Toast |
 | **`rounded.md`** | **8px** | **Card / surface (NEW)** | **Card, KpiRail, table containers, hero card** |
@@ -654,6 +654,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 - **Tabs** (`tabs.tsx`) — sliding white indicator on active trigger (200ms ease-out, transform+width). Two variants: `default` (pill-on-well, `bg-muted rounded-sm h-8 p-1`, active trigger `bg-background rounded-xs`) and `line` (underline, transparent track, active trigger gets a 2px neutral-900 underline). Vertical orientation supported on the default variant.
 
 **Rule (`line` variant — trigger contract):**
+
 - **Trigger vertical padding is `pt-2 pb-3`** (8px top, 12px bottom). Codified 2026-05-21 — earlier `pt-4 pb-3` was disproportionate for the page-level register where most line tabs live (dialog headers, page sub-nav). Every line-variant tab strip site-wide uses this rhythm; no usage-site overrides needed.
 - **Active trigger never gets a hover background.** The trigger's height is `calc(100%-1px)` (1px short of the TabsList) and the indicator (`bottom-[-1px] h-0.5`) overlaps the trigger's bottom 1px by one pixel — so any `hover:bg-*` on the active trigger would clip the indicator from 2px to 1px on rollover. The primitive applies `data-active:hover:bg-transparent` for `variant="line"` to lock this; the indicator stays full height. Hover affordance still fires on non-active triggers (`bg-neutral-100`) because those don't carry an indicator. Codified 2026-05-21 after the Audit-record modal regression.
 - **Segmented** (`segmented.tsx`) — pill-style selector, same sliding-indicator idiom as Tabs default. `bg-muted rounded-sm overflow-clip`. Sizes: default `h-8`, sm `h-7`. Variants: `pill` (default) and `group` (adjacent borders, neutral-900 fill on selected — rare).
@@ -661,11 +662,13 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 - **SegmentedPill track border (codified 2026-06-01):** the track carries a `border-border` hairline — **not** a borderless `border-transparent` track. The track fill is `bg-neutral-100`, the *same* tone as the page surface (`--background` = neutral-100), so without an edge the unselected segments read as floating on the canvas and only the white selected thumb is legible. The border gives the control a defined boundary against the same-tone surface and keeps it a visual peer of the bordered controls it sits beside — Select triggers and outline Buttons like the `Custom` range button it pairs with. The border slot was always reserved (previously `transparent`), so making it visible is a **zero-layout-shift** change. `segmented.tsx`'s pill variant already used `border-border`; the two segmented primitives are now aligned. Supersedes the earlier Paper spec WW0-0 "effectively borderless track" note.
 
 **Rule (Tabs vs Segmented — when to pick which):**
+
 - **`Tabs variant="line"`** = sibling sub-pages of the same surface. Each tab represents content that would map to its own URL path (`/team/members`, `/team/invitations`, `/settings/general`). Different content semantics, equal stature, primary navigation within the page. Used by Team, Models (modality tabs), and the Request detail modal. Matches Vercel's settings/team/billing/integrations sub-nav, Material 3, IBM Carbon.
 - **`Tabs variant="default"`** (pill-on-well) = secondary view scope where the items are stylistic peers but the surface pattern still calls for full-page tab semantics. Rare at page-header level — most page-header tab use cases are line. Reserve for nested tab strips inside a card where the line variant would compete with surrounding chrome.
 - **`Segmented` / `SegmentedPill`** = mutually-exclusive view filters of the *same* data, lives inside a toolbar or panel, not page-level. Time-range pickers (24h / 7d / 30d), chart-type toggles (Bar / Line), unit switchers, code-vs-preview inside a card. Constrained-width by design.
 
 The semantic test: are these *pages of the surface* (line tabs) or *filters/views of the same data* (segmented)? If you'd give each one its own URL, it's a tab. If they're alternate lenses on shared content, they're segmented.
+
 - **Select** (`select.tsx`) — Base UI. Trigger: `bg-neutral-50 border-neutral-200 rounded-sm h-9 text-sm`. Content: `rounded-sm shadow-(--shadow-popup) bg-popover`. Item: `rounded-xs px-3 py-1.5 text-sm`. **Asymmetric padding** `pl-N pr-(N-1)` across all sizes (`pl-3 pr-2` xs/sm, `pl-4 pr-3` default/lg) — optical balance: text side wants more air, chevron has built-in bounding-box whitespace. Long lists use `<SelectGroup>` + `<SelectLabel>` + `<SelectSeparator>` to group (e.g. First-party vs Marketplace).
 - **Toggle** (`toggle.tsx`) — `rounded-sm h-8 px-3 text-sm font-medium`, `data-[state=on]:bg-muted`. Wrap with `<ToggleGroup>` for multi-select.
 
@@ -695,7 +698,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 **Three-tier body-cell ink density** (locked):
 
 | Tone | Use |
-|---|---|
+| --- | --- |
 | `text-neutral-500` | Context-only fragments: sub-IDs nested under a larger identifier (e.g. `(sk-gw-NNN)` parenthetical), gateway-id suffixes, separators. **Not timestamps.** |
 | `text-neutral-800` | Body data (IDs, keys, numerics, initiators, **dates / times / relative-ago / countdowns**). Date/time cells live here — they're row payload, not scaffolding, even when they read as "context." Locked 2026-05-16 after un-muting Conversations / Team / Dashboard / AuditTrail date columns. |
 | `text-neutral-900` | Row's primary identifier (model name with VendorAvatar, row title, member name) |
@@ -804,7 +807,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 **Not a primitive — a className convention.** Inline links in body text use **ink + permanent faint underline**:
 
-```
+```text
 underline decoration-neutral-200 underline-offset-2
 hover:decoration-neutral-500
 focus-visible:decoration-neutral-500
@@ -821,7 +824,7 @@ Rendered as `<button type="button">` (no router in this codebase — no `<a href
 
 Multi-section rows live in **one bordered card** with internal sections divided by **inset hairline `before:` pseudo-elements**:
 
-```
+```text
 relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-neutral-200
 ```
 
@@ -887,7 +890,7 @@ The product targets desktop-first operator workflows; no mobile-shipped state to
 ### Breakpoints (Tailwind v4 defaults — no overrides in `@theme`)
 
 | Name | Width | Key Changes |
-|---|---|---|
+| --- | --- | --- |
 | sm | 640px | (no specific overrides) |
 | md | 768px | (no specific overrides) |
 | lg | 1024px | Outer page padding `lg:p-6` (24px) |
@@ -930,6 +933,7 @@ Resolved 2026-05-19 — **Security Mark-PIJ in-modal slide.** `ThreatEventDetail
 Resolved 2026-05-12 — **Requests page CTO/PM feedback round.** Two-axis table split (Status = success / error / slow; Guardrail = allow / flagged / redacted / block) — filter row mirrors the split, AND-combined. Range pill widened to **1H / 24H / 7D / 30D** + `<DateRangePicker>` for custom backlogs older than the longest preset; both inputs share `rangeStore` (selecting one clears the other). Hero number / eyebrow / delta / chart geometry now all react to the active range (bucket densities tuned per range to defuse the "cumulative?" misread on sparse data). **Cost column gains a PAYG-vs-BYOK signal:** BYOK rows render `—` in `text-neutral-400` (we don't own the billing relationship and won't estimate); Info icon in the column header + Tooltip explains PAYG vs BYOK; cell-level Tooltip on the dash repeats "Billed by your provider (BYOK)". Single `isByokKey(keyId)` predicate replaces the prior brittle `keyId === 'dev'` check (used in 2 modal call sites). **Request detail modal Messages tab reworked** from JSON-payload-only to readable-first: User and Assistant turns render as labeled prose cards (white header + `bg-neutral-50` body, lucide `User` / `Sparkles` icons left of label); full HTTP payload moves into a collapsed `<BodySection>` drawer ("Full request payload" with a lucide `Braces` icon) with a "Copy code" footer below the code well — the footer was a deliberate split from the toggle header so taps can't conflict. KPI rail gains a `Compression` tile; the previously-named "Audit" tile + tab were renamed visually to **Security** (internal `value="audit"` retained for now). Security panel scoped to three checks: prompt injection, PII redaction, credential leak detection. **Subtitle:** "Every model call across your stack, captured in real-time." **A11y:** Tooltip triggers (Cost header info icon, Cost cell dash) take `tabIndex={0}` so keyboard users can read the BYOK explanation; both also get `p-1 -m-1` for a ~32px hit area with no layout shift; `<BodySection>` toggle button gets `focus-visible:ring-2 ring-inset`; Info icon resting bumped `text-neutral-400` → `text-neutral-500` to clear non-text-contrast (WCAG 1.4.11). **Polish:** prose body adds `break-words` (defends long URLs / hashes from horizontal overflow); Cost header Tooltip max-w bumped `xs` → `sm` for a cleaner 2–3 line wrap.
 
 **Open drift:**
+
 - **`<MessageBlock>` naming collision.** The canonical primitive (`src/components/ui/message-block.tsx`, used by Conversations for chat-thread bubbles with role + tone + selection + crosslink) has a same-named local component in `src/pages/Requests.tsx` (labeled prose card for the Request modal Messages tab — different shape, different job). Two fixes possible: (a) rename the local Requests component to `MessageCard` / `MessageTurn` / `MessagePane`; (b) extract the labeled-card shape as a real primitive and absorb both shapes under one name with a `variant` slot. The labeled-card shape currently has only one consumer, so (a) is the safe immediate move; (b) becomes worth doing when a second consumer appears.
 - **`-tracking-[1px]` heading kerning.** PageTitle and the spec-sheet ArtboardHeader use arbitrary `-tracking-[1px]` rather than a named token. Lives in its own optical tier (different from `tracking-snug` / `tracking-tight`); intentionally not promoted to a token yet because there's no second use case. Watch for a third occurrence — that's the extraction trigger.
 - **`bg-neutral-50` exception.** Form-field surfaces (Input, Textarea, Select trigger, table header) still bind to the ramp atom directly because no `--input-bg` semantic alias exists. Add the alias before the next theme-swap candidate ships.
@@ -950,7 +954,7 @@ Resolved 2026-05-12 — **Requests page CTO/PM feedback round.** Two-axis table 
 ## States Checklist *(our extension)*
 
 | Surface | States |
-|---|---|
+| --- | --- |
 | Forms (Input/Select/Switch/Checkbox/Radio) | Default · Focused · Hovered · Disabled · Invalid · Read-only |
 | Tables (Requests / Conversations / AuditTrail / Activity / Models / Team) | Default · Hover · Selected · Sorted · Filtered · Empty · Loading (TBD) · Slow-row |
 | Conversations message thread | User · Assistant · Tool call · Tool result (default + warn) |
@@ -969,7 +973,7 @@ Tokens cite `src/index.css:LINE` inline. Components cite `src/components/ui/<fil
 The MVP-era `src/artboards/CMP-*` spec sheets were stripped from this repo on 2026-05-11 (commit `52d3a2a`). Composed pages now live at `src/pages/*.tsx` directly, route-keyed.
 
 | Route | File | Pattern |
-|---|---|---|
+| --- | --- | --- |
 | `/` → `/overview` | `App.tsx` | Default route navigates to `/overview` (changed 2026-05-19 from `/requests`). Catch-all `*` also routes to `/overview`. |
 | `/overview` | `src/pages/Dashboard.tsx` | **Overview redesign (2026-05-17).** PageTitle "Overview" + 1-line subtitle. Top section: live KPI rail (`<KpiRail>` with `<KpiTile>` fillers — eyebrow + HeroNumeric + suffix + delta + caption + sparkline). Middle section: "Activity This Week" h2 + TokenSavingsStrip + OverviewUsageChart. Bottom section: `grid grid-cols-1 md:grid-cols-3 gap-6` of three preview tables — Latest Requests, Recent Conversations, Security Events. Each preview table is **capped at 8 rows** (see Overview preview tables rule in §7 Lists/Tables / memory `feedback_overview-preview-row-cap`) and links to the full surface. |
 | `/overview-default` | `src/pages/DashboardDefault.tsx` | First-day / empty-state Overview shipped 2026-05-19 (commit `27e0a28`). Hero card + default states for all data sections — used when no traffic / no audit anchors / no security events yet. |
@@ -982,7 +986,7 @@ The MVP-era `src/artboards/CMP-*` spec sheets were stripped from this repo on 20
 | `/security` | `src/pages/Security.tsx` | Threat-event log with alert banner (`role="alert"` + `aria-live="assertive"` + `aria-atomic="true"`) + ramp-token coloring (`bg-danger-600 / text-danger-700`). KpiRail reconciles to the headline number (see memory `feedback_charts-must-reconcile`). Range selector defaults to "All" (lifetime-first view per memory `project_all-range-default`). **In-modal Mark PIJ event slide (2026-05-19, commits `5adba27` / `8f1aea1`):** the `ThreatEventDetailDialog` swaps between detail and mark-form views with a height-animated slide (driven by `useLayoutEffect` measuring detail/mark panel heights). The mark form's reason textarea is fixed at `h-48` (not content-driven) — the label is "Reason," not "Note." Marking flips the dialog badge to `<Badge variant="destructive">Marked false</Badge>`. |
 | `/policies` | `src/pages/Policies.tsx` | Policy library / configuration. Tray uses `bg-card + border-border` (radio option cards moved off ink onto card token per commit `c2a0b87`). |
 | `/audit-trail` | `src/pages/AuditTrail.tsx` + `src/pages/AuditRecordDialog.tsx` | **Audit Trail page (built 2026-05-16).** PageTitle + subtitle + range selector + `<KpiRail>` with `<KpiTile>` slots + Event log table (with `<FilterToolbar>` + `<SearchInput>` + `<Select>` filters + `<TablePaginationFooter>` + `<TableEmptyState>` — canonical empty-state consumer). Table cells use `<Timestamp>` for time columns and the three-tier ink density (date/time in the `text-neutral-800` data tier — see memory `feedback_table-date-time-tier`). Anchor column renders `text-neutral-400 —` with `sr-only` semantics when missing. Row drill opens `<AuditRecordDialog>` with the cryptographically-verifiable evidence. **Required vocabulary:** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." |
-| `/activity` | `src/pages/Activity.tsx` | Usage-by-key table + breakdown. `<UsageByKey>` table is the canonical reference for the nowrap column policy. Deep-link param: `?range=24h|7d|30d|all` is one-way (no strip on close). User-row monogram uses `<Monogram size="sm">` with first-char-of-first-word initials. |
+| `/activity` | `src/pages/Activity.tsx` | Usage-by-key table + breakdown. `<UsageByKey>` table is the canonical reference for the nowrap column policy. Deep-link param: `?range=24h\|7d\|30d\|all` is one-way (no strip on close). User-row monogram uses `<Monogram size="sm">` with first-char-of-first-word initials. |
 | `/team` | `src/pages/Team.tsx` | Members + invitations + access requests + invite form. Empty branches in invitations / requests panes consume `<EmptyState>`. RowActionsMenu `min-w-32`. Action labels: "Approve request" / "Decline request". Invite-dialog labels at `text-neutral-600` (canonical form-label convention). Member-row monogram uses `<Monogram size="md">` with 2-char `initialsOf(name)` initials. |
 | `/settings` | `src/pages/Settings.tsx` | Single-pane Profile + Security cards directly under `<PageHeader>` (Tabs collapsed 2026-05-10). `<SettingsRow>` primitive used for cross-card consistency. |
 | `/api-keys` | `src/pages/ApiKeys.tsx` | **Canonical two-line key pattern** (memory `project_overview-composition`): keyname (sans, medium, neutral-900) over masked `sk-gw-…` (mono, xs, neutral-500). Revoked keys filtered from every consumer dropdown (canonical seed lives here). |
