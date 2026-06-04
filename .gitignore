@@ -32,7 +32,6 @@ dist-ssr
 front-end-developer/
 
 # Local-only project notes (not shipped)
-CLAUDE.md
 docs/
 gateway-fixes.md
 handoff.md
