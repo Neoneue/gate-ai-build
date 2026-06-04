@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
-  Braces,
-  ChevronDown,
   CreditCard,
   ExternalLink,
   Flag,
@@ -13,9 +11,7 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   TriangleAlert,
-  User,
 } from 'lucide-react';
 import { AnimatedDownload } from '@/components/ui/animated-download';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +43,6 @@ import { SegmentedPill } from '@/components/ui/segmented-pill';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { CodeBlock, CodeCard, type CodeLine, type CodeToken } from '@/components/ui/code-card';
-import { SectionHeading } from '@/components/ui/section-heading';
 import {
   Select,
   SelectContent,
@@ -2192,13 +2187,13 @@ export function RequestDetailBodyV2({
         <div
           className={
             variant === 'page'
-              ? 'px-6 pt-4 pb-6'
-              : 'flex-1 min-h-0 overflow-y-auto px-6 pt-4 pb-6'
+              ? 'px-6 pt-2 pb-6'
+              : 'flex-1 min-h-0 overflow-y-auto px-6 pt-2 pb-6'
           }
         >
 
           {/* ── Findings tab ──────────────────────────────────────────── */}
-          <TabsContent value="findings" className="pt-2">
+          <TabsContent value="findings">
             <div className="grid gap-4 md:grid-cols-3">
               {/* Left column: an OUTER card wrapping the Findings + Passed
                   groups. Each group is a 16px title ABOVE a stack of cards. */}
@@ -2225,7 +2220,7 @@ export function RequestDetailBodyV2({
                       {passed.map((p) => (
                         <div
                           key={p.category}
-                          className="rounded-md border border-border bg-card p-4 flex flex-col gap-2"
+                          className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2"
                         >
                           <div className="flex items-start justify-between gap-4">
                             <span className="font-sans text-sm font-medium text-neutral-900">{p.label}</span>
@@ -2283,7 +2278,7 @@ export function RequestDetailBodyV2({
           {/* ── Details tab — message + request metadata ─────────────────
               Same two-column shell as the Findings tab: left 2/3 holds the
               conversation + Full request drawer, right 1/3 the metadata. */}
-          <TabsContent value="details" className="pt-2">
+          <TabsContent value="details">
             <div className="grid gap-4 md:grid-cols-3">
               {/* Left (2/3): the message — user/assistant turns + Full request. */}
               <div className="min-w-0 md:col-span-2">
@@ -2303,7 +2298,7 @@ export function RequestDetailBodyV2({
                 <div className={PANEL_OUTER}>
                   <section className="flex flex-col gap-2">
                     <PanelHeading title="Details" />
-                    <DetailList>
+                    <DetailList className="rounded-xs">
                       <DetailRow
                         label="Timestamp"
                         value={
@@ -2408,7 +2403,7 @@ function FindingCard({
       type="button"
       onClick={onClick}
       className={[
-        'flex flex-col gap-2 rounded-md border bg-card p-4 text-left shadow-xs transition-colors duration-150',
+        'flex flex-col gap-2 rounded-xs border bg-card p-4 text-left shadow-xs transition-colors duration-150',
         selected ? selectedBorder : 'border-border hover:bg-neutral-50',
       ].join(' ')}
       aria-pressed={selected}
@@ -2517,7 +2512,7 @@ function PiiRightPanel({
       {/* User message — raw body with the matched substring highlighted. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="User message" />
-        <div className="rounded-md border border-border bg-card p-4">
+        <div className="rounded-xs border border-border bg-card p-4">
           <p className="font-sans text-sm text-neutral-900 leading-relaxed break-words whitespace-pre-wrap">
             {offset >= 0 ? (
               <>
@@ -2552,7 +2547,7 @@ function PiiRightPanel({
             ) : undefined
           }
         />
-        <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-2">
+        <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
           <KvRow label="Rule" value={rule} />
           <KvRow
             label="Offset in evidence"
@@ -2574,11 +2569,11 @@ function PiiRightPanel({
       <section className="flex flex-col gap-2">
         <PanelHeading title="What we sent upstream" />
         <div className="flex flex-col gap-2">
-          <div className="rounded-md border border-border bg-neutral-50 p-4 flex flex-col gap-1 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">
+          <div className="rounded-xs border border-border bg-neutral-50 p-4 flex flex-col gap-1 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">
             <span className="text-destructive">- {pre}{match}{post}</span>
             <span className="text-success-700">+ {pre}{redactedAs}{post}</span>
           </div>
-          <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-2">
+          <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
             <KvRow label="Bytes redacted" value={match.length} />
             <KvRow label="Policy" value={policy} />
             <KvRow label="Provider" value={VENDOR_META[row.vendor].label} />
@@ -2612,7 +2607,7 @@ function InjectionRightPanel({
       {/* What happened — curated/reasoning sentence + verdict chips + confidence. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="What happened" />
-        <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-2">
+        <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
           <p className="font-sans text-sm text-neutral-900 text-pretty">{whatHappened}</p>
           {verdicts.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -2638,7 +2633,7 @@ function InjectionRightPanel({
       {/* User message — the ~512-token segment, plain. No highlight, no offset. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="User message" />
-        <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-2">
+        <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
           <p className="font-mono text-xs text-neutral-700 leading-relaxed break-words whitespace-pre-wrap">
             {evidence}
           </p>
@@ -2651,7 +2646,7 @@ function InjectionRightPanel({
       {/* What we did — blocked; no diff, no bytes, no provider/model. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="What we did" />
-        <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-2">
+        <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
           <KvRow label="Action" value="Blocked, not sent upstream" />
           <KvRow label="Policy" value={policy} />
         </div>
@@ -2660,7 +2655,7 @@ function InjectionRightPanel({
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
-        <div className="rounded-md border border-border bg-card p-4 flex flex-col gap-4">
+        <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-4">
           <p className="font-sans text-sm text-neutral-700 text-pretty">{howToFix}</p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" onClick={onTunePolicy}>
@@ -2842,31 +2837,25 @@ function sampleResponseText(row: RequestRow): string {
 function BodySection({
   label,
   lines,
-  defaultExpanded = true,
   copyValue,
   copyLabel,
-  icon,
   revealSignal,
 }: {
   label: string;
   lines: CodeLine[];
-  defaultExpanded?: boolean;
   /** When provided, renders a Copy button in a footer below the code
    *  well. Value is the raw text written to the clipboard. */
   copyValue?: string;
   /** Toast fragment for the Copy button. The toast always reads
    *  `Copied ${copyLabel} to clipboard`. Required when copyValue is set. */
   copyLabel?: string;
-  icon?: ReactNode;
-  /** Bump this (a nonce) to force-expand the drawer and scroll the
-   *  highlighted token (`data-code-highlight`) into view. */
+  /** Bump this (a nonce) to scroll the highlighted token
+   *  (`data-code-highlight`) into view. */
   revealSignal?: number;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
   const codeRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!revealSignal) return;
-    setExpanded(true);
     const id = setTimeout(() => {
       // Bring the whole Full request section to the top of the scroll
       // viewport (not just nudge the match in), so the user lands on it.
@@ -2875,86 +2864,46 @@ function BodySection({
     }, 80);
     return () => clearTimeout(id);
   }, [revealSignal]);
+  // Title sits ABOVE the card (PanelHeading), matching the other Details
+  // sections; the code card holds only the payload + copy footer.
   return (
-    // `shrink-0` so the section never gets squished by its flex parent
-    // when sibling sections also expand. The outer panel's max-h handles
-    // overflow via scroll; sticky headers stay pinned during scroll.
-    // Border uses the semantic `border-border` token so the card edge
-    // tracks theme/contrast tokens; the CodeCard's default shadow still
-    // provides a 1px ring to keep the edge crisp at scroll clip points.
-    <CodeCard className="shrink-0 border border-border">
-      {/* Sticky header so the section label stays pinned at the top of
-          the scrollable area as you scroll through the body content
-          underneath. Header sits on the card surface (white) so it reads
-          as part of the chrome; the code well below is neutral-50 to set the
-          payload visually apart. No hover treatment — header is a toggle,
-          not a row affordance. */}
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        className="sticky top-0 z-10 flex items-center justify-between gap-2 w-full pl-3 pr-4 py-2 text-left bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-      >
-        <span className="inline-flex items-center gap-2">
-          {icon}
-          <span className="font-sans text-sm font-medium text-neutral-500">{label}</span>
-        </span>
-        <ChevronDown
-          className={`size-4 text-neutral-500 transition-transform duration-150 ease-out motion-reduce:transition-none ${expanded ? '' : '-rotate-90'}`}
-          strokeWidth={1.75}
-          aria-hidden
-        />
-      </button>
-      {expanded && (
-        <>
-          <div ref={codeRef} className="overflow-x-auto border-t border-border bg-neutral-50">
-            <CodeBlock lines={lines} density="compact" wrap />
+    <section className="shrink-0 flex flex-col gap-2">
+      <PanelHeading title={label} />
+      <CodeCard className="rounded-xs border border-border shadow-none">
+        <div ref={codeRef} className="overflow-x-auto bg-neutral-50">
+          <CodeBlock lines={lines} density="compact" wrap />
+        </div>
+        {copyValue !== undefined && copyLabel !== undefined && (
+          <div className="flex items-center justify-end border-t border-border bg-card px-4 py-2">
+            <CopyButton
+              mode="label"
+              size="compact"
+              text="Copy code"
+              value={copyValue}
+              label={copyLabel}
+            />
           </div>
-          {copyValue !== undefined && copyLabel !== undefined && (
-            // Copy action lives in its own footer below the code well —
-            // separates the toggle target (header) from the action target
-            // (Copy) so tapping one never triggers the other.
-            <div className="flex items-center justify-end border-t border-border bg-card px-4 py-2">
-              <CopyButton
-                mode="label"
-                size="compact"
-                text="Copy code"
-                value={copyValue}
-                label={copyLabel}
-              />
-            </div>
-          )}
-        </>
-      )}
-    </CodeCard>
+        )}
+      </CodeCard>
+    </section>
   );
 }
 
 /* Readable message block — the conversation as prose, not JSON. Static
    card (no toggle, no chevron) so the user/assistant turns are always
-   visible. White surface + sans body distinguishes it from the code-well
-   chrome that `BodySection` uses for the JSON drawer below. */
+   visible. Uses the same PanelHeading (16px title above a bordered box)
+   as the Findings panels so the Details tab reads as one system. */
 function MessageBlock({
   label,
   content,
-  icon,
 }: {
   label: string;
   content: string;
-  icon?: ReactNode;
 }) {
-  // Section style mirrors the Events modal Evidence blocks: a plain
-  // icon + heading above a bordered content box (not a card with a
-  // header bar). Full request keeps its own BodySection drawer style.
   return (
     <section className="shrink-0 flex flex-col gap-2">
-      <SectionHeading>
-        <span className="inline-flex items-center gap-2">
-          {icon}
-          {label}
-        </span>
-      </SectionHeading>
-      <div className="rounded-md border border-border px-4 py-3 font-sans text-sm text-neutral-900 text-pretty whitespace-pre-wrap break-words">
+      <PanelHeading title={label} />
+      <div className="rounded-xs border border-border px-4 py-3 font-sans text-sm text-neutral-900 text-pretty whitespace-pre-wrap break-words">
         {content}
       </div>
     </section>
@@ -3016,25 +2965,15 @@ function RequestBodyPanel({
     // rounded corners without making the cards visually narrower than
     // the KPI rail / tabs above them. `bare` drops this for embedded use.
     <div className={bare ? 'flex flex-col gap-4' : 'flex flex-col gap-4 max-h-80 overflow-y-auto -mx-2 px-2 py-2'}>
-      <MessageBlock
-        label="User message"
-        content={requestContent}
-        icon={<User className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
-      />
+      <MessageBlock label="User message" content={requestContent} />
       {hasResponse && (
-        <MessageBlock
-          label="Assistant response"
-          content={responseContent}
-          icon={<Sparkles className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
-        />
+        <MessageBlock label="Assistant response" content={responseContent} />
       )}
       <BodySection
         label="Full request"
         lines={requestLines}
-        defaultExpanded
         copyValue={requestPayload}
         copyLabel="request"
-        icon={<Braces className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
         revealSignal={revealSignal}
       />
     </div>
