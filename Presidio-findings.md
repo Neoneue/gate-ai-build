@@ -234,7 +234,35 @@ analyzer.registry.add_recognizer(openai_key)
 
 ---
 
-## 7. Sources
+## 7. Sensitivity / detection threshold (configurable)
+
+Detection **sensitivity** is not fixed by Presidio — it maps to the analyzer's
+`score_threshold`, which a deployment sets. Findings scoring below the threshold are
+dropped. Sensitivity is the human-facing inverse of the threshold:
+
+- **High sensitivity -> low threshold** (e.g. 0.3): catches weak/ambiguous matches, more false positives.
+- **Low sensitivity -> high threshold** (e.g. 0.85): only high-confidence matches, fewer false positives.
+
+Set it per deployment via `analyze(..., score_threshold=X)` (or an engine default), or via
+per-recognizer scores in the YAML registry config. The pattern-strength label
+(`Email (Medium)`) is cosmetic; the **score** and **threshold** are the real levers.
+
+Caveats:
+
+- **Not uniform across entities.** Validated entities are near-certain regardless of
+  threshold — email scores `1.0` after domain validation, credit cards pass a checksum.
+  Sensitivity mainly affects ambiguous entities (names, locations, weak/partial patterns,
+  context-boosted scores).
+- **Credentials use a different knob.** The credential scanner (regex + entropy) tunes
+  sensitivity via the **entropy threshold** (+ regex strictness), not `score_threshold` —
+  see `Credentials-findings.md`.
+
+**UI mapping:** this is the real backing for a "Sensitivity" control on a PII/PHI scanner
+policy card (alongside Scan direction + Action on detection) and for the modal's "Tune
+policy" action. Suggested shape: a Low / Balanced / High segmented control mapping to
+concrete thresholds, with the threshold shown as a sub-label to stay honest.
+
+## 8. Sources
 
 - context7 `microsoft/presidio` docs — analyzer, recognizers, anonymizer, decision process
   (research run 2026-06-02; verdicts: PII ✅, credentials ⚠️ custom, injection ❌).

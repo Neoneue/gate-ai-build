@@ -48,6 +48,9 @@ export type CodeTone =
 export interface CodeToken {
   text: string;
   tone?: CodeTone;
+  /** Amber highlight (e.g. a matched finding substring). Marked with
+   *  `data-code-highlight` so callers can scroll it into view. */
+  highlight?: boolean;
 }
 
 export type CodeLine = CodeToken[];
@@ -221,12 +224,16 @@ interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   tone?: 'light' | 'dark';
   /** Compact inline snippet — used inside the steps card. */
   density?: 'default' | 'compact' | 'inline';
+  /** Wrap long lines instead of scrolling horizontally (e.g. a JSON body
+   *  with a long string value). Lines grow to fit; indentation is preserved. */
+  wrap?: boolean;
 }
 
 export function CodeBlock({
   lines,
   tone = 'light',
   density = 'default',
+  wrap = false,
   className,
   ...props
 }: CodeBlockProps) {
@@ -242,7 +249,8 @@ export function CodeBlock({
     <div
       data-slot="code-block"
       className={cn(
-        'flex flex-col font-mono whitespace-pre',
+        'flex flex-col font-mono',
+        wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre',
         text_cls,
         density_cls,
         className,
@@ -250,13 +258,20 @@ export function CodeBlock({
       {...props}
     >
       {lines.map((line, idx) => (
-        <div key={idx} className="flex h-5 shrink-0 min-h-5">
+        <div key={idx} className={wrap ? 'min-h-5' : 'flex h-5 shrink-0 min-h-5'}>
           {line.length === 0 ? (
             // Blank line spacer — keep the line height
             <span aria-hidden="true">&nbsp;</span>
           ) : (
             line.map((tok, j) => (
-              <span key={j} className={toneMap[tok.tone ?? 'default']}>
+              <span
+                key={j}
+                data-code-highlight={tok.highlight ? '' : undefined}
+                className={cn(
+                  toneMap[tok.tone ?? 'default'],
+                  tok.highlight && 'rounded-xs bg-warning-100 text-warning-800',
+                )}
+              >
                 {tok.text}
               </span>
             ))
