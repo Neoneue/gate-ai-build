@@ -42,7 +42,7 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -54,6 +54,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, parseEventTime, type EventRow, type EventCategory } from '@/pages/security-data';
@@ -849,6 +850,21 @@ const RANGE_OPTIONS = [
 // so its options reconcile with the rows instead of being hand-listed.
 const EVENT_KEYS = [...new Set(EVENT_ROWS.map((r) => r.key))];
 
+/** Comparable value per sortable column for the Recent events table. Time is
+ *  the stored "YYYY-MM-DD HH:MM:SS" string, which sorts chronologically as a
+ *  plain string compare. Type/Action sort by their display labels so the
+ *  order matches what the row renders. Key strips the parenthetical id. */
+function eventSortValue(row: EventRow, key: string): string | number | null {
+  switch (key) {
+    case 'time': return row.time;
+    case 'type': return TYPE_META[row.type].label;
+    case 'conversation': return row.conversationId;
+    case 'key': return row.key.split(' (')[0];
+    case 'action': return ACTION_BADGE[row.action].label;
+    default: return null;
+  }
+}
+
 function EventsTableSection({
   range,
   customRange,
@@ -866,6 +882,7 @@ function EventsTableSection({
   // Closing sets it back to null. Index carried alongside so the modal
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
 
   // Deep-link support: ?open=req_* opens the matching event's modal.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -899,6 +916,10 @@ function EventsTableSection({
     });
   }, [query, type, keyFilter, action]);
 
+  // Sort after filter, before pagination. Default (key=null) preserves the
+  // authored reverse-chronological order.
+  const sortedRows = useMemo(() => sortRows(filtered, sort, eventSortValue), [filtered, sort]);
+
   const isEmpty = filtered.length === 0;
 
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
@@ -914,7 +935,7 @@ function EventsTableSection({
   // Cap the rendered rows to `scaledTotal` — at low-volume ranges (e.g. 24H
   // ≈ 12 events) the 16-row sample is larger than the actual total, so an
   // uncapped slice would render more rows than the footer's "of N" claims.
-  const pageRows = filtered
+  const pageRows = sortedRows
     .slice((page - 1) * perPage, page * perPage)
     .slice(0, Math.max(0, scaledTotal - (page - 1) * perPage));
 
@@ -1007,11 +1028,11 @@ function EventsTableSection({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Time</TableHead>
-            <TableHead className="whitespace-nowrap">Type</TableHead>
-            <TableHead className="whitespace-nowrap">Conversation</TableHead>
-            <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="whitespace-nowrap">Action</TableHead>
+            <SortableTableHead sortKey="time" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Time</SortableTableHead>
+            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Type</SortableTableHead>
+            <SortableTableHead sortKey="conversation" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Conversation</SortableTableHead>
+            <SortableTableHead sortKey="key" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Key</SortableTableHead>
+            <SortableTableHead sortKey="action" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Action</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

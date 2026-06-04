@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import {
@@ -40,6 +40,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -52,6 +53,7 @@ import {
 import { TabsCount } from '@/components/ui/tabs-count';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { cn } from '@/lib/utils';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Timestamp } from '@/components/ui/timestamp';
 
@@ -188,12 +190,24 @@ const MEMBER_ROWS: MemberRow[] = [
   { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: new Date(2026, 4,  8) },
 ];
 
+/** Comparable value per sortable column for the Members table. Joined is a
+ *  Date → epoch millis (numeric). Role sorts by its display label. */
+function memberSortValue(row: MemberRow, key: string): string | number | null {
+  switch (key) {
+    case 'member': return row.name;
+    case 'joined': return row.joined.getTime();
+    case 'role': return ROLE_LABEL[row.role];
+    default: return null;
+  }
+}
+
 function MembersPane() {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | MemberRole>('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
   const [pendingRemove, setPendingRemove] = useState<MemberRow | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
 
   const visible = MEMBER_ROWS.filter((r) => {
     if (roleFilter !== 'all' && r.role !== roleFilter) return false;
@@ -204,6 +218,11 @@ function MembersPane() {
       r.email.toLowerCase().includes(q)
     );
   });
+
+  // Sort after filter (default key=null preserves authored order). No
+  // pagination slice here — the sample fits one page — but sorting still
+  // governs render order.
+  const sortedRows = useMemo(() => sortRows(visible, sort, memberSortValue), [visible, sort]);
 
   const isEmpty = visible.length === 0;
 
@@ -261,14 +280,14 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <TableHead className="w-[40%] whitespace-nowrap">Member</TableHead>
-            <TableHead className="w-[22%] whitespace-nowrap">Joined</TableHead>
-            <TableHead className="w-[28%] whitespace-nowrap">Role</TableHead>
+            <SortableTableHead sortKey="member" sort={sort} onSort={toggleSort} className="w-[40%] whitespace-nowrap">Member</SortableTableHead>
+            <SortableTableHead sortKey="joined" sort={sort} onSort={toggleSort} className="w-[22%] whitespace-nowrap">Joined</SortableTableHead>
+            <SortableTableHead sortKey="role" sort={sort} onSort={toggleSort} className="w-[28%] whitespace-nowrap">Role</SortableTableHead>
             <TableHead className="w-[10%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visible.map((row) => (
+          {sortedRows.map((row) => (
             <MemberRowView key={row.id} row={row} onRemove={setPendingRemove} />
           ))}
         </TableBody>
@@ -388,7 +407,23 @@ const INVITATION_ROWS: InvitationRow[] = [
   { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: new Date(2026, 4, 6), role: 'admin',  expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000) },
 ];
 
+/** Comparable value per sortable column for the Invitations table. Sent and
+ *  Expires are Dates → epoch millis (numeric); Role sorts by display label. */
+function invitationSortValue(row: InvitationRow, key: string): string | number | null {
+  switch (key) {
+    case 'email': return row.email;
+    case 'invitedBy': return row.invitedBy;
+    case 'sent': return row.sent.getTime();
+    case 'role': return ROLE_LABEL[row.role];
+    case 'expires': return row.expires.getTime();
+    default: return null;
+  }
+}
+
 function InvitationsPane({ onInvite }: { onInvite: () => void }) {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(() => sortRows(INVITATION_ROWS, sort, invitationSortValue), [sort]);
+
   if (INVITATION_ROWS.length === 0) {
     return (
       <Card density="flush">
@@ -415,16 +450,16 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[27%] whitespace-nowrap">Email</TableHead>
-            <TableHead className="w-[25%] whitespace-nowrap">Invited by</TableHead>
-            <TableHead className="w-[15%] whitespace-nowrap">Sent</TableHead>
-            <TableHead className="w-[15%] whitespace-nowrap">Role</TableHead>
-            <TableHead className="w-[15%] whitespace-nowrap">Expires</TableHead>
+            <SortableTableHead sortKey="email" sort={sort} onSort={toggleSort} className="w-[27%] whitespace-nowrap">Email</SortableTableHead>
+            <SortableTableHead sortKey="invitedBy" sort={sort} onSort={toggleSort} className="w-[25%] whitespace-nowrap">Invited by</SortableTableHead>
+            <SortableTableHead sortKey="sent" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Sent</SortableTableHead>
+            <SortableTableHead sortKey="role" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Role</SortableTableHead>
+            <SortableTableHead sortKey="expires" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Expires</SortableTableHead>
             <TableHead className="w-[3%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {INVITATION_ROWS.map((row) => (
+          {sortedRows.map((row) => (
             <TableRow key={row.id}>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-900">
                 <span className="block truncate" title={row.email}>{row.email}</span>

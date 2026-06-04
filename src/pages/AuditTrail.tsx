@@ -22,6 +22,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -31,6 +32,21 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { AuditRecordDialog } from './AuditRecordDialog';
 import { formatNumber } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
+
+/** Comparable value per sortable column for the audit event log. Time sorts
+ *  on the epoch; type/member/description on their string payload. Event ID and
+ *  Fingerprint are opaque high-entropy hashes with no meaningful order, so
+ *  they stay plain (non-sortable) headers. */
+function eventSortValue(row: EventRow, key: string): string | number | null {
+  switch (key) {
+    case 'at': return row.at.getTime();
+    case 'kind': return row.kind;
+    case 'description': return row.description;
+    case 'member': return row.member;
+    default: return null;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
@@ -483,6 +499,8 @@ function EventLog({ rows }: { rows: EventRow[] }) {
     setPage(1);
   }
 
+  const { sort, toggle: toggleSort } = useTableSort();
+
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
@@ -493,8 +511,15 @@ function EventLog({ rows }: { rows: EventRow[] }) {
     });
   }, [rows, filter, query]);
 
+  // Sort after filter/search, before pagination. Default (key=null) preserves
+  // the authored reverse-chronological order.
+  const sortedRows = useMemo(
+    () => sortRows(filteredRows, sort, eventSortValue),
+    [filteredRows, sort],
+  );
+
   const perPage = parseInt(rowsPerPage, 10);
-  const pageRows = filteredRows.slice((page - 1) * perPage, page * perPage);
+  const pageRows = sortedRows.slice((page - 1) * perPage, page * perPage);
 
   const isEmpty = filteredRows.length === 0;
 
@@ -565,11 +590,11 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                         (Team, Limits, Activity). Description gets the largest
                         share since it's the wrap-tolerant column; the rest hold
                         their content. */}
-                    <TableHead className="w-[14%] whitespace-nowrap">Time</TableHead>
+                    <SortableTableHead sortKey="at" sort={sort} onSort={toggleSort} className="w-[14%] whitespace-nowrap">Time</SortableTableHead>
                     <TableHead className="w-[13%] whitespace-nowrap">Event ID</TableHead>
-                    <TableHead className="w-[9%] whitespace-nowrap">Event type</TableHead>
-                    <TableHead className="w-[30%] whitespace-nowrap">Description</TableHead>
-                    <TableHead className="w-[16%] whitespace-nowrap">Member</TableHead>
+                    <SortableTableHead sortKey="kind" sort={sort} onSort={toggleSort} className="w-[9%] whitespace-nowrap">Event type</SortableTableHead>
+                    <SortableTableHead sortKey="description" sort={sort} onSort={toggleSort} className="w-[30%] whitespace-nowrap">Description</SortableTableHead>
+                    <SortableTableHead sortKey="member" sort={sort} onSort={toggleSort} className="w-[16%] whitespace-nowrap">Member</SortableTableHead>
                     <TableHead className="w-[18%] whitespace-nowrap">Fingerprint</TableHead>
                   </TableRow>
                 </TableHeader>

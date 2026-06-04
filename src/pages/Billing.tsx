@@ -18,13 +18,14 @@ import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { Switch } from '@/components/ui/switch';
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
@@ -530,7 +531,22 @@ const HISTORY_ROWS: HistoryRow[] = [
 const fmtAmount = (n: number) => formatCurrency(n, { signDisplay: 'exceptZero' });
 const fmtUsd = (n: number) => formatCurrency(n);
 
+function historySortValue(row: HistoryRow, key: string): string | number | null {
+  switch (key) {
+    case 'date': return row.date.getTime();
+    case 'type': return row.type;
+    case 'amount': return row.amount;
+    case 'balanceAfter': return row.balanceAfter;
+    default: return null;
+  }
+}
+
 function HistorySection() {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = React.useMemo(
+    () => sortRows(HISTORY_ROWS, sort, historySortValue),
+    [sort],
+  );
   return (
     <Card density="flush">
       <CardHeader className="py-3">
@@ -539,14 +555,14 @@ function HistorySection() {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Date</TableHead>
-            <TableHead className="whitespace-nowrap">Type</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Balance after</TableHead>
+            <SortableTableHead sortKey="date" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Date</SortableTableHead>
+            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Type</SortableTableHead>
+            <SortableTableHead sortKey="amount" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Amount</SortableTableHead>
+            <SortableTableHead sortKey="balanceAfter" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Balance after</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {HISTORY_ROWS.map((row) => (
+          {sortedRows.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
               <TableCell className="whitespace-nowrap text-neutral-800"><Timestamp date={row.date} /></TableCell>
               <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>

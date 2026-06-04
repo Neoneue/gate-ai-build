@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Activity, ArrowRight, ExternalLink, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
@@ -45,6 +46,7 @@ import {
 import { VENDOR_META, VendorAvatar, type Vendor } from '@/components/icons/vendor-meta';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Timestamp } from '@/components/ui/timestamp';
+import { useTableSort, sortRows, parseNumeric } from '@/hooks/use-table-sort';
 
 const REDUCE_MOTION =
   typeof window !== 'undefined' &&
@@ -260,6 +262,24 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
 // with the KPI rail's "Conversations: 100" figure.
 const CONVERSATIONS_TOTAL = 100;
 
+// Sort accessor for the conversations table. Numeric columns parse the raw
+// (unscaled) row value — the proportional scale applied at render preserves
+// ordering, so sorting on the base figure matches what the user sees. Models
+// is intentionally absent (vendor-avatar set has no clean comparable value).
+function conversationSortValue(row: ConversationRow, key: string): string | number | null {
+  switch (key) {
+    case 'title':     return row.title;
+    case 'initiator': return row.initiator;
+    case 'turns':     return row.turns;
+    case 'reqs':      return row.reqs;
+    case 'inTokens':  return parseNumeric(row.inTokens);
+    case 'outTokens': return parseNumeric(row.outTokens);
+    case 'cost':      return parseNumeric(row.cost);
+    case 'updated':   return row.updated.getTime();
+    default:          return null;
+  }
+}
+
 function scaleTokenStr(s: string, scale: number): string {
   return Math.round(Number(s.replace(/,/g, '')) * scale).toLocaleString('en-US');
 }
@@ -274,11 +294,17 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
   const isFiltered = keyId !== 'all' || model !== 'all';
-  const visibleRows = CONVERSATION_ROWS.filter((row) => {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const filteredRows = CONVERSATION_ROWS.filter((row) => {
     if (keyId !== 'all' && row.initiator !== keyId) return false;
     if (model !== 'all' && !row.models.includes(model as ModelId)) return false;
     return true;
   });
+  // Sort AFTER filtering, BEFORE render. Default (key=null) preserves authored order.
+  const visibleRows = useMemo(
+    () => sortRows(filteredRows, sort, conversationSortValue),
+    [filteredRows, sort],
+  );
   const paginationTotal = isFiltered ? visibleRows.length : Math.round(CONVERSATIONS_TOTAL * scale);
   const isEmpty = visibleRows.length === 0;
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
@@ -371,15 +397,15 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[24%] whitespace-nowrap">Conversation</TableHead>
-            <TableHead className="w-[10%] whitespace-nowrap">Key</TableHead>
+            <SortableTableHead sortKey="title" sort={sort} onSort={toggleSort} className="w-[24%] whitespace-nowrap">Conversation</SortableTableHead>
+            <SortableTableHead sortKey="initiator" sort={sort} onSort={toggleSort} className="w-[10%] whitespace-nowrap">Key</SortableTableHead>
             <TableHead className="w-[5%] whitespace-nowrap">Models</TableHead>
-            <TableHead className="w-[5%] text-right whitespace-nowrap">Turns</TableHead>
-            <TableHead className="w-[5%] text-right whitespace-nowrap">Reqs</TableHead>
-            <TableHead className="w-[9%] text-right whitespace-nowrap">Tokens in</TableHead>
-            <TableHead className="w-[9%] text-right whitespace-nowrap">Tokens out</TableHead>
-            <TableHead className="w-[8%] text-right whitespace-nowrap">Cost</TableHead>
-            <TableHead className="w-[11%] text-right whitespace-nowrap">Updated</TableHead>
+            <SortableTableHead sortKey="turns" sort={sort} onSort={toggleSort} numeric className="w-[5%] whitespace-nowrap">Turns</SortableTableHead>
+            <SortableTableHead sortKey="reqs" sort={sort} onSort={toggleSort} numeric className="w-[5%] whitespace-nowrap">Reqs</SortableTableHead>
+            <SortableTableHead sortKey="inTokens" sort={sort} onSort={toggleSort} numeric className="w-[9%] whitespace-nowrap">Tokens in</SortableTableHead>
+            <SortableTableHead sortKey="outTokens" sort={sort} onSort={toggleSort} numeric className="w-[9%] whitespace-nowrap">Tokens out</SortableTableHead>
+            <SortableTableHead sortKey="cost" sort={sort} onSort={toggleSort} numeric className="w-[8%] whitespace-nowrap">Cost</SortableTableHead>
+            <SortableTableHead sortKey="updated" sort={sort} onSort={toggleSort} numeric className="w-[11%] whitespace-nowrap">Updated</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

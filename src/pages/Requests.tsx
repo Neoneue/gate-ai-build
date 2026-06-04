@@ -58,6 +58,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -79,7 +80,37 @@ import { DeltaTag } from '@/components/ui/compact-kpi';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
 import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { useTableSort, sortRows, parseNumeric } from '@/hooks/use-table-sort';
 import { CONVERSATION_ROWS } from './Conversations';
+
+const MONTH_INDEX: Record<string, number> = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
+/** Chronological sort key from row.day ("May 12") + row.time ("02:04:11").
+ *  No real timestamp on the row, so compose a monotonic number. */
+function rowTimeValue(row: RequestRow): number {
+  const [mon, day] = row.day.split(' ');
+  const [h = 0, m = 0, s = 0] = row.time.split(':').map(Number);
+  return ((MONTH_INDEX[mon] ?? 0) * 31 + Number(day ?? 0)) * 86_400 + h * 3_600 + m * 60 + s;
+}
+
+/** Comparable value per sortable column for the Recent requests table.
+ *  Numeric columns parse out $/commas/units; em-dash values → null (sort last). */
+function requestSortValue(row: RequestRow, key: string): string | number | null {
+  switch (key) {
+    case 'time': return rowTimeValue(row);
+    case 'status': return row.status;
+    case 'guardrail': return row.guardrail;
+    case 'model': return row.model;
+    case 'conversation': return conversationTitle(row.conversation) || row.conversation;
+    case 'keyId': return row.keyId;
+    case 'inTokens': return parseNumeric(row.inTokens);
+    case 'outTokens': return parseNumeric(row.outTokens);
+    case 'latency': return parseNumeric(row.latency);
+    default: return null;
+  }
+}
 
 // Conversation titles, sourced from CONVERSATION_ROWS (single source of truth).
 // Looked up lazily at render time only: Conversations.tsx imports
@@ -1418,6 +1449,14 @@ function RequestsTableSection({
     [rows, responseFilter, guardrailFilter, model, keyId],
   );
 
+  // Click-to-sort on column headers. No sort by default → rows stay in their
+  // authored (chronological) order; picking a column sorts client-side.
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(filteredRows, sort, requestSortValue),
+    [filteredRows, sort],
+  );
+
   const isEmpty = filteredRows.length === 0;
 
   return (
@@ -1599,15 +1638,15 @@ function RequestsTableSection({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="whitespace-nowrap">Time</TableHead>
-              <TableHead className="whitespace-nowrap">Status</TableHead>
-              <TableHead className="whitespace-nowrap">Security</TableHead>
-              <TableHead className="whitespace-nowrap">Model</TableHead>
-              <TableHead className="whitespace-nowrap">Conversation</TableHead>
-              <TableHead className="whitespace-nowrap">Key</TableHead>
-              <TableHead className="text-right whitespace-nowrap">In</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Out</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Latency</TableHead>
+              <SortableTableHead sortKey="time" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Time</SortableTableHead>
+              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Status</SortableTableHead>
+              <SortableTableHead sortKey="guardrail" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Security</SortableTableHead>
+              <SortableTableHead sortKey="model" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Model</SortableTableHead>
+              <SortableTableHead sortKey="conversation" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Conversation</SortableTableHead>
+              <SortableTableHead sortKey="keyId" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Key</SortableTableHead>
+              <SortableTableHead sortKey="inTokens" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">In</SortableTableHead>
+              <SortableTableHead sortKey="outTokens" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Out</SortableTableHead>
+              <SortableTableHead sortKey="latency" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Latency</SortableTableHead>
               <TableHead className="text-right whitespace-nowrap">
                 <span className="inline-flex items-center justify-end gap-1">
                   Cost
@@ -1649,7 +1688,7 @@ function RequestsTableSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredRows.map((row, i) => {
+            {sortedRows.map((row, i) => {
               const isMissing = row.inTokens === '—';
               const numericCls = isMissing
                 ? 'text-right whitespace-nowrap font-mono tabular-nums text-neutral-400'

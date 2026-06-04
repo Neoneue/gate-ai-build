@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
@@ -49,6 +50,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTableSort, sortRows, parseNumeric } from '@/hooks/use-table-sort';
 import {
   Tooltip,
   TooltipContent,
@@ -1027,17 +1029,34 @@ function TopByAxisRow({
 /* ─── Usage by key — org-wide admin table, sortable ─────────────────────── */
 
 
-type KeySortKey = 'spend' | 'requests' | 'tokens' | 'owner';
+/** Scaled key row — the shape rendered in the table (and fed to the sort
+ *  accessor). Spend on BYOK rows renders "—"; the accessor returns null for
+ *  it so BYOK always sorts last when ranking by spend (matches the prior
+ *  dropdown's explicit BYOK-last rule). */
+type ScaledKeyRow = (typeof API_KEY_ROWS)[number] & {
+  spend: number;
+  requests: number;
+  tokensIn: number;
+  tokensOut: number;
+};
 
-const KEY_SORT_OPTIONS: { value: KeySortKey; label: string }[] = [
-  { value: 'spend',    label: 'Highest spend' },
-  { value: 'requests', label: 'Most requests' },
-  { value: 'tokens',   label: 'Most tokens' },
-  { value: 'owner',    label: 'Member (A–Z)' },
-];
+function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
+  switch (key) {
+    case 'label':     return row.label;
+    case 'owner':     return row.owner;
+    case 'requests':  return parseNumeric(row.requests);
+    case 'tokensIn':  return parseNumeric(row.tokensIn);
+    case 'tokensOut': return parseNumeric(row.tokensOut);
+    // BYOK has no Gateway spend ("—") → null so those rows sort last.
+    case 'spend':     return row.path === 'BYOK' ? null : parseNumeric(row.spend);
+    default:          return null;
+  }
+}
 
 function UsageByKey({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
-  const [sort, setSort] = useState<KeySortKey>('requests');
+  // Click-to-sort headers replace the former sort <Select>. Default ordering
+  // (key=null) preserves API_KEY_ROWS' authored order.
+  const { sort, toggle: toggleSort } = useTableSort();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
@@ -1048,48 +1067,36 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
   // ranking — possibly past the last page. Rows-per-page already resets
   // inside TablePaginationFooter.
   const [prevResetKey, setPrevResetKey] = useState('');
-  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort}|${query}`;
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort.key}|${sort.dir}|${query}`;
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setPage(1);
   }
 
-  const sortedRows = useMemo(() => {
+  const scaledRows = useMemo<ScaledKeyRow[]>(() => {
     const scale = effectiveScale(range, customRange);
-    const scaled = API_KEY_ROWS.map((k) => ({
+    return API_KEY_ROWS.map((k) => ({
       ...k,
       spend:     +(k.spend * scale).toFixed(2),
       requests:  Math.round(k.requests * scale),
       tokensIn:  Math.round(k.tokensIn * scale),
       tokensOut: Math.round(k.tokensOut * scale),
     }));
-    return scaled.sort((a, b) => {
-      if (sort === 'owner') {
-        return a.owner.localeCompare(b.owner) || b.spend - a.spend;
-      }
-      if (sort === 'tokens') {
-        return (b.tokensIn + b.tokensOut) - (a.tokensIn + a.tokensOut);
-      }
-      if (sort === 'spend') {
-        // BYOK rows render "—" in the Spend column (we don't track that
-        // against the workspace total), so they always sort last when
-        // ranking by spend — regardless of underlying provider charges.
-        const aByok = a.path === 'BYOK';
-        const bByok = b.path === 'BYOK';
-        if (aByok !== bByok) return aByok ? 1 : -1;
-        return b.spend - a.spend;
-      }
-      return b[sort] - a[sort];
-    });
-  }, [range, customRange, sort]);
+  }, [range, customRange]);
 
-  const filteredRows = useMemo(() => {
+  const searchedRows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return sortedRows;
-    return sortedRows.filter(
+    if (!q) return scaledRows;
+    return scaledRows.filter(
       (r) => r.label.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q),
     );
-  }, [sortedRows, query]);
+  }, [scaledRows, query]);
+
+  // Sort AFTER filtering, BEFORE the pagination slice.
+  const filteredRows = useMemo(
+    () => sortRows(searchedRows, sort, keySortValue),
+    [searchedRows, sort],
+  );
 
   const perPage = parseInt(rowsPerPage, 10);
   const pageRows = useMemo(
@@ -1109,22 +1116,6 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
           value={query}
           onChange={setQuery}
         />
-        <Select value={sort} onValueChange={(v: string) => setSort(v as KeySortKey)}>
-          <SelectTrigger
-            size="sm"
-            aria-label="Sort keys by"
-            className="border-border bg-card text-foreground font-normal"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {KEY_SORT_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
           <AnimatedDownload data-icon="inline-start" aria-hidden />
@@ -1143,8 +1134,8 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="whitespace-nowrap">Member</TableHead>
+            <SortableTableHead sortKey="label" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Key</SortableTableHead>
+            <SortableTableHead sortKey="owner" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Member</SortableTableHead>
             <TableHead className="whitespace-nowrap">
               <span className="inline-flex items-center gap-1">
                 Billing
@@ -1176,10 +1167,10 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
                 </Tooltip>
               </span>
             </TableHead>
-            <TableHead className="text-right whitespace-nowrap">Requests</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens in</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Tokens out</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Spend</TableHead>
+            <SortableTableHead sortKey="requests" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Requests</SortableTableHead>
+            <SortableTableHead sortKey="tokensIn" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Tokens in</SortableTableHead>
+            <SortableTableHead sortKey="tokensOut" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Tokens out</SortableTableHead>
+            <SortableTableHead sortKey="spend" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Spend</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

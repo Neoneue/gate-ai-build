@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
@@ -35,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import {
   Tabs,
   TabsList,
@@ -904,6 +906,21 @@ function Toolbar({
 
 /* ─── Models table ───────────────────────────────────────────────────────── */
 
+// Numeric columns sort on the raw underlying value of the default (head)
+// offering — the same anchor the row's formatted cells render from. Output
+// price of 0 ("—") sorts last via the null contract.
+function modelSortValue(model: Model, key: string): string | number | null {
+  const head = model.offerings[0];
+  switch (key) {
+    case 'name': return model.name;
+    case 'handle': return model.defaultHandle;
+    case 'context': return head.contextK;
+    case 'input': return head.inputPricePerM || null;
+    case 'output': return head.outputPricePerM || null;
+    default: return null;
+  }
+}
+
 function ModelsTable({
   rows,
   onSelect,
@@ -911,21 +928,26 @@ function ModelsTable({
   rows: Model[];
   onSelect: (model: Model) => void;
 }) {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(rows, sort, modelSortValue),
+    [rows, sort],
+  );
   return (
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="whitespace-nowrap">Model</TableHead>
-          <TableHead className="whitespace-nowrap">Model ID</TableHead>
-          <TableHead className="text-right whitespace-nowrap">Context</TableHead>
-          <TableHead className="text-right whitespace-nowrap">Input</TableHead>
-          <TableHead className="text-right whitespace-nowrap">Output</TableHead>
+          <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Model</SortableTableHead>
+          <SortableTableHead sortKey="handle" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Model ID</SortableTableHead>
+          <SortableTableHead sortKey="context" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Context</SortableTableHead>
+          <SortableTableHead sortKey="input" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Input</SortableTableHead>
+          <SortableTableHead sortKey="output" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Output</SortableTableHead>
           <TableHead className="whitespace-nowrap">Capabilities</TableHead>
           <TableHead className="whitespace-nowrap">Providers</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((model) => {
+        {sortedRows.map((model) => {
           // Default offering is the first one — typically the vendor-direct
           // entry. Pricing in the row reflects that anchor; the modal shows
           // every provider's price alongside.
@@ -1360,24 +1382,45 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Numeric columns sort on the raw offering value; undefined/0 (rendered as
+// "—") sorts last via the null contract.
+function offeringSortValue(o: ProviderOffering, key: string): string | number | null {
+  switch (key) {
+    case 'provider': return PROVIDER_LABELS[o.provider];
+    case 'context': return o.contextK || null;
+    case 'latency': return o.latencyP50Ms || null;
+    case 'throughput': return o.throughputTps || null;
+    case 'input': return o.inputPricePerM || null;
+    case 'output': return o.outputPricePerM || null;
+    case 'cacheRead': return o.cacheReadPerM ?? null;
+    case 'cacheWrite': return o.cacheWritePerM ?? null;
+    default: return null;
+  }
+}
+
 function ProvidersTable({ model }: { model: Model }) {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedOfferings = useMemo(
+    () => sortRows(model.offerings, sort, offeringSortValue),
+    [model.offerings, sort],
+  );
   return (
     <Card density="flush">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Provider</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Context</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Latency P50</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Throughput</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Input</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Output</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Cache read</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Cache write</TableHead>
+            <SortableTableHead sortKey="provider" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Provider</SortableTableHead>
+            <SortableTableHead sortKey="context" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Context</SortableTableHead>
+            <SortableTableHead sortKey="latency" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Latency P50</SortableTableHead>
+            <SortableTableHead sortKey="throughput" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Throughput</SortableTableHead>
+            <SortableTableHead sortKey="input" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Input</SortableTableHead>
+            <SortableTableHead sortKey="output" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Output</SortableTableHead>
+            <SortableTableHead sortKey="cacheRead" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Cache read</SortableTableHead>
+            <SortableTableHead sortKey="cacheWrite" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Cache write</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {model.offerings.map((o) => (
+          {sortedOfferings.map((o) => (
             <TableRow key={o.handle} className="hover:bg-transparent">
               <TableCell>
                 <div className="flex items-center gap-2 min-w-0">

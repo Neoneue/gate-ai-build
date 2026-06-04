@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -42,6 +43,7 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './activity-data';
 import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 
 // 7-day usage lookup keyed by the user-facing key name. Activity's
 // API_KEY_ROWS is the canonical per-key spend source for the workspace —
@@ -82,6 +84,21 @@ type ApiKeyRow = {
   lastUsed: Date | null; // null = never used (freshly-minted or revoked-untouched)
   revoked?: boolean;     // greys out the row + disables actions when true
 };
+
+/** Comparable value per sortable column for the keys table. Numeric columns
+ *  return a number; Date columns return the epoch ms; never-used (`lastUsed`
+ *  null) → null so it sorts last. */
+function apiKeySortValue(row: ApiKeyRow, key: string): string | number | null {
+  switch (key) {
+    case 'name': return row.name;
+    case 'status': return row.revoked ? 'Revoked' : 'Active';
+    case 'usage': return USAGE_BY_KEY.get(row.name) ?? 0;
+    case 'requests7d': return row.requests7d.at(-1) ?? 0;
+    case 'createdAt': return row.createdAt.getTime();
+    case 'lastUsed': return row.lastUsed ? row.lastUsed.getTime() : null;
+    default: return null;
+  }
+}
 
 export function ApiKeys() {
   const navigate = useNavigate();
@@ -396,6 +413,11 @@ function KeysTable({
   onRevoke: (id: string) => void;
 }) {
   const [pendingRevoke, setPendingRevoke] = useState<ApiKeyRow | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(rows, sort, apiKeySortValue),
+    [rows, sort],
+  );
 
   return (
     <>
@@ -406,17 +428,17 @@ function KeysTable({
               {/* Six data columns at w-1/6 + a fixed-width Actions column.
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
-              <TableHead className="w-1/6 whitespace-nowrap">Key</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Status</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">7-day usage</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">7-day requests</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Created</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Last used</TableHead>
+              <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Key</SortableTableHead>
+              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Status</SortableTableHead>
+              <SortableTableHead sortKey="usage" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">7-day usage</SortableTableHead>
+              <SortableTableHead sortKey="requests7d" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">7-day requests</SortableTableHead>
+              <SortableTableHead sortKey="createdAt" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Created</SortableTableHead>
+              <SortableTableHead sortKey="lastUsed" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Last used</SortableTableHead>
               <TableHead aria-label="Actions" className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
+            {sortedRows.map((row) => (
               <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
                 {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                     to neutral-600. Single-line two-tone form shared with the
