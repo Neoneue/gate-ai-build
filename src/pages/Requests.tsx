@@ -2649,28 +2649,15 @@ function InjectionRightPanel({
   onMarkFalsePositive: () => void;
 }) {
   const { evidence, policy, reasoning } = finding;
-  const verdicts = finding.verdicts ?? [];
   const { whatHappened, howToFix } = resolveInjectionCopy(finding);
 
   return (
     <>
-      {/* What happened — curated/reasoning sentence + verdict chips + confidence. */}
+      {/* What happened — curated sentence + the detector note (reasoning). */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="What happened" />
         <div className="rounded-xs border border-border bg-card p-4 flex flex-col gap-2">
           <p className="font-sans text-sm text-neutral-900 text-pretty">{whatHappened}</p>
-          {verdicts.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {verdicts.map((v) => (
-                <span
-                  key={v}
-                  className="inline-flex items-center rounded-xs bg-neutral-100 px-2 py-1 font-mono text-xs text-neutral-700"
-                >
-                  {INJECTION_VERDICT_COPY[v]?.label ?? v}
-                </span>
-              ))}
-            </div>
-          )}
           {reasoning && (
             <div className="flex flex-col gap-1">
               <span className="text-xs text-neutral-500">Detector note</span>
