@@ -37,6 +37,7 @@ graph LR
 
     LAYOUT --> OV["/overview → Dashboard.tsx"]
     LAYOUT --> REQ["/requests → Requests.tsx"]
+    LAYOUT --> REQF["/requests-findings/:requestId → RequestsFindings.tsx"]
     LAYOUT --> CONV["/conversations → Conversations.tsx"]
     LAYOUT --> MOD["/models → Models.tsx"]
     LAYOUT --> TOK["/token-savings → TokenSavings.tsx"]
@@ -271,6 +272,11 @@ type MessageRole = 'system' | 'user' | 'tool' | 'assistant'
 
 // Defined in: src/components/ui/chart.tsx (recharts wrapper)
 type ChartConfig = Record<string, { label?: ReactNode; icon?: ComponentType } & ({ color: string } | { ... })>
+
+// Defined in: src/hooks/use-table-sort.ts (table click-to-sort, 2026-06-04)
+type SortDir   = 'asc' | 'desc'
+type SortState = { key: string | null; dir: SortDir }   // key=null → unsorted (default order)
+// useTableSort(initial?) → { sort, toggle }; sortRows(rows, sort, getValue); parseNumeric(str)
 ```
 
 ### 3.9 Vendor metadata
@@ -481,26 +487,54 @@ function buildSpark(total: number, seed: number): number[]
 
 ### Requests page (`/requests` → `Requests.tsx`)
 
-**Purpose:** Full request log with drill-in detail modal.
+**Purpose:** Full request log. Row-click drills into the URL-addressable
+**Findings page** (`/requests-findings/:requestId`, see next entry); the stored
+v2 modal is kept ONLY for `?open=` deep-links (Security events).
 
 **State:**
 
 ```typescript
 range:       PresetRange         // default 'all'
 customRange: CustomRange | null
-keyId, model, status, code: string  // filters
+keyId, model, status, code: string  // filters (committed via the Filters modal)
+sort:        SortState              // useTableSort — click-to-sort headers (default unsorted)
 page, rowsPerPage: number
-selectedRow: RequestRow | null     // drives detail modal
+selectedRow: RequestRow | null     // drives the STORED modal (?open= only)
 searchParams: URLSearchParams       // for ?open= deep-link
 ```
 
-**Deep-link:** `?open=req_xxx` → auto-opens detail modal for matching row; URL cleaned via `onOpenChangeComplete`.
+**Row click:** `navigate('/requests-findings/' + requestRowId(row))` (a real
+`<a href>` on the model cell). **Deep-link:** `?open=req_xxx` → opens the stored
+v2 modal for the matching row; URL cleaned via `onOpenChangeComplete`.
 
-**Modal sections:** Messages panel → Trace details → Security checks (3: injection/PII/credential)
-
-**Outbound links from modal:** `/conversations?open=${conversationId}`
+**Table:** sortable columns via `<SortableTableHead>` + `requestSortValue(row,key)`
+accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
 
 **Hero views (`HERO_VIEWS`):** Per `RangeKey` spec with total, success/error/slow counts, sparkline data, tick labels.
+
+---
+
+### Requests Findings page (`/requests-findings/:requestId` → `RequestsFindings.tsx`)
+
+**Purpose:** URL-addressable, shareable, multi-tab findings detail for one
+request (the GitHub model) — the default row-click target from `/requests`.
+
+**Composition:** reads `:requestId`, finds the row in `REQUEST_ROWS_ALL` via
+`requestRowId(row)` (unknown id → "Request not found" alert). Renders the SAME
+`RequestDetailBodyV2` as the stored modal through a `variant: 'modal' | 'page'`
+prop, so page and modal can't drift. Page mode: no modal shell, flows full-width
+(`-mx-6` cancels the chrome gutter), no internal scroll, no footer; back
+breadcrumb (top-left) + "View Conversation" (top-right).
+
+**Body (`RequestDetailBodyV2`):** title+badge → KPI rail → finding banner → tabs.
+Two tabs: **Findings** (left finding list + Passed detectors / right polymorphic
+panel: `PiiRightPanel` for PII/credential, `InjectionRightPanel` for injection)
+and **Details** (Findings-style 2/3 message + 1/3 metadata grid; Message folded
+in here, Full request drawer open by default). Findings data contract:
+`RequestFinding` (`+verdicts?`/`reasoning?`), `getRequestFindings`/`deriveFinding`,
+`DETECTOR_CATALOG`, `SHOWCASE_FINDINGS` (on `req_8f3a1c4`).
+
+**Outbound:** `/conversations?open=${conversationId}`.
 
 ---
 
@@ -850,7 +884,11 @@ graph TB
 | Card/surface | `rounded-md` | 8px | Card, KpiRail, table containers |
 | Modal | `rounded-xl` | 16px | Dialog, AlertDialog — **LOCKED** |
 
-Concentric rule: item radius < container radius. 2× ratios between tiers.
+Concentric rule (sharpened 2026-06-04): a card nested inside another card steps
+DOWN one notch — ladder `24 → 16 → 8 → 4`. On this stack: outer panel `rounded-md`
+(8px) → nested inner card `rounded-xs` (4px). Surfaces at the same nesting level
+match; matching radii across a parent/child boundary is the bug. Override shared
+primitives (DetailList, CodeCard) at the usage site, not in the primitive.
 
 ### 8.3 Shadow system
 
@@ -869,7 +907,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | Display / hero numeric | `font-sans font-medium tabular-nums tracking-tight` via `<HeroNumeric>` | Page titles, KPI values ≥24px |
 | Body / label | `font-sans font-medium` minimum | Card titles, button labels, form labels |
 | Eyebrow | `font-mono uppercase tracking-[0.1em] font-medium` via `<Eyebrow>` | Section labels, KPI eyebrows, nav section headers |
-| Badge / pill | `font-mono tabular-nums font-medium text-xs` | Status codes, counters |
+| Badge / pill | `font-mono tabular-nums font-medium text-xs uppercase` | Status codes, counters (uppercase as of 2026-06-04) |
 | Data / ID | `font-mono tabular-nums` | Table cells, IDs, keys, model handles |
 
 ### 8.5 Spacing rules
@@ -880,8 +918,12 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 
 ### 8.6 Motion
 
-- Default: `transition-[colors,box-shadow] duration-150 ease-out`
-- Press affordance: `active:translate-y-px` (NOT `active:scale-[0.98]`)
+- Default: `transition-[colors,box-shadow] duration-150 ease-out`. The `ease-out`
+  token is the strong emil curve `cubic-bezier(0.23,1,0.32,1)` (`--ease-out` in `@theme`).
+- Press affordance (2026-06-04): `active:scale-[0.99]` (scale DOWN ~1%, matches Aave)
+  with `will-change-transform` on the primitive so the scaled label re-rasters
+  crisply. Replaced the old `active:translate-y-px`. Lives on Button /
+  IconActionButton / TabsTrigger primitives; hand-rolled pressables match.
 - Modal dismiss: every Dialog, Tooltip, Popover popup AND overlay needs `data-closed:fill-mode-forwards` alongside `animate-out` classes
 - Tooltip open: 200ms global default delay; popup padding 8px (`p-2`). Cost-column legend tooltip added on Requests 2026-06-01
 
@@ -893,9 +935,9 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 
 | Component | Base primitive | Notes |
 | --- | --- | --- |
-| `Button` | `@base-ui/react/button` | Variants: default/outline/secondary/ghost/destructive/link. Sizes: xs/sm/default/lg/icon*. Press: `active:translate-y-px` |
+| `Button` | `@base-ui/react/button` | Variants: default/outline/secondary/ghost/destructive/link. Sizes: xs/sm/default/lg/icon*. Press: `active:scale-[0.99]` + `will-change-transform` (2026-06-04, was `translate-y-px`) |
 | `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline) |
-| `Select` | `@base-ui/react/select` | `rounded-sm` trigger, `rounded-sm` popup, `rounded-xs` items |
+| `Select` | `@base-ui/react/select` | `rounded-sm` trigger, `rounded-sm` popup, `rounded-xs` items. Positioning standard (2026-06-04): `side=bottom` / `align=end` / `sideOffset=8`, `alignItemWithTrigger=false` → real dropdown that flips up near the viewport bottom. Same below/end/8 default on Popover, Menu, DateRangePicker. |
 | `Tabs` | `@base-ui/react/tabs` | Variants: default (pill-on-well) / line (underline). `<TabsCount>` chip inside triggers |
 | `Segmented` / `SegmentedPill` | `@base-ui/react/listbox` | Time-range toggles in page toolbars |
 | `Menu` | `@base-ui/react/menu` | 100ms ease-out item highlight (keyboard no-snap). `origin-[var(--transform-origin)]` required |
@@ -906,9 +948,10 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Requests, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
-| `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900 |
+| `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |
+| `SortableTableHead` | native `<th>` + `<button>` | Click-to-sort header (2026-06-04). `⇅` fades in on hover, persists as `↑`/`↓` when active. Three-state cycle (asc→desc→unsorted). Content-width hit area (`max-w-1/2`), `aria-sort`. Pairs with the `useTableSort` hook + `sortRows`/`parseNumeric` in `src/hooks/use-table-sort.ts` (local state, no TanStack); table supplies a `getValue(row,key)` accessor. |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
-| `Badge` | custom div | `font-mono text-xs`. No icons inside. Symmetric padding locked |
+| `Badge` | custom div | `font-mono text-xs uppercase`. No icons inside. Symmetric padding locked. `success`/`destructive` text meet WCAG 4.5:1 (success-800; destructive solid `danger-100/800`). Uppercase + contrast fixes 2026-06-04. |
 | `Eyebrow` | custom span | `font-mono uppercase tracking-[0.1em]`. Default `as="span"`, pass `as="div"` when block |
 | `MessageBlock` | custom div | Conversation bubble — border-only, no fill. Blue outline = model output |
 | `CodeCard` | custom | Syntax-highlighted code with `CodeLine[]` / `CodeToken[]`. Tabs per language |
