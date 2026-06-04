@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Link } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,13 @@ import { cn } from '@/lib/utils';
  *     double-fire when the button itself is clicked
  *   - resets default <button> styling (bg-transparent, p-0) so the cell
  *     content renders identically to a plain <span>/<div>
+ *
+ * `href`: when the drill-in target is a real, URL-addressable page
+ * (e.g. /requests-findings/:id), pass `href` and the primary cell renders
+ * a React Router <Link> (a real <a href>) instead of a <button>. This is
+ * the correct role for navigation — it restores cmd/middle-click-to-new-tab
+ * and "Copy link address", and announces as a link, not a button. Omit
+ * `href` for in-place actions (open a modal, etc.) and it stays a <button>.
  *
  * Layout variants:
  *   row     — `flex items-center gap-2 min-w-0 w-full` — for cells with
@@ -53,6 +61,9 @@ export type RowActionButtonProps = Omit<
 > &
   VariantProps<typeof rowActionButtonVariants> & {
     'aria-label': string;
+    /** When set, render a real <a href> (React Router <Link>) instead of a
+     *  <button> — for drill-ins to URL-addressable pages. */
+    href?: string;
   };
 
 export function RowActionButton({
@@ -60,18 +71,27 @@ export function RowActionButton({
   className,
   onClick,
   children,
+  href,
   ...props
 }: RowActionButtonProps) {
+  const classes = cn(rowActionButtonVariants({ layout, className }));
+  // stopPropagation keeps the parent <tr>'s mouse-convenience onClick from
+  // double-firing; we never preventDefault, so the <Link> still navigates.
+  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    onClick?.(e as React.MouseEvent<HTMLButtonElement>);
+  };
+
+  if (href) {
+    return (
+      <Link to={href} onClick={handleClick} className={classes} aria-label={props['aria-label']}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.(e);
-      }}
-      className={cn(rowActionButtonVariants({ layout, className }))}
-      {...props}
-    >
+    <button type="button" onClick={handleClick} className={classes} {...props}>
       {children}
     </button>
   );

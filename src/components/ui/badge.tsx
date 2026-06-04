@@ -17,13 +17,13 @@ const badgeVariants = cva(
   //      `[&_svg:not([class*='size-'])]:size-3.5` pattern.
   //   3. **Symmetric `px-2` (8px) padding always.** On the 4px grid.
   //      Was `px-2.5` (10px), broke the grid.
-  //   4. **First letter capitalized.** `capitalize` is baked in so
-  //      `<Badge>blocked</Badge>` renders "Blocked". Digits and already-
-  //      uppercase letters unchanged ("200 OK" stays "200 OK").
+  //   4. **Uppercase.** `uppercase` is baked in so `<Badge>blocked</Badge>`
+  //      renders "BLOCKED". Digits and symbols unchanged ("200 OK" stays
+  //      "200 OK").
   //   5. **Variants encode tone.** `success` / `warning` / `destructive` /
   //      `info` / `neutral` / `outline` / `ghost` / `secondary` / `link` /
   //      `default`.
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-xs border border-transparent px-2 font-mono text-xs font-medium tabular-nums whitespace-nowrap capitalize transition-[colors,box-shadow] duration-150 ease-out [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-xs border border-transparent px-2 font-mono text-xs font-medium tabular-nums whitespace-nowrap uppercase transition-[colors,box-shadow] duration-150 ease-out [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
   {
     variants: {
       variant: {
@@ -31,7 +31,7 @@ const badgeVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+          "bg-danger-100 text-danger-800 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-danger-200",
         outline:
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost:
@@ -40,7 +40,7 @@ const badgeVariants = cva(
 
         /* ─── Constellation Gate AI status variants ────────────── */
         success:
-          "bg-success-100 text-success-700 [a]:hover:bg-success-200",
+          "bg-success-100 text-success-800 [a]:hover:bg-success-200",
         warning:
           "bg-warning-100 text-warning-700 [a]:hover:bg-warning-200",
         info:

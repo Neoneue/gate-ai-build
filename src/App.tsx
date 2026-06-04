@@ -22,6 +22,7 @@ import { Upgrade } from '@/pages/Upgrade';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
+import { RequestsFindings } from '@/pages/RequestsFindings';
 import { Security } from '@/pages/Security';
 import { SecurityDefault } from '@/pages/SecurityDefault';
 import { SecurityFree } from '@/pages/SecurityFree';
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/overview-default" element={<DashboardDefault />} />
           <Route path="/requests" element={<Requests />} />
+          <Route path="/requests-findings/:requestId" element={<RequestsFindings />} />
           <Route path="/conversations" element={<Conversations />} />
           <Route path="/models" element={<Models />} />
           <Route path="/token-savings" element={<TokenSavings />} />

@@ -11,6 +11,7 @@ import {
   Info,
   KeyRound,
   Settings2,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   TriangleAlert,
@@ -802,6 +803,17 @@ export type RequestRow = {
   findings?: RequestFinding[];
 };
 
+/** Stable, URL-safe id for a request row. Prefers the canonical `requestId`;
+ *  falls back to a deterministic id derived from the conversation + code so
+ *  every row is addressable. The /requests-findings page and the table row
+ *  links both use this, so a row always resolves back to its source row. */
+export function requestRowId(row: RequestRow): string {
+  return (
+    row.requestId ??
+    `req_${row.conversation.replace('cnv_', '').slice(0, 8)}${row.code}`
+  );
+}
+
 /* ─── Findings model (v2 Request modal) ───────────────────────────────────
  * One source of truth for the rich detail in RequestDetailDialogV2. A row's
  * `findings` seed wins; otherwise deriveFinding() produces a single finding
@@ -1183,7 +1195,7 @@ const REQUEST_ROWS_30D: RequestRow[] = [
 // plus older entries spanning back to mid-March (~60-day lifetime window
 // for this mock account). Same append-only rule as the narrower presets;
 // this is the lifetime row set the `all` preset lands on by default.
-const REQUEST_ROWS_ALL: RequestRow[] = [
+export const REQUEST_ROWS_ALL: RequestRow[] = [
   ...REQUEST_ROWS_30D,
   { day: 'Apr 10', time: '14:08:22', relative: '32d ago',   status: 'success', guardrail: 'allow',  code: '200', vendor: 'openai',    model: 'gpt-5.1',           conversation: 'cnv_orion_70',   keyId: 'prod-web',   inTokens: '3,108', outTokens: '1,542', latency: '4.20s',              cost: '$0.0318' },
   { day: 'Apr 6',  time: '09:42:18', relative: '36d ago',   status: 'error',   guardrail: 'block',  code: '403', vendor: 'anthropic', model: 'claude-opus-4.7',   conversation: 'cnv_meridian_07',keyId: 'prod-agent', inTokens: '4,402', outTokens: '0',     latency: '2.10s',              cost: '$0.0308',       guardrailReason: 'credential' },
@@ -1360,9 +1372,15 @@ function RequestsTableSection({
     },
     [pageScopeKey],
   );
-  // Row-click drill-in. `selectedRow` doubles as the dialog's `open`
-  // signal — `null` means closed, a row means open. Avoids carrying a
-  // separate `open` flag.
+  // Row-click drill-in now navigates to the /requests-findings/:id page
+  // (URL-addressable, shareable, multi-tab — the GitHub model). The modal
+  // below is kept for `?open=` deep-links (e.g. Security events) but is no
+  // longer the row-click target.
+  const navigate = useNavigate();
+  const openRow = (row: RequestRow) =>
+    navigate(`/requests-findings/${requestRowId(row)}`);
+
+  // `selectedRow` still drives the (stored) modal for `?open=` deep-links.
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
 
   // Deep-link support: ?open=req_* opens the matching row's modal. Mirrors
@@ -1654,16 +1672,11 @@ function RequestsTableSection({
               return (
                 <TableRow
                   key={`${row.time}-${i}`}
-                  role="button"
                   className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
-                  onClick={() => setSelectedRow(row)}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedRow(row);
-                    }
-                  }}
+                  // Mouse-only convenience: the keyboard/AT target is the real
+                  // <a href> drill-in in the model cell (RowActionButton href).
+                  // A <tr> can't legally carry role="button"/tabIndex.
+                  onClick={() => openRow(row)}
                 >
                   <TableCell className="whitespace-nowrap w-48">
                     {/* Absolute timestamp is the primary scan target — relative
@@ -1700,10 +1713,7 @@ function RequestsTableSection({
                   </TableCell>
                   <TableCell className="whitespace-nowrap w-60">
                     <RowActionButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRow(row);
-                      }}
+                      href={`/requests-findings/${requestRowId(row)}`}
                       aria-label={`Inspect ${row.code} request to ${row.model} at ${row.time}`}
                     >
                       <VendorAvatar vendor={row.vendor} />
@@ -2047,7 +2057,15 @@ function RequestDetailDialogV2({
   );
 }
 
-function RequestDetailBodyV2({ row }: { row: RequestRow }) {
+export function RequestDetailBodyV2({
+  row,
+  variant = 'modal',
+}: {
+  row: RequestRow;
+  /** 'modal' = fixed tab bar with an internal scroll region (the dialog).
+   *  'page'  = natural flow, no internal scroll (the /requests-findings page). */
+  variant?: 'modal' | 'page';
+}) {
   const navigate = useNavigate();
   const openConversation = () =>
     navigate(`/conversations?open=${row.conversation}`);
@@ -2071,11 +2089,12 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
 
   const selectedFinding = findings[selectedIdx] ?? null;
 
-  // Bumped when the user clicks "Offset in evidence" — switches to the Message
-  // tab and tells the Full request drawer to expand + scroll to the match.
+  // Bumped when the user clicks "Offset in evidence" — switches to the Details
+  // tab (which now holds the message) and tells the Full request drawer to
+  // expand + scroll to the match.
   const [evidenceReveal, setEvidenceReveal] = useState(0);
   const jumpToEvidence = useCallback(() => {
-    setActiveTab('messages');
+    setActiveTab('details');
     setEvidenceReveal((n) => n + 1);
   }, []);
 
@@ -2089,9 +2108,14 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
 
   return (
     <>
-      {/* Header — identical to V1 */}
-      <DialogScrollHeader>
+      {/* Header — identical to V1. In page mode the title is a plain <h2>
+          (static) since it lives outside a <Dialog> root. */}
+      {/* Page mode: drop the header's own pt-6 — the chrome's gap-6 already
+          separates the title from the back breadcrumb above (modal has no
+          breadcrumb, so it keeps pt-6 as its top padding). */}
+      <DialogScrollHeader className={variant === 'page' ? 'pt-0' : undefined}>
         <DialogTitleBlock
+          mode={variant === 'page' ? 'static' : 'dialog'}
           titleFont="mono"
           titleAriaLabel={`Request ${requestId}`}
           badge={
@@ -2146,27 +2170,32 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex flex-1 min-h-0 flex-col"
+        className={variant === 'page' ? 'flex flex-col' : 'flex flex-1 min-h-0 flex-col'}
       >
-        {/* Fixed tab bar — stays put while the content below it scrolls. */}
+        {/* Fixed tab bar — stays put while the content below it scrolls (modal). */}
         <div className="shrink-0 px-6 pt-4">
           <TabsList variant="line" className="px-0">
             <TabsTrigger value="findings" className="pl-0">
               Findings
               {findings.length > 0 && (
-                <Badge variant={bannerTone === 'destructive' ? 'destructive' : 'warning'} className="ml-1.5">
+                <Badge variant="neutral" className="ml-1">
                   {findings.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="messages">Message</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
         </div>
 
-        {/* Scroll region — the ONLY element that scrolls; content is clipped
-            here, below the fixed tab bar. */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-4 pb-6">
+        {/* Body region. Modal: the only element that scrolls (clipped below the
+            fixed tab bar). Page: natural height, no internal scroll. */}
+        <div
+          className={
+            variant === 'page'
+              ? 'px-6 pt-4 pb-6'
+              : 'flex-1 min-h-0 overflow-y-auto px-6 pt-4 pb-6'
+          }
+        >
 
           {/* ── Findings tab ──────────────────────────────────────────── */}
           <TabsContent value="findings" className="pt-2">
@@ -2202,7 +2231,7 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                             <span className="font-sans text-sm font-medium text-neutral-900">{p.label}</span>
                             <Badge variant="success">Pass</Badge>
                           </div>
-                          <span className="font-mono text-sm text-neutral-500">{p.description}</span>
+                          <span className="font-sans text-sm text-neutral-500">{p.description}</span>
                         </div>
                       ))}
                     </div>
@@ -2230,11 +2259,20 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       />
                     )
                   ) : (
-                    <div className="flex flex-col gap-1">
-                      <span className="font-sans text-sm font-medium text-success-700">No findings</span>
-                      <span className="font-sans text-sm text-neutral-500">
+                    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
+                        <ShieldCheck
+                          className="size-5 text-neutral-500"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                      </div>
+                      <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
+                        No findings
+                      </h3>
+                      <p className="font-sans text-sm text-neutral-500 max-w-md text-pretty m-0">
                         All detectors passed for this request.
-                      </span>
+                      </p>
                     </div>
                   )}
                 </div>
@@ -2242,87 +2280,106 @@ function RequestDetailBodyV2({ row }: { row: RequestRow }) {
             </div>
           </TabsContent>
 
-          {/* ── Message tab ───────────────────────────────────────────── */}
-          <TabsContent value="messages">
-            <RequestBodyPanel
-              row={row}
-              highlightMatch={selectedFinding?.match}
-              highlightEvidence={selectedFinding?.evidence}
-              revealSignal={evidenceReveal}
-            />
-          </TabsContent>
-
-          {/* ── Details tab ───────────────────────────────────────────── */}
+          {/* ── Details tab — message + request metadata ─────────────────
+              Same two-column shell as the Findings tab: left 2/3 holds the
+              conversation + Full request drawer, right 1/3 the metadata. */}
           <TabsContent value="details" className="pt-2">
-            <DetailList>
-              <DetailRow
-                label="Timestamp"
-                value={
-                  <span className="font-mono text-neutral-900 tabular-nums">
-                    {row.day}, {row.time}
-                  </span>
-                }
-              />
-              <DetailRow
-                label="Conversation"
-                value={
-                  <span className="font-mono tabular-nums">
-                    <TextLink
-                      onClick={openConversation}
-                      aria-label={`Open conversation ${row.conversation}`}
-                    >
-                      {row.conversation}
-                    </TextLink>
-                  </span>
-                }
-              />
-              <DetailRow
-                label="Model"
-                value={
-                  <div className="flex items-center gap-2">
-                    <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-neutral-900">
-                      {row.model}
-                    </span>
-                  </div>
-                }
-              />
-              <DetailRow label="Provider" value={<span className="text-neutral-900">{provider}</span>} />
-              <DetailRow
-                label="API Key"
-                value={<span className="font-mono text-neutral-900">{row.keyId}</span>}
-              />
-              <DetailRow
-                label="Endpoint"
-                value={
-                  <span className="font-mono text-neutral-900">
-                    <span className="text-neutral-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
-                  </span>
-                }
-              />
-              <DetailRow
-                label="HTTP status"
-                value={<Badge variant={RESPONSE_BADGE[row.status].variant}>{row.code}</Badge>}
-              />
-              <DetailRow
-                label="Cache"
-                value={<Badge variant="info">miss</Badge>}
-              />
-            </DetailList>
+            <div className="grid gap-4 md:grid-cols-3">
+              {/* Left (2/3): the message — user/assistant turns + Full request. */}
+              <div className="min-w-0 md:col-span-2">
+                <div className={PANEL_OUTER}>
+                  <RequestBodyPanel
+                    bare
+                    row={row}
+                    highlightMatch={selectedFinding?.match}
+                    highlightEvidence={selectedFinding?.evidence}
+                    revealSignal={evidenceReveal}
+                  />
+                </div>
+              </div>
+
+              {/* Right (1/3): request metadata. */}
+              <div className="min-w-0 md:col-span-1">
+                <div className={PANEL_OUTER}>
+                  <section className="flex flex-col gap-2">
+                    <PanelHeading title="Details" />
+                    <DetailList>
+                      <DetailRow
+                        label="Timestamp"
+                        value={
+                          <span className="font-mono text-neutral-900 tabular-nums">
+                            {row.day}, {row.time}
+                          </span>
+                        }
+                      />
+                      <DetailRow
+                        label="Conversation"
+                        value={
+                          <span className="font-mono tabular-nums">
+                            <TextLink
+                              onClick={openConversation}
+                              aria-label={`Open conversation ${row.conversation}`}
+                            >
+                              {row.conversation}
+                            </TextLink>
+                          </span>
+                        }
+                      />
+                      <DetailRow
+                        label="Model"
+                        value={
+                          <div className="flex items-center gap-2">
+                            <VendorAvatar vendor={row.vendor} />
+                            <span className="font-mono text-neutral-900">
+                              {row.model}
+                            </span>
+                          </div>
+                        }
+                      />
+                      <DetailRow label="Provider" value={<span className="text-neutral-900">{provider}</span>} />
+                      <DetailRow
+                        label="API Key"
+                        value={<span className="font-mono text-neutral-900">{row.keyId}</span>}
+                      />
+                      <DetailRow
+                        label="Endpoint"
+                        value={
+                          <span className="font-mono text-neutral-900 break-all">
+                            <span className="text-neutral-500">POST</span> {VENDOR_ENDPOINT[row.vendor]}
+                          </span>
+                        }
+                      />
+                      <DetailRow
+                        label="HTTP status"
+                        value={<Badge variant={RESPONSE_BADGE[row.status].variant}>{row.code}</Badge>}
+                      />
+                      <DetailRow
+                        label="Cache"
+                        value={<Badge variant="info">miss</Badge>}
+                      />
+                    </DetailList>
+                  </section>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </div>
       </Tabs>
 
-      <DialogScrollFooter>
-        {/* Finding-scoped actions (Mark false positive / Tune policy) never
-            live in the footer — they render only inside a finding's "How to
-            fix" card, and only when there is an action to take. The footer
-            keeps navigation only. */}
-        <Button type="button" size="sm" onClick={openConversation}>
-          View Conversation
-          <ExternalLink data-icon="inline-end" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
-        </Button>
-      </DialogScrollFooter>
+      {/* Footer is modal-only chrome. On the page, "View Conversation" lives
+          at the top-left (rendered by the page itself), so no footer here. */}
+      {variant !== 'page' && (
+        <DialogScrollFooter>
+          {/* Finding-scoped actions (Mark false positive / Tune policy) never
+              live in the footer — they render only inside a finding's "How to
+              fix" card, and only when there is an action to take. The footer
+              keeps navigation only. */}
+          <Button type="button" size="sm" onClick={openConversation}>
+            View Conversation
+            <ExternalLink data-icon="inline-end" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
+          </Button>
+        </DialogScrollFooter>
+      )}
     </>
   );
 }
@@ -2367,7 +2424,7 @@ function FindingCard({
         </div>
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
-      <p className="font-mono text-sm text-neutral-900 truncate">
+      <p className="font-mono text-sm text-neutral-900 truncate" title={finding.match}>
         “{finding.match}”
       </p>
     </button>
@@ -2503,7 +2560,7 @@ function PiiRightPanel({
               <button
                 type="button"
                 onClick={onJumpToEvidence}
-                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs py-1 -my-1"
                 title="Show in the full request"
               >
                 {offsetLabel}
@@ -2909,6 +2966,7 @@ function RequestBodyPanel({
   highlightMatch,
   highlightEvidence,
   revealSignal,
+  bare = false,
 }: {
   row: RequestRow;
   /** Matched substring to highlight inside the Full request JSON. */
@@ -2918,6 +2976,9 @@ function RequestBodyPanel({
   /** Bumped when the user clicks "Offset in evidence" — expands the Full
    *  request drawer and scrolls the highlighted match into view. */
   revealSignal?: number;
+  /** When true, drop the standalone-tab scroll wrapper (max-h + overflow +
+   *  -mx-2 inset) so the panel flows naturally inside a column/outer card. */
+  bare?: boolean;
 }) {
   // Blocked rows short-circuit before the provider is called, so no
   // assistant turn exists. Provider errors also have no usable response in
@@ -2953,8 +3014,8 @@ function RequestBodyPanel({
     // content column on each side, then inset the cards back to the
     // column edge — gives the shadow ring room to render around the
     // rounded corners without making the cards visually narrower than
-    // the KPI rail / tabs above them.
-    <div className="flex flex-col gap-4 max-h-80 overflow-y-auto -mx-2 px-2 py-2">
+    // the KPI rail / tabs above them. `bare` drops this for embedded use.
+    <div className={bare ? 'flex flex-col gap-4' : 'flex flex-col gap-4 max-h-80 overflow-y-auto -mx-2 px-2 py-2'}>
       <MessageBlock
         label="User message"
         content={requestContent}
@@ -2970,7 +3031,7 @@ function RequestBodyPanel({
       <BodySection
         label="Full request"
         lines={requestLines}
-        defaultExpanded={false}
+        defaultExpanded
         copyValue={requestPayload}
         copyLabel="request"
         icon={<Braces className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />}
