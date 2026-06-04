@@ -44,10 +44,10 @@ export function RequestsFindings() {
         <button
           type="button"
           onClick={() => navigate('/requests')}
-          className="group inline-flex items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors duration-150 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group relative inline-flex items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring after:absolute after:inset-x-0 after:-inset-y-3 after:content-['']"
         >
           <ChevronLeft
-            className="size-4 transition-transform duration-150 group-hover:-translate-x-px"
+            className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
             strokeWidth={1.75}
             aria-hidden
           />
@@ -75,7 +75,7 @@ export function RequestsFindings() {
         </div>
       ) : (
         <div role="alert" className="rounded-md border border-border bg-card p-8 text-center">
-          <h2 className="font-sans text-sm font-medium text-neutral-900 m-0">Request not found</h2>
+          <h2 className="font-sans text-sm font-medium text-neutral-900 m-0 text-balance">Request not found</h2>
           <p className="mt-1 font-sans text-sm text-neutral-500">
             No request matches <span className="font-mono">{requestId}</span>.
           </p>

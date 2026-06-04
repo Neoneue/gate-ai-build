@@ -174,7 +174,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
           </IconActionButton>
         ) : null}
       </div>
-      <PopoverContent side="bottom" align="end" sideOffset={6} className="w-auto">
+      <PopoverContent side="bottom" align="end" sideOffset={8} className="w-auto">
         <Calendar
           mode="range"
           selected={draft}

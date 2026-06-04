@@ -124,10 +124,13 @@ function SelectContent({
   className,
   children,
   side = "bottom",
-  sideOffset = 4,
-  align = "center",
+  sideOffset = 8,
+  align = "end",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  // false = render as a real dropdown BELOW the trigger (8px gap, right-
+  // aligned) that flips up near the viewport bottom — not the macOS-style
+  // overlay that centers the selected item over the trigger. House standard.
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<

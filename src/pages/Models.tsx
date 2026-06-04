@@ -1298,7 +1298,7 @@ function PlatformPanel() {
             // No-op in the showcase; real impl wires to per-platform docs.
             onClick={() => undefined}
             aria-label={`Open ${p.name} integration guide`}
-            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-colors duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px motion-reduce:active:translate-y-0"
+            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-[colors,scale] duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:active:scale-100"
           >
             <div className="flex flex-col gap-1 min-w-0">
               <span className="font-sans text-sm font-medium text-neutral-900">{p.name}</span>

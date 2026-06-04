@@ -150,7 +150,7 @@ function CanvasControls({ scale, onReset }: { scale: number; onReset: () => void
       <button
         type="button"
         onClick={onReset}
-        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs active:scale-[0.99] transition-[colors,scale] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         Reset
       </button>

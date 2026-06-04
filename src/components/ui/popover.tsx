@@ -33,7 +33,7 @@ function PopoverContent({
   className,
   side = 'bottom',
   align = 'end',
-  sideOffset = 6,
+  sideOffset = 8,
   children,
   ...props
 }: PopoverContentProps) {

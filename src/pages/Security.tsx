@@ -1163,7 +1163,7 @@ function ThreatEventDetailBody({
                   setMarked(true);
                   toast.success('Event marked as invalid');
                 }}
-                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] active:scale-[0.99] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <span className="inline-flex items-center justify-center size-8 shrink-0">
                   <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />

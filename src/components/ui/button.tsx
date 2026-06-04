@@ -5,10 +5,13 @@ import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
   // Skill: performance.md — never `transition-all`. Specify exactly the
-  // properties that actually animate on this surface (color, ring, translate
-  // for the press affordance). Duration sits at 150ms — fast enough for UI,
-  // long enough to read on press-and-release.
-  "group/button inline-flex shrink-0 items-center justify-center rounded-sm border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-[colors,opacity,box-shadow,translate] duration-150 ease-out motion-reduce:transition-none outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px motion-reduce:active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  // properties that actually animate on this surface (color, ring, scale
+  // for the press affordance). Press affordance is a subtle scale-DOWN to
+  // 0.99 (matches Aave's CTA press) — the button presses inward on click.
+  // `will-change-transform` promotes a compositing layer so the scaled text
+  // re-rasters crisply (the "letters scale in cleanly" effect). Duration
+  // sits at 150ms — fast enough for UI, long enough to read on press.
+  "group/button inline-flex shrink-0 items-center justify-center rounded-sm border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap will-change-transform transition-[colors,opacity,box-shadow,scale] duration-150 ease-out motion-reduce:transition-none outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:scale-[0.99] motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {

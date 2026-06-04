@@ -616,7 +616,7 @@ function MerkleTreeViewer({
           aria-label="Zoom in"
           onClick={zoomIn}
           disabled={zoom >= MAX_ZOOM}
-          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Plus className="size-4" aria-hidden />
         </button>
@@ -626,7 +626,7 @@ function MerkleTreeViewer({
           aria-label="Zoom out"
           onClick={zoomOut}
           disabled={zoom <= MIN_ZOOM}
-          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Minus className="size-4" aria-hidden />
         </button>
@@ -636,7 +636,7 @@ function MerkleTreeViewer({
           aria-label="Reset view"
           onClick={resetView}
           disabled={isDefaultView}
-          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 inline-flex items-center justify-center text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Maximize2 className="size-4" aria-hidden />
         </button>
@@ -686,7 +686,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   type="button"
   aria-label="Expand Merkle tree"
   onClick={() => setExpandOpen(true)}
-  className="absolute top-2 right-2 z-10 inline-flex items-center justify-center size-8 rounded-sm border border-border bg-card text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.97] transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+  className="absolute top-2 right-2 z-10 inline-flex items-center justify-center size-8 rounded-sm border border-border bg-card text-neutral-700 hover:bg-neutral-50 active:enabled:scale-[0.99] transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
   >
   <Expand className="size-4" aria-hidden />
   </button>

@@ -640,7 +640,7 @@ function KeyCreatedDialog({
             type="button"
             onClick={trigger}
             aria-label={copied ? 'Copied' : 'Copy API key'}
-            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-colors duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             {copied ? (
               <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />

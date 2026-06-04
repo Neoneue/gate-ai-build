@@ -633,7 +633,7 @@ function RowActionsMenu({
         <MoreHorizontal />
       </MenuPrimitive.Trigger>
       <MenuPrimitive.Portal>
-        <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
+        <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={8} className="isolate z-50">
           <MenuPrimitive.Popup
             className={cn(
               'min-w-32 overflow-hidden rounded-sm bg-popover text-neutral-900 border border-border shadow-(--shadow-popup) py-1 outline-none origin-[var(--transform-origin)]',

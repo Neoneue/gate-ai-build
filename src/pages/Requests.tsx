@@ -1327,15 +1327,17 @@ function RequestsTableSection({
     draftResponseFilter,
     draftGuardrailFilter,
   ].filter((v) => v !== 'all').length;
-  // Sync draft ← committed whenever the modal opens. Idempotent: re-running
-  // while already open just re-seeds from committed (which hasn't changed).
-  useEffect(() => {
-    if (!filtersOpen) return;
+  // Seed draft ← committed in the open handler (opening is a user event, not
+  // derived state). Committed filters can't change while the modal is open
+  // (Apply closes it), so this is the only moment a re-seed is needed —
+  // avoids the redundant double-render an effect would cause on every open.
+  const openFilters = useCallback(() => {
     setDraftModel(model);
     setDraftKeyId(keyId);
     setDraftResponseFilter(responseFilter);
     setDraftGuardrailFilter(guardrailFilter);
-  }, [filtersOpen, model, keyId, responseFilter, guardrailFilter]);
+    setFiltersOpen(true);
+  }, [model, keyId, responseFilter, guardrailFilter]);
   // Reset clears the DRAFT only (staged); committed state is untouched until
   // Apply.
   const resetFilters = useCallback(() => {
@@ -1398,19 +1400,23 @@ function RequestsTableSection({
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
   // `row.status` directly. Guardrail filter matches `row.guardrail`.
-  const filteredRows = rows.filter((r) => {
-    const matchesResponse =
-      responseFilter === 'all'
-        ? true
-        : responseFilter === 'slow'
-          ? r.slow === true
-          : r.status === responseFilter;
-    const matchesGuardrail =
-      guardrailFilter === 'all' ? true : r.guardrail === guardrailFilter;
-    const matchesModel = model === 'all' ? true : r.model === model;
-    const matchesKey = keyId === 'all' ? true : r.keyId === keyId;
-    return matchesResponse && matchesGuardrail && matchesModel && matchesKey;
-  });
+  const filteredRows = useMemo(
+    () =>
+      rows.filter((r) => {
+        const matchesResponse =
+          responseFilter === 'all'
+            ? true
+            : responseFilter === 'slow'
+              ? r.slow === true
+              : r.status === responseFilter;
+        const matchesGuardrail =
+          guardrailFilter === 'all' ? true : r.guardrail === guardrailFilter;
+        const matchesModel = model === 'all' ? true : r.model === model;
+        const matchesKey = keyId === 'all' ? true : r.keyId === keyId;
+        return matchesResponse && matchesGuardrail && matchesModel && matchesKey;
+      }),
+    [rows, responseFilter, guardrailFilter, model, keyId],
+  );
 
   const isEmpty = filteredRows.length === 0;
 
@@ -1443,7 +1449,7 @@ function RequestsTableSection({
                 : 'Filters'
             }
             className="border-border bg-card text-foreground font-normal"
-            onClick={() => setFiltersOpen(true)}
+            onClick={openFilters}
           >
             <SlidersHorizontal data-icon="inline-start" aria-hidden />
             Filters
@@ -2075,7 +2081,12 @@ export function RequestDetailBodyV2({
   const requestId = row.requestId ?? `req_${row.conversation.replace('cnv_', '').slice(0, 8)}${row.code}`;
   const provider = VENDOR_META[row.vendor].label;
 
-  const { findings, passed, highestAction } = getRequestFindings(row);
+  // Memoized on `row` so tab switches / finding selection / evidence-reveal
+  // re-renders don't re-run the detector derivation.
+  const { findings, passed, highestAction } = useMemo(
+    () => getRequestFindings(row),
+    [row],
+  );
 
   // Always open on the Findings tab (shows the all-pass state when nothing fired).
   const [activeTab, setActiveTab] = useState('findings');
@@ -2262,7 +2273,7 @@ export function RequestDetailBodyV2({
                           aria-hidden
                         />
                       </div>
-                      <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
+                      <h3 className="font-sans text-lg font-medium text-neutral-900 m-0 text-balance">
                         No findings
                       </h3>
                       <p className="font-sans text-sm text-neutral-500 max-w-md text-pretty m-0">
@@ -2403,7 +2414,7 @@ function FindingCard({
       type="button"
       onClick={onClick}
       className={[
-        'flex flex-col gap-2 rounded-xs border bg-card p-4 text-left shadow-xs transition-colors duration-150',
+        'flex flex-col gap-2 rounded-xs border bg-card p-4 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100',
         selected ? selectedBorder : 'border-border hover:bg-neutral-50',
       ].join(' ')}
       aria-pressed={selected}
@@ -2468,7 +2479,7 @@ function KvRow({
       <span className="font-sans text-sm font-medium text-neutral-900">{label}</span>
       <span
         className={[
-          'font-mono text-sm text-neutral-900 text-right',
+          'font-mono text-sm text-neutral-900 text-right tabular-nums',
           valueClassName ?? '',
         ].join(' ')}
       >
@@ -2555,7 +2566,7 @@ function PiiRightPanel({
               <button
                 type="button"
                 onClick={onJumpToEvidence}
-                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs py-1 -my-1"
+                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs py-2 -my-2 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                 title="Show in the full request"
               >
                 {offsetLabel}

@@ -21,7 +21,7 @@ function MenuContent({
   className,
   side = 'bottom',
   align = 'end',
-  sideOffset = 4,
+  sideOffset = 8,
   children,
   ...props
 }: MenuContentProps) {
