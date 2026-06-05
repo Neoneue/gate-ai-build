@@ -58,7 +58,9 @@ export const ACTION_BADGE: Record<
 > = {
 	blocked: { variant: 'destructive', label: 'blocked' },
 	flagged: { variant: 'warning', label: 'flagged' },
-	redacted: { variant: 'info', label: 'redacted' },
+	// 2-tier severity: redacted shares amber with flagged (block = red); the
+	// badge label carries the identity. CPO direction 2026-06-04.
+	redacted: { variant: 'warning', label: 'redacted' },
 };
 
 // `color` mirrors the `AttackCategoriesCard` palette on this page so the

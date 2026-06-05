@@ -451,7 +451,7 @@ const GUARDRAIL_BADGE: Record<
 > = {
   allow:    { variant: 'neutral'     },
   flagged:  { variant: 'warning'     },
-  redacted: { variant: 'info'        },
+  redacted: { variant: 'warning'     },
   block:    { variant: 'destructive' },
 };
 

@@ -1231,6 +1231,33 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
   { day: 'Mar 16', time: '08:14:08', relative: '57d ago',   status: 'error',   guardrail: 'allow',  code: '500', vendor: 'xai',       model: 'grok-4.1-fast',     conversation: 'cnv_meridian_07',keyId: 'nova-chat',     inTokens: '5,408', outTokens: '0',     latency: '3.40s',              cost: '$0.0158'       },
 ];
 
+// ── Security event bridge ──────────────────────────────────────────────
+// A Security event is the SAME underlying request as a Requests row (shared
+// requestId). So the Security event modal must show the same finding copy the
+// Requests findings panel shows — never a divergent, hand-authored string.
+// Given a requestId + detector category, return the one-line message (injection:
+// the curated "what happened" sentence; pii/credential: the banner sentence) and
+// the evidence segment, both derived from getRequestFindings. Returns null when no
+// request row matches (sparse mock data) or that category didn't fire — the caller
+// falls back to its own copy.
+export type EventFindingCopy = { message: string; evidence: string };
+
+export function getEventFindingCopy(
+  requestId: string | undefined,
+  category: string,
+): EventFindingCopy | null {
+  if (!requestId) return null;
+  const row = REQUEST_ROWS_ALL.find((r) => r.requestId === requestId);
+  if (!row) return null;
+  const finding = getRequestFindings(row).findings.find((f) => f.category === category);
+  if (!finding) return null;
+  const message =
+    finding.category === 'injection'
+      ? resolveInjectionCopy(finding).whatHappened
+      : findingBannerSentence([finding]);
+  return { message, evidence: finding.evidence };
+}
+
 /** Response axis — HTTP outcome from the provider. Pure 2-value mapping;
  *  `slow` short-circuits this in `responseVariant` below. */
 const RESPONSE_BADGE: Record<ResponseStatus, { variant: 'success' | 'destructive' }> = {
@@ -1250,7 +1277,7 @@ const GUARDRAIL_BADGE: Record<GuardrailAction, {
   // `blocked` carry the colored signal in this column.
   allow:    { variant: 'neutral'     },
   flagged:  { variant: 'warning'     },
-  redacted: { variant: 'info'        },
+  redacted: { variant: 'warning'     },
   block:    { variant: 'destructive' },
 };
 
@@ -2143,7 +2170,8 @@ export function RequestDetailBodyV2({
     setEvidenceReveal((n) => n + 1);
   }, []);
 
-  // Banner tone: block = destructive, flag/redact = warning.
+  // 2-tier action severity: block = destructive (red), flag/redact = warning
+  // (amber). The action badge label carries the flag-vs-redact distinction.
   const bannerTone =
     highestAction === 'block'
       ? ('destructive' as const)
@@ -2439,13 +2467,13 @@ function FindingCard({
   selected: boolean;
   onClick: () => void;
 }) {
-  const actionVariant: Record<FindingActionKind, 'warning' | 'destructive' | 'neutral'> = {
+  const actionVariant: Record<FindingActionKind, 'warning' | 'destructive'> = {
     flag: 'warning',
     redact: 'warning',
     block: 'destructive',
   };
-  // Selected card border picks up the action tone (amber for flag/redact, red
-  // for block), matching the Figma selected-state highlight.
+  // Selected card border picks up the action tone: red for block, amber for
+  // flag/redact (2-tier severity; the badge label says flag vs redact).
   const selectedBorder =
     finding.action === 'block' ? 'border-destructive' : 'border-warning-500';
   return (
@@ -2543,7 +2571,8 @@ function PiiRightPanel({
   /** Jump to the Message tab's Full request, scrolled to + highlighting the match. */
   onJumpToEvidence: () => void;
 }) {
-  const [showRaw, setShowRaw] = useState(true);
+  // Unredact is OFF by default — redacted value shown until the operator opts in.
+  const [showRaw, setShowRaw] = useState(false);
   const { evidence, match, redactedAs, rule, policy } = finding;
   const offset = evidence.indexOf(match);
   const offsetLabel =
@@ -2627,7 +2656,15 @@ function PiiRightPanel({
             <KvRow label="Bytes redacted" value={match.length} />
             <KvRow label="Policy" value={policy} />
             <KvRow label="Provider" value={VENDOR_META[row.vendor].label} />
-            <KvRow label="Model" value={row.model} />
+            <KvRow
+              label="Model"
+              value={
+                <span className="inline-flex items-center gap-2">
+                  <VendorAvatar vendor={row.vendor} />
+                  {row.model}
+                </span>
+              }
+            />
           </div>
         </div>
       </section>
@@ -3099,10 +3136,10 @@ function SecurityPanel({ row }: { row: RequestRow }) {
   );
 }
 
-const CHECK_BADGE_VARIANT: Record<CheckStatus, 'success' | 'warning' | 'destructive' | 'neutral'> = {
+const CHECK_BADGE_VARIANT: Record<CheckStatus, 'success' | 'warning' | 'destructive'> = {
   pass:   'success',
   flag:   'warning',
-  redact: 'neutral',
+  redact: 'warning',
   block:  'destructive',
 };
 

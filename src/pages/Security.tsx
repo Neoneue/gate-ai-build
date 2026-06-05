@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { SectionHeading } from '@/components/ui/section-heading';
 import { SearchInput } from '@/components/ui/search-input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -58,6 +57,7 @@ import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, parseEventTime, type EventRow, type EventCategory } from '@/pages/security-data';
+import { getEventFindingCopy } from '@/pages/Requests';
 
 const WHITESPACE_GLOBAL_RE = /\s+/g;
 
@@ -410,7 +410,7 @@ renderTick: (tickProps: { x: string | number; y: string | number; payload: { val
         <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
           <BreakdownRow label="Blocked"  value={fmtCount(blocked)}  tone="danger" />
           <BreakdownRow label="Flagged"  value={fmtCount(flagged)}  tone="warning" />
-          <BreakdownRow label="Redacted" value={fmtCount(redacted)} tone="info" />
+          <BreakdownRow label="Redacted" value={fmtCount(redacted)} tone="warning" />
         </div>
       </div>
 
@@ -634,7 +634,7 @@ const ATTACK_CATEGORIES: AttackCategory[] = [
 const ACTION_CATEGORY_META = [
   { label: 'Blocked',  color: 'var(--color-danger-500)'  },
   { label: 'Flagged',  color: 'var(--color-warning-500)' },
-  { label: 'Redacted', color: 'var(--color-blue-500)'    },
+  { label: 'Redacted', color: 'var(--color-warning-500)' },
 ] as const;
 
 // Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
@@ -1139,7 +1139,7 @@ export function ThreatEventDetailDialog({
 }) {
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
-      <DialogScrollContent className="sm:max-w-[592px]">
+      <DialogScrollContent className="sm:max-w-[640px]">
         {selection ? (
           <ThreatEventDetailBody row={selection} />
         ) : null}
@@ -1161,6 +1161,12 @@ function ThreatEventDetailBody({
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
   const openRequest = () => navigate(`/requests?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
+
+  // Reconcile against the matching Requests row so the message + detection
+  // copy is identical to what the Requests findings panel shows for the same
+  // request. Null when no request row matches (sparse mock) — falls back to
+  // the standalone per-type copy in TYPE_DETAILS.
+  const reconciled = getEventFindingCopy(requestId, row.type);
 
   // Marked state — flips the dialog badge to "Marked false" and converts
   // the footer button to a disabled "Event marked" confirmation in place.
@@ -1209,21 +1215,29 @@ function ThreatEventDetailBody({
               conversation. Per-block "User"/"Assistant" labels are
               extra noise at single-event-detail scale. */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <FileText className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <FileText className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Message
               </span>
-            </SectionHeading>
+            </h3>
             <div className="flex flex-col gap-3">
-              <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                {detail.samplePrompt}
-              </div>
-              {detail.sampleResponse !== null ? (
+              {reconciled ? (
                 <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                  {detail.sampleResponse}
+                  {reconciled.evidence}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                    {detail.samplePrompt}
+                  </div>
+                  {detail.sampleResponse !== null ? (
+                    <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                      {detail.sampleResponse}
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           </section>
 
@@ -1231,29 +1245,37 @@ function ThreatEventDetailBody({
               modal Security panel: each check is its own bordered card
               with title + description + verdict badge. */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <ShieldCheck className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Detection
               </span>
-            </SectionHeading>
+            </h3>
             <div className="flex flex-col gap-2">
               {DETECTION_CHECKS.map((check) => {
                 const firing = check.keys.some((k) => flaggedSet.has(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };
+                // Firing-card border picks up the action tone (2-tier
+                // severity): red = blocked, amber = flagged/redacted. The
+                // action badge label carries the flag-vs-redact distinction.
+                const borderClass = !firing
+                  ? 'border-border'
+                  : row.action === 'blocked'
+                    ? 'border-destructive'
+                    : 'border-warning-500';
                 return (
                   <div
                     key={check.keys.join('-')}
-                    className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
+                    className={`flex items-start justify-between gap-3 rounded-md border ${borderClass} p-4`}
                   >
                     <div className="flex flex-col gap-1 min-w-0">
                       <span className="font-sans text-sm font-medium text-neutral-900">
                         {check.label}
                       </span>
-                      <span className="font-sans text-xs text-neutral-500 text-pretty">
-                        {firing ? detail.reason : check.passText}
+                      <span className="font-sans text-sm/5 font-normal text-neutral-500 text-pretty">
+                        {firing ? (reconciled?.message ?? detail.reason) : check.passText}
                       </span>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -1270,12 +1292,12 @@ function ThreatEventDetailBody({
               Endpoint dropped — "the model provider has nothing to do
               with the prompt injection attempt." */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <ArrowLeftRight className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Request
               </span>
-            </SectionHeading>
+            </h3>
             <DetailList>
               <DetailRow
                 label="Timestamp"
