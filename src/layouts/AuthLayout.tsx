@@ -193,6 +193,8 @@ export function AuthLayout() {
             data-anim-pop
             src="/gate-ai-logo-light.svg"
             alt="Gate AI"
+            width={226}
+            height={80}
             className="h-11 w-auto"
           />
         </div>

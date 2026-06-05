@@ -739,7 +739,7 @@ function BreakdownRow({
       <span className="font-sans text-xs font-medium text-neutral-500 tracking-tight justify-self-end">
         {label}
       </span>
-      <StatusDot kind={tone} size="md" />
+      <StatusDot kind={tone} />
       <span className="font-mono text-xs font-medium tabular-nums text-neutral-900 justify-self-end">
         {value}
       </span>
@@ -2277,7 +2277,7 @@ export function RequestDetailBodyV2({
           className={
             variant === 'page'
               ? 'px-6 pt-2 pb-6'
-              : 'flex-1 min-h-0 overflow-y-auto px-6 pt-2 pb-6'
+              : 'flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-2 pb-6'
           }
         >
 
@@ -2955,7 +2955,7 @@ function BodySection({
     <section className="shrink-0 flex flex-col gap-2">
       <PanelHeading title={label} />
       <CodeCard className="rounded-xs border border-border shadow-none">
-        <div ref={codeRef} className="overflow-x-auto bg-neutral-50">
+        <div ref={codeRef} className="max-h-80 overflow-auto overscroll-contain bg-neutral-50">
           <CodeBlock lines={lines} density="compact" wrap />
         </div>
         {copyValue !== undefined && copyLabel !== undefined && (

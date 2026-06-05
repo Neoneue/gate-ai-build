@@ -80,14 +80,15 @@ export function SegmentedPill({
           // collapses to the same 1px/2px rgba(17,20,23) ramp.
           'absolute top-0 left-0 bg-card rounded-xs shadow-xs',
           indicator.ready ? 'opacity-100' : 'opacity-0',
+          // Gate the slide behind reduced-motion; only enable the transition
+          // once measured so the indicator never slides in from origin (0,0).
+          indicator.ready &&
+            'transition-[transform,width] duration-[220ms] ease-[cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none',
         )}
         style={{
           transform: `translate(${indicator.x}px, ${indicator.y}px)`,
           width: indicator.width,
           height: indicator.height,
-          transition: indicator.ready
-            ? 'transform 220ms cubic-bezier(0.77, 0, 0.175, 1), width 220ms cubic-bezier(0.77, 0, 0.175, 1)'
-            : undefined,
         }}
       />
       {options.map((opt) => (

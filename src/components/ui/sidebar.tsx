@@ -82,7 +82,7 @@ export function Sidebar({
       aria-label="Primary navigation"
       style={{ transitionTimingFunction: 'var(--ease-drawer)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-150 motion-reduce:transition-none',
+        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-300 motion-reduce:transition-none',
         expanded ? 'w-60' : 'w-16',
       )}
     >

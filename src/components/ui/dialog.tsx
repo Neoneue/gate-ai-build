@@ -242,7 +242,7 @@ function DialogScrollBody({ className, ...props }: React.ComponentProps<"div">) 
       // height between fixed sections; `overflow-y-auto` does the
       // scrolling. `pt-4 pb-4` provides internal breathing room from
       // the fixed sections above and below.
-      className={cn("flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-6", className)}
+      className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-6 pb-6", className)}
       {...props}
     />
   )

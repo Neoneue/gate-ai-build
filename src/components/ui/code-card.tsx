@@ -99,7 +99,7 @@ export function CodeCard({
         // flat default uses the everyday material tier (shadow-as-border);
         // raised promotes to the popup elevation token so all floating
         // surfaces (cards, selects, dialogs, tooltips) read as one family.
-        'flex flex-col overflow-hidden rounded-md bg-white shadow-(--shadow-border)',
+        'flex flex-col overflow-hidden rounded-md bg-card shadow-(--shadow-border)',
         elevation === 'raised' && 'shadow-(--shadow-popup)',
         className,
       )}
@@ -156,7 +156,7 @@ export function CodeCardTabs({
           // family's lift instead of inlining its own rgba shadow.
           'inline-flex items-center h-6 rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out',
           isActive
-            ? 'bg-white text-neutral-900 font-medium border border-neutral-200 shadow-xs'
+            ? 'bg-card text-neutral-900 font-medium border border-border shadow-xs'
             : 'text-neutral-600 font-medium border border-transparent',
           interactive && !isActive && 'hover:text-neutral-900 hover:bg-white/60',
         );
@@ -250,7 +250,7 @@ export function CodeBlock({
       data-slot="code-block"
       className={cn(
         'flex flex-col font-mono',
-        wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre',
+        wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre overflow-x-auto',
         text_cls,
         density_cls,
         className,

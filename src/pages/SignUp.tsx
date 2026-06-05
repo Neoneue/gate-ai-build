@@ -44,6 +44,7 @@ export function SignUp() {
                   type="email"
                   placeholder="you@company.com"
                   autoComplete="email"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />

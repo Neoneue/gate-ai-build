@@ -493,7 +493,7 @@ function KeysTable({
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
-              This key will stop authenticating requests immediately. Revocation can't be undone.
+              This key will stop authenticating requests immediately. Revocation can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -682,7 +682,7 @@ function KeyCreatedDialog({
             Store this somewhere safe
           </p>
           <p className="font-sans text-sm text-warning-700 m-0">
-            Paste it into your secret manager or .env before closing. Once you close, we can't show it again. You'll need to rotate the key to get a new one.
+            Paste it into your secret manager or .env before closing. Once you close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the key to get a new one.
           </p>
         </div>
 
@@ -697,7 +697,7 @@ function KeyCreatedDialog({
             htmlFor="apikey-saved-confirm"
             className="text-neutral-700 text-sm font-normal"
           >
-            I've saved this key to a secret manager.
+            I&rsquo;ve saved this key to a secret manager.
           </Label>
         </div>
 

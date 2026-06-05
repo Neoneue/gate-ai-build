@@ -539,7 +539,7 @@ function InviteMemberDialog({
               Invite member
             </DialogTitle>
             <DialogDescription>
-              Enter the teammate's email. They'll see the invitation in their notifications.
+              Enter the teammate&rsquo;s email. They&rsquo;ll see the invitation in their notifications.
             </DialogDescription>
           </DialogHeader>
 
@@ -561,7 +561,7 @@ function InviteMemberDialog({
             />
             {showInvalid ? (
               <p id="invite-email-error" className="font-sans text-xs text-destructive">
-                That doesn't look like an email address.
+                That doesn&rsquo;t look like an email address.
               </p>
             ) : null}
           </div>

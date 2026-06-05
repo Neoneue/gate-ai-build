@@ -17,7 +17,7 @@ export interface ArtboardProps {
 export function Artboard({ id, name, top, left, children }: ArtboardProps) {
   return (
     <div className="absolute" style={{ top, left, width: 1440 }}>
-      <Eyebrow as="div" className="pb-2.5 pl-1">
+      <Eyebrow as="div" className="pb-2 pl-1">
         {id} · {name}
       </Eyebrow>
       <div

@@ -36,7 +36,7 @@ export function AnimatedExternalLink({ className, ...props }: React.SVGProps<SVG
 				// bottom-left (invisible), re-enter to rest. One element.
 				const tl = gsap
 					.timeline({ paused: true })
-					.to(arrow, { x: 5, y: -5, opacity: 0, duration: 0.26, ease: 'power2.in' })
+					.to(arrow, { x: 5, y: -5, opacity: 0, duration: 0.26, ease: 'power2.inOut' })
 					.set(arrow, { x: -5, y: 5 })
 					.to(arrow, { x: 0, y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' });
 

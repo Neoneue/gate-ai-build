@@ -115,9 +115,9 @@ function CodePanel({ snippet }: { snippet: string }) {
           <span className="font-mono text-xs whitespace-pre flex-1">
             {tokenizeLine(line).map((tok, j) =>
               tok.type === 'keyword' ? (
-                <span key={j} className="text-[#818CF8]">{tok.text}</span>
+                <span key={j} className="text-indigo-600">{tok.text}</span>
               ) : tok.type === 'string' ? (
-                <span key={j} className="text-[#F87171]">{tok.text}</span>
+                <span key={j} className="text-red-600">{tok.text}</span>
               ) : (
                 <span key={j} className="text-neutral-800">{tok.text}</span>
               )

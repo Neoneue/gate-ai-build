@@ -57,7 +57,7 @@ export function Timestamp({
         render={(props) => (
           <span
             {...props}
-            className={cn('cursor-default', className)}
+            className={cn('cursor-default tabular-nums', className)}
           >
             {visible}
           </span>

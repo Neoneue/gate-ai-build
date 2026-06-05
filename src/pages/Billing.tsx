@@ -94,7 +94,7 @@ function PlanCard() {
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation's Digital Evidence layer.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation&rsquo;s Digital Evidence layer.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
@@ -306,7 +306,7 @@ function AddCreditsDialog({
         </div>
 
         <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
-          You'll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
+          You&rsquo;ll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
         </p>
 
         <DialogFooter>
