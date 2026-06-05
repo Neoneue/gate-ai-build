@@ -27,8 +27,7 @@ are alphabetical; Conventions and Sections are newest-first.
 ### Design-engineering audit pass · [6915f47]
 
 Full-site audit through three design-eng lenses (make-interfaces-feel-better,
-emil-design-eng, Vercel web-interface-guidelines). Full findings + triage live in
-[`design-audit-6-4.md`](./design-audit-6-4.md). What landed in this pass:
+emil-design-eng, Vercel web-interface-guidelines). What landed in this pass:
 
 - **Motion:** `animated-download` / `animated-log-out` / `animated-external-link`
   exit legs `ease: 'power2.in'` → `'power2.inOut'` (emil: never `ease-in` on UI).
