@@ -114,12 +114,13 @@ export function useCopyFeedback({
   }, []);
 
   const trigger = React.useCallback(() => {
+    // Ignore re-clicks during the 2s success hold so spam-clicking can't
+    // flood the clipboard / fire a stack of toasts. A live `timerRef` means
+    // we're still inside the hold window.
+    if (timerRef.current !== null) return;
     void navigator.clipboard.writeText(value).then(() => {
       setCopied(true);
       toast(`Copied ${label} to clipboard`);
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
       timerRef.current = window.setTimeout(() => {
         setCopied(false);
         timerRef.current = null;
