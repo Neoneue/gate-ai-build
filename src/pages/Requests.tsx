@@ -1693,7 +1693,7 @@ function RequestsTableSection({
                       render={(props) => (
                         <span
                           {...props}
-                          className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-500 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="inline-flex cursor-help p-1 -m-1 rounded-sm text-neutral-500 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                           aria-label="About the Cost column"
                         >
                           <Info className="size-4" strokeWidth={1.75} aria-hidden />
@@ -1851,7 +1851,7 @@ function RequestsTableSection({
                             render={(props) => (
                               <span
                                 {...props}
-                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                                 aria-label="Billed by your provider (BYOK)"
                               >
                                 <KeyRound className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -1869,7 +1869,7 @@ function RequestsTableSection({
                             render={(props) => (
                               <span
                                 {...props}
-                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                                 aria-label="Billed by Gate (PAYG)"
                               >
                                 <CreditCard className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -2645,7 +2645,7 @@ function PiiRightPanel({
               <button
                 type="button"
                 onClick={onJumpToEvidence}
-                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs py-2 -my-2 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="font-mono text-sm text-neutral-900 underline decoration-from-font underline-offset-2 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-xs py-2 -my-2 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                 title="Show in the full request"
               >
                 {offsetLabel}

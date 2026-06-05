@@ -76,7 +76,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
 				<ul className="flex flex-col gap-3 m-0 p-0 list-none">
 					{plan.features.map(({ Icon, title, detail }) => (
 						<li key={title} className="flex items-start gap-3">
-							<span aria-hidden className="shrink-0 size-7 rounded-sm bg-muted flex items-center justify-center mt-0.5">
+							<span aria-hidden className="shrink-0 size-7 rounded-sm bg-muted flex items-center justify-center mt-1">
 								<Icon className="size-3.5 text-neutral-700" strokeWidth={1.75} />
 							</span>
 							<div className="flex flex-col">

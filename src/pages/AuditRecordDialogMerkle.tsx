@@ -680,7 +680,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
 
   {/* Tree card — SVG fills the card edge-to-edge; the card chrome owns the
   rounded border. `overflow-hidden` clips the SVG to the rounded corners. */}
-  <div className="relative rounded-md border-border overflow-hidden">
+  <div className="relative rounded-md border border-border overflow-hidden">
   {/* Expand FAB — opens the interactive zoom/pan viewer. */}
   <button
   type="button"

@@ -28,7 +28,6 @@ import { SecurityDefault } from '@/pages/SecurityDefault';
 import { SecurityFree } from '@/pages/SecurityFree';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
-import { GetStarted } from '@/pages/GetStarted';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { SignIn } from '@/pages/SignIn';
 import { SignUp } from '@/pages/SignUp';
@@ -77,7 +76,6 @@ export default function App() {
         </Route>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/overview" replace />} />
-          <Route path="/get-started" element={<GetStarted />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/overview-default" element={<DashboardDefault />} />
           <Route path="/requests" element={<Requests />} />

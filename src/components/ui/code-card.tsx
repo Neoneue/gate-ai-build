@@ -116,7 +116,7 @@ export function CodeCardHeader({
     <div
       data-slot="code-card-header"
       className={cn(
-        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-neutral-100',
+        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-border',
         className,
       )}
       {...props}

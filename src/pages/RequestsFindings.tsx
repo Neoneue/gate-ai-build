@@ -44,7 +44,7 @@ export function RequestsFindings() {
         <button
           type="button"
           onClick={() => navigate('/requests')}
-          className="group relative inline-flex items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring after:absolute after:inset-x-0 after:-inset-y-3 after:content-['']"
+          className="group relative inline-flex items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 rounded-xs focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 after:absolute after:inset-x-0 after:-inset-y-3 after:content-['']"
         >
           <ChevronLeft
             className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
