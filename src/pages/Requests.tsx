@@ -825,7 +825,7 @@ export type RequestRow = {
    *  to be deep-linkable from Security events. */
   requestId?: string;
   /** Rich finding detail for the v2 Findings modal. When present this is the
-   *  source of truth (overrides the single derived finding). See findings-spec.md. */
+   *  source of truth (overrides the single derived finding). */
   findings?: RequestFinding[];
 };
 
@@ -875,7 +875,7 @@ type RequestFinding = {
   policy: string;
   /** The message body containing `match` (evidence panel + redaction diff). */
   evidence: string;
-  /** Injection only: unranked set of detector verdict enums (§3 of Injection-findings.md). */
+  /** Injection only: unranked set of detector verdict enums (§3 of docs/Injection-findings.md). */
   verdicts?: string[];
   /** Injection only: the model's short "why this fired" string (≤128 chars). */
   reasoning?: string;
@@ -922,7 +922,7 @@ const entityLabel = (entityType: string) =>
   entityType.replace(/(^|[-\s])(\w)/g, (_, sep: string, ch: string) => (sep ? ' ' : '') + ch.toUpperCase());
 
 // Curated per-verdict copy keyed to the detector enum. Sourced verbatim from
-// Injection-findings.md §3 ("What this is (fallback copy)" → whatHappened,
+// docs/Injection-findings.md §3 ("What this is (fallback copy)" → whatHappened,
 // "Short fix" → howToFix). Used as the fallback "what happened" line when no
 // live reasoning string is present, and as the static remedy in "How to fix".
 const INJECTION_VERDICT_COPY: Record<string, { label: string; whatHappened: string; howToFix: string }> = {
@@ -2675,7 +2675,7 @@ function PiiRightPanel({
 /** Right panel for injection findings — the classifier layout. NONE of
  * Recognizer / Offset / Bytes / Unredact / redaction diff. Every section is
  * title-ABOVE-card. Built on the five real detector outputs only
- * (Injection-findings.md §0/§6). */
+ * (docs/Injection-findings.md §0/§6). */
 function InjectionRightPanel({
   finding,
   onTunePolicy,
