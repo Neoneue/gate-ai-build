@@ -15,6 +15,7 @@ import { RowActionButton } from '@/components/ui/row-action-button';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { ToolResultCode } from '@/components/ui/tool-result-code';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { REQUEST_ROWS_RECENT } from './Requests';
 import {
   Dialog,
@@ -305,6 +306,7 @@ function scaleCostStr(s: string, scale: number): string {
 }
 
 function ConversationsTableSection({ range, customRange }: { range: Range; customRange: CustomRange | null }) {
+  const navigate = useNavigate();
   const scale = effectiveScale(range, customRange);
   const [keyId, setKeyId] = useState('all');
   const [model, setModel] = useState('all');
@@ -426,13 +428,13 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
             return (
               <TableRow
                 key={row.conversationId}
-                onClick={() => setSelectedRow(row)}
+                onClick={() => navigate(`/conversations-trace/${row.conversationId}`)}
                 className="cursor-pointer transition-colors duration-150 ease-out motion-reduce:transition-none hover-fine:bg-neutral-50"
               >
                 <TableCell className="whitespace-nowrap max-w-0">
                   <RowActionButton
                     layout="stack"
-                    onClick={() => setSelectedRow(row)}
+                    onClick={() => navigate(`/conversations-trace/${row.conversationId}`)}
                     aria-label={`Inspect conversation ${row.title}`}
                   >
                     <span
@@ -577,7 +579,7 @@ function ConversationDetailDialog({
   );
 }
 
-function ConversationDetailBody({ row }: { row: ConversationRow }) {
+export function ConversationDetailBody({ row, variant = 'modal' }: { row: ConversationRow; variant?: 'page' | 'modal' }) {
   const navigate = useNavigate();
   // Cross-link selection state — clicking a message bubble or trace step
   // sets the active requestId; both panels paint the matching item with
@@ -598,6 +600,15 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
     setSelectionSource(id ? 'trace' : null);
   };
 
+  // Finding / error tallies for the banner + step tabs, derived from the
+  // trace. `warn` rows are policy findings (flagged / redacted); `danger`
+  // rows are errors. Disjoint buckets — passing steps are neither.
+  const findingCount = SAMPLE_TRACE.filter((e) => e.status === 'warn').length;
+  const errorCount = SAMPLE_TRACE.filter((e) => e.status === 'danger').length;
+  const bannerTone: 'destructive' | 'warning' =
+    errorCount > 0 ? 'destructive' : 'warning';
+  const highestAction = errorCount > 0 ? 'Block' : 'Flag';
+
   return (
     <>
       {/* Top section — header + identity row + prompt quote. Fixed (does
@@ -605,8 +616,8 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           `pr-12` lives on the title block only so it clears the absolute
           DialogClose X; the identity row + quote run flush to the modal's
           right padding so action buttons align with the KPI rail edge. */}
-      <DialogScrollHeader>
-        <DialogTitleBlock titleAriaLabel={`Conversation ${row.title}`}>
+      <DialogScrollHeader className={variant === 'page' ? 'pt-0' : undefined}>
+        <DialogTitleBlock mode={variant === 'page' ? 'static' : 'dialog'} titleAriaLabel={`Conversation ${row.title}`}>
           Messages + request trace
         </DialogTitleBlock>
 
@@ -633,25 +644,93 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           Override the body's default `overflow-y-auto` to `overflow-hidden`
           and add `flex flex-col` so the inner grid manages overflow per
           panel rather than scrolling the whole body. */}
-      <DialogScrollBody className="pt-6 overflow-hidden flex flex-col">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
-          <ConversationMessagesPanel
-            activeRequestId={activeRequestId}
-            selectionSource={selectionSource}
-            onSelect={selectFromMessages}
-          />
-          <RequestTracePanel
-            activeRequestId={activeRequestId}
-            selectionSource={selectionSource}
-            onSelect={selectFromTrace}
-          />
-        </div>
-      </DialogScrollBody>
+      <DialogScrollBody className={variant === 'page' ? 'pt-4 flex flex-col gap-4 flex-initial min-h-fit overflow-y-visible overscroll-auto' : 'pt-4 overflow-hidden flex flex-col gap-4'}>
+          {/* Finding banner — same pattern as the Requests modal. Hidden
+              when the conversation surfaced no findings or errors. */}
+          {findingCount + errorCount > 0 && (
+            <div
+              className={[
+                'flex items-center gap-4 rounded-md border p-4',
+                bannerTone === 'destructive'
+                  ? 'border-destructive/50 bg-danger-50'
+                  : 'border-warning-500/50 bg-warning-50',
+              ].join(' ')}
+              role="status"
+            >
+              <TriangleAlert
+                className={[
+                  'size-6 shrink-0',
+                  bannerTone === 'destructive' ? 'text-destructive' : 'text-warning-600',
+                ].join(' ')}
+                strokeWidth={1.75}
+                aria-hidden
+              />
+              <p className="font-sans text-sm font-medium text-neutral-900 min-w-0 text-pretty">
+                {findingCount} finding{findingCount !== 1 ? 's' : ''} across this
+                conversation · Highest action:{' '}
+                <span className="capitalize">{highestAction}</span>
+              </p>
+            </div>
+          )}
+
+          {/* Step tabs — filter the trace by outcome. "All steps" (default)
+              renders the existing two-panel layout unchanged; the "Findings
+              only" / "Errors" subsections are built in a follow-up pass. */}
+          <Tabs defaultValue="all" className={variant === 'page' ? 'flex flex-col' : 'flex flex-1 min-h-0 flex-col'}>
+            <TabsList variant="line" className="px-0">
+              <TabsTrigger value="all">
+                All steps
+                <Badge variant="neutral" className="ml-1">{SAMPLE_TRACE.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="findings">
+                Findings only
+                {findingCount > 0 && (
+                  <Badge variant="neutral" className="ml-1">{findingCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="errors">
+                Errors
+                <Badge variant="neutral" className="ml-1">{errorCount}</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent
+              value="all"
+              className={variant === 'page' ? 'mt-4' : 'flex flex-1 min-h-0 flex-col overflow-hidden mt-4'}
+            >
+              <div className={variant === 'page' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 h-[600px] overflow-hidden' : 'grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden'}>
+                <ConversationMessagesPanel
+                  activeRequestId={activeRequestId}
+                  selectionSource={selectionSource}
+                  onSelect={selectFromMessages}
+                />
+                <RequestTracePanel
+                  activeRequestId={activeRequestId}
+                  selectionSource={selectionSource}
+                  onSelect={selectFromTrace}
+                />
+              </div>
+            </TabsContent>
+
+            {/* Built in the next pass. */}
+            <TabsContent value="findings" className="flex-1 min-h-0 mt-4">
+              <p className="font-sans text-sm text-neutral-500">
+                Findings-only view is coming in the next pass.
+              </p>
+            </TabsContent>
+            <TabsContent value="errors" className="flex-1 min-h-0 mt-4">
+              <p className="font-sans text-sm text-neutral-500">
+                No errors in this conversation.
+              </p>
+            </TabsContent>
+          </Tabs>
+        </DialogScrollBody>
 
       {/* Footer — conversation provenance LEFT, Copy ID action RIGHT.
           Override the footer's default `justify-end` since this footer
           carries informational copy on the leading edge as well. */}
-      <DialogScrollFooter className="justify-between flex-wrap">
+      {variant !== 'page' && (
+        <DialogScrollFooter className="justify-between flex-wrap">
         <span className="font-mono text-xs text-neutral-500">
           Key <span className="text-neutral-800">{row.initiator}</span>{' '}
           · started <Timestamp date={row.updated} className="text-neutral-800" />
@@ -672,7 +751,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
                 (r) => r.conversation === row.conversationId && !!r.requestId,
               );
               if (linkedRequest?.requestId) {
-                navigate(`/requests?open=${linkedRequest.requestId}`);
+                navigate(`/requests-findings/${linkedRequest.requestId}`);
               } else {
                 navigate('/requests');
               }
@@ -683,6 +762,7 @@ function ConversationDetailBody({ row }: { row: ConversationRow }) {
           </Button>
         </div>
       </DialogScrollFooter>
+        )}
     </>
   );
 }

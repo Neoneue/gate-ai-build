@@ -57,7 +57,7 @@ export function RequestsFindings() {
           <Button
             type="button"
             size="sm"
-            onClick={() => navigate(`/conversations?open=${row.conversation}`)}
+            onClick={() => navigate(`/conversations-trace/${row.conversation}`)}
           >
             View Conversation
             <ExternalLink data-icon="inline-end" aria-hidden />

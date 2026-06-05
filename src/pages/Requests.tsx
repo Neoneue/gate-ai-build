@@ -1962,7 +1962,7 @@ function RequestDetailDialogV1({
 function RequestDetailBody({ row }: { row: RequestRow }) {
   const navigate = useNavigate();
   const openConversation = () =>
-    navigate(`/conversations?open=${row.conversation}`);
+    navigate(`/conversations-trace/${row.conversation}`);
   const badge = RESPONSE_BADGE[row.status];
   // Prefer the explicit `requestId` on rows that carry one (Security deep-link
   // targets). Older rows fall back to a synthesized id so display still works
@@ -2146,7 +2146,7 @@ export function RequestDetailBodyV2({
 }) {
   const navigate = useNavigate();
   const openConversation = () =>
-    navigate(`/conversations?open=${row.conversation}`);
+    navigate(`/conversations-trace/${row.conversation}`);
   // Finding-scoped action handlers — shared by the footer (PII/credential) and
   // the injection How-to-fix card so both fire the identical toast.
   const markFalsePositive = () =>
