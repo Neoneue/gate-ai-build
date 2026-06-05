@@ -149,6 +149,16 @@ findings modal + page (and now the Security event modal).
   header — same color as the background, so the divider was invisible (and a raw
   neutral token). → `border-b border-border`. Now a visible, on-token divider.
 
+### Copy button (`ui/copy-button.tsx`) · [1c3e4f9]
+
+- **Spam-click guard:** `useCopyFeedback.trigger` (the shared hook behind every
+  CopyButton mode) now early-returns while the 2s success-hold timer is live, so
+  rapid re-clicks can't re-fire `clipboard.writeText` or stack a flood of
+  "Copied …" toasts. The live `timerRef` is the in-hold signal. Dropped the
+  now-redundant in-`trigger` `clearTimeout` (the early-return means there's never
+  a stale timer to clear); the unmount cleanup stays. Trade-off: a genuine
+  re-copy waits out the 2s hold.
+
 ### Dialog (`ui/dialog.tsx`) · [5e8cbf0]
 
 - `DialogTitleBlock` `pr-12` close-button gutter is gated to `mode="dialog"` — no
