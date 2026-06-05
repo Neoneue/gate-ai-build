@@ -24,6 +24,39 @@ are alphabetical; Conventions and Sections are newest-first.
 
 ## Conventions & tokens
 
+### Design-engineering audit pass · [6915f47]
+
+Full-site audit through three design-eng lenses (make-interfaces-feel-better,
+emil-design-eng, Vercel web-interface-guidelines). Full findings + triage live in
+[`design-audit-6-4.md`](./design-audit-6-4.md). What landed in this pass:
+
+- **Motion:** `animated-download` / `animated-log-out` / `animated-external-link`
+  exit legs `ease: 'power2.in'` → `'power2.inOut'` (emil: never `ease-in` on UI).
+  `switch` thumb gains `duration-150 ease-out` (track already had it).
+  `segmented-pill` slide transition moved to a class so `motion-reduce` gates it.
+  `sidebar` width `duration-150` → `duration-300` (matches the documented drawer
+  curve). Indicator `width`/`left` → `transform` conversion was **declined** on
+  purpose — `scaleX` distorts the pills' rounded corners + shadows for negligible
+  gain; the width animation on tiny, click-frequency elements is the right trade.
+- **Tokens:** `code-card` `bg-white` → `bg-card`, active-tab `border-neutral-200`
+  → `border-border`. `DashboardDefault` hero syntax colors `#818CF8` / `#F87171`
+  → `text-indigo-600` / `text-red-600` (clears 4.5:1 on white, on-ramp).
+  `Artboard` `pb-2.5` → `pb-2`.
+- **Typography:** straight apostrophes → curly `&rsquo;` (`Team`, `Billing`,
+  `ApiKeys`); `text-pretty` on the page-description copy (`AuditTrail`,
+  `AuditTrailMerkle`, `Activity`); `feedback-fab` `10&nbsp;MB`; `timestamp` span
+  gains `tabular-nums`.
+- **Overscroll:** `overscroll-contain` on `dialog` `DialogScrollBody` + the
+  `Requests` inner modal pane + the Full request code window.
+- **Parity / a11y:** `feedback-fab` gains `active:scale-[0.99]` press + `hover-fine`
+  lift gate. `SignUp` email `spellCheck={false}`. `AuthLayout` hero logo `<img>`
+  `width`/`height` (226×80, CLS). `status-dot` dead `sm` (6px, `.5`) variant
+  removed → single hardcoded `size-2` (8px), `size` prop dropped (one caller).
+
+Deliberately deferred (low-traffic / sizable refactor): Artboard + Merkle pan are
+mouse-only and re-render per frame (gesture rewrite); hit-area bumps; tabs/segmented
+indicator transform conversion (see Motion above).
+
 ### Focus-ring standard — `ring-3 ring-ring/50` · [fe0f43e]
 
 The canonical focus-visible ring (every primitive: button, select, table, etc.) is
@@ -186,6 +219,17 @@ findings modal + page (and now the Security event modal).
 ---
 
 ## Sections & surfaces
+
+### Requests — Full request code window scroll cap (`Requests.tsx` → `BodySection`) · [6915f47]
+
+The "Full request" payload code window (`BodySection`, the `CodeBlock` wrapper) was
+uncapped — it grew to the full payload height (~284px on the showcase row) in the
+embedded/`bare` Details-tab context. Now `max-h-80` (320px, 40×8 on-grid) +
+`overflow-auto` (scrolls both axes once content exceeds it) + `overscroll-contain`
+(scroll doesn't chain to the modal behind). Caps the code window itself, so it
+holds in both the embedded modal and the standalone panel.
+
+Verify: `/requests?open=req_8f3a1c4` → Details tab → Full request (long payload scrolls at 320px).
 
 ### Rams review batch — page-level fixes + GetStarted removal · [fe0f43e]
 
