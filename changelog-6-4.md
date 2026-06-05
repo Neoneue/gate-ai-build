@@ -121,6 +121,13 @@ findings modal + page (and now the Security event modal).
 - **Content inset** _[2ab3a47]_: `SelectContent` `py-1` → `p-1` so each
   `rounded-xs` item insets 4px from the popup edge and the highlighted/selected
   row no longer bleeds edge-to-edge (same inset recipe as `Menu`).
+- **Chevron rotates on open** _[8431bd4]_: the Select trigger
+  `ChevronDownIcon` rotates `0 → 180°` while the popup is open and transitions
+  back on close. Trigger carries `group/select`; icon is
+  `group-aria-expanded/select:rotate-180 transition-transform duration-150
+  ease-out motion-reduce:transition-none` — transform-only, 150ms, the
+  `--ease-out` curve (emil). Targets the `ChevronDown` Select chevron only, not
+  the bidirectional `ChevronsUpDown` on menu/workspace triggers.
 
 ### RowActionButton (`ui/row-action-button.tsx`) · [5e8cbf0]
 
@@ -159,6 +166,17 @@ findings modal + page (and now the Security event modal).
 ---
 
 ## Sections & surfaces
+
+### Requests Filters modal — model icons + label-click fix (`Requests.tsx`) · [8431bd4]
+
+- **Model filter Select** renders each option's vendor `VendorAvatar` via a new
+  `MODEL_FILTER_OPTIONS` list (same treatment as Conversations).
+- **Field titles no longer open the dropdown.** The Model/Key/Response/Guardrail
+  `<Label>`s dropped `htmlFor` — a `<label for>` was forwarding clicks to the
+  trigger, so clicking the title opened the select. The triggers keep their
+  `aria-label` for the accessible name; only the dropdown itself opens now.
+- Verify: `/requests` → Filters → click a field title (no open); open a Model
+  dropdown (vendor icons).
 
 ### Conversations — model-filter icons + sortable Models column (`Conversations.tsx`) · [2ab3a47]
 
