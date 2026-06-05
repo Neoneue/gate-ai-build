@@ -24,6 +24,14 @@ are alphabetical; Conventions and Sections are newest-first.
 
 ## Conventions & tokens
 
+### Focus-ring standard — `ring-3 ring-ring/50` · [fe0f43e]
+
+The canonical focus-visible ring (every primitive: button, select, table, etc.) is
+`focus-visible:ring-3 focus-visible:ring-ring/50`. A few hand-rolled triggers had
+drifted to the thinner `ring-2 ring-ring`; normalized them. Spots fixed:
+`Requests.tsx` (3 tooltip triggers + the "offset in evidence" button) and
+`RequestsFindings.tsx` (back breadcrumb). No new pattern, just drift cleanup.
+
 ### Action color — 2-tier severity (red / amber) · [5a00d8b]
 
 Guardrail/event action → color, applied **everywhere** an action is colored
@@ -103,6 +111,12 @@ findings modal + page (and now the Security event modal).
   Primitive-level, cascades to every `variant="outline"`. `box-shadow` is already
   in the transition list, so no hover snap.
 
+### Code card (`ui/code-card.tsx`) · [fe0f43e]
+
+- `CodeCardHeader` divider was `border-b border-neutral-100` on a `bg-neutral-100`
+  header — same color as the background, so the divider was invisible (and a raw
+  neutral token). → `border-b border-border`. Now a visible, on-token divider.
+
 ### Dialog (`ui/dialog.tsx`) · [5e8cbf0]
 
 - `DialogTitleBlock` `pr-12` close-button gutter is gated to `mode="dialog"` — no
@@ -128,6 +142,12 @@ findings modal + page (and now the Security event modal).
   ease-out motion-reduce:transition-none` — transform-only, 150ms, the
   `--ease-out` curve (emil). Targets the `ChevronDown` Select chevron only, not
   the bidirectional `ChevronsUpDown` on menu/workspace triggers.
+
+### Field (`ui/field.tsx`) · [fe0f43e]
+
+- Nested field-card padding `*:data-[slot=field]:p-3` (12px, off the 8px grid and a
+  banned `p-3`) → `p-4` (16px, on-grid). Affects the field-inside-field card variant
+  (SignIn / SignUp).
 
 ### RowActionButton (`ui/row-action-button.tsx`) · [5e8cbf0]
 
@@ -166,6 +186,32 @@ findings modal + page (and now the Security event modal).
 ---
 
 ## Sections & surfaces
+
+### Rams review batch — page-level fixes + GetStarted removal · [fe0f43e]
+
+Outcome of a full Rams (a11y + visual) sweep across all pages/components. The
+fixes that landed at the page/surface level:
+
+- **GetStarted page removed.** Deleted `src/pages/GetStarted.tsx` plus its
+  `App.tsx` import and the `/get-started` route. Nothing linked to it (no nav
+  entry, no deep-link). Not used on the site.
+- **AuditRecordDialogMerkle** (`AuditRecordDialogMerkle.tsx`): the Merkle tree card
+  was `rounded-md border-border overflow-hidden` — missing the `border` width
+  utility, so the frame drew no border. → `border border-border`. (Line 778 in the
+  same file already did it right.)
+- **Policies** (`Policies.tsx`): the per-option flag tag (e.g. "DEFAULT") used the
+  `Eyebrow` primitive, which is reserved for the KPI chrome strip. → `Badge
+  variant="neutral"`. Dropped the now-unused Eyebrow import.
+- **Upgrade** (`Upgrade.tsx`): plan price rendered in an `<h3>` (a display value,
+  not a document heading; the plan name is the Badge above) → `<p>`, classes kept.
+  Feature-icon chip `mt-0.5` → `mt-1` (no-`.5` grid rule).
+- **Plan comparison dialog** (`plan-comparison-dialog.tsx`): feature-icon chip
+  `mt-0.5` → `mt-1` (same grid rule).
+
+Not addressed in this batch (deferred, judgment calls): inert no-op mock buttons
+(Merkle / AuditTrail / feedback-fab), mouse-only clickable rows (Conversations /
+Models), DashboardDefault hero-code contrast, Billing silent validation,
+AuthLayout no-`h1`-at-mobile, SecurityDefault `aria-hidden` ticker heading.
 
 ### Requests Filters modal — model icons + label-click fix (`Requests.tsx`) · [8431bd4]
 
