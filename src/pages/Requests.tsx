@@ -1281,6 +1281,17 @@ const GUARDRAIL_BADGE: Record<GuardrailAction, {
   block:    { variant: 'destructive' },
 };
 
+// Model options for the Filters modal Select. Each carries its vendor so the
+// item renders the brand icon (VendorAvatar) on the left, matching Conversations.
+const MODEL_FILTER_OPTIONS: { value: string; label: string; vendor: Vendor }[] = [
+  { value: 'claude-sonnet-4.8', label: 'claude-sonnet-4.8', vendor: 'anthropic' },
+  { value: 'gpt-5.1',           label: 'gpt-5.1',           vendor: 'openai'    },
+  { value: 'gemini-3-pro',      label: 'gemini-3-pro',      vendor: 'google'    },
+  { value: 'llama-4.2-405b',    label: 'llama-4.2-405b',    vendor: 'meta'      },
+  { value: 'grok-4.1-fast',     label: 'grok-4.1-fast',     vendor: 'xai'       },
+  { value: 'mistral-large-3',   label: 'mistral-large-3',   vendor: 'mistral'   },
+];
+
 /** Status cell label. Returns the raw HTTP outcome (success / error) —
  *  slow rows show Success here per CTO direction (2026-05-20). Slow is
  *  surfaced separately via the latency-cell TriangleAlert + ink tint,
@@ -1537,7 +1548,7 @@ function RequestsTableSection({
               </DialogHeader>
           
               <div className="flex flex-col gap-2">
-                <Label htmlFor="filter-model" className="text-neutral-600 font-medium text-sm">
+                <Label className="text-neutral-600 font-medium text-sm">
                   Model
                 </Label>
                 <Select value={draftModel} onValueChange={setDraftModel}>
@@ -1550,17 +1561,17 @@ function RequestsTableSection({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All models</SelectItem>
-                    <SelectItem value="claude-sonnet-4.8">claude-sonnet-4.8</SelectItem>
-                    <SelectItem value="gpt-5.1">gpt-5.1</SelectItem>
-                    <SelectItem value="gemini-3-pro">gemini-3-pro</SelectItem>
-                    <SelectItem value="llama-4.2-405b">llama-4.2-405b</SelectItem>
-                    <SelectItem value="grok-4.1-fast">grok-4.1-fast</SelectItem>
-                    <SelectItem value="mistral-large-3">mistral-large-3</SelectItem>
+                    {MODEL_FILTER_OPTIONS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        <VendorAvatar vendor={m.vendor} decorative />
+                        {m.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="filter-key" className="text-neutral-600 font-medium text-sm">
+                <Label className="text-neutral-600 font-medium text-sm">
                   Key
                 </Label>
                 <Select value={draftKeyId} onValueChange={setDraftKeyId}>
@@ -1584,7 +1595,7 @@ function RequestsTableSection({
                 </Select>
                 </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="filter-response" className="text-neutral-600 font-medium text-sm">
+                <Label className="text-neutral-600 font-medium text-sm">
                   Response
                 </Label>
                 <Select value={draftResponseFilter} onValueChange={setDraftResponseFilter}>
@@ -1604,7 +1615,7 @@ function RequestsTableSection({
                 </Select>
                 </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="filter-guardrail" className="text-neutral-600 font-medium text-sm">
+                <Label className="text-neutral-600 font-medium text-sm">
                   Guardrail
                 </Label>
                 <Select value={draftGuardrailFilter} onValueChange={setDraftGuardrailFilter}>

@@ -81,7 +81,7 @@ function SelectValue({ className, children, ...props }: SelectPrimitive.Value.Pr
 const selectTriggerVariants = cva(
   // Surface mirrors <Input /> so triggers and inputs share a row.
   // Skill: performance.md — only colors + focus-ring shadow animate; never `transition-all`.
-  "flex w-fit items-center justify-between rounded-sm border border-border bg-neutral-50 text-neutral-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-neutral-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/select flex w-fit items-center justify-between rounded-sm border border-border bg-neutral-50 text-neutral-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-neutral-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       size: {
@@ -113,7 +113,10 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon
         render={
-          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+          // Chevron rotates 180° while the popup is open, back to 0 on close.
+          // Transform-only + the project's strong --ease-out curve (Emil), 150ms
+          // (his dropdown range); reduced-motion drops the rotation.
+          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none" />
         }
       />
     </SelectPrimitive.Trigger>
