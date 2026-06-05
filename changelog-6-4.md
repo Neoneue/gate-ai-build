@@ -98,6 +98,10 @@ findings modal + page (and now the Security event modal).
 - Footprint: hand-rolled pressables match (sidebar, Models card, Security
   "Mark invalid"). NOT applied to popup/select/menu triggers, switches/toggles,
   navigating table rows, or plain text links.
+- **Outline + `shadow-xs`** _[2ab3a47]_: the `outline` variant gains
+  `shadow-xs` (now `border-border bg-card shadow-xs`, matching the Card recipe).
+  Primitive-level, cascades to every `variant="outline"`. `box-shadow` is already
+  in the transition list, so no hover snap.
 
 ### Dialog (`ui/dialog.tsx`) · [5e8cbf0]
 
@@ -114,6 +118,9 @@ findings modal + page (and now the Security event modal).
   macOS-style overlay that centered the selected item over the trigger.
 - Left-anchored triggers (sidebar workspace switcher, side-opening user menu) keep
   their intentional `align="start"` / non-bottom side.
+- **Content inset** _[2ab3a47]_: `SelectContent` `py-1` → `p-1` so each
+  `rounded-xs` item insets 4px from the popup edge and the highlighted/selected
+  row no longer bleeds edge-to-edge (same inset recipe as `Menu`).
 
 ### RowActionButton (`ui/row-action-button.tsx`) · [5e8cbf0]
 
@@ -138,6 +145,10 @@ findings modal + page (and now the Security event modal).
   after filter/search, before pagination; default unsorted. Applied to all data
   tables; NOT on action/kebab/checkbox columns, headers with interactive content,
   or columns with no clean comparable value.
+- **Numeric header alignment** _[2ab3a47]_: numeric (right-aligned) columns
+  use `flex-row-reverse` on the sort button so the glyph sits LEFT of the label
+  and the label stays flush-right, aligned with the right-aligned data. Without
+  it the glyph pushed the label left of the numbers. Left columns unchanged.
 - Verify: any data table (e.g. `/requests`, `/activity`) → click a column header.
 
 ### Tabs (`ui/tabs.tsx`) · [f31a350]
@@ -148,6 +159,17 @@ findings modal + page (and now the Security event modal).
 ---
 
 ## Sections & surfaces
+
+### Conversations — model-filter icons + sortable Models column (`Conversations.tsx`) · [2ab3a47]
+
+- **Model filter Select** renders each model's vendor `VendorAvatar` on the left
+  of the item (new `MODEL_FILTER_OPTIONS` carrying `{value, label, vendor}`); the
+  popup widens to fit. "All models" stays icon-less.
+- **Models column is now sortable** (`SortableTableHead sortKey="vendors"`), keyed
+  by the alphabetically-first vendor label in the row's set (`conversationSortValue`
+  `case 'vendors'`) — the column is a multi-vendor set rendered as icons, so it
+  orders by the brand shown (first-vendor-alpha; option 1).
+- Verify: `/conversations` → open the Model filter; click the Models column header.
 
 ### Security event modal (`Security.tsx` → `ThreatEventDetailBody`) · [5a00d8b]
 
