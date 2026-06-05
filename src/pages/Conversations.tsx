@@ -39,7 +39,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -72,6 +71,21 @@ const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
   { value: '24h', label: '24H' },
   { value: '7d',  label: '7D'  },
   { value: '30d', label: '30D' },
+];
+
+// Model filter options for the toolbar Select. Each carries its vendor so the
+// item renders the brand icon (VendorAvatar) on the left.
+const MODEL_FILTER_OPTIONS: { value: string; label: string; vendor: Vendor }[] = [
+  { value: 'claude-opus-4-7',     label: 'Claude Opus 4.7',     vendor: 'anthropic' },
+  { value: 'claude-sonnet-4-5',   label: 'Claude Sonnet 4.5',   vendor: 'anthropic' },
+  { value: 'claude-haiku-4-5',    label: 'Claude Haiku 4.5',    vendor: 'anthropic' },
+  { value: 'gpt-5',               label: 'GPT-5',               vendor: 'openai'    },
+  { value: 'gpt-4o',              label: 'GPT-4o',              vendor: 'openai'    },
+  { value: 'gpt-4o-mini',         label: 'GPT-4o-mini',         vendor: 'openai'    },
+  { value: 'gemini-3-pro',        label: 'Gemini 3 Pro',        vendor: 'google'    },
+  { value: 'gemini-3-flash',      label: 'Gemini 3 Flash',      vendor: 'google'    },
+  { value: 'gemini-3-flash-lite', label: 'Gemini 3 Flash Lite', vendor: 'google'    },
+  { value: 'llama-3-3-70b',       label: 'Llama 3.3 70B',       vendor: 'meta'      },
 ];
 
 const RANGE_SCALE: Record<PresetRange, number> = {
@@ -270,6 +284,9 @@ function conversationSortValue(row: ConversationRow, key: string): string | numb
   switch (key) {
     case 'title':     return row.title;
     case 'initiator': return row.initiator;
+    // Models column is a multi-vendor set rendered as icons; sort by the
+    // alphabetically-first vendor label so the column orders by the brand shown.
+    case 'vendors':   return row.vendors.map((v) => VENDOR_META[v].label).sort()[0] ?? null;
     case 'turns':     return row.turns;
     case 'reqs':      return row.reqs;
     case 'inTokens':  return parseNumeric(row.inTokens);
@@ -369,16 +386,12 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All models</SelectItem>
-              <SelectItem value="claude-opus-4-7">Claude Opus 4.7</SelectItem>
-              <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5</SelectItem>
-              <SelectItem value="claude-haiku-4-5">Claude Haiku 4.5</SelectItem>
-              <SelectItem value="gpt-5">GPT-5</SelectItem>
-              <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-              <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
-              <SelectItem value="gemini-3-pro">Gemini 3 Pro</SelectItem>
-              <SelectItem value="gemini-3-flash">Gemini 3 Flash</SelectItem>
-              <SelectItem value="gemini-3-flash-lite">Gemini 3 Flash Lite</SelectItem>
-              <SelectItem value="llama-3-3-70b">Llama 3.3 70B</SelectItem>
+              {MODEL_FILTER_OPTIONS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  <VendorAvatar vendor={m.vendor} decorative />
+                  {m.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -399,7 +412,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
           <TableRow className="hover:bg-transparent">
             <SortableTableHead sortKey="title" sort={sort} onSort={toggleSort} className="w-[24%] whitespace-nowrap">Conversation</SortableTableHead>
             <SortableTableHead sortKey="initiator" sort={sort} onSort={toggleSort} className="w-[10%] whitespace-nowrap">Key</SortableTableHead>
-            <TableHead className="w-[5%] whitespace-nowrap">Models</TableHead>
+            <SortableTableHead sortKey="vendors" sort={sort} onSort={toggleSort} className="w-[5%] whitespace-nowrap">Models</SortableTableHead>
             <SortableTableHead sortKey="turns" sort={sort} onSort={toggleSort} numeric className="w-[5%] whitespace-nowrap">Turns</SortableTableHead>
             <SortableTableHead sortKey="reqs" sort={sort} onSort={toggleSort} numeric className="w-[5%] whitespace-nowrap">Reqs</SortableTableHead>
             <SortableTableHead sortKey="inTokens" sort={sort} onSort={toggleSort} numeric className="w-[9%] whitespace-nowrap">Tokens in</SortableTableHead>

@@ -146,6 +146,10 @@ function SortableTableHead({
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
           "group/sort inline-flex h-10 w-fit max-w-1/2 items-center gap-1 align-middle select-none whitespace-nowrap rounded-xs text-xs font-medium text-neutral-500 outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
+          // Numeric columns are right-aligned: put the glyph LEFT of the label
+          // (flex-row-reverse) so the label stays flush to the column's right
+          // edge and lines up with the right-aligned data below it.
+          numeric && "flex-row-reverse",
           active && "text-neutral-900",
         )}
       >
