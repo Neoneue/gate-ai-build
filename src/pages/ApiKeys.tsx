@@ -40,20 +40,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './activity-data';
-import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
 import { useTableSort, sortRows } from '@/hooks/use-table-sort';
-
-// 7-day usage lookup keyed by the user-facing key name. Activity's
-// API_KEY_ROWS is the canonical per-key spend source for the workspace —
-// importing it here means the ApiKeys Usage column reconciles with the
-// Activity UsageByKey table for the same window instead of drifting as
-// a separate constant. Keys not present in Activity (newly-created keys
-// with no traffic yet, one-off test keys) fall back to 0.
-const USAGE_BY_KEY: Map<string, number> = new Map(
-  ACTIVITY_KEY_ROWS.map((r) => [r.key, r.spend]),
-);
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -92,7 +80,6 @@ function apiKeySortValue(row: ApiKeyRow, key: string): string | number | null {
   switch (key) {
     case 'name': return row.name;
     case 'status': return row.revoked ? 'Revoked' : 'Active';
-    case 'usage': return USAGE_BY_KEY.get(row.name) ?? 0;
     case 'requests7d': return row.requests7d.at(-1) ?? 0;
     case 'createdAt': return row.createdAt.getTime();
     case 'lastUsed': return row.lastUsed ? row.lastUsed.getTime() : null;
@@ -140,6 +127,15 @@ export function ApiKeys() {
       createdAt: new Date(2026, 3, 18, 9, 0, 0),    // 2026-04-18 09:00:00
       lastUsed: null,
       revoked: true,
+    },
+    {
+      id: 'sk-gw-ef72d1a9',
+      name: 'design-agent',
+      masked: 'sk-gw-…ef72',
+      // Active — the design-dashboard session runs on this key.
+      requests7d: [2, 4, 3, 7, 6, 9, 13],
+      createdAt: new Date(2026, 5, 6, 18, 24, 22),  // 2026-06-06 18:24:22
+      lastUsed: new Date(2026, 5, 6, 18, 30, 12),   // today
     },
   ]);
   const handleCreate = (input: { name: string }) => {
@@ -425,15 +421,14 @@ function KeysTable({
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              {/* Six data columns at w-1/6 + a fixed-width Actions column.
+              {/* Five data columns at w-1/5 + a fixed-width Actions column.
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
-              <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Key</SortableTableHead>
-              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Status</SortableTableHead>
-              <SortableTableHead sortKey="usage" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">7-day usage</SortableTableHead>
-              <SortableTableHead sortKey="requests7d" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">7-day requests</SortableTableHead>
-              <SortableTableHead sortKey="createdAt" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Created</SortableTableHead>
-              <SortableTableHead sortKey="lastUsed" sort={sort} onSort={toggleSort} className="w-1/6 whitespace-nowrap">Last used</SortableTableHead>
+              <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Key</SortableTableHead>
+              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Status</SortableTableHead>
+              <SortableTableHead sortKey="requests7d" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">7-day requests</SortableTableHead>
+              <SortableTableHead sortKey="createdAt" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Created</SortableTableHead>
+              <SortableTableHead sortKey="lastUsed" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Last used</SortableTableHead>
               <TableHead aria-label="Actions" className="w-12" />
             </TableRow>
           </TableHeader>
@@ -453,9 +448,6 @@ function KeysTable({
                   ) : (
                     <Badge variant="success">Active</Badge>
                   )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>

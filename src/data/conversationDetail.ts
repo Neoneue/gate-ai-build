@@ -94,7 +94,10 @@ export function getConversationView(
   const reqs = rows.length;
   const inTokens = fmtInt(rows.reduce((sum, r) => sum + toInt(r.inTokens), 0));
   const outTokens = fmtInt(rows.reduce((sum, r) => sum + toInt(r.outTokens), 0));
-  const cost = fmtCost(rows.reduce((sum, r) => sum + toMoney(r.cost), 0));
+  // BYOK sessions can't be metered (cost '—' on every row); show '—' rather
+  // than a misleading $0.0000 aggregate.
+  const allByok = reqs > 0 && rows.every((r) => r.cost.trim() === '—');
+  const cost = allByok ? '—' : fmtCost(rows.reduce((sum, r) => sum + toMoney(r.cost), 0));
   const status: ConversationStatus =
     reqs > 0 && rows.every((r) => r.status === 'error') ? 'failed' : seed.status;
   return {
