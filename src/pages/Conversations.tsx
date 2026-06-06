@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Activity, ArrowRight, ExternalLink, TriangleAlert, Wrench } from 'lucide-react';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -16,7 +16,8 @@ import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
 import { ToolResultCode } from '@/components/ui/tool-result-code';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { REQUEST_ROWS_RECENT } from './Requests';
+import { REQUEST_ROWS_ALL, REQUEST_ROWS_RECENT } from './Requests';
+import { getConversationDetail, getConversationView } from '@/data/conversationDetail';
 import {
   Dialog,
   DialogScrollBody,
@@ -231,10 +232,11 @@ function KpiRail({ range, customRange }: { range: Range; customRange: CustomRang
 
 /* ─── Conversations table section (toolbar + table + pagination) ─────── */
 
-type ConversationStatus = 'active' | 'completed' | 'failed';
+export type ConversationStatus = 'active' | 'completed' | 'failed';
 
 
 type ModelId =
+  | 'claude-opus-4-8'
   | 'claude-opus-4-7'
   | 'claude-sonnet-4-5'
   | 'claude-haiku-4-5'
@@ -264,6 +266,7 @@ export type ConversationRow = {
 };
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
+  { title: 'Picking up the gate ai dashboard UI updates. Read the changelog for the 5th and tell me where we landed before we start.', conversationId: 'cnv_7a3f9e2b', initiator: 'test1', turns: 10, reqs: 10, vendors: ['anthropic'], models: ['claude-opus-4-8'], inTokens: '104,080', outTokens: '9,375', cost: '$0.8535', status: 'active', updated: new Date(2026, 4, 12, 14, 30, 14), duration: '10m 19s' },
   { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: new Date(2026, 4, 12, 14, 28, 4),  duration: '3m 53s'  },
   { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: new Date(2026, 4, 12, 14, 22, 11), duration: '5m 12s'  },
   { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: new Date(2026, 4, 12, 14, 15, 22), duration: '0m 47s'  },
@@ -314,7 +317,8 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
   const [rowsPerPage, setRowsPerPage] = useState('25');
   const isFiltered = keyId !== 'all' || model !== 'all';
   const { sort, toggle: toggleSort } = useTableSort();
-  const filteredRows = CONVERSATION_ROWS.filter((row) => {
+  const viewRows = CONVERSATION_ROWS.map((seed) => getConversationView(seed, REQUEST_ROWS_ALL));
+  const filteredRows = viewRows.filter((row) => {
     if (keyId !== 'all' && row.initiator !== keyId) return false;
     if (model !== 'all' && !row.models.includes(model as ModelId)) return false;
     return true;
@@ -346,7 +350,7 @@ function ConversationsTableSection({ range, customRange }: { range: Range; custo
   if (openId !== prevOpenId) {
     setPrevOpenId(openId);
     if (openId) {
-      const match = CONVERSATION_ROWS.find((r) => r.conversationId === openId);
+      const match = viewRows.find((r) => r.conversationId === openId);
       if (match) setSelectedRow(match);
     }
   }
@@ -603,11 +607,17 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
   // Finding / error tallies for the banner + step tabs, derived from the
   // trace. `warn` rows are policy findings (flagged / redacted); `danger`
   // rows are errors. Disjoint buckets — passing steps are neither.
-  const findingCount = SAMPLE_TRACE.filter((e) => e.status === 'warn').length;
-  const errorCount = SAMPLE_TRACE.filter((e) => e.status === 'danger').length;
+  const detail = getConversationDetail(row, REQUEST_ROWS_ALL);
+  const findingCount = detail.trace.filter((e) => e.finding).length;
+  const errorCount = detail.trace.filter((e) => e.status === 'danger').length;
+  const actionRank = { Flag: 1, Redact: 2, Block: 3 } as const;
+  const highestAction = detail.trace.reduce<'Flag' | 'Redact' | 'Block'>(
+    (hi, e) =>
+      e.findingAction && actionRank[e.findingAction] > actionRank[hi] ? e.findingAction : hi,
+    'Flag',
+  );
   const bannerTone: 'destructive' | 'warning' =
-    errorCount > 0 ? 'destructive' : 'warning';
-  const highestAction = errorCount > 0 ? 'Block' : 'Flag';
+    highestAction === 'Block' ? 'destructive' : 'warning';
 
   return (
     <>
@@ -680,7 +690,7 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
             <TabsList variant="line" className="px-0">
               <TabsTrigger value="all">
                 All steps
-                <Badge variant="neutral" className="ml-1">{SAMPLE_TRACE.length}</Badge>
+                <Badge variant="neutral" className="ml-1">{detail.trace.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="findings">
                 Findings only
@@ -702,12 +712,32 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
                 <ConversationMessagesPanel
                   activeRequestId={activeRequestId}
                   selectionSource={selectionSource}
-                  onSelect={selectFromMessages}
+                  messages={detail.messages} onSelect={selectFromMessages}
                 />
                 <RequestTracePanel
                   activeRequestId={activeRequestId}
                   selectionSource={selectionSource}
-                  onSelect={selectFromTrace}
+                  trace={detail.trace} onSelect={selectFromTrace}
+                  footer={
+                    <div className="flex flex-none items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
+                      <span className="font-mono text-xs text-neutral-500">
+                        Key <span className="text-neutral-800">{row.initiator}</span>{' '}
+                        · started <Timestamp date={row.updated} className="text-neutral-800" />
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <CopyButton mode="label" size="sm" text="Copy ID" value={row.conversationId} label="conversation ID" />
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!activeRequestId}
+                          onClick={() => { if (activeRequestId) navigate(`/requests-findings/${activeRequestId}`); }}
+                        >
+                          View Request
+                          <ExternalLink data-icon="inline-end" aria-hidden />
+                        </Button>
+                      </div>
+                    </div>
+                  }
                 />
               </div>
             </TabsContent>
@@ -729,7 +759,7 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
       {/* Footer — conversation provenance LEFT, Copy ID action RIGHT.
           Override the footer's default `justify-end` since this footer
           carries informational copy on the leading edge as well. */}
-      {variant !== 'page' && (
+      {false && (
         <DialogScrollFooter className="justify-between flex-wrap">
         <span className="font-mono text-xs text-neutral-500">
           Key <span className="text-neutral-800">{row.initiator}</span>{' '}
@@ -768,14 +798,15 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
 }
 
 function ConversationKpiRail({ row }: { row: ConversationRow }) {
+  const view = getConversationView(row, REQUEST_ROWS_ALL);
   return (
     <KpiRailShell columns={6}>
-      <ConversationKpiTile label="Requests" value={String(row.reqs)} />
-      <ConversationKpiTile label="Turns" value={String(row.turns)} />
-      <ConversationKpiTile label="Tokens In" value={row.inTokens} />
-      <ConversationKpiTile label="Tokens Out" value={row.outTokens} />
-      <ConversationKpiTile label="Cost" value={row.cost} />
-      <ConversationKpiTile label="Duration" value={row.duration} />
+      <ConversationKpiTile label="Requests" value={String(view.reqs)} />
+      <ConversationKpiTile label="Turns" value={String(view.turns)} />
+      <ConversationKpiTile label="Tokens In" value={view.inTokens} />
+      <ConversationKpiTile label="Tokens Out" value={view.outTokens} />
+      <ConversationKpiTile label="Cost" value={view.cost} />
+      <ConversationKpiTile label="Duration" value={view.duration} />
     </KpiRailShell>
   );
 }
@@ -809,7 +840,15 @@ function ConversationKpiTile({ label, value }: { label: string; value: string })
  * cross-link selection (click message → highlights paired trace event).
  * USER turn is human input — no gateway request, no requestId.
  */
-const CONVERSATION_MESSAGES: {
+export type ConversationMessage = {
+  role: MessageRole;
+  tool?: string;
+  body: React.ReactNode;
+  time: string;
+  requestId?: string;
+};
+
+export const CONVERSATION_MESSAGES: {
   role: MessageRole;
   tool?: string;
   body: React.ReactNode;
@@ -886,16 +925,16 @@ const CONVERSATION_MESSAGES: {
 ];
 
 // Static derivation — computed once at module load from the fixed message list.
-const ASSISTANT_TURN_COUNT = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
+export const ASSISTANT_TURN_COUNT = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
 
-function ConversationMessagesPanel({
+function ConversationMessagesPanel({ messages,
   activeRequestId,
   selectionSource,
   onSelect,
 }: {
   activeRequestId: string | null;
   selectionSource: 'messages' | 'trace' | null;
-  onSelect: (requestId: string | null) => void;
+  onSelect: (requestId: string | null) => void; messages?: ConversationMessage[]; trace?: TraceEvent[];
 }) {
   // Count = assistant turns. Tool/user/system don't count as "turns" — a
   // turn is a model response. Mirrors the convention used in the table
@@ -924,7 +963,7 @@ function ConversationMessagesPanel({
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-messages-eyebrow" className="font-sans text-sm font-medium text-neutral-900">Messages</span>
         <span className="font-mono text-xs text-neutral-500 tabular-nums">
-          {ASSISTANT_TURN_COUNT} {ASSISTANT_TURN_COUNT === 1 ? 'turn' : 'turns'}
+          {(messages ?? []).filter((m) => m.role === 'assistant').length} {(messages ?? []).filter((m) => m.role === 'assistant').length === 1 ? 'turn' : 'turns'}
         </span>
       </div>
       <div
@@ -933,7 +972,7 @@ function ConversationMessagesPanel({
         aria-labelledby="conv-messages-eyebrow"
         className="flex flex-col gap-4 p-4 overflow-y-auto overscroll-contain min-h-0 flex-1"
       >
-        {CONVERSATION_MESSAGES.map((m, i) => {
+        {(messages ?? []).map((m, i) => {
           const selected = !!m.requestId && m.requestId === activeRequestId;
           // Bubble tone stays default regardless of trace status — warn
           // signals live in their narrowest carriers (the inline `pep`
@@ -972,9 +1011,9 @@ function ConversationMessagesPanel({
  * "reason"). Click a step (eventually) to drill into CMP-013's request
  * sheet for that specific call. */
 
-type TraceStatus = 'success' | 'warn' | 'danger';
+export type TraceStatus = 'success' | 'warn' | 'danger';
 
-type TraceEvent = {
+export type TraceEvent = {
   id: string;
   vendor: Vendor;
   model: string;
@@ -985,6 +1024,10 @@ type TraceEvent = {
   kind: 'tool' | 'reason';
   status: TraceStatus;
   warnNote?: string;
+  /** Finding chip: category label (e.g. "PII") plus the action verb. Set when
+   * a detector fired on this request, regardless of HTTP status. */
+  finding?: string;
+  findingAction?: 'Flag' | 'Redact' | 'Block';
   /** Tokens in (e.g. "1.2k"). Mono tabular when rendered. */
   inTokens: string;
   /** Tokens out (e.g. "184"). */
@@ -999,7 +1042,7 @@ type TraceEvent = {
   requestId: string;
 };
 
-const SAMPLE_TRACE: TraceEvent[] = [
+export const SAMPLE_TRACE: TraceEvent[] = [
   { id: 't1', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'plan',                  kind: 'reason', status: 'success', inTokens: '1.2k', outTokens: '184', latency: '1240ms', cost: '$0.0142', time: 'May 12, 14:24:14', requestId: 'req_92cf2a' },
   { id: 't2', vendor: 'openai',    model: 'gpt-5.1',           label: 'tool: lookup_transfer', kind: 'tool',   status: 'success', inTokens: '0.4k', outTokens: '92',  latency: '620ms',  cost: '$0.0008', time: 'May 12, 14:24:38', requestId: 'req_70a48a' },
   { id: 't3', vendor: 'anthropic', model: 'claude-sonnet-4.8', label: 'reason',                kind: 'reason', status: 'success', inTokens: '2.1k', outTokens: '312', latency: '1480ms', cost: '$0.0241', time: 'May 12, 14:24:54', requestId: 'req_2e1f9d' },
@@ -1022,14 +1065,16 @@ const TRACE_NODE_ICON_TONE: Record<TraceStatus, string> = {
   danger:  'text-destructive',
 };
 
-function RequestTracePanel({
+function RequestTracePanel({ trace,
   activeRequestId,
   selectionSource,
   onSelect,
+  footer,
 }: {
   activeRequestId: string | null;
   selectionSource: 'messages' | 'trace' | null;
-  onSelect: (requestId: string | null) => void;
+  onSelect: (requestId: string | null) => void; messages?: ConversationMessage[]; trace?: TraceEvent[];
+  footer?: ReactNode;
 }) {
   // Auto-scroll the matching trace event into view ONLY when the selection
   // came from the counterpart (messages) panel. Selections that originated
@@ -1055,7 +1100,7 @@ function RequestTracePanel({
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-neutral-900">Request Trace</span>
         <span className="font-mono text-xs text-neutral-500 tabular-nums">
-          {SAMPLE_TRACE.length} requests
+          {(trace ?? []).length} requests
         </span>
       </div>
 
@@ -1078,13 +1123,13 @@ function RequestTracePanel({
             height. First/last items truncate the segment at the node
             center; the node's bg-white masks the line where it crosses. */}
         <div className="flex flex-col">
-          {SAMPLE_TRACE.map((event, i) => (
+          {(trace ?? []).map((event, i) => (
             <TraceItem
               key={event.id}
               event={event}
               selected={event.requestId === activeRequestId}
               isFirst={i === 0}
-              isLast={i === SAMPLE_TRACE.length - 1}
+              isLast={i === (trace ?? []).length - 1}
               onSelect={() =>
                 onSelect(
                   event.requestId === activeRequestId ? null : event.requestId,
@@ -1094,6 +1139,7 @@ function RequestTracePanel({
           ))}
         </div>
       </div>
+      {footer}
     </div>
   );
 }
@@ -1237,11 +1283,14 @@ function TraceItem({
         {/* Row 3 — warn badge, only when this step carries a policy warn.
             Left-aligned on its own row so the signal is unmissable without
             crowding the primary identifier line. */}
-        {event.status === 'warn' && event.warnNote ? (
+        {event.finding ? (
           <div className="flex items-center">
-            <Badge variant="warning" aria-label={`Warning: ${event.warnNote} match`}>
+            <Badge
+              variant={event.findingAction === 'Block' ? 'destructive' : 'warning'}
+              aria-label={`${event.finding} ${event.findingAction}`}
+            >
               <TriangleAlert className="size-3" strokeWidth={1.75} aria-hidden />
-              {event.warnNote}
+              {event.finding} · {event.findingAction}
             </Badge>
           </div>
         ) : null}

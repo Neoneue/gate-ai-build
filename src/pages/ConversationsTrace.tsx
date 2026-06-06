@@ -56,7 +56,7 @@ export function ConversationsTrace() {
           />
           Conversations
         </button>
-        {row && (
+        {false && (
           <div className="flex items-center gap-2">
             <CopyButton
               mode="label"
