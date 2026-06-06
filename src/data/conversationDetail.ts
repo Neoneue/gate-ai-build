@@ -164,7 +164,7 @@ export function getConversationDetail(
   // Script-backed conversations carry per-request user/assistant text, so we
   // render the real back-and-forth. Conversations without it fall back to the
   // opening title plus one derived bubble per request.
-  const scripted = rows.some((r) => r.userMessage);
+  const scripted = rows.some((r) => r.userMessage || r.toolName);
 
   const messages: ConversationMessage[] = scripted
     ? rows.flatMap((r): ConversationMessage[] => {
@@ -173,6 +173,7 @@ export function getConversationDetail(
         const out: ConversationMessage[] = [];
         if (r.userMessage) out.push({ role: 'user', time, requestId: id, body: redactUserBody(r, r.userMessage) });
         if (r.assistantResponse) out.push({ role: 'assistant', time, requestId: id, body: r.assistantResponse });
+      if (r.toolName) out.push({ role: 'tool', tool: r.toolName, time, requestId: id, body: r.toolResult ?? '' });
         return out;
       })
     : [

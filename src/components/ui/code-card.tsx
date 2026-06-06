@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { CopyButton } from '@/components/ui/copy-button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -227,6 +228,9 @@ interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Wrap long lines instead of scrolling horizontally (e.g. a JSON body
    *  with a long string value). Lines grow to fit; indentation is preserved. */
   wrap?: boolean;
+  /** When set, highlighted tokens become a hover Tooltip with this content
+   *  (e.g. a finding's detector / score / threshold). */
+  highlightTooltip?: React.ReactNode;
 }
 
 export function CodeBlock({
@@ -235,6 +239,7 @@ export function CodeBlock({
   density = 'default',
   wrap = false,
   className,
+  highlightTooltip,
   ...props
 }: CodeBlockProps) {
   const toneMap = tone === 'dark' ? TONE_CLASS_DARK : TONE_CLASS_LIGHT;
@@ -263,18 +268,38 @@ export function CodeBlock({
             // Blank line spacer — keep the line height
             <span aria-hidden="true">&nbsp;</span>
           ) : (
-            line.map((tok, j) => (
-              <span
-                key={j}
-                data-code-highlight={tok.highlight ? '' : undefined}
-                className={cn(
-                  toneMap[tok.tone ?? 'default'],
-                  tok.highlight && 'rounded-xs bg-warning-100 text-warning-800',
-                )}
-              >
-                {tok.text}
-              </span>
-            ))
+            line.map((tok, j) =>
+              tok.highlight && highlightTooltip ? (
+                <Tooltip key={j}>
+                  <TooltipTrigger
+                    render={(p) => (
+                      <span
+                        {...p}
+                        data-code-highlight=""
+                        className={cn(
+                          toneMap[tok.tone ?? 'default'],
+                          'rounded-xs bg-warning-100 text-warning-800 cursor-help',
+                        )}
+                      >
+                        {tok.text}
+                      </span>
+                    )}
+                  />
+                  <TooltipContent className="text-left p-2">{highlightTooltip}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <span
+                  key={j}
+                  data-code-highlight={tok.highlight ? '' : undefined}
+                  className={cn(
+                    toneMap[tok.tone ?? 'default'],
+                    tok.highlight && 'rounded-xs bg-warning-100 text-warning-800',
+                  )}
+                >
+                  {tok.text}
+                </span>
+              ),
+            )
           )}
         </div>
       ))}

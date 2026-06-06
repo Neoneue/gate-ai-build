@@ -266,7 +266,7 @@ export type ConversationRow = {
 };
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
-  { title: 'Picking up the gate ai dashboard UI updates. Read the changelog for the 5th and tell me where we landed before we start.', conversationId: 'cnv_7a3f9e2b', initiator: 'test1', turns: 10, reqs: 10, vendors: ['anthropic'], models: ['claude-opus-4-8'], inTokens: '104,080', outTokens: '9,375', cost: '$0.8535', status: 'active', updated: new Date(2026, 4, 12, 14, 30, 14), duration: '10m 19s' },
+  { title: 'Check our handoff.md for context so we can continue work', conversationId: 'cnv_7a3f9e2b', initiator: 'test1', turns: 10, reqs: 100, vendors: ['anthropic'], models: ['claude-opus-4-8'], inTokens: '19,358,990', outTokens: '62,494', cost: '—', status: 'active', updated: new Date(2026, 5, 6, 0, 50, 45), duration: '39m 56s' },
   { title: 'Why was the SEPA transfer 0x4a3e flagged for review yesterday?', conversationId: 'cnv_aurora_42',   initiator: 'prod-web',   turns:  3, reqs:  7, vendors: ['anthropic'],                      models: ['claude-sonnet-4-5'],                                 inTokens: '3,438',  outTokens: '613',    cost: '$0.1042', status: 'active',    updated: new Date(2026, 4, 12, 14, 28, 4),  duration: '3m 53s'  },
   { title: 'Draft a 4-step onboarding sequence for new fin clients',         conversationId: 'cnv_skylark_18', initiator: 'prod-agent', turns:  6, reqs: 11, vendors: ['anthropic', 'openai'],            models: ['claude-opus-4-7', 'gpt-4o'],                         inTokens: '6,897',  outTokens: '1,217',  cost: '$0.4218', status: 'active',    updated: new Date(2026, 4, 12, 14, 22, 11), duration: '5m 12s'  },
   { title: 'Classify the attached document and click KYC if needed',         conversationId: 'cnv_meridian_07',initiator: 'prod-agent', turns:  3, reqs:  4, vendors: ['google'],                         models: ['gemini-3-flash'],                                    inTokens: '1,788',  outTokens: '316',    cost: '$0.3104', status: 'active',    updated: new Date(2026, 4, 12, 14, 15, 22), duration: '0m 47s'  },
@@ -984,7 +984,7 @@ function ConversationMessagesPanel({ messages,
               key={i}
               role={m.role}
               tool={m.tool}
-              body={m.body}
+              body={m.role === 'tool' && typeof m.body === 'string' ? <ToolResultCode>{m.body}</ToolResultCode> : m.body}
               time={m.time}
               requestId={m.requestId}
               selected={selected}
