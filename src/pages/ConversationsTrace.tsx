@@ -62,7 +62,7 @@ export function ConversationsTrace() {
               mode="label"
               size="sm"
               text="Copy ID"
-              value={row.conversationId}
+              value={row?.conversationId ?? ''}
               label="conversation ID"
             />
             <Button
@@ -70,7 +70,7 @@ export function ConversationsTrace() {
               size="sm"
               onClick={() => {
                 const linkedRequest = REQUEST_ROWS_RECENT.find(
-                  (r) => r.conversation === row.conversationId && !!r.requestId,
+                  (r) => r.conversation === row?.conversationId && !!r.requestId,
                 );
                 if (linkedRequest?.requestId) {
                   navigate(`/requests-findings/${linkedRequest.requestId}`);
