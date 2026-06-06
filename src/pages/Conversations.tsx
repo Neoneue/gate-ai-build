@@ -1162,26 +1162,18 @@ function TraceItem({
   // overweighted the signal and read as a stuck-state artifact.
   const rowBg = selected ? 'bg-blue-50' : '';
 
-  // Slow-latency tone: codified policy — >1000ms paints warning-700 in the
-  // data line; >2000ms also flips the timeline node ring to warning-600
-  // so the slow step pre-scans at the timeline level (matches CTO's
-  // orange-node treatment for the route_dispute that took 3120ms).
+  // Slow-latency tint: >1000ms paints the latency text warning-700 in the
+  // data line only. Latency is not a security signal, so it never colors the
+  // timeline node.
   const latencyMs = parseInt(event.latency, 10);
   const isSlowLatency = latencyMs > 1000;
-  const isVerySlow = latencyMs > 2000;
   const latencyTone = isSlowLatency ? 'text-warning-700' : 'text-neutral-500';
 
-  // Node ring color — slow takes priority over status-success. Warn/danger
-  // status still wins (a slow warn step would still read as warn-amber on
-  // both the node AND the row bg).
-  const nodeBorder =
-    event.status === 'success' && isVerySlow
-      ? 'border-warning-600'
-      : TRACE_NODE_BORDER[event.status];
-  const nodeIconTone =
-    event.status === 'success' && isVerySlow
-      ? 'text-warning-700'
-      : TRACE_NODE_ICON_TONE[event.status];
+  // Node ring + icon tone key off guardrail status ONLY: green = clean (no
+  // detector fired), amber = flag/redact, red = block/error. A slow-but-clean
+  // step stays green; only a fired guardrail colors the node.
+  const nodeBorder = TRACE_NODE_BORDER[event.status];
+  const nodeIconTone = TRACE_NODE_ICON_TONE[event.status];
 
   // Step-type icon inside the node. Tool calls get Wrench (literal); every
   // other step gets Activity (the EKG wave — implies reasoning/processing).

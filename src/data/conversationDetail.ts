@@ -39,6 +39,23 @@ const FINDING_ACTION: Record<string, 'Flag' | 'Redact' | 'Block'> = {
   block: 'Block',
 };
 
+// The Messages panel is a reconstruction from gateway logs, where PII and
+// credentials were already redacted on ingress before the prompt reached the
+// provider. Mirror that here: mask every user-role finding's verbatim match
+// with the placeholder sent upstream, so a caught value is never re-exposed in
+// the transcript and the bubble agrees with the request-detail redaction diff.
+// Assistant bubbles carry no raw values (they narrate the redaction), so only
+// the user body is masked. split/join does a literal global replace without
+// regex-escaping the match (which holds '.', '@', '/').
+function redactUserBody(row: RequestRow, body: string): string {
+ if (!row.findings) return body;
+ let out = body;
+ for (const f of row.findings) {
+ if (f.role === 'user') out = out.split(f.match).join(f.redactedAs);
+ }
+ return out;
+}
+
 // Request latency is stored in seconds ("3.80s"); the trace row reads ms via
 // parseInt(latency, 10), so normalise to a "<ms>ms" string here.
 const toMsLatency = (latency: string): string => {
@@ -154,7 +171,7 @@ export function getConversationDetail(
         const id = requestRowId(r);
         const time = `${r.day}, ${r.time}`;
         const out: ConversationMessage[] = [];
-        if (r.userMessage) out.push({ role: 'user', time, requestId: id, body: r.userMessage });
+        if (r.userMessage) out.push({ role: 'user', time, requestId: id, body: redactUserBody(r, r.userMessage) });
         if (r.assistantResponse) out.push({ role: 'assistant', time, requestId: id, body: r.assistantResponse });
         return out;
       })
