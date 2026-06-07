@@ -229,6 +229,44 @@ findings modal + page (and now the Security event modal).
 
 ## Sections & surfaces
 
+### Conversations — "Findings only" tab built out (`Conversations.tsx` → `ConversationDetailBody`) · (uncommitted)
+
+The conversation trace view's `findings` tab was a placeholder ("coming in the
+next pass"). It now renders the same two-panel Messages + Request Trace layout as
+the `all` tab, filtered to finding steps. **Before →** `<p>Findings-only view is
+coming…</p>`. **After →** mirrored grid (same `variant`-keyed wrapper classes as
+the `all` tab, so both the modal and the `/conversations-trace/:id` page variant
+render), reusing the existing `ConversationMessagesPanel` + `RequestTracePanel`
+(no fork).
+
+What changed:
+
+- **New derivations in `ConversationDetailBody`** (all `useMemo`): `findingIds`
+  (set of requestIds where `trace[].finding` is truthy), `findingTraceItems`
+  (interleaved `TraceRenderItem[]` — finding events with each run of consecutive
+  passing steps collapsed into one separator, order preserved), `findingMessages`
+  (`detail.messages` filtered to finding requests; no separators on the messages
+  side).
+- **`RequestTracePanel` gained two optional props** (no new component): `items?:
+  TraceRenderItem[]` (when present, renders the interleaved finding/separator list
+  instead of the flat `trace`) and `countLabel?: ReactNode` (header count copy;
+  here `"N findings"`). Auto-scroll/cross-highlight wiring is unchanged — it keys
+  off `[data-request-id]`, which only the finding events carry.
+- **New `TraceRenderItem` exported type** (discriminated union: `event` |
+  `separator`) and **new `TracePassingSeparator`** — a non-interactive, muted
+  timeline row reading "N passing request(s)" (singular/plural). It carries no
+  status node ring, no clickable button, no finding color: a small `bg-neutral-300`
+  dot on the same x=24 rail keeps the timeline track continuous, with `text-neutral-500`
+  mono count copy. Distinct from a `TraceItem` but rail-aligned so the timeline reads
+  as one thread.
+
+Hero `cnv_7a3f9e2b` (100-request session, 10 findings = 6 Redact + 4 Block) shows
+10 finding steps interleaved with passing-run separators; messages panel filters to
+those 10 requests' turns. "View Request" → `/requests-findings/${activeRequestId}`.
+
+Verify: `/conversations?open=cnv_7a3f9e2b` → "Findings only" tab; and the page
+variant `/conversations-trace/cnv_7a3f9e2b` → same tab.
+
 ### Requests — Full request code window scroll cap (`Requests.tsx` → `BodySection`) · [6915f47]
 
 The "Full request" payload code window (`BodySection`, the `CodeBlock` wrapper) was

@@ -619,6 +619,46 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
   const bannerTone: 'destructive' | 'warning' =
     highestAction === 'Block' ? 'destructive' : 'warning';
 
+  // ── Findings-only view derivations ──────────────────────────────────────
+  // A "finding step" = a trace event with a truthy `finding` label. The
+  // Findings-only tab collapses every run of consecutive passing (non-finding)
+  // steps into one muted "N passing request(s)" separator, preserving order.
+  const findingIds = useMemo(
+    () => new Set(detail.trace.filter((e) => e.finding).map((e) => e.requestId)),
+    [detail.trace],
+  );
+  // Interleave separators + finding events. Walk the full trace; accumulate
+  // passing steps into a counter, and whenever a finding is reached (or the
+  // trace ends) flush the accumulated run as a single separator before the
+  // finding event.
+  const findingTraceItems = useMemo<TraceRenderItem[]>(() => {
+    const out: TraceRenderItem[] = [];
+    let passing = 0;
+    let sepSeq = 0;
+    const flush = () => {
+      if (passing > 0) {
+        out.push({ kind: 'separator', id: `sep-${sepSeq++}`, count: passing });
+        passing = 0;
+      }
+    };
+    for (const e of detail.trace) {
+      if (e.finding) {
+        flush();
+        out.push({ kind: 'event', event: e });
+      } else {
+        passing += 1;
+      }
+    }
+    flush();
+    return out;
+  }, [detail.trace]);
+  // Messages belonging to a finding request — no separator rows on this side,
+  // just the filtered subset.
+  const findingMessages = useMemo(
+    () => detail.messages.filter((m) => m.requestId && findingIds.has(m.requestId)),
+    [detail.messages, findingIds],
+  );
+
   return (
     <>
       {/* Top section — header + identity row + prompt quote. Fixed (does
@@ -742,11 +782,49 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
               </div>
             </TabsContent>
 
-            {/* Built in the next pass. */}
-            <TabsContent value="findings" className="flex-1 min-h-0 mt-4">
-              <p className="font-sans text-sm text-neutral-500">
-                Findings-only view is coming in the next pass.
-              </p>
+            {/* Findings-only — same two-panel layout as "All steps", filtered
+                to finding requests. Trace collapses passing runs into muted
+                separators; messages are filtered to finding requests' turns.
+                Cross-highlight + auto-scroll wiring is identical to the All
+                tab (shared activeRequestId / selectionSource / onSelect). */}
+            <TabsContent
+              value="findings"
+              className={variant === 'page' ? 'mt-4' : 'flex flex-1 min-h-0 flex-col overflow-hidden mt-4'}
+            >
+              <div className={variant === 'page' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 h-[600px] overflow-hidden' : 'grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden'}>
+                <ConversationMessagesPanel
+                  activeRequestId={activeRequestId}
+                  selectionSource={selectionSource}
+                  messages={findingMessages} onSelect={selectFromMessages}
+                />
+                <RequestTracePanel
+                  activeRequestId={activeRequestId}
+                  selectionSource={selectionSource}
+                  items={findingTraceItems}
+                  countLabel={`${findingCount} findings`}
+                  onSelect={selectFromTrace}
+                  footer={
+                    <div className="flex flex-none items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
+                      <span className="font-mono text-xs text-neutral-500">
+                        Key <span className="text-neutral-800">{row.initiator}</span>{' '}
+                        · started <Timestamp date={row.updated} className="text-neutral-800" />
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <CopyButton mode="label" size="sm" text="Copy ID" value={row.conversationId} label="conversation ID" />
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!activeRequestId}
+                          onClick={() => { if (activeRequestId) navigate(`/requests-findings/${activeRequestId}`); }}
+                        >
+                          View Request
+                          <ExternalLink data-icon="inline-end" aria-hidden />
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                />
+              </div>
             </TabsContent>
             <TabsContent value="errors" className="flex-1 min-h-0 mt-4">
               <p className="font-sans text-sm text-neutral-500">
@@ -1065,7 +1143,17 @@ const TRACE_NODE_ICON_TONE: Record<TraceStatus, string> = {
   danger:  'text-destructive',
 };
 
+/** Interleaved timeline entry for the Findings-only view: either a finding
+ *  TraceEvent or a collapsed run of consecutive passing (non-finding) steps
+ *  rendered as a single muted separator row. Order is preserved from the
+ *  original trace. */
+export type TraceRenderItem =
+  | { kind: 'event'; event: TraceEvent }
+  | { kind: 'separator'; id: string; count: number };
+
 function RequestTracePanel({ trace,
+  items,
+  countLabel,
   activeRequestId,
   selectionSource,
   onSelect,
@@ -1074,6 +1162,12 @@ function RequestTracePanel({ trace,
   activeRequestId: string | null;
   selectionSource: 'messages' | 'trace' | null;
   onSelect: (requestId: string | null) => void; messages?: ConversationMessage[]; trace?: TraceEvent[];
+  /** When provided, the panel renders this interleaved list (finding events +
+   *  passing-run separators) instead of the flat `trace`. Used by the
+   *  Findings-only tab. */
+  items?: TraceRenderItem[];
+  /** Right-aligned header count copy. Defaults to "N requests" from `trace`. */
+  countLabel?: ReactNode;
   footer?: ReactNode;
 }) {
   // Auto-scroll the matching trace event into view ONLY when the selection
@@ -1100,7 +1194,7 @@ function RequestTracePanel({ trace,
       <div className="flex-none flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <span id="conv-trace-eyebrow" className="font-sans text-sm font-medium text-neutral-900">Request Trace</span>
         <span className="font-mono text-xs text-neutral-500 tabular-nums">
-          {(trace ?? []).length} requests
+          {countLabel ?? `${(trace ?? []).length} requests`}
         </span>
       </div>
 
@@ -1123,20 +1217,46 @@ function RequestTracePanel({ trace,
             height. First/last items truncate the segment at the node
             center; the node's bg-white masks the line where it crosses. */}
         <div className="flex flex-col">
-          {(trace ?? []).map((event, i) => (
-            <TraceItem
-              key={event.id}
-              event={event}
-              selected={event.requestId === activeRequestId}
-              isFirst={i === 0}
-              isLast={i === (trace ?? []).length - 1}
-              onSelect={() =>
-                onSelect(
-                  event.requestId === activeRequestId ? null : event.requestId,
-                )
-              }
-            />
-          ))}
+          {items
+            ? items.map((item, i) =>
+                item.kind === 'separator' ? (
+                  <TracePassingSeparator
+                    key={item.id}
+                    count={item.count}
+                    isFirst={i === 0}
+                    isLast={i === items.length - 1}
+                  />
+                ) : (
+                  <TraceItem
+                    key={item.event.id}
+                    event={item.event}
+                    selected={item.event.requestId === activeRequestId}
+                    isFirst={i === 0}
+                    isLast={i === items.length - 1}
+                    onSelect={() =>
+                      onSelect(
+                        item.event.requestId === activeRequestId
+                          ? null
+                          : item.event.requestId,
+                      )
+                    }
+                  />
+                ),
+              )
+            : (trace ?? []).map((event, i) => (
+                <TraceItem
+                  key={event.id}
+                  event={event}
+                  selected={event.requestId === activeRequestId}
+                  isFirst={i === 0}
+                  isLast={i === (trace ?? []).length - 1}
+                  onSelect={() =>
+                    onSelect(
+                      event.requestId === activeRequestId ? null : event.requestId,
+                    )
+                  }
+                />
+              ))}
         </div>
       </div>
       {footer}
@@ -1288,5 +1408,47 @@ function TraceItem({
         ) : null}
       </div>
     </button>
+  );
+}
+
+/* Passing-run separator — quiet, non-interactive timeline row used in the
+ * Findings-only view to collapse a run of consecutive passing (non-finding)
+ * steps. Reads as muted scaffolding: no status node ring, no clickable
+ * button, no finding color. It stays aligned to the same left rail as a
+ * TraceItem (node centerline x=24) so the timeline track runs continuously
+ * through it. The track segment is full-height for middle/edge rows so the
+ * line is unbroken between the finding events on either side. */
+function TracePassingSeparator({
+  count,
+  isFirst,
+  isLast,
+}: {
+  count: number;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
+  // Mirror TraceItem's per-row track geometry. A separator almost always
+  // sits between two finding events, so the line should run the full row
+  // height; only truncate when it is the very first/last item in the list.
+  const trackSegment = isFirst ? 'top-6 bottom-0' : isLast ? 'top-0 h-6' : 'inset-y-0';
+  return (
+    <div className="relative flex gap-3 py-3 px-3 -mx-2" aria-hidden>
+      {/* Continuous track segment at x=23 — same centerline as TraceItem. */}
+      <span
+        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
+      />
+      {/* Node column placeholder — a small hollow dot centered on the rail
+          (x=24) so the eye still tracks the timeline, but visibly lighter
+          than a status node (no 2px ring, no icon). */}
+      <div className="relative size-6 shrink-0 flex items-center justify-center">
+        <span className="size-1.5 rounded-full bg-neutral-300" />
+      </div>
+      {/* Muted count copy. Mono so it sits in the data voice but quiet. */}
+      <div className="flex min-w-0 flex-1 items-center">
+        <span className="font-mono text-xs text-neutral-500 tabular-nums">
+          {count} passing request{count !== 1 ? 's' : ''}
+        </span>
+      </div>
+    </div>
   );
 }

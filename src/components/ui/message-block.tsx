@@ -82,7 +82,7 @@ export function MessageBlock({
       ? 'border-warning-200 bg-warning-50'
       : 'border-border bg-neutral-50';
   const bubbleClasses = cn(
-    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
+    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none max-h-[200px] overflow-y-auto overscroll-contain',
     selected
       ? // Selected — ring color tracks tone so the warn semantic stays
         // intact through the selection action layer. Warn-state selection
