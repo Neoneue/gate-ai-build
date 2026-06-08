@@ -1223,12 +1223,12 @@ function ThreatEventDetailBody({
             </h3>
             <div className="flex flex-col gap-3">
               {reconciled ? (
-                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty max-h-[200px] overflow-y-auto overscroll-contain">
                   {reconciled.evidence}
                 </div>
               ) : (
                 <>
-                  <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                  <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty max-h-[200px] overflow-y-auto overscroll-contain">
                     {detail.samplePrompt}
                   </div>
                   {detail.sampleResponse !== null ? (
