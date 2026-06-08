@@ -68,7 +68,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 const result = await model.generateContent("Hello!");
 console.log(result.response.text());`;
 
-const HERO_SNIPPETS: Record<string, string> = {
+export const HERO_SNIPPETS: Record<string, string> = {
   anthropic: HERO_ANTHROPIC_SNIPPET,
   openai: HERO_OPENAI_SNIPPET,
   google: HERO_GOOGLE_SNIPPET,
@@ -113,7 +113,7 @@ function tokenizeLine(line: string): CodeToken[] {
   return tokens;
 }
 
-function CodePanel({ snippet }: { snippet: string }) {
+export function CodePanel({ snippet }: { snippet: string }) {
   const lines = snippet.split('\n');
   return (
     <div className="p-4 overflow-x-auto">
@@ -160,7 +160,7 @@ function HeroCard() {
               <div className="flex flex-col gap-2">
                 {false && <Badge variant="info">Recommended</Badge>}
                 <h3 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
-                  Get started with Gate Connect App
+                  Get started with our Gate Connect App
                 </h3>
                 <p className="text-sm text-neutral-500 text-pretty max-w-[480px] m-0">
                   Connect your providers or individual models to Gate AI using our app. Gate Connect writes the config for you, so every request flows right through the gateway. <span className="font-semibold">No code required.</span>
@@ -175,7 +175,7 @@ function HeroCard() {
                       </Button>
                     }
                   />
-                  <DialogContent showCloseButton={false} className="p-0 gap-0 overflow-hidden sm:max-w-[400px]">
+                  <DialogContent showCloseButton={false} className="p-0 gap-0 overflow-hidden sm:max-w-[440px]">
                     {/* Image slot */}
                     <div className="aspect-video bg-neutral-100 border-b border-border flex items-center justify-center px-6 pt-10 pb-4">
                       <img
@@ -188,7 +188,7 @@ function HeroCard() {
                     <div className="flex flex-col gap-6 p-6">
                       <div className="flex flex-col gap-2">
                         <DialogTitle className="text-lg leading-none font-medium text-neutral-900 m-0">
-                          Get started with Gate Connect App
+                          Get started with our Gate Connect App
                         </DialogTitle>
                         <DialogDescription className="text-sm text-neutral-500 text-pretty m-0">
                           Connect your providers or individual models to Gate AI using our app. Gate Connect writes the config for you, so every request flows right through the gateway.

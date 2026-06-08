@@ -14,14 +14,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
-import {
-  CodeBlock,
-  CodeCard,
-  CodeCardHeader,
-  CodeCardTabs,
-  linesToString,
-  type CodeLine,
-} from '@/components/ui/code-card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { AnthropicIcon, OpenAIIcon, GeminiIcon } from '@/components/icons/model-providers';
+import { CodePanel, HERO_SNIPPETS } from '@/pages/DashboardDefault';
 import { CopyButton, useCopyFeedback } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IconActionButton } from '@/components/ui/icon-action-button';
@@ -235,122 +230,11 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 
 /* ─── Usage info ───────────────────────────────────────────────────────── */
 
-// `sk-gw-…YOUR_KEY` is a stand-in. Tones match the request/response modal's
-// JSON palette (property = blue, string = greenish-blue, variable = amber
-// for fill-in placeholders) so code surfaces across the dashboard share a
-// family. Three examples cover the most common ways to call the gateway:
-// raw HTTP (curl), the Claude Code env-var pattern, and the OpenAI SDK.
-// The gateway is provider-neutral — curl leads on purpose.
-
-const CURL_LINES: CodeLine[] = [
-  [
-    { text: 'curl', tone: 'property' },
-    { text: ' https://gateway-staging.constellationgate.ai/v1/chat/completions \\' },
-  ],
-  [
-    { text: '  -H', tone: 'property' },
-    { text: ' "X-Gateway-Api-Key: ', tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: '" \\', tone: 'string' },
-  ],
-  [
-    { text: '  -H', tone: 'property' },
-    { text: ' "Content-Type: application/json"', tone: 'string' },
-    { text: ' \\' },
-  ],
-  [
-    { text: '  -d', tone: 'property' },
-    { text: ' \'{' },
-    { text: '"model"', tone: 'property' },
-    { text: ': ' },
-    { text: '"claude-sonnet-4.8"', tone: 'string' },
-    { text: ', ' },
-    { text: '"messages"', tone: 'property' },
-    { text: ': [{' },
-    { text: '"role"', tone: 'property' },
-    { text: ': ' },
-    { text: '"user"', tone: 'string' },
-    { text: ', ' },
-    { text: '"content"', tone: 'property' },
-    { text: ': ' },
-    { text: '"Hello"', tone: 'string' },
-    { text: '}]}\'' },
-  ],
-];
-
-const CLAUDE_CODE_LINES: CodeLine[] = [
-  [{ text: '# Point Claude Code at the gateway instead of Anthropic directly', tone: 'muted' }],
-  [
-    { text: 'export', tone: 'property' },
-    { text: ' ANTHROPIC_BASE_URL=' },
-    { text: '"https://gateway-staging.constellationgate.ai"', tone: 'string' },
-  ],
-  [{ text: '' }],
-  [{ text: '# Add your gateway key so the gateway can authenticate requests', tone: 'muted' }],
-  [
-    { text: 'export', tone: 'property' },
-    { text: ' ANTHROPIC_CUSTOM_HEADERS=' },
-    { text: '"X-Gateway-Api-Key: ', tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: '"', tone: 'string' },
-  ],
-];
-
-const OPENAI_SDK_LINES: CodeLine[] = [
-  [
-    { text: 'import', tone: 'property' },
-    { text: ' OpenAI ' },
-    { text: 'from', tone: 'property' },
-    { text: ' ' },
-    { text: "'openai'", tone: 'string' },
-    { text: ';' },
-  ],
-  [{ text: '' }],
-  [
-    { text: 'const', tone: 'property' },
-    { text: ' client = ' },
-    { text: 'new', tone: 'property' },
-    { text: ' OpenAI({' },
-  ],
-  [
-    { text: '  baseURL: ' },
-    { text: "'https://gateway-staging.constellationgate.ai/v1'", tone: 'string' },
-    { text: ',' },
-  ],
-  [
-    { text: '  apiKey: ' },
-    { text: "'", tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: "'", tone: 'string' },
-    { text: ',' },
-  ],
-  [{ text: '  defaultHeaders: {' }],
-  [
-    { text: '    ' },
-    { text: "'X-Gateway-Api-Key'", tone: 'property' },
-    { text: ': ' },
-    { text: "'", tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: "'", tone: 'string' },
-    { text: ',' },
-  ],
-  [{ text: '  },' }],
-  [{ text: '});' }],
-];
-
-type ExampleTab = 'cURL' | 'Claude Code' | 'OpenAI SDK';
-
-const EXAMPLE_LINES: Record<ExampleTab, CodeLine[]> = {
-  cURL: CURL_LINES,
-  'Claude Code': CLAUDE_CODE_LINES,
-  'OpenAI SDK': OPENAI_SDK_LINES,
-};
-
-const EXAMPLE_TABS: ExampleTab[] = ['cURL', 'Claude Code', 'OpenAI SDK'];
+// Provider SDK quickstarts (Anthropic / OpenAI / Google) reuse the hero
+// card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
 function UsageInfo() {
-  const [tab, setTab] = useState<ExampleTab>('cURL');
-  const activeLines = EXAMPLE_LINES[tab];
+  const [tab, setTab] = useState<'anthropic' | 'openai' | 'google'>('anthropic');
   return (
     // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
     // curl body line and the OpenAI SDK indentation both fit without
@@ -379,22 +263,33 @@ function UsageInfo() {
         </p>
       </div>
 
-      <CodeCard>
-        <CodeCardHeader>
-          <CodeCardTabs
-            items={EXAMPLE_TABS}
-            active={tab}
-            onChange={(v) => setTab(v as ExampleTab)}
-          />
-          <CopyButton
-            mode="label"
-            text="Copy code"
-            value={linesToString(activeLines)}
-            label={`${tab} snippet`}
-          />
-        </CodeCardHeader>
-        <CodeBlock lines={activeLines} density="compact" />
-      </CodeCard>
+      <Card density="flush">
+        <Tabs defaultValue="anthropic" className="gap-0" onValueChange={(v) => setTab(v as 'anthropic' | 'openai' | 'google')}>
+          <div className="flex items-center justify-between px-4 pt-1 border-b border-border">
+            <TabsList variant="line" className="px-0 border-b-0">
+              <TabsTrigger value="anthropic">
+                <AnthropicIcon className="size-4" />Anthropic
+              </TabsTrigger>
+              <TabsTrigger value="openai">
+                <OpenAIIcon className="size-4" />OpenAI
+              </TabsTrigger>
+              <TabsTrigger value="google">
+                <GeminiIcon className="size-4" />Google
+              </TabsTrigger>
+            </TabsList>
+            <CopyButton mode="label" text="Copy code" value={HERO_SNIPPETS[tab]} label="code snippet" className="-translate-y-[2px]" />
+          </div>
+          <TabsContent value="anthropic" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS.anthropic} />
+          </TabsContent>
+          <TabsContent value="openai" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS.openai} />
+          </TabsContent>
+          <TabsContent value="google" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS.google} />
+          </TabsContent>
+        </Tabs>
+      </Card>
     </section>
   );
 }
