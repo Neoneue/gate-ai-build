@@ -658,6 +658,38 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
     () => detail.messages.filter((m) => m.requestId && findingIds.has(m.requestId)),
     [detail.messages, findingIds],
   );
+  // Errors tab — identical shape to Findings only, filtered to errored steps
+  // (status === 'danger') instead of findings. Passing/non-error runs collapse
+  // into the same muted separators.
+  const errorIds = useMemo(
+    () => new Set(detail.trace.filter((e) => e.status === 'danger').map((e) => e.requestId)),
+    [detail.trace],
+  );
+  const errorTraceItems = useMemo<TraceRenderItem[]>(() => {
+    const out: TraceRenderItem[] = [];
+    let passing = 0;
+    let sepSeq = 0;
+    const flush = () => {
+      if (passing > 0) {
+        out.push({ kind: 'separator', id: `err-sep-${sepSeq++}`, count: passing });
+        passing = 0;
+      }
+    };
+    for (const e of detail.trace) {
+      if (e.status === 'danger') {
+        flush();
+        out.push({ kind: 'event', event: e });
+      } else {
+        passing += 1;
+      }
+    }
+    flush();
+    return out;
+  }, [detail.trace]);
+  const errorMessages = useMemo(
+    () => detail.messages.filter((m) => m.requestId && errorIds.has(m.requestId)),
+    [detail.messages, errorIds],
+  );
 
   return (
     <>
@@ -752,7 +784,7 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
                 <ConversationMessagesPanel
                   activeRequestId={activeRequestId}
                   selectionSource={selectionSource}
-                  messages={detail.messages} onSelect={selectFromMessages}
+                  messages={detail.messages} trace={detail.trace} onSelect={selectFromMessages}
                 />
                 <RequestTracePanel
                   activeRequestId={activeRequestId}
@@ -795,7 +827,7 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
                 <ConversationMessagesPanel
                   activeRequestId={activeRequestId}
                   selectionSource={selectionSource}
-                  messages={findingMessages} onSelect={selectFromMessages}
+                  messages={findingMessages} trace={detail.trace} onSelect={selectFromMessages}
                 />
                 <RequestTracePanel
                   activeRequestId={activeRequestId}
@@ -826,10 +858,53 @@ export function ConversationDetailBody({ row, variant = 'modal' }: { row: Conver
                 />
               </div>
             </TabsContent>
-            <TabsContent value="errors" className="flex-1 min-h-0 mt-4">
-              <p className="font-sans text-sm text-neutral-500">
-                No errors in this conversation.
-              </p>
+            {/* Errors — same two-panel layout as Findings only, filtered to
+                errored steps (status danger). Passing runs collapse into muted
+                separators; messages are filtered to errored requests' turns. */}
+            <TabsContent
+              value="errors"
+              className={variant === 'page' ? 'mt-4' : 'flex flex-1 min-h-0 flex-col overflow-hidden mt-4'}
+            >
+              {errorCount === 0 ? (
+                <p className="font-sans text-sm text-neutral-500">
+                  No errors in this conversation.
+                </p>
+              ) : (
+                <div className={variant === 'page' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 h-[600px] overflow-hidden' : 'grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden'}>
+                  <ConversationMessagesPanel
+                    activeRequestId={activeRequestId}
+                    selectionSource={selectionSource}
+                    messages={errorMessages} trace={detail.trace} onSelect={selectFromMessages}
+                  />
+                  <RequestTracePanel
+                    activeRequestId={activeRequestId}
+                    selectionSource={selectionSource}
+                    items={errorTraceItems}
+                    countLabel={`${errorCount} error${errorCount !== 1 ? 's' : ''}`}
+                    onSelect={selectFromTrace}
+                    footer={
+                      <div className="flex flex-none items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
+                        <span className="font-mono text-xs text-neutral-500">
+                          Key <span className="text-neutral-800">{row.initiator}</span>{' '}
+                          · started <Timestamp date={row.updated} className="text-neutral-800" />
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <CopyButton mode="label" size="sm" text="Copy ID" value={row.conversationId} label="conversation ID" />
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!activeRequestId}
+                            onClick={() => { if (activeRequestId) navigate(`/requests-findings/${activeRequestId}`); }}
+                          >
+                            View Request
+                            <ExternalLink data-icon="inline-end" aria-hidden />
+                          </Button>
+                        </div>
+                      </div>
+                    }
+                  />
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </DialogScrollBody>
@@ -1006,6 +1081,7 @@ export const CONVERSATION_MESSAGES: {
 export const ASSISTANT_TURN_COUNT = CONVERSATION_MESSAGES.filter((m) => m.role === 'assistant').length;
 
 function ConversationMessagesPanel({ messages,
+  trace,
   activeRequestId,
   selectionSource,
   onSelect,
@@ -1033,6 +1109,12 @@ function ConversationMessagesPanel({ messages,
     el?.scrollIntoView({ block: 'nearest', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   }, [activeRequestId, selectionSource]);
 
+  // requestId → status, so each message bubble can adopt its trace step's tone.
+  const statusByRequestId = useMemo(
+    () => new Map((trace ?? []).map((e) => [e.requestId, e.status])),
+    [trace],
+  );
+
   return (
     <div className="flex flex-col rounded-md border border-border overflow-hidden h-full min-h-0">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
@@ -1052,16 +1134,17 @@ function ConversationMessagesPanel({ messages,
       >
         {(messages ?? []).map((m, i) => {
           const selected = !!m.requestId && m.requestId === activeRequestId;
-          // Bubble tone stays default regardless of trace status — warn
-          // signals live in their narrowest carriers (the inline `pep`
-          // badge inside the message body, the trace row's warnNote text,
-          // and the slow-latency text). Tinting the whole bubble was an
-          // artifact and overweighted the warn signal.
+          // Bubble tone tracks the matching trace step's status so the message
+          // and its trace row carry the same color: blue = normal, amber =
+          // flag/redact, red = block/error.
+          const status = m.requestId ? statusByRequestId.get(m.requestId) : undefined;
+          const tone = status === 'danger' ? 'danger' : status === 'warn' ? 'warn' : 'default';
           return (
             <MessageBlock
               key={i}
               role={m.role}
               tool={m.tool}
+              tone={tone}
               body={m.role === 'tool' && typeof m.body === 'string' ? <ToolResultCode>{m.body}</ToolResultCode> : m.body}
               time={m.time}
               requestId={m.requestId}
@@ -1141,6 +1224,18 @@ const TRACE_NODE_ICON_TONE: Record<TraceStatus, string> = {
   success: 'text-success-700',
   warn:    'text-warning-700',
   danger:  'text-destructive',
+};
+// Selected-row OUTLINE color, keyed off status (mirrors the messages panel's
+// tone-aware selection ring): blue = no issues, amber = flag/redact, red =
+// block/error. Selection is an outline, never a fill, so the row tint never
+// competes with the status signal.
+// Drawn as an ::after overlay (not a box-shadow ring) so the selection
+// outline paints ABOVE the timeline track — an inset box-shadow would sit
+// under the positioned track span and the gray line would cross it.
+const TRACE_SELECT_RING: Record<TraceStatus, string> = {
+  success: 'after:ring-success-600',
+  warn:    'after:ring-warning-500',
+  danger:  'after:ring-destructive',
 };
 
 /** Interleaved timeline entry for the Findings-only view: either a finding
@@ -1277,10 +1372,10 @@ function TraceItem({
   isLast: boolean;
   onSelect: () => void;
 }) {
-  // Row bg signals selection only. Warn is conveyed via the warnNote
-  // text + the pep badge inside the matching message — tinting the row
-  // overweighted the signal and read as a stuck-state artifact.
-  const rowBg = selected ? 'bg-blue-50' : '';
+  // Selection is shown as a status-colored OUTLINE (ring), not a fill —
+  // blue/amber/red track the row's status so the only colors in the trace are
+  // the three status tones. See TRACE_SELECT_RING.
+  const selectRing = TRACE_SELECT_RING[event.status];
 
   // Slow-latency tint: >1000ms paints the latency text warning-700 in the
   // data line only. Latency is not a security signal, so it never colors the
@@ -1322,10 +1417,8 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-3 px-3 -mx-2 text-left outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
-        selected ? '' : 'hover-fine:bg-neutral-50'
-      } ${rowBg} before:absolute before:left-0 before:inset-y-1 before:w-[2px] before:bg-blue-500 before:rounded-full before:transition-opacity before:duration-150 motion-reduce:before:transition-none ${
-        selected ? 'before:opacity-100' : 'before:opacity-0'
+      className={`relative flex gap-3 py-3 px-3 -mx-2 rounded-md text-left outline-none transition-[box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 after:pointer-events-none after:absolute after:inset-0 after:rounded-md after:transition-opacity after:duration-150 ${
+        selected ? `after:ring-1 after:ring-inset ${selectRing}` : 'hover-fine:bg-neutral-50'
       }`}
     >
       {/* Per-row track segment — sits at x=23 inside TraceItem coords so
@@ -1336,6 +1429,13 @@ function TraceItem({
         aria-hidden
         className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
       />
+      {/* Selected fill — an opaque card overlay that paints ABOVE the track
+          (so the gray line doesn't show through the selected row) but below
+          the node + content. Rendered as an overlay rather than the button's
+          background because the background paints under the positioned track. */}
+      {selected ? (
+        <span aria-hidden className="absolute inset-0 rounded-md bg-card pointer-events-none" />
+      ) : null}
       {/* Timeline node — circular, status-bordered, white-filled so the
           track behind it reads as broken at the bead. Icon inside marks
           the step type. */}
@@ -1356,7 +1456,7 @@ function TraceItem({
           (1) step label + time as the primary identifier,
           (2) tokens · latency · cost + requestId on the right,
           (3) warn badge (only when status === 'warn'). */}
-      <div className="flex flex-col gap-1 min-w-0 flex-1">
+      <div className="relative flex flex-col gap-1 min-w-0 flex-1">
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex items-center gap-2 min-w-0">
