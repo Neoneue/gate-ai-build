@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -35,23 +35,13 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { API_KEY_ROWS as ACTIVITY_KEY_ROWS } from './activity-data';
-import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
-
-// 7-day usage lookup keyed by the user-facing key name. Activity's
-// API_KEY_ROWS is the canonical per-key spend source for the workspace —
-// importing it here means the ApiKeys Usage column reconciles with the
-// Activity UsageByKey table for the same window instead of drifting as
-// a separate constant. Keys not present in Activity (newly-created keys
-// with no traffic yet, one-off test keys) fall back to 0.
-const USAGE_BY_KEY: Map<string, number> = new Map(
-  ACTIVITY_KEY_ROWS.map((r) => [r.key, r.spend]),
-);
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -82,6 +72,20 @@ type ApiKeyRow = {
   lastUsed: Date | null; // null = never used (freshly-minted or revoked-untouched)
   revoked?: boolean;     // greys out the row + disables actions when true
 };
+
+/** Comparable value per sortable column for the keys table. Numeric columns
+ *  return a number; Date columns return the epoch ms; never-used (`lastUsed`
+ *  null) → null so it sorts last. */
+function apiKeySortValue(row: ApiKeyRow, key: string): string | number | null {
+  switch (key) {
+    case 'name': return row.name;
+    case 'status': return row.revoked ? 'Revoked' : 'Active';
+    case 'requests7d': return row.requests7d.at(-1) ?? 0;
+    case 'createdAt': return row.createdAt.getTime();
+    case 'lastUsed': return row.lastUsed ? row.lastUsed.getTime() : null;
+    default: return null;
+  }
+}
 
 export function ApiKeys() {
   const navigate = useNavigate();
@@ -123,6 +127,15 @@ export function ApiKeys() {
       createdAt: new Date(2026, 3, 18, 9, 0, 0),    // 2026-04-18 09:00:00
       lastUsed: null,
       revoked: true,
+    },
+    {
+      id: 'sk-gw-ef72d1a9',
+      name: 'design-agent',
+      masked: 'sk-gw-…ef72',
+      // Active — the design-dashboard session runs on this key.
+      requests7d: [2, 4, 3, 7, 6, 9, 13],
+      createdAt: new Date(2026, 5, 6, 18, 24, 22),  // 2026-06-06 18:24:22
+      lastUsed: new Date(2026, 5, 6, 18, 30, 12),   // today
     },
   ]);
   const handleCreate = (input: { name: string }) => {
@@ -396,6 +409,11 @@ function KeysTable({
   onRevoke: (id: string) => void;
 }) {
   const [pendingRevoke, setPendingRevoke] = useState<ApiKeyRow | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(rows, sort, apiKeySortValue),
+    [rows, sort],
+  );
 
   return (
     <>
@@ -403,20 +421,19 @@ function KeysTable({
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              {/* Six data columns at w-1/6 + a fixed-width Actions column.
+              {/* Five data columns at w-1/5 + a fixed-width Actions column.
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
-              <TableHead className="w-1/6 whitespace-nowrap">Key</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Status</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">7-day usage</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">7-day requests</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Created</TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap">Last used</TableHead>
+              <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Key</SortableTableHead>
+              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Status</SortableTableHead>
+              <SortableTableHead sortKey="requests7d" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">7-day requests</SortableTableHead>
+              <SortableTableHead sortKey="createdAt" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Created</SortableTableHead>
+              <SortableTableHead sortKey="lastUsed" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Last used</SortableTableHead>
               <TableHead aria-label="Actions" className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
+            {sortedRows.map((row) => (
               <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
                 {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                     to neutral-600. Single-line two-tone form shared with the
@@ -431,9 +448,6 @@ function KeysTable({
                   ) : (
                     <Badge variant="success">Active</Badge>
                   )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
-                  {formatCurrency(USAGE_BY_KEY.get(row.name) ?? 0)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
@@ -471,7 +485,7 @@ function KeysTable({
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
-              This key will stop authenticating requests immediately. Revocation can't be undone.
+              This key will stop authenticating requests immediately. Revocation can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -640,7 +654,7 @@ function KeyCreatedDialog({
             type="button"
             onClick={trigger}
             aria-label={copied ? 'Copied' : 'Copy API key'}
-            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-colors duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             {copied ? (
               <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
@@ -660,7 +674,7 @@ function KeyCreatedDialog({
             Store this somewhere safe
           </p>
           <p className="font-sans text-sm text-warning-700 m-0">
-            Paste it into your secret manager or .env before closing. Once you close, we can't show it again. You'll need to rotate the key to get a new one.
+            Paste it into your secret manager or .env before closing. Once you close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the key to get a new one.
           </p>
         </div>
 
@@ -675,7 +689,7 @@ function KeyCreatedDialog({
             htmlFor="apikey-saved-confirm"
             className="text-neutral-700 text-sm font-normal"
           >
-            I've saved this key to a secret manager.
+            I&rsquo;ve saved this key to a secret manager.
           </Label>
         </div>
 

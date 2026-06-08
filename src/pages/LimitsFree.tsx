@@ -33,12 +33,34 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatDateTime } from '@/lib/formatters';
+import { useTableSort, sortRows, parseNumeric } from '@/hooks/use-table-sort';
 import { ProUpgradeCard } from '@/pages/pro-upgrade-card';
+
+/** Comparable value per sortable column for the Limits table.
+ *  Numeric columns (threshold/used) parse out $/commas; period maps to a
+ *  chronological ordinal so "1 hour" sorts before "1 month". */
+function limitSortValue(row: Limit, key: string): string | number | null {
+  switch (key) {
+    case 'name': return row.name;
+    case 'scope': return scopeName(row.scope);
+    case 'type': return typeLabel(row.type);
+    case 'threshold': return parseNumeric(row.threshold);
+    case 'used': return parseNumeric(row.used);
+    case 'period': return PERIOD_ORDER[row.period] ?? Number.MAX_SAFE_INTEGER;
+    default: return null;
+  }
+}
+
+// Chronological ordinal for the period column so the sort follows real
+// duration order (1h < 1d < 1w < 1mo) rather than the label's alphabetical
+// order. Keys mirror LIMIT_PERIODS values.
+const PERIOD_ORDER: Record<string, number> = { '1h': 0, '1d': 1, '1w': 2, '1mo': 3 };
 
 export function LimitsFree() {
   const navigate = useNavigate();
@@ -120,6 +142,14 @@ function LimitsSection({
     return new Map(limits.map((l) => [l.id, resetsAt(now, l.period)]));
   }, [limits]);
 
+  // Sort runs after the data is in hand; default (key=null) preserves the
+  // authored newest-first insertion order.
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedLimits = useMemo(
+    () => sortRows(limits, sort, limitSortValue),
+    [limits, sort],
+  );
+
   if (limits.length === 0) {
     return (
       <ProUpgradeCard icon={ShieldCheck} body="Limits & quotas are a Pro feature. Upgrade in Billing to catch a runaway agent in the act, not at month-end." />
@@ -135,18 +165,18 @@ function LimitsSection({
                 uniform regardless of cell content — same load-bearing
                 pattern as the Team and Activity tables. Five equal data
                 columns + a narrow actions column. */}
-            <TableHead className="w-[16%] whitespace-nowrap">Name</TableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">Scope</TableHead>
-            <TableHead className="w-[12%] whitespace-nowrap">Type</TableHead>
-            <TableHead className="whitespace-nowrap">Threshold</TableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">Used</TableHead>
-            <TableHead className="w-[10%] whitespace-nowrap">Period</TableHead>
+            <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-[16%] whitespace-nowrap">Name</SortableTableHead>
+            <SortableTableHead sortKey="scope" sort={sort} onSort={toggleSort} className="w-[16%] whitespace-nowrap">Scope</SortableTableHead>
+            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="w-[12%] whitespace-nowrap">Type</SortableTableHead>
+            <SortableTableHead sortKey="threshold" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Threshold</SortableTableHead>
+            <SortableTableHead sortKey="used" sort={sort} onSort={toggleSort} numeric className="w-[16%] whitespace-nowrap">Used</SortableTableHead>
+            <SortableTableHead sortKey="period" sort={sort} onSort={toggleSort} className="w-[10%] whitespace-nowrap">Period</SortableTableHead>
             <TableHead className="w-[16%] whitespace-nowrap">Resets on</TableHead>
             <TableHead className="w-[5%] text-right pl-0 pr-4">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {limits.map((limit) => {
+          {sortedLimits.map((limit) => {
             const scope = findScope(limit.scope);
             const scopeNameText = scope?.name ?? limit.scope;
             return (

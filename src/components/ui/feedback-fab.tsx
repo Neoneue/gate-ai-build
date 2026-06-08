@@ -77,7 +77,7 @@ function FeedbackFab() {
           "bg-neutral-900 text-white text-sm font-medium whitespace-nowrap",
           "shadow-(--shadow-popup)",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer hover:bg-neutral-800 hover:-translate-y-px motion-reduce:hover:translate-y-0",
+          "cursor-pointer hover:bg-neutral-800 hover-fine:-translate-y-px motion-reduce:hover:translate-y-0 active:scale-[0.99] will-change-transform motion-reduce:active:scale-100",
           "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring",
           "select-none",
         )}
@@ -164,7 +164,7 @@ function FeedbackFab() {
               </Button>
             </div>
             <p className="text-xs text-neutral-500">
-              PNG, JPEG, or WEBP, up to 10 MB.
+              PNG, JPEG, or WEBP, up to 10&nbsp;MB.
             </p>
           </div>
 

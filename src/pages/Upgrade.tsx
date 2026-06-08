@@ -69,17 +69,17 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
         {plan.badge.label}
       </Badge>
 
-      <h3 className="text-2xl font-medium tracking-tight text-neutral-900 tabular-nums m-0">
+      <p className="text-2xl font-medium tracking-tight text-neutral-900 tabular-nums m-0">
         {plan.price}
         <span className="text-lg text-muted-foreground"> per month</span>
-      </h3>
+      </p>
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium text-neutral-900 m-0">{plan.benefitsLabel}</p>
         <ul className="flex flex-col gap-3 m-0 p-0 list-none">
           {plan.features.map(({ Icon, title, detail }) => (
             <li key={title} className="flex items-start gap-3">
-              <span aria-hidden className="shrink-0 size-7 rounded-sm bg-muted flex items-center justify-center mt-0.5">
+              <span aria-hidden className="shrink-0 size-7 rounded-sm bg-muted flex items-center justify-center mt-1">
                 <Icon className="size-3.5 text-neutral-700" strokeWidth={1.75} />
               </span>
               <div className="flex flex-col">

@@ -22,12 +22,13 @@ import { Upgrade } from '@/pages/Upgrade';
 import { Models } from '@/pages/Models';
 import { Policies } from '@/pages/Policies';
 import { Requests } from '@/pages/Requests';
+import { RequestsFindings } from '@/pages/RequestsFindings';
+import { ConversationsTrace } from '@/pages/ConversationsTrace';
 import { Security } from '@/pages/Security';
 import { SecurityDefault } from '@/pages/SecurityDefault';
 import { SecurityFree } from '@/pages/SecurityFree';
 import { Settings } from '@/pages/Settings';
 import { Team } from '@/pages/Team';
-import { GetStarted } from '@/pages/GetStarted';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { SignIn } from '@/pages/SignIn';
 import { SignUp } from '@/pages/SignUp';
@@ -76,11 +77,12 @@ export default function App() {
         </Route>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/overview" replace />} />
-          <Route path="/get-started" element={<GetStarted />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/overview-default" element={<DashboardDefault />} />
           <Route path="/requests" element={<Requests />} />
+          <Route path="/requests-findings/:requestId" element={<RequestsFindings />} />
           <Route path="/conversations" element={<Conversations />} />
+          <Route path="/conversations-trace/:conversationId" element={<ConversationsTrace />} />
           <Route path="/models" element={<Models />} />
           <Route path="/token-savings" element={<TokenSavings />} />
           <Route path="/token-savings-free" element={<TokenSavingsFree />} />

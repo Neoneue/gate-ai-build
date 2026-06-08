@@ -17,7 +17,7 @@ The live web application for Constellation Gate AI. Forked from the `mvp` design
 
 ## Layout
 
-```
+```text
 src/
   App.tsx           — react-router routes
   main.tsx          — entry

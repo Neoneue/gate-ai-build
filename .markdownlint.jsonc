@@ -1,0 +1,12 @@
+{
+  // Project markdownlint config. `default: true` keeps all rules on except the
+  // two below, which don't fit reference docs with wide data tables.
+  "default": true,
+  // MD013 line-length: our reference tables and prose intentionally exceed 80
+  // cols; wrapping them would hurt readability.
+  "MD013": false,
+  // MD024 duplicate headings: subsection names like "Finding card" /
+  // "Why this fired" legitimately repeat under different top-level sections
+  // (Email vs Credentials). Only flag true siblings.
+  "MD024": { "siblings_only": true }
+}

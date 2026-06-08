@@ -58,7 +58,9 @@ export const ACTION_BADGE: Record<
 > = {
 	blocked: { variant: 'destructive', label: 'blocked' },
 	flagged: { variant: 'warning', label: 'flagged' },
-	redacted: { variant: 'info', label: 'redacted' },
+	// 2-tier severity: redacted shares amber with flagged (block = red); the
+	// badge label carries the identity. CPO direction 2026-06-04.
+	redacted: { variant: 'warning', label: 'redacted' },
 };
 
 // `color` mirrors the `AttackCategoriesCard` palette on this page so the
@@ -88,6 +90,26 @@ export const EVENT_ROWS: EventRow[] = [
 	// cnv_skylark_18: 6 turns, 11 reqs, 8,114 tokens
 	// cnv_vela_21: 12 turns, 26 reqs, 102,041 tokens
 	// cnv_polaris_55: 4 turns, 7 reqs, 3,402 tokens
+	// cnv_7a3f9e2b: 10 turns, 100 reqs — the live hero session (design-agent,
+	// BYOK). Its three blocked injections are the auto-mode classifier denials,
+	// so the model had already produced output before the tool was blocked:
+	// in/out/latency mirror the real RequestRow values (NOT the fail-fast
+	// outTokens=0/2.1s convention used for pre-forward blocks above).
+	// All nine guardrail events from the session, newest-first: 3 injection
+	// blocks (errors) + 6 PII redactions (success). Values mirror the real
+	// RequestRow rows on the Requests page.
+	{ time: '2026-06-06 00:50:45', relative: 'now',     type: 'injection',  key: 'design-agent (sk-gw-ef7)', action: 'blocked',  requestId: 'req_ded91e',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '255,400', outTokens: '104',   latency: '3.98s',  turn: 10, totalTurns: 10 },
+	{ time: '2026-06-06 00:50:40', relative: 'now',     type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_8389e4',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '24',      outTokens: '17',    latency: '7.87s',  turn: 10, totalTurns: 10 },
+	// Same request as the PII event above (req_8389e4 carries two findings); the
+	// AWS access key in that .env paste was caught by the credentials scanner.
+	{ time: '2026-06-06 00:50:40', relative: 'now',     type: 'credential', key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_8389e4',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '24',      outTokens: '17',    latency: '7.87s',  turn: 10, totalTurns: 10 },
+	{ time: '2026-06-06 00:47:14', relative: '4m ago',  type: 'injection',  key: 'design-agent (sk-gw-ef7)', action: 'blocked',  requestId: 'req_e9c29e',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '240,300', outTokens: '204',   latency: '10.02s', turn: 9,  totalTurns: 10 },
+	{ time: '2026-06-06 00:47:03', relative: '4m ago',  type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_7de227',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '22',      outTokens: '21',    latency: '5.32s',  turn: 9,  totalTurns: 10 },
+	{ time: '2026-06-06 00:46:49', relative: '4m ago',  type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_08fb0b',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '22',      outTokens: '64',    latency: '7.15s',  turn: 8,  totalTurns: 10 },
+	{ time: '2026-06-06 00:35:18', relative: '15m ago', type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_de1f4a',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '204,400', outTokens: '1,600', latency: '25.95s', turn: 6,  totalTurns: 10 },
+	{ time: '2026-06-06 00:33:58', relative: '17m ago', type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_78f14b',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '194,200', outTokens: '526',   latency: '10.42s', turn: 5,  totalTurns: 10 },
+	{ time: '2026-06-06 00:16:22', relative: '34m ago', type: 'pii',        key: 'design-agent (sk-gw-ef7)', action: 'redacted', requestId: 'req_dc4d30',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'success', code: '200', inTokens: '186,900', outTokens: '2,400', latency: '39.52s', turn: 2,  totalTurns: 10 },
+	{ time: '2026-06-06 00:11:32', relative: '39m ago', type: 'injection',  key: 'design-agent (sk-gw-ef7)', action: 'blocked',  requestId: 'req_31b316',        conversationId: 'cnv_7a3f9e2b',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '160,900', outTokens: '146',   latency: '3.71s',  turn: 1,  totalTurns: 10 },
 	{ time: '2026-05-12 09:48:14', relative: '2m ago',  type: 'injection',  key: 'prod-web (sk-gw-438)',     action: 'blocked',  requestId: 'req_aurora_4200',   conversationId: 'cnv_aurora_42',   keyTier: 'critical', status: 'error',   code: '403', inTokens: '612',   outTokens: '0',     latency: '2.10s',  turn: 3,  totalTurns: 3  },
 	{ time: '2026-05-12 09:46:23', relative: '4m ago',  type: 'credential', key: 'prod-agent (sk-gw-930)',   action: 'blocked',  requestId: 'req_orion_4203',    conversationId: 'cnv_orion_70',    keyTier: 'critical', status: 'error',   code: '403', inTokens: '1,408', outTokens: '0',     latency: '2.10s',  turn: 5,  totalTurns: 18 },
 	{ time: '2026-05-12 09:43:10', relative: '7m ago',  type: 'injection',  key: 'development (sk-gw-7d2)',  action: 'flagged',  requestId: 'req_lyra_4207',     conversationId: 'cnv_lyra_92',     keyTier: 'elevated', status: 'success', code: '200', inTokens: '412',   outTokens: '188',   latency: '3.20s',  turn: 8,  totalTurns: 14 },

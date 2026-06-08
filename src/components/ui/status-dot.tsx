@@ -10,34 +10,21 @@ const statusColors = {
 
 export type StatusDotKind = keyof typeof statusColors;
 
-const SIZE_CLASSES = {
-  sm: 'size-1.5', // 6px — default; pairs with Badge h-5 chrome
-  md: 'size-2',   // 8px — standalone, breakdown rows, list legends
-} as const;
-
 export interface StatusDotProps {
   kind: StatusDotKind;
-  /** Dot size. Default `sm` (6px, in-badge). `md` (8px) for standalone rows. */
-  size?: keyof typeof SIZE_CLASSES;
   className?: string;
 }
 
 /**
- * Tiny solid-color dot used inside <Badge /> to communicate status.
- * Use as a child with `data-icon="inline-start"` so the badge applies
- * the right padding adjustment.
+ * Tiny 8px solid-color dot for standalone status signals (breakdown rows,
+ * list legends). Always paired with an adjacent text label — the color is a
+ * redundant cue, never the sole one.
  */
-export function StatusDot({ kind, size = 'sm', className }: StatusDotProps) {
+export function StatusDot({ kind, className }: StatusDotProps) {
   return (
     <span
-      data-icon="inline-start"
       aria-hidden
-      className={cn(
-        SIZE_CLASSES[size],
-        'shrink-0 rounded-full',
-        statusColors[kind],
-        className,
-      )}
+      className={cn('size-2 shrink-0 rounded-full', statusColors[kind], className)}
     />
   );
 }

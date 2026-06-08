@@ -53,7 +53,7 @@ export type MessageBlockProps = {
    *  flagged something) reads at the message level instead of only on
    *  the matching trace event. Default `default` keeps the outline-only
    *  treatment per the project's primitive policy. */
-  tone?: 'default' | 'warn';
+  tone?: 'default' | 'warn' | 'danger';
   /** Selection state — paints a ring around the bubble. Drives the
    *  cross-link highlight when paired with a trace event of the same
    *  requestId. Ring color tracks tone: default selection = blue,
@@ -78,20 +78,24 @@ export function MessageBlock({
   className,
 }: MessageBlockProps) {
   const baseBubbleBorder =
-    tone === 'warn'
-      ? 'border-warning-200 bg-warning-50'
-      : 'border-border bg-neutral-50';
-  const bubbleClasses = cn(
-    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none',
-    selected
-      ? // Selected — ring color tracks tone so the warn semantic stays
-        // intact through the selection action layer. Warn-state selection
-        // rings in warning-500 (not blue) to avoid two competing signals
-        // on the same bubble; default-tone selection rings in blue.
-        tone === 'warn'
+    tone === 'danger'
+      ? 'border-danger-200 bg-danger-50'
+      : tone === 'warn'
+        ? 'border-warning-200 bg-warning-50'
+        : 'border-border bg-neutral-50';
+  // Selected ring color tracks tone so the status semantic stays intact
+  // through the selection layer: green = normal/success, amber = warn
+  // (flag/redact), red = danger (block/error). Matches the trace panel's
+  // status-tone outline + node color.
+  const selectedTone =
+    tone === 'danger'
+      ? 'border-destructive bg-danger-50 ring-1 ring-destructive'
+      : tone === 'warn'
         ? 'border-warning-500 bg-warning-50 ring-1 ring-warning-500'
-        : 'border-blue-500 ring-1 ring-blue-500'
-      : baseBubbleBorder,
+        : 'border-success-600 ring-1 ring-success-600';
+  const bubbleClasses = cn(
+    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none max-h-[200px] overflow-y-auto overscroll-contain',
+    selected ? selectedTone : baseBubbleBorder,
     onClick && !selected && 'hover:border-neutral-400 cursor-pointer',
     onClick && 'text-left w-full',
   );

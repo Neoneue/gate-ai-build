@@ -31,8 +31,8 @@ dist-ssr
 # Vendored agent bundle (sourced separately)
 front-end-developer/
 
-# Local-only project notes (not shipped)
-CLAUDE.md
+# Local-only project notes (not shipped). The whole docs/ folder stays local;
+# the committed UI change logs live in change-logs/ (tracked) instead.
 docs/
 gateway-fixes.md
 handoff.md

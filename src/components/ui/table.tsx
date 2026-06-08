@@ -1,6 +1,8 @@
 import * as React from "react"
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import type { SortState } from "@/hooks/use-table-sort"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   // The `:not(:first-child)` guard lives at the container so the header's
@@ -91,11 +93,82 @@ function TableHead({ className, scope = "col", ...props }: React.ComponentProps<
         // the body cells; sans here keeps the voice split clean. font-medium
         // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "h-9 px-4 text-left align-middle text-xs font-medium text-neutral-500 [&:has([role=checkbox])]:pr-0",
+        "h-10 px-4 text-left align-middle text-xs font-medium text-neutral-500 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
     />
+  )
+}
+
+/* Sortable column header — drop-in replacement for <TableHead> on sortable
+ * columns. The click target is just the label + glyph (NOT the whole cell), so
+ * the empty cell space isn't clickable. The sort glyph fades in on hover when
+ * inactive and PERSISTS, as a directional arrow, when this column is the active
+ * sort. Sorting is a three-state cycle (asc → desc → unsorted) via `onSort`.
+ * `aria-sort` keeps it accessible. Pairs with the `useTableSort` hook +
+ * `sortRows` helper (@/hooks/use-table-sort). Set `numeric` for right-aligned
+ * (number) columns so the trigger hugs the right edge, matching the body. */
+function SortableTableHead({
+  sortKey,
+  sort,
+  onSort,
+  numeric = false,
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"th">, "onSort"> & {
+  sortKey: string
+  sort: SortState
+  onSort: (key: string) => void
+  numeric?: boolean
+}) {
+  const active = sort.key === sortKey
+  return (
+    <th
+      data-slot="table-head"
+      scope="col"
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+      // Cell keeps the standard header padding/alignment; the trigger inside is
+      // content-width so the hit area is the label + glyph, not the whole cell.
+      className={cn(
+        "h-10 px-4 align-middle text-xs font-medium text-neutral-500",
+        numeric ? "text-right" : "text-left",
+        className,
+      )}
+      {...props}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        // Content-width (`w-fit`, capped at half the cell) — the empty cell area
+        // is NOT a click target. A fixed-size glyph slot is always present
+        // (opacity-toggled) so the label never shifts across states.
+        className={cn(
+          "group/sort inline-flex h-10 w-fit max-w-1/2 items-center gap-1 align-middle select-none whitespace-nowrap rounded-xs text-xs font-medium text-neutral-500 outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
+          // Numeric columns are right-aligned: put the glyph LEFT of the label
+          // (flex-row-reverse) so the label stays flush to the column's right
+          // edge and lines up with the right-aligned data below it.
+          numeric && "flex-row-reverse",
+          active && "text-neutral-900",
+        )}
+      >
+        <span>{children}</span>
+        {active ? (
+          sort.dir === "asc" ? (
+            <ArrowUp className="size-3.5 shrink-0 text-neutral-900" strokeWidth={2} aria-hidden />
+          ) : (
+            <ArrowDown className="size-3.5 shrink-0 text-neutral-900" strokeWidth={2} aria-hidden />
+          )
+        ) : (
+          <ChevronsUpDown
+            className="size-3.5 shrink-0 text-neutral-400 opacity-0 transition-opacity duration-150 ease-out group-hover/sort:opacity-100 motion-reduce:transition-none"
+            strokeWidth={2}
+            aria-hidden
+          />
+        )}
+      </button>
+    </th>
   )
 }
 
@@ -131,6 +204,7 @@ export {
   TableBody,
   TableFooter,
   TableHead,
+  SortableTableHead,
   TableRow,
   TableCell,
   TableCaption,

@@ -22,8 +22,6 @@ import {
 } from '@/components/ui/dialog';
 import { DetailList, DetailRow } from '@/components/ui/detail-list';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { SectionHeading } from '@/components/ui/section-heading';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
 import { PageTitle } from '@/components/ui/page-title';
 import { SegmentedPill } from '@/components/ui/segmented-pill';
@@ -43,7 +41,7 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
+  SortableTableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -55,9 +53,11 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatNumber, formatTime, formatDateTime } from '@/lib/formatters';
 import { EVENT_ROWS, ACTION_BADGE, TYPE_META, parseEventTime, type EventRow, type EventCategory } from '@/pages/security-data';
+import { getEventFindingCopy } from '@/pages/Requests';
 
 const WHITESPACE_GLOBAL_RE = /\s+/g;
 
@@ -410,7 +410,7 @@ renderTick: (tickProps: { x: string | number; y: string | number; payload: { val
         <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2 shrink-0">
           <BreakdownRow label="Blocked"  value={fmtCount(blocked)}  tone="danger" />
           <BreakdownRow label="Flagged"  value={fmtCount(flagged)}  tone="warning" />
-          <BreakdownRow label="Redacted" value={fmtCount(redacted)} tone="info" />
+          <BreakdownRow label="Redacted" value={fmtCount(redacted)} tone="warning" />
         </div>
       </div>
 
@@ -549,14 +549,31 @@ export function Security() {
             onToggleSidebar={toggleSidebar}
             onNavigate={(path: string) => navigate(path)}
           >
-            <PageHeader
-              range={range}
-              customRange={customRange}
-              onRangeChange={handleRangeChange}
-              onCustomRangeChange={handleCustomRangeChange}
-            />
-            <HeroMetricCard range={range} customRange={customRange} />
-            <MiddleRow range={range} customRange={customRange} />
+            <PageHeader />
+            {/* Overview — range controls group with the two card rows (gap-4
+                internal) rather than floating in the PageHeader; mirrors
+                AuditTrail / Requests. */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SegmentedPill
+                    size="sm"
+                    aria-label="Time range"
+                    options={RANGE_OPTIONS}
+                    value={range === 'custom' ? '' : range}
+                    onValueChange={(v) => handleRangeChange(v as PresetRange)}
+                  />
+                  <DateRangePicker
+                    value={customRange}
+                    onChange={handleCustomRangeChange}
+                    size="sm"
+                  />
+                </div>
+              </div>
+              <HeroMetricCard range={range} customRange={customRange} />
+              <MiddleRow range={range} customRange={customRange} />
+            </div>
             <EventsTableSection range={range} customRange={customRange} />
           </DashboardChrome>
   );
@@ -564,17 +581,7 @@ export function Security() {
 
 /* ─── Page header ────────────────────────────────────────────────────────── */
 
-function PageHeader({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: EventsRange;
-  customRange: CustomRange | null;
-  onRangeChange: (r: PresetRange) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -585,18 +592,6 @@ function PageHeader({
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Every injection, PII, and credential event your policies caught, fingerprinted to Constellation's Digital Evidence layer. Blocked, flagged, or redacted.
         </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          options={RANGE_OPTIONS}
-          value={range === 'custom' ? '' : range}
-          onValueChange={(v) => onRangeChange(v as PresetRange)}
-        />
-        <DateRangePicker
-          value={customRange}
-          onChange={onCustomRangeChange}
-          size="default"
-        />
       </div>
     </div>
   );
@@ -639,7 +634,7 @@ const ATTACK_CATEGORIES: AttackCategory[] = [
 const ACTION_CATEGORY_META = [
   { label: 'Blocked',  color: 'var(--color-danger-500)'  },
   { label: 'Flagged',  color: 'var(--color-warning-500)' },
-  { label: 'Redacted', color: 'var(--color-blue-500)'    },
+  { label: 'Redacted', color: 'var(--color-warning-500)' },
 ] as const;
 
 // Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
@@ -855,6 +850,21 @@ const RANGE_OPTIONS = [
 // so its options reconcile with the rows instead of being hand-listed.
 const EVENT_KEYS = [...new Set(EVENT_ROWS.map((r) => r.key))];
 
+/** Comparable value per sortable column for the Recent events table. Time is
+ *  the stored "YYYY-MM-DD HH:MM:SS" string, which sorts chronologically as a
+ *  plain string compare. Type/Action sort by their display labels so the
+ *  order matches what the row renders. Key strips the parenthetical id. */
+function eventSortValue(row: EventRow, key: string): string | number | null {
+  switch (key) {
+    case 'time': return row.time;
+    case 'type': return TYPE_META[row.type].label;
+    case 'conversation': return row.conversationId;
+    case 'key': return row.key.split(' (')[0];
+    case 'action': return ACTION_BADGE[row.action].label;
+    default: return null;
+  }
+}
+
 function EventsTableSection({
   range,
   customRange,
@@ -872,6 +882,7 @@ function EventsTableSection({
   // Closing sets it back to null. Index carried alongside so the modal
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
 
   // Deep-link support: ?open=req_* opens the matching event's modal.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -905,6 +916,10 @@ function EventsTableSection({
     });
   }, [query, type, keyFilter, action]);
 
+  // Sort after filter, before pagination. Default (key=null) preserves the
+  // authored reverse-chronological order.
+  const sortedRows = useMemo(() => sortRows(filtered, sort, eventSortValue), [filtered, sort]);
+
   const isEmpty = filtered.length === 0;
 
   // Page-1 row count caps to the 17-row sample (all timestamps inside the
@@ -920,23 +935,28 @@ function EventsTableSection({
   // Cap the rendered rows to `scaledTotal` — at low-volume ranges (e.g. 24H
   // ≈ 12 events) the 16-row sample is larger than the actual total, so an
   // uncapped slice would render more rows than the footer's "of N" claims.
-  const pageRows = filtered
+  const pageRows = sortedRows
     .slice((page - 1) * perPage, page * perPage)
     .slice(0, Math.max(0, scaledTotal - (page - 1) * perPage));
 
   return (
     <>
-    <Card density="flush">
-      {/* Toolbar — Search + 3 filter pills, count summary right-aligned.
-          Same shape as CMP-013's RequestsTableSection. No leading category
-          icons on the filter pills (project rule for dense toolbars). */}
-      {isEmpty ? null : (
-      <FilterToolbar>
+    <div className="mt-2 flex flex-col gap-4">
+      {/* Recent events — section header on the page background, mirroring
+          Requests / AuditTrail. Search + filters + Export live here as
+          page-level section controls, so they always render (a query that
+          returns zero results never hides them). isEmpty governs only the
+          Card interior below. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Recent events</h3>
+        <div className="flex flex-wrap items-center justify-end gap-2">
         <SearchInput
           placeholder="Search events…"
           ariaLabel="Search events"
           value={query}
           onChange={setQuery}
+          surface="background"
+          className="flex-1 min-w-0 shrink"
         />
 
         <Select value={type} onValueChange={setType}>
@@ -990,13 +1010,14 @@ function EventsTableSection({
           </SelectContent>
         </Select>
 
-        <Button type="button" variant="outline" size="sm" className="ml-auto">
+        <Button type="button" variant="outline" size="sm">
           <AnimatedDownload data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
-      </FilterToolbar>
-      )}
+        </div>
+      </div>
 
+      <Card density="flush">
       {isEmpty ? (
         <TableEmptyState
           title="No security events"
@@ -1007,11 +1028,11 @@ function EventsTableSection({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Time</TableHead>
-            <TableHead className="whitespace-nowrap">Type</TableHead>
-            <TableHead className="whitespace-nowrap">Conversation</TableHead>
-            <TableHead className="whitespace-nowrap">Key</TableHead>
-            <TableHead className="whitespace-nowrap">Action</TableHead>
+            <SortableTableHead sortKey="time" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Time</SortableTableHead>
+            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Type</SortableTableHead>
+            <SortableTableHead sortKey="conversation" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Conversation</SortableTableHead>
+            <SortableTableHead sortKey="key" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Key</SortableTableHead>
+            <SortableTableHead sortKey="action" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Action</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1079,7 +1100,8 @@ function EventsTableSection({
       />
         </>
       )}
-    </Card>
+      </Card>
+    </div>
     <ThreatEventDetailDialog
       selection={selectedRow}
       onOpenChange={(open) => {
@@ -1117,7 +1139,7 @@ export function ThreatEventDetailDialog({
 }) {
   return (
     <Dialog open={!!selection} onOpenChange={onOpenChange}>
-      <DialogScrollContent className="sm:max-w-[592px]">
+      <DialogScrollContent className="sm:max-w-[640px]">
         {selection ? (
           <ThreatEventDetailBody row={selection} />
         ) : null}
@@ -1139,6 +1161,12 @@ function ThreatEventDetailBody({
   const openConversation = () => navigate(`/conversations?open=${conversationId}`);
   const openRequest = () => navigate(`/requests?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
+
+  // Reconcile against the matching Requests row so the message + detection
+  // copy is identical to what the Requests findings panel shows for the same
+  // request. Null when no request row matches (sparse mock) — falls back to
+  // the standalone per-type copy in TYPE_DETAILS.
+  const reconciled = getEventFindingCopy(requestId, row.type);
 
   // Marked state — flips the dialog badge to "Marked false" and converts
   // the footer button to a disabled "Event marked" confirmation in place.
@@ -1162,7 +1190,7 @@ function ThreatEventDetailBody({
                   setMarked(true);
                   toast.success('Event marked as invalid');
                 }}
-                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+                className="group/mark relative after:absolute after:-inset-2 after:content-[''] inline-flex items-center shrink-0 h-8 w-8 hover:w-30 focus-visible:w-30 rounded-sm border border-border bg-card text-xs font-medium text-neutral-900 hover:bg-neutral-50 [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] active:scale-[0.99] overflow-hidden whitespace-nowrap outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <span className="inline-flex items-center justify-center size-8 shrink-0">
                   <Flag className="size-3.5" strokeWidth={1.75} aria-hidden />
@@ -1187,21 +1215,29 @@ function ThreatEventDetailBody({
               conversation. Per-block "User"/"Assistant" labels are
               extra noise at single-event-detail scale. */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <FileText className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <FileText className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Message
               </span>
-            </SectionHeading>
+            </h3>
             <div className="flex flex-col gap-3">
-              <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                {detail.samplePrompt}
-              </div>
-              {detail.sampleResponse !== null ? (
-                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
-                  {detail.sampleResponse}
+              {reconciled ? (
+                <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty max-h-[200px] overflow-y-auto overscroll-contain">
+                  {reconciled.evidence}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty max-h-[200px] overflow-y-auto overscroll-contain">
+                    {detail.samplePrompt}
+                  </div>
+                  {detail.sampleResponse !== null ? (
+                    <div className="rounded-md border border-border px-4 py-3 text-sm text-neutral-900 text-pretty">
+                      {detail.sampleResponse}
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           </section>
 
@@ -1209,29 +1245,37 @@ function ThreatEventDetailBody({
               modal Security panel: each check is its own bordered card
               with title + description + verdict badge. */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <ShieldCheck className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Detection
               </span>
-            </SectionHeading>
+            </h3>
             <div className="flex flex-col gap-2">
               {DETECTION_CHECKS.map((check) => {
                 const firing = check.keys.some((k) => flaggedSet.has(k));
                 const badge = firing
                   ? actionMeta
                   : { variant: 'success' as const, label: 'pass' };
+                // Firing-card border picks up the action tone (2-tier
+                // severity): red = blocked, amber = flagged/redacted. The
+                // action badge label carries the flag-vs-redact distinction.
+                const borderClass = !firing
+                  ? 'border-border'
+                  : row.action === 'blocked'
+                    ? 'border-destructive'
+                    : 'border-warning-500';
                 return (
                   <div
                     key={check.keys.join('-')}
-                    className="flex items-start justify-between gap-3 rounded-md border border-border p-4"
+                    className={`flex items-start justify-between gap-3 rounded-md border ${borderClass} p-4`}
                   >
                     <div className="flex flex-col gap-1 min-w-0">
                       <span className="font-sans text-sm font-medium text-neutral-900">
                         {check.label}
                       </span>
-                      <span className="font-sans text-xs text-neutral-500 text-pretty">
-                        {firing ? detail.reason : check.passText}
+                      <span className="font-sans text-sm/5 font-normal text-neutral-500 text-pretty">
+                        {firing ? (reconciled?.message ?? detail.reason) : check.passText}
                       </span>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -1248,12 +1292,12 @@ function ThreatEventDetailBody({
               Endpoint dropped — "the model provider has nothing to do
               with the prompt injection attempt." */}
           <section className="flex flex-col gap-2">
-            <SectionHeading>
+            <h3 className="font-sans text-base font-medium tracking-snug text-neutral-900 m-0">
               <span className="inline-flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+                <ArrowLeftRight className="size-5 text-neutral-500" strokeWidth={1.75} aria-hidden />
                 Request
               </span>
-            </SectionHeading>
+            </h3>
             <DetailList>
               <DetailRow
                 label="Timestamp"

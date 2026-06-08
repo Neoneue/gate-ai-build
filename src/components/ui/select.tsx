@@ -81,7 +81,7 @@ function SelectValue({ className, children, ...props }: SelectPrimitive.Value.Pr
 const selectTriggerVariants = cva(
   // Surface mirrors <Input /> so triggers and inputs share a row.
   // Skill: performance.md — only colors + focus-ring shadow animate; never `transition-all`.
-  "flex w-fit items-center justify-between rounded-sm border border-border bg-neutral-50 text-neutral-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-neutral-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/select flex w-fit items-center justify-between rounded-sm border border-border bg-neutral-50 text-neutral-800 whitespace-nowrap transition-[colors,box-shadow] duration-150 ease-out outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-neutral-400 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       size: {
@@ -113,7 +113,10 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon
         render={
-          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+          // Chevron rotates 180° while the popup is open, back to 0 on close.
+          // Transform-only + the project's strong --ease-out curve (Emil), 150ms
+          // (his dropdown range); reduced-motion drops the rotation.
+          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none" />
         }
       />
     </SelectPrimitive.Trigger>
@@ -124,10 +127,13 @@ function SelectContent({
   className,
   children,
   side = "bottom",
-  sideOffset = 4,
-  align = "center",
+  sideOffset = 8,
+  align = "end",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  // false = render as a real dropdown BELOW the trigger (8px gap, right-
+  // aligned) that flips up near the viewport bottom — not the macOS-style
+  // overlay that centers the selected item over the trigger. House standard.
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
@@ -150,7 +156,7 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-50 max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-sm bg-card text-popover-foreground border border-border shadow-(--shadow-popup) py-1 duration-150 ease-out data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+            "relative isolate z-50 max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-sm bg-card text-popover-foreground border border-border shadow-(--shadow-popup) p-1 duration-150 ease-out data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
             className,
           )}
           {...props}

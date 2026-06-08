@@ -18,13 +18,14 @@ import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { Switch } from '@/components/ui/switch';
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { formatCurrency } from '@/lib/formatters';
 import { Timestamp } from '@/components/ui/timestamp';
@@ -93,7 +94,7 @@ function PlanCard() {
       <CardContent className="flex-1 flex flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation's Digital Evidence layer.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation&rsquo;s Digital Evidence layer.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
       </CardContent>
@@ -305,7 +306,7 @@ function AddCreditsDialog({
         </div>
 
         <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
-          You'll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
+          You&rsquo;ll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
         </p>
 
         <DialogFooter>
@@ -530,7 +531,22 @@ const HISTORY_ROWS: HistoryRow[] = [
 const fmtAmount = (n: number) => formatCurrency(n, { signDisplay: 'exceptZero' });
 const fmtUsd = (n: number) => formatCurrency(n);
 
+function historySortValue(row: HistoryRow, key: string): string | number | null {
+  switch (key) {
+    case 'date': return row.date.getTime();
+    case 'type': return row.type;
+    case 'amount': return row.amount;
+    case 'balanceAfter': return row.balanceAfter;
+    default: return null;
+  }
+}
+
 function HistorySection() {
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = React.useMemo(
+    () => sortRows(HISTORY_ROWS, sort, historySortValue),
+    [sort],
+  );
   return (
     <Card density="flush">
       <CardHeader className="py-3">
@@ -539,14 +555,14 @@ function HistorySection() {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="whitespace-nowrap">Date</TableHead>
-            <TableHead className="whitespace-nowrap">Type</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
-            <TableHead className="text-right whitespace-nowrap">Balance after</TableHead>
+            <SortableTableHead sortKey="date" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Date</SortableTableHead>
+            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Type</SortableTableHead>
+            <SortableTableHead sortKey="amount" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Amount</SortableTableHead>
+            <SortableTableHead sortKey="balanceAfter" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Balance after</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {HISTORY_ROWS.map((row) => (
+          {sortedRows.map((row) => (
             <TableRow key={row.id} className="hover:bg-transparent">
               <TableCell className="whitespace-nowrap text-neutral-800"><Timestamp date={row.date} /></TableCell>
               <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>

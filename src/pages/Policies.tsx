@@ -3,7 +3,6 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Shield, ShieldAlert, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eyebrow } from '@/components/ui/eyebrow';
 // KPI rail hidden for now — see commented KpiSection below.
 // import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 // import { KpiRail } from '@/components/ui/kpi-rail';
@@ -537,7 +536,7 @@ function ActionHalf({
                     {opt.name}
                   </span>
                   {opt.flag ? (
-                    <Eyebrow>{opt.flag}</Eyebrow>
+                    <Badge variant="neutral">{opt.flag}</Badge>
                   ) : null}
                 </div>
                 <span id={descId} className="font-sans text-xs text-neutral-500 tracking-tight text-pretty">

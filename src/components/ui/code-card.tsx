@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { CopyButton } from '@/components/ui/copy-button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -48,6 +49,9 @@ export type CodeTone =
 export interface CodeToken {
   text: string;
   tone?: CodeTone;
+  /** Amber highlight (e.g. a matched finding substring). Marked with
+   *  `data-code-highlight` so callers can scroll it into view. */
+  highlight?: boolean;
 }
 
 export type CodeLine = CodeToken[];
@@ -96,7 +100,7 @@ export function CodeCard({
         // flat default uses the everyday material tier (shadow-as-border);
         // raised promotes to the popup elevation token so all floating
         // surfaces (cards, selects, dialogs, tooltips) read as one family.
-        'flex flex-col overflow-hidden rounded-md bg-white shadow-(--shadow-border)',
+        'flex flex-col overflow-hidden rounded-md bg-card shadow-(--shadow-border)',
         elevation === 'raised' && 'shadow-(--shadow-popup)',
         className,
       )}
@@ -113,7 +117,7 @@ export function CodeCardHeader({
     <div
       data-slot="code-card-header"
       className={cn(
-        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-neutral-100',
+        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-border',
         className,
       )}
       {...props}
@@ -153,7 +157,7 @@ export function CodeCardTabs({
           // family's lift instead of inlining its own rgba shadow.
           'inline-flex items-center h-6 rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out',
           isActive
-            ? 'bg-white text-neutral-900 font-medium border border-neutral-200 shadow-xs'
+            ? 'bg-card text-neutral-900 font-medium border border-border shadow-xs'
             : 'text-neutral-600 font-medium border border-transparent',
           interactive && !isActive && 'hover:text-neutral-900 hover:bg-white/60',
         );
@@ -221,13 +225,21 @@ interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   tone?: 'light' | 'dark';
   /** Compact inline snippet — used inside the steps card. */
   density?: 'default' | 'compact' | 'inline';
+  /** Wrap long lines instead of scrolling horizontally (e.g. a JSON body
+   *  with a long string value). Lines grow to fit; indentation is preserved. */
+  wrap?: boolean;
+  /** When set, highlighted tokens become a hover Tooltip with this content
+   *  (e.g. a finding's detector / score / threshold). */
+  highlightTooltip?: React.ReactNode;
 }
 
 export function CodeBlock({
   lines,
   tone = 'light',
   density = 'default',
+  wrap = false,
   className,
+  highlightTooltip,
   ...props
 }: CodeBlockProps) {
   const toneMap = tone === 'dark' ? TONE_CLASS_DARK : TONE_CLASS_LIGHT;
@@ -242,7 +254,8 @@ export function CodeBlock({
     <div
       data-slot="code-block"
       className={cn(
-        'flex flex-col font-mono whitespace-pre',
+        'flex flex-col font-mono',
+        wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre overflow-x-auto',
         text_cls,
         density_cls,
         className,
@@ -250,16 +263,43 @@ export function CodeBlock({
       {...props}
     >
       {lines.map((line, idx) => (
-        <div key={idx} className="flex h-5 shrink-0 min-h-5">
+        <div key={idx} className={wrap ? 'min-h-5' : 'flex h-5 shrink-0 min-h-5'}>
           {line.length === 0 ? (
             // Blank line spacer — keep the line height
             <span aria-hidden="true">&nbsp;</span>
           ) : (
-            line.map((tok, j) => (
-              <span key={j} className={toneMap[tok.tone ?? 'default']}>
-                {tok.text}
-              </span>
-            ))
+            line.map((tok, j) =>
+              tok.highlight && highlightTooltip ? (
+                <Tooltip key={j}>
+                  <TooltipTrigger
+                    render={(p) => (
+                      <span
+                        {...p}
+                        data-code-highlight=""
+                        className={cn(
+                          toneMap[tok.tone ?? 'default'],
+                          'rounded-xs bg-warning-100 text-warning-800 cursor-help',
+                        )}
+                      >
+                        {tok.text}
+                      </span>
+                    )}
+                  />
+                  <TooltipContent className="text-left p-2">{highlightTooltip}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <span
+                  key={j}
+                  data-code-highlight={tok.highlight ? '' : undefined}
+                  className={cn(
+                    toneMap[tok.tone ?? 'default'],
+                    tok.highlight && 'rounded-xs bg-warning-100 text-warning-800',
+                  )}
+                >
+                  {tok.text}
+                </span>
+              ),
+            )
           )}
         </div>
       ))}

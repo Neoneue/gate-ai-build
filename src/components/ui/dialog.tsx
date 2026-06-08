@@ -214,7 +214,7 @@ function DialogScrollHeader({ className, ...props }: React.ComponentProps<"div">
       // the title block in consumers is OK to clear the absolute close
       // button when needed, but the primitive itself doesn't bake it in
       // (some headers don't need it).
-      className={cn("shrink-0 flex flex-col gap-3 px-6 pt-6", className)}
+      className={cn("shrink-0 flex flex-col gap-2 px-6 pt-6", className)}
       {...props}
     />
   )
@@ -242,7 +242,7 @@ function DialogScrollBody({ className, ...props }: React.ComponentProps<"div">) 
       // height between fixed sections; `overflow-y-auto` does the
       // scrolling. `pt-4 pb-4` provides internal breathing room from
       // the fixed sections above and below.
-      className={cn("flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-6", className)}
+      className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-6 pb-6", className)}
       {...props}
     />
   )
@@ -350,8 +350,9 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
 //                via base-ui) or "static" (renders <h2>; used by the
 //                CMP-007 spec-sheet specimens that live outside a
 //                <Dialog> root).
-// `pr-12` is baked in so the title block always clears the absolute
-// close button at top-right; no consumer needs to remember it.
+// `pr-12` clears the absolute close button at top-right and is applied
+// only in mode="dialog"; in mode="static" (page specimens, no close
+// button) it's dropped so the title/badge sit flush at the gutter.
 function DialogTitleBlock({
   icon,
   badge,
@@ -387,10 +388,9 @@ function DialogTitleBlock({
     )
   // Title row alignment: when an icon is present, it clusters tightly with
   // the title (`gap-2` / 8px) so they read as one visual unit. The badge
-  // sits at the outer `gap-3` (12px) since it's a separate entity. Without
-  // an icon, the title and badge sit at gap-3 in a flat row. Matches the
-  // pre-extraction CMP-015 hand-roll shape (icon belongs to title; badge
-  // is meta).
+  // sits at the same `gap-2` (8px layout grid) as a separate entity.
+  // Without an icon, title and badge sit at gap-2 in a flat row. (Icon
+  // belongs to title; badge is meta.)
   const titleRow = icon ? (
     <>
       <div className="flex items-center gap-2 min-w-0">
@@ -406,8 +406,8 @@ function DialogTitleBlock({
     </>
   )
   return (
-    <div className={cn("flex flex-col gap-3 pr-12 min-w-0", className)}>
-      <div className="flex items-center gap-3 flex-wrap min-w-0">
+    <div className={cn("flex flex-col gap-2 min-w-0", mode === "dialog" && "pr-12", className)}>
+      <div className="flex items-center gap-2 flex-wrap min-w-0">
         {titleRow}
       </div>
       {meta ? (

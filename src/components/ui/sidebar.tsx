@@ -82,7 +82,7 @@ export function Sidebar({
       aria-label="Primary navigation"
       style={{ transitionTimingFunction: 'var(--ease-drawer)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-150 motion-reduce:transition-none',
+        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-300 motion-reduce:transition-none',
         expanded ? 'w-60' : 'w-16',
       )}
     >
@@ -159,16 +159,14 @@ function SidebarCollapsed({
                   disabled={isDisabled}
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   // Collapsed-rail icon buttons (36px square) use
-                  // `active:translate-y-px` instead of `scale-[0.98]` —
-                  // a 0.7px scale shrink on a 36px target is sub-pixel
-                  // and invisible. translate-y-px is size-invariant and
-                  // matches the project's Button primitive press feel.
+                  // `active:scale-[0.99]` — a subtle 1% scale-down on press,
+                  // matching the project's Button primitive press feel.
                   className={
                     isActive
-                      ? 'flex items-center justify-center size-9 rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? 'flex items-center justify-center size-9 rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
                         ? 'flex items-center justify-center size-9 rounded-sm text-neutral-300 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center justify-center size-9 rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-neutral-700 hover:bg-neutral-100 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center justify-center size-9 rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-neutral-700 hover:bg-neutral-100 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon className="size-[18px]" strokeWidth={1.5} />
@@ -230,10 +228,10 @@ function SidebarExpanded({
                   onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                       : isDisabled
                         ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
                   }
                 >
                   <Icon
@@ -290,7 +288,7 @@ export function WorkspaceSwitcher() {
         render={
           <button
             type="button"
-            className="inline-flex items-center gap-2 h-8 px-2 rounded-sm border border-border bg-card outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,translate] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0"
+            className="inline-flex items-center gap-2 h-8 px-2 rounded-sm border border-border bg-card outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
           />
         }
       >
@@ -334,7 +332,7 @@ function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void
         <button
           type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-card text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 after:absolute after:-inset-2 after:content-['']"
+          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-card text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 after:absolute after:-inset-2 after:content-['']"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>

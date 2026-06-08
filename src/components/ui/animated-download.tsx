@@ -40,7 +40,7 @@ export function AnimatedDownload({ className, ...props }: React.SVGProps<SVGSVGE
 				// (invisible), re-enter to rest. One element.
 				const tl = gsap
 					.timeline({ paused: true })
-					.to(arrow, { y: 6, opacity: 0, duration: 0.26, ease: 'power2.in' })
+					.to(arrow, { y: 6, opacity: 0, duration: 0.26, ease: 'power2.inOut' })
 					.set(arrow, { y: -6 })
 					.to(arrow, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' });
 
