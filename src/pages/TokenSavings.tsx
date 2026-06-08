@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { CompactSpark } from '@/components/ui/compact-kpi';
+import { SegmentedPill } from '@/components/ui/segmented-pill';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { KpiRail } from '@/components/ui/kpi-rail';
 import { KpiTile } from '@/components/ui/kpi-tile';
@@ -23,6 +26,14 @@ export function TokenSavings() {
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
+  // Range selector defaults to All on load (every page's landing state); read
+  // `?range=` once for deep-links, then one-way (manual changes don't sync back).
+  const [searchParams] = useSearchParams();
+  const [range, setRange] = useState<Range>(() => {
+    const r = searchParams.get('range');
+    return r === '24h' || r === '7d' || r === '30d' || r === 'all' ? r : 'all';
+  });
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   return (
     <DashboardChrome
       activeNavId="token-savings"
@@ -31,8 +42,16 @@ export function TokenSavings() {
       onNavigate={(path: string) => navigate(path)}
     >
       <PageHeader />
-      <KpiRailSection />
-      <MechanismGrid />
+      <OverviewSection
+        range={range}
+        customRange={customRange}
+        onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
+        onCustomRangeChange={(r) => {
+          if (r) { setCustomRange(r); setRange('custom'); }
+          else { setCustomRange(null); setRange('all'); }
+        }}
+      />
+      <SavingsOptionsSection />
     </DashboardChrome>
   );
 }
@@ -52,23 +71,130 @@ function PageHeader() {
 
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
-function KpiRailSection() {
+type PresetRange = 'all' | '24h' | '7d' | '30d';
+type Range = PresetRange | 'custom';
+type CustomRange = { from: Date; to: Date };
+
+const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: '24h', label: '24H' },
+  { value: '7d', label: '7D' },
+  { value: '30d', label: '30D' },
+];
+
+const RANGE_DELTA_NOTE: Record<Range, string> = {
+  all: 'All time',
+  '24h': 'vs prior day',
+  '7d': 'vs prior week',
+  '30d': 'vs prior month',
+  custom: 'vs prior range',
+};
+
+// Savings is a RATE, so it stays roughly stable across windows (it does not
+// accumulate like a total). Each window shows a slightly different rate, and
+// every tile's sparkline ENDS at its headline value so the trend reconciles.
+// Total saved === caching + compression (rounded): all 0.15+13.7≈13.9,
+// 7d 0.18+14.0≈14.2, 30d 0.14+13.4≈13.5, 24h 0.11+12.7≈12.8.
+const KPI_COLORS = {
+  total: 'var(--color-chart-1)',
+  caching: 'var(--color-chart-3)',
+  compression: 'var(--color-chart-7)',
+} as const;
+type SavingsKpi = { title: string; value: string; colorVar: string; spark: number[] };
+const KPI_BY_RANGE: Record<PresetRange, SavingsKpi[]> = {
+  // All time / 30d show the lifetime ramp: savings start near 0% and climb
+  // steeply as the cache warms and compression heuristics learn the workload,
+  // then begin to plateau near the steady-state rate (ease-out curve). The
+  // shorter windows (24h / 7d) sit in the plateau, so they barely move.
+  all: [
+    { title: 'Total saved', value: '13.9', colorVar: KPI_COLORS.total, spark: [0.4, 2.9, 6.4, 9.6, 11.9, 13.3, 13.9] },
+    { title: 'Caching', value: '0.15', colorVar: KPI_COLORS.caching, spark: [0.0, 0.02, 0.05, 0.09, 0.12, 0.14, 0.15] },
+    { title: 'Compression', value: '13.7', colorVar: KPI_COLORS.compression, spark: [0.4, 2.7, 6.1, 9.3, 11.7, 13.1, 13.7] },
+  ],
+  '24h': [
+    { title: 'Total saved', value: '12.8', colorVar: KPI_COLORS.total, spark: [12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.8] },
+    { title: 'Caching', value: '0.11', colorVar: KPI_COLORS.caching, spark: [0.09, 0.09, 0.10, 0.10, 0.11, 0.11, 0.11] },
+    { title: 'Compression', value: '12.7', colorVar: KPI_COLORS.compression, spark: [12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.7] },
+  ],
+  '7d': [
+    { title: 'Total saved', value: '14.2', colorVar: KPI_COLORS.total, spark: [12.4, 12.8, 13.2, 13.5, 13.8, 14.0, 14.2] },
+    { title: 'Caching', value: '0.18', colorVar: KPI_COLORS.caching, spark: [0.13, 0.14, 0.15, 0.16, 0.17, 0.17, 0.18] },
+    { title: 'Compression', value: '14.0', colorVar: KPI_COLORS.compression, spark: [12.3, 12.7, 13.1, 13.4, 13.7, 13.9, 14.0] },
+  ],
+  '30d': [
+    { title: 'Total saved', value: '13.5', colorVar: KPI_COLORS.total, spark: [0.5, 3.1, 6.7, 9.8, 12.0, 13.1, 13.5] },
+    { title: 'Caching', value: '0.14', colorVar: KPI_COLORS.caching, spark: [0.0, 0.02, 0.05, 0.08, 0.11, 0.13, 0.14] },
+    { title: 'Compression', value: '13.4', colorVar: KPI_COLORS.compression, spark: [0.5, 2.9, 6.3, 9.5, 11.7, 13.0, 13.4] },
+  ],
+};
+
+// Delta = change across the displayed window (last point − first point), so the
+// tag can never contradict the sparkline. Sub-1-point moves keep 2 decimals
+// (caching), larger moves 1 decimal. Always a percentage-point delta.
+function sparkDelta(spark: number[]): string {
+  const d = spark[spark.length - 1] - spark[0];
+  const decimals = Math.abs(d) < 1 ? 2 : 1;
+  return `${d >= 0 ? '+' : '-'}${Math.abs(d).toFixed(decimals)}%`;
+}
+
+function OverviewSection({
+  range,
+  customRange,
+  onRangeChange,
+  onCustomRangeChange,
+}: {
+  range: Range;
+  customRange: CustomRange | null;
+  onRangeChange: (r: PresetRange) => void;
+  onCustomRangeChange: (r: CustomRange | null) => void;
+}) {
+  const kpis = KPI_BY_RANGE[range === 'custom' ? 'all' : range];
+  const note = RANGE_DELTA_NOTE[range];
   return (
-    <KpiRail columns={3}>
-      <KpiTile title="Total saved" value="0" valueSuffix="%" />
-      <KpiTile title="Caching" value="0" valueSuffix="%" />
-      <KpiTile title="Compression" value="0" valueSuffix="%" />
-    </KpiRail>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedPill
+            size="sm"
+            aria-label="Time range"
+            options={RANGE_OPTIONS}
+            value={range === 'custom' ? '' : range}
+            onValueChange={(v) => onRangeChange(v as PresetRange)}
+          />
+          <DateRangePicker value={customRange} onChange={onCustomRangeChange} size="sm" />
+        </div>
+      </div>
+      <KpiRail columns={3}>
+        {kpis.map((k) => (
+          <KpiTile
+            key={k.title}
+            title={k.title}
+            value={k.value}
+            valueSuffix="%"
+            delta={sparkDelta(k.spark)}
+            deltaNote={note}
+            deltaRow
+            spark={<CompactSpark colorVar={k.colorVar} data={[...k.spark]} />}
+          />
+        ))}
+      </KpiRail>
+    </div>
   );
 }
 
-/* ─── Mechanism cards ───────────────────────────────────────────────── */
+/* ─── Savings options ───────────────────────────────────────────────── */
 
-function MechanismGrid() {
+function SavingsOptionsSection() {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <CachingCard />
-      <CompressionCard />
+    <div className="mt-2 flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Savings options</h3>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <CachingCard />
+        <CompressionCard />
+      </div>
     </div>
   );
 }

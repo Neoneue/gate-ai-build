@@ -222,10 +222,10 @@ function LimitsSection({
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
                 {typeLabel(limit.type)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+              <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {thresholdLabel(limit.type, limit.threshold)}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
+              <TableCell className="text-right whitespace-nowrap font-mono text-sm tabular-nums text-neutral-800">
                 {usedLabel(limit.type, limit.used, limit.threshold)}
               </TableCell>
               <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
