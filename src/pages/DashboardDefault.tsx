@@ -15,8 +15,17 @@ import { KpiRail } from '@/components/ui/kpi-rail';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CopyButton } from '@/components/ui/copy-button';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { AnthropicIcon, OpenAIIcon, GeminiIcon, GrokIcon, MetaIcon, MistralIcon } from '@/components/icons/model-providers';
 import { BrandMark } from '@/components/icons/brand-mark';
+import { Badge } from '@/components/ui/badge';
 
 const GATEWAY_URL = 'https://gateway-staging.constellationgate.ai';
 const GATEWAY_KEY_PLACEHOLDER = 'sk-gw-…YOUR_KEY';
@@ -136,28 +145,67 @@ function HeroCard() {
 
   return (
     <Card density="flush">
-      <div className="flex">
+      <div className="flex h-[340px] overflow-hidden">
         {/* Left panel */}
         <div className="flex-1 flex flex-col">
-          <div className="p-8 flex flex-col gap-6 flex-1">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
-                Start using Constellation Gate AI
-              </h2>
-              <p className="text-sm text-neutral-500 text-pretty max-w-md m-0">
-                Built on the AI SDK, Constellation Gate lets you switch between hundreds of models without managing rate limits or provider accounts.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => navigate('/api-keys')}>
-                <Plus className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" data-icon="inline-start" /> Create key
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
-              >
-                Read API docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
-              </Button>
+          <div className="relative flex-1 overflow-hidden">
+            {/* Decorative app preview — pre-faded/cropped asset, fit cleanly inside, right-aligned + vertically centered */}
+            <img
+              src="/gateconnect-app-fade.png"
+              alt=""
+              aria-hidden
+              className="pointer-events-none select-none absolute inset-0 size-full object-contain object-right translate-y-[10px] scale-90 origin-right"
+            />
+            <div className="relative z-10 flex flex-col gap-6 p-8">
+              <div className="flex flex-col gap-2">
+                {false && <Badge variant="info">Recommended</Badge>}
+                <h3 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
+                  Get started with Gate Connect App
+                </h3>
+                <p className="text-sm text-neutral-500 text-pretty max-w-[480px] m-0">
+                  Connect your providers or individual models to Gate AI using our app. Gate Connect writes the config for you, so every request flows right through the gateway. <span className="font-semibold">No code required.</span>
+                </p>
+              </div>
+              <div className="flex">
+                <Dialog disablePointerDismissal>
+                  <DialogTrigger
+                    render={
+                      <Button size="lg">
+                        <Download className="size-4" data-icon="inline-start" /> Download Gate Connect
+                      </Button>
+                    }
+                  />
+                  <DialogContent showCloseButton={false} className="p-0 gap-0 overflow-hidden sm:max-w-[400px]">
+                    {/* Image slot */}
+                    <div className="aspect-video bg-neutral-100 border-b border-border flex items-center justify-center px-6 pt-10 pb-4">
+                      <img
+                        src="/gateconnect-app.png"
+                        alt="Gate Connect desktop app"
+                        className="max-h-full max-w-full object-contain scale-[1.125] -translate-y-1"
+                      />
+                    </div>
+                    {/* Body */}
+                    <div className="flex flex-col gap-6 p-6">
+                      <div className="flex flex-col gap-2">
+                        <DialogTitle className="text-lg leading-none font-medium text-neutral-900 m-0">
+                          Get started with Gate Connect App
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-neutral-500 text-pretty m-0">
+                          Connect your providers or individual models to Gate AI using our app. Gate Connect writes the config for you, so every request flows right through the gateway.
+                          <br />
+                          <span className="font-semibold">No code required.</span>
+                        </DialogDescription>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <DialogClose render={<Button variant="outline">Skip</Button>} />
+                        <Button>
+                          <Download className="size-4" data-icon="inline-start" /> Download Gate Connect
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
           <div className="border-t border-border px-8 py-4 flex items-center gap-4">
@@ -179,7 +227,8 @@ function HeroCard() {
           </div>
         </div>
 
-        {/* Right panel — code snippet */}
+        {/* Right panel — code snippet (hidden; kept for easy restore) */}
+        {false && (
         <div className="flex-1 border-l border-border flex flex-col">
           <Tabs defaultValue="gate-connect" className="flex flex-col flex-1" onValueChange={(v) => setActiveHeroTab(v as 'gate-connect' | 'anthropic' | 'openai' | 'google')}>
             <div className="flex items-center justify-between px-4 border-b border-border">
@@ -202,21 +251,24 @@ function HeroCard() {
               )}
             </div>
             <TabsContent value="gate-connect" className="flex-1 mt-0">
-              <div className="flex flex-col gap-4 p-4 pl-6">
+              <div className="p-8 flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <BrandMark className="size-5 text-blue-700" />
-                    <h3 className="text-lg font-semibold tracking-tight text-neutral-900 m-0">
-                      Connect with Gate Connect App
-                    </h3>
-                  </div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
+                    Start using Constellation Gate AI
+                  </h2>
                   <p className="text-sm text-neutral-500 text-pretty max-w-md m-0">
-                    Connect your AI apps and providers to Gate AI in a single click. Gate Connect writes the config for you, so every request flows right through the gateway. No code required.
+                    Built on the AI SDK, Constellation Gate lets you switch between hundreds of models without managing rate limits or provider accounts.
                   </p>
                 </div>
-                <div className="flex">
-                  <Button>
-                    <Download className="size-4" data-icon="inline-start" /> Download Gate Connect
+                <div className="flex items-center gap-3">
+                  <Button onClick={() => navigate('/api-keys')}>
+                    <Plus className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" data-icon="inline-start" /> Create key
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
+                  >
+                    Read API docs <ExternalLink className="size-4 transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0" />
                   </Button>
                 </div>
               </div>
@@ -232,6 +284,7 @@ function HeroCard() {
             </TabsContent>
           </Tabs>
         </div>
+        )}
       </div>
     </Card>
   );
