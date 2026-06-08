@@ -31,11 +31,8 @@ dist-ssr
 # Vendored agent bundle (sourced separately)
 front-end-developer/
 
-# Local-only project notes (not shipped) — but the findings docs below ship
-# (dev reference for diffing). Anything else under docs/ stays local.
-/docs/*
-!/docs/Presidio-findings.md
-!/docs/Credentials-findings.md
-!/docs/Injection-findings.md
+# Local-only project notes (not shipped). The whole docs/ folder stays local;
+# the committed UI change logs live in change-logs/ (tracked) instead.
+docs/
 gateway-fixes.md
 handoff.md
