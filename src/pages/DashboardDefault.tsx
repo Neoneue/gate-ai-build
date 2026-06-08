@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, ExternalLink, BarChart2, Zap, ShieldAlert, ArrowLeftRight, MessageSquare } from 'lucide-react';
+import { Plus, ExternalLink, Download, BarChart2, Zap, ShieldAlert, ArrowLeftRight, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/ui/page-title';
 import {
@@ -16,6 +16,7 @@ import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CopyButton } from '@/components/ui/copy-button';
 import { AnthropicIcon, OpenAIIcon, GeminiIcon, GrokIcon, MetaIcon, MistralIcon } from '@/components/icons/model-providers';
+import { BrandMark } from '@/components/icons/brand-mark';
 
 const GATEWAY_URL = 'https://gateway-staging.constellationgate.ai';
 const GATEWAY_KEY_PLACEHOLDER = 'sk-gw-…YOUR_KEY';
@@ -131,7 +132,7 @@ function CodePanel({ snippet }: { snippet: string }) {
 
 function HeroCard() {
   const navigate = useNavigate();
-  const [activeHeroTab, setActiveHeroTab] = useState<'anthropic' | 'openai' | 'google'>('anthropic');
+  const [activeHeroTab, setActiveHeroTab] = useState<'gate-connect' | 'anthropic' | 'openai' | 'google'>('gate-connect');
 
   return (
     <Card density="flush">
@@ -180,9 +181,12 @@ function HeroCard() {
 
         {/* Right panel — code snippet */}
         <div className="flex-1 border-l border-border flex flex-col">
-          <Tabs defaultValue="anthropic" className="flex flex-col flex-1" onValueChange={(v) => setActiveHeroTab(v as 'anthropic' | 'openai' | 'google')}>
+          <Tabs defaultValue="gate-connect" className="flex flex-col flex-1" onValueChange={(v) => setActiveHeroTab(v as 'gate-connect' | 'anthropic' | 'openai' | 'google')}>
             <div className="flex items-center justify-between px-4 border-b border-border">
               <TabsList variant="line" className="px-0 border-b-0">
+                <TabsTrigger value="gate-connect">
+                  <BrandMark className="size-4 text-blue-700" />Gate Connect
+                </TabsTrigger>
                 <TabsTrigger value="anthropic">
                   <AnthropicIcon className="size-4" />Anthropic
                 </TabsTrigger>
@@ -193,8 +197,30 @@ function HeroCard() {
                   <GeminiIcon className="size-4" />Google
                 </TabsTrigger>
               </TabsList>
-              <CopyButton mode="label" text="Copy code" value={HERO_SNIPPETS[activeHeroTab]} label="code snippet" />
+              {activeHeroTab !== 'gate-connect' && (
+                <CopyButton mode="label" text="Copy code" value={HERO_SNIPPETS[activeHeroTab]} label="code snippet" />
+              )}
             </div>
+            <TabsContent value="gate-connect" className="flex-1 mt-0">
+              <div className="flex flex-col gap-4 p-4 pl-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <BrandMark className="size-5 text-blue-700" />
+                    <h3 className="text-lg font-semibold tracking-tight text-neutral-900 m-0">
+                      Connect with Gate Connect App
+                    </h3>
+                  </div>
+                  <p className="text-sm text-neutral-500 text-pretty max-w-md m-0">
+                    Connect your AI apps and providers to Gate AI in a single click. Gate Connect writes the config for you, so every request flows right through the gateway. No code required.
+                  </p>
+                </div>
+                <div className="flex">
+                  <Button>
+                    <Download className="size-4" data-icon="inline-start" /> Download Gate Connect
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
             <TabsContent value="anthropic" className="flex-1 mt-0">
               <CodePanel snippet={HERO_ANTHROPIC_SNIPPET} />
             </TabsContent>
