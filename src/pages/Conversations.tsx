@@ -1237,6 +1237,15 @@ const TRACE_SELECT_RING: Record<TraceStatus, string> = {
   warn:    'after:ring-warning-500',
   danger:  'after:ring-destructive',
 };
+// Hover preview of the selection outline — a light SOLID tint of the same
+// status color (the -200 step, not an alpha of the bold ring) so it composites
+// cleanly over the timeline track. -50 is near-white and reads as no color, so
+// -200 is the lightest step that still registers as the status hue.
+const TRACE_HOVER_RING: Record<TraceStatus, string> = {
+  success: 'hover:after:ring-success-200',
+  warn:    'hover:after:ring-warning-200',
+  danger:  'hover:after:ring-danger-200',
+};
 
 /** Interleaved timeline entry for the Findings-only view: either a finding
  *  TraceEvent or a collapsed run of consecutive passing (non-finding) steps
@@ -1373,9 +1382,10 @@ function TraceItem({
   onSelect: () => void;
 }) {
   // Selection is shown as a status-colored OUTLINE (ring), not a fill —
-  // blue/amber/red track the row's status so the only colors in the trace are
-  // the three status tones. See TRACE_SELECT_RING.
+  // green/amber/red track the row's status. Hover previews the same outline in
+  // a faint -50 tint. See TRACE_SELECT_RING / TRACE_HOVER_RING.
   const selectRing = TRACE_SELECT_RING[event.status];
+  const hoverRing = TRACE_HOVER_RING[event.status];
 
   // Slow-latency tint: >1000ms paints the latency text warning-700 in the
   // data line only. Latency is not a security signal, so it never colors the
@@ -1417,8 +1427,8 @@ function TraceItem({
       onClick={onSelect}
       aria-pressed={selected}
       data-request-id={event.requestId}
-      className={`relative flex gap-3 py-3 px-3 -mx-2 rounded-md text-left outline-none transition-[box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 after:pointer-events-none after:absolute after:inset-0 after:rounded-md after:transition-opacity after:duration-150 ${
-        selected ? `after:ring-1 after:ring-inset ${selectRing}` : 'hover-fine:bg-neutral-50'
+      className={`relative flex gap-3 py-3 px-3 -mx-2 rounded-md text-left cursor-pointer outline-none transition-[box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 after:pointer-events-none after:absolute after:inset-0 after:rounded-md after:ring-1 after:ring-inset after:transition-colors after:duration-150 ${
+        selected ? selectRing : `after:ring-transparent ${hoverRing}`
       }`}
     >
       {/* Per-row track segment — sits at x=23 inside TraceItem coords so
