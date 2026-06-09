@@ -31,27 +31,148 @@ const GATEWAY_KEY_PLACEHOLDER = 'sk-gw-…YOUR_KEY';
 // These tabs configure agent apps to route through the gateway — you point
 // the tool at Gate, not the model provider. Claude Code + Codex read base-URL
 // env vars; OpenClaw is Gate-native and takes a small plugin config.
-const HERO_CLAUDE_CODE_SNIPPET =
-`# Point Claude Code at the gateway
-export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
-export ANTHROPIC_CUSTOM_HEADERS="X-Gateway-Api-Key: ${GATEWAY_KEY_PLACEHOLDER}"`;
+const HERO_CLAUDE_CODE_BYOK =
+`import Anthropic from "@anthropic-ai/sdk";
 
-const HERO_CODEX_SNIPPET =
-`# Point Codex at the gateway
-export OPENAI_BASE_URL="${GATEWAY_URL}/v1"
-export OPENAI_API_KEY="${GATEWAY_KEY_PLACEHOLDER}"`;
+// BYOK — your own Anthropic key. The gateway proxies to the upstream
+// you name in X-Gate-Upstream-Url and adds security + audit.
+const client = new Anthropic({
+  baseURL: "${GATEWAY_URL}",
+  apiKey: "sk-ant-…YOUR_ANTHROPIC_KEY",
+  defaultHeaders: {
+    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
+    "X-Gate-Upstream-Url": "https://api.anthropic.com",
+  },
+});
 
-const HERO_OPENCLAW_SNIPPET =
-`// ~/.openclaw/config.json — OpenClaw is Gate-native
-{
-  "baseUrl": "${GATEWAY_URL}",
-  "headers": { "X-Gateway-Api-Key": "${GATEWAY_KEY_PLACEHOLDER}" }
-}`;
+const msg = await client.messages.create({
+  model: "claude-sonnet-4-5",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Hello!" }],
+});
+console.log(msg.content);`;
+
+const HERO_CLAUDE_CODE_PAYG =
+`import Anthropic from "@anthropic-ai/sdk";
+
+// PAYG — single gateway key. The gateway routes to the upstream named
+// by \`provider\` and bills your gateway account. Model is namespaced
+// as <provider>/<model>.
+const client = new Anthropic({
+  baseURL: "${GATEWAY_URL}",
+  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
+  defaultHeaders: {
+    "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
+  },
+});
+
+const msg = await client.messages.create({
+  model: "anthropic/claude-sonnet-4-5",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Hello!" }],
+  // Gateway extension — names the meta-provider to route through.
+  // SDK types don't include it, so we extend the request body directly.
+  ...({ provider: "OpenRouter" } as { provider: string }),
+});
+console.log(msg.content);`;
+
+const HERO_CODEX_BYOK =
+`import OpenAI from "openai";
+
+// BYOK — your own OpenAI key. The gateway proxies to the upstream
+// you name in X-Gate-Upstream-Url and adds security + audit.
+const client = new OpenAI({
+  baseURL: "${GATEWAY_URL}/v1",
+  apiKey: "sk-…YOUR_OPENAI_KEY",
+  defaultHeaders: {
+    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
+    "X-Gate-Upstream-Url": "https://api.openai.com",
+  },
+});
+
+const msg = await client.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "Hello!" }],
+});
+console.log(msg.choices[0].message.content);`;
+
+const HERO_CODEX_PAYG =
+`import OpenAI from "openai";
+
+// PAYG — single gateway key. The gateway routes to the upstream named
+// by \`provider\` and bills your gateway account. Model is namespaced
+// as <provider>/<model>.
+const client = new OpenAI({
+  baseURL: "${GATEWAY_URL}/v1",
+  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
+  defaultHeaders: {
+    "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
+  },
+});
+
+const msg = await client.chat.completions.create({
+  model: "openai/gpt-4",
+  messages: [{ role: "user", content: "Hello!" }],
+  // Gateway extension — names the meta-provider to route through.
+  // OpenAI SDK forwards unknown top-level fields directly to the body.
+  // @ts-expect-error provider is a gateway-specific extension
+  provider: "OpenRouter",
+});
+console.log(msg.choices[0].message.content);`;
+
+const HERO_OPENCLAW_BYOK =
+`import { OpenClawGenAI } from "@openclaw/genai";
+
+// BYOK — your own OpenClaw API key. The gateway proxies to the upstream
+// you name in X-Gate-Upstream-Url and adds security + audit.
+const client = new OpenClawGenAI({
+  apiKey: "YOUR_OPENCLAW_API_KEY",
+  apiVersion: "v1",
+  httpOptions: {
+    baseUrl: "${GATEWAY_URL}/openclaw",
+    headers: {
+      "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
+      "X-Gate-Upstream-Url": "https://generativelanguage.googleapis.com",
+    },
+  },
+});
+
+const res = await client.models.generateContent({
+  model: "gemini-2.5-pro",
+  contents: "Hello!",
+});
+console.log(res.text);`;
+
+const HERO_OPENCLAW_PAYG =
+`import { OpenClawGenAI } from "@openclaw/genai";
+
+// PAYG — single gateway key. The gateway routes to the upstream named
+// by \`provider\` and bills your gateway account. Model is namespaced
+// as <provider>/<model>.
+const client = new OpenClawGenAI({
+  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
+  apiVersion: "v1",
+  httpOptions: {
+    baseUrl: "${GATEWAY_URL}/openclaw",
+    headers: {
+      "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
+    },
+  },
+});
+
+const res = await client.models.generateContent({
+  model: "openclaw/gemini-2.5-pro",
+  contents: "Hello!",
+  // Gateway extension — names the meta-provider to route through.
+  // OpenClaw SDK doesn't type this field; cast through unknown to attach it.
+  ...({ provider: "OpenRouter" } as { provider: string }),
+});
+console.log(res.text);`;
 
 export const HERO_SNIPPETS: Record<string, string> = {
-  'claude-code': HERO_CLAUDE_CODE_SNIPPET,
-  codex: HERO_CODEX_SNIPPET,
-  openclaw: HERO_OPENCLAW_SNIPPET,
+  'claude-code': HERO_CLAUDE_CODE_BYOK,
+  codex: HERO_CODEX_BYOK,
+  openclaw: HERO_OPENCLAW_BYOK,
 };
 
 const KEYWORDS = new Set([
@@ -119,15 +240,75 @@ export function CodePanel({ snippet }: { snippet: string }) {
   );
 }
 
-/** Hero code tab: the snippet panel plus a bottom-right Copy footer. */
-function HeroCodeTab({ snippet }: { snippet: string }) {
+/** Caption shown to the right of the BYOK/PAYG selector strip. */
+const HERO_MODE_CAPTIONS: Record<'byok' | 'payg', string> = {
+  byok: 'Bring your own provider key — gateway adds security + audit.',
+  payg: 'Pay-as-you-go on the gateway. Single key, no provider account needed.',
+};
+
+/**
+ * Hero code tab: an optional BYOK/PAYG selector strip, the scrolling snippet
+ * panel, and a bottom-right Copy footer. Pass `byok` + `payg` for tabs that
+ * have both billing-mode variants (renders the strip); pass a single
+ * `snippet` for tabs that don't (no strip).
+ */
+function HeroCodeTab({
+  snippet,
+  byok,
+  payg,
+  paygOnly = false,
+  caption,
+}: {
+  snippet?: string;
+  byok?: string;
+  payg?: string;
+  /** Force the PAYG snippet and drop the BYOK/PAYG selector (caption stays). */
+  paygOnly?: boolean;
+  /** Overrides the mode caption with a fixed per-tab string. */
+  caption?: string;
+}) {
+  const hasModes = Boolean(byok && payg);
+  const [mode, setMode] = useState<'byok' | 'payg'>('byok');
+  const effectiveMode = paygOnly ? 'payg' : mode;
+  const code = hasModes ? (effectiveMode === 'byok' ? byok! : payg!) : snippet!;
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-hidden">
-        <CodePanel snippet={snippet} />
+      {hasModes && (
+        <div className={`flex items-center gap-4 px-4 border-b border-border ${paygOnly ? 'h-10 justify-start' : 'py-2 justify-between'}`}>
+          {!paygOnly && (
+            <div
+              role="radiogroup"
+              aria-label="Gateway billing mode"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-card p-1 shrink-0"
+            >
+              {(['byok', 'payg'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === m}
+                  onClick={() => setMode(m)}
+                  className={`px-2 py-1 rounded-xs text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                    mode === m
+                      ? 'bg-neutral-100 text-neutral-900'
+                      : 'text-neutral-500 hover:text-neutral-700'
+                  }`}
+                >
+                  {m.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          )}
+          <span className="text-xs text-neutral-500">
+            {caption ?? HERO_MODE_CAPTIONS[effectiveMode]}
+          </span>
+        </div>
+      )}
+      <div className="max-h-[240px] overflow-y-auto">
+        <CodePanel snippet={code} />
       </div>
       <div className="border-t border-border px-4 h-12 flex items-center justify-end">
-        <CopyButton mode="label" text="Copy code" value={snippet} label="code snippet" />
+        <CopyButton mode="label" text="Copy code" value={code} label="code snippet" />
       </div>
     </div>
   );
@@ -372,7 +553,7 @@ function DownloadGateConnectDialog() {
   );
 }
 
-function HeroCard() {
+export function HeroCard() {
   const navigate = useNavigate();
 
   return (
@@ -384,7 +565,7 @@ function HeroCard() {
               <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
                 Get Started with Gate AI
               </h2>
-              <p className="text-sm text-neutral-500 text-pretty max-w-md m-0">
+              <p className="text-sm text-neutral-500 text-pretty max-w-[432px] m-0">
                 Route your AI tools through Gate to add prompt-injection defense and a tamper-evident audit trail to every request. Set it up in one click with Gate Connect, our tiny menu-bar app, or configure your tool manually. Create an API key below to get started.
               </p>
             </div>
@@ -420,60 +601,96 @@ function HeroCard() {
 
       {/* Connect card */}
       <Card density="flush" className="flex-1 xl:rounded-l-none">
-          <Tabs defaultValue="gate-connect" className="flex flex-col flex-1 gap-0">
-            <div className="flex items-center px-4 border-b border-border">
-              <TabsList variant="line" className="px-0 border-b-0 h-12">
-                <TabsTrigger value="gate-connect">
-                  <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-4 w-auto" />Gate Connect
-                </TabsTrigger>
-                <TabsTrigger value="claude-code">
-                  <AnthropicIcon className="size-4" />Claude Code
-                </TabsTrigger>
-                <TabsTrigger value="codex">
-                  <OpenAIIcon className="size-4" />Codex
-                </TabsTrigger>
-                <TabsTrigger value="openclaw">
-                  <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="gate-connect" className="flex-1 mt-0">
-              <div className="relative h-full overflow-hidden">
-                {/* Decorative app preview — pre-faded asset, anchored right.
-                    Scale/position tuned per instruction. */}
-                <img
-                  src="/gateconnect-app-fade.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
-                />
-                <div className="relative z-10 flex flex-col gap-4 p-6">
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-lg font-medium tracking-tight text-neutral-900 m-0">
-                      1-Click setup with Gate Connect
-                    </h3>
-                    <p className="text-sm text-neutral-500 text-pretty max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px] m-0">
-                      Gate Connect is a tiny desktop app living in your menu bar. Install, flip a switch, and your AI coding tools route through Gate automatically. No config files, no environment variables, no terminal. Claude Code, Cowork, Codex, and more are supported.
-                    </p>
-                  </div>
-                  <div className="flex">
-                    <DownloadGateConnectDialog />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="claude-code" className="flex-1 mt-0">
-              <HeroCodeTab snippet={HERO_CLAUDE_CODE_SNIPPET} />
-            </TabsContent>
-            <TabsContent value="codex" className="flex-1 mt-0">
-              <HeroCodeTab snippet={HERO_CODEX_SNIPPET} />
-            </TabsContent>
-            <TabsContent value="openclaw" className="flex-1 mt-0">
-              <HeroCodeTab snippet={HERO_OPENCLAW_SNIPPET} />
-            </TabsContent>
-          </Tabs>
+        <ConnectTabs gateConnectOnly />
       </Card>
     </div>
+  );
+}
+
+/** Per-tab captions for the paygOnly strip (e.g. the Models page). */
+const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'openclaw', string> = {
+  'claude-code': 'Anthropic-shape CLI. Point base URL + key at the gateway.',
+  codex: 'OpenAI Responses CLI. Inline-config the gateway as a provider.',
+  openclaw: 'Edit ~/.openclaw/openclaw.json — gateway as a provider.',
+};
+
+/** Default per-breakpoint max-widths for the Gate Connect blurb. */
+const CONNECT_TEXT_MAXW =
+  'max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px]';
+
+/**
+ * The connect card's tab strip + panels (Gate Connect / Claude Code / Codex /
+ * OpenClaw). Shared between the Overview hero and the API Keys "Using your
+ * key" section so they never drift. Drop it inside any flush <Card>.
+ *
+ * `textMaxWidth` overrides the Gate Connect blurb's max-width set so a given
+ * usage (e.g. the narrower API Keys section) can size it independently.
+ */
+export function ConnectTabs({
+  textMaxWidth = CONNECT_TEXT_MAXW,
+  showGateConnect = true,
+  paygOnly = false,
+  gateConnectOnly = false,
+}: { textMaxWidth?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean } = {}) {
+  return (
+    <Tabs defaultValue={showGateConnect ? 'gate-connect' : 'claude-code'} className="flex flex-col flex-1 gap-0">
+      {!gateConnectOnly && (
+      <div className="flex items-center px-4 border-b border-border">
+        <TabsList variant="line" className="px-0 border-b-0 h-12">
+          {showGateConnect && (
+            <TabsTrigger value="gate-connect">
+              <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-4 w-auto" />Gate Connect
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="claude-code">
+            <AnthropicIcon className="size-4" />Claude Code
+          </TabsTrigger>
+          <TabsTrigger value="codex">
+            <OpenAIIcon className="size-4" />Codex
+          </TabsTrigger>
+          <TabsTrigger value="openclaw">
+            <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
+          </TabsTrigger>
+        </TabsList>
+      </div>
+      )}
+      {showGateConnect && (
+      <TabsContent value="gate-connect" className="mt-0">
+        <div className="relative min-h-[280px] h-full overflow-hidden">
+          {/* Decorative app preview — pre-faded asset, anchored right.
+              Scale/position tuned per instruction. */}
+          <img
+            src="/gateconnect-app-fade.png"
+            alt=""
+            aria-hidden
+            className="pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 3xl:translate-x-[8px] w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
+          />
+          <div className="relative z-10 flex flex-col gap-4 p-8 max-xl:p-6">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
+                1-Click setup with Gate Connect
+              </h3>
+              <p className={`text-sm text-neutral-500 text-pretty ${textMaxWidth} m-0`}>
+                Gate Connect is a tiny desktop app living in your menu bar. Install, flip a switch, and your AI coding tools route through Gate automatically. No config files, no environment variables, no terminal. Claude Code, Cowork, Codex, and more are supported.
+              </p>
+            </div>
+            <div className="flex">
+              <DownloadGateConnectDialog />
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+      )}
+      <TabsContent value="claude-code" className="mt-0">
+        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} />
+      </TabsContent>
+      <TabsContent value="codex" className="mt-0">
+        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} />
+      </TabsContent>
+      <TabsContent value="openclaw" className="mt-0">
+        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} />
+      </TabsContent>
+    </Tabs>
   );
 }
 

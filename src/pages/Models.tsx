@@ -7,13 +7,13 @@ import {
   Database,
   Eye,
   Globe,
-  SquareArrowOutUpRight,
   Wrench,
   Zap,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConnectTabs } from '@/pages/DashboardDefault';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
@@ -1133,15 +1133,6 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
 // Platform link list — names provided by the user. Hrefs are placeholders
 // (design-system showcase, not a docs site). Notes are generic; per-tool
 // setup paths can be filled in later when the docs are wired up.
-const PLATFORM_LINKS: { name: string; note: string }[] = [
-  { name: 'OpenClaw',  note: 'Paste the model ID in your setup.' },
-  { name: 'Hermes',    note: 'Paste the model ID in your setup.' },
-  { name: 'Kilo Code', note: 'Paste the model ID in your setup.' },
-  { name: 'OpenCode',  note: 'Paste the model ID in your setup.' },
-  { name: 'Codex',     note: 'Paste the model ID in your setup.' },
-  { name: 'Roo Code',  note: 'Paste the model ID in your setup.' },
-];
-
 function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }) {
   // Default offering anchors the KPI strip + hero code preview — same pattern
   // as the table row's pricing.
@@ -1262,9 +1253,9 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
         <ProvidersTable model={model} />
       </section>
 
-      {/* Quick Start — paste-instruction + platform cards. Reference snippet
-          lives in its own sibling section below so it stops competing with
-          the integration affordances for primary-row weight. */}
+      {/* Quick start + Example request — two-column grid (24px gap),
+          stacks below lg. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
@@ -1279,7 +1270,9 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
             and authenticate with your Constellation Gate API key.
           </p>
         </div>
-        <PlatformPanel />
+        <Card density="flush">
+          <ConnectTabs showGateConnect={false} paygOnly />
+        </Card>
       </section>
 
       <section className="flex flex-col gap-4">
@@ -1306,36 +1299,11 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
           <CodeBlock lines={activeLines} density="compact" />
         </CodeCard>
       </section>
+      </div>
     </div>
   );
 }
 
-function PlatformPanel() {
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      {PLATFORM_LINKS.map((p) => (
-          <button
-            key={p.name}
-            type="button"
-            // No-op in the showcase; real impl wires to per-platform docs.
-            onClick={() => undefined}
-            aria-label={`Open ${p.name} integration guide`}
-            className="group flex items-start justify-between gap-3 bg-card rounded-md shadow-(--shadow-border) p-4 text-left transition-[colors,scale] duration-150 ease-out motion-reduce:transition-none hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:active:scale-100"
-          >
-            <div className="flex flex-col gap-1 min-w-0">
-              <span className="font-sans text-sm font-medium text-neutral-900">{p.name}</span>
-              <span className="font-sans text-xs text-neutral-500 text-pretty">{p.note}</span>
-            </div>
-            <SquareArrowOutUpRight
-              className="size-4 text-neutral-500 shrink-0 mt-1 transition-[color,transform] duration-150 ease-out motion-reduce:transition-none group-hover:text-neutral-800 group-hover:translate-x-px group-hover:-translate-y-px motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-          </button>
-        ))}
-    </div>
-  );
-}
 
 function ModelKpiRail({ model, head }: { model: Model; head: ProviderOffering }) {
   return (
