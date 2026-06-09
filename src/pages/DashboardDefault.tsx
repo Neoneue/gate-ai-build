@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ComponentType } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ExternalLink, Download, BarChart2, Zap, ShieldAlert, ArrowLeftRight, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,12 @@ import {
   DialogTrigger,
   DialogContent,
   DialogClose,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { XIcon } from 'lucide-react';
+import { Radio } from '@base-ui/react/radio';
+import { XIcon, Check } from 'lucide-react';
 
 const GATEWAY_URL = 'https://gateway-staging.constellationgate.ai';
 const GATEWAY_KEY_PLACEHOLDER = 'sk-gw-…YOUR_KEY';
@@ -169,9 +172,59 @@ const res = await client.models.generateContent({
 });
 console.log(res.text);`;
 
+const HERO_GEMINI_BYOK =
+`import { GoogleGenAI } from "@google/genai";
+
+// BYOK — your own Google API key. The gateway proxies to the upstream
+// you name in X-Gate-Upstream-Url and adds security + audit.
+const client = new GoogleGenAI({
+  apiKey: "YOUR_GOOGLE_API_KEY",
+  apiVersion: "v1",
+  httpOptions: {
+    baseUrl: "${GATEWAY_URL}/google",
+    headers: {
+      "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
+      "X-Gate-Upstream-Url": "https://generativelanguage.googleapis.com",
+    },
+  },
+});
+
+const res = await client.models.generateContent({
+  model: "gemini-2.5-pro",
+  contents: "Hello!",
+});
+console.log(res.text);`;
+
+const HERO_GEMINI_PAYG =
+`import { GoogleGenAI } from "@google/genai";
+
+// PAYG — single gateway key. The gateway routes to the upstream named
+// by \`provider\` and bills your gateway account. Model is namespaced
+// as <provider>/<model>.
+const client = new GoogleGenAI({
+  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
+  apiVersion: "v1",
+  httpOptions: {
+    baseUrl: "${GATEWAY_URL}/google",
+    headers: {
+      "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
+    },
+  },
+});
+
+const res = await client.models.generateContent({
+  model: "google/gemini-2.5-pro",
+  contents: "Hello!",
+  // Gateway extension — names the meta-provider to route through.
+  // Google SDK doesn't type this field; cast through unknown to attach it.
+  ...({ provider: "OpenRouter" } as { provider: string }),
+});
+console.log(res.text);`;
+
 export const HERO_SNIPPETS: Record<string, string> = {
   'claude-code': HERO_CLAUDE_CODE_BYOK,
   codex: HERO_CODEX_BYOK,
+  gemini: HERO_GEMINI_BYOK,
   openclaw: HERO_OPENCLAW_BYOK,
 };
 
@@ -258,6 +311,7 @@ function HeroCodeTab({
   payg,
   paygOnly = false,
   caption,
+  maxHeightClass = 'max-h-[192px]',
 }: {
   snippet?: string;
   byok?: string;
@@ -266,6 +320,8 @@ function HeroCodeTab({
   paygOnly?: boolean;
   /** Overrides the mode caption with a fixed per-tab string. */
   caption?: string;
+  /** Tailwind max-h class for the scrolling snippet panel. */
+  maxHeightClass?: string;
 }) {
   const hasModes = Boolean(byok && payg);
   const [mode, setMode] = useState<'byok' | 'payg'>('byok');
@@ -279,7 +335,7 @@ function HeroCodeTab({
             <div
               role="radiogroup"
               aria-label="Gateway billing mode"
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-card p-1 shrink-0"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-1 h-8 shrink-0"
             >
               {(['byok', 'payg'] as const).map((m) => (
                 <button
@@ -288,7 +344,7 @@ function HeroCodeTab({
                   role="radio"
                   aria-checked={mode === m}
                   onClick={() => setMode(m)}
-                  className={`px-2 py-1 rounded-xs text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                  className={`flex items-center px-2 h-6 rounded-xs text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
                       ? 'bg-neutral-100 text-neutral-900'
                       : 'text-neutral-500 hover:text-neutral-700'
@@ -304,7 +360,7 @@ function HeroCodeTab({
           </span>
         </div>
       )}
-      <div className="max-h-[240px] overflow-y-auto">
+      <div className={`${maxHeightClass} overflow-y-auto`}>
         <CodePanel snippet={code} />
       </div>
       <div className="border-t border-border px-4 h-12 flex items-center justify-end">
@@ -446,15 +502,14 @@ function DownloadGateConnectDialog() {
         className="w-[548px] max-w-[calc(100%-2rem)] gap-0 p-0 overflow-hidden sm:max-w-[548px]"
       >
         {/* HEADER */}
-        <div className="relative flex items-start gap-3 px-6 pt-4 pb-4 border-b border-border">
-          <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-8 w-auto shrink-0" />
+        <div className="relative flex items-start px-6 pt-4 pb-4 border-b border-border">
           <div className="flex flex-col gap-0 min-w-0 pr-8">
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-900 m-0">
+            <DialogTitle className="text-lg font-semibold tracking-tight text-neutral-900 m-0">
               Download Gate <span className="text-blue-700">Connect</span>
-            </h2>
-            <p className="text-sm text-neutral-500 text-pretty m-0">
+            </DialogTitle>
+            <DialogDescription className="text-sm text-neutral-500 text-pretty m-0">
               The menu-bar app that connects your desktop agents to Gate
-            </p>
+            </DialogDescription>
           </div>
           <DialogClose
             aria-label="Close"
@@ -469,40 +524,43 @@ function DownloadGateConnectDialog() {
         {/* BODY */}
         <div className="flex flex-col gap-4 px-6 pt-5 pb-5">
           {/* Platform picker */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <span className="text-sm font-medium text-neutral-900">Choose your platform</span>
-            <div role="radiogroup" aria-label="Choose your platform" className="flex gap-3">
+            <RadioGroup
+              aria-label="Choose your platform"
+              value={platform}
+              onValueChange={(v) => selectPlatform(v as PlatformId)}
+              className="flex gap-3"
+            >
               {PLATFORM_ORDER.map((id) => {
                 const p = PLATFORMS[id];
-                const selected = platform === id;
                 return (
-                  <button
+                  <Radio.Root
                     key={id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => selectPlatform(id)}
-                    className={`group/platform relative flex flex-1 flex-col items-center justify-center gap-2 h-[92px] rounded-lg border bg-card transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform outline-none cursor-pointer active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
-                      selected
-                        ? 'border-neutral-900 shadow-xs'
-                        : 'border-border hover:border-neutral-300'
-                    }`}
+                    value={id}
+                    className="group/platform relative flex flex-1 flex-col items-center justify-center gap-2 h-[92px] rounded-lg border border-border bg-card transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform outline-none cursor-pointer hover:border-neutral-300 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:border-neutral-900 data-checked:shadow-xs"
                   >
                     {detected === id && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center h-5 rounded-full bg-neutral-900 px-2 text-xs font-medium text-white whitespace-nowrap">
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center h-5 rounded-full bg-neutral-900 px-2 text-[10px]/[16px] font-semibold tracking-wide text-white whitespace-nowrap">
                         Detected
                       </span>
                     )}
+                    <Radio.Indicator
+                      className="absolute top-2 right-2 inline-flex items-center justify-center size-4 rounded-full bg-neutral-900 text-white"
+                      keepMounted={false}
+                    >
+                      <Check className="size-3" strokeWidth={2.5} aria-hidden />
+                    </Radio.Indicator>
                     <img src={p.icon} alt="" aria-hidden className="size-6" />
                     <span className="text-sm font-medium text-neutral-900">{p.label}</span>
-                  </button>
+                  </Radio.Root>
                 );
               })}
-            </div>
+            </RadioGroup>
           </div>
 
           {/* Build picker */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <span className="text-sm font-medium text-neutral-900">Choose your build</span>
             <RadioGroup
               aria-label="Choose your build"
@@ -581,42 +639,112 @@ export function HeroCard() {
               </Button>
             </div>
           </div>
-          <div className="border-t border-border px-8 max-xl:px-6 h-12 flex items-center gap-4">
-            <span className="text-sm text-neutral-500 whitespace-nowrap shrink-0">Works with</span>
-            {[
-              { Icon: OpenAIIcon,    name: 'OpenAI',    hide: '' },
-              { Icon: GrokIcon,      name: 'xAI',       hide: '' },
-              { Icon: AnthropicIcon, name: 'Anthropic', hide: '' },
-              { Icon: GeminiIcon,    name: 'Google',    hide: 'xl:max-[1320px]:hidden' },
-              { Icon: MetaIcon,      name: 'Meta',      hide: 'xl:max-[1512px]:hidden' },
-            ].map(({ Icon, name, hide }) => (
-              <div key={name} className={`flex items-center gap-2 shrink-0 ${hide}`}>
-                <Icon className="size-4 text-neutral-600 shrink-0" />
-                <span className="text-sm text-neutral-700 whitespace-nowrap">{name}</span>
-              </div>
-            ))}
-            <span className="text-sm text-neutral-500 italic whitespace-nowrap shrink-0">+ more</span>
-          </div>
+          <WorksWithFooter />
       </Card>
 
       {/* Connect card */}
-      <Card density="flush" className="flex-1 xl:rounded-l-none">
-        <ConnectTabs gateConnectOnly />
+      <Card density="flush" className="flex-1 xl:rounded-l-none flex flex-col">
+        <div className="flex-1"><ConnectTabs gateConnectOnly /></div>
+        <WorksWithFooter label="Manual setup" showMore={false} items={MANUAL_SETUP_ITEMS} asButtons />
       </Card>
     </div>
   );
 }
 
+/** A footer chip: either a component icon (`Icon`) or an image (`src`). */
+type FooterItem = {
+  name: string;
+  hide?: string;
+  Icon?: ComponentType<{ className?: string }>;
+  src?: string;
+  /** ConnectTabs tab id to deep-link on the API Keys page (button footers). */
+  tab?: string;
+};
+
+/** Provider list for the left "Works with" footer. */
+const WORKS_WITH_ITEMS: FooterItem[] = [
+  { Icon: OpenAIIcon,    name: 'OpenAI' },
+  { Icon: GrokIcon,      name: 'xAI' },
+  { Icon: AnthropicIcon, name: 'Anthropic' },
+  { Icon: GeminiIcon,    name: 'Google', hide: 'xl:max-[1320px]:hidden' },
+  { Icon: MetaIcon,      name: 'Meta',   hide: 'xl:max-[1512px]:hidden' },
+];
+
+/** Agent/model list for the right "Manual setup" footer — matches the tabs.
+ *  `tab` deep-links the matching ConnectTabs tab on /api-keys. (Gemini has no
+ *  dedicated tab yet; it points at the openclaw tab, which holds the Google
+ *  SDK snippet.) */
+const MANUAL_SETUP_ITEMS: FooterItem[] = [
+  { Icon: AnthropicIcon, name: 'Claude',   tab: 'claude-code' },
+  { Icon: OpenAIIcon,    name: 'Codex',    tab: 'codex' },
+  { Icon: GeminiIcon,    name: 'Gemini',   tab: 'gemini' },
+  { src: '/icons/providers/openclaw.svg', name: 'OpenClaw', tab: 'openclaw' },
+];
+
+/** "<label> <chips> [+ more]" footer bar, shared by both hero cards. When
+ *  `asButtons`, each chip is a full-height ghost button with hard (0px) edges. */
+function WorksWithFooter({
+  label = 'Works with',
+  showMore = true,
+  items = WORKS_WITH_ITEMS,
+  asButtons = false,
+}: { label?: string; showMore?: boolean; items?: FooterItem[]; asButtons?: boolean } = {}) {
+  const navigate = useNavigate();
+  const chips = items.map(({ Icon, src, name, hide, tab }) => {
+    const inner = (
+      <>
+        {Icon ? (
+          <Icon className="size-4 text-neutral-600 shrink-0" />
+        ) : (
+          <img src={src} alt="" aria-hidden className="size-4 shrink-0" />
+        )}
+        <span className="text-sm text-neutral-700 whitespace-nowrap">{name}</span>
+      </>
+    );
+    return asButtons ? (
+      <button
+        key={name}
+        type="button"
+        onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ''}`)}
+        className={`flex h-12 items-center gap-2 rounded-none px-3 shrink-0 transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 ${hide ?? ''}`}
+      >
+        {inner}
+      </button>
+    ) : (
+      <div key={name} className={`flex items-center gap-2 shrink-0 ${hide ?? ''}`}>
+        {inner}
+      </div>
+    );
+  });
+  return (
+    <div className={`border-t border-border h-12 flex items-center gap-4 ${asButtons ? 'pl-8 max-xl:pl-6' : 'px-8 max-xl:px-6'}`}>
+      <span className="text-sm text-neutral-500 whitespace-nowrap shrink-0">{label}</span>
+      {asButtons ? <div className="flex h-12 items-center">{chips}</div> : chips}
+      {showMore && (
+        <span className="text-sm text-neutral-500 italic whitespace-nowrap shrink-0">+ more</span>
+      )}
+    </div>
+  );
+}
+
 /** Per-tab captions for the paygOnly strip (e.g. the Models page). */
-const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'openclaw', string> = {
+const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'gemini' | 'openclaw', string> = {
   'claude-code': 'Anthropic-shape CLI. Point base URL + key at the gateway.',
   codex: 'OpenAI Responses CLI. Inline-config the gateway as a provider.',
+  gemini: 'Google GenAI SDK. Point the base URL + headers at the gateway.',
   openclaw: 'Edit ~/.openclaw/openclaw.json — gateway as a provider.',
 };
 
 /** Default per-breakpoint max-widths for the Gate Connect blurb. */
 const CONNECT_TEXT_MAXW =
   'max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px]';
+
+/** Default Gate Connect app-preview image placement — tuned for the Overview
+ *  hero (right card nearly full-viewport). Overridable per instance via
+ *  ConnectTabs' `imageClassName` so other usages (e.g. the API Keys card) can
+ *  reposition without disturbing the hero's responsive settings. */
+const CONNECT_IMAGE_CLASS =
+  'pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 3xl:translate-x-[8px] w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden';
 
 /**
  * The connect card's tab strip + panels (Gate Connect / Claude Code / Codex /
@@ -628,12 +756,17 @@ const CONNECT_TEXT_MAXW =
  */
 export function ConnectTabs({
   textMaxWidth = CONNECT_TEXT_MAXW,
+  imageClassName = CONNECT_IMAGE_CLASS,
+  titleClassName = 'text-2xl font-medium tracking-tight text-neutral-900 m-0',
   showGateConnect = true,
   paygOnly = false,
   gateConnectOnly = false,
-}: { textMaxWidth?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean } = {}) {
+  fillHeight = false,
+  codeMaxHeight,
+  defaultTab,
+}: { textMaxWidth?: string; imageClassName?: string; titleClassName?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean; fillHeight?: boolean; codeMaxHeight?: string; defaultTab?: string } = {}) {
   return (
-    <Tabs defaultValue={showGateConnect ? 'gate-connect' : 'claude-code'} className="flex flex-col flex-1 gap-0">
+    <Tabs defaultValue={defaultTab ?? (showGateConnect ? 'gate-connect' : 'claude-code')} className="flex flex-col flex-1 gap-0">
       {!gateConnectOnly && (
       <div className="flex items-center px-4 border-b border-border">
         <TabsList variant="line" className="px-0 border-b-0 h-12">
@@ -648,6 +781,9 @@ export function ConnectTabs({
           <TabsTrigger value="codex">
             <OpenAIIcon className="size-4" />Codex
           </TabsTrigger>
+          <TabsTrigger value="gemini">
+            <GeminiIcon className="size-4" />Gemini
+          </TabsTrigger>
           <TabsTrigger value="openclaw">
             <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
           </TabsTrigger>
@@ -655,19 +791,19 @@ export function ConnectTabs({
       </div>
       )}
       {showGateConnect && (
-      <TabsContent value="gate-connect" className="mt-0">
-        <div className="relative min-h-[280px] h-full overflow-hidden">
+      <TabsContent value="gate-connect" className={`mt-0 ${fillHeight ? 'flex-1 flex flex-col' : ''}`}>
+        <div className={`relative h-full overflow-hidden ${fillHeight ? 'flex-1' : 'min-h-[232px]'}`}>
           {/* Decorative app preview — pre-faded asset, anchored right.
               Scale/position tuned per instruction. */}
           <img
             src="/gateconnect-app-fade.png"
             alt=""
             aria-hidden
-            className="pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 3xl:translate-x-[8px] w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
+            className={imageClassName}
           />
-          <div className="relative z-10 flex flex-col gap-4 p-8 max-xl:p-6">
+          <div className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? 'h-full' : ''}`}>
             <div className="flex flex-col gap-2">
-              <h3 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
+              <h3 className={titleClassName}>
                 1-Click setup with Gate Connect
               </h3>
               <p className={`text-sm text-neutral-500 text-pretty ${textMaxWidth} m-0`}>
@@ -682,13 +818,16 @@ export function ConnectTabs({
       </TabsContent>
       )}
       <TabsContent value="claude-code" className="mt-0">
-        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} />
+        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} />
       </TabsContent>
       <TabsContent value="codex" className="mt-0">
-        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} />
+        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} />
+      </TabsContent>
+      <TabsContent value="gemini" className="mt-0">
+        <HeroCodeTab byok={HERO_GEMINI_BYOK} payg={HERO_GEMINI_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.gemini : undefined} maxHeightClass={codeMaxHeight} />
       </TabsContent>
       <TabsContent value="openclaw" className="mt-0">
-        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} />
+        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} />
       </TabsContent>
     </Tabs>
   );

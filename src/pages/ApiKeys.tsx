@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -231,12 +231,18 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 // Provider SDK quickstarts (Anthropic / OpenAI / Google) reuse the hero
 // card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
+const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'gemini', 'openclaw'];
+
 function UsageInfo() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const defaultTab = tabParam && CONNECT_TAB_IDS.includes(tabParam) ? tabParam : undefined;
+  // Right card never shows the Gate Connect tab, so a `?tab=gate-connect`
+  // deep-link has no target there — fall back to its first tab.
+  const rightDefaultTab =
+    defaultTab && defaultTab !== 'gate-connect' ? defaultTab : undefined;
   return (
-    // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
-    // curl body line and the OpenAI SDK indentation both fit without
-    // wrapping, with breathing room on the right.
-    <section className="flex flex-col gap-6 max-w-3xl">
+    <section className="@container/connect flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
           Using your key
@@ -260,9 +266,27 @@ function UsageInfo() {
         </p>
       </div>
 
-      <Card density="flush">
-        <ConnectTabs textMaxWidth="max-w-[320px] min-[1080px]:max-[1280px]:max-w-[392px] xl:max-[1535px]:max-w-[368px] 2xl:max-[1919px]:max-w-[272px] 3xl:max-w-[368px]" />
-      </Card>
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
+          the manual-setup code tabs (no Gate Connect tab) on the right.
+          Side-by-side with a 24px gap; stacks full-width below lg. */}
+      <div className="flex flex-col gap-6 @min-[993px]/connect:flex-row">
+        <Card density="flush" className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col">
+            <ConnectTabs
+              gateConnectOnly
+              fillHeight
+              titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 m-0"
+              textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(25cqw_-_10px),398px)]"
+              imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+            />
+          </div>
+        </Card>
+        <Card density="flush" className="flex-1 flex flex-col">
+          <div className="flex-1">
+            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[176px]" />
+          </div>
+        </Card>
+      </div>
     </section>
   );
 }
