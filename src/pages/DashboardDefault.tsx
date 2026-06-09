@@ -445,7 +445,7 @@ function HeroCard() {
                   src="/gateconnect-app-fade.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] w-[clamp(479.75px,calc(378.75px_+_6.57552vw),505px)] scale-[0.675] origin-right"
+                  className="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] max-[1280px]:translate-x-0 w-[clamp(479.75px,calc(378.75px_+_6.57552vw),505px)] scale-[0.675] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
                 />
                 <div className="relative z-10 flex flex-col gap-4 p-6">
                   <div className="flex flex-col gap-2">
@@ -453,7 +453,7 @@ function HeroCard() {
                       <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-5 w-auto shrink-0" />
                       1-Click setup with Gate Connect
                     </h3>
-                    <p className="text-sm text-neutral-500 text-pretty max-w-[368px] min-[1080px]:max-[1280px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px] m-0">
+                    <p className="text-sm text-neutral-500 text-pretty max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px] m-0">
                       Gate Connect is a tiny desktop app living in your menu bar. Install, flip a switch, and your AI coding tools route through Gate automatically. No config files, no environment variables, no terminal. Claude Code, Cowork, Codex, and more are supported.
                     </p>
                   </div>
