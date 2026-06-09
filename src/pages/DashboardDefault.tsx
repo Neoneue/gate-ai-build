@@ -990,7 +990,7 @@ export function DashboardDefault() {
     >
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Overview</PageTitle>
-        <p className="font-sans text-neutral-600 text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Monitor request volume, token usage, spend, and security signals across your gateway.
         </p>
       </div>

@@ -294,15 +294,13 @@ export function UsageInfo() {
     <section className="@container/connect flex flex-col gap-6">
       <div className="flex flex-col gap-1 max-w-1/2">
         <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
-          Using your key
+          Connect to the gateway
         </h3>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          Point your client at the gateway and send your key in the{' '}
-          <code className="font-mono text-neutral-800 bg-neutral-100 rounded-xs px-2 py-1">X-Gateway-Api-Key</code>{' '}
-          header. The gateway is provider-neutral — call it with curl, the OpenAI SDK, Anthropic SDK, or any other client that lets you override the base URL.
+          Two ways to start, below. With Gate Connect, setup is automatic, so you can skip the code entirely. Want to set things up yourself? Use the code snippets to do it by hand.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          To learn more about how to use your key, check out our{' '}
+          To learn more, check out our{' '}
           <TextLink
             as="a"
             href={API_KEYS_DOCS_URL}
