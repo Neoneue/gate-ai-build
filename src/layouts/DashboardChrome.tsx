@@ -69,7 +69,10 @@ export function DashboardChrome({
               content and the scroll container never forms). `[&>*]:shrink-0`
               keeps direct children at their natural heights so the pane
               scrolls instead of squashing them. */}
-          <main className="flex flex-col flex-1 min-h-0 gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">
+          {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
+              the extra space falls to the right as margin; the DashTopBar
+              sibling above stays full-bleed. */}
+          <main className="flex flex-col flex-1 min-h-0 max-w-[1920px] gap-6 px-6 pt-6 pb-16 overflow-y-auto [&>*]:shrink-0">
             <h1 className="sr-only">{activePageLabel}</h1>
             {children}
           </main>

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { AnthropicIcon, OpenAIIcon, GeminiIcon } from '@/components/icons/model-providers';
+import { AnthropicIcon, OpenAIIcon } from '@/components/icons/model-providers';
 import { CodePanel, HERO_SNIPPETS } from '@/pages/DashboardDefault';
 import { CopyButton, useCopyFeedback } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -234,7 +234,7 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 // card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
 function UsageInfo() {
-  const [tab, setTab] = useState<'anthropic' | 'openai' | 'google'>('anthropic');
+  const [tab, setTab] = useState<'claude-code' | 'codex' | 'openclaw'>('claude-code');
   return (
     // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
     // curl body line and the OpenAI SDK indentation both fit without
@@ -264,29 +264,29 @@ function UsageInfo() {
       </div>
 
       <Card density="flush">
-        <Tabs defaultValue="anthropic" className="gap-0" onValueChange={(v) => setTab(v as 'anthropic' | 'openai' | 'google')}>
+        <Tabs defaultValue="claude-code" className="gap-0" onValueChange={(v) => setTab(v as 'claude-code' | 'codex' | 'openclaw')}>
           <div className="flex items-center justify-between px-4 pt-1 border-b border-border">
             <TabsList variant="line" className="px-0 border-b-0">
-              <TabsTrigger value="anthropic">
-                <AnthropicIcon className="size-4" />Anthropic
+              <TabsTrigger value="claude-code">
+                <AnthropicIcon className="size-4" />Claude Code
               </TabsTrigger>
-              <TabsTrigger value="openai">
-                <OpenAIIcon className="size-4" />OpenAI
+              <TabsTrigger value="codex">
+                <OpenAIIcon className="size-4" />Codex
               </TabsTrigger>
-              <TabsTrigger value="google">
-                <GeminiIcon className="size-4" />Google
+              <TabsTrigger value="openclaw">
+                <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
               </TabsTrigger>
             </TabsList>
             <CopyButton mode="label" text="Copy code" value={HERO_SNIPPETS[tab]} label="code snippet" className="-translate-y-[2px]" />
           </div>
-          <TabsContent value="anthropic" className="mt-0">
-            <CodePanel snippet={HERO_SNIPPETS.anthropic} />
+          <TabsContent value="claude-code" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS['claude-code']} />
           </TabsContent>
-          <TabsContent value="openai" className="mt-0">
-            <CodePanel snippet={HERO_SNIPPETS.openai} />
+          <TabsContent value="codex" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS.codex} />
           </TabsContent>
-          <TabsContent value="google" className="mt-0">
-            <CodePanel snippet={HERO_SNIPPETS.google} />
+          <TabsContent value="openclaw" className="mt-0">
+            <CodePanel snippet={HERO_SNIPPETS.openclaw} />
           </TabsContent>
         </Tabs>
       </Card>

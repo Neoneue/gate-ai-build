@@ -151,6 +151,31 @@ staging, which shows clean steps green regardless of latency. Where:
 
 ## Sections & surfaces
 
+### Overview hero — new "Download Gate Connect" modal (Figma 514:42) (06-08) (uncommitted)
+
+Replaced the old "Select a version to download" modal (a single Base UI `Select`
+of mac/windows/linux + Cancel/Download footer) in the Overview hero's Gate Connect
+tab with a 548px three-region modal matching Figma node `514:42`. → **Header**
+(BrandMark + "Download Gate **Connect**" with Connect in `text-blue-700` + muted
+subtitle + custom X, bottom divider). **Body**: a "Choose your platform" radiogroup
+of three 92px toggle cards (brand-colored 24px OS icons, selected = `border-neutral-900`
++ `shadow-xs`) with a dark "Detected" pill on the auto-detected OS; a "Choose your
+build" Base UI `RadioGroup` of two 52px rows per platform (Installer + arch + muted
+detail + right-aligned file size); a `v1.4.2 · Requires …` line. **Footer**: full-width
+48px primary Download button labeled "Download for {platform}", top divider. Behavior:
+OS auto-detection (`navigator.userAgentData?.platform` → `platform` → `userAgent`,
+default Windows) sets the initial platform + which card wears the Detected pill (the
+pill never moves when the user picks another card); switching platform swaps the build
+matrix, requirement line, and button label. Outside-press does **not** dismiss (scrim
+inert; X + Escape close) via `onOpenChange` ignoring `reason === 'outside-press'`.
+New co-located `DownloadGateConnectDialog` component + `PLATFORMS` build matrix;
+removed the unused `downloadOS` state and `Select`/`Dialog{Header,Title,Footer}`
+imports. New assets: `public/icons/os/{macos,windows,linux}-color.svg` (brand-colored
+24px; old monochrome `os/*.svg` left untouched, now unreferenced). Locked
+`rounded-xl` (16px) modal radius kept; regions own their 24px x-padding (`gap-0 p-0`
+on the content). **Deep-link:** `/overview-default` → Gate Connect tab → Download
+Gate Connect. Where: `src/pages/DashboardDefault.tsx`.
+
 ### Requests / Conversations — credentials surfaced once, keys redacted everywhere (06-08) [16598f4]
 
 The captured debugging-script lines (`hasRaw*` / `exampleSecretStillRaw`) were

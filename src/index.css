@@ -14,6 +14,11 @@
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 
+  /* Screens — Tailwind defaults (sm 640 … 2xl 1536) plus one custom step.
+     `3xl` (1920px) is the largest breakpoint; content locks at 1536 so this
+     targets the band above the lock. Enables `3xl:` / `max-3xl:` variants. */
+  --breakpoint-3xl: 1920px;
+
   /* ─── Color ramps — all OKLCH, all 11-step (50–950), Tailwind-aligned naming.
      Five ramps total: ink (neutrals), blue (brand), success (green), warning
      (amber), danger (red). Info aliases to the blue ramp via the semantic
