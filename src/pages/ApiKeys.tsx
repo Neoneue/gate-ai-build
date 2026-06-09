@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/card';
 import { ConnectTabs } from '@/pages/DashboardDefault';
 import { useCopyFeedback } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow } from '@/components/ui/eyebrow';
 import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -292,12 +293,12 @@ export function UsageInfo() {
     defaultTab && defaultTab !== 'gate-connect' ? defaultTab : undefined;
   return (
     <section className="@container/connect flex flex-col gap-6">
-      <div className="flex flex-col gap-1 max-w-1/2">
-        <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
-          Connect to the gateway
+      <div className="flex flex-col gap-2 max-w-1/2">
+        <h3 className="font-sans text-lg font-medium text-neutral-900 text-balance m-0">
+          How to make requests
         </h3>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          Two ways to start, below. With Gate Connect, setup is automatic, so you can skip the code entirely. Want to set things up yourself? Use the code snippets to do it by hand.
+          There are two ways to start sending requests using your API key. With <span className="font-medium">Gate Connect</span>, setup is automatic, so you can skip the code entirely. Want to configure it yourself? Use the code snippets to do it by hand.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">
           To learn more, check out our{' '}
@@ -317,22 +318,32 @@ export function UsageInfo() {
           the manual-setup code tabs (no Gate Connect tab) on the right.
           Side-by-side with a 24px gap; stacks full-width below lg. */}
       <div className="flex flex-col gap-6 @min-[993px]/connect:flex-row">
-        <Card density="flush" className="flex-1 flex flex-col">
-          <div className="flex-1 flex flex-col">
-            <ConnectTabs
-              gateConnectOnly
-              fillHeight
-              titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 m-0"
-              textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
-              imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
-            />
-          </div>
-        </Card>
-        <Card density="flush" className="flex-1 flex flex-col">
-          <div className="flex-1">
-            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[208px]" floatingCopy />
-          </div>
-        </Card>
+        {/* Each card gets an Eyebrow label above it (outside the card, so no
+            height impact) so the two setup paths — Automatic vs Manual — read
+            as a matched pair even though the right card is a code card with no
+            internal title slot. */}
+        <div className="flex-1 flex flex-col gap-2">
+          <Eyebrow as="div">Automatic</Eyebrow>
+          <Card density="flush" className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col">
+              <ConnectTabs
+                gateConnectOnly
+                fillHeight
+                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 text-balance m-0"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+              />
+            </div>
+          </Card>
+        </div>
+        <div className="flex-1 flex flex-col gap-2">
+          <Eyebrow as="div">Manual</Eyebrow>
+          <Card density="flush" className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[208px]" floatingCopy />
+            </div>
+          </Card>
+        </div>
       </div>
     </section>
   );
