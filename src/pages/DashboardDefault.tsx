@@ -381,7 +381,7 @@ function HeroCard() {
       <Card density="flush" className="flex-1 xl:rounded-r-none xl:border-r-0">
           <div className="p-8 max-xl:p-6 flex flex-col gap-6 flex-1">
             <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 m-0">
+              <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
                 Get Started with Gate AI
               </h2>
               <p className="text-sm text-neutral-500 text-pretty max-w-md m-0">
@@ -445,12 +445,11 @@ function HeroCard() {
                   src="/gateconnect-app-fade.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] max-[1280px]:translate-x-0 w-[clamp(479.75px,calc(378.75px_+_6.57552vw),505px)] scale-[0.675] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
+                  className="pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden"
                 />
                 <div className="relative z-10 flex flex-col gap-4 p-6">
                   <div className="flex flex-col gap-2">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-neutral-900 m-0">
-                      <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-5 w-auto shrink-0" />
+                    <h3 className="text-lg font-medium tracking-tight text-neutral-900 m-0">
                       1-Click setup with Gate Connect
                     </h3>
                     <p className="text-sm text-neutral-500 text-pretty max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px] m-0">
