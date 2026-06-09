@@ -73,7 +73,7 @@ function FeedbackFab() {
         className={cn(
           // Pill shape, dark surface, shadow elevation, fixed viewport anchor
           "fixed bottom-6 right-6 z-40",
-          "inline-flex items-center gap-2 rounded-full px-4 h-10",
+          "inline-flex items-center gap-2 rounded-full px-4 h-8",
           "bg-neutral-900 text-white text-sm font-medium whitespace-nowrap",
           "shadow-(--shadow-popup)",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",

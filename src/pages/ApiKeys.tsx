@@ -283,7 +283,7 @@ function UsageInfo() {
         </Card>
         <Card density="flush" className="flex-1 flex flex-col">
           <div className="flex-1">
-            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[176px]" />
+            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[176px]" floatingCopy />
           </div>
         </Card>
       </div>

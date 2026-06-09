@@ -312,6 +312,7 @@ function HeroCodeTab({
   paygOnly = false,
   caption,
   maxHeightClass = 'max-h-[192px]',
+  floatingCopy = false,
 }: {
   snippet?: string;
   byok?: string;
@@ -322,13 +323,15 @@ function HeroCodeTab({
   caption?: string;
   /** Tailwind max-h class for the scrolling snippet panel. */
   maxHeightClass?: string;
+  /** Drop the Copy footer and float the Copy button 24px from the bottom-right. */
+  floatingCopy?: boolean;
 }) {
   const hasModes = Boolean(byok && payg);
   const [mode, setMode] = useState<'byok' | 'payg'>('byok');
   const effectiveMode = paygOnly ? 'payg' : mode;
   const code = hasModes ? (effectiveMode === 'byok' ? byok! : payg!) : snippet!;
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col h-full ${floatingCopy ? 'relative' : ''}`}>
       {hasModes && (
         <div className={`flex items-center gap-4 px-4 border-b border-border ${paygOnly ? 'h-10 justify-start' : 'py-2 justify-between'}`}>
           {!paygOnly && (
@@ -363,9 +366,15 @@ function HeroCodeTab({
       <div className={`${maxHeightClass} overflow-y-auto`}>
         <CodePanel snippet={code} />
       </div>
-      <div className="border-t border-border px-4 h-12 flex items-center justify-end">
-        <CopyButton mode="label" text="Copy code" value={code} label="code snippet" />
-      </div>
+      {floatingCopy ? (
+        <div className="absolute bottom-4 right-4">
+          <CopyButton mode="label" size="sm" text="Copy code" value={code} label="code snippet" />
+        </div>
+      ) : (
+        <div className="border-t border-border px-4 h-12 flex items-center justify-end">
+          <CopyButton mode="label" text="Copy code" value={code} label="code snippet" />
+        </div>
+      )}
     </div>
   );
 }
@@ -763,8 +772,9 @@ export function ConnectTabs({
   gateConnectOnly = false,
   fillHeight = false,
   codeMaxHeight,
+  floatingCopy = false,
   defaultTab,
-}: { textMaxWidth?: string; imageClassName?: string; titleClassName?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean; fillHeight?: boolean; codeMaxHeight?: string; defaultTab?: string } = {}) {
+}: { textMaxWidth?: string; imageClassName?: string; titleClassName?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean; fillHeight?: boolean; codeMaxHeight?: string; floatingCopy?: boolean; defaultTab?: string } = {}) {
   return (
     <Tabs defaultValue={defaultTab ?? (showGateConnect ? 'gate-connect' : 'claude-code')} className="flex flex-col flex-1 gap-0">
       {!gateConnectOnly && (
@@ -818,16 +828,16 @@ export function ConnectTabs({
       </TabsContent>
       )}
       <TabsContent value="claude-code" className="mt-0">
-        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} />
+        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
       </TabsContent>
       <TabsContent value="codex" className="mt-0">
-        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} />
+        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
       </TabsContent>
       <TabsContent value="gemini" className="mt-0">
-        <HeroCodeTab byok={HERO_GEMINI_BYOK} payg={HERO_GEMINI_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.gemini : undefined} maxHeightClass={codeMaxHeight} />
+        <HeroCodeTab byok={HERO_GEMINI_BYOK} payg={HERO_GEMINI_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.gemini : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
       </TabsContent>
       <TabsContent value="openclaw" className="mt-0">
-        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} />
+        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
       </TabsContent>
     </Tabs>
   );
