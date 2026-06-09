@@ -32,6 +32,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsCount } from '@/components/ui/tabs-count';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Timestamp } from '@/components/ui/timestamp';
 import { useTableSort, sortRows } from '@/hooks/use-table-sort';
@@ -90,6 +92,9 @@ export function ApiKeys() {
   // Full key string for the step-2 "Key created" modal. Non-null while that
   // modal is open; reset to null on close (the key is shown exactly once).
   const [createdKey, setCreatedKey] = useState<string | null>(null);
+  // Status tab — split the table into Active / Revoked scopes (Models-style
+  // line tabs with count chips). Defaults to Active.
+  const [keyStatus, setKeyStatus] = useState<'active' | 'revoked'>('active');
   // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
   // a revoked test-key. Delete the array literal (replace with `[]`)
   // before testing the real add-key flow.
@@ -155,6 +160,10 @@ export function ApiKeys() {
     setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, revoked: true } : k)));
   };
 
+  const activeKeys = keys.filter((k) => !k.revoked);
+  const revokedKeys = keys.filter((k) => k.revoked);
+  const visibleKeys = keyStatus === 'active' ? activeKeys : revokedKeys;
+
   return (
     <DashboardChrome
       activeNavId="api-keys"
@@ -162,11 +171,46 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
-      <PageHeader onCreate={() => setCreateOpen(true)} />
+      <PageHeader onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)} />
       {keys.length === 0 ? (
         <KeysEmptyState onCreate={() => setCreateOpen(true)} />
       ) : (
-        <KeysTable rows={keys} onRevoke={handleRevoke} />
+        <Tabs
+          value={keyStatus}
+          onValueChange={(v) => setKeyStatus(v as 'active' | 'revoked')}
+          className="gap-4"
+        >
+          <TabsList variant="line" className="px-0 -mt-2">
+            <TabsTrigger value="active">
+              Active
+              <TabsCount>{activeKeys.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="revoked">
+              Revoked
+              <TabsCount>{revokedKeys.length}</TabsCount>
+            </TabsTrigger>
+          </TabsList>
+          {visibleKeys.length === 0 ? (
+            <EmptyState
+              icon={
+                <div
+                  aria-hidden
+                  className="size-12 rounded-full bg-muted flex items-center justify-center"
+                >
+                  <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
+                </div>
+              }
+              title={`No ${keyStatus} keys`}
+              body={
+                keyStatus === 'revoked'
+                  ? 'Keys you revoke will appear here. Revoking a key stops it authenticating immediately.'
+                  : 'You have no active keys. Create one to start routing requests through the gateway.'
+              }
+            />
+          ) : (
+            <KeysTable rows={visibleKeys} onRevoke={handleRevoke} />
+          )}
+        </Tabs>
       )}
       <UsageInfo />
       <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
@@ -178,7 +222,10 @@ export function ApiKeys() {
   );
 }
 
-function PageHeader({ onCreate }: { onCreate: () => void }) {
+// `onCreate` is optional: when omitted (the no-keys empty card is showing),
+// the header drops its "Create key" button so the only CTA is the card's
+// "Create your first key". The header button returns once keys exist.
+export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
@@ -187,36 +234,38 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
           Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onCreate}>
-          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
-          Create key
-        </Button>
-      </div>
+      {onCreate ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={onCreate}>
+            <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
+            Create key
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
+export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <EmptyState
       icon={
         <div
           aria-hidden
-          className="inline-flex items-center justify-center size-10 rounded-full bg-blue-100 text-blue-700"
+          className="size-12 rounded-full bg-muted flex items-center justify-center"
         >
-          <KeyRound className="size-5" strokeWidth={1.75} />
+          <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
       }
       title="No API keys yet"
       body="Create a key to start routing requests through the gateway. The full key is shown only once."
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-4">
           <Button onClick={onCreate}>
             <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
             Create your first key
           </Button>
-          <Button variant="ghost" onClick={openDocs}>
+          <Button variant="outline" onClick={openDocs}>
             <BookOpen data-icon="inline-start" aria-hidden />
             Read the quickstart
           </Button>
@@ -233,7 +282,7 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 
 const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'gemini', 'openclaw'];
 
-function UsageInfo() {
+export function UsageInfo() {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const defaultTab = tabParam && CONNECT_TAB_IDS.includes(tabParam) ? tabParam : undefined;
@@ -243,7 +292,7 @@ function UsageInfo() {
     defaultTab && defaultTab !== 'gate-connect' ? defaultTab : undefined;
   return (
     <section className="@container/connect flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 max-w-1/2">
         <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
           Using your key
         </h3>
@@ -276,14 +325,14 @@ function UsageInfo() {
               gateConnectOnly
               fillHeight
               titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 m-0"
-              textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(25cqw_-_10px),398px)]"
-              imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+              textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+              imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
             />
           </div>
         </Card>
         <Card density="flush" className="flex-1 flex flex-col">
           <div className="flex-1">
-            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[176px]" floatingCopy />
+            <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[208px]" floatingCopy />
           </div>
         </Card>
       </div>
@@ -403,7 +452,7 @@ function KeysTable({
 
 /* ─── Create API key dialog ────────────────────────────────────────────── */
 
-function CreateKeyDialog({
+export function CreateKeyDialog({
   open,
   onOpenChange,
   onCreate,
@@ -497,7 +546,7 @@ function CreateKeyDialog({
 // Step 2 of the create flow: surfaces the full key exactly once. Opens when
 // `fullKey` is non-null (driven by `createdKey` in <ApiKeys>). No form — just
 // copy + a saved-it confirmation gate before the modal can be dismissed.
-function KeyCreatedDialog({
+export function KeyCreatedDialog({
   fullKey,
   onClose,
 }: {
@@ -599,7 +648,7 @@ function KeyCreatedDialog({
 
 /** Small random hex generator for masked key suffixes. Uses Math.random
  *  for demo-only key IDs — real key minting happens server-side. */
-function randomHex(chars: number): string {
+export function randomHex(chars: number): string {
   let out = '';
   for (let i = 0; i < chars; i++) {
     out += Math.floor(Math.random() * 16).toString(16);

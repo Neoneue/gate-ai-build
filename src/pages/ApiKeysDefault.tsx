@@ -1,15 +1,26 @@
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { PageTitle } from '@/components/ui/page-title';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { HeroCard } from '@/pages/DashboardDefault';
+import {
+  PageHeader,
+  KeysEmptyState,
+  UsageInfo,
+  CreateKeyDialog,
+  KeyCreatedDialog,
+  randomHex,
+} from '@/pages/ApiKeys';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * API Keys — default variant (route: /api-keys-default, sidebar: "API Keys")
+ * API Keys — default / empty variant (route: /api-keys-default, sidebar:
+ * "API Keys").
  *
- * Stripped-down version of the API Keys page: the keys table, the Create-key
- * flow, and the "Using your key" section are removed. In their place we drop
- * the Overview "Get Started" hero card (shared <HeroCard> from
- * DashboardDefault) so the page leads with onboarding.
+ * Mirrors the full API Keys page but with no keys: the table + Active/Revoked
+ * tabs are gone, replaced by the shared no-keys <KeysEmptyState> card (built
+ * on the <EmptyState> primitive — the same default empty card used across the
+ * site). The page header (with "Create key") and the "Using your key" section
+ * are reused verbatim from <ApiKeys> so the two pages never drift. The create
+ * flow still opens its dialogs; since there's no table here, a created key
+ * surfaces in the one-time "Key created" modal and isn't appended to a list.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function ApiKeysDefault() {
@@ -18,6 +29,15 @@ export function ApiKeysDefault() {
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
+  const [createOpen, setCreateOpen] = useState(false);
+  // One-time full key for the step-2 modal. No table to append to on this
+  // variant, so creating just surfaces the key once and resets.
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
+
+  const handleCreate = () => {
+    setCreateOpen(false);
+    setCreatedKey(`sk-gw-${randomHex(64)}`);
+  };
 
   return (
     <DashboardChrome
@@ -27,20 +47,10 @@ export function ApiKeysDefault() {
       onNavigate={(path: string) => navigate(path)}
     >
       <PageHeader />
-      <HeroCard />
+      <KeysEmptyState onCreate={() => setCreateOpen(true)} />
+      <UsageInfo />
+      <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
+      <KeyCreatedDialog fullKey={createdKey} onClose={() => setCreatedKey(null)} />
     </DashboardChrome>
-  );
-}
-
-function PageHeader() {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        <PageTitle>API Keys</PageTitle>
-        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
-        </p>
-      </div>
-    </div>
   );
 }

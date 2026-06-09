@@ -368,7 +368,7 @@ function HeroCodeTab({
       </div>
       {floatingCopy ? (
         <div className="absolute bottom-4 right-4">
-          <CopyButton mode="label" size="sm" text="Copy code" value={code} label="code snippet" />
+          <CopyButton mode="label" size="sm" text="Copy code" value={code} label="code snippet" className="shadow-sm" />
         </div>
       ) : (
         <div className="border-t border-border px-4 h-12 flex items-center justify-end">
