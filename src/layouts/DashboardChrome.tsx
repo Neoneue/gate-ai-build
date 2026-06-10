@@ -4,8 +4,8 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AnimatedBell } from '@/components/ui/animated-bell';
-import { AnimatedExternalLink } from '@/components/ui/animated-external-link';
+import { BellIcon } from '@/components/ui/bell';
+import { ExternalLinkIcon } from '@/components/ui/external-link';
 import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
 import { FeedbackFab } from '@/components/ui/feedback-fab';
 import { cn } from '@/lib/utils';
@@ -146,7 +146,7 @@ function DashTopBar({
         {hideDocsButton ? null : (
           <Button variant="outline" size="sm">
             Docs
-            <AnimatedExternalLink data-icon="inline-end" aria-hidden className="relative -top-px" />
+            <ExternalLinkIcon size={16} data-icon="inline-end" aria-hidden className="relative -top-px" />
           </Button>
         )}
         <Button
@@ -154,7 +154,7 @@ function DashTopBar({
           size="icon-sm"
           aria-label="Notifications"
         >
-          <AnimatedBell className="size-4" strokeWidth={1.75} aria-hidden />
+          <BellIcon size={16} strokeWidth={1.75} aria-hidden />
         </Button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Info, Key } from 'lucide-react';
-import { AnimatedDownload } from '@/components/ui/animated-download';
+import { UploadIcon } from '@/components/ui/upload';
 import {
   Bar,
   BarChart,
@@ -1118,7 +1118,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         />
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <AnimatedDownload data-icon="inline-start" aria-hidden />
+          <UploadIcon size={16} data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
       </FilterToolbar>

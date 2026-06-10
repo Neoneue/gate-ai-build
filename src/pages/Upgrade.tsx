@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Route,
@@ -9,9 +10,9 @@ import {
   KeyRound,
   SlidersHorizontal,
   Coins,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
+import { SparklesIcon } from '@/components/ui/sparkles';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/ui/page-title';
@@ -25,7 +26,7 @@ type PlanCardData = {
   benefitsLabel: string;
   features: PlanFeature[];
   featured?: boolean;
-  cta: { label: string; variant: 'default' | 'outline'; icon?: LucideIcon; onClick?: () => void; disabled?: boolean; ariaLabel?: string };
+  cta: { label: string; variant: 'default' | 'outline'; icon?: ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>; onClick?: () => void; disabled?: boolean; ariaLabel?: string };
 };
 
 const FREE_PLAN: PlanCardData = {
@@ -53,7 +54,7 @@ const PRO_PLAN: PlanCardData = {
     { Icon: SlidersHorizontal, title: 'Spend, token & rate limits', detail: 'Caps at the org, project, or key level, to stay within your budget' },
     { Icon: Coins, title: 'Token savings', detail: 'Cache and compression per request to cut excess token costs' },
   ],
-  cta: { label: 'Upgrade to Pro', variant: 'default', icon: Sparkles },
+  cta: { label: 'Upgrade to Pro', variant: 'default', icon: SparklesIcon },
 };
 
 function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => void }) {
@@ -99,7 +100,7 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanCardData; onUpgrade: () => vo
           onClick={plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)}
           className="w-full"
         >
-          {CtaIcon ? <CtaIcon className="size-4" /> : null}
+          {CtaIcon ? <CtaIcon size={16} aria-hidden /> : null}
           {plan.cta.label}
         </Button>
       </div>

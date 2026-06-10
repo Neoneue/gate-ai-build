@@ -232,7 +232,7 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>API Keys</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
+          Create new keys and manage the ones already in use. Keys authenticate every request through the gateway.
         </p>
       </div>
       {onCreate ? (
@@ -298,7 +298,7 @@ export function UsageInfo() {
           How to make requests
         </h3>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          There are two ways to start sending requests using your API key. With <span className="font-medium">Gate Connect</span>, setup is automatic, so you can skip the code entirely. Want to configure it yourself? Use the code snippets to do it by hand.
+          There are two ways to start making requests using your API key. With <span className="font-medium">Gate Connect</span>, setup is automatic, so you can skip the code entirely. Want to configure it yourself? Use the code snippets to do it by hand.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">
           To learn more, check out our{' '}
@@ -322,7 +322,7 @@ export function UsageInfo() {
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no
             internal title slot. */}
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
           <Eyebrow as="div">Automatic</Eyebrow>
           <Card density="flush" className="flex-1 flex flex-col">
             <div className="flex-1 flex flex-col">
@@ -336,7 +336,7 @@ export function UsageInfo() {
             </div>
           </Card>
         </div>
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
           <Eyebrow as="div">Manual</Eyebrow>
           <Card density="flush" className="flex-1 flex flex-col">
             <div className="flex-1">

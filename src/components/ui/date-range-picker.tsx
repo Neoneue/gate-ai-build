@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Calendar as CalendarIcon, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
+import { CalendarDaysIcon } from '@/components/ui/calendar-days';
 import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@/components/ui/button';
@@ -160,7 +161,7 @@ export function DateRangePicker({ value, onChange, className, size = 'sm' }: Dat
               size={size === 'sm' ? 'sm' : 'lg'}
               aria-label={value ? `Custom: ${formatRange(value)}` : 'Pick a custom date range'}
             >
-              <CalendarIcon data-icon="inline-start" aria-hidden />
+              <CalendarDaysIcon size={16} data-icon="inline-start" aria-hidden />
               <span>{value ? formatRange(value) : 'Custom'}</span>
             </Button>
           }
