@@ -25,7 +25,7 @@ rule in N places → **Conventions**; rebuild one surface → **Sections**.
 
 ## Components
 
-### AnimatedUpload — new GSAP icon; Export CSV buttons switch to it (uncommitted)
+### AnimatedUpload — new GSAP icon; Export CSV buttons switch to it [85f7d9e] (superseded same day — the GSAP component never reached a commit; net state is the lucide-animated migration below)
 
 New `src/components/ui/animated-upload.tsx`. Drop-in for lucide's `<Upload>`
 (lucide has no literal "export" icon; Upload is the standard export glyph —
@@ -48,7 +48,7 @@ showing a *download* glyph for an export action):
 `AnimatedDownload` itself is unchanged and still used where download is the
 real action (Overview "Download Gate Connect" trigger).
 
-### AnimatedSliders — new GSAP icon; Requests Filters button switches to it (uncommitted)
+### AnimatedSliders — new GSAP icon; Requests Filters button switches to it [85f7d9e] (superseded same day — see lucide-animated migration below)
 
 New `src/components/ui/animated-sliders.tsx`. Drop-in for lucide's
 `<SlidersHorizontal>`. Pixel-exact lucide v1.14.0 paths. Structural mirror of
@@ -80,7 +80,7 @@ Swap in `src/pages/Requests.tsx`:
 
 ## Sections
 
-### Overview default (Get Started) — GSAP icon animations on the two hero CTAs (uncommitted)
+### Overview default (Get Started) — GSAP icon animations on the two hero CTAs [85f7d9e] (Plus hover-scale on Create key survives; the GSAP Download icon was superseded by DownloadIcon — see migration below)
 
 `src/pages/DashboardDefault.tsx`. Swapped the static lucide icons on the two
 "Get Started" surface buttons for the existing GSAP drop-in components (both
@@ -99,7 +99,7 @@ self-bind hover to their host button via `closest('button,a')`):
   stays (still used by the per-OS "Download for {label}" buttons inside the
   Gate Connect modal, which were deliberately left static).
 
-### lucide-animated migration — GSAP hover icons replaced by vendored motion icons (uncommitted)
+### lucide-animated migration — GSAP hover icons replaced by vendored motion icons [85f7d9e]
 
 Supersedes the AnimatedUpload entry above (that component shipped earlier today
 and is already deleted again by this change).
@@ -145,7 +145,7 @@ and is already deleted again by this change).
   animates from the host button/menuitem, logout animates inside the user-menu
   popover. `npx tsc -b` exits 0.
 
-### ExternalLinkIcon — hand-built lucide-animated-style docs icon (uncommitted)
+### ExternalLinkIcon — hand-built lucide-animated-style docs icon [85f7d9e]
 
 New `src/components/ui/external-link.tsx`. The lucide-animated registry has
 no external-link glyph, so this is hand-built in the exact vendored template
@@ -165,7 +165,7 @@ style (same exports, handle interface, house host-hover patch, wrapper div,
 - Verified in-browser: hover nudge fires from the host button, no opacity
   change, settles back to rest. `npx tsc -b` exits 0.
 
-### API Keys — connect columns hold 50/50 under wide PAYG snippets (uncommitted)
+### API Keys — connect columns hold 50/50 under wide PAYG snippets [85f7d9e]
 
 The "How to make requests" two-column row (ApiKeys.tsx ~325/339) used
 `flex-1` columns without `min-w-0`; flex items default to
@@ -174,3 +174,12 @@ inflated the Manual card and squished the Gate Connect card. Added `min-w-0`
 to both column divs — the code block's existing `overflow-x-auto` now engages
 (~156px horizontal scroll at 1280 container) and the split stays 600/600 across
 all tab + BYOK/PAYG combinations. Verified in-browser.
+
+---
+
+## Non-UI, same day
+
+- Vendored the shadcn/improve audit skill (`.agents/skills/improve`,
+  Claude Code symlink, `skills-lock.json`) [713c96e]. Ran a full /improve
+  audit; vetted findings parked in `docs/improve-audit-2026-06-10.md`
+  (gitignored) — plans phase deferred.
