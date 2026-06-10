@@ -54,29 +54,14 @@ const msg = await client.messages.create({
 });
 console.log(msg.content);`;
 
+// PAYG terminal config — Claude Code routes through the gateway via the
+// OpenRouter-compatible provider. Configs supplied by the gateway devs.
 const HERO_CLAUDE_CODE_PAYG =
-`import Anthropic from "@anthropic-ai/sdk";
+`export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
+export ANTHROPIC_API_KEY="sk-gw-..."
+export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
 
-// PAYG — single gateway key. The gateway routes to the upstream named
-// by \`provider\` and bills your gateway account. Model is namespaced
-// as <provider>/<model>.
-const client = new Anthropic({
-  baseURL: "${GATEWAY_URL}",
-  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
-  defaultHeaders: {
-    "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
-  },
-});
-
-const msg = await client.messages.create({
-  model: "anthropic/claude-sonnet-4-5",
-  max_tokens: 256,
-  messages: [{ role: "user", content: "Hello!" }],
-  // Gateway extension — names the meta-provider to route through.
-  // SDK types don't include it, so we extend the request body directly.
-  ...({ provider: "OpenRouter" } as { provider: string }),
-});
-console.log(msg.content);`;
+claude code "your prompt"`;
 
 const HERO_CODEX_BYOK =
 `import OpenAI from "openai";
@@ -99,28 +84,16 @@ const msg = await client.chat.completions.create({
 console.log(msg.choices[0].message.content);`;
 
 const HERO_CODEX_PAYG =
-`import OpenAI from "openai";
+`export OPENAI_API_KEY="sk-gw-..."
 
-// PAYG — single gateway key. The gateway routes to the upstream named
-// by \`provider\` and bills your gateway account. Model is namespaced
-// as <provider>/<model>.
-const client = new OpenAI({
-  baseURL: "${GATEWAY_URL}/v1",
-  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
-  defaultHeaders: {
-    "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
-  },
-});
-
-const msg = await client.chat.completions.create({
-  model: "openai/gpt-4",
-  messages: [{ role: "user", content: "Hello!" }],
-  // Gateway extension — names the meta-provider to route through.
-  // OpenAI SDK forwards unknown top-level fields directly to the body.
-  // @ts-expect-error provider is a gateway-specific extension
-  provider: "OpenRouter",
-});
-console.log(msg.choices[0].message.content);`;
+codex exec \\
+  -c 'model_providers.gateway.base_url="${GATEWAY_URL}/v1"' \\
+  -c 'model_providers.gateway.env_key="OPENAI_API_KEY"' \\
+  -c 'model_providers.gateway.wire_api="responses"' \\
+  -c 'model_providers.gateway.http_headers."X-Gate-Provider"="openai_compatible"' \\
+  -c 'model_provider="gateway"' \\
+  -m "anthropic/claude-sonnet-4-5" \\
+  "your prompt"`;
 
 const HERO_OPENCLAW_BYOK =
 `import { OpenClawGenAI } from "@openclaw/genai";
@@ -146,84 +119,23 @@ const res = await client.models.generateContent({
 console.log(res.text);`;
 
 const HERO_OPENCLAW_PAYG =
-`import { OpenClawGenAI } from "@openclaw/genai";
-
-// PAYG — single gateway key. The gateway routes to the upstream named
-// by \`provider\` and bills your gateway account. Model is namespaced
-// as <provider>/<model>.
-const client = new OpenClawGenAI({
-  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
-  apiVersion: "v1",
-  httpOptions: {
-    baseUrl: "${GATEWAY_URL}/openclaw",
-    headers: {
-      "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
-    },
-  },
-});
-
-const res = await client.models.generateContent({
-  model: "openclaw/gemini-2.5-pro",
-  contents: "Hello!",
-  // Gateway extension — names the meta-provider to route through.
-  // OpenClaw SDK doesn't type this field; cast through unknown to attach it.
-  ...({ provider: "OpenRouter" } as { provider: string }),
-});
-console.log(res.text);`;
-
-const HERO_GEMINI_BYOK =
-`import { GoogleGenAI } from "@google/genai";
-
-// BYOK — your own Google API key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new GoogleGenAI({
-  apiKey: "YOUR_GOOGLE_API_KEY",
-  apiVersion: "v1",
-  httpOptions: {
-    baseUrl: "${GATEWAY_URL}/google",
-    headers: {
-      "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-      "X-Gate-Upstream-Url": "https://generativelanguage.googleapis.com",
-    },
-  },
-});
-
-const res = await client.models.generateContent({
-  model: "gemini-2.5-pro",
-  contents: "Hello!",
-});
-console.log(res.text);`;
-
-const HERO_GEMINI_PAYG =
-`import { GoogleGenAI } from "@google/genai";
-
-// PAYG — single gateway key. The gateway routes to the upstream named
-// by \`provider\` and bills your gateway account. Model is namespaced
-// as <provider>/<model>.
-const client = new GoogleGenAI({
-  apiKey: "sk-gw-…YOUR_GATEWAY_KEY",
-  apiVersion: "v1",
-  httpOptions: {
-    baseUrl: "${GATEWAY_URL}/google",
-    headers: {
-      "x-gate-api-key": "sk-gw-…YOUR_GATEWAY_KEY",
-    },
-  },
-});
-
-const res = await client.models.generateContent({
-  model: "google/gemini-2.5-pro",
-  contents: "Hello!",
-  // Gateway extension — names the meta-provider to route through.
-  // Google SDK doesn't type this field; cast through unknown to attach it.
-  ...({ provider: "OpenRouter" } as { provider: string }),
-});
-console.log(res.text);`;
+`{
+  "models": {
+    "providers": {
+      "swarm-deck": {
+        "baseUrl": "${GATEWAY_URL}",
+        "apiKey": "sk-gw-...",
+        "api": "openai-completions",
+        "headers": { "X-Gate-Provider": "openai_compatible" },
+        "models": [{ "id": "anthropic/claude-sonnet-4-5", "name": "anthropic/claude-sonnet-4-5" }]
+      }
+    }
+  }
+}`;
 
 export const HERO_SNIPPETS: Record<string, string> = {
   'claude-code': HERO_CLAUDE_CODE_BYOK,
   codex: HERO_CODEX_BYOK,
-  gemini: HERO_GEMINI_BYOK,
   openclaw: HERO_OPENCLAW_BYOK,
 };
 
@@ -334,7 +246,8 @@ function HeroCodeTab({
   paygOnly = false,
   caption,
   maxHeightClass = 'max-h-[192px]',
-  floatingCopy = false,
+  mode = 'byok',
+  onModeChange,
 }: {
   snippet?: string;
   byok?: string;
@@ -345,15 +258,17 @@ function HeroCodeTab({
   caption?: string;
   /** Tailwind max-h class for the scrolling snippet panel. */
   maxHeightClass?: string;
-  /** Drop the Copy footer and float the Copy button 24px from the bottom-right. */
-  floatingCopy?: boolean;
+  /** Billing mode, controlled by the parent so one card-level Copy button can
+   *  read the active code and the toggle stays in sync across tabs. The Copy
+   *  button itself is rendered once at the card level (ConnectTabs), not here. */
+  mode?: 'byok' | 'payg';
+  onModeChange?: (next: 'byok' | 'payg') => void;
 }) {
   const hasModes = Boolean(byok && payg);
-  const [mode, setMode] = useState<'byok' | 'payg'>('byok');
   const effectiveMode = paygOnly ? 'payg' : mode;
   const code = hasModes ? (effectiveMode === 'byok' ? byok! : payg!) : snippet!;
   return (
-    <div className={`flex flex-col h-full ${floatingCopy ? 'relative' : ''}`}>
+    <div className="flex flex-col h-full">
       {hasModes && (
         <div className={`flex items-center gap-4 px-4 border-b border-border ${paygOnly ? 'h-10 justify-start' : 'py-2 justify-between'}`}>
           {!paygOnly && (
@@ -368,7 +283,7 @@ function HeroCodeTab({
                   type="button"
                   role="radio"
                   aria-checked={mode === m}
-                  onClick={() => setMode(m)}
+                  onClick={() => onModeChange?.(m)}
                   className={`flex items-center px-2 h-6 rounded-xs text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
                       ? 'bg-neutral-100 text-neutral-900'
@@ -388,15 +303,6 @@ function HeroCodeTab({
       <div className={`${maxHeightClass} overflow-y-auto`}>
         <CodePanel snippet={code} />
       </div>
-      {floatingCopy ? (
-        <div className="absolute bottom-4 right-4">
-          <CopyButton mode="label" size="sm" text="Copy code" value={code} label="code snippet" className="shadow-sm" />
-        </div>
-      ) : (
-        <div className="border-t border-border px-4 h-12 flex items-center justify-end">
-          <CopyButton mode="label" text="Copy code" value={code} label="code snippet" />
-        </div>
-      )}
     </div>
   );
 }
@@ -708,7 +614,6 @@ const WORKS_WITH_ITEMS: FooterItem[] = [
 const MANUAL_SETUP_ITEMS: FooterItem[] = [
   { Icon: AnthropicIcon, name: 'Claude',   tab: 'claude-code' },
   { Icon: OpenAIIcon,    name: 'Codex',    tab: 'codex' },
-  { Icon: GeminiIcon,    name: 'Gemini',   tab: 'gemini' },
   { src: '/icons/providers/openclaw.svg', name: 'OpenClaw', tab: 'openclaw' },
 ];
 
@@ -759,10 +664,9 @@ function WorksWithFooter({
 }
 
 /** Per-tab captions for the paygOnly strip (e.g. the Models page). */
-const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'gemini' | 'openclaw', string> = {
+const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'openclaw', string> = {
   'claude-code': 'Anthropic-shape CLI. Point base URL + key at the gateway.',
   codex: 'OpenAI Responses CLI. Inline-config the gateway as a provider.',
-  gemini: 'Google GenAI SDK. Point the base URL + headers at the gateway.',
   openclaw: 'Edit ~/.openclaw/openclaw.json — gateway as a provider.',
 };
 
@@ -797,8 +701,21 @@ export function ConnectTabs({
   floatingCopy = false,
   defaultTab,
 }: { textMaxWidth?: string; imageClassName?: string; titleClassName?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean; fillHeight?: boolean; codeMaxHeight?: string; floatingCopy?: boolean; defaultTab?: string } = {}) {
+  const [activeTab, setActiveTab] = useState(
+    defaultTab ?? (showGateConnect ? 'gate-connect' : 'claude-code'),
+  );
+  const [mode, setMode] = useState<'byok' | 'payg'>('byok');
+  const effectiveMode = paygOnly ? 'payg' : mode;
+  // Per-tab code, so a single card-level Copy button (rendered once, floating)
+  // reflects the active tab + mode without a separate button per tab.
+  const TAB_CODE: Record<string, { byok: string; payg: string }> = {
+    'claude-code': { byok: HERO_CLAUDE_CODE_BYOK, payg: HERO_CLAUDE_CODE_PAYG },
+    codex: { byok: HERO_CODEX_BYOK, payg: HERO_CODEX_PAYG },
+    openclaw: { byok: HERO_OPENCLAW_BYOK, payg: HERO_OPENCLAW_PAYG },
+  };
+  const activeCode = TAB_CODE[activeTab]?.[effectiveMode];
   return (
-    <Tabs defaultValue={defaultTab ?? (showGateConnect ? 'gate-connect' : 'claude-code')} className="flex flex-col flex-1 gap-0">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className={`flex flex-col flex-1 gap-0${floatingCopy ? ' relative' : ''}`}>
       {!gateConnectOnly && (
       <div className="flex items-center px-4 border-b border-border">
         <TabsList variant="line" className="px-0 border-b-0 h-12">
@@ -812,9 +729,6 @@ export function ConnectTabs({
           </TabsTrigger>
           <TabsTrigger value="codex">
             <OpenAIIcon className="size-4" />Codex
-          </TabsTrigger>
-          <TabsTrigger value="gemini">
-            <GeminiIcon className="size-4" />Gemini
           </TabsTrigger>
           <TabsTrigger value="openclaw">
             <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
@@ -850,17 +764,21 @@ export function ConnectTabs({
       </TabsContent>
       )}
       <TabsContent value="claude-code" className="mt-0">
-        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
+        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
       </TabsContent>
       <TabsContent value="codex" className="mt-0">
-        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
-      </TabsContent>
-      <TabsContent value="gemini" className="mt-0">
-        <HeroCodeTab byok={HERO_GEMINI_BYOK} payg={HERO_GEMINI_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.gemini : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
+        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
       </TabsContent>
       <TabsContent value="openclaw" className="mt-0">
-        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} floatingCopy={floatingCopy} />
+        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
       </TabsContent>
+      {/* Single card-level Copy button — rendered once, floating bottom-right,
+          reads the active tab + mode code. Not re-mounted per tab. */}
+      {floatingCopy && activeCode && (
+        <div className="absolute bottom-4 right-4">
+          <CopyButton mode="label" size="sm" text="Copy code" value={activeCode} label="code snippet" className="shadow-sm" />
+        </div>
+      )}
     </Tabs>
   );
 }

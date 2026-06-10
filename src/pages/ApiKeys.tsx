@@ -281,7 +281,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 // Provider SDK quickstarts (Anthropic / OpenAI / Google) reuse the hero
 // card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
-const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'gemini', 'openclaw'];
+const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'openclaw'];
 
 export function UsageInfo() {
   const [searchParams] = useSearchParams();
@@ -340,7 +340,7 @@ export function UsageInfo() {
           <Eyebrow as="div">Manual</Eyebrow>
           <Card density="flush" className="flex-1 flex flex-col">
             <div className="flex-1">
-              <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="max-h-[208px]" floatingCopy />
+              <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="h-[208px]" floatingCopy />
             </div>
           </Card>
         </div>
