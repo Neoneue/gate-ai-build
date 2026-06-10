@@ -29,7 +29,6 @@ import { Radio } from '@base-ui/react/radio';
 import { XIcon, Check } from 'lucide-react';
 
 const GATEWAY_URL = 'https://gateway-staging.constellationgate.ai';
-const GATEWAY_KEY_PLACEHOLDER = 'sk-gw-…YOUR_KEY';
 
 // These tabs configure agent apps to route through the gateway — you point
 // the tool at Gate, not the model provider. Claude Code + Codex read base-URL
