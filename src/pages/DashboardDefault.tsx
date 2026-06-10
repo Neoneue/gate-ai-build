@@ -233,13 +233,20 @@ const KEYWORDS = new Set([
   'await', 'new', 'async', 'function', 'return', 'class',
 ]);
 
-type CodeToken = { text: string; type: 'keyword' | 'string' | 'plain' };
+type CodeToken = { text: string; type: 'keyword' | 'string' | 'comment' | 'property' | 'plain' };
 
 function tokenizeLine(line: string): CodeToken[] {
   const tokens: CodeToken[] = [];
   let i = 0;
   while (i < line.length) {
     const ch = line[i];
+    // Line comment — consumes to end of line. Strings are handled below, so a
+    // `//` inside a URL ("https://…") is tokenized as a string and never
+    // reaches here.
+    if (ch === '/' && line[i + 1] === '/') {
+      tokens.push({ text: line.slice(i), type: 'comment' });
+      break;
+    }
     if (ch === "'" || ch === '"' || ch === '`') {
       let j = i + 1;
       while (j < line.length) {
@@ -253,7 +260,14 @@ function tokenizeLine(line: string): CodeToken[] {
       let j = i;
       while (j < line.length && /[a-zA-Z0-9_$]/.test(line[j])) j++;
       const word = line.slice(i, j);
-      tokens.push({ text: word, type: KEYWORDS.has(word) ? 'keyword' : 'plain' });
+      // Object/JSON key: an identifier immediately followed by `:` renders in
+      // the property hue, matching the CodeBlock theme.
+      const type = KEYWORDS.has(word)
+        ? 'keyword'
+        : line[j] === ':'
+        ? 'property'
+        : 'plain';
+      tokens.push({ text: word, type });
       i = j;
     } else {
       if (tokens.length > 0 && tokens[tokens.length - 1].type === 'plain') {
@@ -277,15 +291,24 @@ export function CodePanel({ snippet }: { snippet: string }) {
             {i + 1}
           </span>
           <span className="font-mono text-xs whitespace-pre flex-1">
-            {tokenizeLine(line).map((tok, j) =>
-              tok.type === 'keyword' ? (
-                <span key={j} className="text-indigo-600">{tok.text}</span>
-              ) : tok.type === 'string' ? (
-                <span key={j} className="text-red-600">{tok.text}</span>
-              ) : (
-                <span key={j} className="text-neutral-800">{tok.text}</span>
-              )
-            )}
+            {tokenizeLine(line).map((tok, j) => {
+              // Match the CodeBlock (CodeCard) theme tokens so every code
+              // surface shares one syntax palette: amber keywords, green
+              // strings/values, blue keys, muted comments.
+              const cls =
+                tok.type === 'keyword'
+                  ? 'text-[var(--color-syntax-keyword)]'
+                  : tok.type === 'string'
+                  ? 'text-[var(--color-syntax-terminal-blue)]'
+                  : tok.type === 'property'
+                  ? 'text-[var(--color-syntax-property)]'
+                  : tok.type === 'comment'
+                  ? 'text-neutral-500'
+                  : 'text-neutral-900';
+              return (
+                <span key={j} className={cls}>{tok.text}</span>
+              );
+            })}
           </span>
         </div>
       ))}

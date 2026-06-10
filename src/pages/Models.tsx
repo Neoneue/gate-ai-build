@@ -13,7 +13,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ConnectTabs } from '@/pages/DashboardDefault';
+import { CodePanel } from '@/pages/DashboardDefault';
+import { AnthropicIcon, OpenAIIcon } from '@/components/icons/model-providers';
 import { TableEmptyState } from '@/components/ui/table-empty-state';
 import { FilterToolbar } from '@/components/ui/filter-toolbar';
 import { SearchInput } from '@/components/ui/search-input';
@@ -45,7 +46,7 @@ import {
 import { TabsCount } from '@/components/ui/tabs-count';
 import { RowActionButton } from '@/components/ui/row-action-button';
 import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
-import { CodeBlock, CodeCard, CodeCardCopyButton, CodeCardHeader, CodeCardTabs, linesToString, type CodeLine, type CodeToken } from '@/components/ui/code-card';
+import { CodeBlock, linesToString, type CodeLine, type CodeToken } from '@/components/ui/code-card';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { HeroNumeric } from '@/components/ui/hero-numeric';
@@ -1138,6 +1139,7 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
   // as the table row's pricing.
   const head = model.offerings[0];
   const [lang, setLang] = useState<'TypeScript' | 'Python' | 'cURL'>('TypeScript');
+  const [tool, setTool] = useState<ToolId>('claude-code');
   const [showFullDesc, setShowFullDesc] = useState(false);
   const activeLines = useMemo(() => {
     if (lang === 'TypeScript') return tsSnippet(model.defaultHandle, model.modality);
@@ -1262,16 +1264,48 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
             Quick start
           </h3>
           <p className="font-sans text-sm text-neutral-500 text-pretty m-0">
-            Paste this model ID into the model field of any OpenAI-compatible client. Point your client&rsquo;s base URL at{' '}
+            Point your tool at the gateway base URL{' '}
             <span className="inline-flex items-center gap-1 align-middle">
-              <InlineCode size="sm">https://gateway.constellationgate.ai/v1</InlineCode>
-              <CopyButton size="inline-xs" value="https://gateway.constellationgate.ai/v1" label="base URL" />
+              <InlineCode size="sm">https://gateway-staging.constellationgate.ai</InlineCode>
+              <CopyButton size="inline-xs" value="https://gateway-staging.constellationgate.ai" label="base URL" />
             </span>{' '}
-            and authenticate with your Constellation Gate API key.
+            and authenticate with your gateway key (<InlineCode size="sm">sk-gw-…</InlineCode>). Pick a tool below for the exact configuration.
           </p>
         </div>
-        <Card density="flush">
-          <ConnectTabs showGateConnect={false} paygOnly />
+        {/* Per-tool terminal/CLI config. Mirrors the Example request card:
+            flush Card, line tabs, per-tool caption row, 208px scroll, floating
+            Copy bottom-right. PAYG-only (OpenRouter / openai_compatible). */}
+        <Card density="flush" className="relative">
+          <Tabs
+            value={tool}
+            onValueChange={(v) => setTool(v as ToolId)}
+            className="flex flex-col gap-0"
+          >
+            <div className="flex items-center px-4 border-b border-border">
+              <TabsList variant="line" className="px-0 border-b-0 h-12">
+                <TabsTrigger value="claude-code"><AnthropicIcon className="size-4" />Claude Code</TabsTrigger>
+                <TabsTrigger value="codex"><OpenAIIcon className="size-4" />Codex</TabsTrigger>
+                <TabsTrigger value="opencode"><img src="/icons/providers/opencode.svg" alt="" aria-hidden className="h-4 w-auto" />OpenCode</TabsTrigger>
+                <TabsTrigger value="openclaw"><img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw</TabsTrigger>
+              </TabsList>
+            </div>
+            <div className="flex items-center h-10 px-4 border-b border-border">
+              <span className="text-xs text-neutral-500">{TOOL_CAPTIONS[tool]}</span>
+            </div>
+            <div className="h-[216px] overflow-y-auto">
+              <CodePanel snippet={toolConfigSnippet(tool, model.defaultHandle)} />
+            </div>
+          </Tabs>
+          <div className="absolute bottom-4 right-4">
+            <CopyButton
+              mode="label"
+              size="sm"
+              text="Copy code"
+              value={toolConfigSnippet(tool, model.defaultHandle)}
+              label="setup"
+              className="shadow-sm"
+            />
+          </div>
         </Card>
       </section>
 
@@ -1281,23 +1315,40 @@ function ModelDetailPage({ model, onBack }: { model: Model; onBack: () => void }
             Example request
           </h3>
           <p className="font-sans text-sm text-neutral-500 m-0">
-            Sample request against the gateway. Copy a snippet and adapt the message body for your use case.
+            Once your client is pointed at the gateway, you can send this to make your first call and confirm everything works. The model ID is already filled in. Just add your API key and run it.
           </p>
         </div>
-        <CodeCard>
-          <CodeCardHeader>
-            <CodeCardTabs
-              items={['TypeScript', 'Python', 'cURL']}
-              active={lang}
-              onChange={(v) => setLang(v as 'TypeScript' | 'Python' | 'cURL')}
-            />
-            <CodeCardCopyButton
+        {/* Mirrors the Quick start card on the left: flush Card chrome, line
+            tabs, a 208px scroll area, and a floating Copy button bottom-right
+            (no grey header strip, no caption row). */}
+        <Card density="flush" className="relative">
+          <Tabs
+            value={lang}
+            onValueChange={(v) => setLang(v as 'TypeScript' | 'Python' | 'cURL')}
+            className="flex flex-col gap-0"
+          >
+            <div className="flex items-center px-4 border-b border-border">
+              <TabsList variant="line" className="px-0 border-b-0 h-12">
+                <TabsTrigger value="TypeScript"><img src="/icons/languages/typescript.svg" alt="" aria-hidden className="size-4" />TypeScript</TabsTrigger>
+                <TabsTrigger value="Python"><img src="/icons/languages/python.svg" alt="" aria-hidden className="size-4" />Python</TabsTrigger>
+                <TabsTrigger value="cURL"><img src="/icons/languages/curl.svg" alt="" aria-hidden className="h-4 w-auto" />cURL</TabsTrigger>
+              </TabsList>
+            </div>
+            <div className="h-[256px] overflow-y-auto">
+              <CodeBlock lines={activeLines} density="compact" />
+            </div>
+          </Tabs>
+          <div className="absolute bottom-4 right-4">
+            <CopyButton
+              mode="label"
+              size="sm"
+              text="Copy code"
               value={linesToString(activeLines)}
               label={`${lang} snippet`}
+              className="shadow-sm"
             />
-          </CodeCardHeader>
-          <CodeBlock lines={activeLines} density="compact" />
-        </CodeCard>
+          </div>
+        </Card>
       </section>
       </div>
     </div>
@@ -1593,6 +1644,62 @@ function tokenize(src: string, lang: Lang): CodeLine[] {
   return src.split('\n').map((line) => tokenizeLine(line, lang));
 }
 
+/* ── Quick start: per-tool terminal/CLI configuration ───────────────────────
+ * The tool tabs (Claude Code / Codex / OpenCode / OpenClaw) are CLI/agent
+ * tools, so the accurate setup is environment-variable config + a run command,
+ * not SDK code. Routing is OpenRouter via `X-Gate-Provider: openai_compatible`;
+ * `handle` is the current model's gateway handle. Configs supplied by the
+ * gateway devs — keep verbatim. */
+type ToolId = 'claude-code' | 'codex' | 'opencode' | 'openclaw';
+
+const TOOL_CAPTIONS: Record<ToolId, string> = {
+  'claude-code': 'Anthropic-shape CLI. Point base URL + key at the gateway.',
+  codex: 'OpenAI Responses CLI. Inline-config the gateway as a provider.',
+  opencode: 'OpenAI-compatible CLI. Point base URL + key at the gateway.',
+  openclaw: 'Gate-native config — add the gateway as a provider.',
+};
+
+function toolConfigSnippet(tool: ToolId, handle: string): string {
+  switch (tool) {
+    case 'claude-code':
+      return `export ANTHROPIC_BASE_URL="https://gateway-staging.constellationgate.ai"
+export ANTHROPIC_API_KEY="sk-gw-..."
+export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
+
+claude code "your prompt"`;
+    case 'codex':
+      return `export OPENAI_API_KEY="sk-gw-..."
+
+codex exec \\
+  -c 'model_providers.gateway.base_url="https://gateway-staging.constellationgate.ai/v1"' \\
+  -c 'model_providers.gateway.env_key="OPENAI_API_KEY"' \\
+  -c 'model_providers.gateway.wire_api="responses"' \\
+  -c 'model_providers.gateway.http_headers."X-Gate-Provider"="openai_compatible"' \\
+  -c 'model_provider="gateway"' \\
+  -m "${handle}" \\
+  "your prompt"`;
+    case 'opencode':
+      return `export OPENAI_API_KEY="sk-gw-..."
+export OPENAI_BASE_URL="https://gateway-staging.constellationgate.ai/v1"
+
+opencode "your prompt"`;
+    case 'openclaw':
+      return `{
+  "models": {
+    "providers": {
+      "swarm-deck": {
+        "baseUrl": "https://gateway-staging.constellationgate.ai",
+        "apiKey": "sk-gw-...",
+        "api": "openai-completions",
+        "headers": { "X-Gate-Provider": "openai_compatible" },
+        "models": [{ "id": "${handle}", "name": "${handle}" }]
+      }
+    }
+  }
+}`;
+  }
+}
+
 function tsSnippet(handle: string, modality: Modality): CodeLine[] {
   if (modality === 'embeddings') {
     return tokenize(`import OpenAI from 'openai';
@@ -1635,16 +1742,17 @@ const transcript = await client.audio.transcriptions.create({
   }),
 });`, 'ts');
   }
-  return tokenize(`import OpenAI from 'openai';
-
-const client = new OpenAI({
-  baseURL: 'https://gateway.constellationgate.ai/v1',
-  apiKey: process.env.CONSTELLATION_API_KEY,
-});
-
-const completion = await client.chat.completions.create({
-  model: '${handle}',
-  messages: [{ role: 'user', content: 'Hello!' }],
+  return tokenize(`const res = await fetch('https://gateway-staging.constellationgate.ai/v1/messages', {
+  method: 'POST',
+  headers: {
+    'x-gate-api-key': process.env.GATEWAY_KEY!,
+    'content-type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: '${handle}',
+    messages: [{ role: 'user', content: 'Hello!' }],
+    provider: 'openai_compatible',
+  }),
 });`, 'ts');
 }
 
@@ -1689,16 +1797,19 @@ res = requests.post(
     },
 )`, 'py');
   }
-  return tokenize(`from openai import OpenAI
+  return tokenize(`import os, requests
 
-client = OpenAI(
-    base_url="https://gateway.constellationgate.ai/v1",
-    api_key=os.environ["CONSTELLATION_API_KEY"],
-)
-
-completion = client.chat.completions.create(
-    model="${handle}",
-    messages=[{"role": "user", "content": "Hello!"}],
+res = requests.post(
+    "https://gateway-staging.constellationgate.ai/v1/messages",
+    headers={
+        "x-gate-api-key": os.environ["GATEWAY_KEY"],
+        "content-type": "application/json",
+    },
+    json={
+        "model": "${handle}",
+        "messages": [{"role": "user", "content": "Hello!"}],
+        "provider": "openai_compatible",
+    },
 )`, 'py');
 }
 
@@ -1729,11 +1840,12 @@ function curlSnippet(handle: string, modality: Modality): CodeLine[] {
     "documents": ["Paris is the capital.", "Berlin is in Germany."]
   }'`, 'bash');
   }
-  return tokenize(`curl https://gateway.constellationgate.ai${endpoint} \\
-  -H "Authorization: Bearer $CONSTELLATION_API_KEY" \\
-  -H "Content-Type: application/json" \\
+  return tokenize(`curl https://gateway-staging.constellationgate.ai/v1/messages \\
+  -H "x-gate-api-key: $GATEWAY_KEY" \\
+  -H "content-type: application/json" \\
   -d '{
     "model": "${handle}",
-    "messages": [{"role": "user", "content": "Hello!"}]
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "provider": "openai_compatible"
   }'`, 'bash');
 }
