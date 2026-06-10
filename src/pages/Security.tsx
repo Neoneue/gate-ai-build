@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeftRight, FileText, Flag, ShieldCheck } from 'lucide-react';
-import { AnimatedDownload } from '@/components/ui/animated-download';
+import { UploadIcon } from '@/components/ui/upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -1011,7 +1011,7 @@ function EventsTableSection({
         </Select>
 
         <Button type="button" variant="outline" size="sm">
-          <AnimatedDownload data-icon="inline-start" aria-hidden />
+          <UploadIcon size={16} data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
         </div>

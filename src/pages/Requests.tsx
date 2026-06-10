@@ -10,10 +10,10 @@ import {
   KeyRound,
   Settings2,
   ShieldCheck,
-  SlidersHorizontal,
   TriangleAlert,
 } from 'lucide-react';
-import { AnimatedDownload } from '@/components/ui/animated-download';
+import { UploadIcon } from '@/components/ui/upload';
+import { SlidersHorizontalIcon } from '@/components/ui/sliders-horizontal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -1482,7 +1482,7 @@ function RequestsTableSection({
   // dropdowns (Model/Key/Response/Guardrail) into one modal Dialog to
   // de-cram the toolbar row; the modal gives each Select room to breathe.
   // Reversible: drop this state, restore the inline <Select>s, remove the
-  // Filters Dialog block and the SlidersHorizontal import.
+  // Filters Dialog block and the SlidersHorizontalIcon import.
   const [filtersOpen, setFiltersOpen] = useState(false);
   const activeFilterCount = [model, keyId, responseFilter, guardrailFilter].filter(
     (v) => v !== 'all',
@@ -1642,7 +1642,7 @@ function RequestsTableSection({
             className="border-border bg-card text-foreground font-normal"
             onClick={openFilters}
           >
-            <SlidersHorizontal data-icon="inline-start" aria-hidden />
+            <SlidersHorizontalIcon size={16} data-icon="inline-start" aria-hidden />
             Filters
             {activeFilterCount > 0 ? (
               <Badge
@@ -1772,7 +1772,7 @@ function RequestsTableSection({
           </Dialog>
 
           <Button type="button" variant="outline" size="sm" className="ml-auto">
-            <AnimatedDownload data-icon="inline-start" aria-hidden />
+            <UploadIcon size={16} data-icon="inline-start" aria-hidden />
             Export CSV
           </Button>
         </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Info, Key } from 'lucide-react';
-import { AnimatedDownload } from '@/components/ui/animated-download';
+import { UploadIcon } from '@/components/ui/upload';
 import {
   Bar,
   BarChart,
@@ -191,7 +191,7 @@ function PageHeader({
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>Activity</PageTitle>
-        <p className="font-sans text-muted-foreground text-base tracking-tight text-pretty m-0">
+        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
           Cost, requests, and tokens across the workspace.
         </p>
       </div>
@@ -1118,7 +1118,7 @@ function UsageByKey({ range, customRange }: { range: Range; customRange: CustomR
         />
 
         <Button type="button" variant="outline" size="sm" className="ml-auto">
-          <AnimatedDownload data-icon="inline-start" aria-hidden />
+          <UploadIcon size={16} data-icon="inline-start" aria-hidden />
           Export CSV
         </Button>
       </FilterToolbar>

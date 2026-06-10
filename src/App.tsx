@@ -9,6 +9,7 @@ import {
 import { Toaster } from '@/components/ui/sonner';
 import { Activity } from '@/pages/Activity';
 import { ApiKeys } from '@/pages/ApiKeys';
+import { ApiKeysDefault } from '@/pages/ApiKeysDefault';
 import { AuditTrail } from '@/pages/AuditTrail';
 import { AuditTrailMerkle } from '@/pages/AuditTrailMerkle';
 import { Billing } from '@/pages/Billing';
@@ -58,8 +59,21 @@ function Layout() {
     );
   }, [sidebarExpanded]);
 
+  // Force-collapse at ≤1024px. The user's stored preference is preserved and
+  // restored once the viewport widens past 1024.
+  const [isNarrow, setIsNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
+    setIsNarrow(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const ctx: LayoutContext = {
-    sidebarExpanded,
+    sidebarExpanded: sidebarExpanded && !isNarrow,
     toggleSidebar: () => setSidebarExpanded((v) => !v),
   };
 
@@ -100,6 +114,7 @@ export default function App() {
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/api-keys-default" element={<ApiKeysDefault />} />
           <Route path="/billing" element={<Billing />} />
           {/* Unknown routes fall back to Requests. */}
           <Route path="*" element={<Navigate to="/overview" replace />} />

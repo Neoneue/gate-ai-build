@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Separator } from '@/components/ui/separator';
 import { UserMenu } from '@/components/ui/user-menu';
-import { BrandMark } from '@/components/icons/brand-mark';
 import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -137,15 +136,18 @@ function SidebarCollapsed({
   onNavigate?: (pageId: string) => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-between w-16 h-full py-5 shrink-0">
-      <div className="flex flex-col items-center gap-1 w-full">
-        <BrandMark className="size-8 text-blue-700" />
+    <div className="flex flex-col items-center w-16 h-full shrink-0">
+      <div className="flex items-center justify-center h-16 w-full shrink-0 border-b border-border">
+        <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-8 w-auto" />
+      </div>
+      <div className="flex flex-col items-center justify-between flex-1 w-full pt-3 pb-5 overflow-y-auto">
+        <div className="flex flex-col items-center gap-1 w-full">
         {sections.map((section, i) => (
           <div
             key={section.label ?? `top-${i}`}
             className="flex flex-col items-center gap-1 w-full"
           >
-            <Separator className={i === 0 ? 'w-8 my-2' : 'w-8 my-1'} />
+            {i > 0 && <Separator className="w-8 my-1" />}
             {section.items.map((item) => {
               const Icon = item.icon;
               const isActive = activeId === item.id;
@@ -175,9 +177,10 @@ function SidebarCollapsed({
             })}
           </div>
         ))}
-      </div>
-      <div className="flex items-center justify-center size-6 rounded-full bg-blue-700 text-white font-mono text-xs font-medium">
-        CP
+        </div>
+        <div className="flex items-center justify-center size-6 rounded-full bg-blue-700 text-white font-mono text-xs font-medium">
+          CP
+        </div>
       </div>
     </div>
   );
@@ -202,7 +205,7 @@ function SidebarExpanded({
     <div className="flex flex-col w-60 h-full shrink-0">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0">
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
         {brand ?? <DefaultBrand />}
       </div>
 
@@ -271,7 +274,7 @@ function DefaultBrand() {
     <img
       src="/gate-ai-logo.png"
       alt="Constellation Gate AI"
-      className="h-9 w-auto"
+      className="h-8 w-auto"
       draggable={false}
     />
   );

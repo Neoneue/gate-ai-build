@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,16 +14,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
-import {
-  CodeBlock,
-  CodeCard,
-  CodeCardHeader,
-  CodeCardTabs,
-  linesToString,
-  type CodeLine,
-} from '@/components/ui/code-card';
-import { CopyButton, useCopyFeedback } from '@/components/ui/copy-button';
+import { ConnectTabs } from '@/pages/DashboardDefault';
+import { useCopyFeedback } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow } from '@/components/ui/eyebrow';
 import { IconActionButton } from '@/components/ui/icon-action-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsCount } from '@/components/ui/tabs-count';
 import { DashboardChrome } from '@/layouts/DashboardChrome';
 import { Timestamp } from '@/components/ui/timestamp';
 import { useTableSort, sortRows } from '@/hooks/use-table-sort';
@@ -97,6 +93,9 @@ export function ApiKeys() {
   // Full key string for the step-2 "Key created" modal. Non-null while that
   // modal is open; reset to null on close (the key is shown exactly once).
   const [createdKey, setCreatedKey] = useState<string | null>(null);
+  // Status tab — split the table into Active / Revoked scopes (Models-style
+  // line tabs with count chips). Defaults to Active.
+  const [keyStatus, setKeyStatus] = useState<'active' | 'revoked'>('active');
   // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
   // a revoked test-key. Delete the array literal (replace with `[]`)
   // before testing the real add-key flow.
@@ -162,6 +161,10 @@ export function ApiKeys() {
     setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, revoked: true } : k)));
   };
 
+  const activeKeys = keys.filter((k) => !k.revoked);
+  const revokedKeys = keys.filter((k) => k.revoked);
+  const visibleKeys = keyStatus === 'active' ? activeKeys : revokedKeys;
+
   return (
     <DashboardChrome
       activeNavId="api-keys"
@@ -169,11 +172,46 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
     >
-      <PageHeader onCreate={() => setCreateOpen(true)} />
+      <PageHeader onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)} />
       {keys.length === 0 ? (
         <KeysEmptyState onCreate={() => setCreateOpen(true)} />
       ) : (
-        <KeysTable rows={keys} onRevoke={handleRevoke} />
+        <Tabs
+          value={keyStatus}
+          onValueChange={(v) => setKeyStatus(v as 'active' | 'revoked')}
+          className="gap-4"
+        >
+          <TabsList variant="line" className="px-0 -mt-2">
+            <TabsTrigger value="active">
+              Active
+              <TabsCount>{activeKeys.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="revoked">
+              Revoked
+              <TabsCount>{revokedKeys.length}</TabsCount>
+            </TabsTrigger>
+          </TabsList>
+          {visibleKeys.length === 0 ? (
+            <EmptyState
+              icon={
+                <div
+                  aria-hidden
+                  className="size-12 rounded-full bg-muted flex items-center justify-center"
+                >
+                  <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
+                </div>
+              }
+              title={`No ${keyStatus} keys`}
+              body={
+                keyStatus === 'revoked'
+                  ? 'Keys you revoke will appear here. Revoking a key stops it authenticating immediately.'
+                  : 'You have no active keys. Create one to start routing requests through the gateway.'
+              }
+            />
+          ) : (
+            <KeysTable rows={visibleKeys} onRevoke={handleRevoke} />
+          )}
+        </Tabs>
       )}
       <UsageInfo />
       <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
@@ -185,45 +223,50 @@ export function ApiKeys() {
   );
 }
 
-function PageHeader({ onCreate }: { onCreate: () => void }) {
+// `onCreate` is optional: when omitted (the no-keys empty card is showing),
+// the header drops its "Create key" button so the only CTA is the card's
+// "Create your first key". The header button returns once keys exist.
+export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex flex-col gap-2 max-w-1/2">
         <PageTitle>API Keys</PageTitle>
         <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Keys authenticate every request through the gateway. Rotate on a schedule; scope after creation.
+          Create new keys and manage the ones already in use. Keys authenticate every request through the gateway.
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onCreate}>
-          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
-          Create key
-        </Button>
-      </div>
+      {onCreate ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={onCreate}>
+            <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
+            Create key
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
+export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <EmptyState
       icon={
         <div
           aria-hidden
-          className="inline-flex items-center justify-center size-10 rounded-full bg-blue-100 text-blue-700"
+          className="size-12 rounded-full bg-muted flex items-center justify-center"
         >
-          <KeyRound className="size-5" strokeWidth={1.75} />
+          <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
       }
       title="No API keys yet"
       body="Create a key to start routing requests through the gateway. The full key is shown only once."
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-4">
           <Button onClick={onCreate}>
             <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
             Create your first key
           </Button>
-          <Button variant="ghost" onClick={openDocs}>
+          <Button variant="outline" onClick={openDocs}>
             <BookOpen data-icon="inline-start" aria-hidden />
             Read the quickstart
           </Button>
@@ -235,138 +278,30 @@ function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 
 /* ─── Usage info ───────────────────────────────────────────────────────── */
 
-// `sk-gw-…YOUR_KEY` is a stand-in. Tones match the request/response modal's
-// JSON palette (property = blue, string = greenish-blue, variable = amber
-// for fill-in placeholders) so code surfaces across the dashboard share a
-// family. Three examples cover the most common ways to call the gateway:
-// raw HTTP (curl), the Claude Code env-var pattern, and the OpenAI SDK.
-// The gateway is provider-neutral — curl leads on purpose.
+// Provider SDK quickstarts (Anthropic / OpenAI / Google) reuse the hero
+// card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
-const CURL_LINES: CodeLine[] = [
-  [
-    { text: 'curl', tone: 'property' },
-    { text: ' https://gateway-staging.constellationgate.ai/v1/chat/completions \\' },
-  ],
-  [
-    { text: '  -H', tone: 'property' },
-    { text: ' "X-Gateway-Api-Key: ', tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: '" \\', tone: 'string' },
-  ],
-  [
-    { text: '  -H', tone: 'property' },
-    { text: ' "Content-Type: application/json"', tone: 'string' },
-    { text: ' \\' },
-  ],
-  [
-    { text: '  -d', tone: 'property' },
-    { text: ' \'{' },
-    { text: '"model"', tone: 'property' },
-    { text: ': ' },
-    { text: '"claude-sonnet-4.8"', tone: 'string' },
-    { text: ', ' },
-    { text: '"messages"', tone: 'property' },
-    { text: ': [{' },
-    { text: '"role"', tone: 'property' },
-    { text: ': ' },
-    { text: '"user"', tone: 'string' },
-    { text: ', ' },
-    { text: '"content"', tone: 'property' },
-    { text: ': ' },
-    { text: '"Hello"', tone: 'string' },
-    { text: '}]}\'' },
-  ],
-];
+const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'openclaw'];
 
-const CLAUDE_CODE_LINES: CodeLine[] = [
-  [{ text: '# Point Claude Code at the gateway instead of Anthropic directly', tone: 'muted' }],
-  [
-    { text: 'export', tone: 'property' },
-    { text: ' ANTHROPIC_BASE_URL=' },
-    { text: '"https://gateway-staging.constellationgate.ai"', tone: 'string' },
-  ],
-  [{ text: '' }],
-  [{ text: '# Add your gateway key so the gateway can authenticate requests', tone: 'muted' }],
-  [
-    { text: 'export', tone: 'property' },
-    { text: ' ANTHROPIC_CUSTOM_HEADERS=' },
-    { text: '"X-Gateway-Api-Key: ', tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: '"', tone: 'string' },
-  ],
-];
-
-const OPENAI_SDK_LINES: CodeLine[] = [
-  [
-    { text: 'import', tone: 'property' },
-    { text: ' OpenAI ' },
-    { text: 'from', tone: 'property' },
-    { text: ' ' },
-    { text: "'openai'", tone: 'string' },
-    { text: ';' },
-  ],
-  [{ text: '' }],
-  [
-    { text: 'const', tone: 'property' },
-    { text: ' client = ' },
-    { text: 'new', tone: 'property' },
-    { text: ' OpenAI({' },
-  ],
-  [
-    { text: '  baseURL: ' },
-    { text: "'https://gateway-staging.constellationgate.ai/v1'", tone: 'string' },
-    { text: ',' },
-  ],
-  [
-    { text: '  apiKey: ' },
-    { text: "'", tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: "'", tone: 'string' },
-    { text: ',' },
-  ],
-  [{ text: '  defaultHeaders: {' }],
-  [
-    { text: '    ' },
-    { text: "'X-Gateway-Api-Key'", tone: 'property' },
-    { text: ': ' },
-    { text: "'", tone: 'string' },
-    { text: 'sk-gw-…YOUR_KEY', tone: 'variable' },
-    { text: "'", tone: 'string' },
-    { text: ',' },
-  ],
-  [{ text: '  },' }],
-  [{ text: '});' }],
-];
-
-type ExampleTab = 'cURL' | 'Claude Code' | 'OpenAI SDK';
-
-const EXAMPLE_LINES: Record<ExampleTab, CodeLine[]> = {
-  cURL: CURL_LINES,
-  'Claude Code': CLAUDE_CODE_LINES,
-  'OpenAI SDK': OPENAI_SDK_LINES,
-};
-
-const EXAMPLE_TABS: ExampleTab[] = ['cURL', 'Claude Code', 'OpenAI SDK'];
-
-function UsageInfo() {
-  const [tab, setTab] = useState<ExampleTab>('cURL');
-  const activeLines = EXAMPLE_LINES[tab];
+export function UsageInfo() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const defaultTab = tabParam && CONNECT_TAB_IDS.includes(tabParam) ? tabParam : undefined;
+  // Right card never shows the Gate Connect tab, so a `?tab=gate-connect`
+  // deep-link has no target there — fall back to its first tab.
+  const rightDefaultTab =
+    defaultTab && defaultTab !== 'gate-connect' ? defaultTab : undefined;
   return (
-    // max-w-3xl (768px) — code snippets don't earn 1200px of width; the
-    // curl body line and the OpenAI SDK indentation both fit without
-    // wrapping, with breathing room on the right.
-    <section className="flex flex-col gap-6 max-w-3xl">
-      <div className="flex flex-col gap-1">
-        <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
-          Using your key
+    <section className="@container/connect flex flex-col gap-6">
+      <div className="flex flex-col gap-2 max-w-1/2">
+        <h3 className="font-sans text-lg font-medium text-neutral-900 text-balance m-0">
+          How to make requests
         </h3>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          Point your client at the gateway and send your key in the{' '}
-          <code className="font-mono text-neutral-800 bg-neutral-100 rounded-xs px-2 py-1">X-Gateway-Api-Key</code>{' '}
-          header. The gateway is provider-neutral — call it with curl, the OpenAI SDK, Anthropic SDK, or any other client that lets you override the base URL.
+          There are two ways to start making requests using your API key. With <span className="font-medium">Gate Connect</span>, setup is automatic, so you can skip the code entirely. Want to configure it yourself? Use the code snippets to do it by hand.
         </p>
         <p className="font-sans text-sm text-neutral-500 m-0">
-          To learn more about how to use your key, check out our{' '}
+          To learn more, check out our{' '}
           <TextLink
             as="a"
             href={API_KEYS_DOCS_URL}
@@ -379,22 +314,37 @@ function UsageInfo() {
         </p>
       </div>
 
-      <CodeCard>
-        <CodeCardHeader>
-          <CodeCardTabs
-            items={EXAMPLE_TABS}
-            active={tab}
-            onChange={(v) => setTab(v as ExampleTab)}
-          />
-          <CopyButton
-            mode="label"
-            text="Copy code"
-            value={linesToString(activeLines)}
-            label={`${tab} snippet`}
-          />
-        </CodeCardHeader>
-        <CodeBlock lines={activeLines} density="compact" />
-      </CodeCard>
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
+          the manual-setup code tabs (no Gate Connect tab) on the right.
+          Side-by-side with a 24px gap; stacks full-width below lg. */}
+      <div className="flex flex-col gap-6 @min-[993px]/connect:flex-row">
+        {/* Each card gets an Eyebrow label above it (outside the card, so no
+            height impact) so the two setup paths — Automatic vs Manual — read
+            as a matched pair even though the right card is a code card with no
+            internal title slot. */}
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <Eyebrow as="div">Automatic</Eyebrow>
+          <Card density="flush" className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col">
+              <ConnectTabs
+                gateConnectOnly
+                fillHeight
+                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 text-balance m-0"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+              />
+            </div>
+          </Card>
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <Eyebrow as="div">Manual</Eyebrow>
+          <Card density="flush" className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="h-[208px]" floatingCopy />
+            </div>
+          </Card>
+        </div>
+      </div>
     </section>
   );
 }
@@ -511,7 +461,7 @@ function KeysTable({
 
 /* ─── Create API key dialog ────────────────────────────────────────────── */
 
-function CreateKeyDialog({
+export function CreateKeyDialog({
   open,
   onOpenChange,
   onCreate,
@@ -605,7 +555,7 @@ function CreateKeyDialog({
 // Step 2 of the create flow: surfaces the full key exactly once. Opens when
 // `fullKey` is non-null (driven by `createdKey` in <ApiKeys>). No form — just
 // copy + a saved-it confirmation gate before the modal can be dismissed.
-function KeyCreatedDialog({
+export function KeyCreatedDialog({
   fullKey,
   onClose,
 }: {
@@ -707,7 +657,7 @@ function KeyCreatedDialog({
 
 /** Small random hex generator for masked key suffixes. Uses Math.random
  *  for demo-only key IDs — real key minting happens server-side. */
-function randomHex(chars: number): string {
+export function randomHex(chars: number): string {
   let out = '';
   for (let i = 0; i < chars; i++) {
     out += Math.floor(Math.random() * 16).toString(16);

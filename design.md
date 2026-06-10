@@ -263,8 +263,12 @@ components:
     textColor: "{colors.primary-foreground}"
     typography: "{typography.body-sm}"   # text-sm font-medium
     rounded: "{rounded.sm}"
-    height: 36                           # h-9 (default)
+    height: 40                           # h-10 (default)
     padding: "0 16"                      # px-4 — pr-3 with icon (asymmetric)
+    # Size ramp (2026-06-09): heights on the 8px scale — 24 / 32 / 40 / 48 for
+    # xs (h-6) / sm (h-8) / default (h-10) / lg (h-12). Icon variants mirror:
+    # icon-xs size-6 / icon-sm size-8 / icon size-10 / icon-lg size-12. Replaces
+    # the prior 28/32/36/40 ramp; default went 36→40, no more h-9/h-7 buttons.
   button-outline:    { backgroundColor: "{colors.card}", textColor: "{colors.foreground}", rounded: "{rounded.sm}", elevation: "shadow-xs" }  # border-border + shadow-xs (2026-06-04) — subtle lift, same recipe as Card
   button-secondary:  { backgroundColor: "{colors.secondary}", textColor: "{colors.secondary-foreground}" }
   button-ghost:      { backgroundColor: "transparent", textColor: "{colors.foreground}" }

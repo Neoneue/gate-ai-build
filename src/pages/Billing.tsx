@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { SparklesIcon } from '@/components/ui/sparkles';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -103,7 +104,7 @@ function PlanCard() {
           Compare plans
         </Button>
         <Button>
-          <Sparkles data-icon="inline-start" aria-hidden />
+          <SparklesIcon size={16} data-icon="inline-start" aria-hidden />
           Upgrade to Pro
         </Button>
       </CardFooter>
