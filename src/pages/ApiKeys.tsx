@@ -1,9 +1,21 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { BookOpen, CircleCheck, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+  BookOpen,
+  CircleCheck,
+  Copy,
+  KeyRound,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -12,32 +24,32 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Card } from '@/components/ui/card';
-import { ConnectTabs } from '@/pages/DashboardDefault';
-import { useCopyFeedback } from '@/components/ui/copy-button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { IconActionButton } from '@/components/ui/icon-action-button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { PageTitle } from '@/components/ui/page-title';
-import { Sparkline } from '@/components/ui/sparkline';
-import { TextLink } from '@/components/ui/text-link';
+} from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PageTitle } from "@/components/ui/page-title";
+import { Sparkline } from "@/components/ui/sparkline";
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  SortableTableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TabsCount } from '@/components/ui/tabs-count';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { Timestamp } from '@/components/ui/timestamp';
-import { useTableSort, sortRows } from '@/hooks/use-table-sort';
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsCount } from "@/components/ui/tabs-count";
+import { TextLink } from "@/components/ui/text-link";
+import { Timestamp } from "@/components/ui/timestamp";
+import { useCopyFeedback } from "@/hooks/use-copy-feedback";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { randomHex } from "@/lib/utils";
+import { ConnectTabs } from "@/pages/DashboardDefault";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -55,18 +67,18 @@ import { useTableSort, sortRows } from '@/hooks/use-table-sort';
 // Three call sites: header "Key docs" button, empty-state "Read the
 // quickstart" button, and the inline TextLink in the Using your key
 // section. New tab so dashboard state survives the click.
-const API_KEYS_DOCS_URL = 'https://docs.constellationgate.ai/api-keys';
+const API_KEYS_DOCS_URL = "https://docs.constellationgate.ai/api-keys";
 const openDocs = () =>
-  window.open(API_KEYS_DOCS_URL, '_blank', 'noopener,noreferrer');
+  window.open(API_KEYS_DOCS_URL, "_blank", "noopener,noreferrer");
 
 type ApiKeyRow = {
-  id: string;            // full id used for matching / dedup
-  name: string;          // user-supplied label
-  masked: string;        // `sk-gw-…3a8f` display form
-  requests7d: number[];  // sparkline series; 7 daily buckets
-  createdAt: Date;       // when the key was minted
+  id: string; // full id used for matching / dedup
+  name: string; // user-supplied label
+  masked: string; // `sk-gw-…3a8f` display form
+  requests7d: number[]; // sparkline series; 7 daily buckets
+  createdAt: Date; // when the key was minted
   lastUsed: Date | null; // null = never used (freshly-minted or revoked-untouched)
-  revoked?: boolean;     // greys out the row + disables actions when true
+  revoked?: boolean; // greys out the row + disables actions when true
 };
 
 /** Comparable value per sortable column for the keys table. Numeric columns
@@ -74,12 +86,18 @@ type ApiKeyRow = {
  *  null) → null so it sorts last. */
 function apiKeySortValue(row: ApiKeyRow, key: string): string | number | null {
   switch (key) {
-    case 'name': return row.name;
-    case 'status': return row.revoked ? 'Revoked' : 'Active';
-    case 'requests7d': return row.requests7d.at(-1) ?? 0;
-    case 'createdAt': return row.createdAt.getTime();
-    case 'lastUsed': return row.lastUsed ? row.lastUsed.getTime() : null;
-    default: return null;
+    case "name":
+      return row.name;
+    case "status":
+      return row.revoked ? "Revoked" : "Active";
+    case "requests7d":
+      return row.requests7d.at(-1) ?? 0;
+    case "createdAt":
+      return row.createdAt.getTime();
+    case "lastUsed":
+      return row.lastUsed ? row.lastUsed.getTime() : null;
+    default:
+      return null;
   }
 }
 
@@ -95,46 +113,46 @@ export function ApiKeys() {
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   // Status tab — split the table into Active / Revoked scopes (Models-style
   // line tabs with count chips). Defaults to Active.
-  const [keyStatus, setKeyStatus] = useState<'active' | 'revoked'>('active');
+  const [keyStatus, setKeyStatus] = useState<"active" | "revoked">("active");
   // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
   // a revoked test-key. Delete the array literal (replace with `[]`)
   // before testing the real add-key flow.
   const [keys, setKeys] = useState<ApiKeyRow[]>([
     {
-      id: 'sk-gw-c4aeb3a8',
-      name: 'prod-web',
-      masked: 'sk-gw-…c4ae',
+      id: "sk-gw-c4aeb3a8",
+      name: "prod-web",
+      masked: "sk-gw-…c4ae",
       // Steady climb — prod-web traffic grows day-over-day.
       requests7d: [3, 5, 7, 6, 10, 9, 14],
       createdAt: new Date(2026, 3, 28, 10, 14, 22), // 2026-04-28 10:14:22
-      lastUsed: new Date(2026, 4, 17, 9, 41, 6),    // 2026-05-17 09:41:06
+      lastUsed: new Date(2026, 4, 17, 9, 41, 6), // 2026-05-17 09:41:06
     },
     {
-      id: 'sk-gw-9f3064ce',
-      name: 'prod-agent',
-      masked: 'sk-gw-…9f30',
+      id: "sk-gw-9f3064ce",
+      name: "prod-agent",
+      masked: "sk-gw-…9f30",
       // Spiky — agent runs burst irregularly across the week.
       requests7d: [1, 8, 2, 11, 3, 9, 4],
-      createdAt: new Date(2026, 4, 8, 16, 2, 51),   // 2026-05-08 16:02:51
-      lastUsed: new Date(2026, 4, 18, 10, 12, 33),  // 2026-05-18 10:12:33
+      createdAt: new Date(2026, 4, 8, 16, 2, 51), // 2026-05-08 16:02:51
+      lastUsed: new Date(2026, 4, 18, 10, 12, 33), // 2026-05-18 10:12:33
     },
     {
-      id: 'sk-gw-255e1d3a',
-      name: 'test-key',
-      masked: 'sk-gw-…255e',
+      id: "sk-gw-255e1d3a",
+      name: "test-key",
+      masked: "sk-gw-…255e",
       requests7d: [0, 0, 0, 0, 0, 0, 0],
-      createdAt: new Date(2026, 3, 18, 9, 0, 0),    // 2026-04-18 09:00:00
+      createdAt: new Date(2026, 3, 18, 9, 0, 0), // 2026-04-18 09:00:00
       lastUsed: null,
       revoked: true,
     },
     {
-      id: 'sk-gw-ef72d1a9',
-      name: 'design-agent',
-      masked: 'sk-gw-…ef72',
+      id: "sk-gw-ef72d1a9",
+      name: "design-agent",
+      masked: "sk-gw-…ef72",
       // Active — the design-dashboard session runs on this key.
       requests7d: [2, 4, 3, 7, 6, 9, 13],
-      createdAt: new Date(2026, 5, 6, 18, 24, 22),  // 2026-06-06 18:24:22
-      lastUsed: new Date(2026, 5, 6, 18, 30, 12),   // today
+      createdAt: new Date(2026, 5, 6, 18, 24, 22), // 2026-06-06 18:24:22
+      lastUsed: new Date(2026, 5, 6, 18, 30, 12), // today
     },
   ]);
   const handleCreate = (input: { name: string }) => {
@@ -158,30 +176,34 @@ export function ApiKeys() {
   };
 
   const handleRevoke = (id: string) => {
-    setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, revoked: true } : k)));
+    setKeys((prev) =>
+      prev.map((k) => (k.id === id ? { ...k, revoked: true } : k))
+    );
   };
 
   const activeKeys = keys.filter((k) => !k.revoked);
   const revokedKeys = keys.filter((k) => k.revoked);
-  const visibleKeys = keyStatus === 'active' ? activeKeys : revokedKeys;
+  const visibleKeys = keyStatus === "active" ? activeKeys : revokedKeys;
 
   return (
     <DashboardChrome
       activeNavId="api-keys"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)} />
+      <PageHeader
+        onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
+      />
       {keys.length === 0 ? (
         <KeysEmptyState onCreate={() => setCreateOpen(true)} />
       ) : (
         <Tabs
-          value={keyStatus}
-          onValueChange={(v) => setKeyStatus(v as 'active' | 'revoked')}
           className="gap-4"
+          onValueChange={(v) => setKeyStatus(v as "active" | "revoked")}
+          value={keyStatus}
         >
-          <TabsList variant="line" className="px-0 -mt-2">
+          <TabsList className="-mt-2 px-0" variant="line">
             <TabsTrigger value="active">
               Active
               <TabsCount>{activeKeys.length}</TabsCount>
@@ -193,28 +215,35 @@ export function ApiKeys() {
           </TabsList>
           {visibleKeys.length === 0 ? (
             <EmptyState
+              body={
+                keyStatus === "revoked"
+                  ? "Keys you revoke will appear here. Revoking a key stops it authenticating immediately."
+                  : "You have no active keys. Create one to start routing requests through the gateway."
+              }
               icon={
                 <div
                   aria-hidden
-                  className="size-12 rounded-full bg-muted flex items-center justify-center"
+                  className="flex size-12 items-center justify-center rounded-full bg-muted"
                 >
-                  <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
+                  <KeyRound
+                    className="size-5 text-neutral-700"
+                    strokeWidth={1.75}
+                  />
                 </div>
               }
               title={`No ${keyStatus} keys`}
-              body={
-                keyStatus === 'revoked'
-                  ? 'Keys you revoke will appear here. Revoking a key stops it authenticating immediately.'
-                  : 'You have no active keys. Create one to start routing requests through the gateway.'
-              }
             />
           ) : (
-            <KeysTable rows={visibleKeys} onRevoke={handleRevoke} />
+            <KeysTable onRevoke={handleRevoke} rows={visibleKeys} />
           )}
         </Tabs>
       )}
       <UsageInfo />
-      <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
+      <CreateKeyDialog
+        onCreate={handleCreate}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
       <KeyCreatedDialog
         fullKey={createdKey}
         onClose={() => setCreatedKey(null)}
@@ -229,16 +258,21 @@ export function ApiKeys() {
 export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
+      <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>API Keys</PageTitle>
-        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Create new keys and manage the ones already in use. Keys authenticate every request through the gateway.
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+          Create new keys and manage the ones already in use. Keys authenticate
+          every request through the gateway.
         </p>
       </div>
       {onCreate ? (
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
+            <Plus
+              aria-hidden
+              className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+              data-icon="inline-start"
+            />
             Create key
           </Button>
         </div>
@@ -250,28 +284,32 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
 export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <EmptyState
+      action={
+        <div className="flex items-center gap-2 pt-4">
+          <Button onClick={onCreate}>
+            <Plus
+              aria-hidden
+              className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+              data-icon="inline-start"
+            />
+            Create your first key
+          </Button>
+          <Button onClick={openDocs} variant="outline">
+            <BookOpen aria-hidden data-icon="inline-start" />
+            Read the quickstart
+          </Button>
+        </div>
+      }
+      body="Create a key to start routing requests through the gateway. The full key is shown only once."
       icon={
         <div
           aria-hidden
-          className="size-12 rounded-full bg-muted flex items-center justify-center"
+          className="flex size-12 items-center justify-center rounded-full bg-muted"
         >
           <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
       }
       title="No API keys yet"
-      body="Create a key to start routing requests through the gateway. The full key is shown only once."
-      action={
-        <div className="flex items-center gap-2 pt-4">
-          <Button onClick={onCreate}>
-            <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
-            Create your first key
-          </Button>
-          <Button variant="outline" onClick={openDocs}>
-            <BookOpen data-icon="inline-start" aria-hidden />
-            Read the quickstart
-          </Button>
-        </div>
-      }
     />
   );
 }
@@ -281,32 +319,36 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 // Provider SDK quickstarts (Anthropic / OpenAI / Google) reuse the hero
 // card's CodePanel + snippets so the API Keys page and Overview stay in sync.
 
-const CONNECT_TAB_IDS = ['gate-connect', 'claude-code', 'codex', 'openclaw'];
+const CONNECT_TAB_IDS = ["gate-connect", "claude-code", "codex", "openclaw"];
 
 export function UsageInfo() {
   const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab');
-  const defaultTab = tabParam && CONNECT_TAB_IDS.includes(tabParam) ? tabParam : undefined;
+  const tabParam = searchParams.get("tab");
+  const defaultTab =
+    tabParam && CONNECT_TAB_IDS.includes(tabParam) ? tabParam : undefined;
   // Right card never shows the Gate Connect tab, so a `?tab=gate-connect`
   // deep-link has no target there — fall back to its first tab.
   const rightDefaultTab =
-    defaultTab && defaultTab !== 'gate-connect' ? defaultTab : undefined;
+    defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
   return (
     <section className="@container/connect flex flex-col gap-6">
-      <div className="flex flex-col gap-2 max-w-1/2">
-        <h3 className="font-sans text-lg font-medium text-neutral-900 text-balance m-0">
+      <div className="flex max-w-1/2 flex-col gap-2">
+        <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
           How to make requests
         </h3>
-        <p className="font-sans text-sm text-neutral-500 m-0">
-          There are two ways to start making requests using your API key. With <span className="font-medium">Gate Connect</span>, setup is automatic, so you can skip the code entirely. Want to configure it yourself? Use the code snippets to do it by hand.
+        <p className="m-0 font-sans text-neutral-500 text-sm">
+          There are two ways to start making requests using your API key. With{" "}
+          <span className="font-medium">Gate Connect</span>, setup is automatic,
+          so you can skip the code entirely. Want to configure it yourself? Use
+          the code snippets to do it by hand.
         </p>
-        <p className="font-sans text-sm text-neutral-500 m-0">
-          To learn more, check out our{' '}
+        <p className="m-0 font-sans text-neutral-500 text-sm">
+          To learn more, check out our{" "}
           <TextLink
             as="a"
             href={API_KEYS_DOCS_URL}
-            target="_blank"
             rel="noopener noreferrer"
+            target="_blank"
           >
             API key docs
           </TextLink>
@@ -317,30 +359,35 @@ export function UsageInfo() {
       {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
           the manual-setup code tabs (no Gate Connect tab) on the right.
           Side-by-side with a 24px gap; stacks full-width below lg. */}
-      <div className="flex flex-col gap-6 @min-[993px]/connect:flex-row">
+      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
         {/* Each card gets an Eyebrow label above it (outside the card, so no
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no
             internal title slot. */}
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <Eyebrow as="div">Automatic</Eyebrow>
-          <Card density="flush" className="flex-1 flex flex-col">
-            <div className="flex-1 flex flex-col">
+          <Card className="flex flex-1 flex-col" density="flush">
+            <div className="flex flex-1 flex-col">
               <ConnectTabs
-                gateConnectOnly
                 fillHeight
-                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 text-balance m-0"
-                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                gateConnectOnly
                 imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 text-balance m-0"
               />
             </div>
           </Card>
         </div>
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <Eyebrow as="div">Manual</Eyebrow>
-          <Card density="flush" className="flex-1 flex flex-col">
+          <Card className="flex flex-1 flex-col" density="flush">
             <div className="flex-1">
-              <ConnectTabs showGateConnect={false} defaultTab={rightDefaultTab} codeMaxHeight="h-[208px]" floatingCopy />
+              <ConnectTabs
+                codeMaxHeight="h-[208px]"
+                defaultTab={rightDefaultTab}
+                floatingCopy
+                showGateConnect={false}
+              />
             </div>
           </Card>
         </div>
@@ -362,7 +409,7 @@ function KeysTable({
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = useMemo(
     () => sortRows(rows, sort, apiKeySortValue),
-    [rows, sort],
+    [rows, sort]
   );
 
   return (
@@ -374,17 +421,55 @@ function KeysTable({
               {/* Five data columns at w-1/5 + a fixed-width Actions column.
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
-              <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Key</SortableTableHead>
-              <SortableTableHead sortKey="status" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Status</SortableTableHead>
-              <SortableTableHead sortKey="requests7d" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">7-day requests</SortableTableHead>
-              <SortableTableHead sortKey="createdAt" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Created</SortableTableHead>
-              <SortableTableHead sortKey="lastUsed" sort={sort} onSort={toggleSort} className="w-1/5 whitespace-nowrap">Last used</SortableTableHead>
+              <SortableTableHead
+                className="w-1/5 whitespace-nowrap"
+                onSort={toggleSort}
+                sort={sort}
+                sortKey="name"
+              >
+                Key
+              </SortableTableHead>
+              <SortableTableHead
+                className="w-1/5 whitespace-nowrap"
+                onSort={toggleSort}
+                sort={sort}
+                sortKey="status"
+              >
+                Status
+              </SortableTableHead>
+              <SortableTableHead
+                className="w-1/5 whitespace-nowrap"
+                onSort={toggleSort}
+                sort={sort}
+                sortKey="requests7d"
+              >
+                7-day requests
+              </SortableTableHead>
+              <SortableTableHead
+                className="w-1/5 whitespace-nowrap"
+                onSort={toggleSort}
+                sort={sort}
+                sortKey="createdAt"
+              >
+                Created
+              </SortableTableHead>
+              <SortableTableHead
+                className="w-1/5 whitespace-nowrap"
+                onSort={toggleSort}
+                sort={sort}
+                sortKey="lastUsed"
+              >
+                Last used
+              </SortableTableHead>
               <TableHead aria-label="Actions" className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedRows.map((row) => (
-              <TableRow key={row.id} className={row.revoked ? 'opacity-60' : undefined}>
+              <TableRow
+                className={row.revoked ? "opacity-60" : undefined}
+                key={row.id}
+              >
                 {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                     to neutral-600. Single-line two-tone form shared with the
                     Events / Requests / Activity Key columns. */}
@@ -409,13 +494,17 @@ function KeysTable({
                 <TableCell className="whitespace-nowrap text-neutral-800">
                   <Timestamp date={row.lastUsed} />
                 </TableCell>
-                <TableCell className="text-right whitespace-nowrap">
+                <TableCell className="whitespace-nowrap text-right">
                   {row.revoked ? null : (
                     <IconActionButton
                       aria-label={`Revoke ${row.name}`}
                       onClick={() => setPendingRevoke(row)}
                     >
-                      <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
+                      <Trash2
+                        aria-hidden
+                        className="size-4"
+                        strokeWidth={1.75}
+                      />
                     </IconActionButton>
                   )}
                 </TableCell>
@@ -426,16 +515,19 @@ function KeysTable({
       </Card>
 
       <Dialog
-        open={pendingRevoke !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingRevoke(null);
+          if (!open) {
+            setPendingRevoke(null);
+          }
         }}
+        open={pendingRevoke !== null}
       >
-        <DialogContent className="sm:max-w-sm p-4">
+        <DialogContent className="p-4 sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
-              This key will stop authenticating requests immediately. Revocation can&rsquo;t be undone.
+              This key will stop authenticating requests immediately. Revocation
+              can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -443,12 +535,14 @@ function KeysTable({
               Cancel
             </DialogClose>
             <Button
-              type="button"
-              variant="destructive"
               onClick={() => {
-                if (pendingRevoke) onRevoke(pendingRevoke.id);
+                if (pendingRevoke) {
+                  onRevoke(pendingRevoke.id);
+                }
                 setPendingRevoke(null);
               }}
+              type="button"
+              variant="destructive"
             >
               Revoke key
             </Button>
@@ -470,68 +564,74 @@ export function CreateKeyDialog({
   onOpenChange: (next: boolean) => void;
   onCreate: (input: { name: string }) => void;
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   const isValid = name.trim().length > 0;
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setName('');
+          setName("");
         }
       }}
+      open={open}
     >
-      <DialogContent className="sm:max-w-lg gap-4">
+      <DialogContent className="gap-4 sm:max-w-lg">
         <form
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!isValid) return;
+            if (!isValid) {
+              return;
+            }
             onCreate({ name });
           }}
-          className="flex flex-col gap-4"
         >
           <DialogHeader>
-            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
               Create API key
             </DialogTitle>
             <DialogDescription>
-              Keys inherit all model access by default. Scope can be restricted after creation.
+              Keys inherit all model access by default. Scope can be restricted
+              after creation.
             </DialogDescription>
           </DialogHeader>
 
           {/* Name — required */}
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
-              <Label htmlFor="apikey-name" className="text-neutral-600 font-medium text-sm">
+              <Label
+                className="font-medium text-neutral-600 text-sm"
+                htmlFor="apikey-name"
+              >
                 Name
               </Label>
-              <span className="font-sans text-xs text-neutral-500">
+              <span className="font-sans text-neutral-500 text-xs">
                 Shown in logs and audit events.
               </span>
             </div>
             <Input
+              autoComplete="off"
+              className="font-mono text-sm"
               id="apikey-name"
-              type="text"
-              value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="server · new-service"
-              spellCheck={false}
-              autoComplete="off"
               required
-              className="font-mono text-sm"
+              spellCheck={false}
+              type="text"
+              value={name}
             />
           </div>
 
           {/* Warning callout — tinted card, not inline-icon text. Modal-
               interior radius is rounded-md (8px) per design system. */}
           <div
+            className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
             role="note"
-            className="rounded-md bg-warning-50 border border-warning-200 px-4 py-3"
           >
-            <p className="font-sans text-sm text-warning-700 m-0">
+            <p className="m-0 font-sans text-sm text-warning-700">
               The full key will only be shown once. Store it securely.
             </p>
           </div>
@@ -540,7 +640,7 @@ export function CreateKeyDialog({
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button type="submit" variant="default" disabled={!isValid}>
+            <Button disabled={!isValid} type="submit" variant="default">
               Create key
             </Button>
           </DialogFooter>
@@ -563,11 +663,13 @@ export function KeyCreatedDialog({
   onClose: () => void;
 }) {
   const [saved, setSaved] = useState(false);
-  const { copied, trigger } = useCopyFeedback({ value: fullKey ?? '', label: 'API key' });
+  const { copied, trigger } = useCopyFeedback({
+    value: fullKey ?? "",
+    label: "API key",
+  });
 
   return (
     <Dialog
-      open={fullKey !== null}
       onOpenChange={(next) => {
         if (!next) {
           onClose();
@@ -575,8 +677,9 @@ export function KeyCreatedDialog({
           setSaved(false);
         }
       }}
+      open={fullKey !== null}
     >
-      <DialogContent className="sm:max-w-lg gap-4">
+      <DialogContent className="gap-4 sm:max-w-lg">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <CircleCheck
@@ -584,7 +687,7 @@ export function KeyCreatedDialog({
               className="size-5 shrink-0 text-success-600"
               strokeWidth={1.75}
             />
-            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
               Key created. Copy it now.
             </DialogTitle>
           </div>
@@ -597,47 +700,53 @@ export function KeyCreatedDialog({
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
         <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-neutral-100">
-          <div className="flex-1 px-3 py-2 font-mono text-sm text-neutral-800 break-all">
+          <div className="flex-1 break-all px-3 py-2 font-mono text-neutral-800 text-sm">
             {fullKey}
           </div>
           <button
-            type="button"
+            aria-label={copied ? "Copied" : "Copy API key"}
+            className="flex shrink-0 items-center gap-2 border-border border-l px-4 font-medium font-sans text-neutral-600 text-sm transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
-            aria-label={copied ? 'Copied' : 'Copy API key'}
-            className="flex shrink-0 items-center gap-2 border-l border-border px-4 font-sans text-sm font-medium text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:active:scale-100"
+            type="button"
           >
             {copied ? (
-              <CircleCheck aria-hidden className="size-4 text-success-600" strokeWidth={1.75} />
+              <CircleCheck
+                aria-hidden
+                className="size-4 text-success-600"
+                strokeWidth={1.75}
+              />
             ) : (
               <Copy aria-hidden className="size-4" strokeWidth={1.75} />
             )}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? "Copied!" : "Copy"}
           </button>
         </div>
 
         {/* Warning callout — same tinted-card recipe as <CreateKeyDialog>. */}
         <div
+          className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
           role="note"
-          className="rounded-md bg-warning-50 border border-warning-200 px-4 py-3"
         >
-          <p className="font-sans text-sm font-medium text-warning-700 m-0">
+          <p className="m-0 font-medium font-sans text-sm text-warning-700">
             Store this somewhere safe
           </p>
-          <p className="font-sans text-sm text-warning-700 m-0">
-            Paste it into your secret manager or .env before closing. Once you close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the key to get a new one.
+          <p className="m-0 font-sans text-sm text-warning-700">
+            Paste it into your secret manager or .env before closing. Once you
+            close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the
+            key to get a new one.
           </p>
         </div>
 
         {/* Confirmation gate — Done stays disabled until this is checked. */}
         <div className="flex items-center gap-2">
           <Checkbox
-            id="apikey-saved-confirm"
             checked={saved}
+            id="apikey-saved-confirm"
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
+            className="font-normal text-neutral-700 text-sm"
             htmlFor="apikey-saved-confirm"
-            className="text-neutral-700 text-sm font-normal"
           >
             I&rsquo;ve saved this key to a secret manager.
           </Label>
@@ -645,7 +754,9 @@ export function KeyCreatedDialog({
 
         <DialogFooter>
           <DialogClose
-            render={<Button type="button" variant="default" disabled={!saved} />}
+            render={
+              <Button disabled={!saved} type="button" variant="default" />
+            }
           >
             Done
           </DialogClose>
@@ -657,10 +768,3 @@ export function KeyCreatedDialog({
 
 /** Small random hex generator for masked key suffixes. Uses Math.random
  *  for demo-only key IDs — real key minting happens server-side. */
-export function randomHex(chars: number): string {
-  let out = '';
-  for (let i = 0; i < chars; i++) {
-    out += Math.floor(Math.random() * 16).toString(16);
-  }
-  return out;
-}

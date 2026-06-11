@@ -1,4 +1,4 @@
-import type { SVGProps } from 'react';
+import type { SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -39,7 +39,7 @@ export function GeminiIcon(props: IconProps) {
   // partial-opacity overlays that fade to transparent so the underlying
   // blue shows through. All four paths share the same `d`.
   const path =
-    'M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z';
+    "M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z";
   return (
     <svg
       fillRule="evenodd"
@@ -53,8 +53,8 @@ export function GeminiIcon(props: IconProps) {
       <path d={path} fill="url(#gemini-yellow)" />
       <defs>
         <linearGradient
-          id="gemini-green"
           gradientUnits="userSpaceOnUse"
+          id="gemini-green"
           x1="7"
           x2="11"
           y1="15.5"
@@ -64,8 +64,8 @@ export function GeminiIcon(props: IconProps) {
           <stop offset="1" stopColor="#08B962" stopOpacity="0" />
         </linearGradient>
         <linearGradient
-          id="gemini-red"
           gradientUnits="userSpaceOnUse"
+          id="gemini-red"
           x1="8"
           x2="11.5"
           y1="5.5"
@@ -75,8 +75,8 @@ export function GeminiIcon(props: IconProps) {
           <stop offset="1" stopColor="#F94543" stopOpacity="0" />
         </linearGradient>
         <linearGradient
-          id="gemini-yellow"
           gradientUnits="userSpaceOnUse"
+          id="gemini-yellow"
           x1="3.5"
           x2="17.5"
           y1="13.5"
@@ -135,12 +135,12 @@ export function MistralIcon(props: IconProps) {
     >
       <defs>
         <linearGradient
+          gradientUnits="userSpaceOnUse"
           id="mistral-flame"
           x1="0"
-          y1="3.4"
           x2="0"
+          y1="3.4"
           y2="20.572"
-          gradientUnits="userSpaceOnUse"
         >
           <stop offset="0" stopColor="#FFE008" />
           <stop offset="0.2" stopColor="#FFE008" />
@@ -155,9 +155,9 @@ export function MistralIcon(props: IconProps) {
         </linearGradient>
       </defs>
       <path
-        fill="url(#mistral-flame)"
         clipRule="evenodd"
         d="M3.428 3.4h3.429v3.428h3.429v3.429h-.002 3.431V6.828h3.427V3.4h3.43v13.714H24v3.429H13.714v-3.428h-3.428v-3.429h-3.43v3.428h3.43v3.429H0v-3.429h3.428V3.4zm10.286 13.715h3.428v-3.429h-3.427v3.429z"
+        fill="url(#mistral-flame)"
       />
     </svg>
   );
@@ -191,18 +191,18 @@ export function CohereIcon(props: IconProps) {
       {...props}
     >
       <path
-        fill="#39594D"
         clipRule="evenodd"
         d="M8.128 14.099c.592 0 1.77-.033 3.398-.703 1.897-.781 5.672-2.2 8.395-3.656 1.905-1.018 2.74-2.366 2.74-4.18A4.56 4.56 0 0018.1 1H7.549A6.55 6.55 0 001 7.55c0 3.617 2.745 6.549 7.128 6.549z"
+        fill="#39594D"
       />
       <path
-        fill="#C18BD9"
         clipRule="evenodd"
         d="M9.912 18.61a4.387 4.387 0 012.705-4.052l3.323-1.38c3.361-1.394 7.06 1.076 7.06 4.715a5.104 5.104 0 01-5.105 5.104l-3.597-.001a4.386 4.386 0 01-4.386-4.387z"
+        fill="#C18BD9"
       />
       <path
-        fill="#FF7759"
         d="M4.776 14.962A3.775 3.775 0 001 18.738v.489a3.776 3.776 0 007.551 0v-.49a3.775 3.775 0 00-3.775-3.775z"
+        fill="#FF7759"
       />
     </svg>
   );

@@ -3,7 +3,13 @@
 import type { Variants } from "motion/react";
 import { motion, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -23,7 +29,17 @@ const SVG_VARIANTS: Variants = {
 };
 
 const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, strokeWidth = 2, ...props }, ref) => {
+  (
+    {
+      onMouseEnter,
+      onMouseLeave,
+      className,
+      size = 28,
+      strokeWidth = 2,
+      ...props
+    },
+    ref
+  ) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -32,10 +48,16 @@ const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
     // button/anchor (house pattern), gated by prefers-reduced-motion. Parent
     // refs (imperative handle) still take over when attached.
     useEffect(() => {
-      if (isControlledRef.current) return;
+      if (isControlledRef.current) {
+        return;
+      }
       const host = wrapperRef.current?.closest('[role="menuitem"], button, a');
-      if (!host) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!host) {
+        return;
+      }
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
       const enter = () => void controls.start("animate");
       const leave = () => void controls.start("normal");
       host.addEventListener("mouseenter", enter);
@@ -78,15 +100,15 @@ const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
     );
     return (
       <div
-        ref={wrapperRef}
         className={cn("inline-flex", className)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        ref={wrapperRef}
         {...props}
       >
         <motion.svg
-          className="size-auto"
           animate={controls}
+          className="size-auto"
           fill="none"
           height={size}
           stroke="currentColor"

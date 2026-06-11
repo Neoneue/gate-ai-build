@@ -1,28 +1,27 @@
-import * as React from "react"
-import { MessageSquare, Upload, Camera } from "lucide-react"
-import { toast } from "sonner"
-
-import { cn } from "@/lib/utils"
+import { Camera, MessageSquare, Upload } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * FeedbackFab — floating action button + Send Feedback dialog.
@@ -32,66 +31,73 @@ import {
  * Self-contained: owns open state, form state, and reset logic.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const MAX_MESSAGE_LENGTH = 8000
-const DEFAULT_EMAIL = "chad@constellationnetwork.io"
+const MAX_MESSAGE_LENGTH = 8000;
+const DEFAULT_EMAIL = "chad@constellationnetwork.io";
 
-type FeedbackCategory = "bug" | "feature" | "question" | "other"
+type FeedbackCategory = "bug" | "feature" | "question" | "other";
 
 function FeedbackFab() {
-  const [open, setOpen] = React.useState(false)
-  const [category, setCategory] = React.useState<FeedbackCategory>("bug")
-  const [message, setMessage] = React.useState("")
-  const [email, setEmail] = React.useState(DEFAULT_EMAIL)
+  const [open, setOpen] = React.useState(false);
+  const [category, setCategory] = React.useState<FeedbackCategory>("bug");
+  const [message, setMessage] = React.useState("");
+  const [email, setEmail] = React.useState(DEFAULT_EMAIL);
 
   function resetForm() {
-    setCategory("bug")
-    setMessage("")
-    setEmail(DEFAULT_EMAIL)
+    setCategory("bug");
+    setMessage("");
+    setEmail(DEFAULT_EMAIL);
   }
 
   function handleOpenChange(next: boolean) {
-    setOpen(next)
-    if (!next) resetForm()
+    setOpen(next);
+    if (!next) {
+      resetForm();
+    }
   }
 
   function handleSubmit() {
     // No real backend — close, toast, reset.
-    setOpen(false)
-    resetForm()
-    toast.success("Thanks for the feedback.")
+    setOpen(false);
+    resetForm();
+    toast.success("Thanks for the feedback.");
   }
 
-  const messageIsEmpty = message.trim().length === 0
+  const messageIsEmpty = message.trim().length === 0;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       {/* FAB trigger — fixed viewport anchor */}
       <button
-        type="button"
-        onClick={() => setOpen(true)}
         aria-label="Send feedback"
         className={cn(
           // Pill shape, dark surface, shadow elevation, fixed viewport anchor
-          "fixed bottom-6 right-6 z-40",
-          "inline-flex items-center gap-2 rounded-full px-4 h-8",
-          "bg-neutral-900 text-white text-sm font-medium whitespace-nowrap",
+          "fixed right-6 bottom-6 z-40",
+          "inline-flex h-8 items-center gap-2 rounded-full px-4",
+          "whitespace-nowrap bg-neutral-900 font-medium text-sm text-white",
           "shadow-(--shadow-popup)",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer hover:bg-neutral-800 hover-fine:-translate-y-px motion-reduce:hover:translate-y-0 active:scale-[0.99] will-change-transform motion-reduce:active:scale-100",
-          "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring",
-          "select-none",
+          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-neutral-800 active:scale-[0.99] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
+          "focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "select-none"
         )}
+        onClick={() => setOpen(true)}
+        type="button"
       >
-        <MessageSquare className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+        <MessageSquare
+          aria-hidden
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
         <span>Feedback</span>
       </button>
 
       {/* Dialog — sm:max-w-lg, p-6 */}
-      <DialogContent className="sm:max-w-lg p-6">
+      <DialogContent className="p-6 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Send feedback</DialogTitle>
           <DialogDescription>
-            Anything broken, confusing, or missing. We want to hear it. Screenshots optional.
+            Anything broken, confusing, or missing. We want to hear it.
+            Screenshots optional.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,10 +107,10 @@ function FeedbackFab() {
           <div className="flex flex-col gap-2">
             <Label htmlFor="feedback-category">Category</Label>
             <Select
-              value={category}
               onValueChange={(v) => setCategory(v as FeedbackCategory)}
+              value={category}
             >
-              <SelectTrigger id="feedback-category" className="w-32">
+              <SelectTrigger className="w-32" id="feedback-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -120,50 +126,54 @@ function FeedbackFab() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="feedback-message">Message</Label>
-              <span className="text-xs text-neutral-500" aria-live="polite">
+              <span aria-live="polite" className="text-neutral-500 text-xs">
                 {message.length} / {MAX_MESSAGE_LENGTH}
               </span>
             </div>
             <Textarea
+              className="min-h-24 resize-none"
               id="feedback-message"
-              placeholder="Describe what you saw, what you expected, and any steps to reproduce."
-              value={message}
+              maxLength={MAX_MESSAGE_LENGTH}
               onChange={(e) => {
                 if (e.target.value.length <= MAX_MESSAGE_LENGTH) {
-                  setMessage(e.target.value)
+                  setMessage(e.target.value);
                 }
               }}
-              className="min-h-24 resize-none"
-              maxLength={MAX_MESSAGE_LENGTH}
+              placeholder="Describe what you saw, what you expected, and any steps to reproduce."
+              value={message}
             />
           </div>
 
           {/* Screenshot */}
-          <div className="flex flex-col gap-2" role="group" aria-labelledby="ff-screenshot-label">
+          <div
+            aria-labelledby="ff-screenshot-label"
+            className="flex flex-col gap-2"
+            role="group"
+          >
             <Label id="ff-screenshot-label">Screenshot</Label>
             <div className="flex items-center gap-2">
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
                 // Inert — mock UI, no handler
                 aria-label="Upload file"
+                size="sm"
+                type="button"
+                variant="outline"
               >
-                <Upload className="size-3.5" strokeWidth={1.75} aria-hidden />
+                <Upload aria-hidden className="size-3.5" strokeWidth={1.75} />
                 Upload file
               </Button>
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
                 // Inert — mock UI, no handler
                 aria-label="Capture screen"
+                size="sm"
+                type="button"
+                variant="outline"
               >
-                <Camera className="size-3.5" strokeWidth={1.75} aria-hidden />
+                <Camera aria-hidden className="size-3.5" strokeWidth={1.75} />
                 Capture screen
               </Button>
             </div>
-            <p className="text-xs text-neutral-500">
+            <p className="text-neutral-500 text-xs">
               PNG, JPEG, or WEBP, up to 10&nbsp;MB.
             </p>
           </div>
@@ -176,29 +186,29 @@ function FeedbackFab() {
             </Label>
             <Input
               id="feedback-email"
+              onChange={(e) => setEmail(e.target.value)}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
         </div>
 
         {/* Footer */}
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" type="button" />}>
+          <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>
           <Button
-            type="button"
             disabled={messageIsEmpty}
             onClick={handleSubmit}
+            type="button"
           >
             Send feedback
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-export { FeedbackFab }
+export { FeedbackFab };

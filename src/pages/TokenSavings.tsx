@@ -1,24 +1,28 @@
-import { useState } from 'react';
-import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { CompactSpark } from '@/components/ui/compact-kpi';
-import { SegmentedPill } from '@/components/ui/segmented-pill';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { KpiRail } from '@/components/ui/kpi-rail';
-import { KpiTile } from '@/components/ui/kpi-tile';
-import { PageTitle } from '@/components/ui/page-title';
+import { useState } from "react";
+import {
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CompactSpark } from "@/components/ui/compact-kpi";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { KpiRail } from "@/components/ui/kpi-rail";
+import { KpiTile } from "@/components/ui/kpi-tile";
+import { PageTitle } from "@/components/ui/page-title";
+import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
 
 export function TokenSavings() {
   const navigate = useNavigate();
@@ -30,26 +34,34 @@ export function TokenSavings() {
   // `?range=` once for deep-links, then one-way (manual changes don't sync back).
   const [searchParams] = useSearchParams();
   const [range, setRange] = useState<Range>(() => {
-    const r = searchParams.get('range');
-    return r === '24h' || r === '7d' || r === '30d' || r === 'all' ? r : 'all';
+    const r = searchParams.get("range");
+    return r === "24h" || r === "7d" || r === "30d" || r === "all" ? r : "all";
   });
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   return (
     <DashboardChrome
       activeNavId="token-savings"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
       <OverviewSection
-        range={range}
         customRange={customRange}
-        onRangeChange={(r) => { setRange(r); setCustomRange(null); }}
         onCustomRangeChange={(r) => {
-          if (r) { setCustomRange(r); setRange('custom'); }
-          else { setCustomRange(null); setRange('all'); }
+          if (r) {
+            setCustomRange(r);
+            setRange("custom");
+          } else {
+            setCustomRange(null);
+            setRange("all");
+          }
         }}
+        onRangeChange={(r) => {
+          setRange(r);
+          setCustomRange(null);
+        }}
+        range={range}
       />
       <SavingsOptionsSection />
     </DashboardChrome>
@@ -62,7 +74,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0 max-w-1/2">
+      <p className="m-0 max-w-1/2 text-pretty font-sans text-base text-neutral-500 tracking-tight">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -71,23 +83,23 @@ function PageHeader() {
 
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
-type PresetRange = 'all' | '24h' | '7d' | '30d';
-type Range = PresetRange | 'custom';
+type PresetRange = "all" | "24h" | "7d" | "30d";
+type Range = PresetRange | "custom";
 type CustomRange = { from: Date; to: Date };
 
 const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: '24h', label: '24H' },
-  { value: '7d', label: '7D' },
-  { value: '30d', label: '30D' },
+  { value: "all", label: "All" },
+  { value: "24h", label: "24H" },
+  { value: "7d", label: "7D" },
+  { value: "30d", label: "30D" },
 ];
 
 const RANGE_DELTA_NOTE: Record<Range, string> = {
-  all: 'All time',
-  '24h': 'vs prior day',
-  '7d': 'vs prior week',
-  '30d': 'vs prior month',
-  custom: 'vs prior range',
+  all: "All time",
+  "24h": "vs prior day",
+  "7d": "vs prior week",
+  "30d": "vs prior month",
+  custom: "vs prior range",
 };
 
 // Savings is a RATE, so it stays roughly stable across windows (it does not
@@ -96,35 +108,100 @@ const RANGE_DELTA_NOTE: Record<Range, string> = {
 // Total saved === caching + compression (rounded): all 0.15+13.7≈13.9,
 // 7d 0.18+14.0≈14.2, 30d 0.14+13.4≈13.5, 24h 0.11+12.7≈12.8.
 const KPI_COLORS = {
-  total: 'var(--color-chart-1)',
-  caching: 'var(--color-chart-3)',
-  compression: 'var(--color-chart-7)',
+  total: "var(--color-chart-1)",
+  caching: "var(--color-chart-3)",
+  compression: "var(--color-chart-7)",
 } as const;
-type SavingsKpi = { title: string; value: string; colorVar: string; spark: number[] };
+type SavingsKpi = {
+  title: string;
+  value: string;
+  colorVar: string;
+  spark: number[];
+};
 const KPI_BY_RANGE: Record<PresetRange, SavingsKpi[]> = {
   // All time / 30d show the lifetime ramp: savings start near 0% and climb
   // steeply as the cache warms and compression heuristics learn the workload,
   // then begin to plateau near the steady-state rate (ease-out curve). The
   // shorter windows (24h / 7d) sit in the plateau, so they barely move.
   all: [
-    { title: 'Total saved', value: '13.9', colorVar: KPI_COLORS.total, spark: [0.4, 2.9, 6.4, 9.6, 11.9, 13.3, 13.9] },
-    { title: 'Caching', value: '0.15', colorVar: KPI_COLORS.caching, spark: [0.0, 0.02, 0.05, 0.09, 0.12, 0.14, 0.15] },
-    { title: 'Compression', value: '13.7', colorVar: KPI_COLORS.compression, spark: [0.4, 2.7, 6.1, 9.3, 11.7, 13.1, 13.7] },
+    {
+      title: "Total saved",
+      value: "13.9",
+      colorVar: KPI_COLORS.total,
+      spark: [0.4, 2.9, 6.4, 9.6, 11.9, 13.3, 13.9],
+    },
+    {
+      title: "Caching",
+      value: "0.15",
+      colorVar: KPI_COLORS.caching,
+      spark: [0.0, 0.02, 0.05, 0.09, 0.12, 0.14, 0.15],
+    },
+    {
+      title: "Compression",
+      value: "13.7",
+      colorVar: KPI_COLORS.compression,
+      spark: [0.4, 2.7, 6.1, 9.3, 11.7, 13.1, 13.7],
+    },
   ],
-  '24h': [
-    { title: 'Total saved', value: '12.8', colorVar: KPI_COLORS.total, spark: [12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.8] },
-    { title: 'Caching', value: '0.11', colorVar: KPI_COLORS.caching, spark: [0.09, 0.09, 0.10, 0.10, 0.11, 0.11, 0.11] },
-    { title: 'Compression', value: '12.7', colorVar: KPI_COLORS.compression, spark: [12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.7] },
+  "24h": [
+    {
+      title: "Total saved",
+      value: "12.8",
+      colorVar: KPI_COLORS.total,
+      spark: [12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.8],
+    },
+    {
+      title: "Caching",
+      value: "0.11",
+      colorVar: KPI_COLORS.caching,
+      spark: [0.09, 0.09, 0.1, 0.1, 0.11, 0.11, 0.11],
+    },
+    {
+      title: "Compression",
+      value: "12.7",
+      colorVar: KPI_COLORS.compression,
+      spark: [12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.7],
+    },
   ],
-  '7d': [
-    { title: 'Total saved', value: '14.2', colorVar: KPI_COLORS.total, spark: [12.4, 12.8, 13.2, 13.5, 13.8, 14.0, 14.2] },
-    { title: 'Caching', value: '0.18', colorVar: KPI_COLORS.caching, spark: [0.13, 0.14, 0.15, 0.16, 0.17, 0.17, 0.18] },
-    { title: 'Compression', value: '14.0', colorVar: KPI_COLORS.compression, spark: [12.3, 12.7, 13.1, 13.4, 13.7, 13.9, 14.0] },
+  "7d": [
+    {
+      title: "Total saved",
+      value: "14.2",
+      colorVar: KPI_COLORS.total,
+      spark: [12.4, 12.8, 13.2, 13.5, 13.8, 14.0, 14.2],
+    },
+    {
+      title: "Caching",
+      value: "0.18",
+      colorVar: KPI_COLORS.caching,
+      spark: [0.13, 0.14, 0.15, 0.16, 0.17, 0.17, 0.18],
+    },
+    {
+      title: "Compression",
+      value: "14.0",
+      colorVar: KPI_COLORS.compression,
+      spark: [12.3, 12.7, 13.1, 13.4, 13.7, 13.9, 14.0],
+    },
   ],
-  '30d': [
-    { title: 'Total saved', value: '13.5', colorVar: KPI_COLORS.total, spark: [0.5, 3.1, 6.7, 9.8, 12.0, 13.1, 13.5] },
-    { title: 'Caching', value: '0.14', colorVar: KPI_COLORS.caching, spark: [0.0, 0.02, 0.05, 0.08, 0.11, 0.13, 0.14] },
-    { title: 'Compression', value: '13.4', colorVar: KPI_COLORS.compression, spark: [0.5, 2.9, 6.3, 9.5, 11.7, 13.0, 13.4] },
+  "30d": [
+    {
+      title: "Total saved",
+      value: "13.5",
+      colorVar: KPI_COLORS.total,
+      spark: [0.5, 3.1, 6.7, 9.8, 12.0, 13.1, 13.5],
+    },
+    {
+      title: "Caching",
+      value: "0.14",
+      colorVar: KPI_COLORS.caching,
+      spark: [0.0, 0.02, 0.05, 0.08, 0.11, 0.13, 0.14],
+    },
+    {
+      title: "Compression",
+      value: "13.4",
+      colorVar: KPI_COLORS.compression,
+      spark: [0.5, 2.9, 6.3, 9.5, 11.7, 13.0, 13.4],
+    },
   ],
 };
 
@@ -134,7 +211,7 @@ const KPI_BY_RANGE: Record<PresetRange, SavingsKpi[]> = {
 function sparkDelta(spark: number[]): string {
   const d = spark[spark.length - 1] - spark[0];
   const decimals = Math.abs(d) < 1 ? 2 : 1;
-  return `${d >= 0 ? '+' : '-'}${Math.abs(d).toFixed(decimals)}%`;
+  return `${d >= 0 ? "+" : "-"}${Math.abs(d).toFixed(decimals)}%`;
 }
 
 function OverviewSection({
@@ -148,34 +225,40 @@ function OverviewSection({
   onRangeChange: (r: PresetRange) => void;
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
-  const kpis = KPI_BY_RANGE[range === 'custom' ? 'all' : range];
+  const kpis = KPI_BY_RANGE[range === "custom" ? "all" : range];
   const note = RANGE_DELTA_NOTE[range];
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Overview</h3>
+        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
+          Overview
+        </h3>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedPill
-            size="sm"
             aria-label="Time range"
-            options={RANGE_OPTIONS}
-            value={range === 'custom' ? '' : range}
             onValueChange={(v) => onRangeChange(v as PresetRange)}
+            options={RANGE_OPTIONS}
+            size="sm"
+            value={range === "custom" ? "" : range}
           />
-          <DateRangePicker value={customRange} onChange={onCustomRangeChange} size="sm" />
+          <DateRangePicker
+            onChange={onCustomRangeChange}
+            size="sm"
+            value={customRange}
+          />
         </div>
       </div>
       <KpiRail columns={3}>
         {kpis.map((k) => (
           <KpiTile
-            key={k.title}
-            title={k.title}
-            value={k.value}
-            valueSuffix="%"
             delta={sparkDelta(k.spark)}
             deltaNote={note}
             deltaRow
+            key={k.title}
             spark={<CompactSpark colorVar={k.colorVar} data={[...k.spark]} />}
+            title={k.title}
+            value={k.value}
+            valueSuffix="%"
           />
         ))}
       </KpiRail>
@@ -189,7 +272,9 @@ function SavingsOptionsSection() {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="font-sans text-xl/7 font-medium text-neutral-900 m-0">Savings options</h3>
+        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
+          Savings options
+        </h3>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <CachingCard />
@@ -209,16 +294,18 @@ function CardChromeHeader({
   enabled: boolean;
 }) {
   return (
-    <CardHeader className="border-b border-border">
+    <CardHeader className="border-border border-b">
       <div className="flex items-start gap-3">
-        <div className="flex flex-col gap-1 min-w-0 flex-1">
-          <h3 className="font-sans text-base font-medium text-neutral-900 m-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
             {title}
           </h3>
-          <p className="font-sans text-sm text-neutral-500 m-0">{description}</p>
+          <p className="m-0 font-sans text-neutral-500 text-sm">
+            {description}
+          </p>
         </div>
-        <Badge variant={enabled ? 'success' : 'neutral'}>
-          {enabled ? 'ON' : 'OFF'}
+        <Badge variant={enabled ? "success" : "neutral"}>
+          {enabled ? "ON" : "OFF"}
         </Badge>
       </div>
     </CardHeader>
@@ -226,64 +313,74 @@ function CardChromeHeader({
 }
 
 const TTL_OPTIONS = [
-  { value: '5m', label: '5m' },
-  { value: '30m', label: '30m' },
-  { value: '1h', label: '1h' },
-  { value: '6h', label: '6h' },
-  { value: '24h', label: '24h' },
+  { value: "5m", label: "5m" },
+  { value: "30m", label: "30m" },
+  { value: "1h", label: "1h" },
+  { value: "6h", label: "6h" },
+  { value: "24h", label: "24h" },
 ] as const;
 
 function CachingCard() {
   const [enabled, setEnabled] = useState(true);
-  const [ttl, setTtl] = useState('1h');
+  const [ttl, setTtl] = useState("1h");
 
   return (
     <Card>
       <CardChromeHeader
-        title="Caching"
         description="Reuse identical or semantically similar responses"
         enabled={enabled}
+        title="Caching"
       />
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1 min-w-0">
-            <p id="caching-switch-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              id="caching-switch-label"
+            >
               Enable response caching
             </p>
-            <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
-              Serve cached responses instead of round-tripping to providers. Identical concurrent requests are deduplicated automatically.
+            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+              Serve cached responses instead of round-tripping to providers.
+              Identical concurrent requests are deduplicated automatically.
             </p>
           </div>
           <Switch
             aria-labelledby="caching-switch-label"
             checked={enabled}
+            className="mt-1 shrink-0"
             onCheckedChange={(next) => {
               setEnabled(next);
-              toast.success('Response caching saved');
+              toast.success("Response caching saved");
             }}
-            className="mt-1 shrink-0"
           />
         </div>
 
         <Separator />
 
         <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1 min-w-0">
-            <p id="ttl-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              id="ttl-label"
+            >
               TTL
             </p>
-            <p className="font-sans text-sm text-neutral-500 m-0">
+            <p className="m-0 font-sans text-neutral-500 text-sm">
               How long cached entries live before re-fetching.
             </p>
           </div>
           <Select
-            value={ttl}
             onValueChange={(next) => {
               setTtl(next);
-              toast.success('TTL saved');
+              toast.success("TTL saved");
             }}
+            value={ttl}
           >
-            <SelectTrigger className="w-24 shrink-0" aria-labelledby="ttl-label">
+            <SelectTrigger
+              aria-labelledby="ttl-label"
+              className="w-24 shrink-0"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -306,28 +403,33 @@ function CompressionCard() {
   return (
     <Card>
       <CardChromeHeader
-        title="Compression"
         description="Shrink prompts before they reach the provider"
         enabled={enabled}
+        title="Compression"
       />
       <CardContent className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-1 min-w-0">
-              <p id="compression-switch-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
-                Enable compression
-              </p>
-              <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
-                Strip envelopes, condense embedded tool output (git diff, cargo, pytest…), and apply lossless prose heuristics. Deterministic and cache-friendly.
-              </p>
-            </div>
-            <Switch
-              aria-labelledby="compression-switch-label"
-              checked={enabled}
-              onCheckedChange={setEnabled}
-              className="mt-1 shrink-0"
-            />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              id="compression-switch-label"
+            >
+              Enable compression
+            </p>
+            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+              Strip envelopes, condense embedded tool output (git diff, cargo,
+              pytest…), and apply lossless prose heuristics. Deterministic and
+              cache-friendly.
+            </p>
           </div>
-        </CardContent>
+          <Switch
+            aria-labelledby="compression-switch-label"
+            checked={enabled}
+            className="mt-1 shrink-0"
+            onCheckedChange={setEnabled}
+          />
+        </div>
+      </CardContent>
     </Card>
   );
 }

@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * FilterToolbar — table toolbar wrapper.
@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
  *   </FilterToolbar>
  * ─────────────────────────────────────────────────────────────────────── */
 
-export type FilterToolbarProps = React.ComponentProps<'div'>;
+export type FilterToolbarProps = React.ComponentProps<"div">;
 
 export function FilterToolbar({
   className,
@@ -32,10 +32,7 @@ export function FilterToolbar({
   ...props
 }: FilterToolbarProps) {
   return (
-    <div
-      className={cn('flex items-center gap-2 p-4', className)}
-      {...props}
-    >
+    <div className={cn("flex items-center gap-2 p-4", className)} {...props}>
       {children}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * useTableSort — lightweight client-side sort state for shadcn <Table>s.
@@ -10,19 +10,23 @@ import { useCallback, useState } from 'react';
  * local accessor + `sortRows` keeps the existing rendering intact.
  * ───────────────────────────────────────────────────────────────────────── */
 
-export type SortDir = 'asc' | 'desc';
+export type SortDir = "asc" | "desc";
 export type SortState = { key: string | null; dir: SortDir };
 
-export function useTableSort(initial: SortState = { key: null, dir: 'asc' }) {
+export function useTableSort(initial: SortState = { key: null, dir: "asc" }) {
   const [sort, setSort] = useState<SortState>(initial);
   // Three-state cycle on the active column: asc → desc → unsorted (back to the
   // table's default order). A different column starts fresh at asc. Never locks
   // the user into a sorted view.
   const toggle = useCallback((key: string) => {
     setSort((s) => {
-      if (s.key !== key) return { key, dir: 'asc' };
-      if (s.dir === 'asc') return { key, dir: 'desc' };
-      return { key: null, dir: 'asc' }; // third click clears
+      if (s.key !== key) {
+        return { key, dir: "asc" };
+      }
+      if (s.dir === "asc") {
+        return { key, dir: "desc" };
+      }
+      return { key: null, dir: "asc" }; // third click clears
     });
   }, []);
   return { sort, toggle, setSort };
@@ -30,12 +34,18 @@ export function useTableSort(initial: SortState = { key: null, dir: 'asc' }) {
 
 /** Strip currency / commas / units to a comparable number; non-numeric → null. */
 export function parseNumeric(
-  value: string | number | null | undefined,
+  value: string | number | null | undefined
 ): number | null {
-  if (value == null) return null;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  const cleaned = value.replace(/[^0-9.-]/g, '');
-  if (cleaned === '' || cleaned === '-' || cleaned === '.') return null;
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  const cleaned = value.replace(/[^0-9.-]/g, "");
+  if (cleaned === "" || cleaned === "-" || cleaned === ".") {
+    return null;
+  }
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
@@ -50,20 +60,32 @@ export function parseNumeric(
 export function sortRows<T>(
   rows: T[],
   sort: SortState,
-  getValue: (row: T, key: string) => string | number | null | undefined,
+  getValue: (row: T, key: string) => string | number | null | undefined
 ): T[] {
-  if (!sort.key) return rows;
+  if (!sort.key) {
+    return rows;
+  }
   const key = sort.key;
-  const mul = sort.dir === 'asc' ? 1 : -1;
+  const mul = sort.dir === "asc" ? 1 : -1;
   return [...rows].sort((a, b) => {
     const av = getValue(a, key);
     const bv = getValue(b, key);
-    const aNull = av == null || av === '';
-    const bNull = bv == null || bv === '';
-    if (aNull && bNull) return 0;
-    if (aNull) return 1;
-    if (bNull) return -1;
-    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mul;
-    return String(av).localeCompare(String(bv), undefined, { numeric: true }) * mul;
+    const aNull = av == null || av === "";
+    const bNull = bv == null || bv === "";
+    if (aNull && bNull) {
+      return 0;
+    }
+    if (aNull) {
+      return 1;
+    }
+    if (bNull) {
+      return -1;
+    }
+    if (typeof av === "number" && typeof bv === "number") {
+      return (av - bv) * mul;
+    }
+    return (
+      String(av).localeCompare(String(bv), undefined, { numeric: true }) * mul
+    );
   });
 }

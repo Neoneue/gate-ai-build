@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TextLink — inline link affordance, button-by-default.
@@ -27,24 +27,24 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TEXT_LINK_BASE =
-  'text-neutral-800 bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50';
+  "text-neutral-800 bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
 
 type ButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'type'
+  "type"
 > & {
-  as?: 'button';
+  as?: "button";
 };
 
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-  as: 'a';
+  as: "a";
   href: string;
 };
 
 export type TextLinkProps = ButtonProps | AnchorProps;
 
 export function TextLink(props: TextLinkProps) {
-  if (props.as === 'a') {
+  if (props.as === "a") {
     const { as: _as, className, children, ...rest } = props;
     return (
       <a className={cn(TEXT_LINK_BASE, className)} {...rest}>
@@ -54,11 +54,7 @@ export function TextLink(props: TextLinkProps) {
   }
   const { as: _as, className, children, ...rest } = props as ButtonProps;
   return (
-    <button
-      type="button"
-      className={cn(TEXT_LINK_BASE, className)}
-      {...rest}
-    >
+    <button className={cn(TEXT_LINK_BASE, className)} type="button" {...rest}>
       {children}
     </button>
   );

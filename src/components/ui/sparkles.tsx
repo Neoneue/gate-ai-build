@@ -3,7 +3,13 @@
 import type { Variants } from "motion/react";
 import { motion, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -60,18 +66,24 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
     // button/anchor (house pattern), gated by prefers-reduced-motion. Parent
     // refs (imperative handle) still take over when attached.
     useEffect(() => {
-      if (isControlledRef.current) return;
+      if (isControlledRef.current) {
+        return;
+      }
       const host = wrapperRef.current?.closest('[role="menuitem"], button, a');
-      if (!host) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!host) {
+        return;
+      }
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
       const enter = () => {
-      void sparkleControls.start("hover");
-      void starControls.start("blink", { delay: 1 });
-    };
+        void sparkleControls.start("hover");
+        void starControls.start("blink", { delay: 1 });
+      };
       const leave = () => {
-      void sparkleControls.start("initial");
-      void starControls.start("initial");
-    };
+        void sparkleControls.start("initial");
+        void starControls.start("initial");
+      };
       host.addEventListener("mouseenter", enter);
       host.addEventListener("mouseleave", leave);
       return () => {
@@ -121,10 +133,10 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
 
     return (
       <div
-        ref={wrapperRef}
         className={cn("inline-flex", className)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        ref={wrapperRef}
         {...props}
       >
         <svg

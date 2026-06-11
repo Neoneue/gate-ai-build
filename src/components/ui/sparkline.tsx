@@ -6,7 +6,7 @@
  * picks blue or ink based on whether the trend is up or down.
  * ───────────────────────────────────────────────────────────────────────── */
 
-export type SparklineTone = 'critical' | 'elevated' | 'normal';
+export type SparklineTone = "critical" | "elevated" | "normal";
 
 export function Sparkline({
   points,
@@ -42,8 +42,10 @@ export function Sparkline({
   const buildSegments = () => {
     if (!smooth || coords.length < 2) {
       return coords
-        .map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)},${c.y.toFixed(1)}`)
-        .join(' ');
+        .map(
+          (c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)},${c.y.toFixed(1)}`
+        )
+        .join(" ");
     }
     const t = 0.5;
     let d = `M ${coords[0].x.toFixed(1)},${coords[0].y.toFixed(1)}`;
@@ -64,7 +66,7 @@ export function Sparkline({
   const areaPath =
     `M ${coords[0].x.toFixed(1)},${h} ` +
     `L ${coords[0].x.toFixed(1)},${coords[0].y.toFixed(1)} ` +
-    linePath.replace(/^M [^ ]+ /, '') +
+    linePath.replace(/^M [^ ]+ /, "") +
     ` L ${last.x.toFixed(1)},${h} Z`;
 
   // Chart palette only — sparklines and charts share `--color-chart-1..8`
@@ -74,39 +76,39 @@ export function Sparkline({
   let stroke: string;
   let fill: string;
   const fillOpacity = 0.12;
-  if (tone === 'critical') {
-    stroke = 'var(--color-chart-5)';
-    fill = 'var(--color-chart-5)';
-  } else if (tone === 'elevated') {
-    stroke = 'var(--color-chart-2)';
-    fill = 'var(--color-chart-2)';
-  } else if (tone === 'normal') {
-    stroke = 'var(--color-neutral-500)';
-    fill = 'var(--color-neutral-500)';
+  if (tone === "critical") {
+    stroke = "var(--color-chart-5)";
+    fill = "var(--color-chart-5)";
+  } else if (tone === "elevated") {
+    stroke = "var(--color-chart-2)";
+    fill = "var(--color-chart-2)";
+  } else if (tone === "normal") {
+    stroke = "var(--color-neutral-500)";
+    fill = "var(--color-neutral-500)";
   } else {
-    stroke = 'var(--color-chart-1)';
-    fill = 'var(--color-chart-1)';
+    stroke = "var(--color-chart-1)";
+    fill = "var(--color-chart-1)";
   }
 
   return (
     <svg
-      width={w}
+      aria-hidden
+      className="inline-block"
       height={h}
       viewBox={`0 0 ${w} ${h}`}
+      width={w}
       xmlns="http://www.w3.org/2000/svg"
-      className="inline-block"
-      aria-hidden
     >
       <path d={areaPath} fill={fill} fillOpacity={fillOpacity} />
       <path
         d={linePath}
         fill="none"
         stroke={stroke}
-        strokeWidth={1.25}
         strokeLinecap="round"
         strokeLinejoin="round"
+        strokeWidth={1.25}
       />
-      <circle cx={last.x} cy={last.y} r={2} fill={stroke} />
+      <circle cx={last.x} cy={last.y} fill={stroke} r={2} />
     </svg>
   );
 }

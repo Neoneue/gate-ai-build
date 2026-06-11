@@ -1,18 +1,18 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 const statusColors = {
-  success: 'bg-success-600',
-  warning: 'bg-warning-600',
-  danger: 'bg-destructive',
-  info: 'bg-blue-600',
-  neutral: 'bg-neutral-500',
+  success: "bg-success-600",
+  warning: "bg-warning-600",
+  danger: "bg-destructive",
+  info: "bg-blue-600",
+  neutral: "bg-neutral-500",
 } as const;
 
 export type StatusDotKind = keyof typeof statusColors;
 
 export interface StatusDotProps {
-  kind: StatusDotKind;
   className?: string;
+  kind: StatusDotKind;
 }
 
 /**
@@ -24,7 +24,11 @@ export function StatusDot({ kind, className }: StatusDotProps) {
   return (
     <span
       aria-hidden
-      className={cn('size-2 shrink-0 rounded-full', statusColors[kind], className)}
+      className={cn(
+        "size-2 shrink-0 rounded-full",
+        statusColors[kind],
+        className
+      )}
     />
   );
 }

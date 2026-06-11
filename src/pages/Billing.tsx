@@ -1,10 +1,15 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { SparklesIcon } from '@/components/ui/sparkles';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus } from "lucide-react";
+import * as React from "react";
+import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -13,11 +18,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
-import { Input } from '@/components/ui/input';
-import { PageTitle } from '@/components/ui/page-title';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/dialog";
+import { HeroNumeric } from "@/components/ui/hero-numeric";
+import { Input } from "@/components/ui/input";
+import { PageTitle } from "@/components/ui/page-title";
+import { SparklesIcon } from "@/components/ui/sparkles";
+import { Switch } from "@/components/ui/switch";
 import {
   SortableTableHead,
   Table,
@@ -25,13 +31,13 @@ import {
   TableCell,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useTableSort, sortRows } from '@/hooks/use-table-sort';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { formatCurrency } from '@/lib/formatters';
-import { Timestamp } from '@/components/ui/timestamp';
-import { PlanComparisonDialog } from '@/pages/plan-comparison-dialog';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/table";
+import { Timestamp } from "@/components/ui/timestamp";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page (route: /billing, sidebar: "Billing")
@@ -52,9 +58,9 @@ export function Billing() {
   return (
     <DashboardChrome
       activeNavId="billing"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
       <PlanCreditsRow />
@@ -65,9 +71,9 @@ export function Billing() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-col gap-2 max-w-1/2">
+    <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
         Plan, credits, and transaction history.
       </p>
     </div>
@@ -92,23 +98,32 @@ function PlanCard() {
       <CardHeader>
         <CardTitle>Plan</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-3">
+      <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
-        <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-          BYOK gateway plus a tamper-evident audit trail, no security pipeline. Upgrade to Pro for prompt-injection scans, PII redaction, and a cryptographically verifiable audit trail fingerprinted to Constellation&rsquo;s Digital Evidence layer.
+        <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline.
+          Upgrade to Pro for prompt-injection scans, PII redaction, and a
+          cryptographically verifiable audit trail fingerprinted to
+          Constellation&rsquo;s Digital Evidence layer.
         </p>
-        <p className="font-sans text-sm text-neutral-500 m-0">Free plan — no renewal</p>
+        <p className="m-0 font-sans text-neutral-500 text-sm">
+          Free plan — no renewal
+        </p>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-t border-border">
-        <Button variant="outline" onClick={() => setCompareOpen(true)}>
+      <CardFooter className="justify-end gap-2 border-border border-t">
+        <Button onClick={() => setCompareOpen(true)} variant="outline">
           Compare plans
         </Button>
         <Button>
-          <SparklesIcon size={16} data-icon="inline-start" aria-hidden />
+          <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
           Upgrade to Pro
         </Button>
       </CardFooter>
-      <PlanComparisonDialog open={compareOpen} onOpenChange={setCompareOpen} onUpgrade={() => setCompareOpen(false)} />
+      <PlanComparisonDialog
+        onOpenChange={setCompareOpen}
+        onUpgrade={() => setCompareOpen(false)}
+        open={compareOpen}
+      />
     </Card>
   );
 }
@@ -120,7 +135,7 @@ type AutoRechargeConfig = {
   monthlyCap: number | null;
 };
 
-const AUTO_RECHARGE_STORAGE_KEY = 'billing.autoRecharge.v2';
+const AUTO_RECHARGE_STORAGE_KEY = "billing.autoRecharge.v2";
 const AUTO_RECHARGE_DEFAULTS: AutoRechargeConfig = {
   enabled: false,
   threshold: 0,
@@ -128,18 +143,31 @@ const AUTO_RECHARGE_DEFAULTS: AutoRechargeConfig = {
   monthlyCap: null,
 };
 
-
 function readAutoRecharge(): AutoRechargeConfig {
-  if (typeof window === 'undefined') return AUTO_RECHARGE_DEFAULTS;
+  if (typeof window === "undefined") {
+    return AUTO_RECHARGE_DEFAULTS;
+  }
   try {
     const raw = window.localStorage.getItem(AUTO_RECHARGE_STORAGE_KEY);
-    if (!raw) return AUTO_RECHARGE_DEFAULTS;
+    if (!raw) {
+      return AUTO_RECHARGE_DEFAULTS;
+    }
     const parsed = JSON.parse(raw) as Partial<AutoRechargeConfig>;
     return {
-      enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : AUTO_RECHARGE_DEFAULTS.enabled,
-      threshold: typeof parsed.threshold === 'number' ? parsed.threshold : AUTO_RECHARGE_DEFAULTS.threshold,
-      topUp: typeof parsed.topUp === 'number' ? parsed.topUp : AUTO_RECHARGE_DEFAULTS.topUp,
-      monthlyCap: typeof parsed.monthlyCap === 'number' ? parsed.monthlyCap : null,
+      enabled:
+        typeof parsed.enabled === "boolean"
+          ? parsed.enabled
+          : AUTO_RECHARGE_DEFAULTS.enabled,
+      threshold:
+        typeof parsed.threshold === "number"
+          ? parsed.threshold
+          : AUTO_RECHARGE_DEFAULTS.threshold,
+      topUp:
+        typeof parsed.topUp === "number"
+          ? parsed.topUp
+          : AUTO_RECHARGE_DEFAULTS.topUp,
+      monthlyCap:
+        typeof parsed.monthlyCap === "number" ? parsed.monthlyCap : null,
     };
   } catch {
     return AUTO_RECHARGE_DEFAULTS;
@@ -156,42 +184,57 @@ function CreditsCard() {
       <CardHeader>
         <CardTitle>Credits</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-3">
+      <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">$24.98</HeroNumeric>
-        <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-          Used for requests routed through our gateway. Each call is charged at our per-model rate. Security and audit are included.
+        <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+          Used for requests routed through our gateway. Each call is charged at
+          our per-model rate. Security and audit are included.
         </p>
-        <dl className="flex flex-col gap-2 text-sm m-0 mt-3">
-          <CreditStatRow label="Used this month" value="$0.02" mono />
+        <dl className="m-0 mt-3 flex flex-col gap-2 text-sm">
+          <CreditStatRow label="Used this month" mono value="$0.02" />
           <CreditStatRow
             label="Auto-recharge"
-            value={auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : 'Off'}
+            value={
+              auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
+            }
           />
-          <CreditStatRow label="Last top-up" value={<Timestamp date={LAST_TOPUP_DATE} format="dateNumeric" />} />
+          <CreditStatRow
+            label="Last top-up"
+            value={<Timestamp date={LAST_TOPUP_DATE} format="dateNumeric" />}
+          />
         </dl>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-t border-border">
-        <Button variant="outline" onClick={() => setAutoOpen(true)}>Auto-recharge</Button>
+      <CardFooter className="justify-end gap-2 border-border border-t">
+        <Button onClick={() => setAutoOpen(true)} variant="outline">
+          Auto-recharge
+        </Button>
         <Button onClick={() => setAddOpen(true)}>
-          <Plus data-icon="inline-start" aria-hidden className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none" />
+          <Plus
+            aria-hidden
+            className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+            data-icon="inline-start"
+          />
           Add credits
         </Button>
       </CardFooter>
-      <AddCreditsDialog open={addOpen} onOpenChange={setAddOpen} />
+      <AddCreditsDialog onOpenChange={setAddOpen} open={addOpen} />
       <AutoRechargeDialog
-        key={autoOpen ? 'open' : 'closed'}
-        open={autoOpen}
-        onOpenChange={setAutoOpen}
         initial={auto}
+        key={autoOpen ? "open" : "closed"}
+        onOpenChange={setAutoOpen}
         onSave={(next) => {
           setAuto(next);
           try {
-            window.localStorage.setItem(AUTO_RECHARGE_STORAGE_KEY, JSON.stringify(next));
+            window.localStorage.setItem(
+              AUTO_RECHARGE_STORAGE_KEY,
+              JSON.stringify(next)
+            );
           } catch {
             /* storage unavailable — drop silently */
           }
           setAutoOpen(false);
         }}
+        open={autoOpen}
       />
     </Card>
   );
@@ -209,63 +252,68 @@ function AddCreditsDialog({
   onOpenChange: (next: boolean) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
-  const [custom, setCustom] = useState('');
+  const [custom, setCustom] = useState("");
 
   const customNum = Number(custom);
   const customValid =
-    custom.length > 0 && Number.isFinite(customNum) && customNum >= 5 && customNum <= 1000;
-  const amount = custom.length > 0 ? (customValid ? customNum : null) : selected;
+    custom.length > 0 &&
+    Number.isFinite(customNum) &&
+    customNum >= 5 &&
+    customNum <= 1000;
+  const amount =
+    custom.length > 0 ? (customValid ? customNum : null) : selected;
   const canSubmit = amount !== null;
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
           setSelected(null);
-          setCustom('');
+          setCustom("");
         }
       }}
+      open={open}
     >
       <DialogContent
         className="gap-4"
         style={{ width: 500, minWidth: 500, maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Add credits
           </DialogTitle>
           <DialogDescription>
-            Min {formatCurrency(MIN_TOPUP, { minFrac: 0, maxFrac: 0 })} · Max {formatCurrency(MAX_TOPUP, { minFrac: 0, maxFrac: 0 })}.
+            Min {formatCurrency(MIN_TOPUP, { minFrac: 0, maxFrac: 0 })} · Max{" "}
+            {formatCurrency(MAX_TOPUP, { minFrac: 0, maxFrac: 0 })}.
           </DialogDescription>
         </DialogHeader>
 
         {/* Preset tiles. Single-select; typing a custom amount clears
             the preset selection. */}
         <div
-          role="radiogroup"
           aria-label="Credit amount"
           className="grid grid-cols-4 gap-2"
+          role="radiogroup"
         >
           {CREDIT_PRESETS.map((value) => {
             const isSelected = custom.length === 0 && selected === value;
             return (
               <button
-                key={value}
-                type="button"
-                role="radio"
                 aria-checked={isSelected}
+                className={cn(
+                  "inline-flex h-10 items-center justify-center rounded-md border font-medium font-sans text-sm tabular-nums transition-colors",
+                  isSelected
+                    ? "border-border bg-muted text-neutral-900"
+                    : "border-border bg-card text-neutral-900 hover:bg-neutral-50"
+                )}
+                key={value}
                 onClick={() => {
                   setSelected(value);
-                  setCustom('');
+                  setCustom("");
                 }}
-                className={cn(
-                  'inline-flex h-10 items-center justify-center rounded-md border font-sans text-sm font-medium tabular-nums transition-colors',
-                  isSelected
-                    ? 'border-border bg-muted text-neutral-900'
-                    : 'border-border bg-card text-neutral-900 hover:bg-neutral-50',
-                )}
+                role="radio"
+                type="button"
               >
                 {formatCurrency(value, { minFrac: 0, maxFrac: 0 })}
               </button>
@@ -276,45 +324,48 @@ function AddCreditsDialog({
         {/* Custom amount */}
         <div className="flex flex-col gap-2">
           <label
+            className="m-0 font-medium font-sans text-neutral-500 text-sm"
             htmlFor="add-credits-custom"
-            className="font-sans text-sm font-medium text-neutral-500 m-0"
           >
             Amount (USD)
           </label>
           <div className="relative">
             <span
               aria-hidden
-              className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
             >
               $
             </span>
             <Input
+              className="pl-7 font-mono text-sm tabular-nums"
               id="add-credits-custom"
-              type="number"
               inputMode="decimal"
-              min="5"
               max="1000"
-              step="1"
-              value={custom}
+              min="5"
               onChange={(e) => {
                 setCustom(e.target.value);
-                if (e.target.value.length > 0) setSelected(null);
+                if (e.target.value.length > 0) {
+                  setSelected(null);
+                }
               }}
               placeholder="0"
-              className="pl-7 font-mono text-sm tabular-nums"
+              step="1"
+              type="number"
+              value={custom}
             />
           </div>
         </div>
 
-        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
-          You&rsquo;ll be redirected to Stripe Checkout. Your balance updates within seconds of payment confirmation.
+        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+          You&rsquo;ll be redirected to Stripe Checkout. Your balance updates
+          within seconds of payment confirmation.
         </p>
 
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
           </DialogClose>
-          <Button type="button" disabled={!canSubmit}>
+          <Button disabled={!canSubmit} type="button">
             Continue to checkout
           </Button>
         </DialogFooter>
@@ -337,27 +388,35 @@ function AutoRechargeDialog({
   onSave: (next: AutoRechargeConfig) => void;
 }) {
   const [enabled, setEnabled] = useState(initial.enabled);
-  const [thresholdStr, setThresholdStr] = useState(initial.threshold === 0 ? '' : String(initial.threshold));
-  const [topUpStr, setTopUpStr] = useState(initial.topUp === 0 ? '' : String(initial.topUp));
-  const [capStr, setCapStr] = useState(initial.monthlyCap !== null ? String(initial.monthlyCap) : '');
+  const [thresholdStr, setThresholdStr] = useState(
+    initial.threshold === 0 ? "" : String(initial.threshold)
+  );
+  const [topUpStr, setTopUpStr] = useState(
+    initial.topUp === 0 ? "" : String(initial.topUp)
+  );
+  const [capStr, setCapStr] = useState(
+    initial.monthlyCap === null ? "" : String(initial.monthlyCap)
+  );
 
   const threshold = Number(thresholdStr);
   const topUp = Number(topUpStr);
-  const monthlyCap = capStr.trim() === '' ? null : Number(capStr);
+  const monthlyCap = capStr.trim() === "" ? null : Number(capStr);
 
-  const thresholdValid = thresholdStr.length > 0 && Number.isFinite(threshold) && threshold > 0;
+  const thresholdValid =
+    thresholdStr.length > 0 && Number.isFinite(threshold) && threshold > 0;
   const topUpValid = topUpStr.length > 0 && Number.isFinite(topUp) && topUp > 0;
-  const capValid = monthlyCap === null || (Number.isFinite(monthlyCap) && monthlyCap > 0);
+  const capValid =
+    monthlyCap === null || (Number.isFinite(monthlyCap) && monthlyCap > 0);
   const canSave = !enabled || (thresholdValid && topUpValid && capValid);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className="gap-4"
         style={{ width: 500, minWidth: 500, maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Auto-recharge
           </DialogTitle>
           <DialogDescription>
@@ -367,63 +426,82 @@ function AutoRechargeDialog({
 
         {/* Enable card */}
         <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex flex-col gap-1 min-w-0">
-            <p id="ar-enable-label" className="font-sans text-sm font-medium text-neutral-900 m-0">
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              id="ar-enable-label"
+            >
               Enable auto-recharge
             </p>
-            <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
+            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
               We&apos;ll charge your default card to top up.
             </p>
           </div>
           <Switch
             aria-labelledby="ar-enable-label"
             checked={enabled}
-            onCheckedChange={setEnabled}
             className="mt-1 shrink-0"
+            onCheckedChange={setEnabled}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="ar-threshold" className="font-sans text-sm font-medium text-neutral-500 m-0">
+            <label
+              className="m-0 font-medium font-sans text-neutral-500 text-sm"
+              htmlFor="ar-threshold"
+            >
               When balance drops below
             </label>
             <div className="relative">
-              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+              >
+                $
+              </span>
               <Input
+                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                disabled={!enabled}
                 id="ar-threshold"
-                type="number"
                 inputMode="decimal"
                 min="1"
-                step="1"
-                value={thresholdStr}
                 onChange={(e) => setThresholdStr(e.target.value)}
-                disabled={!enabled}
                 placeholder="0"
-                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                step="1"
+                type="number"
+                value={thresholdStr}
               />
             </div>
           </div>
 
           {/* Top-up amount */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="ar-topup" className="font-sans text-sm font-medium text-neutral-500 m-0">
+            <label
+              className="m-0 font-medium font-sans text-neutral-500 text-sm"
+              htmlFor="ar-topup"
+            >
               Top-up amount
             </label>
             <div className="relative">
-              <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+              >
+                $
+              </span>
               <Input
+                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                disabled={!enabled}
                 id="ar-topup"
-                type="number"
                 inputMode="decimal"
                 min="1"
-                step="1"
-                value={topUpStr}
                 onChange={(e) => setTopUpStr(e.target.value)}
-                disabled={!enabled}
                 placeholder="0"
-                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                step="1"
+                type="number"
+                value={topUpStr}
               />
             </div>
           </div>
@@ -431,35 +509,61 @@ function AutoRechargeDialog({
 
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="ar-cap" className="font-sans text-sm font-medium text-neutral-500 m-0">
-            Monthly cap <span className="font-normal text-neutral-400">(leave blank for no cap)</span>
+          <label
+            className="m-0 font-medium font-sans text-neutral-500 text-sm"
+            htmlFor="ar-cap"
+          >
+            Monthly cap{" "}
+            <span className="font-normal text-neutral-400">
+              (leave blank for no cap)
+            </span>
           </label>
           <div className="relative">
-            <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-neutral-500 pointer-events-none">$</span>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+            >
+              $
+            </span>
             <Input
+              className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+              disabled={!enabled}
               id="ar-cap"
-              type="number"
               inputMode="decimal"
               min="1"
-              step="1"
-              value={capStr}
               onChange={(e) => setCapStr(e.target.value)}
-              disabled={!enabled}
               placeholder="0"
-              className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+              step="1"
+              type="number"
+              value={capStr}
             />
           </div>
         </div>
 
         {enabled && thresholdValid && topUpValid && (
           <div className="flex flex-col gap-2 rounded-md border border-border bg-neutral-50 px-4 py-3">
-            <p className="font-sans text-sm text-neutral-800 m-0 text-pretty">
-              When your balance drops below{' '}
-              <span className="font-medium text-neutral-900">${threshold}</span>, we&apos;ll add{' '}
-              <span className="font-medium text-neutral-900">${topUp}</span> to your account
-              {monthlyCap !== null && capValid
-                ? <>, up to <span className="font-medium text-neutral-900">${monthlyCap}/month</span></>
-                : <> with <span className="font-medium text-neutral-900">no monthly cap</span></>}
+            <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+              When your balance drops below{" "}
+              <span className="font-medium text-neutral-900">${threshold}</span>
+              , we&apos;ll add{" "}
+              <span className="font-medium text-neutral-900">${topUp}</span> to
+              your account
+              {monthlyCap !== null && capValid ? (
+                <>
+                  , up to{" "}
+                  <span className="font-medium text-neutral-900">
+                    ${monthlyCap}/month
+                  </span>
+                </>
+              ) : (
+                <>
+                  {" "}
+                  with{" "}
+                  <span className="font-medium text-neutral-900">
+                    no monthly cap
+                  </span>
+                </>
+              )}
               .
             </p>
           </div>
@@ -470,9 +574,16 @@ function AutoRechargeDialog({
             Cancel
           </DialogClose>
           <Button
-            type="button"
             disabled={!canSave}
-            onClick={() => onSave({ enabled, threshold: thresholdValid ? threshold : initial.threshold, topUp: topUpValid ? topUp : initial.topUp, monthlyCap })}
+            onClick={() =>
+              onSave({
+                enabled,
+                threshold: thresholdValid ? threshold : initial.threshold,
+                topUp: topUpValid ? topUp : initial.topUp,
+                monthlyCap,
+              })
+            }
+            type="button"
           >
             Save changes
           </Button>
@@ -497,8 +608,8 @@ function CreditStatRow({
       <dd
         className={
           mono
-            ? 'font-mono tabular-nums text-neutral-900 m-0'
-            : 'text-neutral-900 m-0'
+            ? "m-0 font-mono text-neutral-900 tabular-nums"
+            : "m-0 text-neutral-900"
         }
       >
         {value}
@@ -516,7 +627,7 @@ const MAX_TOPUP = 1000;
 type HistoryRow = {
   id: string;
   date: Date;
-  type: 'Gateway request' | 'Credits added';
+  type: "Gateway request" | "Credits added";
   amount: number; // positive = credit, negative = debit
   balanceAfter: number;
 };
@@ -524,21 +635,48 @@ type HistoryRow = {
 // Newest first. Credits-added rows render the amount in success-700 to mark
 // the inflow; debits use the default foreground tone.
 const HISTORY_ROWS: HistoryRow[] = [
-  { id: 'h-3', date: new Date(2026, 4, 12, 16, 47, 12), type: 'Gateway request', amount: -0.01, balanceAfter: 24.98 },
-  { id: 'h-2', date: new Date(2026, 4, 12, 14, 22, 5),  type: 'Gateway request', amount: -0.01, balanceAfter: 24.99 },
-  { id: 'h-1', date: new Date(2026, 4, 12, 9, 14, 38),  type: 'Credits added',   amount:  25.00, balanceAfter: 25.00 },
+  {
+    id: "h-3",
+    date: new Date(2026, 4, 12, 16, 47, 12),
+    type: "Gateway request",
+    amount: -0.01,
+    balanceAfter: 24.98,
+  },
+  {
+    id: "h-2",
+    date: new Date(2026, 4, 12, 14, 22, 5),
+    type: "Gateway request",
+    amount: -0.01,
+    balanceAfter: 24.99,
+  },
+  {
+    id: "h-1",
+    date: new Date(2026, 4, 12, 9, 14, 38),
+    type: "Credits added",
+    amount: 25.0,
+    balanceAfter: 25.0,
+  },
 ];
 
-const fmtAmount = (n: number) => formatCurrency(n, { signDisplay: 'exceptZero' });
+const fmtAmount = (n: number) =>
+  formatCurrency(n, { signDisplay: "exceptZero" });
 const fmtUsd = (n: number) => formatCurrency(n);
 
-function historySortValue(row: HistoryRow, key: string): string | number | null {
+function historySortValue(
+  row: HistoryRow,
+  key: string
+): string | number | null {
   switch (key) {
-    case 'date': return row.date.getTime();
-    case 'type': return row.type;
-    case 'amount': return row.amount;
-    case 'balanceAfter': return row.balanceAfter;
-    default: return null;
+    case "date":
+      return row.date.getTime();
+    case "type":
+      return row.type;
+    case "amount":
+      return row.amount;
+    case "balanceAfter":
+      return row.balanceAfter;
+    default:
+      return null;
   }
 }
 
@@ -546,7 +684,7 @@ function HistorySection() {
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = React.useMemo(
     () => sortRows(HISTORY_ROWS, sort, historySortValue),
-    [sort],
+    [sort]
   );
   return (
     <Card density="flush">
@@ -556,26 +694,60 @@ function HistorySection() {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <SortableTableHead sortKey="date" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Date</SortableTableHead>
-            <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="whitespace-nowrap">Type</SortableTableHead>
-            <SortableTableHead sortKey="amount" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Amount</SortableTableHead>
-            <SortableTableHead sortKey="balanceAfter" sort={sort} onSort={toggleSort} numeric className="whitespace-nowrap">Balance after</SortableTableHead>
+            <SortableTableHead
+              className="whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="date"
+            >
+              Date
+            </SortableTableHead>
+            <SortableTableHead
+              className="whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="type"
+            >
+              Type
+            </SortableTableHead>
+            <SortableTableHead
+              className="whitespace-nowrap"
+              numeric
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="amount"
+            >
+              Amount
+            </SortableTableHead>
+            <SortableTableHead
+              className="whitespace-nowrap"
+              numeric
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="balanceAfter"
+            >
+              Balance after
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedRows.map((row) => (
-            <TableRow key={row.id} className="hover:bg-transparent">
-              <TableCell className="whitespace-nowrap text-neutral-800"><Timestamp date={row.date} /></TableCell>
-              <TableCell className="whitespace-nowrap text-neutral-800">{row.type}</TableCell>
+            <TableRow className="hover:bg-transparent" key={row.id}>
+              <TableCell className="whitespace-nowrap text-neutral-800">
+                <Timestamp date={row.date} />
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-neutral-800">
+                {row.type}
+              </TableCell>
               <TableCell
                 className={cn(
-                  'text-right whitespace-nowrap font-mono tabular-nums',
-                  row.amount > 0 ? 'text-success-700' : 'text-neutral-800',
+                  "whitespace-nowrap text-right font-mono tabular-nums",
+                  row.amount > 0 ? "text-success-700" : "text-neutral-800"
                 )}
               >
                 {fmtAmount(row.amount)}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap font-mono tabular-nums text-foreground">
+              <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                 {fmtUsd(row.balanceAfter)}
               </TableCell>
             </TableRow>

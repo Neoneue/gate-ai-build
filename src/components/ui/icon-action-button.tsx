@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * IconActionButton — 24px icon-only button with expanded hit target.
@@ -31,9 +31,9 @@ const ICON_ACTION_BUTTON_BASE =
 
 export type IconActionButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'type' | 'aria-label'
+  "type" | "aria-label"
 > & {
-  'aria-label': string;
+  "aria-label": string;
 };
 
 export function IconActionButton({
@@ -43,8 +43,8 @@ export function IconActionButton({
 }: IconActionButtonProps) {
   return (
     <button
-      type="button"
       className={cn(ICON_ACTION_BUTTON_BASE, className)}
+      type="button"
       {...props}
     >
       {children}

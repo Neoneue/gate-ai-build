@@ -1,40 +1,62 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { PageTitle } from '@/components/ui/page-title';
+import { useMemo, useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardAction,
   CardContent,
-} from '@/components/ui/card';
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
+import { KpiRail } from "@/components/ui/kpi-rail";
+import { PageTitle } from "@/components/ui/page-title";
+import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { SegmentedPill } from '@/components/ui/segmented-pill';
-import { Badge } from '@/components/ui/badge';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+} from "@/components/ui/select";
+import { CONVERSATION_ROWS } from "@/data/conversations";
+import { REQUEST_ROWS_RECENT } from "@/data/requests";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
-  TOTAL_7D_BASE_DOLLARS,
-  TOTAL_7D_BASE_REQUESTS,
+  formatCurrency,
+  formatNumber,
+  formatTimestamp,
+} from "@/lib/formatters";
+import {
   distributeSeries,
   SPEND_BASE,
   SPEND_SERIES,
-  TOKENS_TOTALS_7D,
   seriesColor,
-} from '@/pages/activity-data';
-import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
-import { KpiRail } from '@/components/ui/kpi-rail';
-import { formatCurrency, formatNumber, formatTimestamp } from '@/lib/formatters';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { REQUEST_ROWS_RECENT, type RequestRow } from '@/pages/Requests';
-import { CONVERSATION_ROWS, type ConversationRow } from '@/pages/Conversations';
-import { EVENT_ROWS, ACTION_BADGE, TYPE_META, type EventRow, parseEventTime } from '@/pages/security-data';
+  TOKENS_TOTALS_7D,
+  TOTAL_7D_BASE_DOLLARS,
+  TOTAL_7D_BASE_REQUESTS,
+} from "@/pages/activity-data";
+import type { ConversationRow } from "@/pages/Conversations";
+import type { RequestRow } from "@/pages/Requests";
+import {
+  ACTION_BADGE,
+  EVENT_ROWS,
+  type EventRow,
+  parseEventTime,
+  TYPE_META,
+} from "@/pages/security-data";
 
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
 
@@ -43,19 +65,23 @@ const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagge
  * and compression). Dollar equivalent derives from the canonical spend
  * baseline so Overview, Activity, and the strip all reconcile. */
 
-const TOTAL_SAVED_RATE  = 0.23; // slight overlap between the two mechanisms
-const DOLLARS_SAVED_7D  = Math.round(TOTAL_SAVED_RATE * TOTAL_7D_BASE_DOLLARS);
+const TOTAL_SAVED_RATE = 0.23; // slight overlap between the two mechanisms
+const DOLLARS_SAVED_7D = Math.round(TOTAL_SAVED_RATE * TOTAL_7D_BASE_DOLLARS);
 // Per-day averages derived from the same seeds the Activity KPI rail uses,
 // so the sparkline reflects real daily variation rather than seeded noise.
-const _REQUESTS_7D_SERIES = distributeSeries(TOTAL_7D_BASE_REQUESTS, 7, 77 * 31 + 2);
-const SAVINGS_SPARK     = distributeSeries(DOLLARS_SAVED_7D, 7, 211);
+const _REQUESTS_7D_SERIES = distributeSeries(
+  TOTAL_7D_BASE_REQUESTS,
+  7,
+  77 * 31 + 2
+);
+const SAVINGS_SPARK = distributeSeries(DOLLARS_SAVED_7D, 7, 211);
 
-const THREATS_SPARK     = distributeSeries(THREATS_DETECTED_COUNT, 7, 144);
+const THREATS_SPARK = distributeSeries(THREATS_DETECTED_COUNT, 7, 144);
 
-type Dimension = 'model' | 'provider' | 'apiKey';
+type Dimension = "model" | "provider" | "apiKey";
 
-const OTHERS_KEY = '__others';
-const OTHERS_COLOR = 'var(--color-neutral-300)';
+const OTHERS_KEY = "__others";
+const OTHERS_COLOR = "var(--color-neutral-300)";
 
 /** Cap a series list + data to ≤6 entries, collapsing overflow into an
  *  "__others" rollup. Sorts by descending total across all rows. Top 5
@@ -63,40 +89,54 @@ const OTHERS_COLOR = 'var(--color-neutral-300)';
  *  unchanged. Mirrors the pattern Activity.tsx uses for its trend chart. */
 function capWithOthers(
   series: StackedSeries,
-  data: Array<Record<string, number | string>>,
+  data: Array<Record<string, number | string>>
 ): { series: StackedSeries; data: Array<Record<string, number | string>> } {
-  if (series.length <= 6) return { series, data };
+  if (series.length <= 6) {
+    return { series, data };
+  }
 
   // Sum each series key across all rows.
   const totals: Record<string, number> = {};
   for (const s of series) {
-    totals[s.key] = data.reduce((acc, row) => acc + (Number(row[s.key]) || 0), 0);
+    totals[s.key] = data.reduce(
+      (acc, row) => acc + (Number(row[s.key]) || 0),
+      0
+    );
   }
 
   // Sort descending by total; keep top 5, collapse rest.
-  const sorted = [...series].sort((a, b) => (totals[b.key] ?? 0) - (totals[a.key] ?? 0));
+  const sorted = [...series].sort(
+    (a, b) => (totals[b.key] ?? 0) - (totals[a.key] ?? 0)
+  );
   const top5 = sorted.slice(0, 5);
   const rest = sorted.slice(5);
 
   const cappedData = data.map((row) => {
-    const newRow: Record<string, number | string> = { date: row['date'] ?? '' };
-    for (const s of top5) newRow[s.key] = row[s.key] ?? 0;
-    newRow[OTHERS_KEY] = rest.reduce((acc, s) => acc + (Number(row[s.key]) || 0), 0);
+    const newRow: Record<string, number | string> = { date: row["date"] ?? "" };
+    for (const s of top5) {
+      newRow[s.key] = row[s.key] ?? 0;
+    }
+    newRow[OTHERS_KEY] = rest.reduce(
+      (acc, s) => acc + (Number(row[s.key]) || 0),
+      0
+    );
     return newRow;
   });
 
   const cappedSeries: StackedSeries = [
     ...top5,
-    { key: OTHERS_KEY, label: 'Others', slot: 0, color: OTHERS_COLOR },
+    { key: OTHERS_KEY, label: "Others", slot: 0, color: OTHERS_COLOR },
   ];
 
   return { series: cappedSeries, data: cappedData };
 }
 
 const fmtTokens = (n: number) =>
-  n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M`
-  : n >= 1_000   ? `${(n / 1_000).toFixed(1)}K`
-  : `${n}`;
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(2)}M`
+    : n >= 1000
+      ? `${(n / 1000).toFixed(1)}K`
+      : `${n}`;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-012 — Composed · Dashboard
@@ -110,24 +150,27 @@ const fmtTokens = (n: number) =>
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
+  const { sidebarExpanded, toggleSidebar } = useOutletContext<{
+    sidebarExpanded: boolean;
+    toggleSidebar: () => void;
+  }>();
 
   return (
     <DashboardChrome
       activeNavId="overview"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <h2 className="font-sans text-lg/6 font-medium tracking-snug text-neutral-900 text-balance m-0">
+        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
           Activity This Week
         </h2>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />
@@ -140,10 +183,11 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-col gap-2 max-w-1/2">
+    <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Overview</PageTitle>
-      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-        Monitor request volume, token usage, spend, and security signals across your gateway.
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        Monitor request volume, token usage, spend, and security signals across
+        your gateway.
       </p>
     </div>
   );
@@ -158,32 +202,46 @@ function make7dLabels(): string[] {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    labels.push(
+      d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    );
   }
   return labels;
 }
 
 const KPI_7D_LABELS = make7dLabels();
 
-function makeStackedSpendRows(dim: Dimension): Array<Record<string, number | string>> {
+function makeStackedSpendRows(
+  dim: Dimension
+): Array<Record<string, number | string>> {
   return SPEND_BASE[dim].map((row, i) => ({
-    date: KPI_7D_LABELS[i] ?? '',
+    date: KPI_7D_LABELS[i] ?? "",
     ...row,
   }));
 }
 
-function makeStackedTokenRows(dim: Dimension): Array<Record<string, number | string>> {
+function makeStackedTokenRows(
+  dim: Dimension
+): Array<Record<string, number | string>> {
   const dimSeries = SPEND_SERIES[dim];
   const totals = TOKENS_TOTALS_7D[dim];
   const buckets: Record<string, number[]> = {};
   let seed = 0;
   for (const s of dimSeries) {
     seed++;
-    buckets[s.key] = distributeSeries(totals[s.key] ?? 0, 7, 77 * 31 + seed + 200);
+    buckets[s.key] = distributeSeries(
+      totals[s.key] ?? 0,
+      7,
+      77 * 31 + seed + 200
+    );
   }
   return Array.from({ length: 7 }, (_, i) => {
-    const row: Record<string, number | string> = { date: KPI_7D_LABELS[i] ?? '' };
-    for (const s of dimSeries) row[s.key] = buckets[s.key]?.[i] ?? 0;
+    const row: Record<string, number | string> = {
+      date: KPI_7D_LABELS[i] ?? "",
+    };
+    for (const s of dimSeries) {
+      row[s.key] = buckets[s.key]?.[i] ?? 0;
+    }
     return row;
   });
 }
@@ -192,7 +250,12 @@ function makeStackedTokenRows(dim: Dimension): Array<Record<string, number | str
 const STACKED_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
 const STACKED_CHART_TICK = { fontSize: 10 } as const;
 
-type StackedSeries = readonly { key: string; label: string; slot: number; color?: string }[];
+type StackedSeries = readonly {
+  key: string;
+  label: string;
+  slot: number;
+  color?: string;
+}[];
 
 function StackedKpiChart({
   data,
@@ -206,33 +269,41 @@ function StackedKpiChart({
   className?: string;
 }) {
   const config: ChartConfig = Object.fromEntries(
-    series.map((s) => [s.key, { label: s.label, color: seriesColor(s) }]),
+    series.map((s) => [s.key, { label: s.label, color: seriesColor(s) }])
   ) as ChartConfig;
 
   return (
-    <ChartContainer config={config} className={className ?? 'h-[180px] w-full'}>
-      <BarChart accessibilityLayer data={data} margin={STACKED_CHART_MARGIN} barCategoryGap="20%">
-        <CartesianGrid horizontal vertical={false} stroke="var(--color-neutral-200)" strokeDasharray="8 3" />
+    <ChartContainer className={className ?? "h-[180px] w-full"} config={config}>
+      <BarChart
+        accessibilityLayer
+        barCategoryGap="20%"
+        data={data}
+        margin={STACKED_CHART_MARGIN}
+      >
+        <CartesianGrid
+          horizontal
+          stroke="var(--color-neutral-200)"
+          strokeDasharray="8 3"
+          vertical={false}
+        />
         <XAxis
-          dataKey="date"
-          tickLine={false}
           axisLine={false}
+          dataKey="date"
           height={24}
-          tick={STACKED_CHART_TICK}
           interval="preserveStartEnd"
+          tick={STACKED_CHART_TICK}
+          tickLine={false}
         />
         <YAxis
-          tickLine={false}
           axisLine={false}
-          width={44}
           tick={STACKED_CHART_TICK}
           tickFormatter={yFormatter}
+          tickLine={false}
+          width={44}
         />
         <ChartTooltip
-          cursor={false}
           content={
             <ChartTooltipContent
-              indicator="dot"
               formatter={(value, name) => {
                 const cfg = config[name as string];
                 return (
@@ -240,27 +311,31 @@ function StackedKpiChart({
                     <span className="flex items-center gap-1">
                       <span
                         aria-hidden
-                        className="size-2 rounded-xs shrink-0"
+                        className="size-2 shrink-0 rounded-xs"
                         style={{ backgroundColor: cfg?.color }}
                       />
-                      <span className="text-muted-foreground">{cfg?.label ?? name}</span>
+                      <span className="text-muted-foreground">
+                        {cfg?.label ?? name}
+                      </span>
                     </span>
-                    <span className="font-mono tabular-nums text-foreground">
+                    <span className="font-mono text-foreground tabular-nums">
                       {yFormatter(Number(value))}
                     </span>
                   </div>
                 );
               }}
+              indicator="dot"
             />
           }
+          cursor={false}
         />
         {series.map((s) => (
           <Bar
-            key={s.key}
             dataKey={s.key}
-            stackId="s"
             fill={seriesColor(s)}
             isAnimationActive={false}
+            key={s.key}
+            stackId="s"
           />
         ))}
       </BarChart>
@@ -271,27 +346,36 @@ function StackedKpiChart({
 /** Horizontal color key — dots + series names; breakdown lives in the tooltip. */
 export function HorizontalLegend({ series }: { series: StackedSeries }) {
   return (
-    <div className="px-4 pb-5 flex items-center justify-center gap-4 flex-wrap">
+    <div className="flex flex-wrap items-center justify-center gap-4 px-4 pb-5">
       {series.slice(0, 6).map((s) => (
-        <div key={s.key} className="flex items-center gap-2">
+        <div className="flex items-center gap-2" key={s.key}>
           <span
             aria-hidden
-            className="size-2 rounded-full shrink-0 inline-flex"
+            className="inline-flex size-2 shrink-0 rounded-full"
             style={{ backgroundColor: seriesColor(s) }}
           />
-          <span className="text-xs text-neutral-500">{s.label}</span>
+          <span className="text-neutral-500 text-xs">{s.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-type Metric = 'spend' | 'tokens';
+type Metric = "spend" | "tokens";
 
-function DimSelector({ dim, onDimChange }: { dim: Dimension; onDimChange: (d: Dimension) => void }) {
+function DimSelector({
+  dim,
+  onDimChange,
+}: {
+  dim: Dimension;
+  onDimChange: (d: Dimension) => void;
+}) {
   return (
-    <Select value={dim} onValueChange={(v) => onDimChange(v as Dimension)}>
-      <SelectTrigger size="sm" className="border-border bg-card text-foreground font-normal">
+    <Select onValueChange={(v) => onDimChange(v as Dimension)} value={dim}>
+      <SelectTrigger
+        className="border-border bg-card font-normal text-foreground"
+        size="sm"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -306,10 +390,9 @@ function DimSelector({ dim, onDimChange }: { dim: Dimension; onDimChange: (d: Di
 /* ─── Overview usage chart (full-width) ──────────────────────────────────── */
 
 const OVERVIEW_METRIC_OPTIONS = [
-  { value: 'tokens', label: 'Tokens' },
-  { value: 'spend',  label: 'Spend'  },
+  { value: "tokens", label: "Tokens" },
+  { value: "spend", label: "Spend" },
 ];
-
 
 const fmtSpend = (v: number) => formatCurrency(v, { minFrac: 0, maxFrac: 0 });
 
@@ -318,34 +401,55 @@ const fmtPct = (frac: number) => `${(frac * 100).toFixed(1)}%`;
 function OverviewUsageChart() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [metric, setMetric] = useState<Metric>(
-    (['tokens', 'spend'] as const).includes(searchParams.get('metric') as Metric)
-      ? (searchParams.get('metric') as Metric)
-      : 'tokens',
+    (["tokens", "spend"] as const).includes(
+      searchParams.get("metric") as Metric
+    )
+      ? (searchParams.get("metric") as Metric)
+      : "tokens"
   );
   const [dim, setDim] = useState<Dimension>(
-    (['model', 'provider', 'apiKey'] as const).includes(searchParams.get('dim') as Dimension)
-      ? (searchParams.get('dim') as Dimension)
-      : 'model',
+    (["model", "provider", "apiKey"] as const).includes(
+      searchParams.get("dim") as Dimension
+    )
+      ? (searchParams.get("dim") as Dimension)
+      : "model"
   );
 
   const handleMetricChange = (v: Metric) => {
     setMetric(v);
-    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('metric', v); return n; }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        n.set("metric", v);
+        return n;
+      },
+      { replace: true }
+    );
   };
   const handleDimChange = (d: Dimension) => {
     setDim(d);
-    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('dim', d); return n; }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        n.set("dim", d);
+        return n;
+      },
+      { replace: true }
+    );
   };
 
   const { series, data } = useMemo(() => {
     const rawSeries = SPEND_SERIES[dim];
-    const rawData = metric === 'spend' ? makeStackedSpendRows(dim) : makeStackedTokenRows(dim);
+    const rawData =
+      metric === "spend"
+        ? makeStackedSpendRows(dim)
+        : makeStackedTokenRows(dim);
     return capWithOthers(rawSeries, rawData);
   }, [metric, dim]);
 
-  const yFormatter = metric === 'spend' ? fmtSpend : fmtTokens;
+  const yFormatter = metric === "spend" ? fmtSpend : fmtTokens;
 
-  const title = metric === 'spend' ? 'Total spent' : 'Tokens used';
+  const title = metric === "spend" ? "Total spent" : "Tokens used";
 
   const seriesTotals = useMemo(() => {
     const acc: Record<string, number> = {};
@@ -357,7 +461,8 @@ function OverviewUsageChart() {
     return acc;
   }, [data, series]);
 
-  const grandTotal = Object.values(seriesTotals).reduce((a, b) => a + b, 0) || 1;
+  const grandTotal =
+    Object.values(seriesTotals).reduce((a, b) => a + b, 0) || 1;
 
   return (
     <Card>
@@ -367,10 +472,10 @@ function OverviewUsageChart() {
           <div className="flex items-center gap-2">
             <DimSelector dim={dim} onDimChange={handleDimChange} />
             <SegmentedPill
-              size="sm"
-              options={OVERVIEW_METRIC_OPTIONS}
-              value={metric}
               onValueChange={(v) => handleMetricChange(v as Metric)}
+              options={OVERVIEW_METRIC_OPTIONS}
+              size="sm"
+              value={metric}
             />
           </div>
         </CardAction>
@@ -378,26 +483,43 @@ function OverviewUsageChart() {
       <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* chart — col-span-8 */}
         <div className="md:col-span-8">
-          <StackedKpiChart data={data} series={series} yFormatter={yFormatter} className="aspect-auto h-[184px] w-full" />
+          <StackedKpiChart
+            className="aspect-auto h-[184px] w-full"
+            data={data}
+            series={series}
+            yFormatter={yFormatter}
+          />
         </div>
         {/* breakdown panel — col-span-4 */}
-        <div className="md:col-span-4 md:border-l md:border-border md:pl-3">
+        <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
           <div className="flex flex-col gap-1">
             {series.map((s) => {
               const total = seriesTotals[s.key] ?? 0;
               const pctStr = fmtPct(total / grandTotal);
-              const color = s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s);
+              const color =
+                s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s);
               return (
-                <div key={s.key} className="flex items-center gap-2 py-1 px-2 rounded-xs min-w-0">
-                  <span aria-hidden className="size-2 rounded-xs shrink-0" style={{ backgroundColor: color }} />
-                  <span className="font-sans text-sm text-foreground truncate min-w-0 flex-1">{s.label}</span>
+                <div
+                  className="flex min-w-0 items-center gap-2 rounded-xs px-2 py-1"
+                  key={s.key}
+                >
+                  <span
+                    aria-hidden
+                    className="size-2 shrink-0 rounded-xs"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="min-w-0 flex-1 truncate font-sans text-foreground text-sm">
+                    {s.label}
+                  </span>
                   <div
-                    className="font-mono tabular-nums text-sm shrink-0 grid items-center gap-x-2"
-                    style={{ gridTemplateColumns: '9ch min-content 4ch' }}
+                    className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
+                    style={{ gridTemplateColumns: "9ch min-content 4ch" }}
                   >
-                    <span className="text-foreground text-right">{yFormatter(total)}</span>
+                    <span className="text-right text-foreground">
+                      {yFormatter(total)}
+                    </span>
                     <span className="text-neutral-400">·</span>
-                    <span className="text-foreground text-right">{pctStr}</span>
+                    <span className="text-right text-foreground">{pctStr}</span>
                   </div>
                 </div>
               );
@@ -415,29 +537,47 @@ function TokenSavingsStrip() {
   return (
     <KpiRail columns={3}>
       <CompactKpi
-        flat
-        title="Requests"
-        value={formatNumber(TOTAL_7D_BASE_REQUESTS, { notation: 'compact', maximumFractionDigits: 1 })}
         delta="+8.2%"
         deltaNote="vs last week"
-        spark={<CompactSpark colorVar="var(--color-blue-500)" data={_REQUESTS_7D_SERIES} />}
+        flat
+        spark={
+          <CompactSpark
+            colorVar="var(--color-blue-500)"
+            data={_REQUESTS_7D_SERIES}
+          />
+        }
+        title="Requests"
+        value={formatNumber(TOTAL_7D_BASE_REQUESTS, {
+          notation: "compact",
+          maximumFractionDigits: 1,
+        })}
       />
       <CompactKpi
-        flat
-        title="Tokens saved"
-        value={`${(TOTAL_SAVED_RATE * 100).toFixed(0)}%`}
         delta="+8.7%"
         deltaNote="vs last week"
-        spark={<CompactSpark colorVar="var(--color-success-500)" data={SAVINGS_SPARK} />}
+        flat
+        spark={
+          <CompactSpark
+            colorVar="var(--color-success-500)"
+            data={SAVINGS_SPARK}
+          />
+        }
+        title="Tokens saved"
+        value={`${(TOTAL_SAVED_RATE * 100).toFixed(0)}%`}
       />
       <CompactKpi
+        delta="+22.4%"
+        deltaInverted
+        deltaNote="vs last week"
         flat
+        spark={
+          <CompactSpark
+            colorVar="var(--color-destructive)"
+            data={THREATS_SPARK}
+          />
+        }
         title="Threats detected"
         value={formatNumber(THREATS_DETECTED_COUNT)}
-        delta="+22.4%"
-        deltaNote="vs last week"
-        deltaInverted
-        spark={<CompactSpark colorVar="var(--color-destructive)" data={THREATS_SPARK} />}
       />
     </KpiRail>
   );
@@ -446,13 +586,13 @@ function TokenSavingsStrip() {
 /* ─── Shared pill helper ─────────────────────────────────────────────────── */
 
 const GUARDRAIL_BADGE: Record<
-  'allow' | 'flagged' | 'redacted' | 'block',
-  { variant: 'neutral' | 'warning' | 'info' | 'destructive' }
+  "allow" | "flagged" | "redacted" | "block",
+  { variant: "neutral" | "warning" | "info" | "destructive" }
 > = {
-  allow:    { variant: 'neutral'     },
-  flagged:  { variant: 'warning'     },
-  redacted: { variant: 'warning'     },
-  block:    { variant: 'destructive' },
+  allow: { variant: "neutral" },
+  flagged: { variant: "warning" },
+  redacted: { variant: "warning" },
+  block: { variant: "destructive" },
 };
 
 /* ─── Latest Requests preview table ─────────────────────────────────────── */
@@ -462,51 +602,86 @@ function LatestRequestsTable() {
   const rows: RequestRow[] = REQUEST_ROWS_RECENT.slice(0, 5);
 
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest requests</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest requests
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-      <table className="w-full text-sm" aria-label="Latest requests">
-        <thead>
-          <tr className="border-b border-border bg-neutral-50">
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Time</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Model</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Status</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Security</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((row, i) => (
-            <tr
-              key={row.requestId ?? i}
-              tabIndex={0}
-              role="link"
-              aria-label={row.requestId ? `Open request ${row.requestId}` : 'Open request'}
-              className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
-              onClick={() => row.requestId && navigate(`/requests?open=${row.requestId}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
-            >
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{row.day} {row.time}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800">{row.model}</td>
-              <td className="whitespace-nowrap px-4 py-3">
-                <Badge variant={row.slow ? 'warning' : row.status === 'success' ? 'success' : 'destructive'}>
-                  {row.slow ? 'slow' : row.status}
-                </Badge>
-              </td>
-              <td className="whitespace-nowrap px-4 py-3">
-                <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>{row.guardrail}</Badge>
-              </td>
+        <table aria-label="Latest requests" className="w-full text-sm">
+          <thead>
+            <tr className="border-border border-b bg-neutral-50">
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Time
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Model
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Status
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Security
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((row, i) => (
+              <tr
+                aria-label={
+                  row.requestId
+                    ? `Open request ${row.requestId}`
+                    : "Open request"
+                }
+                className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
+                key={row.requestId ?? i}
+                onClick={() =>
+                  row.requestId && navigate(`/requests?open=${row.requestId}`)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.currentTarget.click();
+                  }
+                }}
+                role="link"
+                tabIndex={0}
+              >
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                  {row.day} {row.time}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-neutral-800 text-xs">
+                  {row.model}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <Badge
+                    variant={
+                      row.slow
+                        ? "warning"
+                        : row.status === "success"
+                          ? "success"
+                          : "destructive"
+                    }
+                  >
+                    {row.slow ? "slow" : row.status}
+                  </Badge>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
+                    {row.guardrail}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -519,47 +694,72 @@ function RecentConversationsTable() {
   const rows: ConversationRow[] = CONVERSATION_ROWS.slice(0, 5);
 
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest conversations</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest conversations
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-      <table className="w-full text-sm" aria-label="Latest conversations">
-        <thead>
-          <tr className="border-b border-border bg-neutral-50">
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Conversation</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Updated</th>
-            <th className="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-neutral-500">Turns</th>
-            <th className="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-neutral-500">Reqs</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((row) => (
-            <tr
-              key={row.conversationId}
-              tabIndex={0}
-              role="link"
-              aria-label={`Open conversation: ${row.title}`}
-              className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
-              onClick={() => navigate(`/conversations?open=${row.conversationId}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
-            >
-              <td className="px-4 py-3 overflow-hidden max-w-0 w-full">
-                <span className="block truncate text-xs text-neutral-800">{row.title}</span>
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-neutral-800">{formatTimestamp(row.updated)}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-right text-xs text-neutral-800">{row.turns}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-right text-xs text-neutral-800">{row.reqs}</td>
+        <table aria-label="Latest conversations" className="w-full text-sm">
+          <thead>
+            <tr className="border-border border-b bg-neutral-50">
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Conversation
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Updated
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+                Turns
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+                Reqs
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((row) => (
+              <tr
+                aria-label={`Open conversation: ${row.title}`}
+                className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
+                key={row.conversationId}
+                onClick={() =>
+                  navigate(`/conversations?open=${row.conversationId}`)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.currentTarget.click();
+                  }
+                }}
+                role="link"
+                tabIndex={0}
+              >
+                <td className="w-full max-w-0 overflow-hidden px-4 py-3">
+                  <span className="block truncate text-neutral-800 text-xs">
+                    {row.title}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                  {formatTimestamp(row.updated)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-neutral-800 text-xs">
+                  {row.turns}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-neutral-800 text-xs">
+                  {row.reqs}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -572,59 +772,88 @@ function SecurityEventsTable() {
   const rows: EventRow[] = EVENT_ROWS.slice(0, 5);
 
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest security events
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-      <table className="w-full text-sm" aria-label="Latest security events">
-        <thead>
-          <tr className="border-b border-border bg-neutral-50">
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Time</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Type</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Action</th>
-            <th className="whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-neutral-500">Key</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((row, i) => {
-            const badge = ACTION_BADGE[row.action];
-            const typeMeta = TYPE_META[row.type];
-            const TypeIcon = typeMeta.Icon;
-            return (
-              <tr
-                key={row.requestId ?? i}
-                tabIndex={0}
-                role="link"
-                aria-label={row.requestId ? `View security event ${row.requestId}` : 'View security event'}
-                className="h-12 cursor-pointer [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50 active:bg-neutral-100 transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
-                onClick={() => navigate(`/security?open=${row.requestId}`)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
-              >
-                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-800 font-mono">{formatTimestamp(parseEventTime(row.time))}</td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <span className="inline-flex items-center gap-2">
-                    <TypeIcon className="size-4 shrink-0" style={{ color: typeMeta.color }} strokeWidth={1.75} aria-hidden />
-                    <span className="text-xs text-neutral-800">{typeMeta.label}</span>
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <Badge variant={badge.variant}>{badge.label}</Badge>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-xs text-neutral-500 font-mono">{row.key.split(' (')[0]}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+        <table aria-label="Latest security events" className="w-full text-sm">
+          <thead>
+            <tr className="border-border border-b bg-neutral-50">
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Time
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Type
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Action
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+                Key
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((row, i) => {
+              const badge = ACTION_BADGE[row.action];
+              const typeMeta = TYPE_META[row.type];
+              const TypeIcon = typeMeta.Icon;
+              return (
+                <tr
+                  aria-label={
+                    row.requestId
+                      ? `View security event ${row.requestId}`
+                      : "View security event"
+                  }
+                  className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
+                  key={row.requestId ?? i}
+                  onClick={() => navigate(`/security?open=${row.requestId}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.currentTarget.click();
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                >
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                    {formatTimestamp(parseEventTime(row.time))}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span className="inline-flex items-center gap-2">
+                      <TypeIcon
+                        aria-hidden
+                        className="size-4 shrink-0"
+                        strokeWidth={1.75}
+                        style={{ color: typeMeta.color }}
+                      />
+                      <span className="text-neutral-800 text-xs">
+                        {typeMeta.label}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-500 text-xs">
+                    {row.key.split(" (")[0]}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
-

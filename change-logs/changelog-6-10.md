@@ -175,6 +175,86 @@ to both column divs — the code block's existing `overflow-x-auto` now engages
 (~156px horizontal scroll at 1280 container) and the split stays 600/600 across
 all tab + BYOK/PAYG combinations. Verified in-browser.
 
+### Lint gate green — audit finding #1: 29 errors → 0 [02fce0c]
+
+Mechanical module-boundary refactor; zero visual changes (all pages
+browser-smoke-tested, Merkle dialog verified). `eslint .` and `npx tsc -b`
+both exit 0.
+
+- **Dead code deleted** (~190 lines): `HERO_SNIPPETS` (DashboardDefault),
+  `CONVERSATION_MESSAGES` + `ASSISTANT_TURN_COUNT` (Conversations, leftovers
+  from the pre-06-06 detail implementation), `PROVIDER_ORDER` (vendor-meta);
+  `buttonVariants`/`badgeVariants` un-exported (no importers).
+- **New shared modules** (extracted, not rewritten):
+  `src/data/requests.ts` (requestRowId + findings model + all REQUEST_ROWS_*
+  - getEventFindingCopy, ~535 lines out of Requests.tsx — first slice of the
+  audit's god-object finding), `src/data/conversations.ts`
+  (CONVERSATION_ROWS, SAMPLE_TRACE), `src/data/audit-trail.ts` (NOW mock
+  clock, fmtRelative/truncateHex — previously DUPLICATED in AuditTrail +
+  AuditTrailMerkle — uuid/hex, EVENT_ROWS, KIND_BADGE_VARIANT),
+  `src/components/icons/vendor-avatar.tsx` (VendorAvatar + MarketplaceAvatar
+  moved out so vendor-meta.tsx is data-only),
+  `src/hooks/use-copy-feedback.ts`, `src/lib/portal-target-context.ts`;
+  `randomHex` → lib/utils, `linesToString` → lib/formatters.
+- **Types stay with their pages** (RequestRow, ConversationRow, EventRow…);
+  data modules import them type-only, so no runtime cycles. The old
+  Requests↔Conversations value-import cycle is gone.
+- **Real fixes**: App.tsx redundant sync setState in the narrow-viewport
+  effect removed (initializer already seeds it); DashboardDefault
+  `useMemo(() => detectPlatform(), [])`; Conversations list pipeline
+  (viewRows/filteredRows) properly memoized. The two intentionally disabled
+  `{false && …}` blocks (Conversations footer Copy ID, ConversationsTrace
+  header) keep explicit eslint-disable directives instead of deletion.
+- Fast refresh now works in every previously-violating file (pages no longer
+  full-reload when editing components).
+
+### Audit #3 + #4 — dependency hygiene and route code splitting [02fce0c]
+
+Zero visual changes; all routes browser-verified after both.
+
+- **Dependencies** (audit finding #3): `npm audit` now reports **0
+  vulnerabilities** (was 6, incl. 1 high). `shadcn` moved to
+  devDependencies and bumped ^4.6.0 → ^4.11.0 (its MCP-SDK chain carried
+  every advisory; the `index.css` tailwind import still resolves at build
+  time); unused `next-themes` removed; `npm audit fix` cleared a
+  brace-expansion moderate.
+- **Code splitting** (audit finding #4): all 27 page imports in `App.tsx`
+  converted to `React.lazy` (named-export `.then` mapping) behind one
+  `<Suspense fallback={null}>` around `<Routes>`. Build went from a single
+  1,884 KB chunk to 88 chunks — largest now 354 KB (shared recharts chunk),
+  entry 314 KB; Vite's 500 kB warning is gone. Pages load their chunk on
+  first visit.
+
+### Ultracite/Biome adopted — formatting + lint now actively enforced [02fce0c]
+
+`npx ultracite init` (Biome 2.4 + ultracite preset). One-time
+`ultracite fix` reformatted ~134 files (whitespace/style only; tsc, eslint,
+build, and browser all verified green after). Baseline went 3,137 → 0 Biome
+errors.
+
+- **Enforcement layers** (the point of the exercise):
+  `npm run lint` = `eslint . && ultracite check` (one-command gate);
+  husky pre-commit runs lint-staged (`ultracite fix` + `eslint --fix
+  --max-warnings=0` on staged files); `.claude/settings.json` PostToolUse
+  hook auto-runs `npm run fix` after every agent Write/Edit. CI remains
+  audit finding #2.
+- **biome.jsonc tuning**: ultracite preset kept for formatting +
+  correctness/suspicious rules; ~30 opinion rules disabled with rationale in
+  the config (nested ternaries, type-vs-interface, filename convention, etc.);
+  the a11y rule batch is parked for a dedicated /rams pass, not rejected.
+  src/index.css excluded (Tailwind v4 syntax breaks Biome's CSS parser).
+- **Real fixes shaken out**: `==` → `===` (field.tsx); rangeStore forEach
+  callbacks no longer leak return values; `dampedClamp` hoisted to module
+  scope in AuditRecordDialogMerkle (was an unstable effect dep); 4 no-op
+  `onClick={() => {}}` placeholders dropped from the unwired Verify/Export
+  buttons; tsconfigs gained `strictNullChecks` (init added it — tsc already
+  passed, so it stays; chunk of audit #9 for free).
+- **Intent change**: Biome's unsafe fix deleted the two `{false && …}`
+  disabled-UI blocks (Conversations footer Copy ID, ConversationsTrace header
+  Copy). Both linters flagged them; the husks were removed entirely.
+  Recoverable from git history (committed at 85f7d9e) if ever wanted.
+- ESLint stays for the react-hooks rule set Biome doesn't replicate.
+
 ---
 
 ## Non-UI, same day

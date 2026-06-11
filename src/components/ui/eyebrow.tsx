@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Eyebrow — small sans-uppercase chrome label used above KPI values,
@@ -28,25 +28,25 @@ import { cn } from '@/lib/utils';
 
 export interface EyebrowProps extends React.HTMLAttributes<HTMLElement> {
   /** Element to render as. Defaults to `<span>` (inline). */
-  as?: 'span' | 'div' | 'label';
+  as?: "span" | "div" | "label";
   /** Associates a `label` eyebrow with a form control. Only meaningful
    *  when `as="label"`. */
   htmlFor?: string;
 }
 
 export function Eyebrow({
-  as: Tag = 'span',
+  as: Tag = "span",
   className,
   children,
   ...props
 }: EyebrowProps) {
   return (
     <Tag
-      data-slot="eyebrow"
       className={cn(
-        'font-mono text-xs uppercase tracking-widest font-medium text-neutral-500',
-        className,
+        "font-medium font-mono text-neutral-500 text-xs uppercase tracking-widest",
+        className
       )}
+      data-slot="eyebrow"
       {...props}
     >
       {children}

@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * SectionHeading — h3-class heading used inside modal body sections
@@ -21,22 +21,22 @@ import { cn } from '@/lib/utils';
 export interface SectionHeadingProps
   extends React.HTMLAttributes<HTMLHeadingElement> {
   /** Heading level. Defaults to `h3` (matches modal body section use). */
-  as?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  as?: "h2" | "h3" | "h4" | "h5" | "h6";
 }
 
 export function SectionHeading({
-  as: Tag = 'h3',
+  as: Tag = "h3",
   className,
   children,
   ...props
 }: SectionHeadingProps) {
   return (
     <Tag
-      data-slot="section-heading"
       className={cn(
-        'font-sans text-sm font-medium text-neutral-900 m-0',
-        className,
+        "m-0 font-medium font-sans text-neutral-900 text-sm",
+        className
       )}
+      data-slot="section-heading"
       {...props}
     >
       {children}

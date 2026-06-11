@@ -1,24 +1,23 @@
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { XIcon } from "lucide-react";
+import type * as React from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
 function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
 function DialogOverlay({
@@ -27,19 +26,19 @@ function DialogOverlay({
 }: DialogPrimitive.Backdrop.Props) {
   return (
     <DialogPrimitive.Backdrop
-      data-slot="dialog-overlay"
       className={cn(
         // `fill-mode-forwards` on the closed state holds opacity 0 after
         // the 100ms exit animation finishes. Without it the overlay snaps
         // back to opacity 1 (its base style) and flashes the backdrop
         // while waiting for the popup's longer 200ms exit to complete —
         // a clearly visible flicker on dismiss.
-        "fixed inset-0 isolate z-50 bg-neutral-900/40 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-neutral-900/40 duration-100 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
+      data-slot="dialog-overlay"
       {...props}
     />
-  )
+  );
 }
 
 function DialogContent({
@@ -50,14 +49,14 @@ function DialogContent({
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
   /** Optional override for the backdrop (e.g. darker scrim on nested dialogs). */
-  overlayClassName?: string
+  overlayClassName?: string;
   /** Render a manual (non-deduped) backdrop. Base UI's Dialog.Backdrop
    *  dedups when dialogs nest — only the outermost backdrop reaches the
    *  DOM, leaving inner dialogs without a scrim over the parent surface.
    *  Set this on the *inner* dialog when nesting. */
-  nestedBackdrop?: boolean
+  nestedBackdrop?: boolean;
 }) {
   return (
     <DialogPortal>
@@ -67,17 +66,16 @@ function DialogContent({
         // and dims it. No dedup.
         <div
           aria-hidden
-          data-open=""
           className={cn(
-            "fixed inset-0 z-50 bg-neutral-900/40 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 motion-reduce:animate-none",
+            "data-open:fade-in-0 fixed inset-0 z-50 bg-neutral-900/40 data-open:animate-in supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none",
             overlayClassName
           )}
+          data-open=""
         />
       ) : (
         <DialogOverlay className={overlayClassName} />
       )}
       <DialogPrimitive.Popup
-        data-slot="dialog-content"
         className={cn(
           // Skill: emil-design-eng — modals belong in the 200–500ms range
           // (slower than dropdowns; the surface is visually heavy enough that
@@ -87,9 +85,10 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-card p-6 text-sm text-neutral-900 border border-border shadow-(--shadow-modal) overscroll-contain duration-200 ease-out outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-[120ms] data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-neutral-900 text-sm shadow-(--shadow-modal) outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
           className
         )}
+        data-slot="dialog-content"
         {...props}
       >
         {children}
@@ -98,20 +97,19 @@ function DialogContent({
             data-slot="dialog-close"
             render={
               <Button
-                variant="ghost"
                 className="absolute top-3 right-3"
                 size="icon-sm"
+                variant="ghost"
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
     </DialogPortal>
-  )
+  );
 }
 
 /* ─── Scroll-shell variant ────────────────────────────────────────────────
@@ -142,18 +140,18 @@ function DialogScrollContent({
 }: React.ComponentProps<typeof DialogContent>) {
   return (
     <DialogContent
-      data-slot="dialog-scroll-content"
       // `gap-0 p-0 overflow-hidden flex flex-col max-h-[90vh]` is the
       // structural contract — sections inside manage their own padding so
       // a fixed footer can sit flush at the modal's bottom edge while the
       // body scrolls between fixed header/footer.
       className={cn(
-        "max-h-[90vh] gap-0 p-0 overflow-hidden flex flex-col",
-        className,
+        "flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0",
+        className
       )}
+      data-slot="dialog-scroll-content"
       {...props}
     />
-  )
+  );
 }
 
 // Static spec-sheet variant of the modal chrome — renders the same outer
@@ -175,105 +173,120 @@ function DialogStaticContent({
   showCloseButton = true,
   ...props
 }: React.ComponentProps<"div"> & {
-  onClose?: () => void
-  showCloseButton?: boolean
+  onClose?: () => void;
+  showCloseButton?: boolean;
 }) {
   return (
     <div
-      data-slot="dialog-static-content"
       className={cn(
-        "relative flex flex-col rounded-xl bg-card border border-border shadow-(--shadow-modal) overflow-clip",
-        className,
+        "relative flex flex-col overflow-clip rounded-xl border border-border bg-card shadow-(--shadow-modal)",
+        className
       )}
+      data-slot="dialog-static-content"
       {...props}
     >
       {children}
       {showCloseButton && onClose ? (
         <Button
-          data-slot="dialog-static-close"
-          variant="ghost"
-          size="icon-sm"
           aria-label="Close"
-          onClick={onClose}
           className="absolute top-3 right-3"
+          data-slot="dialog-static-close"
+          onClick={onClose}
+          size="icon-sm"
           type="button"
+          variant="ghost"
         >
           <XIcon />
           <span className="sr-only">Close</span>
         </Button>
       ) : null}
     </div>
-  )
+  );
 }
 
-function DialogScrollHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogScrollHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-scroll-header"
       // Fixed header band — eyebrow / title / identity meta. `pr-12` on
       // the title block in consumers is OK to clear the absolute close
       // button when needed, but the primitive itself doesn't bake it in
       // (some headers don't need it).
-      className={cn("shrink-0 flex flex-col gap-2 px-6 pt-6", className)}
+      className={cn("flex shrink-0 flex-col gap-2 px-6 pt-6", className)}
+      data-slot="dialog-scroll-header"
       {...props}
     />
-  )
+  );
 }
 
-function DialogScrollSummary({ className, ...props }: React.ComponentProps<"div">) {
+function DialogScrollSummary({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-scroll-summary"
       // Optional fixed summary band between header and scrollable body —
       // typically a KPI rail or status tile. `pt-4` separates it from
       // the header above; bottom spacing comes from the next section's
       // own padding.
       className={cn("shrink-0 px-6 pt-6", className)}
+      data-slot="dialog-scroll-summary"
       {...props}
     />
-  )
+  );
 }
 
-function DialogScrollBody({ className, ...props }: React.ComponentProps<"div">) {
+function DialogScrollBody({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-scroll-body"
       // Scrollable middle. `flex-1 min-h-0` lets it consume remaining
       // height between fixed sections; `overflow-y-auto` does the
       // scrolling. `pt-4 pb-4` provides internal breathing room from
       // the fixed sections above and below.
-      className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-6 pb-6", className)}
+      className={cn(
+        "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 pb-6",
+        className
+      )}
+      data-slot="dialog-scroll-body"
       {...props}
     />
-  )
+  );
 }
 
-function DialogScrollFooter({ className, ...props }: React.ComponentProps<"div">) {
+function DialogScrollFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-scroll-footer"
       // Fixed footer band. `border-t` is intentional in this pattern
       // (unlike CardFooter / DialogFooter which run dividerless): the
       // body above scrolls and content can run right up to the footer's
       // top edge — the hairline visually anchors the action band so it
       // reads as chrome, not as more content.
       className={cn(
-        "shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-border",
-        className,
+        "flex shrink-0 items-center justify-end gap-2 border-border border-t px-6 py-4",
+        className
       )}
+      data-slot="dialog-scroll-footer"
       {...props}
     />
-  )
+  );
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="dialog-header"
       className={cn("flex flex-col gap-2", className)}
+      data-slot="dialog-header"
       {...props}
     />
-  )
+  );
 }
 
 function DialogFooter({
@@ -282,11 +295,10 @@ function DialogFooter({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
 }) {
   return (
     <div
-      data-slot="dialog-footer"
       // `mt-2` (8px) compounds with a parent `gap-4` (16px) to land at
       // 24px between the last form element and the action zone — clearer
       // gestalt than the field-to-field 16px rhythm. Consumers don't
@@ -297,6 +309,7 @@ function DialogFooter({
         "mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
         className
       )}
+      data-slot="dialog-footer"
       {...props}
     >
       {children}
@@ -306,20 +319,20 @@ function DialogFooter({
         </DialogPrimitive.Close>
       )}
     </div>
-  )
+  );
 }
 
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
-      data-slot="dialog-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        "font-heading font-medium text-base leading-none",
         className
       )}
+      data-slot="dialog-title"
       {...props}
     />
-  )
+  );
 }
 
 // Canonical title block for detail modals. Owns the title / meta
@@ -363,19 +376,19 @@ function DialogTitleBlock({
   titleAriaLabel,
   mode = "dialog",
 }: {
-  icon?: React.ReactNode
-  badge?: React.ReactNode
-  meta?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-  titleFont?: "sans" | "mono"
-  titleAriaLabel?: string
-  mode?: "dialog" | "static"
+  icon?: React.ReactNode;
+  badge?: React.ReactNode;
+  meta?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  titleFont?: "sans" | "mono";
+  titleAriaLabel?: string;
+  mode?: "dialog" | "static";
 }) {
   const titleClassName = cn(
     titleFont === "mono" ? "font-mono" : "font-sans",
-    "text-lg leading-none font-medium text-neutral-900 m-0",
-  )
+    "m-0 font-medium text-lg text-neutral-900 leading-none"
+  );
   const titleNode =
     mode === "static" ? (
       <h2 aria-label={titleAriaLabel} className={titleClassName}>
@@ -385,7 +398,7 @@ function DialogTitleBlock({
       <DialogTitle aria-label={titleAriaLabel} className={titleClassName}>
         {children}
       </DialogTitle>
-    )
+    );
   // Title row alignment: when an icon is present, it clusters tightly with
   // the title (`gap-2` / 8px) so they read as one visual unit. The badge
   // sits at the same `gap-2` (8px layout grid) as a separate entity.
@@ -393,8 +406,8 @@ function DialogTitleBlock({
   // belongs to title; badge is meta.)
   const titleRow = icon ? (
     <>
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="shrink-0 inline-flex items-center">{icon}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="inline-flex shrink-0 items-center">{icon}</span>
         {titleNode}
       </div>
       {badge}
@@ -404,17 +417,23 @@ function DialogTitleBlock({
       {titleNode}
       {badge}
     </>
-  )
+  );
   return (
-    <div className={cn("flex flex-col gap-2 min-w-0", mode === "dialog" && "pr-12", className)}>
-      <div className="flex items-center gap-2 flex-wrap min-w-0">
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-2",
+        mode === "dialog" && "pr-12",
+        className
+      )}
+    >
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         {titleRow}
       </div>
       {meta ? (
-        <div className="text-xs text-neutral-500 text-pretty m-0">{meta}</div>
+        <div className="m-0 text-pretty text-neutral-500 text-xs">{meta}</div>
       ) : null}
     </div>
-  )
+  );
 }
 
 function DialogDescription({
@@ -423,14 +442,14 @@ function DialogDescription({
 }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
-      data-slot="dialog-description"
       className={cn(
-        "text-sm text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
+        "text-neutral-600 text-sm *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
         className
       )}
+      data-slot="dialog-description"
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -451,4 +470,4 @@ export {
   DialogTitle,
   DialogTitleBlock,
   DialogTrigger,
-}
+};

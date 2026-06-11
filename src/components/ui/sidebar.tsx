@@ -1,16 +1,11 @@
-import * as React from 'react';
-import { Check, ChevronsUpDown, Lock, MoreHorizontal } from 'lucide-react';
-import {
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuTrigger,
-} from '@/components/ui/menu';
-import { Badge } from '@/components/ui/badge';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { Separator } from '@/components/ui/separator';
-import { UserMenu } from '@/components/ui/user-menu';
-import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown, Lock, MoreHorizontal } from "lucide-react";
+import type * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { Separator } from "@/components/ui/separator";
+import { UserMenu } from "@/components/ui/user-menu";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Sidebar — production-shell primary navigation primitive.
@@ -38,9 +33,9 @@ export type SidebarItem = {
   /** When set, clicking the item calls the surface's `onNavigate(pageId)`
    *  so the inner sidebar can drive the outer App router. */
   pageId?: string;
- /** Show a muted, right-flush lock icon on this row — used to mark
-  * Pro-gated features in the free-tier sidebar. */
- locked?: boolean;
+  /** Show a muted, right-flush lock icon on this row — used to mark
+   * Pro-gated features in the free-tier sidebar. */
+  locked?: boolean;
 };
 
 export type SidebarSection = {
@@ -52,16 +47,16 @@ export type SidebarSection = {
 };
 
 export interface SidebarProps {
-  sections: SidebarSection[];
   /** id of the active item, matched against `SidebarItem.id`. */
   activeId: string;
-  expanded: boolean;
-  onNavigate?: (pageId: string) => void;
   /** Brand lockup. Defaults to BrandMark + Constellation / Gate AI wordmark.
    *  Collapsed rail only renders the BrandMark portion (the slot is rendered
    *  via the `brandCollapsed` prop OR — when undefined — falls back to a
    *  `<BrandMark className="size-8 text-blue-700" />`). */
   brand?: React.ReactNode;
+  expanded: boolean;
+  onNavigate?: (pageId: string) => void;
+  sections: SidebarSection[];
   /** Bottom user area slot (expanded variant only). Defaults to "CP avatar
    *  + Chad + MoreHorizontal user-menu button". The collapsed rail always
    *  renders just a CP monogram. */
@@ -79,41 +74,41 @@ export function Sidebar({
   return (
     <aside
       aria-label="Primary navigation"
-      style={{ transitionTimingFunction: 'var(--ease-drawer)' }}
       className={cn(
-        'relative shrink-0 overflow-hidden bg-card border-r border-border transition-[width] duration-300 motion-reduce:transition-none',
-        expanded ? 'w-60' : 'w-16',
+        "relative shrink-0 overflow-hidden border-border border-r bg-card transition-[width] duration-300 motion-reduce:transition-none",
+        expanded ? "w-60" : "w-16"
       )}
+      style={{ transitionTimingFunction: "var(--ease-drawer)" }}
     >
       {/* `inert` removes the inactive variant from focus order, click,
           and AT in one attribute (React 19 + modern browsers). The
           opacity/pointer-events classes remain for the cross-fade
           paint state. */}
       <div
-        inert={expanded}
         className={cn(
-          'absolute inset-y-0 left-0 transition-opacity duration-200 ease-out motion-reduce:transition-none',
-          expanded ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          "absolute inset-y-0 left-0 transition-opacity duration-200 ease-out motion-reduce:transition-none",
+          expanded ? "pointer-events-none opacity-0" : "opacity-100"
         )}
+        inert={expanded}
       >
         <SidebarCollapsed
-          sections={sections}
           activeId={activeId}
           onNavigate={onNavigate}
+          sections={sections}
         />
       </div>
       <div
-        inert={!expanded}
         className={cn(
-          'absolute inset-y-0 left-0 transition-opacity duration-200 ease-out motion-reduce:transition-none',
-          expanded ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          "absolute inset-y-0 left-0 transition-opacity duration-200 ease-out motion-reduce:transition-none",
+          expanded ? "opacity-100" : "pointer-events-none opacity-0"
         )}
+        inert={!expanded}
       >
         <SidebarExpanded
-          sections={sections}
           activeId={activeId}
-          onNavigate={onNavigate}
           brand={brand}
+          onNavigate={onNavigate}
+          sections={sections}
           userArea={userArea}
         />
       </div>
@@ -136,49 +131,56 @@ function SidebarCollapsed({
   onNavigate?: (pageId: string) => void;
 }) {
   return (
-    <div className="flex flex-col items-center w-16 h-full shrink-0">
-      <div className="flex items-center justify-center h-16 w-full shrink-0 border-b border-border">
-        <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-8 w-auto" />
+    <div className="flex h-full w-16 shrink-0 flex-col items-center">
+      <div className="flex h-16 w-full shrink-0 items-center justify-center border-border border-b">
+        <img
+          alt=""
+          aria-hidden
+          className="h-8 w-auto"
+          src="/gate-ai-logo-mark.png"
+        />
       </div>
-      <div className="flex flex-col items-center justify-between flex-1 w-full pt-3 pb-5 overflow-y-auto">
-        <div className="flex flex-col items-center gap-1 w-full">
-        {sections.map((section, i) => (
-          <div
-            key={section.label ?? `top-${i}`}
-            className="flex flex-col items-center gap-1 w-full"
-          >
-            {i > 0 && <Separator className="w-8 my-1" />}
-            {section.items.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeId === item.id;
-              const isDisabled = !item.pageId;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-label={item.label}
-                  aria-current={isActive ? 'page' : undefined}
-                  disabled={isDisabled}
-                  onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
-                  // Collapsed-rail icon buttons (36px square) use
-                  // `active:scale-[0.99]` — a subtle 1% scale-down on press,
-                  // matching the project's Button primitive press feel.
-                  className={
-                    isActive
-                      ? 'flex items-center justify-center size-9 rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                      : isDisabled
-                        ? 'flex items-center justify-center size-9 rounded-sm text-neutral-300 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center justify-center size-9 rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:text-neutral-700 hover:bg-neutral-100 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                  }
-                >
-                  <Icon className="size-[18px]" strokeWidth={1.5} />
-                </button>
-              );
-            })}
-          </div>
-        ))}
+      <div className="flex w-full flex-1 flex-col items-center justify-between overflow-y-auto pt-3 pb-5">
+        <div className="flex w-full flex-col items-center gap-1">
+          {sections.map((section, i) => (
+            <div
+              className="flex w-full flex-col items-center gap-1"
+              key={section.label ?? `top-${i}`}
+            >
+              {i > 0 && <Separator className="my-1 w-8" />}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeId === item.id;
+                const isDisabled = !item.pageId;
+                return (
+                  <button
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={item.label}
+                    // Collapsed-rail icon buttons (36px square) use
+                    // `active:scale-[0.99]` — a subtle 1% scale-down on press,
+                    // matching the project's Button primitive press feel.
+                    className={
+                      isActive
+                        ? "flex size-9 items-center justify-center rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        : isDisabled
+                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-neutral-300 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                          : "flex size-9 items-center justify-center rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+                    }
+                    disabled={isDisabled}
+                    key={item.id}
+                    onClick={
+                      item.pageId ? () => onNavigate?.(item.pageId!) : undefined
+                    }
+                    type="button"
+                  >
+                    <Icon className="size-[18px]" strokeWidth={1.5} />
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
-        <div className="flex items-center justify-center size-6 rounded-full bg-blue-700 text-white font-mono text-xs font-medium">
+        <div className="flex size-6 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs">
           CP
         </div>
       </div>
@@ -202,17 +204,20 @@ function SidebarExpanded({
   userArea?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col w-60 h-full shrink-0">
+    <div className="flex h-full w-60 shrink-0 flex-col">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
+      <div className="flex h-16 shrink-0 items-center gap-3 border-border border-b px-4">
         {brand ?? <DefaultBrand />}
       </div>
 
       {/* Nav sections */}
-      <nav className="flex flex-col gap-4 px-3 pt-3 pb-6 overflow-y-auto flex-1">
+      <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pt-3 pb-6">
         {sections.map((section, i) => (
-          <div key={section.label ?? `top-${i}`} className="flex flex-col gap-1">
+          <div
+            className="flex flex-col gap-1"
+            key={section.label ?? `top-${i}`}
+          >
             {section.label ? (
               <Eyebrow as="div" className="px-2 pt-1 pb-1">
                 {section.label}
@@ -224,33 +229,38 @@ function SidebarExpanded({
               const isDisabled = !item.pageId;
               return (
                 <button
-                  key={item.id}
-                  type="button"
-                  aria-current={isActive ? 'page' : undefined}
-                  disabled={isDisabled}
-                  onClick={item.pageId ? () => onNavigate?.(item.pageId!) : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 text-neutral-900 font-medium shadow-xs transition-transform duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                      ? "flex items-center gap-3 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 px-2 py-2 font-medium text-neutral-900 shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                       : isDisabled
-                        ? 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-400 cursor-not-allowed opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-                        : 'flex items-center gap-3 px-2 py-2 rounded-sm border border-transparent text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-400 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        : "flex items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-700 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                   }
+                  disabled={isDisabled}
+                  key={item.id}
+                  onClick={
+                    item.pageId ? () => onNavigate?.(item.pageId!) : undefined
+                  }
+                  type="button"
                 >
                   <Icon
-                    className={cn('size-4 shrink-0', isActive && 'text-foreground')}
+                    className={cn(
+                      "size-4 shrink-0",
+                      isActive && "text-foreground"
+                    )}
                     strokeWidth={1.75}
                   />
                   <span className="font-sans text-sm">{item.label}</span>
                   {item.locked ? (
-                  	<>
-                  		<Lock
-                  			className="ml-auto size-4 shrink-0 text-muted-foreground/60"
-                  			strokeWidth={1.75}
-                  			aria-hidden
-                  		/>
-                  		<span className="sr-only">(Pro feature)</span>
-                  	</>
+                    <>
+                      <Lock
+                        aria-hidden
+                        className="ml-auto size-4 shrink-0 text-muted-foreground/60"
+                        strokeWidth={1.75}
+                      />
+                      <span className="sr-only">(Pro feature)</span>
+                    </>
                   ) : null}
                 </button>
               );
@@ -260,7 +270,7 @@ function SidebarExpanded({
       </nav>
 
       {/* Bottom user area */}
-      <div className="flex items-center justify-between gap-2 px-3 py-3 border-t border-border shrink-0">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-3">
         {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
       </div>
     </div>
@@ -272,10 +282,10 @@ function SidebarExpanded({
 function DefaultBrand() {
   return (
     <img
-      src="/gate-ai-logo.png"
       alt="Constellation Gate AI"
       className="h-8 w-auto"
       draggable={false}
+      src="/gate-ai-logo.png"
     />
   );
 }
@@ -290,52 +300,71 @@ export function WorkspaceSwitcher() {
       <MenuTrigger
         render={
           <button
+            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] aria-expanded:bg-neutral-50 motion-reduce:transition-none motion-reduce:active:scale-100"
             type="button"
-            className="inline-flex items-center gap-2 h-8 px-2 rounded-sm border border-border bg-card outline-none hover:bg-neutral-50 aria-expanded:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-[colors,box-shadow,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
           />
         }
       >
-        <span className="font-sans text-sm text-neutral-900">
+        <span className="font-sans text-neutral-900 text-sm">
           Chad's workspace
         </span>
         <Badge variant="neutral">Free</Badge>
-        <ChevronsUpDown className="size-4 text-neutral-500" strokeWidth={1.75} aria-hidden />
+        <ChevronsUpDown
+          aria-hidden
+          className="size-4 text-neutral-500"
+          strokeWidth={1.75}
+        />
       </MenuTrigger>
       <MenuContent
-        side="bottom"
         align="start"
-        sideOffset={8}
         className="min-w-[var(--anchor-width)] p-2"
+        side="bottom"
+        sideOffset={8}
       >
         <MenuItem className="bg-neutral-100 data-[highlighted]:bg-neutral-100">
-          <span className="flex-1 text-left truncate min-w-0">Chad's workspace</span>
-          <Check strokeWidth={1.75} aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-left">
+            Chad's workspace
+          </span>
+          <Check aria-hidden strokeWidth={1.75} />
         </MenuItem>
         <MenuItem>
-          <span className="flex-1 text-left truncate min-w-0">OpenClaw org</span>
+          <span className="min-w-0 flex-1 truncate text-left">
+            OpenClaw org
+          </span>
         </MenuItem>
       </MenuContent>
     </Menu>
   );
 }
 
-function DefaultUserArea({ onNavigate }: { onNavigate?: (pageId: string) => void }) {
+function DefaultUserArea({
+  onNavigate,
+}: {
+  onNavigate?: (pageId: string) => void;
+}) {
   return (
     <>
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
         <span
-          className="size-7 shrink-0 inline-flex items-center justify-center rounded-full bg-blue-700 text-white font-mono text-xs font-medium"
           aria-hidden
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
         >
           CP
         </span>
-        <span className="font-sans text-sm font-medium text-neutral-900 truncate leading-tight">Chad Ponticas</span>
+        <span className="truncate font-medium font-sans text-neutral-900 text-sm leading-tight">
+          Chad Ponticas
+        </span>
       </div>
-      <UserMenu onNavigate={onNavigate} side="right" align="end" sideOffset={12}>
+      <UserMenu
+        align="end"
+        onNavigate={onNavigate}
+        side="right"
+        sideOffset={12}
+      >
         <button
-          type="button"
           aria-label="User menu"
-          className="relative shrink-0 size-7 inline-flex items-center justify-center rounded-sm border border-border bg-card text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 after:absolute after:-inset-2 after:content-['']"
+          className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 hover:text-neutral-900 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+          type="button"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />
         </button>

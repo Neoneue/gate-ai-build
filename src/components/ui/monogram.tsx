@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import { AVATAR_TONE_CLS, type MonogramProps } from './monogram-types';
+import { cn } from "@/lib/utils";
+import { AVATAR_TONE_CLS, type MonogramProps } from "./monogram-types";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Monogram — avatar initial chip.
@@ -28,17 +28,17 @@ import { AVATAR_TONE_CLS, type MonogramProps } from './monogram-types';
  * React Fast Refresh can work correctly.
  * ─────────────────────────────────────────────────────────────────────── */
 
-export function Monogram({ tone, initials, size = 'md' }: MonogramProps) {
- return (
- <span
- aria-hidden
- className={cn(
- 'inline-flex items-center justify-center shrink-0 rounded-full font-sans font-medium',
- size === 'sm' ? 'size-4 text-[10px]' : 'size-7 text-xs',
- AVATAR_TONE_CLS[tone],
- )}
- >
- {initials}
- </span>
- );
+export function Monogram({ tone, initials, size = "md" }: MonogramProps) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-full font-medium font-sans",
+        size === "sm" ? "size-4 text-[10px]" : "size-7 text-xs",
+        AVATAR_TONE_CLS[tone]
+      )}
+    >
+      {initials}
+    </span>
+  );
 }

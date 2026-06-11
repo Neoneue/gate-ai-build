@@ -1,17 +1,17 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useLayoutEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export interface SegmentedProps {
-  options: { value: string; label: string }[];
-  value: string;
-  onChange?: (value: string) => void;
-  variant?: 'pill' | 'group';
-  /** Mirrors button conventions — `sm` for inline header chrome, `default` for standalone use. */
-  size?: 'sm' | 'default';
-  className?: string;
   /** Accessible label for the option group (WCAG 1.3.1). Required when there
    *  is no adjacent visible label that describes the segmented control's purpose. */
-  'aria-label'?: string;
+  "aria-label"?: string;
+  className?: string;
+  onChange?: (value: string) => void;
+  options: { value: string; label: string }[];
+  /** Mirrors button conventions — `sm` for inline header chrome, `default` for standalone use. */
+  size?: "sm" | "default";
+  value: string;
+  variant?: "pill" | "group";
 }
 
 /**
@@ -19,27 +19,42 @@ export interface SegmentedProps {
  *  - "pill": gray container, selected gets a sliding white pill
  *  - "group": adjacent borders, selected gets neutral-900 fill
  */
-export function Segmented({ options, value, onChange, variant = 'pill', size = 'default', className, 'aria-label': ariaLabel }: SegmentedProps) {
-  if (variant === 'group') {
+export function Segmented({
+  options,
+  value,
+  onChange,
+  variant = "pill",
+  size = "default",
+  className,
+  "aria-label": ariaLabel,
+}: SegmentedProps) {
+  if (variant === "group") {
     return (
-      <div role="group" aria-label={ariaLabel} className={cn('inline-flex self-start rounded-sm overflow-clip', className)}>
+      <div
+        aria-label={ariaLabel}
+        className={cn(
+          "inline-flex self-start overflow-clip rounded-sm",
+          className
+        )}
+        role="group"
+      >
         {options.map((opt, i) => {
           const selected = opt.value === value;
           return (
             <button
-              key={opt.value}
-              type="button"
               aria-pressed={selected}
-              onClick={() => onChange?.(opt.value)}
               className={cn(
                 // Skill: emil-design-eng — color/border-only transition (never `transition-all`).
-                'inline-flex items-center justify-center px-3 font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
-                size === 'sm' ? 'h-7' : 'h-8',
+                "inline-flex items-center justify-center px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+                size === "sm" ? "h-7" : "h-8",
                 selected
-                  ? 'bg-neutral-900 text-white border border-neutral-900'
-                  : 'bg-card text-neutral-900 border-t border-b border-r border-border',
-                i === 0 && !selected && 'border-l',
+                  ? "border border-neutral-900 bg-neutral-900 text-white"
+                  : "border-border border-t border-r border-b bg-card text-neutral-900",
+                i === 0 && !selected && "border-l"
               )}
+              key={opt.value}
+              onClick={() => onChange?.(opt.value)}
+              type="button"
             >
               {opt.label}
             </button>
@@ -49,7 +64,16 @@ export function Segmented({ options, value, onChange, variant = 'pill', size = '
     );
   }
 
-  return <SegmentedPillVariant options={options} value={value} onChange={onChange} size={size} className={className} ariaLabel={ariaLabel} />;
+  return (
+    <SegmentedPillVariant
+      ariaLabel={ariaLabel}
+      className={className}
+      onChange={onChange}
+      options={options}
+      size={size}
+      value={value}
+    />
+  );
 }
 
 /**
@@ -71,7 +95,7 @@ function SegmentedPillVariant({
   options: { value: string; label: string }[];
   value: string;
   onChange?: (value: string) => void;
-  size: 'sm' | 'default';
+  size: "sm" | "default";
   className?: string;
   ariaLabel?: string;
 }) {
@@ -84,9 +108,12 @@ function SegmentedPillVariant({
     ready: boolean;
   }>({ x: 0, y: 0, width: 0, height: 0, ready: false });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: options is a deliberate extra dep — option changes resize the rail, so re-measure
   useLayoutEffect(() => {
     const active = itemRefs.current[value];
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     setIndicator({
       x: active.offsetLeft,
       y: active.offsetTop,
@@ -98,24 +125,24 @@ function SegmentedPillVariant({
 
   return (
     <div
-      role="group"
       aria-label={ariaLabel}
       className={cn(
-        'relative inline-flex self-start rounded-sm p-1 bg-neutral-100 border border-border',
-        className,
+        "relative inline-flex self-start rounded-sm border border-border bg-neutral-100 p-1",
+        className
       )}
+      role="group"
     >
       <div
         aria-hidden
         className={cn(
-          'absolute top-0 left-0 bg-card rounded-xs shadow-xs',
-          indicator.ready ? 'opacity-100' : 'opacity-0',
+          "absolute top-0 left-0 rounded-xs bg-card shadow-xs",
+          indicator.ready ? "opacity-100" : "opacity-0",
           // Transition lives in a class so `motion-reduce:transition-none`
           // can override it. Gated on `indicator.ready` to skip the
           // first-paint slide-from-zero — equivalent to the prior inline
           // `transition: ready ? '…' : undefined` pattern.
           indicator.ready &&
-            'transition-[transform,width] duration-[220ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none',
+            "transition-[transform,width] duration-[220ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
         )}
         style={{
           transform: `translate(${indicator.x}px, ${indicator.y}px)`,
@@ -127,20 +154,22 @@ function SegmentedPillVariant({
         const selected = opt.value === value;
         return (
           <button
-            key={opt.value}
-            type="button"
             aria-pressed={selected}
-            ref={(el) => {
-              itemRefs.current[opt.value] = el;
-            }}
-            onClick={() => onChange?.(opt.value)}
             className={cn(
               // z-10 keeps text above the indicator. Color-only transition
               // (skill: performance.md — never `transition-all`).
-              'relative z-10 inline-flex items-center justify-center rounded-xs font-sans font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
-              size === 'sm' ? 'py-1 px-3' : 'py-2 px-4',
-              selected ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900',
+              "relative z-10 inline-flex items-center justify-center rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+              size === "sm" ? "px-3 py-1" : "px-4 py-2",
+              selected
+                ? "text-neutral-900"
+                : "text-neutral-600 hover:text-neutral-900"
             )}
+            key={opt.value}
+            onClick={() => onChange?.(opt.value)}
+            ref={(el) => {
+              itemRefs.current[opt.value] = el;
+            }}
+            type="button"
           >
             {opt.label}
           </button>

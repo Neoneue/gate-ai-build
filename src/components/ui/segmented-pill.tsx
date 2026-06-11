@@ -1,20 +1,20 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
+import { useLayoutEffect, useRef, useState } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 export interface SegmentedPillOption {
-  value: string;
   label: string;
+  value: string;
 }
 
 export interface SegmentedPillProps {
-  value: string;
+  "aria-label"?: string;
+  className?: string;
   onValueChange?: (value: string) => void;
   options: SegmentedPillOption[];
   /** Mirrors button conventions — `sm` for inline header chrome, `default` for standalone use. */
-  size?: 'sm' | 'default';
-  className?: string;
-  'aria-label'?: string;
+  size?: "sm" | "default";
+  value: string;
 }
 
 /**
@@ -28,9 +28,9 @@ export function SegmentedPill({
   value,
   onValueChange,
   options,
-  size = 'default',
+  size = "default",
   className,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
 }: SegmentedPillProps) {
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [indicator, setIndicator] = useState<{
@@ -41,9 +41,12 @@ export function SegmentedPill({
     ready: boolean;
   }>({ x: 0, y: 0, width: 0, height: 0, ready: false });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: options is a deliberate extra dep — option changes resize the rail, so re-measure
   useLayoutEffect(() => {
     const active = itemRefs.current[value];
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     setIndicator({
       x: active.offsetLeft,
       y: active.offsetTop,
@@ -55,22 +58,22 @@ export function SegmentedPill({
 
   return (
     <ToggleGroup
-      value={[value]}
-      onValueChange={(v) => v.length > 0 && onValueChange?.(v[0])}
-      spacing={0}
       aria-label={ariaLabel}
       className={cn(
         // Paper spec WW0-0: h-10 container, py-px px-1, rounded-md (8px),
         // bg neutral-100, with a `border-border` hairline so the pill reads as a
- // bordered container consistent with adjacent Select triggers and outline
- // Buttons (e.g. the "Custom" range button) and the segmented.tsx pill. The
- // border slot was always reserved (previously transparent) — no layout shift.
+        // bordered container consistent with adjacent Select triggers and outline
+        // Buttons (e.g. the "Custom" range button) and the segmented.tsx pill. The
+        // border slot was always reserved (previously transparent) — no layout shift.
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
-        'relative bg-neutral-100 border border-border py-px px-1 rounded-sm gap-0',
-        size === 'sm' ? 'h-8' : 'h-10',
-        className,
+        "relative gap-0 rounded-sm border border-border bg-neutral-100 px-1 py-px",
+        size === "sm" ? "h-8" : "h-10",
+        className
       )}
+      onValueChange={(v) => v.length > 0 && onValueChange?.(v[0])}
+      spacing={0}
+      value={[value]}
     >
       <div
         aria-hidden
@@ -78,12 +81,12 @@ export function SegmentedPill({
           // Paper spec WW9-0: rounded-[4px], white, shadow #11141714 0 1 2.
           // The hardcoded shadow has been replaced with `shadow-xs`, which
           // collapses to the same 1px/2px rgba(17,20,23) ramp.
-          'absolute top-0 left-0 bg-card rounded-xs shadow-xs',
-          indicator.ready ? 'opacity-100' : 'opacity-0',
+          "absolute top-0 left-0 rounded-xs bg-card shadow-xs",
+          indicator.ready ? "opacity-100" : "opacity-0",
           // Gate the slide behind reduced-motion; only enable the transition
           // once measured so the indicator never slides in from origin (0,0).
           indicator.ready &&
-            'transition-[transform,width] duration-[220ms] ease-[cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none',
+            "transition-[transform,width] duration-[220ms] ease-[cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
         )}
         style={{
           transform: `translate(${indicator.x}px, ${indicator.y}px)`,
@@ -93,20 +96,20 @@ export function SegmentedPill({
       />
       {options.map((opt) => (
         <ToggleGroupItem
+          className={cn(
+            // Paper spec WW7-0: h-8, px-3 (12px), text 12px/16px Geist medium.
+            "relative z-10 min-w-0 rounded-xs! px-3 font-medium font-sans text-xs leading-4",
+            size === "sm" ? "h-6" : "h-8",
+            "border-0 bg-transparent text-neutral-600",
+            "hover:bg-transparent hover:text-neutral-900",
+            "data-[pressed]:bg-transparent data-[pressed]:text-neutral-900",
+            "aria-pressed:bg-transparent aria-pressed:text-neutral-900"
+          )}
           key={opt.value}
-          value={opt.value}
           ref={(el: HTMLButtonElement | null) => {
             itemRefs.current[opt.value] = el;
           }}
-          className={cn(
-            // Paper spec WW7-0: h-8, px-3 (12px), text 12px/16px Geist medium.
-            'relative z-10 px-3 min-w-0 rounded-xs! text-xs leading-4 font-sans font-medium',
-            size === 'sm' ? 'h-6' : 'h-8',
-            'text-neutral-600 bg-transparent border-0',
-            'hover:text-neutral-900 hover:bg-transparent',
-            'data-[pressed]:text-neutral-900 data-[pressed]:bg-transparent',
-            'aria-pressed:text-neutral-900 aria-pressed:bg-transparent',
-          )}
+          value={opt.value}
         >
           {opt.label}
         </ToggleGroupItem>

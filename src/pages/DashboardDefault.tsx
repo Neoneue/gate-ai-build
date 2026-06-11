@@ -1,42 +1,49 @@
-import { useMemo, useState, type ComponentType } from 'react';
-import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, Download, BarChart2, Zap, ShieldAlert, ArrowLeftRight, MessageSquare } from 'lucide-react';
-import { DownloadIcon } from '@/components/ui/download';
-import { ExternalLinkIcon } from '@/components/ui/external-link';
-import { Button } from '@/components/ui/button';
-import { PageTitle } from '@/components/ui/page-title';
+import { Radio } from "@base-ui/react/radio";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@/components/ui/card';
-
-
-import { KpiRail } from '@/components/ui/kpi-rail';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CopyButton } from '@/components/ui/copy-button';
-import { AnthropicIcon, OpenAIIcon, GeminiIcon, GrokIcon, MetaIcon } from '@/components/icons/model-providers';
+  ArrowLeftRight,
+  BarChart2,
+  Check,
+  Download,
+  MessageSquare,
+  Plus,
+  ShieldAlert,
+  XIcon,
+  Zap,
+} from "lucide-react";
+import { type ComponentType, useMemo, useState } from "react";
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import {
+  AnthropicIcon,
+  GeminiIcon,
+  GrokIcon,
+  MetaIcon,
+  OpenAIIcon,
+} from "@/components/icons/model-providers";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
-  DialogTrigger,
-  DialogContent,
   DialogClose,
-  DialogTitle,
+  DialogContent,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Radio } from '@base-ui/react/radio';
-import { XIcon, Check } from 'lucide-react';
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { DownloadIcon } from "@/components/ui/download";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
+import { KpiRail } from "@/components/ui/kpi-rail";
+import { PageTitle } from "@/components/ui/page-title";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
 
-const GATEWAY_URL = 'https://gateway-staging.constellationgate.ai';
+const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
 
 // These tabs configure agent apps to route through the gateway — you point
 // the tool at Gate, not the model provider. Claude Code + Codex read base-URL
 // env vars; OpenClaw is Gate-native and takes a small plugin config.
-const HERO_CLAUDE_CODE_BYOK =
-`import Anthropic from "@anthropic-ai/sdk";
+const HERO_CLAUDE_CODE_BYOK = `import Anthropic from "@anthropic-ai/sdk";
 
 // BYOK — your own Anthropic key. The gateway proxies to the upstream
 // you name in X-Gate-Upstream-Url and adds security + audit.
@@ -58,15 +65,13 @@ console.log(msg.content);`;
 
 // PAYG terminal config — Claude Code routes through the gateway via the
 // OpenRouter-compatible provider. Configs supplied by the gateway devs.
-const HERO_CLAUDE_CODE_PAYG =
-`export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
+const HERO_CLAUDE_CODE_PAYG = `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
 export ANTHROPIC_API_KEY="sk-gw-..."
 export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
 
 claude code "your prompt"`;
 
-const HERO_CODEX_BYOK =
-`import OpenAI from "openai";
+const HERO_CODEX_BYOK = `import OpenAI from "openai";
 
 // BYOK — your own OpenAI key. The gateway proxies to the upstream
 // you name in X-Gate-Upstream-Url and adds security + audit.
@@ -85,8 +90,7 @@ const msg = await client.chat.completions.create({
 });
 console.log(msg.choices[0].message.content);`;
 
-const HERO_CODEX_PAYG =
-`export OPENAI_API_KEY="sk-gw-..."
+const HERO_CODEX_PAYG = `export OPENAI_API_KEY="sk-gw-..."
 
 codex exec \\
   -c 'model_providers.gateway.base_url="${GATEWAY_URL}/v1"' \\
@@ -97,8 +101,7 @@ codex exec \\
   -m "anthropic/claude-sonnet-4-5" \\
   "your prompt"`;
 
-const HERO_OPENCLAW_BYOK =
-`import { OpenClawGenAI } from "@openclaw/genai";
+const HERO_OPENCLAW_BYOK = `import { OpenClawGenAI } from "@openclaw/genai";
 
 // BYOK — your own OpenClaw API key. The gateway proxies to the upstream
 // you name in X-Gate-Upstream-Url and adds security + audit.
@@ -120,8 +123,7 @@ const res = await client.models.generateContent({
 });
 console.log(res.text);`;
 
-const HERO_OPENCLAW_PAYG =
-`{
+const HERO_OPENCLAW_PAYG = `{
   "models": {
     "providers": {
       "swarm-deck": {
@@ -135,18 +137,25 @@ const HERO_OPENCLAW_PAYG =
   }
 }`;
 
-export const HERO_SNIPPETS: Record<string, string> = {
-  'claude-code': HERO_CLAUDE_CODE_BYOK,
-  codex: HERO_CODEX_BYOK,
-  openclaw: HERO_OPENCLAW_BYOK,
-};
-
 const KEYWORDS = new Set([
-  'import', 'export', 'from', 'const', 'let', 'var',
-  'await', 'new', 'async', 'function', 'return', 'class',
+  "import",
+  "export",
+  "from",
+  "const",
+  "let",
+  "var",
+  "await",
+  "new",
+  "async",
+  "function",
+  "return",
+  "class",
 ]);
 
-type CodeToken = { text: string; type: 'keyword' | 'string' | 'comment' | 'property' | 'plain' };
+type CodeToken = {
+  text: string;
+  type: "keyword" | "string" | "comment" | "property" | "plain";
+};
 
 function tokenizeLine(line: string): CodeToken[] {
   const tokens: CodeToken[] = [];
@@ -156,37 +165,45 @@ function tokenizeLine(line: string): CodeToken[] {
     // Line comment — consumes to end of line. Strings are handled below, so a
     // `//` inside a URL ("https://…") is tokenized as a string and never
     // reaches here.
-    if (ch === '/' && line[i + 1] === '/') {
-      tokens.push({ text: line.slice(i), type: 'comment' });
+    if (ch === "/" && line[i + 1] === "/") {
+      tokens.push({ text: line.slice(i), type: "comment" });
       break;
     }
-    if (ch === "'" || ch === '"' || ch === '`') {
+    if (ch === "'" || ch === '"' || ch === "`") {
       let j = i + 1;
       while (j < line.length) {
-        if (line[j] === '\\') { j += 2; continue; }
-        if (line[j] === ch) { j++; break; }
+        if (line[j] === "\\") {
+          j += 2;
+          continue;
+        }
+        if (line[j] === ch) {
+          j++;
+          break;
+        }
         j++;
       }
-      tokens.push({ text: line.slice(i, j), type: 'string' });
+      tokens.push({ text: line.slice(i, j), type: "string" });
       i = j;
     } else if (/[a-zA-Z_$]/.test(ch)) {
       let j = i;
-      while (j < line.length && /[a-zA-Z0-9_$]/.test(line[j])) j++;
+      while (j < line.length && /[a-zA-Z0-9_$]/.test(line[j])) {
+        j++;
+      }
       const word = line.slice(i, j);
       // Object/JSON key: an identifier immediately followed by `:` renders in
       // the property hue, matching the CodeBlock theme.
       const type = KEYWORDS.has(word)
-        ? 'keyword'
-        : line[j] === ':'
-        ? 'property'
-        : 'plain';
+        ? "keyword"
+        : line[j] === ":"
+          ? "property"
+          : "plain";
       tokens.push({ text: word, type });
       i = j;
     } else {
-      if (tokens.length > 0 && tokens[tokens.length - 1].type === 'plain') {
+      if (tokens.length > 0 && tokens[tokens.length - 1].type === "plain") {
         tokens[tokens.length - 1].text += ch;
       } else {
-        tokens.push({ text: ch, type: 'plain' });
+        tokens.push({ text: ch, type: "plain" });
       }
       i++;
     }
@@ -195,31 +212,33 @@ function tokenizeLine(line: string): CodeToken[] {
 }
 
 export function CodePanel({ snippet }: { snippet: string }) {
-  const lines = snippet.split('\n');
+  const lines = snippet.split("\n");
   return (
-    <div className="p-4 overflow-x-auto">
+    <div className="overflow-x-auto p-4">
       {lines.map((line, i) => (
-        <div key={i} className="flex gap-4 leading-relaxed">
-          <span className="font-mono text-xs text-neutral-400 select-none tabular-nums w-4 text-right shrink-0">
+        <div className="flex gap-4 leading-relaxed" key={i}>
+          <span className="w-4 shrink-0 select-none text-right font-mono text-neutral-400 text-xs tabular-nums">
             {i + 1}
           </span>
-          <span className="font-mono text-xs whitespace-pre flex-1">
+          <span className="flex-1 whitespace-pre font-mono text-xs">
             {tokenizeLine(line).map((tok, j) => {
               // Match the CodeBlock (CodeCard) theme tokens so every code
               // surface shares one syntax palette: amber keywords, green
               // strings/values, blue keys, muted comments.
               const cls =
-                tok.type === 'keyword'
-                  ? 'text-[var(--color-syntax-keyword)]'
-                  : tok.type === 'string'
-                  ? 'text-[var(--color-syntax-terminal-blue)]'
-                  : tok.type === 'property'
-                  ? 'text-[var(--color-syntax-property)]'
-                  : tok.type === 'comment'
-                  ? 'text-neutral-500'
-                  : 'text-neutral-900';
+                tok.type === "keyword"
+                  ? "text-[var(--color-syntax-keyword)]"
+                  : tok.type === "string"
+                    ? "text-[var(--color-syntax-terminal-blue)]"
+                    : tok.type === "property"
+                      ? "text-[var(--color-syntax-property)]"
+                      : tok.type === "comment"
+                        ? "text-neutral-500"
+                        : "text-neutral-900";
               return (
-                <span key={j} className={cls}>{tok.text}</span>
+                <span className={cls} key={j}>
+                  {tok.text}
+                </span>
               );
             })}
           </span>
@@ -230,9 +249,9 @@ export function CodePanel({ snippet }: { snippet: string }) {
 }
 
 /** Caption shown to the right of the BYOK/PAYG selector strip. */
-const HERO_MODE_CAPTIONS: Record<'byok' | 'payg', string> = {
-  byok: 'Bring your own provider key — gateway adds security + audit.',
-  payg: 'Pay-as-you-go on the gateway. Single key, no provider account needed.',
+const HERO_MODE_CAPTIONS: Record<"byok" | "payg", string> = {
+  byok: "Bring your own provider key — gateway adds security + audit.",
+  payg: "Pay-as-you-go on the gateway. Single key, no provider account needed.",
 };
 
 /**
@@ -247,8 +266,8 @@ function HeroCodeTab({
   payg,
   paygOnly = false,
   caption,
-  maxHeightClass = 'max-h-[192px]',
-  mode = 'byok',
+  maxHeightClass = "max-h-[192px]",
+  mode = "byok",
   onModeChange,
 }: {
   snippet?: string;
@@ -263,41 +282,43 @@ function HeroCodeTab({
   /** Billing mode, controlled by the parent so one card-level Copy button can
    *  read the active code and the toggle stays in sync across tabs. The Copy
    *  button itself is rendered once at the card level (ConnectTabs), not here. */
-  mode?: 'byok' | 'payg';
-  onModeChange?: (next: 'byok' | 'payg') => void;
+  mode?: "byok" | "payg";
+  onModeChange?: (next: "byok" | "payg") => void;
 }) {
   const hasModes = Boolean(byok && payg);
-  const effectiveMode = paygOnly ? 'payg' : mode;
-  const code = hasModes ? (effectiveMode === 'byok' ? byok! : payg!) : snippet!;
+  const effectiveMode = paygOnly ? "payg" : mode;
+  const code = hasModes ? (effectiveMode === "byok" ? byok! : payg!) : snippet!;
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {hasModes && (
-        <div className={`flex items-center gap-4 px-4 border-b border-border ${paygOnly ? 'h-10 justify-start' : 'py-2 justify-between'}`}>
+        <div
+          className={`flex items-center gap-4 border-border border-b px-4 ${paygOnly ? "h-10 justify-start" : "justify-between py-2"}`}
+        >
           {!paygOnly && (
             <div
-              role="radiogroup"
               aria-label="Gateway billing mode"
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-1 h-8 shrink-0"
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm border border-border bg-card px-1"
+              role="radiogroup"
             >
-              {(['byok', 'payg'] as const).map((m) => (
+              {(["byok", "payg"] as const).map((m) => (
                 <button
-                  key={m}
-                  type="button"
-                  role="radio"
                   aria-checked={mode === m}
-                  onClick={() => onModeChange?.(m)}
-                  className={`flex items-center px-2 h-6 rounded-xs text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                  className={`flex h-6 items-center rounded-xs px-2 font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-500 hover:text-neutral-700'
+                      ? "bg-neutral-100 text-neutral-900"
+                      : "text-neutral-500 hover:text-neutral-700"
                   }`}
+                  key={m}
+                  onClick={() => onModeChange?.(m)}
+                  role="radio"
+                  type="button"
                 >
                   {m.toUpperCase()}
                 </button>
               ))}
             </div>
           )}
-          <span className="text-xs text-neutral-500">
+          <span className="text-neutral-500 text-xs">
             {caption ?? HERO_MODE_CAPTIONS[effectiveMode]}
           </span>
         </div>
@@ -319,7 +340,7 @@ function HeroCodeTab({
  * a different card).
  * ──────────────────────────────────────────────────────────────────────── */
 
-type PlatformId = 'mac' | 'windows' | 'linux';
+type PlatformId = "mac" | "windows" | "linux";
 
 type BuildOption = {
   id: string;
@@ -346,68 +367,129 @@ type PlatformSpec = {
   defaultBuild: string;
 };
 
-const GATE_CONNECT_VERSION = 'v1.4.2';
+const GATE_CONNECT_VERSION = "v1.4.2";
 
 const PLATFORMS: Record<PlatformId, PlatformSpec> = {
   windows: {
-    id: 'windows',
-    label: 'Windows',
-    icon: '/icons/os/windows-color.svg',
+    id: "windows",
+    label: "Windows",
+    icon: "/icons/os/windows-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: 'Requires Windows 10 or later',
-    defaultBuild: 'win-x64',
+    requires: "Requires Windows 10 or later",
+    defaultBuild: "win-x64",
     builds: [
-      { id: 'win-x64', kind: 'Installer', arch: 'x64', detail: '(x86-64 / AMD64)', size: '46.1 MB' },
-      { id: 'win-arm64', kind: 'Installer', arch: 'ARM64', detail: '(aarch64)', size: '45.0 MB' },
+      {
+        id: "win-x64",
+        kind: "Installer",
+        arch: "x64",
+        detail: "(x86-64 / AMD64)",
+        size: "46.1 MB",
+      },
+      {
+        id: "win-arm64",
+        kind: "Installer",
+        arch: "ARM64",
+        detail: "(aarch64)",
+        size: "45.0 MB",
+      },
     ],
   },
   mac: {
-    id: 'mac',
-    label: 'macOS',
-    icon: '/icons/os/macos-color.svg',
+    id: "mac",
+    label: "macOS",
+    icon: "/icons/os/macos-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: 'Requires macOS 12 or later',
-    defaultBuild: 'mac-arm',
+    requires: "Requires macOS 12 or later",
+    defaultBuild: "mac-arm",
     builds: [
-      { id: 'mac-arm', kind: 'Installer', arch: 'Apple Silicon', detail: '(arm64)', size: '44.8 MB' },
-      { id: 'mac-intel', kind: 'Installer', arch: 'Intel', detail: '(x86-64)', size: '46.3 MB' },
+      {
+        id: "mac-arm",
+        kind: "Installer",
+        arch: "Apple Silicon",
+        detail: "(arm64)",
+        size: "44.8 MB",
+      },
+      {
+        id: "mac-intel",
+        kind: "Installer",
+        arch: "Intel",
+        detail: "(x86-64)",
+        size: "46.3 MB",
+      },
     ],
   },
   linux: {
-    id: 'linux',
-    label: 'Linux',
-    icon: '/icons/os/linux-color.svg',
+    id: "linux",
+    label: "Linux",
+    icon: "/icons/os/linux-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: 'Requires a modern 64-bit Linux distribution',
-    defaultBuild: 'linux-x64',
+    requires: "Requires a modern 64-bit Linux distribution",
+    defaultBuild: "linux-x64",
     builds: [
-      { id: 'linux-x64', kind: 'Installer', arch: 'x64', detail: '(.AppImage / x86-64)', size: '47.2 MB' },
-      { id: 'linux-arm64', kind: 'Installer', arch: 'ARM64', detail: '(aarch64)', size: '46.0 MB' },
+      {
+        id: "linux-x64",
+        kind: "Installer",
+        arch: "x64",
+        detail: "(.AppImage / x86-64)",
+        size: "47.2 MB",
+      },
+      {
+        id: "linux-arm64",
+        kind: "Installer",
+        arch: "ARM64",
+        detail: "(aarch64)",
+        size: "46.0 MB",
+      },
     ],
   },
 };
 
-const PLATFORM_ORDER: PlatformId[] = ['mac', 'windows', 'linux'];
+const PLATFORM_ORDER: PlatformId[] = ["mac", "windows", "linux"];
 
 /** Best-effort OS detection. Prefers the modern userAgentData hint, falls
  *  back to navigator.platform / userAgent. Defaults to Windows when unknown. */
 function detectPlatform(): PlatformId {
-  if (typeof navigator === 'undefined') return 'windows';
-  const uaData = (navigator as Navigator & {
-    userAgentData?: { platform?: string };
-  }).userAgentData;
-  const hint = (uaData?.platform || navigator.platform || navigator.userAgent || '').toLowerCase();
-  if (hint.includes('mac') || hint.includes('iphone') || hint.includes('ipad')) return 'mac';
-  if (hint.includes('linux') || hint.includes('android') || hint.includes('x11')) return 'linux';
-  if (hint.includes('win')) return 'windows';
-  return 'windows';
+  if (typeof navigator === "undefined") {
+    return "windows";
+  }
+  const uaData = (
+    navigator as Navigator & {
+      userAgentData?: { platform?: string };
+    }
+  ).userAgentData;
+  const hint = (
+    uaData?.platform ||
+    navigator.platform ||
+    navigator.userAgent ||
+    ""
+  ).toLowerCase();
+  if (
+    hint.includes("mac") ||
+    hint.includes("iphone") ||
+    hint.includes("ipad")
+  ) {
+    return "mac";
+  }
+  if (
+    hint.includes("linux") ||
+    hint.includes("android") ||
+    hint.includes("x11")
+  ) {
+    return "linux";
+  }
+  if (hint.includes("win")) {
+    return "windows";
+  }
+  return "windows";
 }
 
 function DownloadGateConnectDialog() {
-  const detected = useMemo(detectPlatform, []);
+  const detected = useMemo(() => detectPlatform(), []);
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<PlatformId>(detected);
-  const [buildId, setBuildId] = useState<string>(PLATFORMS[detected].defaultBuild);
+  const [buildId, setBuildId] = useState<string>(
+    PLATFORMS[detected].defaultBuild
+  );
 
   const spec = PLATFORMS[platform];
 
@@ -418,42 +500,49 @@ function DownloadGateConnectDialog() {
 
   return (
     <Dialog
-      open={open}
       // Outside-press must NOT dismiss (operator-tool requirement: scrim is
       // inert, only the X and Escape close). Every other reason — close-press,
       // escape-key, trigger-press — passes through.
       onOpenChange={(next, details) => {
-        if (!next && details.reason === 'outside-press') return;
+        if (!next && details.reason === "outside-press") {
+          return;
+        }
         setOpen(next);
       }}
+      open={open}
     >
       <DialogTrigger
         render={
           <Button>
-            <DownloadIcon size={16} data-icon="inline-start" aria-hidden /> Download Gate Connect
+            <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}
+            Download Gate Connect
           </Button>
         }
       />
       <DialogContent
-        showCloseButton={false}
         // 548px modal; regions own their padding, so strip the primitive's
         // gap-4 / p-6. rounded-xl (16px, LOCKED) stays from the primitive.
-        className="w-[548px] max-w-[calc(100%-2rem)] gap-0 p-0 overflow-hidden sm:max-w-[548px]"
+        className="w-[548px] max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 sm:max-w-[548px]"
+        showCloseButton={false}
       >
         {/* HEADER */}
-        <div className="relative flex items-start px-6 pt-4 pb-4 border-b border-border">
-          <div className="flex flex-col gap-0 min-w-0 pr-8">
-            <DialogTitle className="text-lg font-semibold tracking-tight text-neutral-900 m-0">
+        <div className="relative flex items-start border-border border-b px-6 pt-4 pb-4">
+          <div className="flex min-w-0 flex-col gap-0 pr-8">
+            <DialogTitle className="m-0 font-semibold text-lg text-neutral-900 tracking-tight">
               Download Gate <span className="text-blue-700">Connect</span>
             </DialogTitle>
-            <DialogDescription className="text-sm text-neutral-500 text-pretty m-0">
+            <DialogDescription className="m-0 text-pretty text-neutral-500 text-sm">
               The menu-bar app that connects your desktop agents to Gate
             </DialogDescription>
           </div>
           <DialogClose
             aria-label="Close"
             render={
-              <Button variant="ghost" size="icon-sm" className="absolute top-4 right-4" />
+              <Button
+                className="absolute top-4 right-4"
+                size="icon-sm"
+                variant="ghost"
+              />
             }
           >
             <XIcon className="size-5" />
@@ -464,34 +553,38 @@ function DownloadGateConnectDialog() {
         <div className="flex flex-col gap-4 px-6 pt-5 pb-5">
           {/* Platform picker */}
           <div className="flex flex-col gap-3">
-            <span className="text-sm font-medium text-neutral-900">Choose your platform</span>
+            <span className="font-medium text-neutral-900 text-sm">
+              Choose your platform
+            </span>
             <RadioGroup
               aria-label="Choose your platform"
-              value={platform}
-              onValueChange={(v) => selectPlatform(v as PlatformId)}
               className="flex gap-3"
+              onValueChange={(v) => selectPlatform(v as PlatformId)}
+              value={platform}
             >
               {PLATFORM_ORDER.map((id) => {
                 const p = PLATFORMS[id];
                 return (
                   <Radio.Root
+                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] data-checked:border-neutral-900 data-checked:shadow-xs motion-reduce:active:scale-100"
                     key={id}
                     value={id}
-                    className="group/platform relative flex flex-1 flex-col items-center justify-center gap-2 h-[92px] rounded-lg border border-border bg-card transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform outline-none cursor-pointer hover:border-neutral-300 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:border-neutral-900 data-checked:shadow-xs"
                   >
                     {detected === id && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center h-5 rounded-full bg-neutral-900 px-2 text-[10px]/[16px] font-semibold tracking-wide text-white whitespace-nowrap">
+                      <span className="absolute -top-2 left-1/2 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full bg-neutral-900 px-2 font-semibold text-[10px]/[16px] text-white tracking-wide">
                         Detected
                       </span>
                     )}
                     <Radio.Indicator
-                      className="absolute top-2 right-2 inline-flex items-center justify-center size-4 rounded-full bg-neutral-900 text-white"
+                      className="absolute top-2 right-2 inline-flex size-4 items-center justify-center rounded-full bg-neutral-900 text-white"
                       keepMounted={false}
                     >
-                      <Check className="size-3" strokeWidth={2.5} aria-hidden />
+                      <Check aria-hidden className="size-3" strokeWidth={2.5} />
                     </Radio.Indicator>
-                    <img src={p.icon} alt="" aria-hidden className="size-6" />
-                    <span className="text-sm font-medium text-neutral-900">{p.label}</span>
+                    <img alt="" aria-hidden className="size-6" src={p.icon} />
+                    <span className="font-medium text-neutral-900 text-sm">
+                      {p.label}
+                    </span>
                   </Radio.Root>
                 );
               })}
@@ -500,27 +593,38 @@ function DownloadGateConnectDialog() {
 
           {/* Build picker */}
           <div className="flex flex-col gap-3">
-            <span className="text-sm font-medium text-neutral-900">Choose your build</span>
+            <span className="font-medium text-neutral-900 text-sm">
+              Choose your build
+            </span>
             <RadioGroup
               aria-label="Choose your build"
-              value={buildId}
-              onValueChange={(v) => setBuildId(v as string)}
               className="gap-3"
+              onValueChange={(v) => setBuildId(v as string)}
+              value={buildId}
             >
               {spec.builds.map((b) => {
                 const selected = buildId === b.id;
                 return (
                   <label
-                    key={b.id}
-                    className={`flex items-center gap-3 h-[52px] rounded-lg border bg-card px-4 transition-colors duration-150 ease-out cursor-pointer ${
-                      selected ? 'border-neutral-900' : 'border-border hover:border-neutral-300'
+                    className={`flex h-[52px] cursor-pointer items-center gap-3 rounded-lg border bg-card px-4 transition-colors duration-150 ease-out ${
+                      selected
+                        ? "border-neutral-900"
+                        : "border-border hover:border-neutral-300"
                     }`}
+                    key={b.id}
                   >
-                    <RadioGroupItem value={b.id} className="size-5 [&_[data-slot=radio-group-indicator]]:size-5" />
-                    <span className="text-sm font-medium text-neutral-900">{b.kind}</span>
-                    <span className="text-sm font-medium text-neutral-900">{b.arch}</span>
-                    <span className="text-sm text-neutral-500">{b.detail}</span>
-                    <span className="ml-auto text-sm text-neutral-500 tabular-nums whitespace-nowrap">
+                    <RadioGroupItem
+                      className="size-5 [&_[data-slot=radio-group-indicator]]:size-5"
+                      value={b.id}
+                    />
+                    <span className="font-medium text-neutral-900 text-sm">
+                      {b.kind}
+                    </span>
+                    <span className="font-medium text-neutral-900 text-sm">
+                      {b.arch}
+                    </span>
+                    <span className="text-neutral-500 text-sm">{b.detail}</span>
+                    <span className="ml-auto whitespace-nowrap text-neutral-500 text-sm tabular-nums">
                       {b.size}
                     </span>
                   </label>
@@ -530,19 +634,17 @@ function DownloadGateConnectDialog() {
           </div>
 
           {/* Version + requirement line — two texts, 8px gap (no separator), per Figma */}
-          <p className="flex items-center gap-2 text-xs text-neutral-500 m-0">
+          <p className="m-0 flex items-center gap-2 text-neutral-500 text-xs">
             <span>{spec.version}</span>
             <span>{spec.requires}</span>
           </p>
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-6 border-t border-border">
-          <Button
-            className="w-full h-12"
-            onClick={() => setOpen(false)}
-          >
-            <Download className="size-4" data-icon="inline-start" /> Download for {spec.label}
+        <div className="border-border border-t px-6 py-6">
+          <Button className="h-12 w-full" onClick={() => setOpen(false)}>
+            <Download className="size-4" data-icon="inline-start" /> Download
+            for {spec.label}
           </Button>
         </div>
       </DialogContent>
@@ -556,35 +658,52 @@ export function HeroCard() {
   return (
     <div className="flex flex-col gap-4 xl:flex-row xl:gap-0">
       {/* Get started card */}
-      <Card density="flush" className="flex-1 xl:rounded-r-none xl:border-r-0">
-          <div className="p-8 max-xl:p-6 flex flex-col gap-6 flex-1">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-2xl font-medium tracking-tight text-neutral-900 m-0">
-                Get Started with Gate AI
-              </h2>
-              <p className="text-sm text-neutral-500 text-pretty max-w-[432px] m-0">
-                Route your AI tools through Gate to add prompt-injection defense and a tamper-evident audit trail to every request. Set it up in one click with Gate Connect, our tiny menu-bar app, or configure your tool manually. Create an API key below to get started.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => navigate('/api-keys')}>
-                <Plus className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none" data-icon="inline-start" /> Create key
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.open('https://docs.constellationgate.ai', '_blank')}
-              >
-                Read API docs <ExternalLinkIcon size={16} data-icon="inline-end" aria-hidden />
-              </Button>
-            </div>
+      <Card className="flex-1 xl:rounded-r-none xl:border-r-0" density="flush">
+        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="m-0 font-medium text-2xl text-neutral-900 tracking-tight">
+              Get Started with Gate AI
+            </h2>
+            <p className="m-0 max-w-[432px] text-pretty text-neutral-500 text-sm">
+              Route your AI tools through Gate to add prompt-injection defense
+              and a tamper-evident audit trail to every request. Set it up in
+              one click with Gate Connect, our tiny menu-bar app, or configure
+              your tool manually. Create an API key below to get started.
+            </p>
           </div>
-          <WorksWithFooter />
+          <div className="flex items-center gap-3">
+            <Button onClick={() => navigate("/api-keys")}>
+              <Plus
+                className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
+                data-icon="inline-start"
+              />{" "}
+              Create key
+            </Button>
+            <Button
+              onClick={() =>
+                window.open("https://docs.constellationgate.ai", "_blank")
+              }
+              variant="outline"
+            >
+              Read API docs{" "}
+              <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
+            </Button>
+          </div>
+        </div>
+        <WorksWithFooter />
       </Card>
 
       {/* Connect card */}
-      <Card density="flush" className="flex-1 xl:rounded-l-none flex flex-col">
-        <div className="flex-1"><ConnectTabs gateConnectOnly /></div>
-        <WorksWithFooter label="Manual setup" showMore={false} items={MANUAL_SETUP_ITEMS} asButtons />
+      <Card className="flex flex-1 flex-col xl:rounded-l-none" density="flush">
+        <div className="flex-1">
+          <ConnectTabs gateConnectOnly />
+        </div>
+        <WorksWithFooter
+          asButtons
+          items={MANUAL_SETUP_ITEMS}
+          label="Manual setup"
+          showMore={false}
+        />
       </Card>
     </div>
   );
@@ -602,11 +721,11 @@ type FooterItem = {
 
 /** Provider list for the left "Works with" footer. */
 const WORKS_WITH_ITEMS: FooterItem[] = [
-  { Icon: OpenAIIcon,    name: 'OpenAI' },
-  { Icon: GrokIcon,      name: 'xAI' },
-  { Icon: AnthropicIcon, name: 'Anthropic' },
-  { Icon: GeminiIcon,    name: 'Google', hide: 'xl:max-[1320px]:hidden' },
-  { Icon: MetaIcon,      name: 'Meta',   hide: 'xl:max-[1512px]:hidden' },
+  { Icon: OpenAIIcon, name: "OpenAI" },
+  { Icon: GrokIcon, name: "xAI" },
+  { Icon: AnthropicIcon, name: "Anthropic" },
+  { Icon: GeminiIcon, name: "Google", hide: "xl:max-[1320px]:hidden" },
+  { Icon: MetaIcon, name: "Meta", hide: "xl:max-[1512px]:hidden" },
 ];
 
 /** Agent/model list for the right "Manual setup" footer — matches the tabs.
@@ -614,74 +733,95 @@ const WORKS_WITH_ITEMS: FooterItem[] = [
  *  dedicated tab yet; it points at the openclaw tab, which holds the Google
  *  SDK snippet.) */
 const MANUAL_SETUP_ITEMS: FooterItem[] = [
-  { Icon: AnthropicIcon, name: 'Claude',   tab: 'claude-code' },
-  { Icon: OpenAIIcon,    name: 'Codex',    tab: 'codex' },
-  { src: '/icons/providers/openclaw.svg', name: 'OpenClaw', tab: 'openclaw' },
+  { Icon: AnthropicIcon, name: "Claude", tab: "claude-code" },
+  { Icon: OpenAIIcon, name: "Codex", tab: "codex" },
+  { src: "/icons/providers/openclaw.svg", name: "OpenClaw", tab: "openclaw" },
 ];
 
 /** "<label> <chips> [+ more]" footer bar, shared by both hero cards. When
  *  `asButtons`, each chip is a full-height ghost button with hard (0px) edges. */
 function WorksWithFooter({
-  label = 'Works with',
+  label = "Works with",
   showMore = true,
   items = WORKS_WITH_ITEMS,
   asButtons = false,
-}: { label?: string; showMore?: boolean; items?: FooterItem[]; asButtons?: boolean } = {}) {
+}: {
+  label?: string;
+  showMore?: boolean;
+  items?: FooterItem[];
+  asButtons?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const chips = items.map(({ Icon, src, name, hide, tab }) => {
     const inner = (
       <>
         {Icon ? (
-          <Icon className="size-4 text-neutral-600 shrink-0" />
+          <Icon className="size-4 shrink-0 text-neutral-600" />
         ) : (
-          <img src={src} alt="" aria-hidden className="size-4 shrink-0" />
+          <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
         )}
-        <span className="text-sm text-neutral-700 whitespace-nowrap">{name}</span>
+        <span className="whitespace-nowrap text-neutral-700 text-sm">
+          {name}
+        </span>
       </>
     );
     return asButtons ? (
       <button
+        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset ${hide ?? ""}`}
         key={name}
+        onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ""}`)}
         type="button"
-        onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ''}`)}
-        className={`flex h-12 items-center gap-2 rounded-none px-3 shrink-0 transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 ${hide ?? ''}`}
       >
         {inner}
       </button>
     ) : (
-      <div key={name} className={`flex items-center gap-2 shrink-0 ${hide ?? ''}`}>
+      <div
+        className={`flex shrink-0 items-center gap-2 ${hide ?? ""}`}
+        key={name}
+      >
         {inner}
       </div>
     );
   });
   return (
-    <div className={`border-t border-border h-12 flex items-center gap-4 ${asButtons ? 'pl-8 max-xl:pl-6' : 'px-8 max-xl:px-6'}`}>
-      <span className="text-sm text-neutral-500 whitespace-nowrap shrink-0">{label}</span>
-      {asButtons ? <div className="flex h-12 items-center">{chips}</div> : chips}
+    <div
+      className={`flex h-12 items-center gap-4 border-border border-t ${asButtons ? "pl-8 max-xl:pl-6" : "px-8 max-xl:px-6"}`}
+    >
+      <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm">
+        {label}
+      </span>
+      {asButtons ? (
+        <div className="flex h-12 items-center">{chips}</div>
+      ) : (
+        chips
+      )}
       {showMore && (
-        <span className="text-sm text-neutral-500 italic whitespace-nowrap shrink-0">+ more</span>
+        <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm italic">
+          + more
+        </span>
       )}
     </div>
   );
 }
 
 /** Per-tab captions for the paygOnly strip (e.g. the Models page). */
-const PAYG_TAB_CAPTIONS: Record<'claude-code' | 'codex' | 'openclaw', string> = {
-  'claude-code': 'Anthropic-shape CLI. Point base URL + key at the gateway.',
-  codex: 'OpenAI Responses CLI. Inline-config the gateway as a provider.',
-  openclaw: 'Edit ~/.openclaw/openclaw.json — gateway as a provider.',
-};
+const PAYG_TAB_CAPTIONS: Record<"claude-code" | "codex" | "openclaw", string> =
+  {
+    "claude-code": "Anthropic-shape CLI. Point base URL + key at the gateway.",
+    codex: "OpenAI Responses CLI. Inline-config the gateway as a provider.",
+    openclaw: "Edit ~/.openclaw/openclaw.json — gateway as a provider.",
+  };
 
 /** Default per-breakpoint max-widths for the Gate Connect blurb. */
 const CONNECT_TEXT_MAXW =
-  'max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px]';
+  "max-w-[368px] min-[1080px]:max-[1280px]:max-w-[440px] xl:max-[1535px]:max-w-[416px] 2xl:max-[1919px]:max-w-[320px] 3xl:max-w-[416px]";
 
 /** Default Gate Connect app-preview image placement — tuned for the Overview
  *  hero (right card nearly full-viewport). Overridable per instance via
  *  ConnectTabs' `imageClassName` so other usages (e.g. the API Keys card) can
  *  reposition without disturbing the hero's responsive settings. */
 const CONNECT_IMAGE_CLASS =
-  'pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 3xl:translate-x-[8px] w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden';
+  "pointer-events-none select-none absolute top-[calc(50%_+_4px)] right-0 -translate-y-1/2 translate-x-[clamp(0px,calc(400px_-_20.8333vw),80px)] min-[1025px]:max-[1280px]:translate-x-0 min-[768px]:max-[1024px]:translate-x-[clamp(0px,calc(256px_-_25vw),64px)] max-[767px]:translate-x-0 3xl:translate-x-[8px] w-[clamp(479.75px,calc(429.25px_+_3.28776vw),492.375px)] scale-[0.658125] max-[1280px]:scale-[0.62522] origin-right xl:max-[1535px]:hidden";
 
 /**
  * The connect card's tab strip + panels (Gate Connect / Claude Code / Codex /
@@ -694,7 +834,7 @@ const CONNECT_IMAGE_CLASS =
 export function ConnectTabs({
   textMaxWidth = CONNECT_TEXT_MAXW,
   imageClassName = CONNECT_IMAGE_CLASS,
-  titleClassName = 'text-2xl font-medium tracking-tight text-neutral-900 m-0',
+  titleClassName = "text-2xl font-medium tracking-tight text-neutral-900 m-0",
   showGateConnect = true,
   paygOnly = false,
   gateConnectOnly = false,
@@ -702,89 +842,161 @@ export function ConnectTabs({
   codeMaxHeight,
   floatingCopy = false,
   defaultTab,
-}: { textMaxWidth?: string; imageClassName?: string; titleClassName?: string; showGateConnect?: boolean; paygOnly?: boolean; gateConnectOnly?: boolean; fillHeight?: boolean; codeMaxHeight?: string; floatingCopy?: boolean; defaultTab?: string } = {}) {
+}: {
+  textMaxWidth?: string;
+  imageClassName?: string;
+  titleClassName?: string;
+  showGateConnect?: boolean;
+  paygOnly?: boolean;
+  gateConnectOnly?: boolean;
+  fillHeight?: boolean;
+  codeMaxHeight?: string;
+  floatingCopy?: boolean;
+  defaultTab?: string;
+} = {}) {
   const [activeTab, setActiveTab] = useState(
-    defaultTab ?? (showGateConnect ? 'gate-connect' : 'claude-code'),
+    defaultTab ?? (showGateConnect ? "gate-connect" : "claude-code")
   );
-  const [mode, setMode] = useState<'byok' | 'payg'>('byok');
-  const effectiveMode = paygOnly ? 'payg' : mode;
+  const [mode, setMode] = useState<"byok" | "payg">("byok");
+  const effectiveMode = paygOnly ? "payg" : mode;
   // Per-tab code, so a single card-level Copy button (rendered once, floating)
   // reflects the active tab + mode without a separate button per tab.
   const TAB_CODE: Record<string, { byok: string; payg: string }> = {
-    'claude-code': { byok: HERO_CLAUDE_CODE_BYOK, payg: HERO_CLAUDE_CODE_PAYG },
+    "claude-code": { byok: HERO_CLAUDE_CODE_BYOK, payg: HERO_CLAUDE_CODE_PAYG },
     codex: { byok: HERO_CODEX_BYOK, payg: HERO_CODEX_PAYG },
     openclaw: { byok: HERO_OPENCLAW_BYOK, payg: HERO_OPENCLAW_PAYG },
   };
   const activeCode = TAB_CODE[activeTab]?.[effectiveMode];
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className={`flex flex-col flex-1 gap-0${floatingCopy ? ' relative' : ''}`}>
+    <Tabs
+      className={`flex flex-1 flex-col gap-0${floatingCopy ? "relative" : ""}`}
+      onValueChange={setActiveTab}
+      value={activeTab}
+    >
       {!gateConnectOnly && (
-      <div className="flex items-center px-4 border-b border-border">
-        <TabsList variant="line" className="px-0 border-b-0 h-12">
-          {showGateConnect && (
-            <TabsTrigger value="gate-connect">
-              <img src="/gate-ai-logo-mark.png" alt="" aria-hidden className="h-4 w-auto" />Gate Connect
+        <div className="flex items-center border-border border-b px-4">
+          <TabsList className="h-12 border-b-0 px-0" variant="line">
+            {showGateConnect && (
+              <TabsTrigger value="gate-connect">
+                <img
+                  alt=""
+                  aria-hidden
+                  className="h-4 w-auto"
+                  src="/gate-ai-logo-mark.png"
+                />
+                Gate Connect
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="claude-code">
+              <AnthropicIcon className="size-4" />
+              Claude Code
             </TabsTrigger>
-          )}
-          <TabsTrigger value="claude-code">
-            <AnthropicIcon className="size-4" />Claude Code
-          </TabsTrigger>
-          <TabsTrigger value="codex">
-            <OpenAIIcon className="size-4" />Codex
-          </TabsTrigger>
-          <TabsTrigger value="openclaw">
-            <img src="/icons/providers/openclaw.svg" alt="" aria-hidden className="size-4" />OpenClaw
-          </TabsTrigger>
-        </TabsList>
-      </div>
+            <TabsTrigger value="codex">
+              <OpenAIIcon className="size-4" />
+              Codex
+            </TabsTrigger>
+            <TabsTrigger value="openclaw">
+              <img
+                alt=""
+                aria-hidden
+                className="size-4"
+                src="/icons/providers/openclaw.svg"
+              />
+              OpenClaw
+            </TabsTrigger>
+          </TabsList>
+        </div>
       )}
       {showGateConnect && (
-      <TabsContent value="gate-connect" className={`mt-0 ${fillHeight ? 'flex-1 flex flex-col' : ''}`}>
-        <div className={`relative h-full overflow-hidden ${fillHeight ? 'flex-1' : 'min-h-[232px]'}`}>
-          {/* Decorative app preview — pre-faded asset, anchored right.
+        <TabsContent
+          className={`mt-0 ${fillHeight ? "flex flex-1 flex-col" : ""}`}
+          value="gate-connect"
+        >
+          <div
+            className={`relative h-full overflow-hidden ${fillHeight ? "flex-1" : "min-h-[232px]"}`}
+          >
+            {/* Decorative app preview — pre-faded asset, anchored right.
               Scale/position tuned per instruction. */}
-          <img
-            src="/gateconnect-app-fade.png"
-            alt=""
-            aria-hidden
-            className={imageClassName}
-          />
-          <div className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? 'h-full' : ''}`}>
-            <div className="flex flex-col gap-2">
-              <h3 className={titleClassName}>
-                1-Click setup with Gate Connect
-              </h3>
-              <p className={`text-sm text-neutral-500 text-pretty ${textMaxWidth} m-0`}>
-                Gate Connect is a tiny desktop app living in your menu bar. Install, flip a switch, and your AI coding tools route through Gate automatically. No config files, no environment variables, no terminal. Claude Code, Cowork, Codex, and more are supported.
-              </p>
-            </div>
-            <div className="flex">
-              <DownloadGateConnectDialog />
+            <img
+              alt=""
+              aria-hidden
+              className={imageClassName}
+              src="/gateconnect-app-fade.png"
+            />
+            <div
+              className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? "h-full" : ""}`}
+            >
+              <div className="flex flex-col gap-2">
+                <h3 className={titleClassName}>
+                  1-Click setup with Gate Connect
+                </h3>
+                <p
+                  className={`text-pretty text-neutral-500 text-sm ${textMaxWidth} m-0`}
+                >
+                  Gate Connect is a tiny desktop app living in your menu bar.
+                  Install, flip a switch, and your AI coding tools route through
+                  Gate automatically. No config files, no environment variables,
+                  no terminal. Claude Code, Cowork, Codex, and more are
+                  supported.
+                </p>
+              </div>
+              <div className="flex">
+                <DownloadGateConnectDialog />
+              </div>
             </div>
           </div>
-        </div>
-      </TabsContent>
+        </TabsContent>
       )}
-      <TabsContent value="claude-code" className="mt-0">
-        <HeroCodeTab byok={HERO_CLAUDE_CODE_BYOK} payg={HERO_CLAUDE_CODE_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS['claude-code'] : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
+      <TabsContent className="mt-0" value="claude-code">
+        <HeroCodeTab
+          byok={HERO_CLAUDE_CODE_BYOK}
+          caption={paygOnly ? PAYG_TAB_CAPTIONS["claude-code"] : undefined}
+          maxHeightClass={codeMaxHeight}
+          mode={mode}
+          onModeChange={setMode}
+          payg={HERO_CLAUDE_CODE_PAYG}
+          paygOnly={paygOnly}
+        />
       </TabsContent>
-      <TabsContent value="codex" className="mt-0">
-        <HeroCodeTab byok={HERO_CODEX_BYOK} payg={HERO_CODEX_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
+      <TabsContent className="mt-0" value="codex">
+        <HeroCodeTab
+          byok={HERO_CODEX_BYOK}
+          caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined}
+          maxHeightClass={codeMaxHeight}
+          mode={mode}
+          onModeChange={setMode}
+          payg={HERO_CODEX_PAYG}
+          paygOnly={paygOnly}
+        />
       </TabsContent>
-      <TabsContent value="openclaw" className="mt-0">
-        <HeroCodeTab byok={HERO_OPENCLAW_BYOK} payg={HERO_OPENCLAW_PAYG} paygOnly={paygOnly} caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined} maxHeightClass={codeMaxHeight} mode={mode} onModeChange={setMode} />
+      <TabsContent className="mt-0" value="openclaw">
+        <HeroCodeTab
+          byok={HERO_OPENCLAW_BYOK}
+          caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined}
+          maxHeightClass={codeMaxHeight}
+          mode={mode}
+          onModeChange={setMode}
+          payg={HERO_OPENCLAW_PAYG}
+          paygOnly={paygOnly}
+        />
       </TabsContent>
       {/* Single card-level Copy button — rendered once, floating bottom-right,
           reads the active tab + mode code. Not re-mounted per tab. */}
       {floatingCopy && activeCode && (
-        <div className="absolute bottom-4 right-4">
-          <CopyButton mode="label" size="sm" text="Copy code" value={activeCode} label="code snippet" className="shadow-sm" />
+        <div className="absolute right-4 bottom-4">
+          <CopyButton
+            className="shadow-sm"
+            label="code snippet"
+            mode="label"
+            size="sm"
+            text="Copy code"
+            value={activeCode}
+          />
         </div>
       )}
     </Tabs>
   );
 }
-
 
 function OverviewUsageChart() {
   return (
@@ -794,10 +1006,13 @@ function OverviewUsageChart() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
+          <div
+            aria-hidden
+            className="flex size-12 items-center justify-center rounded-md bg-muted"
+          >
             <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
           </div>
-          <span className="text-sm text-neutral-500">No usage data yet</span>
+          <span className="text-neutral-500 text-sm">No usage data yet</span>
         </div>
       </CardContent>
     </Card>
@@ -807,23 +1022,32 @@ function OverviewUsageChart() {
 function TokenSavingsStrip() {
   return (
     <KpiRail columns={3}>
-      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
-        <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
+      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-md bg-muted"
+        >
           <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-sm text-neutral-500">No requests yet</span>
+        <span className="text-neutral-500 text-sm">No requests yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
-        <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
+      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-md bg-muted"
+        >
           <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-sm text-neutral-500">No token savings yet</span>
+        <span className="text-neutral-500 text-sm">No token savings yet</span>
       </div>
-      <div className="flex flex-col items-center justify-center gap-3 bg-card p-6 min-h-[120px]">
-        <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
+      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-md bg-muted"
+        >
           <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-sm text-neutral-500">No threats yet</span>
+        <span className="text-neutral-500 text-sm">No threats yet</span>
       </div>
     </KpiRail>
   );
@@ -831,25 +1055,35 @@ function TokenSavingsStrip() {
 
 function LatestRequestsTable() {
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest requests</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest requests
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
-      <table className="w-full text-sm" aria-label="Latest requests">
+      <table aria-label="Latest requests" className="w-full text-sm">
         <tbody>
           <tr>
             <td colSpan={4}>
               <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
-                  <ArrowLeftRight className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <div
+                  aria-hidden
+                  className="flex size-12 items-center justify-center rounded-md bg-muted"
+                >
+                  <ArrowLeftRight
+                    className="size-5 text-neutral-700"
+                    strokeWidth={1.75}
+                  />
                 </div>
-                <span className="text-sm text-neutral-500">No requests yet</span>
+                <span className="text-neutral-500 text-sm">
+                  No requests yet
+                </span>
               </div>
             </td>
           </tr>
@@ -861,25 +1095,35 @@ function LatestRequestsTable() {
 
 function RecentConversationsTable() {
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest conversations</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest conversations
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
-      <table className="w-full text-sm" aria-label="Latest conversations">
+      <table aria-label="Latest conversations" className="w-full text-sm">
         <tbody>
           <tr>
             <td colSpan={4}>
               <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
-                  <MessageSquare className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <div
+                  aria-hidden
+                  className="flex size-12 items-center justify-center rounded-md bg-muted"
+                >
+                  <MessageSquare
+                    className="size-5 text-neutral-700"
+                    strokeWidth={1.75}
+                  />
                 </div>
-                <span className="text-sm text-neutral-500">No conversations yet</span>
+                <span className="text-neutral-500 text-sm">
+                  No conversations yet
+                </span>
               </div>
             </td>
           </tr>
@@ -891,25 +1135,35 @@ function RecentConversationsTable() {
 
 function SecurityEventsTable() {
   return (
-    <div className="flex flex-col rounded-md border border-border bg-card shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-medium text-neutral-900 m-0">Latest security events</h3>
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
+      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
+        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+          Latest security events
+        </h3>
         <Link
+          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
-          className="text-xs text-neutral-500 hover:text-neutral-700 transition-colors duration-100 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-sm px-2 py-2 -mx-2 -my-2"
         >
           View all →
         </Link>
       </div>
-      <table className="w-full text-sm" aria-label="Latest security events">
+      <table aria-label="Latest security events" className="w-full text-sm">
         <tbody>
           <tr>
             <td colSpan={4}>
               <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div aria-hidden className="size-12 rounded-md bg-muted flex items-center justify-center">
-                  <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <div
+                  aria-hidden
+                  className="flex size-12 items-center justify-center rounded-md bg-muted"
+                >
+                  <ShieldAlert
+                    className="size-5 text-neutral-700"
+                    strokeWidth={1.75}
+                  />
                 </div>
-                <span className="text-sm text-neutral-500">No security events yet</span>
+                <span className="text-neutral-500 text-sm">
+                  No security events yet
+                </span>
               </div>
             </td>
           </tr>
@@ -921,30 +1175,36 @@ function SecurityEventsTable() {
 
 export function DashboardDefault() {
   const navigate = useNavigate();
-  const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
+  const { sidebarExpanded, toggleSidebar } = useOutletContext<{
+    sidebarExpanded: boolean;
+    toggleSidebar: () => void;
+  }>();
 
   return (
     <DashboardChrome
       activeNavId="overview"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex flex-col gap-2 max-w-1/2">
+      <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Overview</PageTitle>
-        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Monitor request volume, token usage, spend, and security signals across your gateway.
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+          Monitor request volume, token usage, spend, and security signals
+          across your gateway.
         </p>
       </div>
-      <div className="mb-2"><HeroCard /></div>
+      <div className="mb-2">
+        <HeroCard />
+      </div>
       <div className="flex flex-col gap-4">
-        <h2 className="font-sans text-lg/6 font-medium tracking-snug text-neutral-900 text-balance m-0">
+        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
           Activity This Week
         </h2>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />

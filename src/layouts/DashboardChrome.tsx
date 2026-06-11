@@ -1,15 +1,12 @@
-import * as React from 'react';
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { BellIcon } from '@/components/ui/bell';
-import { ExternalLinkIcon } from '@/components/ui/external-link';
-import { Sidebar, WorkspaceSwitcher } from '@/components/ui/sidebar';
-import { FeedbackFab } from '@/components/ui/feedback-fab';
-import { cn } from '@/lib/utils';
-import { SIDEBAR_SECTIONS } from './nav-sections';
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import type * as React from "react";
+import { BellIcon } from "@/components/ui/bell";
+import { Button } from "@/components/ui/button";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
+import { FeedbackFab } from "@/components/ui/feedback-fab";
+import { Sidebar, WorkspaceSwitcher } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { SIDEBAR_SECTIONS } from "./nav-sections";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
@@ -24,14 +21,14 @@ import { SIDEBAR_SECTIONS } from './nav-sections';
 export interface DashboardChromeProps {
   /** id of the active sidebar item. */
   activeNavId: string;
-  sidebarExpanded: boolean;
-  onToggleSidebar: () => void;
-  onNavigate?: (pageId: string) => void;
+  children: React.ReactNode;
   /** Hide the global "Documentation" button in the top bar. Used on
    *  pages that surface their own docs entrypoint (e.g. ApiKeys' "Key
    *  docs" button + inline link inside the Using your key section). */
   hideDocsButton?: boolean;
-  children: React.ReactNode;
+  onNavigate?: (pageId: string) => void;
+  onToggleSidebar: () => void;
+  sidebarExpanded: boolean;
 }
 
 export function DashboardChrome({
@@ -46,22 +43,22 @@ export function DashboardChrome({
   // in-surface PageTitle renders h2 (child sections use h3 without a skip).
   // Visually hidden; sourced from the active nav label so it's page-specific.
   const activePageLabel =
-    SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)?.label ??
-    'Constellation Gate AI';
+    SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)
+      ?.label ?? "Constellation Gate AI";
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-card">
-      <div className="flex flex-row flex-1 min-h-0">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
+      <div className="flex min-h-0 flex-1 flex-row">
         <Sidebar
-          sections={SIDEBAR_SECTIONS}
           activeId={activeNavId}
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
+          sections={SIDEBAR_SECTIONS}
         />
-        <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-neutral-50">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50">
           <DashTopBar
-            sidebarExpanded={sidebarExpanded}
-            onToggleSidebar={onToggleSidebar}
             hideDocsButton={hideDocsButton}
+            onToggleSidebar={onToggleSidebar}
+            sidebarExpanded={sidebarExpanded}
           />
           {/* Content pane fills the remaining column height and scrolls
               internally — `flex-1 min-h-0` makes it a bounded flex child
@@ -72,7 +69,7 @@ export function DashboardChrome({
           {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main className="flex flex-col flex-1 min-h-0 max-w-[1920px] gap-6 px-6 pt-6 pb-20 overflow-y-auto [&>*]:shrink-0">
+          <main className="flex min-h-0 max-w-[1920px] flex-1 flex-col gap-6 overflow-y-auto px-6 pt-6 pb-20 [&>*]:shrink-0">
             <h1 className="sr-only">{activePageLabel}</h1>
             {children}
           </main>
@@ -99,15 +96,15 @@ function DashTopBar({
   hideDocsButton?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between h-16 px-6 bg-card border-b border-border shrink-0">
+    <div className="flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-6">
       <div className="flex items-center gap-2">
         <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           aria-expanded={sidebarExpanded}
-          onClick={onToggleSidebar}
+          aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
           className="-ml-2 text-neutral-500 hover:text-neutral-700 aria-expanded:bg-transparent aria-expanded:text-neutral-500 hover:aria-expanded:text-neutral-700"
+          onClick={onToggleSidebar}
+          size="icon-sm"
+          variant="ghost"
         >
           {/* Contextual icon cross-fade. Both icons stay in DOM,
               absolute-positioned; toggle scale/opacity/blur. The skill's
@@ -117,23 +114,23 @@ function DashTopBar({
           <span className="relative inline-flex size-4 items-center justify-center">
             <PanelLeftClose
               aria-hidden
-              strokeWidth={1.75}
               className={cn(
-                'absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
+                "absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
                 sidebarExpanded
-                  ? 'opacity-100 scale-100 blur-0'
-                  : 'opacity-0 scale-[0.25] blur-[1px]',
+                  ? "scale-100 opacity-100 blur-0"
+                  : "scale-[0.25] opacity-0 blur-[1px]"
               )}
+              strokeWidth={1.75}
             />
             <PanelLeftOpen
               aria-hidden
-              strokeWidth={1.75}
               className={cn(
-                'absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
+                "absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
                 sidebarExpanded
-                  ? 'opacity-0 scale-[0.25] blur-[1px]'
-                  : 'opacity-100 scale-100 blur-0',
+                  ? "scale-[0.25] opacity-0 blur-[1px]"
+                  : "scale-100 opacity-100 blur-0"
               )}
+              strokeWidth={1.75}
             />
           </span>
         </Button>
@@ -144,17 +141,18 @@ function DashTopBar({
       </div>
       <div className="flex items-center gap-1">
         {hideDocsButton ? null : (
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             Docs
-            <ExternalLinkIcon size={16} data-icon="inline-end" aria-hidden className="relative -top-px" />
+            <ExternalLinkIcon
+              aria-hidden
+              className="relative -top-px"
+              data-icon="inline-end"
+              size={16}
+            />
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="icon-sm"
-          aria-label="Notifications"
-        >
-          <BellIcon size={16} strokeWidth={1.75} aria-hidden />
+        <Button aria-label="Notifications" size="icon-sm" variant="outline">
+          <BellIcon aria-hidden size={16} strokeWidth={1.75} />
         </Button>
       </div>
     </div>

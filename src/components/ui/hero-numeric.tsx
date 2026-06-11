@@ -1,6 +1,6 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HeroNumeric — sans-tabular display tier for summary numerics ≥24px.
@@ -20,18 +20,18 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const heroNumericVariants = cva(
-  'font-sans font-medium tabular-nums tracking-tight text-neutral-900',
+  "font-medium font-sans text-neutral-900 tabular-nums tracking-tight",
   {
     variants: {
       size: {
-        default: 'text-2xl/8',
-        lg: 'text-3xl/9',
+        default: "text-2xl/8",
+        lg: "text-3xl/9",
       },
     },
     defaultVariants: {
-      size: 'default',
+      size: "default",
     },
-  },
+  }
 );
 
 export type HeroNumericProps = React.HTMLAttributes<HTMLDivElement> &
@@ -44,10 +44,7 @@ export function HeroNumeric({
   ...props
 }: HeroNumericProps) {
   return (
-    <div
-      className={cn(heroNumericVariants({ size, className }))}
-      {...props}
-    >
+    <div className={cn(heroNumericVariants({ size, className }))} {...props}>
       {children}
     </div>
   );

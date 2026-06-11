@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * MessageBlock — single conversation/request turn (system / user / tool /
@@ -27,13 +27,13 @@ import { cn } from '@/lib/utils';
  *   `onClick`    — bubble becomes a button when present
  * ───────────────────────────────────────────────────────────────────────── */
 
-export type MessageRole = 'system' | 'user' | 'tool' | 'assistant';
+export type MessageRole = "system" | "user" | "tool" | "assistant";
 
 const ROLE_LABEL: Record<MessageRole, string> = {
-  system: 'System',
-  user: 'User',
-  tool: 'Tool',
-  assistant: 'Assistant',
+  system: "System",
+  user: "User",
+  tool: "Tool",
+  assistant: "Assistant",
 };
 
 export type MessageBlockProps = {
@@ -53,7 +53,7 @@ export type MessageBlockProps = {
    *  flagged something) reads at the message level instead of only on
    *  the matching trace event. Default `default` keeps the outline-only
    *  treatment per the project's primitive policy. */
-  tone?: 'default' | 'warn' | 'danger';
+  tone?: "default" | "warn" | "danger";
   /** Selection state — paints a ring around the bubble. Drives the
    *  cross-link highlight when paired with a trace event of the same
    *  requestId. Ring color tracks tone: default selection = blue,
@@ -72,72 +72,76 @@ export function MessageBlock({
   body,
   time,
   requestId,
-  tone = 'default',
+  tone = "default",
   selected = false,
   onClick,
   className,
 }: MessageBlockProps) {
   const baseBubbleBorder =
-    tone === 'danger'
-      ? 'border-danger-200 bg-danger-50'
-      : tone === 'warn'
-        ? 'border-warning-200 bg-warning-50'
-        : 'border-border bg-neutral-50';
+    tone === "danger"
+      ? "border-danger-200 bg-danger-50"
+      : tone === "warn"
+        ? "border-warning-200 bg-warning-50"
+        : "border-border bg-neutral-50";
   // Selected ring color tracks tone so the status semantic stays intact
   // through the selection layer: green = normal/success, amber = warn
   // (flag/redact), red = danger (block/error). Matches the trace panel's
   // status-tone outline + node color.
   const selectedTone =
-    tone === 'danger'
-      ? 'border-destructive bg-danger-50 ring-1 ring-destructive'
-      : tone === 'warn'
-        ? 'border-warning-500 bg-warning-50 ring-1 ring-warning-500'
-        : 'border-success-600 ring-1 ring-success-600';
+    tone === "danger"
+      ? "border-destructive bg-danger-50 ring-1 ring-destructive"
+      : tone === "warn"
+        ? "border-warning-500 bg-warning-50 ring-1 ring-warning-500"
+        : "border-success-600 ring-1 ring-success-600";
   const bubbleClasses = cn(
-    'rounded-md border p-4 text-sm text-neutral-900 text-pretty transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none max-h-[200px] overflow-y-auto overscroll-contain',
+    "max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border p-4 text-neutral-900 text-sm transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
     selected ? selectedTone : baseBubbleBorder,
-    onClick && !selected && 'hover:border-neutral-400 cursor-pointer',
-    onClick && 'text-left w-full',
+    onClick && !selected && "cursor-pointer hover:border-neutral-400",
+    onClick && "w-full text-left"
   );
 
   // The bubble is rendered as either a <button> (when interactive) or a
   // <div> (when static). Button gets the selection ring + click handler;
   // the link affordance is intentionally absent — selection is driven by
   // the colored ring, not underline.
-  const Bubble = onClick ? 'button' : 'div';
+  const Bubble = onClick ? "button" : "div";
 
   return (
     <div
-      className={cn('flex flex-col gap-2', className)}
+      className={cn("flex flex-col gap-2", className)}
       data-request-id={requestId}
     >
-      <div className="flex items-center justify-between font-sans text-xs font-medium text-neutral-900">
+      <div className="flex items-center justify-between font-medium font-sans text-neutral-900 text-xs">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (
             <>
               <span className="text-neutral-400"> · </span>
-              <span className="font-mono font-normal text-neutral-700">{tool}</span>
+              <span className="font-mono font-normal text-neutral-700">
+                {tool}
+              </span>
             </>
           ) : null}
         </span>
         {time ? (
-          <span className="font-mono font-normal text-neutral-500 tabular-nums shrink-0 ml-2">
+          <span className="ml-2 shrink-0 font-mono font-normal text-neutral-500 tabular-nums">
             {time}
           </span>
         ) : null}
       </div>
       <Bubble
-        type={onClick ? 'button' : undefined}
-        onClick={onClick}
         aria-pressed={onClick ? selected : undefined}
         className={bubbleClasses}
+        onClick={onClick}
+        type={onClick ? "button" : undefined}
       >
         {body}
       </Bubble>
       {requestId ? (
-        <span className="font-mono text-xs text-neutral-500">
-          <span className="text-neutral-400" aria-hidden>↳ </span>
+        <span className="font-mono text-neutral-500 text-xs">
+          <span aria-hidden className="text-neutral-400">
+            ↳{" "}
+          </span>
           {requestId}
         </span>
       ) : null}

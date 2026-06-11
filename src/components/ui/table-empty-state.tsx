@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { FileText } from 'lucide-react';
-import { EmptyState } from '@/components/ui/empty-state';
+import { FileText } from "lucide-react";
+import type * as React from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TableEmptyState — canonical empty state for any table-bearing Card.
@@ -45,18 +45,18 @@ import { EmptyState } from '@/components/ui/empty-state';
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface TableEmptyStateProps {
-  title: string;
+  /** Optional recovery action (e.g. "Clear filters" button). */
+  action?: React.ReactNode;
   body: string;
   /** Optional icon override. Defaults to FileText (document). */
   icon?: React.ReactNode;
-  /** Optional recovery action (e.g. "Clear filters" button). */
-  action?: React.ReactNode;
+  title: string;
 }
 
 const DEFAULT_ICON = (
   <div
     aria-hidden
-    className="size-12 rounded-md bg-muted flex items-center justify-center"
+    className="flex size-12 items-center justify-center rounded-md bg-muted"
   >
     <FileText className="size-5 text-neutral-700" strokeWidth={1.75} />
   </div>
@@ -71,11 +71,11 @@ export function TableEmptyState({
   return (
     <div className="py-6">
       <EmptyState
+        action={action}
+        body={body}
         className="rounded-none shadow-none"
         icon={icon}
         title={title}
-        body={body}
-        action={action}
       />
     </div>
   );

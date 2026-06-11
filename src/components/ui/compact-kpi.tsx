@@ -1,11 +1,8 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, Line, XAxis } from 'recharts';
-import {
-  ChartContainer,
-  type ChartConfig,
-} from '@/components/ui/chart';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, Line, XAxis } from "recharts";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { HeroNumeric } from "@/components/ui/hero-numeric";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DeltaTag — directional arrow + delta value, optional trailing note.
@@ -20,31 +17,31 @@ export function DeltaTag({
   delta,
   note,
   inverted = false,
-  size = 'sm',
+  size = "sm",
 }: {
   delta: string;
   note?: string;
   inverted?: boolean;
   /** `sm` (default) for dense KPI rows; `md` bumps the value, note, and
    *  arrow one step up for hero-scale cards. */
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
 }) {
   const trimmed = delta.trim();
-  const negative = trimmed.startsWith('-');
+  const negative = trimmed.startsWith("-");
   const Icon = negative ? ArrowDownRight : ArrowUpRight;
   const isGood = inverted ? negative : !negative;
-  const toneCls = isGood ? 'text-success-700' : 'text-destructive';
+  const toneCls = isGood ? "text-success-700" : "text-destructive";
   // Preserve the leading +/- on the displayed value. Redundant with the
   // arrow on its own, but the explicit sign reinforces the magnitude
   // direction and is the convention readers expect for tabular deltas.
   const display = trimmed;
-  const iconCls = size === 'md' ? 'size-4' : 'size-3.5';
-  const valueCls = size === 'md' ? 'text-sm' : 'text-xs/4';
-  const noteCls = size === 'md' ? 'text-sm' : 'text-xs';
+  const iconCls = size === "md" ? "size-4" : "size-3.5";
+  const valueCls = size === "md" ? "text-sm" : "text-xs/4";
+  const noteCls = size === "md" ? "text-sm" : "text-xs";
   return (
     <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
-        <Icon className={iconCls} aria-hidden />
+        <Icon aria-hidden className={iconCls} />
         <span className={`font-mono ${valueCls} font-medium tabular-nums`}>
           {display}
         </span>
@@ -71,7 +68,7 @@ export function CompactKpi({
   delta,
   deltaNote,
   deltaInverted = false,
-  deltaSize = 'sm',
+  deltaSize = "sm",
   noteLine,
   spark,
   flat = false,
@@ -89,14 +86,14 @@ export function CompactKpi({
   /** Pass-through to DeltaTag size. `md` is one type-step up — used on the
    *  Overview rail where delta + note carry more weight than in the dense
    *  KPI grids. */
-  deltaSize?: 'sm' | 'md';
+  deltaSize?: "sm" | "md";
   noteLine?: string;
   spark?: React.ReactNode;
   flat?: boolean;
 }) {
   const baseCls = flat
-    ? 'flex flex-col gap-2 bg-card p-4'
-    : 'flex flex-col rounded-md gap-2 bg-card shadow-(--shadow-border) p-4';
+    ? "flex flex-col gap-2 bg-card p-4"
+    : "flex flex-col rounded-md gap-2 bg-card shadow-(--shadow-border) p-4";
   return (
     <div className={baseCls}>
       <div className="flex items-center justify-between gap-2">
@@ -107,18 +104,23 @@ export function CompactKpi({
         {valueSuffix ? (
           <span className="inline-flex items-center text-neutral-500">
             <span aria-hidden className="inline-block h-3.5 w-0" />
-            <span className="font-mono text-xs/4 font-medium tabular-nums">
+            <span className="font-medium font-mono text-xs/4 tabular-nums">
               {valueSuffix}
             </span>
           </span>
         ) : null}
         {delta ? (
-          <DeltaTag delta={delta} note={deltaNote} inverted={deltaInverted} size={deltaSize} />
+          <DeltaTag
+            delta={delta}
+            inverted={deltaInverted}
+            note={deltaNote}
+            size={deltaSize}
+          />
         ) : (
-          <span className="text-sm text-neutral-500">{noteLine}</span>
+          <span className="text-neutral-500 text-sm">{noteLine}</span>
         )}
       </div>
-      {spark != null ? <div className="mt-3">{spark}</div> : null}
+      {spark == null ? null : <div className="mt-3">{spark}</div>}
     </div>
   );
 }
@@ -130,7 +132,7 @@ export function CompactKpi({
 
 const compactSparkConfig: ChartConfig = {
   v: {
-    label: 'Value',
+    label: "Value",
   },
 };
 
@@ -146,12 +148,12 @@ export function CompactSpark({
   noGrid?: boolean;
 }) {
   const points = data.map((v, i) => ({ i, v }));
-  const gradId = `cmp007-spark-${colorVar.replace(/[^a-zA-Z0-9]/g, '')}`;
+  const gradId = `cmp007-spark-${colorVar.replace(/[^a-zA-Z0-9]/g, "")}`;
   const lastIndex = points.length - 1;
   return (
     <ChartContainer
+      className="mt-1 aspect-auto h-9 w-full"
       config={compactSparkConfig}
-      className="aspect-auto h-9 w-full mt-1"
     >
       <AreaChart
         accessibilityLayer
@@ -159,7 +161,7 @@ export function CompactSpark({
         margin={{ top: 2, right: 4, left: 0, bottom: 2 }}
       >
         <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor={colorVar} stopOpacity={0.22} />
             <stop offset="100%" stopColor={colorVar} stopOpacity={0} />
           </linearGradient>
@@ -167,27 +169,25 @@ export function CompactSpark({
         {noGrid ? null : (
           <CartesianGrid
             horizontal
-            vertical={false}
             stroke="var(--color-neutral-200)"
             strokeDasharray="6 3"
+            vertical={false}
           />
         )}
         <Area
+          activeDot={false}
           dataKey="v"
-          type="linear"
-          stroke={colorVar}
-          strokeWidth={1.5}
+          dot={false}
           fill={`url(#${gradId})`}
           isAnimationActive={false}
-          dot={false}
-          activeDot={false}
+          stroke={colorVar}
+          strokeWidth={1.5}
+          type="linear"
         />
         {endDot ? (
           <Line
+            activeDot={false}
             dataKey="v"
-            type="linear"
-            stroke="transparent"
-            isAnimationActive={false}
             dot={(props) => {
               const { cx, cy, index, key } = props as {
                 cx: number;
@@ -200,15 +200,17 @@ export function CompactSpark({
               }
               return (
                 <circle
-                  key={key ?? `dot-${index}`}
                   cx={cx}
                   cy={cy}
-                  r={2.5}
                   fill={colorVar}
+                  key={key ?? `dot-${index}`}
+                  r={2.5}
                 />
               );
             }}
-            activeDot={false}
+            isAnimationActive={false}
+            stroke="transparent"
+            type="linear"
           />
         ) : null}
         <XAxis dataKey="i" hide />

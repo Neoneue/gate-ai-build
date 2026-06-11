@@ -23,14 +23,14 @@
  * ───────────────────────────────────────────────────────────────────────── */
 
 export const CHART_PALETTE = [
-  'var(--color-chart-1)',
-  'var(--color-chart-2)',
-  'var(--color-chart-3)',
-  'var(--color-chart-4)',
-  'var(--color-chart-5)',
-  'var(--color-chart-6)',
-  'var(--color-chart-7)',
-  'var(--color-chart-8)',
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+  "var(--color-chart-6)",
+  "var(--color-chart-7)",
+  "var(--color-chart-8)",
 ] as const;
 
 export type ChartSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -41,6 +41,8 @@ export type ChartSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
  * to slot 1 instead of throwing.
  */
 export function chartSlot(slot: ChartSlot | number): string {
-  const idx = (((slot - 1) % CHART_PALETTE.length) + CHART_PALETTE.length) % CHART_PALETTE.length;
+  const idx =
+    (((slot - 1) % CHART_PALETTE.length) + CHART_PALETTE.length) %
+    CHART_PALETTE.length;
   return CHART_PALETTE[idx]!;
 }

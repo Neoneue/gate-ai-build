@@ -1,26 +1,28 @@
-import * as React from 'react';
-import { Menu as MenuPrimitive } from '@base-ui/react/menu';
+import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 function Menu(props: React.ComponentProps<typeof MenuPrimitive.Root>) {
   return <MenuPrimitive.Root {...props} />;
 }
 
-function MenuTrigger(props: React.ComponentProps<typeof MenuPrimitive.Trigger>) {
+function MenuTrigger(
+  props: React.ComponentProps<typeof MenuPrimitive.Trigger>
+) {
   return <MenuPrimitive.Trigger {...props} />;
 }
 
 type MenuContentProps = React.ComponentProps<typeof MenuPrimitive.Popup> & {
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  align?: 'start' | 'center' | 'end';
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 };
 
 function MenuContent({
   className,
-  side = 'bottom',
-  align = 'end',
+  side = "bottom",
+  align = "end",
   sideOffset = 8,
   children,
   ...props
@@ -28,18 +30,18 @@ function MenuContent({
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
-        side={side}
         align={align}
-        sideOffset={sideOffset}
         className="isolate z-50"
+        side={side}
+        sideOffset={sideOffset}
       >
         <MenuPrimitive.Popup
-          data-slot="menu-content"
           className={cn(
-            'min-w-44 overflow-hidden rounded-sm bg-card text-neutral-900 border border-border shadow-(--shadow-popup) p-1 outline-none origin-[var(--transform-origin)]',
-            'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-100 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
-            className,
+            "min-w-44 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-card p-1 text-neutral-900 shadow-(--shadow-popup) outline-none",
+            "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
+            className
           )}
+          data-slot="menu-content"
           {...props}
         >
           {children}
@@ -51,36 +53,33 @@ function MenuContent({
 
 function MenuItem({
   className,
-  variant = 'default',
+  variant = "default",
   ...props
 }: React.ComponentProps<typeof MenuPrimitive.Item> & {
-  variant?: 'default' | 'destructive';
+  variant?: "default" | "destructive";
 }) {
   return (
     <MenuPrimitive.Item
+      className={cn(
+        "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-xs px-2 text-sm outline-none transition-colors duration-100 ease-out data-disabled:pointer-events-none data-disabled:opacity-50 motion-reduce:transition-none",
+        variant === "destructive"
+          ? "text-danger-700 focus-visible:bg-danger-50 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-700 [&_svg]:text-danger-700"
+          : "text-neutral-900 focus-visible:bg-neutral-100 data-[highlighted]:bg-neutral-100 [&_svg]:text-neutral-500",
+        "[&_svg]:size-4 [&_svg]:shrink-0",
+        className
+      )}
       data-slot="menu-item"
       data-variant={variant}
-      className={cn(
-        'relative flex cursor-pointer items-center gap-2 rounded-xs h-8 px-2 text-sm outline-none select-none transition-colors duration-100 ease-out motion-reduce:transition-none data-disabled:pointer-events-none data-disabled:opacity-50',
-        variant === 'destructive'
-          ? 'text-danger-700 [&_svg]:text-danger-700 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-700 focus-visible:bg-danger-50'
-          : 'text-neutral-900 [&_svg]:text-neutral-500 data-[highlighted]:bg-neutral-100 focus-visible:bg-neutral-100',
-        '[&_svg]:size-4 [&_svg]:shrink-0',
-        className,
-      )}
       {...props}
     />
   );
 }
 
-function MenuLabel({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+function MenuLabel({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
+      className={cn("flex min-w-0 flex-col gap-1 px-2 py-2", className)}
       data-slot="menu-label"
-      className={cn('flex flex-col gap-1 px-2 py-2 min-w-0', className)}
       {...props}
     />
   );
@@ -92,18 +91,11 @@ function MenuSeparator({
 }: React.ComponentProps<typeof MenuPrimitive.Separator>) {
   return (
     <MenuPrimitive.Separator
+      className={cn("my-1 h-px bg-neutral-200", className)}
       data-slot="menu-separator"
-      className={cn('my-1 h-px bg-neutral-200', className)}
       {...props}
     />
   );
 }
 
-export {
-  Menu,
-  MenuTrigger,
-  MenuContent,
-  MenuItem,
-  MenuLabel,
-  MenuSeparator,
-};
+export { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger };

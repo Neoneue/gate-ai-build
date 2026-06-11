@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from "react";
 
 /**
  * Constellation Gate AI logomark.
@@ -18,11 +18,11 @@ export function BrandMark({
 }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 280 280"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
       aria-hidden
       className={className}
+      fill="currentColor"
+      viewBox="0 0 280 280"
+      xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path d="M22.6631 212.738L136.936 278.285L175.028 212.738H22.6631Z" />

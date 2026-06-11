@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
-import { ArrowUpRight } from 'lucide-react';
-import { DeltaTag } from '@/components/ui/compact-kpi';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { HeroNumeric } from '@/components/ui/hero-numeric';
-import { TextLink } from '@/components/ui/text-link';
+import { ArrowUpRight } from "lucide-react";
+import type { ReactNode } from "react";
+import { DeltaTag } from "@/components/ui/compact-kpi";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { HeroNumeric } from "@/components/ui/hero-numeric";
+import { TextLink } from "@/components/ui/text-link";
 
 export function KpiTile({
   title,
@@ -38,10 +38,10 @@ export function KpiTile({
   const linkEl = href ? (
     <TextLink
       as="a"
+      className="inline-flex shrink-0 items-center gap-1 text-sm"
       href={href}
-      target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-sm shrink-0"
+      target="_blank"
     >
       {linkLabel}
       <ArrowUpRight aria-hidden className="size-3.5" />
@@ -51,19 +51,22 @@ export function KpiTile({
     <div className="flex flex-col gap-2 bg-card p-4">
       <div className="flex items-center gap-2">
         {liveDot ? (
-          <span aria-hidden className="size-2 rounded-full bg-success-600 shrink-0" />
+          <span
+            aria-hidden
+            className="size-2 shrink-0 rounded-full bg-success-600"
+          />
         ) : null}
         <Eyebrow as="div">{title}</Eyebrow>
       </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-sans text-2xl/8 font-medium text-neutral-500">
+          <span className="font-medium font-sans text-2xl/8 text-neutral-500">
             {valueSuffix}
           </span>
         ) : null}
-        {!deltaRow ? deltaEl : null}
-        {!deltaRow ? linkEl : null}
+        {deltaRow ? null : deltaEl}
+        {deltaRow ? null : linkEl}
       </div>
       {deltaRow && (deltaEl || linkEl) ? (
         <div className="flex items-center gap-2">
@@ -72,7 +75,7 @@ export function KpiTile({
         </div>
       ) : null}
       {caption ? (
-        <p className="font-sans text-sm text-neutral-500 m-0">{caption}</p>
+        <p className="m-0 font-sans text-neutral-500 text-sm">{caption}</p>
       ) : null}
       {spark ? <div className="mt-1">{spark}</div> : null}
     </div>

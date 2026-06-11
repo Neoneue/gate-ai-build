@@ -1,8 +1,7 @@
-import * as React from "react"
-import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import type { SortState } from "@/hooks/use-table-sort"
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
+import type * as React from "react";
+import type { SortState } from "@/hooks/use-table-sort";
+import { cn } from "@/lib/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   // The `:not(:first-child)` guard lives at the container so the header's
@@ -14,91 +13,89 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   // same y-position is what reads as a "darker line" along the top.
   return (
     <div
+      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-border [&:not(:first-child)>table>thead>tr]:border-t"
       data-slot="table-container"
-      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-t [&:not(:first-child)>table>thead>tr]:border-border"
     >
       <table
-        data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}
+        data-slot="table"
         {...props}
       />
     </div>
-  )
+  );
 }
 
-function TableHeader({
-  className,
-  ...props
-}: React.ComponentProps<"thead">) {
+function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
-      data-slot="table-header"
       className={cn("bg-neutral-50", className)}
+      data-slot="table-header"
       {...props}
     />
-  )
+  );
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
-      data-slot="table-body"
       className={cn("[&_tr:last-child]:border-0", className)}
+      data-slot="table-body"
       {...props}
     />
-  )
+  );
 }
 
-function TableFooter({
-  className,
-  ...props
-}: React.ComponentProps<"tfoot">) {
+function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
-      data-slot="table-footer"
       className={cn(
-        "border-t border-border bg-neutral-50 font-medium [&>tr]:last:border-b-0",
-        className,
+        "border-border border-t bg-neutral-50 font-medium [&>tr]:last:border-b-0",
+        className
       )}
+      data-slot="table-footer"
       {...props}
     />
-  )
+  );
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
-      data-slot="table-row"
       className={cn(
-        "border-b border-border transition-colors motion-reduce:transition-none hover:bg-neutral-50 data-[state=selected]:bg-neutral-50",
-        className,
+        "border-border border-b transition-colors hover:bg-neutral-50 data-[state=selected]:bg-neutral-50 motion-reduce:transition-none",
+        className
       )}
+      data-slot="table-row"
       {...props}
     />
-  )
+  );
 }
 
-function TableHead({ className, scope = "col", ...props }: React.ComponentProps<"th">) {
+function TableHead({
+  className,
+  scope = "col",
+  ...props
+}: React.ComponentProps<"th">) {
   return (
     <th
-      data-slot="table-head"
-      // `scope="col"` is the WCAG H63 association affordance — without it,
-      // screen readers can't reliably link cells back to their column heads
-      // in fixed-layout multi-column tables. Defaulted in the primitive so
-      // every consumer gets it; can be overridden for row-headers.
-      scope={scope}
       className={cn(
         // Sans Title Case (not uppercase) so column heads stay distinct
         // from section eyebrows. Mono is reserved for ID / value content in
         // the body cells; sans here keeps the voice split clean. font-medium
         // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "h-10 px-4 text-left align-middle text-xs font-medium text-neutral-500 [&:has([role=checkbox])]:pr-0",
-        className,
+        "h-10 px-4 text-left align-middle font-medium text-neutral-500 text-xs [&:has([role=checkbox])]:pr-0",
+        className
       )}
+      data-slot="table-head"
+      // `scope="col"` is the WCAG H63 association affordance — without it,
+      // screen readers can't reliably link cells back to their column heads
+      // in fixed-layout multi-column tables. Defaulted in the primitive so
+      // every consumer gets it; can be overridden for row-headers.
+      scope={scope}
       {...props}
     />
-  )
+  );
 }
 
 /* Sortable column header — drop-in replacement for <TableHead> on sortable
@@ -118,71 +115,81 @@ function SortableTableHead({
   children,
   ...props
 }: Omit<React.ComponentProps<"th">, "onSort"> & {
-  sortKey: string
-  sort: SortState
-  onSort: (key: string) => void
-  numeric?: boolean
+  sortKey: string;
+  sort: SortState;
+  onSort: (key: string) => void;
+  numeric?: boolean;
 }) {
-  const active = sort.key === sortKey
+  const active = sort.key === sortKey;
   return (
     <th
-      data-slot="table-head"
-      scope="col"
-      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+      aria-sort={
+        active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
+      }
       // Cell keeps the standard header padding/alignment; the trigger inside is
       // content-width so the hit area is the label + glyph, not the whole cell.
       className={cn(
-        "h-10 px-4 align-middle text-xs font-medium text-neutral-500",
+        "h-10 px-4 align-middle font-medium text-neutral-500 text-xs",
         numeric ? "text-right" : "text-left",
-        className,
+        className
       )}
+      data-slot="table-head"
+      scope="col"
       {...props}
     >
       <button
-        type="button"
-        onClick={() => onSort(sortKey)}
         // Content-width (`w-fit`, capped at half the cell) — the empty cell area
         // is NOT a click target. A fixed-size glyph slot is always present
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
-          "group/sort inline-flex h-10 w-fit max-w-1/2 items-center gap-1 align-middle select-none whitespace-nowrap rounded-xs text-xs font-medium text-neutral-500 outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
+          "group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle font-medium text-neutral-500 text-xs outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
           // Numeric columns are right-aligned: put the glyph LEFT of the label
           // (flex-row-reverse) so the label stays flush to the column's right
           // edge and lines up with the right-aligned data below it.
           numeric && "flex-row-reverse",
-          active && "text-neutral-900",
+          active && "text-neutral-900"
         )}
+        onClick={() => onSort(sortKey)}
+        type="button"
       >
         <span>{children}</span>
         {active ? (
           sort.dir === "asc" ? (
-            <ArrowUp className="size-3.5 shrink-0 text-neutral-900" strokeWidth={2} aria-hidden />
+            <ArrowUp
+              aria-hidden
+              className="size-3.5 shrink-0 text-neutral-900"
+              strokeWidth={2}
+            />
           ) : (
-            <ArrowDown className="size-3.5 shrink-0 text-neutral-900" strokeWidth={2} aria-hidden />
+            <ArrowDown
+              aria-hidden
+              className="size-3.5 shrink-0 text-neutral-900"
+              strokeWidth={2}
+            />
           )
         ) : (
           <ChevronsUpDown
+            aria-hidden
             className="size-3.5 shrink-0 text-neutral-400 opacity-0 transition-opacity duration-150 ease-out group-hover/sort:opacity-100 motion-reduce:transition-none"
             strokeWidth={2}
-            aria-hidden
           />
         )}
       </button>
     </th>
-  )
+  );
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
-      data-slot="table-cell"
       className={cn(
-        "px-4 py-3 align-middle text-sm text-neutral-900 [&:has([role=checkbox])]:pr-0",
-        className,
+        "px-4 py-3 align-middle text-neutral-900 text-sm [&:has([role=checkbox])]:pr-0",
+        className
       )}
+      data-slot="table-cell"
       {...props}
     />
-  )
+  );
 }
 
 function TableCaption({
@@ -191,21 +198,21 @@ function TableCaption({
 }: React.ComponentProps<"caption">) {
   return (
     <caption
+      className={cn("mt-4 text-neutral-500 text-sm", className)}
       data-slot="table-caption"
-      className={cn("mt-4 text-sm text-neutral-500", className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
+  SortableTableHead,
   Table,
-  TableHeader,
   TableBody,
+  TableCaption,
+  TableCell,
   TableFooter,
   TableHead,
-  SortableTableHead,
+  TableHeader,
   TableRow,
-  TableCell,
-  TableCaption,
-}
+};

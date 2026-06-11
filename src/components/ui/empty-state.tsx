@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * EmptyState — page-level empty surface with icon + heading + body + action.
@@ -26,14 +26,14 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface EmptyStateProps {
+  /** Optional action node (typically a `<Button>`). */
+  action?: React.ReactNode;
+  body: string;
+  className?: string;
   /** Optional decorative element rendered above the heading (typically an
    *  icon chip wrapped in `aria-hidden`). */
   icon?: React.ReactNode;
   title: string;
-  body: string;
-  /** Optional action node (typically a `<Button>`). */
-  action?: React.ReactNode;
-  className?: string;
 }
 
 export function EmptyState({
@@ -46,15 +46,15 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-3 py-12 px-6 rounded-md bg-card border border-border shadow-xs text-center',
-        className,
+        "flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center shadow-xs",
+        className
       )}
     >
       {icon}
-      <h3 className="font-sans text-lg font-medium text-neutral-900 m-0">
+      <h3 className="m-0 font-medium font-sans text-lg text-neutral-900">
         {title}
       </h3>
-      <p className="font-sans text-sm text-neutral-500 max-w-md text-pretty m-0">
+      <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
         {body}
       </p>
       {action ? <div className="mt-1">{action}</div> : null}

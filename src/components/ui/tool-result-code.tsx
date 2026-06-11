@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * ToolResultCode — inline <code> recipe for tool-result JSON blobs.
@@ -20,8 +20,7 @@ import { cn } from '@/lib/utils';
  * site (the monospace grid carries its own optical density).
  * ───────────────────────────────────────────────────────────────────────── */
 
-const TOOL_RESULT_CODE_BASE =
-  'font-mono text-sm text-neutral-900 break-all';
+const TOOL_RESULT_CODE_BASE = "font-mono text-sm text-neutral-900 break-all";
 
 export type ToolResultCodeProps = React.HTMLAttributes<HTMLElement>;
 

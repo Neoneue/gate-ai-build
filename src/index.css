@@ -6,7 +6,8 @@
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant hover-fine ((@media (hover: hover) and (pointer: fine)) and (&:hover));
+@custom-variant hover-fine ((@media (hover: hover)
+and (pointer: fine)) and (&:hover));
 
 /* ─── Design tokens (Constellation Gate AI) ────────────────── */
 @theme {
@@ -253,19 +254,19 @@
 html,
 body,
 #root {
-  margin: 0;
-  padding: 0;
   width: 100%;
   height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 body {
   font-family: var(--font-sans);
-  color: var(--foreground);
-  background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none;
+  color: var(--foreground);
+  background: var(--background);
 }
 
 @theme inline {
@@ -333,16 +334,18 @@ body {
   body {
     /* canvas grid wins over default shadcn bg-background.
        overflow: auto so native scroll + browser pinch-zoom work. */
-    @apply text-foreground;
+    overflow: auto;
+    /* Skill: typography.md — pretty wrapping prevents orphaned words on
+       short-to-medium text. Inherited by paragraphs / list items / captions. */
+    text-wrap: pretty;
     background: var(--canvas-bg);
     background-image:
       linear-gradient(var(--canvas-grid) 1px, transparent 1px),
       linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
     background-size: 40px 40px;
-    overflow: auto;
-    /* Skill: typography.md — pretty wrapping prevents orphaned words on
-       short-to-medium text. Inherited by paragraphs / list items / captions. */
-    text-wrap: pretty;
+    /* canvas grid wins over default shadcn bg-background.
+       overflow: auto so native scroll + browser pinch-zoom work. */
+    @apply text-foreground;
   }
   html {
     @apply font-sans;
