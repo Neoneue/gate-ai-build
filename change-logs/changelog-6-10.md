@@ -175,7 +175,7 @@ to both column divs — the code block's existing `overflow-x-auto` now engages
 (~156px horizontal scroll at 1280 container) and the split stays 600/600 across
 all tab + BYOK/PAYG combinations. Verified in-browser.
 
-### Lint gate green — audit finding #1: 29 errors → 0 (uncommitted)
+### Lint gate green — audit finding #1: 29 errors → 0 [02fce0c]
 
 Mechanical module-boundary refactor; zero visual changes (all pages
 browser-smoke-tested, Merkle dialog verified). `eslint .` and `npx tsc -b`
@@ -208,7 +208,7 @@ both exit 0.
 - Fast refresh now works in every previously-violating file (pages no longer
   full-reload when editing components).
 
-### Audit #3 + #4 — dependency hygiene and route code splitting (uncommitted)
+### Audit #3 + #4 — dependency hygiene and route code splitting [02fce0c]
 
 Zero visual changes; all routes browser-verified after both.
 
@@ -225,7 +225,7 @@ Zero visual changes; all routes browser-verified after both.
   entry 314 KB; Vite's 500 kB warning is gone. Pages load their chunk on
   first visit.
 
-### Ultracite/Biome adopted — formatting + lint now actively enforced (uncommitted)
+### Ultracite/Biome adopted — formatting + lint now actively enforced [02fce0c]
 
 `npx ultracite init` (Biome 2.4 + ultracite preset). One-time
 `ultracite fix` reformatted ~134 files (whitespace/style only; tsc, eslint,
