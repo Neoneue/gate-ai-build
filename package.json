@@ -37,7 +37,8 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "ultracite": "^7.8.3",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.8"
   },
   "name": "gate-ai-build",
   "scripts": {
@@ -49,7 +50,9 @@
     "preview": "vite preview",
     "check": "ultracite check",
     "fix": "ultracite fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "type": "module",
   "version": "0.0.0",

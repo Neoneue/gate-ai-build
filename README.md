@@ -4,16 +4,58 @@ The live web application for Constellation Gate AI. Forked from the `mvp` design
 
 ## Routes
 
-| Path             | Page          |
-| ---------------- | ------------- |
-| `/`              | Dashboard     |
-| `/requests`      | Requests      |
+`/` and unknown paths redirect to `/overview`. Full specs per page live in
+[`data-model.md`](./data-model.md) §6.
+
+### Core (sidebar)
+
+| Path | Page |
+| --- | --- |
+| `/overview` | Overview (`Dashboard.tsx`) |
+| `/requests` | Requests |
 | `/conversations` | Conversations |
-| `/models`        | Models        |
-| `/security`      | Security      |
-| `/activity`      | Activity      |
-| `/team`          | Team          |
-| `/settings`      | Settings      |
+| `/models` | Models |
+| `/token-savings` | Token Savings |
+| `/limits` | Limits |
+| `/security` | Security events |
+| `/policies` | Policies |
+| `/audit-trail` | Audit Trail |
+| `/activity` | Activity |
+| `/team` | Team |
+| `/billing` | Billing |
+| `/api-keys` | API Keys |
+| `/settings` | Settings |
+
+### Detail / route-only
+
+| Path | Page |
+| --- | --- |
+| `/requests-findings/:requestId` | Request findings detail |
+| `/conversations-trace/:conversationId` | Conversation trace detail |
+| `/audit-trail-merkle` | Audit Trail, Merkle variant (not in nav) |
+| `/upgrade` | Plan upgrade |
+
+### Tier / onboarding variants
+
+| Path | Page |
+| --- | --- |
+| `/overview-default` | Overview, empty-workspace variant |
+| `/api-keys-default` | API Keys, empty-workspace variant |
+| `/limits-default` | Limits, Pro-upsell variant |
+| `/events-default` | Security, Pro-upsell variant |
+| `/token-savings-free` | Token Savings, free-tier variant |
+| `/limits-free` | Limits, free-tier variant |
+| `/security-free` | Security, free-tier variant |
+
+### Auth
+
+| Path | Page |
+| --- | --- |
+| `/sign-in` | Sign in |
+| `/sign-up` | Sign up |
+
+Deep-link query params: `?open=<id>` (Conversations/Requests detail modal),
+`?create=1` (Limits create flow), `?range=<key>` (Activity range).
 
 ## Layout
 

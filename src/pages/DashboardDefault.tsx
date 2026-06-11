@@ -681,7 +681,11 @@ export function HeroCard() {
             </Button>
             <Button
               onClick={() =>
-                window.open("https://docs.constellationgate.ai", "_blank")
+                window.open(
+                  "https://docs.constellationgate.ai",
+                  "_blank",
+                  "noopener,noreferrer"
+                )
               }
               variant="outline"
             >
