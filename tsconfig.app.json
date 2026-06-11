@@ -27,7 +27,7 @@
       "@/*": ["./src/*"]
     },
     "ignoreDeprecations": "6.0",
-    "strictNullChecks": true
+    "strict": true
   },
   "include": ["src"]
 }

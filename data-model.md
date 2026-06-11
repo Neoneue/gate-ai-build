@@ -54,7 +54,8 @@ graph LR
     LAYOUT --> BILL["/billing → Billing.tsx"]
 ```
 
-- Default route: `/` and `*` both redirect to `/requests`.
+- Default route: `/` and `*` both redirect to `/overview`.
+- Auth routes (`/sign-in`, `/sign-up`) render under `AuthLayout`, outside `DashboardChrome`.
 - All routes share `DashboardChrome` as their layout wrapper.
 - Sidebar expand/collapse state lives in `App.tsx` with `localStorage` persistence; passed to pages via `useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>()`.
 
@@ -71,6 +72,26 @@ Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 | Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
+
+### Tier & onboarding variants
+
+Several sidebar pages have standalone route variants (same chrome, different
+content state). Naming contract:
+
+- `*Default.tsx` (`/overview-default`, `/api-keys-default`, `/limits-default`,
+  `/events-default`) — the page as a NEW workspace sees it: empty-state hero
+  or Pro-upsell pitch (SecurityDefault/LimitsDefault share the `HeroCard`
+  upsell pattern).
+- `*Free.tsx` (`/security-free`, `/limits-free`, `/token-savings-free`) — the
+  page as a FREE-tier workspace sees it: feature gated, upgrade CTA.
+- Pro-gated nav items carry `locked: true` in `nav-sections.ts`, which renders
+  the sidebar lock icon (Token Savings, Limits, Security events on free tier).
+- Variants are reached by direct route only — there is no runtime tier switch;
+  the variants exist so each state can be designed/reviewed at its own URL.
+- `/upgrade` is the plan-comparison page the upsell CTAs link to.
+- Gating is asymmetric by design-in-progress: Conversations, Billing, Team
+  have no Free variants yet (open product question, see improve-audit
+  direction findings).
 
 ---
 
@@ -372,6 +393,15 @@ erDiagram
 
 ## 5. Mock Data Architecture
 
+> **2026-06-10 extraction:** cross-page mock data no longer lives inside page
+> components. `src/data/requests.ts` (REQUEST_ROWS_* + the findings model +
+> `requestRowId` + `getEventFindingCopy`), `src/data/conversations.ts`
+> (CONVERSATION_ROWS), and `src/data/audit-trail.ts` (NOW, EVENT_ROWS,
+> KIND_BADGE_VARIANT, fmtRelative, truncateHex) are the owners. Row TYPES stay
+> with their pages (`RequestRow` in Requests.tsx etc.); the data modules
+> import them type-only, so there are no runtime cycles. Data invariants are
+> enforced by Vitest (`src/**/*.test.ts`, run in CI).
+
 The app has no backend. All data is seeded in-file. The three rules:
 
 1. **Single source of truth.** KPI tiles, chart bars, descriptions, and breakdowns all derive from one constant or generator function. Never hardcode the same number in two places.
@@ -429,9 +459,9 @@ function buildSpark(total: number, seed: number): number[]
 
 | Array | Page | Shape | Count |
 | --- | --- | --- | --- |
-| `REQUEST_ROWS` | Requests | `RequestRow[]` | 17 (cumulative: 24h ⊂ 7d ⊂ 30d ⊂ all) |
+| `REQUEST_ROWS` | `src/data/requests.ts` | `RequestRow[]` | 17 (cumulative: 24h ⊂ 7d ⊂ 30d ⊂ all) |
 | `EVENT_ROWS` | Security | `EventRow[]` | 17 |
-| `CONVERSATION_ROWS` | Conversations | `ConversationRow[]` | 8 |
+| `CONVERSATION_ROWS` | `src/data/conversations.ts` | `ConversationRow[]` | 8 |
 | `CONVERSATION_MESSAGES` | Conversations | message thread | 8 |
 | `SAMPLE_TRACE` | Conversations | trace events | 7 |
 | `MODELS` | Models | `Model[]` | 25 |
@@ -479,8 +509,8 @@ function buildSpark(total: number, seed: number): number[]
 
 - `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
 - `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime`, `ThreatEventDetailDialog`
-- `AuditTrail.tsx` → `EVENT_ROWS as AUDIT_EVENT_ROWS`, `EventRow as AuditEventRow`, `KIND_BADGE_VARIANT`, `fmtTime`, `truncateHex`
-- `Conversations.tsx` → `CONVERSATION_ROWS`, `KEY_SUFFIX`, `ConversationRow`
+- `src/data/audit-trail.ts` → `EVENT_ROWS`, `EventRow`, `KIND_BADGE_VARIANT`, `NOW`, `fmtRelative`, `truncateHex` (extracted from `AuditTrail.tsx` 2026-06-10; both audit pages + both record dialogs import from here)
+- `Conversations.tsx` → `ConversationRow` + other types; `src/data/conversations.ts` → `CONVERSATION_ROWS` (values moved 2026-06-10, types stay with the page)
 - `AuditRecordDialog.tsx` → `AuditRecordDialog`
 
 ---
@@ -721,7 +751,7 @@ The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h
 
 ### Audit Trail, Merkle variant (`/audit-trail-merkle` → `AuditTrailMerkle.tsx`)
 
-**Status:** Built (2026-06-01). Route-only evolution of the Audit Trail page; NOT in the sidebar nav. Reuses the same data: imports `EVENT_ROWS`, `KIND_BADGE_VARIANT`, and the `EventRow` type from `AuditTrail.tsx` (no separate feed). Same `NOW = 2026-05-16 16:00` mock anchor and `isWithinRange` range logic.
+**Status:** Built (2026-06-01). Route-only evolution of the Audit Trail page; NOT in the sidebar nav. Reuses the same data: imports `EVENT_ROWS`, `KIND_BADGE_VARIANT`, and the `EventRow` type from `src/data/audit-trail.ts` (no separate feed). Same `NOW = 2026-05-16 16:00` mock anchor and `isWithinRange` range logic.
 
 **New vs. `/audit-trail`:**
 
@@ -791,6 +821,26 @@ sort, query, page, rowsPerPage              // UsageByKey table
 ### Billing page (`/billing` → `Billing.tsx`)
 
 Billing-specific layout (does not use `DashboardChrome`). Details TBD.
+
+---
+
+### Variant & auxiliary pages (brief)
+
+Not specced in full above; see "Tier & onboarding variants" in §2 for the
+pattern:
+
+- `/conversations-trace/:conversationId` → `ConversationsTrace.tsx` — full-page
+  conversation trace (route-only; the Conversations modal is the primary surface).
+- `/upgrade` → `Upgrade.tsx` — plan cards; Pro CTA carries the animated
+  SparklesIcon.
+- `/overview-default` → `DashboardDefault.tsx` — also exports `ConnectTabs` /
+  `CodePanel` reused by ApiKeys and Models.
+- `/api-keys-default` → `ApiKeysDefault.tsx` — reuses ApiKeys page components.
+- `/limits-default` → `LimitsDefault.tsx`, `/events-default` →
+  `SecurityDefault.tsx` — HeroCard upsell surfaces (GSAP page animation).
+- `/token-savings-free`, `/limits-free`, `/security-free` — free-tier gated
+  variants.
+- `/sign-in`, `/sign-up` — AuthLayout pages (GSAP).
 
 ---
 

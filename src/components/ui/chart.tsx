@@ -209,7 +209,7 @@ function ChartTooltipContent({
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-neutral-500",
                   indicator === "dot" && "items-center"
                 )}
-                key={index}
+                key={`${item.dataKey ?? item.name ?? index}`}
               >
                 {formatter && item?.value !== undefined && item.name ? (
                   formatter(item.value, item.name, item, index, item.payload)
@@ -306,7 +306,7 @@ function ChartLegendContent({
               className={cn(
                 "flex items-center gap-2 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-neutral-500"
               )}
-              key={index}
+              key={`${item.dataKey ?? index}`}
             >
               {itemConfig?.icon && !hideIcon ? (
                 <itemConfig.icon />

@@ -255,6 +255,46 @@ errors.
   Recoverable from git history (committed at 85f7d9e) if ever wanted.
 - ESLint stays for the react-hooks rule set Biome doesn't replicate.
 
+### Audit #2 — verification baseline: Vitest + GitHub Actions CI (uncommitted)
+
+Non-UI. `npm test` = `vitest run` (vitest.config.ts, node env, @ alias);
+29 tests in 5 files, all pure logic — no component/snapshot tests:
+
+- `use-table-sort.test.ts` — parseNumeric formats, sortRows contracts
+  (nulls last in BOTH directions, numeric-aware string compare, no mutation)
+- `data/requests.test.ts` — requestRowId determinism + fallback, finding
+  categories closed set, RECENT ⊆ ALL by row identity, getEventFindingCopy
+- `data/audit-trail.test.ts` — fmtRelative buckets + future-clamp,
+  truncateHex, EVENT_ROWS id uniqueness / ≤ NOW / badge-variant coverage
+- `pages/activity-data.test.ts` — THE charts-must-reconcile contract:
+  SPEND_TOTALS_7D and TOKENS_TOTALS_7D sum to TOTAL_7D_BASE_* in every
+  dimension (passed unmodified — the discipline held); distributeSeries
+  sums exactly + deterministic seeding. This also discharges audit
+  finding #7 (mock-data invariants unenforced).
+- `lib/formatters.test.ts` — linesToString, formatNumber/Currency, randomHex
+
+CI: `.github/workflows/ci.yml` — push/PR on dev + main, Node 22, npm ci,
+then lint (eslint + biome) → test → build (tsc -b + vite). Closes the
+`--no-verify` bypass gap left by pre-commit-only enforcement.
+
+### Audit #8 + #9 + #10 — small fixes, full strict mode, docs refresh (uncommitted)
+
+- **#8 correctness bundle**: clipboard copy failures now surface a
+  `toast.error` instead of silently doing nothing (use-copy-feedback);
+  chart.tsx tooltip/legend keys use `item.dataKey` instead of array index;
+  the Read-API-docs `window.open` gained `noopener,noreferrer`. Tooltip
+  verified in-browser (multi-series, no key warnings).
+- **#9 strict mode**: `"strict": true` in all three tsconfigs — tsc passes
+  with ZERO new errors (strictNullChecks yesterday's hard part; the rest was
+  already clean).
+- **#10 docs refresh**: README routes table rewritten — all 27 routes grouped
+  (core / detail / tier variants / auth) + deep-link params, was 8 rows.
+  data-model.md: default route corrected (/overview, was /requests), new
+  "Tier & onboarding variants" section (\*Default/\*Free naming contract,
+  locked flag, gating asymmetry), §5 notes the 2026-06-10 src/data extraction
+  - corrected import contracts (audit-trail/conversations/requests module
+  owners), §6 gains a brief variant-pages inventory.
+
 ---
 
 ## Non-UI, same day

@@ -36,14 +36,21 @@ export function useCopyFeedback({
     if (timerRef.current !== null) {
       return;
     }
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      toast(`Copied ${label} to clipboard`);
-      timerRef.current = window.setTimeout(() => {
-        setCopied(false);
-        timerRef.current = null;
-      }, HOLD_MS);
-    });
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopied(true);
+        toast(`Copied ${label} to clipboard`);
+        timerRef.current = window.setTimeout(() => {
+          setCopied(false);
+          timerRef.current = null;
+        }, HOLD_MS);
+      })
+      .catch(() => {
+        // Permission denied or no clipboard (non-secure context): tell the
+        // user instead of silently doing nothing.
+        toast.error(`Couldn't copy ${label} — clipboard unavailable`);
+      });
   }, [value, label]);
 
   return { copied, trigger };
