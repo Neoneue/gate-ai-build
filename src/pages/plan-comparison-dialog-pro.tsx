@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SparklesIcon } from "@/components/ui/sparkles";
 
 export type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
 
@@ -70,10 +69,9 @@ const FREE_PLAN: PlanCardData = {
     },
   ],
   cta: {
-    label: "Your current plan",
+    label: "Downgrade plan",
     variant: "outline",
-    disabled: true,
-    ariaLabel: "Free plan is your current plan",
+    ariaLabel: "Downgrade to Free plan",
   },
   ctaCaption: "Free to use, forever",
 };
@@ -82,7 +80,7 @@ const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: "PRO PLAN", tone: "pro" },
   title: "Pro plan",
-  price: "$30",
+  price: "$29",
   benefitsLabel: "What you'll get going Pro:",
   features: [
     {
@@ -107,8 +105,13 @@ const PRO_PLAN: PlanCardData = {
         "20%+ tokens saved per request via lossless compression and cache injection.",
     },
   ],
-  cta: { label: "Upgrade to Pro", variant: "default" },
-  ctaCaption: "$30/month after your 14 day trial ends",
+  cta: {
+    label: "Your current plan",
+    variant: "outline",
+    disabled: true,
+    ariaLabel: "Pro plan is your current plan",
+  },
+  ctaCaption: "$29/month after your 14 day trial ends",
 };
 
 function PlanCard({
@@ -170,9 +173,6 @@ function PlanCard({
           }
           variant={plan.cta.variant}
         >
-          {plan.featured ? (
-            <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
-          ) : null}
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
           {plan.cta.label}
         </Button>
@@ -184,7 +184,7 @@ function PlanCard({
   );
 }
 
-export function PlanComparisonDialog({
+export function PlanComparisonDialogPro({
   open,
   onOpenChange,
   onUpgrade,

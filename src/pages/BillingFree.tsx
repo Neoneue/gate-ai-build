@@ -36,10 +36,10 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Billing page (route: /billing, sidebar: "Billing")
+ * Billing page — Free-plan duplicate (route: /billing-free, sidebar: "Billing")
  *
  * Three sections stacked: plan + credits row (50/50), and the History
  * table. Mock data assumes a fresh workspace with one $25 top-up and two
@@ -47,7 +47,7 @@ import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
  * running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function Billing() {
+export function BillingFree() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -92,64 +92,29 @@ function PlanCreditsRow() {
 
 function PlanCard() {
   const [compareOpen, setCompareOpen] = useState(false);
-  const [autoRenew, setAutoRenew] = useState(true);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
         <CardTitle>Your plan</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">Pro</HeroNumeric>
+        <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
-          Scans every request sent through your own provider keys for prompt
-          injections, credential leaks and PII. Includes the full Constellation
-          Gate audit trail.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline.
+          Upgrade to Pro for prompt-injection scans, PII redaction, and a
+          cryptographically verifiable audit trail fingerprinted to
+          Constellation&rsquo;s Digital Evidence layer.
         </p>
         <p className="m-0 font-sans text-neutral-500 text-sm">
-          Renews on Jun 12, 2026 · $29 / user / month
+          Free plan — no renewal needed
         </p>
-
-        {/* Seats inset */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Seats
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Billed per user — a seat is added when an invite is accepted
-              (prorated for the rest of the period); removed seats stop billing
-              at the next cycle.
-            </p>
-          </div>
-          <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
-            1 seat × $29 = $29 / month
-          </p>
-        </div>
-
-        {/* Auto-renew inset */}
-        <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Auto-renew
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Renews automatically on Jun 12, 2026.
-            </p>
-          </div>
-          <Switch
-            aria-label="Auto-renew"
-            checked={autoRenew}
-            className="shrink-0"
-            onCheckedChange={setAutoRenew}
-          />
-        </div>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button onClick={() => setCompareOpen(true)} variant="outline">
           Manage subscription
         </Button>
       </CardFooter>
-      <PlanComparisonDialogPro
+      <PlanComparisonDialog
         onOpenChange={setCompareOpen}
         onUpgrade={() => setCompareOpen(false)}
         open={compareOpen}
@@ -215,23 +180,20 @@ function CreditsCard() {
         <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$24.98</HeroNumeric>
+        <HeroNumeric size="lg">$0.00</HeroNumeric>
         <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="m-0 mt-3 flex flex-col gap-2 text-sm">
-          <CreditStatRow label="Used this month" mono value="$0.02" />
+          <CreditStatRow label="Used this month" mono value="$0.00" />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow
-            label="Last top-up"
-            value={<Timestamp date={LAST_TOPUP_DATE} format="dateNumeric" />}
-          />
+          <CreditStatRow label="Last top-up" value="Never" />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
@@ -650,7 +612,6 @@ function CreditStatRow({
 
 /* ─── History ────────────────────────────────────────────────────────── */
 
-const LAST_TOPUP_DATE = new Date(2026, 4, 12);
 const MIN_TOPUP = 5;
 const MAX_TOPUP = 1000;
 
