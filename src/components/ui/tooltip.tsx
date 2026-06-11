@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Tooltip — short hover/focus explanation for inline affordances.
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 function TooltipProvider(
-  props: React.ComponentProps<typeof TooltipPrimitive.Provider>,
+  props: React.ComponentProps<typeof TooltipPrimitive.Provider>
 ) {
   return <TooltipPrimitive.Provider delay={200} {...props} />;
 }
@@ -36,16 +36,18 @@ function TooltipTrigger({
   return <TooltipPrimitive.Trigger delay={delay} {...props} />;
 }
 
-type TooltipContentProps = React.ComponentProps<typeof TooltipPrimitive.Popup> & {
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  align?: 'start' | 'center' | 'end';
+type TooltipContentProps = React.ComponentProps<
+  typeof TooltipPrimitive.Popup
+> & {
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 };
 
 function TooltipContent({
   className,
-  side = 'top',
-  align = 'center',
+  side = "top",
+  align = "center",
   sideOffset = 6,
   children,
   ...props
@@ -53,18 +55,18 @@ function TooltipContent({
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Positioner
-        side={side}
         align={align}
-        sideOffset={sideOffset}
         className="isolate z-50"
+        side={side}
+        sideOffset={sideOffset}
       >
         <TooltipPrimitive.Popup
-          data-slot="tooltip-content"
           className={cn(
-            'max-w-xs rounded-xs border border-border bg-card px-2 py-1 text-xs leading-snug text-neutral-700 shadow-(--shadow-popup) origin-[var(--transform-origin)]',
-            'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-100 data-[instant]:duration-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
-            className,
+            "max-w-xs origin-[var(--transform-origin)] rounded-xs border border-border bg-card px-2 py-1 text-neutral-700 text-xs leading-snug shadow-(--shadow-popup)",
+            "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-[instant]:duration-0 data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
+            className
           )}
+          data-slot="tooltip-content"
           {...props}
         >
           {children}
@@ -74,4 +76,4 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent };
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

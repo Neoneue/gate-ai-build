@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode, type RefObject } from 'react';
+import type { ReactNode, RefObject } from "react";
 
 /**
  * Optional override for where shadcn primitives' Portals mount.
@@ -15,25 +15,20 @@ import { createContext, useContext, type ReactNode, type RefObject } from 'react
  * Menu, etc.) read this context and pass `container` to their Portal —
  * with a `null` fallback so production behavior is unchanged.
  */
-const PortalTargetContext = createContext<RefObject<HTMLElement | null> | null>(null);
+import { PortalTargetContext } from "@/lib/portal-target-context";
 
 export interface PortalTargetProviderProps {
-  value: RefObject<HTMLElement | null>;
   children: ReactNode;
+  value: RefObject<HTMLElement | null>;
 }
 
-export function PortalTargetProvider({ value, children }: PortalTargetProviderProps) {
+export function PortalTargetProvider({
+  value,
+  children,
+}: PortalTargetProviderProps) {
   return (
     <PortalTargetContext.Provider value={value}>
       {children}
     </PortalTargetContext.Provider>
   );
-}
-
-/**
- * Returns the current portal target ref, or `null` if no provider is in
- * scope (in which case Portals should default to <body>).
- */
-export function usePortalTarget(): RefObject<HTMLElement | null> | null {
-  return useContext(PortalTargetContext);
 }

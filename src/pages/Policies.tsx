@@ -1,17 +1,17 @@
-import { useState, type ComponentType, type SVGProps } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Shield, ShieldAlert, UserRound } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Shield, ShieldAlert, UserRound } from "lucide-react";
+import { type ComponentType, type SVGProps, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 // KPI rail hidden for now — see commented KpiSection below.
 // import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 // import { KpiRail } from '@/components/ui/kpi-rail';
-import { PageTitle } from '@/components/ui/page-title';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { SectionHeading } from '@/components/ui/section-heading';
-import { Segmented } from '@/components/ui/segmented';
-import { Switch } from '@/components/ui/switch';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { PageTitle } from "@/components/ui/page-title";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Segmented } from "@/components/ui/segmented";
+import { Switch } from "@/components/ui/switch";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Policies
@@ -35,7 +35,7 @@ type ActionOption = {
   value: string;
   name: string;
   /** Small all-caps qualifier rendered beside the option name. */
-  flag?: 'DEFAULT';
+  flag?: "DEFAULT";
   description: string;
 };
 
@@ -70,122 +70,124 @@ type PolicyConfig = {
 
 const POLICIES: PolicyConfig[] = [
   {
-    id: 'prompt-injection',
-    name: 'Prompt injection detection',
-    scanTag: 'Input scan',
+    id: "prompt-injection",
+    name: "Prompt injection detection",
+    scanTag: "Input scan",
     icon: Shield,
     description:
-      'Detects direct injection, indirect injection, jailbreak attempts, and obfuscated attacks across every LLM input.',
+      "Detects direct injection, indirect injection, jailbreak attempts, and obfuscated attacks across every LLM input.",
     sensitivity: {
       options: [
-        { value: 'low', label: 'Low' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
+        { value: "low", label: "Low" },
+        { value: "medium", label: "Medium" },
+        { value: "high", label: "High" },
       ],
       caption: (value) => {
-        if (value === 'low')
-          return 'Flags only high-confidence attacks. Fewest false positives.';
-        if (value === 'high')
-          return 'Catches subtle, obfuscated attacks. Expect more false positives.';
-        return 'Balanced detection for typical production traffic. Default.';
+        if (value === "low") {
+          return "Flags only high-confidence attacks. Fewest false positives.";
+        }
+        if (value === "high") {
+          return "Catches subtle, obfuscated attacks. Expect more false positives.";
+        }
+        return "Balanced detection for typical production traffic. Default.";
       },
     },
     action: {
-      helper: 'What to do when a request scores above threshold',
+      helper: "What to do when a request scores above threshold",
       options: [
         {
-          value: 'block',
-          name: 'Block',
-          flag: 'DEFAULT',
-          description: 'Reject the request before it reaches the model.',
+          value: "block",
+          name: "Block",
+          flag: "DEFAULT",
+          description: "Reject the request before it reaches the model.",
         },
         {
-          value: 'flag',
-          name: 'Flag',
+          value: "flag",
+          name: "Flag",
           description:
-            'Request proceeds. Trace is annotated with the detection. Alert fired.',
+            "Request proceeds. Trace is annotated with the detection. Alert fired.",
         },
       ],
     },
   },
   {
-    id: 'pii',
-    name: 'PII / PHI scanner',
-    scanTag: 'Output scan',
+    id: "pii",
+    name: "PII / PHI scanner",
+    scanTag: "Output scan",
     icon: UserRound,
     description:
-      'Scans LLM outputs for personally identifiable information (PII) and protected health information (PHI).',
+      "Scans LLM outputs for personally identifiable information (PII) and protected health information (PHI).",
     scanDirection: {
       options: [
-        { value: 'output', label: 'Output only' },
-        { value: 'input', label: 'Input only' },
-        { value: 'both', label: 'Both' },
+        { value: "output", label: "Output only" },
+        { value: "input", label: "Input only" },
+        { value: "both", label: "Both" },
       ],
       caption:
-        'Output scanning is on by default. Input scanning catches data leaving your perimeter, but agents often legitimately include user data in prompts.',
+        "Output scanning is on by default. Input scanning catches data leaving your perimeter, but agents often legitimately include user data in prompts.",
     },
     action: {
-      helper: 'What to do when PII is detected',
+      helper: "What to do when PII is detected",
       options: [
         {
-          value: 'redact',
-          name: 'Redact',
-          flag: 'DEFAULT',
+          value: "redact",
+          name: "Redact",
+          flag: "DEFAULT",
           description:
-            'Strip PII from the payload, forward the cleaned request.',
+            "Strip PII from the payload, forward the cleaned request.",
         },
         {
-          value: 'flag',
-          name: 'Flag',
+          value: "flag",
+          name: "Flag",
           description:
-            'Response proceeds. Trace is annotated with the detection. Alert fired.',
+            "Response proceeds. Trace is annotated with the detection. Alert fired.",
         },
         {
-          value: 'block',
-          name: 'Block',
+          value: "block",
+          name: "Block",
           description:
-            'Reject the entire request. Use for high-sensitivity environments.',
+            "Reject the entire request. Use for high-sensitivity environments.",
         },
       ],
     },
   },
   {
-    id: 'secrets',
-    name: 'Credential & secrets scanner',
-    scanTag: 'Input + Output scan',
+    id: "secrets",
+    name: "Credential & secrets scanner",
+    scanTag: "Input + Output scan",
     icon: ShieldAlert,
     description:
-      'Detects cloud keys, access tokens, and high-entropy secrets in both user prompts and LLM responses.',
+      "Detects cloud keys, access tokens, and high-entropy secrets in both user prompts and LLM responses.",
     scanDirection: {
       options: [
-        { value: 'output', label: 'Output only' },
-        { value: 'input', label: 'Input only' },
-        { value: 'both', label: 'Both' },
+        { value: "output", label: "Output only" },
+        { value: "input", label: "Input only" },
+        { value: "both", label: "Both" },
       ],
       caption:
-        'Scanning both directions catches secrets in prompts and secrets leaked by the model.',
+        "Scanning both directions catches secrets in prompts and secrets leaked by the model.",
     },
     action: {
-      helper: 'What to do when a credential is found',
+      helper: "What to do when a credential is found",
       options: [
         {
-          value: 'redact',
-          name: 'Redact',
-          flag: 'DEFAULT',
+          value: "redact",
+          name: "Redact",
+          flag: "DEFAULT",
           description:
-            'Replace the credential with a placeholder and forward the cleaned payload.',
+            "Replace the credential with a placeholder and forward the cleaned payload.",
         },
         {
-          value: 'flag',
-          name: 'Flag',
+          value: "flag",
+          name: "Flag",
           description:
-            'Response proceeds. Trace is annotated with the detection. Alert fired.',
+            "Response proceeds. Trace is annotated with the detection. Alert fired.",
         },
         {
-          value: 'block',
-          name: 'Block',
+          value: "block",
+          name: "Block",
           description:
-            'Reject the request before it reaches the upstream model.',
+            "Reject the request before it reaches the upstream model.",
         },
       ],
     },
@@ -204,9 +206,14 @@ type PolicyState = {
 };
 
 const INITIAL_POLICIES: PolicyState[] = [
-  { id: 'prompt-injection', enabled: true, sensitivity: 'medium', action: 'flag' },
-  { id: 'pii', enabled: true, scanDirection: 'output', action: 'redact' },
-  { id: 'secrets', enabled: true, scanDirection: 'output', action: 'redact' },
+  {
+    id: "prompt-injection",
+    enabled: true,
+    sensitivity: "medium",
+    action: "flag",
+  },
+  { id: "pii", enabled: true, scanDirection: "output", action: "redact" },
+  { id: "secrets", enabled: true, scanDirection: "output", action: "redact" },
 ];
 
 // Static KPI constants — kept for when the rail is restored. Detections /
@@ -229,19 +236,19 @@ export function Policies() {
 
   const toggleEnabled = (id: string) =>
     setPolicies((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)),
+      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p))
     );
   const setSensitivity = (id: string, value: string) =>
     setPolicies((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, sensitivity: value } : p)),
+      prev.map((p) => (p.id === id ? { ...p, sensitivity: value } : p))
     );
   const setScanDirection = (id: string, value: string) =>
     setPolicies((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, scanDirection: value } : p)),
+      prev.map((p) => (p.id === id ? { ...p, scanDirection: value } : p))
     );
   const setAction = (id: string, value: string) =>
     setPolicies((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, action: value } : p)),
+      prev.map((p) => (p.id === id ? { ...p, action: value } : p))
     );
 
   const visiblePolicies = (() => {
@@ -255,22 +262,22 @@ export function Policies() {
   return (
     <DashboardChrome
       activeNavId="policies"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
       {/* KPI rail hidden for now — restore <KpiSection /> when wired. */}
       <div className="flex flex-col gap-4">
         {visiblePolicies.map(({ cfg, state }) => (
           <PolicyCard
-            key={cfg.id}
             config={cfg}
-            state={state}
-            onToggle={() => toggleEnabled(cfg.id)}
-            onSensitivityChange={(v) => setSensitivity(cfg.id, v)}
-            onScanDirectionChange={(v) => setScanDirection(cfg.id, v)}
+            key={cfg.id}
             onActionChange={(v) => setAction(cfg.id, v)}
+            onScanDirectionChange={(v) => setScanDirection(cfg.id, v)}
+            onSensitivityChange={(v) => setSensitivity(cfg.id, v)}
+            onToggle={() => toggleEnabled(cfg.id)}
+            state={state}
           />
         ))}
       </div>
@@ -282,12 +289,11 @@ export function Policies() {
 
 function PageHeader() {
   return (
-    <div className="flex flex-col gap-2 max-w-1/2">
+    <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
         Three inline scans run on every routed request. Each has its own
-        settings — tune sensitivity, pick what to detect, choose how to
-        respond.
+        settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>
     </div>
   );
@@ -376,29 +382,27 @@ function PolicyCard({
     // gutter below the tray. Must match the `data-[density=default]:`
     // variant or tailwind-merge won't override the Card's `py-4`.
     // Collapsed cards keep the default py-4.
-    <Card
-      className={state.enabled ? 'data-[density=default]:pb-0' : undefined}
-    >
+    <Card className={state.enabled ? "data-[density=default]:pb-0" : undefined}>
       {/* Header row — always visible. */}
       <div className="flex items-start gap-3 px-4">
         {/* Bare lucide icon — no wrapper box. */}
-        <Icon className="size-5 text-neutral-700 mt-1 shrink-0" aria-hidden />
-        <div className="flex flex-col gap-1 min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-sans text-base/6 font-medium text-neutral-900 m-0">
+        <Icon aria-hidden className="mt-1 size-5 shrink-0 text-neutral-700" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="m-0 font-medium font-sans text-base/6 text-neutral-900">
               {config.name}
             </h3>
             <Badge variant="neutral">{config.scanTag}</Badge>
           </div>
-          <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
+          <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
             {config.description}
           </p>
         </div>
         <Switch
+          aria-label={`${config.name} — ${state.enabled ? "enabled" : "disabled"}`}
           checked={state.enabled}
-          onCheckedChange={onToggle}
-          aria-label={`${config.name} — ${state.enabled ? 'enabled' : 'disabled'}`}
           className="mt-1 shrink-0"
+          onCheckedChange={onToggle}
         />
       </div>
 
@@ -406,15 +410,24 @@ function PolicyCard({
           neutral-50 tray + nested white Cards group the two columns so they
           read as panels, not free-floating controls. */}
       {state.enabled ? (
-        <div className="grid grid-cols-2 items-start gap-4 border-t border-border bg-card p-4">
-          <Card className="shadow-none border border-border bg-transparent">
+        <div className="grid grid-cols-2 items-start gap-4 border-border border-t bg-card p-4">
+          <Card className="border border-border bg-transparent shadow-none">
             <CardContent>
-              <SettingsHalf config={config} state={state} onSensitivityChange={onSensitivityChange} onScanDirectionChange={onScanDirectionChange} />
+              <SettingsHalf
+                config={config}
+                onScanDirectionChange={onScanDirectionChange}
+                onSensitivityChange={onSensitivityChange}
+                state={state}
+              />
             </CardContent>
           </Card>
-          <Card className="shadow-none border border-border bg-transparent">
+          <Card className="border border-border bg-transparent shadow-none">
             <CardContent>
-              <ActionHalf config={config} value={state.action} onChange={onActionChange} />
+              <ActionHalf
+                config={config}
+                onChange={onActionChange}
+                value={state.action}
+              />
             </CardContent>
           </Card>
         </div>
@@ -442,20 +455,20 @@ function SettingsHalf({
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
           <SectionHeading as="h4">Sensitivity</SectionHeading>
-          <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
+          <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
             How aggressive to be when scoring inputs
           </p>
         </div>
         <Segmented
           aria-label="Sensitivity"
-          variant="pill"
-          size="default"
-          options={config.sensitivity.options}
-          value={value}
-          onChange={onSensitivityChange}
           className="mt-4"
+          onChange={onSensitivityChange}
+          options={config.sensitivity.options}
+          size="default"
+          value={value}
+          variant="pill"
         />
-        <p className="font-sans text-xs text-neutral-500 m-0 mt-3 tracking-tight text-pretty">
+        <p className="m-0 mt-3 text-pretty font-sans text-neutral-500 text-xs tracking-tight">
           {config.sensitivity.caption(value)}
         </p>
       </div>
@@ -469,20 +482,20 @@ function SettingsHalf({
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
         <SectionHeading as="h4">Scan direction</SectionHeading>
-        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
+        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
           Which side of the request to scan
         </p>
       </div>
       <Segmented
         aria-label="Scan direction"
-        variant="pill"
-        size="default"
-        options={scan.options}
-        value={value}
-        onChange={onScanDirectionChange}
         className="mt-4"
+        onChange={onScanDirectionChange}
+        options={scan.options}
+        size="default"
+        value={value}
+        variant="pill"
       />
-      <p className="font-sans text-xs text-neutral-500 m-0 mt-3 tracking-tight text-pretty">
+      <p className="m-0 mt-3 text-pretty font-sans text-neutral-500 text-xs tracking-tight">
         {scan.caption}
       </p>
     </div>
@@ -504,42 +517,55 @@ function ActionHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" id={headingId}>Action on detection</SectionHeading>
-        <p className="font-sans text-sm text-neutral-500 m-0 text-pretty">
+        <SectionHeading as="h4" id={headingId}>
+          Action on detection
+        </SectionHeading>
+        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
           {config.action.helper}
         </p>
       </div>
-      <RadioGroup aria-labelledby={headingId} value={value} onValueChange={onChange} className="mt-4 gap-2">
+      <RadioGroup
+        aria-labelledby={headingId}
+        className="mt-4 gap-2"
+        onValueChange={onChange}
+        value={value}
+      >
         {config.action.options.map((opt) => {
           const selected = opt.value === value;
           const nameId = `action-${config.id}-${opt.value}-name`;
           const descId = `action-${config.id}-${opt.value}-desc`;
           return (
             <label
-              key={opt.value}
               className={
-                'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors duration-150 ease-out ' +
+                "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ease-out" +
                 (selected
-                  ? 'border-foreground bg-neutral-50'
-                  : 'border-border bg-transparent hover:bg-neutral-50')
+                  ? "border-foreground bg-neutral-50"
+                  : "border-border bg-transparent hover:bg-neutral-50")
               }
+              key={opt.value}
             >
               <RadioGroupItem
-                value={opt.value}
-                aria-labelledby={nameId}
                 aria-describedby={descId}
+                aria-labelledby={nameId}
                 className="mt-1"
+                value={opt.value}
               />
-              <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span id={nameId} className="font-sans text-sm font-medium text-neutral-900">
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span
+                    className="font-medium font-sans text-neutral-900 text-sm"
+                    id={nameId}
+                  >
                     {opt.name}
                   </span>
                   {opt.flag ? (
                     <Badge variant="neutral">{opt.flag}</Badge>
                   ) : null}
                 </div>
-                <span id={descId} className="font-sans text-xs text-neutral-500 tracking-tight text-pretty">
+                <span
+                  className="text-pretty font-sans text-neutral-500 text-xs tracking-tight"
+                  id={descId}
+                >
                   {opt.description}
                 </span>
               </div>

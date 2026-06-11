@@ -1,11 +1,11 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva, type VariantProps } from "class-variance-authority";
+import type * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const inputVariants = cva(
   // Surface mirrors <SelectTrigger /> so inputs and triggers share a row.
-  "w-full min-w-0 rounded-sm border border-border text-neutral-800 transition-colors motion-reduce:transition-none outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-100 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+  "w-full min-w-0 rounded-sm border border-border text-neutral-800 outline-none transition-colors file:inline-flex file:h-6 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-100 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 motion-reduce:transition-none",
   {
     variants: {
       size: {
@@ -29,7 +29,7 @@ const inputVariants = cva(
       surface: "card",
     },
   }
-)
+);
 
 function Input({
   className,
@@ -41,12 +41,12 @@ function Input({
   VariantProps<typeof inputVariants>) {
   return (
     <input
-      type={type}
-      data-slot="input"
       className={cn(inputVariants({ size, surface, className }))}
+      data-slot="input"
+      type={type}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };

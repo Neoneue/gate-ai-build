@@ -1,7 +1,7 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * SettingsRow — title + subtitle on the left, control on the right.
@@ -39,27 +39,27 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface SettingsRowProps {
-  /** Id of the inner control — required when titleAs="label" (default
-   *  behavior). Wires the click target via `<Label htmlFor={id}>`. */
-  id?: string;
-  title: string;
-  subtitle: string;
-  control: React.ReactNode;
-  /** First row in the list — omit the top divider. */
-  first?: boolean;
-  /** Title renders as a non-label span (no `htmlFor`). Used when the
-   *  right-side affordance is read-only (Badge, etc.). */
-  static?: boolean;
-  /** Override the title rendering element. Defaults: 'label' when
-   *  `static` is false, 'span' when `static` is true. Pass 'h4' to render
-   *  as a heading (e.g. when the row sits inside a Card with a CardTitle
-   *  section heading and needs to nest semantically). */
-  titleAs?: 'label' | 'span' | 'h4';
   /** Vertical alignment of the row's two columns. Defaults to
    *  `items-center`. Pass `alignTop` for `items-start` when the title or
    *  subtitle may wrap. */
   alignTop?: boolean;
   className?: string;
+  control: React.ReactNode;
+  /** First row in the list — omit the top divider. */
+  first?: boolean;
+  /** Id of the inner control — required when titleAs="label" (default
+   *  behavior). Wires the click target via `<Label htmlFor={id}>`. */
+  id?: string;
+  /** Title renders as a non-label span (no `htmlFor`). Used when the
+   *  right-side affordance is read-only (Badge, etc.). */
+  static?: boolean;
+  subtitle: string;
+  title: string;
+  /** Override the title rendering element. Defaults: 'label' when
+   *  `static` is false, 'span' when `static` is true. Pass 'h4' to render
+   *  as a heading (e.g. when the row sits inside a Card with a CardTitle
+   *  section heading and needs to nest semantically). */
+  titleAs?: "label" | "span" | "h4";
 }
 
 export function SettingsRow({
@@ -73,34 +73,34 @@ export function SettingsRow({
   alignTop = false,
   className,
 }: SettingsRowProps) {
-  const effectiveTitleAs: 'label' | 'span' | 'h4' =
-    titleAs ?? (isStatic ? 'span' : 'label');
+  const effectiveTitleAs: "label" | "span" | "h4" =
+    titleAs ?? (isStatic ? "span" : "label");
 
   const titleClass =
-    effectiveTitleAs === 'h4'
-      ? 'font-sans text-sm font-medium text-neutral-900 m-0'
-      : 'font-sans text-neutral-900 font-medium text-sm leading-none';
+    effectiveTitleAs === "h4"
+      ? "font-sans text-sm font-medium text-neutral-900 m-0"
+      : "font-sans text-neutral-900 font-medium text-sm leading-none";
 
   return (
     <div
       className={cn(
-        'flex justify-between gap-6 py-4',
-        alignTop ? 'items-start' : 'items-center',
-        first ? '' : 'border-t border-border',
-        className,
+        "flex justify-between gap-6 py-4",
+        alignTop ? "items-start" : "items-center",
+        first ? "" : "border-border border-t",
+        className
       )}
     >
-      <div className="flex flex-col gap-1 min-w-0">
-        {effectiveTitleAs === 'label' ? (
-          <Label htmlFor={id} className="text-neutral-900 font-medium text-sm">
+      <div className="flex min-w-0 flex-col gap-1">
+        {effectiveTitleAs === "label" ? (
+          <Label className="font-medium text-neutral-900 text-sm" htmlFor={id}>
             {title}
           </Label>
-        ) : effectiveTitleAs === 'h4' ? (
+        ) : effectiveTitleAs === "h4" ? (
           <h4 className={titleClass}>{title}</h4>
         ) : (
           <span className={titleClass}>{title}</span>
         )}
-        <p className="font-sans text-sm text-neutral-500 text-pretty m-0">
+        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
           {subtitle}
         </p>
       </div>

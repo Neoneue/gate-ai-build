@@ -1,4 +1,12 @@
-import type { ComponentType, SVGProps } from 'react';
+import type { ComponentType, SVGProps } from "react";
+import {
+  AzureIcon,
+  BedrockIcon,
+  FireworksIcon,
+  GroqIcon,
+  TogetherIcon,
+  VertexIcon,
+} from "./marketplace-providers";
 import {
   AnthropicIcon,
   CohereIcon,
@@ -8,15 +16,7 @@ import {
   MetaIcon,
   MistralIcon,
   OpenAIIcon,
-} from './model-providers';
-import {
-  AzureIcon,
-  BedrockIcon,
-  FireworksIcon,
-  GroqIcon,
-  TogetherIcon,
-  VertexIcon,
-} from './marketplace-providers';
+} from "./model-providers";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Vendor meta — canonical mapping of model providers to brand color, icon,
@@ -37,14 +37,14 @@ import {
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type Vendor =
-  | 'anthropic'
-  | 'xai'
-  | 'google'
-  | 'openai'
-  | 'meta'
-  | 'mistral'
-  | 'deepseek'
-  | 'cohere';
+  | "anthropic"
+  | "xai"
+  | "google"
+  | "openai"
+  | "meta"
+  | "mistral"
+  | "deepseek"
+  | "cohere";
 
 export interface VendorMeta {
   color: string;
@@ -53,26 +53,15 @@ export interface VendorMeta {
 }
 
 export const VENDOR_META: Record<Vendor, VendorMeta> = {
-  anthropic: { color: '#D97757', icon: AnthropicIcon, label: 'Anthropic' },
-  xai:       { color: '#3D3D3D', icon: GrokIcon,      label: 'xAI' },
-  google:    { color: '#4285F4', icon: GeminiIcon,    label: 'Google' },
-  openai:    { color: '#3D3D3D', icon: OpenAIIcon,    label: 'OpenAI' },
-  meta:      { color: '#0064E0', icon: MetaIcon,      label: 'Meta' },
-  mistral:   { color: '#FA520F', icon: MistralIcon,   label: 'Mistral' },
-  deepseek:  { color: '#4D6BFE', icon: DeepSeekIcon,  label: 'DeepSeek' },
-  cohere:    { color: '#FF7759', icon: CohereIcon,    label: 'Cohere' },
+  anthropic: { color: "#D97757", icon: AnthropicIcon, label: "Anthropic" },
+  xai: { color: "#3D3D3D", icon: GrokIcon, label: "xAI" },
+  google: { color: "#4285F4", icon: GeminiIcon, label: "Google" },
+  openai: { color: "#3D3D3D", icon: OpenAIIcon, label: "OpenAI" },
+  meta: { color: "#0064E0", icon: MetaIcon, label: "Meta" },
+  mistral: { color: "#FA520F", icon: MistralIcon, label: "Mistral" },
+  deepseek: { color: "#4D6BFE", icon: DeepSeekIcon, label: "DeepSeek" },
+  cohere: { color: "#FF7759", icon: CohereIcon, label: "Cohere" },
 };
-
-export const PROVIDER_ORDER: Vendor[] = [
-  'anthropic',
-  'openai',
-  'google',
-  'xai',
-  'meta',
-  'mistral',
-  'deepseek',
-  'cohere',
-];
 
 /**
  * Provider glyph rendered in its native brand color — no chip wrapper,
@@ -99,42 +88,6 @@ export const PROVIDER_ORDER: Vendor[] = [
 /** Avatar size keys. `sm` (size-4 = 16px) is the default in tables / row
  *  cells. `md` (size-5 = 20px) pairs with `text-xl` titles. `lg` (size-6
  *  = 24px) pairs with `text-2xl` titles. Stay on the icon ladder. */
-type VendorAvatarSize = 'sm' | 'md' | 'lg';
-const VENDOR_AVATAR_SIZE: Record<VendorAvatarSize, string> = {
-  sm: 'size-4',
-  md: 'size-5',
-  lg: 'size-6',
-};
-
-export function VendorAvatar({
-  vendor,
-  decorative = false,
-  size = 'sm',
-}: {
-  vendor: Vendor;
-  decorative?: boolean;
-  size?: VendorAvatarSize;
-}) {
-  const meta = VENDOR_META[vendor];
-  const Icon = meta.icon;
-  // Wrapper carries `shrink-0` so flex parents behave the same as when the
-  // primitive returned a bare `<Icon shrink-0 />`. The sr-only label means
-  // every consumer gets vendor identity announced without injecting custom
-  // sr-only spans at the call site. Pass `decorative` when the surrounding
-  // chrome already carries an aggregated label (e.g. a row of avatars
-  // labeled "Anthropic, OpenAI, Mistral" at the cell level).
-  return (
-    <span className="inline-flex shrink-0 items-center">
-      <Icon
-        className={VENDOR_AVATAR_SIZE[size]}
-        style={{ color: meta.color }}
-        aria-hidden="true"
-      />
-      {!decorative ? <span className="sr-only">{meta.label}</span> : null}
-    </span>
-  );
-}
-
 /* ─────────────────────────────────────────────────────────────────────────
  * Marketplace providers — AI-infrastructure hosts that serve other
  * vendors' models (AWS Bedrock, Azure OpenAI, Google Vertex, Together,
@@ -151,12 +104,12 @@ export function VendorAvatar({
  * ───────────────────────────────────────────────────────────────────────── */
 
 export type MarketplaceProvider =
-  | 'bedrock'
-  | 'azure'
-  | 'vertex'
-  | 'together'
-  | 'fireworks'
-  | 'groq';
+  | "bedrock"
+  | "azure"
+  | "vertex"
+  | "together"
+  | "fireworks"
+  | "groq";
 
 export interface MarketplaceMeta {
   color: string;
@@ -165,12 +118,12 @@ export interface MarketplaceMeta {
 }
 
 export const MARKETPLACE_META: Record<MarketplaceProvider, MarketplaceMeta> = {
-  bedrock:   { color: '#3D8FFF', icon: BedrockIcon,   label: 'AWS Bedrock' },
-  azure:     { color: '#0078D4', icon: AzureIcon,     label: 'Azure OpenAI' },
-  vertex:    { color: '#4285F4', icon: VertexIcon,    label: 'Google Vertex' },
-  together:  { color: '#EF2CC1', icon: TogetherIcon,  label: 'Together AI' },
-  fireworks: { color: '#5019C5', icon: FireworksIcon, label: 'Fireworks AI' },
-  groq:      { color: '#F55036', icon: GroqIcon,      label: 'Groq' },
+  bedrock: { color: "#3D8FFF", icon: BedrockIcon, label: "AWS Bedrock" },
+  azure: { color: "#0078D4", icon: AzureIcon, label: "Azure OpenAI" },
+  vertex: { color: "#4285F4", icon: VertexIcon, label: "Google Vertex" },
+  together: { color: "#EF2CC1", icon: TogetherIcon, label: "Together AI" },
+  fireworks: { color: "#5019C5", icon: FireworksIcon, label: "Fireworks AI" },
+  groq: { color: "#F55036", icon: GroqIcon, label: "Groq" },
 };
 
 /**
@@ -182,23 +135,3 @@ export const MARKETPLACE_META: Record<MarketplaceProvider, MarketplaceMeta> = {
  * because their fills are pinned. Mono SVGs (Groq) are painted by the
  * wrapper.
  */
-export function MarketplaceAvatar({
-  provider,
-  decorative = false,
-}: {
-  provider: MarketplaceProvider;
-  decorative?: boolean;
-}) {
-  const meta = MARKETPLACE_META[provider];
-  const Icon = meta.icon;
-  return (
-    <span className="inline-flex shrink-0 items-center">
-      <Icon
-        className="size-4"
-        style={{ color: meta.color }}
-        aria-hidden="true"
-      />
-      {!decorative ? <span className="sr-only">{meta.label}</span> : null}
-    </span>
-  );
-}

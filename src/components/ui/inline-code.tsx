@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * InlineCode — short identifier chip rendered as a `<code>` element.
@@ -19,27 +19,26 @@ import { cn } from '@/lib/utils';
  * default is text-sm.
  * ───────────────────────────────────────────────────────────────────── */
 
-export interface InlineCodeProps
-  extends React.HTMLAttributes<HTMLElement> {
+export interface InlineCodeProps extends React.HTMLAttributes<HTMLElement> {
   /** Chip size. `default` = text-sm; `sm` = text-xs (table-cell density). */
-  size?: 'default' | 'sm';
+  size?: "default" | "sm";
 }
 
 export function InlineCode({
-  size = 'default',
+  size = "default",
   className,
   children,
   ...props
 }: InlineCodeProps) {
   return (
     <code
-      data-slot="inline-code"
-      data-size={size}
       className={cn(
-        'font-mono text-neutral-800 bg-neutral-100 rounded-xs px-1 py-0',
-        size === 'sm' ? 'text-xs' : 'text-sm',
-        className,
+        "rounded-xs bg-neutral-100 px-1 py-0 font-mono text-neutral-800",
+        size === "sm" ? "text-xs" : "text-sm",
+        className
       )}
+      data-size={size}
+      data-slot="inline-code"
       {...props}
     >
       {children}

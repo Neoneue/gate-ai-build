@@ -1,0 +1,68 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core", "ultracite/biome/react"],
+  // src/index.css is Tailwind v4 syntax (@theme, @custom-variant) that Biome's
+  // CSS parser cannot read; Tailwind owns that file.
+  "files": { "includes": ["!src/index.css"] },
+  // Adoption tuning (2026-06-10): ultracite preset kept for formatting and the
+  // correctness/suspicious rule set. The opinion rules below conflicted with
+  // established house conventions at adoption (423 violations) and are off
+  // deliberately — see docs/improve-audit-2026-06-10.md. The a11y batch is
+  // parked for a dedicated accessibility pass (/rams), not rejected.
+  "linter": {
+    "rules": {
+      "style": {
+        "noNestedTernary": "off",
+        "noNonNullAssertion": "off",
+        "useAtIndex": "off",
+        "useConsistentArrayType": "off",
+        "useConsistentTypeDefinitions": "off",
+        "useDefaultSwitchClause": "off",
+        "useFilenamingConvention": "off",
+        "useForOf": "off",
+        "useTemplate": "off"
+      },
+      "a11y": {
+        "noLabelWithoutControl": "off",
+        "noNoninteractiveElementInteractions": "off",
+        "noRedundantRoles": "off",
+        "noStaticElementInteractions": "off",
+        "noSvgWithoutTitle": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useKeyWithClickEvents": "off",
+        "useSemanticElements": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off",
+        "noForEach": "off",
+        "noUselessSwitchCase": "off",
+        "noVoid": "off",
+        "useLiteralKeys": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noBitwiseOperators": "off",
+        "noReactForwardRef": "off",
+        "noTemplateCurlyInString": "off"
+      },
+      "correctness": {
+        "noNestedComponentDefinitions": "off",
+        "useImageSize": "off"
+      },
+      "performance": {
+        "noNamespaceImport": "off",
+        "useTopLevelRegex": "off"
+      }
+    }
+  },
+  // src/index.css is Tailwind v4 syntax (@theme, @custom-variant) that Biome's
+  // CSS parser cannot read; Tailwind owns that file entirely.
+  "overrides": [
+    {
+      "includes": ["src/index.css"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false }
+    }
+  ]
+}

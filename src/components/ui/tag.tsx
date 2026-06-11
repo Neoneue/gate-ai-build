@@ -1,11 +1,11 @@
-import type { ReactNode, MouseEvent } from 'react';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { X } from "lucide-react";
+import type { MouseEvent, ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export interface TagProps {
   children: ReactNode;
-  onRemove?: (e: MouseEvent<HTMLButtonElement>) => void;
   className?: string;
+  onRemove?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
 /**
@@ -16,10 +16,10 @@ export function Tag({ children, onRemove, className }: TagProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center h-6 rounded-full bg-neutral-100 border border-border',
-        'text-neutral-900 font-sans text-xs gap-2',
-        onRemove ? 'pr-1 pl-2' : 'px-3',
-        className,
+        "inline-flex h-6 items-center rounded-full border border-border bg-neutral-100",
+        "gap-2 font-sans text-neutral-900 text-xs",
+        onRemove ? "pr-1 pl-2" : "px-3",
+        className
       )}
     >
       <span>{children}</span>
@@ -29,10 +29,12 @@ export function Tag({ children, onRemove, className }: TagProps) {
         // adjacent tags don't collide. `transition-colors` is explicit
         // (skill: performance.md — never `transition: all`).
         <button
-          type="button"
+          aria-label={
+            typeof children === "string" ? `Remove ${children}` : "Remove"
+          }
+          className="relative inline-flex size-3.5 items-center justify-center rounded-full text-neutral-600 transition-colors duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-200 hover:text-neutral-900"
           onClick={onRemove}
-          aria-label={typeof children === 'string' ? `Remove ${children}` : 'Remove'}
-          className="relative inline-flex items-center justify-center size-3.5 rounded-full text-neutral-600 transition-colors duration-150 ease-out hover:text-neutral-900 hover:bg-neutral-200 after:absolute after:-inset-2 after:content-['']"
+          type="button"
         >
           <X size={10} strokeWidth={2} />
         </button>

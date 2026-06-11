@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DetailList / DetailRow — bordered label/value list for modal "Details"
@@ -26,18 +26,18 @@ export function DetailList({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="detail-list"
       className={cn(
-        'rounded-md border border-border overflow-hidden',
-        className,
+        "overflow-hidden rounded-md border border-border",
+        className
       )}
+      data-slot="detail-list"
       {...props}
     />
   );
 }
 
 export interface DetailRowProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
   label: React.ReactNode;
   value: React.ReactNode;
 }
@@ -50,15 +50,15 @@ export function DetailRow({
 }: DetailRowProps) {
   return (
     <div
-      data-slot="detail-row"
       className={cn(
-        'flex items-start gap-4 px-4 py-3 border-b border-border last:border-b-0',
-        className,
+        "flex items-start gap-4 border-border border-b px-4 py-3 last:border-b-0",
+        className
       )}
+      data-slot="detail-row"
       {...props}
     >
-      <span className="w-32 shrink-0 text-sm text-neutral-500">{label}</span>
-      <div className="flex-1 min-w-0 text-sm">{value}</div>
+      <span className="w-32 shrink-0 text-neutral-500 text-sm">{label}</span>
+      <div className="min-w-0 flex-1 text-sm">{value}</div>
     </div>
   );
 }

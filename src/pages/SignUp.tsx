@@ -1,8 +1,8 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,90 +10,104 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
-import { GoogleG } from "@/components/ui/google-g"
-import { Input } from "@/components/ui/input"
-import { TextLink } from "@/components/ui/text-link"
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
+import { GoogleG } from "@/components/ui/google-g";
+import { Input } from "@/components/ui/input";
+import { TextLink } from "@/components/ui/text-link";
 
 export function SignUp() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState("")
-  const [invite, setInvite] = useState("")
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [invite, setInvite] = useState("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+    e.preventDefault();
   }
 
   return (
     <Card className="w-100 rounded-lg shadow-(--shadow-modal) data-[density=default]:py-6">
-        <CardHeader className="gap-y-2 px-6">
-          <CardTitle className="text-xl">Enter your invite code</CardTitle>
-          <CardDescription>
-            Sign-ups are currently invite-only. Drop your code in to continue.
-          </CardDescription>
-        </CardHeader>
+      <CardHeader className="gap-y-2 px-6">
+        <CardTitle className="text-xl">Enter your invite code</CardTitle>
+        <CardDescription>
+          Sign-ups are currently invite-only. Drop your code in to continue.
+        </CardDescription>
+      </CardHeader>
 
-        <CardContent className="px-6">
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email" className="text-neutral-600">Work email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  autoComplete="email"
-                  spellCheck={false}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
+      <CardContent className="px-6">
+        <form onSubmit={handleSubmit}>
+          <FieldGroup>
+            <Field>
+              <FieldLabel className="text-neutral-600" htmlFor="email">
+                Work email
+              </FieldLabel>
+              <Input
+                autoComplete="email"
+                id="email"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                spellCheck={false}
+                type="email"
+                value={email}
+              />
+            </Field>
 
-              <Field>
-                <FieldLabel htmlFor="invite" className="text-neutral-600">Invite code</FieldLabel>
-                <Input
-                  id="invite"
-                  type="text"
-                  placeholder="e.g. ABC123-XYZ789"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={invite}
-                  onChange={(e) => setInvite(e.target.value)}
-                  className="font-mono"
-                />
-              </Field>
+            <Field>
+              <FieldLabel className="text-neutral-600" htmlFor="invite">
+                Invite code
+              </FieldLabel>
+              <Input
+                autoComplete="off"
+                className="font-mono"
+                id="invite"
+                onChange={(e) => setInvite(e.target.value)}
+                placeholder="e.g. ABC123-XYZ789"
+                spellCheck={false}
+                type="text"
+                value={invite}
+              />
+            </Field>
 
-              <Button type="submit" size="lg" className="relative w-full">
-                Continue with email
-                <ArrowRight
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  aria-hidden
-                />
-              </Button>
+            <Button className="relative w-full" size="lg" type="submit">
+              Continue with email
+              <ArrowRight
+                aria-hidden
+                className="absolute top-1/2 right-3 -translate-y-1/2"
+              />
+            </Button>
 
-              <FieldSeparator>or</FieldSeparator>
+            <FieldSeparator>or</FieldSeparator>
 
-              <Button type="button" variant="outline" size="lg" className="w-full">
-                <GoogleG />
-                Continue with Google
-              </Button>
-            </FieldGroup>
+            <Button
+              className="w-full"
+              size="lg"
+              type="button"
+              variant="outline"
+            >
+              <GoogleG />
+              Continue with Google
+            </Button>
+          </FieldGroup>
 
-            <p className="mt-4 text-center text-xs/5 text-neutral-500">
-              Your invite code is single-use. Find it in your welcome email.
-            </p>
-          </form>
-        </CardContent>
-
-        <CardFooter className="justify-center p-6 pt-2">
-          <p className="text-xs text-neutral-500">
-            Already have an account?{" "}
-            <TextLink className="text-xs" onClick={() => navigate("/sign-in")}>
-              Sign in
-            </TextLink>
+          <p className="mt-4 text-center text-neutral-500 text-xs/5">
+            Your invite code is single-use. Find it in your welcome email.
           </p>
-        </CardFooter>
-      </Card>
-  )
+        </form>
+      </CardContent>
+
+      <CardFooter className="justify-center p-6 pt-2">
+        <p className="text-neutral-500 text-xs">
+          Already have an account?{" "}
+          <TextLink className="text-xs" onClick={() => navigate("/sign-in")}>
+            Sign in
+          </TextLink>
+        </p>
+      </CardFooter>
+    </Card>
+  );
 }

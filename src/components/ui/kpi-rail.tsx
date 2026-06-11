@@ -1,6 +1,6 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * KpiRail — bordered single-row container with inset divider hairlines
@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const DIVIDER_CLS =
-  'relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-neutral-200';
+  "relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-neutral-200";
 
 /* Responsive column ladder. At narrow viewports (≤sm = 640px) KPI tiles
  * need at least ~180px each to read; below that the eyebrow + hero +
@@ -42,11 +42,11 @@ const DIVIDER_CLS =
  * but not load-bearing. Acceptable trade for keeping the primitive
  * single-axis. */
 const COLUMN_CLS: Record<number, string> = {
-  2: 'grid-cols-1 sm:grid-cols-2',
-  3: 'grid-cols-1 sm:grid-cols-3',
-  4: 'grid-cols-2 md:grid-cols-4',
-  5: 'grid-cols-3 lg:grid-cols-5',
-  6: 'grid-cols-3 lg:grid-cols-6',
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-4",
+  5: "grid-cols-3 lg:grid-cols-5",
+  6: "grid-cols-3 lg:grid-cols-6",
 };
 
 export interface KpiRailProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -64,9 +64,9 @@ export function KpiRail({
   return (
     <div
       className={cn(
-        'grid rounded-md bg-card border border-border shadow-xs overflow-hidden',
+        "grid overflow-hidden rounded-md border border-border bg-card shadow-xs",
         COLUMN_CLS[columns],
-        className,
+        className
       )}
       {...props}
     >
@@ -74,10 +74,10 @@ export function KpiRail({
         i === 0 ? (
           <React.Fragment key={i}>{child}</React.Fragment>
         ) : (
-          <div key={i} className={DIVIDER_CLS}>
+          <div className={DIVIDER_CLS} key={i}>
             {child}
           </div>
-        ),
+        )
       )}
     </div>
   );

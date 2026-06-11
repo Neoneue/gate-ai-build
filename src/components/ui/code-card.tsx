@@ -1,7 +1,11 @@
-import * as React from 'react';
-import { CopyButton } from '@/components/ui/copy-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import type * as React from "react";
+import { CopyButton } from "@/components/ui/copy-button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CodeCard family — primitives for CMP-012.
@@ -37,73 +41,73 @@ import { cn } from '@/lib/utils';
 /* ── Token model ─────────────────────────────────────────────────────────── */
 
 export type CodeTone =
-  | 'default'   // neutral-900 light · neutral-100 (faint white) on dark
-  | 'muted'     // neutral-500 light · neutral-400 on dark — comments, slashes, dividers
-  | 'keyword'   // syntax-keyword — curl, -H, -d, export, npm
-  | 'string'    // success-2 — quoted strings
-  | 'variable'  // syntax-variable — $KEY, interpolated values
-  | 'property'  // syntax-property — JSON keys
-  | 'number'    // syntax-terminal-blue — numeric values, status codes
-  | 'success';  // success — exit codes, "OK"
+  | "default" // neutral-900 light · neutral-100 (faint white) on dark
+  | "muted" // neutral-500 light · neutral-400 on dark — comments, slashes, dividers
+  | "keyword" // syntax-keyword — curl, -H, -d, export, npm
+  | "string" // success-2 — quoted strings
+  | "variable" // syntax-variable — $KEY, interpolated values
+  | "property" // syntax-property — JSON keys
+  | "number" // syntax-terminal-blue — numeric values, status codes
+  | "success"; // success — exit codes, "OK"
 
 export interface CodeToken {
-  text: string;
-  tone?: CodeTone;
   /** Amber highlight (e.g. a matched finding substring). Marked with
    *  `data-code-highlight` so callers can scroll it into view. */
   highlight?: boolean;
+  text: string;
+  tone?: CodeTone;
 }
 
 export type CodeLine = CodeToken[];
 
 const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
-  default:  'text-neutral-900',
-  muted:    'text-neutral-500',
-  keyword:  'text-[var(--color-syntax-keyword)]',
+  default: "text-neutral-900",
+  muted: "text-neutral-500",
+  keyword: "text-[var(--color-syntax-keyword)]",
   // Brand palette: keys = blue-700 (--color-syntax-property), all literal
   // values = success-700 green (--color-syntax-terminal-blue). One hue per
   // role — keys vs values — using the codebase's own ramp instead of an
   // external palette so the JSON view stays on-brand.
-  string:   'text-[var(--color-syntax-terminal-blue)]',
-  variable: 'text-[var(--color-syntax-variable)]',
-  property: 'text-[var(--color-syntax-property)]',
-  number:   'text-[var(--color-syntax-terminal-blue)]',
-  success:  'text-success-700',
+  string: "text-[var(--color-syntax-terminal-blue)]",
+  variable: "text-[var(--color-syntax-variable)]",
+  property: "text-[var(--color-syntax-property)]",
+  number: "text-[var(--color-syntax-terminal-blue)]",
+  success: "text-success-700",
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
-  default:  'text-neutral-100',
-  muted:    'text-neutral-400',
-  keyword:  'text-[var(--color-syntax-variable)]', // dark terminal: keywords render as amber, matches Paper
-  string:   'text-success-500',
-  variable: 'text-[var(--color-syntax-variable)]',
-  property: 'text-[var(--color-syntax-terminal-blue)]',
-  number:   'text-[var(--color-syntax-terminal-blue)]',
-  success:  'text-success-500',
+  default: "text-neutral-100",
+  muted: "text-neutral-400",
+  keyword: "text-[var(--color-syntax-variable)]", // dark terminal: keywords render as amber, matches Paper
+  string: "text-success-500",
+  variable: "text-[var(--color-syntax-variable)]",
+  property: "text-[var(--color-syntax-terminal-blue)]",
+  number: "text-[var(--color-syntax-terminal-blue)]",
+  success: "text-success-500",
 };
 
 /* ── Outer card shells ───────────────────────────────────────────────────── */
 
 interface CodeCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  elevation?: 'flat' | 'raised';
+  elevation?: "flat" | "raised";
 }
 
 export function CodeCard({
   className,
-  elevation = 'flat',
+  elevation = "flat",
   ...props
 }: CodeCardProps) {
   return (
     <div
-      data-slot="code-card"
       className={cn(
         // flat default uses the everyday material tier (shadow-as-border);
         // raised promotes to the popup elevation token so all floating
         // surfaces (cards, selects, dialogs, tooltips) read as one family.
-        'flex flex-col overflow-hidden rounded-md bg-card shadow-(--shadow-border)',
-        elevation === 'raised' && 'shadow-(--shadow-popup)',
-        className,
+        "flex flex-col overflow-hidden rounded-md bg-card shadow-(--shadow-border)",
+        elevation === "raised" && "shadow-(--shadow-popup)",
+        className
       )}
+      data-slot="code-card"
       {...props}
     />
   );
@@ -115,11 +119,11 @@ export function CodeCardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="code-card-header"
       className={cn(
-        'flex items-center justify-between gap-3 px-4 py-2 bg-neutral-100 border-b border-border',
-        className,
+        "flex items-center justify-between gap-3 border-border border-b bg-neutral-100 px-4 py-2",
+        className
       )}
+      data-slot="code-card-header"
       {...props}
     />
   );
@@ -128,10 +132,10 @@ export function CodeCardHeader({
 /* ── Tabs strip (visual; behaviour is opt-in via onChange) ───────────────── */
 
 export interface CodeCardTabsProps {
-  items: string[];
   active: string;
-  onChange?: (value: string) => void;
   className?: string;
+  items: string[];
+  onChange?: (value: string) => void;
 }
 
 export function CodeCardTabs({
@@ -140,7 +144,7 @@ export function CodeCardTabs({
   onChange,
   className,
 }: CodeCardTabsProps) {
-  const interactive = typeof onChange === 'function';
+  const interactive = typeof onChange === "function";
   // We do NOT declare `role="tablist"`/`role="tab"` here. The full WAI-ARIA
   // tab pattern requires arrow-key focus management, Home/End jumps,
   // tabIndex={-1} on inactive tabs, and `role="tabpanel"` + aria-controls
@@ -148,34 +152,34 @@ export function CodeCardTabs({
   // claiming it — screen readers announce these as plain buttons (which is
   // honest), and `aria-pressed` carries the active state.
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       {items.map((item) => {
         const isActive = item === active;
         const sharedClass = cn(
           // Skill: emil-design-eng — explicit `transition-colors duration-150
           // ease-out`; the active pill uses `shadow-xs` to match the segmented
           // family's lift instead of inlining its own rgba shadow.
-          'inline-flex items-center h-6 rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out',
+          "inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out",
           isActive
-            ? 'bg-card text-neutral-900 font-medium border border-border shadow-xs'
-            : 'text-neutral-600 font-medium border border-transparent',
-          interactive && !isActive && 'hover:text-neutral-900 hover:bg-white/60',
+            ? "border border-border bg-card font-medium text-neutral-900 shadow-xs"
+            : "border border-transparent font-medium text-neutral-600",
+          interactive && !isActive && "hover:bg-white/60 hover:text-neutral-900"
         );
         if (interactive) {
           return (
             <button
-              key={item}
-              type="button"
               aria-pressed={isActive}
-              onClick={() => onChange?.(item)}
               className={sharedClass}
+              key={item}
+              onClick={() => onChange?.(item)}
+              type="button"
             >
               {item}
             </button>
           );
         }
         return (
-          <span key={item} className={sharedClass}>
+          <span className={sharedClass} key={item}>
             {item}
           </span>
         );
@@ -205,65 +209,67 @@ export function CodeCardCopyButton({
 }) {
   return (
     <CopyButton
+      className={className}
+      label={label}
       mode="label"
       value={value}
-      label={label}
-      className={className}
     />
   );
 }
 
 /** Flatten a `CodeLine[]` to a plain string for clipboard writes. */
-export function linesToString(lines: CodeLine[]): string {
-  return lines.map((line) => line.map((t) => t.text).join('')).join('\n');
-}
 
 /* ── Code body ───────────────────────────────────────────────────────────── */
 
 interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
-  lines: CodeLine[];
-  tone?: 'light' | 'dark';
   /** Compact inline snippet — used inside the steps card. */
-  density?: 'default' | 'compact' | 'inline';
-  /** Wrap long lines instead of scrolling horizontally (e.g. a JSON body
-   *  with a long string value). Lines grow to fit; indentation is preserved. */
-  wrap?: boolean;
+  density?: "default" | "compact" | "inline";
   /** When set, highlighted tokens become a hover Tooltip with this content
    *  (e.g. a finding's detector / score / threshold). */
   highlightTooltip?: React.ReactNode;
+  lines: CodeLine[];
+  tone?: "light" | "dark";
+  /** Wrap long lines instead of scrolling horizontally (e.g. a JSON body
+   *  with a long string value). Lines grow to fit; indentation is preserved. */
+  wrap?: boolean;
 }
 
 export function CodeBlock({
   lines,
-  tone = 'light',
-  density = 'default',
+  tone = "light",
+  density = "default",
   wrap = false,
   className,
   highlightTooltip,
   ...props
 }: CodeBlockProps) {
-  const toneMap = tone === 'dark' ? TONE_CLASS_DARK : TONE_CLASS_LIGHT;
+  const toneMap = tone === "dark" ? TONE_CLASS_DARK : TONE_CLASS_LIGHT;
   const density_cls =
-    density === 'inline'
-      ? 'px-4 py-3'
-      : density === 'compact'
-      ? 'px-4 py-3'
-      : 'px-4 py-4';
-  const text_cls = density === 'inline' ? 'text-xs/4' : 'text-xs/5';
+    density === "inline"
+      ? "px-4 py-3"
+      : density === "compact"
+        ? "px-4 py-3"
+        : "px-4 py-4";
+  const text_cls = density === "inline" ? "text-xs/4" : "text-xs/5";
   return (
     <div
-      data-slot="code-block"
       className={cn(
-        'flex flex-col font-mono',
-        wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre overflow-x-auto',
+        "flex flex-col font-mono",
+        wrap
+          ? "whitespace-pre-wrap break-words"
+          : "overflow-x-auto whitespace-pre",
         text_cls,
         density_cls,
-        className,
+        className
       )}
+      data-slot="code-block"
       {...props}
     >
       {lines.map((line, idx) => (
-        <div key={idx} className={wrap ? 'min-h-5' : 'flex h-5 shrink-0 min-h-5'}>
+        <div
+          className={wrap ? "min-h-5" : "flex h-5 min-h-5 shrink-0"}
+          key={idx}
+        >
           {line.length === 0 ? (
             // Blank line spacer — keep the line height
             <span aria-hidden="true">&nbsp;</span>
@@ -275,30 +281,33 @@ export function CodeBlock({
                     render={(p) => (
                       <span
                         {...p}
-                        data-code-highlight=""
                         className={cn(
-                          toneMap[tok.tone ?? 'default'],
-                          'rounded-xs bg-warning-100 text-warning-800 cursor-help',
+                          toneMap[tok.tone ?? "default"],
+                          "cursor-help rounded-xs bg-warning-100 text-warning-800"
                         )}
+                        data-code-highlight=""
                       >
                         {tok.text}
                       </span>
                     )}
                   />
-                  <TooltipContent className="text-left p-2">{highlightTooltip}</TooltipContent>
+                  <TooltipContent className="p-2 text-left">
+                    {highlightTooltip}
+                  </TooltipContent>
                 </Tooltip>
               ) : (
                 <span
-                  key={j}
-                  data-code-highlight={tok.highlight ? '' : undefined}
                   className={cn(
-                    toneMap[tok.tone ?? 'default'],
-                    tok.highlight && 'rounded-xs bg-warning-100 text-warning-800',
+                    toneMap[tok.tone ?? "default"],
+                    tok.highlight &&
+                      "rounded-xs bg-warning-100 text-warning-800"
                   )}
+                  data-code-highlight={tok.highlight ? "" : undefined}
+                  key={j}
                 >
                   {tok.text}
                 </span>
-              ),
+              )
             )
           )}
         </div>
@@ -320,22 +329,22 @@ export function TerminalCard({
 }) {
   return (
     <div
-      data-slot="terminal-card"
       className={cn(
-        'flex flex-col overflow-hidden rounded-md bg-neutral-800',
-        className,
+        "flex flex-col overflow-hidden rounded-md bg-neutral-800",
+        className
       )}
+      data-slot="terminal-card"
     >
-      <div className="flex items-center gap-2 px-4 py-2 bg-neutral-700 border-b border-neutral-900/60">
+      <div className="flex items-center gap-2 border-neutral-900/60 border-b bg-neutral-700 px-4 py-2">
         {/* macOS traffic-light affordances live in their own token family
             (--color-traffic-red/amber/green) so we don't reuse the semantic
             danger/warning/success ramps for chrome decoration. */}
-        <div className="flex gap-1" aria-hidden="true">
+        <div aria-hidden="true" className="flex gap-1">
           <span className="size-2 rounded-full bg-traffic-red" />
           <span className="size-2 rounded-full bg-traffic-amber" />
           <span className="size-2 rounded-full bg-traffic-green" />
         </div>
-        <span className="ml-auto font-mono text-xs/4 text-neutral-400">
+        <span className="ml-auto font-mono text-neutral-400 text-xs/4">
           {title}
         </span>
       </div>

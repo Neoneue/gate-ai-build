@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
+import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { randomHex } from "@/lib/utils";
 import {
-  PageHeader,
-  KeysEmptyState,
-  UsageInfo,
   CreateKeyDialog,
   KeyCreatedDialog,
-  randomHex,
-} from '@/pages/ApiKeys';
+  KeysEmptyState,
+  PageHeader,
+  UsageInfo,
+} from "@/pages/ApiKeys";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys — default / empty variant (route: /api-keys-default, sidebar:
@@ -42,15 +42,22 @@ export function ApiKeysDefault() {
   return (
     <DashboardChrome
       activeNavId="api-keys"
-      sidebarExpanded={sidebarExpanded}
-      onToggleSidebar={toggleSidebar}
       onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
       <KeysEmptyState onCreate={() => setCreateOpen(true)} />
       <UsageInfo />
-      <CreateKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={handleCreate} />
-      <KeyCreatedDialog fullKey={createdKey} onClose={() => setCreatedKey(null)} />
+      <CreateKeyDialog
+        onCreate={handleCreate}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
+      <KeyCreatedDialog
+        fullKey={createdKey}
+        onClose={() => setCreatedKey(null)}
+      />
     </DashboardChrome>
   );
 }

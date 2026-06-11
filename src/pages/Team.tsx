@@ -1,19 +1,10 @@
-import type { ComponentType } from 'react';
-import { useMemo, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Menu as MenuPrimitive } from '@base-ui/react/menu';
-import {
-  MoreHorizontal,
-  Send,
-  Trash2,
-  UserPlus,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { IconActionButton } from '@/components/ui/icon-action-button';
-import { Monogram } from '@/components/ui/monogram';
-import { type AvatarTone } from '@/components/ui/monogram-types';
-import { TableEmptyState } from '@/components/ui/table-empty-state';
+import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import { MoreHorizontal, Send, Trash2, UserPlus } from "lucide-react";
+import type { ComponentType } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -22,40 +13,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { FilterToolbar } from '@/components/ui/filter-toolbar';
-import { SearchInput } from '@/components/ui/search-input';
-import { Label } from '@/components/ui/label';
-import { PageTitle } from '@/components/ui/page-title';
+} from "@/components/ui/dialog";
+import { FilterToolbar } from "@/components/ui/filter-toolbar";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Monogram } from "@/components/ui/monogram";
+import type { AvatarTone } from "@/components/ui/monogram-types";
+import { PageTitle } from "@/components/ui/page-title";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  SortableTableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { TabsCount } from '@/components/ui/tabs-count';
-import { TablePaginationFooter } from '@/components/ui/table-pagination-footer';
-import { cn } from '@/lib/utils';
-import { useTableSort, sortRows } from '@/hooks/use-table-sort';
-import { DashboardChrome } from '@/layouts/DashboardChrome';
-import { Timestamp } from '@/components/ui/timestamp';
+} from "@/components/ui/table";
+import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsCount } from "@/components/ui/tabs-count";
+import { Timestamp } from "@/components/ui/timestamp";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { cn } from "@/lib/utils";
 
 const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
 
@@ -82,17 +72,20 @@ const WHITESPACE_RE = /\s+/;
 
 export function Team() {
   const navigate = useNavigate();
-  const { sidebarExpanded, toggleSidebar } = useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>();
+  const { sidebarExpanded, toggleSidebar } = useOutletContext<{
+    sidebarExpanded: boolean;
+    toggleSidebar: () => void;
+  }>();
 
   return (
     <DashboardChrome
-            activeNavId="team"
-            sidebarExpanded={sidebarExpanded}
-            onToggleSidebar={toggleSidebar}
-            onNavigate={(path: string) => navigate(path)}
-          >
-            <TeamSurface />
-          </DashboardChrome>
+      activeNavId="team"
+      onNavigate={(path: string) => navigate(path)}
+      onToggleSidebar={toggleSidebar}
+      sidebarExpanded={sidebarExpanded}
+    >
+      <TeamSurface />
+    </DashboardChrome>
   );
 }
 
@@ -100,15 +93,27 @@ export function Team() {
 
 function TeamSurface() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [tab, setTab] = useState<'members' | 'invitations'>('members');
+  const [tab, setTab] = useState<"members" | "invitations">("members");
 
   return (
     <>
       <PageHeader onInvite={() => setInviteOpen(true)} />
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="gap-4">
-        <TabsList variant="line" className="px-0 -mt-2">
-          <TeamTabsTrigger value="members" label="Members" count={MEMBER_ROWS.length} />
-          <TeamTabsTrigger value="invitations" label="Invitations" count={INVITATION_ROWS.length} />
+      <Tabs
+        className="gap-4"
+        onValueChange={(v) => setTab(v as typeof tab)}
+        value={tab}
+      >
+        <TabsList className="-mt-2 px-0" variant="line">
+          <TeamTabsTrigger
+            count={MEMBER_ROWS.length}
+            label="Members"
+            value="members"
+          />
+          <TeamTabsTrigger
+            count={INVITATION_ROWS.length}
+            label="Invitations"
+            value="invitations"
+          />
         </TabsList>
 
         <TabsContent value="members">
@@ -119,7 +124,7 @@ function TeamSurface() {
         </TabsContent>
       </Tabs>
 
-      <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <InviteMemberDialog onOpenChange={setInviteOpen} open={inviteOpen} />
     </>
   );
 }
@@ -129,15 +134,16 @@ function TeamSurface() {
 function PageHeader({ onInvite }: { onInvite: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex flex-col gap-2 max-w-1/2">
+      <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Team</PageTitle>
-        <p className="font-sans text-neutral-500 text-base tracking-tight text-pretty m-0">
-          Manage roles, invite teammates, and remove access from Chad Ponticas&rsquo;s workspace.
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+          Manage roles, invite teammates, and remove access from Chad
+          Ponticas&rsquo;s workspace.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="default" size="default" onClick={onInvite}>
-          <UserPlus data-icon="inline-start" aria-hidden />
+        <Button onClick={onInvite} size="default" variant="default">
+          <UserPlus aria-hidden data-icon="inline-start" />
           Invite member
         </Button>
       </div>
@@ -166,12 +172,12 @@ function TeamTabsTrigger({
 
 /* ─── Members pane ────────────────────────────────────────────────────── */
 
-type MemberRole = 'owner' | 'admin' | 'member';
+type MemberRole = "owner" | "admin" | "member";
 
 const ROLE_LABEL: Record<MemberRole, string> = {
-  owner: 'Owner',
-  admin: 'Admin',
-  member: 'Member',
+  owner: "Owner",
+  admin: "Admin",
+  member: "Member",
 };
 
 type MemberRow = {
@@ -184,95 +190,135 @@ type MemberRow = {
 };
 
 const MEMBER_ROWS: MemberRow[] = [
-  { id: 'usr_chad',   name: 'Chad Ponticas', email: 'chad@constellationnetwork.io', avatarTone: 'blue',    role: 'owner',  joined: new Date(2026, 3, 20) },
-  { id: 'usr_kira',   name: 'Kira Tan',      email: 'kira.tan@acme.io',             avatarTone: 'rose',    role: 'admin',  joined: new Date(2026, 3, 22) },
-  { id: 'usr_mate',   name: 'Mateus Silva',  email: 'mateus.silva@ebux.com',        avatarTone: 'emerald', role: 'member', joined: new Date(2026, 4,  1) },
-  { id: 'usr_jordan', name: 'Jordan Lee',    email: 'jordan.lee@acme.io',           avatarTone: 'amber',   role: 'member', joined: new Date(2026, 4,  8) },
+  {
+    id: "usr_chad",
+    name: "Chad Ponticas",
+    email: "chad@constellationnetwork.io",
+    avatarTone: "blue",
+    role: "owner",
+    joined: new Date(2026, 3, 20),
+  },
+  {
+    id: "usr_kira",
+    name: "Kira Tan",
+    email: "kira.tan@acme.io",
+    avatarTone: "rose",
+    role: "admin",
+    joined: new Date(2026, 3, 22),
+  },
+  {
+    id: "usr_mate",
+    name: "Mateus Silva",
+    email: "mateus.silva@ebux.com",
+    avatarTone: "emerald",
+    role: "member",
+    joined: new Date(2026, 4, 1),
+  },
+  {
+    id: "usr_jordan",
+    name: "Jordan Lee",
+    email: "jordan.lee@acme.io",
+    avatarTone: "amber",
+    role: "member",
+    joined: new Date(2026, 4, 8),
+  },
 ];
 
 /** Comparable value per sortable column for the Members table. Joined is a
  *  Date → epoch millis (numeric). Role sorts by its display label. */
 function memberSortValue(row: MemberRow, key: string): string | number | null {
   switch (key) {
-    case 'member': return row.name;
-    case 'joined': return row.joined.getTime();
-    case 'role': return ROLE_LABEL[row.role];
-    default: return null;
+    case "member":
+      return row.name;
+    case "joined":
+      return row.joined.getTime();
+    case "role":
+      return ROLE_LABEL[row.role];
+    default:
+      return null;
   }
 }
 
 function MembersPane() {
-  const [query, setQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | MemberRole>('all');
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | MemberRole>("all");
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [rowsPerPage, setRowsPerPage] = useState("10");
   const [pendingRemove, setPendingRemove] = useState<MemberRow | null>(null);
   const { sort, toggle: toggleSort } = useTableSort();
 
   const visible = MEMBER_ROWS.filter((r) => {
-    if (roleFilter !== 'all' && r.role !== roleFilter) return false;
-    if (!query) return true;
+    if (roleFilter !== "all" && r.role !== roleFilter) {
+      return false;
+    }
+    if (!query) {
+      return true;
+    }
     const q = query.toLowerCase();
     return (
-      r.name.toLowerCase().includes(q) ||
-      r.email.toLowerCase().includes(q)
+      r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
     );
   });
 
   // Sort after filter (default key=null preserves authored order). No
   // pagination slice here — the sample fits one page — but sorting still
   // governs render order.
-  const sortedRows = useMemo(() => sortRows(visible, sort, memberSortValue), [visible, sort]);
+  const sortedRows = useMemo(
+    () => sortRows(visible, sort, memberSortValue),
+    [visible, sort]
+  );
 
   const isEmpty = visible.length === 0;
 
   return (
     <>
-    <Card density="flush">
-      {/* Toolbar — search + role filter. Sits as direct child of Card
+      <Card density="flush">
+        {/* Toolbar — search + role filter. Sits as direct child of Card
           (density="flush"); paddings cascade from the toolbar's own
           px-4/py-3 plus Card's edge-flush contract. Filter pills follow
           the codified no-leading-icon rule for dense table toolbars. */}
-      {isEmpty ? null : (
-      <FilterToolbar>
-        <SearchInput
-          placeholder="Search by name or email…"
-          ariaLabel="Search members"
-          value={query}
-          onChange={setQuery}
-        />
-        <Select
-          value={roleFilter}
-          onValueChange={(v: string) => setRoleFilter(v as 'all' | MemberRole)}
-        >
-          <SelectTrigger
-            size="sm"
-            aria-label="Filter by role"
-            className="border-border bg-card text-foreground font-normal"
-          >
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
-            <SelectItem value="owner">Owners</SelectItem>
-            <SelectItem value="admin">Admins</SelectItem>
-            <SelectItem value="member">Members</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterToolbar>
-      )}
+        {isEmpty ? null : (
+          <FilterToolbar>
+            <SearchInput
+              ariaLabel="Search members"
+              onChange={setQuery}
+              placeholder="Search by name or email…"
+              value={query}
+            />
+            <Select
+              onValueChange={(v: string) =>
+                setRoleFilter(v as "all" | MemberRole)
+              }
+              value={roleFilter}
+            >
+              <SelectTrigger
+                aria-label="Filter by role"
+                className="border-border bg-card font-normal text-foreground"
+                size="sm"
+              >
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="owner">Owners</SelectItem>
+                <SelectItem value="admin">Admins</SelectItem>
+                <SelectItem value="member">Members</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterToolbar>
+        )}
 
-      {isEmpty ? (
-        <TableEmptyState
-          title="No members match"
-          body="No members match your search or filter. Try a different name or email."
-        />
-      ) : (
-        <>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {/* `table-fixed` + percentage widths on the header row is the
+        {isEmpty ? (
+          <TableEmptyState
+            body="No members match your search or filter. Try a different name or email."
+            title="No members match"
+          />
+        ) : (
+          <>
+            <Table className="table-fixed">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  {/* `table-fixed` + percentage widths on the header row is the
                 load-bearing pattern: with auto layout the browser hands
                 slack to whichever cell can grow most (Member, since the
                 stacked email is the widest content), producing one
@@ -280,94 +326,141 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-            <SortableTableHead sortKey="member" sort={sort} onSort={toggleSort} className="w-[40%] whitespace-nowrap">Member</SortableTableHead>
-            <SortableTableHead sortKey="joined" sort={sort} onSort={toggleSort} className="w-[22%] whitespace-nowrap">Joined</SortableTableHead>
-            <SortableTableHead sortKey="role" sort={sort} onSort={toggleSort} className="w-[28%] whitespace-nowrap">Role</SortableTableHead>
-            <TableHead className="w-[10%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.map((row) => (
-            <MemberRowView key={row.id} row={row} onRemove={setPendingRemove} />
-          ))}
-        </TableBody>
-      </Table>
+                  <SortableTableHead
+                    className="w-[40%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="member"
+                  >
+                    Member
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="w-[22%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="joined"
+                  >
+                    Joined
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="w-[28%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="role"
+                  >
+                    Role
+                  </SortableTableHead>
+                  <TableHead className="w-[10%] whitespace-nowrap pr-4 pl-0 text-right">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedRows.map((row) => (
+                  <MemberRowView
+                    key={row.id}
+                    onRemove={setPendingRemove}
+                    row={row}
+                  />
+                ))}
+              </TableBody>
+            </Table>
 
-      <TablePaginationFooter
-        total={MEMBER_ROWS.length}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setPage}
-        onRowsPerPageChange={setRowsPerPage}
-      />
-        </>
-      )}
-    </Card>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={MEMBER_ROWS.length}
+            />
+          </>
+        )}
+      </Card>
 
-    <Dialog
-      open={pendingRemove !== null}
-      onOpenChange={(open) => {
-        if (!open) setPendingRemove(null);
-      }}
-    >
-      <DialogContent className="sm:max-w-sm p-4">
-        <DialogHeader>
-          <DialogTitle>Remove {pendingRemove?.name}?</DialogTitle>
-          <DialogDescription>
-            {pendingRemove?.name} will lose access to this workspace immediately. You can re-invite them later.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
-            Cancel
-          </DialogClose>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => {
-              // Mock-only: the seeded MEMBER_ROWS constant isn't mutated.
-              // Wire to a real mutation handler when the backend lands.
-              setPendingRemove(null);
-            }}
-          >
-            Remove member
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingRemove(null);
+          }
+        }}
+        open={pendingRemove !== null}
+      >
+        <DialogContent className="p-4 sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove {pendingRemove?.name}?</DialogTitle>
+            <DialogDescription>
+              {pendingRemove?.name} will lose access to this workspace
+              immediately. You can re-invite them later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              onClick={() => {
+                // Mock-only: the seeded MEMBER_ROWS constant isn't mutated.
+                // Wire to a real mutation handler when the backend lands.
+                setPendingRemove(null);
+              }}
+              type="button"
+              variant="destructive"
+            >
+              Remove member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
-function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: MemberRow) => void }) {
+function MemberRowView({
+  row,
+  onRemove,
+}: {
+  row: MemberRow;
+  onRemove: (row: MemberRow) => void;
+}) {
   const [role, setRole] = useState<MemberRole>(row.role);
   return (
     <TableRow>
       <TableCell className="whitespace-nowrap">
-        <div className="flex items-center gap-3 min-w-0">
-          <Monogram size="md" tone={row.avatarTone} initials={initialsOf(row.name)} />
-          <div className="flex flex-col min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-3">
+          <Monogram
+            initials={initialsOf(row.name)}
+            size="md"
+            tone={row.avatarTone}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
             <span
+              className="truncate font-medium font-sans text-neutral-900 text-sm"
               title={row.name}
-              className="font-sans text-sm font-medium text-neutral-900 truncate"
             >
               {row.name}
             </span>
-            <span className="font-sans text-xs text-neutral-500 tracking-snug truncate" title={row.email}>
+            <span
+              className="truncate font-sans text-neutral-500 text-xs tracking-snug"
+              title={row.email}
+            >
               {row.email}
             </span>
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
+      <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
         <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
-        {row.role === 'owner' ? (
-          'Owner'
+      <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+        {row.role === "owner" ? (
+          "Owner"
         ) : (
-          <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-            <SelectTrigger size="sm" aria-label={`Role for ${row.name}`} className="w-28 border-border bg-card text-neutral-900 font-normal">
+          <Select onValueChange={(v) => setRole(v as MemberRole)} value={role}>
+            <SelectTrigger
+              aria-label={`Role for ${row.name}`}
+              className="w-28 border-border bg-card font-normal text-neutral-900"
+              size="sm"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -377,15 +470,15 @@ function MemberRowView({ row, onRemove }: { row: MemberRow; onRemove: (row: Memb
           </Select>
         )}
       </TableCell>
-      <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
-        {row.role !== 'owner' ? (
+      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+        {row.role === "owner" ? null : (
           <IconActionButton
             aria-label={`Remove ${row.name}`}
             onClick={() => onRemove(row)}
           >
-            <Trash2 aria-hidden strokeWidth={1.75} className="size-4" />
+            <Trash2 aria-hidden className="size-4" strokeWidth={1.75} />
           </IconActionButton>
-        ) : null}
+        )}
       </TableCell>
     </TableRow>
   );
@@ -403,44 +496,70 @@ type InvitationRow = {
 };
 
 const INVITATION_ROWS: InvitationRow[] = [
-  { id: 'inv_01', email: 'marcus.cho@acme.io',  invitedBy: 'Chad Ponticas', sent: new Date(2026, 4, 7), role: 'member', expires: new Date(NOW.getTime() + 6 * 24 * 60 * 60 * 1000) },
-  { id: 'inv_02', email: 'priya.iyer@ebux.com', invitedBy: 'Kira Tan',      sent: new Date(2026, 4, 6), role: 'admin',  expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000) },
+  {
+    id: "inv_01",
+    email: "marcus.cho@acme.io",
+    invitedBy: "Chad Ponticas",
+    sent: new Date(2026, 4, 7),
+    role: "member",
+    expires: new Date(NOW.getTime() + 6 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: "inv_02",
+    email: "priya.iyer@ebux.com",
+    invitedBy: "Kira Tan",
+    sent: new Date(2026, 4, 6),
+    role: "admin",
+    expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000),
+  },
 ];
 
 /** Comparable value per sortable column for the Invitations table. Sent and
  *  Expires are Dates → epoch millis (numeric); Role sorts by display label. */
-function invitationSortValue(row: InvitationRow, key: string): string | number | null {
+function invitationSortValue(
+  row: InvitationRow,
+  key: string
+): string | number | null {
   switch (key) {
-    case 'email': return row.email;
-    case 'invitedBy': return row.invitedBy;
-    case 'sent': return row.sent.getTime();
-    case 'role': return ROLE_LABEL[row.role];
-    case 'expires': return row.expires.getTime();
-    default: return null;
+    case "email":
+      return row.email;
+    case "invitedBy":
+      return row.invitedBy;
+    case "sent":
+      return row.sent.getTime();
+    case "role":
+      return ROLE_LABEL[row.role];
+    case "expires":
+      return row.expires.getTime();
+    default:
+      return null;
   }
 }
 
 function InvitationsPane({ onInvite }: { onInvite: () => void }) {
   const { sort, toggle: toggleSort } = useTableSort();
-  const sortedRows = useMemo(() => sortRows(INVITATION_ROWS, sort, invitationSortValue), [sort]);
+  const sortedRows = useMemo(
+    () => sortRows(INVITATION_ROWS, sort, invitationSortValue),
+    [sort]
+  );
 
   if (INVITATION_ROWS.length === 0) {
     return (
       <Card density="flush">
         <TableEmptyState
-          title="No pending invitations"
-          body="Invitations you’ve sent that haven’t been accepted yet show up here. They expire after 7 days."
           action={
             <Button
-              variant="outline"
-              size="sm"
-              onClick={onInvite}
               className="border-border bg-card text-neutral-900"
+              onClick={onInvite}
+              size="sm"
+              variant="outline"
             >
-              <UserPlus data-icon="inline-start" aria-hidden />
+              <UserPlus aria-hidden data-icon="inline-start" />
               Invite member
             </Button>
           }
+          body="Invitations you’ve sent that haven’t been accepted yet show up here. They expire after 7 days."
+          title="No pending invitations"
         />
       </Card>
     );
@@ -450,40 +569,81 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <SortableTableHead sortKey="email" sort={sort} onSort={toggleSort} className="w-[27%] whitespace-nowrap">Email</SortableTableHead>
-            <SortableTableHead sortKey="invitedBy" sort={sort} onSort={toggleSort} className="w-[25%] whitespace-nowrap">Invited by</SortableTableHead>
-            <SortableTableHead sortKey="sent" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Sent</SortableTableHead>
-            <SortableTableHead sortKey="role" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Role</SortableTableHead>
-            <SortableTableHead sortKey="expires" sort={sort} onSort={toggleSort} className="w-[15%] whitespace-nowrap">Expires</SortableTableHead>
-            <TableHead className="w-[3%] text-right pl-0 pr-4 whitespace-nowrap">Actions</TableHead>
+            <SortableTableHead
+              className="w-[27%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="email"
+            >
+              Email
+            </SortableTableHead>
+            <SortableTableHead
+              className="w-[25%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="invitedBy"
+            >
+              Invited by
+            </SortableTableHead>
+            <SortableTableHead
+              className="w-[15%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="sent"
+            >
+              Sent
+            </SortableTableHead>
+            <SortableTableHead
+              className="w-[15%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="role"
+            >
+              Role
+            </SortableTableHead>
+            <SortableTableHead
+              className="w-[15%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="expires"
+            >
+              Expires
+            </SortableTableHead>
+            <TableHead className="w-[3%] whitespace-nowrap pr-4 pl-0 text-right">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedRows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-900">
-                <span className="block truncate" title={row.email}>{row.email}</span>
+              <TableCell className="whitespace-nowrap font-sans text-neutral-900 text-sm">
+                <span className="block truncate" title={row.email}>
+                  {row.email}
+                </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
-                <span className="block truncate" title={row.invitedBy}>{row.invitedBy}</span>
+              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+                <span className="block truncate" title={row.invitedBy}>
+                  {row.invitedBy}
+                </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
+              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
                 <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800">
+              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-sm text-neutral-800 tabular-nums">
-                <Timestamp date={row.expires} format="relative" anchor={NOW} />
+              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
+                <Timestamp anchor={NOW} date={row.expires} format="relative" />
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap pl-0 pr-4">
+              <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                 <RowActionsMenu
-                  label={`Open actions for ${row.email}`}
                   items={[
-                    { id: 'resend', label: 'Resend invite' },
-                    { id: 'copy',   label: 'Copy invite link' },
-                    { id: 'revoke', label: 'Revoke invite', destructive: true },
+                    { id: "resend", label: "Resend invite" },
+                    { id: "copy", label: "Copy invite link" },
+                    { id: "revoke", label: "Revoke invite", destructive: true },
                   ]}
+                  label={`Open actions for ${row.email}`}
                 />
               </TableCell>
             </TableRow>
@@ -503,8 +663,8 @@ function InviteMemberDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<MemberRole>('member');
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<MemberRole>("member");
 
   // Single-email validation: pragmatic regex (not RFC-strict; server
   // owns the canonical check). Empty ⇒ disabled; malformed ⇒ disabled.
@@ -514,67 +674,82 @@ function InviteMemberDialog({
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setEmail('');
-          setRole('member');
+          setEmail("");
+          setRole("member");
         }
       }}
+      open={open}
     >
-      <DialogContent className="sm:max-w-lg gap-4">
+      <DialogContent className="gap-4 sm:max-w-lg">
         {/* Form wrapper enables Enter-to-submit. Submit handler closes
             the dialog; the demo doesn't actually send, but the contract
             mirrors a real implementation. */}
         <form
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (isValid) onOpenChange(false);
+            if (isValid) {
+              onOpenChange(false);
+            }
           }}
-          className="flex flex-col gap-4"
         >
           <DialogHeader>
-            <DialogTitle className="font-sans text-lg/6 font-medium text-neutral-900">
+            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
               Invite member
             </DialogTitle>
             <DialogDescription>
-              Enter the teammate&rsquo;s email. They&rsquo;ll see the invitation in their notifications.
+              Enter the teammate&rsquo;s email. They&rsquo;ll see the invitation
+              in their notifications.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-email" className="text-neutral-600 font-medium text-sm">
+            <Label
+              className="font-medium text-neutral-600 text-sm"
+              htmlFor="invite-email"
+            >
               Email
             </Label>
             <Input
+              aria-describedby={showInvalid ? "invite-email-error" : undefined}
+              aria-invalid={showInvalid || undefined}
+              autoComplete="off"
+              className="font-sans text-sm"
               id="invite-email"
-              type="email"
-              value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="teammate@example.com"
               spellCheck={false}
-              autoComplete="off"
-              aria-invalid={showInvalid || undefined}
-              aria-describedby={showInvalid ? 'invite-email-error' : undefined}
-              className="font-sans text-sm"
+              type="email"
+              value={email}
             />
             {showInvalid ? (
-              <p id="invite-email-error" className="font-sans text-xs text-destructive">
+              <p
+                className="font-sans text-destructive text-xs"
+                id="invite-email-error"
+              >
                 That doesn&rsquo;t look like an email address.
               </p>
             ) : null}
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-role" className="text-neutral-600 font-medium text-sm">
+            <Label
+              className="font-medium text-neutral-600 text-sm"
+              htmlFor="invite-role"
+            >
               Role
             </Label>
-            <Select value={role} onValueChange={(v: string) => setRole(v as MemberRole)}>
+            <Select
+              onValueChange={(v: string) => setRole(v as MemberRole)}
+              value={role}
+            >
               <SelectTrigger
+                className="w-full border-border bg-card text-neutral-900"
                 id="invite-role"
                 size="default"
-                className="border-border bg-card text-neutral-900 w-full"
               >
                 {/* Function-child so the trigger renders only the short
                     label — the rich two-line item body is for the popup,
@@ -587,30 +762,28 @@ function InviteMemberDialog({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="min-w-[var(--anchor-width)]">
-                <SelectItem value="admin" className="h-auto py-2 items-start">
-                  <RoleItemBody label="Admin" description="Manage settings, billing, and members. Full project access." />
+                <SelectItem className="h-auto items-start py-2" value="admin">
+                  <RoleItemBody
+                    description="Manage settings, billing, and members. Full project access."
+                    label="Admin"
+                  />
                 </SelectItem>
-                <SelectItem value="member" className="h-auto py-2 items-start">
-                  <RoleItemBody label="Member" description="Create, update, share, and delete projects and resources." />
+                <SelectItem className="h-auto items-start py-2" value="member">
+                  <RoleItemBody
+                    description="Create, update, share, and delete projects and resources."
+                    label="Member"
+                  />
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <DialogFooter>
-            <DialogClose
-              render={
-                <Button type="button" variant="outline" />
-              }
-            >
+            <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button
-              type="submit"
-              variant="default"
-              disabled={!isValid}
-            >
-              <Send data-icon="inline-start" aria-hidden />
+            <Button disabled={!isValid} type="submit" variant="default">
+              <Send aria-hidden data-icon="inline-start" />
               Send invitation
             </Button>
           </DialogFooter>
@@ -620,11 +793,21 @@ function InviteMemberDialog({
   );
 }
 
-function RoleItemBody({ label, description }: { label: string; description: string }) {
+function RoleItemBody({
+  label,
+  description,
+}: {
+  label: string;
+  description: string;
+}) {
   return (
     <span className="flex flex-col gap-1 text-left">
-      <span className="font-sans text-sm font-medium text-neutral-900">{label}</span>
-      <span className="font-sans text-xs text-neutral-500 text-pretty">{description}</span>
+      <span className="font-medium font-sans text-neutral-900 text-sm">
+        {label}
+      </span>
+      <span className="text-pretty font-sans text-neutral-500 text-xs">
+        {description}
+      </span>
     </span>
   );
 }
@@ -658,39 +841,44 @@ function RowActionsMenu({
       <MenuPrimitive.Trigger
         render={
           <Button
-            variant="ghost"
-            size="icon-sm"
             aria-label={label}
             className="text-neutral-500 hover:text-neutral-900"
+            size="icon-sm"
+            variant="ghost"
           />
         }
       >
         <MoreHorizontal />
       </MenuPrimitive.Trigger>
       <MenuPrimitive.Portal>
-        <MenuPrimitive.Positioner side="bottom" align="end" sideOffset={8} className="isolate z-50">
+        <MenuPrimitive.Positioner
+          align="end"
+          className="isolate z-50"
+          side="bottom"
+          sideOffset={8}
+        >
           <MenuPrimitive.Popup
             className={cn(
-              'min-w-32 overflow-hidden rounded-sm bg-popover text-neutral-900 border border-border shadow-(--shadow-popup) py-1 outline-none origin-[var(--transform-origin)]',
-              'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
+              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-neutral-900 shadow-(--shadow-popup) outline-none",
+              "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0"
             )}
           >
             {items.map((item) => {
               const Icon = item.icon;
               return (
                 <MenuPrimitive.Item
+                  className={cn(
+                    "relative flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-xs px-3 text-sm outline-none",
+                    "focus-visible:bg-muted data-[highlighted]:bg-muted",
+                    item.destructive
+                      ? "text-destructive data-[highlighted]:text-destructive"
+                      : "text-neutral-900",
+                    "[&_svg]:size-4 [&_svg]:shrink-0"
+                  )}
                   key={item.id}
                   onClick={item.onSelect}
-                  className={cn(
-                    'relative flex w-full cursor-pointer items-center gap-2 rounded-xs h-8 px-3 text-sm outline-none select-none',
-                    'data-[highlighted]:bg-muted focus-visible:bg-muted',
-                    item.destructive
-                      ? 'text-destructive data-[highlighted]:text-destructive'
-                      : 'text-neutral-900',
-                    '[&_svg]:size-4 [&_svg]:shrink-0',
-                  )}
                 >
-                  {Icon ? <Icon strokeWidth={1.75} aria-hidden /> : null}
+                  {Icon ? <Icon aria-hidden strokeWidth={1.75} /> : null}
                   <span className="flex-1 text-left">{item.label}</span>
                 </MenuPrimitive.Item>
               );
@@ -704,6 +892,8 @@ function RowActionsMenu({
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(WHITESPACE_RE);
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }

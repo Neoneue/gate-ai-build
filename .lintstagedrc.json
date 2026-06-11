@@ -1,0 +1,4 @@
+{
+  "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": ["npx ultracite fix"],
+  "*.{ts,tsx}": ["npx eslint --fix --max-warnings=0"]
+}

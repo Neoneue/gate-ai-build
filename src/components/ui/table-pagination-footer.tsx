@@ -5,14 +5,14 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TablePaginationFooter — bottom strip of any paginated table.
@@ -30,7 +30,7 @@ import {
  * read the truncation pattern (rare, but supported).
  * ───────────────────────────────────────────────────────────────────────── */
 
-const ROWS_PER_PAGE_OPTIONS = ['10', '25', '50', '100'];
+const ROWS_PER_PAGE_OPTIONS = ["10", "25", "50", "100"];
 
 /**
  * Canonical truncated-pagination window. For totalPages ≤ 7 returns every
@@ -39,17 +39,23 @@ const ROWS_PER_PAGE_OPTIONS = ['10', '25', '50', '100'];
  */
 function buildPageWindow(
   current: number,
-  totalPages: number,
-): (number | 'ellipsis-l' | 'ellipsis-r')[] {
+  totalPages: number
+): (number | "ellipsis-l" | "ellipsis-r")[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
-  const out: (number | 'ellipsis-l' | 'ellipsis-r')[] = [1];
-  if (current > 3) out.push('ellipsis-l');
-  for (let p = current - 1; p <= current + 1; p++) {
-    if (p > 1 && p < totalPages) out.push(p);
+  const out: (number | "ellipsis-l" | "ellipsis-r")[] = [1];
+  if (current > 3) {
+    out.push("ellipsis-l");
   }
-  if (current < totalPages - 2) out.push('ellipsis-r');
+  for (let p = current - 1; p <= current + 1; p++) {
+    if (p > 1 && p < totalPages) {
+      out.push(p);
+    }
+  }
+  if (current < totalPages - 2) {
+    out.push("ellipsis-r");
+  }
   out.push(totalPages);
   return out;
 }
@@ -69,7 +75,7 @@ export function TablePaginationFooter({
   onPageChange,
   onRowsPerPageChange,
 }: TablePaginationFooterProps) {
-  const perPage = parseInt(rowsPerPage, 10);
+  const perPage = Number.parseInt(rowsPerPage, 10);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = (safePage - 1) * perPage + 1;
@@ -78,30 +84,32 @@ export function TablePaginationFooter({
   const atLastPage = safePage >= totalPages;
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 px-4 border-t border-border">
+    <div className="flex items-center justify-between gap-3 border-border border-t px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-xs text-neutral-500 tabular-nums">
-          Showing{' '}
+        <span className="font-mono text-neutral-500 text-xs tabular-nums">
+          Showing{" "}
           <span className="font-medium">
             {start.toLocaleString()}–{end.toLocaleString()}
-          </span>{' '}
+          </span>{" "}
           of <span className="font-medium">{total.toLocaleString()}</span>
         </span>
-        <span className="text-neutral-400" aria-hidden>·</span>
-        <span className="font-mono text-xs font-medium text-neutral-500">
+        <span aria-hidden className="text-neutral-400">
+          ·
+        </span>
+        <span className="font-medium font-mono text-neutral-500 text-xs">
           Rows
         </span>
         <Select
-          value={rowsPerPage}
           onValueChange={(v: string) => {
             onRowsPerPageChange(v);
             onPageChange(1);
           }}
+          value={rowsPerPage}
         >
           <SelectTrigger
-            size="sm"
             aria-label="Rows per page"
-            className="border-border bg-card text-neutral-900 font-normal"
+            className="border-border bg-card font-normal text-neutral-900"
+            size="sm"
           >
             <SelectValue />
           </SelectTrigger>
@@ -118,7 +126,7 @@ export function TablePaginationFooter({
       <Pagination className="mx-0 w-fit justify-end">
         <PaginationContent className="gap-1">
           {pageWindow.map((entry, idx) =>
-            entry === 'ellipsis-l' || entry === 'ellipsis-r' ? (
+            entry === "ellipsis-l" || entry === "ellipsis-r" ? (
               <PaginationItem key={`${entry}-${idx}`}>
                 <PaginationEllipsis />
               </PaginationItem>
@@ -131,15 +139,15 @@ export function TablePaginationFooter({
                   {entry}
                 </PaginationLink>
               </PaginationItem>
-            ),
+            )
           )}
           <PaginationItem>
             <PaginationNext
               aria-disabled={atLastPage || undefined}
-              disabled={atLastPage}
               className={
-                atLastPage ? 'pointer-events-none opacity-50' : undefined
+                atLastPage ? "pointer-events-none opacity-50" : undefined
               }
+              disabled={atLastPage}
               onClick={() => {
                 if (!atLastPage) {
                   onPageChange(Math.min(totalPages, safePage + 1));

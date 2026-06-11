@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * PageTitle — top-of-surface heading on composed pages (CMP-012 through
@@ -27,22 +27,22 @@ import { cn } from '@/lib/utils';
 export interface PageTitleProps
   extends React.HTMLAttributes<HTMLHeadingElement> {
   /** Heading level. Defaults to `h2` (composed-page convention). */
-  as?: 'h1' | 'h2';
+  as?: "h1" | "h2";
 }
 
 export function PageTitle({
-  as: Tag = 'h2',
+  as: Tag = "h2",
   className,
   children,
   ...props
 }: PageTitleProps) {
   return (
     <Tag
-      data-slot="page-title"
       className={cn(
-        'font-sans font-medium text-neutral-900 text-3xl/9 -tracking-[1px] text-balance m-0',
-        className,
+        "m-0 text-balance font-medium font-sans text-3xl/9 text-neutral-900 -tracking-[1px]",
+        className
       )}
+      data-slot="page-title"
       {...props}
     >
       {children}

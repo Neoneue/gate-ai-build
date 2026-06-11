@@ -1,7 +1,7 @@
-import { cva, type VariantProps } from 'class-variance-authority';
-import { Link } from 'react-router-dom';
+import { cva, type VariantProps } from "class-variance-authority";
+import { Link } from "react-router-dom";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * RowActionButton — drill-in button inside a TableRow's primary cell.
@@ -40,27 +40,27 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────────── */
 
 const rowActionButtonVariants = cva(
-  'text-left bg-transparent p-0 outline-none rounded-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+  "rounded-xs bg-transparent p-0 text-left outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
   {
     variants: {
       layout: {
-        row: 'flex items-center gap-2 min-w-0 w-full',
-        stack: 'flex flex-col gap-1 min-w-0 w-full',
-        inline: '',
+        row: "flex w-full min-w-0 items-center gap-2",
+        stack: "flex w-full min-w-0 flex-col gap-1",
+        inline: "",
       },
     },
     defaultVariants: {
-      layout: 'row',
+      layout: "row",
     },
-  },
+  }
 );
 
 export type RowActionButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'type'
+  "type"
 > &
   VariantProps<typeof rowActionButtonVariants> & {
-    'aria-label': string;
+    "aria-label": string;
     /** When set, render a real <a href> (React Router <Link>) instead of a
      *  <button> — for drill-ins to URL-addressable pages. */
     href?: string;
@@ -84,14 +84,19 @@ export function RowActionButton({
 
   if (href) {
     return (
-      <Link to={href} onClick={handleClick} className={classes} aria-label={props['aria-label']}>
+      <Link
+        aria-label={props["aria-label"]}
+        className={classes}
+        onClick={handleClick}
+        to={href}
+      >
         {children}
       </Link>
     );
   }
 
   return (
-    <button type="button" onClick={handleClick} className={classes} {...props}>
+    <button className={classes} onClick={handleClick} type="button" {...props}>
       {children}
     </button>
   );

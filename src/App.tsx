@@ -1,40 +1,109 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
   Outlet,
   Route,
   Routes,
-} from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
-import { Activity } from '@/pages/Activity';
-import { ApiKeys } from '@/pages/ApiKeys';
-import { ApiKeysDefault } from '@/pages/ApiKeysDefault';
-import { AuditTrail } from '@/pages/AuditTrail';
-import { AuditTrailMerkle } from '@/pages/AuditTrailMerkle';
-import { Billing } from '@/pages/Billing';
-import { Conversations } from '@/pages/Conversations';
-import { Dashboard } from '@/pages/Dashboard';
-import { DashboardDefault } from '@/pages/DashboardDefault';
-import { Limits } from '@/pages/Limits';
-import { LimitsDefault } from '@/pages/LimitsDefault';
-import { LimitsFree } from '@/pages/LimitsFree';
-import { Upgrade } from '@/pages/Upgrade';
-import { Models } from '@/pages/Models';
-import { Policies } from '@/pages/Policies';
-import { Requests } from '@/pages/Requests';
-import { RequestsFindings } from '@/pages/RequestsFindings';
-import { ConversationsTrace } from '@/pages/ConversationsTrace';
-import { Security } from '@/pages/Security';
-import { SecurityDefault } from '@/pages/SecurityDefault';
-import { SecurityFree } from '@/pages/SecurityFree';
-import { Settings } from '@/pages/Settings';
-import { Team } from '@/pages/Team';
-import { AuthLayout } from '@/layouts/AuthLayout';
-import { SignIn } from '@/pages/SignIn';
-import { SignUp } from '@/pages/SignUp';
-import { TokenSavings } from '@/pages/TokenSavings';
-import { TokenSavingsFree } from '@/pages/TokenSavingsFree';
+} from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthLayout } from "@/layouts/AuthLayout";
+
+/* Route-level code splitting: each page loads as its own chunk on first
+ * visit instead of shipping the whole dashboard in the entry bundle. */
+const Activity = lazy(() =>
+  import("@/pages/Activity").then((m) => ({ default: m.Activity }))
+);
+const ApiKeys = lazy(() =>
+  import("@/pages/ApiKeys").then((m) => ({ default: m.ApiKeys }))
+);
+const ApiKeysDefault = lazy(() =>
+  import("@/pages/ApiKeysDefault").then((m) => ({ default: m.ApiKeysDefault }))
+);
+const AuditTrail = lazy(() =>
+  import("@/pages/AuditTrail").then((m) => ({ default: m.AuditTrail }))
+);
+const AuditTrailMerkle = lazy(() =>
+  import("@/pages/AuditTrailMerkle").then((m) => ({
+    default: m.AuditTrailMerkle,
+  }))
+);
+const Billing = lazy(() =>
+  import("@/pages/Billing").then((m) => ({ default: m.Billing }))
+);
+const Conversations = lazy(() =>
+  import("@/pages/Conversations").then((m) => ({ default: m.Conversations }))
+);
+const Dashboard = lazy(() =>
+  import("@/pages/Dashboard").then((m) => ({ default: m.Dashboard }))
+);
+const DashboardDefault = lazy(() =>
+  import("@/pages/DashboardDefault").then((m) => ({
+    default: m.DashboardDefault,
+  }))
+);
+const Limits = lazy(() =>
+  import("@/pages/Limits").then((m) => ({ default: m.Limits }))
+);
+const LimitsDefault = lazy(() =>
+  import("@/pages/LimitsDefault").then((m) => ({ default: m.LimitsDefault }))
+);
+const LimitsFree = lazy(() =>
+  import("@/pages/LimitsFree").then((m) => ({ default: m.LimitsFree }))
+);
+const Upgrade = lazy(() =>
+  import("@/pages/Upgrade").then((m) => ({ default: m.Upgrade }))
+);
+const Models = lazy(() =>
+  import("@/pages/Models").then((m) => ({ default: m.Models }))
+);
+const Policies = lazy(() =>
+  import("@/pages/Policies").then((m) => ({ default: m.Policies }))
+);
+const Requests = lazy(() =>
+  import("@/pages/Requests").then((m) => ({ default: m.Requests }))
+);
+const RequestsFindings = lazy(() =>
+  import("@/pages/RequestsFindings").then((m) => ({
+    default: m.RequestsFindings,
+  }))
+);
+const ConversationsTrace = lazy(() =>
+  import("@/pages/ConversationsTrace").then((m) => ({
+    default: m.ConversationsTrace,
+  }))
+);
+const Security = lazy(() =>
+  import("@/pages/Security").then((m) => ({ default: m.Security }))
+);
+const SecurityDefault = lazy(() =>
+  import("@/pages/SecurityDefault").then((m) => ({
+    default: m.SecurityDefault,
+  }))
+);
+const SecurityFree = lazy(() =>
+  import("@/pages/SecurityFree").then((m) => ({ default: m.SecurityFree }))
+);
+const Settings = lazy(() =>
+  import("@/pages/Settings").then((m) => ({ default: m.Settings }))
+);
+const Team = lazy(() =>
+  import("@/pages/Team").then((m) => ({ default: m.Team }))
+);
+const SignIn = lazy(() =>
+  import("@/pages/SignIn").then((m) => ({ default: m.SignIn }))
+);
+const SignUp = lazy(() =>
+  import("@/pages/SignUp").then((m) => ({ default: m.SignUp }))
+);
+const TokenSavings = lazy(() =>
+  import("@/pages/TokenSavings").then((m) => ({ default: m.TokenSavings }))
+);
+const TokenSavingsFree = lazy(() =>
+  import("@/pages/TokenSavingsFree").then((m) => ({
+    default: m.TokenSavingsFree,
+  }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -48,28 +117,31 @@ function Layout() {
   // Sidebar state persists across navigation. localStorage so a tab refresh
   // keeps the user's choice.
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.localStorage.getItem('sidebar') !== 'collapsed';
+    if (typeof window === "undefined") {
+      return true;
+    }
+    return window.localStorage.getItem("sidebar") !== "collapsed";
   });
 
   useEffect(() => {
     window.localStorage.setItem(
-      'sidebar',
-      sidebarExpanded ? 'expanded' : 'collapsed',
+      "sidebar",
+      sidebarExpanded ? "expanded" : "collapsed"
     );
   }, [sidebarExpanded]);
 
   // Force-collapse at ≤1024px. The user's stored preference is preserved and
   // restored once the viewport widens past 1024.
   const [isNarrow, setIsNarrow] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches,
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1024px)").matches
   );
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 1024px)');
+    const mq = window.matchMedia("(max-width: 1024px)");
     const onChange = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
-    setIsNarrow(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   const ctx: LayoutContext = {
@@ -83,43 +155,51 @@ function Layout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
-        <Route element={<AuthLayout />}>
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-        </Route>
-        <Route element={<Layout />}>
-          <Route index element={<Navigate to="/overview" replace />} />
-          <Route path="/overview" element={<Dashboard />} />
-          <Route path="/overview-default" element={<DashboardDefault />} />
-          <Route path="/requests" element={<Requests />} />
-          <Route path="/requests-findings/:requestId" element={<RequestsFindings />} />
-          <Route path="/conversations" element={<Conversations />} />
-          <Route path="/conversations-trace/:conversationId" element={<ConversationsTrace />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/token-savings" element={<TokenSavings />} />
-          <Route path="/token-savings-free" element={<TokenSavingsFree />} />
-          <Route path="/limits" element={<Limits />} />
-          <Route path="/limits-default" element={<LimitsDefault />} />
-          <Route path="/limits-free" element={<LimitsFree />} />
-  <Route path="/upgrade" element={<Upgrade />} />
-          <Route path="/security" element={<Security />} />
-          <Route path="/events-default" element={<SecurityDefault />} />
-  <Route path="/security-free" element={<SecurityFree />} />
-          <Route path="/policies" element={<Policies />} />
-          <Route path="/audit-trail" element={<AuditTrail />} />
-   <Route path="/audit-trail-merkle" element={<AuditTrailMerkle />} />
-          <Route path="/activity" element={<Activity />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/api-keys" element={<ApiKeys />} />
-          <Route path="/api-keys-default" element={<ApiKeysDefault />} />
-          <Route path="/billing" element={<Billing />} />
-          {/* Unknown routes fall back to Requests. */}
-          <Route path="*" element={<Navigate to="/overview" replace />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
+          <Route element={<AuthLayout />}>
+            <Route element={<SignIn />} path="/sign-in" />
+            <Route element={<SignUp />} path="/sign-up" />
+          </Route>
+          <Route element={<Layout />}>
+            <Route element={<Navigate replace to="/overview" />} index />
+            <Route element={<Dashboard />} path="/overview" />
+            <Route element={<DashboardDefault />} path="/overview-default" />
+            <Route element={<Requests />} path="/requests" />
+            <Route
+              element={<RequestsFindings />}
+              path="/requests-findings/:requestId"
+            />
+            <Route element={<Conversations />} path="/conversations" />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace/:conversationId"
+            />
+            <Route element={<Models />} path="/models" />
+            <Route element={<TokenSavings />} path="/token-savings" />
+            <Route element={<TokenSavingsFree />} path="/token-savings-free" />
+            <Route element={<Limits />} path="/limits" />
+            <Route element={<LimitsDefault />} path="/limits-default" />
+            <Route element={<LimitsFree />} path="/limits-free" />
+            <Route element={<Upgrade />} path="/upgrade" />
+            <Route element={<Security />} path="/security" />
+            <Route element={<SecurityDefault />} path="/events-default" />
+            <Route element={<SecurityFree />} path="/security-free" />
+            <Route element={<Policies />} path="/policies" />
+            <Route element={<AuditTrail />} path="/audit-trail" />
+            <Route element={<AuditTrailMerkle />} path="/audit-trail-merkle" />
+            <Route element={<Activity />} path="/activity" />
+            <Route element={<Team />} path="/team" />
+            <Route element={<Settings />} path="/settings" />
+            <Route element={<ApiKeys />} path="/api-keys" />
+            <Route element={<ApiKeysDefault />} path="/api-keys-default" />
+            <Route element={<Billing />} path="/billing" />
+            {/* Unknown routes fall back to Requests. */}
+            <Route element={<Navigate replace to="/overview" />} path="*" />
+          </Route>
+        </Routes>
+      </Suspense>
       <Toaster position="bottom-right" />
     </BrowserRouter>
   );

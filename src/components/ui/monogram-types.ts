@@ -10,18 +10,18 @@
  * `./monogram`.
  * ─────────────────────────────────────────────────────────────────────── */
 
-export type AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink';
+export type AvatarTone = "blue" | "rose" | "emerald" | "amber" | "ink";
 
 export const AVATAR_TONE_CLS: Record<AvatarTone, string> = {
-  blue: 'bg-blue-700 text-white',
-  rose: 'bg-danger-700 text-white',
-  emerald: 'bg-success-700 text-white',
-  amber: 'bg-warning-700 text-white',
-  ink: 'bg-neutral-700 text-white',
+  blue: "bg-blue-700 text-white",
+  rose: "bg-danger-700 text-white",
+  emerald: "bg-success-700 text-white",
+  amber: "bg-warning-700 text-white",
+  ink: "bg-neutral-700 text-white",
 };
 
 export interface MonogramProps {
-  tone: AvatarTone;
   initials: string;
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
+  tone: AvatarTone;
 }

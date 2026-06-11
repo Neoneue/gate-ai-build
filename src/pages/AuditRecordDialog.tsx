@@ -1,6 +1,7 @@
-import { BookOpen, CircleCheck, Copy, ExternalLink } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { BookOpen, CircleCheck, Copy, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DetailList, DetailRow } from "@/components/ui/detail-list";
 import {
   Dialog,
   DialogScrollBody,
@@ -9,16 +10,15 @@ import {
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
-} from '@/components/ui/dialog';
-import { DetailList, DetailRow } from '@/components/ui/detail-list';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Timestamp } from "@/components/ui/timestamp";
 import {
   type EventRow,
-  KIND_BADGE_VARIANT,
   fmtRelative,
+  KIND_BADGE_VARIANT,
   truncateHex,
-} from './AuditTrail';
-import { Timestamp } from '@/components/ui/timestamp';
+} from "@/data/audit-trail";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditRecordDialog — drill-in modal for a single audit event row.
@@ -38,9 +38,9 @@ import { Timestamp } from '@/components/ui/timestamp';
 function VerifiedBySeal() {
   return (
     <img
-      src="/icons/de-verified-badge.svg"
       alt="Verified by Constellation Digital Evidence"
       className="h-6 w-auto self-start"
+      src="/icons/de-verified-badge.svg"
     />
   );
 }
@@ -64,10 +64,10 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Description */}
-      <p className="text-sm text-neutral-800 m-0">
+      <p className="m-0 text-neutral-800 text-sm">
         Highlighted path cryptographically proves{" "}
-        <span className="font-mono text-neutral-900">{leafHex}</span> is included
-        in fingerprint root{" "}
+        <span className="font-mono text-neutral-900">{leafHex}</span> is
+        included in fingerprint root{" "}
         <span className="font-mono text-neutral-900">{anchorShort}</span>.
       </p>
 
@@ -75,16 +75,16 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           background acts as the card's fill, the card chrome only owns
           the rounded border. `overflow-hidden` clips the SVG to the
           rounded corners. */}
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-md border border-border">
         <img
-          src="/icons/merkle-tree.svg"
           alt={`Merkle inclusion proof: leaf ${leafHex} verified against fingerprint root ${anchorShort} in ${TREE_DEPTH} hash operations.`}
-          className="block w-full h-auto"
+          className="block h-auto w-full"
+          src="/icons/merkle-tree.svg"
         />
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-neutral-500">
+      <div className="flex items-center justify-between text-neutral-500 text-xs">
         <span>
           <span className="text-neutral-500">Path:</span>{" "}
           <span className="font-mono text-neutral-700">
@@ -99,35 +99,34 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   );
 }
 
-
 /* ─── How it works panel ─────────────────────────────────────────────── */
 
 const HOW_STEPS = [
   {
-    id: '01',
-    title: 'Hash',
-    body: 'Each request, policy decision, and limit check is hashed at the gateway edge using SHA-256.',
+    id: "01",
+    title: "Hash",
+    body: "Each request, policy decision, and limit check is hashed at the gateway edge using SHA-256.",
   },
   {
-    id: '02',
-    title: 'Batch',
-    body: 'Hashes are batched into a Merkle tree every 5 minutes, or 64 events, whichever comes first.',
+    id: "02",
+    title: "Batch",
+    body: "Hashes are batched into a Merkle tree every 5 minutes, or 64 events, whichever comes first.",
   },
   {
-    id: '03',
-    title: 'Fingerprint',
-    body: 'The Merkle root is submitted to Constellation Digital Evidence with a 3-of-3 validator quorum.',
+    id: "03",
+    title: "Fingerprint",
+    body: "The Merkle root is submitted to Constellation Digital Evidence with a 3-of-3 validator quorum.",
   },
   {
-    id: '04',
-    title: 'Verify',
-    body: 'Anyone with the leaf, root, and sibling hashes can re-derive the root locally. No trust in us required.',
+    id: "04",
+    title: "Verify",
+    body: "Anyone with the leaf, root, and sibling hashes can re-derive the root locally. No trust in us required.",
   },
 ] as const;
 
 function NumberChip({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center justify-center size-8 rounded-xs bg-neutral-100 text-neutral-700 font-mono text-xs font-medium shrink-0">
+    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-xs bg-neutral-100 font-medium font-mono text-neutral-700 text-xs">
       {children}
     </span>
   );
@@ -137,17 +136,21 @@ function HowItWorksPanel() {
   return (
     <div className="flex flex-col gap-4">
       {/* 2×2 step grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {HOW_STEPS.map((step) => (
           <div
+            className="flex flex-col gap-2 rounded-md border border-border bg-card p-4"
             key={step.id}
-            className="rounded-md border border-border bg-card p-4 flex flex-col gap-2"
           >
             <div className="flex items-center gap-2">
               <NumberChip>{step.id}</NumberChip>
-              <h3 className="text-sm font-medium text-neutral-900 m-0">{step.title}</h3>
+              <h3 className="m-0 font-medium text-neutral-900 text-sm">
+                {step.title}
+              </h3>
             </div>
-            <p className="text-sm text-neutral-700 text-pretty m-0">{step.body}</p>
+            <p className="m-0 text-pretty text-neutral-700 text-sm">
+              {step.body}
+            </p>
           </div>
         ))}
       </div>
@@ -157,25 +160,28 @@ function HowItWorksPanel() {
           knowledge graph yet). Copy uses the approved tamper-evident /
           cryptographic-proof vocabulary from the DE product record. */}
       <a
+        className="group flex items-center justify-between gap-4 rounded-md border border-border bg-card p-4 text-left transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
         href="https://digitalevidence.constellationnetwork.io/"
-        target="_blank"
         rel="noopener noreferrer"
-        className="group rounded-md border border-border bg-card p-4 flex items-center justify-between gap-4 text-left transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
+        target="_blank"
       >
-        <span className="flex items-center gap-3 min-w-0">
-          <span className="size-8 rounded-xs bg-neutral-100 inline-flex items-center justify-center shrink-0">
-            <BookOpen className="size-4 text-neutral-700" aria-hidden />
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-xs bg-neutral-100">
+            <BookOpen aria-hidden className="size-4 text-neutral-700" />
           </span>
-          <span className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-neutral-900">Digital Evidence docs</span>
-            <span className="text-sm text-neutral-700 text-pretty">
-              How Constellation's tamper-evident layer makes every event in this log independently verifiable.
+          <span className="flex min-w-0 flex-col">
+            <span className="font-medium text-neutral-900 text-sm">
+              Digital Evidence docs
+            </span>
+            <span className="text-pretty text-neutral-700 text-sm">
+              How Constellation's tamper-evident layer makes every event in this
+              log independently verifiable.
             </span>
           </span>
         </span>
         <ExternalLink
-          className="size-4 text-neutral-500 shrink-0 transition-colors duration-150 ease-out group-hover:text-neutral-900 motion-reduce:transition-none"
           aria-hidden
+          className="size-4 shrink-0 text-neutral-500 transition-colors duration-150 ease-out group-hover:text-neutral-900 motion-reduce:transition-none"
         />
       </a>
     </div>
@@ -193,14 +199,18 @@ export function AuditRecordDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  if (!row) return null;
+  if (!row) {
+    return null;
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogScrollContent className="sm:max-w-2xl">
         {/* ── Header ── */}
         <DialogScrollHeader>
-          <DialogTitleBlock badge={<VerifiedBySeal />}>Audit record</DialogTitleBlock>
+          <DialogTitleBlock badge={<VerifiedBySeal />}>
+            Audit record
+          </DialogTitleBlock>
         </DialogScrollHeader>
 
         {/* ── Anchor banner ──
@@ -211,15 +221,19 @@ export function AuditRecordDialog({
          * statement before the tabbed detail. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-neutral-900 m-0">
-              This event is fingerprinted to{' '}
-              <span className="font-medium">Constellation's Digital Evidence</span>{' '}
+            <p className="m-0 text-neutral-900 text-sm">
+              This event is fingerprinted to{" "}
+              <span className="font-medium">
+                Constellation's Digital Evidence
+              </span>{" "}
               layer.
             </p>
-            <p className="text-xs text-neutral-500 m-0">
-              Fingerprinted ·{' '}
-              <span className="font-mono text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
-              {' · '}
+            <p className="m-0 text-neutral-500 text-xs">
+              Fingerprinted ·{" "}
+              <span className="font-mono text-neutral-800">
+                {truncateHex(row.anchor, 4, 4)}
+              </span>
+              {" · "}
               {fmtRelative(row.at)}
             </p>
           </div>
@@ -228,8 +242,10 @@ export function AuditRecordDialog({
         {/* ── Tabbed body ── */}
         <DialogScrollBody className="pt-4">
           <Tabs defaultValue="event">
-            <TabsList variant="line" className="mb-2 px-0">
-              <TabsTrigger value="event" className="pl-0">Event</TabsTrigger>
+            <TabsList className="mb-2 px-0" variant="line">
+              <TabsTrigger className="pl-0" value="event">
+                Event
+              </TabsTrigger>
               <TabsTrigger value="merkle">Merkle path</TabsTrigger>
               <TabsTrigger value="how">How it works</TabsTrigger>
             </TabsList>
@@ -239,21 +255,34 @@ export function AuditRecordDialog({
               <DetailList>
                 <DetailRow
                   label="Time"
-                  value={<Timestamp date={row.at} className="font-mono text-neutral-800" />}
+                  value={
+                    <Timestamp
+                      className="font-mono text-neutral-800"
+                      date={row.at}
+                    />
+                  }
                 />
                 <DetailRow
                   label="Event ID"
                   value={
-                    <span className="font-mono break-all text-neutral-800">{row.eventId}</span>
+                    <span className="break-all font-mono text-neutral-800">
+                      {row.eventId}
+                    </span>
                   }
                 />
                 <DetailRow
                   label="Event type"
-                  value={<Badge variant={KIND_BADGE_VARIANT[row.kind]}>{row.kind}</Badge>}
+                  value={
+                    <Badge variant={KIND_BADGE_VARIANT[row.kind]}>
+                      {row.kind}
+                    </Badge>
+                  }
                 />
                 <DetailRow
                   label="Description"
-                  value={<span className="text-neutral-900">{row.description}</span>}
+                  value={
+                    <span className="text-neutral-900">{row.description}</span>
+                  }
                 />
                 <DetailRow
                   label="Member"
@@ -264,12 +293,14 @@ export function AuditRecordDialog({
                   value={
                     <span className="inline-flex items-center gap-2">
                       <CircleCheck
-                        className="size-4 text-success-600 shrink-0"
-                        strokeWidth={1.75}
                         aria-hidden
+                        className="size-4 shrink-0 text-success-600"
+                        strokeWidth={1.75}
                       />
                       <span className="sr-only">Verified fingerprint</span>
-                      <span className="font-mono whitespace-nowrap text-neutral-800">{truncateHex(row.anchor, 4, 4)}</span>
+                      <span className="whitespace-nowrap font-mono text-neutral-800">
+                        {truncateHex(row.anchor, 4, 4)}
+                      </span>
                     </span>
                   }
                 />
@@ -290,11 +321,11 @@ export function AuditRecordDialog({
 
         {/* ── Footer ── */}
         <DialogScrollFooter>
-          <Button variant="outline" size="sm" onClick={() => {}}>
+          <Button size="sm" variant="outline">
             <Copy className="size-3.5" />
             Copy proof JSON
           </Button>
-          <Button size="sm" onClick={() => {}}>
+          <Button size="sm">
             <ExternalLink className="size-3.5" />
             Open DE Explorer
           </Button>

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { Eyebrow } from '@/components/ui/eyebrow';
+import { Eyebrow } from "@/components/ui/eyebrow";
 
 export interface ArtboardProps {
+  children: ReactNode;
   id: string;
+  left: number;
   name: string;
   top: number;
-  left: number;
-  children: ReactNode;
 }
 
 /**
@@ -21,10 +21,10 @@ export function Artboard({ id, name, top, left, children }: ArtboardProps) {
         {id} · {name}
       </Eyebrow>
       <div
-        className="artboard-shell bg-card rounded-sm overflow-hidden"
+        className="artboard-shell overflow-hidden rounded-sm bg-card"
         style={{
           boxShadow:
-            '0 1px 2px rgba(17,20,23,0.06), 0 8px 24px -8px rgba(17,20,23,0.10)',
+            "0 1px 2px rgba(17,20,23,0.06), 0 8px 24px -8px rgba(17,20,23,0.10)",
         }}
       >
         {children}
@@ -67,12 +67,16 @@ export function Canvas({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
-    if (!wrapper) return;
+    if (!wrapper) {
+      return;
+    }
 
     const onWheel = (e: WheelEvent) => {
       // Don't hijack wheel inside a real form control (textarea scrolls itself)
       const target = e.target as HTMLElement | null;
-      if (target?.closest('textarea, [data-radix-scroll-area-viewport]')) return;
+      if (target?.closest("textarea, [data-radix-scroll-area-viewport]")) {
+        return;
+      }
 
       e.preventDefault();
 
@@ -83,10 +87,12 @@ export function Canvas({ children }: { children: ReactNode }) {
         const my = e.clientY - rect.top;
 
         const clamped = Math.max(-ZOOM_CLAMP, Math.min(ZOOM_CLAMP, e.deltaY));
-        const factor = Math.pow(2, -clamped * 0.01);
+        const factor = 2 ** (-clamped * 0.01);
         const prev = scaleRef.current;
         const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev * factor));
-        if (next === prev) return;
+        if (next === prev) {
+          return;
+        }
         // Keep the point under the cursor stationary.
         const ratio = next / prev;
         const newTx = mx - (mx - txRef.current) * ratio;
@@ -101,16 +107,16 @@ export function Canvas({ children }: { children: ReactNode }) {
       }
     };
 
-    wrapper.addEventListener('wheel', onWheel, { passive: false });
-    return () => wrapper.removeEventListener('wheel', onWheel);
+    wrapper.addEventListener("wheel", onWheel, { passive: false });
+    return () => wrapper.removeEventListener("wheel", onWheel);
   }, []);
 
   return (
     <>
       <div
-        ref={wrapperRef}
         className="fixed inset-0 overflow-hidden"
-        style={{ touchAction: 'none' }}
+        ref={wrapperRef}
+        style={{ touchAction: "none" }}
       >
         <div
           className="relative"
@@ -119,38 +125,44 @@ export function Canvas({ children }: { children: ReactNode }) {
             height: 5200,
             padding: 120,
             transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-            transformOrigin: '0 0',
-            willChange: 'transform',
+            transformOrigin: "0 0",
+            willChange: "transform",
           }}
         >
           {children}
         </div>
       </div>
       <CanvasControls
-        scale={scale}
         onReset={() => {
           setScale(1);
           setTx(40);
           setTy(40);
         }}
+        scale={scale}
       />
     </>
   );
 }
 
-function CanvasControls({ scale, onReset }: { scale: number; onReset: () => void }) {
+function CanvasControls({
+  scale,
+  onReset,
+}: {
+  scale: number;
+  onReset: () => void;
+}) {
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-sm bg-card border border-border shadow-[0_4px_16px_rgba(17,20,23,0.10)] px-2 py-1"
+      className="fixed right-6 bottom-6 z-50 flex items-center gap-2 rounded-sm border border-border bg-card px-2 py-1 shadow-[0_4px_16px_rgba(17,20,23,0.10)]"
       onWheel={(e) => e.stopPropagation()}
     >
-      <span className="font-mono text-xs tabular-nums text-neutral-500 px-1">
+      <span className="px-1 font-mono text-neutral-500 text-xs tabular-nums">
         {Math.round(scale * 100)}%
       </span>
       <button
-        type="button"
+        className="inline-flex h-7 items-center justify-center rounded-sm px-3 font-mono text-neutral-600 text-xs transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
         onClick={onReset}
-        className="h-7 px-3 inline-flex items-center justify-center rounded-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 font-mono text-xs active:scale-[0.99] transition-[colors,scale] duration-150 ease-out motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        type="button"
       >
         Reset
       </button>

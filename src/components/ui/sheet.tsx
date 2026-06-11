@@ -1,9 +1,8 @@
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { XIcon } from "lucide-react";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /* ─── Sheet ───────────────────────────────────────────────────────────────
  * Right-docked drawer for inspection workflows (row drill-ins, detail
@@ -28,28 +27,24 @@ import { XIcon } from "lucide-react"
  * without touching the primitive again. ────────────────────────────── */
 
 function Sheet({ modal = true, ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="sheet" modal={modal} {...props} />
+  return <DialogPrimitive.Root data-slot="sheet" modal={modal} {...props} />;
 }
 
 function SheetTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+  return <DialogPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
 function SheetPortal({ ...props }: DialogPrimitive.Portal.Props) {
-  return <DialogPrimitive.Portal data-slot="sheet-portal" {...props} />
+  return <DialogPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
 function SheetClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="sheet-close" {...props} />
+  return <DialogPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
-function SheetOverlay({
-  className,
-  ...props
-}: DialogPrimitive.Backdrop.Props) {
+function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   return (
     <DialogPrimitive.Backdrop
-      data-slot="sheet-overlay"
       className={cn(
         // Fade-only on the backdrop — the panel owns the slide motion.
         // Durations stay in lockstep with the panel: 300ms enter, 200ms exit
@@ -58,12 +53,13 @@ function SheetOverlay({
         // produces a visible flicker as the keyframe element reverts to its
         // resting opacity early; matching the panel keeps the dim leaving
         // alongside it.
-        "fixed inset-0 isolate z-50 bg-neutral-900/40 duration-300 data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-neutral-900/40 duration-300 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
+      data-slot="sheet-overlay"
       {...props}
     />
-  )
+  );
 }
 
 function SheetContent({
@@ -72,18 +68,20 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
 }) {
   // Dev-only guard: Base UI wires `aria-labelledby` from <SheetTitle> onto
   // the popup, so a missing title leaves the dialog unnamed for AT. CMP-013
   // shipped without one before being caught in audit; this warns next time.
   const popupRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!import.meta.env.DEV) {
+      return;
+    }
     const popup = popupRef.current;
-    if (popup && !popup.hasAttribute('aria-labelledby')) {
+    if (popup && !popup.hasAttribute("aria-labelledby")) {
       console.warn(
-        '[Sheet] SheetContent rendered without a <SheetTitle>. Add one (wrap in sr-only if the design has no visible title) so the dialog has an accessible name.'
+        "[Sheet] SheetContent rendered without a <SheetTitle>. Add one (wrap in sr-only if the design has no visible title) so the dialog has an accessible name."
       );
     }
   }, []);
@@ -91,8 +89,6 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Popup
-        ref={popupRef}
-        data-slot="sheet-content"
         className={cn(
           // Anchoring: full viewport height, flush against the right edge.
           // No rounded corners — the right edge is the viewport edge, and
@@ -102,7 +98,7 @@ function SheetContent({
           // wider inspector surfaces than centered modals (which ship gap-4),
           // so the section rhythm wants more air. Tightening at the call
           // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex flex-col gap-6 w-full sm:max-w-2xl bg-card border-l border-border shadow-(--shadow-modal) p-4 text-sm text-neutral-900 outline-none overscroll-contain",
+          "fixed inset-y-0 right-0 z-50 flex w-full flex-col gap-6 overscroll-contain border-border border-l bg-card p-4 text-neutral-900 text-sm shadow-(--shadow-modal) outline-none sm:max-w-2xl",
           // Slide animation. Uses tw-animate keyframes (same plugin Dialog
           // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
           // Mixing tw-animate keyframes for the backdrop with CSS transitions
@@ -113,9 +109,11 @@ function SheetContent({
           // shadcn Sheet's open duration. `will-change-transform` keeps the
           // panel on its own compositor layer so the GPU doesn't allocate
           // mid-slide.
-          "will-change-transform data-open:animate-in data-closed:animate-out data-open:slide-in-from-right data-closed:slide-out-to-right data-closed:duration-200 data-closed:fill-mode-forwards duration-300 ease-out motion-reduce:animate-none motion-reduce:duration-0",
+          "data-open:slide-in-from-right data-closed:slide-out-to-right duration-300 ease-out will-change-transform data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 motion-reduce:animate-none motion-reduce:duration-0",
           className
         )}
+        data-slot="sheet-content"
+        ref={popupRef}
         {...props}
       >
         {children}
@@ -124,9 +122,9 @@ function SheetContent({
             data-slot="sheet-close"
             render={
               <Button
-                variant="ghost"
                 className="absolute top-2 right-2"
                 size="icon-sm"
+                variant="ghost"
               />
             }
           >
@@ -136,17 +134,17 @@ function SheetContent({
         )}
       </DialogPrimitive.Popup>
     </SheetPortal>
-  )
+  );
 }
 
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="sheet-header"
       className={cn("flex flex-col gap-2", className)}
+      data-slot="sheet-header"
       {...props}
     />
-  )
+  );
 }
 
 function SheetFooter({
@@ -155,7 +153,7 @@ function SheetFooter({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
 }) {
   // Pinned-at-bottom footer pattern: flex-col-reverse on mobile,
   // flex-row + justify-end on sm+. Negative-margin trick (-mx-4 -mb-4)
@@ -164,11 +162,11 @@ function SheetFooter({
   // Mirrors the inline footer style in CMP013 and DialogFooter.
   return (
     <div
-      data-slot="sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-border pt-3 -mx-4 px-4 -mb-4 pb-3",
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 border-border border-t px-4 pt-3 pb-3 sm:flex-row sm:justify-end",
         className
       )}
+      data-slot="sheet-footer"
       {...props}
     >
       {children}
@@ -178,20 +176,20 @@ function SheetFooter({
         </DialogPrimitive.Close>
       )}
     </div>
-  )
+  );
 }
 
 function SheetTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
-      data-slot="sheet-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        "font-heading font-medium text-base leading-none",
         className
       )}
+      data-slot="sheet-title"
       {...props}
     />
-  )
+  );
 }
 
 function SheetDescription({
@@ -200,14 +198,14 @@ function SheetDescription({
 }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
-      data-slot="sheet-description"
       className={cn(
-        "text-sm text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
+        "text-neutral-600 text-sm *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
         className
       )}
+      data-slot="sheet-description"
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -221,4 +219,4 @@ export {
   SheetPortal,
   SheetTitle,
   SheetTrigger,
-}
+};

@@ -1,7 +1,7 @@
-import { Search } from 'lucide-react';
+import { Search } from "lucide-react";
 
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * SearchInput — table toolbar search field with leading icon.
@@ -25,20 +25,20 @@ import { cn } from '@/lib/utils';
  * ───────────────────────────────────────────────────────────────────── */
 
 export interface SearchInputProps {
-  /** Placeholder copy. Should end with `…`. */
-  placeholder: string;
   /** Required accessible label. */
   ariaLabel: string;
-  /** Controlled value. Omit for uncontrolled. */
-  value?: string;
-  /** Controlled change handler. Receives the input's new string value. */
-  onChange?: (value: string) => void;
-  /** Form `name` attribute. Defaults to `'q'`. */
-  name?: string;
   /** Wrapper-level className override. Layout-only; do not pass `w-*` */
   className?: string;
+  /** Form `name` attribute. Defaults to `'q'`. */
+  name?: string;
+  /** Controlled change handler. Receives the input's new string value. */
+  onChange?: (value: string) => void;
+  /** Placeholder copy. Should end with `…`. */
+  placeholder: string;
   /** Inner input resting fill. `'card'` (default) on white/card surfaces; `'background'` on the page background layer. */
-  surface?: 'card' | 'background';
+  surface?: "card" | "background";
+  /** Controlled value. Omit for uncontrolled. */
+  value?: string;
 }
 
 export function SearchInput({
@@ -46,29 +46,29 @@ export function SearchInput({
   ariaLabel,
   value,
   onChange,
-  name = 'q',
+  name = "q",
   className,
-  surface = 'card',
+  surface = "card",
 }: SearchInputProps) {
   return (
-    <div className={cn('relative w-96 min-w-0 shrink-0', className)}>
+    <div className={cn("relative w-96 min-w-0 shrink-0", className)}>
       <Search
         aria-hidden
+        className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-neutral-500"
         strokeWidth={1.75}
-        className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-neutral-500"
       />
       <Input
+        aria-label={ariaLabel}
+        autoComplete="off"
+        className="pl-8"
+        name={name}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        placeholder={placeholder}
         size="sm"
+        spellCheck={false}
         surface={surface}
         type="search"
-        name={name}
-        autoComplete="off"
-        spellCheck={false}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        className="pl-8"
         value={value}
-        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
       />
     </div>
   );

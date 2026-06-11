@@ -1,8 +1,7 @@
-import * as React from 'react';
-import { CircleCheck, Copy } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { CircleCheck, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCopyFeedback } from "@/hooks/use-copy-feedback";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CopyButton — shared copy-with-feedback affordance.
@@ -35,35 +34,33 @@ import { cn } from '@/lib/utils';
  * targets evergreen browsers.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const HOLD_MS = 2000;
-
-export type CopyButtonMode = 'icon' | 'label';
+export type CopyButtonMode = "icon" | "label";
 
 /** Icon-mode size variants — match the existing footprints these replace. */
 export type CopyIconSize =
-  | 'icon-sm'    // 32×32 ghost — default; mirrors `<Button size="icon-sm">`.
-  | 'inline-xs'; // 20×20 neutral-500 ghost — used inline inside running text
-                 //                       next to <code> chips (CMP-016 base URL).
+  | "icon-sm" // 32×32 ghost — default; mirrors `<Button size="icon-sm">`.
+  | "inline-xs"; // 20×20 neutral-500 ghost — used inline inside running text
+//                       next to <code> chips (CMP-016 base URL).
 
 interface CopyButtonBaseProps {
-  /** Text written to the clipboard. */
-  value: string;
+  className?: string;
   /**
    * Toast fragment. The full toast is always
    * `Copied ${label} to clipboard` — don't pre-format.
    * Examples: "model ID", "base URL", "audit proof", "TypeScript snippet".
    */
   label: string;
-  className?: string;
+  /** Text written to the clipboard. */
+  value: string;
 }
 
 interface CopyButtonIconProps extends CopyButtonBaseProps {
-  mode?: 'icon';
   /**
    * Override for the resting `aria-label`. When omitted, defaults to
    * `Copy ${label}`. Success state always reads "Copied".
    */
   ariaLabel?: string;
+  mode?: "icon";
   size?: CopyIconSize;
 }
 
@@ -75,61 +72,19 @@ interface CopyButtonIconProps extends CopyButtonBaseProps {
  *                 button can sit alongside other `sm` buttons in modal
  *                 footers (CMP-013 / CMP-014) without optical mismatch.
  */
-export type CopyLabelSize = 'compact' | 'sm';
+export type CopyLabelSize = "compact" | "sm";
 
 interface CopyButtonLabelProps extends CopyButtonBaseProps {
-  mode: 'label';
+  mode: "label";
+  size?: CopyLabelSize;
   /**
    * Resting button text. Defaults to "Copy". Success state always reads
    * "Copied!" — that consistency is part of the affordance contract.
    */
   text?: string;
-  size?: CopyLabelSize;
 }
 
 export type CopyButtonProps = CopyButtonIconProps | CopyButtonLabelProps;
-
-/**
- * Custom hook — owns the click→success→revert state machine and the toast
- * call. Exposed as a hook (rather than only via the component) so the rare
- * caller that needs to wire its own button chrome can still get the
- * canonical behaviour without re-implementing the timer.
- */
-export function useCopyFeedback({
-  value,
-  label,
-}: {
-  value: string;
-  label: string;
-}) {
-  const [copied, setCopied] = React.useState(false);
-  const timerRef = React.useRef<number | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
-
-  const trigger = React.useCallback(() => {
-    // Ignore re-clicks during the 2s success hold so spam-clicking can't
-    // flood the clipboard / fire a stack of toasts. A live `timerRef` means
-    // we're still inside the hold window.
-    if (timerRef.current !== null) return;
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      toast(`Copied ${label} to clipboard`);
-      timerRef.current = window.setTimeout(() => {
-        setCopied(false);
-        timerRef.current = null;
-      }, HOLD_MS);
-    });
-  }, [value, label]);
-
-  return { copied, trigger };
-}
 
 export function CopyButton(props: CopyButtonProps) {
   const { value, label, className } = props;
@@ -139,45 +94,45 @@ export function CopyButton(props: CopyButtonProps) {
   // is impractical). Icon modes use CopyIconSwap for an opacity cross-fade.
   const Icon = copied ? CircleCheck : Copy;
 
-  if (props.mode === 'label') {
-    const restingText = props.text ?? 'Copy';
-    const labelSize = props.size ?? 'compact';
+  if (props.mode === "label") {
+    const restingText = props.text ?? "Copy";
+    const labelSize = props.size ?? "compact";
     // 'compact' keeps the tight h-6 / px-2 / gap-1 recipe used at the top of
     // code cards. 'sm' delegates to <Button size="sm"> so the button matches
     // the height + padding of the default-variant siblings it sits next to
     // in modal footers.
     return (
       <Button
+        aria-label={copied ? "Copied" : restingText}
+        className={cn(
+          labelSize === "compact" &&
+            "h-6 gap-1 px-2 font-medium text-neutral-600 hover:text-neutral-900",
+          className
+        )}
+        onClick={trigger}
+        size={labelSize === "sm" ? "sm" : "xs"}
         type="button"
         variant="outline"
-        size={labelSize === 'sm' ? 'sm' : 'xs'}
-        onClick={trigger}
-        aria-label={copied ? 'Copied' : restingText}
-        className={cn(
-          labelSize === 'compact' &&
-            'h-6 gap-1 px-2 font-medium text-neutral-600 hover:text-neutral-900',
-          className,
-        )}
       >
         <Icon
-          data-icon="inline-start"
-          strokeWidth={1.8}
           aria-hidden="true"
           className={cn(
-            'transition-colors duration-150 ease-out motion-reduce:transition-none',
-            copied && 'text-success-600',
+            "transition-colors duration-150 ease-out motion-reduce:transition-none",
+            copied && "text-success-600"
           )}
+          data-icon="inline-start"
+          strokeWidth={1.8}
         />
-        {copied ? 'Copied!' : restingText}
+        {copied ? "Copied!" : restingText}
       </Button>
     );
   }
 
   // Icon mode.
-  const size = props.size ?? 'icon-sm';
-  const ariaLabel = copied ? 'Copied' : (props.ariaLabel ?? `Copy ${label}`);
+  const size = props.size ?? "icon-sm";
+  const ariaLabel = copied ? "Copied" : (props.ariaLabel ?? `Copy ${label}`);
 
-  if (size === 'inline-xs') {
+  if (size === "inline-xs") {
     // 20×20 inline ghost — preserves the exact recipe used inline next to
     // <code> chips inside running text (CMP-016 base URL) and inside dense
     // table cells (CMP-016 ProvidersTable). The visible icon stays 20×20 so
@@ -187,16 +142,16 @@ export function CopyButton(props: CopyButtonProps) {
     // enough surrounding clearance that the pseudo never overlaps siblings.
     return (
       <button
-        type="button"
-        onClick={trigger}
         aria-label={ariaLabel}
         className={cn(
-          'relative inline-flex items-center justify-center size-5 rounded-xs text-neutral-500 hover:text-neutral-900 transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 before:absolute before:inset-[-2px] before:content-[""]',
-          copied && 'text-success-600 hover:text-success-600',
-          className,
+          'relative inline-flex size-5 items-center justify-center rounded-xs text-neutral-500 transition-colors duration-150 ease-out before:absolute before:inset-[-2px] before:content-[""] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
+          copied && "text-success-600 hover:text-success-600",
+          className
         )}
+        onClick={trigger}
+        type="button"
       >
-        <CopyIconSwap copied={copied} className="size-3" strokeWidth={1.75} />
+        <CopyIconSwap className="size-3" copied={copied} strokeWidth={1.75} />
       </button>
     );
   }
@@ -204,16 +159,16 @@ export function CopyButton(props: CopyButtonProps) {
   // 'icon-sm' — default.
   return (
     <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={trigger}
       aria-label={ariaLabel}
       className={cn(
-        copied && 'text-success-600 hover:text-success-600',
-        'transition-colors duration-150 ease-out motion-reduce:transition-none',
-        className,
+        copied && "text-success-600 hover:text-success-600",
+        "transition-colors duration-150 ease-out motion-reduce:transition-none",
+        className
       )}
+      onClick={trigger}
+      size="icon-sm"
+      type="button"
+      variant="ghost"
     >
       <CopyIconSwap copied={copied} />
     </Button>
@@ -237,18 +192,18 @@ function CopyIconSwap({
   strokeWidth?: number;
 }) {
   const shared = cn(
-    '[grid-area:1/1] transition-opacity duration-150 ease-out motion-reduce:transition-none',
-    className,
+    "transition-opacity duration-150 ease-out [grid-area:1/1] motion-reduce:transition-none",
+    className
   );
   return (
-    <span className="grid" aria-hidden="true">
+    <span aria-hidden="true" className="grid">
       <Copy
+        className={cn(shared, copied ? "opacity-0" : "opacity-100")}
         strokeWidth={strokeWidth}
-        className={cn(shared, copied ? 'opacity-0' : 'opacity-100')}
       />
       <CircleCheck
+        className={cn(shared, copied ? "opacity-100" : "opacity-0")}
         strokeWidth={strokeWidth}
-        className={cn(shared, copied ? 'opacity-100' : 'opacity-0')}
       />
     </span>
   );

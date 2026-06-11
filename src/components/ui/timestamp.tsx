@@ -1,10 +1,14 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   formatDateNumeric,
   formatRelative,
   formatTimestamp,
-} from '@/lib/formatters';
+} from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Timestamp — canonical date/time cell with a relative-time tooltip.
@@ -22,7 +26,7 @@ import {
  * tooltip is computed against `anchor` (defaults to `new Date()`).
  * ───────────────────────────────────────────────────────────────────────── */
 
-type TimestampFormat = 'timestamp' | 'dateNumeric' | 'relative';
+type TimestampFormat = "timestamp" | "dateNumeric" | "relative";
 
 type TimestampProps = {
   date: Date | null;
@@ -33,7 +37,7 @@ type TimestampProps = {
 
 export function Timestamp({
   date,
-  format = 'timestamp',
+  format = "timestamp",
   anchor,
   className,
 }: TimestampProps) {
@@ -42,14 +46,16 @@ export function Timestamp({
   }
 
   const visible =
-    format === 'timestamp'
+    format === "timestamp"
       ? formatTimestamp(date)
-      : format === 'dateNumeric'
+      : format === "dateNumeric"
         ? formatDateNumeric(date)
         : formatRelative(date, anchor);
 
   const tooltip =
-    format === 'relative' ? formatTimestamp(date) : formatRelative(date, anchor);
+    format === "relative"
+      ? formatTimestamp(date)
+      : formatRelative(date, anchor);
 
   return (
     <Tooltip>
@@ -57,7 +63,7 @@ export function Timestamp({
         render={(props) => (
           <span
             {...props}
-            className={cn('cursor-default tabular-nums', className)}
+            className={cn("cursor-default tabular-nums", className)}
           >
             {visible}
           </span>

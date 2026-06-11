@@ -1,6 +1,6 @@
-import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Popover — click-triggered floating panel for the chrome ladder
@@ -24,15 +24,15 @@ function PopoverTrigger(props: PopoverPrimitive.Trigger.Props) {
 }
 
 type PopoverContentProps = PopoverPrimitive.Popup.Props & {
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  align?: 'start' | 'center' | 'end';
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 };
 
 function PopoverContent({
   className,
-  side = 'bottom',
-  align = 'end',
+  side = "bottom",
+  align = "end",
   sideOffset = 8,
   children,
   ...props
@@ -40,18 +40,18 @@ function PopoverContent({
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
-        side={side}
         align={align}
-        sideOffset={sideOffset}
         className="isolate z-50 outline-none"
+        side={side}
+        sideOffset={sideOffset}
       >
         <PopoverPrimitive.Popup
-          data-slot="popover-content"
           className={cn(
-            'rounded-sm border border-border bg-card text-neutral-900 shadow-(--shadow-popup) origin-[var(--transform-origin)] outline-none',
-            'duration-150 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-closed:duration-100 data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0',
-            className,
+            "origin-[var(--transform-origin)] rounded-sm border border-border bg-card text-neutral-900 shadow-(--shadow-popup) outline-none",
+            "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
+            className
           )}
+          data-slot="popover-content"
           {...props}
         >
           {children}
@@ -61,4 +61,4 @@ function PopoverContent({
   );
 }
 
-export { Popover, PopoverTrigger, PopoverContent };
+export { Popover, PopoverContent, PopoverTrigger };
