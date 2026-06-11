@@ -255,7 +255,7 @@ errors.
   Recoverable from git history (committed at 85f7d9e) if ever wanted.
 - ESLint stays for the react-hooks rule set Biome doesn't replicate.
 
-### Audit #2 — verification baseline: Vitest + GitHub Actions CI (uncommitted)
+### Audit #2 — verification baseline: Vitest + GitHub Actions CI [c72f586]
 
 Non-UI. `npm test` = `vitest run` (vitest.config.ts, node env, @ alias);
 29 tests in 5 files, all pure logic — no component/snapshot tests:
@@ -277,7 +277,7 @@ CI: `.github/workflows/ci.yml` — push/PR on dev + main, Node 22, npm ci,
 then lint (eslint + biome) → test → build (tsc -b + vite). Closes the
 `--no-verify` bypass gap left by pre-commit-only enforcement.
 
-### Audit #8 + #9 + #10 — small fixes, full strict mode, docs refresh (uncommitted)
+### Audit #8 + #9 + #10 — small fixes, full strict mode, docs refresh [c72f586]
 
 - **#8 correctness bundle**: clipboard copy failures now surface a
   `toast.error` instead of silently doing nothing (use-copy-feedback);
