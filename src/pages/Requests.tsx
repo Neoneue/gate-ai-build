@@ -1,4 +1,6 @@
+import { Collapsible } from "@base-ui/react/collapsible";
 import {
+  ChevronDown,
   CreditCard,
   ExternalLink,
   Flag,
@@ -116,6 +118,7 @@ import {
 } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { errorExplanation, errorOrigin } from "@/lib/error-origin";
 
 const MONTH_INDEX: Record<string, number> = {
   Jan: 0,
@@ -977,6 +980,14 @@ export type RequestRow = {
   traceKind?: "tool" | "reason";
   userMessage?: string;
   assistantResponse?: string;
+  /** Provider/upstream failure attribution (mirrors the gateway's
+   * error_source / error_code columns). Present only on rows the gateway
+   * recorded as a non-policy error; drives the Details-tab Error response card
+   * (origin badge + explanation + body). Absent on success and block rows. */
+  errorSource?: string;
+  errorCode?: string;
+  /** Raw error body the provider returned, rendered as a JSON code block. */
+  errorBody?: string;
   /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash'),
    * its invocation args, and the result text. Drive the messages-panel
    * tool bubble (`Tool · <toolName>` + result) and the trace `tool: X` label. */
@@ -2291,15 +2302,9 @@ export function RequestDetailBodyV2({
               {/* Left (2/3): the message — user/assistant turns + Full request. */}
               <div className="min-w-0 md:col-span-2">
                 <div className={PANEL_OUTER}>
-                  <RequestBodyPanel
-                    bare
-                    fullRequestOnly
-                    highlightEvidence={selectedFinding?.evidence}
-                    highlightFinding={selectedFinding ?? undefined}
-                    highlightMatch={selectedFinding?.match}
+                  <DetailMessageSubcards
                     revealSignal={evidenceReveal}
                     row={row}
-                    showRaw={showRaw}
                   />
                 </div>
               </div>
@@ -3095,6 +3100,196 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
         {content}
       </div>
     </section>
+  );
+}
+
+/* Inline icon heading for the Details-tab subcards — smaller than
+ * PanelHeading (14px medium, an icon, no h3 chrome) so the User message /
+ * Assistant response / Full request stack reads as peer subcards, matching
+ * the real MessageCard's inline label rather than the 16px section title the
+ * Findings panels use. Error icons tint destructive; the rest sit neutral. */
+function SubcardHeading({ label }: { label: string }) {
+  return (
+    <span className="font-medium font-sans text-neutral-900 text-sm">
+      {label}
+    </span>
+  );
+}
+
+/* A single conversation turn as a Details-tab subcard: a plain-text heading
+ * above a bordered prose well. `max-h-[200px]` keeps the user and assistant
+ * turns peers in the stack; long turns scroll inside the card rather than
+ * pushing the Full request collapsible off-screen. */
+function DetailMessageSubcard({
+  label,
+  content,
+}: {
+  label: string;
+  content: string;
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <SubcardHeading label={label} />
+      <div className="max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 font-sans text-neutral-900 text-sm">
+        {content}
+      </div>
+    </section>
+  );
+}
+
+/* The response subcard's error variant. A recorded provider/upstream failure
+ * turns the second card into the response itself (not a separate card): an
+ * origin badge, a plain-language explanation, and the raw error body the
+ * provider returned. */
+function ErrorResponseSubcard({ row }: { row: RequestRow }) {
+  const origin = errorOrigin(row.errorSource);
+  const explanation = errorExplanation(row.errorCode);
+  return (
+    <section className="flex flex-col gap-2">
+      <SubcardHeading label="Error response" />
+      <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
+        {origin ? <Badge variant={origin.variant}>{origin.label}</Badge> : null}
+        {explanation ? (
+          <p className="font-sans text-neutral-500 text-sm">{explanation}</p>
+        ) : null}
+        {row.errorBody ? (
+          <pre className="mt-2 overflow-auto font-mono text-neutral-800 text-xs">
+            {row.errorBody}
+          </pre>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/* Full request as a collapsed-by-default disclosure. The trigger bar IS the
+ * heading (no nested PanelHeading "Full request" below it), mirroring the real
+ * CollapsibleJson: the panel holds only the JSON code well + Copy code. The
+ * Details-tab Full request is decoupled from a selected finding, so it drops
+ * the highlight / unredact wiring the Findings-tab RequestBodyPanel carries —
+ * it always renders the redacted-by-default body and a matching clipboard
+ * payload built straight from the row. */
+function FullRequestCollapsible({
+  row,
+  revealSignal,
+}: {
+  row: RequestRow;
+  /** Bump (a nonce) to expand the panel — the Findings tab's "Show in the
+   * full request" jump fires this so the collapsed default still opens when
+   * the user follows a finding's offset across to the Details tab. */
+  revealSignal?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Open + scroll into view when the jump nonce changes (skip the initial 0).
+  // Deferred so the open isn't a synchronous setState in the effect body, and
+  // so the scroll lands after the panel has begun expanding.
+  useEffect(() => {
+    if (!revealSignal) {
+      return;
+    }
+    const id = setTimeout(() => {
+      setOpen(true);
+      requestAnimationFrame(() => {
+        panelRef.current?.scrollIntoView({
+          block: "center",
+          behavior: "smooth",
+        });
+      });
+    }, 16);
+    return () => clearTimeout(id);
+  }, [revealSignal]);
+  const lines = buildRequestBodyLines(row);
+  const requestPayload = JSON.stringify(
+    {
+      model: `${row.vendor}/${row.model}`,
+      messages: [{ role: "user", content: sampleRequestContent(row) }],
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: false,
+    },
+    null,
+    2
+  );
+  return (
+    <Collapsible.Root
+      className="flex flex-col overflow-hidden rounded-xs border border-border"
+      onOpenChange={setOpen}
+      open={open}
+    >
+      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-neutral-900 text-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+        Full request
+        <ChevronDown
+          aria-hidden
+          className="size-4 shrink-0 text-neutral-500 transition-transform duration-150 ease-out group-data-[panel-open]/fullreq:rotate-180 motion-reduce:transition-none"
+          strokeWidth={1.75}
+        />
+      </Collapsible.Trigger>
+      <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
+        <div
+          className="max-h-80 overflow-auto overscroll-contain bg-neutral-50"
+          ref={panelRef}
+        >
+          <CodeBlock density="compact" lines={lines} wrap />
+        </div>
+        <div className="flex items-center justify-end border-border border-t bg-card px-4 py-2">
+          <CopyButton
+            label="request"
+            mode="label"
+            size="compact"
+            text="Copy code"
+            value={requestPayload}
+          />
+        </div>
+      </Collapsible.Panel>
+    </Collapsible.Root>
+  );
+}
+
+/* Details-tab left column: the request as three subcards — the user turn, the
+ * assistant turn, and the collapsed Full request JSON. Mirrors the content
+ * resolution RequestBodyPanel uses (tool steps render a Tool call / Tool
+ * result pair; everything else is User message / Assistant response) so the
+ * Details and Messages tabs never disagree about what was said. Card 2 is the
+ * response: a recorded provider/upstream failure renders it as the Error
+ * response variant rather than a separate card; otherwise it is the assistant
+ * (or tool) turn, suppressed when no turn exists. */
+function DetailMessageSubcards({
+  row,
+  revealSignal,
+}: {
+  row: RequestRow;
+  revealSignal?: number;
+}) {
+  // A `sed`/`grep` tool step is not user input, so it renders as a tool call.
+  const isTool = !row.userMessage && !!row.toolName;
+  const userContent =
+    row.userMessage ??
+    (isTool
+      ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
+      : sampleRequestContent(row));
+  // Card 2 switches to the Error response variant when the gateway recorded a
+  // provider/upstream failure; otherwise it's the assistant (or tool) turn.
+  const isErrorResponse = errorOrigin(row.errorSource) !== null;
+  const responseContent = isTool
+    ? (row.toolResult ?? "")
+    : (row.assistantResponse ?? sampleResponseText(row));
+  return (
+    <>
+      <DetailMessageSubcard
+        content={userContent}
+        label={isTool ? "Tool call" : "User message"}
+      />
+      {isErrorResponse ? (
+        <ErrorResponseSubcard row={row} />
+      ) : responseContent ? (
+        <DetailMessageSubcard
+          content={responseContent}
+          label={isTool ? "Tool result" : "Assistant response"}
+        />
+      ) : null}
+      <FullRequestCollapsible revealSignal={revealSignal} row={row} />
+    </>
   );
 }
 

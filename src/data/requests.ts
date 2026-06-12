@@ -441,6 +441,29 @@ const SHOWCASE_FINDINGS: RequestFinding[] = [
 export const REQUEST_ROWS_RECENT: RequestRow[] = [
   {
     day: "Jun 6",
+    time: "00:50:51",
+    relative: "now",
+    status: "error",
+    guardrail: "allow",
+    code: "400",
+    vendor: "openai",
+    model: "gpt-5.3-codex",
+    conversation: "cnv_7a3f9e2b",
+    keyId: "design-agent",
+    inTokens: "1,180",
+    outTokens: "0",
+    latency: "0.41s",
+    cost: "—",
+    requestId: "req_cd0e57",
+    userMessage: "brew upgrade codex",
+    errorSource: "provider",
+    errorCode: "upstream_error",
+    errorBody: `{
+  "detail": "The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account."
+}`,
+  },
+  {
+    day: "Jun 6",
     time: "00:50:45",
     relative: "now",
     status: "error",
