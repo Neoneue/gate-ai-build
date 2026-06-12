@@ -124,7 +124,7 @@ function PlanCard({
   const CtaIcon = plan.cta.icon;
   return (
     <div
-      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? "border-blue-600/30 ring-1 ring-blue-600/20" : "border-border"}`}
+      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? "border-primary/30 ring-1 ring-primary/20" : "border-border"}`}
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
@@ -171,6 +171,7 @@ function PlanCard({
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
           }
+          size="sm"
           variant={plan.cta.variant}
         >
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
@@ -224,7 +225,7 @@ export function PlanComparisonDialogPro({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="gap-4 p-4 sm:max-w-3xl">
+      <DialogContent className="gap-4 p-6 sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Manage subscription

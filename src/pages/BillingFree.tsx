@@ -1,11 +1,12 @@
-import { Plus } from "lucide-react";
-import * as React from "react";
+import { ArrowUpCircle, History, Plus, RefreshCw } from "lucide-react";
+import type * as React from "react";
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -19,20 +20,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { PageTitle } from "@/components/ui/page-title";
 import { Switch } from "@/components/ui/switch";
-import {
-  SortableTableHead,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Timestamp } from "@/components/ui/timestamp";
-import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -63,6 +55,7 @@ export function BillingFree() {
     >
       <PageHeader />
       <PlanCreditsRow />
+      <PaymentMethodCard />
       <HistorySection />
     </DashboardChrome>
   );
@@ -73,7 +66,8 @@ function PageHeader() {
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
       <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
-        Plan, credits, and transaction history.
+        Manage your plan, track credit usage, and review every gateway
+        transaction.
       </p>
     </div>
   );
@@ -110,7 +104,12 @@ function PlanCard() {
         </p>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button onClick={() => setCompareOpen(true)} variant="outline">
+        <Button
+          onClick={() => setCompareOpen(true)}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowUpCircle aria-hidden data-icon="inline-start" />
           Manage subscription
         </Button>
       </CardFooter>
@@ -197,10 +196,11 @@ function CreditsCard() {
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button onClick={() => setAutoOpen(true)} variant="outline">
+        <Button onClick={() => setAutoOpen(true)} size="sm" variant="outline">
+          <RefreshCw aria-hidden data-icon="inline-start" />
           Auto-recharge
         </Button>
-        <Button onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)} size="sm">
           <Plus
             aria-hidden
             className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
@@ -354,10 +354,12 @@ function AddCreditsDialog({
         </p>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="sm" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} type="button">
+          <Button disabled={!canSubmit} size="sm" type="button">
             Continue to checkout
           </Button>
         </DialogFooter>
@@ -562,7 +564,9 @@ function AutoRechargeDialog({
         )}
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="sm" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
           <Button
@@ -575,6 +579,7 @@ function AutoRechargeDialog({
                 monthlyCap,
               })
             }
+            size="sm"
             type="button"
           >
             Save changes
@@ -615,136 +620,48 @@ function CreditStatRow({
 const MIN_TOPUP = 5;
 const MAX_TOPUP = 1000;
 
-type HistoryRow = {
-  id: string;
-  date: Date;
-  type: "Gateway request" | "Credits added";
-  amount: number; // positive = credit, negative = debit
-  balanceAfter: number;
-};
-
-// Newest first. Credits-added rows render the amount in success-700 to mark
-// the inflow; debits use the default foreground tone.
-const HISTORY_ROWS: HistoryRow[] = [
-  {
-    id: "h-3",
-    date: new Date(2026, 4, 12, 16, 47, 12),
-    type: "Gateway request",
-    amount: -0.01,
-    balanceAfter: 24.98,
-  },
-  {
-    id: "h-2",
-    date: new Date(2026, 4, 12, 14, 22, 5),
-    type: "Gateway request",
-    amount: -0.01,
-    balanceAfter: 24.99,
-  },
-  {
-    id: "h-1",
-    date: new Date(2026, 4, 12, 9, 14, 38),
-    type: "Credits added",
-    amount: 25.0,
-    balanceAfter: 25.0,
-  },
-];
-
-const fmtAmount = (n: number) =>
-  formatCurrency(n, { signDisplay: "exceptZero" });
-const fmtUsd = (n: number) => formatCurrency(n);
-
-function historySortValue(
-  row: HistoryRow,
-  key: string
-): string | number | null {
-  switch (key) {
-    case "date":
-      return row.date.getTime();
-    case "type":
-      return row.type;
-    case "amount":
-      return row.amount;
-    case "balanceAfter":
-      return row.balanceAfter;
-    default:
-      return null;
-  }
+function PaymentMethodCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment method</CardTitle>
+        <CardDescription>
+          Charged for subscription renewals and credit top-ups.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
+          <span className="inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 font-medium text-neutral-800 text-xs">
+            CARD
+          </span>
+          <span className="font-sans text-neutral-800 text-sm">
+            No payment method on file
+          </span>
+        </div>
+      </CardContent>
+      <CardFooter className="justify-end gap-2 border-border border-t py-2">
+        <Button size="sm">
+          <Plus aria-hidden data-icon="inline-start" />
+          Add card
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }
 
 function HistorySection() {
-  const { sort, toggle: toggleSort } = useTableSort();
-  const sortedRows = React.useMemo(
-    () => sortRows(HISTORY_ROWS, sort, historySortValue),
-    [sort]
-  );
   return (
-    <Card density="flush">
-      <CardHeader className="py-3">
-        <CardTitle>History</CardTitle>
-      </CardHeader>
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <SortableTableHead
-              className="whitespace-nowrap"
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="date"
-            >
-              Date
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="type"
-            >
-              Type
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              numeric
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="amount"
-            >
-              Amount
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              numeric
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="balanceAfter"
-            >
-              Balance after
-            </SortableTableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.map((row) => (
-            <TableRow className="hover:bg-transparent" key={row.id}>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                <Timestamp date={row.date} />
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                {row.type}
-              </TableCell>
-              <TableCell
-                className={cn(
-                  "whitespace-nowrap text-right font-mono tabular-nums",
-                  row.amount > 0 ? "text-success-700" : "text-neutral-800"
-                )}
-              >
-                {fmtAmount(row.amount)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
-                {fmtUsd(row.balanceAfter)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+    <EmptyState
+      body="Charges and credit top-ups will appear here once your organization starts routing requests."
+      icon={
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-full bg-muted"
+        >
+          <History className="size-5 text-neutral-700" strokeWidth={1.75} />
+        </div>
+      }
+      title="No history yet"
+    />
   );
 }

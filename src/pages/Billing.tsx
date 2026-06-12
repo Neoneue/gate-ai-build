@@ -1,11 +1,19 @@
-import { Plus } from "lucide-react";
+import {
+  ArrowUpCircle,
+  CreditCard,
+  Plus,
+  Receipt,
+  RefreshCw,
+} from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -42,9 +50,9 @@ import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
  * Billing page (route: /billing, sidebar: "Billing")
  *
  * Three sections stacked: plan + credits row (50/50), and the History
- * table. Mock data assumes a fresh workspace with one $25 top-up and two
- * gateway-request debits — reconciles with the Credits hero ($24.98 = the
- * running balance after the last history row).
+ * table. Mock data assumes a fresh workspace with one $25 top-up, two
+ * gateway-request debits, and two micro-adjustments — reconciles with the
+ * Credits hero ($24.99238 = the running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Billing() {
@@ -63,6 +71,7 @@ export function Billing() {
     >
       <PageHeader />
       <PlanCreditsRow />
+      <PaymentMethodCard />
       <HistorySection />
     </DashboardChrome>
   );
@@ -73,7 +82,8 @@ function PageHeader() {
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
       <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
-        Plan, credits, and transaction history.
+        Manage your plan, track credit usage, and review every gateway
+        transaction.
       </p>
     </div>
   );
@@ -116,9 +126,8 @@ function PlanCard() {
               Seats
             </p>
             <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Billed per user — a seat is added when an invite is accepted
-              (prorated for the rest of the period); removed seats stop billing
-              at the next cycle.
+              Billed per seat. Accepting an invite adds a prorated seat; removed
+              seats stop billing next cycle.
             </p>
           </div>
           <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
@@ -145,7 +154,12 @@ function PlanCard() {
         </div>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button onClick={() => setCompareOpen(true)} variant="outline">
+        <Button
+          onClick={() => setCompareOpen(true)}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowUpCircle aria-hidden data-icon="inline-start" />
           Manage subscription
         </Button>
       </CardFooter>
@@ -215,30 +229,28 @@ function CreditsCard() {
         <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$24.98</HeroNumeric>
+        <HeroNumeric size="lg">$24.99238</HeroNumeric>
         <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="m-0 mt-3 flex flex-col gap-2 text-sm">
-          <CreditStatRow label="Used this month" mono value="$0.02" />
+          <CreditStatRow label="Used this month" mono value="$0.02 / $24.99" />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow
-            label="Last top-up"
-            value={<Timestamp date={LAST_TOPUP_DATE} format="dateNumeric" />}
-          />
+          <CreditStatRow label="Last top-up" value="May 12, 2026 · $25" />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button onClick={() => setAutoOpen(true)} variant="outline">
+        <Button onClick={() => setAutoOpen(true)} size="sm" variant="outline">
+          <RefreshCw aria-hidden data-icon="inline-start" />
           Auto-recharge
         </Button>
-        <Button onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)} size="sm">
           <Plus
             aria-hidden
             className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
@@ -392,10 +404,12 @@ function AddCreditsDialog({
         </p>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="sm" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} type="button">
+          <Button disabled={!canSubmit} size="sm" type="button">
             Continue to checkout
           </Button>
         </DialogFooter>
@@ -600,7 +614,9 @@ function AutoRechargeDialog({
         )}
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="sm" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
           <Button
@@ -613,6 +629,7 @@ function AutoRechargeDialog({
                 monthlyCap,
               })
             }
+            size="sm"
             type="button"
           >
             Save changes
@@ -650,14 +667,13 @@ function CreditStatRow({
 
 /* ─── History ────────────────────────────────────────────────────────── */
 
-const LAST_TOPUP_DATE = new Date(2026, 4, 12);
 const MIN_TOPUP = 5;
 const MAX_TOPUP = 1000;
 
 type HistoryRow = {
   id: string;
   date: Date;
-  type: "Gateway request" | "Credits added";
+  type: "Gateway request" | "Credits added" | "Adjustment";
   amount: number; // positive = credit, negative = debit
   balanceAfter: number;
 };
@@ -665,6 +681,20 @@ type HistoryRow = {
 // Newest first. Credits-added rows render the amount in success-700 to mark
 // the inflow; debits use the default foreground tone.
 const HISTORY_ROWS: HistoryRow[] = [
+  {
+    id: "h-5",
+    date: new Date(2026, 4, 29, 14, 30, 0),
+    type: "Adjustment",
+    amount: 0.005_29,
+    balanceAfter: 24.992_38,
+  },
+  {
+    id: "h-4",
+    date: new Date(2026, 4, 29, 10, 15, 0),
+    type: "Adjustment",
+    amount: 0.007_09,
+    balanceAfter: 24.987_09,
+  },
   {
     id: "h-3",
     date: new Date(2026, 4, 12, 16, 47, 12),
@@ -689,8 +719,8 @@ const HISTORY_ROWS: HistoryRow[] = [
 ];
 
 const fmtAmount = (n: number) =>
-  formatCurrency(n, { signDisplay: "exceptZero" });
-const fmtUsd = (n: number) => formatCurrency(n);
+  formatCurrency(n, { signDisplay: "exceptZero", maxFrac: 5 });
+const fmtUsd = (n: number) => formatCurrency(n, { maxFrac: 5 });
 
 function historySortValue(
   row: HistoryRow,
@@ -710,6 +740,40 @@ function historySortValue(
   }
 }
 
+function PaymentMethodCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment method</CardTitle>
+        <CardDescription>
+          Charged for subscription renewals and credit top-ups.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
+          <span className="inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 font-medium text-neutral-800 text-xs">
+            VISA
+          </span>
+          <div className="flex flex-col">
+            <span className="font-sans text-neutral-800 text-sm">
+              •••• 4242
+            </span>
+            <span className="font-sans text-neutral-500 text-sm">
+              Expires 01/27
+            </span>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="justify-end gap-2 border-border border-t py-2">
+        <Button size="sm" variant="outline">
+          <CreditCard aria-hidden data-icon="inline-start" />
+          Update card
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 function HistorySection() {
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = React.useMemo(
@@ -720,6 +784,13 @@ function HistorySection() {
     <Card density="flush">
       <CardHeader className="py-3">
         <CardTitle>History</CardTitle>
+        <CardDescription>Past charges and credit top-ups.</CardDescription>
+        <CardAction>
+          <Button size="sm" variant="outline">
+            <Receipt aria-hidden data-icon="inline-start" />
+            Invoice portal
+          </Button>
+        </CardAction>
       </CardHeader>
       <Table>
         <TableHeader>
