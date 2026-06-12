@@ -121,7 +121,7 @@ function PlanCard({
   const CtaIcon = plan.cta.icon;
   return (
     <div
-      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? "border-blue-600/30 ring-1 ring-blue-600/20" : "border-border"}`}
+      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? "border-primary/30 ring-1 ring-primary/20" : "border-border"}`}
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
