@@ -26,7 +26,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "ignoreDeprecations": "6.0",
     "strict": true
   },
   "include": ["src"]
