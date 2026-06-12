@@ -1,17 +1,10 @@
-import {
-  ArrowUpCircle,
-  CreditCard,
-  Plus,
-  Receipt,
-  RefreshCw,
-} from "lucide-react";
-import * as React from "react";
+import { ArrowUpCircle, History, Plus, RefreshCw } from "lucide-react";
+import type * as React from "react";
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -27,35 +20,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { PageTitle } from "@/components/ui/page-title";
 import { Switch } from "@/components/ui/switch";
-import {
-  SortableTableHead,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Timestamp } from "@/components/ui/timestamp";
-import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Billing page (route: /billing, sidebar: "Billing")
+ * Billing page — Free-plan duplicate (route: /billing-free, sidebar: "Billing")
  *
  * Three sections stacked: plan + credits row (50/50), and the History
- * table. Mock data assumes a fresh workspace with one $25 top-up, two
- * gateway-request debits, and two micro-adjustments — reconciles with the
- * Credits hero ($24.99238 = the running balance after the last history row).
+ * table. Mock data assumes a fresh workspace with one $25 top-up and two
+ * gateway-request debits — reconciles with the Credits hero ($24.98 = the
+ * running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function Billing() {
+export function BillingFree() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -102,56 +86,22 @@ function PlanCreditsRow() {
 
 function PlanCard() {
   const [compareOpen, setCompareOpen] = useState(false);
-  const [autoRenew, setAutoRenew] = useState(true);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
         <CardTitle>Your plan</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">Pro</HeroNumeric>
+        <HeroNumeric size="lg">Free</HeroNumeric>
         <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
-          Scans every request sent through your own provider keys for prompt
-          injections, credential leaks and PII. Includes the full Constellation
-          Gate audit trail.
+          BYOK gateway plus a tamper-evident audit trail, no security pipeline.
+          Upgrade to Pro for prompt-injection scans, PII redaction, and a
+          cryptographically verifiable audit trail fingerprinted to
+          Constellation&rsquo;s Digital Evidence layer.
         </p>
         <p className="m-0 font-sans text-neutral-500 text-sm">
-          Renews on Jun 12, 2026 · $29 / user / month
+          Free plan — no renewal needed
         </p>
-
-        {/* Seats inset */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Seats
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Billed per seat. Accepting an invite adds a prorated seat; removed
-              seats stop billing next cycle.
-            </p>
-          </div>
-          <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
-            1 seat × $29 = $29 / month
-          </p>
-        </div>
-
-        {/* Auto-renew inset */}
-        <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Auto-renew
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Renews automatically on Jun 12, 2026.
-            </p>
-          </div>
-          <Switch
-            aria-label="Auto-renew"
-            checked={autoRenew}
-            className="shrink-0"
-            onCheckedChange={setAutoRenew}
-          />
-        </div>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
@@ -163,7 +113,7 @@ function PlanCard() {
           Manage subscription
         </Button>
       </CardFooter>
-      <PlanComparisonDialogPro
+      <PlanComparisonDialog
         onOpenChange={setCompareOpen}
         onUpgrade={() => setCompareOpen(false)}
         open={compareOpen}
@@ -229,20 +179,20 @@ function CreditsCard() {
         <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$24.99238</HeroNumeric>
+        <HeroNumeric size="lg">$0.00</HeroNumeric>
         <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="m-0 mt-3 flex flex-col gap-2 text-sm">
-          <CreditStatRow label="Used this month" mono value="$0.02 / $24.99" />
+          <CreditStatRow label="Used this month" mono value="$0.00" />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value="May 12, 2026 · $25" />
+          <CreditStatRow label="Last top-up" value="Never" />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
@@ -670,76 +620,6 @@ function CreditStatRow({
 const MIN_TOPUP = 5;
 const MAX_TOPUP = 1000;
 
-type HistoryRow = {
-  id: string;
-  date: Date;
-  type: "Gateway request" | "Credits added" | "Adjustment";
-  amount: number; // positive = credit, negative = debit
-  balanceAfter: number;
-};
-
-// Newest first. Credits-added rows render the amount in success-700 to mark
-// the inflow; debits use the default foreground tone.
-const HISTORY_ROWS: HistoryRow[] = [
-  {
-    id: "h-5",
-    date: new Date(2026, 4, 29, 14, 30, 0),
-    type: "Adjustment",
-    amount: 0.005_29,
-    balanceAfter: 24.992_38,
-  },
-  {
-    id: "h-4",
-    date: new Date(2026, 4, 29, 10, 15, 0),
-    type: "Adjustment",
-    amount: 0.007_09,
-    balanceAfter: 24.987_09,
-  },
-  {
-    id: "h-3",
-    date: new Date(2026, 4, 12, 16, 47, 12),
-    type: "Gateway request",
-    amount: -0.01,
-    balanceAfter: 24.98,
-  },
-  {
-    id: "h-2",
-    date: new Date(2026, 4, 12, 14, 22, 5),
-    type: "Gateway request",
-    amount: -0.01,
-    balanceAfter: 24.99,
-  },
-  {
-    id: "h-1",
-    date: new Date(2026, 4, 12, 9, 14, 38),
-    type: "Credits added",
-    amount: 25.0,
-    balanceAfter: 25.0,
-  },
-];
-
-const fmtAmount = (n: number) =>
-  formatCurrency(n, { signDisplay: "exceptZero", maxFrac: 5 });
-const fmtUsd = (n: number) => formatCurrency(n, { maxFrac: 5 });
-
-function historySortValue(
-  row: HistoryRow,
-  key: string
-): string | number | null {
-  switch (key) {
-    case "date":
-      return row.date.getTime();
-    case "type":
-      return row.type;
-    case "amount":
-      return row.amount;
-    case "balanceAfter":
-      return row.balanceAfter;
-    default:
-      return null;
-  }
-}
-
 function PaymentMethodCard() {
   return (
     <Card>
@@ -752,22 +632,17 @@ function PaymentMethodCard() {
       <CardContent>
         <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
           <span className="inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 font-medium text-neutral-800 text-xs">
-            VISA
+            CARD
           </span>
-          <div className="flex flex-col">
-            <span className="font-sans text-neutral-800 text-sm">
-              •••• 4242
-            </span>
-            <span className="font-sans text-neutral-500 text-sm">
-              Expires 01/27
-            </span>
-          </div>
+          <span className="font-sans text-neutral-800 text-sm">
+            No payment method on file
+          </span>
         </div>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button size="sm" variant="outline">
-          <CreditCard aria-hidden data-icon="inline-start" />
-          Update card
+        <Button size="sm">
+          <Plus aria-hidden data-icon="inline-start" />
+          Add card
         </Button>
       </CardFooter>
     </Card>
@@ -775,86 +650,18 @@ function PaymentMethodCard() {
 }
 
 function HistorySection() {
-  const { sort, toggle: toggleSort } = useTableSort();
-  const sortedRows = React.useMemo(
-    () => sortRows(HISTORY_ROWS, sort, historySortValue),
-    [sort]
-  );
   return (
-    <Card density="flush">
-      <CardHeader className="py-3">
-        <CardTitle>History</CardTitle>
-        <CardDescription>Past charges and credit top-ups.</CardDescription>
-        <CardAction>
-          <Button size="sm" variant="outline">
-            <Receipt aria-hidden data-icon="inline-start" />
-            Invoice portal
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <SortableTableHead
-              className="whitespace-nowrap"
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="date"
-            >
-              Date
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="type"
-            >
-              Type
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              numeric
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="amount"
-            >
-              Amount
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              numeric
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="balanceAfter"
-            >
-              Balance after
-            </SortableTableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.map((row) => (
-            <TableRow className="hover:bg-transparent" key={row.id}>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                <Timestamp date={row.date} />
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-neutral-800">
-                {row.type}
-              </TableCell>
-              <TableCell
-                className={cn(
-                  "whitespace-nowrap text-right font-mono tabular-nums",
-                  row.amount > 0 ? "text-success-700" : "text-neutral-800"
-                )}
-              >
-                {fmtAmount(row.amount)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
-                {fmtUsd(row.balanceAfter)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+    <EmptyState
+      body="Charges and credit top-ups will appear here once your organization starts routing requests."
+      icon={
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-full bg-muted"
+        >
+          <History className="size-5 text-neutral-700" strokeWidth={1.75} />
+        </div>
+      }
+      title="No history yet"
+    />
   );
 }

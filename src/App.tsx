@@ -31,6 +31,9 @@ const AuditTrailMerkle = lazy(() =>
 const Billing = lazy(() =>
   import("@/pages/Billing").then((m) => ({ default: m.Billing }))
 );
+const BillingFree = lazy(() =>
+  import("@/pages/BillingFree").then((m) => ({ default: m.BillingFree }))
+);
 const Conversations = lazy(() =>
   import("@/pages/Conversations").then((m) => ({ default: m.Conversations }))
 );
@@ -195,6 +198,7 @@ export default function App() {
             <Route element={<ApiKeys />} path="/api-keys" />
             <Route element={<ApiKeysDefault />} path="/api-keys-default" />
             <Route element={<Billing />} path="/billing" />
+            <Route element={<BillingFree />} path="/billing-free" />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />
           </Route>
