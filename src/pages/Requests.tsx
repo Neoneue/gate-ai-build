@@ -2051,6 +2051,9 @@ export function RequestDetailBodyV2({
   const navigate = useNavigate();
   const openConversation = () =>
     navigate(`/conversations-trace/${row.conversation}`);
+  // Provider/upstream failure attribution — drives the metadata panel's
+  // Error origin row (badge). Null on success and guardrail-block rows.
+  const errorOriginInfo = errorOrigin(row.errorSource);
   // Finding-scoped action handlers — shared by the footer (PII/credential) and
   // the injection How-to-fix card so both fire the identical toast.
   const markFalsePositive = () =>
@@ -2077,15 +2080,6 @@ export function RequestDetailBodyV2({
   const [selectedIdx, setSelectedIdx] = useState(0);
 
   const selectedFinding = findings[selectedIdx] ?? null;
-
-  // Bumped when the user clicks "Offset in evidence" — switches to the Details
-  // tab (which now holds the message) and tells the Full request drawer to
-  // expand + scroll to the match.
-  const [evidenceReveal, setEvidenceReveal] = useState(0);
-  const jumpToEvidence = useCallback(() => {
-    setActiveTab("details");
-    setEvidenceReveal((n) => n + 1);
-  }, []);
 
   // Unredact is OFF by default and shared across surfaces: the same admin-gated
   // toggle controls BOTH the Findings-tab evidence span and the Details-tab
@@ -2260,7 +2254,6 @@ export function RequestDetailBodyV2({
                       <PiiRightPanel
                         finding={selectedFinding}
                         isAdmin={IS_ADMIN}
-                        onJumpToEvidence={jumpToEvidence}
                         onShowRawChange={setShowRaw}
                         row={row}
                         showRaw={showRaw}
@@ -2302,10 +2295,7 @@ export function RequestDetailBodyV2({
               {/* Left (2/3): the message — user/assistant turns + Full request. */}
               <div className="min-w-0 md:col-span-2">
                 <div className={PANEL_OUTER}>
-                  <DetailMessageSubcards
-                    revealSignal={evidenceReveal}
-                    row={row}
-                  />
+                  <DetailMessageSubcards row={row} />
                 </div>
               </div>
 
@@ -2370,6 +2360,16 @@ export function RequestDetailBodyV2({
                           </span>
                         }
                       />
+                      {errorOriginInfo ? (
+                        <DetailRow
+                          label="Error origin"
+                          value={
+                            <Badge variant={errorOriginInfo.variant}>
+                              {errorOriginInfo.label}
+                            </Badge>
+                          }
+                        />
+                      ) : null}
                       <DetailRow
                         label="HTTP status"
                         value={
@@ -2555,7 +2555,6 @@ function PiiRightPanel({
   isAdmin,
   showRaw,
   onShowRawChange,
-  onJumpToEvidence,
 }: {
   finding: RequestFinding;
   row: RequestRow;
@@ -2564,8 +2563,6 @@ function PiiRightPanel({
    *  Full request (one toggle, both surfaces). OFF = redacted by default. */
   showRaw: boolean;
   onShowRawChange: (next: boolean) => void;
-  /** Jump to the Message tab's Full request, scrolled to + highlighting the match. */
-  onJumpToEvidence: () => void;
 }) {
   const { evidence, match, redactedAs, rule } = finding;
   // Heading reflects where the span actually fired: a user turn, a tool result
@@ -2586,7 +2583,7 @@ function PiiRightPanel({
   const offset = evidence.indexOf(match);
   const offsetLabel =
     offset >= 0
-      ? `${offset}-${offset + match.length} (${match.length} chars)`
+      ? `Lines ${offset}-${offset + match.length} (${match.length} chars)`
       : "—";
   // Windowed redaction diff (a few chars of context either side of the match).
   const winStart = offset >= 0 ? Math.max(0, offset - 24) : 0;
@@ -2660,14 +2657,9 @@ function PiiRightPanel({
           <KvRow
             label="Offset in evidence"
             value={
-              <button
-                className="-my-2 rounded-xs py-2 font-mono text-neutral-900 text-sm underline decoration-from-font underline-offset-2 transition-[colors,scale] duration-150 ease-out hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
-                onClick={onJumpToEvidence}
-                title="Show in the full request"
-                type="button"
-              >
+              <span className="font-mono text-neutral-900 text-sm">
                 {offsetLabel}
-              </button>
+              </span>
             }
           />
         </div>
@@ -3138,27 +3130,42 @@ function DetailMessageSubcard({
 }
 
 /* The response subcard's error variant. A recorded provider/upstream failure
- * turns the second card into the response itself (not a separate card): an
- * origin badge, a plain-language explanation, and the raw error body the
- * provider returned. */
+ * renders two stacked sections: a Provider context card with the plain-language
+ * explanation (the origin badge lives in the metadata panel's Error origin
+ * row), then an Error response card holding only the raw error body (a code
+ * well + Copy code footer, mirroring Full request). */
 function ErrorResponseSubcard({ row }: { row: RequestRow }) {
-  const origin = errorOrigin(row.errorSource);
   const explanation = errorExplanation(row.errorCode);
   return (
-    <section className="flex flex-col gap-2">
-      <SubcardHeading label="Error response" />
-      <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
-        {origin ? <Badge variant={origin.variant}>{origin.label}</Badge> : null}
-        {explanation ? (
-          <p className="font-sans text-neutral-500 text-sm">{explanation}</p>
-        ) : null}
-        {row.errorBody ? (
-          <pre className="mt-2 overflow-auto font-mono text-neutral-800 text-xs">
-            {row.errorBody}
-          </pre>
-        ) : null}
-      </div>
-    </section>
+    <>
+      {explanation ? (
+        <section className="flex flex-col gap-2">
+          <SubcardHeading label="Provider context" />
+          <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
+            <p className="font-sans text-foreground text-sm">{explanation}</p>
+          </div>
+        </section>
+      ) : null}
+      {row.errorBody ? (
+        <section className="flex flex-col gap-2">
+          <SubcardHeading label="Error response" />
+          <div className="flex flex-col overflow-hidden rounded-xs border border-border">
+            <pre className="overflow-auto bg-neutral-50 px-4 py-4 font-mono text-neutral-800 text-xs">
+              {row.errorBody}
+            </pre>
+            <div className="flex items-center justify-end border-border border-t bg-card px-4 py-2">
+              <CopyButton
+                label="error response"
+                mode="label"
+                size="compact"
+                text="Copy code"
+                value={row.errorBody}
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </>
   );
 }
 
