@@ -37,6 +37,22 @@ Data + helper (same commit):
   `errorSource: "provider"`) to `cnv_7a3f9e2b`; reconciled that conversation's
   `vendors` / `models` / `reqs` in `src/data/conversations.ts`.
 
+### Error UI refinement: Provider context + Error origin row `[c5a01c9]`
+
+Reworked the error case on the Details tab:
+
+- Split the single Error response card into **Provider context** (the
+  plain-language explanation, `text-foreground`) and **Error response** (only
+  the raw error body, in a `bg-neutral-50` code well with a `border-t` Copy code
+  footer, mirroring Full request). Order: User message → Provider context →
+  Error response → Full request.
+- Moved the origin badge out of the left column into a new **Error origin** row
+  in the right metadata panel, above **HTTP status** (renders only for
+  provider/upstream errors).
+- **Offset in evidence** (Findings "Why this fired"): relabeled to
+  `Lines N-M (X chars)` and de-linked; removed the now-dead jump-to-evidence
+  plumbing (`onJumpToEvidence` / `jumpToEvidence` / `evidenceReveal`).
+
 ### tsconfig path-alias cleanup `[795c342]`
 
 Dropped both `baseUrl: "."` and the `ignoreDeprecations: "6.0"` that only existed
