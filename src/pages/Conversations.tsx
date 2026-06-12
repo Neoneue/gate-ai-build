@@ -331,6 +331,7 @@ type ModelId =
   | "claude-sonnet-4-5"
   | "claude-haiku-4-5"
   | "gpt-5"
+  | "gpt-5.3-codex"
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gemini-3-pro"

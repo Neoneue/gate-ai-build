@@ -37,7 +37,9 @@ Data + helper (same commit):
   `errorSource: "provider"`) to `cnv_7a3f9e2b`; reconciled that conversation's
   `vendors` / `models` / `reqs` in `src/data/conversations.ts`.
 
-### Drop invalid `ignoreDeprecations` from tsconfig `[795c342]`
+### tsconfig path-alias cleanup `[795c342]`
 
-Removed `"ignoreDeprecations": "6.0"` from `tsconfig.app.json` — TS 6.0.3 silences
-nothing with it and the IDE language service rejected the value. No build effect.
+Dropped both `baseUrl: "."` and the `ignoreDeprecations: "6.0"` that only existed
+to silence `baseUrl`'s TS 6.0 deprecation. `paths` resolves relative to the config
+without `baseUrl` (TS 4.1+) and Vite aliases `@` via `resolve.alias`, so `tsc -b`
+stays clean and the IDE no longer rejects the value.
