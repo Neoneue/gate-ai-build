@@ -82,7 +82,7 @@ const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: "PRO PLAN", tone: "pro" },
   title: "Pro plan",
-  price: "$30",
+  price: "$29",
   benefitsLabel: "What you'll get going Pro:",
   features: [
     {
@@ -108,7 +108,7 @@ const PRO_PLAN: PlanCardData = {
     },
   ],
   cta: { label: "Upgrade to Pro", variant: "default" },
-  ctaCaption: "$30/month after your 14 day trial ends",
+  ctaCaption: "$29/month after your 14 day trial ends",
 };
 
 function PlanCard({
@@ -224,7 +224,7 @@ export function PlanComparisonDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="gap-4 p-4 sm:max-w-3xl">
+      <DialogContent className="gap-4 p-6 sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Manage subscription
