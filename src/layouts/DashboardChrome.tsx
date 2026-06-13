@@ -4,7 +4,8 @@ import { BellIcon } from "@/components/ui/bell";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
-import { Sidebar, WorkspaceSwitcher } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/ui/sidebar";
+import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./nav-sections";
 

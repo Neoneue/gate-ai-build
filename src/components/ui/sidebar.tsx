@@ -1,8 +1,6 @@
-import { Check, ChevronsUpDown, Lock, MoreHorizontal } from "lucide-react";
+import { Lock, MoreHorizontal } from "lucide-react";
 import type * as React from "react";
-import { Badge } from "@/components/ui/badge";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { Separator } from "@/components/ui/separator";
 import { UserMenu } from "@/components/ui/user-menu";
 import { cn } from "@/lib/utils";
@@ -16,9 +14,9 @@ import { cn } from "@/lib/utils";
  * focus and AT only ever land on the visible variant.
  *
  * Consumed by `_shared/DashboardChrome` (CMP-012/013/014). The expanded
- * variant exposes `brand` / `workspaceSwitcher` / `userArea` slots; the
- * collapsed rail uses the `brand` slot up top and the workspace switcher
- * + user area collapse to a single CP monogram at the bottom.
+ * variant exposes `brand` / `userArea` slots; the collapsed rail uses the
+ * `brand` slot up top and the user area collapses to a single CP monogram
+ * at the bottom. (The workspace switcher was promoted to the top bar.)
  *
  * Animation values:
  *   - aside width: 300ms `cubic-bezier(0.32, 0.72, 0, 1)` (drawer curve)
@@ -287,53 +285,6 @@ function DefaultBrand() {
       draggable={false}
       src="/gate-ai-logo.png"
     />
-  );
-}
-
-/* Workspace switcher — formerly slotted into the sidebar, promoted to the
- * top bar on 2026-05-17 so the sidebar reads as pure navigation. Styled
- * for the top bar's compact h-8 chrome (auto-sized to content; no
- * truncation since the top bar has room). */
-export function WorkspaceSwitcher() {
-  return (
-    <Menu>
-      <MenuTrigger
-        render={
-          <button
-            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] aria-expanded:bg-neutral-50 motion-reduce:transition-none motion-reduce:active:scale-100"
-            type="button"
-          />
-        }
-      >
-        <span className="font-sans text-neutral-900 text-sm">
-          Chad's workspace
-        </span>
-        <Badge variant="neutral">Pro</Badge>
-        <ChevronsUpDown
-          aria-hidden
-          className="size-4 text-neutral-500"
-          strokeWidth={1.75}
-        />
-      </MenuTrigger>
-      <MenuContent
-        align="start"
-        className="min-w-[var(--anchor-width)] p-2"
-        side="bottom"
-        sideOffset={8}
-      >
-        <MenuItem className="bg-neutral-100 data-[highlighted]:bg-neutral-100">
-          <span className="min-w-0 flex-1 truncate text-left">
-            Chad's workspace
-          </span>
-          <Check aria-hidden strokeWidth={1.75} />
-        </MenuItem>
-        <MenuItem>
-          <span className="min-w-0 flex-1 truncate text-left">
-            OpenClaw org
-          </span>
-        </MenuItem>
-      </MenuContent>
-    </Menu>
   );
 }
 
