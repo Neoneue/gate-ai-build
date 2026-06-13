@@ -44,7 +44,7 @@ const FREE_PLAN: PlanCardData = {
   badge: { label: "FREE", tone: "neutral" },
   title: "Free plan",
   price: "$0",
-  benefitsLabel: "Included in your Free plan:",
+  benefitsLabel: "Included with the Free plan:",
   features: [
     {
       Icon: Route,
@@ -81,7 +81,7 @@ const PRO_PLAN: PlanCardData = {
   badge: { label: "PRO PLAN", tone: "pro" },
   title: "Pro plan",
   price: "$29",
-  benefitsLabel: "What you'll get going Pro:",
+  benefitsLabel: "What you're getting with Pro plan:",
   features: [
     {
       Icon: ShieldAlert,
