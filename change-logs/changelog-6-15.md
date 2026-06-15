@@ -152,3 +152,18 @@ is still a hardcoded string in 5 places — no shared constant yet.
 traffic through Gate, adding prompt-injection defense and a tamper-evident audit
 trail to every request. Use it with our Gate Connect app, or any AI coding tools
 you configure manually." (No em dash, per house style.)
+
+### Settings: hide Notification preferences card `e49dc64`
+
+`src/pages/Settings.tsx`. Removed the `<NotificationsCard />` usage and its
+function definition (added earlier the same day). Settings now shows Profile +
+Security only. Restorable from git history.
+
+### Feedback FAB: outlined style + shadow-md `b00187e`
+
+`src/components/ui/feedback-fab.tsx`. The floating Feedback pill switches from
+the dark fill (`bg-neutral-900` / `text-white`, `hover:bg-neutral-800`) to an
+outlined treatment matching the button `outline` variant (`border-border`,
+`bg-card`, `text-neutral-900`, `hover:bg-muted`). Shadow raised from
+`--shadow-popup` to `shadow-md`. Pill shape, hover-lift, and press scale
+unchanged.
