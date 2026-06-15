@@ -144,3 +144,11 @@ All Pro-price instances updated from `$29` to `$20` across `Billing.tsx`,
 `ctaCaption`, trial captions, and the Billing seat breakdown). The Billing
 renews line now reads `$20 / month` (was `$20 / user / month`). Note: the price
 is still a hardcoded string in 5 places — no shared constant yet.
+
+### Overview (default): rewrite Create-key card body copy `b4fbac7`
+
+`src/pages/DashboardDefault.tsx`. Reworked the right-card body to be key-led
+(matching the "Create your first API key" title): "Your API key is what routes
+traffic through Gate, adding prompt-injection defense and a tamper-evident audit
+trail to every request. Use it with our Gate Connect app, or any AI coding tools
+you configure manually." (No em dash, per house style.)
