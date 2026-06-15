@@ -51,9 +51,12 @@ function SettingsSurface() {
   return (
     <>
       <PageHeader />
-      <div className="flex flex-col gap-4">
-        <ProfileCard />
-        <SecurityCard />
+      <div className="grid grid-cols-12">
+        <div className="col-span-12 flex flex-col gap-4 2xl:col-span-9">
+          <ProfileCard />
+          <SecurityCard />
+          <NotificationsCard />
+        </div>
       </div>
     </>
   );
@@ -127,7 +130,10 @@ function ProfileCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile &amp; organization</CardTitle>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>
+          View and update your personal and organization's information.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form id="profile-form" onSubmit={handleSave}>
@@ -179,7 +185,7 @@ function ProfileCard() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-border border-t">
+      <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
           disabled={!dirty}
           onClick={handleReset}
@@ -232,6 +238,21 @@ function SecurityCard() {
           No passkeys registered yet.
         </p>
       </CardContent>
+    </Card>
+  );
+}
+
+/* ─── Notifications card ────────────────────────────────────────────────── */
+
+function NotificationsCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification preferences</CardTitle>
+        <CardDescription>
+          Choose which notifications you'd like to receive.
+        </CardDescription>
+      </CardHeader>
     </Card>
   );
 }

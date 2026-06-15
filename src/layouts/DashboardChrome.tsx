@@ -4,6 +4,7 @@ import { BellIcon } from "@/components/ui/bell";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
+import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import { Sidebar } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { cn } from "@/lib/utils";
@@ -152,9 +153,11 @@ function DashTopBar({
             />
           </Button>
         )}
-        <Button aria-label="Notifications" size="icon-sm" variant="outline">
-          <BellIcon aria-hidden size={16} strokeWidth={1.75} />
-        </Button>
+        <NotificationsMenu>
+          <Button aria-label="Notifications" size="icon-sm" variant="outline">
+            <BellIcon aria-hidden size={16} strokeWidth={1.75} />
+          </Button>
+        </NotificationsMenu>
       </div>
     </div>
   );
