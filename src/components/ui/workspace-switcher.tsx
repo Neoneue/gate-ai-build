@@ -2,6 +2,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { isFreeSurface } from "@/lib/plan";
 
 /* Workspace switcher — top-bar scope chrome (promoted out of the sidebar on
  * 2026-05-17 so the sidebar reads as pure navigation). Styled for the top
@@ -10,12 +11,12 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
  *
  * The plan badge reflects the current surface: FREE on the billing-free page
  * and the default / free-tier experience pages (routes ending in `-default`
- * or `-free`), PRO everywhere else. */
-const FREE_SURFACE = /-(default|free)$/;
+ * or `-free`), PRO everywhere else. Shares `isFreeSurface` with the sidebar
+ * lock icons so the badge and the locks never disagree. */
 
 export function WorkspaceSwitcher() {
   const { pathname } = useLocation();
-  const plan = FREE_SURFACE.test(pathname) ? "Free" : "Pro";
+  const plan = isFreeSurface(pathname) ? "Free" : "Pro";
   return (
     <Menu>
       <MenuTrigger
