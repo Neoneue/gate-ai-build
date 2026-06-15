@@ -55,7 +55,6 @@ function SettingsSurface() {
         <div className="col-span-12 flex flex-col gap-4 2xl:col-span-9">
           <ProfileCard />
           <SecurityCard />
-          <NotificationsCard />
         </div>
       </div>
     </>
@@ -259,21 +258,6 @@ function SecurityCard() {
           No passkeys registered yet.
         </p>
       </CardContent>
-    </Card>
-  );
-}
-
-/* ─── Notifications card ────────────────────────────────────────────────── */
-
-function NotificationsCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notification preferences</CardTitle>
-        <CardDescription>
-          Choose which notifications you'd like to receive.
-        </CardDescription>
-      </CardHeader>
     </Card>
   );
 }
