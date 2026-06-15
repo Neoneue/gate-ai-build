@@ -1,11 +1,9 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type * as React from "react";
 import { useLocation } from "react-router-dom";
-import { BellIcon } from "@/components/ui/bell";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
-import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import { Sidebar } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { isFreeSurface } from "@/lib/plan";
@@ -160,11 +158,6 @@ function DashTopBar({
             />
           </Button>
         )}
-        <NotificationsMenu>
-          <Button aria-label="Notifications" size="icon-sm" variant="outline">
-            <BellIcon aria-hidden size={16} strokeWidth={1.75} />
-          </Button>
-        </NotificationsMenu>
       </div>
     </div>
   );
