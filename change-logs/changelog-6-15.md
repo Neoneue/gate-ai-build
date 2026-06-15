@@ -81,6 +81,13 @@ Lock icons on Token Savings / Limits / Events were hardcoded `locked: true` in
   PRO. `isDisabled` (`!item.pageId`) is unchanged, so PRO users still navigate
   the gated items.
 
+### Chrome: Notifications bell button hidden for now `39af049`
+
+Removed the bell trigger + `NotificationsMenu` from the top bar (and the unused
+`BellIcon` / `NotificationsMenu` imports in `DashboardChrome.tsx`). The
+`notifications-menu.tsx` component is kept in the tree; restore = re-add the
+import and the `<NotificationsMenu><Button…/></NotificationsMenu>` block.
+
 ## Sections
 
 ### Settings: Notification preferences card, Profile copy, footer + responsive grid `45cb33f`
