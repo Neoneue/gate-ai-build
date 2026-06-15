@@ -6,14 +6,14 @@ committed work) its commit hash.
 
 Prior day: [`changelog-6-13.md`](./changelog-6-13.md).
 
-> Today's entries are still **uncommitted** on `dev` (working tree). Replace the
-> `[uncommitted]` markers with commit hashes when stamped.
+> Entries below are committed on `dev` (not yet pushed); commit hash is stamped
+> per entry. None of today's work is on `main`.
 
 ---
 
 ## Components
 
-### Notifications dropdown menu (new) `[uncommitted]`
+### Notifications dropdown menu (new) `45cb33f`
 
 New `src/components/ui/notifications-menu.tsx`, exporting `NotificationsMenu`.
 Bell-triggered top-bar dropdown, modeled on the shadcn notifications panel but
@@ -48,7 +48,7 @@ Padding tuning after in-browser review:
   to correct the optical inset of the gear icon and the text action against the
   right edge.
 
-### Segmented pill: indicator no longer animates on mount `[uncommitted]`
+### Segmented pill: indicator no longer animates on mount `45cb33f`
 
 `src/components/ui/segmented.tsx` (pill variant). The sliding indicator's
 transition was gated on `indicator.ready`, which applied the transition class in
@@ -66,7 +66,7 @@ indicator visibly slid into place when the notifications menu opened.
 
 ## Sections
 
-### Settings: Notification preferences card, Profile copy, footer + responsive grid `[uncommitted]`
+### Settings: Notification preferences card, Profile copy, footer + responsive grid `45cb33f`
 
 `src/pages/Settings.tsx`.
 
@@ -80,3 +80,18 @@ indicator visibly slid into place when the notifications menu opened.
 - **Responsive width** — the cards container is wrapped in `grid grid-cols-12`;
   the cards span `col-span-12` (full width) up through xl and `2xl:col-span-9`
   (columns 1-9, whitespace in 10-12) at 1536px and above. Page header untouched.
+
+### Settings: Profile field width + Email verification helper `6e813af`
+
+`src/pages/Settings.tsx`, follow-up tuning after in-browser review.
+
+- **Organization input width** — the Organization field was outside the Profile
+  grid in a separate `mt-4` block with its `Input` capped at `max-w-md` (448px),
+  so it rendered narrower than Display name. Moved it into the `grid grid-cols-2`
+  as the third child (row 2, left column) and dropped `max-w-md`, so it now
+  matches the Display name column width exactly. Grid `gap-4` replaces the old
+  `mt-4` spacing.
+- **Email helper text** — added below the Email input: "Verified at sign-in.
+  Changing it requires re-verification through your identity provider."
+  (`m-0 mt-1 text-pretty font-sans text-neutral-500 text-xs tracking-tight`,
+  the repo's standard field-helper voice).
