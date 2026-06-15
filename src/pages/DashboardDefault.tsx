@@ -681,10 +681,10 @@ export function HeroCard() {
               Create your first API key
             </h2>
             <p className="m-0 max-w-[432px] text-pretty text-neutral-500 text-sm">
-              Route your AI tools through Gate to add prompt-injection defense
-              and a tamper-evident audit trail to every request. Set it up in
-              one click with Gate Connect, our tiny menu-bar app, or configure
-              your tool manually. Create an API key below to get started.
+              Your API key is what routes traffic through Gate, adding
+              prompt-injection defense and a tamper-evident audit trail to every
+              request. Use it with our Gate Connect app, or any AI coding tools
+              you configure manually.
             </p>
           </div>
           <div className="flex items-center gap-3">
