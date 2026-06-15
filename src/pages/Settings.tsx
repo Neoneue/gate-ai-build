@@ -167,21 +167,24 @@ function ProfileCard() {
                 type="email"
                 value={email}
               />
+              <p className="m-0 mt-1 text-pretty font-sans text-neutral-500 text-xs tracking-tight">
+                Verified at sign-in. Changing it requires re-verification
+                through your identity provider.
+              </p>
             </div>
-          </div>
-          <div className="mt-4">
-            <label
-              className="mb-1 block font-medium text-neutral-700 text-sm"
-              htmlFor="settings-organization"
-            >
-              Organization
-            </label>
-            <Input
-              className="max-w-md"
-              id="settings-organization"
-              onChange={(e) => setOrganization(e.target.value)}
-              value={organization}
-            />
+            <div>
+              <label
+                className="mb-1 block font-medium text-neutral-700 text-sm"
+                htmlFor="settings-organization"
+              >
+                Organization
+              </label>
+              <Input
+                id="settings-organization"
+                onChange={(e) => setOrganization(e.target.value)}
+                value={organization}
+              />
+            </div>
           </div>
         </form>
       </CardContent>
