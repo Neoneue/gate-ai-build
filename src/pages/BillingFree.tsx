@@ -1,5 +1,5 @@
-import { ArrowUpCircle, History, Plus, RefreshCw } from "lucide-react";
-import type * as React from "react";
+import { History, Plus } from "lucide-react";
+import * as React from "react";
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { PageTitle } from "@/components/ui/page-title";
+import { RefreshCWIcon } from "@/components/ui/refresh-cw";
+import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
@@ -77,7 +79,7 @@ function PageHeader() {
 
 function PlanCreditsRow() {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <PlanCard />
       <CreditsCard />
     </div>
@@ -109,7 +111,7 @@ function PlanCard() {
           size="sm"
           variant="outline"
         >
-          <ArrowUpCircle aria-hidden data-icon="inline-start" />
+          <SquareArrowUpIcon aria-hidden data-icon="inline-start" size={16} />
           Manage subscription
         </Button>
       </CardFooter>
@@ -197,7 +199,7 @@ function CreditsCard() {
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button onClick={() => setAutoOpen(true)} size="sm" variant="outline">
-          <RefreshCw aria-hidden data-icon="inline-start" />
+          <RefreshCWIcon aria-hidden data-icon="inline-start" size={16} />
           Auto-recharge
         </Button>
         <Button onClick={() => setAddOpen(true)} size="sm">
@@ -255,6 +257,41 @@ function AddCreditsDialog({
   const amount =
     custom.length > 0 ? (customValid ? customNum : null) : selected;
   const canSubmit = amount !== null;
+  const selectedPreset = custom.length === 0 ? selected : null;
+  const presetRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  const movePresetSelection = (nextIndex: number) => {
+    const nextValue = CREDIT_PRESETS[nextIndex];
+    setSelected(nextValue);
+    setCustom("");
+    requestAnimationFrame(() => {
+      presetRefs.current[nextIndex]?.focus();
+    });
+  };
+
+  const onPresetKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    if (
+      event.key !== "ArrowRight" &&
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowUp"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      movePresetSelection((index + 1) % CREDIT_PRESETS.length);
+      return;
+    }
+
+    movePresetSelection(
+      (index - 1 + CREDIT_PRESETS.length) % CREDIT_PRESETS.length
+    );
+  };
 
   return (
     <Dialog
@@ -267,10 +304,7 @@ function AddCreditsDialog({
       }}
       open={open}
     >
-      <DialogContent
-        className="gap-4"
-        style={{ width: 500, minWidth: 500, maxWidth: 500 }}
-      >
+      <DialogContent className="w-full max-w-[500px] gap-4">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Add credits
@@ -288,7 +322,7 @@ function AddCreditsDialog({
           className="grid grid-cols-4 gap-2"
           role="radiogroup"
         >
-          {CREDIT_PRESETS.map((value) => {
+          {CREDIT_PRESETS.map((value, index) => {
             const isSelected = custom.length === 0 && selected === value;
             return (
               <button
@@ -304,7 +338,20 @@ function AddCreditsDialog({
                   setSelected(value);
                   setCustom("");
                 }}
+                onKeyDown={(event) => onPresetKeyDown(event, index)}
+                ref={(el) => {
+                  presetRefs.current[index] = el;
+                }}
                 role="radio"
+                tabIndex={
+                  selectedPreset === null
+                    ? index === 0
+                      ? 0
+                      : -1
+                    : isSelected
+                      ? 0
+                      : -1
+                }
                 type="button"
               >
                 {formatCurrency(value, { minFrac: 0, maxFrac: 0 })}
@@ -329,6 +376,12 @@ function AddCreditsDialog({
               $
             </span>
             <Input
+              aria-describedby={
+                custom.length > 0 && !customValid
+                  ? "add-credits-custom-error"
+                  : undefined
+              }
+              aria-invalid={custom.length > 0 && !customValid}
               className="pl-7 font-mono text-sm tabular-nums"
               id="add-credits-custom"
               inputMode="decimal"
@@ -346,6 +399,17 @@ function AddCreditsDialog({
               value={custom}
             />
           </div>
+          {custom.length > 0 && !customValid && (
+            <p
+              aria-live="polite"
+              className="m-0 font-sans text-destructive text-sm"
+              id="add-credits-custom-error"
+            >
+              Enter an amount between{" "}
+              {formatCurrency(MIN_TOPUP, { minFrac: 0, maxFrac: 0 })} and{" "}
+              {formatCurrency(MAX_TOPUP, { minFrac: 0, maxFrac: 0 })}.
+            </p>
+          )}
         </div>
 
         <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
@@ -402,13 +466,13 @@ function AutoRechargeDialog({
   const capValid =
     monthlyCap === null || (Number.isFinite(monthlyCap) && monthlyCap > 0);
   const canSave = !enabled || (thresholdValid && topUpValid && capValid);
+  const thresholdInvalid = enabled && !thresholdValid;
+  const topUpInvalid = enabled && !topUpValid;
+  const capInvalid = enabled && capStr.trim().length > 0 && !capValid;
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className="gap-4"
-        style={{ width: 500, minWidth: 500, maxWidth: 500 }}
-      >
+      <DialogContent className="w-full max-w-[500px] gap-4">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Auto-recharge
@@ -439,7 +503,7 @@ function AutoRechargeDialog({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
@@ -456,6 +520,10 @@ function AutoRechargeDialog({
                 $
               </span>
               <Input
+                aria-describedby={
+                  thresholdInvalid ? "ar-threshold-error" : undefined
+                }
+                aria-invalid={thresholdInvalid}
                 className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
                 disabled={!enabled}
                 id="ar-threshold"
@@ -468,6 +536,15 @@ function AutoRechargeDialog({
                 value={thresholdStr}
               />
             </div>
+            {thresholdInvalid && (
+              <p
+                aria-live="polite"
+                className="m-0 font-sans text-destructive text-sm"
+                id="ar-threshold-error"
+              >
+                Enter a threshold greater than $0.
+              </p>
+            )}
           </div>
 
           {/* Top-up amount */}
@@ -486,6 +563,8 @@ function AutoRechargeDialog({
                 $
               </span>
               <Input
+                aria-describedby={topUpInvalid ? "ar-topup-error" : undefined}
+                aria-invalid={topUpInvalid}
                 className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
                 disabled={!enabled}
                 id="ar-topup"
@@ -498,6 +577,15 @@ function AutoRechargeDialog({
                 value={topUpStr}
               />
             </div>
+            {topUpInvalid && (
+              <p
+                aria-live="polite"
+                className="m-0 font-sans text-destructive text-sm"
+                id="ar-topup-error"
+              >
+                Enter a top-up amount greater than $0.
+              </p>
+            )}
           </div>
         </div>
 
@@ -508,7 +596,7 @@ function AutoRechargeDialog({
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
-            <span className="font-normal text-neutral-400">
+            <span className="font-normal text-neutral-500">
               (leave blank for no cap)
             </span>
           </label>
@@ -520,6 +608,8 @@ function AutoRechargeDialog({
               $
             </span>
             <Input
+              aria-describedby={capInvalid ? "ar-cap-error" : undefined}
+              aria-invalid={capInvalid}
               className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
               disabled={!enabled}
               id="ar-cap"
@@ -532,6 +622,15 @@ function AutoRechargeDialog({
               value={capStr}
             />
           </div>
+          {capInvalid && (
+            <p
+              aria-live="polite"
+              className="m-0 font-sans text-destructive text-sm"
+              id="ar-cap-error"
+            >
+              Monthly cap must be greater than $0, or left blank.
+            </p>
+          )}
         </div>
 
         {enabled && thresholdValid && topUpValid && (
@@ -641,7 +740,11 @@ function PaymentMethodCard() {
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button size="sm">
-          <Plus aria-hidden data-icon="inline-start" />
+          <Plus
+            aria-hidden
+            className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+            data-icon="inline-start"
+          />
           Add card
         </Button>
       </CardFooter>
