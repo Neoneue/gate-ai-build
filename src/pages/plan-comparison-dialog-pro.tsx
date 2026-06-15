@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export type PlanFeature = { Icon: LucideIcon; title: string; detail: string };
 
@@ -111,7 +112,7 @@ const PRO_PLAN: PlanCardData = {
     disabled: true,
     ariaLabel: "Pro plan is your current plan",
   },
-  ctaCaption: "$29/month after your 14 day trial ends",
+  ctaCaption: "$29/month after your 14-day trial ends",
 };
 
 function PlanCard({
@@ -124,7 +125,12 @@ function PlanCard({
   const CtaIcon = plan.cta.icon;
   return (
     <div
-      className={`flex flex-col gap-4 rounded-md border bg-card p-4 ${plan.featured ? "border-primary/30 ring-1 ring-primary/20" : "border-border"}`}
+      className={cn(
+        "flex flex-col gap-4 rounded-md border bg-card p-4",
+        plan.featured
+          ? "border-primary/30 ring-1 ring-primary/20"
+          : "border-border"
+      )}
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
@@ -147,10 +153,7 @@ function PlanCard({
                 aria-hidden
                 className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-sm bg-muted"
               >
-                <Icon
-                  className="size-3.5 text-neutral-700"
-                  strokeWidth={1.75}
-                />
+                <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
               </span>
               <div className="flex flex-col">
                 <span className="text-neutral-900 text-sm">{title}</span>
@@ -225,13 +228,16 @@ export function PlanComparisonDialogPro({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="gap-4 p-6 sm:max-w-3xl">
+      <DialogContent className="flex max-h-[90vh] flex-col gap-4 overflow-hidden p-4 sm:max-w-3xl sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Manage subscription
           </DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4" ref={cardsRef}>
+        <div
+          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2"
+          ref={cardsRef}
+        >
           <PlanCard onUpgrade={onUpgrade} plan={FREE_PLAN} />
           <PlanCard
             onUpgrade={() => {
