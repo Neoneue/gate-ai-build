@@ -250,7 +250,7 @@ export function HeroCard({
               <div className="flex items-center gap-2">
                 <Badge variant="info">PRO PLAN</Badge>
                 <span className="font-medium text-neutral-500 text-xs">
-                  $29 / month after your 14-day trial ends
+                  $20 / month after your 14-day trial ends
                 </span>
               </div>
 

@@ -77,7 +77,7 @@ const FREE_PLAN: PlanCardData = {
 const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: "PRO PLAN", tone: "pro" },
-  price: "$29",
+  price: "$20",
   benefitsLabel: "What you'll get going Pro:",
   features: [
     {

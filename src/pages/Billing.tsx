@@ -114,7 +114,7 @@ function PlanCard() {
           Gate audit trail.
         </p>
         <p className="m-0 font-sans text-neutral-500 text-sm">
-          Renews on Jun 12, 2026 · $29 / user / month
+          Renews on Jun 12, 2026 · $20 / month
         </p>
 
         {/* Seats inset */}
@@ -129,7 +129,7 @@ function PlanCard() {
             </p>
           </div>
           <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
-            1 seat × $29 = $29 / month
+            1 seat × $20 = $20 / month
           </p>
         </div>
 
