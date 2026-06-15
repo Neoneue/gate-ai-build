@@ -64,6 +64,23 @@ indicator visibly slid into place when the notifications menu opened.
   **only on user selection**. No-op on static pages; popover remount on each
   open resets the flag, so reopening never slides.
 
+### Sidebar: PRO-feature locks gated to FREE surfaces `863df29`
+
+Lock icons on Token Savings / Limits / Events were hardcoded `locked: true` in
+`nav-sections.ts`, so they rendered on PRO accounts too.
+
+- New `src/lib/plan.ts` exports `FREE_SURFACE = /-(default|free)$/` and
+  `isFreeSurface(pathname)` — single source of truth for plan tier.
+- `workspace-switcher.tsx` now imports that helper (dropped its private regex),
+  so the plan badge and the locks can't drift apart.
+- `sidebar.tsx` gains a `showLocks` prop (default `false`), threaded into
+  `SidebarExpanded`; the lock renders only when `item.locked && showLocks`.
+  `DashboardChrome` computes `showLocks = isFreeSurface(pathname)` via
+  `useLocation`.
+- Net: locks show only on `-default`/`-free` routes (badge = FREE), hidden on
+  PRO. `isDisabled` (`!item.pageId`) is unchanged, so PRO users still navigate
+  the gated items.
+
 ## Sections
 
 ### Settings: Notification preferences card, Profile copy, footer + responsive grid `45cb33f`
@@ -95,3 +112,28 @@ indicator visibly slid into place when the notifications menu opened.
   Changing it requires re-verification through your identity provider."
   (`m-0 mt-1 text-pretty font-sans text-neutral-500 text-xs tracking-tight`,
   the repo's standard field-helper voice).
+
+### Settings: split Display name into First / Last name `04927e6`
+
+`src/pages/Settings.tsx`. The Profile form is now a 2×2 grid: **First name |
+Last name** on row 1, **Email | Organization** on row 2 (Email moved down a
+row). `PROFILE_DEFAULTS`, the `useState` fields, `dirty`, Save, and Reset all
+moved from three fields to four (`firstName`, `lastName`, `email`,
+`organization`); the inputs use `given-name` / `family-name` autocomplete.
+
+### Overview (default): swap hero cards + retitle Get started `acbe2db`
+
+`src/pages/DashboardDefault.tsx` `HeroCard`. **Gate Connect** now sits on the
+left, **Get started** on the right (was reversed). The positional seam classes
+were swapped along with the order so the two cards still butt together at xl+:
+the left card flattens its right edge (`xl:rounded-r-none xl:border-r-0`), the
+right card flattens its left edge (`xl:rounded-l-none`). Get started title:
+"Get Started with Gate AI" → **"Create your first API key"**.
+
+### Billing: Pro price $29 → $20, drop per-user framing `9ca54a8`
+
+All Pro-price instances updated from `$29` to `$20` across `Billing.tsx`,
+`Upgrade.tsx`, `SecurityDefault.tsx`, and both plan-comparison dialogs (`price`,
+`ctaCaption`, trial captions, and the Billing seat breakdown). The Billing
+renews line now reads `$20 / month` (was `$20 / user / month`). Note: the price
+is still a hardcoded string in 5 places — no shared constant yet.
