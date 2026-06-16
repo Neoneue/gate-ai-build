@@ -60,7 +60,12 @@ import { UploadIcon } from "@/components/ui/upload";
 import { getEventFindingCopy } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatDateTime, formatNumber, formatTime } from "@/lib/formatters";
+import {
+  formatDateTime,
+  formatNumber,
+  formatSparkLabel,
+  formatTime,
+} from "@/lib/formatters";
 import {
   ACTION_BADGE,
   EVENT_ROWS,
@@ -333,7 +338,7 @@ function minutesBeforeAnchor(minutesAgo: number): {
 }
 
 type EventsChartView = {
-  data: Array<{ time: string; requests: number }>;
+  data: Array<{ time: string; label: string; requests: number }>;
   ticks: string[];
   domainTop: number;
 };
@@ -409,7 +414,7 @@ function buildEventsChartView(
           minute: "2-digit",
           hour12: false,
         });
-    return { time, requests };
+    return { time, label: formatSparkLabel(d, true), requests };
   });
 
   // 4–7 evenly spaced ticks across the series, de-duplicated.
@@ -608,6 +613,10 @@ function HeroMetricCard({
                 )}
                 hideIndicator
                 labelClassName="font-normal text-muted-foreground"
+                labelFormatter={(_label, items) =>
+                  (items?.[0]?.payload as { label?: string } | undefined)
+                    ?.label ?? ""
+                }
               />
             }
             cursor={{

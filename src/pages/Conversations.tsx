@@ -62,6 +62,7 @@ import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { formatSparkLabel } from "@/lib/formatters";
 
 const REDUCE_MOTION =
   typeof window !== "undefined" &&
@@ -161,18 +162,6 @@ const SPARK: Record<
 // show a date beside each value — the values themselves stay illustrative.
 const SPARK_POINTS = 9;
 const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
-const SPARK_TIME = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-});
-const SPARK_DAY = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-const SPARK_MONTH = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  year: "numeric",
-});
 
 function sparkDates(range: Range, customRange: CustomRange | null): string[] {
   const last = SPARK_POINTS - 1;
@@ -182,7 +171,7 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     const span = customRange.to.getTime() - customRange.from.getTime();
     for (let i = 0; i < SPARK_POINTS; i++) {
       labels.push(
-        SPARK_DAY.format(
+        formatSparkLabel(
           new Date(customRange.from.getTime() + (span * i) / last)
         )
       );
@@ -196,14 +185,12 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     const d = new Date(SPARK_TODAY);
     if (preset === "24h") {
       d.setHours(d.getHours() - stepsBack * 3);
-      labels.push(SPARK_TIME.format(d));
     } else if (preset === "all") {
       d.setMonth(d.getMonth() - stepsBack);
-      labels.push(SPARK_MONTH.format(d));
     } else {
       d.setDate(d.getDate() - stepsBack * (preset === "30d" ? 4 : 1));
-      labels.push(SPARK_DAY.format(d));
     }
+    labels.push(formatSparkLabel(d, preset === "24h"));
   }
   return labels;
 }
@@ -220,6 +207,30 @@ function effectiveScale(range: Range, customRange: CustomRange | null): number {
     return daysInRange(customRange) / 7;
   }
   return RANGE_SCALE[range === "custom" ? "7d" : range];
+}
+
+// The Conversations KPI is the COUNT of conversations in the range; its
+// sparkline shows per-bucket volume that must SUM to that KPI total (mirrors the
+// backend getStats, where the daily buckets and the count agree). Each range's
+// authored array is treated as the bucket *shape* and rescaled to the total via
+// largest-remainder rounding, so the integer buckets sum to the total exactly.
+function distributeTotal(total: number, shape: number[]): number[] {
+  const shapeSum = shape.reduce((sum, w) => sum + w, 0);
+  if (shapeSum <= 0) {
+    return shape.map(() => 0);
+  }
+  const exact = shape.map((w) => (total * w) / shapeSum);
+  const floored = exact.map((v) => Math.floor(v));
+  let remainder = total - floored.reduce((sum, v) => sum + v, 0);
+  const byFraction = exact
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const result = [...floored];
+  for (let k = 0; remainder > 0 && k < byFraction.length; k += 1) {
+    result[byFraction[k].i] += 1;
+    remainder -= 1;
+  }
+  return result;
 }
 
 export function Conversations() {
@@ -329,11 +340,16 @@ function KpiRail({
   range: Range;
   customRange: CustomRange | null;
 }) {
-  const conversationsValue = Math.round(
+  const conversationsTotal = Math.round(
     100 * effectiveScale(range, customRange)
-  ).toLocaleString("en-US");
+  );
+  const conversationsValue = conversationsTotal.toLocaleString("en-US");
   const spark = SPARK[range];
   const sparkLabels = sparkDates(range, customRange);
+  const conversationsSpark = distributeTotal(
+    conversationsTotal,
+    spark.conversations
+  );
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
@@ -342,7 +358,7 @@ function KpiRail({
         spark={
           <CompactSpark
             colorVar="var(--color-chart-7)"
-            data={spark.conversations}
+            data={conversationsSpark}
             labels={sparkLabels}
             tooltip
             valueFormatter={(v) => Math.round(v).toLocaleString("en-US")}

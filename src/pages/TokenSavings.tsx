@@ -23,6 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { formatSparkLabel } from "@/lib/formatters";
 
 export function TokenSavings() {
   const navigate = useNavigate();
@@ -233,18 +234,6 @@ const SPARK_STEP: Record<PresetRange, number> = {
   "30d": 2, // days
 };
 const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
-const SPARK_TIME = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-});
-const SPARK_DAY = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-const SPARK_MONTH = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  year: "numeric",
-});
 
 // Resample an authored trend onto `count` evenly-spaced stops via linear
 // interpolation. Endpoints are preserved exactly; intermediate stops sit on the
@@ -270,14 +259,12 @@ function sparkDates(range: PresetRange, count: number): string[] {
     const d = new Date(SPARK_TODAY);
     if (range === "24h") {
       d.setHours(d.getHours() - stepsBack * step);
-      return SPARK_TIME.format(d);
-    }
-    if (range === "all") {
+    } else if (range === "all") {
       d.setMonth(d.getMonth() - stepsBack * step);
-      return SPARK_MONTH.format(d);
+    } else {
+      d.setDate(d.getDate() - stepsBack * step);
     }
-    d.setDate(d.getDate() - stepsBack * step);
-    return SPARK_DAY.format(d);
+    return formatSparkLabel(d, range === "24h");
   });
 }
 
