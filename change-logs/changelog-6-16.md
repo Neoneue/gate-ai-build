@@ -138,3 +138,9 @@ The sidebar is plan-aware via `FREE_SIDEBAR_SECTIONS` (derived from
 `SIDEBAR_SECTIONS` so they never drift): in Free, unlocked items route to their
 `-free` twin and **Limits + Events** render as inert lock affordances (no nav).
 Detail pages and the legacy `-default` upsell pages are left shared / untouched.
+
+### Sidebar: darker disabled nav-item color `06d25b4`
+
+The locked Free-tier items (Events + Limits) were nearly invisible. Disabled
+label color bumped one stop — collapsed rail `text-neutral-300 → neutral-400`,
+expanded `text-neutral-400 → neutral-500`; `opacity-50` unchanged.
