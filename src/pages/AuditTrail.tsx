@@ -197,11 +197,11 @@ function PageHeader() {
       {/* TODO: wire page-level Verify / Export actions per the Audit Trail review doc.
           Verify-a-hash dialog and Export view are not built yet — no onClick handlers. */}
       <div className="flex items-center gap-2">
-        <Button size="lg" type="button" variant="outline">
+        <Button size="default" type="button" variant="outline">
           <BadgeCheck />
           Verify a hash
         </Button>
-        <Button size="lg" type="button" variant="outline">
+        <Button size="default" type="button" variant="outline">
           <Download />
           Export view
         </Button>
@@ -407,7 +407,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               className="min-w-0 flex-1 shrink"
               onChange={setQuery}
               placeholder="Search events, users, hashes…"
-              surface="background"
+              surface="elevated"
               value={query}
             />
             <Select

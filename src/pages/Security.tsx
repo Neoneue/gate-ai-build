@@ -1160,7 +1160,7 @@ function EventsTableSection({
               className="min-w-0 flex-1 shrink"
               onChange={setQuery}
               placeholder="Search events…"
-              surface="background"
+              surface="elevated"
               value={query}
             />
 

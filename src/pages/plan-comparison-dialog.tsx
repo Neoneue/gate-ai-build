@@ -83,7 +83,7 @@ const PRO_PLAN: PlanCardData = {
   featured: true,
   badge: { label: "PRO PLAN", tone: "pro" },
   title: "Pro plan",
-  price: "$29",
+  price: "$20",
   benefitsLabel: "What you'll get going Pro:",
   features: [
     {
@@ -109,7 +109,7 @@ const PRO_PLAN: PlanCardData = {
     },
   ],
   cta: { label: "Upgrade to Pro", variant: "default" },
-  ctaCaption: "$29/month after your 14-day trial ends",
+  ctaCaption: "$20/month after your 14-day trial ends",
 };
 
 function PlanCard({

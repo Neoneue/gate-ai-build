@@ -12,6 +12,16 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Segmented } from "@/components/ui/segmented";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { cn } from "@/lib/utils";
+import { TYPE_META } from "./security-data";
+
+// Title-icon colors mirror the Security events type palette (TYPE_META) so the
+// two surfaces stay in sync. Keyed by policy id.
+const ICON_COLOR: Record<string, string> = {
+  "prompt-injection": TYPE_META.injection.color,
+  pii: TYPE_META.pii.color,
+  secrets: TYPE_META.credential.color,
+};
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Policies
@@ -34,8 +44,6 @@ type LucideIcon = ComponentType<SVGProps<SVGSVGElement>>;
 type ActionOption = {
   value: string;
   name: string;
-  /** Small all-caps qualifier rendered beside the option name. */
-  flag?: "DEFAULT";
   description: string;
 };
 
@@ -98,7 +106,6 @@ const POLICIES: PolicyConfig[] = [
         {
           value: "block",
           name: "Block",
-          flag: "DEFAULT",
           description: "Reject the request before it reaches the model.",
         },
         {
@@ -132,7 +139,6 @@ const POLICIES: PolicyConfig[] = [
         {
           value: "redact",
           name: "Redact",
-          flag: "DEFAULT",
           description:
             "Strip PII from the payload, forward the cleaned request.",
         },
@@ -173,7 +179,6 @@ const POLICIES: PolicyConfig[] = [
         {
           value: "redact",
           name: "Redact",
-          flag: "DEFAULT",
           description:
             "Replace the credential with a placeholder and forward the cleaned payload.",
         },
@@ -212,9 +217,15 @@ const INITIAL_POLICIES: PolicyState[] = [
     sensitivity: "medium",
     action: "flag",
   },
-  { id: "pii", enabled: true, scanDirection: "output", action: "redact" },
-  { id: "secrets", enabled: true, scanDirection: "output", action: "redact" },
+  { id: "pii", enabled: true, scanDirection: "output", action: "flag" },
+  { id: "secrets", enabled: true, scanDirection: "output", action: "flag" },
 ];
+
+// The "DEFAULT" badge marks each policy's shipped default action, derived from
+// the seed above so it always matches (was hardcoded onto the flag option).
+const DEFAULT_ACTION: Record<string, string> = Object.fromEntries(
+  INITIAL_POLICIES.map((p) => [p.id, p.action])
+);
 
 // Static KPI constants — kept for when the rail is restored. Detections /
 // block rate / avg latency are not wired to live data yet; only the
@@ -385,8 +396,14 @@ function PolicyCard({
     <Card className={state.enabled ? "data-[density=default]:pb-0" : undefined}>
       {/* Header row — always visible. */}
       <div className="flex items-start gap-3 px-4">
-        {/* Bare lucide icon — no wrapper box. */}
-        <Icon aria-hidden className="mt-1 size-5 shrink-0 text-neutral-700" />
+        {/* Bare lucide icon — no wrapper box. Centered on the title line. */}
+        <span className="flex h-6 shrink-0 items-center">
+          <Icon
+            aria-hidden
+            className="size-5"
+            style={{ color: ICON_COLOR[config.id] }}
+          />
+        </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="m-0 font-medium font-sans text-base/6 text-neutral-900">
@@ -536,12 +553,12 @@ function ActionHalf({
           const descId = `action-${config.id}-${opt.value}-desc`;
           return (
             <label
-              className={
-                "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ease-out" +
-                (selected
-                  ? "border-foreground bg-neutral-50"
-                  : "border-border bg-transparent hover:bg-neutral-50")
-              }
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ease-out",
+                selected
+                  ? "border-primary bg-neutral-50"
+                  : "border-border bg-transparent hover:bg-neutral-50"
+              )}
               key={opt.value}
             >
               <RadioGroupItem
@@ -558,8 +575,8 @@ function ActionHalf({
                   >
                     {opt.name}
                   </span>
-                  {opt.flag ? (
-                    <Badge variant="neutral">{opt.flag}</Badge>
+                  {opt.value === DEFAULT_ACTION[config.id] ? (
+                    <Badge variant="neutral">DEFAULT</Badge>
                   ) : null}
                 </div>
                 <span

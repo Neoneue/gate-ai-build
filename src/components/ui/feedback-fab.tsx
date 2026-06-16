@@ -70,13 +70,13 @@ function FeedbackFab() {
       <button
         aria-label="Send feedback"
         className={cn(
-          // Pill shape, dark surface, shadow elevation, fixed viewport anchor
+          // Pill shape, outlined surface, shadow elevation, fixed viewport anchor
           "fixed right-6 bottom-6 z-40",
           "inline-flex h-8 items-center gap-2 rounded-full px-4",
-          "whitespace-nowrap bg-neutral-900 font-medium text-sm text-white",
-          "shadow-(--shadow-popup)",
+          "whitespace-nowrap border border-border bg-card font-medium text-neutral-900 text-sm",
+          "shadow-md",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-neutral-800 active:scale-[0.99] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
+          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-muted active:scale-[0.99] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
           "focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "select-none"
         )}

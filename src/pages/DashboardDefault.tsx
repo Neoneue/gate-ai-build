@@ -657,18 +657,34 @@ export function HeroCard() {
 
   return (
     <div className="flex flex-col gap-4 xl:flex-row xl:gap-0">
+      {/* Connect card */}
+      <Card
+        className="flex flex-1 flex-col xl:rounded-r-none xl:border-r-0"
+        density="flush"
+      >
+        <div className="flex-1">
+          <ConnectTabs gateConnectOnly />
+        </div>
+        <WorksWithFooter
+          asButtons
+          items={MANUAL_SETUP_ITEMS}
+          label="Manual setup"
+          showMore={false}
+        />
+      </Card>
+
       {/* Get started card */}
-      <Card className="flex-1 xl:rounded-r-none xl:border-r-0" density="flush">
+      <Card className="flex-1 xl:rounded-l-none" density="flush">
         <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
           <div className="flex flex-col gap-2">
             <h2 className="m-0 font-medium text-2xl text-neutral-900 tracking-tight">
-              Get Started with Gate AI
+              Create your first API key
             </h2>
             <p className="m-0 max-w-[432px] text-pretty text-neutral-500 text-sm">
-              Route your AI tools through Gate to add prompt-injection defense
-              and a tamper-evident audit trail to every request. Set it up in
-              one click with Gate Connect, our tiny menu-bar app, or configure
-              your tool manually. Create an API key below to get started.
+              Your API key is what routes traffic through Gate, adding
+              prompt-injection defense and a tamper-evident audit trail to every
+              request. Use it with our Gate Connect app, or any AI coding tools
+              you configure manually.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -695,19 +711,6 @@ export function HeroCard() {
           </div>
         </div>
         <WorksWithFooter />
-      </Card>
-
-      {/* Connect card */}
-      <Card className="flex flex-1 flex-col xl:rounded-l-none" density="flush">
-        <div className="flex-1">
-          <ConnectTabs gateConnectOnly />
-        </div>
-        <WorksWithFooter
-          asButtons
-          items={MANUAL_SETUP_ITEMS}
-          label="Manual setup"
-          showMore={false}
-        />
       </Card>
     </div>
   );

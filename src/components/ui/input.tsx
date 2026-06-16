@@ -15,13 +15,13 @@ const inputVariants = cva(
         default: "h-9 px-4 text-sm",
         lg: "h-10 px-4 text-sm",
       },
-      // Resting fill = one step darker than the surrounding surface so the
-      // control reads as recessed. `card` sits on white/card/modal surfaces;
-      // `background` sits directly on the page background layer (bg-neutral-50)
-      // and matches the SegmentedPill track (bg-neutral-100).
+      // `card` (default) reads as recessed: one step darker than the white/card
+      // surface it sits on. `elevated` is the opposite — a white, raised field
+      // for search bars that sit OUTSIDE table cards on the page background,
+      // matching the adjacent outline buttons (bg-card + shadow-xs).
       surface: {
         card: "bg-neutral-50",
-        background: "bg-neutral-100",
+        elevated: "bg-card shadow-xs",
       },
     },
     defaultVariants: {

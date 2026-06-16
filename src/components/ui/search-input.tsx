@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
  * `className` only when a specific toolbar needs a different shape.
  *
  * `surface` forwards to the inner <Input>: `'card'` (default, bg-neutral-50)
- * for toolbars on white/card surfaces; `'background'` (bg-neutral-100) when the
- * search field sits directly on the page background layer.
+ * for toolbars inside white/card surfaces; `'elevated'` (bg-card + shadow-xs)
+ * for search fields that sit OUTSIDE table cards on the page background.
  * ───────────────────────────────────────────────────────────────────── */
 
 export interface SearchInputProps {
@@ -35,8 +35,8 @@ export interface SearchInputProps {
   onChange?: (value: string) => void;
   /** Placeholder copy. Should end with `…`. */
   placeholder: string;
-  /** Inner input resting fill. `'card'` (default) on white/card surfaces; `'background'` on the page background layer. */
-  surface?: "card" | "background";
+  /** Inner input resting fill. `'card'` (default) inside white/card surfaces; `'elevated'` (white + shadow) for search bars outside table cards. */
+  surface?: "card" | "elevated";
   /** Controlled value. Omit for uncontrolled. */
   value?: string;
 }

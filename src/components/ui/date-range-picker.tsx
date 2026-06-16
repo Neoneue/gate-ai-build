@@ -24,7 +24,7 @@ export interface DateRangePickerProps {
   onChange: (range: { from: Date; to: Date } | null) => void;
   /** Trigger button height. Defaults to `sm` (h-8) to match the inline
    *  toolbar usage on Requests; pass `default` for h-10 (40px) page-header
-   *  chrome — overridden up from Button's native h-9 default size. */
+   *  chrome (Button's native default size), matching a sibling SegmentedPill. */
   size?: "sm" | "default";
   value: { from: Date; to: Date } | null;
 }
@@ -176,7 +176,7 @@ export function DateRangePicker({
                   ? `Custom: ${formatRange(value)}`
                   : "Pick a custom date range"
               }
-              size={size === "sm" ? "sm" : "lg"}
+              size={size === "sm" ? "sm" : "default"}
               variant="outline"
             >
               <CalendarDaysIcon

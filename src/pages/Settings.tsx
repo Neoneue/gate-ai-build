@@ -51,9 +51,11 @@ function SettingsSurface() {
   return (
     <>
       <PageHeader />
-      <div className="flex flex-col gap-4">
-        <ProfileCard />
-        <SecurityCard />
+      <div className="grid grid-cols-12">
+        <div className="col-span-12 flex flex-col gap-4 2xl:col-span-9">
+          <ProfileCard />
+          <SecurityCard />
+        </div>
       </div>
     </>
   );
@@ -75,25 +77,28 @@ function PageHeader() {
 }
 
 /* ─── Profile & organization card ──────────────────────────────────────────
- * Three fields share a single dirty state. Dirty = any field differs from
- * its last-saved value. Save commits all three; Reset reverts all three. */
+ * Four fields share a single dirty state. Dirty = any field differs from
+ * its last-saved value. Save commits all four; Reset reverts all four. */
 
 const PROFILE_DEFAULTS = {
-  displayName: "Chad Ponticas",
+  firstName: "Chad",
+  lastName: "Ponticas",
   email: "chad@constellationnetwork.io",
   organization: "Chad Ponticas's workspace",
 };
 
 function ProfileCard() {
   const [saved, setSaved] = useState(PROFILE_DEFAULTS);
-  const [displayName, setDisplayName] = useState(PROFILE_DEFAULTS.displayName);
+  const [firstName, setFirstName] = useState(PROFILE_DEFAULTS.firstName);
+  const [lastName, setLastName] = useState(PROFILE_DEFAULTS.lastName);
   const [email, setEmail] = useState(PROFILE_DEFAULTS.email);
   const [organization, setOrganization] = useState(
     PROFILE_DEFAULTS.organization
   );
 
   const dirty =
-    displayName !== saved.displayName ||
+    firstName !== saved.firstName ||
+    lastName !== saved.lastName ||
     email !== saved.email ||
     organization !== saved.organization;
 
@@ -115,11 +120,12 @@ function ProfileCard() {
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaved({ displayName, email, organization });
+    setSaved({ firstName, lastName, email, organization });
   }
 
   function handleReset() {
-    setDisplayName(saved.displayName);
+    setFirstName(saved.firstName);
+    setLastName(saved.lastName);
     setEmail(saved.email);
     setOrganization(saved.organization);
   }
@@ -127,7 +133,10 @@ function ProfileCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile &amp; organization</CardTitle>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>
+          View and update your personal and organization's information.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form id="profile-form" onSubmit={handleSave}>
@@ -135,15 +144,29 @@ function ProfileCard() {
             <div>
               <label
                 className="mb-1 block font-medium text-neutral-700 text-sm"
-                htmlFor="settings-display-name"
+                htmlFor="settings-first-name"
               >
-                Display name
+                First name
               </label>
               <Input
-                autoComplete="name"
-                id="settings-display-name"
-                onChange={(e) => setDisplayName(e.target.value)}
-                value={displayName}
+                autoComplete="given-name"
+                id="settings-first-name"
+                onChange={(e) => setFirstName(e.target.value)}
+                value={firstName}
+              />
+            </div>
+            <div>
+              <label
+                className="mb-1 block font-medium text-neutral-700 text-sm"
+                htmlFor="settings-last-name"
+              >
+                Last name
+              </label>
+              <Input
+                autoComplete="family-name"
+                id="settings-last-name"
+                onChange={(e) => setLastName(e.target.value)}
+                value={lastName}
               />
             </div>
             <div>
@@ -161,25 +184,28 @@ function ProfileCard() {
                 type="email"
                 value={email}
               />
+              <p className="m-0 mt-1 text-pretty font-sans text-neutral-500 text-xs tracking-tight">
+                Verified at sign-in. Changing it requires re-verification
+                through your identity provider.
+              </p>
             </div>
-          </div>
-          <div className="mt-4">
-            <label
-              className="mb-1 block font-medium text-neutral-700 text-sm"
-              htmlFor="settings-organization"
-            >
-              Organization
-            </label>
-            <Input
-              className="max-w-md"
-              id="settings-organization"
-              onChange={(e) => setOrganization(e.target.value)}
-              value={organization}
-            />
+            <div>
+              <label
+                className="mb-1 block font-medium text-neutral-700 text-sm"
+                htmlFor="settings-organization"
+              >
+                Organization
+              </label>
+              <Input
+                id="settings-organization"
+                onChange={(e) => setOrganization(e.target.value)}
+                value={organization}
+              />
+            </div>
           </div>
         </form>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-border border-t">
+      <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
           disabled={!dirty}
           onClick={handleReset}

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface SegmentedProps {
@@ -107,6 +107,12 @@ function SegmentedPillVariant({
     height: number;
     ready: boolean;
   }>({ x: 0, y: 0, width: 0, height: 0, ready: false });
+  // Transitions stay off until one frame after the first measurement, so the
+  // indicator paints in its resting place on mount (incl. when this control
+  // mounts inside an opening popover, whose enter animation paints the
+  // zero-width indicator and would otherwise defeat the skip-first-paint
+  // trick). Only user selection — which happens after this frame — animates.
+  const [animate, setAnimate] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: options is a deliberate extra dep — option changes resize the rail, so re-measure
   useLayoutEffect(() => {
@@ -123,6 +129,13 @@ function SegmentedPillVariant({
     });
   }, [value, options]);
 
+  // One frame after mount the resting indicator has painted, so turning
+  // transitions on now animates only subsequent (user-driven) moves.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimate(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <div
       aria-label={ariaLabel}
@@ -138,10 +151,10 @@ function SegmentedPillVariant({
           "absolute top-0 left-0 rounded-xs bg-card shadow-xs",
           indicator.ready ? "opacity-100" : "opacity-0",
           // Transition lives in a class so `motion-reduce:transition-none`
-          // can override it. Gated on `indicator.ready` to skip the
-          // first-paint slide-from-zero — equivalent to the prior inline
-          // `transition: ready ? '…' : undefined` pattern.
-          indicator.ready &&
+          // can override it. Gated on `animate` (flips true one frame after
+          // mount) so the indicator paints in place on first render and only
+          // user selection slides — robust even inside an opening popover.
+          animate &&
             "transition-[transform,width] duration-[220ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
         )}
         style={{

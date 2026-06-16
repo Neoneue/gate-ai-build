@@ -55,6 +55,11 @@ export interface SidebarProps {
   expanded: boolean;
   onNavigate?: (pageId: string) => void;
   sections: SidebarSection[];
+  /** When true, PRO-gated items (those flagged `locked`) render a lock icon.
+   * Driven by the surface tier — passed true only on FREE/default surfaces so
+   * the lock mirrors the workspace PRO/FREE badge. Defaults to false (PRO,
+   * unlocked). */
+  showLocks?: boolean;
   /** Bottom user area slot (expanded variant only). Defaults to "CP avatar
    *  + Chad + MoreHorizontal user-menu button". The collapsed rail always
    *  renders just a CP monogram. */
@@ -68,6 +73,7 @@ export function Sidebar({
   onNavigate,
   brand,
   userArea,
+  showLocks = false,
 }: SidebarProps) {
   return (
     <aside
@@ -107,6 +113,7 @@ export function Sidebar({
           brand={brand}
           onNavigate={onNavigate}
           sections={sections}
+          showLocks={showLocks}
           userArea={userArea}
         />
       </div>
@@ -194,12 +201,14 @@ function SidebarExpanded({
   onNavigate,
   brand,
   userArea,
+  showLocks,
 }: {
   sections: SidebarSection[];
   activeId: string;
   onNavigate?: (pageId: string) => void;
   brand?: React.ReactNode;
   userArea?: React.ReactNode;
+  showLocks?: boolean;
 }) {
   return (
     <div className="flex h-full w-60 shrink-0 flex-col">
@@ -250,7 +259,7 @@ function SidebarExpanded({
                     strokeWidth={1.75}
                   />
                   <span className="font-sans text-sm">{item.label}</span>
-                  {item.locked ? (
+                  {item.locked && showLocks ? (
                     <>
                       <Lock
                         aria-hidden

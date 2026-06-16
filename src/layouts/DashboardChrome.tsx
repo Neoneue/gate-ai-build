@@ -1,11 +1,12 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type * as React from "react";
-import { BellIcon } from "@/components/ui/bell";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import { Sidebar } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
+import { isFreeSurface } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_SECTIONS } from "./nav-sections";
 
@@ -46,6 +47,10 @@ export function DashboardChrome({
   const activePageLabel =
     SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)
       ?.label ?? "Constellation Gate AI";
+  // Sidebar PRO-feature locks show only on FREE/default surfaces, mirroring the
+  // workspace PRO/FREE badge (shared `isFreeSurface`). PRO surfaces are unlocked.
+  const { pathname } = useLocation();
+  const showLocks = isFreeSurface(pathname);
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 flex-row">
@@ -54,6 +59,7 @@ export function DashboardChrome({
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
           sections={SIDEBAR_SECTIONS}
+          showLocks={showLocks}
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50">
           <DashTopBar
@@ -152,9 +158,6 @@ function DashTopBar({
             />
           </Button>
         )}
-        <Button aria-label="Notifications" size="icon-sm" variant="outline">
-          <BellIcon aria-hidden size={16} strokeWidth={1.75} />
-        </Button>
       </div>
     </div>
   );
