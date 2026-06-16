@@ -111,3 +111,25 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
 ];
+
+/** PRO-only nav ids — locked in the Free workspace (rendered as inert lock
+ *  affordances, no navigation). Everything else routes to its `-free` twin. */
+const LOCKED_IN_FREE = new Set(["limits", "security-events"]);
+
+/** Sidebar for the Free workspace, derived from SIDEBAR_SECTIONS so the two
+ *  never drift: unlocked items point at their `-free` twin (and drop any
+ *  PRO-only lock flag); Limits + Events become inert lock affordances. */
+export const FREE_SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_SECTIONS.map(
+  (section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      LOCKED_IN_FREE.has(item.id)
+        ? { ...item, locked: true, pageId: undefined }
+        : {
+            ...item,
+            locked: false,
+            pageId: item.pageId ? `${item.pageId}-free` : item.pageId,
+          }
+    ),
+  })
+);

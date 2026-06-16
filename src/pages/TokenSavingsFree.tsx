@@ -1,40 +1,8 @@
-import { Coins } from "lucide-react";
-import { useNavigate, useOutletContext } from "react-router-dom";
-import { PageTitle } from "@/components/ui/page-title";
-import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { ProUpgradeCard } from "@/pages/pro-upgrade-card";
+import { TokenSavings } from "@/pages/TokenSavings";
 
+/** Free-tier Token Savings — identical to Pro (this surface is not gated in
+ *  Free). Renders the Pro page verbatim; kept as its own `-free` route so the
+ *  Free workspace stays self-consistent (badge + sidebar). */
 export function TokenSavingsFree() {
-  const navigate = useNavigate();
-  const { sidebarExpanded, toggleSidebar } = useOutletContext<{
-    sidebarExpanded: boolean;
-    toggleSidebar: () => void;
-  }>();
-  return (
-    <DashboardChrome
-      activeNavId="token-savings"
-      onNavigate={(path: string) => navigate(path)}
-      onToggleSidebar={toggleSidebar}
-      sidebarExpanded={sidebarExpanded}
-    >
-      <PageHeader />
-      <ProUpgradeCard
-        body="Token savings are a Pro feature. Upgrade in Billing to save 20%+ on every request, automatically."
-        icon={Coins}
-      />
-    </DashboardChrome>
-  );
-}
-
-/* ─── Page header ───────────────────────────────────────────────────── */
-
-function PageHeader() {
-  return (
-    <div className="flex flex-col gap-2">
-      <PageTitle>Token Savings</PageTitle>
-      <p className="m-0 max-w-1/2 text-pretty font-sans text-base text-neutral-500 tracking-tight">
-        Cache, compress and deduplicate to spend less per request.
-      </p>
-    </div>
-  );
+  return <TokenSavings />;
 }
