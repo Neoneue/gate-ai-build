@@ -168,7 +168,7 @@ function SidebarCollapsed({
                       isActive
                         ? "flex size-9 items-center justify-center rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                         : isDisabled
-                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-neutral-300 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-neutral-400 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                           : "flex size-9 items-center justify-center rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                     }
                     disabled={isDisabled}
@@ -241,7 +241,7 @@ function SidebarExpanded({
                     isActive
                       ? "flex items-center gap-3 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 px-2 py-2 font-medium text-neutral-900 shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                       : isDisabled
-                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-400 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-500 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                         : "flex items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-700 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
                   }
                   disabled={isDisabled}
