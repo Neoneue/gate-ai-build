@@ -409,7 +409,6 @@ function PolicyCard({
             <h3 className="m-0 font-medium font-sans text-base/6 text-neutral-900">
               {config.name}
             </h3>
-            <Badge variant="neutral">{config.scanTag}</Badge>
           </div>
           <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
             {config.description}
