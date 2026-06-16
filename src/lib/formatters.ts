@@ -66,6 +66,29 @@ export function formatTime(
   return new Intl.DateTimeFormat(LOCALE, options).format(date);
 }
 
+/** Chart hover-tooltip timestamp. Date only ("Mar 01, 2026") by default; pass
+ *  `withTime` for sub-daily buckets to append a 24-hour, no-AM/PM time
+ *  ("Mar 01, 2026 12:00"). Single source of truth so the label format stays
+ *  identical across every KPI / area-chart tooltip (Conversations, Requests,
+ *  Security, Token Savings, Activity). Pinned en-US: date and time are joined
+ *  with a space (not a locale separator) so there is no comma before the time. */
+export function formatSparkLabel(date: Date, withTime = false): string {
+  const datePart = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(date);
+  if (!withTime) {
+    return datePart;
+  }
+  const timePart = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+  return `${datePart} ${timePart}`;
+}
+
 /** Absolute timestamp: "May 12, 09:23:49". For null inputs (e.g., key never
  *  used) returns 'Never'. Use in table cells where a precise timestamp is more
  *  useful than a relative ("2h ago") hint. */

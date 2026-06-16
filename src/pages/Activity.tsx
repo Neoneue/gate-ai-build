@@ -63,6 +63,7 @@ import {
   formatCurrency,
   formatDate,
   formatNumber,
+  formatSparkLabel,
   formatTime,
 } from "@/lib/formatters";
 import {
@@ -342,6 +343,9 @@ function KpiRail({
   customRange: CustomRange | null;
 }) {
   const k = getKpiSpec(range, customRange);
+  const sparkLabels = getRangeDates(range, customRange).map((d) =>
+    formatSparkLabel(d, range === "24h")
+  );
   const note = RANGE_DELTA_NOTE[range];
   return (
     <KpiRailShell columns={3}>
@@ -350,7 +354,13 @@ function KpiRail({
         deltaNote={note}
         flat
         spark={
-          <CompactSpark colorVar="var(--color-chart-1)" data={k.spend.spark} />
+          <CompactSpark
+            colorVar="var(--color-chart-1)"
+            data={k.spend.spark}
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => fmtUsd(v)}
+          />
         }
         title="Total Spend"
         value={k.spend.value}
@@ -363,6 +373,9 @@ function KpiRail({
           <CompactSpark
             colorVar="var(--color-neutral-500)"
             data={k.requests.spark}
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => fmtInt(Math.round(v))}
           />
         }
         title="Total Requests"
@@ -373,7 +386,13 @@ function KpiRail({
         deltaNote={note}
         flat
         spark={
-          <CompactSpark colorVar="var(--color-chart-3)" data={k.tokens.spark} />
+          <CompactSpark
+            colorVar="var(--color-chart-3)"
+            data={k.tokens.spark}
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => fmtTokens(Math.round(v))}
+          />
         }
         title="Tokens Used"
         value={k.tokens.value}
@@ -437,6 +456,52 @@ function getBucketLabel(range: Range, customRange: CustomRange | null): string {
 /** Generate N evenly-spaced labels for the chart x-axis. Each preset has
  *  its own anchoring (1H → minute marks ending at "Now"; 24H → 2-hour
  *  marks on the calendar; 7D → daily; 30D → daily ending today). */
+/** Bucket start dates per range — anchored at the mock "today" (Apr 27, 2026);
+ *  24H's trailing bucket is the 14:30 anchor. Kept in lockstep with
+ *  getRangeLabels below (same anchor + stepping); getRangeLabels renders the
+ *  short axis labels, the KPI rail renders these via formatSparkLabel. */
+function getRangeDates(range: Range, customRange: CustomRange | null): Date[] {
+  const count = getBucketCount(range, customRange);
+  if (range === "custom" && customRange) {
+    const span = customRange.to.getTime() - customRange.from.getTime();
+    return Array.from(
+      { length: count },
+      (_, i) => new Date(customRange.from.getTime() + (span * i) / (count - 1))
+    );
+  }
+  if (range === "all") {
+    const lastDay = new Date(2026, 3, 27);
+    return Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(lastDay);
+      d.setDate(d.getDate() - Math.round(((29 - i) * 59) / 29));
+      return d;
+    });
+  }
+  if (range === "24h") {
+    const anchor = new Date(2026, 3, 27, 0, 0);
+    const dates = Array.from(
+      { length: 11 },
+      (_, i) => new Date(anchor.getTime() + i * 2 * 60 * 60 * 1000)
+    );
+    dates.push(new Date(2026, 3, 27, 14, 30));
+    return dates;
+  }
+  if (range === "7d") {
+    const anchor = new Date(2026, 3, 27);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(anchor);
+      d.setDate(d.getDate() - (6 - i));
+      return d;
+    });
+  }
+  const lastDay = new Date(2026, 3, 27);
+  return Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(lastDay);
+    d.setDate(d.getDate() - (29 - i));
+    return d;
+  });
+}
+
 function getRangeLabels(
   range: Range,
   customRange: CustomRange | null

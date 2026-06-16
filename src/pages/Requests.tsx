@@ -119,6 +119,7 @@ import {
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
+import { formatSparkLabel } from "@/lib/formatters";
 
 const MONTH_INDEX: Record<string, number> = {
   Jan: 0,
@@ -318,7 +319,7 @@ type HeroView = {
   errors: number;
   delta: string;
   deltaNote: string;
-  data: Array<{ time: string; requests: number }>;
+  data: Array<{ time: string; label: string; requests: number }>;
   ticks: string[];
   bucketLabel: string;
   domainTop: number;
@@ -470,6 +471,7 @@ function minutesBeforeAnchor(minutesAgo: number): {
   day: number;
   hour: number;
   minute: number;
+  date: Date;
 } {
   // Use Date arithmetic with year 2026 as scaffolding only — we read the
   // calendar fields back out, never the year. This handles month boundaries
@@ -487,6 +489,7 @@ function minutesBeforeAnchor(minutesAgo: number): {
     day: d.getDate(),
     hour: d.getHours(),
     minute: d.getMinutes(),
+    date: d,
   };
 }
 
@@ -509,8 +512,12 @@ const HERO_ALL_BUCKETS = makeHeroBuckets(
 const HERO_ALL_DATA = HERO_ALL_BUCKETS.map((requests, i) => {
   // Bucket 239 = current 6h window (anchor); bucket 0 = 239*6h earlier.
   const minutesAgo = (239 - i) * 360;
-  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
-  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
+  const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
+  return {
+    time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
+    label: formatSparkLabel(date, true),
+    requests,
+  };
 });
 const HERO_ALL_TICKS = [
   "Mar 14 00:00",
@@ -527,8 +534,12 @@ const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, "daily", 0xc5_7e_11_a7);
 const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
   // Bucket 0 = 14:30 yesterday; bucket 95 = 14:15 today (15-min buckets).
   const minutesAgo = (95 - i) * 15;
-  const { hour, minute } = minutesBeforeAnchor(minutesAgo);
-  return { time: `${pad2(hour)}:${pad2(minute)}`, requests };
+  const { hour, minute, date } = minutesBeforeAnchor(minutesAgo);
+  return {
+    time: `${pad2(hour)}:${pad2(minute)}`,
+    label: formatSparkLabel(date, true),
+    requests,
+  };
 });
 const HERO_24H_TICKS = ["15:00", "20:00", "01:00", "06:00", "11:00", "14:30"];
 
@@ -537,8 +548,12 @@ const HERO_7D_BUCKETS = makeHeroBuckets(168, 468, "weekly", 0x7d_c0_ff_ee);
 const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
   // Bucket 167 = current hour (14:00 today); bucket 0 = 167h before that.
   const minutesAgo = (167 - i) * 60;
-  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
-  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
+  const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
+  return {
+    time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
+    label: formatSparkLabel(date, true),
+    requests,
+  };
 });
 const HERO_7D_TICKS = [
   "May 6 00:00",
@@ -555,8 +570,12 @@ const HERO_30D_BUCKETS = makeHeroBuckets(120, 2248, "monthly", 0x30_dc_af_e0);
 const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
   // Bucket 119 = current 6h window (anchor); bucket 0 = 119*6h earlier.
   const minutesAgo = (119 - i) * 360;
-  const { month, day, hour } = minutesBeforeAnchor(minutesAgo);
-  return { time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`, requests };
+  const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
+  return {
+    time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
+    label: formatSparkLabel(date, true),
+    requests,
+  };
 });
 const HERO_30D_TICKS = [
   "Apr 13 00:00",
@@ -673,7 +692,11 @@ function buildCustomHeroView(custom: CustomRange | null): HeroView {
     const m = bucketStart.getMonth();
     const d = bucketStart.getDate();
     const hh = pad2(bucketStart.getHours());
-    return { time: `${MONTH_NAMES[m]} ${d} ${hh}:00`, requests };
+    return {
+      time: `${MONTH_NAMES[m]} ${d} ${hh}:00`,
+      label: formatSparkLabel(bucketStart, true),
+      requests,
+    };
   });
 
   // 4–7 evenly spaced ticks from start to end, formatted "Mon D" (the
@@ -859,6 +882,10 @@ function HeroMetricCard() {
                 )}
                 hideIndicator
                 labelClassName="font-normal text-muted-foreground"
+                labelFormatter={(_label, items) =>
+                  (items?.[0]?.payload as { label?: string } | undefined)
+                    ?.label ?? ""
+                }
               />
             }
             cursor={{
