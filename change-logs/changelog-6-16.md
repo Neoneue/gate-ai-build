@@ -72,3 +72,42 @@ Three `Billing.tsx` changes:
   desktop.
 - **Input validation helper text** — both dialogs' error lines
   (`text-destructive`) went `text-sm` → `text-xs` (12px/16px).
+
+## Components
+
+### `formatSparkLabel` — one tooltip date-label format for every chart `9d1133d`
+
+New shared formatter in `lib/formatters.ts` is the single source for all KPI-rail
+and area-chart hover labels: `Mar 01, 2026` (date only) or, with `withTime`,
+`Mar 01, 2026 14:30` (24-hour, no AM/PM; `hourCycle: "h23"` so midnight is `00:00`
+not `24:00`). Replaces the per-page/per-range Intl formatters that had drifted
+(some AM/PM, some missing the year, some month-only). Time is shown only for
+sub-daily buckets: the three rails pass `withTime` for 24H only (All/7D/30D/custom
+are date-only — no meaningless `00:00`); the Requests/Security area charts bucket
+sub-daily on every range, so they pass `withTime=true` throughout.
+
+## Sections
+
+### Conversations / Token Savings / Activity KPI rails — dated hover tooltips `9d1133d`
+
+All three CompactSpark rails now share the `formatSparkLabel` tooltip. Token
+Savings and Conversations `sparkDates` format through it; Activity gains
+`getRangeDates()` (the page's Apr-27-anchored bucket dates, proven byte-identical
+to the existing `getRangeLabels` axis output) and lights up all three cards with
+`tooltip` + a per-metric `valueFormatter` (USD / count / tokens).
+
+### Conversations count sparkline reconciles to the KPI total `9d1133d`
+
+The Conversations count card distributes the KPI total across its bucket shape
+via largest-remainder rounding, so the per-bucket volume sums **exactly** to the
+total (850 all-time, 420/100/16 for 30D/7D/24H, dynamic for custom) — mirroring
+the backend `getStats`, where the daily buckets and the count agree. The line can
+still spike up/down; it is not cumulative. Avg Turns / Avg Cost (averages) are
+untouched.
+
+### Requests / Security area-chart tooltips matched + dated `9d1133d`
+
+Both hero area charts read their date header from a per-bucket `label` field
+(`formatSparkLabel(date, true)`); the `time` field still drives the axis ticks, so
+the axis is unchanged. Combined with the earlier `hideIndicator` / value-only
+restyle, the two charts now match the rails.
