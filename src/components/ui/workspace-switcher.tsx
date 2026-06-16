@@ -30,7 +30,7 @@ export function WorkspaceSwitcher() {
         <span className="font-sans text-neutral-900 text-sm">
           Chad's workspace
         </span>
-        <Badge variant="neutral">{plan}</Badge>
+        <Badge variant={plan === "Pro" ? "info" : "neutral"}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
           className="size-4 text-neutral-500"
