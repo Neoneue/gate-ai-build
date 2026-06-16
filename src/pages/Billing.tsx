@@ -100,7 +100,6 @@ function PlanCreditsRow() {
 
 function PlanCard() {
   const [compareOpen, setCompareOpen] = useState(false);
-  const [autoRenew, setAutoRenew] = useState(true);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -131,24 +130,6 @@ function PlanCard() {
           <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
             1 seat × $20 = $20 / month
           </p>
-        </div>
-
-        {/* Auto-renew inset */}
-        <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Auto-renew
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Renews automatically on Jun 12, 2026.
-            </p>
-          </div>
-          <Switch
-            aria-label="Auto-renew"
-            checked={autoRenew}
-            className="shrink-0"
-            onCheckedChange={setAutoRenew}
-          />
         </div>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
@@ -350,7 +331,7 @@ function AddCreditsDialog({
       }}
       open={open}
     >
-      <DialogContent className="w-full max-w-[500px] gap-4">
+      <DialogContent className="w-full max-w-[500px] gap-4 sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Add credits
@@ -448,7 +429,7 @@ function AddCreditsDialog({
           {custom.length > 0 && !customValid && (
             <p
               aria-live="polite"
-              className="m-0 font-sans text-destructive text-sm"
+              className="m-0 font-sans text-destructive text-xs"
               id="add-credits-custom-error"
             >
               Enter an amount between{" "}
@@ -518,7 +499,7 @@ function AutoRechargeDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="w-full max-w-[500px] gap-4">
+      <DialogContent className="w-full max-w-[500px] gap-4 sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Auto-recharge
@@ -585,7 +566,7 @@ function AutoRechargeDialog({
             {thresholdInvalid && (
               <p
                 aria-live="polite"
-                className="m-0 font-sans text-destructive text-sm"
+                className="m-0 font-sans text-destructive text-xs"
                 id="ar-threshold-error"
               >
                 Enter a threshold greater than $0.
@@ -626,7 +607,7 @@ function AutoRechargeDialog({
             {topUpInvalid && (
               <p
                 aria-live="polite"
-                className="m-0 font-sans text-destructive text-sm"
+                className="m-0 font-sans text-destructive text-xs"
                 id="ar-topup-error"
               >
                 Enter a top-up amount greater than $0.
@@ -671,7 +652,7 @@ function AutoRechargeDialog({
           {capInvalid && (
             <p
               aria-live="polite"
-              className="m-0 font-sans text-destructive text-sm"
+              className="m-0 font-sans text-destructive text-xs"
               id="ar-cap-error"
             >
               Monthly cap must be greater than $0, or left blank.
