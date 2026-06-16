@@ -107,6 +107,38 @@ const TokenSavingsFree = lazy(() =>
     default: m.TokenSavingsFree,
   }))
 );
+const DashboardFree = lazy(() =>
+  import("@/pages/DashboardFree").then((m) => ({ default: m.DashboardFree }))
+);
+const RequestsFree = lazy(() =>
+  import("@/pages/RequestsFree").then((m) => ({ default: m.RequestsFree }))
+);
+const ConversationsFree = lazy(() =>
+  import("@/pages/ConversationsFree").then((m) => ({
+    default: m.ConversationsFree,
+  }))
+);
+const ModelsFree = lazy(() =>
+  import("@/pages/ModelsFree").then((m) => ({ default: m.ModelsFree }))
+);
+const PoliciesFree = lazy(() =>
+  import("@/pages/PoliciesFree").then((m) => ({ default: m.PoliciesFree }))
+);
+const AuditTrailFree = lazy(() =>
+  import("@/pages/AuditTrailFree").then((m) => ({ default: m.AuditTrailFree }))
+);
+const ActivityFree = lazy(() =>
+  import("@/pages/ActivityFree").then((m) => ({ default: m.ActivityFree }))
+);
+const TeamFree = lazy(() =>
+  import("@/pages/TeamFree").then((m) => ({ default: m.TeamFree }))
+);
+const ApiKeysFree = lazy(() =>
+  import("@/pages/ApiKeysFree").then((m) => ({ default: m.ApiKeysFree }))
+);
+const SettingsFree = lazy(() =>
+  import("@/pages/SettingsFree").then((m) => ({ default: m.SettingsFree }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -199,6 +231,17 @@ export default function App() {
             <Route element={<ApiKeysDefault />} path="/api-keys-default" />
             <Route element={<Billing />} path="/billing" />
             <Route element={<BillingFree />} path="/billing-free" />
+            {/* Free-tier twins — reached via the PRO/Free workspace switcher. */}
+            <Route element={<DashboardFree />} path="/overview-free" />
+            <Route element={<RequestsFree />} path="/requests-free" />
+            <Route element={<ConversationsFree />} path="/conversations-free" />
+            <Route element={<ModelsFree />} path="/models-free" />
+            <Route element={<PoliciesFree />} path="/policies-free" />
+            <Route element={<AuditTrailFree />} path="/audit-trail-free" />
+            <Route element={<ActivityFree />} path="/activity-free" />
+            <Route element={<TeamFree />} path="/team-free" />
+            <Route element={<ApiKeysFree />} path="/api-keys-free" />
+            <Route element={<SettingsFree />} path="/settings-free" />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />
           </Route>

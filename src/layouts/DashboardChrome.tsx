@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { isFreeSurface } from "@/lib/plan";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_SECTIONS } from "./nav-sections";
+import { FREE_SIDEBAR_SECTIONS, SIDEBAR_SECTIONS } from "./nav-sections";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
@@ -58,7 +58,7 @@ export function DashboardChrome({
           activeId={activeNavId}
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
-          sections={SIDEBAR_SECTIONS}
+          sections={showLocks ? FREE_SIDEBAR_SECTIONS : SIDEBAR_SECTIONS}
           showLocks={showLocks}
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50">
