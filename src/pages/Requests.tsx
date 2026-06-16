@@ -1267,7 +1267,7 @@ function RequestsTableSection({
               ariaLabel="Search requests"
               className="min-w-0 flex-1 shrink"
               placeholder="Search request…"
-              surface="background"
+              surface="elevated"
             />
 
             {/* PROTOTYPE — four section-header filters collapsed into one

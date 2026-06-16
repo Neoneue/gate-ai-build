@@ -491,7 +491,7 @@ function ConversationsTableSection({
               ariaLabel="Search conversations"
               className="min-w-0 flex-1 shrink"
               placeholder="Search by id, prompt, user, key…"
-              surface="background"
+              surface="elevated"
             />
             <Select onValueChange={setKeyId} value={keyId}>
               <SelectTrigger
