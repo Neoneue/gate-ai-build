@@ -111,3 +111,30 @@ Both hero area charts read their date header from a per-bucket `label` field
 (`formatSparkLabel(date, true)`); the `time` field still drives the axis ticks, so
 the axis is unchanged. Combined with the earlier `hideIndicator` / value-only
 restyle, the two charts now match the rails.
+
+### Workspace switcher: real PRO/Free toggle `37ae83e`
+
+The top-bar switcher replaces the decorative "OpenClaw org" item with a working
+PRO ↔ Free toggle. The trigger label + badge reflect the active workspace
+(`Chad's workspace` + blue `Pro`, or `Free workspace` + neutral `Free`); each menu
+item navigates to the current page's twin via `toFreePath` / `toProPath`
+(`lib/plan.ts`), with a check on the active one. Badge stays driven by
+`isFreeSurface`, so it never disagrees with the sidebar locks.
+
+## Sections
+
+### Free workspace: `-free` page twins for every unlocked surface `37ae83e`
+
+Free is now a full parallel site reached by the switcher. Every unlocked surface
+has a `-free` route + page (`/requests` ↔ `/requests-free`, etc.). New pages are
+verbatim wrappers of the Pro page for now — `DashboardFree`, `RequestsFree`,
+`ConversationsFree`, `ModelsFree`, `PoliciesFree`, `AuditTrailFree`,
+`ActivityFree`, `TeamFree`, `ApiKeysFree`, `SettingsFree` — and exist as separate
+files so the Free experience can diverge (show less / gate PRO features) without
+touching Pro. `TokenSavingsFree` was converted from the old upsell page to a Pro
+wrapper (Token Savings is the same as Pro in Free).
+
+The sidebar is plan-aware via `FREE_SIDEBAR_SECTIONS` (derived from
+`SIDEBAR_SECTIONS` so they never drift): in Free, unlocked items route to their
+`-free` twin and **Limits + Events** render as inert lock affordances (no nav).
+Detail pages and the legacy `-default` upsell pages are left shared / untouched.
