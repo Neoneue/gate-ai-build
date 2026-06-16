@@ -1,6 +1,11 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Line, XAxis } from "recharts";
-import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 
@@ -141,13 +146,23 @@ export function CompactSpark({
   data,
   endDot = true,
   noGrid = false,
+  tooltip = false,
+  valueFormatter,
+  labels,
 }: {
   colorVar: string;
   data: number[];
   endDot?: boolean;
   noGrid?: boolean;
+  /** Enable hover tooltips (active dot + cursor + value), like the larger
+   *  charts. Off by default to keep purely-decorative sparklines inert. */
+  tooltip?: boolean;
+  /** Formats the value shown in the tooltip (e.g. `(v) => `${v}%``). */
+  valueFormatter?: (value: number) => string;
+  /** Per-point labels (e.g. dates) shown above the value in the tooltip. */
+  labels?: (string | number)[];
 }) {
-  const points = data.map((v, i) => ({ i, v }));
+  const points = data.map((v, i) => ({ i, v, label: labels?.[i] }));
   const gradId = `cmp007-spark-${colorVar.replace(/[^a-zA-Z0-9]/g, "")}`;
   const lastIndex = points.length - 1;
   return (
@@ -175,7 +190,7 @@ export function CompactSpark({
           />
         )}
         <Area
-          activeDot={false}
+          activeDot={tooltip ? { r: 3, fill: colorVar, strokeWidth: 0 } : false}
           dataKey="v"
           dot={false}
           fill={`url(#${gradId})`}
@@ -210,7 +225,36 @@ export function CompactSpark({
             }}
             isAnimationActive={false}
             stroke="transparent"
+            tooltipType="none"
             type="linear"
+          />
+        ) : null}
+        {tooltip ? (
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                className="gap-1"
+                formatter={(value) => (
+                  <span className="font-medium text-foreground text-sm">
+                    {valueFormatter
+                      ? valueFormatter(Number(value))
+                      : String(value)}
+                  </span>
+                )}
+                hideIndicator
+                labelClassName="font-normal text-muted-foreground"
+                labelFormatter={(_label, items) =>
+                  (
+                    items?.[0]?.payload as
+                      | { label?: string | number }
+                      | undefined
+                  )?.label ?? ""
+                }
+              />
+            }
+            cursor={{ stroke: "var(--color-neutral-300)", strokeWidth: 1 }}
+            isAnimationActive={false}
+            position={{ y: -24 }}
           />
         ) : null}
         <XAxis dataKey="i" hide />

@@ -214,6 +214,70 @@ function sparkDelta(spark: number[]): string {
   return `${d >= 0 ? "+" : "-"}${Math.abs(d).toFixed(decimals)}%`;
 }
 
+// Sparkline density + tooltip dates. The KPI sparklines are illustrative
+// trends (authored as 7 points) with no real timestamps. We resample each onto
+// a denser, range-appropriate set of stops (the line is linear, so this only
+// adds hover points without changing its shape) and derive evenly-spaced bucket
+// dates ending at the mock "today" — the values stay illustrative.
+const SPARK_STOPS: Record<PresetRange, number> = {
+  all: 7,
+  "24h": 12, // one stop per 2-hour block
+  "7d": 7, // one stop per day
+  "30d": 14,
+};
+// Step per stop, in the range's native unit (hours for 24h, days otherwise).
+const SPARK_STEP: Record<PresetRange, number> = {
+  all: 1, // months
+  "24h": 2, // hours
+  "7d": 1, // days
+  "30d": 2, // days
+};
+const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
+const SPARK_TIME = new Intl.DateTimeFormat("en-US", { hour: "numeric" });
+const SPARK_DAY = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+const SPARK_MONTH = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+});
+
+// Resample an authored trend onto `count` evenly-spaced stops via linear
+// interpolation. Endpoints are preserved exactly; intermediate stops sit on the
+// existing line segments, rounded to 2 decimals.
+function resampleSpark(values: number[], count: number): number[] {
+  if (count <= values.length) {
+    return [...values];
+  }
+  const last = values.length - 1;
+  return Array.from({ length: count }, (_, i) => {
+    const pos = (i / (count - 1)) * last;
+    const lo = Math.floor(pos);
+    const hi = Math.min(lo + 1, last);
+    const v = values[lo] + (values[hi] - values[lo]) * (pos - lo);
+    return Math.round(v * 100) / 100;
+  });
+}
+
+function sparkDates(range: PresetRange, count: number): string[] {
+  const step = SPARK_STEP[range];
+  return Array.from({ length: count }, (_, i) => {
+    const stepsBack = count - 1 - i;
+    const d = new Date(SPARK_TODAY);
+    if (range === "24h") {
+      d.setHours(d.getHours() - stepsBack * step);
+      return SPARK_TIME.format(d);
+    }
+    if (range === "all") {
+      d.setMonth(d.getMonth() - stepsBack * step);
+      return SPARK_MONTH.format(d);
+    }
+    d.setDate(d.getDate() - stepsBack * step);
+    return SPARK_DAY.format(d);
+  });
+}
+
 function OverviewSection({
   range,
   customRange,
@@ -225,7 +289,10 @@ function OverviewSection({
   onRangeChange: (r: PresetRange) => void;
   onCustomRangeChange: (r: CustomRange | null) => void;
 }) {
-  const kpis = KPI_BY_RANGE[range === "custom" ? "all" : range];
+  const effectiveRange = range === "custom" ? "all" : range;
+  const kpis = KPI_BY_RANGE[effectiveRange];
+  const sparkStops = SPARK_STOPS[effectiveRange];
+  const sparkLabels = sparkDates(effectiveRange, sparkStops);
   const note = RANGE_DELTA_NOTE[range];
   return (
     <div className="flex flex-col gap-4">
@@ -255,7 +322,15 @@ function OverviewSection({
             deltaNote={note}
             deltaRow
             key={k.title}
-            spark={<CompactSpark colorVar={k.colorVar} data={[...k.spark]} />}
+            spark={
+              <CompactSpark
+                colorVar={k.colorVar}
+                data={resampleSpark(k.spark, sparkStops)}
+                labels={sparkLabels}
+                tooltip
+                valueFormatter={(v) => `${v}%`}
+              />
+            }
             title={k.title}
             value={k.value}
             valueSuffix="%"
