@@ -88,6 +88,38 @@ Removed the bell trigger + `NotificationsMenu` from the top bar (and the unused
 `notifications-menu.tsx` component is kept in the tree; restore = re-add the
 import and the `<NotificationsMenu><Button…/></NotificationsMenu>` block.
 
+### Buttons: no `lg` anywhere; DateRangePicker default is h-10 `195c8b4`
+
+`default` = h-10 (40px), `lg` = h-12 (48px). `DateRangePicker` `size="default"`
+now maps to Button `default` (was `lg`), which makes the Activity custom-range
+button match its sibling SegmentedPill date selector. All `Button size="lg"` to
+`default` in `AuditTrail.tsx` / `AuditTrailMerkle.tsx`. SignIn/SignUp full-width
+CTAs intentionally kept at `lg`. `HeroNumeric size="lg"` (typography) untouched.
+The Button `lg` variant stays defined but is now unused.
+
+### CompactSpark: opt-in hover tooltips `3a49423`
+
+`compact-kpi.tsx` `CompactSpark` gains `tooltip?`, `valueFormatter?`, `labels?`.
+When on: `ChartTooltip` + `ChartTooltipContent` (same primitives as the big
+charts), an active dot, and a cursor. Tooltip shows the per-point date
+(`text-muted-foreground`, regular) above the value (`text-foreground`,
+`font-medium`, `text-sm`), `gap-1`, lifted via `position={{ y: -24 }}`, with
+`isAnimationActive={false}` so sweeping the line is smooth (the jank was the
+default position animation; the wrapper is already `pointer-events:none`).
+Enabled so far only on the Token Savings overview, via `resampleSpark()`
+(interpolates the authored 7-point trend onto denser stops: 24h=12 @2h, 7d=7
+@1d, 30d=14 @2d, all=7 @1mo) and `sparkDates()` (bucket dates ending at the mock
+today). Values stay illustrative; dates are derived from the selected range.
+
+### SearchInput: `elevated` surface for outside-table search bars `195c8b4`
+
+`input.tsx` renamed the `background` surface variant to `elevated` =
+`bg-card shadow-xs` (was `bg-neutral-100`, no shadow). The 5 search bars that sit
+OUTSIDE table cards on the page background (Requests, Conversations, AuditTrail,
+AuditTrailMerkle, Security) switched to `surface="elevated"` so they read as
+raised, like the adjacent Filters/Export buttons. Inside-toolbar search bars
+(Team, Models, Activity) stay on `surface="card"` (bg-neutral-50, recessed).
+
 ## Sections
 
 ### Settings: Notification preferences card, Profile copy, footer + responsive grid `45cb33f`
@@ -167,3 +199,20 @@ outlined treatment matching the button `outline` variant (`border-border`,
 `bg-card`, `text-neutral-900`, `hover:bg-muted`). Shadow raised from
 `--shadow-popup` to `shadow-md`. Pill shape, hover-lift, and press scale
 unchanged.
+
+### Policies: type-icon colors + alignment, DEFAULT badge, selected border `55c6577`
+
+`src/pages/Policies.tsx`.
+
+- Policy card title icons now take their color from the Security events palette
+  (`TYPE_META`): injection -> `--color-danger-600`, PII -> `--color-chart-3`,
+  secrets -> `--color-chart-4` (were `text-neutral-700`). Glyphs unchanged.
+- Icons centered on the title line (wrapped in an `h-6` flex-center span; dropped
+  the `mt-1` that made them hang a few px low).
+- "DEFAULT" badge now derives from `INITIAL_POLICIES` (no more hardcoded `flag`
+  option field). The seed action is `flag` for all three policies, so the
+  DEFAULT badge and the active/highlighted selection both land on the Flag
+  option for every policy.
+- Selected action option now shows the `border-primary` border. The old
+  string-concat had a missing space (`ease-outborder-foreground`), so the
+  selected border never applied; switched to `cn()`.
