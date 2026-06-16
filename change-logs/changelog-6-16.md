@@ -24,3 +24,30 @@ Removed the per-card `scanTag` `<Badge>` next to each policy title (e.g. "Input 
 Output scan") in `Policies.tsx`. `config.scanTag` data and the `Badge` import are
 kept (Badge still backs the action-option DEFAULT badge), so restoring is a
 one-line re-add of `<Badge variant="info">{config.scanTag}</Badge>`.
+
+### Conversations: KPI sparkline hover tooltips `2e9de49`
+
+All three Overview KPI cards (Conversations, Avg Turns, Avg Cost / Conv) now show
+the CompactSpark hover tooltip — crosshair + a card with a muted date over the
+value. Added a local `sparkDates(range, customRange)` helper (same
+`SPARK_TIME/DAY/MONTH` formatters + `SPARK_TODAY` anchor as `TokenSavings.tsx`)
+tuned to the fixed 9-point spark arrays, with a `custom`-range branch that
+interpolates `from`→`to`. Per-card `valueFormatter`: count (thousands-sep),
+1-decimal turns, `$0.000` cost. Wired via `tooltip` + `labels={sparkLabels}` +
+`valueFormatter` on each `<CompactSpark>`. Labels are illustrative (the spark
+arrays are authored, not entity-derived), per the carried-over comment.
+
+### Token Savings + Conversations: 24h spark labels read "12:00 PM" `2e9de49`
+
+`SPARK_TIME` on both pages now includes `minute: "2-digit"` (`hour: "numeric",
+minute: "2-digit"`), so 24h hover labels render "12:00 PM" instead of "12 PM".
+Steps land on the hour, so minutes are always `:00`.
+
+### Requests: KPI chart tooltip matched to CompactSpark `c00e265`
+
+The hero `AreaChart` tooltip now mirrors the CompactSpark KPI tooltips:
+`hideIndicator` drops the dot swatch, the value renders as a value-only
+`font-medium text-foreground text-sm` span (drops the "Requests/6h" series-name
+row), `labelClassName="font-normal text-muted-foreground"` mutes the date header,
+and `gap-1` tightens spacing. Date still comes from the `time` dataKey; cursor
+(dashed neutral-500) and the on-line active dot are unchanged.
