@@ -51,3 +51,24 @@ The hero `AreaChart` tooltip now mirrors the CompactSpark KPI tooltips:
 row), `labelClassName="font-normal text-muted-foreground"` mutes the date header,
 and `gap-1` tightens spacing. Date still comes from the `time` dataKey; cursor
 (dashed neutral-500) and the on-line active dot are unchanged.
+
+### Security: Total Events tooltip matched to CompactSpark `e8a4a79`
+
+Same restyle as the Requests tooltip, applied to the Total Events `AreaChart` in
+`Security.tsx`: `hideIndicator`, value-only `font-medium text-foreground text-sm`
+span (drops the "Events" series-name row), `font-normal text-muted-foreground`
+date header, `gap-1`. Date from the `time` dataKey; cursor + active dot unchanged.
+
+### Billing: Your plan auto-renew removed, modals widened, helper text 12px `846a63e`
+
+Three `Billing.tsx` changes:
+
+- **Your plan card** — removed the Auto-renew inset (the bordered toggle row
+  reading "Auto-renew / Renews automatically on…") and its dead `autoRenew`
+  state. `Switch` import kept (still used by the auto-recharge toggle).
+- **Add credits + Auto-recharge dialogs** — appended `sm:max-w-[500px]` to each
+  `DialogContent`. They were `max-w-[500px]` but the `DialogContent` primitive's
+  base `sm:max-w-sm` won at ≥640px and capped them at 384px; now a true 500px on
+  desktop.
+- **Input validation helper text** — both dialogs' error lines
+  (`text-destructive`) went `text-sm` → `text-xs` (12px/16px).
