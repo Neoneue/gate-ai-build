@@ -155,6 +155,59 @@ const SPARK: Record<
   },
 };
 
+// Sparkline tooltip dates. These KPI sparklines are illustrative trends
+// (authored as fixed 9-point arrays) with no real timestamps. We derive
+// evenly-spaced bucket dates ending at the mock "today" so the hover card can
+// show a date beside each value — the values themselves stay illustrative.
+const SPARK_POINTS = 9;
+const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
+const SPARK_TIME = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+});
+const SPARK_DAY = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+const SPARK_MONTH = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+});
+
+function sparkDates(range: Range, customRange: CustomRange | null): string[] {
+  const last = SPARK_POINTS - 1;
+  const labels: string[] = [];
+
+  if (range === "custom" && customRange) {
+    const span = customRange.to.getTime() - customRange.from.getTime();
+    for (let i = 0; i < SPARK_POINTS; i++) {
+      labels.push(
+        SPARK_DAY.format(
+          new Date(customRange.from.getTime() + (span * i) / last)
+        )
+      );
+    }
+    return labels;
+  }
+
+  const preset: PresetRange = range === "custom" ? "all" : range;
+  for (let i = 0; i < SPARK_POINTS; i++) {
+    const stepsBack = last - i;
+    const d = new Date(SPARK_TODAY);
+    if (preset === "24h") {
+      d.setHours(d.getHours() - stepsBack * 3);
+      labels.push(SPARK_TIME.format(d));
+    } else if (preset === "all") {
+      d.setMonth(d.getMonth() - stepsBack);
+      labels.push(SPARK_MONTH.format(d));
+    } else {
+      d.setDate(d.getDate() - stepsBack * (preset === "30d" ? 4 : 1));
+      labels.push(SPARK_DAY.format(d));
+    }
+  }
+  return labels;
+}
+
 function daysInRange(r: CustomRange): number {
   return Math.max(
     1,
@@ -280,6 +333,7 @@ function KpiRail({
     100 * effectiveScale(range, customRange)
   ).toLocaleString("en-US");
   const spark = SPARK[range];
+  const sparkLabels = sparkDates(range, customRange);
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
@@ -289,6 +343,9 @@ function KpiRail({
           <CompactSpark
             colorVar="var(--color-chart-7)"
             data={spark.conversations}
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => Math.round(v).toLocaleString("en-US")}
           />
         }
         title="Conversations"
@@ -298,7 +355,13 @@ function KpiRail({
         delta="+1.8"
         flat
         spark={
-          <CompactSpark colorVar="var(--color-chart-3)" data={spark.avgTurns} />
+          <CompactSpark
+            colorVar="var(--color-chart-3)"
+            data={spark.avgTurns}
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => v.toFixed(1)}
+          />
         }
         title="Avg Turns"
         value="14.2"
@@ -312,6 +375,9 @@ function KpiRail({
             colorVar="var(--color-chart-1)"
             data={spark.avgCost}
             endDot
+            labels={sparkLabels}
+            tooltip
+            valueFormatter={(v) => `$${v.toFixed(3)}`}
           />
         }
         title="Avg Cost / Conv"

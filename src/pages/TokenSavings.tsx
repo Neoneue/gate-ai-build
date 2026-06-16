@@ -233,7 +233,10 @@ const SPARK_STEP: Record<PresetRange, number> = {
   "30d": 2, // days
 };
 const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
-const SPARK_TIME = new Intl.DateTimeFormat("en-US", { hour: "numeric" });
+const SPARK_TIME = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+});
 const SPARK_DAY = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",

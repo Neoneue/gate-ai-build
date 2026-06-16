@@ -598,7 +598,18 @@ function HeroMetricCard({
             ticks={chart.ticks}
           />
           <ChartTooltip
-            content={<ChartTooltipContent indicator="dot" />}
+            content={
+              <ChartTooltipContent
+                className="gap-1"
+                formatter={(value) => (
+                  <span className="font-medium text-foreground text-sm">
+                    {Number(value).toLocaleString("en-US")}
+                  </span>
+                )}
+                hideIndicator
+                labelClassName="font-normal text-muted-foreground"
+              />
+            }
             cursor={{
               stroke: "var(--color-neutral-500)",
               strokeDasharray: "3 3",
