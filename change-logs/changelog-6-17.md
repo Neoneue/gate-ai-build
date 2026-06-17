@@ -88,3 +88,31 @@ On the three policy cards (`Policies.tsx`):
   Redact `neutral-600` (gray), Block `destructive` (red) — was `border-primary`.
 - The checked radio fill/border is one step darker than its card border:
   `warning-600` / `neutral-700` / `danger-700`.
+
+### Real-data request detail pages + per-occurrence findings `17e25b5`
+
+Request detail pages (`/requests-findings/:id`) are now populated from real
+session transcripts instead of placeholder content. In `requests.ts`,
+`req_8389e4` / `req_a7f59d` / `req_ded91e` carry the verbatim `userMessage`,
+finding `evidence`, `requestBodyRaw`, `assistantResponse`, and KPI values
+(latency / tokens / `compression` overrides).
+
+Findings model + rendering (`RequestFinding` in `requests.ts`, detail panels in
+`Requests.tsx`):
+
+- Added optional `occurrence` to `RequestFinding`. A value that appears twice
+  is now two distinct findings, each highlighting its own instance. The
+  evidence highlighter targets one occurrence per finding (default 0) instead
+  of the first/all matches. `req_8389e4` = two email findings (occ 0/1).
+- Clicking a finding smooth-scrolls its match into the center of the evidence
+  box, even when re-clicking the active finding (`revealNonce` signal).
+- Removed the per-span Detector/Score/Threshold tooltip from the evidence
+  highlights; spans are plain highlights now.
+- Classifier-deny card reads tool call → assistant response → full request;
+  clean success/allow rows render Tool call / Assistant response / Full
+  request via `NoFindingTurns`.
+
+Banner (`findingBannerSentence`): identical detections collapse into one
+count-aware sentence ("PII detector caught 2 instances of `<EMAIL>` …") and the
+raw value is revealed when Unredact is on (before → `<EMAIL>`, after →
+`noreply@anthropic.com`).
