@@ -1,6 +1,8 @@
 import { Collapsible } from "@base-ui/react/collapsible";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   ExternalLink,
   Flag,
@@ -106,7 +108,6 @@ import {
   findingBannerSentence,
   getRequestFindings,
   isByokKey,
-  METHOD_LABEL,
   REQUEST_ROWS_7D,
   REQUEST_ROWS_24H,
   REQUEST_ROWS_30D,
@@ -2304,30 +2305,50 @@ export function RequestDetailBodyV2({
               <div className={PANEL_OUTER}>
                 {findings.length > 0 && (
                   <section className="flex flex-col gap-2">
-                    <PanelHeading
-                      aside={<CountChip count={findings.length} />}
-                      title="Findings"
-                    />
+                    <PanelHeading title="Findings" />
                     <div className="flex flex-col gap-2">
-                      {findings.map((f, idx) => (
-                        <FindingCard
-                          finding={f}
-                          key={idx}
-                          onClick={() => {
-                            setSelectedIdx(idx);
-                            setRevealNonce((n) => n + 1);
-                          }}
-                          selected={selectedIdx === idx}
-                        />
-                      ))}
+                      {(() => {
+                        const piiItems = findings
+                          .map((finding, i) => ({ finding, idx: i }))
+                          .filter((it) => it.finding.category === "pii");
+                        const usePiiSwitcher = piiItems.length > 1;
+                        let piiEmitted = false;
+                        return findings.map((f, idx) => {
+                          if (f.category === "pii" && usePiiSwitcher) {
+                            if (piiEmitted) {
+                              return null;
+                            }
+                            piiEmitted = true;
+                            return (
+                              <PiiSwitcherCard
+                                items={piiItems}
+                                key="pii"
+                                onSelect={(i) => {
+                                  setSelectedIdx(i);
+                                  setRevealNonce((n) => n + 1);
+                                }}
+                                selectedIdx={selectedIdx}
+                              />
+                            );
+                          }
+                          return (
+                            <FindingCard
+                              finding={f}
+                              key={idx}
+                              onClick={() => {
+                                setSelectedIdx(idx);
+                                setRevealNonce((n) => n + 1);
+                              }}
+                              selected={selectedIdx === idx}
+                            />
+                          );
+                        });
+                      })()}
                     </div>
                   </section>
                 )}
                 <section className="flex flex-col gap-2">
-                  <PanelHeading
-                    aside={<CountChip count={passed.length} />}
-                    title="Passed"
-                  />
+                  <PanelHeading title="Passed" />
                   <div className="flex flex-col gap-2">
                     {passed.map((p) => (
                       <div
@@ -2459,32 +2480,6 @@ export function RequestDetailBodyV2({
 }
 
 /** Single finding card — left column of the Findings tab. */
-/** Hover-popover content for a highlighted finding span: detector + score +
- *  threshold. Shared by the evidence panel and the Full request code block. */
-function DetectorTip({ finding }: { finding: RequestFinding }) {
-  return (
-    <span className="flex flex-col gap-1 text-xs">
-      <span className="flex items-center justify-between gap-6">
-        <span className="font-medium text-muted-foreground">Detector</span>
-        <span className="font-medium">
-          {METHOD_LABEL[finding.method] ?? finding.method}
-        </span>
-      </span>
-      <span className="flex items-center justify-between gap-6">
-        <span className="font-medium text-muted-foreground">Score</span>
-        <span className="font-mono tabular-nums">
-          {finding.score.toFixed(2)}
-        </span>
-      </span>
-      <span className="flex items-center justify-between gap-6">
-        <span className="font-medium text-muted-foreground">Threshold</span>
-        <span className="font-mono tabular-nums">
-          {finding.threshold.toFixed(2)}
-        </span>
-      </span>
-    </span>
-  );
-}
 
 function FindingCard({
   finding,
@@ -2547,6 +2542,87 @@ function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
         {title}
       </h3>
       {aside}
+    </div>
+  );
+}
+
+/** Concept card: collapses repeated same-category PII occurrences into one
+ * "PII (N)" card with a prev/next pager. Controlled by the parent's
+ * `selectedIdx`: paging selects that occurrence's finding and bumps the reveal
+ * nonce, so the evidence panel scrolls to the matching span. */
+function PiiSwitcherCard({
+  items,
+  selectedIdx,
+  onSelect,
+}: {
+  items: { finding: RequestFinding; idx: number }[];
+  selectedIdx: number;
+  onSelect: (idx: number) => void;
+}) {
+  const total = items.length;
+  const activePos = items.findIndex((it) => it.idx === selectedIdx);
+  const isActive = activePos >= 0;
+  const pos = isActive ? activePos : 0;
+  const current = items[pos].finding;
+  const actionVariant: Record<FindingActionKind, "warning" | "destructive"> = {
+    flag: "warning",
+    redact: "warning",
+    block: "destructive",
+  };
+  const selectedBorder =
+    current.action === "block" ? "border-destructive" : "border-warning-500";
+  const atStart = pos <= 0;
+  const atEnd = pos >= total - 1;
+  const paddle =
+    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+  return (
+    <div
+      className={[
+        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 shadow-xs",
+        isActive ? selectedBorder : "border-border",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
+          {CATEGORY_LABEL[current.category]}
+          <CountChip count={total} />
+        </span>
+        <Badge variant={actionVariant[current.action]}>{current.action}</Badge>
+      </div>
+      <p
+        className="line-clamp-2 font-sans text-neutral-900 text-sm"
+        title={current.match}
+      >
+        <span className="text-neutral-500">
+          {entityLabel(current.entityType)} ·{" "}
+        </span>
+        “{current.match}”
+      </p>
+      <div className="mt-1 flex items-center justify-between gap-2 border-border border-t pt-2">
+        <span className="font-sans text-foreground text-xs tabular-nums">
+          Finding {pos + 1} / {total}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            aria-label="Previous PII finding"
+            className={paddle}
+            disabled={atStart}
+            onClick={() => onSelect(items[Math.max(0, pos - 1)].idx)}
+            type="button"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            aria-label="Next PII finding"
+            className={paddle}
+            disabled={atEnd}
+            onClick={() => onSelect(items[Math.min(total - 1, pos + 1)].idx)}
+            type="button"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2620,7 +2696,17 @@ function PiiDetailPanel({
       : isToolRow
         ? "Tool result"
         : "Assistant response";
-  const offset = evidence.indexOf(match);
+  // Resolve THIS finding's own occurrence (not just the first match), so paging
+  // between same-value findings reports each instance's real position.
+  const occurrenceIndex = finding.occurrence ?? 0;
+  let offset = -1;
+  for (let k = 0, from = 0; k <= occurrenceIndex; k++) {
+    offset = evidence.indexOf(match, from);
+    if (offset < 0) {
+      break;
+    }
+    from = offset + match.length;
+  }
   const offsetLabel =
     offset >= 0
       ? `Lines ${offset}-${offset + match.length} (${match.length} chars)`
@@ -3502,11 +3588,6 @@ function RequestBodyPanel({
         <BodySection
           copyLabel="request"
           copyValue={requestPayload}
-          highlightTooltip={
-            highlightFinding ? (
-              <DetectorTip finding={highlightFinding} />
-            ) : undefined
-          }
           label="Full request"
           lines={requestLines}
           revealSignal={revealSignal}
