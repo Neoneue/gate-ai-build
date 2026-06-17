@@ -1000,6 +1000,10 @@ export type RequestRow = {
   /** True when this request crossed the 1s "slow" threshold. */
   slow?: boolean;
   cost: string;
+  /** Optional per-row compression override. When set, it wins over the
+   *  derived `compressionValue` (e.g. an error response that produced no
+   *  output reads as 100.0%). */
+  compression?: string;
   /** Which guardrail check fired. Set for `block`, `flag`, and `redact`
    *  rows; absent for plain `allow`. Drives the matching check state on
    *  the modal's Audit tab so the row and the modal stay in lock-step. */
@@ -1026,6 +1030,13 @@ export type RequestRow = {
   errorCode?: string;
   /** Raw error body the provider returned, rendered as a JSON code block. */
   errorBody?: string;
+  /** Human-readable detail line for the failure (the gateway's `error_detail`).
+   * Shown as a text field under the User message on the detail card for
+   * provider errors. */
+  errorDetail?: string;
+  /** Verbatim request body to show in the Full request drawer, overriding the
+   * synthesized `buildRequestBodyLines` output. Placeholder real-capture JSON. */
+  requestBodyRaw?: string;
   /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash'),
    * its invocation args, and the result text. Drive the messages-panel
    * tool bubble (`Tool · <toolName>` + result) and the trace `tool: X` label. */
@@ -2112,8 +2123,6 @@ export function RequestDetailBodyV2({
     [row]
   );
 
-  // Always open on the Findings tab (shows the all-pass state when nothing fired).
-  const [activeTab, setActiveTab] = useState("findings");
   // Track which finding card is selected in the left column.
   const [selectedIdx, setSelectedIdx] = useState(0);
 
@@ -2151,15 +2160,13 @@ export function RequestDetailBodyV2({
           {requestId}
         </DialogTitleBlock>
       </DialogScrollHeader>
-
       {/* KPI rail — persistent, sits above everything including banner */}
       <DialogScrollSummary>
         <KpiRail row={row} />
       </DialogScrollSummary>
-
       {/* Finding banner — icon + title + descriptive sentence (no link). */}
       {findings.length > 0 && (
-        <div className="px-6 pt-4">
+        <div className="px-6 pt-6">
           <div
             aria-live="polite"
             className={[
@@ -2193,242 +2200,230 @@ export function RequestDetailBodyV2({
           </div>
         </div>
       )}
-
-      <Tabs
+      <div
         className={
           variant === "page" ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"
         }
-        onValueChange={setActiveTab}
-        value={activeTab}
       >
-        {/* Fixed tab bar — stays put while the content below it scrolls (modal). */}
-        <div className="shrink-0 px-6 pt-4">
-          <TabsList className="px-0" variant="line">
-            <TabsTrigger className="pl-0" value="findings">
-              Findings
-              {findings.length > 0 && (
-                <Badge className="ml-1" variant="neutral">
-                  {findings.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Body region. Modal: the only element that scrolls (clipped below the
-            fixed tab bar). Page: natural height, no internal scroll. */}
+        {/* Body region. Modal: the only element that scrolls. Page: natural
+            height, no internal scroll. */}
         <div
-          className={
+          className={[
             variant === "page"
-              ? "px-6 pt-2 pb-6"
-              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-6"
-          }
+              ? "px-6 pb-6"
+              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
+            // Always 24px below whatever sits above (KPI rail or banner).
+            "pt-6",
+          ].join(" ")}
         >
-          {/* ── Findings tab ──────────────────────────────────────────── */}
-          <TabsContent value="findings">
-            <div className="grid gap-4 md:grid-cols-3">
-              {/* Left column: an OUTER card wrapping the Findings + Passed
-                  groups. Each group is a 16px title ABOVE a stack of cards. */}
-              <div className="min-w-0 md:col-span-1">
-                <div className={PANEL_OUTER}>
-                  {findings.length > 0 && (
-                    <section className="flex flex-col gap-2">
-                      <PanelHeading
-                        aside={<CountChip count={findings.length} />}
-                        title="Findings"
-                      />
-                      <div className="flex flex-col gap-2">
-                        {findings.map((f, idx) => (
-                          <FindingCard
-                            finding={f}
-                            key={idx}
-                            onClick={() => setSelectedIdx(idx)}
-                            selected={selectedIdx === idx}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Left column (2/3): an OUTER card wrapping the per-finding
+                  detail sections, or a calm "No findings" default when
+                  nothing fired. */}
+            <div className="min-w-0 md:col-span-2">
+              <div className={PANEL_OUTER}>
+                {selectedFinding ? (
+                  selectedFinding.category === "injection" ? (
+                    <InjectionRightPanel
+                      finding={selectedFinding}
+                      onMarkFalsePositive={markFalsePositive}
+                      onTunePolicy={tunePolicy}
+                      row={row}
+                    />
+                  ) : (
+                    <PiiRightPanel
+                      finding={selectedFinding}
+                      isAdmin={IS_ADMIN}
+                      onShowRawChange={setShowRaw}
+                      row={row}
+                      showRaw={showRaw}
+                    />
+                  )
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {row.errorSource === "provider" ? (
+                      <>
+                        {/* Provider error: User message, the error detail as a
+                              text field, then the Full request drawer. */}
+                        <DetailMessageSubcard
+                          content={resolveRequestTurns(row).userContent}
+                          label="User message"
+                        />
+                        {row.errorDetail ? (
+                          <section className="flex flex-col gap-2">
+                            <PanelHeading title="Error detail" />
+                            <div className="rounded-xs border border-border bg-card p-4">
+                              <p className="text-pretty font-sans text-neutral-700 text-sm">
+                                {row.errorDetail}
+                              </p>
+                            </div>
+                          </section>
+                        ) : null}
+                        <FullRequestCollapsible row={row} />
+                      </>
+                    ) : (
+                      <>
+                        {/* No detector fired: still surface the originating
+                              message (user / assistant / tool call + result)
+                              above the No-findings card. */}
+                        <RequestBodyPanel bare messagesOnly row={row} />
+                        <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
+                          <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
+                            <ShieldCheck
+                              aria-hidden
+                              className="size-5 text-neutral-500"
+                              strokeWidth={1.75}
+                            />
+                          </div>
+                          <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+                            No findings
+                          </h3>
+                          <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+                            All detectors passed for this request.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right column (1/3): a stack of separate cards — Findings +
+                  Passed in one, request Details metadata in another below it. */}
+            <div className="flex min-w-0 flex-col gap-4 md:col-span-1">
+              <div className={PANEL_OUTER}>
+                {findings.length > 0 && (
                   <section className="flex flex-col gap-2">
                     <PanelHeading
-                      aside={<CountChip count={passed.length} />}
-                      title="Passed"
+                      aside={<CountChip count={findings.length} />}
+                      title="Findings"
                     />
                     <div className="flex flex-col gap-2">
-                      {passed.map((p) => (
-                        <div
-                          className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4"
-                          key={p.category}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <span className="font-medium font-sans text-neutral-900 text-sm">
-                              {p.label}
-                            </span>
-                            <Badge variant="success">Pass</Badge>
-                          </div>
-                          <span className="font-sans text-neutral-500 text-sm">
-                            {p.description}
-                          </span>
-                        </div>
+                      {findings.map((f, idx) => (
+                        <FindingCard
+                          finding={f}
+                          key={idx}
+                          onClick={() => setSelectedIdx(idx)}
+                          selected={selectedIdx === idx}
+                        />
                       ))}
                     </div>
                   </section>
-                </div>
-              </div>
-
-              {/* Right column: an OUTER card wrapping the per-finding detail
-                  sections, or a calm "No findings" default when nothing fired. */}
-              <div className="min-w-0 md:col-span-2">
-                <div className={PANEL_OUTER}>
-                  {selectedFinding ? (
-                    selectedFinding.category === "injection" ? (
-                      <InjectionRightPanel
-                        finding={selectedFinding}
-                        onMarkFalsePositive={markFalsePositive}
-                        onTunePolicy={tunePolicy}
-                      />
-                    ) : (
-                      <PiiRightPanel
-                        finding={selectedFinding}
-                        isAdmin={IS_ADMIN}
-                        onShowRawChange={setShowRaw}
-                        row={row}
-                        showRaw={showRaw}
-                      />
-                    )
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {/* No detector fired: still surface the originating
-                          message (user / assistant / tool call + result)
-                          above the No-findings card. */}
-                      <RequestBodyPanel bare messagesOnly row={row} />
-                      <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
-                        <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
-                          <ShieldCheck
-                            aria-hidden
-                            className="size-5 text-neutral-500"
-                            strokeWidth={1.75}
-                          />
+                )}
+                <section className="flex flex-col gap-2">
+                  <PanelHeading
+                    aside={<CountChip count={passed.length} />}
+                    title="Passed"
+                  />
+                  <div className="flex flex-col gap-2">
+                    {passed.map((p) => (
+                      <div
+                        className="flex flex-col gap-2 rounded-xs border border-border bg-card px-4 py-3"
+                        key={p.category}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="font-medium font-sans text-neutral-900 text-sm">
+                            {p.label}
+                          </span>
+                          <Badge variant="success">Pass</Badge>
                         </div>
-                        <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
-                          No findings
-                        </h3>
-                        <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
-                          All detectors passed for this request.
-                        </p>
+                        <span className="font-sans text-neutral-500 text-sm">
+                          {p.description}
+                        </span>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                </section>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* ── Details tab — message + request metadata ─────────────────
-              Same two-column shell as the Findings tab: left 2/3 holds the
-              conversation + Full request drawer, right 1/3 the metadata. */}
-          <TabsContent value="details">
-            <div className="grid gap-4 md:grid-cols-3">
-              {/* Left (2/3): the message — user/assistant turns + Full request. */}
-              <div className="min-w-0 md:col-span-2">
-                <div className={PANEL_OUTER}>
-                  <DetailMessageSubcards row={row} />
-                </div>
-              </div>
-
-              {/* Right (1/3): request metadata. */}
-              <div className="min-w-0 md:col-span-1">
-                <div className={PANEL_OUTER}>
-                  <section className="flex flex-col gap-2">
-                    <PanelHeading title="Details" />
-                    <DetailList className="rounded-xs">
-                      <DetailRow
-                        label="Timestamp"
-                        value={
-                          <span className="font-mono text-neutral-900 tabular-nums">
-                            {row.day}, {row.time}
-                          </span>
-                        }
-                      />
-                      <DetailRow
-                        label="Conversation"
-                        value={
-                          <span className="font-mono tabular-nums">
-                            <TextLink
-                              aria-label={`Open conversation ${row.conversation}`}
-                              onClick={openConversation}
-                            >
-                              {row.conversation}
-                            </TextLink>
-                          </span>
-                        }
-                      />
-                      <DetailRow
-                        label="Model"
-                        value={
-                          <div className="flex items-center gap-2">
-                            <VendorAvatar vendor={row.vendor} />
-                            <span className="font-mono text-neutral-900">
-                              {row.model}
-                            </span>
-                          </div>
-                        }
-                      />
-                      <DetailRow
-                        label="Provider"
-                        value={
-                          <span className="text-neutral-900">{provider}</span>
-                        }
-                      />
-                      <DetailRow
-                        label="API Key"
-                        value={
+              <div className={PANEL_OUTER}>
+                <section className="flex flex-col gap-2">
+                  <PanelHeading title="Details" />
+                  <DetailList className="rounded-xs">
+                    <DetailRow
+                      label="Timestamp"
+                      value={
+                        <span className="font-mono text-neutral-900 tabular-nums">
+                          {row.day}, {row.time}
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Conversation"
+                      value={
+                        <span className="font-mono tabular-nums">
+                          <TextLink
+                            aria-label={`Open conversation ${row.conversation}`}
+                            onClick={openConversation}
+                          >
+                            {row.conversation}
+                          </TextLink>
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Model"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <VendorAvatar vendor={row.vendor} />
                           <span className="font-mono text-neutral-900">
-                            {row.keyId}
+                            {row.model}
                           </span>
-                        }
-                      />
+                        </div>
+                      }
+                    />
+                    <DetailRow
+                      label="Provider"
+                      value={
+                        <span className="text-neutral-900">{provider}</span>
+                      }
+                    />
+                    <DetailRow
+                      label="API Key"
+                      value={
+                        <span className="font-mono text-neutral-900">
+                          {row.keyId}
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Endpoint"
+                      value={
+                        <span className="break-all font-mono text-neutral-900">
+                          <span className="text-neutral-500">POST</span>{" "}
+                          {VENDOR_ENDPOINT[row.vendor]}
+                        </span>
+                      }
+                    />
+                    {errorOriginInfo ? (
                       <DetailRow
-                        label="Endpoint"
+                        label="Error origin"
                         value={
-                          <span className="break-all font-mono text-neutral-900">
-                            <span className="text-neutral-500">POST</span>{" "}
-                            {VENDOR_ENDPOINT[row.vendor]}
-                          </span>
-                        }
-                      />
-                      {errorOriginInfo ? (
-                        <DetailRow
-                          label="Error origin"
-                          value={
-                            <Badge variant={errorOriginInfo.variant}>
-                              {errorOriginInfo.label}
-                            </Badge>
-                          }
-                        />
-                      ) : null}
-                      <DetailRow
-                        label="HTTP status"
-                        value={
-                          <Badge variant={RESPONSE_BADGE[row.status].variant}>
-                            {row.code}
+                          <Badge variant={errorOriginInfo.variant}>
+                            {errorOriginInfo.label}
                           </Badge>
                         }
                       />
-                      <DetailRow
-                        label="Cache"
-                        value={<Badge variant="info">miss</Badge>}
-                      />
-                    </DetailList>
-                  </section>
-                </div>
+                    ) : null}
+                    <DetailRow
+                      label="HTTP status"
+                      value={
+                        <Badge variant={RESPONSE_BADGE[row.status].variant}>
+                          {row.code}
+                        </Badge>
+                      }
+                    />
+                    <DetailRow
+                      label="Cache"
+                      value={<Badge variant="info">miss</Badge>}
+                    />
+                  </DetailList>
+                </section>
               </div>
             </div>
-          </TabsContent>
+          </div>
         </div>
-      </Tabs>
-
+      </div>
       {/* Footer is modal-only chrome. On the page, "View Conversation" lives
           at the top-left (rendered by the page itself), so no footer here. */}
       {variant !== "page" && (
@@ -2501,7 +2496,7 @@ function FindingCard({
     <button
       aria-pressed={selected}
       className={[
-        "flex flex-col gap-2 rounded-xs border bg-card p-4 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
         selected ? selectedBorder : "border-border hover:bg-neutral-50",
       ].join(" ")}
       onClick={onClick}
@@ -2513,15 +2508,11 @@ function FindingCard({
             {CATEGORY_LABEL[finding.category]} ·{" "}
             {entityLabel(finding.entityType)}
           </span>
-          <span className="font-sans text-neutral-500 text-xs">
-            {METHOD_LABEL[finding.method] ?? finding.method} · Turn{" "}
-            {finding.turn}
-          </span>
         </div>
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
       <p
-        className="line-clamp-2 font-mono text-neutral-900 text-sm"
+        className="line-clamp-2 font-sans text-neutral-900 text-sm"
         title={finding.match}
       >
         “{finding.match}”
@@ -2613,11 +2604,6 @@ function PiiRightPanel({
       : isToolRow
         ? "Tool result"
         : "Assistant response";
-  // Span tone per the doc: red for a block, yellow for a redact/flag.
-  const spanTone =
-    finding.action === "block"
-      ? "bg-danger-50 text-danger-700"
-      : "bg-warning-50 text-warning-700";
   const offset = evidence.indexOf(match);
   const offsetLabel =
     offset >= 0
@@ -2637,6 +2623,49 @@ function PiiRightPanel({
         (winEnd < evidence.length ? "…" : "")
       : "";
 
+  // Redact EVERY co-located finding's match in this same evidence text, not
+  // just the selected one, so a message with two issues shows both redacted
+  // (and the unredact toggle reveals both).
+  const evidenceSpans = (row.findings ?? [])
+    .map((f) => ({ f, start: evidence.indexOf(f.match) }))
+    .filter((s) => s.start >= 0)
+    .sort((a, b) => a.start - b.start);
+  const evidenceNodes: ReactNode[] = [];
+  let evidenceCursor = 0;
+  for (const { f, start } of evidenceSpans) {
+    if (start < evidenceCursor) {
+      continue;
+    }
+    if (start > evidenceCursor) {
+      evidenceNodes.push(evidence.slice(evidenceCursor, start));
+    }
+    const tone =
+      f.action === "block"
+        ? "bg-danger-50 text-danger-700"
+        : "bg-warning-50 text-warning-700";
+    evidenceNodes.push(
+      <Tooltip key={`${start}-${f.entityType}`}>
+        <TooltipTrigger
+          render={(props) => (
+            <span
+              {...props}
+              className={`cursor-help rounded-xs px-1 font-medium ${tone}`}
+            >
+              {showRaw ? f.match : f.redactedAs}
+            </span>
+          )}
+        />
+        <TooltipContent className="p-2 text-left">
+          <DetectorTip finding={f} />
+        </TooltipContent>
+      </Tooltip>
+    );
+    evidenceCursor = start + f.match.length;
+  }
+  if (evidenceCursor < evidence.length) {
+    evidenceNodes.push(evidence.slice(evidenceCursor));
+  }
+
   return (
     <>
       {/* Evidence — raw body (user / tool result / assistant) with the matched
@@ -2645,32 +2674,19 @@ function PiiRightPanel({
         <PanelHeading title={evidenceLabel} />
         <div className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4">
           <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
-            {offset >= 0 ? (
-              <>
-                {evidence.slice(0, offset)}
-                <Tooltip>
-                  <TooltipTrigger
-                    render={(props) => (
-                      <span
-                        {...props}
-                        className={`cursor-help rounded-xs px-1 font-medium ${spanTone}`}
-                      >
-                        {showRaw ? match : redactedAs}
-                      </span>
-                    )}
-                  />
-                  <TooltipContent className="p-2 text-left">
-                    <DetectorTip finding={finding} />
-                  </TooltipContent>
-                </Tooltip>
-                {evidence.slice(offset + match.length)}
-              </>
-            ) : (
-              evidence
-            )}
+            {evidenceNodes.length > 0 ? evidenceNodes : evidence}
           </p>
         </div>
       </section>
+
+      {/* The other turn of the pair + the Full request drawer, directly below
+          the evidence. When the evidence is the user message the complement is
+          the response side; when it is a tool result / assistant response the
+          complement is the request side. */}
+      <RequestTurnComplement
+        row={row}
+        which={evidenceLabel === "User message" ? "response" : "request"}
+      />
 
       {/* Why this fired — Unredact toggle on the heading row; label/value rows. */}
       <section className="flex flex-col gap-2">
@@ -2714,7 +2730,7 @@ function PiiRightPanel({
         />
         <div className="flex flex-col gap-2">
           {finding.action === "block" ? null : (
-            <div className="flex flex-col gap-1 whitespace-pre-wrap break-words rounded-xs border border-border bg-neutral-50 p-4 font-mono text-sm leading-relaxed">
+            <div className="flex flex-col gap-1 whitespace-pre-wrap break-words rounded-xs border border-border bg-card p-4 font-mono text-sm leading-relaxed">
               <span className="text-destructive">
                 - {pre}
                 {match}
@@ -2760,10 +2776,12 @@ function PiiRightPanel({
  * (docs/Injection-findings.md §0/§6). */
 function InjectionRightPanel({
   finding,
+  row,
   onTunePolicy,
   onMarkFalsePositive,
 }: {
   finding: RequestFinding;
+  row: RequestRow;
   onTunePolicy: () => void;
   onMarkFalsePositive: () => void;
 }) {
@@ -2791,61 +2809,48 @@ function InjectionRightPanel({
         <PanelHeading
           title={isClassifierDeny ? "Tool result" : "User message"}
         />
-        <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-          <p className="whitespace-pre-wrap break-words font-mono text-neutral-700 text-xs leading-relaxed">
+        <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
+          <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
             {evidence}
           </p>
-          {!isClassifierDeny && (
-            <p className="text-neutral-500 text-xs">
-              Found within this segment (~512 tokens). Exact position not
-              available.
+        </div>
+      </section>
+
+      {/* The other turn of the pair + the Full request drawer, directly below
+          the evidence. A classifier denial shows the tool result as evidence,
+          so its complement is the tool call; a user-segment finding shows the
+          user message, so its complement is the assistant/error response. */}
+      <RequestTurnComplement
+        row={row}
+        which={isClassifierDeny ? "request" : "response"}
+      />
+
+      {/* What happened — hidden on provider/upstream error responses; shown
+          for policy findings. Curated sentence + optional detector note. */}
+      {errorOrigin(row.errorSource) === null && (
+        <section className="flex flex-col gap-2">
+          <PanelHeading title="What happened" />
+          <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
+            <p className="text-pretty font-sans text-neutral-900 text-sm">
+              {isClassifierDeny && reasoning ? reasoning : whatHappened}
             </p>
-          )}
-        </div>
-      </section>
-
-      {/* What happened — curated sentence + the detector note (reasoning). */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading title="What happened" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-neutral-900 text-sm">
-            {isClassifierDeny && reasoning ? reasoning : whatHappened}
-          </p>
-          {!isClassifierDeny && reasoning && (
-            <div className="flex flex-col gap-1">
-              <span className="text-neutral-500 text-xs">Detector note</span>
-              <p className="text-pretty font-sans text-neutral-700 text-sm">
-                “{reasoning}”
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* What we did — blocked; no diff, no bytes, no provider/model. */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading title="What we did" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-          <KvRow
-            label="Action"
-            value={
-              finding.action === "flag"
-                ? "Flagged - request proceeded"
-                : "Blocked, not sent upstream"
-            }
-          />
-          <KvRow
-            label="Policy"
-            value={POLICY_SCANNER_LABEL[finding.category]}
-          />
-        </div>
-      </section>
+            {!isClassifierDeny && reasoning && (
+              <div className="flex flex-col gap-1">
+                <span className="text-neutral-500 text-xs">Detector note</span>
+                <p className="text-pretty font-sans text-neutral-700 text-sm">
+                  “{reasoning}”
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
         <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-neutral-700 text-sm">
+          <p className="text-pretty font-sans text-foreground text-sm">
             {howToFix}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -2878,6 +2883,9 @@ function InjectionRightPanel({
  *  rows with no input tokens return `—`. Hand-tuned to land in the 20-55%
  *  band so the value reads as plausible savings without ever maxing out. */
 function compressionValue(row: RequestRow): string {
+  if (row.compression) {
+    return row.compression;
+  }
   const tokens = Number.parseInt(row.inTokens.replace(/,/g, ""), 10);
   if (!Number.isFinite(tokens) || tokens <= 0) {
     return "—";
@@ -3092,7 +3100,7 @@ function BodySection({
       <PanelHeading title={label} />
       <CodeCard className="rounded-xs border border-border shadow-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-neutral-50"
+          className="max-h-80 overflow-auto overscroll-contain bg-card"
           ref={codeRef}
         >
           <CodeBlock
@@ -3133,14 +3141,12 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   );
 }
 
-/* Inline icon heading for the Details-tab subcards — smaller than
- * PanelHeading (14px medium, an icon, no h3 chrome) so the User message /
- * Assistant response / Full request stack reads as peer subcards, matching
- * the real MessageCard's inline label rather than the 16px section title the
- * Findings panels use. Error icons tint destructive; the rest sit neutral. */
+/* Plain-text label for message subcards (User message / Assistant response /
+ * Tool call / Tool result). 16px medium, no h3 chrome, matching the
+ * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
   return (
-    <span className="font-medium font-sans text-neutral-900 text-sm">
+    <span className="font-medium font-sans text-base text-neutral-900">
       {label}
     </span>
   );
@@ -3171,7 +3177,7 @@ function DetailMessageSubcard({
  * renders two stacked sections: a Provider context card with the plain-language
  * explanation (the origin badge lives in the metadata panel's Error origin
  * row), then an Error response card holding only the raw error body (a code
- * well + Copy code footer, mirroring Full request). */
+ * well, no footer). */
 function ErrorResponseSubcard({ row }: { row: RequestRow }) {
   const explanation = errorExplanation(row.errorCode);
   return (
@@ -3188,18 +3194,9 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-neutral-50 px-4 py-4 font-mono text-neutral-800 text-xs">
+            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-neutral-800 text-xs">
               {row.errorBody}
             </pre>
-            <div className="flex items-center justify-end border-border border-t bg-card px-4 py-2">
-              <CopyButton
-                label="error response"
-                mode="label"
-                size="compact"
-                text="Copy code"
-                value={row.errorBody}
-              />
-            </div>
           </div>
         </section>
       ) : null}
@@ -3244,25 +3241,29 @@ function FullRequestCollapsible({
     }, 16);
     return () => clearTimeout(id);
   }, [revealSignal]);
-  const lines = buildRequestBodyLines(row);
-  const requestPayload = JSON.stringify(
-    {
-      model: `${row.vendor}/${row.model}`,
-      messages: [{ role: "user", content: sampleRequestContent(row) }],
-      max_tokens: 1024,
-      temperature: 0.7,
-      stream: false,
-    },
-    null,
-    2
-  );
+  const lines = row.requestBodyRaw
+    ? row.requestBodyRaw.split("\n").map((text): CodeLine => [{ text }])
+    : buildRequestBodyLines(row);
+  const requestPayload =
+    row.requestBodyRaw ??
+    JSON.stringify(
+      {
+        model: `${row.vendor}/${row.model}`,
+        messages: [{ role: "user", content: sampleRequestContent(row) }],
+        max_tokens: 1024,
+        temperature: 0.7,
+        stream: false,
+      },
+      null,
+      2
+    );
   return (
     <Collapsible.Root
       className="flex flex-col overflow-hidden rounded-xs border border-border"
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-neutral-900 text-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-base text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
@@ -3272,7 +3273,7 @@ function FullRequestCollapsible({
       </Collapsible.Trigger>
       <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-neutral-50"
+          className="max-h-80 overflow-auto overscroll-contain bg-card"
           ref={panelRef}
         >
           <CodeBlock density="compact" lines={lines} wrap />
@@ -3299,13 +3300,16 @@ function FullRequestCollapsible({
  * response: a recorded provider/upstream failure renders it as the Error
  * response variant rather than a separate card; otherwise it is the assistant
  * (or tool) turn, suppressed when no turn exists. */
-function DetailMessageSubcards({
-  row,
-  revealSignal,
-}: {
-  row: RequestRow;
-  revealSignal?: number;
-}) {
+/* Single source of truth for a request's two conversation turns. The finding
+ * panels (PII / injection) and the Details subcards all resolve the request
+ * and response sides from here so the labels and content stay identical
+ * wherever they render. */
+function resolveRequestTurns(row: RequestRow): {
+  isTool: boolean;
+  userContent: string;
+  responseContent: string;
+  isErrorResponse: boolean;
+} {
   // A `sed`/`grep` tool step is not user input, so it renders as a tool call.
   const isTool = !row.userMessage && !!row.toolName;
   const userContent =
@@ -3313,27 +3317,51 @@ function DetailMessageSubcards({
     (isTool
       ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
       : sampleRequestContent(row));
-  // Card 2 switches to the Error response variant when the gateway recorded a
+  // The response side switches to the Error variant when the gateway recorded a
   // provider/upstream failure; otherwise it's the assistant (or tool) turn.
   const isErrorResponse = errorOrigin(row.errorSource) !== null;
   const responseContent = isTool
     ? (row.toolResult ?? "")
     : (row.assistantResponse ?? sampleResponseText(row));
-  return (
-    <>
+  return { isTool, userContent, responseContent, isErrorResponse };
+}
+
+/* Renders the conversation turn a finding panel does NOT already show as its
+ * evidence (the "complement"), followed by the Full request drawer. `which`
+ * picks the side: "request" = the user/tool-call turn, "response" = the
+ * assistant/tool-result turn (or the error variant). Built on
+ * resolveRequestTurns so it matches the Details subcards exactly. */
+function RequestTurnComplement({
+  row,
+  which,
+}: {
+  row: RequestRow;
+  which: "request" | "response";
+}) {
+  const { isTool, userContent, responseContent, isErrorResponse } =
+    resolveRequestTurns(row);
+  let turn: ReactNode = null;
+  if (which === "request") {
+    turn = (
       <DetailMessageSubcard
         content={userContent}
         label={isTool ? "Tool call" : "User message"}
       />
-      {isErrorResponse ? (
-        <ErrorResponseSubcard row={row} />
-      ) : responseContent ? (
-        <DetailMessageSubcard
-          content={responseContent}
-          label={isTool ? "Tool result" : "Assistant response"}
-        />
-      ) : null}
-      <FullRequestCollapsible revealSignal={revealSignal} row={row} />
+    );
+  } else if (isErrorResponse) {
+    turn = <ErrorResponseSubcard row={row} />;
+  } else if (responseContent) {
+    turn = (
+      <DetailMessageSubcard
+        content={responseContent}
+        label={isTool ? "Tool result" : "Assistant response"}
+      />
+    );
+  }
+  return (
+    <>
+      {turn}
+      <FullRequestCollapsible row={row} />
     </>
   );
 }
