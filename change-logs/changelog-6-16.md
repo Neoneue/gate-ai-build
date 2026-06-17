@@ -144,3 +144,16 @@ Detail pages and the legacy `-default` upsell pages are left shared / untouched.
 The locked Free-tier items (Events + Limits) were nearly invisible. Disabled
 label color bumped one stop — collapsed rail `text-neutral-300 → neutral-400`,
 expanded `text-neutral-400 → neutral-500`; `opacity-50` unchanged.
+
+## Sections
+
+### Requests detail: Findings/Details tabs merged into one view `2a9ed1d`
+
+The request detail view (`RequestDetailBodyV2`, `src/pages/Requests.tsx`) dropped
+its `Findings` / `Details` tab split. Before: a `Findings` tab (per-finding panel)
+plus a separate `Details` tab holding the message turns + Full request. After: a
+single view where the per-finding main card carries the message turn(s) and the
+Full request drawer — resolved through the shared `resolveRequestTurns` helper so
+labels still vary by error type — while the findings list and a request-metadata
+card move into the right rail. The orphaned `DetailMessageSubcards` is removed.
+Gap below the finding banner set to 24px (`pt-6`).
