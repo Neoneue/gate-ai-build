@@ -458,8 +458,28 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
     userMessage: "brew upgrade codex",
     errorSource: "provider",
     errorCode: "upstream_error",
+    errorDetail:
+      "Upstream stream returned an error payload despite a 2xx HTTP status: stream closed without terminal event (message_stop / [DONE])",
     errorBody: `{
   "detail": "The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account."
+}`,
+    requestBodyRaw: `{
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        { "text": "\\n\\n", "type": "text" },
+        {
+          "signature": "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",
+          "thinking": "",
+          "type": "thinking"
+        }
+      ]
+    }
+  ],
+  "model": "gpt-5.3-codex",
+  "max_tokens": 1024,
+  "stream": true
 }`,
   },
   {

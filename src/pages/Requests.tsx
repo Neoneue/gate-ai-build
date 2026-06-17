@@ -1026,6 +1026,13 @@ export type RequestRow = {
   errorCode?: string;
   /** Raw error body the provider returned, rendered as a JSON code block. */
   errorBody?: string;
+  /** Human-readable detail line for the failure (the gateway's `error_detail`).
+   * Shown as a text field under the User message on the detail card for
+   * provider errors. */
+  errorDetail?: string;
+  /** Verbatim request body to show in the Full request drawer, overriding the
+   * synthesized `buildRequestBodyLines` output. Placeholder real-capture JSON. */
+  requestBodyRaw?: string;
   /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash'),
    * its invocation args, and the result text. Drive the messages-panel
    * tool bubble (`Tool · <toolName>` + result) and the trace `tool: X` label. */
@@ -2155,7 +2162,7 @@ export function RequestDetailBodyV2({
       </DialogScrollSummary>
       {/* Finding banner — icon + title + descriptive sentence (no link). */}
       {findings.length > 0 && (
-        <div className="px-6 pt-4">
+        <div className="px-6 pt-6">
           <div
             aria-live="polite"
             className={[
@@ -2201,8 +2208,8 @@ export function RequestDetailBodyV2({
             variant === "page"
               ? "px-6 pb-6"
               : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
-            // 24px below the finding banner; 8px when there's no banner.
-            findings.length > 0 ? "pt-6" : "pt-2",
+            // Always 24px below whatever sits above (KPI rail or banner).
+            "pt-6",
           ].join(" ")}
         >
           <div className="grid gap-4 md:grid-cols-3">
@@ -2230,25 +2237,49 @@ export function RequestDetailBodyV2({
                   )
                 ) : (
                   <div className="flex flex-col gap-4">
-                    {/* No detector fired: still surface the originating
-                          message (user / assistant / tool call + result)
-                          above the No-findings card. */}
-                    <RequestBodyPanel bare messagesOnly row={row} />
-                    <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
-                        <ShieldCheck
-                          aria-hidden
-                          className="size-5 text-neutral-500"
-                          strokeWidth={1.75}
+                    {row.errorSource === "provider" ? (
+                      <>
+                        {/* Provider error: User message, the error detail as a
+                              text field, then the Full request drawer. */}
+                        <DetailMessageSubcard
+                          content={resolveRequestTurns(row).userContent}
+                          label="User message"
                         />
-                      </div>
-                      <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
-                        No findings
-                      </h3>
-                      <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
-                        All detectors passed for this request.
-                      </p>
-                    </div>
+                        {row.errorDetail ? (
+                          <section className="flex flex-col gap-2">
+                            <PanelHeading title="Error detail" />
+                            <div className="rounded-xs border border-border bg-card p-4">
+                              <p className="text-pretty font-sans text-neutral-700 text-sm">
+                                {row.errorDetail}
+                              </p>
+                            </div>
+                          </section>
+                        ) : null}
+                        <FullRequestCollapsible row={row} />
+                      </>
+                    ) : (
+                      <>
+                        {/* No detector fired: still surface the originating
+                              message (user / assistant / tool call + result)
+                              above the No-findings card. */}
+                        <RequestBodyPanel bare messagesOnly row={row} />
+                        <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
+                          <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
+                            <ShieldCheck
+                              aria-hidden
+                              className="size-5 text-neutral-500"
+                              strokeWidth={1.75}
+                            />
+                          </div>
+                          <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+                            No findings
+                          </h3>
+                          <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+                            All detectors passed for this request.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -3113,14 +3144,12 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   );
 }
 
-/* Inline icon heading for the Details-tab subcards — smaller than
- * PanelHeading (14px medium, an icon, no h3 chrome) so the User message /
- * Assistant response / Full request stack reads as peer subcards, matching
- * the real MessageCard's inline label rather than the 16px section title the
- * Findings panels use. Error icons tint destructive; the rest sit neutral. */
+/* Plain-text label for message subcards (User message / Assistant response /
+ * Tool call / Tool result). 16px medium, no h3 chrome, matching the
+ * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
   return (
-    <span className="font-medium font-sans text-neutral-900 text-sm">
+    <span className="font-medium font-sans text-base text-neutral-900">
       {label}
     </span>
   );
@@ -3224,25 +3253,29 @@ function FullRequestCollapsible({
     }, 16);
     return () => clearTimeout(id);
   }, [revealSignal]);
-  const lines = buildRequestBodyLines(row);
-  const requestPayload = JSON.stringify(
-    {
-      model: `${row.vendor}/${row.model}`,
-      messages: [{ role: "user", content: sampleRequestContent(row) }],
-      max_tokens: 1024,
-      temperature: 0.7,
-      stream: false,
-    },
-    null,
-    2
-  );
+  const lines = row.requestBodyRaw
+    ? row.requestBodyRaw.split("\n").map((text): CodeLine => [{ text }])
+    : buildRequestBodyLines(row);
+  const requestPayload =
+    row.requestBodyRaw ??
+    JSON.stringify(
+      {
+        model: `${row.vendor}/${row.model}`,
+        messages: [{ role: "user", content: sampleRequestContent(row) }],
+        max_tokens: 1024,
+        temperature: 0.7,
+        stream: false,
+      },
+      null,
+      2
+    );
   return (
     <Collapsible.Root
       className="flex flex-col overflow-hidden rounded-xs border border-border"
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-neutral-900 text-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-base text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
