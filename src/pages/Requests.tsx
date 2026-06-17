@@ -1000,6 +1000,10 @@ export type RequestRow = {
   /** True when this request crossed the 1s "slow" threshold. */
   slow?: boolean;
   cost: string;
+  /** Optional per-row compression override. When set, it wins over the
+   *  derived `compressionValue` (e.g. an error response that produced no
+   *  output reads as 100.0%). */
+  compression?: string;
   /** Which guardrail check fired. Set for `block`, `flag`, and `redact`
    *  rows; absent for plain `allow`. Drives the matching check state on
    *  the modal's Audit tab so the row and the modal stay in lock-step. */
@@ -2315,7 +2319,7 @@ export function RequestDetailBodyV2({
                   <div className="flex flex-col gap-2">
                     {passed.map((p) => (
                       <div
-                        className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4"
+                        className="flex flex-col gap-2 rounded-xs border border-border bg-card px-4 py-3"
                         key={p.category}
                       >
                         <div className="flex items-start justify-between gap-4">
@@ -2492,7 +2496,7 @@ function FindingCard({
     <button
       aria-pressed={selected}
       className={[
-        "flex flex-col gap-2 rounded-xs border bg-card p-4 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
         selected ? selectedBorder : "border-border hover:bg-neutral-50",
       ].join(" ")}
       onClick={onClick}
@@ -2504,15 +2508,11 @@ function FindingCard({
             {CATEGORY_LABEL[finding.category]} ·{" "}
             {entityLabel(finding.entityType)}
           </span>
-          <span className="font-sans text-neutral-500 text-xs">
-            {METHOD_LABEL[finding.method] ?? finding.method} · Turn{" "}
-            {finding.turn}
-          </span>
         </div>
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
       <p
-        className="line-clamp-2 font-mono text-neutral-900 text-sm"
+        className="line-clamp-2 font-sans text-neutral-900 text-sm"
         title={finding.match}
       >
         “{finding.match}”
@@ -2604,11 +2604,6 @@ function PiiRightPanel({
       : isToolRow
         ? "Tool result"
         : "Assistant response";
-  // Span tone per the doc: red for a block, yellow for a redact/flag.
-  const spanTone =
-    finding.action === "block"
-      ? "bg-danger-50 text-danger-700"
-      : "bg-warning-50 text-warning-700";
   const offset = evidence.indexOf(match);
   const offsetLabel =
     offset >= 0
@@ -2628,6 +2623,49 @@ function PiiRightPanel({
         (winEnd < evidence.length ? "…" : "")
       : "";
 
+  // Redact EVERY co-located finding's match in this same evidence text, not
+  // just the selected one, so a message with two issues shows both redacted
+  // (and the unredact toggle reveals both).
+  const evidenceSpans = (row.findings ?? [])
+    .map((f) => ({ f, start: evidence.indexOf(f.match) }))
+    .filter((s) => s.start >= 0)
+    .sort((a, b) => a.start - b.start);
+  const evidenceNodes: ReactNode[] = [];
+  let evidenceCursor = 0;
+  for (const { f, start } of evidenceSpans) {
+    if (start < evidenceCursor) {
+      continue;
+    }
+    if (start > evidenceCursor) {
+      evidenceNodes.push(evidence.slice(evidenceCursor, start));
+    }
+    const tone =
+      f.action === "block"
+        ? "bg-danger-50 text-danger-700"
+        : "bg-warning-50 text-warning-700";
+    evidenceNodes.push(
+      <Tooltip key={`${start}-${f.entityType}`}>
+        <TooltipTrigger
+          render={(props) => (
+            <span
+              {...props}
+              className={`cursor-help rounded-xs px-1 font-medium ${tone}`}
+            >
+              {showRaw ? f.match : f.redactedAs}
+            </span>
+          )}
+        />
+        <TooltipContent className="p-2 text-left">
+          <DetectorTip finding={f} />
+        </TooltipContent>
+      </Tooltip>
+    );
+    evidenceCursor = start + f.match.length;
+  }
+  if (evidenceCursor < evidence.length) {
+    evidenceNodes.push(evidence.slice(evidenceCursor));
+  }
+
   return (
     <>
       {/* Evidence — raw body (user / tool result / assistant) with the matched
@@ -2636,29 +2674,7 @@ function PiiRightPanel({
         <PanelHeading title={evidenceLabel} />
         <div className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4">
           <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
-            {offset >= 0 ? (
-              <>
-                {evidence.slice(0, offset)}
-                <Tooltip>
-                  <TooltipTrigger
-                    render={(props) => (
-                      <span
-                        {...props}
-                        className={`cursor-help rounded-xs px-1 font-medium ${spanTone}`}
-                      >
-                        {showRaw ? match : redactedAs}
-                      </span>
-                    )}
-                  />
-                  <TooltipContent className="p-2 text-left">
-                    <DetectorTip finding={finding} />
-                  </TooltipContent>
-                </Tooltip>
-                {evidence.slice(offset + match.length)}
-              </>
-            ) : (
-              evidence
-            )}
+            {evidenceNodes.length > 0 ? evidenceNodes : evidence}
           </p>
         </div>
       </section>
@@ -2714,7 +2730,7 @@ function PiiRightPanel({
         />
         <div className="flex flex-col gap-2">
           {finding.action === "block" ? null : (
-            <div className="flex flex-col gap-1 whitespace-pre-wrap break-words rounded-xs border border-border bg-neutral-50 p-4 font-mono text-sm leading-relaxed">
+            <div className="flex flex-col gap-1 whitespace-pre-wrap break-words rounded-xs border border-border bg-card p-4 font-mono text-sm leading-relaxed">
               <span className="text-destructive">
                 - {pre}
                 {match}
@@ -2793,16 +2809,10 @@ function InjectionRightPanel({
         <PanelHeading
           title={isClassifierDeny ? "Tool result" : "User message"}
         />
-        <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-          <p className="whitespace-pre-wrap break-words font-mono text-neutral-700 text-xs leading-relaxed">
+        <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
+          <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
             {evidence}
           </p>
-          {!isClassifierDeny && (
-            <p className="text-neutral-500 text-xs">
-              Found within this segment (~512 tokens). Exact position not
-              available.
-            </p>
-          )}
         </div>
       </section>
 
@@ -2815,48 +2825,32 @@ function InjectionRightPanel({
         which={isClassifierDeny ? "request" : "response"}
       />
 
-      {/* What happened — curated sentence + the detector note (reasoning). */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading title="What happened" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-neutral-900 text-sm">
-            {isClassifierDeny && reasoning ? reasoning : whatHappened}
-          </p>
-          {!isClassifierDeny && reasoning && (
-            <div className="flex flex-col gap-1">
-              <span className="text-neutral-500 text-xs">Detector note</span>
-              <p className="text-pretty font-sans text-neutral-700 text-sm">
-                “{reasoning}”
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* What we did — blocked; no diff, no bytes, no provider/model. */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading title="What we did" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-          <KvRow
-            label="Action"
-            value={
-              finding.action === "flag"
-                ? "Flagged - request proceeded"
-                : "Blocked, not sent upstream"
-            }
-          />
-          <KvRow
-            label="Policy"
-            value={POLICY_SCANNER_LABEL[finding.category]}
-          />
-        </div>
-      </section>
+      {/* What happened — hidden on provider/upstream error responses; shown
+          for policy findings. Curated sentence + optional detector note. */}
+      {errorOrigin(row.errorSource) === null && (
+        <section className="flex flex-col gap-2">
+          <PanelHeading title="What happened" />
+          <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
+            <p className="text-pretty font-sans text-neutral-900 text-sm">
+              {isClassifierDeny && reasoning ? reasoning : whatHappened}
+            </p>
+            {!isClassifierDeny && reasoning && (
+              <div className="flex flex-col gap-1">
+                <span className="text-neutral-500 text-xs">Detector note</span>
+                <p className="text-pretty font-sans text-neutral-700 text-sm">
+                  “{reasoning}”
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
         <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-neutral-700 text-sm">
+          <p className="text-pretty font-sans text-foreground text-sm">
             {howToFix}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -2889,6 +2883,9 @@ function InjectionRightPanel({
  *  rows with no input tokens return `—`. Hand-tuned to land in the 20-55%
  *  band so the value reads as plausible savings without ever maxing out. */
 function compressionValue(row: RequestRow): string {
+  if (row.compression) {
+    return row.compression;
+  }
   const tokens = Number.parseInt(row.inTokens.replace(/,/g, ""), 10);
   if (!Number.isFinite(tokens) || tokens <= 0) {
     return "—";
@@ -3103,7 +3100,7 @@ function BodySection({
       <PanelHeading title={label} />
       <CodeCard className="rounded-xs border border-border shadow-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-neutral-50"
+          className="max-h-80 overflow-auto overscroll-contain bg-card"
           ref={codeRef}
         >
           <CodeBlock
@@ -3180,7 +3177,7 @@ function DetailMessageSubcard({
  * renders two stacked sections: a Provider context card with the plain-language
  * explanation (the origin badge lives in the metadata panel's Error origin
  * row), then an Error response card holding only the raw error body (a code
- * well + Copy code footer, mirroring Full request). */
+ * well, no footer). */
 function ErrorResponseSubcard({ row }: { row: RequestRow }) {
   const explanation = errorExplanation(row.errorCode);
   return (
@@ -3197,18 +3194,9 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-neutral-50 px-4 py-4 font-mono text-neutral-800 text-xs">
+            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-neutral-800 text-xs">
               {row.errorBody}
             </pre>
-            <div className="flex items-center justify-end border-border border-t bg-card px-4 py-2">
-              <CopyButton
-                label="error response"
-                mode="label"
-                size="compact"
-                text="Copy code"
-                value={row.errorBody}
-              />
-            </div>
           </div>
         </section>
       ) : null}
@@ -3285,7 +3273,7 @@ function FullRequestCollapsible({
       </Collapsible.Trigger>
       <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-neutral-50"
+          className="max-h-80 overflow-auto overscroll-contain bg-card"
           ref={panelRef}
         >
           <CodeBlock density="compact" lines={lines} wrap />

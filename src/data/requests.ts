@@ -95,6 +95,15 @@ const ENTITY_DESCRIPTOR: Record<string, string> = {
 // so the operator sees what fired without re-leaking the secret; other findings
 // fall back to the human descriptor.
 export function findingBannerSentence(findings: RequestFinding[]): string {
+  // Mockup: a single flagged prompt-injection finding shows the gateway's
+  // generic flag sentence instead of the per-entity detector breakdown.
+  if (
+    findings.length === 1 &&
+    findings[0].category === "injection" &&
+    findings[0].action === "flag"
+  ) {
+    return "Request flagged by prompt-injection protection.";
+  }
   return findings
     .map((f) => {
       const what =
@@ -206,6 +215,15 @@ export function resolveInjectionCopy(finding: RequestFinding): {
   whatHappened: string;
   howToFix: string;
 } {
+  // Mockup: flagged (not blocked) injection uses the gateway's generic flag
+  // narrative; the allow-through remedy points at the Flag policy.
+  if (finding.action === "flag") {
+    return {
+      whatHappened: "Request flagged by prompt-injection protection.",
+      howToFix:
+        "This request was flagged and allowed through under your current Flag policy. If requests like this should be stopped before they run, tune the policy to Block. If this was not an injection, mark it a false positive to sharpen the detector.",
+    };
+  }
   const verdicts = finding.verdicts ?? [];
   const known = verdicts.filter((v) => INJECTION_VERDICT_COPY[v]);
   const set = new Set(known);
@@ -444,24 +462,78 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
     time: "00:50:51",
     relative: "now",
     status: "error",
-    guardrail: "allow",
-    code: "400",
-    vendor: "openai",
-    model: "gpt-5.3-codex",
+    guardrail: "flagged",
+    guardrailReason: "injection",
+    code: "429",
+    vendor: "anthropic",
+    model: "claude-opus-4-8",
     conversation: "cnv_7a3f9e2b",
     keyId: "design-agent",
-    inTokens: "1,180",
-    outTokens: "0",
-    latency: "0.41s",
+    inTokens: "—",
+    outTokens: "—",
+    latency: "2.30s",
     cost: "—",
+    compression: "100.0%",
     requestId: "req_cd0e57",
-    userMessage: "brew upgrade codex",
+    userMessage: `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
+
+- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
+- You already have all the context you need in the conversation above.
+- Tool calls will be REJECTED and will waste your only turn — you will fail the task.
+- Your entire response must be plain text: an <analysis> block followed by a
+</example>
+
+Please provide your summary based on the conversation so far, following this structure and ensuring precision and thoroughness in your response.
+
+There may be additional summarization instructions provided in the included context. If so, remember to follow these instructions when creating the above summary. Examples of instructions include:
+<example>
+## Compact Instructions
+When summarizing the conversation focus on typescript code changes and also remember the mistakes you made and how you fixed them.
+</example>
+
+<example>
+# Summary instructions
+When you are using compact - please focus on test output and code changes. Include file ads verbatim.
+</example>
+
+REMINDER: Do NOT call any tools. Respond with plain text only — an <analysis> block followed by a <summary> block. Tool calls will be rejected and you will fail the task.`,
+    findings: [
+      {
+        category: "injection",
+        entityType: "prompt-injection",
+        method: "classifier",
+        score: 0.97,
+        threshold: 0.7,
+        action: "flag",
+        turn: 101,
+        role: "user",
+        match: "Request flagged by prompt-injection protection.",
+        redactedAs: "[flagged]",
+        recognizer: "PromptInjectionRecognizer",
+        rule: "instruction-override flag",
+        policy: "injection-flag-v1",
+        evidence: `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
+
+- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
+- You already have all the context you need in the conversation above.
+- Tool calls will be REJECTED and will waste your only turn — you will fail the task.
+- Your entire response must be plain text: an <analysis> block followed by a
+</example>
+
+Please provide your summary based on the conversation so far, following this structure and ensuring precision and thoroughness in your response.`,
+        verdicts: ["instruction_override"],
+      },
+    ],
     errorSource: "provider",
     errorCode: "upstream_error",
     errorDetail:
-      "Upstream stream returned an error payload despite a 2xx HTTP status: stream closed without terminal event (message_stop / [DONE])",
+      "This request would exceed your account's rate limit. Please try again later.",
     errorBody: `{
-  "detail": "The 'gpt-5.3-codex' model is not supported when using Codex with a ChatGPT account."
+  "error": {
+    "type": "rate_limit_error",
+    "code": "rate_limit_exceeded",
+    "message": "This request would exceed your account's rate limit. Please try again later."
+  }
 }`,
     requestBodyRaw: `{
   "messages": [
