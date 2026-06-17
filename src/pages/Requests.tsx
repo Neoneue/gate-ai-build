@@ -2058,7 +2058,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
  *   • Tabs order: Findings (default) · Message · Details
  *   • Two-column Findings tab: card list (left) + evidence panel (right)
  *   • Highlight popover (method/score/threshold) + IS_ADMIN unredact toggle
- *   • "Why this fired" + "What we sent upstream" detail surfaces
+ *   • "Why this fired" detail surface
  *   • Footer adapts to active tab (Copy Fingerprint / Dismiss on Findings)
  * ────────────────────────────────────────────────────────────────────── */
 
@@ -2124,6 +2124,9 @@ export function RequestDetailBodyV2({
 
   // Track which finding card is selected in the left column.
   const [selectedIdx, setSelectedIdx] = useState(0);
+  // Bumped on every finding click (even re-clicking the active one) so the
+  // evidence panel re-scrolls its match into view.
+  const [revealNonce, setRevealNonce] = useState(0);
 
   const selectedFinding = findings[selectedIdx] ?? null;
 
@@ -2193,7 +2196,7 @@ export function RequestDetailBodyV2({
                 <span className="capitalize">{highestAction}</span>
               </p>
               <p className="text-pretty font-sans text-neutral-900 text-sm">
-                {findingBannerSentence(findings)}
+                {findingBannerSentence(findings, showRaw)}
               </p>
             </div>
           </div>
@@ -2234,6 +2237,7 @@ export function RequestDetailBodyV2({
                       finding={selectedFinding}
                       isAdmin={IS_ADMIN}
                       onShowRawChange={setShowRaw}
+                      revealNonce={revealNonce}
                       row={row}
                       showRaw={showRaw}
                     />
@@ -2260,15 +2264,18 @@ export function RequestDetailBodyV2({
                         ) : null}
                         <FullRequestCollapsible row={row} />
                       </>
+                    ) : row.status === "success" &&
+                      row.guardrail === "allow" ? (
+                      /* Clean success/allow pass, no detector fired: show the
+                         request turns (Tool call / Assistant response / Full
+                         request). The right-column "Passed" section already
+                         reports that every detector passed. */
+                      <NoFindingTurns row={row} />
                     ) : (
                       <>
-                        {/* No detector fired. A clean success/allow pass shows
-                              only the No-findings card; other no-finding rows
-                              (e.g. non-provider errors) still surface the
-                              originating message above the card. */}
-                        {!(
-                          row.status === "success" && row.guardrail === "allow"
-                        ) && <RequestBodyPanel bare messagesOnly row={row} />}
+                        {/* Non-provider error with no finding still surfaces
+                              the originating message above the No-findings card. */}
+                        <RequestBodyPanel bare messagesOnly row={row} />
                         <div className="flex h-[304px] flex-col items-center justify-center gap-2 rounded-md border border-border bg-card text-center">
                           <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
                             <ShieldCheck
@@ -2306,7 +2313,10 @@ export function RequestDetailBodyV2({
                         <FindingCard
                           finding={f}
                           key={idx}
-                          onClick={() => setSelectedIdx(idx)}
+                          onClick={() => {
+                            setSelectedIdx(idx);
+                            setRevealNonce((n) => n + 1);
+                          }}
                           selected={selectedIdx === idx}
                         />
                       ))}
@@ -2586,6 +2596,7 @@ function PiiDetailPanel({
   isAdmin,
   showRaw,
   onShowRawChange,
+  revealNonce,
 }: {
   finding: RequestFinding;
   row: RequestRow;
@@ -2594,8 +2605,11 @@ function PiiDetailPanel({
    *  Full request (one toggle, both surfaces). OFF = redacted by default. */
   showRaw: boolean;
   onShowRawChange: (next: boolean) => void;
+  /** Bumped on each finding click so the panel re-scrolls to the match even
+   * when the same finding is re-clicked. */
+  revealNonce?: number;
 }) {
-  const { evidence, match, redactedAs, rule } = finding;
+  const { evidence, match, rule } = finding;
   // Heading reflects where the span actually fired: a user turn, a tool result
   // (e.g. a handoff.md read), or the assistant reply. Tool-origin findings are
   // tagged role 'assistant' but read from the tool result, so disambiguate.
@@ -2611,29 +2625,36 @@ function PiiDetailPanel({
     offset >= 0
       ? `Lines ${offset}-${offset + match.length} (${match.length} chars)`
       : "—";
-  // Windowed redaction diff (a few chars of context either side of the match).
-  const winStart = offset >= 0 ? Math.max(0, offset - 24) : 0;
-  const winEnd =
-    offset >= 0 ? Math.min(evidence.length, offset + match.length + 24) : 0;
-  const pre =
-    offset >= 0
-      ? (winStart > 0 ? "…" : "") + evidence.slice(winStart, offset)
-      : "";
-  const post =
-    offset >= 0
-      ? evidence.slice(offset + match.length, winEnd) +
-        (winEnd < evidence.length ? "…" : "")
-      : "";
 
-  // Redact EVERY co-located finding's match in this same evidence text, not
-  // just the selected one, so a message with two issues shows both redacted
-  // (and the unredact toggle reveals both).
-  const evidenceSpans = (row.findings ?? [])
-    .map((f) => ({ f, start: evidence.indexOf(f.match) }))
-    .filter((s) => s.start >= 0)
-    .sort((a, b) => a.start - b.start);
+  // Each finding targets ONE occurrence of its match in the evidence (its
+  // `occurrence` index, default 0), so a value that appears twice is two
+  // distinct findings, each highlighting its own instance. Every co-located
+  // finding is redacted here, not just the selected one.
+  const evidenceSpans: { f: RequestFinding; start: number }[] = [];
+  for (const f of row.findings ?? []) {
+    if (!f.match) {
+      continue;
+    }
+    const occ = f.occurrence ?? 0;
+    let at = -1;
+    let from = 0;
+    for (let k = 0; k <= occ; k++) {
+      at = evidence.indexOf(f.match, from);
+      if (at < 0) {
+        break;
+      }
+      from = at + f.match.length;
+    }
+    if (at >= 0) {
+      evidenceSpans.push({ f, start: at });
+    }
+  }
+  evidenceSpans.sort((a, b) => a.start - b.start);
   const evidenceNodes: ReactNode[] = [];
   let evidenceCursor = 0;
+  // Start offset of the active finding's match, so only that one span carries
+  // the scroll-target marker.
+  const selectedFirstStart = evidenceSpans.find((s) => s.f === finding)?.start;
   for (const { f, start } of evidenceSpans) {
     if (start < evidenceCursor) {
       continue;
@@ -2645,22 +2666,15 @@ function PiiDetailPanel({
       f.action === "block"
         ? "bg-danger-50 text-danger-700"
         : "bg-warning-50 text-warning-700";
+    const isSelectedSpan = f === finding && start === selectedFirstStart;
     evidenceNodes.push(
-      <Tooltip key={`${start}-${f.entityType}`}>
-        <TooltipTrigger
-          render={(props) => (
-            <span
-              {...props}
-              className={`cursor-help rounded-xs px-1 font-medium ${tone}`}
-            >
-              {showRaw ? f.match : f.redactedAs}
-            </span>
-          )}
-        />
-        <TooltipContent className="p-2 text-left">
-          <DetectorTip finding={f} />
-        </TooltipContent>
-      </Tooltip>
+      <span
+        className={`rounded-xs px-1 font-medium ${tone}`}
+        data-selected-evidence={isSelectedSpan ? "" : undefined}
+        key={`${start}-${f.entityType}`}
+      >
+        {showRaw ? f.match : f.redactedAs}
+      </span>
     );
     evidenceCursor = start + f.match.length;
   }
@@ -2668,13 +2682,33 @@ function PiiDetailPanel({
     evidenceNodes.push(evidence.slice(evidenceCursor));
   }
 
+  const evidenceBoxRef = useRef<HTMLDivElement>(null);
+  // When the active finding changes (a click on the right), scroll its first
+  // match into the center of the evidence box without moving the page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: finding + revealNonce are intentional re-scroll triggers; the effect reads the tagged DOM node, not these values directly
+  useEffect(() => {
+    const box = evidenceBoxRef.current;
+    const el = box?.querySelector<HTMLElement>("[data-selected-evidence]");
+    if (box && el) {
+      const er = el.getBoundingClientRect();
+      const br = box.getBoundingClientRect();
+      box.scrollTo({
+        top: box.scrollTop + (er.top - br.top) - (br.height - er.height) / 2,
+        behavior: "smooth",
+      });
+    }
+  }, [finding, revealNonce]);
+
   return (
     <>
       {/* Evidence — raw body (user / tool result / assistant) with the matched
           substring highlighted. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title={evidenceLabel} />
-        <div className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4">
+        <div
+          className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+          ref={evidenceBoxRef}
+        >
           <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
             {evidenceNodes.length > 0 ? evidenceNodes : evidence}
           </p>
@@ -2720,33 +2754,6 @@ function PiiDetailPanel({
           />
         </div>
       </section>
-
-      {/* What we did — a block refuses the request (nothing egresses), so it
-          shows no redaction diff; a redact/flag shows the red/green diff +
-          bytes-redacted. Metadata card is shared. */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading
-          title={
-            finding.action === "block" ? "What we did" : "What we sent upstream"
-          }
-        />
-        <div className="flex flex-col gap-2">
-          {finding.action === "block" ? null : (
-            <div className="flex flex-col gap-1 whitespace-pre-wrap break-words rounded-xs border border-border bg-card p-4 font-mono text-sm leading-relaxed">
-              <span className="text-destructive">
-                - {pre}
-                {match}
-                {post}
-              </span>
-              <span className="text-success-700">
-                + {pre}
-                {redactedAs}
-                {post}
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
     </>
   );
 }
@@ -2766,9 +2773,8 @@ function InjectionDetailPanel({
   onTunePolicy: () => void;
   onMarkFalsePositive: () => void;
 }) {
-  const { evidence, reasoning } = finding;
-  const { whatHappened, howToFix: howToFixBlocked } =
-    resolveInjectionCopy(finding);
+  const { evidence } = finding;
+  const { howToFix: howToFixBlocked } = resolveInjectionCopy(finding);
   // Flag policy lets the request through and annotates the trace, so the
   // remedy is about the operator's call, not a code fix: keep it, tighten to
   // Block, or dismiss as a false positive. Block policy keeps the curated
@@ -2777,54 +2783,53 @@ function InjectionDetailPanel({
     finding.action === "flag"
       ? "This request was flagged and allowed through under your current Flag policy. If commands like this should be stopped before they run, tune the policy to Block. If this was not an injection, mark it a false positive to sharpen the detector."
       : howToFixBlocked;
-  // Auto-mode classifier denials carry a plain, request-specific reasoning
-  // that names the actual blocked command, so lead with that instead of the
-  // generic verdict sentence — no jargon for the operator.
+  // Auto-mode classifier denials pair a tool call with the assistant response,
+  // so the turn order and labels differ from a user-segment finding.
   const isClassifierDeny = finding.rule === "auto-mode classifier deny";
+
+  // Evidence — the assistant response (classifier denial) or the ~512-token
+  // user segment, plain. No highlight, no offset.
+  const evidenceSection = (
+    <section className="flex flex-col gap-2">
+      <PanelHeading
+        title={isClassifierDeny ? "Assistant response" : "User message"}
+      />
+      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
+        <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
+          {evidence}
+        </p>
+      </div>
+    </section>
+  );
+
+  // The other turn of the pair. A classifier denial pairs the tool call with
+  // the assistant response; a user-segment finding shows the user message with
+  // the assistant/error response. The deny layout renders the Full request
+  // drawer itself (last), so the complement skips it there.
+  const complement = (
+    <RequestTurnComplement
+      includeFullRequest={!isClassifierDeny}
+      row={row}
+      which={isClassifierDeny ? "request" : "response"}
+    />
+  );
 
   return (
     <>
-      {/* Evidence — the tool result (classifier denial) or the ~512-token
-          user segment, plain. No highlight, no offset. */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading
-          title={isClassifierDeny ? "Tool result" : "User message"}
-        />
-        <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-          <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
-            {evidence}
-          </p>
-        </div>
-      </section>
-
-      {/* The other turn of the pair + the Full request drawer, directly below
-          the evidence. A classifier denial shows the tool result as evidence,
-          so its complement is the tool call; a user-segment finding shows the
-          user message, so its complement is the assistant/error response. */}
-      <RequestTurnComplement
-        row={row}
-        which={isClassifierDeny ? "request" : "response"}
-      />
-
-      {/* What happened — hidden on provider/upstream error responses; shown
-          for policy findings. Curated sentence + optional detector note. */}
-      {errorOrigin(row.errorSource) === null && (
-        <section className="flex flex-col gap-2">
-          <PanelHeading title="What happened" />
-          <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-            <p className="text-pretty font-sans text-neutral-900 text-sm">
-              {isClassifierDeny && reasoning ? reasoning : whatHappened}
-            </p>
-            {!isClassifierDeny && reasoning && (
-              <div className="flex flex-col gap-1">
-                <span className="text-neutral-500 text-xs">Detector note</span>
-                <p className="text-pretty font-sans text-neutral-700 text-sm">
-                  “{reasoning}”
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+      {/* Classifier denial reads tool call → assistant response → full request;
+          the user-segment finding keeps user message → response (+ full
+          request, rendered inside the complement). */}
+      {isClassifierDeny ? (
+        <>
+          {complement}
+          {evidenceSection}
+          <FullRequestCollapsible row={row} />
+        </>
+      ) : (
+        <>
+          {evidenceSection}
+          {complement}
+        </>
       )}
 
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
@@ -3315,9 +3320,14 @@ function resolveRequestTurns(row: RequestRow): {
 function RequestTurnComplement({
   row,
   which,
+  includeFullRequest = true,
 }: {
   row: RequestRow;
   which: "request" | "response";
+  /** Whether to append the Full request drawer after the turn. The classifier
+   * deny layout renders the drawer itself, last, so it passes false to keep
+   * Full request below the assistant response rather than between the two. */
+  includeFullRequest?: boolean;
 }) {
   const { isTool, userContent, responseContent, isErrorResponse } =
     resolveRequestTurns(row);
@@ -3342,8 +3352,31 @@ function RequestTurnComplement({
   return (
     <>
       {turn}
-      <FullRequestCollapsible row={row} />
+      {includeFullRequest && <FullRequestCollapsible row={row} />}
     </>
+  );
+}
+
+/* No-finding success/allow view: the same Tool call → Assistant response →
+ * Full request stack the finding panel uses, minus the detector evidence.
+ * The response side is always labelled "Assistant response" here (never
+ * "Tool result") since this is the request's own turn, not finding evidence. */
+function NoFindingTurns({ row }: { row: RequestRow }) {
+  const { isTool, userContent, responseContent } = resolveRequestTurns(row);
+  return (
+    <div className={PANEL_OUTER}>
+      <DetailMessageSubcard
+        content={userContent}
+        label={isTool ? "Tool call" : "User message"}
+      />
+      {responseContent && (
+        <DetailMessageSubcard
+          content={responseContent}
+          label="Assistant response"
+        />
+      )}
+      <FullRequestCollapsible row={row} />
+    </div>
   );
 }
 
