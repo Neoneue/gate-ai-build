@@ -157,3 +157,29 @@ Full request drawer — resolved through the shared `resolveRequestTurns` helper
 labels still vary by error type — while the findings list and a request-metadata
 card move into the right rail. The orphaned `DetailMessageSubcards` is removed.
 Gap below the finding banner set to 24px (`pt-6`).
+
+## Sections
+
+### Requests detail: provider-error main card `6ac3c13`
+
+Provider-error rows (e.g. `req_cd0e57`) now render on the detail main card as
+**User message → Error detail (text field) → Full request drawer**, replacing the
+generic "No findings" placeholder for that case. Two new `RequestRow` fields drive
+it: `errorDetail` (the gateway failure-detail line) and `requestBodyRaw` (a verbatim
+Full-request override for `FullRequestCollapsible`, used as a real-capture
+placeholder on `req_cd0e57`).
+
+## Conventions
+
+### Detail-card labels unified to 16px `6ac3c13`
+
+`SubcardHeading` (`text-sm` → `text-base`) and the Full-request collapsible trigger
+(`text-sm` → `text-base`) now match the `PanelHeading` section title, so every label
+in the detail stack — User message, Error detail, Full request, and the finding-panel
+message turns — reads at one 16px size instead of mixing 14/16.
+
+### Gap below the KPI rail is always 24px `6ac3c13`
+
+The request detail body's top padding is now an unconditional `pt-6` (was `pt-2` /
+8px when no finding banner was present), and the finding banner wrapper bumped
+`pt-4` → `pt-6`. The KPI-to-banner and banner-to-card gaps are now a consistent 24px.
