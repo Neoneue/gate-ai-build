@@ -31,6 +31,19 @@ now returns `row.compression` when set, otherwise the existing derived ratio.
 Lets a row (e.g. an error response that produced no output) read a fixed
 `100.0%` instead of the token-derived value.
 
+### PII findings switcher card + pager `843c706`
+
+Repeated same-category PII findings now collapse into one `PII (N)` card with a
+prev/next pager (`PiiSwitcherCard`, `Requests.tsx`) instead of one card per
+match. The pager is controlled by the panel's selected finding + reveal nonce,
+so each step scrolls the evidence to that occurrence; the "Why this fired"
+offset is occurrence-aware (was always the first match). Removed the
+`DetectorTip` hover popover (Detector / Score / Threshold) and the
+`METHOD_LABEL` import, so the Full-request highlight is a plain span and
+Presidio no longer appears in the UI. Dropped the count badge from the
+Findings / Passed titles (`CountChip` back to its plain form, still on the PII
+card); the `Finding x / y` label is `text-foreground`.
+
 ## Sections
 
 ### req_cd0e57: flagged provider-error request `fc9f5f3`
@@ -63,7 +76,7 @@ On the `/requests-findings/:id` page (`Requests.tsx`):
 Replaced `req_cd0e57`'s `requestBodyRaw` (`src/data/requests.ts`), the Full
 request drawer payload, with a `user` message of two empty `text` blocks plus a
 `claude-opus-4-8` / `max_tokens` / `stream` tail. Drops the stale codex thinking
-+ base64 signature payload so the drawer reconciles with the row's Claude Opus
+- base64 signature payload so the drawer reconciles with the row's Claude Opus
 identity.
 
 ### No-findings empty state: standalone card, success/allow only `a5f0364`
@@ -116,3 +129,13 @@ Banner (`findingBannerSentence`): identical detections collapse into one
 count-aware sentence ("PII detector caught 2 instances of `<EMAIL>` …") and the
 raw value is revealed when Unredact is on (before → `<EMAIL>`, after →
 `noreply@anthropic.com`).
+
+### req_8389e4: chad@ trailers + generic PII banner `843c706`
+
+Added `Authored-by: NeoNeue chad@constellationnetwork.io` before each
+`Co-Authored-By` line in `req_8389e4` (`requests.ts`), giving 4 PII email
+instances (chad + noreply, two occurrences each) to page through. The findings
+banner now names a generic, stable entity descriptor (`emailAddress`) instead
+of the matched value or redaction token, so it no longer changes on Unredact
+and groups all email findings into one sentence ("PII detector caught 4
+instances of emailAddress in user turn 99.").
