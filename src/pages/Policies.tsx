@@ -1,4 +1,4 @@
-import { Shield, ShieldAlert, UserRound } from "lucide-react";
+import { KeyRound, Shield, UserRound } from "lucide-react";
 import { type ComponentType, type SVGProps, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -23,12 +23,28 @@ const ICON_COLOR: Record<string, string> = {
   secrets: TYPE_META.credential.color,
 };
 
+/** Active (selected) action border tone: Flag amber, Redact gray-600, Block
+ *  red — mirrors the finding-card action tones. */
+const ACTION_ACTIVE_BORDER: Record<string, string> = {
+  flag: "border-warning-500",
+  redact: "border-neutral-600",
+  block: "border-destructive",
+};
+
+/** Checked radio fill/border per action — matches ACTION_ACTIVE_BORDER so the
+ *  radio dot and the card border read as one tone. Dot stays white. */
+const ACTION_ACTIVE_RADIO: Record<string, string> = {
+  flag: "data-checked:border-warning-600 data-checked:bg-warning-600",
+  redact: "data-checked:border-neutral-700 data-checked:bg-neutral-700",
+  block: "data-checked:border-danger-700 data-checked:bg-danger-700",
+};
+
 /* ─────────────────────────────────────────────────────────────────────────
  * Policies
  *
  * The three inline scans that run on every routed request. Each policy is
  * an enable/disable Switch plus, when on, a settings body split into
- * "Sensitivity"/"Scan direction" (left) and "Action on detection" (right).
+ * "Action on detection" (left) and "Sensitivity"/"Scan direction" (right).
  *
  * Reconciliation: the "Active Policies" KPI numerator derives from the
  * single `policies` state array — `enabled` is the sole source of truth.
@@ -161,7 +177,7 @@ const POLICIES: PolicyConfig[] = [
     id: "secrets",
     name: "Credential & secrets scanner",
     scanTag: "Input + Output scan",
-    icon: ShieldAlert,
+    icon: KeyRound,
     description:
       "Detects cloud keys, access tokens, and high-entropy secrets in both user prompts and LLM responses.",
     scanDirection: {
@@ -429,20 +445,20 @@ function PolicyCard({
         <div className="grid grid-cols-2 items-start gap-4 border-border border-t bg-card p-4">
           <Card className="border border-border bg-transparent shadow-none">
             <CardContent>
-              <SettingsHalf
+              <ActionHalf
                 config={config}
-                onScanDirectionChange={onScanDirectionChange}
-                onSensitivityChange={onSensitivityChange}
-                state={state}
+                onChange={onActionChange}
+                value={state.action}
               />
             </CardContent>
           </Card>
           <Card className="border border-border bg-transparent shadow-none">
             <CardContent>
-              <ActionHalf
+              <SettingsHalf
                 config={config}
-                onChange={onActionChange}
-                value={state.action}
+                onScanDirectionChange={onScanDirectionChange}
+                onSensitivityChange={onSensitivityChange}
+                state={state}
               />
             </CardContent>
           </Card>
@@ -555,7 +571,7 @@ function ActionHalf({
               className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ease-out",
                 selected
-                  ? "border-primary bg-neutral-50"
+                  ? cn("bg-neutral-50", ACTION_ACTIVE_BORDER[opt.value])
                   : "border-border bg-transparent hover:bg-neutral-50"
               )}
               key={opt.value}
@@ -563,7 +579,7 @@ function ActionHalf({
               <RadioGroupItem
                 aria-describedby={descId}
                 aria-labelledby={nameId}
-                className="mt-1"
+                className={cn("mt-1", ACTION_ACTIVE_RADIO[opt.value])}
                 value={opt.value}
               />
               <div className="flex min-w-0 flex-col gap-1">

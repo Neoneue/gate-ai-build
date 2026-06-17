@@ -107,7 +107,6 @@ import {
   getRequestFindings,
   isByokKey,
   METHOD_LABEL,
-  POLICY_SCANNER_LABEL,
   REQUEST_ROWS_7D,
   REQUEST_ROWS_24H,
   REQUEST_ROWS_30D,
@@ -2221,17 +2220,17 @@ export function RequestDetailBodyV2({
                   detail sections, or a calm "No findings" default when
                   nothing fired. */}
             <div className="min-w-0 md:col-span-2">
-              <div className={PANEL_OUTER}>
+              <div className={selectedFinding ? PANEL_OUTER : "contents"}>
                 {selectedFinding ? (
                   selectedFinding.category === "injection" ? (
-                    <InjectionRightPanel
+                    <InjectionDetailPanel
                       finding={selectedFinding}
                       onMarkFalsePositive={markFalsePositive}
                       onTunePolicy={tunePolicy}
                       row={row}
                     />
                   ) : (
-                    <PiiRightPanel
+                    <PiiDetailPanel
                       finding={selectedFinding}
                       isAdmin={IS_ADMIN}
                       onShowRawChange={setShowRaw}
@@ -2263,11 +2262,14 @@ export function RequestDetailBodyV2({
                       </>
                     ) : (
                       <>
-                        {/* No detector fired: still surface the originating
-                              message (user / assistant / tool call + result)
-                              above the No-findings card. */}
-                        <RequestBodyPanel bare messagesOnly row={row} />
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
+                        {/* No detector fired. A clean success/allow pass shows
+                              only the No-findings card; other no-finding rows
+                              (e.g. non-provider errors) still surface the
+                              originating message above the card. */}
+                        {!(
+                          row.status === "success" && row.guardrail === "allow"
+                        ) && <RequestBodyPanel bare messagesOnly row={row} />}
+                        <div className="flex h-[304px] flex-col items-center justify-center gap-2 rounded-md border border-border bg-card text-center">
                           <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
                             <ShieldCheck
                               aria-hidden
@@ -2575,10 +2577,10 @@ function KvRow({
   );
 }
 
-/** Right panel for PII / credential findings — the Presidio / regex layout.
+/** Detail panel for PII / credential findings — the Presidio / regex layout.
  * Owns the Unredact toggle (rendered on the "Why this fired" heading row).
  * Every section is title-ABOVE-card; cards hold only data. */
-function PiiRightPanel({
+function PiiDetailPanel({
   finding,
   row,
   isAdmin,
@@ -2743,38 +2745,17 @@ function PiiRightPanel({
               </span>
             </div>
           )}
-          <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
-            {finding.action === "block" ? (
-              <KvRow label="Action" value="Blocked, not sent upstream" />
-            ) : (
-              <KvRow label="Bytes redacted" value={match.length} />
-            )}
-            <KvRow
-              label="Policy"
-              value={POLICY_SCANNER_LABEL[finding.category]}
-            />
-            <KvRow label="Provider" value={VENDOR_META[row.vendor].label} />
-            <KvRow
-              label="Model"
-              value={
-                <span className="inline-flex items-center gap-2">
-                  <VendorAvatar vendor={row.vendor} />
-                  {row.model}
-                </span>
-              }
-            />
-          </div>
         </div>
       </section>
     </>
   );
 }
 
-/** Right panel for injection findings — the classifier layout. NONE of
+/** Detail panel for injection findings — the classifier layout. NONE of
  * Recognizer / Offset / Bytes / Unredact / redaction diff. Every section is
  * title-ABOVE-card. Built on the five real detector outputs only
  * (docs/Injection-findings.md §0/§6). */
-function InjectionRightPanel({
+function InjectionDetailPanel({
   finding,
   row,
   onTunePolicy,
