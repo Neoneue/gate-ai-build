@@ -65,3 +65,26 @@ request drawer payload, with a `user` message of two empty `text` blocks plus a
 `claude-opus-4-8` / `max_tokens` / `stream` tail. Drops the stale codex thinking
 + base64 signature payload so the drawer reconciles with the row's Claude Opus
 identity.
+
+### No-findings empty state: standalone card, success/allow only `a5f0364`
+
+On a success + allow request the findings detail now shows **only** the
+No-findings card (the originating message / tool-request panel is hidden). The
+card is a standalone `rounded-md` card fixed at `h-[304px]` to match the Passed
+card; the outer `PANEL_OUTER` wrapper is dropped for the no-finding case
+(`contents`) so there's no double border. Also removed the Bytes-redacted
+metadata card from the PII / credential detail panels, and renamed
+`PiiRightPanel` / `InjectionRightPanel` to `...DetailPanel` (they render on the
+left). All in `Requests.tsx`.
+
+### Policies: per-action active colors, swapped halves, key icon `a5f0364`
+
+On the three policy cards (`Policies.tsx`):
+
+- "Credential & secrets scanner" uses the `KeyRound` icon (was `ShieldAlert`).
+- The two inner cards are swapped: **Action on detection** (left),
+  **Sensitivity / Scan direction** (right).
+- The selected action border is now per-action: Flag `warning-500` (amber),
+  Redact `neutral-600` (gray), Block `destructive` (red) — was `border-primary`.
+- The checked radio fill/border is one step darker than its card border:
+  `warning-600` / `neutral-700` / `danger-700`.
