@@ -2112,8 +2112,6 @@ export function RequestDetailBodyV2({
     [row]
   );
 
-  // Always open on the Findings tab (shows the all-pass state when nothing fired).
-  const [activeTab, setActiveTab] = useState("findings");
   // Track which finding card is selected in the left column.
   const [selectedIdx, setSelectedIdx] = useState(0);
 
@@ -2151,12 +2149,10 @@ export function RequestDetailBodyV2({
           {requestId}
         </DialogTitleBlock>
       </DialogScrollHeader>
-
       {/* KPI rail — persistent, sits above everything including banner */}
       <DialogScrollSummary>
         <KpiRail row={row} />
       </DialogScrollSummary>
-
       {/* Finding banner — icon + title + descriptive sentence (no link). */}
       {findings.length > 0 && (
         <div className="px-6 pt-4">
@@ -2193,242 +2189,206 @@ export function RequestDetailBodyV2({
           </div>
         </div>
       )}
-
-      <Tabs
+      <div
         className={
           variant === "page" ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"
         }
-        onValueChange={setActiveTab}
-        value={activeTab}
       >
-        {/* Fixed tab bar — stays put while the content below it scrolls (modal). */}
-        <div className="shrink-0 px-6 pt-4">
-          <TabsList className="px-0" variant="line">
-            <TabsTrigger className="pl-0" value="findings">
-              Findings
-              {findings.length > 0 && (
-                <Badge className="ml-1" variant="neutral">
-                  {findings.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Body region. Modal: the only element that scrolls (clipped below the
-            fixed tab bar). Page: natural height, no internal scroll. */}
+        {/* Body region. Modal: the only element that scrolls. Page: natural
+            height, no internal scroll. */}
         <div
-          className={
+          className={[
             variant === "page"
-              ? "px-6 pt-2 pb-6"
-              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-6"
-          }
+              ? "px-6 pb-6"
+              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
+            // 24px below the finding banner; 8px when there's no banner.
+            findings.length > 0 ? "pt-6" : "pt-2",
+          ].join(" ")}
         >
-          {/* ── Findings tab ──────────────────────────────────────────── */}
-          <TabsContent value="findings">
-            <div className="grid gap-4 md:grid-cols-3">
-              {/* Left column: an OUTER card wrapping the Findings + Passed
-                  groups. Each group is a 16px title ABOVE a stack of cards. */}
-              <div className="min-w-0 md:col-span-1">
-                <div className={PANEL_OUTER}>
-                  {findings.length > 0 && (
-                    <section className="flex flex-col gap-2">
-                      <PanelHeading
-                        aside={<CountChip count={findings.length} />}
-                        title="Findings"
-                      />
-                      <div className="flex flex-col gap-2">
-                        {findings.map((f, idx) => (
-                          <FindingCard
-                            finding={f}
-                            key={idx}
-                            onClick={() => setSelectedIdx(idx)}
-                            selected={selectedIdx === idx}
-                          />
-                        ))}
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Left column (2/3): an OUTER card wrapping the per-finding
+                  detail sections, or a calm "No findings" default when
+                  nothing fired. */}
+            <div className="min-w-0 md:col-span-2">
+              <div className={PANEL_OUTER}>
+                {selectedFinding ? (
+                  selectedFinding.category === "injection" ? (
+                    <InjectionRightPanel
+                      finding={selectedFinding}
+                      onMarkFalsePositive={markFalsePositive}
+                      onTunePolicy={tunePolicy}
+                      row={row}
+                    />
+                  ) : (
+                    <PiiRightPanel
+                      finding={selectedFinding}
+                      isAdmin={IS_ADMIN}
+                      onShowRawChange={setShowRaw}
+                      row={row}
+                      showRaw={showRaw}
+                    />
+                  )
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {/* No detector fired: still surface the originating
+                          message (user / assistant / tool call + result)
+                          above the No-findings card. */}
+                    <RequestBodyPanel bare messagesOnly row={row} />
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
+                        <ShieldCheck
+                          aria-hidden
+                          className="size-5 text-neutral-500"
+                          strokeWidth={1.75}
+                        />
                       </div>
-                    </section>
-                  )}
+                      <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+                        No findings
+                      </h3>
+                      <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+                        All detectors passed for this request.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right column (1/3): a stack of separate cards — Findings +
+                  Passed in one, request Details metadata in another below it. */}
+            <div className="flex min-w-0 flex-col gap-4 md:col-span-1">
+              <div className={PANEL_OUTER}>
+                {findings.length > 0 && (
                   <section className="flex flex-col gap-2">
                     <PanelHeading
-                      aside={<CountChip count={passed.length} />}
-                      title="Passed"
+                      aside={<CountChip count={findings.length} />}
+                      title="Findings"
                     />
                     <div className="flex flex-col gap-2">
-                      {passed.map((p) => (
-                        <div
-                          className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4"
-                          key={p.category}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <span className="font-medium font-sans text-neutral-900 text-sm">
-                              {p.label}
-                            </span>
-                            <Badge variant="success">Pass</Badge>
-                          </div>
-                          <span className="font-sans text-neutral-500 text-sm">
-                            {p.description}
-                          </span>
-                        </div>
+                      {findings.map((f, idx) => (
+                        <FindingCard
+                          finding={f}
+                          key={idx}
+                          onClick={() => setSelectedIdx(idx)}
+                          selected={selectedIdx === idx}
+                        />
                       ))}
                     </div>
                   </section>
-                </div>
-              </div>
-
-              {/* Right column: an OUTER card wrapping the per-finding detail
-                  sections, or a calm "No findings" default when nothing fired. */}
-              <div className="min-w-0 md:col-span-2">
-                <div className={PANEL_OUTER}>
-                  {selectedFinding ? (
-                    selectedFinding.category === "injection" ? (
-                      <InjectionRightPanel
-                        finding={selectedFinding}
-                        onMarkFalsePositive={markFalsePositive}
-                        onTunePolicy={tunePolicy}
-                      />
-                    ) : (
-                      <PiiRightPanel
-                        finding={selectedFinding}
-                        isAdmin={IS_ADMIN}
-                        onShowRawChange={setShowRaw}
-                        row={row}
-                        showRaw={showRaw}
-                      />
-                    )
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {/* No detector fired: still surface the originating
-                          message (user / assistant / tool call + result)
-                          above the No-findings card. */}
-                      <RequestBodyPanel bare messagesOnly row={row} />
-                      <div className="flex flex-col items-center justify-center gap-2 rounded-xs border border-border bg-card py-12 text-center">
-                        <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
-                          <ShieldCheck
-                            aria-hidden
-                            className="size-5 text-neutral-500"
-                            strokeWidth={1.75}
-                          />
+                )}
+                <section className="flex flex-col gap-2">
+                  <PanelHeading
+                    aside={<CountChip count={passed.length} />}
+                    title="Passed"
+                  />
+                  <div className="flex flex-col gap-2">
+                    {passed.map((p) => (
+                      <div
+                        className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4"
+                        key={p.category}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="font-medium font-sans text-neutral-900 text-sm">
+                            {p.label}
+                          </span>
+                          <Badge variant="success">Pass</Badge>
                         </div>
-                        <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
-                          No findings
-                        </h3>
-                        <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
-                          All detectors passed for this request.
-                        </p>
+                        <span className="font-sans text-neutral-500 text-sm">
+                          {p.description}
+                        </span>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                </section>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* ── Details tab — message + request metadata ─────────────────
-              Same two-column shell as the Findings tab: left 2/3 holds the
-              conversation + Full request drawer, right 1/3 the metadata. */}
-          <TabsContent value="details">
-            <div className="grid gap-4 md:grid-cols-3">
-              {/* Left (2/3): the message — user/assistant turns + Full request. */}
-              <div className="min-w-0 md:col-span-2">
-                <div className={PANEL_OUTER}>
-                  <DetailMessageSubcards row={row} />
-                </div>
-              </div>
-
-              {/* Right (1/3): request metadata. */}
-              <div className="min-w-0 md:col-span-1">
-                <div className={PANEL_OUTER}>
-                  <section className="flex flex-col gap-2">
-                    <PanelHeading title="Details" />
-                    <DetailList className="rounded-xs">
-                      <DetailRow
-                        label="Timestamp"
-                        value={
-                          <span className="font-mono text-neutral-900 tabular-nums">
-                            {row.day}, {row.time}
-                          </span>
-                        }
-                      />
-                      <DetailRow
-                        label="Conversation"
-                        value={
-                          <span className="font-mono tabular-nums">
-                            <TextLink
-                              aria-label={`Open conversation ${row.conversation}`}
-                              onClick={openConversation}
-                            >
-                              {row.conversation}
-                            </TextLink>
-                          </span>
-                        }
-                      />
-                      <DetailRow
-                        label="Model"
-                        value={
-                          <div className="flex items-center gap-2">
-                            <VendorAvatar vendor={row.vendor} />
-                            <span className="font-mono text-neutral-900">
-                              {row.model}
-                            </span>
-                          </div>
-                        }
-                      />
-                      <DetailRow
-                        label="Provider"
-                        value={
-                          <span className="text-neutral-900">{provider}</span>
-                        }
-                      />
-                      <DetailRow
-                        label="API Key"
-                        value={
+              <div className={PANEL_OUTER}>
+                <section className="flex flex-col gap-2">
+                  <PanelHeading title="Details" />
+                  <DetailList className="rounded-xs">
+                    <DetailRow
+                      label="Timestamp"
+                      value={
+                        <span className="font-mono text-neutral-900 tabular-nums">
+                          {row.day}, {row.time}
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Conversation"
+                      value={
+                        <span className="font-mono tabular-nums">
+                          <TextLink
+                            aria-label={`Open conversation ${row.conversation}`}
+                            onClick={openConversation}
+                          >
+                            {row.conversation}
+                          </TextLink>
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Model"
+                      value={
+                        <div className="flex items-center gap-2">
+                          <VendorAvatar vendor={row.vendor} />
                           <span className="font-mono text-neutral-900">
-                            {row.keyId}
+                            {row.model}
                           </span>
-                        }
-                      />
+                        </div>
+                      }
+                    />
+                    <DetailRow
+                      label="Provider"
+                      value={
+                        <span className="text-neutral-900">{provider}</span>
+                      }
+                    />
+                    <DetailRow
+                      label="API Key"
+                      value={
+                        <span className="font-mono text-neutral-900">
+                          {row.keyId}
+                        </span>
+                      }
+                    />
+                    <DetailRow
+                      label="Endpoint"
+                      value={
+                        <span className="break-all font-mono text-neutral-900">
+                          <span className="text-neutral-500">POST</span>{" "}
+                          {VENDOR_ENDPOINT[row.vendor]}
+                        </span>
+                      }
+                    />
+                    {errorOriginInfo ? (
                       <DetailRow
-                        label="Endpoint"
+                        label="Error origin"
                         value={
-                          <span className="break-all font-mono text-neutral-900">
-                            <span className="text-neutral-500">POST</span>{" "}
-                            {VENDOR_ENDPOINT[row.vendor]}
-                          </span>
-                        }
-                      />
-                      {errorOriginInfo ? (
-                        <DetailRow
-                          label="Error origin"
-                          value={
-                            <Badge variant={errorOriginInfo.variant}>
-                              {errorOriginInfo.label}
-                            </Badge>
-                          }
-                        />
-                      ) : null}
-                      <DetailRow
-                        label="HTTP status"
-                        value={
-                          <Badge variant={RESPONSE_BADGE[row.status].variant}>
-                            {row.code}
+                          <Badge variant={errorOriginInfo.variant}>
+                            {errorOriginInfo.label}
                           </Badge>
                         }
                       />
-                      <DetailRow
-                        label="Cache"
-                        value={<Badge variant="info">miss</Badge>}
-                      />
-                    </DetailList>
-                  </section>
-                </div>
+                    ) : null}
+                    <DetailRow
+                      label="HTTP status"
+                      value={
+                        <Badge variant={RESPONSE_BADGE[row.status].variant}>
+                          {row.code}
+                        </Badge>
+                      }
+                    />
+                    <DetailRow
+                      label="Cache"
+                      value={<Badge variant="info">miss</Badge>}
+                    />
+                  </DetailList>
+                </section>
               </div>
             </div>
-          </TabsContent>
+          </div>
         </div>
-      </Tabs>
-
+      </div>
       {/* Footer is modal-only chrome. On the page, "View Conversation" lives
           at the top-left (rendered by the page itself), so no footer here. */}
       {variant !== "page" && (
@@ -2672,6 +2632,15 @@ function PiiRightPanel({
         </div>
       </section>
 
+      {/* The other turn of the pair + the Full request drawer, directly below
+          the evidence. When the evidence is the user message the complement is
+          the response side; when it is a tool result / assistant response the
+          complement is the request side. */}
+      <RequestTurnComplement
+        row={row}
+        which={evidenceLabel === "User message" ? "response" : "request"}
+      />
+
       {/* Why this fired — Unredact toggle on the heading row; label/value rows. */}
       <section className="flex flex-col gap-2">
         <PanelHeading
@@ -2760,10 +2729,12 @@ function PiiRightPanel({
  * (docs/Injection-findings.md §0/§6). */
 function InjectionRightPanel({
   finding,
+  row,
   onTunePolicy,
   onMarkFalsePositive,
 }: {
   finding: RequestFinding;
+  row: RequestRow;
   onTunePolicy: () => void;
   onMarkFalsePositive: () => void;
 }) {
@@ -2803,6 +2774,15 @@ function InjectionRightPanel({
           )}
         </div>
       </section>
+
+      {/* The other turn of the pair + the Full request drawer, directly below
+          the evidence. A classifier denial shows the tool result as evidence,
+          so its complement is the tool call; a user-segment finding shows the
+          user message, so its complement is the assistant/error response. */}
+      <RequestTurnComplement
+        row={row}
+        which={isClassifierDeny ? "request" : "response"}
+      />
 
       {/* What happened — curated sentence + the detector note (reasoning). */}
       <section className="flex flex-col gap-2">
@@ -3299,13 +3279,16 @@ function FullRequestCollapsible({
  * response: a recorded provider/upstream failure renders it as the Error
  * response variant rather than a separate card; otherwise it is the assistant
  * (or tool) turn, suppressed when no turn exists. */
-function DetailMessageSubcards({
-  row,
-  revealSignal,
-}: {
-  row: RequestRow;
-  revealSignal?: number;
-}) {
+/* Single source of truth for a request's two conversation turns. The finding
+ * panels (PII / injection) and the Details subcards all resolve the request
+ * and response sides from here so the labels and content stay identical
+ * wherever they render. */
+function resolveRequestTurns(row: RequestRow): {
+  isTool: boolean;
+  userContent: string;
+  responseContent: string;
+  isErrorResponse: boolean;
+} {
   // A `sed`/`grep` tool step is not user input, so it renders as a tool call.
   const isTool = !row.userMessage && !!row.toolName;
   const userContent =
@@ -3313,27 +3296,51 @@ function DetailMessageSubcards({
     (isTool
       ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
       : sampleRequestContent(row));
-  // Card 2 switches to the Error response variant when the gateway recorded a
+  // The response side switches to the Error variant when the gateway recorded a
   // provider/upstream failure; otherwise it's the assistant (or tool) turn.
   const isErrorResponse = errorOrigin(row.errorSource) !== null;
   const responseContent = isTool
     ? (row.toolResult ?? "")
     : (row.assistantResponse ?? sampleResponseText(row));
-  return (
-    <>
+  return { isTool, userContent, responseContent, isErrorResponse };
+}
+
+/* Renders the conversation turn a finding panel does NOT already show as its
+ * evidence (the "complement"), followed by the Full request drawer. `which`
+ * picks the side: "request" = the user/tool-call turn, "response" = the
+ * assistant/tool-result turn (or the error variant). Built on
+ * resolveRequestTurns so it matches the Details subcards exactly. */
+function RequestTurnComplement({
+  row,
+  which,
+}: {
+  row: RequestRow;
+  which: "request" | "response";
+}) {
+  const { isTool, userContent, responseContent, isErrorResponse } =
+    resolveRequestTurns(row);
+  let turn: ReactNode = null;
+  if (which === "request") {
+    turn = (
       <DetailMessageSubcard
         content={userContent}
         label={isTool ? "Tool call" : "User message"}
       />
-      {isErrorResponse ? (
-        <ErrorResponseSubcard row={row} />
-      ) : responseContent ? (
-        <DetailMessageSubcard
-          content={responseContent}
-          label={isTool ? "Tool result" : "Assistant response"}
-        />
-      ) : null}
-      <FullRequestCollapsible revealSignal={revealSignal} row={row} />
+    );
+  } else if (isErrorResponse) {
+    turn = <ErrorResponseSubcard row={row} />;
+  } else if (responseContent) {
+    turn = (
+      <DetailMessageSubcard
+        content={responseContent}
+        label={isTool ? "Tool result" : "Assistant response"}
+      />
+    );
+  }
+  return (
+    <>
+      {turn}
+      <FullRequestCollapsible row={row} />
     </>
   );
 }
