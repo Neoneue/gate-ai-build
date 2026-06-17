@@ -57,3 +57,11 @@ On the `/requests-findings/:id` page (`Requests.tsx`):
   and capped at `max-h-[200px]` with scroll.
 - Code wells (Error response, Full request, mono evidence well) switched from
   `bg-neutral-50` to `bg-card` (white); only hover states keep the gray.
+
+### req_cd0e57: full-request body swapped to empty text blocks `c233407`
+
+Replaced `req_cd0e57`'s `requestBodyRaw` (`src/data/requests.ts`), the Full
+request drawer payload, with a `user` message of two empty `text` blocks plus a
+`claude-opus-4-8` / `max_tokens` / `stream` tail. Drops the stale codex thinking
++ base64 signature payload so the drawer reconciles with the row's Claude Opus
+identity.
