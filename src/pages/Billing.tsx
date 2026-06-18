@@ -79,7 +79,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
         Manage your plan, track credit usage, and review every gateway
         transaction.
       </p>

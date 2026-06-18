@@ -1352,7 +1352,7 @@ function PageHeader({
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
         Route to{" "}
         <span className="text-neutral-800 tabular-nums">{modelCount}</span>{" "}
         models across{" "}

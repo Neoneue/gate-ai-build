@@ -333,7 +333,7 @@ export function SecurityDefault() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Security events</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           See every threat event your policies caught, with the prompt, model,
           and per-key risk tier behind each call. Fingerprinted to
           Constellation's Digital Evidence layer so every detection is

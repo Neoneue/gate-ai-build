@@ -260,7 +260,7 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>API Keys</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
           every request through the gateway.
         </p>

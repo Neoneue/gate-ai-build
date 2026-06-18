@@ -1,5 +1,5 @@
 import { ArrowLeftRight, FileText, Flag, ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useNavigate,
   useOutletContext,
@@ -27,13 +27,19 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DetailList, DetailRow } from "@/components/ui/detail-list";
 import {
   Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
   DialogScrollBody,
   DialogScrollContent,
   DialogScrollHeader,
+  DialogTitle,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
+import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
@@ -44,6 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import {
   SortableTableHead,
   Table,
@@ -755,7 +762,7 @@ function PageHeader() {
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           Every injection, PII, and credential event your policies caught,
           fingerprinted to Constellation's Digital Evidence layer. Blocked,
           flagged, or redacted.
@@ -1086,6 +1093,48 @@ function EventsTableSection({
   const [type, setType] = useState("all");
   const [keyFilter, setKeyFilter] = useState("all");
   const [action, setAction] = useState("all");
+  // Filters Dialog — the three single-select event filters (Type / Action /
+  // Key) collapsed off the toolbar into a modal, mirroring Requests. Each
+  // <Select> moves verbatim (single value, single onValueChange); only the
+  // chrome changes. filtersOpen drives the Dialog.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Staged-Apply drafts. The modal's <Select>s bind to these, never to the
+  // committed state below, so an abandoned draft (Cancel / X / Esc / overlay)
+  // never leaks into a later open. Apply commits draft → committed; Cancel
+  // closes without committing.
+  const [draftType, setDraftType] = useState("all");
+  const [draftKeyFilter, setDraftKeyFilter] = useState("all");
+  const [draftAction, setDraftAction] = useState("all");
+  const activeFilterCount = [type, action, keyFilter].filter(
+    (v) => v !== "all"
+  ).length;
+  const draftActiveFilterCount = [
+    draftType,
+    draftAction,
+    draftKeyFilter,
+  ].filter((v) => v !== "all").length;
+  // Seed draft ← committed in the open handler (opening is a user event, not
+  // derived state). Committed filters can't change while the modal is open
+  // (Apply closes it), so this is the only moment a re-seed is needed.
+  const openFilters = useCallback(() => {
+    setDraftType(type);
+    setDraftAction(action);
+    setDraftKeyFilter(keyFilter);
+    setFiltersOpen(true);
+  }, [type, action, keyFilter]);
+  // Reset clears the DRAFT only (staged); committed state is untouched until
+  // Apply.
+  const resetFilters = useCallback(() => {
+    setDraftType("all");
+    setDraftAction("all");
+    setDraftKeyFilter("all");
+  }, []);
+  const applyFilters = useCallback(() => {
+    setType(draftType);
+    setAction(draftAction);
+    setKeyFilter(draftKeyFilter);
+    setFiltersOpen(false);
+  }, [draftType, draftAction, draftKeyFilter]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
   // Row-click drill-in — selectedRow doubles as the dialog `open` signal.
@@ -1184,56 +1233,41 @@ function EventsTableSection({
               value={query}
             />
 
-            <Select onValueChange={setType} value={type}>
-              <SelectTrigger
-                aria-label="Type"
-                className="border-border bg-card font-normal text-foreground"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="injection">Injection</SelectItem>
-                <SelectItem value="pii">PII</SelectItem>
-                <SelectItem value="phi">PHI</SelectItem>
-                <SelectItem value="credential">Credential</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={setKeyFilter} value={keyFilter}>
-              <SelectTrigger
-                aria-label="API key"
-                className="border-border bg-card font-normal text-foreground"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All keys</SelectItem>
-                {EVENT_KEYS.map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {k}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={setAction} value={action}>
-              <SelectTrigger
-                aria-label="Action"
-                className="border-border bg-card font-normal text-foreground"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All actions</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
-                <SelectItem value="flagged">Flagged</SelectItem>
-                <SelectItem value="redacted">Redacted</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* PROTOTYPE — three section-header filters (Type / Action /
+                Key) collapsed into one modal Dialog to de-cram the toolbar
+                row, mirroring Requests / AuditTrail. The single-select
+                <Select>s are moved verbatim into the Dialog below (same
+                value / onValueChange + option lists), each laid out as a
+                labeled full-width row. Active-count badge on the trigger;
+                Reset clears all three. Reversible: restore the inline
+                <Select>s and delete this Dialog. */}
+            <Button
+              aria-label={
+                activeFilterCount > 0
+                  ? `Filters (${activeFilterCount} active)`
+                  : "Filters"
+              }
+              className="border-border bg-card font-normal text-foreground"
+              onClick={openFilters}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <SlidersHorizontalIcon
+                aria-hidden
+                data-icon="inline-start"
+                size={16}
+              />
+              Filters
+              {activeFilterCount > 0 ? (
+                <Badge
+                  aria-hidden
+                  className="h-4 min-w-4 justify-center px-1 leading-none"
+                >
+                  {activeFilterCount}
+                </Badge>
+              ) : null}
+            </Button>
 
             <Button size="sm" type="button" variant="outline">
               <UploadIcon aria-hidden data-icon="inline-start" size={16} />
@@ -1241,6 +1275,108 @@ function EventsTableSection({
             </Button>
           </div>
         </div>
+
+        {/* Filters Dialog — the three single-select event filters moved off
+            the toolbar (Type / Action / Key, in that order). Drafts are
+            edited here and committed only on Apply; Cancel / X / Esc /
+            overlay discard. The committed type/action/keyFilter still drive
+            filteredRows below. */}
+        <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
+          <DialogContent className="w-full gap-4 sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+                Filters
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Type
+              </Label>
+              <Select onValueChange={setDraftType} value={draftType}>
+                <SelectTrigger
+                  aria-label="Type"
+                  className="w-full border-border bg-card font-normal text-foreground"
+                  id="filter-type"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="injection">Injection</SelectItem>
+                  <SelectItem value="pii">PII</SelectItem>
+                  <SelectItem value="phi">PHI</SelectItem>
+                  <SelectItem value="credential">Credential</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Action
+              </Label>
+              <Select onValueChange={setDraftAction} value={draftAction}>
+                <SelectTrigger
+                  aria-label="Action"
+                  className="w-full border-border bg-card font-normal text-foreground"
+                  id="filter-action"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All actions</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="flagged">Flagged</SelectItem>
+                  <SelectItem value="redacted">Redacted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Key
+              </Label>
+              <Select onValueChange={setDraftKeyFilter} value={draftKeyFilter}>
+                <SelectTrigger
+                  aria-label="API key"
+                  className="w-full border-border bg-card font-normal text-foreground"
+                  id="filter-key"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All keys</SelectItem>
+                  {EVENT_KEYS.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {k}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter className="sm:justify-between">
+              <Button
+                disabled={draftActiveFilterCount === 0}
+                onClick={resetFilters}
+                type="button"
+                variant="ghost"
+              >
+                Reset
+              </Button>
+              <div className="flex items-center gap-2">
+                <DialogClose
+                  render={<Button type="button" variant="outline" />}
+                >
+                  Cancel
+                </DialogClose>
+                <Button onClick={applyFilters} type="button">
+                  Apply
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Card density="flush">
           {isEmpty ? (

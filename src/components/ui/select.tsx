@@ -39,15 +39,31 @@ function collectItemLabels(
 // Base UI's Root is generic over Value/Multiple; defaulting to string here so
 // every consumer can pass plain `(v: string) => …` callbacks without per-call
 // generic params or `unknown` casts.
+//
+// SelectProps is a discriminated union on `multiple`:
+//   • single mode (default, `multiple` absent/false) — the original shape, so
+//     every existing single-select call site keeps compiling unchanged.
+//   • multiple mode (`multiple` true) — array value/defaultValue and an
+//     array onValueChange, matching Base UI's native multi-select. Base UI
+//     handles the per-item checkmark (ItemIndicator) for selected items.
 type BaseRootProps = React.ComponentProps<typeof SelectPrimitive.Root>;
-type SelectProps = Omit<
+type SelectCommonProps = Omit<
   BaseRootProps,
-  "value" | "defaultValue" | "onValueChange"
-> & {
+  "value" | "defaultValue" | "onValueChange" | "multiple"
+>;
+type SingleSelectProps = SelectCommonProps & {
+  multiple?: false;
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
 };
+type MultipleSelectProps = SelectCommonProps & {
+  multiple: true;
+  value?: string[];
+  defaultValue?: string[];
+  onValueChange?: (value: string[]) => void;
+};
+type SelectProps = SingleSelectProps | MultipleSelectProps;
 
 function Select({ children, onValueChange, ...props }: SelectProps) {
   const labels = React.useMemo(() => {
@@ -55,14 +71,18 @@ function Select({ children, onValueChange, ...props }: SelectProps) {
     collectItemLabels(children, map);
     return map;
   }, [children]);
+  // Base UI emits a string in single mode and string[] in multiple mode; the
+  // discriminated union has already constrained the consumer's callback to the
+  // matching signature, so one runtime forward covers both.
+  const handleValueChange = onValueChange
+    ? (v: unknown) =>
+        (onValueChange as (value: string | string[]) => void)(
+          v as string | string[]
+        )
+    : undefined;
   return (
     <SelectLabelContext.Provider value={labels}>
-      <SelectPrimitive.Root
-        {...props}
-        onValueChange={
-          onValueChange ? (v: unknown) => onValueChange(v as string) : undefined
-        }
-      >
+      <SelectPrimitive.Root {...props} onValueChange={handleValueChange}>
         {children}
       </SelectPrimitive.Root>
     </SelectLabelContext.Provider>

@@ -185,7 +185,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Overview</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
         your gateway.
       </p>

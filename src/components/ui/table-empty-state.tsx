@@ -73,7 +73,7 @@ export function TableEmptyState({
       <EmptyState
         action={action}
         body={body}
-        className="rounded-none shadow-none"
+        className="rounded-none border-none bg-transparent shadow-none"
         icon={icon}
         title={title}
       />
