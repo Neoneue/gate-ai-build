@@ -94,19 +94,45 @@ const ENTITY_DESCRIPTOR: Record<string, string> = {
   "prompt-injection": "injection instructions",
 };
 // Composes the banner's descriptive sentence from the fired findings, e.g.
-// "PII detector caught <EMAIL> in user turn 99." Entity findings (PII /
-// credential) name the REDACTION TOKEN (never the raw value — it was redacted)
-// so the operator sees what fired without re-leaking the secret; other findings
-// fall back to the human descriptor.
+// "PII detector caught 6 instances of <EMAIL> in turn 99." The banner is a
+// per-detector digest: every occurrence in a category collapses into one
+// count-aware sentence with a generic placeholder, never the raw value. The
+// per-value detail (and the raw/redacted toggle) lives in the finding cards.
 export type FindingBannerSegment = { pre: string; what: string; post: string };
+
+// Detector order for the summary banner: PII, then credentials, then injection.
+// Categories not listed sort last.
+const CATEGORY_ORDER: FindingCategory[] = ["pii", "credential", "injection"];
+
+const BANNER_TOKEN_WHITESPACE = /\s+/g;
+
+// The bold placeholder a category's summary sentence emphasizes. Credentials
+// always collapse to a generic <KEYS> token; PII brackets its entity descriptor
+// (Email -> <EMAIL>) and falls back to <PII> when a turn mixes entity types;
+// other detectors keep the human descriptor.
+function categoryBannerToken(
+  category: FindingCategory,
+  entityTypes: Set<string>
+): string {
+  if (category === "credential") {
+    return "<KEYS>";
+  }
+  const [firstEntity] = entityTypes;
+  const descriptor = ENTITY_DESCRIPTOR[firstEntity] ?? entityLabel(firstEntity);
+  if (category === "pii") {
+    return entityTypes.size === 1
+      ? `<${descriptor.toUpperCase().replace(BANNER_TOKEN_WHITESPACE, "_")}>`
+      : "<PII>";
+  }
+  return entityTypes.size === 1 ? descriptor : CATEGORY_LABEL[category];
+}
 
 /** Structured banner content: either a single canned sentence (the flagged-
  *  injection mockup) or per-group segments where `what` is the entity
  *  descriptor, so the view can emphasize it. `findingBannerSentence` renders the
  *  plain string from the same data, keeping non-React callers on a string. */
 export function findingBannerSegments(
-  findings: RequestFinding[],
-  showRaw = false
+  findings: RequestFinding[]
 ): { plain: string } | { segments: FindingBannerSegment[] } {
   // Mockup: a single flagged prompt-injection finding shows the gateway's
   // generic flag sentence instead of the per-entity detector breakdown.
@@ -117,51 +143,61 @@ export function findingBannerSegments(
   ) {
     return { plain: "Request flagged by prompt-injection protection." };
   }
-  // Collapse identical detections (same category/value/turn) into one
-  // count-aware sentence so two of the same email don't repeat verbatim.
-  const groups: {
-    key: string;
-    label: string;
-    what: string;
-    role: string;
-    turn: number;
-    count: number;
-  }[] = [];
+  // One summary sentence per detector category: collapse every occurrence
+  // (across entity types, roles, and turns) into a single count so the banner
+  // reads as a digest, not a per-entity ledger.
+  const byCategory = new Map<
+    FindingCategory,
+    {
+      label: string;
+      count: number;
+      roles: Set<string>;
+      turns: Set<number>;
+      entityTypes: Set<string>;
+    }
+  >();
   for (const f of findings) {
-    // PII names a generic entity descriptor (e.g. "Email") so the banner stays
-    // stable and never echoes the matched value, redacted or raw. Credential
-    // keeps its redaction token; everything else uses its descriptor.
-    const what =
-      f.category === "pii"
-        ? (ENTITY_DESCRIPTOR[f.entityType] ?? entityLabel(f.entityType))
-        : f.category === "credential" && f.redactedAs
-          ? showRaw
-            ? f.match
-            : f.redactedAs
-          : (ENTITY_DESCRIPTOR[f.entityType] ?? entityLabel(f.entityType));
-    const label = CATEGORY_LABEL[f.category];
-    const key = `${label}|${what}|${f.role}|${f.turn}`;
-    const existing = groups.find((g) => g.key === key);
-    if (existing) {
-      existing.count += 1;
+    const group = byCategory.get(f.category);
+    if (group) {
+      group.count += 1;
+      group.roles.add(f.role);
+      group.turns.add(f.turn);
+      group.entityTypes.add(f.entityType);
     } else {
-      groups.push({ key, label, what, role: f.role, turn: f.turn, count: 1 });
+      byCategory.set(f.category, {
+        label: CATEGORY_LABEL[f.category],
+        count: 1,
+        roles: new Set([f.role]),
+        turns: new Set([f.turn]),
+        entityTypes: new Set([f.entityType]),
+      });
     }
   }
+  // Deterministic detector order so the banner stays stable regardless of the
+  // order findings happen to sit in the array.
+  const ordered = [...byCategory.entries()].sort(
+    (a, b) => CATEGORY_ORDER.indexOf(a[0]) - CATEGORY_ORDER.indexOf(b[0])
+  );
   return {
-    segments: groups.map((g) => ({
-      pre: `${g.label} detector caught ${g.count > 1 ? `${g.count} instances of ` : ""}`,
-      what: g.what,
-      post: ` in ${g.role} turn ${g.turn}.`,
-    })),
+    segments: ordered.map(([category, g]) => {
+      // Keep the role word only when the whole group shares one role; drop it
+      // when a detector spans both user and assistant turns.
+      const [firstRole] = g.roles;
+      const [firstTurn] = g.turns;
+      const roleWord = g.roles.size === 1 ? `${firstRole} ` : "";
+      const post =
+        g.turns.size === 1 ? ` in ${roleWord}turn ${firstTurn}.` : ".";
+      return {
+        pre: `${g.label} detector caught ${g.count > 1 ? `${g.count} instances of ` : ""}`,
+        what: categoryBannerToken(category, g.entityTypes),
+        post,
+      };
+    }),
   };
 }
 
-export function findingBannerSentence(
-  findings: RequestFinding[],
-  showRaw = false
-): string {
-  const result = findingBannerSegments(findings, showRaw);
+export function findingBannerSentence(findings: RequestFinding[]): string {
+  const result = findingBannerSegments(findings);
   if ("plain" in result) {
     return result.plain;
   }

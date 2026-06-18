@@ -2199,7 +2199,7 @@ export function RequestDetailBodyV2({
               </p>
               <p className="text-pretty font-sans text-neutral-900 text-sm">
                 {(() => {
-                  const banner = findingBannerSegments(findings, showRaw);
+                  const banner = findingBannerSegments(findings);
                   if ("plain" in banner) {
                     return banner.plain;
                   }
