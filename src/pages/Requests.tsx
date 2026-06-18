@@ -2322,21 +2322,51 @@ export function RequestDetailBodyV2({
                     <PanelHeading title="Findings" />
                     <div className="flex flex-col gap-2">
                       {(() => {
-                        const piiItems = findings
-                          .map((finding, i) => ({ finding, idx: i }))
-                          .filter((it) => it.finding.category === "pii");
-                        const usePiiSwitcher = piiItems.length > 1;
-                        let piiEmitted = false;
+                        // Group findings by category in first-appearance order.
+                        // Any category with >1 occurrence collapses into one
+                        // FindingSwitcherCard (with a pager); single-occurrence
+                        // categories render an individual FindingCard.
+                        const itemsByCategory = new Map<
+                          RequestFinding["category"],
+                          { finding: RequestFinding; idx: number }[]
+                        >();
+                        findings.forEach((finding, i) => {
+                          const list = itemsByCategory.get(finding.category);
+                          if (list) {
+                            list.push({ finding, idx: i });
+                          } else {
+                            itemsByCategory.set(finding.category, [
+                              { finding, idx: i },
+                            ]);
+                          }
+                        });
+                        // Page each group top-to-bottom: order by where the
+                        // match sits in the evidence, not by value/array order.
+                        for (const list of itemsByCategory.values()) {
+                          // Input (user) occurrences first, then output
+                          // (assistant); within each, by position in evidence.
+                          list.sort(
+                            (a, b) =>
+                              Number(a.finding.role === "assistant") -
+                                Number(b.finding.role === "assistant") ||
+                              findingMatchOffset(a.finding) -
+                                findingMatchOffset(b.finding)
+                          );
+                        }
+                        const switcherEmitted = new Set<
+                          RequestFinding["category"]
+                        >();
                         return findings.map((f, idx) => {
-                          if (f.category === "pii" && usePiiSwitcher) {
-                            if (piiEmitted) {
+                          const items = itemsByCategory.get(f.category) ?? [];
+                          if (items.length > 1) {
+                            if (switcherEmitted.has(f.category)) {
                               return null;
                             }
-                            piiEmitted = true;
+                            switcherEmitted.add(f.category);
                             return (
-                              <PiiSwitcherCard
-                                items={piiItems}
-                                key="pii"
+                              <FindingSwitcherCard
+                                items={items}
+                                key={f.category}
                                 onSelect={(i) => {
                                   setSelectedIdx(i);
                                   setRevealNonce((n) => n + 1);
@@ -2517,7 +2547,7 @@ function FindingCard({
     <button
       aria-pressed={selected}
       className={[
-        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 text-left shadow-xs transition-[colors,scale] duration-150 ease-out active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 text-left shadow-xs transition-colors duration-150 ease-out motion-reduce:transition-none",
         selected ? selectedBorder : "border-border hover:bg-neutral-50",
       ].join(" ")}
       onClick={onClick}
@@ -2560,11 +2590,29 @@ function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   );
 }
 
-/** Concept card: collapses repeated same-category PII occurrences into one
- * "PII (N)" card with a prev/next pager. Controlled by the parent's
- * `selectedIdx`: paging selects that occurrence's finding and bumps the reveal
- * nonce, so the evidence panel scrolls to the matching span. */
-function PiiSwitcherCard({
+/** Character offset of a finding's OWN occurrence of `match` within its
+ * `evidence` (occurrence-aware, mirroring the evidence-panel scroll). Lets a
+ * switcher group page through its findings in document order instead of by
+ * value, so the evidence scroll moves top-to-bottom rather than bouncing. */
+function findingMatchOffset(f: RequestFinding): number {
+  const occ = f.occurrence ?? 0;
+  let from = 0;
+  let at = -1;
+  for (let k = 0; k <= occ; k++) {
+    at = f.evidence.indexOf(f.match, from);
+    if (at < 0) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+    from = at + f.match.length;
+  }
+  return at;
+}
+
+/** Concept card: collapses repeated same-category findings (PII, credential,
+ * injection) into one "{Category} (N)" card with a prev/next pager. Controlled
+ * by the parent's `selectedIdx`: paging selects that occurrence's finding and
+ * bumps the reveal nonce, so the evidence panel scrolls to the matching span. */
+function FindingSwitcherCard({
   items,
   selectedIdx,
   onSelect,
@@ -2585,40 +2633,56 @@ function PiiSwitcherCard({
   };
   const selectedBorder =
     current.action === "block" ? "border-destructive" : "border-warning-500";
-  const atStart = pos <= 0;
-  const atEnd = pos >= total - 1;
+  // Inactive group: BOTH paddles are disabled. You click the card to enter the
+  // group (lands on its first finding), then the paddles step. Keeps an
+  // unselected group from offering controls that do nothing visible yet.
+  const atStart = !isActive || pos <= 0;
+  const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-50 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
-        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 shadow-xs",
+        "flex flex-col overflow-hidden rounded-xs border bg-card shadow-xs",
         isActive ? selectedBorder : "border-border",
       ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
-          {CATEGORY_LABEL[current.category]}
-          <CountChip count={total} />
-        </span>
-        <Badge variant={actionVariant[current.action]}>{current.action}</Badge>
-      </div>
-      <p
-        className="line-clamp-2 font-sans text-muted-foreground text-sm"
-        title={current.match}
+      {/* Card body selects the group's FIRST finding (and scrolls to it),
+       *  matching the single FindingCard click. Paddles step from there. */}
+      <button
+        className={[
+          "flex w-full flex-col gap-2 px-4 pt-3 pb-3 text-left outline-none transition-colors duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none",
+          isActive ? "" : "hover:bg-neutral-50",
+        ].join(" ")}
+        onClick={() => onSelect(items[0].idx)}
+        type="button"
       >
-        <span className="text-foreground">
-          {entityLabel(current.entityType)} ·{" "}
-        </span>
-        “{current.match}”
-      </p>
-      <div className="mt-1 flex items-center justify-between gap-2 border-border border-t pt-2">
+        <div className="flex items-start justify-between gap-2">
+          <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
+            {CATEGORY_LABEL[current.category]}
+            <CountChip count={total} />
+          </span>
+          <Badge variant={actionVariant[current.action]}>
+            {current.action}
+          </Badge>
+        </div>
+        <p
+          className="line-clamp-2 font-sans text-muted-foreground text-sm"
+          title={current.match}
+        >
+          <span className="text-foreground">
+            {entityLabel(current.entityType)} ·{" "}
+          </span>
+          “{current.match}”
+        </p>
+      </button>
+      <div className="flex items-center justify-between gap-2 border-border border-t px-4 pt-2 pb-3">
         <span className="font-sans text-foreground text-xs tabular-nums">
           Finding {pos + 1} of {total}
         </span>
         <div className="flex items-center gap-1">
           <button
-            aria-label="Previous PII finding"
+            aria-label={`Previous ${CATEGORY_LABEL[current.category]} finding`}
             className={paddle}
             disabled={atStart}
             onClick={() => onSelect(items[Math.max(0, pos - 1)].idx)}
@@ -2627,7 +2691,7 @@ function PiiSwitcherCard({
             <ChevronLeft className="size-4" />
           </button>
           <button
-            aria-label="Next PII finding"
+            aria-label={`Next ${CATEGORY_LABEL[current.category]} finding`}
             className={paddle}
             disabled={atEnd}
             onClick={() => onSelect(items[Math.min(total - 1, pos + 1)].idx)}
@@ -2680,6 +2744,128 @@ function KvRow({
 /** Detail panel for PII / credential findings — the Presidio / regex layout.
  * Owns the Unredact toggle (rendered on the "Why this fired" heading row).
  * Every section is title-ABOVE-card; cards hold only data. */
+/** One scrollable evidence box: title-above-card, the message body with each
+ * of THIS turn's findings highlighted in place, and an auto-scroll to the
+ * selected finding's first match. `findings` must already be scoped to a single
+ * turn so a value that appears on both turns (e.g. the same email in the user
+ * message AND the assistant response) highlights only inside its own window —
+ * the cross-turn collision that hid the selected output finding. The scroll
+ * effect only fires when `selectedFinding` is one of `findings`; otherwise no
+ * span carries the marker and the box stays put. */
+function EvidenceWindow({
+  text,
+  label,
+  findings,
+  selectedFinding,
+  revealNonce,
+  showRaw,
+}: {
+  /** The turn's message body the spans are measured against. */
+  text: string;
+  /** Heading shown above the box, e.g. "User message" / "Assistant response". */
+  label: string;
+  /** Only this turn's findings — drives both highlight and scroll ownership. */
+  findings: RequestFinding[];
+  /** The right-column's active finding; may belong to a different window. */
+  selectedFinding: RequestFinding;
+  /** Bumped on each finding click so a re-click re-scrolls. */
+  revealNonce?: number;
+  /** Unredact state — show raw match instead of the placeholder. */
+  showRaw: boolean;
+}) {
+  // Build highlight spans for every match of this turn's findings, occurrence-
+  // aware (a value can repeat, and each finding pins its own instance). Only
+  // the selected finding's first match carries the scroll-target marker, and
+  // only when that finding lives in THIS window.
+  const evidenceSpans: { f: RequestFinding; start: number }[] = [];
+  for (const f of findings) {
+    if (!f.match) {
+      continue;
+    }
+    const occ = f.occurrence ?? 0;
+    let at = -1;
+    let from = 0;
+    for (let k = 0; k <= occ; k++) {
+      at = text.indexOf(f.match, from);
+      if (at < 0) {
+        break;
+      }
+      from = at + f.match.length;
+    }
+    if (at >= 0) {
+      evidenceSpans.push({ f, start: at });
+    }
+  }
+  evidenceSpans.sort((a, b) => a.start - b.start);
+  const evidenceNodes: ReactNode[] = [];
+  let evidenceCursor = 0;
+  // Start offset of the active finding's match, so only that one span carries
+  // the scroll-target marker.
+  const selectedFirstStart = evidenceSpans.find(
+    (s) => s.f === selectedFinding
+  )?.start;
+  for (const { f, start } of evidenceSpans) {
+    if (start < evidenceCursor) {
+      continue;
+    }
+    if (start > evidenceCursor) {
+      evidenceNodes.push(text.slice(evidenceCursor, start));
+    }
+    const tone =
+      f.action === "block"
+        ? "bg-danger-50 text-danger-700"
+        : "bg-warning-50 text-warning-700";
+    const isSelectedSpan =
+      f === selectedFinding && start === selectedFirstStart;
+    evidenceNodes.push(
+      <span
+        className={`rounded-xs px-1 font-medium ${tone}`}
+        data-selected-evidence={isSelectedSpan ? "" : undefined}
+        key={`${start}-${f.entityType}`}
+      >
+        {showRaw ? f.match : f.redactedAs}
+      </span>
+    );
+    evidenceCursor = start + f.match.length;
+  }
+  if (evidenceCursor < text.length) {
+    evidenceNodes.push(text.slice(evidenceCursor));
+  }
+
+  const evidenceBoxRef = useRef<HTMLDivElement>(null);
+  // When the active finding changes (a click on the right), scroll its first
+  // match into the center of the evidence box without moving the page. No node
+  // carries the marker unless the selected finding is in this window, so a
+  // window that does not own the selection never scrolls.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedFinding + revealNonce are intentional re-scroll triggers; the effect reads the tagged DOM node, not these values directly
+  useEffect(() => {
+    const box = evidenceBoxRef.current;
+    const el = box?.querySelector<HTMLElement>("[data-selected-evidence]");
+    if (box && el) {
+      const er = el.getBoundingClientRect();
+      const br = box.getBoundingClientRect();
+      box.scrollTo({
+        top: box.scrollTop + (er.top - br.top) - (br.height - er.height) / 2,
+        behavior: "smooth",
+      });
+    }
+  }, [selectedFinding, revealNonce]);
+
+  return (
+    <section className="flex flex-col gap-2">
+      <PanelHeading title={label} />
+      <div
+        className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+        ref={evidenceBoxRef}
+      >
+        <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+          {evidenceNodes.length > 0 ? evidenceNodes : text}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function PiiDetailPanel({
   finding,
   row,
@@ -2704,6 +2890,17 @@ function PiiDetailPanel({
   // (e.g. a handoff.md read), or the assistant reply. Tool-origin findings are
   // tagged role 'assistant' but read from the tool result, so disambiguate.
   const isToolRow = !row.userMessage && !!row.toolName;
+  // Split findings by the turn they fired on. When a request carries findings
+  // on BOTH turns (the in/out case, e.g. req_8384d2 — PII in the user message
+  // AND in the assistant response), we render one scrollable EvidenceWindow per
+  // turn in a FIXED order (user, then assistant) so paging through findings
+  // never reorders the fields, and each window highlights/scrolls only its own
+  // turn. Every other row (single-turn PII, tool rows, provider-error rows)
+  // keeps the existing single-evidence + complement layout untouched.
+  const allFindings = row.findings ?? [];
+  const userFindings = allFindings.filter((f) => f.role === "user");
+  const assistantFindings = allFindings.filter((f) => f.role === "assistant");
+  const useTwoWindows = userFindings.length > 0 && assistantFindings.length > 0;
   const evidenceLabel =
     finding.role === "user"
       ? "User message"
@@ -2801,28 +2998,56 @@ function PiiDetailPanel({
 
   return (
     <>
-      {/* Evidence — raw body (user / tool result / assistant) with the matched
-          substring highlighted. */}
-      <section className="flex flex-col gap-2">
-        <PanelHeading title={evidenceLabel} />
-        <div
-          className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
-          ref={evidenceBoxRef}
-        >
-          <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
-            {evidenceNodes.length > 0 ? evidenceNodes : evidence}
-          </p>
-        </div>
-      </section>
+      {useTwoWindows ? (
+        <>
+          {/* Both turns carry findings: a fixed user → assistant stack of
+              scrollable windows, then the Full request drawer. Each window owns
+              only its turn's findings, so the selected finding scrolls/highlights
+              inside exactly one window and the order never changes. */}
+          <EvidenceWindow
+            findings={userFindings}
+            label="User message"
+            revealNonce={revealNonce}
+            selectedFinding={finding}
+            showRaw={showRaw}
+            text={userFindings[0].evidence}
+          />
+          <EvidenceWindow
+            findings={assistantFindings}
+            label="Assistant response"
+            revealNonce={revealNonce}
+            selectedFinding={finding}
+            showRaw={showRaw}
+            text={assistantFindings[0].evidence}
+          />
+          <FullRequestCollapsible row={row} />
+        </>
+      ) : (
+        <>
+          {/* Evidence — raw body (user / tool result / assistant) with the matched
+              substring highlighted. */}
+          <section className="flex flex-col gap-2">
+            <PanelHeading title={evidenceLabel} />
+            <div
+              className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+              ref={evidenceBoxRef}
+            >
+              <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+                {evidenceNodes.length > 0 ? evidenceNodes : evidence}
+              </p>
+            </div>
+          </section>
 
-      {/* The other turn of the pair + the Full request drawer, directly below
-          the evidence. When the evidence is the user message the complement is
-          the response side; when it is a tool result / assistant response the
-          complement is the request side. */}
-      <RequestTurnComplement
-        row={row}
-        which={evidenceLabel === "User message" ? "response" : "request"}
-      />
+          {/* The other turn of the pair + the Full request drawer, directly below
+              the evidence. When the evidence is the user message the complement is
+              the response side; when it is a tool result / assistant response the
+              complement is the request side. */}
+          <RequestTurnComplement
+            row={row}
+            which={evidenceLabel === "User message" ? "response" : "request"}
+          />
+        </>
+      )}
 
       {/* Why this fired — Unredact toggle on the heading row; label/value rows. */}
       <section className="flex flex-col gap-2">
