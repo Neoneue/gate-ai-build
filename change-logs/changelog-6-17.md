@@ -44,6 +44,19 @@ Presidio no longer appears in the UI. Dropped the count badge from the
 Findings / Passed titles (`CountChip` back to its plain form, still on the PII
 card); the `Finding x / y` label is `text-foreground`.
 
+### PII switcher banner + match-line polish `7e7ae74`
+Follow-up polish on the Findings panel (`Requests.tsx`, `requests.ts`):
+- Banner: PII uses the generic descriptor `Email` (was `emailAddress`); the
+  entity word renders `font-medium` via a shared `findingBannerSegments` helper
+  without echoing the matched value.
+- Switcher match line: `Email ·` is `text-foreground`, the value is
+  `text-muted-foreground` (was muted label / dark value).
+- Pager reads `Finding N of M` (was `N / M`); the `‹ ›` paddles gained the
+  system `focus-visible` ring.
+- `req_8389e4` Authored-by trailers wrap the email in angle brackets
+  (`NeoNeue <chad@constellationnetwork.io>`) to match the Co-Authored-By
+  trailer convention.
+
 ## Sections
 
 ### req_cd0e57: flagged provider-error request `fc9f5f3`
