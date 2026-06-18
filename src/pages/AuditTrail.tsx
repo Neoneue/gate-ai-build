@@ -1,15 +1,22 @@
-import { BadgeCheck, CircleCheck, Download } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CircleCheck, Download } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { KpiRail } from "@/components/ui/kpi-rail";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { KpiTile } from "@/components/ui/kpi-tile";
+import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
-import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
   SelectContent,
@@ -17,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import {
   SortableTableHead,
   Table,
@@ -28,13 +36,14 @@ import {
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
 import {
   EVENT_ROWS,
+  type EventKind,
   type EventRow,
   fmtRelative,
   KIND_BADGE_VARIANT,
-  NOW,
   truncateHex,
 } from "@/data/audit-trail";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
@@ -64,61 +73,9 @@ function eventSortValue(row: EventRow, key: string): string | number | null {
 /* ─────────────────────────────────────────────────────────────────────────
  * AuditTrail page (route: /audit-trail, sidebar: "Audit Trail")
  *
- * Title + subtitle + range selector + KPI rail + event log table with
- * toolbar + pagination. Range selector wired to state but doesn't yet
- * filter the static mock data — when the real event stream lands, the KPI
- * tiles and event log will scope to the active range.
+ * Title + subtitle + KPI rail + event log table with
+ * toolbar + pagination.
  * ───────────────────────────────────────────────────────────────────────── */
-
-type PresetRange = "all" | "24h" | "7d" | "30d";
-type Range = PresetRange | "custom";
-
-// Trailing comparison copy for the KPI delta tags, tied to the active range.
-const RANGE_DELTA_NOTE: Record<Range, string> = {
-  all: "All time",
-  "24h": "vs last 24hrs",
-  "7d": "vs last 7d",
-  "30d": "vs last 30d",
-  custom: "vs prior range",
-};
-type CustomRange = { from: Date; to: Date };
-
-const RANGE_OPTIONS: { value: PresetRange; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "24h", label: "24H" },
-  { value: "7d", label: "7D" },
-  { value: "30d", label: "30D" },
-];
-
-/** Anchor "now" to a fixed mock date so the relative times ("2d ago") and
- *  range filters don't go stale as wall-clock time passes. Mirror of the
- *  technique Activity / Conversations use for range scaling. */
-
-const HOURS_PER_PRESET: Record<Exclude<PresetRange, "all">, number> = {
-  "24h": 24,
-  "7d": 24 * 7,
-  "30d": 24 * 30,
-};
-
-function isWithinRange(
-  at: Date,
-  range: Range,
-  customRange: CustomRange | null
-): boolean {
-  if (range === "all") {
-    return true;
-  }
-  if (range === "custom") {
-    if (!customRange) {
-      return true;
-    }
-    return at >= customRange.from && at <= customRange.to;
-  }
-  const cutoff = new Date(
-    NOW.getTime() - HOURS_PER_PRESET[range] * 3600 * 1000
-  );
-  return at >= cutoff;
-}
 
 /** Truncates a hex string or UUID for display in a table cell. Uses a
  *  single horizontal-ellipsis glyph (…, U+2026) so the middle reads as one
@@ -132,17 +89,9 @@ export function AuditTrail() {
     toggleSidebar: () => void;
   }>();
 
-  // Defaults to `all` on load per project rule (every page's time-range
-  // selector should land on All).
-  const [range, setRange] = useState<Range>("all");
-  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
-
-  // Range filter is the load-bearing pipe — both KPIs and EventLog read from
-  // these range-scoped rows. EventLog further narrows by kind + query.
-  const rangeRows = useMemo(
-    () => EVENT_ROWS.filter((r) => isWithinRange(r.at, range, customRange)),
-    [range, customRange]
-  );
+  // No range filter on this surface — KPIs and EventLog read the full event
+  // set. EventLog further narrows by kind + query.
+  const rows = EVENT_ROWS;
 
   return (
     <DashboardChrome
@@ -152,55 +101,50 @@ export function AuditTrail() {
       sidebarExpanded={sidebarExpanded}
     >
       <PageHeader />
-      {/* Overview label + range controls group with the KPI rail (gap-4
-          internal) rather than floating equidistant between sections — the
-          chrome content pane spaces its direct children at gap-6, so wrapping
-          the bar + rail in one tighter-gapped child reads the "Overview"
-          heading as the label FOR the rail it sits above. */}
+      {/* Overview label groups with the KPI rail (gap-4 internal) rather than
+          floating equidistant between sections — the chrome content pane
+          spaces its direct children at gap-6, so wrapping the label + rail in
+          one tighter-gapped child reads the "Overview" heading as the label
+          FOR the rail it sits above. */}
       <div className="flex flex-col gap-4">
-        <OverviewBar
-          customRange={customRange}
-          onCustomRangeChange={(r) => {
-            if (r) {
-              setCustomRange(r);
-              setRange("custom");
-            } else {
-              setCustomRange(null);
-              setRange("all");
-            }
-          }}
-          onRangeChange={(r) => {
-            setRange(r);
-            setCustomRange(null);
-          }}
-          range={range}
-        />
-        <KpiRailSection range={range} rows={rangeRows} />
+        <OverviewBar />
+        <KpiRailSection rows={rows} />
       </div>
-      <EventLog rows={rangeRows} />
+      <EventLog rows={rows} />
     </DashboardChrome>
   );
 }
+
+const DIGITAL_EVIDENCE_DOCS_URL =
+  "https://constellation-main.gitbook.io/digital-evidence";
 
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           Every model call gets a cryptographic receipt. Receipts are
           fingerprinted to Constellation's Digital Evidence layer on a public
           chain, so anyone can verify a record existed and was unmodified,
           including after retention. No trust in Constellation required.
         </p>
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+          To learn more, check out our{" "}
+          <TextLink
+            as="a"
+            href={DIGITAL_EVIDENCE_DOCS_URL}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Digital Evidence docs
+          </TextLink>
+          .
+        </p>
       </div>
-      {/* TODO: wire page-level Verify / Export actions per the Audit Trail review doc.
-          Verify-a-hash dialog and Export view are not built yet — no onClick handlers. */}
+      {/* TODO: wire the page-level Export action per the Audit Trail review doc.
+          Export view is not built yet — no onClick handler. */}
       <div className="flex items-center gap-2">
-        <Button size="default" type="button" variant="outline">
-          <BadgeCheck />
-          Verify a hash
-        </Button>
         <Button size="default" type="button" variant="outline">
           <Download />
           Export view
@@ -210,96 +154,53 @@ function PageHeader() {
   );
 }
 
-/* ─── Overview bar (section label + range controls) ─────────────────────── */
+/* ─── Overview bar (section label) ─────────────────────── */
 
-/* Section label for the KPI rail on the left; range controls inline on the
- * right. PageTitle renders an h2, so this heading is h3 to keep the outline
+/* Section label for the KPI rail. PageTitle renders an h2, so this heading is h3 to keep the outline
  * valid (h1 = document title owned by DashboardChrome → h2 page title → h3
  * section). Visual size is text-xl/7 (20/28) — a section-label tier one step
  * under the design-system h2 "Section title" token (text-2xl/24) so it doesn't
  * match the 24px KPI hero values directly below — NOT the text-sm
- * `SectionHeading` primitive, whose tier is modal body-section labels. Range
- * state lives in AuditTrail(); the moved SegmentedPill + DateRangePicker are
- * wired verbatim to the same handlers the header used. */
-function OverviewBar({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: Range;
-  customRange: CustomRange | null;
-  onRangeChange: (r: PresetRange) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+ * `SectionHeading` primitive, whose tier is modal body-section labels. */
+function OverviewBar() {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-        Overview
-      </h3>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          aria-label="Time range"
-          onValueChange={(v) => onRangeChange(v as PresetRange)}
-          options={RANGE_OPTIONS}
-          size="sm"
-          value={range === "custom" ? "" : range}
-        />
-        <DateRangePicker
-          onChange={onCustomRangeChange}
-          size="sm"
-          value={customRange}
-        />
-      </div>
-    </div>
+    <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
+      Overview
+    </h3>
   );
 }
 
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
-function KpiRailSection({ rows, range }: { rows: EventRow[]; range: Range }) {
-  const { eventsLogged, distinctAnchors, mostRecent } = useMemo(() => {
+function KpiRailSection({ rows }: { rows: EventRow[] }) {
+  const { eventsLogged, mostRecent } = useMemo(() => {
     const eventsLogged = rows.length;
-    const distinctAnchors = new Set(rows.map((r) => r.anchor)).size;
     const mostRecent = rows.reduce<Date | null>(
       (latest, r) => (!latest || r.at > latest ? r.at : latest),
       null
     );
-    return { eventsLogged, distinctAnchors, mostRecent };
+    return { eventsLogged, mostRecent };
   }, [rows]);
 
   return (
-    <KpiRail columns={4}>
-      <KpiTile
-        delta="+12.4%"
-        deltaNote={RANGE_DELTA_NOTE[range]}
-        deltaRow
-        title="Events logged"
-        value={formatNumber(eventsLogged)}
-      />
-      <KpiTile
-        delta="+9.1%"
-        deltaNote={RANGE_DELTA_NOTE[range]}
-        deltaRow
-        title="Fingerprints"
-        value={formatNumber(distinctAnchors)}
-      />
-      {/* Hand-authored stat: every mock anchor verifies (derived = 100%); 92.4% is product-set. */}
-      <KpiTile
-        delta="+0.6%"
-        deltaNote={RANGE_DELTA_NOTE[range]}
-        deltaRow
-        title="Verified rate"
-        value="92.4%"
-      />
-      <KpiTile
-        deltaRow
-        href="https://digitalevidence.constellationnetwork.io/"
-        linkLabel="Open in DE Explorer"
-        title="Last fingerprint"
-        value={mostRecent ? fmtRelative(mostRecent) : "—"}
-      />
-    </KpiRail>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
+        <KpiTile
+          delta="+12.4%"
+          deltaNote="All time"
+          title="Events logged"
+          value={formatNumber(eventsLogged)}
+        />
+      </div>
+      <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
+        <KpiTile
+          href="https://digitalevidence.constellationnetwork.io/"
+          linkLabel="Open in Explorer"
+          title="Last fingerprint"
+          value={mostRecent ? fmtRelative(mostRecent) : "—"}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -318,29 +219,92 @@ function KpiRailSection({ rows, range }: { rows: EventRow[]; range: Range }) {
 // This keeps high-entropy strings out of static-analysis content scanners that
 // would otherwise flag the file as containing real secrets.
 
-type FilterValue = "__all" | "REQUEST" | "POLICY" | "LIMITS" | "AUDIT";
+// Filters modal option sources. Members mirror the canonical workspace roster
+// (Team.tsx MEMBER_ROWS) present in EVENT_ROWS; kinds are the full EventKind
+// union, labelled in the same casing the table badges render (KIND_BADGE_*).
+const MEMBER_OPTIONS = [
+  "Chad Ponticas",
+  "Jordan Lee",
+  "Mateus Silva",
+  "Kira Tan",
+] as const;
 
-const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
-  { value: "__all", label: "All events" },
-  { value: "REQUEST", label: "Requests" },
-  { value: "POLICY", label: "Policy" },
-  { value: "LIMITS", label: "Limits" },
-  { value: "AUDIT", label: "Audit" },
+const KIND_OPTIONS: { value: EventKind; label: string }[] = [
+  { value: "AUDIT", label: "AUDIT" },
+  { value: "REQUEST", label: "REQUEST" },
+  { value: "POLICY", label: "POLICY" },
+  { value: "EVENT", label: "EVENT" },
+  { value: "LIMITS", label: "LIMITS" },
 ];
 
 function EventLog({ rows }: { rows: EventRow[] }) {
-  const [filter, setFilter] = useState<FilterValue>("__all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
 
-  // Reset to page 1 whenever the range-scoped row set, filter, or query
+  // ─── Filters modal (Reset/Apply with staged drafts) ───────────────────
+  // Committed filter state drives the table. The modal binds to draft copies
+  // so editing a control never touches the table until Apply commits. Mirrors
+  // the canonical Requests.tsx Filters dialog. Three AND-combined groups:
+  // member ∈ selected, kind ∈ selected, row.at within the date+time range.
+  // An empty group is no constraint. Reversible: delete this block + the
+  // Dialog and restore the inline event-type Select.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [members, setMembers] = useState<string[]>([]);
+  const [kinds, setKinds] = useState<EventKind[]>([]);
+  const [dateRange, setDateRange] = useState<{
+    from: Date;
+    to: Date;
+  } | null>(null);
+  const [draftMembers, setDraftMembers] = useState<string[]>([]);
+  const [draftKinds, setDraftKinds] = useState<EventKind[]>([]);
+  const [draftDateRange, setDraftDateRange] = useState<{
+    from: Date;
+    to: Date;
+  } | null>(null);
+
+  const activeFilterCount =
+    (members.length > 0 ? 1 : 0) +
+    (kinds.length > 0 ? 1 : 0) +
+    (dateRange ? 1 : 0);
+
+  const openFilters = useCallback(() => {
+    setDraftMembers(members);
+    setDraftKinds(kinds);
+    setDraftDateRange(dateRange);
+    setFiltersOpen(true);
+  }, [members, kinds, dateRange]);
+
+  const resetFilters = useCallback(() => {
+    setDraftMembers([]);
+    setDraftKinds([]);
+    setDraftDateRange(null);
+  }, []);
+
+  const applyFilters = useCallback(() => {
+    setMembers(draftMembers);
+    setKinds(draftKinds);
+    setDateRange(draftDateRange);
+    setFiltersOpen(false);
+  }, [draftMembers, draftKinds, draftDateRange]);
+
+  // Recovery path from the empty state: clear every committed group at once.
+  const clearFilters = useCallback(() => {
+    setMembers([]);
+    setKinds([]);
+    setDateRange(null);
+    setQuery("");
+  }, []);
+
+  // Reset to page 1 whenever the range-scoped row set, filters, or query
   // changes — render-time pattern, not useEffect (see Activity UsageByKey
   // for the canonical shape). `rows.length` stands in for the range
   // identity since the same range produces the same row count.
   const [prevResetKey, setPrevResetKey] = useState("");
-  const resetKey = `${rows.length}|${filter}|${query}`;
+  const resetKey = `${rows.length}|${members.join(",")}|${kinds.join(
+    ","
+  )}|${dateRange ? `${dateRange.from.getTime()}-${dateRange.to.getTime()}` : ""}|${query}`;
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setPage(1);
@@ -351,8 +315,18 @@ function EventLog({ rows }: { rows: EventRow[] }) {
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
-      if (filter !== "__all" && row.kind !== filter) {
+      // AND-combined groups; an empty group imposes no constraint.
+      if (members.length > 0 && !members.includes(row.member)) {
         return false;
+      }
+      if (kinds.length > 0 && !kinds.includes(row.kind)) {
+        return false;
+      }
+      if (dateRange) {
+        const t = row.at.getTime();
+        if (t < dateRange.from.getTime() || t > dateRange.to.getTime()) {
+          return false;
+        }
       }
       if (!q) {
         return true;
@@ -361,7 +335,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
         `${row.eventId} ${row.description} ${row.member} ${row.anchor}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [rows, filter, query]);
+  }, [rows, members, kinds, dateRange, query]);
 
   // Sort after filter/search, before pagination. Default (key=null) preserves
   // the authored reverse-chronological order.
@@ -410,31 +384,161 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               surface="elevated"
               value={query}
             />
-            <Select
-              onValueChange={(v: string) => setFilter(v as FilterValue)}
-              value={filter}
+            {/* Filters button — collapses member / event-type / event-time
+                into one modal Dialog (mirrors Requests.tsx). Active-count
+                Badge on the trigger; the modal stages drafts and commits on
+                Apply. Reversible: restore the inline event-type <Select> and
+                delete this button + the Dialog block below. */}
+            <Button
+              aria-label={
+                activeFilterCount > 0
+                  ? `Filters (${activeFilterCount} active)`
+                  : "Filters"
+              }
+              className="border-border bg-card font-normal text-foreground"
+              onClick={openFilters}
+              size="sm"
+              type="button"
+              variant="outline"
             >
-              <SelectTrigger
-                aria-label="Filter by event type"
-                className="border-border bg-card font-normal text-foreground"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FILTER_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <SlidersHorizontalIcon
+                aria-hidden
+                data-icon="inline-start"
+                size={16}
+              />
+              Filters
+              {activeFilterCount > 0 ? (
+                <Badge
+                  className="h-4 min-w-4 justify-center px-1 leading-none"
+                  variant="secondary"
+                >
+                  {activeFilterCount}
+                </Badge>
+              ) : null}
+            </Button>
           </div>
         </div>
+
+        {/* Filters modal — 3 labeled full-width rows + Reset/Apply footer. */}
+        <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
+          <DialogContent className="w-full gap-4 sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+                Filters
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Event time
+              </Label>
+              <DateRangePicker
+                className="w-full"
+                onChange={setDraftDateRange}
+                value={draftDateRange}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Member
+              </Label>
+              <Select
+                multiple
+                onValueChange={setDraftMembers}
+                value={draftMembers}
+              >
+                <SelectTrigger
+                  aria-label="Filter by member"
+                  className="w-full border-border bg-card font-normal text-foreground"
+                >
+                  <SelectValue>
+                    {(value: string[]) =>
+                      value.length === 0
+                        ? "All members"
+                        : `${value.length} selected`
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {MEMBER_OPTIONS.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="font-medium text-neutral-600 text-sm">
+                Event type
+              </Label>
+              <Select
+                multiple
+                onValueChange={(v: string[]) => setDraftKinds(v as EventKind[])}
+                value={draftKinds}
+              >
+                <SelectTrigger
+                  aria-label="Filter by event type"
+                  className="w-full border-border bg-card font-normal text-foreground"
+                >
+                  <SelectValue>
+                    {(value: string[]) =>
+                      value.length === 0
+                        ? "All event types"
+                        : `${value.length} selected`
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {KIND_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter className="sm:justify-between">
+              <Button
+                onClick={resetFilters}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Reset
+              </Button>
+              <div className="flex items-center gap-2">
+                <DialogClose
+                  render={<Button size="sm" type="button" variant="outline" />}
+                >
+                  Cancel
+                </DialogClose>
+                <Button onClick={applyFilters} size="sm" type="button">
+                  Apply
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Card density="flush">
           {isEmpty ? (
             <TableEmptyState
+              action={
+                activeFilterCount > 0 || query.trim() ? (
+                  <Button
+                    onClick={clearFilters}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Clear filters
+                  </Button>
+                ) : undefined
+              }
               body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
               title="No audit events"
             />

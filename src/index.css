@@ -56,6 +56,7 @@ and (pointer: fine)) and (&:hover));
   --color-blue-950: oklch(0.145 0.085 268.85);
 
   /* Success (green) — Tailwind v4 green ramp OKLCH. */
+  --color-success-25:  oklch(0.993 0.007 155.826);
   --color-success-50:  oklch(0.982 0.018 155.826);
   --color-success-100: oklch(0.962 0.044 156.743);
   --color-success-200: oklch(0.925 0.084 155.995);
@@ -69,6 +70,7 @@ and (pointer: fine)) and (&:hover));
   --color-success-950: oklch(0.266 0.065 152.934);
 
   /* Warning (amber) — Tailwind v4 amber ramp OKLCH. */
+  --color-warning-25:  oklch(0.995 0.008 95.277);
   --color-warning-50:  oklch(0.987 0.022 95.277);
   --color-warning-100: oklch(0.962 0.059 95.617);
   --color-warning-200: oklch(0.924 0.120 95.746);
@@ -82,6 +84,7 @@ and (pointer: fine)) and (&:hover));
   --color-warning-950: oklch(0.279 0.077 45.635);
 
   /* Danger (red) — Tailwind v4 red ramp OKLCH. */
+  --color-danger-25:  oklch(0.988 0.007 17.380);
   --color-danger-50:  oklch(0.971 0.013 17.380);
   --color-danger-100: oklch(0.936 0.032 17.717);
   --color-danger-200: oklch(0.885 0.062 18.334);
@@ -149,6 +152,10 @@ and (pointer: fine)) and (&:hover));
   --shadow-card-soft:
     0 4px 8px -1px color-mix(in oklch, var(--color-neutral-800) 5%, transparent),
     0 2px 6px -2px color-mix(in oklch, var(--color-neutral-800) 5%, transparent);
+
+  /* shadow-xs: Tailwind default darkened ~10% (0.05 -> 0.055 alpha) for a
+     touch more lift on cards / buttons. */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.055);
 
   /* Typescale overrides — align Tailwind's named sizes to Vercel Geist's
      heading scale (even-numbered, larger increments at the top). Sizes not
@@ -354,5 +361,13 @@ body {
      evenly. Browsers cap at ~6 lines so it's a no-op on long headings. */
   h1, h2, h3, h4, h5, h6 {
     text-wrap: balance;
+  }
+  /* Skill: make-interfaces-feel-better — interactive controls show a pointer
+     cursor (Tailwind v4 preflight ships buttons as cursor:default). Disabled /
+     aria-disabled controls keep the default arrow so dead controls don't read
+     as live. In @layer base so per-element cursor-* utilities still win. */
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not(:disabled):not([aria-disabled="true"]) {
+    cursor: pointer;
   }
 }

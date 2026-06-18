@@ -188,7 +188,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           Every model call gets a cryptographic receipt. Receipts are
           fingerprinted to Constellation's Digital Evidence layer on a public
           chain, so anyone can verify a record existed and was unmodified,

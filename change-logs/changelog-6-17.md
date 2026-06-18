@@ -31,6 +31,74 @@ now returns `row.compression` when set, otherwise the existing derived ratio.
 Lets a row (e.g. an error response that produced no output) read a fixed
 `100.0%` instead of the token-derived value.
 
+### PII findings switcher card + pager `843c706`
+
+Repeated same-category PII findings now collapse into one `PII (N)` card with a
+prev/next pager (`PiiSwitcherCard`, `Requests.tsx`) instead of one card per
+match. The pager is controlled by the panel's selected finding + reveal nonce,
+so each step scrolls the evidence to that occurrence; the "Why this fired"
+offset is occurrence-aware (was always the first match). Removed the
+`DetectorTip` hover popover (Detector / Score / Threshold) and the
+`METHOD_LABEL` import, so the Full-request highlight is a plain span and
+Presidio no longer appears in the UI. Dropped the count badge from the
+Findings / Passed titles (`CountChip` back to its plain form, still on the PII
+card); the `Finding x / y` label is `text-foreground`.
+
+### PII switcher banner + match-line polish `7e7ae74`
+
+Follow-up polish on the Findings panel (`Requests.tsx`, `requests.ts`):
+
+- Banner: PII uses the generic descriptor `Email` (was `emailAddress`); the
+  entity word renders `font-medium` via a shared `findingBannerSegments` helper
+  without echoing the matched value.
+- Switcher match line: `Email ·` is `text-foreground`, the value is
+  `text-muted-foreground` (was muted label / dark value).
+- Pager reads `Finding N of M` (was `N / M`); the `‹ ›` paddles gained the
+  system `focus-visible` ring.
+- `req_8389e4` Authored-by trailers wrap the email in angle brackets
+  (`NeoNeue <chad@constellationnetwork.io>`) to match the Co-Authored-By
+  trailer convention.
+
+### Findings switcher generalized + two-turn evidence `c3bf0d0`
+
+`PiiSwitcherCard` -> `FindingSwitcherCard` (`Requests.tsx`): the Findings list now
+collapses ANY category with >1 occurrence into one switcher (so a row shows
+`PII 5` + `Credential 5`), single-occurrence categories stay individual cards.
+
+- Each group is ordered by the match's offset in the evidence, input (user)
+  turns before output (assistant), so the pager walks the message top-to-bottom
+  instead of jumping by value.
+- The card body is clickable and jumps to the group's first finding; on an
+  inactive group both `‹ ›` paddles are disabled until you enter it. Paddles
+  gained `shadow-xs` + a clearer `bg-neutral-100` hover; the press-scale was
+  removed from the finding cards (kept on the paddles only).
+- `PiiDetailPanel`: extracted `EvidenceWindow`; rows with findings on both turns
+  render two fixed-order windows (User message, then Assistant response), so
+  paging to an output finding scrolls/highlights the assistant window WITHOUT
+  reordering the fields. Per-turn span scoping fixes the cross-turn highlight
+  collision. Other rows are unchanged.
+
+### Findings banner collapsed to one digest sentence per detector `b9dabde`
+
+`findingBannerSegments` (`src/data/requests.ts`): the summary banner above the
+findings list now groups by detector category instead of per entity/value/turn,
+so `req_8384d2`'s five run-on sentences become two.
+
+- Before: `PII detector caught 5 instances of Email ... Credential detector
+  caught 2 instances of <AWS_ACCESS_KEY_ID> ... 2 instances of <ANTHROPIC_API_KEY>
+  ... <AWS_SECRET_ACCESS_KEY> ... Email in assistant turn 99.` (5 sentences).
+- After: `PII detector caught 6 instances of <EMAIL> in turn 99. Credential
+  detector caught 5 instances of <KEYS> in user turn 99.` (one sentence per
+  detector). Counts are the real summed occurrences.
+- Placeholders: PII brackets its descriptor (`Email` -> `<EMAIL>`, falls back to
+  `<PII>` if a turn mixes PII types), credentials always collapse to a generic
+  `<KEYS>`; injection keeps its human descriptor. Detector order is fixed
+  (PII, Credential, Injection).
+- The role word is dropped only when a detector spans both turns (`in turn 99`);
+  single-role groups keep it (`in user turn 99`). The now-unused `showRaw`
+  argument was removed from both banner functions; the raw/redacted toggle
+  still drives the finding cards below.
+
 ## Sections
 
 ### req_cd0e57: flagged provider-error request `fc9f5f3`
@@ -63,7 +131,8 @@ On the `/requests-findings/:id` page (`Requests.tsx`):
 Replaced `req_cd0e57`'s `requestBodyRaw` (`src/data/requests.ts`), the Full
 request drawer payload, with a `user` message of two empty `text` blocks plus a
 `claude-opus-4-8` / `max_tokens` / `stream` tail. Drops the stale codex thinking
-+ base64 signature payload so the drawer reconciles with the row's Claude Opus
+
+- base64 signature payload so the drawer reconciles with the row's Claude Opus
 identity.
 
 ### No-findings empty state: standalone card, success/allow only `a5f0364`
@@ -88,3 +157,51 @@ On the three policy cards (`Policies.tsx`):
   Redact `neutral-600` (gray), Block `destructive` (red) — was `border-primary`.
 - The checked radio fill/border is one step darker than its card border:
   `warning-600` / `neutral-700` / `danger-700`.
+
+### Real-data request detail pages + per-occurrence findings `17e25b5`
+
+Request detail pages (`/requests-findings/:id`) are now populated from real
+session transcripts instead of placeholder content. In `requests.ts`,
+`req_8389e4` / `req_a7f59d` / `req_ded91e` carry the verbatim `userMessage`,
+finding `evidence`, `requestBodyRaw`, `assistantResponse`, and KPI values
+(latency / tokens / `compression` overrides).
+
+Findings model + rendering (`RequestFinding` in `requests.ts`, detail panels in
+`Requests.tsx`):
+
+- Added optional `occurrence` to `RequestFinding`. A value that appears twice
+  is now two distinct findings, each highlighting its own instance. The
+  evidence highlighter targets one occurrence per finding (default 0) instead
+  of the first/all matches. `req_8389e4` = two email findings (occ 0/1).
+- Clicking a finding smooth-scrolls its match into the center of the evidence
+  box, even when re-clicking the active finding (`revealNonce` signal).
+- Removed the per-span Detector/Score/Threshold tooltip from the evidence
+  highlights; spans are plain highlights now.
+- Classifier-deny card reads tool call → assistant response → full request;
+  clean success/allow rows render Tool call / Assistant response / Full
+  request via `NoFindingTurns`.
+
+Banner (`findingBannerSentence`): identical detections collapse into one
+count-aware sentence ("PII detector caught 2 instances of `<EMAIL>` …") and the
+raw value is revealed when Unredact is on (before → `<EMAIL>`, after →
+`noreply@anthropic.com`).
+
+### req_8389e4: chad@ trailers + generic PII banner `843c706`
+
+Added `Authored-by: NeoNeue chad@constellationnetwork.io` before each
+`Co-Authored-By` line in `req_8389e4` (`requests.ts`), giving 4 PII email
+instances (chad + noreply, two occurrences each) to page through. The findings
+banner now names a generic, stable entity descriptor (`emailAddress`) instead
+of the matched value or redaction token, so it no longer changes on Unredact
+and groups all email findings into one sentence ("PII detector caught 4
+instances of emailAddress in user turn 99.").
+
+### req_8384d2: in/out redaction request from docs/ sources `c3bf0d0`
+
+New Success/Redacted row (`requests.ts`), a clone of `req_8389e4` populated from
+the session-source files: `userMessage` = `text.md` transcript carrying 5 PII
+(`lena` x3, `ops` x2) + 5 credential (AWS key x2, Anthropic key x2, AWS secret)
+findings; `assistantResponse` = `assistant.md` with a 6th finding on the OUTPUT
+turn (`lena`, `role: assistant`); `requestBodyRaw` = `request-trace.md` (the full
+classifier request). KPIs: 61,755 in / 149 out / 4.05s / 5.8%, cost —. Demonstrates
+the PII + Credential switchers and the in/out evidence windows on one request.

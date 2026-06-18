@@ -769,7 +769,7 @@ export function LimitsDefault() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-tight">
+        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
           key level. Limits run inline with no separate billing system to wire
           up.

@@ -35,7 +35,7 @@ The subagent prompt must contain:
 > skipped, say so plainly. When finished, reply with exactly the report
 > format below.
 
-3. The report format:
+1. The report format:
 
 ```
 STATUS: COMPLETE | STOPPED
