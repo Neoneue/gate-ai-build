@@ -8,6 +8,31 @@ Prior day: [`changelog-6-17.md`](./changelog-6-17.md).
 
 ---
 
+## Conventions
+
+### Press scale 0.98 + cursor:pointer on buttons `7550799`
+
+- Press affordance standardized to `active:scale-[0.98]` **site-wide** (was a
+  uniform `0.99`): 18 usages across 12 files. `motion-reduce` resets unchanged.
+- New global `@layer base` rule in `index.css`: `button:not(:disabled)` and
+  `[role="button"]` (excluding `aria-disabled`) get `cursor: pointer`. Tailwind
+  v4 preflight ships buttons as `cursor:default`; this restores the pointer.
+  Disabled / aria-disabled controls keep the default arrow.
+
+### shadow-xs darkened ~10% `7550799`
+
+Overrode the Tailwind default `--shadow-xs` in `@theme`: alpha `0.05` → `0.055`
+(`0 1px 2px 0 rgb(0 0 0 / 0.055)`). Site-wide, slightly more lift on cards /
+buttons / rails.
+
+### Ultralight `-25` tint tokens `7550799`
+
+Added a `-25` step (above `-50`) to the warning / success / danger ramps in
+`index.css`: `--color-warning-25` `oklch(0.995 0.008 95.277)`,
+`--color-success-25` `oklch(0.993 0.007 155.826)`,
+`--color-danger-25` `oklch(0.988 0.007 17.380)` (danger kept more saturated).
+Used as active-card background tints (see Components).
+
 ## Components
 
 ### Findings switcher: whole-card click + detail polish `a2a5263`
@@ -42,6 +67,30 @@ A batch of findings-detail refinements in `RequestDetailBodyV2` /
   span).
 
 ## Sections
+
+### Findings cards: active tint, static single card, select-none `7550799`
+
+`FindingCard` / `FindingSwitcherCard` (`Requests.tsx`):
+
+- **Active tint.** Active cards fill with the action-tone `-25` tint
+  (`bg-warning-25` flag/redact, `bg-danger-25` block); inactive cards are white
+  and **hover** to the tint. Hover classes are literal `hover:bg-warning-25` /
+  `hover:bg-danger-25` consts (not composed `hover:${var}`) so Tailwind's
+  scanner emits the rules.
+- **Single finding is static.** When `findings.length === 1`, the lone
+  `FindingCard` renders as a `<div>` (not a `<button>`): no pointer, no select,
+  no click — there is nothing else to select. Multiple findings stay clickable.
+- **select-none.** Clickable findings cards are `select-none` (matching the
+  `Button` primitive) to stop accidental text selection on click; message /
+  evidence content stays selectable.
+- In-card count chip dropped to `text-xs` via a new `CountChip` `size` prop;
+  the Findings / Passed heading chips stay `text-sm`.
+
+### Detail KPI rail gets shadow-xs `7550799`
+
+The request-detail KPI rail (`KpiRailShell` at `Requests.tsx`) passed
+`shadow-none`, overriding the shell default. Changed to `shadow-xs` so it
+matches the other rails (Models / Activity / Conversations already inherit it).
 
 ### Tune policy action routes to the Policies page `a2a5263`
 
