@@ -76,7 +76,7 @@ function FeedbackFab() {
           "whitespace-nowrap border border-border bg-card font-medium text-neutral-900 text-sm",
           "shadow-md",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-muted active:scale-[0.99] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
+          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-muted active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
           "focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "select-none"
         )}

@@ -27,7 +27,7 @@ export function WorkspaceSwitcher() {
       <MenuTrigger
         render={
           <button
-            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] aria-expanded:bg-neutral-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] aria-expanded:bg-neutral-50 motion-reduce:transition-none motion-reduce:active:scale-100"
             type="button"
           />
         }

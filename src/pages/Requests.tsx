@@ -2380,6 +2380,7 @@ export function RequestDetailBodyV2({
                           return (
                             <FindingCard
                               finding={f}
+                              interactive={findings.length > 1}
                               key={idx}
                               onClick={() => {
                                 setSelectedIdx(idx);
@@ -2534,10 +2535,12 @@ function FindingCard({
   finding,
   selected,
   onClick,
+  interactive = true,
 }: {
   finding: RequestFinding;
   selected: boolean;
   onClick: () => void;
+  interactive?: boolean;
 }) {
   const actionVariant: Record<FindingActionKind, "warning" | "destructive"> = {
     flag: "warning",
@@ -2548,16 +2551,15 @@ function FindingCard({
   // flag/redact (2-tier severity; the badge label says flag vs redact).
   const selectedBorder =
     finding.action === "block" ? "border-destructive" : "border-warning-500";
-  return (
-    <button
-      aria-pressed={selected}
-      className={[
-        "flex flex-col gap-2 rounded-xs border bg-card px-4 py-3 text-left shadow-xs transition-colors duration-150 ease-out motion-reduce:transition-none",
-        selected ? selectedBorder : "border-border hover:bg-neutral-50",
-      ].join(" ")}
-      onClick={onClick}
-      type="button"
-    >
+  // Active card background: ultralight action-tone tint (warning-25 flag/redact, danger-25 block).
+  const activeBg =
+    finding.action === "block" ? "bg-danger-25" : "bg-warning-25";
+  const hoverBg =
+    finding.action === "block" ? "hover:bg-danger-25" : "hover:bg-warning-25";
+  const base =
+    "flex flex-col gap-2 rounded-xs border px-4 py-3 text-left shadow-xs";
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="font-medium font-sans text-neutral-900 text-sm">
@@ -2573,6 +2575,33 @@ function FindingCard({
       >
         “{finding.match}”
       </p>
+    </>
+  );
+  // A sole finding is informational — there is nothing else to select, so it
+  // renders static (no button semantics, no pointer cursor, no hover affordance).
+  if (!interactive) {
+    return (
+      <div
+        className={`${base} ${selected ? `${activeBg} ${selectedBorder}` : "border-border bg-card"}`}
+      >
+        {content}
+      </div>
+    );
+  }
+  return (
+    <button
+      aria-pressed={selected}
+      className={[
+        base,
+        "select-none transition-colors duration-150 ease-out motion-reduce:transition-none",
+        selected
+          ? `${activeBg} ${selectedBorder}`
+          : `border-border bg-card ${hoverBg}`,
+      ].join(" ")}
+      onClick={onClick}
+      type="button"
+    >
+      {content}
     </button>
   );
 }
@@ -2644,18 +2673,25 @@ function FindingSwitcherCard({
     current.action === "block"
       ? "border-danger-200 hover:border-danger-300"
       : "border-warning-200 hover:border-warning-300";
+  // Active card background: ultralight action-tone tint (warning-25 flag/redact, danger-25 block).
+  const activeBg =
+    current.action === "block" ? "bg-danger-25" : "bg-warning-25";
+  const hoverBg =
+    current.action === "block" ? "hover:bg-danger-25" : "hover:bg-warning-25";
   // Inactive group: BOTH paddles are disabled. You click the card to enter the
   // group (lands on its first finding), then the paddles step. Keeps an
   // unselected group from offering controls that do nothing visible yet.
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
-        "relative flex flex-col overflow-hidden rounded-xs border bg-card shadow-xs transition-colors duration-150 ease-out motion-reduce:transition-none",
-        isActive ? selectedBorder : `${inactiveBorder} hover:bg-neutral-50`,
+        "relative flex select-none flex-col overflow-hidden rounded-xs border shadow-xs transition-colors duration-150 ease-out motion-reduce:transition-none",
+        isActive
+          ? `${activeBg} ${selectedBorder}`
+          : `bg-card ${inactiveBorder} ${hoverBg}`,
       ].join(" ")}
     >
       {/* Card body selects the group's FIRST finding (and scrolls to it),
@@ -2669,7 +2705,7 @@ function FindingSwitcherCard({
         <div className="flex items-start justify-between gap-2">
           <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
             {CATEGORY_LABEL[current.category]}
-            <CountChip count={total} />
+            <CountChip count={total} size="xs" />
           </span>
           <Badge variant={actionVariant[current.action]}>
             {current.action}
@@ -2715,9 +2751,17 @@ function FindingSwitcherCard({
 }
 
 /** Tabs-count-style count chip used on the Findings / Passed group headings. */
-function CountChip({ count }: { count: number }) {
+function CountChip({
+  count,
+  size = "sm",
+}: {
+  count: number;
+  size?: "sm" | "xs";
+}) {
   return (
-    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-neutral-500 text-sm tabular-nums">
+    <span
+      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-neutral-500 tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
+    >
       {count}
     </span>
   );
@@ -3216,7 +3260,7 @@ function compressionValue(row: RequestRow): string {
 
 function KpiRail({ row }: { row: RequestRow }) {
   return (
-    <KpiRailShell className="border border-border shadow-none" columns={5}>
+    <KpiRailShell className="border border-border shadow-xs" columns={5}>
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile label="Tokens In" value={row.inTokens} />

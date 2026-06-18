@@ -37,7 +37,7 @@ export function ConversationsTrace() {
           (top-right), mirroring the Requests findings page. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <button
-          className="group relative inline-flex items-center gap-1 rounded-xs font-medium text-neutral-500 text-sm transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="group relative inline-flex items-center gap-1 rounded-xs font-medium text-neutral-500 text-sm transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           onClick={() => navigate("/conversations")}
           type="button"
         >
