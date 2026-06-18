@@ -13,6 +13,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import {
+  Fragment,
   type ReactNode,
   useCallback,
   useEffect,
@@ -105,7 +106,7 @@ import {
   CATEGORY_LABEL,
   entityLabel,
   type FindingActionKind,
-  findingBannerSentence,
+  findingBannerSegments,
   getRequestFindings,
   isByokKey,
   REQUEST_ROWS_7D,
@@ -2197,7 +2198,20 @@ export function RequestDetailBodyV2({
                 <span className="capitalize">{highestAction}</span>
               </p>
               <p className="text-pretty font-sans text-neutral-900 text-sm">
-                {findingBannerSentence(findings, showRaw)}
+                {(() => {
+                  const banner = findingBannerSegments(findings, showRaw);
+                  if ("plain" in banner) {
+                    return banner.plain;
+                  }
+                  return banner.segments.map((s, i) => (
+                    <Fragment key={`${s.pre}${s.what}${s.post}`}>
+                      {i > 0 ? " " : ""}
+                      {s.pre}
+                      <span className="font-medium">{s.what}</span>
+                      {s.post}
+                    </Fragment>
+                  ));
+                })()}
               </p>
             </div>
           </div>
@@ -2574,7 +2588,7 @@ function PiiSwitcherCard({
   const atStart = pos <= 0;
   const atEnd = pos >= total - 1;
   const paddle =
-    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-50 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -2590,17 +2604,17 @@ function PiiSwitcherCard({
         <Badge variant={actionVariant[current.action]}>{current.action}</Badge>
       </div>
       <p
-        className="line-clamp-2 font-sans text-neutral-900 text-sm"
+        className="line-clamp-2 font-sans text-muted-foreground text-sm"
         title={current.match}
       >
-        <span className="text-neutral-500">
+        <span className="text-foreground">
           {entityLabel(current.entityType)} ·{" "}
         </span>
         “{current.match}”
       </p>
       <div className="mt-1 flex items-center justify-between gap-2 border-border border-t pt-2">
         <span className="font-sans text-foreground text-xs tabular-nums">
-          Finding {pos + 1} / {total}
+          Finding {pos + 1} of {total}
         </span>
         <div className="flex items-center gap-1">
           <button
