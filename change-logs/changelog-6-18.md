@@ -275,3 +275,37 @@ header row, leaving the table `<Card>` a sibling whose gap was governed by the
 page pane's `gap-6`. Moved the Card inside the wrapper (like Overview's
 label + KPI rail) so the title -> table gap is the intended 16px. Audited the
 other 12 table pages: already conformant.
+
+### Requests findings always masked; Unredact toggle removed `5734de5`
+
+`src/pages/Requests.tsx` (`RequestDetailBody`, shared by the request-detail
+modal + the `RequestsFindings` page) and `src/data/requests.ts`.
+
+- Removed the admin **Unredact** toggle + label and all `showRaw` / `IS_ADMIN`
+  threading. Sensitive values are never revealed.
+- **Findings cards + evidence always render `redactedAs`** (never the raw
+  `match`), for every finding type: PII/credentials show their token
+  (`<EMAIL>`, `<AWS_ACCESS_KEY_ID>`, `<ANTHROPIC_API_KEY>`,
+  `<AWS_SECRET_ACCESS_KEY>`, `<OPENAI_API_KEY>`); injection/blocked show
+  `[blocked]`; flagged shows `[flagged]`. `match` is retained in data only for
+  offset/highlight position math. The Details-tab Full request always renders
+  the redacted body.
+- The highlight popover (method/score/threshold) and evidence reveal-scroll are
+  unchanged.
+- Data: `redactedAs "<OPENAI_KEY>" -> "<OPENAI_API_KEY>"` (2 findings) so the
+  card token matches the message body. All other PII/credential `redactedAs`
+  already match their message token.
+
+### Billing modals: fixed 500px from md up `5734de5`
+
+`AddCreditsDialog` + `AutoRechargeDialog` in `src/pages/Billing.tsx`.
+
+- Width is mobile-first: base `w-[calc(100%-2rem)]` (viewport minus 16px
+  gutters) capped at `max-w-[500px]`, then `md:w-[500px]` locks a fixed 500px
+  from 768px up. On a 1920px screen the dialog is 500px, not full-bleed.
+- Root cause of the prior breakage: the base `DialogContent` ships
+  `w-full max-w-[calc(100%-2rem)] sm:max-w-sm`. The earlier inline-`style`
+  and base-only `max-w-[500px]` attempts never beat `sm:max-w-sm` (a separate
+  twMerge variant group), so from 640px up the dialog stayed capped at 384px.
+  The override now replaces all three width classes, including the `sm:` one.
+- Auto-recharge form grid breaks two-up at `min-[480px]` instead of `md`.
