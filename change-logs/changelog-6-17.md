@@ -78,6 +78,27 @@ collapses ANY category with >1 occurrence into one switcher (so a row shows
   reordering the fields. Per-turn span scoping fixes the cross-turn highlight
   collision. Other rows are unchanged.
 
+### Findings banner collapsed to one digest sentence per detector `b9dabde`
+
+`findingBannerSegments` (`src/data/requests.ts`): the summary banner above the
+findings list now groups by detector category instead of per entity/value/turn,
+so `req_8384d2`'s five run-on sentences become two.
+
+- Before: `PII detector caught 5 instances of Email ... Credential detector
+  caught 2 instances of <AWS_ACCESS_KEY_ID> ... 2 instances of <ANTHROPIC_API_KEY>
+  ... <AWS_SECRET_ACCESS_KEY> ... Email in assistant turn 99.` (5 sentences).
+- After: `PII detector caught 6 instances of <EMAIL> in turn 99. Credential
+  detector caught 5 instances of <KEYS> in user turn 99.` (one sentence per
+  detector). Counts are the real summed occurrences.
+- Placeholders: PII brackets its descriptor (`Email` -> `<EMAIL>`, falls back to
+  `<PII>` if a turn mixes PII types), credentials always collapse to a generic
+  `<KEYS>`; injection keeps its human descriptor. Detector order is fixed
+  (PII, Credential, Injection).
+- The role word is dropped only when a detector spans both turns (`in turn 99`);
+  single-role groups keep it (`in user turn 99`). The now-unused `showRaw`
+  argument was removed from both banner functions; the raw/redacted toggle
+  still drives the finding cards below.
+
 ## Sections
 
 ### req_cd0e57: flagged provider-error request `fc9f5f3`
