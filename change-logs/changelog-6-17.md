@@ -45,7 +45,9 @@ Findings / Passed titles (`CountChip` back to its plain form, still on the PII
 card); the `Finding x / y` label is `text-foreground`.
 
 ### PII switcher banner + match-line polish `7e7ae74`
+
 Follow-up polish on the Findings panel (`Requests.tsx`, `requests.ts`):
+
 - Banner: PII uses the generic descriptor `Email` (was `emailAddress`); the
   entity word renders `font-medium` via a shared `findingBannerSegments` helper
   without echoing the matched value.
@@ -56,6 +58,25 @@ Follow-up polish on the Findings panel (`Requests.tsx`, `requests.ts`):
 - `req_8389e4` Authored-by trailers wrap the email in angle brackets
   (`NeoNeue <chad@constellationnetwork.io>`) to match the Co-Authored-By
   trailer convention.
+
+### Findings switcher generalized + two-turn evidence `c3bf0d0`
+
+`PiiSwitcherCard` -> `FindingSwitcherCard` (`Requests.tsx`): the Findings list now
+collapses ANY category with >1 occurrence into one switcher (so a row shows
+`PII 5` + `Credential 5`), single-occurrence categories stay individual cards.
+
+- Each group is ordered by the match's offset in the evidence, input (user)
+  turns before output (assistant), so the pager walks the message top-to-bottom
+  instead of jumping by value.
+- The card body is clickable and jumps to the group's first finding; on an
+  inactive group both `‹ ›` paddles are disabled until you enter it. Paddles
+  gained `shadow-xs` + a clearer `bg-neutral-100` hover; the press-scale was
+  removed from the finding cards (kept on the paddles only).
+- `PiiDetailPanel`: extracted `EvidenceWindow`; rows with findings on both turns
+  render two fixed-order windows (User message, then Assistant response), so
+  paging to an output finding scrolls/highlights the assistant window WITHOUT
+  reordering the fields. Per-turn span scoping fixes the cross-turn highlight
+  collision. Other rows are unchanged.
 
 ## Sections
 
@@ -89,6 +110,7 @@ On the `/requests-findings/:id` page (`Requests.tsx`):
 Replaced `req_cd0e57`'s `requestBodyRaw` (`src/data/requests.ts`), the Full
 request drawer payload, with a `user` message of two empty `text` blocks plus a
 `claude-opus-4-8` / `max_tokens` / `stream` tail. Drops the stale codex thinking
+
 - base64 signature payload so the drawer reconciles with the row's Claude Opus
 identity.
 
@@ -152,3 +174,13 @@ banner now names a generic, stable entity descriptor (`emailAddress`) instead
 of the matched value or redaction token, so it no longer changes on Unredact
 and groups all email findings into one sentence ("PII detector caught 4
 instances of emailAddress in user turn 99.").
+
+### req_8384d2: in/out redaction request from docs/ sources `c3bf0d0`
+
+New Success/Redacted row (`requests.ts`), a clone of `req_8389e4` populated from
+the session-source files: `userMessage` = `text.md` transcript carrying 5 PII
+(`lena` x3, `ops` x2) + 5 credential (AWS key x2, Anthropic key x2, AWS secret)
+findings; `assistantResponse` = `assistant.md` with a 6th finding on the OUTPUT
+turn (`lena`, `role: assistant`); `requestBodyRaw` = `request-trace.md` (the full
+classifier request). KPIs: 61,755 in / 149 out / 4.05s / 5.8%, cost —. Demonstrates
+the PII + Credential switchers and the in/out evidence windows on one request.
