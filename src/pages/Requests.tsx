@@ -2110,8 +2110,7 @@ export function RequestDetailBodyV2({
     toast("Marked as false positive", {
       description: "This finding is excluded from policy metrics.",
     });
-  const tunePolicy = () =>
-    toast("Policy tuning", { description: "Adjust detector thresholds." });
+  const tunePolicy = () => navigate("/policies");
   const requestId =
     row.requestId ??
     `req_${row.conversation.replace("cnv_", "").slice(0, 8)}${row.code}`;
@@ -2319,7 +2318,10 @@ export function RequestDetailBodyV2({
               <div className={PANEL_OUTER}>
                 {findings.length > 0 && (
                   <section className="flex flex-col gap-2">
-                    <PanelHeading title="Findings" />
+                    <PanelHeading
+                      aside={<CountChip count={findings.length} />}
+                      title="Findings"
+                    />
                     <div className="flex flex-col gap-2">
                       {(() => {
                         // Group findings by category in first-appearance order.
@@ -2392,7 +2394,10 @@ export function RequestDetailBodyV2({
                   </section>
                 )}
                 <section className="flex flex-col gap-2">
-                  <PanelHeading title="Passed" />
+                  <PanelHeading
+                    aside={<CountChip count={passed.length} />}
+                    title="Passed"
+                  />
                   <div className="flex flex-col gap-2">
                     {passed.map((p) => (
                       <div
@@ -2633,27 +2638,31 @@ function FindingSwitcherCard({
   };
   const selectedBorder =
     current.action === "block" ? "border-destructive" : "border-warning-500";
+  // Unselected clickable cards keep the action tone, dimmed two steps, so the
+  // group still reads as flagged without competing with the active card.
+  const inactiveBorder =
+    current.action === "block"
+      ? "border-danger-200 hover:border-danger-300"
+      : "border-warning-200 hover:border-warning-300";
   // Inactive group: BOTH paddles are disabled. You click the card to enter the
   // group (lands on its first finding), then the paddles step. Keeps an
   // unselected group from offering controls that do nothing visible yet.
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-6 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
-        "flex flex-col overflow-hidden rounded-xs border bg-card shadow-xs",
-        isActive ? selectedBorder : "border-border",
+        "relative flex flex-col overflow-hidden rounded-xs border bg-card shadow-xs transition-colors duration-150 ease-out motion-reduce:transition-none",
+        isActive ? selectedBorder : `${inactiveBorder} hover:bg-neutral-50`,
       ].join(" ")}
     >
       {/* Card body selects the group's FIRST finding (and scrolls to it),
        *  matching the single FindingCard click. Paddles step from there. */}
       <button
-        className={[
-          "flex w-full flex-col gap-2 px-4 pt-3 pb-3 text-left outline-none transition-colors duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none",
-          isActive ? "" : "hover:bg-neutral-50",
-        ].join(" ")}
+        className="flex w-full flex-col gap-2 px-4 pt-3 pb-3 text-left outline-none transition-colors duration-150 ease-out after:absolute after:inset-0 after:content-[''] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:after:cursor-default motion-reduce:transition-none"
+        disabled={isActive}
         onClick={() => onSelect(items[0].idx)}
         type="button"
       >
@@ -2677,10 +2686,10 @@ function FindingSwitcherCard({
         </p>
       </button>
       <div className="flex items-center justify-between gap-2 border-border border-t px-4 pt-2 pb-3">
-        <span className="font-sans text-foreground text-xs tabular-nums">
+        <span className="font-sans text-foreground text-sm tabular-nums">
           Finding {pos + 1} of {total}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="relative z-10 flex items-center gap-1">
           <button
             aria-label={`Previous ${CATEGORY_LABEL[current.category]} finding`}
             className={paddle}
@@ -2708,7 +2717,7 @@ function FindingSwitcherCard({
 /** Tabs-count-style count chip used on the Findings / Passed group headings. */
 function CountChip({ count }: { count: number }) {
   return (
-    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-mono text-neutral-500 text-sm tabular-nums">
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-neutral-500 text-sm tabular-nums">
       {count}
     </span>
   );
