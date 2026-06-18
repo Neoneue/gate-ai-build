@@ -61,7 +61,7 @@ export function RequestsFindings() {
 
       {row ? (
         /* No modal card — the findings content flows directly on the page:
-           title + badge, KPI rail, banner, tabs, then the body. `-mx-6` cancels
+           title + badge, KPI rail, tabs, then the body. `-mx-6` cancels
            the chrome's page gutter so the body's own px-6 lands at the standard
            gutter (no double padding). */
         <div className="-mx-6">

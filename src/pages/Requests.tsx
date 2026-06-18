@@ -13,7 +13,6 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import {
-  Fragment,
   type ReactNode,
   useCallback,
   useEffect,
@@ -81,7 +80,6 @@ import {
 } from "@/components/ui/select";
 import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import { StatusDot } from "@/components/ui/status-dot";
-import { Switch } from "@/components/ui/switch";
 import {
   SortableTableHead,
   Table,
@@ -106,7 +104,6 @@ import {
   CATEGORY_LABEL,
   entityLabel,
   type FindingActionKind,
-  findingBannerSegments,
   getRequestFindings,
   isByokKey,
   REQUEST_ROWS_7D,
@@ -2056,16 +2053,14 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
 
 /* ─── V2 Request detail modal — Findings-first ────────────────────────────
  * Identical Dialog scaffold to V1. Adds:
- *   • Finding banner below KPI rail (when findings.length > 0)
  *   • Tabs order: Findings (default) · Message · Details
  *   • Two-column Findings tab: card list (left) + evidence panel (right)
- *   • Highlight popover (method/score/threshold) + IS_ADMIN unredact toggle
+ *   • Highlight popover (method/score/threshold)
  *   • "Why this fired" detail surface
  *   • Footer adapts to active tab (Copy Fingerprint / Dismiss on Findings)
+ * Sensitive values are ALWAYS masked — every finding renders its
+ * `redactedAs` placeholder, never the raw `match`.
  * ────────────────────────────────────────────────────────────────────── */
-
-/** Module-level mock. Swap to a real auth check once RBAC ships. */
-const IS_ADMIN = true;
 
 function RequestDetailDialogV2({
   row,
@@ -2118,10 +2113,7 @@ export function RequestDetailBodyV2({
 
   // Memoized on `row` so tab switches / finding selection / evidence-reveal
   // re-renders don't re-run the detector derivation.
-  const { findings, passed, highestAction } = useMemo(
-    () => getRequestFindings(row),
-    [row]
-  );
+  const { findings, passed } = useMemo(() => getRequestFindings(row), [row]);
 
   // Track which finding card is selected in the left column.
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -2130,17 +2122,6 @@ export function RequestDetailBodyV2({
   const [revealNonce, setRevealNonce] = useState(0);
 
   const selectedFinding = findings[selectedIdx] ?? null;
-
-  // Unredact is OFF by default and shared across surfaces: the same admin-gated
-  // toggle controls BOTH the Findings-tab evidence span and the Details-tab
-  // Full request, so a caught value stays masked everywhere until explicitly
-  // revealed. Non-admins can't toggle, so they only ever see the redacted form.
-  const [showRaw, setShowRaw] = useState(false);
-
-  // 2-tier action severity: block = destructive (red), flag/redact = warning
-  // (amber). The action badge label carries the flag-vs-redact distinction.
-  const bannerTone =
-    highestAction === "block" ? ("destructive" as const) : ("warning" as const);
 
   // Copy the finding's match fingerprint to clipboard.
 
@@ -2163,59 +2144,10 @@ export function RequestDetailBodyV2({
           {requestId}
         </DialogTitleBlock>
       </DialogScrollHeader>
-      {/* KPI rail — persistent, sits above everything including banner */}
+      {/* KPI rail — persistent, sits above everything */}
       <DialogScrollSummary>
         <KpiRail row={row} />
       </DialogScrollSummary>
-      {/* Finding banner — icon + title + descriptive sentence (no link). */}
-      {findings.length > 0 && (
-        <div className="px-6 pt-6">
-          <div
-            aria-live="polite"
-            className={[
-              "flex items-start gap-4 rounded-md border p-4",
-              bannerTone === "destructive"
-                ? "border-destructive/50 bg-danger-50"
-                : "border-warning-500/50 bg-warning-50",
-            ].join(" ")}
-            role="status"
-          >
-            <TriangleAlert
-              aria-hidden
-              className={[
-                "size-6 shrink-0",
-                bannerTone === "destructive"
-                  ? "text-destructive"
-                  : "text-warning-600",
-              ].join(" ")}
-              strokeWidth={1.75}
-            />
-            <div className="flex min-w-0 flex-col gap-1">
-              <p className="font-medium font-sans text-neutral-900 text-sm">
-                {findings.length} finding{findings.length === 1 ? "" : "s"} ·
-                Highest action:{" "}
-                <span className="capitalize">{highestAction}</span>
-              </p>
-              <p className="text-pretty font-sans text-neutral-900 text-sm">
-                {(() => {
-                  const banner = findingBannerSegments(findings);
-                  if ("plain" in banner) {
-                    return banner.plain;
-                  }
-                  return banner.segments.map((s, i) => (
-                    <Fragment key={`${s.pre}${s.what}${s.post}`}>
-                      {i > 0 ? " " : ""}
-                      {s.pre}
-                      <span className="font-medium">{s.what}</span>
-                      {s.post}
-                    </Fragment>
-                  ));
-                })()}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       <div
         className={
           variant === "page" ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"
@@ -2228,7 +2160,7 @@ export function RequestDetailBodyV2({
             variant === "page"
               ? "px-6 pb-6"
               : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
-            // Always 24px below whatever sits above (KPI rail or banner).
+            // Always 24px below the KPI rail.
             "pt-6",
           ].join(" ")}
         >
@@ -2249,11 +2181,8 @@ export function RequestDetailBodyV2({
                   ) : (
                     <PiiDetailPanel
                       finding={selectedFinding}
-                      isAdmin={IS_ADMIN}
-                      onShowRawChange={setShowRaw}
                       revealNonce={revealNonce}
                       row={row}
-                      showRaw={showRaw}
                     />
                   )
                 ) : (
@@ -2571,9 +2500,9 @@ function FindingCard({
       </div>
       <p
         className="line-clamp-2 font-sans text-neutral-900 text-sm"
-        title={finding.match}
+        title={finding.redactedAs}
       >
-        “{finding.match}”
+        “{finding.redactedAs}”
       </p>
     </>
   );
@@ -2612,7 +2541,7 @@ const PANEL_OUTER =
   "rounded-md border border-border bg-card shadow-xs p-4 flex flex-col gap-4";
 
 /** Section title (16px medium) above its card, with an optional right-aligned
- * aside (count chip / Unredact toggle). Cards never contain the title. */
+ * aside (e.g. a count chip). Cards never contain the title. */
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
@@ -2713,12 +2642,12 @@ function FindingSwitcherCard({
         </div>
         <p
           className="line-clamp-2 font-sans text-muted-foreground text-sm"
-          title={current.match}
+          title={current.redactedAs}
         >
           <span className="text-foreground">
             {entityLabel(current.entityType)} ·{" "}
           </span>
-          “{current.match}”
+          “{current.redactedAs}”
         </p>
       </button>
       <div className="flex items-center justify-between gap-2 border-border border-t px-4 pt-2 pb-3">
@@ -2795,8 +2724,8 @@ function KvRow({
 }
 
 /** Detail panel for PII / credential findings — the Presidio / regex layout.
- * Owns the Unredact toggle (rendered on the "Why this fired" heading row).
- * Every section is title-ABOVE-card; cards hold only data. */
+ * Findings are always masked: titles and evidence render `redactedAs`, never
+ * the raw match. Every section is title-ABOVE-card; cards hold only data. */
 /** One scrollable evidence box: title-above-card, the message body with each
  * of THIS turn's findings highlighted in place, and an auto-scroll to the
  * selected finding's first match. `findings` must already be scoped to a single
@@ -2811,7 +2740,6 @@ function EvidenceWindow({
   findings,
   selectedFinding,
   revealNonce,
-  showRaw,
 }: {
   /** The turn's message body the spans are measured against. */
   text: string;
@@ -2823,8 +2751,6 @@ function EvidenceWindow({
   selectedFinding: RequestFinding;
   /** Bumped on each finding click so a re-click re-scrolls. */
   revealNonce?: number;
-  /** Unredact state — show raw match instead of the placeholder. */
-  showRaw: boolean;
 }) {
   // Build highlight spans for every match of this turn's findings, occurrence-
   // aware (a value can repeat, and each finding pins its own instance). Only
@@ -2876,7 +2802,7 @@ function EvidenceWindow({
         data-selected-evidence={isSelectedSpan ? "" : undefined}
         key={`${start}-${f.entityType}`}
       >
-        {showRaw ? f.match : f.redactedAs}
+        {f.redactedAs}
       </span>
     );
     evidenceCursor = start + f.match.length;
@@ -2922,18 +2848,10 @@ function EvidenceWindow({
 function PiiDetailPanel({
   finding,
   row,
-  isAdmin,
-  showRaw,
-  onShowRawChange,
   revealNonce,
 }: {
   finding: RequestFinding;
   row: RequestRow;
-  isAdmin: boolean;
-  /** Unredact state, lifted to the detail body so it also drives the Details-tab
-   *  Full request (one toggle, both surfaces). OFF = redacted by default. */
-  showRaw: boolean;
-  onShowRawChange: (next: boolean) => void;
   /** Bumped on each finding click so the panel re-scrolls to the match even
    * when the same finding is re-clicked. */
   revealNonce?: number;
@@ -3023,7 +2941,7 @@ function PiiDetailPanel({
         data-selected-evidence={isSelectedSpan ? "" : undefined}
         key={`${start}-${f.entityType}`}
       >
-        {showRaw ? f.match : f.redactedAs}
+        {f.redactedAs}
       </span>
     );
     evidenceCursor = start + f.match.length;
@@ -3062,7 +2980,6 @@ function PiiDetailPanel({
             label="User message"
             revealNonce={revealNonce}
             selectedFinding={finding}
-            showRaw={showRaw}
             text={userFindings[0].evidence}
           />
           <EvidenceWindow
@@ -3070,7 +2987,6 @@ function PiiDetailPanel({
             label="Assistant response"
             revealNonce={revealNonce}
             selectedFinding={finding}
-            showRaw={showRaw}
             text={assistantFindings[0].evidence}
           />
           <FullRequestCollapsible row={row} />
@@ -3102,24 +3018,9 @@ function PiiDetailPanel({
         </>
       )}
 
-      {/* Why this fired — Unredact toggle on the heading row; label/value rows. */}
+      {/* Why this fired — label/value rows. */}
       <section className="flex flex-col gap-2">
-        <PanelHeading
-          aside={
-            isAdmin ? (
-              <label className="flex cursor-pointer select-none items-center gap-2 text-neutral-600 text-sm">
-                <Switch
-                  aria-label="Show unredacted match"
-                  checked={showRaw}
-                  onCheckedChange={onShowRawChange}
-                  size="sm"
-                />
-                Unredact
-              </label>
-            ) : undefined
-          }
-          title="Why this fired"
-        />
+        <PanelHeading title="Why this fired" />
         <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
           <KvRow label="Rule" value={rule} />
           <KvRow
@@ -3137,7 +3038,7 @@ function PiiDetailPanel({
 }
 
 /** Detail panel for injection findings — the classifier layout. NONE of
- * Recognizer / Offset / Bytes / Unredact / redaction diff. Every section is
+ * Recognizer / Offset / Bytes / redaction diff. Every section is
  * title-ABOVE-card. Built on the five real detector outputs only
  * (docs/Injection-findings.md §0/§6). */
 function InjectionDetailPanel({
@@ -3572,8 +3473,8 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
  * heading (no nested PanelHeading "Full request" below it), mirroring the real
  * CollapsibleJson: the panel holds only the JSON code well + Copy code. The
  * Details-tab Full request is decoupled from a selected finding, so it drops
- * the highlight / unredact wiring the Findings-tab RequestBodyPanel carries —
- * it always renders the redacted-by-default body and a matching clipboard
+ * the highlight wiring the Findings-tab RequestBodyPanel carries —
+ * it always renders the redacted body and a matching clipboard
  * payload built straight from the row. */
 function FullRequestCollapsible({
   row,
@@ -3764,7 +3665,6 @@ function RequestBodyPanel({
   highlightEvidence,
   highlightFinding,
   revealSignal,
-  showRaw = false,
   bare = false,
   fullRequestOnly = false,
   messagesOnly = false,
@@ -3776,10 +3676,6 @@ function RequestBodyPanel({
   highlightEvidence?: string;
   /** The selected finding — drives the highlight's hover popover. */
   highlightFinding?: RequestFinding;
-  /** Shared Unredact state. OFF (default) masks every finding's match in the
-   *  Full request + clipboard payload, so the raw value never shows here unless
-   *  an admin unredacts (same toggle as the Findings-tab evidence). */
-  showRaw?: boolean;
   /** Bumped when the user clicks "Offset in evidence" — expands the Full
    *  request drawer and scrolls the highlighted match into view. */
   revealSignal?: number;
@@ -3809,19 +3705,16 @@ function RequestBodyPanel({
     (row.toolName
       ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
       : sampleRequestContent(row));
-  // Redacted by default: mask EVERY finding's match in the Full request body (a
+  // Always redacted: mask EVERY finding's match in the Full request body (a
   // request can carry more than one, e.g. PII + credential), and highlight the
-  // selected finding's placeholder. Unredact reveals the raw body + raw match.
-  const requestContent =
-    !showRaw && row.findings
-      ? row.findings.reduce(
-          (acc, f) => acc.split(f.match).join(f.redactedAs),
-          rawRequestContent
-        )
-      : rawRequestContent;
-  const effectiveHighlight = showRaw
-    ? highlightMatch
-    : (highlightFinding?.redactedAs ?? highlightMatch);
+  // selected finding's placeholder. The raw value is never rendered here.
+  const requestContent = row.findings
+    ? row.findings.reduce(
+        (acc, f) => acc.split(f.match).join(f.redactedAs),
+        rawRequestContent
+      )
+    : rawRequestContent;
+  const effectiveHighlight = highlightFinding?.redactedAs ?? highlightMatch;
   const responseContent =
     row.assistantResponse ??
     (row.toolName ? (row.toolResult ?? "") : sampleResponseText(row));

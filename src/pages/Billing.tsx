@@ -331,7 +331,11 @@ function AddCreditsDialog({
       }}
       open={open}
     >
-      <DialogContent className="w-full max-w-[500px] gap-4 sm:max-w-[500px]">
+      {/* Mobile-first width: below md the dialog fills the viewport minus 16px gutters
+          (capped at 500px); from md (≥768px) up it locks to a fixed 500px. Must override
+          three base width classes — w-full, max-w-[calc(100%-2rem)], and sm:max-w-sm (384px,
+          a separate twMerge variant group that otherwise caps the dialog from 640px up). */}
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[500px] gap-4 sm:max-w-[500px] md:w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Add credits
@@ -499,7 +503,11 @@ function AutoRechargeDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="w-full max-w-[500px] gap-4 sm:max-w-[500px]">
+      {/* Mobile-first width: below md the dialog fills the viewport minus 16px gutters
+          (capped at 500px); from md (≥768px) up it locks to a fixed 500px. Must override
+          three base width classes — w-full, max-w-[calc(100%-2rem)], and sm:max-w-sm (384px,
+          a separate twMerge variant group that otherwise caps the dialog from 640px up). */}
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[500px] gap-4 sm:max-w-[500px] md:w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
             Auto-recharge
@@ -530,7 +538,7 @@ function AutoRechargeDialog({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2">
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
