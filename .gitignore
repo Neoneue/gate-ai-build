@@ -37,3 +37,4 @@ docs/
 gateway-fixes.md
 handoff.md
 .rams-capture/
+.playwright-mcp/
