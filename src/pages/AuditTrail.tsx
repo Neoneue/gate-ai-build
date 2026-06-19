@@ -185,12 +185,7 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
-        <KpiTile
-          delta="+12.4%"
-          deltaNote="All time"
-          title="Events logged"
-          value={formatNumber(eventsLogged)}
-        />
+        <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
       </div>
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile
