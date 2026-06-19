@@ -664,7 +664,7 @@ function MerkleTreeViewer({
       <div className="absolute top-4 right-4 flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-sm">
         <button
           aria-label="Zoom in"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={zoom >= MAX_ZOOM}
           onClick={zoomIn}
           type="button"
@@ -674,7 +674,7 @@ function MerkleTreeViewer({
         <div className="h-px bg-border" />
         <button
           aria-label="Zoom out"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={zoom <= MIN_ZOOM}
           onClick={zoomOut}
           type="button"
@@ -684,7 +684,7 @@ function MerkleTreeViewer({
         <div className="h-px bg-border" />
         <button
           aria-label="Reset view"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={isDefaultView}
           onClick={resetView}
           type="button"
@@ -735,7 +735,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
         {/* Expand FAB — opens the interactive zoom/pan viewer. */}
         <button
           aria-label="Expand Merkle tree"
-          className="absolute top-2 right-2 z-10 inline-flex size-8 items-center justify-center rounded-sm border border-border bg-card text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="absolute top-2 right-2 z-10 inline-flex size-8 items-center justify-center rounded-sm border border-border bg-card text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           onClick={() => setExpandOpen(true)}
           type="button"
         >

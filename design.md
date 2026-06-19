@@ -405,17 +405,23 @@ Two layers: **palette atoms** (5 OKLCH ramps × 11 steps + atomic surfaces + 8-s
 
 ### Step roles (apply across all 5 ramps)
 
+The step encodes **intent, not lightness** — the same number plays the same UI
+role in every ramp (`neutral`, `success`, `warning`, `danger`, `blue`). One role
+per step:
+
 | Step | Role |
 | --- | --- |
-| 50–100 | Subtle backgrounds, washes, hover-bg |
+| 50 | Field/well wash — Input, Textarea, Select trigger, table-header surface (neutral-50; see `bg-neutral-50` gap below) |
+| 100 | Default subtle background + hover-bg; secondary/muted/accent fills (`--secondary`, `--muted`, `--accent` resolve to neutral-100) |
 | 200 | Borders, dividers (`--border`, `--input` resolve to neutral-200) |
 | 300 | Strong borders, ghost-button hover-bg, dashed gridlines |
 | 400 | Placeholder text, missing-data dashes, breadcrumb separators (`--ring` resolves to neutral-400) |
 | 500 | Secondary text, eyebrow, chart strokes (`--muted-foreground` resolves to neutral-500) |
-| 600 | Saturated mid (default solid surfaces, `--destructive` resolves to danger-600) |
+| 600 | Saturated mid — default solid surfaces (`--destructive` resolves to danger-600) |
 | 700 | Saturated text on tinted bg, brand-mark anchor (blue-700 = logomark) |
-| 800–900 | High-contrast text on white. neutral-800 = body default; neutral-900 = `--primary`, `--foreground`, headlines |
-| 950 | Reserved (extreme contrast, future dark-mode anchor) |
+| 800 | Body text default (neutral-800) |
+| 900 | Primary text, headlines (`--primary`, `--foreground` resolve to neutral-900) |
+| 950 | Reserved — extreme contrast, future dark-mode anchor |
 
 **Note:** `--neutral-700` is intentionally avoided as a table body-cell tone — middle-tier neutrals collide with the three-tier table policy (see §7 Tables).
 
@@ -500,6 +506,8 @@ Tailwind named scale only. Three sizes overridden in `@theme` to Geist's heading
 | `eyebrow-default` | Geist Mono | 14 | 500 | 20 | 0.1em | Modal eyebrows, drawer headers, hero strips. | UPPERCASE TRACKED. |
 | `badge` | Geist Mono | 12 | 500 | 16 | normal | Status codes, counters, deltas, pills. | tabular-nums (Badge default). |
 | `data` | Geist Mono | 14 | 400 | 20 | normal | Table cells, IDs, codes, hashes, model identifiers, row values. | tabular-nums. |
+
+**Default.** When no stronger role applies, UI text is `body-sm` (14/20 sans) and any value, ID, or numeric is `data` (14/20 Geist Mono, tabular-nums). These two carry most of the app; reach past them only when a role above is genuinely the intent.
 
 ### Five-voice taxonomy (codified 2026-05-07)
 
@@ -589,9 +597,26 @@ Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popu
 
 **Rules:** Card-tier surfaces wear an honest `border-border` plus `shadow-xs`. Menus and modals stay on their shadow tokens. **Concentric rule:** item radius < container radius (4px badge inside 8px card inside 16px modal). Don't override `rounded-xl` on modals — locked.
 
-### Motion
+---
 
-`transition-[colors,box-shadow] duration-150 ease-out motion-reduce:transition-none` everywhere — NOT `transition-all`. **Custom easing curves** are declared in `@theme` (`index.css:168–171`): `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`, `--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)`. Tailwind v4 maps the bare `ease-out` utility to the custom curve site-wide; `ease-drawer` is named separately for slide-in surfaces (Sheet, sidebar). The `<Button>` primitive's transition expands to `transition-[colors,opacity,box-shadow,scale]` so `disabled:opacity-50` *fades* on dirty-flip across every form button instead of snapping. Press affordance (revised 2026-06-04): **`active:scale-[0.99]` — a subtle 1% scale-DOWN (matches Aave's CTA press)** with `will-change-transform` on the primitive so the scaled label re-rasters crisply instead of bitmap-stretching. Replaces the old `active:translate-y-px`. The scale is gated `active:not-aria-[haspopup]:scale-[0.99]` so popover/select/menu *triggers* don't scale — that gate is what now avoids the anchor-reposition flicker that retired the earlier `active:scale-[0.98]` on 2026-05-10. Always paired with `motion-reduce:active:scale-100`. Same press lives on `IconActionButton` + `TabsTrigger`; hand-rolled pressables match. Sliding indicator (Tabs / Segmented / SegmentedPill): 200ms ease-out, transform + width animated. Sheet enter: 300ms slide from right. Dialog enter: 200ms fade + zoom-in-95 (`Menu` popup gets `origin-[var(--transform-origin)]` so it scales *from the trigger*, not from the popup's geometric center — Base UI publishes the variable on the Positioner). MenuItem highlight uses `transition-colors duration-100 ease-out` — keyboard arrow-through no longer snaps. Toast: sonner default (200ms enter + 4s hold + 200ms exit).
+## Motion *(Google canonical — added 2026-06-19)*
+
+Animate intent, not decoration. Transition only `colors`, `box-shadow`, `opacity`, `scale`, and `transform`; never `transition-all`. Reduced motion always wins (`motion-reduce:transition-none` / `motion-reduce:animate-none`).
+
+| Token / duration | Value | Where |
+| --- | --- | --- |
+| `--ease-out` (default) | `cubic-bezier(0.23, 1, 0.32, 1)` | All color/shadow/scale transitions; Tailwind `ease-out` maps to it site-wide |
+| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` | Symmetric moves |
+| `--ease-drawer` | `cubic-bezier(0.32, 0.72, 0, 1)` | Slide-in surfaces (Sheet, sidebar) |
+| 100ms | duration | Overlay fade, MenuItem highlight |
+| 150ms | duration | Default control transition: colors, shadow, scale |
+| 200ms | duration | Dialog enter (fade + zoom-in-95), sliding indicator, toast |
+| 120ms | duration | Dialog close, held by `data-closed:fill-mode-forwards` |
+| 300ms | duration | Sheet slide-in from right |
+
+Easings are declared in `@theme` (`index.css:168–171`). Base UI + tw-animate-css exits need `data-closed:fill-mode-forwards` on both popup and overlay, or they flicker back to opacity 1 for ~28ms before unmount (see §7 Dialog).
+
+The `<Button>` primitive's transition expands to `transition-[colors,opacity,box-shadow,scale]` so `disabled:opacity-50` *fades* on dirty-flip across every form button instead of snapping. Press affordance (standardized site-wide 2026-06-18, replacing the earlier `0.99`): **`active:scale-[0.98]` — a subtle scale-DOWN** with `will-change-transform` on the primitive so the scaled label re-rasters crisply instead of bitmap-stretching. Replaces the old `active:translate-y-px`. Gated so popover/select/menu *triggers* don't scale (`not-aria-[haspopup]` on the Button primitive, `enabled:` elsewhere), which avoids the anchor-reposition flicker. Always paired with `motion-reduce:active:scale-100`. Same press lives on `IconActionButton` + `TabsTrigger`; hand-rolled pressables match. Sliding indicator (Tabs / Segmented / SegmentedPill): 200ms ease-out, transform + width animated. Sheet enter: 300ms slide from right. Dialog enter: 200ms fade + zoom-in-95 (`Menu` popup gets `origin-[var(--transform-origin)]` so it scales *from the trigger*, not from the popup's geometric center — Base UI publishes the variable on the Positioner). MenuItem highlight uses `transition-colors duration-100 ease-out` — keyboard arrow-through no longer snaps. Toast: sonner default (200ms enter + 4s hold + 200ms exit).
 
 ---
 
@@ -622,7 +647,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 `src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with 4 size variants (xs/sm/default/lg) and 6 style variants (default/outline/secondary/ghost/destructive/link).
 
-- **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 36px tall (`h-9`), `px-4` (`pr-3` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.99]` (1% scale-down) + `will-change-transform` (2026-06-04, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
+- **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 36px tall (`h-9`), `px-4` (`pr-3` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.98]` (scale-down) + `will-change-transform` (standardized 2026-06-18, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
 - **Sizes:** xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-9 px-4 text-sm · lg h-10 px-4 text-sm (brand tightening from shadcn's px-6 default — operator-tool register, not marketing CTA; size differentiates by height only)
 - **Outline:** `border-border bg-card` + **`shadow-xs`** (added 2026-06-04, primitive-level so it cascades to every `variant="outline"`) — the subtle lift matches the Card recipe and reads against any backdrop. `box-shadow` is in the button's transition list, so it does not snap on hover.
 - **Asymmetric icon padding:** `has-data-[icon=inline-start]:pl-3` / `has-data-[icon=inline-end]:pr-3` (default size). Mirrors `SelectTrigger` rule (see below).
@@ -849,6 +874,18 @@ When one section is the focal action, accent it with `bg-blue-50` (and the icon 
 
 ---
 
+## Voice & Content *(Google canonical — added 2026-06-19)*
+
+Copy is part of the design: precise, plain, no marketing superlatives. This is an operator tool, not a landing page.
+
+- **Case.** Sentence case for titles, labels, buttons, and tabs (`Export view`, `Save changes`, `Audit record`, `Open Explorer`). UPPERCASE TRACKED is reserved for mono eyebrows and KPI labels only; never put it on a form/input label.
+- **Actions.** Label buttons with a specific verb (`Export view`, `Copy proof JSON`, `Open Explorer`), never a bare `OK` / `Confirm`.
+- **Terminology.** The user-facing term is "fingerprint" / "fingerprinted"; the code identifier stays `anchor` (`ANCHORED_EVENTS_COUNT`, `RecentAnchoredEventsCard`). The verification mark reads "Verified by Digital Evidence." Don't blind-rename across the UI/code divide.
+- **Numbers are real.** Every visible figure derives from an actual entity row: no hand-authored constants, no plausible-looking filler. An unknown or unmetered value renders as an em-dash (`—`), never an estimate (e.g. BYOK request cost).
+- **Status + errors.** Show real tokens (HTTP `200` / `500`). Write an error as what happened plus the fix, quoting the actual requirement (e.g. the passthrough `X-Gate-Upstream-Url` header message), not a generic "Something went wrong."
+
+---
+
 ## 8. Do's and Don'ts *(Google canonical §8 — cross-cutting only)*
 
 ### Do
@@ -863,7 +900,7 @@ When one section is the focal action, accent it with `bg-blue-50` (and the icon 
 - **Render pagination/inline links as `<button>`**, not `<a>`. No router in this app.
 - **Use the chart palette by index**, not by entity. Brand-decoupled by default. Import from `@/lib/chart-palette` (`CHART_PALETTE`, `chartSlot(n)`) — extracted 2026-05-10 from CMP-012's inline literal.
 - **Use `<TextLink>` for inline links**, `<IconActionButton>` for icon-only buttons, `<KpiRail>` for KPI rails, `<HeroNumeric>` for ≥24px hero numerics, `<MessageBlock>` for conversation bubbles, `<TabsCount>` for tab counts, `<ToolResultCode>` for tool-result JSON, `<SettingsRow>` for settings rows. **Don't hand-roll these recipes** — `src/components/ui/` is the canonical home.
-- **Press affordance is `active:scale-[0.99]`** (1% scale-DOWN, revised 2026-06-04) gated `active:not-aria-[haspopup]:scale-[0.99]` so popover/select/menu triggers don't scale, paired with `will-change-transform` for crisp label re-raster and `motion-reduce:active:scale-100`. Replaced the old `active:translate-y-px`. The earlier ungated `active:scale-[0.98]` was retired 2026-05-10 for popover anchor-reposition flicker; the `not-aria-[haspopup]` gate is what makes scale-press safe now.
+- **Press affordance is `active:scale-[0.98]`** (subtle scale-DOWN, standardized site-wide 2026-06-18) gated so popover/select/menu triggers don't scale (`not-aria-[haspopup]` on the Button primitive, `enabled:` elsewhere), paired with `will-change-transform` for crisp label re-raster and `motion-reduce:active:scale-100`. Replaced the old `active:translate-y-px`. Gate the scale on any trigger that anchors a popover, or it flickers on reposition.
 
 ### Don't
 
@@ -883,7 +920,7 @@ When one section is the focal action, accent it with `bg-blue-50` (and the icon 
 - **Don't use odd 4-multiples (12, 20, 28, 36) for surface-tier spacing.** Surface tier is 8-multiples only — those odd values belong to compound tier (within a primitive's row/group), never to page/section/card rhythm. Specifically: no `p-7`, `gap-7`, `mb-7`, `gap-3` between-card gaps, `gap-5` between sections.
 - **Don't put cards at `rounded-sm` (6px).** Cards live at the new 8px (`rounded-md`) surface tier as of 2026-05-10; 6px is the button / chrome / menu tier. Reaching for `rounded-sm` on a new card class is a tell that this doc was read at an old snapshot.
 - **Don't put modals at `rounded-xl: 12px`.** The token resolves to **16px** as of 2026-05-10 (`--radius-xl: 1rem` in `@theme inline`). Don't reintroduce the 12px override or hand-roll a `rounded-[12px]` modal.
-- **Don't use the ungated `active:scale-[0.98]` for press affordance.** Use `active:not-aria-[haspopup]:scale-[0.99]` + `will-change-transform` + `motion-reduce:active:scale-100` (2026-06-04). The `not-aria-[haspopup]` gate keeps popover/select/menu triggers from scaling — that gate is what avoids the anchor-reposition flicker that retired the old ungated scale-press. Don't revert to `active:translate-y-px`.
+- **Don't apply ungated scale-press to a popover/select/menu trigger** — it flickers on anchor-reposition. Gate it (`not-aria-[haspopup]` on the Button primitive, `enabled:` elsewhere). Standard press is `active:scale-[0.98]` + `will-change-transform` + `motion-reduce:active:scale-100` (standardized site-wide 2026-06-18). Don't revert to `active:translate-y-px`.
 - **Don't use raw ramp tokens where a semantic token exists.** Surfaces: `bg-white` → `bg-card` / `bg-popover` / `bg-background`; `bg-neutral-100` → `bg-muted`. Borders: `border-neutral-200` → `border-border`. Rings: `ring-neutral-N` → `ring-ring`. Text: `text-neutral-900` → `text-foreground`; `text-neutral-500` → `text-muted-foreground`. The only permitted ramp-token exceptions today are `bg-neutral-50` (no `--input-bg` alias yet), `text-neutral-800` / `text-neutral-600` / `text-neutral-400` (no semantic aliases yet). See §2 semantic token quick-reference.
 - **`tracking-snug` (`-0.01em`) is scoped to three tiers only:** (1) small sans titles — CardTitle / in-card h3 at `text-base` or `text-base/5 font-medium`; (2) large mono KPI numerics — `font-mono text-lg font-medium tabular-nums` in modal KpiTile / ConversationKpiTile; (3) **page-header subtitles** — the `text-base text-neutral-500` `<p>` under `<PageTitle>` (swept site-wide 2026-06-18, replacing `tracking-tight`, which at -0.025em was too aggressive for the 16px subtitle body). **14px sans body (`text-sm`) is `tracking-normal`.** **Mono at `text-sm` and below is `tracking-normal`** — the monospace grid carries its own optical density at small sizes and negative tracking smears digit shapes. Don't pass arbitrary `-tracking-[Npx]` anywhere; heading `-tracking-[1px]` (PageTitle / artboard h2) stays arbitrary — different optical tier.
 - **Don't hand-roll the user dropdown or workspace switcher.** Both surfaces (sidebar 3-dot, top-bar avatar) open the shared `<UserMenu>`. Adding a third surface = new `<UserMenu>` consumer, not a new local menu.
@@ -891,7 +928,7 @@ When one section is the focal action, accent it with `bg-blue-50` (and the icon 
 
 ---
 
-## Responsive Behavior *(our extension — preserved)*
+## Responsive Behavior *(our extension)*
 
 The product targets desktop-first operator workflows; no mobile-shipped state today. Composed pages (`src/pages/*`) are responsive but tuned for ≥1280px. **Mobile not observed in the current state — flagged TBD.**
 
@@ -917,60 +954,6 @@ The product targets desktop-first operator workflows; no mobile-shipped state to
 - **Sidebar** (left nav): expanded 240px (`w-60`) / collapsed 64px (`w-16`) in `sidebar.tsx`. Collapse toggle lives in the sidebar header; the workspace switcher sits in the top bar (not the sidebar — see §7 UserMenu / WorkspaceSwitcher).
 - **KPI rail:** four sections side-by-side at composed widths. Mobile collapse strategy TBD.
 - **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper). Column priority not codified.
-
----
-
-## Drift to Normalize *(our extension)*
-
-Resolved 2026-05-09 — `<RowActionButton>` (4 sites) and `<EmptyState>` (2 sites) extracted to `src/components/ui/`. See §7 Lists/Tables for the row-as-button primitive contract. CMP-007's `CMP007ModalEmptyState.tsx` is a separate modal-internal specimen and intentionally remains its own shape.
-
-Resolved 2026-05-10 — second extract-before-handrolling pass shipped **eight** new primitives in `src/components/ui/`: `<KpiRail>` (4 sites), `<TextLink>` (CMP-013), `<IconActionButton>` (CMP-012), `<TabsCount>` (CMP-016 / 017), `<ToolResultCode>` (CMP-014, 4× consumers), `<SettingsRow>` (lifted from CMP-018 local definition), `<Menu>` (shadcn-style wrapper over Base UI), `<UserMenu>` (sidebar + DashboardChrome avatar share one menu). Plus one shared helper at `src/lib/chart-palette.ts` (`CHART_PALETTE` array + `chartSlot(n)`) extracted from CMP-012's inline literal. Same pass swept 34 artboard sites of hand-rolled `rounded-sm bg-white shadow-(--shadow-border)` → `rounded-md` (new card tier) and migrated ~30 `-tracking-[Npx]` values to the new `tracking-snug` token.
-
-Resolved 2026-05-11 — **modal-chrome unification pass.** The 2026-05-09 note that "CMP-007 is a separate modal-internal specimen and intentionally remains its own shape" is reversed: spec sheets must use the same primitive as live consumers — if they look different, the primitive is missing a slot, not the spec being its own shape. Fix shipped three primitive additions in `dialog.tsx`: `<DialogStaticContent>` (spec-sheet modal shell — no portal/popup, same outer chrome as `<DialogContent>`), `<DialogTitleBlock>` (canonical title + meta block — owns type sizes and gap rhythm so every modal title block is type-locked at the primitive; **eyebrow slot deliberately omitted** — drilled-in modals carry surface context from how they were opened; competitor scan of Linear / Vercel / Stripe / Helicone confirmed no eyebrow on detail modals), and a bump of every Dialog/AlertDialog padding from `p-4` → `p-6` (with `<DialogScrollFooter>` deliberately staying at `py-4` so the action band reads as chrome, not body). Plus one new primitive at `src/components/ui/detail-list.tsx` (`<DetailList>` + `<DetailRow>`) — extracted after the third occurrence of the same label/value-row recipe (CMP-013 `DetailRow`, CMP-015 `ContextRow`, CMP-007 `DetailGrid` — the last was drifting to a different shape). Consumers refactored: CMP-007 `ModalSpecimen` + `GenerationDetailsModal` (now compose `<DialogStaticContent>` + `<DialogTitleBlock mode="static">` + section h3 blocks + `<DialogScrollFooter>`; the GenerationDetails specimen structurally mirrors CMP-015), CMP-013 / CMP-014 / CMP-015 detail modals (use `<DialogTitleBlock>` instead of hand-rolled eyebrow + `<DialogTitle>` + meta prose; CMP-013 / CMP-015 also consume the new `<DetailRow>` primitive — local `DetailRow` / `ContextRow` helpers deleted). Lesson codified: **className overrides on a primitive are hand-rolling wearing the primitive's name.** If a consumer reaches for `<DialogTitle className="font-mono text-lg ...">`, the primitive needs a `titleFont` slot — extract, don't override.
-
-Resolved 2026-05-11 (later) — **typography primitive extraction pass.** Five-agent audit found ~200 instances of drift across the codebase; tier A (the highest-leverage cascade) tackled four typography primitives: `<Eyebrow>` (13 sites consolidated across Requests / Conversations / Security/16/18 + sidebar + compact-kpi + Artboard.tsx — the last had drifted to `tracking-[0.08em]` without `font-medium`), `<SectionHeading>` (5 sites in CMP-007/15 modal body sections), `<PageTitle>` (8 sites across every composed page — one used `tracking-tight` instead of `-tracking-[1px]`, normalized on extraction; the spec-sheet `<ArtboardHeader>` stays separate as its own surface convention), and `<InlineCode>` (5 sites in CMP-016 alone — short identifier chips distinct from `<ToolResultCode>`'s JSON-blob variant). Process correction: I had previously claimed the codebase was clean of hand-rolling after the modal-chrome refactor; the audit proved that claim wrong. The audit-first-then-extract sequence is now the standard for any drift question — read the codebase, don't trust assertions about its state.
-
-Resolved 2026-05-15 — **Border-token migration.** Card / KpiRail / Tabs `line` variant moved from `shadow-(--shadow-border)` to `border border-border shadow-xs` in a single commit (`c2a0b87`, "Design polish: border tokens, radio fill, Conversations rhythm, Policies card bg, Models handle"). Same commit bumped `--input` from neutral-200 to neutral-300 for a stronger form-control stroke and migrated MessageBlock to `border-border` + rounded-md bubbles + ring-1 selection. `--shadow-border` token stays defined in `index.css:117–120` but has no consumer after this pass. Removed dependency on a token that re-tinted edges via `color-mix` — the explicit border reads cleanly at any zoom against any backdrop, which the operator surfaces need at ≥125% scaling.
-
-Resolved 2026-05-16 — **Audit Trail page shipped.** New surface at `/audit-trail`. Composes `<PageTitle>` + range selector + `<KpiRail>` with `<KpiTile>` slots + Event log table consuming `<FilterToolbar>` + `<SearchInput>` + `<TablePaginationFooter>` + `<TableEmptyState>` (canonical extraction point for the table-empty-state primitive — see §7 Lists/Tables). Three-tier ink with **date/time cells in the `text-neutral-800` data tier** (locked decision from this pass — see memory `feedback_table-date-time-tier`). Subsequently swept Conversations / Team / Dashboard date columns to the same tier.
-
-Resolved 2026-05-17 — **Overview redesign + ink→neutral rename + three new shared primitives.** `--background` rebased from `var(--color-white)` to `var(--color-neutral-100)` and the custom `--color-ink-*` ramp removed from `@theme` — Tailwind's built-in `neutral-*` defaults now resolve through the semantic aliases. Use `bg-card` (white) on surfaces that should remain white (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome), NOT `bg-background` (canvas color). Same pass: button `lg` size tightened from `px-6` to `px-4` (brand-tight operator register). Overview (`/overview`) rebuilt — workspace switcher migrated from the sidebar to the top bar (`<WorkspaceSwitcher>` exported from `sidebar.tsx`, rendered by `DashboardChrome` to the right of the expand/collapse button); page composes a live KPI rail (`<KpiRail>` filled with `<KpiTile>` tiles) + Activity-This-Week chart + three preview tables (Latest Requests / Recent Conversations / Security Events) each capped at 8 rows. Three primitives extracted in the same pass: `<KpiTile>` (Overview + Audit Trail rail filler), `<FilterToolbar>` (7 hand-rolled `flex items-center gap-2 p-4` sites consolidated across Team / Conversations / Requests / Models / Activity / AuditTrail / Security), `<Monogram>` (Team + Activity avatar-initial chip unified). Default route changed from `/requests` to `/overview` (commit `881c347`).
-
-Resolved 2026-05-19 — **Security Mark-PIJ in-modal slide.** `ThreatEventDetailDialog` gains a second view ("Mark PIJ event") that slides in alongside the detail view inside the same Dialog. Height animation driven by `useLayoutEffect` measuring detail and mark panel heights. Mark form textarea fixed at `h-48` (not content-driven); textarea label is "Reason" (not "Note" — renamed in commit `8f1aea1`). Marking flips the dialog badge to `<Badge variant="destructive">Marked false</Badge>`. This pattern is reusable for any modal that needs a paired action-slide without leaving the surface.
-
-Resolved 2026-05-12 — **Requests page CTO/PM feedback round.** Two-axis table split (Status = success / error / slow; Guardrail = allow / flagged / redacted / block) — filter row mirrors the split, AND-combined. Range pill widened to **1H / 24H / 7D / 30D** + `<DateRangePicker>` for custom backlogs older than the longest preset; both inputs share `rangeStore` (selecting one clears the other). Hero number / eyebrow / delta / chart geometry now all react to the active range (bucket densities tuned per range to defuse the "cumulative?" misread on sparse data). **Cost column gains a PAYG-vs-BYOK signal:** BYOK rows render `—` in `text-neutral-400` (we don't own the billing relationship and won't estimate); Info icon in the column header + Tooltip explains PAYG vs BYOK; cell-level Tooltip on the dash repeats "Billed by your provider (BYOK)". Single `isByokKey(keyId)` predicate replaces the prior brittle `keyId === 'dev'` check (used in 2 modal call sites). **Request detail modal Messages tab reworked** from JSON-payload-only to readable-first: User and Assistant turns render as labeled prose cards (white header + `bg-neutral-50` body, lucide `User` / `Sparkles` icons left of label); full HTTP payload moves into a collapsed `<BodySection>` drawer ("Full request payload" with a lucide `Braces` icon) with a "Copy code" footer below the code well — the footer was a deliberate split from the toggle header so taps can't conflict. KPI rail gains a `Compression` tile; the previously-named "Audit" tile + tab were renamed visually to **Security** (internal `value="audit"` retained for now). Security panel scoped to three checks: prompt injection, PII redaction, credential leak detection. **Subtitle:** "Every model call across your stack, captured in real-time." **A11y:** Tooltip triggers (Cost header info icon, Cost cell dash) take `tabIndex={0}` so keyboard users can read the BYOK explanation; both also get `p-1 -m-1` for a ~32px hit area with no layout shift; `<BodySection>` toggle button gets `focus-visible:ring-2 ring-inset`; Info icon resting bumped `text-neutral-400` → `text-neutral-500` to clear non-text-contrast (WCAG 1.4.11). **Polish:** prose body adds `break-words` (defends long URLs / hashes from horizontal overflow); Cost header Tooltip max-w bumped `xs` → `sm` for a cleaner 2–3 line wrap.
-
-**Open drift:**
-
-- **`<MessageBlock>` naming collision.** The canonical primitive (`src/components/ui/message-block.tsx`, used by Conversations for chat-thread bubbles with role + tone + selection + crosslink) has a same-named local component in `src/pages/Requests.tsx` (labeled prose card for the Request modal Messages tab — different shape, different job). Two fixes possible: (a) rename the local Requests component to `MessageCard` / `MessageTurn` / `MessagePane`; (b) extract the labeled-card shape as a real primitive and absorb both shapes under one name with a `variant` slot. The labeled-card shape currently has only one consumer, so (a) is the safe immediate move; (b) becomes worth doing when a second consumer appears.
-- **`-tracking-[1px]` heading kerning.** PageTitle and the spec-sheet ArtboardHeader use arbitrary `-tracking-[1px]` rather than a named token. Lives in its own optical tier (different from `tracking-snug` / `tracking-tight`); intentionally not promoted to a token yet because there's no second use case. Watch for a third occurrence — that's the extraction trigger.
-- **`bg-neutral-50` exception.** Form-field surfaces (Input, Textarea, Select trigger, table header) still bind to the ramp atom directly because no `--input-bg` semantic alias exists. Add the alias before the next theme-swap candidate ships.
-- **Typography ramp tokens without semantic aliases:** `text-neutral-800` (body-data), `text-neutral-600` (table-header), `text-neutral-400` (placeholder / missing-data dash). Close when touching the token layer.
-- If unbound hex appears outside `@theme`, bind to the closest ramp atom.
-
-## Open Questions *(our extension)*
-
-1. **Wordmark + lockups.** Logomark finalized; wordmark + horizontal/stacked lockups TBD.
-2. **Tagline.** Closest in-codebase one-liner is the Overview subtitle ("Monitor request volume, token usage, spend, and security signals across your gateway.") — that's a subtitle, not a tagline.
-3. **Favicon refresh.** `public/favicon.svg` predates the current logomark.
-4. **Mobile.** No mobile state today. Sidebar/KPI-rail collapse and table column-priority not codified.
-5. **Dark mode.** `:root.dark` intentionally absent. When activated, redefine semantic tokens against a dark palette in a `.dark` block — OKLCH ramp values stay constant across modes; only semantic mappings shift.
-6. **Error / marketing voice.** Empty-state tone is set; error-state tone TBD. Marketing voice TBD until marketing surfaces ship.
-
----
-
-## States Checklist *(our extension)*
-
-| Surface | States |
-| --- | --- |
-| Forms (Input/Select/Switch/Checkbox/Radio) | Default · Focused · Hovered · Disabled · Invalid · Read-only |
-| Tables (Requests / Conversations / AuditTrail / Activity / Models / Team) | Default · Hover · Selected · Sorted · Filtered · Empty · Loading (TBD) · Slow-row |
-| Conversations message thread | User · Assistant · Tool call · Tool result (default + warn) |
-| Modal / Sheet | Closed · Opening · Open · Closing · Backdrop-blur |
-| Buttons | Default · Hover · Active · Focus · Disabled · Loading (TBD) |
-| Toast | success · info · warning · error · loading |
-
-**Rule:** every new screen in request/conversation/security ships with Default + Hover + Focus + Empty + Filtered in the same PR.
 
 ---
 

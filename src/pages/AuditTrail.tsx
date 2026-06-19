@@ -1,4 +1,4 @@
-import { CircleCheck, Download } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
+import { UploadIcon } from "@/components/ui/upload";
 import {
   EVENT_ROWS,
   type EventKind,
@@ -146,7 +147,7 @@ function PageHeader() {
           Export view is not built yet — no onClick handler. */}
       <div className="flex items-center gap-2">
         <Button size="default" type="button" variant="outline">
-          <Download />
+          <UploadIcon aria-hidden data-icon="inline-start" size={16} />
           Export view
         </Button>
       </div>

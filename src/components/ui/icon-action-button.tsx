@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  *   transition-[color,background-color,transform,box-shadow] duration-150 ease-out
  *   hover: text-neutral-900 + bg-neutral-100
  *   focus-visible: ring-3 ring-ring/50
- *   active: scale-[0.99] (press affordance — subtle scale-down; gated for reduced-motion)
+ *   active: scale-[0.98] (press affordance — subtle scale-down; gated for reduced-motion)
  *   after:absolute after:-inset-2 — pseudo-element expands the hit area
  *     by 8px in every direction (44×44 effective tap target without
  *     inflating the visual footprint). The button itself is `relative`
