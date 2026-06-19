@@ -10,6 +10,12 @@ Prior day: [`changelog-6-18.md`](./changelog-6-18.md).
 
 ## Components
 
+### Audit trail: drop synthetic delta from Events logged KPI `3ffb14a`
+
+`src/pages/AuditTrail.tsx`. The "Events logged" KPI tile carried a hardcoded
+`delta="+12.4%"` / `deltaNote="All time"` with no backing entity data. Removed
+both props; the tile now renders only the eyebrow + value (no delta row).
+
 ### Audit record modal: single details card, tabs removed `e98cfde`
 
 `src/pages/AuditRecordDialog.tsx` (the drill-in modal on Audit trail, also used
