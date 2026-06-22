@@ -7,6 +7,7 @@ import { TextLink } from "@/components/ui/text-link";
 
 export function KpiTile({
   title,
+  titleInfo,
   value,
   valueSuffix,
   liveDot,
@@ -19,6 +20,8 @@ export function KpiTile({
   deltaNote,
 }: {
   title: string;
+  /** Optional adornment rendered after the title, e.g. an info-icon tooltip. */
+  titleInfo?: ReactNode;
   value: string;
   valueSuffix?: string;
   liveDot?: boolean;
@@ -57,6 +60,7 @@ export function KpiTile({
           />
         ) : null}
         <Eyebrow as="div">{title}</Eyebrow>
+        {titleInfo}
       </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>

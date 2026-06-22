@@ -1,4 +1,4 @@
-import { ChevronDownIcon, CircleCheck } from "lucide-react";
+import { ChevronDownIcon, CircleCheck, Info } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,11 @@ import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import {
   EVENT_ROWS,
@@ -157,6 +162,35 @@ function OverviewBar() {
   );
 }
 
+/* ─── Fingerprint info tooltip ──────────────────────────────────────── */
+
+/* Info-icon tooltip explaining what a fingerprint is. Shared by the
+   "Last fingerprint" KPI tile and the Fingerprint table column header so the
+   copy lives in one place. */
+function FingerprintInfoTooltip() {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={(props) => (
+          <button
+            {...props}
+            aria-label="What is a fingerprint?"
+            className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            type="button"
+          />
+        )}
+      >
+        <Info aria-hidden className="size-3.5" strokeWidth={2} />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        A fingerprint is a permanent record saved to Constellation's Digital
+        Evidence each time events are logged, so anyone can confirm these events
+        really happened and were never changed.
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
 function KpiRailSection({ rows }: { rows: EventRow[] }) {
@@ -179,6 +213,7 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
           href="https://digitalevidence.constellationnetwork.io/"
           linkLabel="Open in Explorer"
           title="Last fingerprint"
+          titleInfo={<FingerprintInfoTooltip />}
           value={mostRecent ? fmtRelative(mostRecent) : "—"}
         />
       </div>
@@ -563,7 +598,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       Member
                     </SortableTableHead>
                     <TableHead className="w-[18%] whitespace-nowrap">
-                      Fingerprint
+                      <span className="inline-flex items-center gap-1">
+                        Fingerprint
+                        <FingerprintInfoTooltip />
+                      </span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
