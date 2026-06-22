@@ -81,7 +81,7 @@ export const EVENT_ROWS: EventRow[] = [
     eventId: "e_" + uuid("ac2525f1", "3b74", "4d92", "bf1e", "9c03d78afe59"),
     kind: "REQUEST",
     description:
-      'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
+      'Request error: Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
     member: "Chad Ponticas",
     anchor: hex(
       "ab40eb92",
@@ -100,7 +100,7 @@ export const EVENT_ROWS: EventRow[] = [
     eventId: "e_" + uuid("5ea003d8", "c92f", "4a17", "b836", "e501d4cbfc55"),
     kind: "REQUEST",
     description:
-      'Request error: Passthrough tokens require explicit X-Gate-Upstream-Url header. Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
+      'Request error: Set it to "https://api.anthropic.com" for Anthropic API keys, or to your custom upstream URL.',
     member: "Chad Ponticas",
     anchor: hex(
       "a96fc5e2",
@@ -230,7 +230,7 @@ export const EVENT_ROWS: EventRow[] = [
     at: new Date(2026, 4, 12, 9, 18, 12),
     eventId: "e_" + uuid("e77116a3", "d058", "4b7f", "9c21", "e3a540b318ae"),
     kind: "AUDIT",
-    description: `API key ${uuid("47b14b0a", "43cc", "4738", "928d", "b0fc94c635f2")} revoked`,
+    description: "API key <API_KEY> revoked",
     member: "Chad Ponticas",
     anchor: hex(
       "a0eb4a27",

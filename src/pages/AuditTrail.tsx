@@ -1,4 +1,4 @@
-import { CircleCheck } from "lucide-react";
+import { ChevronDownIcon, CircleCheck } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { Label } from "@/components/ui/label";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
@@ -135,14 +136,6 @@ function PageHeader() {
           </TextLink>
           .
         </p>
-      </div>
-      {/* TODO: wire the page-level Export action per the Audit Trail review doc.
-          Export view is not built yet — no onClick handler. */}
-      <div className="flex items-center gap-2">
-        <Button size="default" type="button" variant="outline">
-          <UploadIcon aria-hidden data-icon="inline-start" size={16} />
-          Export view
-        </Button>
       </div>
     </div>
   );
@@ -405,6 +398,33 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                 </Badge>
               ) : null}
             </Button>
+            <Menu>
+              <MenuTrigger
+                render={
+                  <Button
+                    className="border-border bg-card font-normal text-foreground"
+                    disabled={isEmpty}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  />
+                }
+              >
+                <UploadIcon aria-hidden data-icon="inline-start" size={16} />
+                Export
+                <ChevronDownIcon
+                  aria-hidden
+                  className="text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/button:rotate-180 motion-reduce:transition-none"
+                  data-icon="inline-end"
+                />
+              </MenuTrigger>
+              <MenuContent align="end">
+                {/* TODO: wire export actions (PDF / CSV) per the Audit Trail
+                    review doc — no handlers yet. */}
+                <MenuItem>Export as PDF</MenuItem>
+                <MenuItem>Export as CSV</MenuItem>
+              </MenuContent>
+            </Menu>
           </div>
         </div>
 
@@ -495,7 +515,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   </Button>
                 ) : undefined
               }
-              body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
+              body="No events match your current search or filters. Clear them to see the full audit trail."
               title="No audit events"
             />
           ) : (
