@@ -29,7 +29,7 @@ import {
 /* ─── Verification seal placeholder ──────────────────────────────────── */
 
 /** Constellation Digital Evidence "Verified" badge — native asset at
- *  269×40. Rendered at `h-8` (32px) to fit the banner without dominating. */
+ *  269×40. Rendered at `h-6` (24px) to fit the banner without dominating. */
 function VerifiedBySeal() {
   return (
     <img
@@ -141,7 +141,18 @@ export function AuditRecordDialog({
             <Copy className="size-3.5" />
             Copy proof JSON
           </Button>
-          <Button size="sm">
+          <Button
+            nativeButton={false}
+            render={
+              // biome-ignore lint/a11y/useAnchorContent: label + icon are injected as children by Base UI's render prop at runtime
+              <a
+                href="https://digitalevidence.constellationnetwork.io/"
+                rel="noopener noreferrer"
+                target="_blank"
+              />
+            }
+            size="sm"
+          >
             <ExternalLink className="size-3.5" />
             Open Explorer
           </Button>
