@@ -35,6 +35,13 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - Search input is built in but disabled for now (the Member field no longer
   passes `searchable`).
 
+### Audit trail: fingerprint info tooltip `1e3d6e7`
+
+- Added a shared `FingerprintInfoTooltip` (Info icon + Base UI `Tooltip`) beside
+  the "Last fingerprint" KPI tile title and the Fingerprint table column header,
+  with a plain-language explanation living in one component. Added an optional
+  `titleInfo` slot to `KpiTile` to host the icon next to the title.
+
 ### Audit trail Filters: Export dropdown `7deb172`
 
 - New Export control after the Filters button (`AuditTrail.tsx`): icon + "Export"
