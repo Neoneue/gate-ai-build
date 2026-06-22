@@ -35,6 +35,23 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - Search input is built in but disabled for now (the Member field no longer
   passes `searchable`).
 
+### Audit trail Filters: Export dropdown `7deb172`
+
+- New Export control after the Filters button (`AuditTrail.tsx`): icon + "Export"
+  + chevron, opening a menu with `Export as PDF` / `Export as CSV` (Base UI
+  `Menu`). Menu aligns to the right edge of the trigger (`align="end"`).
+- Disabled when the table has no rows to export, reusing the existing
+  `isEmpty = filteredRows.length === 0` so it stays in sync with the empty state.
+- Removed the page-header "Export view" button (superseded by this toolbar menu).
+
+### Empty state: title grouped with copy `0500d34`
+
+- `EmptyState` primitive: title + body wrapped in their own `flex-col` at `gap-3`,
+  outer container at `gap-4`. Before, all children sat at a uniform `gap-3` with
+  the action offset by `mt-1`. Now icon-to-title and copy-to-action read looser
+  than the tighter title-to-copy pairing. Applies to every default-state card via
+  `TableEmptyState`.
+
 ## Sections
 
 ### Audit trail: benefit-led page subtitle `33364fa`
@@ -47,3 +64,14 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - Leads with what the page does and the user benefit instead of the mechanism;
   grounded in the Audit Trail PRD (scope, developer use, independent
   verification).
+
+### Audit trail: redacted descriptions + empty-state copy `7deb172`
+
+- `audit-trail.ts`: the revoked-key event showed a raw key id; redacted to
+  `API key <API_KEY> revoked` (Requests placeholder convention). Removed the
+  "Passthrough tokens require explicit X-Gate-Upstream-Url header." sentence from
+  the two `Request error` descriptions.
+- Empty-state body rewritten from "Requests, policy decisions, and limit checks
+  will appear here as your workspace routes traffic." to "No events match your
+  current search or filters. Clear them to see the full audit trail." The state is
+  only reachable via search/filters, so it now points at the Clear filters action.
