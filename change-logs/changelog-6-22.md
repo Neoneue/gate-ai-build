@@ -42,6 +42,17 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   with a plain-language explanation living in one component. Added an optional
   `titleInfo` slot to `KpiTile` to host the icon next to the title.
 
+### API Keys Manual card: copy button anchor + tabs gap `f00ae42`
+
+- `ConnectTabs` (floatingCopy): the conditional class concatenated into
+  `gap-0relative`, so `relative` never applied and the Copy code button had no
+  positioned ancestor (it anchored to the viewport bottom). Switched to `cn()`
+  so `relative` applies (button now anchors to the snippet card) and the
+  intended `gap-0` overrides the Tabs base `gap-2`.
+- That removed an 8px gap below the tab row; the Manual code area went 208px →
+  216px so the card height holds at 314px. Only the `floatingCopy` card was
+  affected; other `ConnectTabs` usages already had `gap-0` working.
+
 ### Audit trail Filters: Export dropdown `7deb172`
 
 - New Export control after the Filters button (`AuditTrail.tsx`): icon + "Export"
