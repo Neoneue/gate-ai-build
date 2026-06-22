@@ -383,7 +383,7 @@ export function UsageInfo() {
           <Card className="flex flex-1 flex-col" density="flush">
             <div className="flex-1">
               <ConnectTabs
-                codeMaxHeight="h-[208px]"
+                codeMaxHeight="h-[216px]"
                 defaultTab={rightDefaultTab}
                 floatingCopy
                 showGateConnect={false}

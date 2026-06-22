@@ -37,6 +37,7 @@ import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { cn } from "@/lib/utils";
 
 const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
 
@@ -876,7 +877,7 @@ export function ConnectTabs({
   const activeCode = TAB_CODE[activeTab]?.[effectiveMode];
   return (
     <Tabs
-      className={`flex flex-1 flex-col gap-0${floatingCopy ? "relative" : ""}`}
+      className={cn("flex flex-1 flex-col gap-0", floatingCopy && "relative")}
       onValueChange={setActiveTab}
       value={activeTab}
     >
