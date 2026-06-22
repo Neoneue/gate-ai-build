@@ -15,15 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import {
   SortableTableHead,
@@ -125,10 +119,9 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
         <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
-          Every model call gets a cryptographic receipt. Receipts are
-          fingerprinted to Constellation's Digital Evidence layer on a public
-          chain, so anyone can verify a record existed and was unmodified,
-          including after retention. No trust in Constellation required.
+          A tamper-evident record of every request, response, and policy
+          decision the gateway handled. Investigate exactly what happened, and
+          let anyone verify it independently.
         </p>
         <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
           To learn more, check out our{" "}
@@ -439,62 +432,29 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               <Label className="font-medium text-neutral-600 text-sm">
                 Member
               </Label>
-              <Select
-                multiple
+              <MultiSelect
+                aria-label="Filter by member"
                 onValueChange={setDraftMembers}
+                options={MEMBER_OPTIONS.map((name) => ({
+                  value: name,
+                  label: name,
+                }))}
+                placeholder="All members"
                 value={draftMembers}
-              >
-                <SelectTrigger
-                  aria-label="Filter by member"
-                  className="w-full border-border bg-card font-normal text-foreground"
-                >
-                  <SelectValue>
-                    {(value: string[]) =>
-                      value.length === 0
-                        ? "All members"
-                        : `${value.length} selected`
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {MEMBER_OPTIONS.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div className="flex flex-col gap-2">
               <Label className="font-medium text-neutral-600 text-sm">
                 Event type
               </Label>
-              <Select
-                multiple
-                onValueChange={(v: string[]) => setDraftKinds(v as EventKind[])}
+              <MultiSelect
+                aria-label="Filter by event type"
+                onValueChange={(v) => setDraftKinds(v as EventKind[])}
+                options={KIND_OPTIONS}
+                placeholder="All event types"
                 value={draftKinds}
-              >
-                <SelectTrigger
-                  aria-label="Filter by event type"
-                  className="w-full border-border bg-card font-normal text-foreground"
-                >
-                  <SelectValue>
-                    {(value: string[]) =>
-                      value.length === 0
-                        ? "All event types"
-                        : `${value.length} selected`
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {KIND_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <DialogFooter className="sm:justify-between">
