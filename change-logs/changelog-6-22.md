@@ -183,3 +183,46 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   40×40 guidance without changing the visual icon size.
 - Policy card `<h3>` titles now include `text-balance` to reduce awkward wraps
   on longer labels.
+
+### Policies: semantic heading/label/copy type roles `a9643d7`
+
+- Added reusable typography role utilities in `src/index.css` to mirror a
+  Vercel-style semantic system: `type-heading-18`, `type-heading-16`,
+  `type-label-16`, `type-label-14`, `type-label-12`, `type-copy-16`,
+  `type-copy-14`, `type-copy-14-tight`, `type-copy-12`.
+- `Policies.tsx` now consumes those role classes instead of page-local
+  typography mixes (`text-lg/7`, `text-base/6`, `text-sm`, etc.) for policy
+  titles, section headings, option labels, and helper/body copy. Visual output
+  stays the same while naming/usage is standardized.
+
+### Policies (Free): Pro upsell panel added + iterated to match comp `a9643d7`
+
+- Added a Free-only prompt-injection upsell panel under the "Enable free Regex
+  scanning" card in `Policies.tsx` (`variant === "free"` + policy id seam).
+- Panel now follows the comp structure: headline + inline `PRO` badge, concise
+  explainer copy, and a 2-column benefits grid (6 items total):
+  Indirect injection, Obfuscated attacks, Goal hijacking, Jailbreak patterns,
+  Choose what happens when caught, Tunable sensitivity.
+- Tunable sensitivity copy corrected to
+  `Low, Medium, or High sensitivity per workspace`.
+- CTA uses the same modal-upgrade flow wiring as Billing (`PlanComparisonDialog`
+  + `onUpgrade` route to `/billing`) with a single `Upgrade to Pro` action.
+- Spacing tuned to reduce cramping while preserving page rhythm:
+  extra 8px between subtitle and benefits grid, increased row/item breathing in
+  the benefits list, and heading/subtitle kept on the page-standard `gap-1`.
+
+### Token: blue-25 surface tier for subtle upsell fills `a9643d7`
+
+- Added `--color-blue-25` in `src/index.css` and consumed it via `bg-blue-25`
+  on the Free prompt-injection Pro upsell panel to keep the surface tint in the
+  token system (no ad-hoc color values).
+
+### Cross-page typography consistency sweep (Requests + Security) `a9643d7`
+
+- `Security.tsx`: page subtitle moved to `type-copy-16`; filter modal labels
+  (`Type`, `Action`, `Key`) moved to `type-label-14 text-neutral-600`.
+- `Requests.tsx`: page subtitle moved to `type-copy-16`; filter modal labels
+  (`Model`, `Key`, `Response`, `Guardrail`) moved to
+  `type-label-14 text-neutral-600`.
+- Goal: keep `Policies` from becoming a one-off by applying the same semantic
+  heading/label/copy role classes on adjacent high-traffic pages.
