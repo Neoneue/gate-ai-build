@@ -23,6 +23,7 @@ import {
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -164,9 +165,7 @@ export function Dashboard() {
     >
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
-          Activity This Week
-        </h2>
+        <SectionTitle as="h2">Activity This Week</SectionTitle>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>

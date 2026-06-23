@@ -10,8 +10,13 @@ import {
   XIcon,
   Zap,
 } from "lucide-react";
-import { type ComponentType, useMemo, useState } from "react";
-import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { type ComponentType, type ElementType, useMemo, useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
 import {
   AnthropicIcon,
   GeminiIcon,
@@ -35,6 +40,7 @@ import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SectionTitle } from "@/components/ui/section-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
@@ -653,6 +659,65 @@ function DownloadGateConnectDialog() {
   );
 }
 
+function OverviewHeroCard() {
+  const navigate = useNavigate();
+
+  return (
+    <section className="flex flex-col gap-4">
+      <SectionTitle as="h2">Get started</SectionTitle>
+      <Card className="flex-1" density="flush">
+        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
+          <div className="flex max-w-1/2 flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 font-medium text-neutral-700 text-sm tabular-nums"
+              >
+                1
+              </span>
+              <h3 className="m-0 font-medium text-lg text-neutral-900">
+                Create your first API key
+              </h3>
+            </div>
+            <p className="m-0 text-pretty text-base text-neutral-500">
+              Your API key is what routes traffic through Gate, adding
+              prompt-injection defense and a tamper-evident audit trail to every
+              request. Use it with our Gate Connect app, or any AI coding tools
+              you configure manually.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate("/api-keys")}>
+              <Plus
+                className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
+                data-icon="inline-start"
+              />{" "}
+              Create key
+            </Button>
+            <Button
+              onClick={() =>
+                window.open(
+                  "https://docs.constellationgate.ai",
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+              variant="outline"
+            >
+              Read API docs{" "}
+              <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
+            </Button>
+          </div>
+        </div>
+        <div className="border-border border-t p-8 max-xl:p-6">
+          <FirstRequestInfo />
+        </div>
+        <WorksWithFooter />
+      </Card>
+    </section>
+  );
+}
+
 export function HeroCard() {
   const navigate = useNavigate();
 
@@ -843,6 +908,7 @@ export function ConnectTabs({
   textMaxWidth = CONNECT_TEXT_MAXW,
   imageClassName = CONNECT_IMAGE_CLASS,
   titleClassName = "text-2xl font-medium tracking-tight text-neutral-900 m-0",
+  titleAs: TitleTag = "h3",
   showGateConnect = true,
   paygOnly = false,
   gateConnectOnly = false,
@@ -854,6 +920,7 @@ export function ConnectTabs({
   textMaxWidth?: string;
   imageClassName?: string;
   titleClassName?: string;
+  titleAs?: ElementType;
   showGateConnect?: boolean;
   paygOnly?: boolean;
   gateConnectOnly?: boolean;
@@ -935,9 +1002,9 @@ export function ConnectTabs({
               className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? "h-full" : ""}`}
             >
               <div className="flex flex-col gap-2">
-                <h3 className={titleClassName}>
+                <TitleTag className={titleClassName}>
                   1-Click setup with Gate Connect
-                </h3>
+                </TitleTag>
                 <p
                   className={`text-pretty text-neutral-500 text-sm ${textMaxWidth} m-0`}
                 >
@@ -1181,6 +1248,83 @@ function SecurityEventsTable() {
   );
 }
 
+const FIRST_REQUEST_TAB_IDS = [
+  "gate-connect",
+  "claude-code",
+  "codex",
+  "openclaw",
+];
+
+function FirstRequestInfo() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const defaultTab =
+    tabParam && FIRST_REQUEST_TAB_IDS.includes(tabParam) ? tabParam : undefined;
+  const rightDefaultTab =
+    defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
+  return (
+    <section className="@container/connect flex flex-col gap-6">
+      <div className="flex max-w-1/2 flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 font-medium text-neutral-700 text-sm tabular-nums"
+          >
+            2
+          </span>
+          <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+            Making your first request
+          </h3>
+        </div>
+        <p className="m-0 font-sans text-base text-neutral-500">
+          There are two ways to start making requests using your API key. With{" "}
+          <span className="font-medium">Gate Connect</span>, setup is automatic,
+          so you can skip the code entirely. Want to configure it yourself? Use
+          the code snippets to do it by hand.
+        </p>
+      </div>
+
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
+          the manual-setup code tabs (no Gate Connect tab) on the right.
+          Side-by-side with a 24px gap; stacks full-width below lg. */}
+      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
+        {/* Each card gets an h4 label above it (outside the card, so no
+            height impact) so the two setup paths — Automatic vs Manual — read
+            as a matched pair even though the right card is a code card with no
+            internal title slot. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <CardTitle as="h4">Automatic</CardTitle>
+          <Card className="flex flex-1 flex-col" density="flush">
+            <div className="flex flex-1 flex-col">
+              <ConnectTabs
+                fillHeight
+                gateConnectOnly
+                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                titleAs="h4"
+                titleClassName="text-lg font-medium text-neutral-900 text-balance m-0"
+              />
+            </div>
+          </Card>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <CardTitle as="h4">Manual</CardTitle>
+          <Card className="flex flex-1 flex-col" density="flush">
+            <div className="flex-1">
+              <ConnectTabs
+                codeMaxHeight="h-[216px]"
+                defaultTab={rightDefaultTab}
+                floatingCopy
+                showGateConnect={false}
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function DashboardDefault() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -1203,12 +1347,10 @@ export function DashboardDefault() {
         </p>
       </div>
       <div className="mb-2">
-        <HeroCard />
-      </div>
+        <OverviewHeroCard />
+      </div>{" "}
       <div className="flex flex-col gap-4">
-        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
-          Activity This Week
-        </h2>
+        <SectionTitle as="h2">Activity This Week</SectionTitle>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>

@@ -33,6 +33,7 @@ import { MessageBlock, type MessageRole } from "@/components/ui/message-block";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -292,9 +293,7 @@ function OverviewBar({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-        Overview
-      </h3>
+      <SectionTitle>Overview</SectionTitle>
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
           aria-label="Time range"
@@ -565,9 +564,7 @@ function ConversationsTableSection({
           (a query that returns zero results never hides them). isEmpty
           governs only the Card interior below. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Recent conversations
-          </h3>
+          <SectionTitle>Recent conversations</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search conversations"

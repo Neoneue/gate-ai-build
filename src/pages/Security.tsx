@@ -42,6 +42,7 @@ import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -726,9 +727,7 @@ export function Security() {
                 AuditTrail / Requests. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Overview
-          </h3>
+          <SectionTitle>Overview</SectionTitle>
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedPill
               aria-label="Time range"
@@ -1220,9 +1219,7 @@ function EventsTableSection({
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Recent events
-          </h3>
+          <SectionTitle>Recent events</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search events"

@@ -53,9 +53,13 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
+function CardTitle({
+  as: Tag = "h3",
+  className,
+  ...props
+}: React.ComponentProps<"h3"> & { as?: React.ElementType }) {
   return (
-    <h3
+    <Tag
       className={cn(
         "font-heading font-medium text-base leading-snug group-data-[size=sm]/card:text-sm",
         className

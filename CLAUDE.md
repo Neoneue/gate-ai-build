@@ -9,6 +9,9 @@ lives in the reference docs linked below.
 - Work on `dev`, never push to `main` directly.
 - Keep changes scoped to the literal request.
 - Run `npx tsc -b` before any merge or promotion step.
+- **Visual values are a closed set.** Never invent a color, type size, or
+  tracking — map every value to a token/voice in `design.md`, or stop and ask.
+  Enforced by `npm run lint:design`. Full rule: @.claude/rules/design-tokens.md
 
 ## Reference docs (repo root)
 

@@ -12,6 +12,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageTitle } from "@/components/ui/page-title";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -287,9 +288,7 @@ function OverviewSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-          Overview
-        </h3>
+        <SectionTitle>Overview</SectionTitle>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedPill
             aria-label="Time range"
@@ -337,9 +336,7 @@ function SavingsOptionsSection() {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-          Savings options
-        </h3>
+        <SectionTitle>Savings options</SectionTitle>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <CachingCard />

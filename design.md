@@ -143,6 +143,12 @@ typography:
 
   h3:
     fontFamily: "Geist"
+    fontSize: 20
+    lineHeight: 28
+    fontWeight: 500
+
+  h4:
+    fontFamily: "Geist"
     fontSize: 18
     lineHeight: 28
     fontWeight: 500
@@ -496,8 +502,9 @@ Tailwind named scale only. Three sizes overridden in `@theme` to Geist's heading
 | `hero-numeric-lg` | Geist | 32 | 500 | 36 | tight | Full-page hero metric only (Requests page hero, `8,241`). One per page. | sans + `tabular-nums` — presentation tier. |
 | `hero-numeric-default` | Geist | 24 | 500 | 32 | tight | KPI rail value, panel hero (Top Keys total). | sans + `tabular-nums`. |
 | `h1` | Geist | 32 | 500 | 40 | tight | Page title (artboard h1). | overridden text-3xl (Geist 32). |
-| `h2` | Geist | 24 | 500 | 32 | normal | Section title (SectionHeader). | text-2xl/8. |
-| `h3` | Geist | 18 | 500 | 28 | normal | Card title, modal hero ID, modal `KpiTile` value (mono — below sans-hero threshold). | text-lg. |
+| `h2` | Geist | 24 | 500 | 32 | normal | Superseded as the section-title voice by `h3` (20px, below). The h2 *element* still carries `SectionTitle as="h2"` (at 20px) when a section has sub-headings (e.g. Overview "Get started"). | text-2xl/8. |
+| `h3` | Geist | 20 | 500 | 28 | normal | Page section titles via `<SectionTitle>` — "Overview", "Recent …", "Activity This Week", "Get started". Default `<h3>` element; `as` overrides level without changing the voice. | text-xl/7. No tracking. |
+| `h4` | Geist | 18 | 500 | 28 | normal | Card title, modal hero ID, modal `KpiTile` value (mono — below sans-hero threshold). | text-lg. |
 | `body` | Geist | 16 | 400 | 24 | normal | Card subtitles, button labels, body in spacious surfaces. | text-base. |
 | `body-sm` | Geist | 14 | 400 | 20 | normal | Modal field labels, body in compact surfaces, eyebrow default. | text-sm. |
 | `body-xs` | Geist | 12 | 400 | 16 | normal | Eyebrow sm, table column heads, breadcrumbs, dense metadata. | text-xs. |
@@ -818,6 +825,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 - **Eyebrow** (`eyebrow.tsx`, codified 2026-05-11) — small mono-uppercase chrome label used above KPI values, in sidebar nav-section headers, atop CompactKpi titles, on artboard / spec-sheet headers. Recipe: `font-mono text-xs uppercase tracking-[0.1em] font-medium text-neutral-500`. Default element `<span>` (inline); pass `as="div"` when a block is needed. Extracted after the 2026-05-11 audit found 13 hand-rolled occurrences across Requests / Conversations / Security/16/18 + sidebar.tsx + compact-kpi.tsx + Artboard.tsx (the last had drifted to `tracking-[0.08em]` without `font-medium`). **No size variant ships** — the previous `Eyebrow / default` (text-sm) variant from the typography spec is unused (modal eyebrows removed 2026-05-11); add the variant back with intent when a surface needs it.
 - **SectionHeading** (`section-heading.tsx`, codified 2026-05-11) — h3-class heading used inside modal body sections ("Evidence", "Detection", "Context", "Details", "Security scan"). Recipe: `font-sans text-sm font-medium text-neutral-900 m-0`. Renders `<h3>` by default; pass `as="h2|h4|h5|h6"` to override level. Extracted after the audit found the recipe hand-rolled in CMP-007 + CMP-015 modal body sections (5 sites).
+- **SectionTitle** (`section-title.tsx`, codified 2026-06-22) — single source of truth for page-level section titles ("Overview", "Recent …", "Activity This Week", "Get started"). Recipe: `font-sans text-xl/7 font-medium text-neutral-900 m-0` (20/28, no tracking). Renders `<h3>` by default; pass `as="h2"` when the section has sub-headings so the outline stays correct without changing the voice. Distinct from `SectionHeading` (text-sm, modal body sections). Adopted 2026-06-22 across Overview(default) / Requests / Conversations / Security / AuditTrail(+Merkle) / TokenSavings / Dashboard, replacing hand-rolled `text-xl/7` and `text-lg/6` headings.
 - **PageTitle** (`page-title.tsx`, codified 2026-05-11) — top-of-surface heading on composed pages. Recipe: `font-sans font-medium text-neutral-900 text-3xl/9 -tracking-[1px] text-balance m-0`. Renders `<h2>` by default — composed pages sit inside `<DashboardChrome>` which owns the document h1 implicitly; the in-surface page title reads as h2 in the outline so child cards can use h3 without level skips. Extracted after the audit found 8 hand-rolls (every composed page's PageHeader plus a CMP-013 variant that used `tracking-tight` instead of `-tracking-[1px]` — normalized on extraction). Spec-sheet `<ArtboardHeader>` uses `text-neutral-800` and does NOT compose this primitive (different surface convention; intentional).
 
 ### Helpers, links & icon affordances

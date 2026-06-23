@@ -70,6 +70,7 @@ import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -256,9 +257,7 @@ export function Requests() {
               sits above. Mirrors AuditTrail's OverviewBar + KPI rail. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Overview
-          </h3>
+          <SectionTitle>Overview</SectionTitle>
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedPill
               onValueChange={(next) => handleRangeChange(next as RangeKey)}
@@ -1306,9 +1305,7 @@ function RequestsTableSection({
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Recent requests
-          </h3>
+          <SectionTitle>Recent requests</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search requests"

@@ -19,6 +19,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import {
   SortableTableHead,
@@ -155,11 +156,7 @@ function PageHeader() {
  * match the 24px KPI hero values directly below — NOT the text-sm
  * `SectionHeading` primitive, whose tier is modal body-section labels. */
 function OverviewBar() {
-  return (
-    <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-      Overview
-    </h3>
-  );
+  return <SectionTitle>Overview</SectionTitle>;
 }
 
 /* ─── Fingerprint info tooltip ──────────────────────────────────────── */
@@ -389,9 +386,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             controls drop onto their own row (grid-cols-1) so the row never
             crushes on narrow screens. */}
         <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-12">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7 md:col-span-8">
-            Recent events
-          </h3>
+          <SectionTitle className="md:col-span-8">Recent events</SectionTitle>
           <div className="flex items-center gap-2 md:col-span-4">
             <SearchInput
               ariaLabel="Search audit events"
