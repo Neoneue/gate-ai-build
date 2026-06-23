@@ -64,3 +64,22 @@ notifications-menu.tsx, user-menu.tsx, AuthLayout.tsx, and all page files.
   filters dialog passes `emptyLabel="Select"`.
 - `Policies` — `DetailCard`: `Info` icon stays `text-neutral-500`; all other
   icons receive `text-blue-700`.
+
+---
+
+## Sections
+
+### Policies radio + icon + copy polish `9ccc611`
+
+**Action radio cards (`src/pages/Policies.tsx` — `ActionHalf`)**
+Before: `RadioGroupItem` on left, `items-start`, `p-3`.
+After: `RadioGroupItem` on right (`shrink-0`), `items-center`, `p-4` to match adjacent card padding.
+
+**DetailCard icon**
+Before: `Info` icon `text-neutral-500`; others `text-blue-700`.
+After: all icons `text-blue-700`.
+
+**Copy — prompt-injection**
+- Block description: "Reject the request before it reaches the model." → "Request rejected before it reaches the model. Trace annotated. Alert fired."
+- Policy description: "jailbreak attempts" → "jailbreaks".
+- Pro toggle title: "Enable advanced protection"; description updated to match.
