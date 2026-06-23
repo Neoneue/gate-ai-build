@@ -169,3 +169,17 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   Input `ArrowRightToLine` (`→|`, arriving), Both `ArrowLeftRight` (`↔`). Reads
   as request flow through the gateway. (Initial vertical arrows read as
   upload/download and were rejected.) Sensitivity card keeps `Info`.
+
+### Policies: typography rhythm + micro-interaction polish (Free + Pro) `41dbb9a`
+
+- `Policies.tsx` heading hierarchy tuned for readability across both variants:
+  policy titles now `text-lg/7` (18px), policy subtitle copy `text-base` (16px),
+  and panel/helper copy stays `text-sm`/`text-sm/5` (14px tier).
+- Free prompt-injection toggle card copy updated to plain-language onboarding
+  text: title `Enable free Regex scanning` with helper
+  `Lightweight free-tier scanning that checks for common prompt injection patterns.`
+- Collapse chevron trigger now uses `active:scale-[0.96]` (was 0.98) and gains
+  an expanded hit target via `after:-inset-2` so the interactive area meets the
+  40×40 guidance without changing the visual icon size.
+- Policy card `<h3>` titles now include `text-balance` to reduce awkward wraps
+  on longer labels.
