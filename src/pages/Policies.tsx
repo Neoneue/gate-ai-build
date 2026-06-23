@@ -285,7 +285,9 @@ const FREE_TOGGLE_CARD: Record<
   "prompt-injection": {
     title: "Enable Prompt injection detection",
     // Free runs only the regex layer, so it's labeled for what it is.
-    freeTitle: "Enable lightweight Regex scanning",
+    freeTitle: "Enable free Regex scanning",
+    description:
+      "Lightweight free-tier scanning that checks for common prompt injection patterns.",
     badge: "BASIC",
   },
   pii: { title: "Enable PII / PHI scanning" },
@@ -559,18 +561,18 @@ function PolicyCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="m-0 font-medium font-sans text-base/6 text-neutral-900">
+            <h3 className="m-0 text-balance font-medium font-sans text-lg/7 text-neutral-900">
               {config.name}
             </h3>
           </div>
-          <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+          <p className="m-0 text-pretty font-sans text-base text-neutral-500">
             {config.description}
           </p>
         </div>
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors duration-150 ease-out will-change-transform hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]"
+          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
@@ -637,11 +639,13 @@ function FreeToggleCard({
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <SectionHeading as="h4">{title}</SectionHeading>
+              <SectionHeading as="h4" className="text-base/6">
+                {title}
+              </SectionHeading>
               {badge ? <Badge variant="neutral">{badge}</Badge> : null}
             </div>
             {description ? (
-              <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+              <p className="m-0 text-pretty font-sans text-neutral-500 text-sm/5">
                 {description}
               </p>
             ) : null}
@@ -765,7 +769,9 @@ function SettingsHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4">Scan direction</SectionHeading>
+        <SectionHeading as="h4" className="text-base/6">
+          Scan direction
+        </SectionHeading>
         <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
           Which side of the request to scan
         </p>
@@ -808,7 +814,7 @@ function DetailCard({
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
-          <span className="font-medium font-sans text-neutral-900 text-sm">
+          <span className="font-normal font-sans text-neutral-900 text-sm">
             {title}
           </span>
         ) : null}
@@ -835,7 +841,7 @@ function ActionHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" id={headingId}>
+        <SectionHeading as="h4" className="text-base/6" id={headingId}>
           Action on detection
         </SectionHeading>
         <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
