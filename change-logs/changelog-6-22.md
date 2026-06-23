@@ -226,3 +226,37 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   `type-label-14 text-neutral-600`.
 - Goal: keep `Policies` from becoming a one-off by applying the same semantic
   heading/label/copy role classes on adjacent high-traffic pages.
+
+### Project-wide typography sweep + role expansion `(uncommitted)`
+
+- Expanded semantic type-role utilities in `src/index.css` to mirror the wider
+  Vercel naming model:
+  `type-heading-24/20/18/16/14`,
+  `type-label-20/18/16/14/13/12`,
+  `type-copy-24/20/18/16/14/14-tight/13/12`.
+- Updated `design.md` semantic type-role table to include the expanded set and
+  keep docs aligned with implementation.
+- Ran a project-wide mechanical pass across `src/**/*.tsx` replacing repeated
+  raw typography mixes with semantic role classes where the mapping was direct
+  and low-risk (page subtitles, form/filter labels, helper copy, recurring
+  card/list text treatments in pages and primitives).
+- Verification: `npx tsc -b` passes after the sweep; no linter diagnostics on
+  touched files.
+
+### Policies (Free): Upgrade CTA sm + card title/subtitle revert `5c119be`
+
+- `ProBenefitsCard` Upgrade button: `default` → `size="sm"`, icon 16 → 14px.
+- `PolicyCard` outer title: `type-heading-18` → `type-heading-16` (18 → 16px).
+- `PolicyCard` subtitle: `type-copy-16` → `type-copy-14` (16 → 14px).
+
+### Overview-first semantic type-role adoption `(uncommitted)`
+
+- Started the route-by-route rollout with Overview surfaces:
+  `Dashboard.tsx` and `DashboardDefault.tsx`.
+- Replaced safe, 1:1-equivalent typography recipes with semantic role classes
+  only where the mapping was exact and low-risk (table header labels, small
+  supporting copy, section headlines, and explanatory copy blocks).
+- Explicitly avoided ambiguous typography spots where a role swap could alter
+  metrics; those remain for manual review before broader replacement.
+- Validation: `npx tsc -b` passes after the Overview pass; no linter diagnostics
+  on touched Overview files.
