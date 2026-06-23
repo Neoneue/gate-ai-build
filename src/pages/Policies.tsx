@@ -292,7 +292,7 @@ const FREE_TOGGLE_CARD: Record<
     freeTitle: "Basic protection",
     description:
       "Lightweight free-tier scanning that checks for common prompt injection patterns.",
-    badge: "Free plan",
+    badge: "Free",
   },
   pii: { title: "Enable PII / PHI scanning" },
   secrets: { title: "Enable Credentials scanning" },
@@ -439,7 +439,7 @@ function FreePlanNoticeBanner() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="type-copy-14 m-0 text-pretty text-neutral-700">
-                <span className="type-label-14 text-neutral-700">
+                <span className="type-label-14 text-neutral-900">
                   You&apos;re on the Free plan.
                 </span>{" "}
                 Pro unlocks full prompt-injection protection with advanced
@@ -447,13 +447,13 @@ function FreePlanNoticeBanner() {
               </p>
             </div>
             <Button
-              className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
               onClick={() => setCompareOpen(true)}
               size="sm"
               type="button"
             >
               <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
-              Upgrade to Pro
+              <span>Upgrade to Pro</span>
             </Button>
           </div>
         </CardContent>
@@ -693,7 +693,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none">
+      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -701,7 +701,7 @@ function ProBenefitsCard() {
                 <SectionHeading as="h4" className="type-heading-16">
                   Pro plan protection
                 </SectionHeading>
-                <Badge variant="info">Pro plan</Badge>
+                <Badge variant="info">Pro</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-neutral-500">
                 Catches advanced prompt-injection patterns beyond free Regex
@@ -711,7 +711,7 @@ function ProBenefitsCard() {
             <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
               {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
                 <li className="flex items-start gap-3" key={benefit.title}>
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
@@ -731,8 +731,8 @@ function ProBenefitsCard() {
                 onClick={() => setCompareOpen(true)}
                 type="button"
               >
-                <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
-                Upgrade to Pro
+                <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
+                <span>Upgrade to Pro</span>
               </Button>
             </div>
           </div>

@@ -448,4 +448,5 @@ body {
   .type-input-helper {
     @apply m-0 mt-2 font-sans text-xs font-normal text-pretty text-neutral-500 tracking-tight;
   }
+
 }
