@@ -148,7 +148,7 @@ const POLICIES: PolicyConfig[] = [
     scanTag: "Input scan",
     icon: Shield,
     description:
-      "Detects direct injection, indirect injection, jailbreak attempts, and obfuscated attacks across every LLM input.",
+      "Detects direct injection, indirect injection, jailbreaks, and obfuscated attacks across every LLM input.",
     sensitivity: {
       options: [
         { value: "low", label: "Low" },
@@ -171,7 +171,8 @@ const POLICIES: PolicyConfig[] = [
         {
           value: "block",
           name: "Block",
-          description: "Reject the request before it reaches the model.",
+          description:
+            "Request rejected before it reaches the model. Trace annotated. Alert fired.",
         },
         {
           value: "flag",
@@ -665,13 +666,19 @@ function PolicyCard({
         <div className="flex flex-col gap-3 border-border border-t bg-card p-4">
           <FreeToggleCard
             badge={isFree ? toggleCard.badge : undefined}
-            description={toggleCard.description}
+            description={
+              !isFree && config.id === "prompt-injection"
+                ? "Everything in basic, plus advanced detection that catches the sophisticated attacks pattern checks miss."
+                : toggleCard.description
+            }
             enabled={state.enabled}
             onToggle={onToggle}
             title={
-              isFree
-                ? (toggleCard.freeTitle ?? toggleCard.title)
-                : toggleCard.title
+              !isFree && config.id === "prompt-injection"
+                ? "Enable advanced protection"
+                : isFree
+                  ? (toggleCard.freeTitle ?? toggleCard.title)
+                  : toggleCard.title
             }
           />
           {showProBenefits ? <ProBenefitsCard /> : null}
@@ -944,13 +951,7 @@ function DetailCard({
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-neutral-50 p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon
-          aria-hidden
-          className={cn(
-            "size-4",
-            Icon === Info ? "text-neutral-500" : "text-blue-700"
-          )}
-        />
+        <Icon aria-hidden className="size-4 text-blue-700" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
@@ -999,7 +1000,7 @@ function ActionHalf({
           return (
             <label
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-xs border p-3 transition-colors duration-150 ease-out",
+                "flex cursor-pointer items-center gap-3 rounded-xs border p-4 transition-colors duration-150 ease-out",
                 selected
                   ? cn(
                       ACTION_ACTIVE_FILL[opt.value],
@@ -1009,13 +1010,7 @@ function ActionHalf({
               )}
               key={opt.value}
             >
-              <RadioGroupItem
-                aria-describedby={descId}
-                aria-labelledby={nameId}
-                className={cn("mt-1", ACTION_ACTIVE_RADIO[opt.value])}
-                value={opt.value}
-              />
-              <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="type-label-14 text-neutral-900" id={nameId}>
                     {opt.name}
@@ -1031,6 +1026,12 @@ function ActionHalf({
                   {opt.description}
                 </span>
               </div>
+              <RadioGroupItem
+                aria-describedby={descId}
+                aria-labelledby={nameId}
+                className={cn("shrink-0", ACTION_ACTIVE_RADIO[opt.value])}
+                value={opt.value}
+              />
             </label>
           );
         })}
