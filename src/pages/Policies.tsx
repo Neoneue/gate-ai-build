@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   ArrowRightFromLine,
   ArrowRightToLine,
+  Check,
   ChevronDown,
   Info,
   KeyRound,
@@ -11,6 +12,7 @@ import {
 import { type ComponentType, type SVGProps, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 // KPI rail hidden for now — see commented KpiSection below.
 // import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
@@ -19,9 +21,11 @@ import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Segmented } from "@/components/ui/segmented";
+import { SparklesIcon } from "@/components/ui/sparkles";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 import { TYPE_META } from "./security-data";
 
 // Title-icon colors mirror the Security events type palette (TYPE_META) so the
@@ -294,6 +298,33 @@ const FREE_TOGGLE_CARD: Record<
   secrets: { title: "Enable Credentials scanning" },
 };
 
+const PRO_PROMPT_INJECTION_BENEFITS = [
+  {
+    title: "Indirect injection detection",
+    description: "Attacks hidden in retrieved emails, PDFs, web pages, tickets",
+  },
+  {
+    title: "Obfuscated attack detection",
+    description: "Encoded payloads, unicode tricks, base64 smuggling",
+  },
+  {
+    title: "Goal hijacking",
+    description: "Mid-task redirects and tool-call hijacks",
+  },
+  {
+    title: "Jailbreak pattern coverage",
+    description: "DAN-style unlocks, role-play bypass, refusal-bypass",
+  },
+  {
+    title: "Choose what happens when caught",
+    description: "Block the request or flag and let it through",
+  },
+  {
+    title: "Tunable sensitivity",
+    description: "Low, Medium, or High sensitivity per workspace",
+  },
+] as const;
+
 /** Per-policy mutable state. `sensitivity` / `scanDirection` track whichever
  *  Segmented the policy renders; `action` tracks the radio group. Seeded so
  *  all three policies start enabled with their default selections. */
@@ -402,7 +433,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-2xl flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>
@@ -502,6 +533,7 @@ function PolicyCard({
   // Free prompt-injection drops the Action + Sensitivity panels (a replacement
   // card lands here soon); every other case shows them.
   const showOptionPanels = !(isFree && config.id === "prompt-injection");
+  const showProBenefits = isFree && config.id === "prompt-injection";
 
   // When the in-body enable toggle is off, dim + disable the option panels
   // below it (the enable card itself stays interactive).
@@ -561,11 +593,11 @@ function PolicyCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="m-0 text-balance font-medium font-sans text-lg/7 text-neutral-900">
+            <h3 className="type-heading-18 m-0 text-balance text-neutral-900">
               {config.name}
             </h3>
           </div>
-          <p className="m-0 text-pretty font-sans text-base text-neutral-500">
+          <p className="type-copy-16 m-0 text-pretty text-neutral-500">
             {config.description}
           </p>
         </div>
@@ -602,6 +634,7 @@ function PolicyCard({
                 : toggleCard.title
             }
           />
+          {showProBenefits ? <ProBenefitsCard /> : null}
           {showOptionPanels ? (
             <>
               {actionPanel}
@@ -611,6 +644,62 @@ function PolicyCard({
         </div>
       ) : null}
     </Card>
+  );
+}
+
+function ProBenefitsCard() {
+  const navigate = useNavigate();
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  return (
+    <>
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none">
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <SectionHeading as="h4" className="type-heading-16">
+                  Catch what basic Regex misses
+                </SectionHeading>
+                <Badge variant="info">Pro</Badge>
+              </div>
+              <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+                Regex catches obvious attacks. Pro adds broader detection across
+                hidden, obfuscated, and jailbreak-style prompt injections.
+              </p>
+            </div>
+            <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
+              {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
+                <li className="flex items-start gap-3" key={benefit.title}>
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                    <Check aria-hidden className="size-3.5" />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="type-label-14 text-neutral-900">
+                      {benefit.title}
+                    </span>
+                    <span className="type-copy-12 text-pretty text-neutral-500">
+                      {benefit.description}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="pt-2">
+              <Button onClick={() => setCompareOpen(true)} type="button">
+                <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
+                Upgrade to Pro
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <PlanComparisonDialog
+        onOpenChange={setCompareOpen}
+        onUpgrade={() => navigate("/billing")}
+        open={compareOpen}
+      />
+    </>
   );
 }
 
@@ -639,13 +728,13 @@ function FreeToggleCard({
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <SectionHeading as="h4" className="text-base/6">
+              <SectionHeading as="h4" className="type-heading-16">
                 {title}
               </SectionHeading>
               {badge ? <Badge variant="neutral">{badge}</Badge> : null}
             </div>
             {description ? (
-              <p className="m-0 text-pretty font-sans text-neutral-500 text-sm/5">
+              <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
                 {description}
               </p>
             ) : null}
@@ -689,8 +778,10 @@ function SettingsHalf({
     return (
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
-          <SectionHeading as="h4">Sensitivity</SectionHeading>
-          <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+          <SectionHeading as="h4" className="type-heading-16">
+            Sensitivity
+          </SectionHeading>
+          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
             How aggressive to be when scoring inputs
           </p>
         </div>
@@ -699,7 +790,7 @@ function SettingsHalf({
             a slider — fewer false positives at the lenient end, more coverage
             at the aggressive end. Keyboard nav comes from RadioGroup.
             Constrained to half the card width so the rail isn't overlong. */}
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-6 flex flex-col gap-2">
           <RadioGroup
             aria-label="Sensitivity"
             className="relative flex w-full items-center justify-between gap-0 py-1"
@@ -739,13 +830,12 @@ function SettingsHalf({
               />
             ))}
           </RadioGroup>
-          <div className="flex items-center justify-between font-sans text-sm">
+          <div className="flex items-center justify-between">
             {options.map((opt) => (
               <span
                 className={cn(
-                  opt.value === value
-                    ? "font-medium text-neutral-900"
-                    : "text-neutral-500"
+                  "type-label-14",
+                  opt.value === value ? "text-neutral-900" : "text-neutral-500"
                 )}
                 key={opt.value}
               >
@@ -769,10 +859,10 @@ function SettingsHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" className="text-base/6">
+        <SectionHeading as="h4" className="type-heading-16">
           Scan direction
         </SectionHeading>
-        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
           Which side of the request to scan
         </p>
       </div>
@@ -814,11 +904,9 @@ function DetailCard({
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
-          <span className="font-normal font-sans text-neutral-900 text-sm">
-            {title}
-          </span>
+          <span className="type-label-14 text-neutral-900">{title}</span>
         ) : null}
-        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm/5">
+        <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
           {description}
         </p>
       </div>
@@ -841,10 +929,10 @@ function ActionHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" className="text-base/6" id={headingId}>
+        <SectionHeading as="h4" className="type-heading-16" id={headingId}>
           Action on detection
         </SectionHeading>
-        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
           {config.action.helper}
         </p>
       </div>
@@ -879,10 +967,7 @@ function ActionHalf({
               />
               <div className="flex min-w-0 flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span
-                    className="font-medium font-sans text-neutral-900 text-sm"
-                    id={nameId}
-                  >
+                  <span className="type-label-14 text-neutral-900" id={nameId}>
                     {opt.name}
                   </span>
                   {opt.value === DEFAULT_ACTION[config.id] ? (
@@ -890,7 +975,7 @@ function ActionHalf({
                   ) : null}
                 </div>
                 <span
-                  className="text-pretty font-sans text-neutral-500 text-sm"
+                  className="type-copy-14 text-pretty text-neutral-500"
                   id={descId}
                 >
                   {opt.description}
