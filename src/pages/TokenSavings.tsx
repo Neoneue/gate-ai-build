@@ -359,9 +359,7 @@ function CardChromeHeader({
     <CardHeader className="border-border border-b">
       <div className="flex items-start gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
-            {title}
-          </h3>
+          <h3 className="type-heading-16 m-0 text-neutral-900">{title}</h3>
           <p className="type-copy-14 m-0 text-neutral-500">{description}</p>
         </div>
         <Badge variant={enabled ? "success" : "neutral"}>

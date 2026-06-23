@@ -17,7 +17,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
       data-slot="table-container"
     >
       <table
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("type-copy-14 w-full caption-bottom", className)}
         data-slot="table"
         {...props}
       />
@@ -84,7 +84,7 @@ function TableHead({
         // the body cells; sans here keeps the voice split clean. font-medium
         // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "h-10 px-4 text-left align-middle font-medium text-neutral-500 text-xs [&:has([role=checkbox])]:pr-0",
+        "type-label-12 h-10 px-4 text-left align-middle text-neutral-500 [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-head"
@@ -129,7 +129,7 @@ function SortableTableHead({
       // Cell keeps the standard header padding/alignment; the trigger inside is
       // content-width so the hit area is the label + glyph, not the whole cell.
       className={cn(
-        "h-10 px-4 align-middle font-medium text-neutral-500 text-xs",
+        "type-label-12 h-10 px-4 align-middle text-neutral-500",
         numeric ? "text-right" : "text-left",
         className
       )}
@@ -142,7 +142,7 @@ function SortableTableHead({
         // is NOT a click target. A fixed-size glyph slot is always present
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
-          "group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle font-medium text-neutral-500 text-xs outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
+          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-neutral-500 outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
           // Numeric columns are right-aligned: put the glyph LEFT of the label
           // (flex-row-reverse) so the label stays flush to the column's right
           // edge and lines up with the right-aligned data below it.
@@ -183,7 +183,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       className={cn(
-        "px-4 py-3 align-middle text-neutral-900 text-sm [&:has([role=checkbox])]:pr-0",
+        "type-copy-14 px-4 py-3 align-middle text-neutral-900 [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-cell"
@@ -198,7 +198,7 @@ function TableCaption({
 }: React.ComponentProps<"caption">) {
   return (
     <caption
-      className={cn("mt-4 text-neutral-500 text-sm", className)}
+      className={cn("type-copy-14 mt-4 text-neutral-500", className)}
       data-slot="table-caption"
       {...props}
     />

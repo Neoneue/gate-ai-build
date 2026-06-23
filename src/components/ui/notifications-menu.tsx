@@ -107,7 +107,7 @@ function NotificationsMenu({
           >
             <Bell className="size-5 text-neutral-700" strokeWidth={1.75} />
           </div>
-          <p className="m-0 text-neutral-500 text-sm">{emptyLabel}</p>
+          <p className="type-copy-14 m-0 text-neutral-500">{emptyLabel}</p>
         </div>
       </PopoverContent>
     </Popover>

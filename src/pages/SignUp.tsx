@@ -33,7 +33,9 @@ export function SignUp() {
   return (
     <Card className="w-100 rounded-lg shadow-(--shadow-modal) data-[density=default]:py-6">
       <CardHeader className="gap-y-2 px-6">
-        <CardTitle className="text-xl">Enter your invite code</CardTitle>
+        <CardTitle className="type-heading-20">
+          Enter your invite code
+        </CardTitle>
         <CardDescription>
           Sign-ups are currently invite-only. Drop your code in to continue.
         </CardDescription>
@@ -94,16 +96,19 @@ export function SignUp() {
             </Button>
           </FieldGroup>
 
-          <p className="mt-4 text-center text-neutral-500 text-xs/5">
+          <p className="type-copy-12 mt-4 text-center text-neutral-500 leading-5">
             Your invite code is single-use. Find it in your welcome email.
           </p>
         </form>
       </CardContent>
 
       <CardFooter className="justify-center p-6 pt-2">
-        <p className="text-neutral-500 text-xs">
+        <p className="type-copy-12 text-neutral-500">
           Already have an account?{" "}
-          <TextLink className="text-xs" onClick={() => navigate("/sign-in")}>
+          <TextLink
+            className="type-copy-12"
+            onClick={() => navigate("/sign-in")}
+          >
             Sign in
           </TextLink>
         </p>

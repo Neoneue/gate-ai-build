@@ -310,7 +310,7 @@ function HeroCodeTab({
               {(["byok", "payg"] as const).map((m) => (
                 <button
                   aria-checked={mode === m}
-                  className={`flex h-6 items-center rounded-xs px-2 font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                  className={`type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
                       ? "bg-neutral-100 text-neutral-900"
                       : "text-neutral-500 hover:text-neutral-700"
@@ -325,7 +325,7 @@ function HeroCodeTab({
               ))}
             </div>
           )}
-          <span className="text-neutral-500 text-xs">
+          <span className="type-copy-12 text-neutral-500">
             {caption ?? HERO_MODE_CAPTIONS[effectiveMode]}
           </span>
         </div>
@@ -535,10 +535,10 @@ function DownloadGateConnectDialog() {
         {/* HEADER */}
         <div className="relative flex items-start border-border border-b px-6 pt-4 pb-4">
           <div className="flex min-w-0 flex-col gap-0 pr-8">
-            <DialogTitle className="m-0 font-semibold text-lg text-neutral-900 tracking-tight">
+            <DialogTitle className="type-heading-18 m-0 text-neutral-900 tracking-tight">
               Download Gate <span className="text-blue-700">Connect</span>
             </DialogTitle>
-            <DialogDescription className="m-0 text-pretty text-neutral-500 text-sm">
+            <DialogDescription className="type-copy-14 m-0 text-pretty text-neutral-500">
               The menu-bar app that connects your desktop agents to Gate
             </DialogDescription>
           </div>
@@ -630,8 +630,10 @@ function DownloadGateConnectDialog() {
                     <span className="type-label-14 text-neutral-900">
                       {b.arch}
                     </span>
-                    <span className="text-neutral-500 text-sm">{b.detail}</span>
-                    <span className="ml-auto whitespace-nowrap text-neutral-500 text-sm tabular-nums">
+                    <span className="type-copy-14 text-neutral-500">
+                      {b.detail}
+                    </span>
+                    <span className="type-copy-14 ml-auto whitespace-nowrap text-neutral-500 tabular-nums">
                       {b.size}
                     </span>
                   </label>
@@ -641,7 +643,7 @@ function DownloadGateConnectDialog() {
           </div>
 
           {/* Version + requirement line — two texts, 8px gap (no separator), per Figma */}
-          <p className="m-0 flex items-center gap-2 text-neutral-500 text-xs">
+          <p className="type-copy-12 m-0 flex items-center gap-2 text-neutral-500">
             <span>{spec.version}</span>
             <span>{spec.requires}</span>
           </p>
@@ -671,15 +673,15 @@ function OverviewHeroCard() {
             <div className="flex items-center gap-2">
               <span
                 aria-hidden
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 font-medium text-neutral-700 text-sm tabular-nums"
+                className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
               >
                 1
               </span>
-              <h3 className="m-0 font-medium text-lg text-neutral-900">
+              <h3 className="type-heading-18 m-0 text-neutral-900">
                 Create your first API key
               </h3>
             </div>
-            <p className="m-0 text-pretty text-base text-neutral-500">
+            <p className="type-copy-16 m-0 text-pretty text-neutral-500">
               Your API key is what routes traffic through Gate, adding
               prompt-injection defense and a tamper-evident audit trail to every
               request. Use it with our Gate Connect app, or any AI coding tools
@@ -833,7 +835,7 @@ function WorksWithFooter({
         ) : (
           <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
         )}
-        <span className="whitespace-nowrap text-neutral-700 text-sm">
+        <span className="type-copy-14 whitespace-nowrap text-neutral-700">
           {name}
         </span>
       </>
@@ -860,7 +862,7 @@ function WorksWithFooter({
     <div
       className={`flex h-12 items-center gap-4 border-border border-t ${asButtons ? "pl-8 max-xl:pl-6" : "px-8 max-xl:px-6"}`}
     >
-      <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm">
+      <span className="type-copy-14 shrink-0 whitespace-nowrap text-neutral-500">
         {label}
       </span>
       {asButtons ? (
@@ -869,7 +871,7 @@ function WorksWithFooter({
         chips
       )}
       {showMore && (
-        <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm italic">
+        <span className="type-copy-14 shrink-0 whitespace-nowrap text-neutral-500 italic">
           + more
         </span>
       )}
@@ -907,7 +909,7 @@ const CONNECT_IMAGE_CLASS =
 export function ConnectTabs({
   textMaxWidth = CONNECT_TEXT_MAXW,
   imageClassName = CONNECT_IMAGE_CLASS,
-  titleClassName = "text-2xl font-medium tracking-tight text-neutral-900 m-0",
+  titleClassName = "type-heading-24 tracking-tight text-neutral-900 m-0",
   titleAs: TitleTag = "h3",
   showGateConnect = true,
   paygOnly = false,
@@ -1006,7 +1008,7 @@ export function ConnectTabs({
                   1-Click setup with Gate Connect
                 </TitleTag>
                 <p
-                  className={`text-pretty text-neutral-500 text-sm ${textMaxWidth} m-0`}
+                  className={`type-copy-14 text-pretty text-neutral-500 ${textMaxWidth} m-0`}
                 >
                   Gate Connect is a tiny desktop app living in your menu bar.
                   Install, flip a switch, and your AI coding tools route through
@@ -1087,7 +1089,9 @@ function OverviewUsageChart() {
           >
             <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
           </div>
-          <span className="text-neutral-500 text-sm">No usage data yet</span>
+          <span className="type-copy-14 text-neutral-500">
+            No usage data yet
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -1104,7 +1108,7 @@ function TokenSavingsStrip() {
         >
           <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No requests yet</span>
+        <span className="type-copy-14 text-neutral-500">No requests yet</span>
       </div>
       <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
         <div
@@ -1113,7 +1117,9 @@ function TokenSavingsStrip() {
         >
           <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No token savings yet</span>
+        <span className="type-copy-14 text-neutral-500">
+          No token savings yet
+        </span>
       </div>
       <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
         <div
@@ -1122,7 +1128,7 @@ function TokenSavingsStrip() {
         >
           <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No threats yet</span>
+        <span className="type-copy-14 text-neutral-500">No threats yet</span>
       </div>
     </KpiRail>
   );
@@ -1134,13 +1140,13 @@ function LatestRequestsTable() {
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
         <h3 className="type-label-14 m-0 text-neutral-900">Latest requests</h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest requests" className="w-full text-sm">
+      <table aria-label="Latest requests" className="type-copy-14 w-full">
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1154,7 +1160,7 @@ function LatestRequestsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-neutral-500">
                   No requests yet
                 </span>
               </div>
@@ -1174,13 +1180,13 @@ function RecentConversationsTable() {
           Latest conversations
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest conversations" className="w-full text-sm">
+      <table aria-label="Latest conversations" className="type-copy-14 w-full">
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1194,7 +1200,7 @@ function RecentConversationsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-neutral-500">
                   No conversations yet
                 </span>
               </div>
@@ -1214,13 +1220,16 @@ function SecurityEventsTable() {
           Latest security events
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest security events" className="w-full text-sm">
+      <table
+        aria-label="Latest security events"
+        className="type-copy-14 w-full"
+      >
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1234,7 +1243,7 @@ function SecurityEventsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-neutral-500">
                   No security events yet
                 </span>
               </div>
@@ -1266,7 +1275,7 @@ function FirstRequestInfo() {
         <div className="flex items-center gap-2">
           <span
             aria-hidden
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 font-medium text-neutral-700 text-sm tabular-nums"
+            className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
           >
             2
           </span>

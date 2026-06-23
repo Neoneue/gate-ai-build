@@ -122,7 +122,7 @@ export function CompactKpi({
             size={deltaSize}
           />
         ) : (
-          <span className="text-neutral-500 text-sm">{noteLine}</span>
+          <span className="type-copy-14 text-neutral-500">{noteLine}</span>
         )}
       </div>
       {spark == null ? null : <div className="mt-3">{spark}</div>}
@@ -235,7 +235,7 @@ export function CompactSpark({
               <ChartTooltipContent
                 className="gap-1"
                 formatter={(value) => (
-                  <span className="font-medium text-foreground text-sm">
+                  <span className="type-label-14 text-foreground">
                     {valueFormatter
                       ? valueFormatter(Number(value))
                       : String(value)}

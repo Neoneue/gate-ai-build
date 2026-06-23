@@ -111,7 +111,7 @@ function SecurityEventsTable() {
       <div className="overflow-hidden">
         <table
           aria-hidden
-          className="w-full table-fixed border-separate text-sm"
+          className="type-copy-14 w-full table-fixed border-separate"
           style={{ borderSpacing: 0, marginBottom: -ROW_HEIGHT }}
         >
           <colgroup>
@@ -122,16 +122,16 @@ function SecurityEventsTable() {
           </colgroup>
           <thead className="relative z-10">
             <tr>
-              <th className="whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left text-neutral-500">
                 Time
               </th>
-              <th className="whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left text-neutral-500">
                 Type
               </th>
-              <th className="whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left text-neutral-500">
                 Action
               </th>
-              <th className="whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap border-border border-b bg-neutral-50 px-4 py-2 text-left text-neutral-500">
                 Key
               </th>
             </tr>
@@ -183,7 +183,7 @@ function SecurityEventsTable() {
                         strokeWidth={1.75}
                         style={{ color: typeMeta.color }}
                       />
-                      <span className="text-neutral-800 text-xs">
+                      <span className="type-copy-12 text-neutral-800">
                         {typeMeta.label}
                       </span>
                     </span>
@@ -249,13 +249,13 @@ export function HeroCard({
             <div className="flex flex-1 flex-col gap-4 p-6">
               <div className="flex items-center gap-2">
                 <Badge variant="info">PRO PLAN</Badge>
-                <span className="font-medium text-neutral-500 text-xs">
+                <span className="type-label-12 text-neutral-500">
                   $20 / month after your 14-day trial ends
                 </span>
               </div>
 
               <div className="flex flex-col gap-2">
-                <h2 className="m-0 text-balance font-medium text-2xl text-neutral-900 tracking-tight">
+                <h2 className="type-heading-24 m-0 text-balance text-neutral-900 tracking-tight">
                   Inspect <span className="text-blue-600">every</span>{" "}
                   detection, gate <span className="text-blue-600">every</span>{" "}
                   threat.
@@ -279,10 +279,10 @@ export function HeroCard({
                         />
                       </span>
                       <div className="flex flex-col">
-                        <span className="text-neutral-900 text-sm">
+                        <span className="type-copy-14 text-neutral-900">
                           {title}
                         </span>
-                        <span className="text-pretty text-neutral-500 text-sm">
+                        <span className="type-copy-14 text-pretty text-neutral-500">
                           {detail}
                         </span>
                       </div>

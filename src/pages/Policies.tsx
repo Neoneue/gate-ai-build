@@ -944,7 +944,13 @@ function DetailCard({
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-neutral-50 p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon aria-hidden className="size-4 text-neutral-500" />
+        <Icon
+          aria-hidden
+          className={cn(
+            "size-4",
+            Icon === Info ? "text-neutral-500" : "text-blue-700"
+          )}
+        />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (

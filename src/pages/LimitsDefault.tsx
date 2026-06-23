@@ -554,10 +554,10 @@ function LimitsPreview() {
           ref={dialogRef}
         >
           <div className="flex flex-col gap-1">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-neutral-900">
               Create limit
             </h3>
-            <p className="m-0 font-sans text-neutral-500 text-xs">
+            <p className="type-copy-12 m-0 text-neutral-500">
               Block requests that exceed the threshold (returns 429).
             </p>
           </div>

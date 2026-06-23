@@ -48,7 +48,7 @@ function UserMenu({
               Chad Ponticas
             </span>
             <span
-              className="truncate font-sans text-neutral-500 text-xs leading-tight"
+              className="type-copy-12 truncate text-neutral-500 leading-tight"
               title="chad@constellationnetwork.io"
             >
               chad@constellationnetwork.io

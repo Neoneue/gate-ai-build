@@ -57,8 +57,10 @@ export function DetailRow({
       data-slot="detail-row"
       {...props}
     >
-      <span className="w-32 shrink-0 text-neutral-500 text-sm">{label}</span>
-      <div className="min-w-0 flex-1 text-sm">{value}</div>
+      <span className="type-copy-14 w-32 shrink-0 text-neutral-500">
+        {label}
+      </span>
+      <div className="type-copy-14 min-w-0 flex-1">{value}</div>
     </div>
   );
 }

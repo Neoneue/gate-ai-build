@@ -131,16 +131,16 @@ function PlanCard({
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
-        <p className="m-0 font-medium text-lg text-neutral-900">{plan.title}</p>
+        <p className="type-heading-18 m-0 text-neutral-900">{plan.title}</p>
       </div>
 
-      <h3 className="m-0 font-medium text-3xl text-neutral-900 tabular-nums tracking-tight">
+      <h3 className="type-heading-24 m-0 text-neutral-900 tabular-nums tracking-tight">
         {plan.price}
-        <span className="text-lg text-muted-foreground"> per month</span>
+        <span className="type-copy-18 text-muted-foreground"> per month</span>
       </h3>
 
       <div className="flex flex-col gap-4">
-        <p className="m-0 font-medium text-neutral-900 text-xs">
+        <p className="type-label-12 m-0 text-neutral-900">
           {plan.benefitsLabel}
         </p>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
@@ -153,8 +153,8 @@ function PlanCard({
                 <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
               </span>
               <div className="flex flex-col">
-                <span className="text-neutral-900 text-sm">{title}</span>
-                <span className="text-pretty text-neutral-500 text-xs">
+                <span className="type-copy-14 text-neutral-900">{title}</span>
+                <span className="type-copy-12 text-pretty text-neutral-500">
                   {detail}
                 </span>
               </div>
@@ -179,7 +179,7 @@ function PlanCard({
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
           {plan.cta.label}
         </Button>
-        <p className="m-0 text-center text-neutral-500 text-xs">
+        <p className="type-copy-12 m-0 text-center text-neutral-500">
           {plan.ctaCaption}
         </p>
       </div>
@@ -229,7 +229,7 @@ export function PlanComparisonDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-4 overflow-hidden p-4 sm:max-w-3xl sm:p-6">
         <DialogHeader>
-          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-neutral-900">
             Manage subscription
           </DialogTitle>
         </DialogHeader>

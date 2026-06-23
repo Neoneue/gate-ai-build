@@ -129,13 +129,13 @@ function PlanCard({
         {plan.badge.label}
       </Badge>
 
-      <p className="m-0 font-medium text-2xl text-neutral-900 tabular-nums tracking-tight">
+      <p className="type-heading-24 m-0 text-neutral-900 tabular-nums tracking-tight">
         {plan.price}
-        <span className="text-lg text-muted-foreground"> per month</span>
+        <span className="type-copy-18 text-muted-foreground"> per month</span>
       </p>
 
       <div className="flex flex-col gap-2">
-        <p className="m-0 font-medium text-neutral-900 text-xs">
+        <p className="type-label-12 m-0 text-neutral-900">
           {plan.benefitsLabel}
         </p>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
@@ -151,8 +151,8 @@ function PlanCard({
                 />
               </span>
               <div className="flex flex-col">
-                <span className="text-neutral-900 text-sm">{title}</span>
-                <span className="text-pretty text-neutral-500 text-xs">
+                <span className="type-copy-14 text-neutral-900">{title}</span>
+                <span className="type-copy-12 text-pretty text-neutral-500">
                   {detail}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export function Upgrade() {
       <section aria-labelledby="compare-plans-heading">
         <div className="mb-4 flex flex-col gap-2">
           <h2
-            className="m-0 font-medium font-sans text-lg text-neutral-900 tracking-tight"
+            className="type-heading-18 m-0 text-neutral-900 tracking-tight"
             id="compare-plans-heading"
           >
             Compare plans

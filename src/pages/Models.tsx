@@ -1330,7 +1330,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         </Card>
       </Tabs>
 
-      <p className="m-0 font-sans text-neutral-500 text-xs tracking-snug">
+      <p className="type-copy-12 m-0 text-neutral-500 tracking-snug">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
         preferred provider, or{" "}
         <InlineCode size="sm">bedrock/claude-haiku-4-5</InlineCode> to pin a
@@ -1767,7 +1767,7 @@ function ModelDetailPage({
       <div className="flex items-center justify-between gap-4">
         <TextLink
           aria-label="Back to Models"
-          className="inline-flex items-center gap-1 font-sans text-sm transition-colors duration-150 ease-out motion-reduce:transition-none"
+          className="type-copy-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
           onClick={onBack}
         >
           <ChevronLeft
@@ -1793,7 +1793,7 @@ function ModelDetailPage({
                 page-level h1 ("Models") on ArtboardHeader and the
                 breadcrumb already carry the model name, so a third
                 32px appearance over-anchors identity. */}
-            <h2 className="m-0 font-medium font-sans text-neutral-900 text-xl">
+            <h2 className="type-heading-20 m-0 text-neutral-900">
               {model.name}
             </h2>
           </div>
@@ -1845,7 +1845,7 @@ function ModelDetailPage({
           <TextLink
             aria-controls="model-description"
             aria-expanded={showFullDesc}
-            className="group inline-flex w-fit items-center gap-1 font-sans text-sm hover:text-neutral-900 focus-visible:text-neutral-900"
+            className="type-copy-14 group inline-flex w-fit items-center gap-1 hover:text-neutral-900 focus-visible:text-neutral-900"
             onClick={() => setShowFullDesc((v) => !v)}
           >
             {showFullDesc ? "Show less" : "Show more"}
@@ -1867,9 +1867,7 @@ function ModelDetailPage({
       {/* Providers */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
-            Providers
-          </h3>
+          <h3 className="type-heading-16 m-0 text-neutral-900">Providers</h3>
           <p className="type-copy-14 m-0 text-neutral-500">
             Route requests across multiple providers. Copy a provider handle to
             pin a specific one.
@@ -1883,7 +1881,7 @@ function ModelDetailPage({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-neutral-900">
               Quick start
             </h3>
             <p className="type-copy-14 m-0 text-pretty text-neutral-500">
@@ -1943,7 +1941,7 @@ function ModelDetailPage({
                 </TabsList>
               </div>
               <div className="flex h-10 items-center border-border border-b px-4">
-                <span className="text-neutral-500 text-xs">
+                <span className="type-copy-12 text-neutral-500">
                   {TOOL_CAPTIONS[tool]}
                 </span>
               </div>
@@ -1968,7 +1966,7 @@ function ModelDetailPage({
 
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-neutral-900">
               Example request
             </h3>
             <p className="type-copy-14 m-0 text-neutral-500">

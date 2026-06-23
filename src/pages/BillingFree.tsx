@@ -186,7 +186,7 @@ function CreditsCard() {
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
-        <dl className="m-0 mt-3 flex flex-col gap-2 text-sm">
+        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
           <CreditStatRow label="Used this month" mono value="$0.00" />
           <CreditStatRow
             label="Auto-recharge"
@@ -306,7 +306,7 @@ function AddCreditsDialog({
     >
       <DialogContent className="w-full max-w-[500px] gap-4">
         <DialogHeader>
-          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-neutral-900">
             Add credits
           </DialogTitle>
           <DialogDescription>
@@ -474,7 +474,7 @@ function AutoRechargeDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="w-full max-w-[500px] gap-4">
         <DialogHeader>
-          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-neutral-900">
             Auto-recharge
           </DialogTitle>
           <DialogDescription>
@@ -730,7 +730,7 @@ function PaymentMethodCard() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <span className="inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 font-medium text-neutral-800 text-xs">
+          <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-neutral-800">
             CARD
           </span>
           <span className="type-copy-14 text-neutral-800">

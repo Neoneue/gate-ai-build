@@ -126,7 +126,10 @@ function FeedbackFab() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="feedback-message">Message</Label>
-              <span aria-live="polite" className="text-neutral-500 text-xs">
+              <span
+                aria-live="polite"
+                className="type-copy-12 text-neutral-500"
+              >
                 {message.length} / {MAX_MESSAGE_LENGTH}
               </span>
             </div>
@@ -173,7 +176,7 @@ function FeedbackFab() {
                 Capture screen
               </Button>
             </div>
-            <p className="text-neutral-500 text-xs">
+            <p className="type-copy-12 text-neutral-500">
               PNG, JPEG, or WEBP, up to 10&nbsp;MB.
             </p>
           </div>

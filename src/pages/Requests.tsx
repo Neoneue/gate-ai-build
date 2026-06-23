@@ -873,7 +873,7 @@ function HeroMetricCard() {
               <ChartTooltipContent
                 className="gap-1"
                 formatter={(value) => (
-                  <span className="font-medium text-foreground text-sm">
+                  <span className="type-label-14 text-foreground">
                     {Number(value).toLocaleString("en-US")}
                   </span>
                 )}
@@ -918,7 +918,7 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="justify-self-end font-medium font-sans text-neutral-500 text-xs tracking-tight">
+      <span className="type-label-12 justify-self-end text-neutral-500 tracking-tight">
         {label}
       </span>
       <StatusDot kind={tone} />
@@ -1350,7 +1350,7 @@ function RequestsTableSection({
             <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
               <DialogContent className="w-full gap-4 sm:max-w-[440px]">
                 <DialogHeader>
-                  <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+                  <DialogTitle className="type-heading-18 text-neutral-900">
                     Filters
                   </DialogTitle>
                 </DialogHeader>
@@ -2194,7 +2194,7 @@ export function RequestDetailBodyV2({
                           <section className="flex flex-col gap-2">
                             <PanelHeading title="Error detail" />
                             <div className="rounded-xs border border-border bg-card p-4">
-                              <p className="text-pretty font-sans text-neutral-700 text-sm">
+                              <p className="type-copy-14 text-pretty text-neutral-700">
                                 {row.errorDetail}
                               </p>
                             </div>
@@ -2222,7 +2222,7 @@ export function RequestDetailBodyV2({
                               strokeWidth={1.75}
                             />
                           </div>
-                          <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+                          <h3 className="type-heading-18 m-0 text-balance text-neutral-900">
                             No findings
                           </h3>
                           <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
@@ -2540,7 +2540,7 @@ const PANEL_OUTER =
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
-      <h3 className="m-0 font-medium font-sans text-base text-neutral-900 tracking-snug">
+      <h3 className="type-heading-16 m-0 text-neutral-900 tracking-snug">
         {title}
       </h3>
       {aside}
@@ -3067,7 +3067,7 @@ function InjectionDetailPanel({
         title={isClassifierDeny ? "Assistant response" : "User message"}
       />
       <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-        <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-700 leading-relaxed">
           {evidence}
         </p>
       </div>
@@ -3401,11 +3401,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
  * Tool call / Tool result). 16px medium, no h3 chrome, matching the
  * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
-  return (
-    <span className="font-medium font-sans text-base text-neutral-900">
-      {label}
-    </span>
-  );
+  return <span className="type-heading-16 text-neutral-900">{label}</span>;
 }
 
 /* A single conversation turn as a Details-tab subcard: a plain-text heading
@@ -3519,7 +3515,7 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-base text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
@@ -3882,7 +3878,7 @@ function SecurityCheckRow({
     <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="type-label-14 text-neutral-900">{title}</span>
-        <span className="text-pretty font-sans text-neutral-500 text-xs">
+        <span className="type-copy-12 text-pretty text-neutral-500">
           {description}
         </span>
       </div>

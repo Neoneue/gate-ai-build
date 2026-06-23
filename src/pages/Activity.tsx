@@ -1130,7 +1130,7 @@ function TopList({
     <Card density="flush">
       <div className="flex items-start justify-between gap-2 p-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <h3 className="m-0 font-heading font-medium text-base text-foreground leading-snug">
+          <h3 className="type-heading-16 m-0 text-foreground leading-snug">
             {title}
           </h3>
           <p className="type-copy-14 m-0 text-muted-foreground/5">{subtitle}</p>
@@ -1147,7 +1147,7 @@ function TopList({
           <div className="flex min-w-0 items-center gap-2" key={row.rowKey}>
             {row.avatar}
             <span
-              className={`min-w-0 flex-1 truncate text-foreground text-sm ${row.labelClassName ?? "font-sans"}`}
+              className={`type-copy-14 min-w-0 flex-1 truncate text-foreground ${row.labelClassName ?? ""}`}
               title={row.label}
             >
               {row.label}

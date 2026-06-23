@@ -41,7 +41,7 @@ export function KpiTile({
   const linkEl = href ? (
     <TextLink
       as="a"
-      className="inline-flex shrink-0 items-center gap-1 text-sm"
+      className="type-copy-14 inline-flex shrink-0 items-center gap-1"
       href={href}
       rel="noopener noreferrer"
       target="_blank"
@@ -65,7 +65,7 @@ export function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-medium font-sans text-2xl/8 text-neutral-500">
+          <span className="type-heading-24 text-neutral-500">
             {valueSuffix}
           </span>
         ) : null}

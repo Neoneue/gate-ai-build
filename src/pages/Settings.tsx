@@ -242,7 +242,7 @@ function SecurityCard() {
         <div className="flex items-center">
           <div className="flex flex-col gap-1">
             <p className="type-label-14 m-0 text-neutral-900">Passkey</p>
-            <p className="m-0 text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-neutral-500">
               Sign in with Touch ID, Windows Hello, or a hardware key.
             </p>
           </div>

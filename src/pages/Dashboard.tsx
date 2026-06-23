@@ -612,7 +612,7 @@ function LatestRequestsTable() {
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest requests" className="w-full text-sm">
+        <table aria-label="Latest requests" className="type-copy-14 w-full">
           <thead>
             <tr className="border-border border-b bg-neutral-50">
               <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
@@ -704,7 +704,10 @@ function RecentConversationsTable() {
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest conversations" className="w-full text-sm">
+        <table
+          aria-label="Latest conversations"
+          className="type-copy-14 w-full"
+        >
           <thead>
             <tr className="border-border border-b bg-neutral-50">
               <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
@@ -782,7 +785,10 @@ function SecurityEventsTable() {
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest security events" className="w-full text-sm">
+        <table
+          aria-label="Latest security events"
+          className="type-copy-14 w-full"
+        >
           <thead>
             <tr className="border-border border-b bg-neutral-50">
               <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">

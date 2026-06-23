@@ -430,7 +430,9 @@ function DialogTitleBlock({
         {titleRow}
       </div>
       {meta ? (
-        <div className="m-0 text-pretty text-neutral-500 text-xs">{meta}</div>
+        <div className="type-copy-12 m-0 text-pretty text-neutral-500">
+          {meta}
+        </div>
       ) : null}
     </div>
   );
@@ -443,7 +445,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       className={cn(
-        "text-neutral-600 text-sm *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
+        "type-copy-14 text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
         className
       )}
       data-slot="dialog-description"

@@ -333,7 +333,7 @@ export function UsageInfo() {
   return (
     <section className="@container/connect flex flex-col gap-6">
       <div className="flex max-w-1/2 flex-col gap-2">
-        <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+        <h3 className="type-heading-18 m-0 text-balance text-neutral-900">
           How to make requests
         </h3>
         <p className="type-copy-14 m-0 text-neutral-500">
@@ -590,7 +590,7 @@ export function CreateKeyDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-neutral-900">
               Create API key
             </DialogTitle>
             <DialogDescription>
@@ -608,7 +608,7 @@ export function CreateKeyDialog({
               >
                 Name
               </Label>
-              <span className="font-sans text-neutral-500 text-xs">
+              <span className="type-copy-12 text-neutral-500">
                 Shown in logs and audit events.
               </span>
             </div>
@@ -631,7 +631,7 @@ export function CreateKeyDialog({
             className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
             role="note"
           >
-            <p className="m-0 font-sans text-sm text-warning-700">
+            <p className="type-copy-14 m-0 text-warning-700">
               The full key will only be shown once. Store it securely.
             </p>
           </div>
@@ -687,7 +687,7 @@ export function KeyCreatedDialog({
               className="size-5 shrink-0 text-success-600"
               strokeWidth={1.75}
             />
-            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-neutral-900">
               Key created. Copy it now.
             </DialogTitle>
           </div>
@@ -705,7 +705,7 @@ export function KeyCreatedDialog({
           </div>
           <button
             aria-label={copied ? "Copied" : "Copy API key"}
-            className="flex shrink-0 items-center gap-2 border-border border-l px-4 font-medium font-sans text-neutral-600 text-sm transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
             type="button"
           >
@@ -727,10 +727,10 @@ export function KeyCreatedDialog({
           className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
           role="note"
         >
-          <p className="m-0 font-medium font-sans text-sm text-warning-700">
+          <p className="type-label-14 m-0 text-warning-700">
             Store this somewhere safe
           </p>
-          <p className="m-0 font-sans text-sm text-warning-700">
+          <p className="type-copy-14 m-0 text-warning-700">
             Paste it into your secret manager or .env before closing. Once you
             close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the
             key to get a new one.
@@ -745,7 +745,7 @@ export function KeyCreatedDialog({
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
-            className="font-normal text-neutral-700 text-sm"
+            className="type-copy-14 text-neutral-700"
             htmlFor="apikey-saved-confirm"
           >
             I&rsquo;ve saved this key to a secret manager.

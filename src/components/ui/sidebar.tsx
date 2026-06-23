@@ -258,7 +258,7 @@ function SidebarExpanded({
                     )}
                     strokeWidth={1.75}
                   />
-                  <span className="font-sans text-sm">{item.label}</span>
+                  <span className="type-copy-14">{item.label}</span>
                   {item.locked && showLocks ? (
                     <>
                       <Lock

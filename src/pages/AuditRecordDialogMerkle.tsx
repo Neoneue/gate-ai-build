@@ -722,7 +722,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Description */}
-      <p className="m-0 text-neutral-800 text-sm">
+      <p className="type-copy-14 m-0 text-neutral-800">
         Highlighted path cryptographically proves{" "}
         <span className="font-mono text-neutral-900">{leafHex}</span> is
         included in fingerprint root{" "}
@@ -750,7 +750,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-neutral-500 text-xs">
+      <div className="type-copy-12 flex items-center justify-between text-neutral-500">
         <span>
           <span className="text-neutral-500">Path:</span>{" "}
           <span className="font-mono text-neutral-700">
@@ -773,7 +773,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           showCloseButton={true}
           style={{ width: 800, height: 640, maxWidth: 800 }}
         >
-          <DialogTitle className="m-0 font-medium font-sans text-lg text-neutral-900 leading-none">
+          <DialogTitle className="type-heading-18 m-0 text-neutral-900 leading-none">
             Merkle tree
           </DialogTitle>
           <MerkleTreeViewer
@@ -836,7 +836,7 @@ function HowItWorksPanel() {
                 {step.title}
               </h3>
             </div>
-            <p className="m-0 text-pretty text-neutral-700 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-700">
               {step.body}
             </p>
           </div>
@@ -861,7 +861,7 @@ function HowItWorksPanel() {
             <span className="type-label-14 text-neutral-900">
               Digital Evidence docs
             </span>
-            <span className="text-pretty text-neutral-700 text-sm">
+            <span className="type-copy-14 text-pretty text-neutral-700">
               How Constellation's tamper-evident layer makes every event in this
               log independently verifiable.
             </span>
@@ -909,14 +909,14 @@ export function AuditRecordDialogMerkle({
          * statement before the tabbed detail. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
-            <p className="m-0 text-neutral-900 text-sm">
+            <p className="type-copy-14 m-0 text-neutral-900">
               This event is fingerprinted to{" "}
               <span className="font-medium">
                 Constellation's Digital Evidence
               </span>{" "}
               layer.
             </p>
-            <p className="m-0 text-neutral-500 text-xs">
+            <p className="type-copy-12 m-0 text-neutral-500">
               Fingerprinted ·{" "}
               <span className="font-mono text-neutral-800">
                 {truncateHex(row.anchor, 4, 4)}

@@ -615,7 +615,7 @@ function HeroMetricCard({
               <ChartTooltipContent
                 className="gap-1"
                 formatter={(value) => (
-                  <span className="font-medium text-foreground text-sm">
+                  <span className="type-label-14 text-foreground">
                     {Number(value).toLocaleString("en-US")}
                   </span>
                 )}
@@ -670,7 +670,7 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="justify-self-end font-medium font-sans text-neutral-500 text-xs tracking-tight">
+      <span className="type-label-12 justify-self-end text-neutral-500 tracking-tight">
         {label}
       </span>
       <span
@@ -887,7 +887,7 @@ function CategoryBreakdownCard({
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="font-medium font-sans text-base text-neutral-900 -tracking-[0.25px]">
+        <CardTitle className="type-heading-16 text-neutral-900 -tracking-[0.25px]">
           {title}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -1281,7 +1281,7 @@ function EventsTableSection({
         <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
           <DialogContent className="w-full gap-4 sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+              <DialogTitle className="type-heading-18 text-neutral-900">
                 Filters
               </DialogTitle>
             </DialogHeader>
@@ -1574,7 +1574,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             ) : (
               <button
                 aria-label="Mark event invalid"
-                className="group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card font-medium text-neutral-900 text-xs outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-neutral-50 focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-neutral-900 outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-neutral-50 focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                 onClick={() => {
                   setMarked(true);
                   toast.success("Event marked as invalid");
@@ -1605,7 +1605,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               conversation. Per-block "User"/"Assistant" labels are
               extra noise at single-event-detail scale. */}
           <section className="flex flex-col gap-2">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900 tracking-snug">
+            <h3 className="type-heading-16 m-0 text-neutral-900 tracking-snug">
               <span className="inline-flex items-center gap-2">
                 <FileText
                   aria-hidden
@@ -1617,16 +1617,16 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             </h3>
             <div className="flex flex-col gap-3">
               {reconciled ? (
-                <div className="max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border border-border px-4 py-3 text-neutral-900 text-sm">
+                <div className="type-copy-14 max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border border-border px-4 py-3 text-neutral-900">
                   {reconciled.evidence}
                 </div>
               ) : (
                 <>
-                  <div className="max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border border-border px-4 py-3 text-neutral-900 text-sm">
+                  <div className="type-copy-14 max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border border-border px-4 py-3 text-neutral-900">
                     {detail.samplePrompt}
                   </div>
                   {detail.sampleResponse === null ? null : (
-                    <div className="text-pretty rounded-md border border-border px-4 py-3 text-neutral-900 text-sm">
+                    <div className="type-copy-14 text-pretty rounded-md border border-border px-4 py-3 text-neutral-900">
                       {detail.sampleResponse}
                     </div>
                   )}
@@ -1639,7 +1639,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               modal Security panel: each check is its own bordered card
               with title + description + verdict badge. */}
           <section className="flex flex-col gap-2">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900 tracking-snug">
+            <h3 className="type-heading-16 m-0 text-neutral-900 tracking-snug">
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck
                   aria-hidden
@@ -1692,7 +1692,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               Endpoint dropped — "the model provider has nothing to do
               with the prompt injection attempt." */}
           <section className="flex flex-col gap-2">
-            <h3 className="m-0 font-medium font-sans text-base text-neutral-900 tracking-snug">
+            <h3 className="type-heading-16 m-0 text-neutral-900 tracking-snug">
               <span className="inline-flex items-center gap-2">
                 <ArrowLeftRight
                   aria-hidden

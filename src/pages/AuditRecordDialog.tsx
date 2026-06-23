@@ -69,7 +69,7 @@ export function AuditRecordDialog({
          * "Verified" seal sitting directly beneath the copy. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
-            <p className="m-0 text-base/6 text-neutral-900">
+            <p className="type-copy-16 m-0 text-neutral-900">
               This event is fingerprinted to{" "}
               <span className="font-medium">
                 Constellation's Digital Evidence

@@ -122,7 +122,7 @@ function MultiSelect({
               <Search className="size-4 shrink-0 text-neutral-400" />
               <input
                 aria-label="Search options"
-                className="w-full min-w-0 bg-transparent text-neutral-800 text-sm outline-none placeholder:text-neutral-400"
+                className="type-copy-14 w-full min-w-0 bg-transparent text-neutral-800 outline-none placeholder:text-neutral-400"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search options…"
                 type="text"
@@ -134,7 +134,7 @@ function MultiSelect({
 
         <div className="border-border border-b p-1">
           <button
-            className="flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-neutral-800 text-sm outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:bg-neutral-100 motion-reduce:transition-none"
+            className="type-copy-14 flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-neutral-800 outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:bg-neutral-100 motion-reduce:transition-none"
             onClick={toggleAll}
             type="button"
           >
@@ -145,13 +145,13 @@ function MultiSelect({
 
         <div className="max-h-56 overflow-y-auto overscroll-contain p-1">
           {filteredOptions.length === 0 ? (
-            <p className="px-2 py-3 text-center text-neutral-400 text-sm">
+            <p className="type-copy-14 px-2 py-3 text-center text-neutral-400">
               No options found
             </p>
           ) : (
             filteredOptions.map((option) => (
               <label
-                className="flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-neutral-800 text-sm transition-colors duration-150 ease-out hover:bg-neutral-100 has-focus-visible:bg-neutral-100 motion-reduce:transition-none"
+                className="type-copy-14 flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-neutral-800 transition-colors duration-150 ease-out hover:bg-neutral-100 has-focus-visible:bg-neutral-100 motion-reduce:transition-none"
                 key={option.value}
               >
                 <Checkbox

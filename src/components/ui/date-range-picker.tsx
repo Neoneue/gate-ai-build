@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 
 export interface DateRangePickerProps {
   className?: string;
+  /** Trigger label when no range is selected. Defaults to "Custom". */
+  emptyLabel?: string;
   onChange: (range: { from: Date; to: Date } | null) => void;
   /** Trigger button height. Defaults to `sm` (h-8) to match the inline
    *  toolbar usage on Requests; pass `default` for h-10 (40px) page-header
@@ -108,6 +110,7 @@ export function DateRangePicker({
   value,
   onChange,
   className,
+  emptyLabel = "Custom",
   size = "sm",
 }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
@@ -184,7 +187,7 @@ export function DateRangePicker({
                 data-icon="inline-start"
                 size={16}
               />
-              <span>{value ? formatRange(value) : "Custom"}</span>
+              <span>{value ? formatRange(value) : emptyLabel}</span>
             </Button>
           }
         />
@@ -215,9 +218,7 @@ export function DateRangePicker({
         />
         <div className="grid grid-cols-2 gap-3 border-border border-t p-3">
           <div className="flex flex-col gap-1">
-            <span className="font-medium font-sans text-neutral-600 text-xs">
-              Start time
-            </span>
+            <span className="type-label-12 text-neutral-600">Start time</span>
             <div className="flex items-center gap-1">
               <Select
                 onValueChange={(h) => setFromTime((t) => withHour(t, h))}
@@ -271,9 +272,7 @@ export function DateRangePicker({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="font-medium font-sans text-neutral-600 text-xs">
-              End time
-            </span>
+            <span className="type-label-12 text-neutral-600">End time</span>
             <div className="flex items-center gap-1">
               <Select
                 onValueChange={(h) => setToTime((t) => withHour(t, h))}

@@ -440,7 +440,7 @@ function MemberRowView({
               {row.name}
             </span>
             <span
-              className="truncate font-sans text-neutral-500 text-xs tracking-snug"
+              className="type-copy-12 truncate text-neutral-500 tracking-snug"
               title={row.email}
             >
               {row.email}
@@ -697,7 +697,7 @@ function InviteMemberDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-neutral-900">
               Invite member
             </DialogTitle>
             <DialogDescription>
@@ -717,7 +717,7 @@ function InviteMemberDialog({
               aria-describedby={showInvalid ? "invite-email-error" : undefined}
               aria-invalid={showInvalid || undefined}
               autoComplete="off"
-              className="font-sans text-sm"
+              className="type-copy-14"
               id="invite-email"
               onChange={(e) => setEmail(e.target.value)}
               placeholder="teammate@example.com"
@@ -727,7 +727,7 @@ function InviteMemberDialog({
             />
             {showInvalid ? (
               <p
-                className="font-sans text-destructive text-xs"
+                className="type-copy-12 text-destructive"
                 id="invite-email-error"
               >
                 That doesn&rsquo;t look like an email address.
@@ -803,7 +803,7 @@ function RoleItemBody({
   return (
     <span className="flex flex-col gap-1 text-left">
       <span className="type-label-14 text-neutral-900">{label}</span>
-      <span className="text-pretty font-sans text-neutral-500 text-xs">
+      <span className="type-copy-12 text-pretty text-neutral-500">
         {description}
       </span>
     </span>

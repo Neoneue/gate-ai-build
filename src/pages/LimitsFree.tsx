@@ -522,7 +522,7 @@ function CreateLimitDialog({
     >
       <DialogContent className="w-full gap-4 sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-neutral-900">
             Create limit
           </DialogTitle>
           <DialogDescription>

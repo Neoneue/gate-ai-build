@@ -235,8 +235,10 @@ export function AuthLayout() {
                   <Icon aria-hidden className="size-5" strokeWidth={1.75} />
                 </span>
                 <div>
-                  <p className="font-medium text-base text-white">{title}</p>
-                  <p className="text-neutral-400 text-sm/6">{sub}</p>
+                  <p className="type-heading-16 text-white">{title}</p>
+                  <p className="type-copy-14 text-neutral-400 leading-6">
+                    {sub}
+                  </p>
                 </div>
               </li>
             ))}
@@ -251,7 +253,7 @@ export function AuthLayout() {
         </div>
 
         <p
-          className="row-start-3 self-end text-center font-medium text-neutral-400 text-xs uppercase tracking-widest md:col-span-5 md:col-start-1 md:text-left"
+          className="type-label-12 row-start-3 self-end text-center text-neutral-400 uppercase tracking-widest md:col-span-5 md:col-start-1 md:text-left"
           data-anim
         >
           &copy; 2026 Constellation Network
