@@ -8,7 +8,32 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 
 ---
 
+## Conventions
+
+### Design values are a closed set: token guard + heading scale `7cd5528`
+
+- New `npm run lint:design` (`scripts/check-design-tokens.mjs`) fails the build
+  on invented colors (`*-[#…]` / `rgb` / `oklch` / …) and literal `text-[Npx]`
+  sizes; wired into `npm run lint`. Rule codified in
+  `.claude/rules/design-tokens.md` and surfaced in `CLAUDE.md`.
+- Heading scale shifted in `design.md`: `h3` is now the 20px section-title voice
+  (was 18px) and the 18px card-title voice moves to `h4`.
+
+---
+
 ## Components
+
+### SectionTitle primitive + CardTitle `as` prop `7cd5528`
+
+- New `section-title.tsx`: single source of truth for page-level section titles
+  (`m-0 font-medium font-sans text-neutral-900 text-xl/7`, 20/28). Renders
+  `<h3>`; `as` overrides the level without changing the voice. Distinct from
+  `SectionHeading` (text-sm, modal body sections).
+- Adopted across Overview(default) / Requests / Conversations / Security /
+  AuditTrail(+Merkle) / TokenSavings / Dashboard, replacing hand-rolled
+  `text-xl/7` and `text-lg/6` headings.
+- `CardTitle` gains an `as` prop (default `<h3>`) so card titles can follow the
+  document outline without changing the voice.
 
 ### Audit record modal: accurate seal comment + Open Explorer as link `c01770e`
 
@@ -93,3 +118,18 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   will appear here as your workspace routes traffic." to "No events match your
   current search or filters. Clear them to see the full audit trail." The state is
   only reachable via search/filters, so it now points at the Clear filters action.
+
+### Default Overview: Get started hero rebuilt `7cd5528`
+
+- `DashboardDefault.tsx`: the old `HeroCard` is replaced by `OverviewHeroCard` —
+  a "Get started" section (`SectionTitle as="h2"`) wrapping a flush card with a
+  numbered "1 · Create your first API key" block (Create key + Read API docs)
+  and a `FirstRequestInfo` footer pairing an Automatic (Gate Connect) and Manual
+  (code tabs) setup card. "Activity This Week" now uses `SectionTitle as="h2"`.
+
+### Requests findings: credential rule labeled credential-scanner `e4742f8`
+
+- `requests.ts`: the OpenAI/AWS credential findings showed recognizer-specific
+  rule strings ("OpenAI API key", "AKIA[0-9A-Z]{16} + Shannon entropy >= 4.5
+  bits/char"); the visible `rule` is normalized to `credential-scanner` across
+  all occurrences, matching the Credentials-findings doc.
