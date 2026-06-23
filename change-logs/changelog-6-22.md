@@ -227,7 +227,7 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - Goal: keep `Policies` from becoming a one-off by applying the same semantic
   heading/label/copy role classes on adjacent high-traffic pages.
 
-### Project-wide typography sweep + role expansion `(uncommitted)`
+### Project-wide typography sweep + role expansion `0477a15`
 
 - Expanded semantic type-role utilities in `src/index.css` to mirror the wider
   Vercel naming model:
@@ -249,7 +249,7 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - `PolicyCard` outer title: `type-heading-18` → `type-heading-16` (18 → 16px).
 - `PolicyCard` subtitle: `type-copy-16` → `type-copy-14` (16 → 14px).
 
-### Overview-first semantic type-role adoption `(uncommitted)`
+### Overview-first semantic type-role adoption `0477a15`
 
 - Started the route-by-route rollout with Overview surfaces:
   `Dashboard.tsx` and `DashboardDefault.tsx`.
