@@ -593,11 +593,11 @@ function PolicyCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="type-heading-18 m-0 text-balance text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-balance text-neutral-900">
               {config.name}
             </h3>
           </div>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500">
+          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
             {config.description}
           </p>
         </div>
@@ -686,8 +686,12 @@ function ProBenefitsCard() {
               ))}
             </ul>
             <div className="pt-2">
-              <Button onClick={() => setCompareOpen(true)} type="button">
-                <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
+              <Button
+                onClick={() => setCompareOpen(true)}
+                size="sm"
+                type="button"
+              >
+                <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
                 Upgrade to Pro
               </Button>
             </div>
