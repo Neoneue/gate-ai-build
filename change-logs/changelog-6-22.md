@@ -160,3 +160,12 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   is titled "Enable lightweight Regex scanning" with a `BASIC` badge and drops
   its Action + Sensitivity panels (replacement card pending); Pro shows "Enable
   Prompt injection detection" with no badge and keeps the panels.
+
+### Policies: scan-direction detail card gains a directional arrow `a1aa888`
+
+- `DetailCard` gains an optional `icon` prop (defaults to `Info`). The Scan
+  direction card now swaps the info glyph for a horizontal boundary-crossing
+  arrow matching the selection: Output `ArrowRightFromLine` (`|→`, leaving),
+  Input `ArrowRightToLine` (`→|`, arriving), Both `ArrowLeftRight` (`↔`). Reads
+  as request flow through the gateway. (Initial vertical arrows read as
+  upload/download and were rejected.) Sensitivity card keeps `Info`.
