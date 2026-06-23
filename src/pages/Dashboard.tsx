@@ -184,7 +184,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Overview</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
         your gateway.
       </p>
@@ -353,7 +353,7 @@ export function HorizontalLegend({ series }: { series: StackedSeries }) {
             className="inline-flex size-2 shrink-0 rounded-full"
             style={{ backgroundColor: seriesColor(s) }}
           />
-          <span className="text-neutral-500 text-xs">{s.label}</span>
+          <span className="type-copy-12 text-neutral-500">{s.label}</span>
         </div>
       ))}
     </div>
@@ -507,7 +507,7 @@ function OverviewUsageChart() {
                     className="size-2 shrink-0 rounded-xs"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="min-w-0 flex-1 truncate font-sans text-foreground text-sm">
+                  <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
                     {s.label}
                   </span>
                   <div
@@ -603,11 +603,9 @@ function LatestRequestsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
-          Latest requests
-        </h3>
+        <h3 className="type-label-14 m-0 text-neutral-900">Latest requests</h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
         >
           View all →
@@ -617,16 +615,16 @@ function LatestRequestsTable() {
         <table aria-label="Latest requests" className="w-full text-sm">
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Time
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Model
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Status
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Security
               </th>
             </tr>
@@ -656,7 +654,7 @@ function LatestRequestsTable() {
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
                   {row.day} {row.time}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-neutral-800 text-xs">
+                <td className="type-copy-12 whitespace-nowrap px-4 py-3 text-neutral-800">
                   {row.model}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
@@ -695,11 +693,11 @@ function RecentConversationsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-neutral-900">
           Latest conversations
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
         >
           View all →
@@ -709,16 +707,16 @@ function RecentConversationsTable() {
         <table aria-label="Latest conversations" className="w-full text-sm">
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Conversation
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Updated
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-neutral-500">
                 Turns
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-neutral-500">
                 Reqs
               </th>
             </tr>
@@ -742,7 +740,7 @@ function RecentConversationsTable() {
                 tabIndex={0}
               >
                 <td className="w-full max-w-0 overflow-hidden px-4 py-3">
-                  <span className="block truncate text-neutral-800 text-xs">
+                  <span className="type-copy-12 block truncate text-neutral-800">
                     {row.title}
                   </span>
                 </td>
@@ -773,11 +771,11 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-neutral-900">
           Latest security events
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
         >
           View all →
@@ -787,16 +785,16 @@ function SecurityEventsTable() {
         <table aria-label="Latest security events" className="w-full text-sm">
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Time
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Type
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Action
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-neutral-500">
                 Key
               </th>
             </tr>
@@ -836,7 +834,7 @@ function SecurityEventsTable() {
                         strokeWidth={1.75}
                         style={{ color: typeMeta.color }}
                       />
-                      <span className="text-neutral-800 text-xs">
+                      <span className="type-copy-12 text-neutral-800">
                         {typeMeta.label}
                       </span>
                     </span>

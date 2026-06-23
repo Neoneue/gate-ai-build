@@ -220,7 +220,7 @@ function PageHeader({
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Activity</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Cost, requests, and tokens across the workspace.
         </p>
       </div>
@@ -630,7 +630,7 @@ function TrendBreakdownPanel({
               className="size-2 shrink-0 rounded-xs"
               style={{ backgroundColor: color }}
             />
-            <span className="min-w-0 flex-1 truncate font-sans text-foreground text-sm">
+            <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
               {s.label}
             </span>
             <div
@@ -1133,9 +1133,7 @@ function TopList({
           <h3 className="m-0 font-heading font-medium text-base text-foreground leading-snug">
             {title}
           </h3>
-          <p className="m-0 font-sans text-muted-foreground text-sm/5">
-            {subtitle}
-          </p>
+          <p className="type-copy-14 m-0 text-muted-foreground/5">{subtitle}</p>
         </div>
         <SegmentedPill
           onValueChange={(v) => onMetricChange(v as Metric)}
@@ -1529,7 +1527,7 @@ function UsageByKey({
                     <span className="text-neutral-800">{row.label}</span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <span className="font-sans text-neutral-800 text-sm">
+                    <span className="type-copy-14 text-neutral-800">
                       {row.owner}
                     </span>
                   </TableCell>

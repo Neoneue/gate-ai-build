@@ -62,9 +62,7 @@ function NotificationsMenu({
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-2 py-2 pr-2 pl-4">
-          <h2 className="m-0 font-medium font-sans text-neutral-900 text-sm">
-            Notifications
-          </h2>
+          <h2 className="type-label-14 m-0 text-neutral-900">Notifications</h2>
           <Button
             aria-label="Notification settings"
             onClick={() => {

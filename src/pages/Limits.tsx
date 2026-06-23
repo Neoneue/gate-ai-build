@@ -127,7 +127,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
           key level. Limits run inline with no separate billing system to wire
           up.
@@ -263,7 +263,7 @@ function LimitsSection({
             const scopeNameText = scope?.name ?? limit.scope;
             return (
               <TableRow key={limit.id}>
-                <TableCell className="font-medium font-sans text-neutral-900 text-sm">
+                <TableCell className="type-label-14 text-neutral-900">
                   <span className="block truncate" title={limit.name}>
                     {limit.name}
                   </span>
@@ -271,7 +271,7 @@ function LimitsSection({
                 <TableCell>
                   <div className="flex min-w-0 flex-col">
                     <span
-                      className="truncate font-sans text-neutral-900 text-sm"
+                      className="type-copy-14 truncate text-neutral-900"
                       title={scopeNameText}
                     >
                       {scopeNameText}
@@ -283,7 +283,7 @@ function LimitsSection({
                     ) : null}
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+                <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
                   {typeLabel(limit.type)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
@@ -292,10 +292,10 @@ function LimitsSection({
                 <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
                   {usedLabel(limit.type, limit.used, limit.threshold)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+                <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
                   {periodLabel(limit.period)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-sans text-neutral-500 text-sm">
+                <TableCell className="type-copy-14 whitespace-nowrap text-neutral-500">
                   {resetsAtMap.get(limit.id) ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -551,7 +551,7 @@ function CreateLimitDialog({
 
         <div className="flex flex-col gap-2">
           <Label
-            className="font-medium text-neutral-600 text-sm"
+            className="type-label-14 text-neutral-600"
             htmlFor="create-limit-name"
           >
             Name
@@ -567,7 +567,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="create-limit-type"
             >
               Type
@@ -587,7 +587,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="create-limit-threshold"
             >
               Threshold
@@ -609,7 +609,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="create-limit-period"
             >
               Period
@@ -629,7 +629,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="create-limit-scope"
             >
               Scope
@@ -651,7 +651,7 @@ function CreateLimitDialog({
                   >
                     {s.masked ? (
                       <span className="flex flex-col">
-                        <span className="font-sans text-neutral-900 text-sm">
+                        <span className="type-copy-14 text-neutral-900">
                           {s.name}
                         </span>
                         <span className="font-mono text-neutral-500 text-xs">

@@ -260,7 +260,7 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>API Keys</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
           every request through the gateway.
         </p>
@@ -336,13 +336,13 @@ export function UsageInfo() {
         <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
           How to make requests
         </h3>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-neutral-500">
           There are two ways to start making requests using your API key. With{" "}
           <span className="font-medium">Gate Connect</span>, setup is automatic,
           so you can skip the code entirely. Want to configure it yourself? Use
           the code snippets to do it by hand.
         </p>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-neutral-500">
           To learn more, check out our{" "}
           <TextLink
             as="a"
@@ -603,7 +603,7 @@ export function CreateKeyDialog({
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <Label
-                className="font-medium text-neutral-600 text-sm"
+                className="type-label-14 text-neutral-600"
                 htmlFor="apikey-name"
               >
                 Name

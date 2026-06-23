@@ -832,7 +832,7 @@ function HowItWorksPanel() {
           >
             <div className="flex items-center gap-2">
               <NumberChip>{step.id}</NumberChip>
-              <h3 className="m-0 font-medium text-neutral-900 text-sm">
+              <h3 className="type-label-14 m-0 text-neutral-900">
                 {step.title}
               </h3>
             </div>
@@ -858,7 +858,7 @@ function HowItWorksPanel() {
             <BookOpen aria-hidden className="size-4 text-neutral-700" />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="font-medium text-neutral-900 text-sm">
+            <span className="type-label-14 text-neutral-900">
               Digital Evidence docs
             </span>
             <span className="text-pretty text-neutral-700 text-sm">

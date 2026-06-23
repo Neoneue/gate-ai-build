@@ -32,9 +32,7 @@ export function WorkspaceSwitcher() {
           />
         }
       >
-        <span className="font-sans text-neutral-900 text-sm">
-          {workspaceName}
-        </span>
+        <span className="type-copy-14 text-neutral-900">{workspaceName}</span>
         <Badge variant={isFree ? "neutral" : "info"}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden

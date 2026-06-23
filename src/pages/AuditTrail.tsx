@@ -125,12 +125,12 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           A tamper-evident record of every request, response, and policy
           decision the gateway handled. Investigate exactly what happened, and
           let anyone verify it independently.
         </p>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           To learn more, check out our{" "}
           <TextLink
             as="a"
@@ -468,7 +468,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
+              <Label className="type-label-14 text-neutral-600">
                 Event time
               </Label>
               <DateRangePicker
@@ -479,9 +479,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Member
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Member</Label>
               <MultiSelect
                 aria-label="Filter by member"
                 onValueChange={setDraftMembers}
@@ -495,7 +493,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
+              <Label className="type-label-14 text-neutral-600">
                 Event type
               </Label>
               <MultiSelect

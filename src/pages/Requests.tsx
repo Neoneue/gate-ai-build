@@ -290,7 +290,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Every model call across your stack, inspected for injection, PII, and
           credentials before it reaches the model.
         </p>
@@ -1356,7 +1356,7 @@ function RequestsTableSection({
                 </DialogHeader>
 
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Model
                   </Label>
                   <Select onValueChange={setDraftModel} value={draftModel}>
@@ -1379,9 +1379,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
-                    Key
-                  </Label>
+                  <Label className="type-label-14 text-neutral-600">Key</Label>
                   <Select onValueChange={setDraftKeyId} value={draftKeyId}>
                     <SelectTrigger
                       aria-label="Key"
@@ -1403,7 +1401,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Response
                   </Label>
                   <Select
@@ -1426,7 +1424,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Guardrail
                   </Label>
                   <Select
@@ -1713,7 +1711,7 @@ function RequestsTableSection({
                           {conversationName ? (
                             <>
                               <span
-                                className="block truncate font-sans text-neutral-900 text-sm"
+                                className="type-copy-14 block truncate text-neutral-900"
                                 title={conversationName}
                               >
                                 {conversationName}
@@ -2227,7 +2225,7 @@ export function RequestDetailBodyV2({
                           <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
                             No findings
                           </h3>
-                          <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+                          <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
                             All detectors passed for this request.
                           </p>
                         </div>
@@ -2332,12 +2330,12 @@ export function RequestDetailBodyV2({
                         key={p.category}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <span className="font-medium font-sans text-neutral-900 text-sm">
+                          <span className="type-label-14 text-neutral-900">
                             {p.label}
                           </span>
                           <Badge variant="success">Pass</Badge>
                         </div>
-                        <span className="font-sans text-neutral-500 text-sm">
+                        <span className="type-copy-14 text-neutral-500">
                           {p.description}
                         </span>
                       </div>
@@ -2488,7 +2486,7 @@ function FindingCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="font-medium font-sans text-neutral-900 text-sm">
+          <span className="type-label-14 text-neutral-900">
             {CATEGORY_LABEL[finding.category]} ·{" "}
             {entityLabel(finding.entityType)}
           </span>
@@ -2496,7 +2494,7 @@ function FindingCard({
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
       <p
-        className="line-clamp-2 font-sans text-neutral-900 text-sm"
+        className="type-copy-14 line-clamp-2 text-neutral-900"
         title={finding.redactedAs}
       >
         “{finding.redactedAs}”
@@ -2629,7 +2627,7 @@ function FindingSwitcherCard({
         type="button"
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
+          <span className="type-label-14 flex items-center gap-2 text-neutral-900">
             {CATEGORY_LABEL[current.category]}
             <CountChip count={total} size="xs" />
           </span>
@@ -2638,7 +2636,7 @@ function FindingSwitcherCard({
           </Badge>
         </div>
         <p
-          className="line-clamp-2 font-sans text-muted-foreground text-sm"
+          className="type-copy-14 line-clamp-2 text-muted-foreground"
           title={current.redactedAs}
         >
           <span className="text-foreground">
@@ -2648,7 +2646,7 @@ function FindingSwitcherCard({
         </p>
       </button>
       <div className="flex items-center justify-between gap-2 border-border border-t px-4 pt-2 pb-3">
-        <span className="font-sans text-foreground text-sm tabular-nums">
+        <span className="type-copy-14 text-foreground tabular-nums">
           Finding {pos + 1} of {total}
         </span>
         <div className="relative z-10 flex items-center gap-1">
@@ -2705,9 +2703,7 @@ function KvRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="font-medium font-sans text-neutral-900 text-sm">
-        {label}
-      </span>
+      <span className="type-label-14 text-neutral-900">{label}</span>
       <span
         className={[
           "text-right font-mono text-neutral-900 text-sm tabular-nums",
@@ -2834,7 +2830,7 @@ function EvidenceWindow({
         className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
         ref={evidenceBoxRef}
       >
-        <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-900 leading-relaxed">
           {evidenceNodes.length > 0 ? evidenceNodes : text}
         </p>
       </div>
@@ -2998,7 +2994,7 @@ function PiiDetailPanel({
               className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
               ref={evidenceBoxRef}
             >
-              <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+              <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-900 leading-relaxed">
                 {evidenceNodes.length > 0 ? evidenceNodes : evidence}
               </p>
             </div>
@@ -3112,9 +3108,7 @@ function InjectionDetailPanel({
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
         <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-foreground text-sm">
-            {howToFix}
-          </p>
+          <p className="type-copy-14 text-pretty text-foreground">{howToFix}</p>
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={onTunePolicy}
@@ -3396,7 +3390,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   return (
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
-      <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 font-sans text-neutral-900 text-sm">
+      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-neutral-900">
         {content}
       </div>
     </section>
@@ -3428,7 +3422,7 @@ function DetailMessageSubcard({
   return (
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
-      <div className="max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 font-sans text-neutral-900 text-sm">
+      <div className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-neutral-900">
         {content}
       </div>
     </section>
@@ -3448,7 +3442,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Provider context" />
           <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
-            <p className="font-sans text-foreground text-sm">{explanation}</p>
+            <p className="type-copy-14 text-foreground">{explanation}</p>
           </div>
         </section>
       ) : null}
@@ -3887,9 +3881,7 @@ function SecurityCheckRow({
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="font-medium font-sans text-neutral-900 text-sm">
-          {title}
-        </span>
+        <span className="type-label-14 text-neutral-900">{title}</span>
         <span className="text-pretty font-sans text-neutral-500 text-xs">
           {description}
         </span>

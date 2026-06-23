@@ -92,7 +92,7 @@ export function SettingsRow({
     >
       <div className="flex min-w-0 flex-col gap-1">
         {effectiveTitleAs === "label" ? (
-          <Label className="font-medium text-neutral-900 text-sm" htmlFor={id}>
+          <Label className="type-label-14 text-neutral-900" htmlFor={id}>
             {title}
           </Label>
         ) : effectiveTitleAs === "h4" ? (
@@ -100,7 +100,7 @@ export function SettingsRow({
         ) : (
           <span className={titleClass}>{title}</span>
         )}
-        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
           {subtitle}
         </p>
       </div>

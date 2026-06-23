@@ -563,7 +563,7 @@ function LimitsPreview() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label className="font-medium text-neutral-600 text-sm">Name</Label>
+            <Label className="type-label-14 text-neutral-600">Name</Label>
             <div ref={nameRef}>
               <Input
                 className={cn(nameFocus && FOCUS_RING)}
@@ -576,9 +576,7 @@ function LimitsPreview() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Type
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Type</Label>
               <div className="relative" ref={typeTriggerRef}>
                 <Select value={typeVal}>
                   <SelectTrigger className="w-full">
@@ -623,7 +621,7 @@ function LimitsPreview() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
+              <Label className="type-label-14 text-neutral-600">
                 Threshold
               </Label>
               <div ref={amountRef}>
@@ -643,9 +641,7 @@ function LimitsPreview() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Period
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Period</Label>
               <Select value="1d">
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -660,9 +656,7 @@ function LimitsPreview() {
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Scope
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Scope</Label>
               <Select value="org">
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -769,7 +763,7 @@ export function LimitsDefault() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
           key level. Limits run inline with no separate billing system to wire
           up.

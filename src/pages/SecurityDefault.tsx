@@ -104,7 +104,7 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-card-soft">
       <div className="flex shrink-0 items-center border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-neutral-900">
           Latest security events
         </h3>
       </div>
@@ -263,7 +263,7 @@ export function HeroCard({
               </div>
 
               <div className="flex flex-col gap-4">
-                <p className="m-0 font-medium text-neutral-900 text-sm">
+                <p className="type-label-14 m-0 text-neutral-900">
                   What you&rsquo;ll get going Pro:
                 </p>
                 <ul className="m-0 flex list-none flex-col gap-4 rounded-md border border-border bg-card p-4">
@@ -333,7 +333,7 @@ export function SecurityDefault() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Security events</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           See every threat event your policies caught, with the prompt, model,
           and per-key risk tier behind each call. Fingerprinted to
           Constellation's Digital Evidence layer so every detection is

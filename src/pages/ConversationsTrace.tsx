@@ -67,10 +67,10 @@ export function ConversationsTrace() {
           className="rounded-md border border-border bg-card p-8 text-center"
           role="alert"
         >
-          <h2 className="m-0 text-balance font-medium font-sans text-neutral-900 text-sm">
+          <h2 className="type-label-14 m-0 text-balance text-neutral-900">
             Conversation not found
           </h2>
-          <p className="mt-1 font-sans text-neutral-500 text-sm">
+          <p className="type-copy-14 mt-1 text-neutral-500">
             No conversation matches{" "}
             <span className="font-mono">{conversationId}</span>.
           </p>

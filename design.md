@@ -516,6 +516,40 @@ Tailwind named scale only. Three sizes overridden in `@theme` to Geist's heading
 
 **Default.** When no stronger role applies, UI text is `body-sm` (14/20 sans) and any value, ID, or numeric is `data` (14/20 Geist Mono, tabular-nums). These two carry most of the app; reach past them only when a role above is genuinely the intent.
 
+### Semantic type-role utilities (codified 2026-06-23)
+
+Vercel-style role naming is now the policy for page work: prefer semantic
+heading/label/copy classes over ad-hoc `text-*` mixes in route files.
+
+| Role | Utility class | Recipe |
+| --- | --- | --- |
+| Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium` |
+| Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium` |
+| Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium` |
+| Heading 16 | `type-heading-16` | `font-sans text-base/6 font-medium` |
+| Heading 14 | `type-heading-14` | `font-sans text-sm font-medium` |
+| Label 20 | `type-label-20` | `font-sans text-xl/8 font-normal` |
+| Label 18 | `type-label-18` | `font-sans text-lg/5 font-normal` |
+| Label 16 | `type-label-16` | `font-sans text-base font-medium` |
+| Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
+| Label 12 | `type-label-12` | `font-sans text-xs font-medium` |
+| Copy 24 | `type-copy-24` | `font-sans text-2xl/9 font-normal` |
+| Copy 20 | `type-copy-20` | `font-sans text-xl/9 font-normal` |
+| Copy 18 | `type-copy-18` | `font-sans text-lg/7 font-normal` |
+| Copy 16 | `type-copy-16` | `font-sans text-base font-normal` |
+| Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
+| Copy 14 tight | `type-copy-14-tight` | `font-sans text-sm/5 font-normal` |
+| Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |
+
+**Usage rule:** when one of the semantic roles above fits, use it in page code.
+Only compose raw text utilities when a role truly does not exist yet; then
+promote that recipe into a named role.
+
+**Global input-helper rule:** all helper text under inputs uses
+`type-input-helper` (locked recipe: `font-sans text-xs font-normal` = 12px,
+line-height 16px, plus `mt-2` = 8px gap from the input). Do not hand-roll
+helper text size or spacing with one-off `text-*` / `mt-*` values.
+
 ### Five-voice taxonomy (codified 2026-05-07)
 
 Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
@@ -824,7 +858,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 ### Typography primitives
 
 - **Eyebrow** (`eyebrow.tsx`, codified 2026-05-11) — small mono-uppercase chrome label used above KPI values, in sidebar nav-section headers, atop CompactKpi titles, on artboard / spec-sheet headers. Recipe: `font-mono text-xs uppercase tracking-[0.1em] font-medium text-neutral-500`. Default element `<span>` (inline); pass `as="div"` when a block is needed. Extracted after the 2026-05-11 audit found 13 hand-rolled occurrences across Requests / Conversations / Security/16/18 + sidebar.tsx + compact-kpi.tsx + Artboard.tsx (the last had drifted to `tracking-[0.08em]` without `font-medium`). **No size variant ships** — the previous `Eyebrow / default` (text-sm) variant from the typography spec is unused (modal eyebrows removed 2026-05-11); add the variant back with intent when a surface needs it.
-- **SectionHeading** (`section-heading.tsx`, codified 2026-05-11) — h3-class heading used inside modal body sections ("Evidence", "Detection", "Context", "Details", "Security scan"). Recipe: `font-sans text-sm font-medium text-neutral-900 m-0`. Renders `<h3>` by default; pass `as="h2|h4|h5|h6"` to override level. Extracted after the audit found the recipe hand-rolled in CMP-007 + CMP-015 modal body sections (5 sites).
+- **SectionHeading** (`section-heading.tsx`, codified 2026-05-11) — h3-class heading used inside modal body sections ("Evidence", "Detection", "Context", "Details", "Security scan"). Base recipe: `font-sans text-sm font-medium text-neutral-900 m-0` (`type-label-14` equivalence). Renders `<h3>` by default; pass `as="h2|h4|h5|h6"` to override level. For policy-panel section headings, promote via semantic role class (`className="type-heading-16"`). Extracted after the audit found the recipe hand-rolled in CMP-007 + CMP-015 modal body sections (5 sites).
 - **SectionTitle** (`section-title.tsx`, codified 2026-06-22) — single source of truth for page-level section titles ("Overview", "Recent …", "Activity This Week", "Get started"). Recipe: `font-sans text-xl/7 font-medium text-neutral-900 m-0` (20/28, no tracking). Renders `<h3>` by default; pass `as="h2"` when the section has sub-headings so the outline stays correct without changing the voice. Distinct from `SectionHeading` (text-sm, modal body sections). Adopted 2026-06-22 across Overview(default) / Requests / Conversations / Security / AuditTrail(+Merkle) / TokenSavings / Dashboard, replacing hand-rolled `text-xl/7` and `text-lg/6` headings.
 - **PageTitle** (`page-title.tsx`, codified 2026-05-11) — top-of-surface heading on composed pages. Recipe: `font-sans font-medium text-neutral-900 text-3xl/9 -tracking-[1px] text-balance m-0`. Renders `<h2>` by default — composed pages sit inside `<DashboardChrome>` which owns the document h1 implicitly; the in-surface page title reads as h2 in the outline so child cards can use h3 without level skips. Extracted after the audit found 8 hand-rolls (every composed page's PageHeader plus a CMP-013 variant that used `tracking-tight` instead of `-tracking-[1px]` — normalized on extraction). Spec-sheet `<ArtboardHeader>` uses `text-neutral-800` and does NOT compose this primitive (different surface convention; intentional).
 
@@ -982,7 +1016,7 @@ The MVP-era `src/artboards/CMP-*` spec sheets were stripped from this repo on 20
 | `/token-savings` | `src/pages/TokenSavings.tsx` | Token-compression savings page. |
 | `/guardrails` | `src/pages/Guardrails.tsx` | Policy / limit configuration. Deep-link param: `?create=1` opens the create modal and strips on close. Revoked keys filtered out of every scope / key picker (see memory `feedback_no-revoked-keys`). |
 | `/security` | `src/pages/Security.tsx` | Threat-event log with alert banner (`role="alert"` + `aria-live="assertive"` + `aria-atomic="true"`) + ramp-token coloring (`bg-danger-600 / text-danger-700`). KpiRail reconciles to the headline number (see memory `feedback_charts-must-reconcile`). Range selector defaults to "All" (lifetime-first view per memory `project_all-range-default`). **In-modal Mark PIJ event slide (2026-05-19, commits `5adba27` / `8f1aea1`):** the `ThreatEventDetailDialog` swaps between detail and mark-form views with a height-animated slide (driven by `useLayoutEffect` measuring detail/mark panel heights). The mark form's reason textarea is fixed at `h-48` (not content-driven) — the label is "Reason," not "Note." Marking flips the dialog badge to `<Badge variant="destructive">Marked false</Badge>`. |
-| `/policies` | `src/pages/Policies.tsx` | Policy library / configuration. Tray uses `bg-card + border-border` (radio option cards moved off ink onto card token per commit `c2a0b87`). |
+| `/policies` | `src/pages/Policies.tsx` | Policy library / configuration. Tray uses `bg-card + border-border` (radio option cards moved off ink onto card token per commit `c2a0b87`). **Typography reference page for semantic heading/label/copy role classes** (`type-heading-*`, `type-label-*`, `type-copy-*`); use as the rollout baseline for other routes. |
 | `/audit-trail` | `src/pages/AuditTrail.tsx` + `src/pages/AuditRecordDialog.tsx` | **Audit Trail page (built 2026-05-16).** PageTitle + subtitle + range selector + `<KpiRail>` with `<KpiTile>` slots + Event log table (with `<FilterToolbar>` + `<SearchInput>` + `<Select>` filters + `<TablePaginationFooter>` + `<TableEmptyState>` — canonical empty-state consumer). Table cells use `<Timestamp>` for time columns and the three-tier ink density (date/time in the `text-neutral-800` data tier — see memory `feedback_table-date-time-tier`). Anchor column renders `text-neutral-400 —` with `sr-only` semantics when missing. Row drill opens `<AuditRecordDialog>` with the cryptographically-verifiable evidence. **Required vocabulary:** "tamper-evident," "cryptographically verifiable," "anchored to Constellation's Digital Evidence layer." |
 | `/activity` | `src/pages/Activity.tsx` | Usage-by-key table + breakdown. `<UsageByKey>` table is the canonical reference for the nowrap column policy. Deep-link param: `?range=24h\|7d\|30d\|all` is one-way (no strip on close). User-row monogram uses `<Monogram size="sm">` with first-char-of-first-word initials. |
 | `/team` | `src/pages/Team.tsx` | Members + invitations + access requests + invite form. Empty branches in invitations / requests panes consume `<EmptyState>`. RowActionsMenu `min-w-32`. Action labels: "Approve request" / "Decline request". Invite-dialog labels at `text-neutral-600` (canonical form-label convention). Member-row monogram uses `<Monogram size="md">` with 2-char `initialsOf(name)` initials. |

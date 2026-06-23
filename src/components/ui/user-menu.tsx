@@ -44,7 +44,7 @@ function UserMenu({
             CP
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="truncate font-medium font-sans text-neutral-900 text-sm leading-tight">
+            <span className="type-label-14 truncate text-neutral-900 leading-tight">
               Chad Ponticas
             </span>
             <span

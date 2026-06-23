@@ -320,7 +320,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           A conversation is a chain of requests that share session context:
           agent runs, multi-turn chats, tool-calling loops. Click any row to see
           its message thread.
@@ -720,7 +720,7 @@ function ConversationsTableSection({
                           }
                         >
                           <span
-                            className="truncate font-sans text-neutral-900 text-sm"
+                            className="type-copy-14 truncate text-neutral-900"
                             title={row.title}
                           >
                             {row.title}
@@ -1063,7 +1063,7 @@ export function ConversationDetailBody({
               ].join(" ")}
               strokeWidth={1.75}
             />
-            <p className="min-w-0 text-pretty font-medium font-sans text-neutral-900 text-sm">
+            <p className="type-label-14 min-w-0 text-pretty text-neutral-900">
               {findingCount} finding{findingCount === 1 ? "" : "s"} across this
               conversation · Highest action:{" "}
               <span className="capitalize">{highestAction}</span>
@@ -1254,7 +1254,7 @@ export function ConversationDetailBody({
             value="errors"
           >
             {errorCount === 0 ? (
-              <p className="font-sans text-neutral-500 text-sm">
+              <p className="type-copy-14 text-neutral-500">
                 No errors in this conversation.
               </p>
             ) : (
@@ -1440,7 +1440,7 @@ function ConversationMessagesPanel({
           it doesn't shrink when the body scrolls. */}
       <div className="flex flex-none items-center justify-between border-border border-b bg-card px-4 py-3">
         <span
-          className="font-medium font-sans text-neutral-900 text-sm"
+          className="type-label-14 text-neutral-900"
           id="conv-messages-eyebrow"
         >
           Messages
@@ -1636,7 +1636,7 @@ function RequestTracePanel({
           so it doesn't shrink when the body scrolls. */}
       <div className="flex flex-none items-center justify-between border-border border-b bg-card px-4 py-3">
         <span
-          className="font-medium font-sans text-neutral-900 text-sm"
+          className="type-label-14 text-neutral-900"
           id="conv-trace-eyebrow"
         >
           Request Trace

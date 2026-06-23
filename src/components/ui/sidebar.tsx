@@ -311,7 +311,7 @@ function DefaultUserArea({
         >
           CP
         </span>
-        <span className="truncate font-medium font-sans text-neutral-900 text-sm leading-tight">
+        <span className="type-label-14 truncate text-neutral-900 leading-tight">
           Chad Ponticas
         </span>
       </div>

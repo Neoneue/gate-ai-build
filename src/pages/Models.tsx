@@ -1352,7 +1352,7 @@ function PageHeader({
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
         Route to{" "}
         <span className="text-neutral-800 tabular-nums">{modelCount}</span>{" "}
         models across{" "}
@@ -1568,7 +1568,7 @@ function ModelsTable({
                 >
                   <VendorAvatar vendor={model.vendor} />
                   <span
-                    className="truncate font-sans text-neutral-900 text-sm"
+                    className="type-copy-14 truncate text-neutral-900"
                     title={model.name}
                   >
                     {model.name}
@@ -1870,7 +1870,7 @@ function ModelDetailPage({
           <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
             Providers
           </h3>
-          <p className="m-0 font-sans text-neutral-500 text-sm">
+          <p className="type-copy-14 m-0 text-neutral-500">
             Route requests across multiple providers. Copy a provider handle to
             pin a specific one.
           </p>
@@ -1886,7 +1886,7 @@ function ModelDetailPage({
             <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
               Quick start
             </h3>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
               Point your tool at the gateway base URL{" "}
               <span className="inline-flex items-center gap-1 align-middle">
                 <InlineCode size="sm">
@@ -1971,7 +1971,7 @@ function ModelDetailPage({
             <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
               Example request
             </h3>
-            <p className="m-0 font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-neutral-500">
               Once your client is pointed at the gateway, you can send this to
               make your first call and confirm everything works. The model ID is
               already filled in. Just add your API key and run it.
@@ -2212,7 +2212,7 @@ function ProvidersTable({ model }: { model: Model }) {
                 <div className="flex min-w-0 items-center gap-2">
                   <ProviderMark provider={o.provider} />
                   <span
-                    className="truncate font-sans text-neutral-900 text-sm"
+                    className="type-copy-14 truncate text-neutral-900"
                     title={PROVIDER_LABELS[o.provider]}
                   >
                     {PROVIDER_LABELS[o.provider]}

@@ -55,7 +55,7 @@ export function EmptyState({
         <h3 className="m-0 font-medium font-sans text-lg text-neutral-900">
           {title}
         </h3>
-        <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
           {body}
         </p>
       </div>

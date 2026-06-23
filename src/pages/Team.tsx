@@ -136,7 +136,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Team</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Manage roles, invite teammates, and remove access from Chad
           Ponticas&rsquo;s workspace.
         </p>
@@ -434,7 +434,7 @@ function MemberRowView({
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <span
-              className="truncate font-medium font-sans text-neutral-900 text-sm"
+              className="type-label-14 truncate text-neutral-900"
               title={row.name}
             >
               {row.name}
@@ -448,10 +448,10 @@ function MemberRowView({
           </div>
         </div>
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
+      <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
         <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
-      <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+      <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
         {row.role === "owner" ? (
           "Owner"
         ) : (
@@ -617,23 +617,23 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {sortedRows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap font-sans text-neutral-900 text-sm">
+              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-900">
                 <span className="block truncate" title={row.email}>
                   {row.email}
                 </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
                 <span className="block truncate" title={row.invitedBy}>
                   {row.invitedBy}
                 </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
+              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
                 <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm">
+              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="whitespace-nowrap font-sans text-neutral-800 text-sm tabular-nums">
+              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
                 <Timestamp anchor={NOW} date={row.expires} format="relative" />
               </TableCell>
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -708,7 +708,7 @@ function InviteMemberDialog({
 
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="invite-email"
             >
               Email
@@ -737,7 +737,7 @@ function InviteMemberDialog({
 
           <div className="flex flex-col gap-2">
             <Label
-              className="font-medium text-neutral-600 text-sm"
+              className="type-label-14 text-neutral-600"
               htmlFor="invite-role"
             >
               Role
@@ -802,9 +802,7 @@ function RoleItemBody({
 }) {
   return (
     <span className="flex flex-col gap-1 text-left">
-      <span className="font-medium font-sans text-neutral-900 text-sm">
-        {label}
-      </span>
+      <span className="type-label-14 text-neutral-900">{label}</span>
       <span className="text-pretty font-sans text-neutral-500 text-xs">
         {description}
       </span>

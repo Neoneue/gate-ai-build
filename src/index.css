@@ -43,6 +43,7 @@ and (pointer: fine)) and (&:hover));
 
   /* Blue (brand) — anchored to brand mark at blue-700. logomark.svg is the
      source of truth; the rest of the ramp is derived around it. */
+  --color-blue-25:  oklch(0.985 0.010 268.85);
   --color-blue-50:  oklch(0.970 0.020 268.85);
   --color-blue-100: oklch(0.940 0.040 268.85);
   --color-blue-200: oklch(0.890 0.075 268.85);
@@ -369,5 +370,82 @@ body {
   button:not(:disabled):not([aria-disabled="true"]),
   [role="button"]:not(:disabled):not([aria-disabled="true"]) {
     cursor: pointer;
+  }
+}
+
+@layer utilities {
+  /* Semantic type roles (Vercel-style): heading, label, copy.
+     Use these roles in page code instead of ad-hoc text-* mixes. */
+  .type-heading-24 {
+    @apply font-sans text-2xl/8 font-medium;
+  }
+
+  .type-heading-20 {
+    @apply font-sans text-xl/7 font-medium;
+  }
+
+  .type-heading-18 {
+    @apply font-sans text-lg/7 font-medium;
+  }
+
+  .type-heading-16 {
+    @apply font-sans text-base/6 font-medium;
+  }
+
+  .type-heading-14 {
+    @apply font-sans text-sm font-medium;
+  }
+
+  .type-label-20 {
+    @apply font-sans text-xl/8 font-normal;
+  }
+
+  .type-label-18 {
+    @apply font-sans text-lg/5 font-normal;
+  }
+
+  .type-label-16 {
+    @apply font-sans text-base font-medium;
+  }
+
+  .type-label-14 {
+    @apply font-sans text-sm font-medium;
+  }
+
+  .type-label-12 {
+    @apply font-sans text-xs font-medium;
+  }
+
+  .type-copy-24 {
+    @apply font-sans text-2xl/9 font-normal;
+  }
+
+  .type-copy-20 {
+    @apply font-sans text-xl/9 font-normal;
+  }
+
+  .type-copy-18 {
+    @apply font-sans text-lg/7 font-normal;
+  }
+
+  .type-copy-16 {
+    @apply font-sans text-base font-normal;
+  }
+
+  .type-copy-14 {
+    @apply font-sans text-sm font-normal;
+  }
+
+  .type-copy-14-tight {
+    @apply font-sans text-sm/5 font-normal;
+  }
+
+  .type-copy-12 {
+    @apply font-sans text-xs font-normal;
+  }
+
+  /* Form/input helper copy: 12px tier + 8px separation from control. */
+  .type-input-helper {
+    @apply m-0 mt-2 font-sans text-xs font-normal text-pretty text-neutral-500 tracking-tight;
   }
 }

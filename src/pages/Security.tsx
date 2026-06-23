@@ -761,7 +761,7 @@ function PageHeader() {
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Every injection, PII, and credential event your policies caught,
           fingerprinted to Constellation's Digital Evidence layer. Blocked,
           flagged, or redacted.
@@ -904,7 +904,7 @@ function CategoryBreakdownCard({
           return (
             <div className="contents" key={cat.label}>
               <span
-                className="w-48 shrink-0 truncate font-sans text-neutral-900 text-sm"
+                className="type-copy-14 w-48 shrink-0 truncate text-neutral-900"
                 id={labelId}
                 title={cat.label}
               >
@@ -1287,9 +1287,7 @@ function EventsTableSection({
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Type
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Type</Label>
               <Select onValueChange={setDraftType} value={draftType}>
                 <SelectTrigger
                   aria-label="Type"
@@ -1309,9 +1307,7 @@ function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Action
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Action</Label>
               <Select onValueChange={setDraftAction} value={draftAction}>
                 <SelectTrigger
                   aria-label="Action"
@@ -1330,9 +1326,7 @@ function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Key
-              </Label>
+              <Label className="type-label-14 text-neutral-600">Key</Label>
               <Select onValueChange={setDraftKeyFilter} value={draftKeyFilter}>
                 <SelectTrigger
                   aria-label="API key"
@@ -1461,7 +1455,7 @@ function EventsTableSection({
                               strokeWidth={1.75}
                               style={{ color: typeMeta.color }}
                             />
-                            <span className="font-sans text-neutral-800 text-sm">
+                            <span className="type-copy-14 text-neutral-800">
                               {typeMeta.label}
                             </span>
                           </span>
@@ -1675,10 +1669,10 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                     key={check.keys.join("-")}
                   >
                     <div className="flex min-w-0 flex-col gap-1">
-                      <span className="font-medium font-sans text-neutral-900 text-sm">
+                      <span className="type-label-14 text-neutral-900">
                         {check.label}
                       </span>
-                      <span className="text-pretty font-normal font-sans text-neutral-500 text-sm/5">
+                      <span className="type-copy-14-tight text-pretty font-normal text-neutral-500">
                         {firing
                           ? (reconciled?.message ?? detail.reason)
                           : check.passText}

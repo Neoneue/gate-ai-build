@@ -76,7 +76,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="m-0 max-w-1/2 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-neutral-500 tracking-snug">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -362,9 +362,7 @@ function CardChromeHeader({
           <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
             {title}
           </h3>
-          <p className="m-0 font-sans text-neutral-500 text-sm">
-            {description}
-          </p>
+          <p className="type-copy-14 m-0 text-neutral-500">{description}</p>
         </div>
         <Badge variant={enabled ? "success" : "neutral"}>
           {enabled ? "ON" : "OFF"}
@@ -397,12 +395,12 @@ function CachingCard() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              className="type-label-14 m-0 text-neutral-900"
               id="caching-switch-label"
             >
               Enable response caching
             </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
               Serve cached responses instead of round-tripping to providers.
               Identical concurrent requests are deduplicated automatically.
             </p>
@@ -422,13 +420,10 @@ function CachingCard() {
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
-              id="ttl-label"
-            >
+            <p className="type-label-14 m-0 text-neutral-900" id="ttl-label">
               TTL
             </p>
-            <p className="m-0 font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-neutral-500">
               How long cached entries live before re-fetching.
             </p>
           </div>
@@ -473,12 +468,12 @@ function CompressionCard() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              className="type-label-14 m-0 text-neutral-900"
               id="compression-switch-label"
             >
               Enable compression
             </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
               Strip envelopes, condense embedded tool output (git diff, cargo,
               pytest…), and apply lossless prose heuristics. Deterministic and
               cache-friendly.

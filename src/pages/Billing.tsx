@@ -79,7 +79,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
         Manage your plan, track credit usage, and review every gateway
         transaction.
       </p>
@@ -107,27 +107,25 @@ function PlanCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">Pro</HeroNumeric>
-        <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-800">
           Scans every request sent through your own provider keys for prompt
           injections, credential leaks and PII. Includes the full Constellation
           Gate audit trail.
         </p>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-neutral-500">
           Renews on Jun 12, 2026 · $20 / month
         </p>
 
         {/* Seats inset */}
         <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
           <div className="flex min-w-0 flex-col gap-1">
-            <p className="m-0 font-medium font-sans text-neutral-900 text-sm">
-              Seats
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+            <p className="type-label-14 m-0 text-neutral-900">Seats</p>
+            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
               Billed per seat. Accepting an invite adds a prorated seat; removed
               seats stop billing next cycle.
             </p>
           </div>
-          <p className="m-0 whitespace-nowrap font-sans text-neutral-800 text-sm">
+          <p className="type-copy-14 m-0 whitespace-nowrap text-neutral-800">
             1 seat × $20 = $20 / month
           </p>
         </div>
@@ -209,7 +207,7 @@ function CreditsCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">$24.99238</HeroNumeric>
-        <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-800">
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
@@ -394,7 +392,7 @@ function AddCreditsDialog({
         {/* Custom amount */}
         <div className="flex flex-col gap-2">
           <label
-            className="m-0 font-medium font-sans text-neutral-500 text-sm"
+            className="type-copy-14 m-0 font-medium text-neutral-500"
             htmlFor="add-credits-custom"
           >
             Amount (USD)
@@ -433,7 +431,7 @@ function AddCreditsDialog({
           {custom.length > 0 && !customValid && (
             <p
               aria-live="polite"
-              className="m-0 font-sans text-destructive text-xs"
+              className="type-copy-12 m-0 text-destructive"
               id="add-credits-custom-error"
             >
               Enter an amount between{" "}
@@ -443,7 +441,7 @@ function AddCreditsDialog({
           )}
         </div>
 
-        <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
           You&rsquo;ll be redirected to Stripe Checkout. Your balance updates
           within seconds of payment confirmation.
         </p>
@@ -521,12 +519,12 @@ function AutoRechargeDialog({
         <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
+              className="type-label-14 m-0 text-neutral-900"
               id="ar-enable-label"
             >
               Enable auto-recharge
             </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
               We&apos;ll charge your default card to top up.
             </p>
           </div>
@@ -542,7 +540,7 @@ function AutoRechargeDialog({
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
-              className="m-0 font-medium font-sans text-neutral-500 text-sm"
+              className="type-copy-14 m-0 font-medium text-neutral-500"
               htmlFor="ar-threshold"
             >
               When balance drops below
@@ -574,7 +572,7 @@ function AutoRechargeDialog({
             {thresholdInvalid && (
               <p
                 aria-live="polite"
-                className="m-0 font-sans text-destructive text-xs"
+                className="type-copy-12 m-0 text-destructive"
                 id="ar-threshold-error"
               >
                 Enter a threshold greater than $0.
@@ -585,7 +583,7 @@ function AutoRechargeDialog({
           {/* Top-up amount */}
           <div className="flex flex-col gap-2">
             <label
-              className="m-0 font-medium font-sans text-neutral-500 text-sm"
+              className="type-copy-14 m-0 font-medium text-neutral-500"
               htmlFor="ar-topup"
             >
               Top-up amount
@@ -615,7 +613,7 @@ function AutoRechargeDialog({
             {topUpInvalid && (
               <p
                 aria-live="polite"
-                className="m-0 font-sans text-destructive text-xs"
+                className="type-copy-12 m-0 text-destructive"
                 id="ar-topup-error"
               >
                 Enter a top-up amount greater than $0.
@@ -627,7 +625,7 @@ function AutoRechargeDialog({
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
           <label
-            className="m-0 font-medium font-sans text-neutral-500 text-sm"
+            className="type-copy-14 m-0 font-medium text-neutral-500"
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
@@ -660,7 +658,7 @@ function AutoRechargeDialog({
           {capInvalid && (
             <p
               aria-live="polite"
-              className="m-0 font-sans text-destructive text-xs"
+              className="type-copy-12 m-0 text-destructive"
               id="ar-cap-error"
             >
               Monthly cap must be greater than $0, or left blank.
@@ -670,7 +668,7 @@ function AutoRechargeDialog({
 
         {enabled && thresholdValid && topUpValid && (
           <div className="flex flex-col gap-2 rounded-md border border-border bg-neutral-50 px-4 py-3">
-            <p className="m-0 text-pretty font-sans text-neutral-800 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-800">
               When your balance drops below{" "}
               <span className="font-medium text-neutral-900">${threshold}</span>
               , we&apos;ll add{" "}
@@ -839,12 +837,8 @@ function PaymentMethodCard() {
             VISA
           </span>
           <div className="flex flex-col">
-            <span className="font-sans text-neutral-800 text-sm">
-              •••• 4242
-            </span>
-            <span className="font-sans text-neutral-500 text-sm">
-              Expires 01/27
-            </span>
+            <span className="type-copy-14 text-neutral-800">•••• 4242</span>
+            <span className="type-copy-14 text-neutral-500">Expires 01/27</span>
           </div>
         </div>
       </CardContent>

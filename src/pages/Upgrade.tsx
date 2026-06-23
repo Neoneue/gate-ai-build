@@ -195,7 +195,7 @@ export function Upgrade() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
           key level. Limits run inline with no separate billing system to wire
           up.
@@ -209,7 +209,7 @@ export function Upgrade() {
           >
             Compare plans
           </h2>
-          <p className="m-0 font-sans text-neutral-500 text-sm">
+          <p className="type-copy-14 m-0 text-neutral-500">
             Choose the plan that fits your team. Upgrade any time from your
             billing settings.
           </p>

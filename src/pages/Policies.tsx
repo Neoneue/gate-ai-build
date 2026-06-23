@@ -289,10 +289,10 @@ const FREE_TOGGLE_CARD: Record<
   "prompt-injection": {
     title: "Enable Prompt injection detection",
     // Free runs only the regex layer, so it's labeled for what it is.
-    freeTitle: "Enable free Regex scanning",
+    freeTitle: "Basic protection",
     description:
       "Lightweight free-tier scanning that checks for common prompt injection patterns.",
-    badge: "BASIC",
+    badge: "Free plan",
   },
   pii: { title: "Enable PII / PHI scanning" },
   secrets: { title: "Enable Credentials scanning" },
@@ -407,6 +407,7 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
           stretch across ultrawide displays. */}
       <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
         <PageHeader />
+        {variant === "free" ? <FreePlanNoticeBanner /> : null}
         {/* KPI rail hidden for now — restore <KpiSection /> when wired. */}
         <div className="flex flex-col gap-4">
           {visiblePolicies.map(({ cfg, state }) => (
@@ -424,6 +425,45 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
         </div>
       </div>
     </DashboardChrome>
+  );
+}
+
+function FreePlanNoticeBanner() {
+  const navigate = useNavigate();
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  return (
+    <>
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none">
+        <CardContent>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="type-copy-14 m-0 text-pretty text-neutral-700">
+                <span className="type-label-14 text-neutral-700">
+                  You&apos;re on the Free plan.
+                </span>{" "}
+                Pro unlocks full prompt-injection protection with advanced
+                detection and tunable controls.
+              </p>
+            </div>
+            <Button
+              className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              onClick={() => setCompareOpen(true)}
+              size="sm"
+              type="button"
+            >
+              <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
+              Upgrade to Pro
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <PlanComparisonDialog
+        onOpenChange={setCompareOpen}
+        onUpgrade={() => navigate("/billing")}
+        open={compareOpen}
+      />
+    </>
   );
 }
 
@@ -659,13 +699,13 @@ function ProBenefitsCard() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <SectionHeading as="h4" className="type-heading-16">
-                  Catch what basic Regex misses
+                  Pro plan protection
                 </SectionHeading>
-                <Badge variant="info">Pro</Badge>
+                <Badge variant="info">Pro plan</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-neutral-500">
-                Regex catches obvious attacks. Pro adds broader detection across
-                hidden, obfuscated, and jailbreak-style prompt injections.
+                Catches advanced prompt-injection patterns beyond free Regex
+                checks.
               </p>
             </div>
             <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
@@ -687,8 +727,8 @@ function ProBenefitsCard() {
             </ul>
             <div className="pt-2">
               <Button
+                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
                 onClick={() => setCompareOpen(true)}
-                size="sm"
                 type="button"
               >
                 <SparklesIcon aria-hidden data-icon="inline-start" size={14} />

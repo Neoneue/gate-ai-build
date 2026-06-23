@@ -79,7 +79,7 @@ export function KpiTile({
         </div>
       ) : null}
       {caption ? (
-        <p className="m-0 font-sans text-neutral-500 text-sm">{caption}</p>
+        <p className="type-copy-14 m-0 text-neutral-500">{caption}</p>
       ) : null}
       {spark ? <div className="mt-1">{spark}</div> : null}
     </div>

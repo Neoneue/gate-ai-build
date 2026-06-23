@@ -73,7 +73,7 @@ function CardTitle({
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-sans text-neutral-500 text-sm/5", className)}
+      className={cn("type-copy-14-tight text-neutral-500", className)}
       data-slot="card-description"
       {...props}
     />
