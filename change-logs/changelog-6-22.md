@@ -133,3 +133,30 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
   rule strings ("OpenAI API key", "AKIA[0-9A-Z]{16} + Shannon entropy >= 4.5
   bits/char"); the visible `rule` is normalized to `credential-scanner` across
   all occurrences, matching the Credentials-findings doc.
+
+### Policies: card redesign + sensitivity slider, mirrored across tiers `0ab29d7`
+
+- `Policies.tsx` policy cards reworked and `PoliciesFree.tsx` now renders the
+  shared page with `variant="free"`. Both tiers: header enable Switch → a
+  collapse chevron; the enable toggle moves into an in-body card (first panel);
+  Action on detection + Sensitivity/Scan direction render as flat stacked
+  panels (was a 2-column grid); the option panels dim + disable when the enable
+  toggle is off.
+- Sensitivity: the segmented Low/Medium/High pills → a trade-off slider — a
+  gray rail with a solid black sliding thumb that glides between stops on the
+  strong `ease-out` curve (`transition-[left]`/`[width]`, 200ms), passed stops
+  fill gray, stops grow on hover. Values/captions unchanged.
+- New shared `DetailCard` (info chip + title + description) summarizes the
+  current selection under both Sensitivity ("{level} sensitivity") and Scan
+  direction ("Output/Input/Bidirectional scanning"); scan-direction copy is now
+  dynamic per selection and verified against the Security PRD (output on by
+  default, input opt-in). Credentials policy copy reconciled to output-default.
+- Action option cards: selected/hover fills now use the action's `-25` tone
+  (Flag warning, Block danger; Redact stays neutral) with a lighter active
+  border on hover, and option descriptions bumped `text-xs` → `text-sm`.
+- Nested radii made concentric (card 8 → panel 6 → control 4); page content
+  capped at `xl:max-w-5xl`; header subtitle widened to `max-w-2xl`.
+- Free-only divergence (via the `variant` seam): prompt-injection enable card
+  is titled "Enable lightweight Regex scanning" with a `BASIC` badge and drops
+  its Action + Sensitivity panels (replacement card pending); Pro shows "Enable
+  Prompt injection detection" with no badge and keeps the panels.
