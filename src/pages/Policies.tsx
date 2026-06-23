@@ -1,4 +1,13 @@
-import { ChevronDown, Info, KeyRound, Shield, UserRound } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ArrowRightFromLine,
+  ArrowRightToLine,
+  ChevronDown,
+  Info,
+  KeyRound,
+  Shield,
+  UserRound,
+} from "lucide-react";
 import { type ComponentType, type SVGProps, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +46,15 @@ const SCAN_DIRECTION_TITLE: Record<string, string> = {
   output: "Output scanning",
   input: "Input scanning",
   both: "Bidirectional scanning",
+};
+
+/** Detail-card icon per scan direction — horizontal arrows reading as traffic
+ *  flowing through the gateway: into the boundary (input), out of it (output),
+ *  or both ways. */
+const SCAN_DIRECTION_ICON: Record<string, LucideIcon> = {
+  output: ArrowRightFromLine,
+  input: ArrowRightToLine,
+  both: ArrowLeftRight,
 };
 
 /** Active (selected) action fill — the lightest -25 tint of the action's
@@ -763,6 +781,7 @@ function SettingsHalf({
       />
       <DetailCard
         description={scan.caption(value)}
+        icon={SCAN_DIRECTION_ICON[value]}
         title={SCAN_DIRECTION_TITLE[value]}
       />
     </div>
@@ -776,14 +795,16 @@ function SettingsHalf({
 function DetailCard({
   title,
   description,
+  icon: Icon = Info,
 }: {
   title?: string;
   description: string;
+  icon?: LucideIcon;
 }) {
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-neutral-50 p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Info aria-hidden className="size-4 text-neutral-500" />
+        <Icon aria-hidden className="size-4 text-neutral-500" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
