@@ -24,10 +24,7 @@ export function SectionTitle({
 }: SectionTitleProps) {
   return (
     <Tag
-      className={cn(
-        "m-0 font-medium font-sans text-neutral-900 text-xl/7",
-        className
-      )}
+      className={cn("h3 m-0 text-neutral-900", className)}
       data-slot="section-title"
       {...props}
     >

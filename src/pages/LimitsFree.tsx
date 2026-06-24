@@ -165,7 +165,7 @@ function LimitsSection({
   if (limits.length === 0) {
     return (
       <ProUpgradeCard
-        body="Limits & quotas are a Pro feature. Upgrade in Billing to catch a runaway agent in the act, not at month-end."
+        body="Limits & quotas are a Pro feature. Upgrade to our Pro plan to catch a runaway agent in the act, not at month-end."
         icon={ShieldCheck}
       />
     );

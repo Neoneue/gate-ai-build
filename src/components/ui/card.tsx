@@ -61,7 +61,7 @@ function CardTitle({
   return (
     <Tag
       className={cn(
-        "font-heading font-medium text-base leading-snug group-data-[size=sm]/card:text-sm",
+        "h5 leading-snug group-data-[size=sm]/card:text-sm",
         className
       )}
       data-slot="card-title"

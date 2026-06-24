@@ -332,7 +332,7 @@ function OverviewSection({
 
 /* ─── Savings options ───────────────────────────────────────────────── */
 
-function SavingsOptionsSection() {
+export function SavingsOptionsSection() {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">

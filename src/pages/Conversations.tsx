@@ -481,7 +481,11 @@ function scaleTokenStr(s: string, scale: number): string {
   );
 }
 function scaleCostStr(s: string, scale: number): string {
-  return "$" + (Number.parseFloat(s.replace("$", "")) * scale).toFixed(4);
+  const parsed = Number.parseFloat(s.replace("$", "")) * scale;
+  if (!Number.isFinite(parsed)) {
+    return "—";
+  }
+  return "$" + parsed.toFixed(4);
 }
 
 function ConversationsTableSection({
