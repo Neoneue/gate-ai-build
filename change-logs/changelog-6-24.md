@@ -42,6 +42,16 @@ Prior day: [`changelog-6-23.md`](./changelog-6-23.md)
 
 ## Components
 
+### WorkspaceSwitcher badge polish + alignment fix `dcf770f`
+
+**`src/components/ui/workspace-switcher.tsx`**
+
+- Trigger badge now reflects active tier: Pro (blue `info`), Default (green `success`), Free (green `success`). Was always "Free" or "Pro" regardless of default surface.
+- Dropdown items: name + badge wrapped in `flex items-center gap-2` so badge sits immediately after the label; check icon (`text-primary`) stays at far right. Was: name took `flex-1`, badge floated to far right.
+- Default item badge: `variant="success"` (green), text "Default". Free item: `variant="success"`, text "Free". Pro item: `variant="info"`, text "Pro".
+
+---
+
 ### Billing modal Pro card blue styling + display heading scale `cbe65d7`
 
 **PlanComparisonDialog (`plan-comparison-dialog.tsx`)**
