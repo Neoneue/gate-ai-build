@@ -38,6 +38,38 @@ Prior day: [`changelog-6-23.md`](./changelog-6-23.md)
 
 **`fix(workspace)` `de86510`** — badge text for Default workspace corrected to "Free" (not "Default").
 
+### Default pages: empty-state rebuilds + Activity layout polish `4d347a2`
+
+**`src/pages/SecurityFree.tsx`**
+
+- Was: `ProUpgradeCard` upsell. Now: wraps `Security` component directly — full Pro page, no gate.
+
+**`src/pages/SecurityDefault.tsx`**
+
+- Was: animated live-feed `HeroCard` with plan comparison. Now: standard empty-state layout — Overview card ("No events yet") + `TableEmptyState` ("No security events"), matching `RequestsDefault` pattern.
+
+**`src/pages/AuditTrailDefault.tsx`**
+
+- Was: delegated to `AuditTrailFree` (full Pro page). Now: 2-col Overview grid with "No events logged" (List icon) and "No fingerprints logged" (Fingerprint icon) tiles + `TableEmptyState` under "Event log" section title.
+
+**`src/pages/ActivityDefault.tsx`**
+
+- Was: delegated to `ActivityFree` (full Pro page). Now: 3-tile KPI rail (No spend / No requests / No tokens) + "Tokens over time" empty card + `TableEmptyState` under "Recent key usage" section title. Top-by-axis row (Top models / keys / users) hidden.
+
+**`src/pages/TeamDefault.tsx`**
+
+- Was: delegated to `TeamFree` (full Pro page). Now: Members tab shows owner row only (Chad Ponticas) with pagination `total=1`; Invitations tab badge=0 with `TableEmptyState` "No teammates invited" (UserPlus icon).
+
+**`src/pages/Activity.tsx`** (Pro + Free)
+
+- Range selector moved from PageHeader top-right into an inline row with "Overview" `SectionTitle` (matches Security / Requests pattern). `size="sm"` on both controls.
+- "Recent key usage" `SectionTitle` added above usage table; toolbar controls (search + Export CSV) moved flush-right of that header, out of the card's `FilterToolbar`.
+- Page subtitle updated to "Cost, request volume, and token usage by model, API key, and team member."
+
+**`src/pages/LimitsFree.tsx`**
+
+- `ProUpgradeCard` body: "Upgrade in Billing" → "Upgrade to our Pro plan" (two-word swap only).
+
 ---
 
 ## Components
