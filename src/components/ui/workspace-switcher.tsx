@@ -2,7 +2,13 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
-import { isFreeSurface, toFreePath, toProPath } from "@/lib/plan";
+import {
+  isDefaultSurface,
+  isFreeSurface,
+  toDefaultPath,
+  toFreePath,
+  toProPath,
+} from "@/lib/plan";
 
 /* Workspace switcher — top-bar scope chrome (promoted out of the sidebar on
  * 2026-05-17 so the sidebar reads as pure navigation). Styled for the top
@@ -19,9 +25,17 @@ const ACTIVE_ITEM = "bg-neutral-100 data-[highlighted]:bg-neutral-100";
 export function WorkspaceSwitcher() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
-  const plan = isFree ? "Free" : "Pro";
-  const workspaceName = isFree ? "Free workspace" : "Chad's workspace";
+  const isPro = !(isDefault || isFree);
+
+  const plan = isPro ? "Pro" : isFree ? "Free" : "Default";
+  const workspaceName = isPro
+    ? "Chad's workspace"
+    : isFree
+      ? "Free workspace"
+      : "Default workspace";
+
   return (
     <Menu>
       <MenuTrigger
@@ -33,7 +47,7 @@ export function WorkspaceSwitcher() {
         }
       >
         <span className="type-copy-14 text-neutral-900">{workspaceName}</span>
-        <Badge variant={isFree ? "neutral" : "info"}>{plan}</Badge>
+        <Badge variant={isPro ? "info" : "neutral"}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
           className="size-4 text-neutral-500"
@@ -47,13 +61,22 @@ export function WorkspaceSwitcher() {
         sideOffset={8}
       >
         <MenuItem
-          className={isFree ? undefined : ACTIVE_ITEM}
+          className={isPro ? ACTIVE_ITEM : undefined}
           onClick={() => navigate(toProPath(pathname))}
         >
           <span className="min-w-0 flex-1 truncate text-left">
             Chad's workspace
           </span>
-          {isFree ? null : <Check aria-hidden strokeWidth={1.75} />}
+          {isPro ? <Check aria-hidden strokeWidth={1.75} /> : null}
+        </MenuItem>
+        <MenuItem
+          className={isDefault ? ACTIVE_ITEM : undefined}
+          onClick={() => navigate(toDefaultPath(pathname))}
+        >
+          <span className="min-w-0 flex-1 truncate text-left">
+            Default workspace
+          </span>
+          {isDefault ? <Check aria-hidden strokeWidth={1.75} /> : null}
         </MenuItem>
         <MenuItem
           className={isFree ? ACTIVE_ITEM : undefined}

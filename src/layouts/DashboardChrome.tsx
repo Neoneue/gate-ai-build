@@ -6,9 +6,13 @@ import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import { Sidebar } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
-import { isFreeSurface } from "@/lib/plan";
+import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
 import { cn } from "@/lib/utils";
-import { FREE_SIDEBAR_SECTIONS, SIDEBAR_SECTIONS } from "./nav-sections";
+import {
+  DEFAULT_SIDEBAR_SECTIONS,
+  FREE_SIDEBAR_SECTIONS,
+  SIDEBAR_SECTIONS,
+} from "./nav-sections";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
@@ -41,16 +45,17 @@ export function DashboardChrome({
   hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
-  // Document h1 lives here so every composed page has exactly one — the
-  // in-surface PageTitle renders h2 (child sections use h3 without a skip).
-  // Visually hidden; sourced from the active nav label so it's page-specific.
-  const activePageLabel =
-    SIDEBAR_SECTIONS.flatMap((s) => s.items).find((i) => i.id === activeNavId)
-      ?.label ?? "Constellation Gate AI";
-  // Sidebar PRO-feature locks show only on FREE/default surfaces, mirroring the
-  // workspace PRO/FREE badge (shared `isFreeSurface`). PRO surfaces are unlocked.
+  // Sidebar PRO-feature locks show on non-PRO surfaces. Section set is chosen
+  // per workspace tier so nav links stay within their variant.
   const { pathname } = useLocation();
-  const showLocks = isFreeSurface(pathname);
+  const isDefault = isDefaultSurface(pathname);
+  const isFree = isFreeSurface(pathname);
+  const showLocks = isDefault || isFree;
+  const sections = isDefault
+    ? DEFAULT_SIDEBAR_SECTIONS
+    : isFree
+      ? FREE_SIDEBAR_SECTIONS
+      : SIDEBAR_SECTIONS;
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 flex-row">
@@ -58,7 +63,7 @@ export function DashboardChrome({
           activeId={activeNavId}
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
-          sections={showLocks ? FREE_SIDEBAR_SECTIONS : SIDEBAR_SECTIONS}
+          sections={sections}
           showLocks={showLocks}
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50">
@@ -77,7 +82,6 @@ export function DashboardChrome({
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
           <main className="flex min-h-0 max-w-[1920px] flex-1 flex-col gap-6 overflow-y-auto px-6 pt-6 pb-20 [&>*]:shrink-0">
-            <h1 className="sr-only">{activePageLabel}</h1>
             {children}
           </main>
         </div>
