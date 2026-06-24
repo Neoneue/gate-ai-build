@@ -1,6 +1,6 @@
 import { ArrowLeftRight, BarChart2, Key, Zap } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -31,57 +31,62 @@ export function ActivityDefault() {
         </div>
       </div>
 
-      <KpiRail columns={3}>
-        <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-md bg-muted"
-          >
-            <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
+      <div className="flex flex-col gap-4">
+        <SectionTitle>Overview</SectionTitle>
+        <KpiRail columns={3}>
+          <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
+            <div
+              aria-hidden
+              className="flex size-12 items-center justify-center rounded-md bg-muted"
+            >
+              <BarChart2
+                className="size-5 text-neutral-700"
+                strokeWidth={1.75}
+              />
+            </div>
+            <span className="type-copy-14 text-neutral-500">No spend yet</span>
           </div>
-          <span className="type-copy-14 text-neutral-500">No spend yet</span>
-        </div>
-        <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-md bg-muted"
-          >
-            <ArrowLeftRight
-              className="size-5 text-neutral-700"
-              strokeWidth={1.75}
-            />
+          <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
+            <div
+              aria-hidden
+              className="flex size-12 items-center justify-center rounded-md bg-muted"
+            >
+              <ArrowLeftRight
+                className="size-5 text-neutral-700"
+                strokeWidth={1.75}
+              />
+            </div>
+            <span className="type-copy-14 text-neutral-500">
+              No requests yet
+            </span>
           </div>
-          <span className="type-copy-14 text-neutral-500">No requests yet</span>
-        </div>
-        <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-md bg-muted"
-          >
-            <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
-          </div>
-          <span className="type-copy-14 text-neutral-500">No tokens yet</span>
-        </div>
-      </KpiRail>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Tokens over time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center gap-3 py-16">
+          <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
             <div
               aria-hidden
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
             </div>
-            <span className="type-copy-14 text-neutral-500">
-              No tokens used
-            </span>
+            <span className="type-copy-14 text-neutral-500">No tokens yet</span>
           </div>
-        </CardContent>
-      </Card>
+        </KpiRail>
+
+        <Card>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <div
+                aria-hidden
+                className="flex size-12 items-center justify-center rounded-md bg-muted"
+              >
+                <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
+              </div>
+              <span className="type-copy-14 text-neutral-500">
+                No tokens used
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-2 flex flex-col gap-4">
         <SectionTitle>Recent key usage</SectionTitle>

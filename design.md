@@ -523,26 +523,26 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 
 | Role | Utility class | Recipe |
 | --- | --- | --- |
-| Heading 72 | `type-heading-72` | 72/72 medium tracking-[-4px] |
-| Heading 64 | `type-heading-64` | 64/64 medium tracking-[-4px] |
-| Heading 56 | `type-heading-56` | 56/56 medium tracking-[-3px] |
-| Heading 48 | `type-heading-48` | 48/56 medium tracking-[-3px] |
-| Heading 40 | `type-heading-40` | 40/48 medium tracking-[-2px] |
-| Heading 32 | `type-heading-32` | 32/40 medium tracking-[-1px] |
-| Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium` |
-| Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium` |
-| Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium` |
-| Heading 16 | `type-heading-16` | `font-sans text-base/6 font-medium` |
+| Heading 72 | `type-heading-72` | `font-sans text-7xl font-medium tracking-tight` |
+| Heading 64 | `type-heading-64` | `font-sans text-8xl font-medium tracking-tight` |
+| Heading 56 | `type-heading-56` | `font-sans text-6xl font-medium tracking-tight` |
+| Heading 48 | `type-heading-48` | `font-sans text-5xl/14 font-medium tracking-tight` |
+| Heading 40 | `type-heading-40` | `font-sans text-4xl/12 font-medium tracking-tight` |
+| Heading 32 | `type-heading-32` | `font-sans text-3xl/10 font-medium tracking-tight` |
+| Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium tracking-snug` |
+| Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium tracking-snug` |
+| Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium tracking-snug` |
+| Heading 16 | `type-heading-16` | `font-sans text-base/6 font-medium tracking-snug` |
 | Heading 14 | `type-heading-14` | `font-sans text-sm font-medium` |
-| Label 20 | `type-label-20` | `font-sans text-xl/8 font-normal` |
-| Label 18 | `type-label-18` | `font-sans text-lg/5 font-normal` |
-| Label 16 | `type-label-16` | `font-sans text-base font-medium` |
+| Label 20 | `type-label-20` | `font-sans text-xl/8 font-normal tracking-tight` |
+| Label 18 | `type-label-18` | `font-sans text-lg/5 font-normal tracking-tight` |
+| Label 16 | `type-label-16` | `font-sans text-base font-medium tracking-tight` |
 | Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
 | Label 12 | `type-label-12` | `font-sans text-xs font-medium` |
-| Copy 24 | `type-copy-24` | `font-sans text-2xl/9 font-normal` |
-| Copy 20 | `type-copy-20` | `font-sans text-xl/9 font-normal` |
-| Copy 18 | `type-copy-18` | `font-sans text-lg/7 font-normal` |
-| Copy 16 | `type-copy-16` | `font-sans text-base font-normal` |
+| Copy 24 | `type-copy-24` | `font-sans text-2xl/9 font-normal tracking-snug` |
+| Copy 20 | `type-copy-20` | `font-sans text-xl/9 font-normal tracking-snug` |
+| Copy 18 | `type-copy-18` | `font-sans text-lg/7 font-normal tracking-snug` |
+| Copy 16 | `type-copy-16` | `font-sans text-base font-normal tracking-snug` |
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
 | Copy 14 tight | `type-copy-14-tight` | `font-sans text-sm/5 font-normal` |
 | Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |

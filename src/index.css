@@ -164,13 +164,16 @@ and (pointer: fine)) and (&:hover));
      Floor is text-xs (12px) — sub-12px sizes are out of scale by policy.
        text-3xl: 30 → 32   (Geist heading-32)
        text-4xl: 36 → 40   (Geist heading-40)
-       text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1) */
+       text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1)
+       text-8xl: 96 → 64   (Geist heading-64; no default step at 4rem) */
   --text-3xl: 2rem;
   --text-3xl--line-height: 2.5rem;
   --text-4xl: 2.5rem;
   --text-4xl--line-height: 3rem;
   --text-6xl: 3.5rem;
   --text-6xl--line-height: 1;
+  --text-8xl: 4rem;
+  --text-8xl--line-height: 1;
 
   /* Tracking token — sub-pixel tightening for two specific tiers:
        1. Small sans titles — CardTitle / in-card h3 at
@@ -377,58 +380,40 @@ body {
   /* Semantic type roles (Vercel-style): heading, label, copy.
      Use these roles in page code instead of ad-hoc text-* mixes. */
 
-  /* Display tier — 600 weight, tight tracking */
+  /* Display tier — medium weight, tight tracking */
   .type-heading-72 {
-    @apply font-sans font-medium;
-    font-size: 72px;
-    line-height: 72px;
-    letter-spacing: -4px;
+    @apply font-sans text-7xl font-medium tracking-tight;
   }
   .type-heading-64 {
-    @apply font-sans font-medium;
-    font-size: 64px;
-    line-height: 64px;
-    letter-spacing: -4px;
+    @apply font-sans text-8xl font-medium tracking-tight;
   }
   .type-heading-56 {
-    @apply font-sans font-medium;
-    font-size: 56px;
-    line-height: 56px;
-    letter-spacing: -3px;
+    @apply font-sans text-6xl font-medium tracking-tight;
   }
   .type-heading-48 {
-    @apply font-sans font-medium;
-    font-size: 48px;
-    line-height: 56px;
-    letter-spacing: -3px;
+    @apply font-sans text-5xl/14 font-medium tracking-tight;
   }
   .type-heading-40 {
-    @apply font-sans font-medium;
-    font-size: 40px;
-    line-height: 48px;
-    letter-spacing: -2px;
+    @apply font-sans text-4xl/12 font-medium tracking-tight;
   }
   .type-heading-32 {
-    @apply font-sans font-medium;
-    font-size: 32px;
-    line-height: 40px;
-    letter-spacing: -1px;
+    @apply font-sans text-3xl/10 font-medium tracking-tight;
   }
 
   .type-heading-24 {
-    @apply font-sans text-2xl/8 font-medium;
+    @apply font-sans text-2xl/8 font-medium tracking-snug;
   }
 
   .type-heading-20 {
-    @apply font-sans text-xl/7 font-medium;
+    @apply font-sans text-xl/7 font-medium tracking-snug;
   }
 
   .type-heading-18 {
-    @apply font-sans text-lg/7 font-medium;
+    @apply font-sans text-lg/7 font-medium tracking-snug;
   }
 
   .type-heading-16 {
-    @apply font-sans text-base/6 font-medium;
+    @apply font-sans text-base/6 font-medium tracking-snug;
   }
 
   .type-heading-14 {
@@ -453,15 +438,15 @@ body {
   }
 
   .type-label-20 {
-    @apply font-sans text-xl/8 font-normal;
+    @apply font-sans text-xl/8 font-normal tracking-tight;
   }
 
   .type-label-18 {
-    @apply font-sans text-lg/5 font-normal;
+    @apply font-sans text-lg/5 font-normal tracking-tight;
   }
 
   .type-label-16 {
-    @apply font-sans text-base font-medium;
+    @apply font-sans text-base font-medium tracking-tight;
   }
 
   .type-label-14 {
@@ -473,19 +458,19 @@ body {
   }
 
   .type-copy-24 {
-    @apply font-sans text-2xl/9 font-normal;
+    @apply font-sans text-2xl/9 font-normal tracking-snug;
   }
 
   .type-copy-20 {
-    @apply font-sans text-xl/9 font-normal;
+    @apply font-sans text-xl/9 font-normal tracking-snug;
   }
 
   .type-copy-18 {
-    @apply font-sans text-lg/7 font-normal;
+    @apply font-sans text-lg/7 font-normal tracking-snug;
   }
 
   .type-copy-16 {
-    @apply font-sans text-base font-normal;
+    @apply font-sans text-base font-normal tracking-snug;
   }
 
   .type-copy-14 {

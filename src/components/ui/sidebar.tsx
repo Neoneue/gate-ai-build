@@ -54,6 +54,9 @@ export interface SidebarProps {
   brand?: React.ReactNode;
   expanded: boolean;
   onNavigate?: (pageId: string) => void;
+  /** Overview route for the active workspace tier (/overview, /overview-free,
+   *  /overview-default). Logo click navigates here. */
+  overviewPath?: string;
   sections: SidebarSection[];
   /** When true, PRO-gated items (those flagged `locked`) render a lock icon.
    * Driven by the surface tier — passed true only on FREE/default surfaces so
@@ -71,6 +74,7 @@ export function Sidebar({
   activeId,
   expanded,
   onNavigate,
+  overviewPath,
   brand,
   userArea,
   showLocks = false,
@@ -98,6 +102,7 @@ export function Sidebar({
         <SidebarCollapsed
           activeId={activeId}
           onNavigate={onNavigate}
+          overviewPath={overviewPath}
           sections={sections}
         />
       </div>
@@ -112,6 +117,7 @@ export function Sidebar({
           activeId={activeId}
           brand={brand}
           onNavigate={onNavigate}
+          overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
           userArea={userArea}
@@ -130,20 +136,29 @@ function SidebarCollapsed({
   sections,
   activeId,
   onNavigate,
+  overviewPath,
 }: {
   sections: SidebarSection[];
   activeId: string;
   onNavigate?: (pageId: string) => void;
+  overviewPath?: string;
 }) {
   return (
     <div className="flex h-full w-16 shrink-0 flex-col items-center">
       <div className="flex h-16 w-full shrink-0 items-center justify-center border-border border-b">
-        <img
-          alt=""
-          aria-hidden
-          className="h-8 w-auto"
-          src="/gate-ai-logo-mark.png"
-        />
+        <button
+          aria-label="Go to overview"
+          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
+          type="button"
+        >
+          <img
+            alt=""
+            aria-hidden
+            className="h-8 w-auto"
+            src="/gate-ai-logo-mark.png"
+          />
+        </button>
       </div>
       <div className="flex w-full flex-1 flex-col items-center justify-between overflow-y-auto pt-3 pb-5">
         <div className="flex w-full flex-col items-center gap-1">
@@ -199,6 +214,7 @@ function SidebarExpanded({
   sections,
   activeId,
   onNavigate,
+  overviewPath,
   brand,
   userArea,
   showLocks,
@@ -206,16 +222,20 @@ function SidebarExpanded({
   sections: SidebarSection[];
   activeId: string;
   onNavigate?: (pageId: string) => void;
+  overviewPath?: string;
   brand?: React.ReactNode;
   userArea?: React.ReactNode;
   showLocks?: boolean;
 }) {
+  const onLogoClick = overviewPath
+    ? () => onNavigate?.(overviewPath)
+    : undefined;
   return (
     <div className="flex h-full w-60 shrink-0 flex-col">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-border border-b px-4">
-        {brand ?? <DefaultBrand />}
+        {brand ?? <DefaultBrand onLogoClick={onLogoClick} />}
       </div>
 
       {/* Nav sections */}
@@ -286,14 +306,21 @@ function SidebarExpanded({
 
 /* ─── Slot defaults ──────────────────────────────────────────────────────── */
 
-function DefaultBrand() {
+function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
   return (
-    <img
-      alt="Constellation Gate AI"
-      className="h-8 w-auto"
-      draggable={false}
-      src="/gate-ai-logo.png"
-    />
+    <button
+      aria-label="Go to overview"
+      className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      onClick={onLogoClick}
+      type="button"
+    >
+      <img
+        alt="Constellation Gate AI"
+        className="h-8 w-auto"
+        draggable={false}
+        src="/gate-ai-logo.png"
+      />
+    </button>
   );
 }
 

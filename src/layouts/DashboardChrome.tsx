@@ -56,6 +56,11 @@ export function DashboardChrome({
     : isFree
       ? FREE_SIDEBAR_SECTIONS
       : SIDEBAR_SECTIONS;
+  const overviewPath = isDefault
+    ? "/overview-default"
+    : isFree
+      ? "/overview-free"
+      : "/overview";
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 flex-row">
@@ -63,6 +68,7 @@ export function DashboardChrome({
           activeId={activeNavId}
           expanded={sidebarExpanded}
           onNavigate={onNavigate}
+          overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
         />
