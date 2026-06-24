@@ -29,7 +29,7 @@ export function WorkspaceSwitcher() {
   const isFree = isFreeSurface(pathname);
   const isPro = !(isDefault || isFree);
 
-  const plan = isPro ? "Pro" : isFree ? "Free" : "Default";
+  const plan = isPro ? "Pro" : "Free";
   const workspaceName = isPro
     ? "Chad's workspace"
     : isFree
