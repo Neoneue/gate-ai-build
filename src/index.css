@@ -376,6 +376,45 @@ body {
 @layer utilities {
   /* Semantic type roles (Vercel-style): heading, label, copy.
      Use these roles in page code instead of ad-hoc text-* mixes. */
+
+  /* Display tier — 600 weight, tight tracking */
+  .type-heading-72 {
+    @apply font-sans font-medium;
+    font-size: 72px;
+    line-height: 72px;
+    letter-spacing: -4px;
+  }
+  .type-heading-64 {
+    @apply font-sans font-medium;
+    font-size: 64px;
+    line-height: 64px;
+    letter-spacing: -4px;
+  }
+  .type-heading-56 {
+    @apply font-sans font-medium;
+    font-size: 56px;
+    line-height: 56px;
+    letter-spacing: -3px;
+  }
+  .type-heading-48 {
+    @apply font-sans font-medium;
+    font-size: 48px;
+    line-height: 56px;
+    letter-spacing: -3px;
+  }
+  .type-heading-40 {
+    @apply font-sans font-medium;
+    font-size: 40px;
+    line-height: 48px;
+    letter-spacing: -2px;
+  }
+  .type-heading-32 {
+    @apply font-sans font-medium;
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -1px;
+  }
+
   .type-heading-24 {
     @apply font-sans text-2xl/8 font-medium;
   }
@@ -394,6 +433,23 @@ body {
 
   .type-heading-14 {
     @apply font-sans text-sm font-medium;
+  }
+
+  /* Heading aliases used across site title hierarchy (5 levels). */
+  .h1 {
+    @apply font-sans text-3xl font-medium tracking-tight;
+  }
+  .h2 {
+    @apply font-sans text-2xl/8 font-medium;
+  }
+  .h3 {
+    @apply font-sans text-xl/7 font-medium;
+  }
+  .h4 {
+    @apply font-sans text-lg/7 font-medium;
+  }
+  .h5 {
+    @apply font-sans text-base/6 font-medium;
   }
 
   .type-label-20 {

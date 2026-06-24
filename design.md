@@ -523,6 +523,12 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 
 | Role | Utility class | Recipe |
 | --- | --- | --- |
+| Heading 72 | `type-heading-72` | 72/72 medium tracking-[-4px] |
+| Heading 64 | `type-heading-64` | 64/64 medium tracking-[-4px] |
+| Heading 56 | `type-heading-56` | 56/56 medium tracking-[-3px] |
+| Heading 48 | `type-heading-48` | 48/56 medium tracking-[-3px] |
+| Heading 40 | `type-heading-40` | 40/48 medium tracking-[-2px] |
+| Heading 32 | `type-heading-32` | 32/40 medium tracking-[-1px] |
 | Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium` |
 | Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium` |
 | Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium` |
