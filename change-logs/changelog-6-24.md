@@ -6,6 +6,40 @@ Prior day: [`changelog-6-23.md`](./changelog-6-23.md)
 
 ---
 
+## Conventions
+
+### Default workspace: three-way switcher + `-default` route tier `4789531`
+
+**`src/lib/plan.ts`**
+
+- Split `isFreeSurface` (now `-free` only) into two distinct helpers: `isDefaultSurface` (`-default` suffix) and `isFreeSurface` (`-free` suffix). Added `isNonProSurface` (checks both) for sidebar lock logic.
+- Added `toDefaultPath` (converts any path to its `-default` twin) and `DEFAULT_TWINS` set mirroring `FREE_TWINS`.
+- Updated `toFreePath` to accept `-default` inputs (converts to `-free`); updated `toProPath` to strip both `-(free|default)`.
+
+**`src/layouts/nav-sections.ts`**
+
+- Extracted `buildVariantSections(suffix, lockedIds)` helper; regenerated `FREE_SIDEBAR_SECTIONS` through it.
+- Added `DEFAULT_SIDEBAR_SECTIONS` (same shape; all items navigable, pointing at `-default` paths).
+
+**`src/layouts/DashboardChrome.tsx`**
+
+- `sections` prop now picks `DEFAULT_SIDEBAR_SECTIONS` / `FREE_SIDEBAR_SECTIONS` / `SIDEBAR_SECTIONS` based on path.
+- `showLocks` set to `isDefault || isFree` so both non-Pro tiers display visual lock indicators.
+
+**`src/components/ui/workspace-switcher.tsx`**
+
+- Three-way dropdown: "Chad's workspace" (Pro badge), "Default workspace" (Free badge), "Free workspace" (Free badge).
+- Each option routes through `toProPath` / `toDefaultPath` / `toFreePath` respectively.
+
+**10 new `-default` page files + `App.tsx` routes**
+
+- Created thin wrappers for every page lacking a hand-authored default variant: `ActivityDefault`, `AuditTrailDefault`, `BillingDefault`, `ConversationsDefault`, `ModelsDefault`, `PoliciesDefault`, `RequestsDefault`, `SettingsDefault`, `TeamDefault`, `TokenSavingsDefault` — each delegates to its `*Free` counterpart.
+- Registered all 10 new routes in `App.tsx` alongside `/security-default` alias for `SecurityDefault`.
+
+**`fix(workspace)` `de86510`** — badge text for Default workspace corrected to "Free" (not "Default").
+
+---
+
 ## Components
 
 ### Billing modal Pro card blue styling + display heading scale `cbe65d7`
