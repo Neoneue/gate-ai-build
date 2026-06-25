@@ -421,6 +421,7 @@ function CachingCard() {
                   setEnabled(next);
                   toast(next ? "Caching enabled" : "Caching disabled");
                 }}
+                size="lg"
               />
             </div>
           </CardContent>
@@ -585,6 +586,7 @@ function CompressionCard() {
                           next ? "Compression enabled" : "Compression disabled"
                         );
                       }}
+                      size="lg"
                     />
                   </div>
                   <BenefitList
@@ -594,7 +596,7 @@ function CompressionCard() {
                   <div className="mt-auto border-border border-t pt-4">
                     <p className="type-copy-14 m-0 text-pretty text-foreground">
                       Real traffic:{" "}
-                      <span className="type-label-14 text-foreground">
+                      <span className="type-label-14 text-success-700">
                         ~8% smaller requests
                       </span>
                       .

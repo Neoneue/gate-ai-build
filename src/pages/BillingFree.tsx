@@ -304,7 +304,13 @@ function AddCreditsDialog({
       }}
       open={open}
     >
-      <DialogContent className="w-full max-w-[500px] gap-4">
+      {/* Fixed 500px modal; only shrinks on a phone. Width fills the viewport minus
+            16px gutters, capped at 500px. The inline style beats DialogContent's base
+            `sm:max-w-sm` (384px) so 500px always wins — no per-breakpoint width. */}
+      <DialogContent
+        className="gap-4"
+        style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
+      >
         <DialogHeader>
           <DialogTitle className="type-heading-18 text-neutral-900">
             Add credits
@@ -472,7 +478,13 @@ function AutoRechargeDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="w-full max-w-[500px] gap-4">
+      {/* Fixed 500px modal; only shrinks on a phone. Width fills the viewport minus
+            16px gutters, capped at 500px. The inline style beats DialogContent's base
+            `sm:max-w-sm` (384px) so 500px always wins — no per-breakpoint width. */}
+      <DialogContent
+        className="gap-4"
+        style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
+      >
         <DialogHeader>
           <DialogTitle className="type-heading-18 text-neutral-900">
             Auto-recharge
@@ -500,6 +512,7 @@ function AutoRechargeDialog({
             checked={enabled}
             className="mt-1 shrink-0"
             onCheckedChange={setEnabled}
+            size="lg"
           />
         </div>
 

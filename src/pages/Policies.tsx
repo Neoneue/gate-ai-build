@@ -804,6 +804,7 @@ function FreeToggleCard({
             checked={enabled}
             className="shrink-0"
             onCheckedChange={onToggle}
+            size="lg"
           />
         </div>
       </CardContent>
