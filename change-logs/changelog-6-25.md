@@ -6,6 +6,27 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 
 ---
 
+## Conventions
+
+### Spacing relaxed to a 4px grid `20627e3`
+
+**`.claude/rules/design-tokens.md`, `feedback_4px-grid` memory**
+
+- Retired the old "layout spacing is 8px-only" rule. Spacing (gap/padding/margin) is now any **4px multiple** — `gap-3` / `p-3` (12px) are allowed.
+- Still banned: the `*.5` utilities (`gap-0.5`, `mt-1.5`, `px-2.5` = 2/6/10px), which break the 4px unit.
+
+### Semantic text tokens site-wide `928999a`
+
+**32 files across `src/pages` + `src/layouts`**
+
+- Migrated raw neutral text ramps to the semantic token layer: `text-neutral-500/700/800` → `text-muted-foreground` / `text-foreground`. No visual change intended; binds visible text to tokens instead of the ramp.
+
+### `blue-25` documented `20627e3`
+
+**`design.md`**
+
+- Added `blue-25: oklch(0.985 0.010 268.85)` to the color block (already defined in `index.css:46`; the doc just omitted it). Used as the Pro card gradient floor.
+
 ## Components
 
 ### `lg` switch size `cbbefe0`
@@ -37,3 +58,20 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 **`src/pages/Billing.tsx`, `src/pages/BillingFree.tsx`**
 
 - Removed `bg-neutral-50` from the top "Enable auto-recharge" card in both auto-recharge dialogs; it now sits flush on the white dialog surface (border + padding retained). The other gray cards in each modal are unchanged.
+
+### Token Savings compression polish + plan-gating `20627e3`
+
+**`src/pages/TokenSavings.tsx`, `TokenSavingsFree.tsx`, `TokenSavingsDefault.tsx`**
+
+- Plan-gated the Basic compression card via a `plan` prop: Free (`plan="free"`) shows both Basic + Advanced; Pro shows Advanced only, full-width.
+- Stacked the two compression cards vertically (`grid-cols-1`) and set the gap between them — and between the Caching subcards — to `gap-3` (12px).
+- Promoted the savings figure: dropped the "Real traffic:" label and trailing copy; the percentage is now a `font-mono tabular-nums` numeral at `text-base` (16px) in the accent color (green Free / blue Pro), matching the dashboard's KPI-numeral convention. Promotes by typeface + color, not size, so it doesn't outrank card titles. Values: Free "4% smaller requests", Pro "~25% smaller requests (up to ~30%)".
+- Bullet list: hid the per-item subtext (`hidden`, not deleted), switched to a 2x2 grid, and fixed check-icon/title alignment (`items-center`, dropped the off-grid `mt-0.5`) now that rows are single-line.
+
+### Policies: collapse by default + CTA bullet weight `20627e3`
+
+**`src/pages/Policies.tsx`**
+
+- Scan cards now start collapsed on every load (`expanded` initial state `false`); users expand the ones they want to tune.
+- Pro plan protection CTA: bullet titles changed from `type-label-14` (medium) to `type-copy-14` (regular) so they stop competing with the `type-heading-16` card title.
+
