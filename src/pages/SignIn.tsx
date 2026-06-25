@@ -126,7 +126,7 @@ export function SignIn() {
       </CardContent>
 
       <CardFooter className="justify-center p-6 pt-2">
-        <p className="type-copy-12 text-neutral-500">
+        <p className="type-copy-12 text-muted-foreground">
           New to Constellation Gate?{" "}
           <TextLink
             className="type-copy-12"

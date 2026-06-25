@@ -124,12 +124,12 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           A tamper-evident record of every request, response, and policy
           decision the gateway handled. Investigate exactly what happened, and
           let anyone verify it independently.
         </p>
-        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           To learn more, check out our{" "}
           <TextLink
             as="a"
@@ -444,7 +444,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
         <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
           <DialogContent className="w-full gap-4 sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle className="type-heading-18 text-neutral-900">
+              <DialogTitle className="type-heading-18 text-foreground">
                 Filters
               </DialogTitle>
             </DialogHeader>
@@ -596,10 +596,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       role="button"
                       tabIndex={0}
                     >
-                      <TableCell className="whitespace-nowrap text-neutral-800">
+                      <TableCell className="whitespace-nowrap text-foreground">
                         <Timestamp date={row.at} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-neutral-800">
+                      <TableCell className="whitespace-nowrap font-mono text-foreground">
                         {truncateHex(row.eventId)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -607,7 +607,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                           {row.kind}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-neutral-800">
+                      <TableCell className="text-foreground">
                         <span
                           className="line-clamp-2 break-words"
                           title={row.description}
@@ -615,7 +615,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                           {row.description}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-sans text-neutral-800">
+                      <TableCell className="whitespace-nowrap font-sans text-foreground">
                         {row.member}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -626,7 +626,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                             strokeWidth={1.75}
                           />
                           <span className="sr-only">Verified fingerprint</span>
-                          <span className="font-mono text-neutral-800">
+                          <span className="font-mono text-foreground">
                             {truncateHex(row.anchor, 4, 4)}
                           </span>
                         </span>

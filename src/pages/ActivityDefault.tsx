@@ -24,7 +24,7 @@ export function ActivityDefault() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex max-w-1/2 flex-col gap-2">
           <PageTitle>Activity</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             Cost, request volume, and token usage by model, API key, and team
             member.
           </p>
@@ -44,7 +44,9 @@ export function ActivityDefault() {
                 strokeWidth={1.75}
               />
             </div>
-            <span className="type-copy-14 text-neutral-500">No spend yet</span>
+            <span className="type-copy-14 text-muted-foreground">
+              No spend yet
+            </span>
           </div>
           <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
             <div
@@ -56,7 +58,7 @@ export function ActivityDefault() {
                 strokeWidth={1.75}
               />
             </div>
-            <span className="type-copy-14 text-neutral-500">
+            <span className="type-copy-14 text-muted-foreground">
               No requests yet
             </span>
           </div>
@@ -67,7 +69,9 @@ export function ActivityDefault() {
             >
               <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
             </div>
-            <span className="type-copy-14 text-neutral-500">No tokens yet</span>
+            <span className="type-copy-14 text-muted-foreground">
+              No tokens yet
+            </span>
           </div>
         </KpiRail>
 
@@ -80,7 +84,7 @@ export function ActivityDefault() {
               >
                 <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
               </div>
-              <span className="type-copy-14 text-neutral-500">
+              <span className="type-copy-14 text-muted-foreground">
                 No tokens used
               </span>
             </div>

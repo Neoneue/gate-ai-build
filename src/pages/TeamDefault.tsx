@@ -44,7 +44,7 @@ export function TeamDefault() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex max-w-1/2 flex-col gap-2">
           <PageTitle>Team</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             Manage roles, invite teammates, and remove access from Chad
             Ponticas&rsquo;s workspace.
           </p>
@@ -93,19 +93,19 @@ export function TeamDefault() {
                     <div className="flex min-w-0 items-center gap-3">
                       <Monogram initials="C" size="md" tone="blue" />
                       <div className="flex min-w-0 flex-1 flex-col">
-                        <span className="type-label-14 truncate text-neutral-900">
+                        <span className="type-label-14 truncate text-foreground">
                           {OWNER.name}
                         </span>
-                        <span className="type-copy-12 truncate text-neutral-500 tracking-snug">
+                        <span className="type-copy-12 truncate text-muted-foreground tracking-snug">
                           {OWNER.email}
                         </span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
+                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
                     <Timestamp date={OWNER.joined} format="dateNumeric" />
                   </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
+                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                     Owner
                   </TableCell>
                 </TableRow>

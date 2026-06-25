@@ -37,7 +37,7 @@ export function ConversationsTrace() {
           (top-right), mirroring the Requests findings page. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <button
-          className="type-label-14 group relative inline-flex items-center gap-1 rounded-xs text-neutral-500 transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="type-label-14 group relative inline-flex items-center gap-1 rounded-xs text-muted-foreground transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           onClick={() => navigate("/conversations")}
           type="button"
         >
@@ -67,10 +67,10 @@ export function ConversationsTrace() {
           className="rounded-md border border-border bg-card p-8 text-center"
           role="alert"
         >
-          <h2 className="type-label-14 m-0 text-balance text-neutral-900">
+          <h2 className="type-label-14 m-0 text-balance text-foreground">
             Conversation not found
           </h2>
-          <p className="type-copy-14 mt-1 text-neutral-500">
+          <p className="type-copy-14 mt-1 text-muted-foreground">
             No conversation matches{" "}
             <span className="font-mono">{conversationId}</span>.
           </p>

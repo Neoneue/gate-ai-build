@@ -136,7 +136,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Team</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Manage roles, invite teammates, and remove access from Chad
           Ponticas&rsquo;s workspace.
         </p>
@@ -434,13 +434,13 @@ function MemberRowView({
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <span
-              className="type-label-14 truncate text-neutral-900"
+              className="type-label-14 truncate text-foreground"
               title={row.name}
             >
               {row.name}
             </span>
             <span
-              className="type-copy-12 truncate text-neutral-500 tracking-snug"
+              className="type-copy-12 truncate text-muted-foreground tracking-snug"
               title={row.email}
             >
               {row.email}
@@ -448,17 +448,17 @@ function MemberRowView({
           </div>
         </div>
       </TableCell>
-      <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
+      <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
         <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
-      <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
+      <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
         {row.role === "owner" ? (
           "Owner"
         ) : (
           <Select onValueChange={(v) => setRole(v as MemberRole)} value={role}>
             <SelectTrigger
               aria-label={`Role for ${row.name}`}
-              className="w-28 border-border bg-card font-normal text-neutral-900"
+              className="w-28 border-border bg-card font-normal text-foreground"
               size="sm"
             >
               <SelectValue />
@@ -549,7 +549,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableEmptyState
           action={
             <Button
-              className="border-border bg-card text-neutral-900"
+              className="border-border bg-card text-foreground"
               onClick={onInvite}
               size="sm"
               variant="outline"
@@ -617,23 +617,23 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableBody>
           {sortedRows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-900">
+              <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                 <span className="block truncate" title={row.email}>
                   {row.email}
                 </span>
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
+              <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                 <span className="block truncate" title={row.invitedBy}>
                   {row.invitedBy}
                 </span>
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
+              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
                 <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800">
+              <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-neutral-800 tabular-nums">
+              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
                 <Timestamp anchor={NOW} date={row.expires} format="relative" />
               </TableCell>
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -697,7 +697,7 @@ function InviteMemberDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="type-heading-18 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-foreground">
               Invite member
             </DialogTitle>
             <DialogDescription>
@@ -747,7 +747,7 @@ function InviteMemberDialog({
               value={role}
             >
               <SelectTrigger
-                className="w-full border-border bg-card text-neutral-900"
+                className="w-full border-border bg-card text-foreground"
                 id="invite-role"
                 size="default"
               >
@@ -802,8 +802,8 @@ function RoleItemBody({
 }) {
   return (
     <span className="flex flex-col gap-1 text-left">
-      <span className="type-label-14 text-neutral-900">{label}</span>
-      <span className="type-copy-12 text-pretty text-neutral-500">
+      <span className="type-label-14 text-foreground">{label}</span>
+      <span className="type-copy-12 text-pretty text-muted-foreground">
         {description}
       </span>
     </span>
@@ -840,7 +840,7 @@ function RowActionsMenu({
         render={
           <Button
             aria-label={label}
-            className="text-neutral-500 hover:text-neutral-900"
+            className="text-muted-foreground hover:text-foreground"
             size="icon-sm"
             variant="ghost"
           />
@@ -857,7 +857,7 @@ function RowActionsMenu({
         >
           <MenuPrimitive.Popup
             className={cn(
-              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-neutral-900 shadow-(--shadow-popup) outline-none",
+              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-(--shadow-popup) outline-none",
               "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0"
             )}
           >
@@ -870,7 +870,7 @@ function RowActionsMenu({
                     "focus-visible:bg-muted data-[highlighted]:bg-muted",
                     item.destructive
                       ? "text-destructive data-[highlighted]:text-destructive"
-                      : "text-neutral-900",
+                      : "text-foreground",
                     "[&_svg]:size-4 [&_svg]:shrink-0"
                   )}
                   key={item.id}

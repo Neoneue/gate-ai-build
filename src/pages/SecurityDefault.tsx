@@ -23,7 +23,7 @@ export function SecurityDefault() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex max-w-1/2 flex-col gap-2">
           <PageTitle>Security events</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             Every injection, PII, and credential event your policies caught,
             fingerprinted to Constellation's Digital Evidence layer. Blocked,
             flagged, or redacted.
@@ -48,7 +48,7 @@ export function SecurityDefault() {
                   strokeWidth={1.75}
                 />
               </div>
-              <span className="type-copy-14 text-neutral-500">
+              <span className="type-copy-14 text-muted-foreground">
                 No events yet
               </span>
             </div>

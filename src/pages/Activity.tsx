@@ -223,7 +223,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Activity</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Cost, request volume, and token usage by model, API key, and team
         member.
       </p>
@@ -1518,23 +1518,23 @@ function UsageByKey({
                 {pageRows.map((row) => (
                   <TableRow className="hover:bg-transparent" key={row.key}>
                     <TableCell className="whitespace-nowrap font-mono">
-                      <span className="text-neutral-800">{row.label}</span>
+                      <span className="text-foreground">{row.label}</span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <span className="type-copy-14 text-neutral-800">
+                      <span className="type-copy-14 text-foreground">
                         {row.owner}
                       </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <Badge variant="outline">{row.path}</Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtInt(row.requests)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtTokens(row.tokensIn)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtTokens(row.tokensOut)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">

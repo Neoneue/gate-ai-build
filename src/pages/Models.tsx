@@ -1303,7 +1303,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             <TableEmptyState
               action={
                 <Button
-                  className="border-border bg-card text-neutral-900"
+                  className="border-border bg-card text-foreground"
                   onClick={clearFilters}
                   size="sm"
                   variant="outline"
@@ -1330,7 +1330,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         </Card>
       </Tabs>
 
-      <p className="type-copy-12 m-0 text-neutral-500 tracking-snug">
+      <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
         preferred provider, or{" "}
         <InlineCode size="sm">bedrock/claude-haiku-4-5</InlineCode> to pin a
@@ -1352,11 +1352,11 @@ function PageHeader({
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Route to{" "}
-        <span className="text-neutral-800 tabular-nums">{modelCount}</span>{" "}
+        <span className="text-foreground tabular-nums">{modelCount}</span>{" "}
         models across{" "}
-        <span className="text-neutral-800 tabular-nums">{providerCount}</span>{" "}
+        <span className="text-foreground tabular-nums">{providerCount}</span>{" "}
         providers, with per-provider pricing and code samples on every detail
         page.
       </p>
@@ -1568,7 +1568,7 @@ function ModelsTable({
                 >
                   <VendorAvatar vendor={model.vendor} />
                   <span
-                    className="type-copy-14 truncate text-neutral-900"
+                    className="type-copy-14 truncate text-foreground"
                     title={model.name}
                   >
                     {model.name}
@@ -1585,7 +1585,7 @@ function ModelsTable({
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  <span className="select-text font-mono text-neutral-800 text-sm">
+                  <span className="select-text font-mono text-foreground text-sm">
                     {model.defaultHandle}
                   </span>
                   <CopyButton
@@ -1596,17 +1596,17 @@ function ModelsTable({
                   />
                 </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+              <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                 {context}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+              <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                 {inputPrice}
               </TableCell>
               <TableCell
                 className={
                   outputPrice === "—"
                     ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
-                    : "whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums"
+                    : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
                 }
               >
                 {outputPrice}
@@ -1648,7 +1648,7 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
           <span className="inline-flex shrink-0" key={c}>
             <Icon
               aria-label={meta.label}
-              className="size-4 shrink-0 text-neutral-500"
+              className="size-4 shrink-0 text-muted-foreground"
               role="img"
               strokeWidth={1.75}
             />
@@ -1722,7 +1722,7 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
         // glyph height; inline-flex centers the text inside h-4.
         <span
           aria-hidden
-          className="inline-flex h-4 items-center font-mono text-neutral-500 text-xs tabular-nums leading-none"
+          className="inline-flex h-4 items-center font-mono text-muted-foreground text-xs tabular-nums leading-none"
         >
           +{overflow}
         </span>
@@ -1793,13 +1793,13 @@ function ModelDetailPage({
                 page-level h1 ("Models") on ArtboardHeader and the
                 breadcrumb already carry the model name, so a third
                 32px appearance over-anchors identity. */}
-            <h2 className="type-heading-20 m-0 text-neutral-900">
+            <h2 className="type-heading-20 m-0 text-foreground">
               {model.name}
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-neutral-900 text-sm">
+            <span className="font-mono text-foreground text-sm">
               {model.defaultHandle}
             </span>
             <CopyButton
@@ -1835,7 +1835,7 @@ function ModelDetailPage({
               // (line-clamp uses -webkit-box, which short-circuits text-wrap).
               // Apply it conditionally so the rule is only present where it
               // can actually do work.
-              "m-0 font-sans text-base text-neutral-800",
+              "m-0 font-sans text-base text-foreground",
               showFullDesc ? "text-pretty" : "line-clamp-3"
             )}
             id="model-description"
@@ -1845,14 +1845,14 @@ function ModelDetailPage({
           <TextLink
             aria-controls="model-description"
             aria-expanded={showFullDesc}
-            className="type-copy-14 group inline-flex w-fit items-center gap-1 hover:text-neutral-900 focus-visible:text-neutral-900"
+            className="type-copy-14 group inline-flex w-fit items-center gap-1 hover:text-foreground focus-visible:text-foreground"
             onClick={() => setShowFullDesc((v) => !v)}
           >
             {showFullDesc ? "Show less" : "Show more"}
             <ChevronDown
               aria-hidden="true"
               className={cn(
-                "size-3.5 shrink-0 text-neutral-500 transition-transform duration-150 ease-out group-hover:text-neutral-800 motion-reduce:transition-none",
+                "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
                 showFullDesc && "rotate-180"
               )}
               strokeWidth={1.75}
@@ -1867,8 +1867,8 @@ function ModelDetailPage({
       {/* Providers */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h3 className="type-heading-16 m-0 text-neutral-900">Providers</h3>
-          <p className="type-copy-14 m-0 text-neutral-500">
+          <h3 className="type-heading-16 m-0 text-foreground">Providers</h3>
+          <p className="type-copy-14 m-0 text-muted-foreground">
             Route requests across multiple providers. Copy a provider handle to
             pin a specific one.
           </p>
@@ -1881,10 +1881,8 @@ function ModelDetailPage({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h3 className="type-heading-16 m-0 text-neutral-900">
-              Quick start
-            </h3>
-            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+            <h3 className="type-heading-16 m-0 text-foreground">Quick start</h3>
+            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
               Point your tool at the gateway base URL{" "}
               <span className="inline-flex items-center gap-1 align-middle">
                 <InlineCode size="sm">
@@ -1941,7 +1939,7 @@ function ModelDetailPage({
                 </TabsList>
               </div>
               <div className="flex h-10 items-center border-border border-b px-4">
-                <span className="type-copy-12 text-neutral-500">
+                <span className="type-copy-12 text-muted-foreground">
                   {TOOL_CAPTIONS[tool]}
                 </span>
               </div>
@@ -1966,10 +1964,10 @@ function ModelDetailPage({
 
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h3 className="type-heading-16 m-0 text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-foreground">
               Example request
             </h3>
-            <p className="type-copy-14 m-0 text-neutral-500">
+            <p className="type-copy-14 m-0 text-muted-foreground">
               Once your client is pointed at the gateway, you can send this to
               make your first call and confirm everything works. The model ID is
               already filled in. Just add your API key and run it.
@@ -2210,7 +2208,7 @@ function ProvidersTable({ model }: { model: Model }) {
                 <div className="flex min-w-0 items-center gap-2">
                   <ProviderMark provider={o.provider} />
                   <span
-                    className="type-copy-14 truncate text-neutral-900"
+                    className="type-copy-14 truncate text-foreground"
                     title={PROVIDER_LABELS[o.provider]}
                   >
                     {PROVIDER_LABELS[o.provider]}
@@ -2292,7 +2290,7 @@ function ProviderNumeric({ value }: { value: string }) {
       className={
         isMissing
           ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
-          : "whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums"
+          : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
       }
     >
       {isMissing ? (

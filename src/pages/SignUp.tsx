@@ -96,14 +96,14 @@ export function SignUp() {
             </Button>
           </FieldGroup>
 
-          <p className="type-copy-12 mt-4 text-center text-neutral-500 leading-5">
+          <p className="type-copy-12 mt-4 text-center text-muted-foreground leading-5">
             Your invite code is single-use. Find it in your welcome email.
           </p>
         </form>
       </CardContent>
 
       <CardFooter className="justify-center p-6 pt-2">
-        <p className="type-copy-12 text-neutral-500">
+        <p className="type-copy-12 text-muted-foreground">
           Already have an account?{" "}
           <TextLink
             className="type-copy-12"

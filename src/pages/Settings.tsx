@@ -66,7 +66,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Settings</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Profile, security, logging, and integrations.
         </p>
       </div>
@@ -241,8 +241,8 @@ function SecurityCard() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center">
           <div className="flex flex-col gap-1">
-            <p className="type-label-14 m-0 text-neutral-900">Passkey</p>
-            <p className="type-copy-14 m-0 text-neutral-500">
+            <p className="type-label-14 m-0 text-foreground">Passkey</p>
+            <p className="type-copy-14 m-0 text-muted-foreground">
               Sign in with Touch ID, Windows Hello, or a hardware key.
             </p>
           </div>
@@ -253,7 +253,7 @@ function SecurityCard() {
         </div>
         <div className="flex flex-col gap-1">
           <SectionHeading as="h4">Registered passkeys</SectionHeading>
-          <p className="type-copy-14 m-0 text-neutral-500">
+          <p className="type-copy-14 m-0 text-muted-foreground">
             No passkeys registered yet.
           </p>
         </div>

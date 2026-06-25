@@ -118,7 +118,7 @@ function DashTopBar({
         <Button
           aria-expanded={sidebarExpanded}
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 text-neutral-500 hover:text-neutral-700 aria-expanded:bg-transparent aria-expanded:text-neutral-500 hover:aria-expanded:text-neutral-700"
+          className="-ml-2 text-muted-foreground hover:text-neutral-700 aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-neutral-700"
           onClick={onToggleSidebar}
           size="icon-sm"
           variant="ghost"

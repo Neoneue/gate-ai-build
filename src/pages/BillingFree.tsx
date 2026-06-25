@@ -67,7 +67,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Manage your plan, track credit usage, and review every gateway
         transaction.
       </p>
@@ -95,13 +95,13 @@ function PlanCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">Free</HeroNumeric>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-800">
+        <p className="type-copy-14 m-0 text-pretty text-foreground">
           BYOK gateway plus a tamper-evident audit trail, no security pipeline.
           Upgrade to Pro for prompt-injection scans, PII redaction, and a
           cryptographically verifiable audit trail fingerprinted to
           Constellation&rsquo;s Digital Evidence layer.
         </p>
-        <p className="type-copy-14 m-0 text-neutral-500">
+        <p className="type-copy-14 m-0 text-muted-foreground">
           Free plan — no renewal needed
         </p>
       </CardContent>
@@ -182,7 +182,7 @@ function CreditsCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">$0.00</HeroNumeric>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-800">
+        <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for requests routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
@@ -312,7 +312,7 @@ function AddCreditsDialog({
         style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-foreground">
             Add credits
           </DialogTitle>
           <DialogDescription>
@@ -336,8 +336,8 @@ function AddCreditsDialog({
                 className={cn(
                   "inline-flex h-10 items-center justify-center rounded-md border font-medium font-sans text-sm tabular-nums transition-colors",
                   isSelected
-                    ? "border-border bg-muted text-neutral-900"
-                    : "border-border bg-card text-neutral-900 hover:bg-neutral-50"
+                    ? "border-border bg-muted text-foreground"
+                    : "border-border bg-card text-foreground hover:bg-neutral-50"
                 )}
                 key={value}
                 onClick={() => {
@@ -369,7 +369,7 @@ function AddCreditsDialog({
         {/* Custom amount */}
         <div className="flex flex-col gap-2">
           <label
-            className="type-copy-14 m-0 font-medium text-neutral-500"
+            className="type-copy-14 m-0 font-medium text-muted-foreground"
             htmlFor="add-credits-custom"
           >
             Amount (USD)
@@ -377,7 +377,7 @@ function AddCreditsDialog({
           <div className="relative">
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
             >
               $
             </span>
@@ -418,7 +418,7 @@ function AddCreditsDialog({
           )}
         </div>
 
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           You&rsquo;ll be redirected to Stripe Checkout. Your balance updates
           within seconds of payment confirmation.
         </p>
@@ -486,7 +486,7 @@ function AutoRechargeDialog({
         style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-foreground">
             Auto-recharge
           </DialogTitle>
           <DialogDescription>
@@ -498,12 +498,12 @@ function AutoRechargeDialog({
         <div className="flex items-start justify-between gap-4 rounded-md border border-border p-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p
-              className="type-label-14 m-0 text-neutral-900"
+              className="type-label-14 m-0 text-foreground"
               id="ar-enable-label"
             >
               Enable auto-recharge
             </p>
-            <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
               We&apos;ll charge your default card to top up.
             </p>
           </div>
@@ -520,7 +520,7 @@ function AutoRechargeDialog({
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
-              className="type-copy-14 m-0 font-medium text-neutral-500"
+              className="type-copy-14 m-0 font-medium text-muted-foreground"
               htmlFor="ar-threshold"
             >
               When balance drops below
@@ -528,7 +528,7 @@ function AutoRechargeDialog({
             <div className="relative">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
               >
                 $
               </span>
@@ -563,7 +563,7 @@ function AutoRechargeDialog({
           {/* Top-up amount */}
           <div className="flex flex-col gap-2">
             <label
-              className="type-copy-14 m-0 font-medium text-neutral-500"
+              className="type-copy-14 m-0 font-medium text-muted-foreground"
               htmlFor="ar-topup"
             >
               Top-up amount
@@ -571,7 +571,7 @@ function AutoRechargeDialog({
             <div className="relative">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
               >
                 $
               </span>
@@ -605,18 +605,18 @@ function AutoRechargeDialog({
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
           <label
-            className="type-copy-14 m-0 font-medium text-neutral-500"
+            className="type-copy-14 m-0 font-medium text-muted-foreground"
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
-            <span className="font-normal text-neutral-500">
+            <span className="font-normal text-muted-foreground">
               (leave blank for no cap)
             </span>
           </label>
           <div className="relative">
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-neutral-500 text-sm"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
             >
               $
             </span>
@@ -648,16 +648,16 @@ function AutoRechargeDialog({
 
         {enabled && thresholdValid && topUpValid && (
           <div className="flex flex-col gap-2 rounded-md border border-border bg-neutral-50 px-4 py-3">
-            <p className="type-copy-14 m-0 text-pretty text-neutral-800">
+            <p className="type-copy-14 m-0 text-pretty text-foreground">
               When your balance drops below{" "}
-              <span className="font-medium text-neutral-900">${threshold}</span>
-              , we&apos;ll add{" "}
-              <span className="font-medium text-neutral-900">${topUp}</span> to
+              <span className="font-medium text-foreground">${threshold}</span>,
+              we&apos;ll add{" "}
+              <span className="font-medium text-foreground">${topUp}</span> to
               your account
               {monthlyCap !== null && capValid ? (
                 <>
                   , up to{" "}
-                  <span className="font-medium text-neutral-900">
+                  <span className="font-medium text-foreground">
                     ${monthlyCap}/month
                   </span>
                 </>
@@ -665,7 +665,7 @@ function AutoRechargeDialog({
                 <>
                   {" "}
                   with{" "}
-                  <span className="font-medium text-neutral-900">
+                  <span className="font-medium text-foreground">
                     no monthly cap
                   </span>
                 </>
@@ -713,12 +713,12 @@ function CreditStatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="text-neutral-500">{label}</dt>
+      <dt className="text-muted-foreground">{label}</dt>
       <dd
         className={
           mono
-            ? "m-0 font-mono text-neutral-900 tabular-nums"
-            : "m-0 text-neutral-900"
+            ? "m-0 font-mono text-foreground tabular-nums"
+            : "m-0 text-foreground"
         }
       >
         {value}
@@ -743,10 +743,10 @@ function PaymentMethodCard() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
-          <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-neutral-800">
+          <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
             CARD
           </span>
-          <span className="type-copy-14 text-neutral-800">
+          <span className="type-copy-14 text-foreground">
             No payment method on file
           </span>
         </div>

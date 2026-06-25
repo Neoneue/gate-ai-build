@@ -69,7 +69,7 @@ export function AuditRecordDialog({
          * "Verified" seal sitting directly beneath the copy. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
-            <p className="type-copy-16 m-0 text-neutral-900">
+            <p className="type-copy-16 m-0 text-foreground">
               This event is fingerprinted to{" "}
               <span className="font-medium">
                 Constellation's Digital Evidence
@@ -87,7 +87,7 @@ export function AuditRecordDialog({
               label="Time"
               value={
                 <Timestamp
-                  className="font-mono text-neutral-800"
+                  className="font-mono text-foreground"
                   date={row.at}
                 />
               }
@@ -95,7 +95,7 @@ export function AuditRecordDialog({
             <DetailRow
               label="Event ID"
               value={
-                <span className="break-all font-mono text-neutral-800">
+                <span className="break-all font-mono text-foreground">
                   {row.eventId}
                 </span>
               }
@@ -108,13 +108,11 @@ export function AuditRecordDialog({
             />
             <DetailRow
               label="Description"
-              value={
-                <span className="text-neutral-900">{row.description}</span>
-              }
+              value={<span className="text-foreground">{row.description}</span>}
             />
             <DetailRow
               label="Member"
-              value={<span className="text-neutral-800">{row.member}</span>}
+              value={<span className="text-foreground">{row.member}</span>}
             />
             <DetailRow
               label="Fingerprint"
@@ -126,7 +124,7 @@ export function AuditRecordDialog({
                     strokeWidth={1.75}
                   />
                   <span className="sr-only">Verified fingerprint</span>
-                  <span className="whitespace-nowrap font-mono text-neutral-800">
+                  <span className="whitespace-nowrap font-mono text-foreground">
                     {truncateHex(row.anchor, 4, 4)}
                   </span>
                 </span>

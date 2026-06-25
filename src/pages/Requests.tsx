@@ -291,7 +291,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Every model call across your stack, inspected for injection, PII, and
           credentials before it reaches the model.
         </p>
@@ -919,11 +919,11 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="type-label-12 justify-self-end text-neutral-500 tracking-tight">
+      <span className="type-label-12 justify-self-end text-muted-foreground tracking-tight">
         {label}
       </span>
       <StatusDot kind={tone} />
-      <span className="justify-self-end font-medium font-mono text-neutral-900 text-xs tabular-nums">
+      <span className="justify-self-end font-medium font-mono text-foreground text-xs tabular-nums">
         {value}
       </span>
     </>
@@ -1351,7 +1351,7 @@ function RequestsTableSection({
             <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
               <DialogContent className="w-full gap-4 sm:max-w-[440px]">
                 <DialogHeader>
-                  <DialogTitle className="type-heading-18 text-neutral-900">
+                  <DialogTitle className="type-heading-18 text-foreground">
                     Filters
                   </DialogTitle>
                 </DialogHeader>
@@ -1580,7 +1580,7 @@ function RequestsTableSection({
                               <span
                                 {...props}
                                 aria-label="About the Cost column"
-                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-neutral-500 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                               >
                                 <Info
                                   aria-hidden
@@ -1631,7 +1631,7 @@ function RequestsTableSection({
                     const isMissing = row.inTokens === "—";
                     const numericCls = isMissing
                       ? "text-right whitespace-nowrap font-mono tabular-nums text-neutral-400"
-                      : "text-right whitespace-nowrap font-mono tabular-nums text-neutral-800";
+                      : "text-right whitespace-nowrap font-mono tabular-nums text-foreground";
                     // Slow rows: leading amber TriangleAlert + neutral-900 (one step
                     // darker than the neutral-800 default). Same weight as non-slow rows
                     // so `tabular-nums` keeps the column tracks aligned — font-medium
@@ -1645,8 +1645,8 @@ function RequestsTableSection({
                       row.latency === "—"
                         ? "text-neutral-400"
                         : isSlow
-                          ? "text-neutral-900"
-                          : "text-neutral-800";
+                          ? "text-foreground"
+                          : "text-foreground";
                     const conversationName = conversationTitle(
                       row.conversation
                     );
@@ -1673,7 +1673,7 @@ function RequestsTableSection({
                               render={(props) => (
                                 <span
                                   {...props}
-                                  className="font-mono text-neutral-800 text-sm tabular-nums"
+                                  className="font-mono text-foreground text-sm tabular-nums"
                                 >
                                   {row.day}, {row.time}
                                 </span>
@@ -1701,7 +1701,7 @@ function RequestsTableSection({
                           >
                             <VendorAvatar vendor={row.vendor} />
                             <span
-                              className="truncate font-mono text-neutral-900 text-sm"
+                              className="truncate font-mono text-foreground text-sm"
                               title={row.model}
                             >
                               {row.model}
@@ -1712,18 +1712,18 @@ function RequestsTableSection({
                           {conversationName ? (
                             <>
                               <span
-                                className="type-copy-14 block truncate text-neutral-900"
+                                className="type-copy-14 block truncate text-foreground"
                                 title={conversationName}
                               >
                                 {conversationName}
                               </span>
-                              <span className="block font-mono text-neutral-500 text-xs">
+                              <span className="block font-mono text-muted-foreground text-xs">
                                 {row.conversation}
                               </span>
                             </>
                           ) : (
                             <span
-                              className="block max-w-full truncate font-mono text-neutral-900 text-sm tabular-nums"
+                              className="block max-w-full truncate font-mono text-foreground text-sm tabular-nums"
                               title={row.conversation}
                             >
                               {row.conversation}
@@ -1731,7 +1731,7 @@ function RequestsTableSection({
                           )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap font-mono">
-                          <span className="text-neutral-800">{row.keyId}</span>
+                          <span className="text-foreground">{row.keyId}</span>
                         </TableCell>
                         <TableCell className={numericCls}>
                           {row.inTokens}
@@ -1809,7 +1809,7 @@ function RequestsTableSection({
                                 className={
                                   isMissing
                                     ? "text-neutral-400"
-                                    : "text-neutral-800"
+                                    : "text-foreground"
                                 }
                               >
                                 {row.cost}
@@ -1964,7 +1964,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-neutral-900 tabular-nums">
+                  <span className="font-mono text-foreground tabular-nums">
                     {row.day}, {row.time}
                   </span>
                 }
@@ -1987,7 +1987,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 value={
                   <div className="flex items-center gap-2">
                     <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-neutral-900">
+                    <span className="font-mono text-foreground">
                       {row.model}
                     </span>
                   </div>
@@ -1995,21 +1995,19 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               />
               <DetailRow
                 label="Provider"
-                value={<span className="text-neutral-900">{provider}</span>}
+                value={<span className="text-foreground">{provider}</span>}
               />
               <DetailRow
                 label="API Key"
                 value={
-                  <span className="font-mono text-neutral-900">
-                    {row.keyId}
-                  </span>
+                  <span className="font-mono text-foreground">{row.keyId}</span>
                 }
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-neutral-900">
-                    <span className="text-neutral-500">POST</span>{" "}
+                  <span className="font-mono text-foreground">
+                    <span className="text-muted-foreground">POST</span>{" "}
                     {VENDOR_ENDPOINT[row.vendor]}
                   </span>
                 }
@@ -2329,14 +2327,14 @@ export function RequestDetailBodyV2({
                           <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
                             <ShieldCheck
                               aria-hidden
-                              className="size-5 text-neutral-500"
+                              className="size-5 text-muted-foreground"
                               strokeWidth={1.75}
                             />
                           </div>
-                          <h3 className="type-heading-18 m-0 text-balance text-neutral-900">
+                          <h3 className="type-heading-18 m-0 text-balance text-foreground">
                             No findings
                           </h3>
-                          <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
+                          <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
                             All detectors passed for this request.
                           </p>
                         </div>
@@ -2441,12 +2439,12 @@ export function RequestDetailBodyV2({
                         key={p.category}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <span className="type-label-14 text-neutral-900">
+                          <span className="type-label-14 text-foreground">
                             {p.label}
                           </span>
                           <Badge variant="success">Pass</Badge>
                         </div>
-                        <span className="type-copy-14 text-neutral-500">
+                        <span className="type-copy-14 text-muted-foreground">
                           {p.description}
                         </span>
                       </div>
@@ -2461,7 +2459,7 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Timestamp"
                       value={
-                        <span className="font-mono text-neutral-900 tabular-nums">
+                        <span className="font-mono text-foreground tabular-nums">
                           {row.day}, {row.time}
                         </span>
                       }
@@ -2484,7 +2482,7 @@ export function RequestDetailBodyV2({
                       value={
                         <div className="flex items-center gap-2">
                           <VendorAvatar vendor={row.vendor} />
-                          <span className="font-mono text-neutral-900">
+                          <span className="font-mono text-foreground">
                             {row.model}
                           </span>
                         </div>
@@ -2493,13 +2491,13 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Provider"
                       value={
-                        <span className="text-neutral-900">{provider}</span>
+                        <span className="text-foreground">{provider}</span>
                       }
                     />
                     <DetailRow
                       label="API Key"
                       value={
-                        <span className="font-mono text-neutral-900">
+                        <span className="font-mono text-foreground">
                           {row.keyId}
                         </span>
                       }
@@ -2507,8 +2505,8 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Endpoint"
                       value={
-                        <span className="break-all font-mono text-neutral-900">
-                          <span className="text-neutral-500">POST</span>{" "}
+                        <span className="break-all font-mono text-foreground">
+                          <span className="text-muted-foreground">POST</span>{" "}
                           {VENDOR_ENDPOINT[row.vendor]}
                         </span>
                       }
@@ -2597,7 +2595,7 @@ function FindingCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="type-label-14 text-neutral-900">
+          <span className="type-label-14 text-foreground">
             {CATEGORY_LABEL[finding.category]} ·{" "}
             {entityLabel(finding.entityType)}
           </span>
@@ -2605,7 +2603,7 @@ function FindingCard({
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
       <p
-        className="type-copy-14 line-clamp-2 text-neutral-900"
+        className="type-copy-14 line-clamp-2 text-foreground"
         title={finding.redactedAs}
       >
         “{finding.redactedAs}”
@@ -2651,7 +2649,7 @@ const PANEL_OUTER =
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
-      <h3 className="type-heading-16 m-0 text-neutral-900 tracking-snug">
+      <h3 className="type-heading-16 m-0 text-foreground tracking-snug">
         {title}
       </h3>
       {aside}
@@ -2719,7 +2717,7 @@ function FindingSwitcherCard({
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -2738,7 +2736,7 @@ function FindingSwitcherCard({
         type="button"
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="type-label-14 flex items-center gap-2 text-neutral-900">
+          <span className="type-label-14 flex items-center gap-2 text-foreground">
             {CATEGORY_LABEL[current.category]}
             <CountChip count={total} size="xs" />
           </span>
@@ -2795,7 +2793,7 @@ function CountChip({
 }) {
   return (
     <span
-      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-neutral-500 tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
+      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-muted-foreground tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
     >
       {count}
     </span>
@@ -2814,10 +2812,10 @@ function KvRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="type-label-14 text-neutral-900">{label}</span>
+      <span className="type-label-14 text-foreground">{label}</span>
       <span
         className={[
-          "text-right font-mono text-neutral-900 text-sm tabular-nums",
+          "text-right font-mono text-foreground text-sm tabular-nums",
           valueClassName ?? "",
         ].join(" ")}
       >
@@ -2941,7 +2939,7 @@ function EvidenceWindow({
         className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
         ref={evidenceBoxRef}
       >
-        <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-900 leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
           {evidenceNodes.length > 0 ? evidenceNodes : text}
         </p>
       </div>
@@ -3105,7 +3103,7 @@ function PiiDetailPanel({
               className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
               ref={evidenceBoxRef}
             >
-              <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-900 leading-relaxed">
+              <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
                 {evidenceNodes.length > 0 ? evidenceNodes : evidence}
               </p>
             </div>
@@ -3130,7 +3128,7 @@ function PiiDetailPanel({
           <KvRow
             label="Offset in evidence"
             value={
-              <span className="font-mono text-neutral-900 text-sm">
+              <span className="font-mono text-foreground text-sm">
                 {offsetLabel}
               </span>
             }
@@ -3279,7 +3277,7 @@ function KpiTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-medium font-mono text-lg text-neutral-900 tabular-nums tracking-snug">
+      <span className="font-medium font-mono text-foreground text-lg tabular-nums tracking-snug">
         {value}
       </span>
     </div>
@@ -3501,7 +3499,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   return (
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
-      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-neutral-900">
+      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-foreground">
         {content}
       </div>
     </section>
@@ -3512,7 +3510,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
  * Tool call / Tool result). 16px medium, no h3 chrome, matching the
  * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
-  return <span className="type-heading-16 text-neutral-900">{label}</span>;
+  return <span className="type-heading-16 text-foreground">{label}</span>;
 }
 
 /* A single conversation turn as a Details-tab subcard: a plain-text heading
@@ -3534,7 +3532,7 @@ function DetailMessageSubcard({
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
       <div
-        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-neutral-900"
+        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-foreground"
         data-grow-well={growWell ? "" : undefined}
       >
         {content}
@@ -3564,7 +3562,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-neutral-800 text-xs">
+            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-foreground text-xs">
               {row.errorBody}
             </pre>
           </div>
@@ -3633,11 +3631,11 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
-          className="size-4 shrink-0 text-neutral-500 transition-transform duration-150 ease-out group-data-[panel-open]/fullreq:rotate-180 motion-reduce:transition-none"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-data-[panel-open]/fullreq:rotate-180 motion-reduce:transition-none"
           strokeWidth={1.75}
         />
       </Collapsible.Trigger>
@@ -3997,8 +3995,8 @@ function SecurityCheckRow({
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="type-label-14 text-neutral-900">{title}</span>
-        <span className="type-copy-12 text-pretty text-neutral-500">
+        <span className="type-label-14 text-foreground">{title}</span>
+        <span className="type-copy-12 text-pretty text-muted-foreground">
           {description}
         </span>
       </div>

@@ -131,16 +131,16 @@ function PlanCard({
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
-        <p className="type-heading-18 m-0 text-neutral-900">{plan.title}</p>
+        <p className="type-heading-18 m-0 text-foreground">{plan.title}</p>
       </div>
 
-      <h3 className="type-heading-32 m-0 text-neutral-900 tabular-nums tracking-tight">
+      <h3 className="type-heading-32 m-0 text-foreground tabular-nums tracking-tight">
         {plan.price}
         <span className="type-copy-18 text-muted-foreground"> per month</span>
       </h3>
 
       <div className="flex flex-col gap-4">
-        <p className="type-label-12 m-0 text-neutral-900">
+        <p className="type-label-12 m-0 text-foreground">
           {plan.benefitsLabel}
         </p>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
@@ -155,8 +155,8 @@ function PlanCard({
                 strokeWidth={1.75}
               />
               <div className="flex flex-col">
-                <span className="type-copy-14 text-neutral-900">{title}</span>
-                <span className="type-copy-12 text-pretty text-neutral-500">
+                <span className="type-copy-14 text-foreground">{title}</span>
+                <span className="type-copy-12 text-pretty text-muted-foreground">
                   {detail}
                 </span>
               </div>
@@ -185,7 +185,7 @@ function PlanCard({
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
           {plan.cta.label}
         </Button>
-        <p className="type-copy-12 m-0 text-center text-neutral-500">
+        <p className="type-copy-12 m-0 text-center text-muted-foreground">
           {plan.ctaCaption}
         </p>
       </div>
@@ -235,7 +235,7 @@ export function PlanComparisonDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[90vh] w-full flex-col gap-4 overflow-hidden p-4 sm:p-6 md:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-foreground">
             Manage subscription
           </DialogTitle>
         </DialogHeader>

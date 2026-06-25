@@ -27,12 +27,12 @@ export function AuditTrailDefault() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex max-w-1/2 flex-col gap-2">
           <PageTitle>Audit trail</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             A tamper-evident record of every request, response, and policy
             decision the gateway handled. Investigate exactly what happened, and
             let anyone verify it independently.
           </p>
-          <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             To learn more, check out our{" "}
             <TextLink
               as="a"
@@ -58,7 +58,7 @@ export function AuditTrailDefault() {
               >
                 <List className="size-5 text-neutral-700" strokeWidth={1.75} />
               </div>
-              <span className="type-copy-14 text-neutral-500">
+              <span className="type-copy-14 text-muted-foreground">
                 No events logged
               </span>
             </div>
@@ -74,7 +74,7 @@ export function AuditTrailDefault() {
                   strokeWidth={1.75}
                 />
               </div>
-              <span className="type-copy-14 text-neutral-500">
+              <span className="type-copy-14 text-muted-foreground">
                 No fingerprints logged
               </span>
             </div>
