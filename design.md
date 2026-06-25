@@ -48,6 +48,7 @@ colors:
   neutral-900: "oklch(0.090 0 0)"
   neutral-950: "oklch(0.045 0 0)"
 
+  blue-25: "oklch(0.985 0.010 268.85)"  # code-direct: src/index.css:46 — tint below blue-50, used for the Pro card gradient floor
   blue-50: "oklch(0.970 0.020 268.85)"
   blue-100: "oklch(0.940 0.040 268.85)"
   blue-200: "oklch(0.890 0.075 268.85)"

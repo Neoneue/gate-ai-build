@@ -566,9 +566,11 @@ function PolicyCard({
   // Both tiers: the header is a collapse chevron and the enable toggle lives
   // in the body's first card. `expanded` controls visibility; `state.enabled`
   // (the in-body toggle) controls whether the option panels are active.
+  // Cards start COLLAPSED on every load to keep the page clean; the user
+  // opens the ones they want to tune.
   // The `variant` seam currently only gates the "BASIC" badge (Free only);
   // Free diverges further later.
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const bodyOpen = expanded;
   const toggleCard = FREE_TOGGLE_CARD[config.id];
 
@@ -731,7 +733,7 @@ function ProBenefitsCard() {
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="type-label-14 text-neutral-900">
+                    <span className="type-copy-14 text-neutral-900">
                       {benefit.title}
                     </span>
                     <span className="type-copy-12 text-pretty text-neutral-500">

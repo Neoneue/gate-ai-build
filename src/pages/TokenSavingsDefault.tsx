@@ -22,7 +22,7 @@ export function TokenSavingsDefault() {
     >
       <div className="flex flex-col gap-2">
         <PageTitle>Token Savings</PageTitle>
-        <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-muted-foreground tracking-snug">
           Cache, compress and deduplicate to spend less per request.
         </p>
       </div>
@@ -40,7 +40,7 @@ export function TokenSavingsDefault() {
                 strokeWidth={1.75}
               />
             </div>
-            <span className="type-copy-14 text-neutral-500">
+            <span className="type-copy-14 text-muted-foreground">
               No savings yet
             </span>
           </div>
@@ -51,7 +51,7 @@ export function TokenSavingsDefault() {
             >
               <Layers className="size-5 text-neutral-700" strokeWidth={1.75} />
             </div>
-            <span className="type-copy-14 text-neutral-500">
+            <span className="type-copy-14 text-muted-foreground">
               No caching yet
             </span>
           </div>
@@ -62,14 +62,14 @@ export function TokenSavingsDefault() {
             >
               <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
             </div>
-            <span className="type-copy-14 text-neutral-500">
+            <span className="type-copy-14 text-muted-foreground">
               No compression yet
             </span>
           </div>
         </KpiRail>
       </div>
 
-      <SavingsOptionsSection />
+      <SavingsOptionsSection plan="free" />
     </DashboardChrome>
   );
 }

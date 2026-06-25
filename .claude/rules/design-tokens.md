@@ -15,8 +15,12 @@ every value you write must map to a named token or voice defined in `design.md`.
   `<hN className="text-…">`.
 - **One tracking system.** h2–h4 / body = normal tracking; only the page-title
   display tier is tight (documented). Don't sprinkle `tracking-tight`.
-- **Spacing on the grid.** Component intrinsics 4px; layout gaps / padding /
-  margin 8px only. No `gap-3` / `p-3`, no `*.5`.
+- **Spacing on the 4px grid.** Every spacing value (gaps, padding, margin) must
+  be a 4px multiple — `gap-1`/`2`/`3`/`4`… and `p-1`/`2`/`3`/`4`… are all fine
+  (`gap-3`/`p-3` = 12px is allowed). What stays banned: the `*.5` utilities
+  (`gap-0.5`, `mt-1.5`, `p-2.5` = 2/6/10px), which break the 4px unit. Prefer
+  the 8px steps (`2`/`4`/`6`/`8`) for layout rhythm where they fit; reach for the
+  odd 4px steps (`1`/`3`/`5`) when 8px is too coarse.
 
 ## When no token fits
 
