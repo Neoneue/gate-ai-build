@@ -29,6 +29,12 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 
 ## Components
 
+### Advanced compression bullet checks softened `166b7bd`
+
+**`src/pages/TokenSavings.tsx`**
+
+- Advanced compression bullet checks now use `bg-blue-100 text-blue-700` (soft) on both plans, instead of solid `bg-blue-600` on Pro. Keeps the saturated CTA button as the single loudest element rather than competing with a mass of solid-blue check dots.
+
 ### `lg` switch size `cbbefe0`
 
 **`src/components/ui/switch.tsx`**
