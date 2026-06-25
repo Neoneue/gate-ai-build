@@ -31,3 +31,9 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 
 - Basic plan "~8% smaller requests" figure recolored to `text-success-700` (green), mirroring the Advanced card's `text-blue-700` accent.
 - Advanced footer tail copy shortened to "…, increasing with heavier workloads."
+
+### Auto-recharge enable card: drop gray fill `e788311`
+
+**`src/pages/Billing.tsx`, `src/pages/BillingFree.tsx`**
+
+- Removed `bg-neutral-50` from the top "Enable auto-recharge" card in both auto-recharge dialogs; it now sits flush on the white dialog surface (border + padding retained). The other gray cards in each modal are unchanged.
