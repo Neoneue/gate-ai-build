@@ -37,5 +37,12 @@ result.
 
 If you have made 2+ edits or 2+ browser measurements on one issue without a
 confirmed root cause, you are thrashing. Stop, revert to last commit, and pin
-the surface (step 1). Relevant memory: `feedback_confirm-route-file-before-debugging`,
-`feedback_refactors-breaking-working-code`, `feedback_reply-fast-no-overthinking`.
+the surface (step 1).
+
+Two hard-won specifics this gate absorbs: (a) **confirm route→file before any
+edit** — Free/Pro/Default twins are separate files, and a fix in the wrong twin
+looks identical to a broken fix; (b) **passing tsc/lint/build is NOT proof a
+feature works** (Vite renders despite TS errors) — verify working behavior
+in-browser before and after a refactor, and revert to the last good commit
+instead of patching a refactor forward. Relevant memory:
+`feedback_reply-fast-no-overthinking`.
