@@ -16,6 +16,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -2118,6 +2119,116 @@ export function RequestDetailBodyV2({
 
   const selectedFinding = findings[selectedIdx] ?? null;
 
+  // Clean pass (success + allow, no provider error): the left card's first well
+  // (User message / Tool call) grows by the gap below the left card so its
+  // bottom lines up with the right column's bottom.
+  const isCleanPass =
+    row.errorSource !== "provider" &&
+    row.status === "success" &&
+    row.guardrail === "allow";
+
+  // Fill the gap below the left card so its bottom lines up with the right
+  // column's. Pure arithmetic — CSS can't do it because the left side can't see
+  // the right column's height. Each "grow well" (User message, Assistant
+  // response) only wants its own overflow, so a short message is never stretched
+  // into an empty box; the gap is split evenly across the wells that overflow,
+  // capped per well at how much each can actually use. Heights are set inline,
+  // never via class, and the math reads content (scrollHeight) — not the heights
+  // it sets — so it's stable under the ResizeObserver.
+  const gridRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    if (!(grid && isCleanPass)) {
+      return;
+    }
+    const rightCol = grid.children[1] as HTMLElement | undefined;
+    const leftCard = grid.querySelector<HTMLElement>("[data-clean-card]");
+    const wells = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-grow-well]")
+    );
+    if (!(rightCol && leftCard && wells.length)) {
+      return;
+    }
+    const WELL_CAP = 200;
+    const clearWells = () => {
+      for (const w of wells) {
+        w.style.height = "";
+        w.style.maxHeight = "";
+      }
+    };
+    const sync = () => {
+      // Two-column layout only; the stacked mobile layout keeps natural height.
+      if (!window.matchMedia("(min-width: 768px)").matches) {
+        clearWells();
+        return;
+      }
+      // Right column is grid-stretched, so measure its cards' natural span.
+      const first = rightCol.firstElementChild;
+      const last = rightCol.lastElementChild;
+      if (!(first && last)) {
+        return;
+      }
+      const rightHeight =
+        last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+      // Per well: lo = its capped resting height, hi = its full content height,
+      // cap = how much overflow it could absorb. scrollHeight is the content
+      // height regardless of the inline height we set (we never set above hi).
+      const info = wells.map((w) => {
+        const content = w.scrollHeight;
+        const lo = Math.min(content, WELL_CAP);
+        return { w, lo, cap: content - lo };
+      });
+      // Non-well chrome (headings, Full request, padding) — stays constant as
+      // the wells grow, so the available space for the wells is stable.
+      const sumOffsets = info.reduce((s, i) => s + i.w.offsetHeight, 0);
+      const otherHeight = leftCard.offsetHeight - sumOffsets;
+      const sumLo = info.reduce((s, i) => s + i.lo, 0);
+      const sumCap = info.reduce((s, i) => s + i.cap, 0);
+      // The gap, clamped so we never grow a well past its own content.
+      let extra = Math.max(
+        0,
+        Math.min(rightHeight - otherHeight - sumLo, sumCap)
+      );
+      // Water-fill: hand out the gap evenly, spilling a maxed well's remainder
+      // to the others, so two overflowing wells split a 100px gap 50/50.
+      const alloc = info.map(() => 0);
+      let active = info
+        .map((i, idx) => (i.cap > 0 ? idx : -1))
+        .filter((idx) => idx >= 0);
+      while (extra > 0.5 && active.length > 0) {
+        const share = extra / active.length;
+        let consumed = 0;
+        const stillActive: number[] = [];
+        for (const idx of active) {
+          const room = info[idx].cap - alloc[idx];
+          const give = Math.min(share, room);
+          alloc[idx] += give;
+          consumed += give;
+          if (info[idx].cap - alloc[idx] > 0.5) {
+            stillActive.push(idx);
+          }
+        }
+        extra -= consumed;
+        if (consumed < 0.5) {
+          break;
+        }
+        active = stillActive;
+      }
+      info.forEach((i, idx) => {
+        const next = `${Math.round(i.lo + alloc[idx])}px`;
+        if (i.w.style.height !== next) {
+          i.w.style.height = next;
+          i.w.style.maxHeight = next;
+        }
+      });
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(rightCol);
+    ro.observe(leftCard);
+    return () => ro.disconnect();
+  }, [isCleanPass]);
+
   // Copy the finding's match fingerprint to clipboard.
 
   return (
@@ -2159,7 +2270,7 @@ export function RequestDetailBodyV2({
             "pt-6",
           ].join(" ")}
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3" ref={gridRef}>
             {/* Left column (2/3): an OUTER card wrapping the per-finding
                   detail sections, or a calm "No findings" default when
                   nothing fired. */}
@@ -3411,14 +3522,21 @@ function SubcardHeading({ label }: { label: string }) {
 function DetailMessageSubcard({
   label,
   content,
+  growWell = false,
 }: {
   label: string;
   content: string;
+  /** Tags this well so the clean-pass layout effect can grow its height by the
+   * gap below the left card. Height is set via inline style, not class. */
+  growWell?: boolean;
 }) {
   return (
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
-      <div className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-neutral-900">
+      <div
+        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-neutral-900"
+        data-grow-well={growWell ? "" : undefined}
+      >
         {content}
       </div>
     </section>
@@ -3630,14 +3748,16 @@ function RequestTurnComplement({
 function NoFindingTurns({ row }: { row: RequestRow }) {
   const { isTool, userContent, responseContent } = resolveRequestTurns(row);
   return (
-    <div className={PANEL_OUTER}>
+    <div className={PANEL_OUTER} data-clean-card>
       <DetailMessageSubcard
         content={userContent}
+        growWell
         label={isTool ? "Tool call" : "User message"}
       />
       {responseContent && (
         <DetailMessageSubcard
           content={responseContent}
+          growWell
           label="Assistant response"
         />
       )}
