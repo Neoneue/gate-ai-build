@@ -520,7 +520,7 @@ function AutoRechargeDialog({
         </DialogHeader>
 
         {/* Enable card */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border p-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p
               className="type-label-14 m-0 text-neutral-900"
