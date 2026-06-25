@@ -108,3 +108,35 @@ Added six new display-tier type voices (`font-medium`, tight negative tracking, 
 | `type-heading-32` | 32/40 | -1px |
 
 Documented in `design.md` semantic type table.
+
+---
+
+### Shared ON/OFF StatusBadge `b185914`
+
+**`src/components/ui/status-badge.tsx`** (new)
+
+- `<StatusBadge on={boolean} />` renders the on/off state pill: `success` (green) + `CircleCheck` when on, `neutral` (grey) + `CircleSlash` when off — both lucide icons at `size-3.5`, color inherited via `currentColor`.
+- Height overridden to `h-6` (24px), 4px taller than the standard badge `h-5`, so the state pill reads distinctly from same-shaped Free/Pro tier badges. The leading glyph is the affordance (state indicator), allowed under Badge contract #2 (not a redundant tone restatement).
+- Replaces the inline `<Badge variant={enabled ? "success" : "neutral"}>ON/OFF</Badge>` previously duplicated across Token Savings and Policies headers.
+
+---
+
+## Sections
+
+### Token Savings: Compression plan cards + card-wrapped Caching options `b185914`
+
+**`src/pages/TokenSavings.tsx`**
+
+- **Compression card** — below the enable strip, added two side-by-side plan cards: **Basic compression** (Free, neutral card, `bg-muted-foreground` check chips) and **Advanced compression** (Pro, blue CTA card `border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25`, `bg-blue-600` check chips), modeled on the Policies `ProBenefitsCard`. Each lists four benefits + a "Real traffic" footer (~8% / ~29%). The Pro card's "Upgrade to Pro" button sits flush-right in its title row and opens `PlanComparisonDialog`.
+- Plan-card footers pin to the bottom via `flex-1` + `mt-auto` so both cards bottom-align; title + subtitle wrapped in their own `flex-col gap-1` column with the control as a sibling, so subtitles align regardless of control height.
+- **Caching card** — the two options (Enable response caching, TTL) each wrapped in their own `rounded-sm border-border bg-transparent shadow-none` card (Policies option-card pattern); `Separator` removed.
+- ON/OFF `StatusBadge` moved into the Compression and Caching `CardChromeHeader` (flush right, via new `action` slot); badges removed from next to the visible toggles.
+- "Free" badge on the Basic card switched `neutral` → `success` (green).
+- Body text migrated to semantic tokens (`text-foreground` / `text-muted-foreground`), not the `text-neutral-*` ramp.
+
+### Policies: header status badges + Free prompt-injection Action panel `b185914`
+
+**`src/pages/Policies.tsx`**
+
+- Each policy card header gained an ON/OFF `StatusBadge` to the left of the collapse chevron, keyed to `state.enabled` — gives enabled-state visibility when the card is collapsed.
+- Free prompt-injection card now renders the **Action on detection** panel (Block / Flag) above the Pro CTA and below the enable card; Sensitivity panel stays Pro-only. `showOptionPanels` comment updated to match.
