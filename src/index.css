@@ -43,6 +43,7 @@ and (pointer: fine)) and (&:hover));
 
   /* Blue (brand) — anchored to brand mark at blue-700. logomark.svg is the
      source of truth; the rest of the ramp is derived around it. */
+  --color-blue-25:  oklch(0.985 0.010 268.85);
   --color-blue-50:  oklch(0.970 0.020 268.85);
   --color-blue-100: oklch(0.940 0.040 268.85);
   --color-blue-200: oklch(0.890 0.075 268.85);
@@ -163,13 +164,16 @@ and (pointer: fine)) and (&:hover));
      Floor is text-xs (12px) — sub-12px sizes are out of scale by policy.
        text-3xl: 30 → 32   (Geist heading-32)
        text-4xl: 36 → 40   (Geist heading-40)
-       text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1) */
+       text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1)
+       text-8xl: 96 → 64   (Geist heading-64; no default step at 4rem) */
   --text-3xl: 2rem;
   --text-3xl--line-height: 2.5rem;
   --text-4xl: 2.5rem;
   --text-4xl--line-height: 3rem;
   --text-6xl: 3.5rem;
   --text-6xl--line-height: 1;
+  --text-8xl: 4rem;
+  --text-8xl--line-height: 1;
 
   /* Tracking token — sub-pixel tightening for two specific tiers:
        1. Small sans titles — CardTitle / in-card h3 at
@@ -370,4 +374,120 @@ body {
   [role="button"]:not(:disabled):not([aria-disabled="true"]) {
     cursor: pointer;
   }
+}
+
+@layer utilities {
+  /* Semantic type roles (Vercel-style): heading, label, copy.
+     Use these roles in page code instead of ad-hoc text-* mixes. */
+
+  /* Display tier — medium weight, tight tracking */
+  .type-heading-72 {
+    @apply font-sans text-7xl font-medium tracking-tight;
+  }
+  .type-heading-64 {
+    @apply font-sans text-8xl font-medium tracking-tight;
+  }
+  .type-heading-56 {
+    @apply font-sans text-6xl font-medium tracking-tight;
+  }
+  .type-heading-48 {
+    @apply font-sans text-5xl/14 font-medium tracking-tight;
+  }
+  .type-heading-40 {
+    @apply font-sans text-4xl/12 font-medium tracking-tight;
+  }
+  .type-heading-32 {
+    @apply font-sans text-3xl/10 font-medium tracking-tight;
+  }
+
+  .type-heading-24 {
+    @apply font-sans text-2xl/8 font-medium tracking-snug;
+  }
+
+  .type-heading-20 {
+    @apply font-sans text-xl/7 font-medium tracking-snug;
+  }
+
+  .type-heading-18 {
+    @apply font-sans text-lg/7 font-medium tracking-snug;
+  }
+
+  .type-heading-16 {
+    @apply font-sans text-base/6 font-medium tracking-snug;
+  }
+
+  .type-heading-14 {
+    @apply font-sans text-sm font-medium;
+  }
+
+  /* Heading aliases used across site title hierarchy (5 levels). */
+  .h1 {
+    @apply font-sans text-3xl font-medium tracking-tight;
+  }
+  .h2 {
+    @apply font-sans text-2xl/8 font-medium;
+  }
+  .h3 {
+    @apply font-sans text-xl/7 font-medium;
+  }
+  .h4 {
+    @apply font-sans text-lg/7 font-medium;
+  }
+  .h5 {
+    @apply font-sans text-base/6 font-medium;
+  }
+
+  .type-label-20 {
+    @apply font-sans text-xl/8 font-normal tracking-tight;
+  }
+
+  .type-label-18 {
+    @apply font-sans text-lg/5 font-normal tracking-tight;
+  }
+
+  .type-label-16 {
+    @apply font-sans text-base font-medium tracking-tight;
+  }
+
+  .type-label-14 {
+    @apply font-sans text-sm font-medium;
+  }
+
+  .type-label-12 {
+    @apply font-sans text-xs font-medium;
+  }
+
+  .type-copy-24 {
+    @apply font-sans text-2xl/9 font-normal tracking-snug;
+  }
+
+  .type-copy-20 {
+    @apply font-sans text-xl/9 font-normal tracking-snug;
+  }
+
+  .type-copy-18 {
+    @apply font-sans text-lg/7 font-normal tracking-snug;
+  }
+
+  .type-copy-16 {
+    @apply font-sans text-base font-normal tracking-snug;
+  }
+
+  .type-copy-14 {
+    @apply font-sans text-sm font-normal;
+  }
+
+  .type-copy-14-tight {
+    @apply font-sans text-sm/5 font-normal;
+  }
+
+  .type-copy-12 {
+    @apply font-sans text-xs font-normal;
+  }
+
+  /* Form/input helper copy: 12px tier + 8px separation from control. */
+  .type-input-helper {
+    @apply m-0 mt-2 font-sans text-xs font-normal text-pretty text-neutral-500 tracking-tight;
+  }
+
 }

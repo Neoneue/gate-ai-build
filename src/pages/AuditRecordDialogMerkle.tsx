@@ -664,7 +664,7 @@ function MerkleTreeViewer({
       <div className="absolute top-4 right-4 flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-sm">
         <button
           aria-label="Zoom in"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={zoom >= MAX_ZOOM}
           onClick={zoomIn}
           type="button"
@@ -674,7 +674,7 @@ function MerkleTreeViewer({
         <div className="h-px bg-border" />
         <button
           aria-label="Zoom out"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={zoom <= MIN_ZOOM}
           onClick={zoomOut}
           type="button"
@@ -684,7 +684,7 @@ function MerkleTreeViewer({
         <div className="h-px bg-border" />
         <button
           aria-label="Reset view"
-          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="inline-flex size-8 items-center justify-center text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100"
           disabled={isDefaultView}
           onClick={resetView}
           type="button"
@@ -722,11 +722,11 @@ function MerklePathPanel({ row }: { row: EventRow }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Description */}
-      <p className="m-0 text-neutral-800 text-sm">
+      <p className="type-copy-14 m-0 text-foreground">
         Highlighted path cryptographically proves{" "}
-        <span className="font-mono text-neutral-900">{leafHex}</span> is
-        included in fingerprint root{" "}
-        <span className="font-mono text-neutral-900">{anchorShort}</span>.
+        <span className="font-mono text-foreground">{leafHex}</span> is included
+        in fingerprint root{" "}
+        <span className="font-mono text-foreground">{anchorShort}</span>.
       </p>
 
       {/* Tree card — SVG fills the card edge-to-edge; the card chrome owns the
@@ -735,7 +735,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
         {/* Expand FAB — opens the interactive zoom/pan viewer. */}
         <button
           aria-label="Expand Merkle tree"
-          className="absolute top-2 right-2 z-10 inline-flex size-8 items-center justify-center rounded-sm border border-border bg-card text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="absolute top-2 right-2 z-10 inline-flex size-8 items-center justify-center rounded-sm border border-border bg-card text-neutral-700 transition-[colors,transform] duration-150 ease-out hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:enabled:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           onClick={() => setExpandOpen(true)}
           type="button"
         >
@@ -750,9 +750,9 @@ function MerklePathPanel({ row }: { row: EventRow }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-neutral-500 text-xs">
+      <div className="type-copy-12 flex items-center justify-between text-muted-foreground">
         <span>
-          <span className="text-neutral-500">Path:</span>{" "}
+          <span className="text-muted-foreground">Path:</span>{" "}
           <span className="font-mono text-neutral-700">
             leaf → L2 → L1 → ROOT
           </span>
@@ -773,7 +773,7 @@ function MerklePathPanel({ row }: { row: EventRow }) {
           showCloseButton={true}
           style={{ width: 800, height: 640, maxWidth: 800 }}
         >
-          <DialogTitle className="m-0 font-medium font-sans text-lg text-neutral-900 leading-none">
+          <DialogTitle className="type-heading-18 m-0 text-foreground leading-none">
             Merkle tree
           </DialogTitle>
           <MerkleTreeViewer
@@ -832,11 +832,11 @@ function HowItWorksPanel() {
           >
             <div className="flex items-center gap-2">
               <NumberChip>{step.id}</NumberChip>
-              <h3 className="m-0 font-medium text-neutral-900 text-sm">
+              <h3 className="type-label-14 m-0 text-foreground">
                 {step.title}
               </h3>
             </div>
-            <p className="m-0 text-pretty text-neutral-700 text-sm">
+            <p className="type-copy-14 m-0 text-pretty text-neutral-700">
               {step.body}
             </p>
           </div>
@@ -858,10 +858,10 @@ function HowItWorksPanel() {
             <BookOpen aria-hidden className="size-4 text-neutral-700" />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="font-medium text-neutral-900 text-sm">
+            <span className="type-label-14 text-foreground">
               Digital Evidence docs
             </span>
-            <span className="text-pretty text-neutral-700 text-sm">
+            <span className="type-copy-14 text-pretty text-neutral-700">
               How Constellation's tamper-evident layer makes every event in this
               log independently verifiable.
             </span>
@@ -869,7 +869,7 @@ function HowItWorksPanel() {
         </span>
         <ExternalLink
           aria-hidden
-          className="size-4 shrink-0 text-neutral-500 transition-colors duration-150 ease-out group-hover:text-neutral-900 motion-reduce:transition-none"
+          className="size-4 shrink-0 text-muted-foreground transition-colors duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none"
         />
       </a>
     </div>
@@ -909,16 +909,16 @@ export function AuditRecordDialogMerkle({
          * statement before the tabbed detail. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
-            <p className="m-0 text-neutral-900 text-sm">
+            <p className="type-copy-14 m-0 text-foreground">
               This event is fingerprinted to{" "}
               <span className="font-medium">
                 Constellation's Digital Evidence
               </span>{" "}
               layer.
             </p>
-            <p className="m-0 text-neutral-500 text-xs">
+            <p className="type-copy-12 m-0 text-muted-foreground">
               Fingerprinted ·{" "}
-              <span className="font-mono text-neutral-800">
+              <span className="font-mono text-foreground">
                 {truncateHex(row.anchor, 4, 4)}
               </span>
               {" · "}
@@ -945,7 +945,7 @@ export function AuditRecordDialogMerkle({
                   label="Time"
                   value={
                     <Timestamp
-                      className="font-mono text-neutral-800"
+                      className="font-mono text-foreground"
                       date={row.at}
                     />
                   }
@@ -953,7 +953,7 @@ export function AuditRecordDialogMerkle({
                 <DetailRow
                   label="Event ID"
                   value={
-                    <span className="break-all font-mono text-neutral-800">
+                    <span className="break-all font-mono text-foreground">
                       {row.eventId}
                     </span>
                   }
@@ -969,12 +969,12 @@ export function AuditRecordDialogMerkle({
                 <DetailRow
                   label="Description"
                   value={
-                    <span className="text-neutral-900">{row.description}</span>
+                    <span className="text-foreground">{row.description}</span>
                   }
                 />
                 <DetailRow
                   label="Member"
-                  value={<span className="text-neutral-800">{row.member}</span>}
+                  value={<span className="text-foreground">{row.member}</span>}
                 />
                 <DetailRow
                   label="Fingerprint"
@@ -986,7 +986,7 @@ export function AuditRecordDialogMerkle({
                         strokeWidth={1.75}
                       />
                       <span className="sr-only">Verified fingerprint</span>
-                      <span className="whitespace-nowrap font-mono text-neutral-800">
+                      <span className="whitespace-nowrap font-mono text-foreground">
                         {truncateHex(row.anchor, 4, 4)}
                       </span>
                     </span>

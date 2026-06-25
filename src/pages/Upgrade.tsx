@@ -129,13 +129,13 @@ function PlanCard({
         {plan.badge.label}
       </Badge>
 
-      <p className="m-0 font-medium text-2xl text-neutral-900 tabular-nums tracking-tight">
+      <p className="type-heading-24 m-0 text-foreground tabular-nums tracking-tight">
         {plan.price}
-        <span className="text-lg text-muted-foreground"> per month</span>
+        <span className="type-copy-18 text-muted-foreground"> per month</span>
       </p>
 
       <div className="flex flex-col gap-2">
-        <p className="m-0 font-medium text-neutral-900 text-xs">
+        <p className="type-label-12 m-0 text-foreground">
           {plan.benefitsLabel}
         </p>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
@@ -151,8 +151,8 @@ function PlanCard({
                 />
               </span>
               <div className="flex flex-col">
-                <span className="text-neutral-900 text-sm">{title}</span>
-                <span className="text-pretty text-neutral-500 text-xs">
+                <span className="type-copy-14 text-foreground">{title}</span>
+                <span className="type-copy-12 text-pretty text-muted-foreground">
                   {detail}
                 </span>
               </div>
@@ -195,7 +195,7 @@ export function Upgrade() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
           key level. Limits run inline with no separate billing system to wire
           up.
@@ -204,12 +204,12 @@ export function Upgrade() {
       <section aria-labelledby="compare-plans-heading">
         <div className="mb-4 flex flex-col gap-2">
           <h2
-            className="m-0 font-medium font-sans text-lg text-neutral-900 tracking-tight"
+            className="type-heading-18 m-0 text-foreground tracking-tight"
             id="compare-plans-heading"
           >
             Compare plans
           </h2>
-          <p className="m-0 font-sans text-neutral-500 text-sm">
+          <p className="type-copy-14 m-0 text-muted-foreground">
             Choose the plan that fits your team. Upgrade any time from your
             billing settings.
           </p>

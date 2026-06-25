@@ -260,7 +260,7 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>API Keys</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
           every request through the gateway.
         </p>
@@ -333,16 +333,16 @@ export function UsageInfo() {
   return (
     <section className="@container/connect flex flex-col gap-6">
       <div className="flex max-w-1/2 flex-col gap-2">
-        <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+        <h3 className="type-heading-18 m-0 text-balance text-foreground">
           How to make requests
         </h3>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-muted-foreground">
           There are two ways to start making requests using your API key. With{" "}
           <span className="font-medium">Gate Connect</span>, setup is automatic,
           so you can skip the code entirely. Want to configure it yourself? Use
           the code snippets to do it by hand.
         </p>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
+        <p className="type-copy-14 m-0 text-muted-foreground">
           To learn more, check out our{" "}
           <TextLink
             as="a"
@@ -373,7 +373,7 @@ export function UsageInfo() {
                 gateConnectOnly
                 imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
                 textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
-                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-neutral-900 text-balance m-0"
+                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
               />
             </div>
           </Card>
@@ -383,7 +383,7 @@ export function UsageInfo() {
           <Card className="flex flex-1 flex-col" density="flush">
             <div className="flex-1">
               <ConnectTabs
-                codeMaxHeight="h-[208px]"
+                codeMaxHeight="h-[216px]"
                 defaultTab={rightDefaultTab}
                 floatingCopy
                 showGateConnect={false}
@@ -474,7 +474,7 @@ function KeysTable({
                     to neutral-600. Single-line two-tone form shared with the
                     Events / Requests / Activity Key columns. */}
                 <TableCell className="whitespace-nowrap font-mono">
-                  <span className="text-neutral-800">{row.name}</span>
+                  <span className="text-foreground">{row.name}</span>
                   <span className="text-neutral-600"> ({row.masked})</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
@@ -488,10 +488,10 @@ function KeysTable({
                   <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-neutral-800">
+                <TableCell className="whitespace-nowrap text-foreground">
                   <Timestamp date={row.createdAt} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-neutral-800">
+                <TableCell className="whitespace-nowrap text-foreground">
                   <Timestamp date={row.lastUsed} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right">
@@ -590,7 +590,7 @@ export function CreateKeyDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-foreground">
               Create API key
             </DialogTitle>
             <DialogDescription>
@@ -603,12 +603,12 @@ export function CreateKeyDialog({
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <Label
-                className="font-medium text-neutral-600 text-sm"
+                className="type-label-14 text-neutral-600"
                 htmlFor="apikey-name"
               >
                 Name
               </Label>
-              <span className="font-sans text-neutral-500 text-xs">
+              <span className="type-copy-12 text-muted-foreground">
                 Shown in logs and audit events.
               </span>
             </div>
@@ -631,7 +631,7 @@ export function CreateKeyDialog({
             className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
             role="note"
           >
-            <p className="m-0 font-sans text-sm text-warning-700">
+            <p className="type-copy-14 m-0 text-warning-700">
               The full key will only be shown once. Store it securely.
             </p>
           </div>
@@ -687,7 +687,7 @@ export function KeyCreatedDialog({
               className="size-5 shrink-0 text-success-600"
               strokeWidth={1.75}
             />
-            <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+            <DialogTitle className="type-heading-18 text-foreground">
               Key created. Copy it now.
             </DialogTitle>
           </div>
@@ -700,12 +700,12 @@ export function KeyCreatedDialog({
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
         <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-neutral-100">
-          <div className="flex-1 break-all px-3 py-2 font-mono text-neutral-800 text-sm">
+          <div className="flex-1 break-all px-3 py-2 font-mono text-foreground text-sm">
             {fullKey}
           </div>
           <button
             aria-label={copied ? "Copied" : "Copy API key"}
-            className="flex shrink-0 items-center gap-2 border-border border-l px-4 font-medium font-sans text-neutral-600 text-sm transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
             type="button"
           >
@@ -727,10 +727,10 @@ export function KeyCreatedDialog({
           className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
           role="note"
         >
-          <p className="m-0 font-medium font-sans text-sm text-warning-700">
+          <p className="type-label-14 m-0 text-warning-700">
             Store this somewhere safe
           </p>
-          <p className="m-0 font-sans text-sm text-warning-700">
+          <p className="type-copy-14 m-0 text-warning-700">
             Paste it into your secret manager or .env before closing. Once you
             close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the
             key to get a new one.
@@ -745,7 +745,7 @@ export function KeyCreatedDialog({
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
-            className="font-normal text-neutral-700 text-sm"
+            className="type-copy-14 text-neutral-700"
             htmlFor="apikey-saved-confirm"
           >
             I&rsquo;ve saved this key to a secret manager.

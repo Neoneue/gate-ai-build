@@ -44,7 +44,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint . && ultracite check",
+    "lint": "eslint . && ultracite check && npm run lint:design",
+    "lint:design": "node scripts/check-design-tokens.mjs",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "preview": "vite preview",

@@ -1,14 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
+import { SparklesIcon } from "@/components/ui/sparkles";
 
 // Shared Pro-upsell card for the `-free` feature pages. The icon and body copy
-// vary per feature; everything else (icon chip, 18px balanced title, button
-// row, and the Compare-plans dialog wiring) is baked in so a stylistic change
-// here lands on every page that uses it.
+// vary per feature; everything else (blue card chrome, button) is baked in so
+// a stylistic change here lands on every page that uses it.
 export function ProUpgradeCard({
   icon: Icon,
   body,
@@ -19,35 +17,30 @@ export function ProUpgradeCard({
   title?: string;
 }) {
   const navigate = useNavigate();
-  const [compareOpen, setCompareOpen] = useState(false);
   return (
-    <>
-      <EmptyState
-        action={
-          <div className="flex items-center gap-2 pt-4">
-            <Button onClick={() => navigate("/billing")}>Go to Billing</Button>
-            <Button onClick={() => setCompareOpen(true)} variant="outline">
-              Compare plans
-            </Button>
-          </div>
-        }
-        body={body}
-        className="[&_h3]:text-balance"
-        icon={
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-full bg-muted"
+    <EmptyState
+      action={
+        <div className="pt-4">
+          <Button
+            className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+            onClick={() => navigate("/billing")}
           >
-            <Icon className="size-5 text-neutral-700" />
-          </div>
-        }
-        title={title}
-      />
-      <PlanComparisonDialog
-        onOpenChange={setCompareOpen}
-        onUpgrade={() => navigate("/billing")}
-        open={compareOpen}
-      />
-    </>
+            <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
+            Upgrade to Pro
+          </Button>
+        </div>
+      }
+      body={body}
+      className="border-blue-200 bg-blue-25 shadow-sm [&_h3]:text-balance"
+      icon={
+        <div
+          aria-hidden
+          className="flex size-12 items-center justify-center rounded-full bg-blue-100"
+        >
+          <Icon className="size-5 text-blue-700" />
+        </div>
+      }
+      title={title}
+    />
   );
 }

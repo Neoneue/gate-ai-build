@@ -49,15 +49,13 @@ export function Settings() {
 
 function SettingsSurface() {
   return (
-    <>
+    <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
       <PageHeader />
-      <div className="grid grid-cols-12">
-        <div className="col-span-12 flex flex-col gap-4 2xl:col-span-9">
-          <ProfileCard />
-          <SecurityCard />
-        </div>
+      <div className="flex flex-col gap-4">
+        <ProfileCard />
+        <SecurityCard />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -68,7 +66,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Settings</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Profile, security, logging, and integrations.
         </p>
       </div>
@@ -132,7 +130,7 @@ function ProfileCard() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="gap-y-1">
         <CardTitle>Profile</CardTitle>
         <CardDescription>
           View and update your personal and organization's information.
@@ -143,7 +141,7 @@ function ProfileCard() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
-                className="mb-1 block font-medium text-neutral-700 text-sm"
+                className="type-label-14 mb-1 block text-neutral-700"
                 htmlFor="settings-first-name"
               >
                 First name
@@ -157,7 +155,7 @@ function ProfileCard() {
             </div>
             <div>
               <label
-                className="mb-1 block font-medium text-neutral-700 text-sm"
+                className="type-label-14 mb-1 block text-neutral-700"
                 htmlFor="settings-last-name"
               >
                 Last name
@@ -171,7 +169,7 @@ function ProfileCard() {
             </div>
             <div>
               <label
-                className="mb-1 block font-medium text-neutral-700 text-sm"
+                className="type-label-14 mb-1 block text-neutral-700"
                 htmlFor="settings-email"
               >
                 Email
@@ -184,14 +182,14 @@ function ProfileCard() {
                 type="email"
                 value={email}
               />
-              <p className="m-0 mt-1 text-pretty font-sans text-neutral-500 text-xs tracking-tight">
-                Verified at sign-in. Changing it requires re-verification
-                through your identity provider.
+              <p className="type-input-helper">
+                Verified at sign-in; changes require identity-provider
+                re-verification.
               </p>
             </div>
             <div>
               <label
-                className="mb-1 block font-medium text-neutral-700 text-sm"
+                className="type-label-14 mb-1 block text-neutral-700"
                 htmlFor="settings-organization"
               >
                 Organization
@@ -234,7 +232,7 @@ function ProfileCard() {
 function SecurityCard() {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="gap-y-1">
         <CardTitle>Security</CardTitle>
         <CardDescription>
           Passkeys — phishing-resistant, no password required.
@@ -243,8 +241,8 @@ function SecurityCard() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center">
           <div className="flex flex-col gap-1">
-            <p className="m-0 font-medium text-neutral-900 text-sm">Passkey</p>
-            <p className="m-0 text-neutral-500 text-sm">
+            <p className="type-label-14 m-0 text-foreground">Passkey</p>
+            <p className="type-copy-14 m-0 text-muted-foreground">
               Sign in with Touch ID, Windows Hello, or a hardware key.
             </p>
           </div>
@@ -253,10 +251,12 @@ function SecurityCard() {
             Add a passkey
           </Button>
         </div>
-        <SectionHeading as="h4">Registered passkeys</SectionHeading>
-        <p className="m-0 font-sans text-neutral-500 text-sm">
-          No passkeys registered yet.
-        </p>
+        <div className="flex flex-col gap-1">
+          <SectionHeading as="h4">Registered passkeys</SectionHeading>
+          <p className="type-copy-14 m-0 text-muted-foreground">
+            No passkeys registered yet.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

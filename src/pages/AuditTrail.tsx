@@ -1,4 +1,4 @@
-import { CircleCheck, Download } from "lucide-react";
+import { CircleCheck, Info } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SlidersHorizontalIcon } from "@/components/ui/sliders-horizontal";
 import {
   SortableTableHead,
@@ -38,6 +33,12 @@ import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { UploadIcon } from "@/components/ui/upload";
 import {
   EVENT_ROWS,
   type EventKind,
@@ -123,13 +124,12 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
-          Every model call gets a cryptographic receipt. Receipts are
-          fingerprinted to Constellation's Digital Evidence layer on a public
-          chain, so anyone can verify a record existed and was unmodified,
-          including after retention. No trust in Constellation required.
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+          A tamper-evident record of every request, response, and policy
+          decision the gateway handled. Investigate exactly what happened, and
+          let anyone verify it independently.
         </p>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           To learn more, check out our{" "}
           <TextLink
             as="a"
@@ -141,14 +141,6 @@ function PageHeader() {
           </TextLink>
           .
         </p>
-      </div>
-      {/* TODO: wire the page-level Export action per the Audit Trail review doc.
-          Export view is not built yet — no onClick handler. */}
-      <div className="flex items-center gap-2">
-        <Button size="default" type="button" variant="outline">
-          <Download />
-          Export view
-        </Button>
       </div>
     </div>
   );
@@ -163,10 +155,35 @@ function PageHeader() {
  * match the 24px KPI hero values directly below — NOT the text-sm
  * `SectionHeading` primitive, whose tier is modal body-section labels. */
 function OverviewBar() {
+  return <SectionTitle>Overview</SectionTitle>;
+}
+
+/* ─── Fingerprint info tooltip ──────────────────────────────────────── */
+
+/* Info-icon tooltip explaining what a fingerprint is. Shared by the
+   "Last fingerprint" KPI tile and the Fingerprint table column header so the
+   copy lives in one place. */
+function FingerprintInfoTooltip() {
   return (
-    <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-      Overview
-    </h3>
+    <Tooltip>
+      <TooltipTrigger
+        render={(props) => (
+          <button
+            {...props}
+            aria-label="What is a fingerprint?"
+            className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            type="button"
+          />
+        )}
+      >
+        <Info aria-hidden className="size-3.5" strokeWidth={2} />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        A fingerprint is a permanent record saved to Constellation's Digital
+        Evidence each time events are logged, so anyone can confirm these events
+        really happened and were never changed.
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -185,18 +202,14 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
-        <KpiTile
-          delta="+12.4%"
-          deltaNote="All time"
-          title="Events logged"
-          value={formatNumber(eventsLogged)}
-        />
+        <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
       </div>
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile
           href="https://digitalevidence.constellationnetwork.io/"
           linkLabel="Open in Explorer"
           title="Last fingerprint"
+          titleInfo={<FingerprintInfoTooltip />}
           value={mostRecent ? fmtRelative(mostRecent) : "—"}
         />
       </div>
@@ -372,9 +385,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             controls drop onto their own row (grid-cols-1) so the row never
             crushes on narrow screens. */}
         <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-12">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7 md:col-span-8">
-            Recent events
-          </h3>
+          <SectionTitle className="md:col-span-8">Recent events</SectionTitle>
           <div className="flex items-center gap-2 md:col-span-4">
             <SearchInput
               ariaLabel="Search audit events"
@@ -416,6 +427,16 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                 </Badge>
               ) : null}
             </Button>
+            <Button
+              className="border-border bg-card font-normal text-foreground"
+              disabled={isEmpty}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <UploadIcon aria-hidden data-icon="inline-start" size={16} />
+              Export CSV
+            </Button>
           </div>
         </div>
 
@@ -423,82 +444,48 @@ function EventLog({ rows }: { rows: EventRow[] }) {
         <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
           <DialogContent className="w-full gap-4 sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+              <DialogTitle className="type-heading-18 text-foreground">
                 Filters
               </DialogTitle>
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
+              <Label className="type-label-14 text-neutral-600">
                 Event time
               </Label>
               <DateRangePicker
                 className="w-full"
+                emptyLabel="Select"
                 onChange={setDraftDateRange}
                 value={draftDateRange}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
-                Member
-              </Label>
-              <Select
-                multiple
+              <Label className="type-label-14 text-neutral-600">Member</Label>
+              <MultiSelect
+                aria-label="Filter by member"
                 onValueChange={setDraftMembers}
+                options={MEMBER_OPTIONS.map((name) => ({
+                  value: name,
+                  label: name,
+                }))}
+                placeholder="All members"
                 value={draftMembers}
-              >
-                <SelectTrigger
-                  aria-label="Filter by member"
-                  className="w-full border-border bg-card font-normal text-foreground"
-                >
-                  <SelectValue>
-                    {(value: string[]) =>
-                      value.length === 0
-                        ? "All members"
-                        : `${value.length} selected`
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {MEMBER_OPTIONS.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="font-medium text-neutral-600 text-sm">
+              <Label className="type-label-14 text-neutral-600">
                 Event type
               </Label>
-              <Select
-                multiple
-                onValueChange={(v: string[]) => setDraftKinds(v as EventKind[])}
+              <MultiSelect
+                aria-label="Filter by event type"
+                onValueChange={(v) => setDraftKinds(v as EventKind[])}
+                options={KIND_OPTIONS}
+                placeholder="All event types"
                 value={draftKinds}
-              >
-                <SelectTrigger
-                  aria-label="Filter by event type"
-                  className="w-full border-border bg-card font-normal text-foreground"
-                >
-                  <SelectValue>
-                    {(value: string[]) =>
-                      value.length === 0
-                        ? "All event types"
-                        : `${value.length} selected`
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {KIND_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <DialogFooter className="sm:justify-between">
@@ -539,7 +526,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   </Button>
                 ) : undefined
               }
-              body="Requests, policy decisions, and limit checks will appear here as your workspace routes traffic."
+              body="No events match your current search or filters. Clear them to see the full audit trail."
               title="No audit events"
             />
           ) : (
@@ -587,7 +574,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       Member
                     </SortableTableHead>
                     <TableHead className="w-[18%] whitespace-nowrap">
-                      Fingerprint
+                      <span className="inline-flex items-center gap-1">
+                        Fingerprint
+                        <FingerprintInfoTooltip />
+                      </span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -606,10 +596,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       role="button"
                       tabIndex={0}
                     >
-                      <TableCell className="whitespace-nowrap text-neutral-800">
+                      <TableCell className="whitespace-nowrap text-foreground">
                         <Timestamp date={row.at} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-neutral-800">
+                      <TableCell className="whitespace-nowrap font-mono text-foreground">
                         {truncateHex(row.eventId)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -617,7 +607,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                           {row.kind}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-neutral-800">
+                      <TableCell className="text-foreground">
                         <span
                           className="line-clamp-2 break-words"
                           title={row.description}
@@ -625,7 +615,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                           {row.description}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-sans text-neutral-800">
+                      <TableCell className="whitespace-nowrap font-sans text-foreground">
                         {row.member}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -636,7 +626,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                             strokeWidth={1.75}
                           />
                           <span className="sr-only">Verified fingerprint</span>
-                          <span className="font-mono text-neutral-800">
+                          <span className="font-mono text-foreground">
                             {truncateHex(row.anchor, 4, 4)}
                           </span>
                         </span>

@@ -114,22 +114,34 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
 
 /** PRO-only nav ids — locked in the Free workspace (rendered as inert lock
  *  affordances, no navigation). Everything else routes to its `-free` twin. */
-const LOCKED_IN_FREE = new Set(["limits", "security-events"]);
+const LOCKED_IN_FREE = new Set<string>([]);
 
-/** Sidebar for the Free workspace, derived from SIDEBAR_SECTIONS so the two
- *  never drift: unlocked items point at their `-free` twin (and drop any
- *  PRO-only lock flag); Limits + Events become inert lock affordances. */
-export const FREE_SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_SECTIONS.map(
-  (section) => ({
+function buildVariantSections(
+  suffix: string,
+  lockedIds: Set<string>
+): SidebarSection[] {
+  return SIDEBAR_SECTIONS.map((section) => ({
     ...section,
     items: section.items.map((item) =>
-      LOCKED_IN_FREE.has(item.id)
+      lockedIds.has(item.id)
         ? { ...item, locked: true, pageId: undefined }
         : {
             ...item,
             locked: false,
-            pageId: item.pageId ? `${item.pageId}-free` : item.pageId,
+            pageId: item.pageId ? `${item.pageId}${suffix}` : item.pageId,
           }
     ),
-  })
+  }));
+}
+
+/** Sidebar for the Free workspace — unlocked items point at their `-free` twin. */
+export const FREE_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
+  "-free",
+  LOCKED_IN_FREE
+);
+
+/** Sidebar for the Default workspace — unlocked items point at their `-default` twin. */
+export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
+  "-default",
+  new Set<string>()
 );

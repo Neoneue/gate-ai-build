@@ -26,12 +26,12 @@ import {
 } from "@/components/ui/chart";
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
 import { Monogram } from "@/components/ui/monogram";
 import type { AvatarTone } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -178,25 +178,39 @@ export function Activity() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader
-        customRange={customRange}
-        onCustomRangeChange={(r) => {
-          if (r) {
-            setCustomRange(r);
-            setRange("custom");
-          } else {
-            setCustomRange(null);
-            setRange("all");
-          }
-        }}
-        onRangeChange={(r) => {
-          setRange(r);
-          setCustomRange(null);
-        }}
-        range={range}
-      />
-      <KpiRail customRange={customRange} range={range} />
-      <TrendCard customRange={customRange} range={range} />
+      <PageHeader />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <SectionTitle>Overview</SectionTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedPill
+              aria-label="Time range"
+              onValueChange={(v) => {
+                setRange(v as PresetRange);
+                setCustomRange(null);
+              }}
+              options={RANGE_OPTIONS}
+              size="sm"
+              value={range === "custom" ? "" : range}
+            />
+            <DateRangePicker
+              onChange={(r) => {
+                if (r) {
+                  setCustomRange(r);
+                  setRange("custom");
+                } else {
+                  setCustomRange(null);
+                  setRange("all");
+                }
+              }}
+              size="sm"
+              value={customRange}
+            />
+          </div>
+        </div>
+        <KpiRail customRange={customRange} range={range} />
+        <TrendCard customRange={customRange} range={range} />
+      </div>
       <TopByAxisRow customRange={customRange} range={range} />
       <UsageByKey customRange={customRange} range={range} />
     </DashboardChrome>
@@ -205,37 +219,14 @@ export function Activity() {
 
 /* ─── Page header — title + subtitle on left, range pill on right ───────── */
 
-function PageHeader({
-  range,
-  customRange,
-  onRangeChange,
-  onCustomRangeChange,
-}: {
-  range: Range;
-  customRange: CustomRange | null;
-  onRangeChange: (r: PresetRange) => void;
-  onCustomRangeChange: (r: CustomRange | null) => void;
-}) {
+function PageHeader() {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
-        <PageTitle>Activity</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
-          Cost, requests, and tokens across the workspace.
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedPill
-          onValueChange={(v) => onRangeChange(v as PresetRange)}
-          options={RANGE_OPTIONS}
-          value={range === "custom" ? "" : range}
-        />
-        <DateRangePicker
-          onChange={onCustomRangeChange}
-          size="default"
-          value={customRange}
-        />
-      </div>
+    <div className="flex max-w-1/2 flex-col gap-2">
+      <PageTitle>Activity</PageTitle>
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        Cost, request volume, and token usage by model, API key, and team
+        member.
+      </p>
     </div>
   );
 }
@@ -630,7 +621,7 @@ function TrendBreakdownPanel({
               className="size-2 shrink-0 rounded-xs"
               style={{ backgroundColor: color }}
             />
-            <span className="min-w-0 flex-1 truncate font-sans text-foreground text-sm">
+            <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
               {s.label}
             </span>
             <div
@@ -1130,12 +1121,10 @@ function TopList({
     <Card density="flush">
       <div className="flex items-start justify-between gap-2 p-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <h3 className="m-0 font-heading font-medium text-base text-foreground leading-snug">
+          <h3 className="type-heading-16 m-0 text-foreground leading-snug">
             {title}
           </h3>
-          <p className="m-0 font-sans text-muted-foreground text-sm/5">
-            {subtitle}
-          </p>
+          <p className="type-copy-14 m-0 text-muted-foreground/5">{subtitle}</p>
         </div>
         <SegmentedPill
           onValueChange={(v) => onMetricChange(v as Metric)}
@@ -1149,7 +1138,7 @@ function TopList({
           <div className="flex min-w-0 items-center gap-2" key={row.rowKey}>
             {row.avatar}
             <span
-              className={`min-w-0 flex-1 truncate text-foreground text-sm ${row.labelClassName ?? "font-sans"}`}
+              className={`type-copy-14 min-w-0 flex-1 truncate text-foreground ${row.labelClassName ?? ""}`}
               title={row.label}
             >
               {row.label}
@@ -1401,175 +1390,181 @@ function UsageByKey({
   const isEmpty = filteredRows.length === 0;
 
   return (
-    <Card density="flush" id="usage-by-key">
-      {isEmpty ? null : (
-        <FilterToolbar>
+    <div className="mt-2 flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <SectionTitle>Recent key usage</SectionTitle>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <SearchInput
             ariaLabel="Search keys"
+            className="min-w-0 flex-1 shrink"
             onChange={setQuery}
             placeholder="Search key or member…"
+            surface="elevated"
             value={query}
           />
-
-          <Button className="ml-auto" size="sm" type="button" variant="outline">
+          <Button size="sm" type="button" variant="outline">
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
-        </FilterToolbar>
-      )}
-
-      {isEmpty ? (
-        <TableEmptyState
-          body="No keys match your search or filter. Try a different name or clear the filter."
-          title="No keys match"
-        />
-      ) : (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="label"
-                >
-                  Key
-                </SortableTableHead>
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="owner"
-                >
-                  Member
-                </SortableTableHead>
-                <TableHead className="whitespace-nowrap">
-                  <span className="inline-flex items-center gap-1">
-                    Billing
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={(props) => (
-                          <button
-                            {...props}
-                            aria-label="What's the difference between Gate and BYOK?"
-                            className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            type="button"
-                          />
-                        )}
-                      >
-                        <Info
-                          aria-hidden
-                          className="size-3.5"
-                          strokeWidth={2}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="flex flex-col gap-1">
-                          <div>
-                            <span className="font-medium font-mono text-foreground">
-                              Gate
-                            </span>
-                            {": "}debits the workspace prepaid Gateway balance.
-                          </div>
-                          <div>
-                            <span className="font-medium font-mono text-foreground">
-                              BYOK
-                            </span>
-                            {": "}bills the customer's own provider account
-                            directly; Gateway sees $0.
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </span>
-                </TableHead>
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="requests"
-                >
-                  Requests
-                </SortableTableHead>
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="tokensIn"
-                >
-                  Tokens in
-                </SortableTableHead>
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="tokensOut"
-                >
-                  Tokens out
-                </SortableTableHead>
-                <SortableTableHead
-                  className="whitespace-nowrap"
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="spend"
-                >
-                  Spend
-                </SortableTableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageRows.map((row) => (
-                <TableRow className="hover:bg-transparent" key={row.key}>
-                  <TableCell className="whitespace-nowrap font-mono">
-                    <span className="text-neutral-800">{row.label}</span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <span className="font-sans text-neutral-800 text-sm">
-                      {row.owner}
-                    </span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <Badge variant="outline">{row.path}</Badge>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
-                    {fmtInt(row.requests)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
-                    {fmtTokens(row.tokensIn)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 tabular-nums">
-                    {fmtTokens(row.tokensOut)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
-                    {row.path === "BYOK" ? (
-                      <>
-                        <span aria-hidden className="text-neutral-400">
-                          —
-                        </span>
-                        <span className="sr-only">No Gateway spend (BYOK)</span>
-                      </>
-                    ) : (
-                      fmtUsd(row.spend)
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <TablePaginationFooter
-            onPageChange={setPage}
-            onRowsPerPageChange={setRowsPerPage}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            total={filteredRows.length}
+        </div>
+      </div>
+      <Card density="flush" id="usage-by-key">
+        {isEmpty ? (
+          <TableEmptyState
+            body="No keys match your search or filter. Try a different name or clear the filter."
+            title="No keys match"
           />
-        </>
-      )}
-    </Card>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="label"
+                  >
+                    Key
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="owner"
+                  >
+                    Member
+                  </SortableTableHead>
+                  <TableHead className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1">
+                      Billing
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={(props) => (
+                            <button
+                              {...props}
+                              aria-label="What's the difference between Gate and BYOK?"
+                              className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              type="button"
+                            />
+                          )}
+                        >
+                          <Info
+                            aria-hidden
+                            className="size-3.5"
+                            strokeWidth={2}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="flex flex-col gap-1">
+                            <div>
+                              <span className="font-medium font-mono text-foreground">
+                                Gate
+                              </span>
+                              {": "}debits the workspace prepaid Gateway
+                              balance.
+                            </div>
+                            <div>
+                              <span className="font-medium font-mono text-foreground">
+                                BYOK
+                              </span>
+                              {": "}bills the customer's own provider account
+                              directly; Gateway sees $0.
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </TableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="requests"
+                  >
+                    Requests
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="tokensIn"
+                  >
+                    Tokens in
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="tokensOut"
+                  >
+                    Tokens out
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="spend"
+                  >
+                    Spend
+                  </SortableTableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageRows.map((row) => (
+                  <TableRow className="hover:bg-transparent" key={row.key}>
+                    <TableCell className="whitespace-nowrap font-mono">
+                      <span className="text-foreground">{row.label}</span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="type-copy-14 text-foreground">
+                        {row.owner}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Badge variant="outline">{row.path}</Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {fmtInt(row.requests)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {fmtTokens(row.tokensIn)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {fmtTokens(row.tokensOut)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {row.path === "BYOK" ? (
+                        <>
+                          <span aria-hidden className="text-neutral-400">
+                            —
+                          </span>
+                          <span className="sr-only">
+                            No Gateway spend (BYOK)
+                          </span>
+                        </>
+                      ) : (
+                        fmtUsd(row.spend)
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={filteredRows.length}
+            />
+          </>
+        )}
+      </Card>
+    </div>
   );
 }

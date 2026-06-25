@@ -33,6 +33,7 @@ import { MessageBlock, type MessageRole } from "@/components/ui/message-block";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -292,9 +293,7 @@ function OverviewBar({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-        Overview
-      </h3>
+      <SectionTitle>Overview</SectionTitle>
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedPill
           aria-label="Time range"
@@ -321,7 +320,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           A conversation is a chain of requests that share session context:
           agent runs, multi-turn chats, tool-calling loops. Click any row to see
           its message thread.
@@ -482,7 +481,11 @@ function scaleTokenStr(s: string, scale: number): string {
   );
 }
 function scaleCostStr(s: string, scale: number): string {
-  return "$" + (Number.parseFloat(s.replace("$", "")) * scale).toFixed(4);
+  const parsed = Number.parseFloat(s.replace("$", "")) * scale;
+  if (!Number.isFinite(parsed)) {
+    return "—";
+  }
+  return "$" + parsed.toFixed(4);
 }
 
 function ConversationsTableSection({
@@ -565,9 +568,7 @@ function ConversationsTableSection({
           (a query that returns zero results never hides them). isEmpty
           governs only the Card interior below. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Recent conversations
-          </h3>
+          <SectionTitle>Recent conversations</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search conversations"
@@ -723,20 +724,18 @@ function ConversationsTableSection({
                           }
                         >
                           <span
-                            className="truncate font-sans text-neutral-900 text-sm"
+                            className="type-copy-14 truncate text-foreground"
                             title={row.title}
                           >
                             {row.title}
                           </span>
-                          <span className="font-mono text-neutral-500 text-xs">
+                          <span className="font-mono text-muted-foreground text-xs">
                             {row.conversationId}
                           </span>
                         </RowActionButton>
                       </TableCell>
                       <TableCell className="whitespace-nowrap font-mono text-sm">
-                        <span className="text-neutral-800">
-                          {row.initiator}
-                        </span>
+                        <span className="text-foreground">{row.initiator}</span>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <div
@@ -749,22 +748,22 @@ function ConversationsTableSection({
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         {row.turns}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         {row.reqs}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         {scaleTokenStr(row.inTokens, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         {scaleTokenStr(row.outTokens, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         {scaleCostStr(row.cost, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-neutral-800 text-sm tabular-nums">
+                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
                         <Timestamp date={row.updated} />
                       </TableCell>
                     </TableRow>
@@ -1017,10 +1016,10 @@ export function ConversationDetailBody({
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
             footer-right; the header carries identity only. */}
         <div className="flex flex-wrap items-center gap-3">
-          <span className="font-medium font-mono text-neutral-900 text-sm">
+          <span className="font-medium font-mono text-foreground text-sm">
             {row.conversationId}
           </span>
-          <span className="font-mono text-neutral-500 text-xs">
+          <span className="font-mono text-muted-foreground text-xs">
             {row.initiator}
           </span>
         </div>
@@ -1066,7 +1065,7 @@ export function ConversationDetailBody({
               ].join(" ")}
               strokeWidth={1.75}
             />
-            <p className="min-w-0 text-pretty font-medium font-sans text-neutral-900 text-sm">
+            <p className="type-label-14 min-w-0 text-pretty text-foreground">
               {findingCount} finding{findingCount === 1 ? "" : "s"} across this
               conversation · Highest action:{" "}
               <span className="capitalize">{highestAction}</span>
@@ -1134,12 +1133,12 @@ export function ConversationDetailBody({
                 activeRequestId={activeRequestId}
                 footer={
                   <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                    <span className="font-mono text-neutral-500 text-xs">
+                    <span className="font-mono text-muted-foreground text-xs">
                       Key{" "}
-                      <span className="text-neutral-800">{row.initiator}</span>{" "}
-                      · started{" "}
+                      <span className="text-foreground">{row.initiator}</span> ·
+                      started{" "}
                       <Timestamp
-                        className="text-neutral-800"
+                        className="text-foreground"
                         date={row.updated}
                       />
                     </span>
@@ -1206,12 +1205,12 @@ export function ConversationDetailBody({
                 countLabel={`${findingCount} findings`}
                 footer={
                   <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                    <span className="font-mono text-neutral-500 text-xs">
+                    <span className="font-mono text-muted-foreground text-xs">
                       Key{" "}
-                      <span className="text-neutral-800">{row.initiator}</span>{" "}
-                      · started{" "}
+                      <span className="text-foreground">{row.initiator}</span> ·
+                      started{" "}
                       <Timestamp
-                        className="text-neutral-800"
+                        className="text-foreground"
                         date={row.updated}
                       />
                     </span>
@@ -1257,7 +1256,7 @@ export function ConversationDetailBody({
             value="errors"
           >
             {errorCount === 0 ? (
-              <p className="font-sans text-neutral-500 text-sm">
+              <p className="type-copy-14 text-muted-foreground">
                 No errors in this conversation.
               </p>
             ) : (
@@ -1280,14 +1279,12 @@ export function ConversationDetailBody({
                   countLabel={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
                   footer={
                     <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                      <span className="font-mono text-neutral-500 text-xs">
+                      <span className="font-mono text-muted-foreground text-xs">
                         Key{" "}
-                        <span className="text-neutral-800">
-                          {row.initiator}
-                        </span>{" "}
+                        <span className="text-foreground">{row.initiator}</span>{" "}
                         · started{" "}
                         <Timestamp
-                          className="text-neutral-800"
+                          className="text-foreground"
                           date={row.updated}
                         />
                       </span>
@@ -1362,7 +1359,7 @@ function ConversationKpiTile({
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-medium font-mono text-lg text-neutral-900 tabular-nums tracking-snug">
+      <span className="font-medium font-mono text-foreground text-lg tabular-nums tracking-snug">
         {value}
       </span>
     </div>
@@ -1443,12 +1440,12 @@ function ConversationMessagesPanel({
           it doesn't shrink when the body scrolls. */}
       <div className="flex flex-none items-center justify-between border-border border-b bg-card px-4 py-3">
         <span
-          className="font-medium font-sans text-neutral-900 text-sm"
+          className="type-label-14 text-foreground"
           id="conv-messages-eyebrow"
         >
           Messages
         </span>
-        <span className="font-mono text-neutral-500 text-xs tabular-nums">
+        <span className="font-mono text-muted-foreground text-xs tabular-nums">
           {(messages ?? []).filter((m) => m.role === "assistant").length}{" "}
           {(messages ?? []).filter((m) => m.role === "assistant").length === 1
             ? "turn"
@@ -1638,13 +1635,10 @@ function RequestTracePanel({
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
       <div className="flex flex-none items-center justify-between border-border border-b bg-card px-4 py-3">
-        <span
-          className="font-medium font-sans text-neutral-900 text-sm"
-          id="conv-trace-eyebrow"
-        >
+        <span className="type-label-14 text-foreground" id="conv-trace-eyebrow">
           Request Trace
         </span>
-        <span className="font-mono text-neutral-500 text-xs tabular-nums">
+        <span className="font-mono text-muted-foreground text-xs tabular-nums">
           {countLabel ?? `${(trace ?? []).length} requests`}
         </span>
       </div>
@@ -1741,7 +1735,9 @@ function TraceItem({
   // timeline node.
   const latencyMs = Number.parseInt(event.latency, 10);
   const isSlowLatency = latencyMs > 1000;
-  const latencyTone = isSlowLatency ? "text-warning-700" : "text-neutral-500";
+  const latencyTone = isSlowLatency
+    ? "text-warning-700"
+    : "text-muted-foreground";
 
   // Node ring + icon tone key off guardrail status ONLY: green = clean (no
   // detector fired), amber = flag/redact, red = block/error. A slow-but-clean
@@ -1822,10 +1818,10 @@ function TraceItem({
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex-1 truncate font-mono text-neutral-900 text-sm">
+          <span className="flex-1 truncate font-mono text-foreground text-sm">
             {event.label}
           </span>
-          <span className="shrink-0 font-mono text-neutral-500 text-xs tabular-nums">
+          <span className="shrink-0 font-mono text-muted-foreground text-xs tabular-nums">
             {event.time}
           </span>
         </div>
@@ -1835,7 +1831,7 @@ function TraceItem({
             turns warning-700 on slow rows. Cost renders at neutral-800 per the
             three-tier table ink policy. Separators drop to neutral-300 so they
             read as hairline scaffolding, not data. */}
-        <div className="flex min-w-0 items-center gap-2 text-neutral-500">
+        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
           <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
             {event.inTokens}
             <ArrowRight aria-hidden className="size-3" strokeWidth={1.75} />
@@ -1850,10 +1846,10 @@ function TraceItem({
           <span aria-hidden className="text-neutral-300">
             ·
           </span>
-          <span className="flex-1 font-mono text-neutral-800 text-xs tabular-nums">
+          <span className="flex-1 font-mono text-foreground text-xs tabular-nums">
             {event.cost}
           </span>
-          <span className="shrink-0 font-mono text-neutral-500 text-xs">
+          <span className="shrink-0 font-mono text-muted-foreground text-xs">
             {event.requestId}
           </span>
         </div>
@@ -1921,7 +1917,7 @@ function TracePassingSeparator({
       </div>
       {/* Muted count copy. Mono so it sits in the data voice but quiet. */}
       <div className="flex min-w-0 flex-1 items-center">
-        <span className="font-mono text-neutral-500 text-xs tabular-nums">
+        <span className="font-mono text-muted-foreground text-xs tabular-nums">
           {count} passing request{count === 1 ? "" : "s"}
         </span>
       </div>

@@ -46,18 +46,18 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-md border border-border bg-card px-6 py-12 text-center shadow-xs",
+        "flex flex-col items-center justify-center gap-4 rounded-md border border-border bg-card px-6 py-12 text-center shadow-xs",
         className
       )}
     >
       {icon}
-      <h3 className="m-0 font-medium font-sans text-lg text-neutral-900">
-        {title}
-      </h3>
-      <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
-        {body}
-      </p>
-      {action ? <div className="mt-1">{action}</div> : null}
+      <div className="flex flex-col gap-3">
+        <h3 className="type-heading-18 m-0 text-neutral-900">{title}</h3>
+        <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
+          {body}
+        </p>
+      </div>
+      {action ? <div>{action}</div> : null}
     </div>
   );
 }

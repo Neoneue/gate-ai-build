@@ -40,7 +40,7 @@ export function SignIn() {
   return (
     <Card className="w-100 rounded-lg shadow-(--shadow-modal) data-[density=default]:py-6">
       <CardHeader className="gap-y-2 px-6">
-        <CardTitle className="text-xl">Sign in</CardTitle>
+        <CardTitle className="type-heading-20">Sign in</CardTitle>
         <CardDescription>
           Welcome back. Pick any of the methods below to continue.
         </CardDescription>
@@ -126,9 +126,12 @@ export function SignIn() {
       </CardContent>
 
       <CardFooter className="justify-center p-6 pt-2">
-        <p className="text-neutral-500 text-xs">
+        <p className="type-copy-12 text-muted-foreground">
           New to Constellation Gate?{" "}
-          <TextLink className="text-xs" onClick={() => navigate("/sign-up")}>
+          <TextLink
+            className="type-copy-12"
+            onClick={() => navigate("/sign-up")}
+          >
             Create an account
           </TextLink>
         </p>

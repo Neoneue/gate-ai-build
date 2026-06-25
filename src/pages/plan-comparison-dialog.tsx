@@ -123,38 +123,40 @@ function PlanCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-md border bg-card p-4",
+        "flex flex-col gap-4 rounded-md border p-4",
         plan.featured
-          ? "border-primary/30 ring-1 ring-primary/20"
-          : "border-border"
+          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25"
+          : "border-border bg-card"
       )}
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
-        <p className="m-0 font-medium text-lg text-neutral-900">{plan.title}</p>
+        <p className="type-heading-18 m-0 text-foreground">{plan.title}</p>
       </div>
 
-      <h3 className="m-0 font-medium text-3xl text-neutral-900 tabular-nums tracking-tight">
+      <h3 className="type-heading-32 m-0 text-foreground tabular-nums tracking-tight">
         {plan.price}
-        <span className="text-lg text-muted-foreground"> per month</span>
+        <span className="type-copy-18 text-muted-foreground"> per month</span>
       </h3>
 
       <div className="flex flex-col gap-4">
-        <p className="m-0 font-medium text-neutral-900 text-xs">
+        <p className="type-label-12 m-0 text-foreground">
           {plan.benefitsLabel}
         </p>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {plan.features.map(({ Icon, title, detail }) => (
             <li className="flex items-start gap-3" key={title}>
-              <span
+              <Icon
                 aria-hidden
-                className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-sm bg-muted"
-              >
-                <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
-              </span>
+                className={cn(
+                  "mt-1 size-4 shrink-0",
+                  plan.featured ? "text-blue-700" : "text-neutral-700"
+                )}
+                strokeWidth={1.75}
+              />
               <div className="flex flex-col">
-                <span className="text-neutral-900 text-sm">{title}</span>
-                <span className="text-pretty text-neutral-500 text-xs">
+                <span className="type-copy-14 text-foreground">{title}</span>
+                <span className="type-copy-12 text-pretty text-muted-foreground">
                   {detail}
                 </span>
               </div>
@@ -166,7 +168,11 @@ function PlanCard({
       <div className="mt-auto flex flex-col gap-4 pt-2">
         <Button
           aria-label={plan.cta.ariaLabel}
-          className="w-full"
+          className={cn(
+            "w-full",
+            plan.featured &&
+              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+          )}
           disabled={plan.cta.disabled}
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
@@ -179,7 +185,7 @@ function PlanCard({
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
           {plan.cta.label}
         </Button>
-        <p className="m-0 text-center text-neutral-500 text-xs">
+        <p className="type-copy-12 m-0 text-center text-muted-foreground">
           {plan.ctaCaption}
         </p>
       </div>
@@ -227,14 +233,14 @@ export function PlanComparisonDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-4 overflow-hidden p-4 sm:max-w-3xl sm:p-6">
+      <DialogContent className="flex max-h-[90vh] w-full flex-col gap-4 overflow-hidden p-4 sm:p-6 md:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+          <DialogTitle className="type-heading-18 text-foreground">
             Manage subscription
           </DialogTitle>
         </DialogHeader>
         <div
-          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2"
+          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2"
           ref={cardsRef}
         >
           <PlanCard onUpgrade={onUpgrade} plan={FREE_PLAN} />

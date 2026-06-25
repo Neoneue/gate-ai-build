@@ -7,6 +7,7 @@ import { TextLink } from "@/components/ui/text-link";
 
 export function KpiTile({
   title,
+  titleInfo,
   value,
   valueSuffix,
   liveDot,
@@ -19,6 +20,8 @@ export function KpiTile({
   deltaNote,
 }: {
   title: string;
+  /** Optional adornment rendered after the title, e.g. an info-icon tooltip. */
+  titleInfo?: ReactNode;
   value: string;
   valueSuffix?: string;
   liveDot?: boolean;
@@ -38,7 +41,7 @@ export function KpiTile({
   const linkEl = href ? (
     <TextLink
       as="a"
-      className="inline-flex shrink-0 items-center gap-1 text-sm"
+      className="type-copy-14 inline-flex shrink-0 items-center gap-1"
       href={href}
       rel="noopener noreferrer"
       target="_blank"
@@ -57,11 +60,12 @@ export function KpiTile({
           />
         ) : null}
         <Eyebrow as="div">{title}</Eyebrow>
+        {titleInfo}
       </div>
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="font-medium font-sans text-2xl/8 text-neutral-500">
+          <span className="type-heading-24 text-neutral-500">
             {valueSuffix}
           </span>
         ) : null}
@@ -75,7 +79,7 @@ export function KpiTile({
         </div>
       ) : null}
       {caption ? (
-        <p className="m-0 font-sans text-neutral-500 text-sm">{caption}</p>
+        <p className="type-copy-14 m-0 text-neutral-500">{caption}</p>
       ) : null}
       {spark ? <div className="mt-1">{spark}</div> : null}
     </div>

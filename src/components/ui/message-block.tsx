@@ -111,7 +111,7 @@ export function MessageBlock({
       className={cn("flex flex-col gap-2", className)}
       data-request-id={requestId}
     >
-      <div className="flex items-center justify-between font-medium font-sans text-neutral-900 text-xs">
+      <div className="type-label-12 flex items-center justify-between text-neutral-900">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (

@@ -10,8 +10,13 @@ import {
   XIcon,
   Zap,
 } from "lucide-react";
-import { type ComponentType, useMemo, useState } from "react";
-import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { type ComponentType, type ElementType, useMemo, useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
 import {
   AnthropicIcon,
   GeminiIcon,
@@ -35,8 +40,10 @@ import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SectionTitle } from "@/components/ui/section-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { cn } from "@/lib/utils";
 
 const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
 
@@ -233,8 +240,8 @@ export function CodePanel({ snippet }: { snippet: string }) {
                     : tok.type === "property"
                       ? "text-[var(--color-syntax-property)]"
                       : tok.type === "comment"
-                        ? "text-neutral-500"
-                        : "text-neutral-900";
+                        ? "text-muted-foreground"
+                        : "text-foreground";
               return (
                 <span className={cls} key={j}>
                   {tok.text}
@@ -303,10 +310,10 @@ function HeroCodeTab({
               {(["byok", "payg"] as const).map((m) => (
                 <button
                   aria-checked={mode === m}
-                  className={`flex h-6 items-center rounded-xs px-2 font-medium text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                  className={`type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
-                      ? "bg-neutral-100 text-neutral-900"
-                      : "text-neutral-500 hover:text-neutral-700"
+                      ? "bg-neutral-100 text-foreground"
+                      : "text-muted-foreground hover:text-neutral-700"
                   }`}
                   key={m}
                   onClick={() => onModeChange?.(m)}
@@ -318,7 +325,7 @@ function HeroCodeTab({
               ))}
             </div>
           )}
-          <span className="text-neutral-500 text-xs">
+          <span className="type-copy-12 text-muted-foreground">
             {caption ?? HERO_MODE_CAPTIONS[effectiveMode]}
           </span>
         </div>
@@ -528,10 +535,10 @@ function DownloadGateConnectDialog() {
         {/* HEADER */}
         <div className="relative flex items-start border-border border-b px-6 pt-4 pb-4">
           <div className="flex min-w-0 flex-col gap-0 pr-8">
-            <DialogTitle className="m-0 font-semibold text-lg text-neutral-900 tracking-tight">
+            <DialogTitle className="type-heading-18 m-0 text-foreground tracking-tight">
               Download Gate <span className="text-blue-700">Connect</span>
             </DialogTitle>
-            <DialogDescription className="m-0 text-pretty text-neutral-500 text-sm">
+            <DialogDescription className="type-copy-14 m-0 text-pretty text-muted-foreground">
               The menu-bar app that connects your desktop agents to Gate
             </DialogDescription>
           </div>
@@ -553,7 +560,7 @@ function DownloadGateConnectDialog() {
         <div className="flex flex-col gap-4 px-6 pt-5 pb-5">
           {/* Platform picker */}
           <div className="flex flex-col gap-3">
-            <span className="font-medium text-neutral-900 text-sm">
+            <span className="type-label-14 text-foreground">
               Choose your platform
             </span>
             <RadioGroup
@@ -582,7 +589,7 @@ function DownloadGateConnectDialog() {
                       <Check aria-hidden className="size-3" strokeWidth={2.5} />
                     </Radio.Indicator>
                     <img alt="" aria-hidden className="size-6" src={p.icon} />
-                    <span className="font-medium text-neutral-900 text-sm">
+                    <span className="type-label-14 text-foreground">
                       {p.label}
                     </span>
                   </Radio.Root>
@@ -593,7 +600,7 @@ function DownloadGateConnectDialog() {
 
           {/* Build picker */}
           <div className="flex flex-col gap-3">
-            <span className="font-medium text-neutral-900 text-sm">
+            <span className="type-label-14 text-foreground">
               Choose your build
             </span>
             <RadioGroup
@@ -617,14 +624,16 @@ function DownloadGateConnectDialog() {
                       className="size-5 [&_[data-slot=radio-group-indicator]]:size-5"
                       value={b.id}
                     />
-                    <span className="font-medium text-neutral-900 text-sm">
+                    <span className="type-label-14 text-foreground">
                       {b.kind}
                     </span>
-                    <span className="font-medium text-neutral-900 text-sm">
+                    <span className="type-label-14 text-foreground">
                       {b.arch}
                     </span>
-                    <span className="text-neutral-500 text-sm">{b.detail}</span>
-                    <span className="ml-auto whitespace-nowrap text-neutral-500 text-sm tabular-nums">
+                    <span className="type-copy-14 text-muted-foreground">
+                      {b.detail}
+                    </span>
+                    <span className="type-copy-14 ml-auto whitespace-nowrap text-muted-foreground tabular-nums">
                       {b.size}
                     </span>
                   </label>
@@ -634,7 +643,7 @@ function DownloadGateConnectDialog() {
           </div>
 
           {/* Version + requirement line — two texts, 8px gap (no separator), per Figma */}
-          <p className="m-0 flex items-center gap-2 text-neutral-500 text-xs">
+          <p className="type-copy-12 m-0 flex items-center gap-2 text-muted-foreground">
             <span>{spec.version}</span>
             <span>{spec.requires}</span>
           </p>
@@ -649,6 +658,65 @@ function DownloadGateConnectDialog() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function OverviewHeroCard() {
+  const navigate = useNavigate();
+
+  return (
+    <section className="flex flex-col gap-4">
+      <SectionTitle as="h2">Get started</SectionTitle>
+      <Card className="flex-1" density="flush">
+        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
+          <div className="flex max-w-1/2 flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
+              >
+                1
+              </span>
+              <h3 className="type-heading-18 m-0 text-foreground">
+                Create your first API key
+              </h3>
+            </div>
+            <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
+              Your API key is what routes traffic through Gate, adding
+              prompt-injection defense and a tamper-evident audit trail to every
+              request. Use it with our Gate Connect app, or any AI coding tools
+              you configure manually.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate("/api-keys")}>
+              <Plus
+                className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
+                data-icon="inline-start"
+              />{" "}
+              Create key
+            </Button>
+            <Button
+              onClick={() =>
+                window.open(
+                  "https://docs.constellationgate.ai",
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+              variant="outline"
+            >
+              Read API docs{" "}
+              <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
+            </Button>
+          </div>
+        </div>
+        <div className="border-border border-t p-8 max-xl:p-6">
+          <FirstRequestInfo />
+        </div>
+        <WorksWithFooter />
+      </Card>
+    </section>
   );
 }
 
@@ -677,10 +745,10 @@ export function HeroCard() {
       <Card className="flex-1 xl:rounded-l-none" density="flush">
         <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
           <div className="flex flex-col gap-2">
-            <h2 className="m-0 font-medium text-2xl text-neutral-900 tracking-tight">
+            <h2 className="type-heading-24 m-0 text-foreground tracking-tight">
               Create your first API key
             </h2>
-            <p className="m-0 max-w-[432px] text-pretty text-neutral-500 text-sm">
+            <p className="type-copy-14 m-0 max-w-[432px] text-pretty text-muted-foreground">
               Your API key is what routes traffic through Gate, adding
               prompt-injection defense and a tamper-evident audit trail to every
               request. Use it with our Gate Connect app, or any AI coding tools
@@ -767,7 +835,7 @@ function WorksWithFooter({
         ) : (
           <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
         )}
-        <span className="whitespace-nowrap text-neutral-700 text-sm">
+        <span className="type-copy-14 whitespace-nowrap text-neutral-700">
           {name}
         </span>
       </>
@@ -794,7 +862,7 @@ function WorksWithFooter({
     <div
       className={`flex h-12 items-center gap-4 border-border border-t ${asButtons ? "pl-8 max-xl:pl-6" : "px-8 max-xl:px-6"}`}
     >
-      <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm">
+      <span className="type-copy-14 shrink-0 whitespace-nowrap text-muted-foreground">
         {label}
       </span>
       {asButtons ? (
@@ -803,7 +871,7 @@ function WorksWithFooter({
         chips
       )}
       {showMore && (
-        <span className="shrink-0 whitespace-nowrap text-neutral-500 text-sm italic">
+        <span className="type-copy-14 shrink-0 whitespace-nowrap text-muted-foreground italic">
           + more
         </span>
       )}
@@ -841,7 +909,8 @@ const CONNECT_IMAGE_CLASS =
 export function ConnectTabs({
   textMaxWidth = CONNECT_TEXT_MAXW,
   imageClassName = CONNECT_IMAGE_CLASS,
-  titleClassName = "text-2xl font-medium tracking-tight text-neutral-900 m-0",
+  titleClassName = "type-heading-24 tracking-tight text-foreground m-0",
+  titleAs: TitleTag = "h3",
   showGateConnect = true,
   paygOnly = false,
   gateConnectOnly = false,
@@ -853,6 +922,7 @@ export function ConnectTabs({
   textMaxWidth?: string;
   imageClassName?: string;
   titleClassName?: string;
+  titleAs?: ElementType;
   showGateConnect?: boolean;
   paygOnly?: boolean;
   gateConnectOnly?: boolean;
@@ -876,7 +946,7 @@ export function ConnectTabs({
   const activeCode = TAB_CODE[activeTab]?.[effectiveMode];
   return (
     <Tabs
-      className={`flex flex-1 flex-col gap-0${floatingCopy ? "relative" : ""}`}
+      className={cn("flex flex-1 flex-col gap-0", floatingCopy && "relative")}
       onValueChange={setActiveTab}
       value={activeTab}
     >
@@ -934,11 +1004,11 @@ export function ConnectTabs({
               className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? "h-full" : ""}`}
             >
               <div className="flex flex-col gap-2">
-                <h3 className={titleClassName}>
+                <TitleTag className={titleClassName}>
                   1-Click setup with Gate Connect
-                </h3>
+                </TitleTag>
                 <p
-                  className={`text-pretty text-neutral-500 text-sm ${textMaxWidth} m-0`}
+                  className={`type-copy-14 text-pretty text-muted-foreground ${textMaxWidth} m-0`}
                 >
                   Gate Connect is a tiny desktop app living in your menu bar.
                   Install, flip a switch, and your AI coding tools route through
@@ -1019,7 +1089,9 @@ function OverviewUsageChart() {
           >
             <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
           </div>
-          <span className="text-neutral-500 text-sm">No usage data yet</span>
+          <span className="type-copy-14 text-muted-foreground">
+            No usage data yet
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -1036,7 +1108,9 @@ function TokenSavingsStrip() {
         >
           <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No requests yet</span>
+        <span className="type-copy-14 text-muted-foreground">
+          No requests yet
+        </span>
       </div>
       <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
         <div
@@ -1045,7 +1119,9 @@ function TokenSavingsStrip() {
         >
           <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No token savings yet</span>
+        <span className="type-copy-14 text-muted-foreground">
+          No token savings yet
+        </span>
       </div>
       <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
         <div
@@ -1054,7 +1130,9 @@ function TokenSavingsStrip() {
         >
           <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
         </div>
-        <span className="text-neutral-500 text-sm">No threats yet</span>
+        <span className="type-copy-14 text-muted-foreground">
+          No threats yet
+        </span>
       </div>
     </KpiRail>
   );
@@ -1064,17 +1142,15 @@ function LatestRequestsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
-          Latest requests
-        </h3>
+        <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest requests" className="w-full text-sm">
+      <table aria-label="Latest requests" className="type-copy-14 w-full">
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1088,7 +1164,7 @@ function LatestRequestsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-muted-foreground">
                   No requests yet
                 </span>
               </div>
@@ -1104,17 +1180,17 @@ function RecentConversationsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-foreground">
           Latest conversations
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest conversations" className="w-full text-sm">
+      <table aria-label="Latest conversations" className="type-copy-14 w-full">
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1128,7 +1204,7 @@ function RecentConversationsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-muted-foreground">
                   No conversations yet
                 </span>
               </div>
@@ -1144,17 +1220,20 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-foreground">
           Latest security events
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
         >
           View all →
         </Link>
       </div>
-      <table aria-label="Latest security events" className="w-full text-sm">
+      <table
+        aria-label="Latest security events"
+        className="type-copy-14 w-full"
+      >
         <tbody>
           <tr>
             <td colSpan={4}>
@@ -1168,7 +1247,7 @@ function SecurityEventsTable() {
                     strokeWidth={1.75}
                   />
                 </div>
-                <span className="text-neutral-500 text-sm">
+                <span className="type-copy-14 text-muted-foreground">
                   No security events yet
                 </span>
               </div>
@@ -1177,6 +1256,83 @@ function SecurityEventsTable() {
         </tbody>
       </table>
     </div>
+  );
+}
+
+const FIRST_REQUEST_TAB_IDS = [
+  "gate-connect",
+  "claude-code",
+  "codex",
+  "openclaw",
+];
+
+function FirstRequestInfo() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const defaultTab =
+    tabParam && FIRST_REQUEST_TAB_IDS.includes(tabParam) ? tabParam : undefined;
+  const rightDefaultTab =
+    defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
+  return (
+    <section className="@container/connect flex flex-col gap-6">
+      <div className="flex max-w-1/2 flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
+          >
+            2
+          </span>
+          <h3 className="type-heading-18 m-0 text-balance text-foreground">
+            Making your first request
+          </h3>
+        </div>
+        <p className="type-copy-16 m-0 text-muted-foreground">
+          There are two ways to start making requests using your API key. With{" "}
+          <span className="font-medium">Gate Connect</span>, setup is automatic,
+          so you can skip the code entirely. Want to configure it yourself? Use
+          the code snippets to do it by hand.
+        </p>
+      </div>
+
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
+          the manual-setup code tabs (no Gate Connect tab) on the right.
+          Side-by-side with a 24px gap; stacks full-width below lg. */}
+      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
+        {/* Each card gets an h4 label above it (outside the card, so no
+            height impact) so the two setup paths — Automatic vs Manual — read
+            as a matched pair even though the right card is a code card with no
+            internal title slot. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <CardTitle as="h4">Automatic</CardTitle>
+          <Card className="flex flex-1 flex-col" density="flush">
+            <div className="flex flex-1 flex-col">
+              <ConnectTabs
+                fillHeight
+                gateConnectOnly
+                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                titleAs="h4"
+                titleClassName="type-heading-18 text-foreground text-balance m-0"
+              />
+            </div>
+          </Card>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <CardTitle as="h4">Manual</CardTitle>
+          <Card className="flex flex-1 flex-col" density="flush">
+            <div className="flex-1">
+              <ConnectTabs
+                codeMaxHeight="h-[216px]"
+                defaultTab={rightDefaultTab}
+                floatingCopy
+                showGateConnect={false}
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1196,18 +1352,16 @@ export function DashboardDefault() {
     >
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Overview</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Monitor request volume, token usage, spend, and security signals
           across your gateway.
         </p>
       </div>
       <div className="mb-2">
-        <HeroCard />
-      </div>
+        <OverviewHeroCard />
+      </div>{" "}
       <div className="flex flex-col gap-4">
-        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
-          Activity This Week
-        </h2>
+        <SectionTitle as="h2">Activity This Week</SectionTitle>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>

@@ -13,10 +13,8 @@ import { cn } from "@/lib/utils";
  * `-tracking-[1px]` value — drift waiting to happen the next time
  * someone polished one site without touching the others.
  *
- * Renders an `<h2>` by default — composed pages sit inside a
- * `<DashboardChrome>` that owns the document h1 implicitly; the
- * in-surface page title reads as h2 in the outline so child cards
- * can use h3 without level skips.
+ * Renders an `<h1>` by default — page title should be the primary
+ * heading for each surface.
  *
  * Recipe is locked at the primitive. Type size / weight / tracking /
  * balance / margin are not overridable. Spec-sheet ArtboardHeader
@@ -26,20 +24,23 @@ import { cn } from "@/lib/utils";
 
 export interface PageTitleProps
   extends React.HTMLAttributes<HTMLHeadingElement> {
-  /** Heading level. Defaults to `h2` (composed-page convention). */
+  /** Heading level. Defaults to `h1` (page-title convention). */
   as?: "h1" | "h2";
 }
 
 export function PageTitle({
-  as: Tag = "h2",
+  as: Tag = "h1",
   className,
   children,
   ...props
 }: PageTitleProps) {
+  const headingClass = Tag === "h1" ? "h1" : "h2";
+
   return (
     <Tag
       className={cn(
-        "m-0 text-balance font-medium font-sans text-3xl/9 text-neutral-900 -tracking-[1px]",
+        headingClass,
+        "m-0 text-balance text-neutral-900",
         className
       )}
       data-slot="page-title"

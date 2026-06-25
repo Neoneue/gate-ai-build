@@ -23,6 +23,7 @@ import {
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -164,9 +165,7 @@ export function Dashboard() {
     >
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <h2 className="m-0 text-balance font-medium font-sans text-lg/6 text-neutral-900 tracking-snug">
-          Activity This Week
-        </h2>
+        <SectionTitle as="h2">Activity This Week</SectionTitle>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
@@ -185,7 +184,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-1/2 flex-col gap-2">
       <PageTitle>Overview</PageTitle>
-      <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
         your gateway.
       </p>
@@ -354,7 +353,7 @@ export function HorizontalLegend({ series }: { series: StackedSeries }) {
             className="inline-flex size-2 shrink-0 rounded-full"
             style={{ backgroundColor: seriesColor(s) }}
           />
-          <span className="text-neutral-500 text-xs">{s.label}</span>
+          <span className="type-copy-12 text-muted-foreground">{s.label}</span>
         </div>
       ))}
     </div>
@@ -508,7 +507,7 @@ function OverviewUsageChart() {
                     className="size-2 shrink-0 rounded-xs"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="min-w-0 flex-1 truncate font-sans text-foreground text-sm">
+                  <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
                     {s.label}
                   </span>
                   <div
@@ -604,30 +603,28 @@ function LatestRequestsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
-          Latest requests
-        </h3>
+        <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/requests"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest requests" className="w-full text-sm">
+        <table aria-label="Latest requests" className="type-copy-14 w-full">
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Time
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Model
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Status
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Security
               </th>
             </tr>
@@ -654,10 +651,10 @@ function LatestRequestsTable() {
                 role="link"
                 tabIndex={0}
               >
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
                   {row.day} {row.time}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-neutral-800 text-xs">
+                <td className="type-copy-12 whitespace-nowrap px-4 py-3 text-foreground">
                   {row.model}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
@@ -696,30 +693,33 @@ function RecentConversationsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-foreground">
           Latest conversations
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/conversations"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest conversations" className="w-full text-sm">
+        <table
+          aria-label="Latest conversations"
+          className="type-copy-14 w-full"
+        >
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Conversation
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Updated
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-muted-foreground">
                 Turns
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-right font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-muted-foreground">
                 Reqs
               </th>
             </tr>
@@ -743,17 +743,17 @@ function RecentConversationsTable() {
                 tabIndex={0}
               >
                 <td className="w-full max-w-0 overflow-hidden px-4 py-3">
-                  <span className="block truncate text-neutral-800 text-xs">
+                  <span className="type-copy-12 block truncate text-foreground">
                     {row.title}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
                   {formatTimestamp(row.updated)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-neutral-800 text-xs">
+                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-foreground text-xs">
                   {row.turns}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-neutral-800 text-xs">
+                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-foreground text-xs">
                   {row.reqs}
                 </td>
               </tr>
@@ -774,30 +774,33 @@ function SecurityEventsTable() {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
       <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="m-0 font-medium text-neutral-900 text-sm">
+        <h3 className="type-label-14 m-0 text-foreground">
           Latest security events
         </h3>
         <Link
-          className="-mx-2 -my-2 rounded-sm px-2 py-2 text-neutral-500 text-xs outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
           to="/security"
         >
           View all →
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table aria-label="Latest security events" className="w-full text-sm">
+        <table
+          aria-label="Latest security events"
+          className="type-copy-14 w-full"
+        >
           <thead>
             <tr className="border-border border-b bg-neutral-50">
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Time
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Type
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Action
               </th>
-              <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-neutral-500 text-xs">
+              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
                 Key
               </th>
             </tr>
@@ -826,7 +829,7 @@ function SecurityEventsTable() {
                   role="link"
                   tabIndex={0}
                 >
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-800 text-xs">
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
                     {formatTimestamp(parseEventTime(row.time))}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
@@ -837,7 +840,7 @@ function SecurityEventsTable() {
                         strokeWidth={1.75}
                         style={{ color: typeMeta.color }}
                       />
-                      <span className="text-neutral-800 text-xs">
+                      <span className="type-copy-12 text-foreground">
                         {typeMeta.label}
                       </span>
                     </span>
@@ -845,7 +848,7 @@ function SecurityEventsTable() {
                   <td className="whitespace-nowrap px-4 py-3">
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-neutral-500 text-xs">
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-muted-foreground text-xs">
                     {row.key.split(" (")[0]}
                   </td>
                 </tr>

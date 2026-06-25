@@ -9,6 +9,13 @@ lives in the reference docs linked below.
 - Work on `dev`, never push to `main` directly.
 - Keep changes scoped to the literal request.
 - Run `npx tsc -b` before any merge or promotion step.
+- **Visual values are a closed set.** Never invent a color, type size, or
+  tracking — map every value to a token/voice in `design.md`, or stop and ask.
+  Enforced by `npm run lint:design`. Full rule: @.claude/rules/design-tokens.md
+- **Don't thrash.** When the user says something "isn't working" / "still the
+  same", PIN the surface (which route → which file) and confirm BEFORE editing
+  or measuring. Revert failed fixes instead of patching forward. Full gate:
+  @.claude/rules/no-thrash.md
 
 ## Reference docs (repo root)
 

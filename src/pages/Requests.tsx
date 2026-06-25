@@ -16,6 +16,7 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -70,6 +71,7 @@ import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -256,9 +258,7 @@ export function Requests() {
               sits above. Mirrors AuditTrail's OverviewBar + KPI rail. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Overview
-          </h3>
+          <SectionTitle>Overview</SectionTitle>
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedPill
               onValueChange={(next) => handleRangeChange(next as RangeKey)}
@@ -291,7 +291,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Requests</PageTitle>
-        <p className="m-0 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Every model call across your stack, inspected for injection, PII, and
           credentials before it reaches the model.
         </p>
@@ -874,7 +874,7 @@ function HeroMetricCard() {
               <ChartTooltipContent
                 className="gap-1"
                 formatter={(value) => (
-                  <span className="font-medium text-foreground text-sm">
+                  <span className="type-label-14 text-foreground">
                     {Number(value).toLocaleString("en-US")}
                   </span>
                 )}
@@ -919,11 +919,11 @@ function BreakdownRow({
   // text-flow cells within their tracks.
   return (
     <>
-      <span className="justify-self-end font-medium font-sans text-neutral-500 text-xs tracking-tight">
+      <span className="type-label-12 justify-self-end text-muted-foreground tracking-tight">
         {label}
       </span>
       <StatusDot kind={tone} />
-      <span className="justify-self-end font-medium font-mono text-neutral-900 text-xs tabular-nums">
+      <span className="justify-self-end font-medium font-mono text-foreground text-xs tabular-nums">
         {value}
       </span>
     </>
@@ -1306,9 +1306,7 @@ function RequestsTableSection({
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-            Recent requests
-          </h3>
+          <SectionTitle>Recent requests</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search requests"
@@ -1353,13 +1351,13 @@ function RequestsTableSection({
             <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
               <DialogContent className="w-full gap-4 sm:max-w-[440px]">
                 <DialogHeader>
-                  <DialogTitle className="font-medium font-sans text-lg/6 text-neutral-900">
+                  <DialogTitle className="type-heading-18 text-foreground">
                     Filters
                   </DialogTitle>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Model
                   </Label>
                   <Select onValueChange={setDraftModel} value={draftModel}>
@@ -1382,9 +1380,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
-                    Key
-                  </Label>
+                  <Label className="type-label-14 text-neutral-600">Key</Label>
                   <Select onValueChange={setDraftKeyId} value={draftKeyId}>
                     <SelectTrigger
                       aria-label="Key"
@@ -1406,7 +1402,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Response
                   </Label>
                   <Select
@@ -1429,7 +1425,7 @@ function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="font-medium text-neutral-600 text-sm">
+                  <Label className="type-label-14 text-neutral-600">
                     Guardrail
                   </Label>
                   <Select
@@ -1584,7 +1580,7 @@ function RequestsTableSection({
                               <span
                                 {...props}
                                 aria-label="About the Cost column"
-                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-neutral-500 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                               >
                                 <Info
                                   aria-hidden
@@ -1635,7 +1631,7 @@ function RequestsTableSection({
                     const isMissing = row.inTokens === "—";
                     const numericCls = isMissing
                       ? "text-right whitespace-nowrap font-mono tabular-nums text-neutral-400"
-                      : "text-right whitespace-nowrap font-mono tabular-nums text-neutral-800";
+                      : "text-right whitespace-nowrap font-mono tabular-nums text-foreground";
                     // Slow rows: leading amber TriangleAlert + neutral-900 (one step
                     // darker than the neutral-800 default). Same weight as non-slow rows
                     // so `tabular-nums` keeps the column tracks aligned — font-medium
@@ -1649,8 +1645,8 @@ function RequestsTableSection({
                       row.latency === "—"
                         ? "text-neutral-400"
                         : isSlow
-                          ? "text-neutral-900"
-                          : "text-neutral-800";
+                          ? "text-foreground"
+                          : "text-foreground";
                     const conversationName = conversationTitle(
                       row.conversation
                     );
@@ -1677,7 +1673,7 @@ function RequestsTableSection({
                               render={(props) => (
                                 <span
                                   {...props}
-                                  className="font-mono text-neutral-800 text-sm tabular-nums"
+                                  className="font-mono text-foreground text-sm tabular-nums"
                                 >
                                   {row.day}, {row.time}
                                 </span>
@@ -1705,7 +1701,7 @@ function RequestsTableSection({
                           >
                             <VendorAvatar vendor={row.vendor} />
                             <span
-                              className="truncate font-mono text-neutral-900 text-sm"
+                              className="truncate font-mono text-foreground text-sm"
                               title={row.model}
                             >
                               {row.model}
@@ -1716,18 +1712,18 @@ function RequestsTableSection({
                           {conversationName ? (
                             <>
                               <span
-                                className="block truncate font-sans text-neutral-900 text-sm"
+                                className="type-copy-14 block truncate text-foreground"
                                 title={conversationName}
                               >
                                 {conversationName}
                               </span>
-                              <span className="block font-mono text-neutral-500 text-xs">
+                              <span className="block font-mono text-muted-foreground text-xs">
                                 {row.conversation}
                               </span>
                             </>
                           ) : (
                             <span
-                              className="block max-w-full truncate font-mono text-neutral-900 text-sm tabular-nums"
+                              className="block max-w-full truncate font-mono text-foreground text-sm tabular-nums"
                               title={row.conversation}
                             >
                               {row.conversation}
@@ -1735,7 +1731,7 @@ function RequestsTableSection({
                           )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap font-mono">
-                          <span className="text-neutral-800">{row.keyId}</span>
+                          <span className="text-foreground">{row.keyId}</span>
                         </TableCell>
                         <TableCell className={numericCls}>
                           {row.inTokens}
@@ -1813,7 +1809,7 @@ function RequestsTableSection({
                                 className={
                                   isMissing
                                     ? "text-neutral-400"
-                                    : "text-neutral-800"
+                                    : "text-foreground"
                                 }
                               >
                                 {row.cost}
@@ -1968,7 +1964,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               <DetailRow
                 label="Timestamp"
                 value={
-                  <span className="font-mono text-neutral-900 tabular-nums">
+                  <span className="font-mono text-foreground tabular-nums">
                     {row.day}, {row.time}
                   </span>
                 }
@@ -1991,7 +1987,7 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
                 value={
                   <div className="flex items-center gap-2">
                     <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-neutral-900">
+                    <span className="font-mono text-foreground">
                       {row.model}
                     </span>
                   </div>
@@ -1999,21 +1995,19 @@ function RequestDetailBody({ row }: { row: RequestRow }) {
               />
               <DetailRow
                 label="Provider"
-                value={<span className="text-neutral-900">{provider}</span>}
+                value={<span className="text-foreground">{provider}</span>}
               />
               <DetailRow
                 label="API Key"
                 value={
-                  <span className="font-mono text-neutral-900">
-                    {row.keyId}
-                  </span>
+                  <span className="font-mono text-foreground">{row.keyId}</span>
                 }
               />
               <DetailRow
                 label="Endpoint"
                 value={
-                  <span className="font-mono text-neutral-900">
-                    <span className="text-neutral-500">POST</span>{" "}
+                  <span className="font-mono text-foreground">
+                    <span className="text-muted-foreground">POST</span>{" "}
                     {VENDOR_ENDPOINT[row.vendor]}
                   </span>
                 }
@@ -2123,6 +2117,116 @@ export function RequestDetailBodyV2({
 
   const selectedFinding = findings[selectedIdx] ?? null;
 
+  // Clean pass (success + allow, no provider error): the left card's first well
+  // (User message / Tool call) grows by the gap below the left card so its
+  // bottom lines up with the right column's bottom.
+  const isCleanPass =
+    row.errorSource !== "provider" &&
+    row.status === "success" &&
+    row.guardrail === "allow";
+
+  // Fill the gap below the left card so its bottom lines up with the right
+  // column's. Pure arithmetic — CSS can't do it because the left side can't see
+  // the right column's height. Each "grow well" (User message, Assistant
+  // response) only wants its own overflow, so a short message is never stretched
+  // into an empty box; the gap is split evenly across the wells that overflow,
+  // capped per well at how much each can actually use. Heights are set inline,
+  // never via class, and the math reads content (scrollHeight) — not the heights
+  // it sets — so it's stable under the ResizeObserver.
+  const gridRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    if (!(grid && isCleanPass)) {
+      return;
+    }
+    const rightCol = grid.children[1] as HTMLElement | undefined;
+    const leftCard = grid.querySelector<HTMLElement>("[data-clean-card]");
+    const wells = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-grow-well]")
+    );
+    if (!(rightCol && leftCard && wells.length)) {
+      return;
+    }
+    const WELL_CAP = 200;
+    const clearWells = () => {
+      for (const w of wells) {
+        w.style.height = "";
+        w.style.maxHeight = "";
+      }
+    };
+    const sync = () => {
+      // Two-column layout only; the stacked mobile layout keeps natural height.
+      if (!window.matchMedia("(min-width: 768px)").matches) {
+        clearWells();
+        return;
+      }
+      // Right column is grid-stretched, so measure its cards' natural span.
+      const first = rightCol.firstElementChild;
+      const last = rightCol.lastElementChild;
+      if (!(first && last)) {
+        return;
+      }
+      const rightHeight =
+        last.getBoundingClientRect().bottom - first.getBoundingClientRect().top;
+      // Per well: lo = its capped resting height, hi = its full content height,
+      // cap = how much overflow it could absorb. scrollHeight is the content
+      // height regardless of the inline height we set (we never set above hi).
+      const info = wells.map((w) => {
+        const content = w.scrollHeight;
+        const lo = Math.min(content, WELL_CAP);
+        return { w, lo, cap: content - lo };
+      });
+      // Non-well chrome (headings, Full request, padding) — stays constant as
+      // the wells grow, so the available space for the wells is stable.
+      const sumOffsets = info.reduce((s, i) => s + i.w.offsetHeight, 0);
+      const otherHeight = leftCard.offsetHeight - sumOffsets;
+      const sumLo = info.reduce((s, i) => s + i.lo, 0);
+      const sumCap = info.reduce((s, i) => s + i.cap, 0);
+      // The gap, clamped so we never grow a well past its own content.
+      let extra = Math.max(
+        0,
+        Math.min(rightHeight - otherHeight - sumLo, sumCap)
+      );
+      // Water-fill: hand out the gap evenly, spilling a maxed well's remainder
+      // to the others, so two overflowing wells split a 100px gap 50/50.
+      const alloc = info.map(() => 0);
+      let active = info
+        .map((i, idx) => (i.cap > 0 ? idx : -1))
+        .filter((idx) => idx >= 0);
+      while (extra > 0.5 && active.length > 0) {
+        const share = extra / active.length;
+        let consumed = 0;
+        const stillActive: number[] = [];
+        for (const idx of active) {
+          const room = info[idx].cap - alloc[idx];
+          const give = Math.min(share, room);
+          alloc[idx] += give;
+          consumed += give;
+          if (info[idx].cap - alloc[idx] > 0.5) {
+            stillActive.push(idx);
+          }
+        }
+        extra -= consumed;
+        if (consumed < 0.5) {
+          break;
+        }
+        active = stillActive;
+      }
+      info.forEach((i, idx) => {
+        const next = `${Math.round(i.lo + alloc[idx])}px`;
+        if (i.w.style.height !== next) {
+          i.w.style.height = next;
+          i.w.style.maxHeight = next;
+        }
+      });
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(rightCol);
+    ro.observe(leftCard);
+    return () => ro.disconnect();
+  }, [isCleanPass]);
+
   // Copy the finding's match fingerprint to clipboard.
 
   return (
@@ -2164,7 +2268,7 @@ export function RequestDetailBodyV2({
             "pt-6",
           ].join(" ")}
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3" ref={gridRef}>
             {/* Left column (2/3): an OUTER card wrapping the per-finding
                   detail sections, or a calm "No findings" default when
                   nothing fired. */}
@@ -2199,7 +2303,7 @@ export function RequestDetailBodyV2({
                           <section className="flex flex-col gap-2">
                             <PanelHeading title="Error detail" />
                             <div className="rounded-xs border border-border bg-card p-4">
-                              <p className="text-pretty font-sans text-neutral-700 text-sm">
+                              <p className="type-copy-14 text-pretty text-neutral-700">
                                 {row.errorDetail}
                               </p>
                             </div>
@@ -2223,14 +2327,14 @@ export function RequestDetailBodyV2({
                           <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
                             <ShieldCheck
                               aria-hidden
-                              className="size-5 text-neutral-500"
+                              className="size-5 text-muted-foreground"
                               strokeWidth={1.75}
                             />
                           </div>
-                          <h3 className="m-0 text-balance font-medium font-sans text-lg text-neutral-900">
+                          <h3 className="type-heading-18 m-0 text-balance text-foreground">
                             No findings
                           </h3>
-                          <p className="m-0 max-w-md text-pretty font-sans text-neutral-500 text-sm">
+                          <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
                             All detectors passed for this request.
                           </p>
                         </div>
@@ -2335,12 +2439,12 @@ export function RequestDetailBodyV2({
                         key={p.category}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <span className="font-medium font-sans text-neutral-900 text-sm">
+                          <span className="type-label-14 text-foreground">
                             {p.label}
                           </span>
                           <Badge variant="success">Pass</Badge>
                         </div>
-                        <span className="font-sans text-neutral-500 text-sm">
+                        <span className="type-copy-14 text-muted-foreground">
                           {p.description}
                         </span>
                       </div>
@@ -2355,7 +2459,7 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Timestamp"
                       value={
-                        <span className="font-mono text-neutral-900 tabular-nums">
+                        <span className="font-mono text-foreground tabular-nums">
                           {row.day}, {row.time}
                         </span>
                       }
@@ -2378,7 +2482,7 @@ export function RequestDetailBodyV2({
                       value={
                         <div className="flex items-center gap-2">
                           <VendorAvatar vendor={row.vendor} />
-                          <span className="font-mono text-neutral-900">
+                          <span className="font-mono text-foreground">
                             {row.model}
                           </span>
                         </div>
@@ -2387,13 +2491,13 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Provider"
                       value={
-                        <span className="text-neutral-900">{provider}</span>
+                        <span className="text-foreground">{provider}</span>
                       }
                     />
                     <DetailRow
                       label="API Key"
                       value={
-                        <span className="font-mono text-neutral-900">
+                        <span className="font-mono text-foreground">
                           {row.keyId}
                         </span>
                       }
@@ -2401,8 +2505,8 @@ export function RequestDetailBodyV2({
                     <DetailRow
                       label="Endpoint"
                       value={
-                        <span className="break-all font-mono text-neutral-900">
-                          <span className="text-neutral-500">POST</span>{" "}
+                        <span className="break-all font-mono text-foreground">
+                          <span className="text-muted-foreground">POST</span>{" "}
                           {VENDOR_ENDPOINT[row.vendor]}
                         </span>
                       }
@@ -2491,7 +2595,7 @@ function FindingCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="font-medium font-sans text-neutral-900 text-sm">
+          <span className="type-label-14 text-foreground">
             {CATEGORY_LABEL[finding.category]} ·{" "}
             {entityLabel(finding.entityType)}
           </span>
@@ -2499,7 +2603,7 @@ function FindingCard({
         <Badge variant={actionVariant[finding.action]}>{finding.action}</Badge>
       </div>
       <p
-        className="line-clamp-2 font-sans text-neutral-900 text-sm"
+        className="type-copy-14 line-clamp-2 text-foreground"
         title={finding.redactedAs}
       >
         “{finding.redactedAs}”
@@ -2545,7 +2649,7 @@ const PANEL_OUTER =
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
-      <h3 className="m-0 font-medium font-sans text-base text-neutral-900 tracking-snug">
+      <h3 className="type-heading-16 m-0 text-foreground tracking-snug">
         {title}
       </h3>
       {aside}
@@ -2613,7 +2717,7 @@ function FindingSwitcherCard({
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-neutral-900 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -2632,7 +2736,7 @@ function FindingSwitcherCard({
         type="button"
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="flex items-center gap-2 font-medium font-sans text-neutral-900 text-sm">
+          <span className="type-label-14 flex items-center gap-2 text-foreground">
             {CATEGORY_LABEL[current.category]}
             <CountChip count={total} size="xs" />
           </span>
@@ -2641,7 +2745,7 @@ function FindingSwitcherCard({
           </Badge>
         </div>
         <p
-          className="line-clamp-2 font-sans text-muted-foreground text-sm"
+          className="type-copy-14 line-clamp-2 text-muted-foreground"
           title={current.redactedAs}
         >
           <span className="text-foreground">
@@ -2651,7 +2755,7 @@ function FindingSwitcherCard({
         </p>
       </button>
       <div className="flex items-center justify-between gap-2 border-border border-t px-4 pt-2 pb-3">
-        <span className="font-sans text-foreground text-sm tabular-nums">
+        <span className="type-copy-14 text-foreground tabular-nums">
           Finding {pos + 1} of {total}
         </span>
         <div className="relative z-10 flex items-center gap-1">
@@ -2689,7 +2793,7 @@ function CountChip({
 }) {
   return (
     <span
-      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-neutral-500 tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
+      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-muted-foreground tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
     >
       {count}
     </span>
@@ -2708,12 +2812,10 @@ function KvRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="font-medium font-sans text-neutral-900 text-sm">
-        {label}
-      </span>
+      <span className="type-label-14 text-foreground">{label}</span>
       <span
         className={[
-          "text-right font-mono text-neutral-900 text-sm tabular-nums",
+          "text-right font-mono text-foreground text-sm tabular-nums",
           valueClassName ?? "",
         ].join(" ")}
       >
@@ -2837,7 +2939,7 @@ function EvidenceWindow({
         className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
         ref={evidenceBoxRef}
       >
-        <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
           {evidenceNodes.length > 0 ? evidenceNodes : text}
         </p>
       </div>
@@ -3001,7 +3103,7 @@ function PiiDetailPanel({
               className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
               ref={evidenceBoxRef}
             >
-              <p className="whitespace-pre-wrap break-words font-sans text-neutral-900 text-sm leading-relaxed">
+              <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
                 {evidenceNodes.length > 0 ? evidenceNodes : evidence}
               </p>
             </div>
@@ -3026,7 +3128,7 @@ function PiiDetailPanel({
           <KvRow
             label="Offset in evidence"
             value={
-              <span className="font-mono text-neutral-900 text-sm">
+              <span className="font-mono text-foreground text-sm">
                 {offsetLabel}
               </span>
             }
@@ -3074,7 +3176,7 @@ function InjectionDetailPanel({
         title={isClassifierDeny ? "Assistant response" : "User message"}
       />
       <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-        <p className="whitespace-pre-wrap break-words font-sans text-neutral-700 text-sm leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-700 leading-relaxed">
           {evidence}
         </p>
       </div>
@@ -3115,9 +3217,7 @@ function InjectionDetailPanel({
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
         <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
-          <p className="text-pretty font-sans text-foreground text-sm">
-            {howToFix}
-          </p>
+          <p className="type-copy-14 text-pretty text-foreground">{howToFix}</p>
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={onTunePolicy}
@@ -3177,7 +3277,7 @@ function KpiTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
-      <span className="font-medium font-mono text-lg text-neutral-900 tabular-nums tracking-snug">
+      <span className="font-medium font-mono text-foreground text-lg tabular-nums tracking-snug">
         {value}
       </span>
     </div>
@@ -3399,7 +3499,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   return (
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
-      <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 font-sans text-neutral-900 text-sm">
+      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-foreground">
         {content}
       </div>
     </section>
@@ -3410,11 +3510,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
  * Tool call / Tool result). 16px medium, no h3 chrome, matching the
  * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
-  return (
-    <span className="font-medium font-sans text-base text-neutral-900">
-      {label}
-    </span>
-  );
+  return <span className="type-heading-16 text-foreground">{label}</span>;
 }
 
 /* A single conversation turn as a Details-tab subcard: a plain-text heading
@@ -3424,14 +3520,21 @@ function SubcardHeading({ label }: { label: string }) {
 function DetailMessageSubcard({
   label,
   content,
+  growWell = false,
 }: {
   label: string;
   content: string;
+  /** Tags this well so the clean-pass layout effect can grow its height by the
+   * gap below the left card. Height is set via inline style, not class. */
+  growWell?: boolean;
 }) {
   return (
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
-      <div className="max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 font-sans text-neutral-900 text-sm">
+      <div
+        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-foreground"
+        data-grow-well={growWell ? "" : undefined}
+      >
         {content}
       </div>
     </section>
@@ -3451,7 +3554,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Provider context" />
           <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
-            <p className="font-sans text-foreground text-sm">{explanation}</p>
+            <p className="type-copy-14 text-foreground">{explanation}</p>
           </div>
         </section>
       ) : null}
@@ -3459,7 +3562,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-neutral-800 text-xs">
+            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-foreground text-xs">
               {row.errorBody}
             </pre>
           </div>
@@ -3528,11 +3631,11 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-medium font-sans text-base text-neutral-900 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
-          className="size-4 shrink-0 text-neutral-500 transition-transform duration-150 ease-out group-data-[panel-open]/fullreq:rotate-180 motion-reduce:transition-none"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-data-[panel-open]/fullreq:rotate-180 motion-reduce:transition-none"
           strokeWidth={1.75}
         />
       </Collapsible.Trigger>
@@ -3643,14 +3746,16 @@ function RequestTurnComplement({
 function NoFindingTurns({ row }: { row: RequestRow }) {
   const { isTool, userContent, responseContent } = resolveRequestTurns(row);
   return (
-    <div className={PANEL_OUTER}>
+    <div className={PANEL_OUTER} data-clean-card>
       <DetailMessageSubcard
         content={userContent}
+        growWell
         label={isTool ? "Tool call" : "User message"}
       />
       {responseContent && (
         <DetailMessageSubcard
           content={responseContent}
+          growWell
           label="Assistant response"
         />
       )}
@@ -3890,10 +3995,8 @@ function SecurityCheckRow({
   return (
     <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="font-medium font-sans text-neutral-900 text-sm">
-          {title}
-        </span>
-        <span className="text-pretty font-sans text-neutral-500 text-xs">
+        <span className="type-label-14 text-foreground">{title}</span>
+        <span className="type-copy-12 text-pretty text-muted-foreground">
           {description}
         </span>
       </div>

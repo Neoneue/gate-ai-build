@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { Check, Info } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import {
   useNavigate,
   useOutletContext,
   useSearchParams,
 } from "react-router-dom";
 import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CompactSpark } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageTitle } from "@/components/ui/page-title";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -20,12 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { SparklesIcon } from "@/components/ui/sparkles";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatSparkLabel } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
-export function TokenSavings() {
+type Plan = "pro" | "free";
+
+export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -64,7 +80,7 @@ export function TokenSavings() {
         }}
         range={range}
       />
-      <SavingsOptionsSection />
+      <SavingsOptionsSection plan={plan} />
     </DashboardChrome>
   );
 }
@@ -75,7 +91,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="m-0 max-w-1/2 text-pretty font-sans text-base text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-muted-foreground tracking-snug">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -287,9 +303,7 @@ function OverviewSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-          Overview
-        </h3>
+        <SectionTitle>Overview</SectionTitle>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedPill
             aria-label="Time range"
@@ -333,17 +347,15 @@ function OverviewSection({
 
 /* ─── Savings options ───────────────────────────────────────────────── */
 
-function SavingsOptionsSection() {
+export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h3 className="m-0 font-medium font-sans text-neutral-900 text-xl/7">
-          Savings options
-        </h3>
+        <SectionTitle>Savings options</SectionTitle>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-col gap-4">
+        <CompressionCard plan={plan} />
         <CachingCard />
-        <CompressionCard />
       </div>
     </div>
   );
@@ -352,26 +364,24 @@ function SavingsOptionsSection() {
 function CardChromeHeader({
   title,
   description,
-  enabled,
+  action,
 }: {
   title: string;
   description: string;
-  enabled: boolean;
+  /** Optional control rendered flush right with the title — e.g. the card's
+   * enable Switch, so the header toggle governs the whole card. */
+  action?: ReactNode;
 }) {
   return (
     <CardHeader className="border-border border-b">
-      <div className="flex items-start gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h3 className="m-0 font-medium font-sans text-base text-neutral-900">
-            {title}
-          </h3>
-          <p className="m-0 font-sans text-neutral-500 text-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h3 className="type-heading-16 m-0 text-foreground">{title}</h3>
+          <p className="type-copy-14 m-0 text-muted-foreground">
             {description}
           </p>
         </div>
-        <Badge variant={enabled ? "success" : "neutral"}>
-          {enabled ? "ON" : "OFF"}
-        </Badge>
+        {action ? <div className="shrink-0">{action}</div> : null}
       </div>
     </CardHeader>
   );
@@ -392,109 +402,349 @@ function CachingCard() {
   return (
     <Card>
       <CardChromeHeader
+        action={<StatusBadge on={enabled} />}
         description="Reuse identical or semantically similar responses"
-        enabled={enabled}
         title="Caching"
       />
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
-              id="caching-switch-label"
-            >
-              Enable response caching
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Serve cached responses instead of round-tripping to providers.
-              Identical concurrent requests are deduplicated automatically.
-            </p>
-          </div>
-          <Switch
-            aria-labelledby="caching-switch-label"
-            checked={enabled}
-            className="mt-1 shrink-0"
-            onCheckedChange={(next) => {
-              setEnabled(next);
-              toast.success("Response caching saved");
-            }}
-          />
-        </div>
+      <CardContent className="flex flex-col gap-3">
+        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 flex-col gap-1">
+                <p
+                  className="type-label-14 m-0 text-foreground"
+                  id="caching-switch-label"
+                >
+                  Enable response caching
+                </p>
+                <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+                  Serve cached responses instead of round-tripping to providers.
+                  Identical concurrent requests are deduplicated automatically.
+                </p>
+              </div>
+              <Switch
+                aria-labelledby="caching-switch-label"
+                checked={enabled}
+                className="mt-1 shrink-0"
+                onCheckedChange={(next) => {
+                  setEnabled(next);
+                  toast(next ? "Caching enabled" : "Caching disabled");
+                }}
+                size="lg"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-        <Separator />
-
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
-              id="ttl-label"
-            >
-              TTL
-            </p>
-            <p className="m-0 font-sans text-neutral-500 text-sm">
-              How long cached entries live before re-fetching.
-            </p>
-          </div>
-          <Select
-            onValueChange={(next) => {
-              setTtl(next);
-              toast.success("TTL saved");
-            }}
-            value={ttl}
-          >
-            <SelectTrigger
-              aria-labelledby="ttl-label"
-              className="w-24 shrink-0"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TTL_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+          <CardContent>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="type-label-14 m-0 text-foreground" id="ttl-label">
+                  TTL
+                </p>
+                <p className="type-copy-14 m-0 text-muted-foreground">
+                  How long cached entries live before re-fetching.
+                </p>
+              </div>
+              <Select
+                onValueChange={(next) => {
+                  setTtl(next);
+                  toast.success("TTL saved");
+                }}
+                value={ttl}
+              >
+                <SelectTrigger
+                  aria-labelledby="ttl-label"
+                  className="w-24 shrink-0"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TTL_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
       </CardContent>
     </Card>
   );
 }
 
-function CompressionCard() {
-  const [enabled, setEnabled] = useState(true);
+type CompressionBenefit = { title: string; description: string };
 
+// Free = the "safe lane": lightweight, content-agnostic clean-up.
+const FREE_COMPRESSION_BENEFITS: CompressionBenefit[] = [
+  {
+    title: "Strips wrapper and clutter",
+    description:
+      "Editor and agent scaffolding (e.g. system reminders) that isn't part of the actual content.",
+  },
+  {
+    title: "JSON tidy",
+    description: "Removes pretty-print spacing from JSON payloads.",
+  },
+  {
+    title: "Lossless clean-up",
+    description:
+      "Collapses whitespace, removes terminal color codes, de-duplicates repeated lines, strips invisible characters.",
+  },
+  {
+    title: "Trims giant blobs",
+    description: "Caps oversized pasted base64/hex and long lines.",
+  },
+];
+
+// Pro = everything in Free, plus the heavy hitters that drive the real savings.
+const PRO_COMPRESSION_BENEFITS: CompressionBenefit[] = [
+  {
+    title: "Tool-output compaction",
+    description:
+      "Intelligently shrinks command output: git diffs, test runs (pytest/jest), build logs, npm/cargo, and more.",
+  },
+  {
+    title: "Cross-conversation de-duplication",
+    description:
+      "When the same file or output recurs across a long session, stores it once instead of every turn — the single biggest saver.",
+  },
+  {
+    title: "Tool-definition slimming",
+    description:
+      "Compresses the large “available tools” schemas sent on every request.",
+  },
+  {
+    title: "Prose trimming",
+    description:
+      "Removes filler and redundancy in long English passages, with path collapse and aggressive duplicate-paragraph/quote removal.",
+  },
+];
+
+// Payoff-first hero: the savings figure is the point of the card, so it leads
+// at the same 24px sans-tabular voice as the Overview rail (HeroNumeric),
+// with the checklist beneath it as supporting proof.
+function SavingsHeadline({
+  value,
+  caption,
+  valueClassName,
+}: {
+  value: string;
+  caption: string;
+  valueClassName: string;
+}) {
   return (
-    <Card>
-      <CardChromeHeader
-        description="Shrink prompts before they reach the provider"
-        enabled={enabled}
-        title="Compression"
-      />
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className="m-0 font-medium font-sans text-neutral-900 text-sm"
-              id="compression-switch-label"
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <HeroNumeric className={`leading-none ${valueClassName}`}>
+        {value}
+      </HeroNumeric>
+      <p className="type-copy-14 m-0 text-muted-foreground">{caption}</p>
+    </div>
+  );
+}
+
+function BenefitList({
+  benefits,
+  checkClassName,
+  outlineClassName,
+}: {
+  benefits: CompressionBenefit[];
+  checkClassName: string;
+  /** Border color for the outline card wrapping the list (matches card chrome). */
+  outlineClassName: string;
+}) {
+  return (
+    <div className={`rounded-sm border bg-card/40 p-4 ${outlineClassName}`}>
+      <ul className="m-0 grid list-none grid-cols-2 gap-4 p-0">
+        {benefits.map((benefit) => (
+          <li className="flex items-center gap-2" key={benefit.title}>
+            <span
+              className={cn(
+                "flex size-5 shrink-0 items-center justify-center rounded-full text-primary-foreground",
+                checkClassName
+              )}
             >
-              Enable compression
-            </p>
-            <p className="m-0 text-pretty font-sans text-neutral-500 text-sm">
-              Strip envelopes, condense embedded tool output (git diff, cargo,
-              pytest…), and apply lossless prose heuristics. Deterministic and
-              cache-friendly.
-            </p>
+              <Check aria-hidden className="size-3.5" />
+            </span>
+            <span className="flex min-w-0 items-center gap-1">
+              <span className="type-copy-14 text-foreground">
+                {benefit.title}
+              </span>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <span
+                      {...props}
+                      aria-label={`About ${benefit.title}`}
+                      className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-neutral-400 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      <Info
+                        aria-hidden
+                        className="size-3.5"
+                        strokeWidth={1.75}
+                      />
+                    </span>
+                  )}
+                />
+                <TooltipContent>{benefit.description}</TooltipContent>
+              </Tooltip>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CompressionCard({ plan }: { plan: Plan }) {
+  const navigate = useNavigate();
+  const isPro = plan === "pro";
+  const [enabled, setEnabled] = useState(true);
+  const [advancedEnabled, setAdvancedEnabled] = useState(true);
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  // Free — neutral "safe lane" card. Only shown on the Free plan, where the
+  // Advanced card sits beside it as an upsell.
+  const basicCard = (
+    <Card className="rounded-sm shadow-none">
+      <CardContent className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <SectionHeading as="h4" className="type-heading-16">
+                  Basic compression
+                </SectionHeading>
+                <Badge variant="success">Free</Badge>
+              </div>
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+                The safe lane — lightweight, content-agnostic clean-up.
+              </p>
+            </div>
+            <Switch
+              aria-label="Enable compression"
+              checked={enabled}
+              className="shrink-0"
+              onCheckedChange={(next) => {
+                setEnabled(next);
+                toast(next ? "Compression enabled" : "Compression disabled");
+              }}
+              size="lg"
+            />
           </div>
-          <Switch
-            aria-labelledby="compression-switch-label"
-            checked={enabled}
-            className="mt-1 shrink-0"
-            onCheckedChange={setEnabled}
+          <SavingsHeadline
+            caption="smaller requests"
+            value="4%"
+            valueClassName="text-success-700"
+          />
+          <BenefitList
+            benefits={FREE_COMPRESSION_BENEFITS}
+            checkClassName="bg-muted text-muted-foreground"
+            outlineClassName="border-border"
           />
         </div>
       </CardContent>
     </Card>
+  );
+
+  // Advanced card. On Free it's the blue upsell CTA; on Pro the user already
+  // has it, so it drops the promotional blue chrome (neutral, like Basic) and
+  // swaps the Upgrade CTA for an enable toggle — but keeps the blue Pro badge
+  // and blue savings KPI to mark it as the Pro-tier capability.
+  const advancedCard = (
+    <Card
+      className={
+        isPro
+          ? "rounded-sm shadow-none"
+          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none"
+      }
+    >
+      <CardContent className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <SectionHeading as="h4" className="type-heading-16">
+                  Advanced compression
+                </SectionHeading>
+                <Badge variant="info">Pro</Badge>
+              </div>
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+                All the lightweight Basic clean-up, plus the heavy hitters that
+                drive the real savings.
+              </p>
+            </div>
+            {isPro ? (
+              <Switch
+                aria-label="Enable advanced compression"
+                checked={advancedEnabled}
+                className="shrink-0"
+                onCheckedChange={(next) => {
+                  setAdvancedEnabled(next);
+                  toast(
+                    next
+                      ? "Advanced compression enabled"
+                      : "Advanced compression disabled"
+                  );
+                }}
+                size="lg"
+              />
+            ) : (
+              <Button
+                className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+                onClick={() => setCompareOpen(true)}
+                size="sm"
+                type="button"
+              >
+                <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
+                <span>Upgrade to Pro</span>
+              </Button>
+            )}
+          </div>
+          <SavingsHeadline
+            caption="smaller requests · up to ~25%"
+            value="~20%"
+            valueClassName="text-blue-700"
+          />
+          <BenefitList
+            benefits={PRO_COMPRESSION_BENEFITS}
+            // Soft blue checks on both plans: the card already wins the eye via
+            // its gradient + CTA, so keeping checks light lets the saturated CTA
+            // button stay the single loudest element instead of competing with
+            // a mass of solid-blue dots.
+            checkClassName="bg-blue-100 text-blue-700"
+            outlineClassName={isPro ? "border-border" : "border-blue-200"}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <>
+      <Card>
+        <CardChromeHeader
+          action={<StatusBadge on={isPro ? advancedEnabled : enabled} />}
+          description="Shrink prompts before they reach the provider"
+          title="Compression"
+        />
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-3">
+            {isPro ? null : basicCard}
+            {advancedCard}
+          </div>
+        </CardContent>
+      </Card>
+      {isPro ? null : (
+        <PlanComparisonDialog
+          onOpenChange={setCompareOpen}
+          onUpgrade={() => navigate("/billing")}
+          open={compareOpen}
+        />
+      )}
+    </>
   );
 }

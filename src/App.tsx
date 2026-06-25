@@ -139,6 +139,50 @@ const ApiKeysFree = lazy(() =>
 const SettingsFree = lazy(() =>
   import("@/pages/SettingsFree").then((m) => ({ default: m.SettingsFree }))
 );
+const RequestsDefault = lazy(() =>
+  import("@/pages/RequestsDefault").then((m) => ({
+    default: m.RequestsDefault,
+  }))
+);
+const ConversationsDefault = lazy(() =>
+  import("@/pages/ConversationsDefault").then((m) => ({
+    default: m.ConversationsDefault,
+  }))
+);
+const ModelsDefault = lazy(() =>
+  import("@/pages/ModelsDefault").then((m) => ({ default: m.ModelsDefault }))
+);
+const TokenSavingsDefault = lazy(() =>
+  import("@/pages/TokenSavingsDefault").then((m) => ({
+    default: m.TokenSavingsDefault,
+  }))
+);
+const PoliciesDefault = lazy(() =>
+  import("@/pages/PoliciesDefault").then((m) => ({
+    default: m.PoliciesDefault,
+  }))
+);
+const AuditTrailDefault = lazy(() =>
+  import("@/pages/AuditTrailDefault").then((m) => ({
+    default: m.AuditTrailDefault,
+  }))
+);
+const ActivityDefault = lazy(() =>
+  import("@/pages/ActivityDefault").then((m) => ({
+    default: m.ActivityDefault,
+  }))
+);
+const TeamDefault = lazy(() =>
+  import("@/pages/TeamDefault").then((m) => ({ default: m.TeamDefault }))
+);
+const BillingDefault = lazy(() =>
+  import("@/pages/BillingDefault").then((m) => ({ default: m.BillingDefault }))
+);
+const SettingsDefault = lazy(() =>
+  import("@/pages/SettingsDefault").then((m) => ({
+    default: m.SettingsDefault,
+  }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -220,6 +264,7 @@ export default function App() {
             <Route element={<Upgrade />} path="/upgrade" />
             <Route element={<Security />} path="/security" />
             <Route element={<SecurityDefault />} path="/events-default" />
+            <Route element={<SecurityDefault />} path="/security-default" />
             <Route element={<SecurityFree />} path="/security-free" />
             <Route element={<Policies />} path="/policies" />
             <Route element={<AuditTrail />} path="/audit-trail" />
@@ -231,7 +276,27 @@ export default function App() {
             <Route element={<ApiKeysDefault />} path="/api-keys-default" />
             <Route element={<Billing />} path="/billing" />
             <Route element={<BillingFree />} path="/billing-free" />
-            {/* Free-tier twins — reached via the PRO/Free workspace switcher. */}
+            {/* Default-workspace twins — reached via the workspace switcher. */}
+            <Route element={<RequestsDefault />} path="/requests-default" />
+            <Route
+              element={<ConversationsDefault />}
+              path="/conversations-default"
+            />
+            <Route element={<ModelsDefault />} path="/models-default" />
+            <Route
+              element={<TokenSavingsDefault />}
+              path="/token-savings-default"
+            />
+            <Route element={<PoliciesDefault />} path="/policies-default" />
+            <Route
+              element={<AuditTrailDefault />}
+              path="/audit-trail-default"
+            />
+            <Route element={<ActivityDefault />} path="/activity-default" />
+            <Route element={<TeamDefault />} path="/team-default" />
+            <Route element={<BillingDefault />} path="/billing-default" />
+            <Route element={<SettingsDefault />} path="/settings-default" />
+            {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
             <Route element={<RequestsFree />} path="/requests-free" />
             <Route element={<ConversationsFree />} path="/conversations-free" />
