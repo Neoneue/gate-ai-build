@@ -140,3 +140,10 @@ Documented in `design.md` semantic type table.
 
 - Each policy card header gained an ON/OFF `StatusBadge` to the left of the collapse chevron, keyed to `state.enabled` — gives enabled-state visibility when the card is collapsed.
 - Free prompt-injection card now renders the **Action on detection** panel (Block / Flag) above the Pro CTA and below the enable card; Sensitivity panel stays Pro-only. `showOptionPanels` comment updated to match.
+
+### Requests: grow finding-modal wells to fill the clean-pass gap `7ea5ced`
+
+**`src/pages/Requests.tsx`**
+
+- On the clean-pass (success + allow) request detail, the left card's message wells now grow so the card bottom-aligns with the right card stack. A `useLayoutEffect` reads the right stack's natural height and the left card height, then water-fills the gap across the User message / Tool call and Assistant response wells.
+- Each well is capped at its own overflow, so a short message is never stretched into an empty box; long content scrolls inside the grown well. Two-column (`md+`) layout only, stable under a `ResizeObserver`. No width / column classes touched.
