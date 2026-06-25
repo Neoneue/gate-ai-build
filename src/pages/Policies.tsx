@@ -22,6 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Segmented } from "@/components/ui/segmented";
 import { SparklesIcon } from "@/components/ui/sparkles";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
@@ -571,8 +572,8 @@ function PolicyCard({
   const bodyOpen = expanded;
   const toggleCard = FREE_TOGGLE_CARD[config.id];
 
-  // Free prompt-injection drops the Action + Sensitivity panels (a replacement
-  // card lands here soon); every other case shows them.
+  // Free prompt-injection shows the Action panel (now accessible) above the Pro
+  // CTA, but drops the Sensitivity panel; every other case shows both panels.
   const showOptionPanels = !(isFree && config.id === "prompt-injection");
   const showProBenefits = isFree && config.id === "prompt-injection";
 
@@ -642,6 +643,9 @@ function PolicyCard({
             {config.description}
           </p>
         </div>
+        <span className="flex h-6 shrink-0 items-center">
+          <StatusBadge on={state.enabled} />
+        </span>
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
@@ -681,7 +685,12 @@ function PolicyCard({
                   : toggleCard.title
             }
           />
-          {showProBenefits ? <ProBenefitsCard /> : null}
+          {showProBenefits ? (
+            <>
+              {actionPanel}
+              <ProBenefitsCard />
+            </>
+          ) : null}
           {showOptionPanels ? (
             <>
               {actionPanel}
