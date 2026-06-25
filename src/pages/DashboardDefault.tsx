@@ -1,8 +1,10 @@
 import { Radio } from "@base-ui/react/radio";
 import {
   ArrowLeftRight,
+  BadgeCheck,
   BarChart2,
   Check,
+  Coins,
   Download,
   MessageSquare,
   Plus,
@@ -11,12 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { type ComponentType, type ElementType, useMemo, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useOutletContext,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import {
   AnthropicIcon,
   GeminiIcon,
@@ -44,6 +41,7 @@ import { SectionTitle } from "@/components/ui/section-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
+import { ChoiceCard } from "@/pages/onboarding-shared";
 
 const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
 
@@ -382,7 +380,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "Windows",
     icon: "/icons/os/windows-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires Windows 10 or later",
+    requires: "Requires Windows 10 or later.",
     defaultBuild: "win-x64",
     builds: [
       {
@@ -406,7 +404,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "macOS",
     icon: "/icons/os/macos-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires macOS 12 or later",
+    requires: "Requires macOS 12 or later.",
     defaultBuild: "mac-arm",
     builds: [
       {
@@ -430,7 +428,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "Linux",
     icon: "/icons/os/linux-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires a modern 64-bit Linux distribution",
+    requires: "Requires a modern 64-bit Linux distribution.",
     defaultBuild: "linux-x64",
     builds: [
       {
@@ -490,7 +488,7 @@ function detectPlatform(): PlatformId {
   return "windows";
 }
 
-function DownloadGateConnectDialog() {
+export function DownloadGateConnectDialog() {
   const detected = useMemo(() => detectPlatform(), []);
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<PlatformId>(detected);
@@ -539,7 +537,7 @@ function DownloadGateConnectDialog() {
               Download Gate <span className="text-blue-700">Connect</span>
             </DialogTitle>
             <DialogDescription className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              The menu-bar app that connects your desktop agents to Gate
+              The menu-bar app that connects your desktop agents to Gate.
             </DialogDescription>
           </div>
           <DialogClose
@@ -661,60 +659,97 @@ function DownloadGateConnectDialog() {
   );
 }
 
-function OverviewHeroCard() {
+/** Two-node progress rail: "Connect a tool" (current) → "First request"
+ *  (upcoming). Tokenized — current node = ink ring, upcoming = muted. */
+function StepRail() {
+  return (
+    <div className="flex w-fit items-center gap-3">
+      <RailStep label="Connect a tool" n={1} state="current" />
+      <span aria-hidden className="h-px w-10 bg-border" />
+      <RailStep label="Send first request" n={2} state="upcoming" />
+    </div>
+  );
+}
+
+function RailStep({
+  n,
+  label,
+  state,
+}: {
+  n: number;
+  label: string;
+  state: "current" | "upcoming";
+}) {
+  const current = state === "current";
+  return (
+    <div
+      className={cn(
+        "type-label-14 flex items-center gap-2",
+        current ? "text-foreground" : "text-muted-foreground"
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "inline-flex size-6 items-center justify-center rounded-full border tabular-nums",
+          current
+            ? "border-neutral-900 text-foreground"
+            : "border-border text-muted-foreground"
+        )}
+      >
+        {n}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+/** New-workspace onboarding hero. Step rail + the two routing outcomes:
+ *  bring-your-own subscriptions (BYOK → /setup-connect-default) and
+ *  pay-as-you-go (PAYG → /setup-manual-default?bill=payg). */
+function GetStartedCard() {
   const navigate = useNavigate();
 
   return (
     <section className="flex flex-col gap-4">
       <SectionTitle as="h2">Get started</SectionTitle>
-      <Card className="flex-1" density="flush">
-        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
-          <div className="flex max-w-1/2 flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
-              >
-                1
-              </span>
-              <h3 className="type-heading-18 m-0 text-foreground">
-                Create your first API key
-              </h3>
-            </div>
-            <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
-              Your API key is what routes traffic through Gate, adding
-              prompt-injection defense and a tamper-evident audit trail to every
-              request. Use it with our Gate Connect app, or any AI coding tools
-              you configure manually.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/api-keys")}>
-              <Plus
-                className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
-                data-icon="inline-start"
-              />{" "}
-              Create key
-            </Button>
-            <Button
-              onClick={() =>
-                window.open(
-                  "https://docs.constellationgate.ai",
-                  "_blank",
-                  "noopener,noreferrer"
-                )
+      <Card density="flush">
+        <div className="flex flex-col gap-6 p-6">
+          <StepRail />
+          <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-muted-foreground">
+            However you connect, every request flows through Gate with
+            prompt-injection defense, a tamper-evident audit trail, and lighter
+            token bills from built-in compression. Pick how you&rsquo;ll use it.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ChoiceCard
+              body="Route the plans you already pay for through Gate. Your keys, your billing."
+              cta="Route my traffic"
+              ctaVariant="default"
+              icon={BadgeCheck}
+              onClick={() => navigate("/setup-connect-default")}
+              supports={
+                <>
+                  Works with{" "}
+                  <span className="font-medium text-foreground">Claude</span>{" "}
+                  and <span className="font-medium text-foreground">Codex</span>{" "}
+                  subscriptions, plus your own provider keys.
+                </>
               }
-              variant="outline"
-            >
-              Read API docs{" "}
-              <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
-            </Button>
+              title="Use my existing subscriptions"
+              tone="blue"
+            />
+            <ChoiceCard
+              body="No provider accounts. Add credits and call any model, billed through Gate."
+              cta="Get started"
+              ctaVariant="default"
+              icon={Coins}
+              onClick={() => navigate("/setup-manual-default?bill=payg")}
+              title="Pay as you go"
+              tone="success"
+            />
           </div>
         </div>
-        <div className="border-border border-t p-8 max-xl:p-6">
-          <FirstRequestInfo />
-        </div>
-        <WorksWithFooter />
       </Card>
     </section>
   );
@@ -1259,83 +1294,6 @@ function SecurityEventsTable() {
   );
 }
 
-const FIRST_REQUEST_TAB_IDS = [
-  "gate-connect",
-  "claude-code",
-  "codex",
-  "openclaw",
-];
-
-function FirstRequestInfo() {
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const defaultTab =
-    tabParam && FIRST_REQUEST_TAB_IDS.includes(tabParam) ? tabParam : undefined;
-  const rightDefaultTab =
-    defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
-  return (
-    <section className="@container/connect flex flex-col gap-6">
-      <div className="flex max-w-1/2 flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
-          >
-            2
-          </span>
-          <h3 className="type-heading-18 m-0 text-balance text-foreground">
-            Making your first request
-          </h3>
-        </div>
-        <p className="type-copy-16 m-0 text-muted-foreground">
-          There are two ways to start making requests using your API key. With{" "}
-          <span className="font-medium">Gate Connect</span>, setup is automatic,
-          so you can skip the code entirely. Want to configure it yourself? Use
-          the code snippets to do it by hand.
-        </p>
-      </div>
-
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
-          the manual-setup code tabs (no Gate Connect tab) on the right.
-          Side-by-side with a 24px gap; stacks full-width below lg. */}
-      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
-        {/* Each card gets an h4 label above it (outside the card, so no
-            height impact) so the two setup paths — Automatic vs Manual — read
-            as a matched pair even though the right card is a code card with no
-            internal title slot. */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <CardTitle as="h4">Automatic</CardTitle>
-          <Card className="flex flex-1 flex-col" density="flush">
-            <div className="flex flex-1 flex-col">
-              <ConnectTabs
-                fillHeight
-                gateConnectOnly
-                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
-                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
-                titleAs="h4"
-                titleClassName="type-heading-18 text-foreground text-balance m-0"
-              />
-            </div>
-          </Card>
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <CardTitle as="h4">Manual</CardTitle>
-          <Card className="flex flex-1 flex-col" density="flush">
-            <div className="flex-1">
-              <ConnectTabs
-                codeMaxHeight="h-[216px]"
-                defaultTab={rightDefaultTab}
-                floatingCopy
-                showGateConnect={false}
-              />
-            </div>
-          </Card>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function DashboardDefault() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -1358,7 +1316,7 @@ export function DashboardDefault() {
         </p>
       </div>
       <div className="mb-2">
-        <OverviewHeroCard />
+        <GetStartedCard />
       </div>{" "}
       <div className="flex flex-col gap-4">
         <SectionTitle as="h2">Activity This Week</SectionTitle>
