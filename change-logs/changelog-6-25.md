@@ -81,3 +81,38 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 - Scan cards now start collapsed on every load (`expanded` initial state `false`); users expand the ones they want to tune.
 - Pro plan protection CTA: bullet titles changed from `type-label-14` (medium) to `type-copy-14` (regular) so they stop competing with the `type-heading-16` card title.
 
+## Pages
+
+### Overview-default onboarding flow rebuilt + setup subpages `9c7281d`
+
+**`src/pages/DashboardDefault.tsx`, `src/pages/onboarding-shared.tsx` (new), `src/pages/SetupConnect.tsx` (new), `src/pages/SetupGateConnect.tsx` (new), `src/pages/SetupManual.tsx` (new), `src/pages/SetupCredits.tsx` (new), `src/pages/SetupModels.tsx` (new), `src/App.tsx`**
+
+- Replaced the `/overview-default` get-started hero (`OverviewHeroCard` + `FirstRequestInfo`, now removed) with a new `GetStartedCard`: a two-step progress rail ("Connect a tool" → "First request") above two routing outcomes — "Use my existing subscriptions" (BYOK, featured blue) and "Pay as you go" (PAYG, green). The lower "Activity This Week" empty-state section (KPI strip + chart + tables) is unchanged.
+- New shared module `onboarding-shared.tsx` owns the flow primitives so the card and subpages can't drift: `ChoiceCard` (tokenized blue/success/neutral icon chip; featured = `border-blue-200` + `from-blue-50 to-blue-25` gradient, matching the Pro/Token-Savings upsell treatment), `SetupScaffold` (default-tier `DashboardChrome` + centered column + back breadcrumb + title/subtitle), `SetupBackLink` (RequestsFindings breadcrumb pattern), and `WaitingStrip`.
+- Five dedicated onboarding subpages, all routed under `-default` so the sidebar keeps the new-workspace locks (`isDefaultSurface`): `/setup-connect-default` (Pick how to connect), `/setup-gate-connect-default` (Gate Connect 3-step, reuses the exported `DownloadGateConnectDialog`), `/setup-manual-default` (create-key reveal + tool tabs/snippet; billing mode fixed via `?bill=byok|payg`, no in-page toggle), `/setup-credits-default` (PAYG top-up), `/setup-models-default` (pooled pricing table via `VendorAvatar`/`VENDOR_META`).
+- Multi-level back stack preserved per the concept: Gate Connect → Connect options → Overview; Manual (BYOK) → Connect options; Manual (PAYG) → Overview; Credits/Models → Manual (PAYG). The Manual "Change" link re-enters the prior decision point.
+- `DownloadGateConnectDialog` is now exported from `DashboardDefault.tsx` for reuse; `CodePanel` / `ConnectTabs` exports are unchanged. Verified clean: `tsc -b`, `lint:design`, and a full browser walk of both branches (no console errors).
+
+### Token Savings copy + KPI cleanup (post dev-sync) `2dde112`
+
+**`src/pages/TokenSavings.tsx`**
+
+- Removed the Basic compression card's `4% smaller requests` KPI headline (per dev-sync: focus the Free view on the Pro upgrade path).
+- Advanced KPI headline: dropped the `· up to ~25%` ceiling and the color/size emphasis — now `~20%` (neutral `text-foreground`, one step smaller at `text-xl`) + caption `smaller requests on average`, per Chad's note to add an "average" indicator and avoid overpromising. The headline now renders on the Free (CTA) version only; on Pro it's dropped since the user already has the capability.
+- Compression subtitle now carries Alex's no-quality-impact assurance: `Shrink prompts before they reach the provider, without affecting the model's output.`
+- Caching subtitle: removed the inaccurate similarity claim — `Reuse identical or semantically similar responses` → `Reuse identical responses.` (matches the card's identical-dedup behavior + dev-sync decision).
+
+### Overview Get-started card: CTA + supports treatment `9c7281d`
+
+**`src/pages/DashboardDefault.tsx`, `src/pages/onboarding-shared.tsx`**
+
+- Both Get-started choice cards now use primary CTAs via a new `ChoiceCard` `ctaVariant` prop (defaults to `outline`, so `SetupConnect`'s cards are unchanged). PAYG CTA relabeled `Get started`.
+- `ChoiceCard` `supports` box restyled from grey `bg-muted` fill to an outlined card (`border border-border bg-card`); the PAYG card's supports box was removed (kept only on the BYOK card).
+
+### Terminal-period convention codified + swept site-wide `2dde112`
+
+**`design.md` (Voice & Content), + `src/pages/*`**
+
+- Codified the rule: complete descriptive sentences (page subtitles, card/section `description`s, step/list body copy, helper paragraphs, tooltip prose) take a terminal period — even one-line imperatives; terse fragments (titles, labels, button/tab text, eyebrows, KPI values + captions, badges, table headers) do not.
+- Applied to Token Savings (Compression + Caching subtitles) by hand, then swept the remaining 55 page files via 6 parallel agents. Edits: `Upgrade.tsx` (+4), `plan-comparison-dialog.tsx` (+3), `plan-comparison-dialog-pro.tsx` (+3), `DashboardDefault.tsx` (+4 incl. download specs), `Settings.tsx` (−1: topic-list subtitle is a fragment). All other pages were already compliant. Verified: `tsc -b` + `lint:design` clean.
+
