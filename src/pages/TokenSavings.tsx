@@ -711,9 +711,11 @@ function CompressionCard({ plan }: { plan: Plan }) {
           />
           <BenefitList
             benefits={PRO_COMPRESSION_BENEFITS}
-            // Free plan: bold solid blue so the Pro card wins the eye against
-            // the muted Basic card. Pro plan: soft blue — identity, not a fight.
-            checkClassName={isPro ? "bg-blue-100 text-blue-700" : "bg-blue-600"}
+            // Soft blue checks on both plans: the card already wins the eye via
+            // its gradient + CTA, so keeping checks light lets the saturated CTA
+            // button stay the single loudest element instead of competing with
+            // a mass of solid-blue dots.
+            checkClassName="bg-blue-100 text-blue-700"
             outlineClassName={isPro ? "border-border" : "border-blue-200"}
           />
         </div>
