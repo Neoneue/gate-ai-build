@@ -152,3 +152,9 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 - `PaygToolConfigCard`: OpenCode → **Hermes** tab with lucide `Bot` icon; per-tab captions match live site.
 - Moved the shared snippet + captions (`paygConfigSnippet`, `PAYG_TOOL_CAPTIONS`, `PaygToolId`) out of `DashboardDefault` into a component-free `src/pages/payg-config.ts` so `Models` / `SetupManual` import one source without tripping `react-refresh/only-export-components`.
 
+### Overview PAYG card title aligned with setup page `9b73781`
+
+**`src/pages/DashboardDefault.tsx`**
+
+- Choice card title "Run models as you go" → "Run models pay-as-you-go" (matches `/setup-manual-default?bill=payg` scaffold).
+
