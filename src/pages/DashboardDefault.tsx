@@ -691,7 +691,7 @@ function GetStartedCard() {
             many more.
           </>
         }
-        title="Run models as you go"
+        title="Run models pay-as-you-go"
         tone="success"
       />
     </div>
