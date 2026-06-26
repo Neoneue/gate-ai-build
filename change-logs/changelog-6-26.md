@@ -16,3 +16,11 @@ Prior day: [`changelog-6-25.md`](./changelog-6-25.md)
 - Mapped the primitives onto the scale: `PageTitle` `h1` → `type-heading-32`, `h2` → `type-heading-24`; `SectionTitle` → `type-heading-20`; `CardTitle` → `type-heading-16`. The `type-heading-*` utilities are now the single source of truth for heading voice.
 - Tracking: `tracking-snug` (`-0.01em`) on the sans heading tiers `type-heading-16` through `type-heading-24`; the display tier (`type-heading-32`+) keeps the tighter `tracking-tight`; `type-heading-14` stays `tracking-normal`. Confirmed in-browser: SectionTitle 20px → -0.2px, CardTitle 16px → -0.16px, PageTitle 32px → -0.8px.
 - Reconciled `design.md` to match the code: Hierarchy intro + table (h2/h3/h4 letter-spacing `normal` → `snug`, notes reference the tokens) and the §975 tracking rule (rewritten to lead with the sans heading tiers).
+
+### One-h1-per-page rule codified `6cc819d`
+
+**`design.md`**
+
+- Added an explicit typography rule: exactly one `<h1>` per page (the `<PageTitle>`), section titles `<h2>` (`SectionTitle`), card/modal-body titles `<h3>`, no level skips, and chrome never emits a competing `<h1>`. Element level and visual size are independent (the `type-heading-*` voice sets the look, the tag sets the outline).
+- Corrected the `PageTitle` primitive description: it renders `<h1>` by default (the page's sole h1), not `<h2>` as the doc previously claimed. Verified against the live `/overview` outline (one h1 = "Overview", h2 section titles, h3 card titles).
+- Fixed the `SectionTitle` recipe note from "20/28, no tracking" → "20/28, tracking-snug" after the heading-tier `tracking-snug` restore.
