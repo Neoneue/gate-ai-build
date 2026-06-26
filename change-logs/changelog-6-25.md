@@ -158,3 +158,9 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 
 - Choice card title "Run models as you go" → "Run models pay-as-you-go" (matches `/setup-manual-default?bill=payg` scaffold).
 
+### Policies Free Pro-benefits CTA: soft blue check icons `aa66835`
+
+**`src/pages/Policies.tsx`**
+
+- `ProBenefitsCard` benefit checkmarks: `bg-blue-600 text-white` → `bg-blue-200 text-blue-800`, so a column of solid-blue dots stops competing with the card's CTA.
+
