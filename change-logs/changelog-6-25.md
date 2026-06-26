@@ -116,3 +116,39 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 - Codified the rule: complete descriptive sentences (page subtitles, card/section `description`s, step/list body copy, helper paragraphs, tooltip prose) take a terminal period — even one-line imperatives; terse fragments (titles, labels, button/tab text, eyebrows, KPI values + captions, badges, table headers) do not.
 - Applied to Token Savings (Compression + Caching subtitles) by hand, then swept the remaining 55 page files via 6 parallel agents. Edits: `Upgrade.tsx` (+4), `plan-comparison-dialog.tsx` (+3), `plan-comparison-dialog-pro.tsx` (+3), `DashboardDefault.tsx` (+4 incl. download specs), `Settings.tsx` (−1: topic-list subtitle is a fragment). All other pages were already compliant. Verified: `tsc -b` + `lint:design` clean.
 
+### Overview-default: onboarding-first empty state `ddbb5fe`
+
+**`src/pages/DashboardDefault.tsx`**
+
+- Replaced the "Overview" page title + monitoring subtitle with a promoted onboarding header matching `SetupScaffold`: `PageTitle` "Choose how to use Gate" + subtitle "Keep your existing subscriptions, or run models as you go. Switch anytime."
+- `GetStartedCard` now mirrors the "Pick how to connect" layout — choice cards only (no step rail, no in-card intro paragraph). Card titles/CTAs relabeled: "Keep my existing subscriptions" / "Keep my subscriptions" and "Run models as you go" / "Run as you go".
+- Hid the always-empty Activity This Week section (KPI strip + usage chart) and the three preview tables (Latest requests / conversations / security events) so the first screen reads as a single clear decision.
+
+### Gate Connect setup steps + inline create-key modal `ddbb5fe`
+
+**`src/pages/SetupGateConnect.tsx`**
+
+- Replaced the three steps with "Download the app", "Create an API key", and "Send your first request" (was Sign in / Flip the switch on).
+- Step 2 opens the shared `CreateKeyDialog` + `KeyCreatedDialog` from API Keys inline — no redirect to `/api-keys-default`. The listening strip moves to step 3 after the key is saved.
+
+### Overview PAYG card: model breadth supports strip `ddbb5fe`
+
+**`src/pages/DashboardDefault.tsx`**
+
+- Restored the outlined `supports` box on the "Run models as you go" choice card, mirroring BYOK: vendor avatars + flagship names (Claude, GPT, Gemini) and "and more." — concrete breadth without claiming "hundreds" ahead of the catalog.
+
+### BYOK manual config snippets — agent settings format `ddbb5fe`
+
+**`src/pages/DashboardDefault.tsx`, `src/pages/SetupManual.tsx`**
+
+- Replaced stale SDK sample code (Anthropic/OpenAI/OpenClaw imports) with the gateway devs' BYOK configs: Claude Code `settings.json`, Codex `config.toml` (+ credential-helper comments), OpenClaw `openclaw.json` + `.env` notes. Uses production `gateway.constellationgate.ai` for BYOK paths.
+- Tokenizer: `#` line comments (Codex TOML). Manual setup BYOK keeps `ConnectTabs` locked to BYOK with the mode strip hidden (billing path is already chosen upstream).
+
+### PAYG agent configs + Hermes tab `ddbb5fe`
+
+**`src/pages/DashboardDefault.tsx`, `src/pages/Models.tsx`**
+
+- Replaced stale PAYG shell-export snippets with live agent configs (Claude `settings.json`, Codex `config.toml`, OpenClaw `openclaw.json`, Hermes `config.yaml`) via shared `paygConfigSnippet()` — production gateway, model handle interpolated on setup/model detail.
+- `PaygToolConfigCard`: OpenCode → **Hermes** tab with lucide `Bot` icon; per-tab captions match live site.
+- Moved the shared snippet + captions (`paygConfigSnippet`, `PAYG_TOOL_CAPTIONS`, `PaygToolId`) out of `DashboardDefault` into a component-free `src/pages/payg-config.ts` so `Models` / `SetupManual` import one source without tripping `react-refresh/only-export-components`.
+
