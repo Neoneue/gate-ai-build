@@ -55,7 +55,6 @@ export function SetupModels() {
     <SetupScaffold
       backLabel="Manual setup"
       backTo="/setup-manual-default?bill=payg"
-      maxWidthClassName="max-w-[860px]"
       subtitle="Pooled pay-as-you-go pricing, per 1M tokens."
       title="Models"
     >

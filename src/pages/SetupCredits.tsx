@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { SetupScaffold } from "@/pages/onboarding-shared";
+import { SetupIconChip, SetupScaffold } from "@/pages/onboarding-shared";
 
 /* ─── /setup-credits-default ────────────────────────────────────────────────
  * Pay-as-you-go credit top-up, reached from the Manual setup PAYG note. Back
@@ -26,12 +26,7 @@ export function SetupCredits() {
       <Card density="flush">
         {/* Balance header */}
         <div className="flex flex-wrap items-center gap-3 border-border border-b px-6 py-4">
-          <span
-            aria-hidden
-            className="inline-flex size-10 items-center justify-center rounded-md bg-success-100 text-success-700"
-          >
-            <Wallet className="size-5" />
-          </span>
+          <SetupIconChip icon={Wallet} tone="success" />
           <div className="flex flex-col gap-1">
             <h2 className="type-heading-16 m-0 text-foreground">
               Current balance

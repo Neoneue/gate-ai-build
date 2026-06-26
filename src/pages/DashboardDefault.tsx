@@ -1,19 +1,7 @@
 import { Radio } from "@base-ui/react/radio";
-import {
-  ArrowLeftRight,
-  BadgeCheck,
-  BarChart2,
-  Check,
-  Coins,
-  Download,
-  MessageSquare,
-  Plus,
-  ShieldAlert,
-  XIcon,
-  Zap,
-} from "lucide-react";
+import { BadgeCheck, Check, Coins, Download, Plus, XIcon } from "lucide-react";
 import { type ComponentType, type ElementType, useMemo, useState } from "react";
-import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   AnthropicIcon,
   GeminiIcon,
@@ -21,8 +9,9 @@ import {
   MetaIcon,
   OpenAIIcon,
 } from "@/components/icons/model-providers";
+import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
@@ -34,113 +23,81 @@ import {
 } from "@/components/ui/dialog";
 import { DownloadIcon } from "@/components/ui/download";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
-import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { SectionTitle } from "@/components/ui/section-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
 import { ChoiceCard } from "@/pages/onboarding-shared";
+import { PAYG_TOOL_CAPTIONS, paygConfigSnippet } from "@/pages/payg-config";
 
-const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
+const BYOK_GATEWAY_URL = "https://gateway.constellationgate.ai";
 
-// These tabs configure agent apps to route through the gateway — you point
-// the tool at Gate, not the model provider. Claude Code + Codex read base-URL
-// env vars; OpenClaw is Gate-native and takes a small plugin config.
-const HERO_CLAUDE_CODE_BYOK = `import Anthropic from "@anthropic-ai/sdk";
+// BYOK — Claude Code ~/.claude/settings.json
+const HERO_CLAUDE_CODE_BYOK = `{
+  "env": {
+    "ANTHROPIC_BASE_URL": "${BYOK_GATEWAY_URL}",
+    "ANTHROPIC_CUSTOM_HEADERS": "X-Gate-Api-Key: sk-gw-…your Gate key…\\nX-Gate-Upstream-Url: https://api.anthropic.com"
+  }
+}`;
 
-// BYOK — your own Anthropic key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new Anthropic({
-  baseURL: "${GATEWAY_URL}",
-  apiKey: "sk-ant-…YOUR_ANTHROPIC_KEY",
-  defaultHeaders: {
-    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-    "X-Gate-Upstream-Url": "https://api.anthropic.com",
-  },
-});
+const HERO_CLAUDE_CODE_PAYG = paygConfigSnippet("claude-code");
+const HERO_CODEX_PAYG = paygConfigSnippet("codex");
+const HERO_OPENCLAW_PAYG = paygConfigSnippet("openclaw");
+// BYOK — Codex ~/.codex/config.toml (subscription auth via credential helper)
+const HERO_CODEX_BYOK = `model_provider = "gate"
 
-const msg = await client.messages.create({
-  model: "claude-sonnet-4-5",
-  max_tokens: 256,
-  messages: [{ role: "user", content: "Hello!" }],
-});
-console.log(msg.content);`;
+[model_providers.gate]
+name = "Constellation Gate"
+base_url = "${BYOK_GATEWAY_URL}/codex"
+wire_api = "responses"
 
-// PAYG terminal config — Claude Code routes through the gateway via the
-// OpenRouter-compatible provider. Configs supplied by the gateway devs.
-const HERO_CLAUDE_CODE_PAYG = `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
-export ANTHROPIC_API_KEY="sk-gw-..."
-export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
+[model_providers.gate.http_headers]
+"X-Gate-Api-Key" = "sk-gw-…your Gate key…"
+"X-Gate-Upstream-Url" = "https://chatgpt.com/backend-api"
 
-claude code "your prompt"`;
+[model_providers.gate.auth]
+command = "/Users/you/.codex/gate-credential-helper.sh"
 
-const HERO_CODEX_BYOK = `import OpenAI from "openai";
+# Subscription auth — no API key.
+# NOTE: Gate Connect would handle this for you automatically.
+# Run \`codex login\` once, then create the helper
+# that prints your ChatGPT OAuth bearer from ~/.codex/auth.json. Codex calls it on
+# every request, so token refresh is automatic. Use an absolute path above (no ~):
+#
+#   cat > ~/.codex/gate-credential-helper.sh <<'EOF'
+#   #!/bin/sh
+#   set -eu
+#   AUTH_FILE="$HOME/.codex/auth.json"
+#   TOKEN=$(sed -n 's/.*"access_token"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$AUTH_FILE" | head -1)
+#   [ -z "$TOKEN" ] && TOKEN=$(sed -n 's/.*"OPENAI_API_KEY"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$AUTH_FILE" | head -1)
+#   printf '%s' "$TOKEN"
+#   EOF
+#   chmod 700 ~/.codex/gate-credential-helper.sh`;
 
-// BYOK — your own OpenAI key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new OpenAI({
-  baseURL: "${GATEWAY_URL}/v1",
-  apiKey: "sk-…YOUR_OPENAI_KEY",
-  defaultHeaders: {
-    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-    "X-Gate-Upstream-Url": "https://api.openai.com",
-  },
-});
-
-const msg = await client.chat.completions.create({
-  model: "gpt-4o",
-  messages: [{ role: "user", content: "Hello!" }],
-});
-console.log(msg.choices[0].message.content);`;
-
-const HERO_CODEX_PAYG = `export OPENAI_API_KEY="sk-gw-..."
-
-codex exec \\
-  -c 'model_providers.gateway.base_url="${GATEWAY_URL}/v1"' \\
-  -c 'model_providers.gateway.env_key="OPENAI_API_KEY"' \\
-  -c 'model_providers.gateway.wire_api="responses"' \\
-  -c 'model_providers.gateway.http_headers."X-Gate-Provider"="openai_compatible"' \\
-  -c 'model_provider="gateway"' \\
-  -m "anthropic/claude-sonnet-4-5" \\
-  "your prompt"`;
-
-const HERO_OPENCLAW_BYOK = `import { OpenClawGenAI } from "@openclaw/genai";
-
-// BYOK — your own OpenClaw API key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new OpenClawGenAI({
-  apiKey: "YOUR_OPENCLAW_API_KEY",
-  apiVersion: "v1",
-  httpOptions: {
-    baseUrl: "${GATEWAY_URL}/openclaw",
-    headers: {
-      "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-      "X-Gate-Upstream-Url": "https://generativelanguage.googleapis.com",
-    },
-  },
-});
-
-const res = await client.models.generateContent({
-  model: "gemini-2.5-pro",
-  contents: "Hello!",
-});
-console.log(res.text);`;
-
-const HERO_OPENCLAW_PAYG = `{
+// BYOK — OpenClaw openclaw.json + ~/.openclaw/.env
+const HERO_OPENCLAW_BYOK = `{
   "models": {
     "providers": {
-      "swarm-deck": {
-        "baseUrl": "${GATEWAY_URL}",
-        "apiKey": "sk-gw-...",
+      "openrouter": {
+        "baseUrl": "${BYOK_GATEWAY_URL}",
+        "apiKey": "\${OPENROUTER_API_KEY}",
         "api": "openai-completions",
-        "headers": { "X-Gate-Provider": "openai_compatible" },
-        "models": [{ "id": "anthropic/claude-sonnet-4-5", "name": "anthropic/claude-sonnet-4-5" }]
+        "headers": {
+          "X-Gate-Api-Key": "sk-gw-…your Gate key…",
+          "X-Gate-Upstream-Url": "https://openrouter.ai/api/v1"
+        },
+        "models": [
+          { "id": "openrouter/auto", "name": "openrouter/auto" },
+          { "id": "kimi-k2.5", "name": "kimi-k2.5" }
+        ]
       }
     }
   }
-}`;
+}
+
+// In ~/.openclaw/.env:  OPENROUTER_API_KEY=sk-or-…your OpenRouter key…
+// Validate with:  openclaw doctor`;
 
 const KEYWORDS = new Set([
   "import",
@@ -171,6 +128,10 @@ function tokenizeLine(line: string): CodeToken[] {
     // `//` inside a URL ("https://…") is tokenized as a string and never
     // reaches here.
     if (ch === "/" && line[i + 1] === "/") {
+      tokens.push({ text: line.slice(i), type: "comment" });
+      break;
+    }
+    if (ch === "#") {
       tokens.push({ text: line.slice(i), type: "comment" });
       break;
     }
@@ -270,6 +231,8 @@ function HeroCodeTab({
   byok,
   payg,
   paygOnly = false,
+  byokOnly = false,
+  hideStrip = false,
   caption,
   maxHeightClass = "max-h-[192px]",
   mode = "byok",
@@ -280,6 +243,10 @@ function HeroCodeTab({
   payg?: string;
   /** Force the PAYG snippet and drop the BYOK/PAYG selector (caption stays). */
   paygOnly?: boolean;
+  /** Force the BYOK snippet and drop the BYOK/PAYG selector (caption stays). */
+  byokOnly?: boolean;
+  /** Drop the mode/caption strip entirely (only meaningful when locked). */
+  hideStrip?: boolean;
   /** Overrides the mode caption with a fixed per-tab string. */
   caption?: string;
   /** Tailwind max-h class for the scrolling snippet panel. */
@@ -291,15 +258,16 @@ function HeroCodeTab({
   onModeChange?: (next: "byok" | "payg") => void;
 }) {
   const hasModes = Boolean(byok && payg);
-  const effectiveMode = paygOnly ? "payg" : mode;
+  const lockMode = paygOnly || byokOnly;
+  const effectiveMode = paygOnly ? "payg" : byokOnly ? "byok" : mode;
   const code = hasModes ? (effectiveMode === "byok" ? byok! : payg!) : snippet!;
   return (
     <div className="flex h-full flex-col">
-      {hasModes && (
+      {hasModes && !hideStrip && (
         <div
-          className={`flex items-center gap-4 border-border border-b px-4 ${paygOnly ? "h-10 justify-start" : "justify-between py-2"}`}
+          className={`flex items-center gap-4 border-border border-b px-4 ${lockMode ? "h-10 justify-start" : "justify-between py-2"}`}
         >
-          {!paygOnly && (
+          {!lockMode && (
             <div
               aria-label="Gateway billing mode"
               className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm border border-border bg-card px-1"
@@ -488,7 +456,11 @@ function detectPlatform(): PlatformId {
   return "windows";
 }
 
-export function DownloadGateConnectDialog() {
+export function DownloadGateConnectDialog({
+  onDownload,
+}: {
+  onDownload?: () => void;
+} = {}) {
   const detected = useMemo(() => detectPlatform(), []);
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<PlatformId>(detected);
@@ -649,7 +621,13 @@ export function DownloadGateConnectDialog() {
 
         {/* FOOTER */}
         <div className="border-border border-t px-6 py-6">
-          <Button className="h-12 w-full" onClick={() => setOpen(false)}>
+          <Button
+            className="h-12 w-full"
+            onClick={() => {
+              onDownload?.();
+              setOpen(false);
+            }}
+          >
             <Download className="size-4" data-icon="inline-start" /> Download
             for {spec.label}
           </Button>
@@ -659,99 +637,64 @@ export function DownloadGateConnectDialog() {
   );
 }
 
-/** Two-node progress rail: "Connect a tool" (current) → "First request"
- *  (upcoming). Tokenized — current node = ink ring, upcoming = muted. */
-function StepRail() {
-  return (
-    <div className="flex w-fit items-center gap-3">
-      <RailStep label="Connect a tool" n={1} state="current" />
-      <span aria-hidden className="h-px w-10 bg-border" />
-      <RailStep label="Send first request" n={2} state="upcoming" />
-    </div>
-  );
-}
-
-function RailStep({
-  n,
-  label,
-  state,
-}: {
-  n: number;
-  label: string;
-  state: "current" | "upcoming";
-}) {
-  const current = state === "current";
-  return (
-    <div
-      className={cn(
-        "type-label-14 flex items-center gap-2",
-        current ? "text-foreground" : "text-muted-foreground"
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "inline-flex size-6 items-center justify-center rounded-full border tabular-nums",
-          current
-            ? "border-neutral-900 text-foreground"
-            : "border-border text-muted-foreground"
-        )}
-      >
-        {n}
-      </span>
-      {label}
-    </div>
-  );
-}
-
-/** New-workspace onboarding hero. Step rail + the two routing outcomes:
- *  bring-your-own subscriptions (BYOK → /setup-connect-default) and
- *  pay-as-you-go (PAYG → /setup-manual-default?bill=payg). */
+/** New-workspace onboarding hero — two routing outcomes only (no outer card).
+ *  Page title + subtitle live in DashboardDefault. */
 function GetStartedCard() {
   const navigate = useNavigate();
 
   return (
-    <section className="flex flex-col gap-4">
-      <SectionTitle as="h2">Get started</SectionTitle>
-      <Card density="flush">
-        <div className="flex flex-col gap-6 p-6">
-          <StepRail />
-          <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-muted-foreground">
-            However you connect, every request flows through Gate with
-            prompt-injection defense, a tamper-evident audit trail, and lighter
-            token bills from built-in compression. Pick how you&rsquo;ll use it.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ChoiceCard
-              body="Route the plans you already pay for through Gate. Your keys, your billing."
-              cta="Route my traffic"
-              ctaVariant="default"
-              icon={BadgeCheck}
-              onClick={() => navigate("/setup-connect-default")}
-              supports={
-                <>
-                  Works with{" "}
-                  <span className="font-medium text-foreground">Claude</span>{" "}
-                  and <span className="font-medium text-foreground">Codex</span>{" "}
-                  subscriptions, plus your own provider keys.
-                </>
-              }
-              title="Use my existing subscriptions"
-              tone="blue"
-            />
-            <ChoiceCard
-              body="No provider accounts. Add credits and call any model, billed through Gate."
-              cta="Get started"
-              ctaVariant="default"
-              icon={Coins}
-              onClick={() => navigate("/setup-manual-default?bill=payg")}
-              title="Pay as you go"
-              tone="success"
-            />
-          </div>
-        </div>
-      </Card>
-    </section>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <ChoiceCard
+        body="Route the plans you already pay for through Gate. Manage your own keys and billing plans."
+        cta="Route my traffic"
+        ctaVariant="default"
+        icon={BadgeCheck}
+        onClick={() => navigate("/setup-connect-default")}
+        supports={
+          <>
+            Works with{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="anthropic" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Claude</span> and{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="openai" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Codex</span>{" "}
+            subscriptions, plus your own provider keys.
+          </>
+        }
+        title="Keep my existing subscriptions"
+        tone="blue"
+      />
+      <ChoiceCard
+        body="No provider accounts needed. Add credits and call any model, billed through Gate."
+        cta="Get started"
+        ctaVariant="default"
+        icon={Coins}
+        onClick={() => navigate("/setup-manual-default?bill=payg")}
+        supports={
+          <>
+            Choose from hundreds of models, including{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="anthropic" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Claude</span>,{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="openai" />
+            </span>{" "}
+            <span className="font-medium text-foreground">GPT</span>,{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="google" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Gemini</span>, and
+            many more.
+          </>
+        }
+        title="Run models as you go"
+        tone="success"
+      />
+    </div>
   );
 }
 
@@ -915,12 +858,7 @@ function WorksWithFooter({
 }
 
 /** Per-tab captions for the paygOnly strip (e.g. the Models page). */
-const PAYG_TAB_CAPTIONS: Record<"claude-code" | "codex" | "openclaw", string> =
-  {
-    "claude-code": "Anthropic-shape CLI. Point base URL + key at the gateway.",
-    codex: "OpenAI Responses CLI. Inline-config the gateway as a provider.",
-    openclaw: "Edit ~/.openclaw/openclaw.json — gateway as a provider.",
-  };
+const PAYG_TAB_CAPTIONS = PAYG_TOOL_CAPTIONS;
 
 /** Default per-breakpoint max-widths for the Gate Connect blurb. */
 const CONNECT_TEXT_MAXW =
@@ -948,6 +886,8 @@ export function ConnectTabs({
   titleAs: TitleTag = "h3",
   showGateConnect = true,
   paygOnly = false,
+  byokOnly = false,
+  hideStrip = false,
   gateConnectOnly = false,
   fillHeight = false,
   codeMaxHeight,
@@ -960,6 +900,8 @@ export function ConnectTabs({
   titleAs?: ElementType;
   showGateConnect?: boolean;
   paygOnly?: boolean;
+  byokOnly?: boolean;
+  hideStrip?: boolean;
   gateConnectOnly?: boolean;
   fillHeight?: boolean;
   codeMaxHeight?: string;
@@ -970,7 +912,7 @@ export function ConnectTabs({
     defaultTab ?? (showGateConnect ? "gate-connect" : "claude-code")
   );
   const [mode, setMode] = useState<"byok" | "payg">("byok");
-  const effectiveMode = paygOnly ? "payg" : mode;
+  const effectiveMode = paygOnly ? "payg" : byokOnly ? "byok" : mode;
   // Per-tab code, so a single card-level Copy button (rendered once, floating)
   // reflects the active tab + mode without a separate button per tab.
   const TAB_CODE: Record<string, { byok: string; payg: string }> = {
@@ -1062,7 +1004,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="claude-code">
         <HeroCodeTab
           byok={HERO_CLAUDE_CODE_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS["claude-code"] : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1073,7 +1017,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="codex">
         <HeroCodeTab
           byok={HERO_CODEX_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1084,7 +1030,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="openclaw">
         <HeroCodeTab
           byok={HERO_OPENCLAW_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1110,190 +1058,6 @@ export function ConnectTabs({
   );
 }
 
-function OverviewUsageChart() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Token usage</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-md bg-muted"
-          >
-            <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
-          </div>
-          <span className="type-copy-14 text-muted-foreground">
-            No usage data yet
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TokenSavingsStrip() {
-  return (
-    <KpiRail columns={3}>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No requests yet
-        </span>
-      </div>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No token savings yet
-        </span>
-      </div>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No threats yet
-        </span>
-      </div>
-    </KpiRail>
-  );
-}
-
-function LatestRequestsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/requests"
-        >
-          View all →
-        </Link>
-      </div>
-      <table aria-label="Latest requests" className="type-copy-14 w-full">
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <ArrowLeftRight
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No requests yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function RecentConversationsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest conversations
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/conversations"
-        >
-          View all →
-        </Link>
-      </div>
-      <table aria-label="Latest conversations" className="type-copy-14 w-full">
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <MessageSquare
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No conversations yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function SecurityEventsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest security events
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/security"
-        >
-          View all →
-        </Link>
-      </div>
-      <table
-        aria-label="Latest security events"
-        className="type-copy-14 w-full"
-      >
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <ShieldAlert
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No security events yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function DashboardDefault() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -1308,25 +1072,16 @@ export function DashboardDefault() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex max-w-1/2 flex-col gap-2">
-        <PageTitle>Overview</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          Monitor request volume, token usage, spend, and security signals
-          across your gateway.
-        </p>
-      </div>
-      <div className="mb-2">
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <div className="flex flex-col gap-2">
+          <PageTitle>Choose how to use Gate</PageTitle>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
+            However you connect, every request flows through Gate with
+            prompt-injection defense, a tamper-evident audit trail, and lighter
+            token bills from built-in compression.
+          </p>
+        </div>
         <GetStartedCard />
-      </div>{" "}
-      <div className="flex flex-col gap-4">
-        <SectionTitle as="h2">Activity This Week</SectionTitle>
-        <TokenSavingsStrip />
-        <OverviewUsageChart />
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <LatestRequestsTable />
-        <RecentConversationsTable />
-        <SecurityEventsTable />
       </div>
     </DashboardChrome>
   );

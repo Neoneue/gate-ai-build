@@ -15,13 +15,44 @@ import { cn } from "@/lib/utils";
 
 type ChoiceTone = "blue" | "success" | "neutral";
 
-/** Icon-chip tone → tokenized bg + text. `blue` = primary/featured path,
- *  `success` = pay-as-you-go / credits, `neutral` = manual / config. */
+/** Icon-chip tone → tokenized icon ink only. The chip sits on a shared light
+ *  gray (`bg-muted`) wrapper; the tone just colors the glyph. `blue` =
+ *  primary path, `success` = pay-as-you-go / credits, `neutral` = manual. */
 const CHOICE_ICON_TONE: Record<ChoiceTone, string> = {
-  blue: "bg-blue-50 text-blue-700",
-  success: "bg-success-100 text-success-700",
-  neutral: "bg-neutral-100 text-neutral-700",
+  blue: "text-blue-600",
+  success: "text-success-600",
+  neutral: "text-neutral-600",
 };
+
+/**
+ * The one onboarding icon chip — light gray (`bg-muted`) square, one-step-sharp
+ * `rounded-sm`, tone-colored glyph. Single source so the Get-started choice
+ * cards and every setup-subpage header/row chip stay identical. `md` (size-10 /
+ * icon size-5) is the card + section-header default; `sm` (size-8 / size-4)
+ * is the inline-row size (e.g. the Manual create-key row).
+ */
+export function SetupIconChip({
+  icon: Icon,
+  tone = "neutral",
+  size = "md",
+}: {
+  icon: ComponentType<{ className?: string }>;
+  tone?: ChoiceTone;
+  size?: "sm" | "md";
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-sm bg-muted",
+        size === "md" ? "size-10" : "size-8",
+        CHOICE_ICON_TONE[tone]
+      )}
+    >
+      <Icon className={size === "md" ? "size-5" : "size-4"} />
+    </span>
+  );
+}
 
 /**
  * A single tappable onboarding option. Featured cards get the same
@@ -52,21 +83,11 @@ export function ChoiceCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col items-start gap-4 rounded-xs border border-border bg-card p-5 text-left shadow-xs",
+        "flex h-full flex-col items-start gap-4 rounded-md border border-border bg-card p-5 text-left shadow-xs",
         featured && "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25"
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "inline-flex size-10 items-center justify-center rounded-md",
-          // Featured cards sit on a blue-50→blue-25 gradient, so the chip
-          // steps one notch darker (blue-100) to stay legible against it.
-          featured ? "bg-blue-100 text-blue-700" : CHOICE_ICON_TONE[tone]
-        )}
-      >
-        <Icon className="size-5" />
-      </span>
+      <SetupIconChip icon={Icon} tone={featured ? "blue" : tone} />
       <span className="flex flex-col gap-1">
         <span className="type-heading-16 text-foreground">{title}</span>
         <span className="type-copy-14 text-pretty text-muted-foreground">
@@ -74,7 +95,7 @@ export function ChoiceCard({
         </span>
       </span>
       {supports ? (
-        <span className="type-copy-12 w-full text-pretty rounded-sm border border-border bg-card px-3 py-2 text-muted-foreground">
+        <span className="type-copy-14 w-full text-pretty rounded-sm border border-border bg-card px-3 py-2 text-muted-foreground">
           {supports}
         </span>
       ) : null}
@@ -118,16 +139,16 @@ export function SetupBackLink({
 /**
  * Page scaffold for every setup subpage: default-tier DashboardChrome (the
  * route ends in `-default`, so the sidebar shows the new-workspace locks),
- * a centered column, a back breadcrumb, and the page title/subtitle. Subpages
- * pass `backTo` (a route, optionally with a `?bill=` query) to preserve the
- * concept's multi-level back stack.
+ * a left-aligned column (max-width 1024px, matching Settings/Policies), a back
+ * breadcrumb, and the page title/subtitle. Subpages pass `backTo` (a route,
+ * optionally with a `?bill=` query) to preserve the multi-level back stack.
  */
 export function SetupScaffold({
   backTo,
   backLabel,
   title,
   subtitle,
-  maxWidthClassName = "max-w-[720px]",
+  maxWidthClassName = "xl:max-w-5xl",
   children,
 }: {
   backTo: string;
@@ -150,9 +171,7 @@ export function SetupScaffold({
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div
-        className={cn("mx-auto flex w-full flex-col gap-6", maxWidthClassName)}
-      >
+      <div className={cn("flex w-full flex-col gap-6", maxWidthClassName)}>
         <SetupBackLink label={backLabel} onClick={() => navigate(backTo)} />
         <div className="flex flex-col gap-2">
           <PageTitle>{title}</PageTitle>
@@ -168,14 +187,30 @@ export function SetupScaffold({
   );
 }
 
+/** Pure-CSS animated ellipsis (. → .. → ...) for "listening / waiting" copy.
+ *  Decorative — keep the meaning in the preceding text. */
+export function AnimatedEllipsis() {
+  return <span aria-hidden className="animate-ellipsis" />;
+}
+
 /** Tokenized "listening / waiting for first request" strip used by the
- *  Gate Connect and Manual setup subpages. Dashed surface + spinning loader. */
-export function WaitingStrip({ children }: { children: ReactNode }) {
+ *  Gate Connect and Manual setup subpages. Solid surface + spinning loader.
+ *  Pass `active={false}` to show a static icon (step not yet reached). */
+export function WaitingStrip({
+  children,
+  active = true,
+}: {
+  children: ReactNode;
+  active?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border border-dashed bg-neutral-50 px-4 py-4 text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-md border border-border bg-neutral-50 px-4 py-4 text-muted-foreground">
       <Loader2
         aria-hidden
-        className="size-5 shrink-0 animate-spin text-muted-foreground motion-reduce:animate-none"
+        className={cn(
+          "size-5 shrink-0 motion-reduce:animate-none",
+          active ? "animate-spin text-blue-600" : "text-muted-foreground"
+        )}
         strokeWidth={1.75}
       />
       <span className="type-copy-14 flex-1">{children}</span>

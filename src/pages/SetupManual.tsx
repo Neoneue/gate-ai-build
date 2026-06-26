@@ -1,70 +1,74 @@
-import { Box, CreditCard, Info, KeyRound, Plus } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  Info,
+  KeyRound,
+  Plus,
+  Search,
+} from "lucide-react";
+import type React from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AnthropicIcon, OpenAIIcon } from "@/components/icons/model-providers";
+import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { TextLink } from "@/components/ui/text-link";
-import { CodePanel } from "@/pages/DashboardDefault";
-import { SetupScaffold, WaitingStrip } from "@/pages/onboarding-shared";
+import { randomHex } from "@/lib/utils";
+import {
+  CreateKeyButton,
+  CreateKeyDialog,
+  KeyCreatedDialog,
+} from "@/pages/ApiKeys";
+import { ConnectTabs } from "@/pages/DashboardDefault";
+import { MODEL_OPTIONS, PaygToolConfigCard } from "@/pages/Models";
+import {
+  AnimatedEllipsis,
+  SetupIconChip,
+  SetupScaffold,
+  WaitingStrip,
+} from "@/pages/onboarding-shared";
 
 /* ─── /setup-manual-default?bill=byok|payg ──────────────────────────────────
- * The hand-config path, reached from BYOK → Manual and directly from the
- * pay-as-you-go outcome on Overview. Billing mode is fixed by the prior choice
- * (carried via ?bill=), so there's no in-page BYOK/PAYG toggle — the context
- * strip + "Change" link own that. Back breadcrumb: Connect options (BYOK) or
- * Overview (PAYG), matching the concept's flow.
+ * Two onboarding shapes sharing the create-key flow (API Keys dialogs):
+ *   • BYOK ("Manual setup") — create a key, then add the Manual config from
+ *     /api-keys (ConnectTabs).
+ *   • PAYG ("Pay as you go") — the only PAYG path today: create a key, choose a
+ *     model, configure your agent with the model-detail PAYG config card, then
+ *     send your first request.
+ * Billing mode is carried via ?bill= (context strip + Change link).
  * ────────────────────────────────────────────────────────────────────────── */
 
 type BillingMode = "byok" | "payg";
-type ToolId = "claude-code" | "codex" | "openclaw";
 
-const GATEWAY_URL = "https://gateway.constellationgate.ai";
-const MASKED_KEY = "sk-gw-7Q2••••••••••••f9A1";
+// Demo balance. "Add credits" is a secondary action on the model step, shown
+// only while the workspace has no credits (matches /setup-credits-default).
+const CREDIT_BALANCE = 0;
 
-const BILL_CONTEXT: Record<BillingMode, { context: string; subtitle: string }> =
-  {
-    byok: {
-      context: "Using your existing subscription, your own key.",
-      subtitle: "Create a key, add the config, and route your own plan.",
-    },
-    payg: {
-      context: "Pay as you go, billed through Gate credits.",
-      subtitle: "Create a key, add credits, then drop in the config.",
-    },
-  };
-
-const SNIPPETS: Record<BillingMode, Record<ToolId, string>> = {
+const BILL_META: Record<
+  BillingMode,
+  { title: string; subtitle: string; context: string }
+> = {
   byok: {
-    "claude-code": `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
-export ANTHROPIC_API_KEY="sk-ant-•••YOUR_KEY"
-export GATE_KEY="sk-gw-7Q2•••f9A1"`,
-    codex: `[gate]
-base_url = "${GATEWAY_URL}"
-upstream_key = "sk-•••YOUR_OPENAI_KEY"
-gate_key = "sk-gw-7Q2•••f9A1"`,
-    openclaw: `openclaw config set base_url ${GATEWAY_URL}
-openclaw config set upstream_key sk-•••YOUR_KEY
-openclaw config set gate_key sk-gw-7Q2•••f9A1`,
+    title: "Manual setup",
+    subtitle: "Create a key, add the config, and route your own plan.",
+    context: "Using your existing subscription, your own key.",
   },
   payg: {
-    "claude-code": `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
-export ANTHROPIC_API_KEY="sk-gw-7Q2•••f9A1"   // Gate covers model access`,
-    codex: `[gate]
-base_url = "${GATEWAY_URL}"
-gate_key = "sk-gw-7Q2•••f9A1"   // PAYG, no provider key`,
-    openclaw: `openclaw config set base_url ${GATEWAY_URL}
-openclaw config set gate_key sk-gw-7Q2•••f9A1   // PAYG`,
+    title: "Run models pay-as-you-go",
+    subtitle:
+      "No provider accounts needed. Add credits and call any model, billed through Gate.",
+    context: "Pay as you go, billed through Gate credits.",
   },
 };
-
-const TOOL_TABS: { id: ToolId; label: string; icon: typeof AnthropicIcon }[] = [
-  { id: "claude-code", label: "Claude Code", icon: AnthropicIcon },
-  { id: "codex", label: "Codex", icon: OpenAIIcon },
-];
 
 export function SetupManual() {
   const navigate = useNavigate();
@@ -72,34 +76,102 @@ export function SetupManual() {
   const bill: BillingMode =
     searchParams.get("bill") === "payg" ? "payg" : "byok";
 
-  const [tool, setTool] = useState<ToolId>("claude-code");
-  const [keyCreated, setKeyCreated] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [keySaved, setKeySaved] = useState(false);
+  const [maskedKey, setMaskedKey] = useState<string | null>(null);
+  const [modelHandle, setModelHandle] = useState(MODEL_OPTIONS[0].handle);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [modelQuery, setModelQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const backTo =
     bill === "byok" ? "/setup-connect-default" : "/overview-default";
   const backLabel = bill === "byok" ? "Connect options" : "Overview";
 
+  const handleCreate = () => {
+    setCreateOpen(false);
+    setCreatedKey(`sk-gw-${randomHex(64)}`);
+  };
+
+  // Step 1 is identical across both modes.
+  const createKeyStep = (
+    <div className="rounded-md border border-border bg-card p-4">
+      {keySaved && maskedKey ? (
+        <div className="flex items-center gap-3 rounded-sm border border-success-200 bg-success-50 px-4 py-3">
+          <span
+            aria-hidden
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700"
+          >
+            <KeyRound className="size-4" />
+          </span>
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="type-label-14 text-success-800">
+              API key created
+            </span>
+            <span className="font-mono text-success-800/80 text-xs tabular-nums">
+              {maskedKey}
+            </span>
+          </div>
+          <CopyButton
+            label="API key"
+            mode="label"
+            size="sm"
+            text="Copy"
+            value={maskedKey}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <SetupIconChip icon={KeyRound} size="sm" tone="blue" />
+          <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+            <span className="type-label-14 text-foreground">
+              Create a key to authenticate your requests
+            </span>
+            <span className="type-copy-14 text-muted-foreground">
+              Generated instantly. Shown once.
+            </span>
+          </div>
+          <Button
+            onClick={() =>
+              window.open(
+                "https://docs.constellationgate.ai",
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+            variant="outline"
+          >
+            API docs
+            <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
+          </Button>
+          <CreateKeyButton onClick={() => setCreateOpen(true)} />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <SetupScaffold
       backLabel={backLabel}
       backTo={backTo}
-      subtitle={BILL_CONTEXT[bill].subtitle}
-      title="Manual setup"
+      subtitle={BILL_META[bill].subtitle}
+      title={BILL_META[bill].title}
     >
       <Card density="flush">
         <div className="flex flex-col gap-6 p-6">
           {/* Billing-mode context + change affordance */}
-          <div className="flex items-center gap-3 rounded-sm border border-border bg-neutral-50 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-sm border border-border px-4 py-3">
             <Info
               aria-hidden
-              className="size-4 shrink-0 text-muted-foreground"
+              className="size-4 shrink-0 text-blue-600"
               strokeWidth={1.75}
             />
             <span className="type-copy-14 flex-1 text-foreground">
-              {BILL_CONTEXT[bill].context}
+              {BILL_META[bill].context}
             </span>
             <TextLink
-              className="type-label-14"
+              className="type-label-14 inline-flex items-center gap-1"
               onClick={() =>
                 navigate(
                   bill === "byok"
@@ -109,171 +181,230 @@ export function SetupManual() {
               }
             >
               Change
+              <ArrowUpRight
+                aria-hidden
+                className="size-3.5 shrink-0"
+                strokeWidth={1.75}
+              />
             </TextLink>
           </div>
 
-          {/* Step 1 — create key */}
-          <div className="flex flex-col gap-3">
-            <h2 className="type-label-14 m-0 text-foreground">
-              1. Create your API key
-            </h2>
-            {keyCreated ? (
-              <div className="flex items-center gap-3 rounded-sm border border-success-200 bg-success-50 px-4 py-3">
-                <span
-                  aria-hidden
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700"
-                >
-                  <KeyRound className="size-4" />
-                </span>
-                <div className="flex flex-1 flex-col gap-1">
-                  <span className="type-label-14 text-success-800">
-                    API key created
-                  </span>
-                  <span className="font-mono text-success-800/80 text-xs tabular-nums">
-                    {MASKED_KEY}
-                  </span>
-                </div>
-                <CopyButton
-                  label="API key"
-                  mode="label"
-                  size="sm"
-                  text="Copy"
-                  value={MASKED_KEY}
-                />
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3 rounded-sm border border-border bg-neutral-50 px-4 py-3">
-                <span
-                  aria-hidden
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-neutral-700"
-                >
-                  <KeyRound className="size-4" />
-                </span>
-                <div className="flex min-w-[180px] flex-1 flex-col gap-1">
-                  <span className="type-label-14 text-foreground">
-                    Create a key for the config below
-                  </span>
-                  <span className="type-copy-14 text-muted-foreground">
-                    Generated instantly. Revoke anytime.
-                  </span>
-                </div>
-                <Button
-                  onClick={() =>
-                    window.open(
-                      "https://docs.constellationgate.ai",
-                      "_blank",
-                      "noopener,noreferrer"
-                    )
-                  }
-                  size="sm"
-                  variant="outline"
-                >
-                  API docs
-                  <ExternalLinkIcon
-                    aria-hidden
-                    data-icon="inline-end"
-                    size={16}
-                  />
-                </Button>
-                <Button onClick={() => setKeyCreated(true)} size="sm">
-                  <Plus aria-hidden data-icon="inline-start" />
-                  Create key
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* PAYG-only note → credits / models subpages */}
           {bill === "payg" ? (
-            <div className="flex items-start gap-3 rounded-sm border border-blue-200 bg-blue-50 px-4 py-3">
-              <CreditCard
-                aria-hidden
-                className="mt-px size-4 shrink-0 text-blue-700"
-                strokeWidth={1.75}
-              />
-              <div className="flex flex-col gap-2">
-                <p className="type-copy-14 m-0 text-foreground">
-                  Runs on Gate credits. Top up, then call any model at pooled
-                  rates. Gate Connect for pay-as-you-go is coming soon.
-                </p>
-                <div className="flex flex-wrap items-center gap-4">
-                  <Button
-                    className="-mx-3"
-                    onClick={() => navigate("/setup-credits-default")}
-                    size="sm"
-                    variant="link"
-                  >
-                    <Plus aria-hidden data-icon="inline-start" />
-                    Add credits
-                  </Button>
-                  <Button
-                    className="-mx-3"
-                    onClick={() => navigate("/setup-models-default")}
-                    size="sm"
-                    variant="link"
-                  >
-                    <Box aria-hidden data-icon="inline-start" />
-                    See all available models
-                  </Button>
+            <>
+              {/* Step 1 — create key */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  1. Create an API key
+                </h2>
+                {createKeyStep}
+              </div>
+
+              {/* Step 2 — choose a model (Add credits secondary, zero-balance only) */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  2. Choose a model
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
+                  <ModelPicker
+                    onOpenChange={(open) => {
+                      setModelPickerOpen(open);
+                      if (open) {
+                        setModelQuery("");
+                        // Focus the search input after the popover animates in
+                        setTimeout(() => searchRef.current?.focus(), 50);
+                      }
+                    }}
+                    onQueryChange={setModelQuery}
+                    onSelect={(handle) => {
+                      setModelHandle(handle);
+                      setModelPickerOpen(false);
+                    }}
+                    open={modelPickerOpen}
+                    query={modelQuery}
+                    searchRef={searchRef}
+                    value={modelHandle}
+                  />
+                  {CREDIT_BALANCE === 0 ? (
+                    <Button
+                      className="ml-auto"
+                      onClick={() => navigate("/setup-credits-default")}
+                      variant="outline"
+                    >
+                      <Plus aria-hidden data-icon="inline-start" />
+                      Add credits
+                    </Button>
+                  ) : null}
                 </div>
               </div>
-            </div>
-          ) : null}
 
-          {/* Step 2 — tool config snippet */}
-          <div className="flex flex-col gap-3">
-            <h2 className="type-label-14 m-0 text-foreground">
-              2. Which tool are you using?
-            </h2>
-            <Tabs
-              className="flex flex-col gap-0"
-              onValueChange={(v) => setTool(v as ToolId)}
-              value={tool}
-            >
-              <TabsList className="px-0" variant="line">
-                {TOOL_TABS.map(({ id, label, icon: Icon }) => (
-                  <TabsTrigger key={id} value={id}>
-                    <Icon className="size-4" />
-                    {label}
-                  </TabsTrigger>
-                ))}
-                <TabsTrigger value="openclaw">
-                  <img
-                    alt=""
-                    aria-hidden
-                    className="size-4"
-                    src="/icons/providers/openclaw.svg"
-                  />
-                  OpenClaw
-                </TabsTrigger>
-              </TabsList>
-              {(["claude-code", "codex", "openclaw"] as ToolId[]).map((id) => (
-                <TabsContent className="mt-3" key={id} value={id}>
-                  <div className="relative overflow-hidden rounded-sm border border-border bg-card">
-                    <div className="max-h-[260px] overflow-y-auto">
-                      <CodePanel snippet={SNIPPETS[bill][id]} />
-                    </div>
-                    <div className="absolute right-3 bottom-3">
-                      <CopyButton
-                        className="shadow-xs"
-                        label="config snippet"
-                        mode="label"
-                        size="sm"
-                        text="Copy"
-                        value={SNIPPETS[bill][id]}
-                      />
-                    </div>
+              {/* Step 3 — configure your agent (shared model-detail PAYG config) */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  3. Configure your agent
+                </h2>
+                <PaygToolConfigCard handle={modelHandle} />
+              </div>
+
+              {/* Step 4 — first request */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  4. Send your first request
+                </h2>
+                <WaitingStrip>
+                  Listening for your first request
+                  <AnimatedEllipsis />
+                </WaitingStrip>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Step 1 — create key */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  1. Create your API key
+                </h2>
+                {createKeyStep}
+              </div>
+
+              {/* Step 2 — exact Manual config component from /api-keys */}
+              <div className="flex flex-col gap-3">
+                <h2 className="type-label-14 m-0 text-foreground">
+                  2. Add the config
+                </h2>
+                <Card className="flex flex-1 flex-col" density="flush">
+                  <div className="flex-1">
+                    <ConnectTabs
+                      byokOnly
+                      codeMaxHeight="h-[216px]"
+                      floatingCopy
+                      hideStrip
+                      showGateConnect={false}
+                    />
                   </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </div>
+                </Card>
+              </div>
 
-          <WaitingStrip>
-            Run your tool once and we&rsquo;ll confirm it&rsquo;s working.
-          </WaitingStrip>
+              <WaitingStrip>
+                Listening for you to send your first request
+                <AnimatedEllipsis />
+              </WaitingStrip>
+            </>
+          )}
         </div>
       </Card>
+
+      <CreateKeyDialog
+        onCreate={handleCreate}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
+      <KeyCreatedDialog
+        fullKey={createdKey}
+        onClose={() => {
+          if (createdKey) {
+            setMaskedKey(`sk-gw-…${createdKey.slice(-4)}`);
+          }
+          setCreatedKey(null);
+          setKeySaved(true);
+        }}
+      />
     </SetupScaffold>
+  );
+}
+
+/* ─── Model combobox ─────────────────────────────────────────────────────── */
+
+function ModelPicker({
+  value,
+  open,
+  onOpenChange,
+  onSelect,
+  query,
+  onQueryChange,
+  searchRef,
+}: {
+  value: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (handle: string) => void;
+  query: string;
+  onQueryChange: (q: string) => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const selected = MODEL_OPTIONS.find((m) => m.handle === value);
+  const filtered = MODEL_OPTIONS.filter((m) =>
+    m.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <Popover onOpenChange={onOpenChange} open={open}>
+      <PopoverTrigger
+        aria-label="Choose a model"
+        className="group/select flex h-9 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-neutral-50 pr-3 pl-4 text-neutral-800 text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-72"
+      >
+        <span className="flex flex-1 items-center gap-2 overflow-hidden">
+          {selected ? (
+            <>
+              <VendorAvatar decorative vendor={selected.vendor} />
+              <span className="truncate">{selected.label}</span>
+            </>
+          ) : (
+            <span className="text-neutral-400">Choose a model</span>
+          )}
+        </span>
+        <ChevronDown
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none"
+        />
+      </PopoverTrigger>
+
+      <PopoverContent align="start" className="w-72 p-0" sideOffset={6}>
+        {/* Sticky search bar */}
+        <div className="flex items-center gap-2 border-border border-b px-3 py-2">
+          <Search
+            aria-hidden
+            className="size-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+          <Input
+            className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Search models…"
+            ref={searchRef}
+            type="search"
+            value={query}
+          />
+        </div>
+
+        {/* Filtered list */}
+        <div className="max-h-64 overflow-y-auto p-1">
+          {filtered.length === 0 ? (
+            <p className="type-copy-14 px-3 py-6 text-center text-muted-foreground">
+              No models match &ldquo;{query}&rdquo;
+            </p>
+          ) : (
+            filtered.map((m) => (
+              <button
+                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-neutral-800 text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100 data-[active=true]:bg-neutral-100"
+                data-active={m.handle === value}
+                key={m.handle}
+                onClick={() => onSelect(m.handle)}
+                type="button"
+              >
+                <VendorAvatar decorative vendor={m.vendor} />
+                <span className="flex-1 truncate text-left">{m.label}</span>
+                {m.handle === value ? (
+                  <Check
+                    aria-hidden
+                    className="size-4 shrink-0 text-blue-600"
+                    strokeWidth={2}
+                  />
+                ) : null}
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

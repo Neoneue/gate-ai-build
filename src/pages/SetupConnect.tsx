@@ -22,7 +22,7 @@ export function SetupConnect() {
         <ChoiceCard
           body="A menu-bar app routes your Claude app, Cowork, Codex, and Cursor automatically. No keys to copy."
           cta="Set up Gate Connect"
-          featured
+          ctaVariant="default"
           icon={Zap}
           onClick={() => navigate("/setup-gate-connect-default")}
           title="Gate Connect"
@@ -31,10 +31,11 @@ export function SetupConnect() {
         <ChoiceCard
           body="Create a key and add the config to your code, CLI, or CI."
           cta="Set up manually"
+          ctaVariant="default"
           icon={Code}
           onClick={() => navigate("/setup-manual-default?bill=byok")}
           title="Manual"
-          tone="neutral"
+          tone="blue"
         />
       </div>
     </SetupScaffold>
