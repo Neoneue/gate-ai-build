@@ -1,0 +1,1903 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Constellation Gate AI — Design System</title>
+    <style>
+    @import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+
+    /* ─── Tokens copied verbatim from src/index.css (single source of truth) ─── */
+    :root {
+      --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+      --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+
+      /* Neutral — Tailwind v4 default neutral ramp (chroma 0) */
+      --neutral-50: oklch(0.985 0 0);
+      --neutral-100: oklch(0.97 0 0);
+      --neutral-200: oklch(0.922 0 0);
+      --neutral-300: oklch(0.87 0 0);
+      --neutral-400: oklch(0.708 0 0);
+      --neutral-500: oklch(0.556 0 0);
+      --neutral-600: oklch(0.439 0 0);
+      --neutral-700: oklch(0.371 0 0);
+      --neutral-800: oklch(0.269 0 0);
+      --neutral-900: oklch(0.205 0 0);
+      --neutral-950: oklch(0.145 0 0);
+
+      /* Blue (brand) — anchored to brand mark at blue-700 (#1F2FCE) */
+      --blue-25: oklch(0.985 0.01 268.85);
+      --blue-50: oklch(0.97 0.02 268.85);
+      --blue-100: oklch(0.94 0.04 268.85);
+      --blue-200: oklch(0.89 0.075 268.85);
+      --blue-300: oklch(0.81 0.13 268.85);
+      --blue-400: oklch(0.7 0.18 268.85);
+      --blue-500: oklch(0.58 0.215 268.85);
+      --blue-600: oklch(0.47 0.232 268.85);
+      --blue-700: oklch(0.345 0.224 268.85);
+      --blue-800: oklch(0.275 0.175 268.85);
+      --blue-900: oklch(0.215 0.13 268.85);
+      --blue-950: oklch(0.145 0.085 268.85);
+
+      /* Success (green) — Tailwind v4 green ramp */
+      --success-25: oklch(0.993 0.007 155.826);
+      --success-50: oklch(0.982 0.018 155.826);
+      --success-100: oklch(0.962 0.044 156.743);
+      --success-200: oklch(0.925 0.084 155.995);
+      --success-300: oklch(0.871 0.15 154.449);
+      --success-400: oklch(0.792 0.209 151.711);
+      --success-500: oklch(0.723 0.219 149.579);
+      --success-600: oklch(0.627 0.194 149.214);
+      --success-700: oklch(0.527 0.154 150.069);
+      --success-800: oklch(0.448 0.119 151.328);
+      --success-900: oklch(0.393 0.095 152.535);
+      --success-950: oklch(0.266 0.065 152.934);
+
+      /* Warning (amber) — Tailwind v4 amber ramp */
+      --warning-25: oklch(0.995 0.008 95.277);
+      --warning-50: oklch(0.987 0.022 95.277);
+      --warning-100: oklch(0.962 0.059 95.617);
+      --warning-200: oklch(0.924 0.12 95.746);
+      --warning-300: oklch(0.879 0.169 91.605);
+      --warning-400: oklch(0.828 0.189 84.429);
+      --warning-500: oklch(0.769 0.188 70.08);
+      --warning-600: oklch(0.666 0.179 58.318);
+      --warning-700: oklch(0.555 0.163 48.998);
+      --warning-800: oklch(0.473 0.137 46.201);
+      --warning-900: oklch(0.414 0.112 45.904);
+      --warning-950: oklch(0.279 0.077 45.635);
+
+      /* Danger (red) — Tailwind v4 red ramp */
+      --danger-25: oklch(0.988 0.007 17.38);
+      --danger-50: oklch(0.971 0.013 17.38);
+      --danger-100: oklch(0.936 0.032 17.717);
+      --danger-200: oklch(0.885 0.062 18.334);
+      --danger-300: oklch(0.808 0.114 19.571);
+      --danger-400: oklch(0.704 0.191 22.216);
+      --danger-500: oklch(0.637 0.237 25.331);
+      --danger-600: oklch(0.577 0.245 27.325);
+      --danger-700: oklch(0.505 0.213 27.518);
+      --danger-800: oklch(0.444 0.177 26.899);
+      --danger-900: oklch(0.396 0.141 25.723);
+      --danger-950: oklch(0.258 0.092 26.042);
+
+      /* Atomic surfaces */
+      --white: #ffffff;
+      --canvas: #ecece7;
+
+      /* Syntax tokens (code cards) — named by intent, not hue */
+      --syntax-keyword: #b6491a;
+      --syntax-variable: #d69e2e;
+      --syntax-property: var(--blue-700);
+      --syntax-terminal-blue: var(--success-700);
+
+      /* macOS window-control "traffic light" tokens (dashboard chrome strip) */
+      --traffic-red: #ff5f57;
+      --traffic-amber: #febc2e;
+      --traffic-green: #28c840;
+
+      /* Categorical chart palette — standalone, not tied to brand */
+      --chart-1: oklch(0.62 0.18 255);
+      --chart-2: oklch(0.72 0.17 50);
+      --chart-3: oklch(0.72 0.2 145);
+      --chart-4: oklch(0.7 0.18 290);
+      --chart-5: oklch(0.65 0.2 18);
+      --chart-6: oklch(0.75 0.13 195);
+      --chart-7: oklch(0.85 0.16 88);
+      --chart-8: oklch(0.68 0.2 335);
+
+      /* Semantic layer */
+      --background: var(--neutral-100);
+      --foreground: var(--neutral-900);
+      --card: var(--white);
+      --muted-foreground: var(--neutral-500);
+      --border: var(--neutral-200);
+      --input: var(--neutral-300);
+      --ring: var(--neutral-400);
+      --destructive: var(--danger-600);
+
+      /* Tracking */
+      --tracking-tight: -0.025em;
+      --tracking-snug: -0.01em;
+
+      /* Radius — derived from --radius: 0.625rem (10px) */
+      --radius-xs: 4px; /* sub-elements */
+      --radius-sm: 6px; /* button / chrome */
+      --radius-md: 8px; /* card / surface */
+      --radius-lg: 10px;
+      --radius-xl: 16px; /* modal / dialog (locked) */
+
+      /* Elevation ladder (mixed from neutral-800) */
+      --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.055);
+      --shadow-card-soft:
+        0 4px 8px -1px color-mix(in oklch, var(--neutral-800) 5%, transparent),
+        0 2px 6px -2px color-mix(in oklch, var(--neutral-800) 5%, transparent);
+      --shadow-border:
+        0 0 0 1px color-mix(in oklch, var(--neutral-800) 6%, transparent),
+        0 1px 2px -1px color-mix(in oklch, var(--neutral-800) 6%, transparent),
+        0 2px 4px 0 color-mix(in oklch, var(--neutral-800) 4%, transparent);
+      --shadow-popup:
+        0 4px 12px -2px color-mix(in oklch, var(--neutral-800) 8%, transparent),
+        0 0 0 1px color-mix(in oklch, var(--neutral-800) 4%, transparent);
+      --shadow-modal:
+        0 16px 32px -4px
+        color-mix(in oklch, var(--neutral-800) 12%, transparent),
+        0 0 0 1px color-mix(in oklch, var(--neutral-800) 6%, transparent);
+
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    /* ─── Type-role utilities (mirror src/index.css) ─── */
+    .type-heading-72 {
+      font: 500 72px / 1 var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-64 {
+      font: 500 64px / 1 var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-56 {
+      font: 500 56px / 1 var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-48 {
+      font: 500 48px / 56px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-40 {
+      font: 500 40px / 48px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-32 {
+      font: 500 32px / 40px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-heading-24 {
+      font: 500 24px / 32px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-heading-20 {
+      font: 500 20px / 28px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-heading-18 {
+      font: 500 18px / 28px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-heading-16 {
+      font: 500 16px / 24px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-heading-14 {
+      font: 500 14px / 20px var(--font-sans);
+    }
+
+    .type-label-20 {
+      font: 400 20px / 32px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-label-18 {
+      font: 400 18px / 20px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-label-16 {
+      font: 500 16px / 24px var(--font-sans);
+      letter-spacing: var(--tracking-tight);
+    }
+    .type-label-14 {
+      font: 500 14px / 20px var(--font-sans);
+    }
+    .type-label-12 {
+      font: 500 12px / 16px var(--font-sans);
+    }
+
+    .type-copy-24 {
+      font: 400 24px / 36px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-copy-20 {
+      font: 400 20px / 36px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-copy-18 {
+      font: 400 18px / 28px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-copy-16 {
+      font: 400 16px / 24px var(--font-sans);
+      letter-spacing: var(--tracking-snug);
+    }
+    .type-copy-14 {
+      font: 400 14px / 20px var(--font-sans);
+    }
+    .type-copy-12 {
+      font: 400 12px / 16px var(--font-sans);
+    }
+
+    .eyebrow {
+      font: 500 12px / 16px var(--font-mono);
+      color: var(--neutral-500);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── Page chrome ─── */
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 24px;
+    }
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    body {
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: var(--foreground);
+      text-wrap: pretty;
+      background-color: var(--canvas);
+      background-image:
+        linear-gradient(
+          color-mix(in oklch, var(--neutral-800) 6%, transparent) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          color-mix(in oklch, var(--neutral-800) 6%, transparent) 1px,
+          transparent 1px
+        );
+      background-size: 32px 32px;
+    }
+    .wrap {
+      max-width: 1100px;
+      padding: 48px 24px 120px;
+      margin: 0 auto;
+    }
+
+    /* Layout: sticky left rail + scrollable content */
+    .shell {
+      display: flex;
+      align-items: flex-start;
+    }
+    .content {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    section.block {
+      scroll-margin-top: 24px;
+    }
+    .nav {
+      position: sticky;
+      top: 0;
+      flex: none;
+      width: 236px;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 16px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+    }
+    .nav .brand {
+      display: block;
+      padding: 0 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav .brand b {
+      display: block;
+      font: 500 14px / 18px var(--font-sans);
+      color: var(--neutral-900);
+    }
+    .nav .brand span {
+      font: 400 11px / 16px var(--font-mono);
+      color: var(--neutral-500);
+    }
+    .nav .section-label {
+      display: block;
+      padding: 16px 12px 6px;
+    }
+    .nav ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav a {
+      display: block;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font: 500 13px / 18px var(--font-sans);
+      color: var(--neutral-600);
+      text-decoration: none;
+      transition:
+        background 120ms var(--ease-out),
+        color 120ms var(--ease-out);
+    }
+    .nav a:hover {
+      background: var(--neutral-100);
+      color: var(--neutral-900);
+    }
+    .nav a.active {
+      background: var(--neutral-100);
+      color: var(--neutral-900);
+    }
+
+    header.page {
+      padding: 40px;
+      margin-bottom: 40px;
+      background: var(--card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-modal);
+    }
+    header.page p.lede {
+      max-width: 64ch;
+      margin: 12px 0 0;
+      color: var(--neutral-500);
+    }
+    header.page .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .pill {
+      padding: 4px 10px;
+      font: 400 12px / 16px var(--font-mono);
+      color: var(--neutral-700);
+      background: var(--neutral-100);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    section.block {
+      padding: 32px;
+      margin-bottom: 24px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-border);
+    }
+    section.block > .section-head {
+      margin-bottom: 24px;
+    }
+    section.block > .section-head .eyebrow {
+      display: block;
+      margin-bottom: 8px;
+    }
+    section.block > .section-head p {
+      max-width: 72ch;
+      margin: 8px 0 0;
+      color: var(--neutral-500);
+    }
+
+    .grp {
+      margin-top: 28px;
+    }
+    .grp > h3 {
+      margin: 0 0 12px;
+      font: 500 14px / 20px var(--font-sans);
+      color: var(--neutral-900);
+    }
+    .grp > .note {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: var(--neutral-500);
+    }
+
+    /* Color swatches */
+    .ramp {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 0;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-border);
+    }
+    .ramp.r12 {
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .ramp .sw {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 64px;
+      padding-bottom: 6px;
+    }
+    .ramp .sw span {
+      font: 500 10px / 1 var(--font-mono);
+    }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .swatches .tok {
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .swatches .tok .chip {
+      height: 52px;
+    }
+    .swatches .tok .lbl {
+      padding: 8px 10px;
+    }
+    .swatches .tok .lbl b {
+      display: block;
+      font: 500 12px / 16px var(--font-sans);
+    }
+    .swatches .tok .lbl code {
+      font: 400 11px / 15px var(--font-mono);
+      color: var(--neutral-500);
+    }
+
+    /* Type specimens */
+    .type-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 24px;
+      align-items: baseline;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    .type-row:first-child {
+      border-top: 0;
+    }
+    .type-row .spec code {
+      display: block;
+      font: 400 12px / 16px var(--font-mono);
+      color: var(--neutral-900);
+    }
+    .type-row .spec small {
+      font: 400 11px / 16px var(--font-mono);
+      color: var(--neutral-500);
+    }
+    .type-row .demo {
+      overflow: hidden;
+      color: var(--neutral-900);
+    }
+
+    /* Radius / spacing / shadow */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .tile {
+      text-align: center;
+    }
+    .tile .box {
+      height: 88px;
+      margin-bottom: 10px;
+      background: var(--blue-100);
+      border: 1px solid var(--blue-300);
+    }
+    .tile .swatch-card {
+      height: 88px;
+      margin-bottom: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+    }
+    .tile b {
+      display: block;
+      font: 500 13px / 18px var(--font-sans);
+    }
+    .tile code {
+      font: 400 11px / 15px var(--font-mono);
+      color: var(--neutral-500);
+    }
+
+    .space-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 7px 0;
+    }
+    .space-row .bar {
+      height: 16px;
+      background: var(--blue-500);
+      border-radius: 2px;
+    }
+    .space-row code {
+      width: 160px;
+      font: 400 12px / 16px var(--font-mono);
+      color: var(--neutral-700);
+    }
+
+    /* Components */
+    .btn {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 16px;
+      font: 500 14px / 1 var(--font-sans);
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      transition:
+        scale 150ms var(--ease-out),
+        background 150ms var(--ease-out);
+    }
+    .btn:active {
+      scale: 0.98;
+    }
+    .btn-primary {
+      color: var(--white);
+      background: var(--neutral-900);
+      box-shadow: var(--shadow-xs);
+    }
+    .btn-primary:hover {
+      background: var(--neutral-800);
+    }
+    .btn-secondary {
+      color: var(--neutral-900);
+      background: var(--white);
+      border-color: var(--border);
+      box-shadow: var(--shadow-xs);
+    }
+    .btn-secondary:hover {
+      background: var(--neutral-100);
+    }
+    .btn-ghost {
+      color: var(--neutral-900);
+      background: transparent;
+    }
+    .btn-ghost:hover {
+      background: var(--neutral-100);
+    }
+    .btn-destructive {
+      color: var(--white);
+      background: var(--destructive);
+      box-shadow: var(--shadow-xs);
+    }
+    .btn-sm {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+    .btn-lg {
+      height: 40px;
+      padding: 0 16px;
+      font-size: 16px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      font: 500 12px / 16px var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      border-radius: var(--radius-xs);
+    }
+    .badge-neutral {
+      color: var(--neutral-700);
+      background: var(--neutral-100);
+      border: 1px solid var(--border);
+    }
+    .badge-success {
+      color: var(--success-700);
+      background: var(--success-100);
+    }
+    .badge-warning {
+      color: var(--warning-700);
+      background: var(--warning-100);
+    }
+    .badge-danger {
+      color: var(--danger-700);
+      background: var(--danger-100);
+    }
+    .badge-info {
+      color: var(--blue-700);
+      background: var(--blue-100);
+    }
+
+    .input {
+      width: 280px;
+      max-width: 100%;
+      height: 36px;
+      padding: 0 12px;
+      font: 400 14px / 20px var(--font-sans);
+      color: var(--neutral-900);
+      outline: none;
+      background: var(--white);
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+    }
+    .input::placeholder {
+      color: var(--neutral-400);
+    }
+    .input:focus-visible {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+    }
+
+    .demo-card {
+      max-width: 360px;
+      padding: 20px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-border);
+    }
+    .demo-card .desc {
+      margin: 6px 0 0;
+      color: var(--neutral-500);
+    }
+    .nested {
+      padding: 14px;
+      margin-top: 16px;
+      background: var(--neutral-50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+    }
+    .nested .eyebrow {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .outline-demo {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .outline-demo .lvl {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      border-top: 1px solid var(--border);
+    }
+    .outline-demo .lvl:first-child {
+      border-top: 0;
+    }
+    .outline-demo .tag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 0;
+      font: 500 12px / 1 var(--font-mono);
+      color: var(--neutral-500);
+      background: var(--neutral-50);
+    }
+    .outline-demo .txt {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+    }
+
+    table.spec {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table.spec th,
+    table.spec td {
+      padding: 10px 12px;
+      font-size: 13px;
+      vertical-align: top;
+      text-align: left;
+      border-top: 1px solid var(--border);
+    }
+    table.spec th {
+      font: 500 12px / 16px var(--font-mono);
+      color: var(--neutral-500);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-top: 0;
+    }
+    table.spec td code {
+      font: 400 12px / 16px var(--font-mono);
+      color: var(--neutral-900);
+    }
+    table.spec td .muted {
+      color: var(--neutral-500);
+    }
+
+    .callout {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--neutral-700);
+      background: var(--blue-25);
+      border-left: 3px solid var(--blue-600);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .callout b {
+      color: var(--neutral-900);
+    }
+
+    footer.foot {
+      margin-top: 40px;
+      font-size: 12px;
+      color: var(--neutral-500);
+      text-align: center;
+    }
+    footer.foot code {
+      font-family: var(--font-mono);
+    }
+
+    /* Motion */
+    .ease-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 16px;
+    }
+    .ease-card {
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .ease-card svg {
+      display: block;
+      width: 64px;
+      height: 64px;
+    }
+    .ease-card .curve-base {
+      fill: none;
+      stroke: var(--neutral-200);
+      stroke-width: 1.5;
+    }
+    .ease-card .curve-path {
+      fill: none;
+      stroke: var(--blue-600);
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+    .ease-card b {
+      display: block;
+      margin-top: 10px;
+      font: 500 13px / 18px var(--font-sans);
+    }
+    .ease-card code {
+      font: 400 11px / 16px var(--font-mono);
+      color: var(--neutral-500);
+    }
+    .ease-track {
+      position: relative;
+      height: 8px;
+      margin-top: 14px;
+      background: var(--neutral-100);
+      border-radius: 999px;
+    }
+    .ease-ball {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 14px;
+      height: 14px;
+      background: var(--blue-600);
+      border-radius: 50%;
+      animation-name: ds-slide;
+      animation-duration: 1.6s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+    @keyframes ds-slide {
+      from {
+        left: 0;
+      }
+      to {
+        left: calc(100% - 14px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ease-ball {
+        animation: none;
+      }
+      .btn {
+        transition: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav {
+        display: none;
+      }
+      .type-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .ramp {
+        grid-template-columns: repeat(6, 1fr);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="nav">
+        <a class="brand" href="#top">
+          <b>Design System</b>
+          <span>Constellation Gate AI</span>
+        </a>
+        <span class="eyebrow section-label">Foundations</span>
+        <ul>
+          <li><a href="#color">Color</a></li>
+          <li><a href="#typography">Typography</a></li>
+          <li><a href="#heading-outline">Heading outline</a></li>
+          <li><a href="#radius">Radius</a></li>
+          <li><a href="#spacing">Spacing</a></li>
+          <li><a href="#elevation">Elevation</a></li>
+          <li><a href="#motion">Motion</a></li>
+        </ul>
+        <span class="eyebrow section-label">Primitives</span>
+        <ul>
+          <li><a href="#components">Components</a></li>
+        </ul>
+      </aside>
+      <div class="content">
+        <div class="wrap" id="top">
+          <header class="page">
+        <span class="eyebrow">Constellation Gate AI</span>
+        <h1 class="type-heading-32" style="margin:8px 0 0">Design System</h1>
+        <p class="lede type-copy-16">
+          A living reference for the dashboard's visual contract: color,
+          typography, radius, spacing, elevation, and core component recipes.
+          Every value is mapped to a named token in
+          <code style="font-family:var(--font-mono)">design.md</code>
+          /
+          <code style="font-family:var(--font-mono)">src/index.css</code>.
+          Visual values are a closed set: nothing here is invented.
+        </p>
+        <div class="meta">
+          <span class="pill">Geist + Geist Mono</span>
+          <span class="pill">OKLCH ramps</span>
+          <span class="pill">4px spacing grid</span>
+          <span class="pill">Weight ceiling 500</span>
+          <span class="pill">Standalone — not routed</span>
+        </div>
+      </header>
+
+      <!-- COLOR -->
+      <section class="block" id="color">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Color</h2>
+          <p class="type-copy-14">
+            Five OKLCH ramps (neutral, blue/brand, success, warning, danger).
+            Neutral is the Tailwind v4 default 11-step ramp (50–950); the four
+            chromatic ramps add a <code style="font-family:var(--font-mono)">-25</code>
+            floor step (an extra-subtle wash below 50, used for gradient floors
+            and tinted panel backgrounds), making them 12-step. Color carries
+            state, not hierarchy. Page background is
+            <code style="font-family:var(--font-mono)">neutral-100</code>, cards
+            are pure white.
+          </p>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Neutral
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— Tailwind v4 default ramp (chroma 0)</span
+            >
+          </h3>
+          <div class="ramp">
+            <div class="sw" style="background:var(--neutral-50)">
+              <span style="color:var(--neutral-700)">50</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-100)">
+              <span style="color:var(--neutral-700)">100</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-200)">
+              <span style="color:var(--neutral-700)">200</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-300)">
+              <span style="color:var(--neutral-700)">300</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-400)">
+              <span style="color:var(--neutral-900)">400</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-500)">
+              <span style="color:var(--white)">500</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-600)">
+              <span style="color:var(--white)">600</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-700)">
+              <span style="color:var(--white)">700</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-800)">
+              <span style="color:var(--white)">800</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-900)">
+              <span style="color:var(--white)">900</span>
+            </div>
+            <div class="sw" style="background:var(--neutral-950)">
+              <span style="color:var(--white)">950</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Blue / brand
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— anchored to the logomark at blue-700 (#1F2FCE)</span
+            >
+          </h3>
+          <div class="ramp r12">
+            <div class="sw" style="background:var(--blue-25)">
+              <span style="color:var(--blue-700)">25</span>
+            </div>
+            <div class="sw" style="background:var(--blue-50)">
+              <span style="color:var(--blue-700)">50</span>
+            </div>
+            <div class="sw" style="background:var(--blue-100)">
+              <span style="color:var(--blue-700)">100</span>
+            </div>
+            <div class="sw" style="background:var(--blue-200)">
+              <span style="color:var(--blue-800)">200</span>
+            </div>
+            <div class="sw" style="background:var(--blue-300)">
+              <span style="color:var(--blue-900)">300</span>
+            </div>
+            <div class="sw" style="background:var(--blue-400)">
+              <span style="color:var(--white)">400</span>
+            </div>
+            <div class="sw" style="background:var(--blue-500)">
+              <span style="color:var(--white)">500</span>
+            </div>
+            <div class="sw" style="background:var(--blue-600)">
+              <span style="color:var(--white)">600</span>
+            </div>
+            <div class="sw" style="background:var(--blue-700)">
+              <span style="color:var(--white)">700</span>
+            </div>
+            <div class="sw" style="background:var(--blue-800)">
+              <span style="color:var(--white)">800</span>
+            </div>
+            <div class="sw" style="background:var(--blue-900)">
+              <span style="color:var(--white)">900</span>
+            </div>
+            <div class="sw" style="background:var(--blue-950)">
+              <span style="color:var(--white)">950</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Success</h3>
+          <div class="ramp r12">
+            <div class="sw" style="background:var(--success-25)">
+              <span style="color:var(--success-700)">25</span>
+            </div>
+            <div class="sw" style="background:var(--success-50)">
+              <span style="color:var(--success-700)">50</span>
+            </div>
+            <div class="sw" style="background:var(--success-100)">
+              <span style="color:var(--success-700)">100</span>
+            </div>
+            <div class="sw" style="background:var(--success-200)">
+              <span style="color:var(--success-800)">200</span>
+            </div>
+            <div class="sw" style="background:var(--success-300)">
+              <span style="color:var(--success-900)">300</span>
+            </div>
+            <div class="sw" style="background:var(--success-400)">
+              <span style="color:var(--success-950)">400</span>
+            </div>
+            <div class="sw" style="background:var(--success-500)">
+              <span style="color:var(--white)">500</span>
+            </div>
+            <div class="sw" style="background:var(--success-600)">
+              <span style="color:var(--white)">600</span>
+            </div>
+            <div class="sw" style="background:var(--success-700)">
+              <span style="color:var(--white)">700</span>
+            </div>
+            <div class="sw" style="background:var(--success-800)">
+              <span style="color:var(--white)">800</span>
+            </div>
+            <div class="sw" style="background:var(--success-900)">
+              <span style="color:var(--white)">900</span>
+            </div>
+            <div class="sw" style="background:var(--success-950)">
+              <span style="color:var(--white)">950</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Warning</h3>
+          <div class="ramp r12">
+            <div class="sw" style="background:var(--warning-25)">
+              <span style="color:var(--warning-800)">25</span>
+            </div>
+            <div class="sw" style="background:var(--warning-50)">
+              <span style="color:var(--warning-800)">50</span>
+            </div>
+            <div class="sw" style="background:var(--warning-100)">
+              <span style="color:var(--warning-800)">100</span>
+            </div>
+            <div class="sw" style="background:var(--warning-200)">
+              <span style="color:var(--warning-800)">200</span>
+            </div>
+            <div class="sw" style="background:var(--warning-300)">
+              <span style="color:var(--warning-900)">300</span>
+            </div>
+            <div class="sw" style="background:var(--warning-400)">
+              <span style="color:var(--warning-950)">400</span>
+            </div>
+            <div class="sw" style="background:var(--warning-500)">
+              <span style="color:var(--warning-950)">500</span>
+            </div>
+            <div class="sw" style="background:var(--warning-600)">
+              <span style="color:var(--white)">600</span>
+            </div>
+            <div class="sw" style="background:var(--warning-700)">
+              <span style="color:var(--white)">700</span>
+            </div>
+            <div class="sw" style="background:var(--warning-800)">
+              <span style="color:var(--white)">800</span>
+            </div>
+            <div class="sw" style="background:var(--warning-900)">
+              <span style="color:var(--white)">900</span>
+            </div>
+            <div class="sw" style="background:var(--warning-950)">
+              <span style="color:var(--white)">950</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Danger</h3>
+          <div class="ramp r12">
+            <div class="sw" style="background:var(--danger-25)">
+              <span style="color:var(--danger-700)">25</span>
+            </div>
+            <div class="sw" style="background:var(--danger-50)">
+              <span style="color:var(--danger-700)">50</span>
+            </div>
+            <div class="sw" style="background:var(--danger-100)">
+              <span style="color:var(--danger-700)">100</span>
+            </div>
+            <div class="sw" style="background:var(--danger-200)">
+              <span style="color:var(--danger-800)">200</span>
+            </div>
+            <div class="sw" style="background:var(--danger-300)">
+              <span style="color:var(--danger-900)">300</span>
+            </div>
+            <div class="sw" style="background:var(--danger-400)">
+              <span style="color:var(--white)">400</span>
+            </div>
+            <div class="sw" style="background:var(--danger-500)">
+              <span style="color:var(--white)">500</span>
+            </div>
+            <div class="sw" style="background:var(--danger-600)">
+              <span style="color:var(--white)">600</span>
+            </div>
+            <div class="sw" style="background:var(--danger-700)">
+              <span style="color:var(--white)">700</span>
+            </div>
+            <div class="sw" style="background:var(--danger-800)">
+              <span style="color:var(--white)">800</span>
+            </div>
+            <div class="sw" style="background:var(--danger-900)">
+              <span style="color:var(--white)">900</span>
+            </div>
+            <div class="sw" style="background:var(--danger-950)">
+              <span style="color:var(--white)">950</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Semantic tokens
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— prefer these aliases over raw ramp steps</span
+            >
+          </h3>
+          <div class="swatches">
+            <div class="tok">
+              <div class="chip" style="background:var(--background)"></div>
+              <div class="lbl"><b>background</b><code>neutral-100</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--card)"></div>
+              <div class="lbl"><b>card</b><code>white</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--foreground)"></div>
+              <div class="lbl"><b>foreground</b><code>neutral-900</code></div>
+            </div>
+            <div class="tok">
+              <div
+                class="chip"
+                style="background:var(--muted-foreground)"
+              ></div>
+              <div class="lbl">
+                <b>muted-foreground</b><code>neutral-500</code>
+              </div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--border)"></div>
+              <div class="lbl"><b>border</b><code>neutral-200</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--input)"></div>
+              <div class="lbl"><b>input</b><code>neutral-300</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--ring)"></div>
+              <div class="lbl"><b>ring</b><code>neutral-400</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--destructive)"></div>
+              <div class="lbl"><b>destructive</b><code>danger-600</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--canvas)"></div>
+              <div class="lbl"><b>canvas</b><code>#ECECE7</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Categorical chart palette
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— 8 slots, picked by index, never tied to brand</span
+            >
+          </h3>
+          <div class="swatches">
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-1)"></div>
+              <div class="lbl"><b>chart-1</b><code>blue</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-2)"></div>
+              <div class="lbl"><b>chart-2</b><code>orange</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-3)"></div>
+              <div class="lbl"><b>chart-3</b><code>green</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-4)"></div>
+              <div class="lbl"><b>chart-4</b><code>purple</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-5)"></div>
+              <div class="lbl"><b>chart-5</b><code>coral</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-6)"></div>
+              <div class="lbl"><b>chart-6</b><code>teal</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-7)"></div>
+              <div class="lbl"><b>chart-7</b><code>amber</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--chart-8)"></div>
+              <div class="lbl"><b>chart-8</b><code>magenta</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Syntax tokens
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— code cards; named by intent, not hue</span
+            >
+          </h3>
+          <div class="swatches">
+            <div class="tok">
+              <div class="chip" style="background:var(--syntax-keyword)"></div>
+              <div class="lbl"><b>syntax-keyword</b><code>#B6491A · curl, -H, export</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--syntax-variable)"></div>
+              <div class="lbl"><b>syntax-variable</b><code>#D69E2E · $KEY</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--syntax-property)"></div>
+              <div class="lbl"><b>syntax-property</b><code>blue-700 · JSON keys</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--syntax-terminal-blue)"></div>
+              <div class="lbl"><b>syntax-terminal-blue</b><code>success-700 · JSON literals</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Traffic-light tokens
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— macOS window-control chrome; isolated from the semantic ramps</span
+            >
+          </h3>
+          <div class="swatches">
+            <div class="tok">
+              <div class="chip" style="background:var(--traffic-red)"></div>
+              <div class="lbl"><b>traffic-red</b><code>#FF5F57</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--traffic-amber)"></div>
+              <div class="lbl"><b>traffic-amber</b><code>#FEBC2E</code></div>
+            </div>
+            <div class="tok">
+              <div class="chip" style="background:var(--traffic-green)"></div>
+              <div class="lbl"><b>traffic-green</b><code>#28C840</code></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TYPOGRAPHY -->
+      <section class="block" id="typography">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Typography</h2>
+          <p class="type-copy-14">
+            Geist (sans) + Geist Mono. Three semantic families resolve through
+            the
+            <code style="font-family:var(--font-mono)">type-*</code>
+            utilities:
+            <b>heading</b>
+            (medium, tight/snug), <b>copy</b> (normal weight reading text),
+            <b>label</b>
+            (UI chrome). Weight ceiling is 500 — size and voice carry hierarchy,
+            not bold weights.
+          </p>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Heading —
+            <code style="font-family:var(--font-mono);font-weight:400"
+              >type-heading-*</code
+            >
+          </h3>
+          <p class="note">
+            Display tier (32+) uses
+            <code style="font-family:var(--font-mono)">tracking-tight</code>
+            (-0.025em); the 16–24 tiers use
+            <code style="font-family:var(--font-mono)">tracking-snug</code>
+            (-0.01em); 14 is normal.
+          </p>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-32</code><small>32 / 40 · 500 · tight</small>
+            </div>
+            <div class="demo type-heading-32">Gateway observability</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-24</code><small>24 / 32 · 500 · snug</small>
+            </div>
+            <div class="demo type-heading-24">Gateway observability</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-20</code><small>20 / 28 · 500 · snug</small>
+            </div>
+            <div class="demo type-heading-20">Gateway observability</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-18</code><small>18 / 28 · 500 · snug</small>
+            </div>
+            <div class="demo type-heading-18">Gateway observability</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-16</code><small>16 / 24 · 500 · snug</small>
+            </div>
+            <div class="demo type-heading-16">Gateway observability</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-heading-14</code><small>14 / 20 · 500 · normal</small>
+            </div>
+            <div class="demo type-heading-14">Gateway observability</div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Copy —
+            <code style="font-family:var(--font-mono);font-weight:400"
+              >type-copy-*</code
+            >
+          </h3>
+          <p class="note">
+            Reading text and descriptions. Normal weight, snug tracking at 16+;
+            14 and below normal.
+          </p>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-copy-18</code><small>18 / 28 · 400 · snug</small>
+            </div>
+            <div class="demo type-copy-18">
+              Inspect every request that flows through the gateway.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-copy-16</code><small>16 / 24 · 400 · snug</small>
+            </div>
+            <div class="demo type-copy-16">
+              Inspect every request that flows through the gateway.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-copy-14</code><small>14 / 20 · 400 · normal</small>
+            </div>
+            <div class="demo type-copy-14">
+              Inspect every request that flows through the gateway.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-copy-12</code><small>12 / 16 · 400 · normal</small>
+            </div>
+            <div class="demo type-copy-12">
+              Inspect every request that flows through the gateway.
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Label —
+            <code style="font-family:var(--font-mono);font-weight:400"
+              >type-label-*</code
+            >
+          </h3>
+          <p class="note">
+            UI chrome: form labels, table headers and cells, metadata. Tighter
+            line-height than copy.
+          </p>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-label-16</code><small>16 / 24 · 500 · tight</small>
+            </div>
+            <div class="demo type-label-16">Requests per minute</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-label-14</code><small>14 / 20 · 500 · normal</small>
+            </div>
+            <div class="demo type-label-14">Requests per minute</div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>type-label-12</code><small>12 / 16 · 500 · normal</small>
+            </div>
+            <div class="demo type-label-12">Requests per minute</div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Eyebrow + mono</h3>
+          <p class="note">
+            Mono uppercase chrome label above KPI values and in nav-section
+            headers:
+            <code style="font-family:var(--font-mono)"
+              >font-mono 12px uppercase tracking-[0.1em] 500 neutral-500</code
+            >.
+          </p>
+          <div class="type-row">
+            <div class="spec">
+              <code>.eyebrow</code><small>mono · 12 · 0.1em · upper</small>
+            </div>
+            <div class="demo"><span class="eyebrow">Total requests</span></div>
+          </div>
+          <div class="type-row">
+            <div class="spec">
+              <code>data (mono)</code><small>Geist Mono · tabular-nums</small>
+            </div>
+            <div
+              class="demo"
+              style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:14px;color:var(--neutral-800)"
+            >
+              req_aurora_4200 · 8,241 · $0.07
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HEADING OUTLINE RULE -->
+      <section class="block" id="heading-outline">
+        <div class="section-head">
+          <span class="eyebrow">Rule</span>
+          <h2 class="type-heading-24">Heading outline</h2>
+          <p class="type-copy-14">
+            Element level and visual size are independent: the
+            <code style="font-family:var(--font-mono)">type-*</code>
+            voice sets the look, the tag sets the document outline. Choose the
+            tag for the outline, not the size.
+          </p>
+        </div>
+        <div class="callout" style="margin-bottom:20px">
+          <b
+            >Exactly one
+            <code style="font-family:var(--font-mono)">&lt;h1&gt;</code>
+            per page</b
+          >
+          — the <code style="font-family:var(--font-mono)">PageTitle</code>. It
+          is the largest heading and appears once. Section titles are
+          <code style="font-family:var(--font-mono)">&lt;h2&gt;</code>, card and
+          modal-body titles
+          <code style="font-family:var(--font-mono)">&lt;h3&gt;</code>. Never
+          skip levels; chrome (sidebar, top bar, wordmark) never emits a
+          competing
+          <code style="font-family:var(--font-mono)">&lt;h1&gt;</code>.
+        </div>
+        <div class="outline-demo">
+          <div class="lvl">
+            <div class="tag">h1</div>
+            <div class="txt type-heading-32">
+              Overview
+              <span style="margin-left:10px" class="badge badge-neutral"
+                >PageTitle</span
+              >
+            </div>
+          </div>
+          <div class="lvl">
+            <div class="tag">h2</div>
+            <div class="txt type-heading-20">
+              Activity this week
+              <span style="margin-left:10px" class="badge badge-neutral"
+                >SectionTitle</span
+              >
+            </div>
+          </div>
+          <div class="lvl">
+            <div class="tag">h3</div>
+            <div class="txt type-heading-16">
+              Tokens used
+              <span style="margin-left:10px" class="badge badge-neutral"
+                >CardTitle</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RADIUS -->
+      <section class="block" id="radius">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Radius</h2>
+          <p class="type-copy-14">
+            Three material tiers. Nested surfaces step down one tier per level
+            (16 → 8 → 4).
+          </p>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="border-radius:var(--radius-xs);box-shadow:var(--shadow-border)"
+            ></div>
+            <b>rounded-xs</b><code>4px · sub-elements</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="border-radius:var(--radius-sm);box-shadow:var(--shadow-border)"
+            ></div>
+            <b>rounded-sm</b><code>6px · button / chrome</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="border-radius:var(--radius-md);box-shadow:var(--shadow-border)"
+            ></div>
+            <b>rounded-md</b><code>8px · card / surface</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="border-radius:var(--radius-lg);box-shadow:var(--shadow-border)"
+            ></div>
+            <b>rounded-lg</b><code>10px</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="border-radius:var(--radius-xl);box-shadow:var(--shadow-border)"
+            ></div>
+            <b>rounded-xl</b><code>16px · modal (locked)</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPACING -->
+      <section class="block" id="spacing">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Spacing</h2>
+          <p class="type-copy-14">
+            Every gap, padding and margin is a 4px multiple. The
+            <code style="font-family:var(--font-mono)">*.5</code>
+            utilities (2 / 6 / 10px) are banned because they break the 4px unit.
+          </p>
+        </div>
+        <div class="space-row">
+          <code>gap-1 / p-1 — 4px</code>
+          <div class="bar" style="width:4px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-2 / p-2 — 8px</code>
+          <div class="bar" style="width:8px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-3 / p-3 — 12px</code>
+          <div class="bar" style="width:12px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-4 / p-4 — 16px</code>
+          <div class="bar" style="width:16px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-5 / p-5 — 20px</code>
+          <div class="bar" style="width:20px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-6 / p-6 — 24px</code>
+          <div class="bar" style="width:24px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-8 / p-8 — 32px</code>
+          <div class="bar" style="width:32px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-10 — 40px</code>
+          <div class="bar" style="width:40px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-12 — 48px</code>
+          <div class="bar" style="width:48px"></div>
+        </div>
+        <div class="space-row">
+          <code>gap-16 — 64px</code>
+          <div class="bar" style="width:64px"></div>
+        </div>
+      </section>
+
+      <!-- ELEVATION -->
+      <section class="block" id="elevation">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Elevation</h2>
+          <p class="type-copy-14">
+            Layered shadows over solid borders for depth. Each floating tier
+            pairs a lift with a 1px ring, both mixed from
+            <code style="font-family:var(--font-mono)">neutral-800</code>
+            so the shadow family tracks the ink ramp.
+          </p>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <div class="swatch-card" style="box-shadow:var(--shadow-xs)"></div>
+            <b>shadow-xs</b><code>button / card lift</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="box-shadow:var(--shadow-card-soft)"
+            ></div>
+            <b>shadow-card-soft</b><code>upsell hero</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="box-shadow:var(--shadow-border)"
+            ></div>
+            <b>shadow-border</b><code>card / surface</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="box-shadow:var(--shadow-popup)"
+            ></div>
+            <b>shadow-popup</b><code>menu / select (6px)</code>
+          </div>
+          <div class="tile">
+            <div
+              class="swatch-card"
+              style="box-shadow:var(--shadow-modal)"
+            ></div>
+            <b>shadow-modal</b><code>dialog (16px)</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOTION -->
+      <section class="block" id="motion">
+        <div class="section-head">
+          <span class="eyebrow">Foundations</span>
+          <h2 class="type-heading-24">Motion</h2>
+          <p class="type-copy-14">
+            Four easing tokens defined in
+            <code style="font-family:var(--font-mono)">@theme</code>. Defining
+            <code style="font-family:var(--font-mono)">--ease-*</code> means the
+            bare <code style="font-family:var(--font-mono)">ease-out</code>
+            utility resolves to the strong curve site-wide. Every transition
+            pairs with
+            <code style="font-family:var(--font-mono)">motion-reduce</code>
+            fallbacks — the balls below stop under
+            <code style="font-family:var(--font-mono)">prefers-reduced-motion</code>.
+          </p>
+        </div>
+
+        <div class="grp">
+          <h3>Easing curves</h3>
+          <div class="ease-grid">
+            <div class="ease-card">
+              <svg viewBox="-8 -8 116 116" aria-hidden="true">
+                <path class="curve-base" d="M0,100 L100,0" />
+                <path class="curve-path" d="M0,100 C23,0 32,0 100,0" />
+              </svg>
+              <b>ease-out <span style="color:var(--neutral-500);font-weight:400">· default</span></b>
+              <code>cubic-bezier(0.23, 1, 0.32, 1)</code>
+              <div class="ease-track">
+                <div class="ease-ball" style="animation-timing-function:var(--ease-out)"></div>
+              </div>
+            </div>
+
+            <div class="ease-card">
+              <svg viewBox="-8 -8 116 116" aria-hidden="true">
+                <path class="curve-base" d="M0,100 L100,0" />
+                <path class="curve-path" d="M0,100 C40,100 100,0 100,0" />
+              </svg>
+              <b>ease-in</b>
+              <code>cubic-bezier(0.4, 0, 1, 1)</code>
+              <div class="ease-track">
+                <div class="ease-ball" style="animation-timing-function:var(--ease-in)"></div>
+              </div>
+            </div>
+
+            <div class="ease-card">
+              <svg viewBox="-8 -8 116 116" aria-hidden="true">
+                <path class="curve-base" d="M0,100 L100,0" />
+                <path class="curve-path" d="M0,100 C77,100 17.5,0 100,0" />
+              </svg>
+              <b>ease-in-out</b>
+              <code>cubic-bezier(0.77, 0, 0.175, 1)</code>
+              <div class="ease-track">
+                <div class="ease-ball" style="animation-timing-function:var(--ease-in-out)"></div>
+              </div>
+            </div>
+
+            <div class="ease-card">
+              <svg viewBox="-8 -8 116 116" aria-hidden="true">
+                <path class="curve-base" d="M0,100 L100,0" />
+                <path class="curve-path" d="M0,100 C32,28 0,0 100,0" />
+              </svg>
+              <b>ease-drawer <span style="color:var(--neutral-500);font-weight:400">· slide-in</span></b>
+              <code>cubic-bezier(0.32, 0.72, 0, 1)</code>
+              <div class="ease-track">
+                <div class="ease-ball" style="animation-timing-function:var(--ease-drawer)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Durations &amp; patterns</h3>
+          <table class="spec">
+            <thead>
+              <tr><th>Pattern</th><th>Duration</th><th>Easing</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Button / control press <span class="muted">— <code>active:scale-[0.98]</code>, <code>will-change-transform</code></span></td>
+                <td><code>150ms</code></td>
+                <td><code>ease-out</code></td>
+              </tr>
+              <tr>
+                <td>Menu item highlight <span class="muted">— <code>transition-colors</code></span></td>
+                <td><code>100ms</code></td>
+                <td><code>ease-out</code></td>
+              </tr>
+              <tr>
+                <td>Tabs / Segmented sliding indicator <span class="muted">— transform + width</span></td>
+                <td><code>200ms</code></td>
+                <td><code>ease-out</code></td>
+              </tr>
+              <tr>
+                <td>Dialog enter <span class="muted">— fade + zoom-in-95</span></td>
+                <td><code>200ms</code></td>
+                <td><code>ease-out</code></td>
+              </tr>
+              <tr>
+                <td>Sheet / drawer enter <span class="muted">— slide from right</span></td>
+                <td><code>300ms</code></td>
+                <td><code>ease-drawer</code></td>
+              </tr>
+              <tr>
+                <td>Toast <span class="muted">— sonner default (enter / hold / exit)</span></td>
+                <td><code>200ms / 4s / 200ms</code></td>
+                <td><code>ease-out</code></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top:16px">
+            <b>Press affordance is global.</b> The scale-down lives on
+            <code style="font-family:var(--font-mono)">Button</code>,
+            <code style="font-family:var(--font-mono)">IconActionButton</code> and
+            <code style="font-family:var(--font-mono)">TabsTrigger</code>, always paired with
+            <code style="font-family:var(--font-mono)">motion-reduce:active:scale-100</code>.
+            Popover / select / menu triggers are gated out so they don't scale and cause anchor-reposition flicker.
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPONENTS -->
+      <section class="block" id="components">
+        <div class="section-head">
+          <span class="eyebrow">Primitives</span>
+          <h2 class="type-heading-24">Components</h2>
+          <p class="type-copy-14">
+            Representative recipes. The React primitives in
+            <code style="font-family:var(--font-mono)">src/components/ui/</code>
+            are the canonical source; these specimens mirror their visual
+            contract.
+          </p>
+        </div>
+
+        <div class="grp">
+          <h3>Buttons</h3>
+          <p class="note">
+            Radius
+            <code style="font-family:var(--font-mono)">rounded-sm</code>
+            (6px). Press affordance:
+            <code style="font-family:var(--font-mono)"
+              >active:scale-[0.98]</code
+            >
+            (150ms ease-out) — click one to feel it.
+          </p>
+          <div class="row" style="margin-bottom:14px">
+            <button type="button" class="btn btn-primary">Primary</button>
+            <button type="button" class="btn btn-secondary">Secondary</button>
+            <button type="button" class="btn btn-ghost">Ghost</button>
+            <button type="button" class="btn btn-destructive">
+              Delete key
+            </button>
+          </div>
+          <div class="row">
+            <button type="button" class="btn btn-primary btn-sm">Small</button>
+            <button type="button" class="btn btn-primary">Default</button>
+            <button type="button" class="btn btn-primary btn-lg">Large</button>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>
+            Badges
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— mono, tabular-nums, soft tint = bg-*-100 / text-*-700</span
+            >
+          </h3>
+          <div class="row">
+            <span class="badge badge-neutral">DRAFT</span>
+            <span class="badge badge-success">200 OK</span>
+            <span class="badge badge-info">CACHED</span>
+            <span class="badge badge-warning">RATE LIMIT</span>
+            <span class="badge badge-danger">BLOCKED</span>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3>Input</h3>
+          <p class="note">
+            Border
+            <code style="font-family:var(--font-mono)">input</code>
+            (neutral-300),
+            <code style="font-family:var(--font-mono)">rounded-md</code>, focus
+            ring from
+            <code style="font-family:var(--font-mono)">ring</code>
+            (neutral-400). Focus the field to see the ring.
+          </p>
+          <input class="input" placeholder="Search requests…">
+        </div>
+
+        <div class="grp">
+          <h3>
+            Card
+            <span style="color:var(--neutral-500);font-weight:400"
+              >— rounded-md + shadow-border; nested surface steps down to
+              rounded-xs</span
+            >
+          </h3>
+          <div class="demo-card">
+            <div class="type-heading-16">Tokens used</div>
+            <p class="desc type-copy-14">
+              Aggregate input + output tokens across all keys this period.
+            </p>
+            <div class="nested">
+              <span class="eyebrow">This period</span>
+              <div
+                style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:500;letter-spacing:var(--tracking-tight);color:var(--neutral-900)"
+              >
+                1,284,930
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        Generated from <code>design.md</code> + <code>src/index.css</code> ·
+        standalone reference, not wired into the app · open directly in a
+        browser.
+      </footer>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Scrollspy — highlight the nav link for the section in view.
+      (function () {
+        var links = Array.prototype.slice.call(
+          document.querySelectorAll(".nav a[href^='#']")
+        );
+        var byId = {};
+        for (var i = 0; i < links.length; i++) {
+          byId[links[i].getAttribute("href").slice(1)] = links[i];
+        }
+        var sections = Array.prototype.slice
+          .call(document.querySelectorAll("section.block[id]"));
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (l) {
+                  l.classList.remove("active");
+                });
+                var active = byId[entry.target.id];
+                if (active) {
+                  active.classList.add("active");
+                }
+              }
+            });
+          },
+          { rootMargin: "-20% 0px -70% 0px", threshold: 0 }
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
