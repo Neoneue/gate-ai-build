@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * PageTitle — top-of-surface heading on composed pages (CMP-012 through
- * CMP-018). Recipe: `font-sans font-medium text-neutral-900 text-3xl/9
- * -tracking-[1px] text-balance m-0`.
+ * CMP-018). Voice maps to the semantic type scale: `h1` → `type-heading-32`,
+ * `h2` → `type-heading-24`, plus `text-balance text-neutral-900 m-0`.
  *
  * Extracted 2026-05-11 after the 5-agent audit found this exact recipe
  * hand-rolled in 8 sites (every composed page's PageHeader plus the
@@ -34,7 +34,7 @@ export function PageTitle({
   children,
   ...props
 }: PageTitleProps) {
-  const headingClass = Tag === "h1" ? "h1" : "h2";
+  const headingClass = Tag === "h1" ? "type-heading-32" : "type-heading-24";
 
   return (
     <Tag

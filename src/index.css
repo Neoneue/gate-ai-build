@@ -400,6 +400,8 @@ body {
     @apply font-sans text-3xl/10 font-medium tracking-tight;
   }
 
+  /* Sans heading tiers 16–24 carry tracking-snug; the display tier (32+)
+     uses the tighter tracking-tight. See design.md §975. */
   .type-heading-24 {
     @apply font-sans text-2xl/8 font-medium tracking-snug;
   }
@@ -418,23 +420,6 @@ body {
 
   .type-heading-14 {
     @apply font-sans text-sm font-medium;
-  }
-
-  /* Heading aliases used across site title hierarchy (5 levels). */
-  .h1 {
-    @apply font-sans text-3xl font-medium tracking-tight;
-  }
-  .h2 {
-    @apply font-sans text-2xl/8 font-medium;
-  }
-  .h3 {
-    @apply font-sans text-xl/7 font-medium;
-  }
-  .h4 {
-    @apply font-sans text-lg/7 font-medium;
-  }
-  .h5 {
-    @apply font-sans text-base/6 font-medium;
   }
 
   .type-label-20 {
