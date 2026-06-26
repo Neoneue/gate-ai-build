@@ -22,7 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TextLink } from "@/components/ui/text-link";
-import { randomHex } from "@/lib/utils";
+import { cn, randomHex } from "@/lib/utils";
 import {
   CreateKeyButton,
   CreateKeyDialog,
@@ -32,7 +32,6 @@ import { ConnectTabs } from "@/pages/DashboardDefault";
 import { MODEL_OPTIONS, PaygToolConfigCard } from "@/pages/Models";
 import {
   AnimatedEllipsis,
-  SetupIconChip,
   SetupScaffold,
   WaitingStrip,
 } from "@/pages/onboarding-shared";
@@ -80,6 +79,11 @@ export function SetupManual() {
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [keySaved, setKeySaved] = useState(false);
   const [maskedKey, setMaskedKey] = useState<string | null>(null);
+  // Gated flow (both modes): step 2 stays dimmed until the user creates a key
+  // or cancels the dialog. PAYG additionally gates steps 3 & 4 behind the first
+  // interaction with the model selector.
+  const [configRevealed, setConfigRevealed] = useState(false);
+  const [modelChosen, setModelChosen] = useState(false);
   const [modelHandle, setModelHandle] = useState(MODEL_OPTIONS[0].handle);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [modelQuery, setModelQuery] = useState("");
@@ -123,7 +127,6 @@ export function SetupManual() {
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3">
-          <SetupIconChip icon={KeyRound} size="sm" tone="blue" />
           <div className="flex min-w-[180px] flex-1 flex-col gap-1">
             <span className="type-label-14 text-foreground">
               Create a key to authenticate your requests
@@ -193,22 +196,26 @@ export function SetupManual() {
             <>
               {/* Step 1 — create key */}
               <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  1. Create an API key
-                </h2>
+                <StepHeading n={1}>Create an API key</StepHeading>
                 {createKeyStep}
               </div>
 
-              {/* Step 2 — choose a model (Add credits secondary, zero-balance only) */}
-              <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  2. Choose a model
-                </h2>
+              {/* Step 2 — choose a model. Dimmed until the user creates a key
+                  or cancels the dialog. */}
+              <div
+                className={cn(
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  configRevealed ? null : "pointer-events-none opacity-50"
+                )}
+              >
+                <StepHeading n={2}>Choose a model</StepHeading>
                 <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
                   <ModelPicker
                     onOpenChange={(open) => {
                       setModelPickerOpen(open);
                       if (open) {
+                        // First interaction with the selector reveals steps 3-4.
+                        setModelChosen(true);
                         setModelQuery("");
                         // Focus the search input after the popover animates in
                         setTimeout(() => searchRef.current?.focus(), 50);
@@ -217,6 +224,7 @@ export function SetupManual() {
                     onQueryChange={setModelQuery}
                     onSelect={(handle) => {
                       setModelHandle(handle);
+                      setModelChosen(true);
                       setModelPickerOpen(false);
                     }}
                     open={modelPickerOpen}
@@ -237,22 +245,30 @@ export function SetupManual() {
                 </div>
               </div>
 
-              {/* Step 3 — configure your agent (shared model-detail PAYG config) */}
-              <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  3. Configure your agent
-                </h2>
+              {/* Step 3 — configure your agent (shared model-detail PAYG config).
+                  Dimmed until the user interacts with the model selector. */}
+              <div
+                className={cn(
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  modelChosen ? null : "pointer-events-none opacity-50"
+                )}
+              >
+                <StepHeading n={3}>Configure your agent</StepHeading>
                 <PaygToolConfigCard handle={modelHandle} />
               </div>
 
-              {/* Step 4 — first request */}
-              <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  4. Send your first request
-                </h2>
-                <WaitingStrip>
+              {/* Step 4 — first request. Un-dims with step 3; spinner starts
+                  once the model selector has been used. */}
+              <div
+                className={cn(
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  modelChosen ? null : "pointer-events-none opacity-50"
+                )}
+              >
+                <StepHeading n={4}>Send your first request</StepHeading>
+                <WaitingStrip active={modelChosen}>
                   Listening for your first request
-                  <AnimatedEllipsis />
+                  {modelChosen ? <AnimatedEllipsis /> : null}
                 </WaitingStrip>
               </div>
             </>
@@ -260,17 +276,20 @@ export function SetupManual() {
             <>
               {/* Step 1 — create key */}
               <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  1. Create your API key
-                </h2>
+                <StepHeading n={1}>Create your API key</StepHeading>
                 {createKeyStep}
               </div>
 
-              {/* Step 2 — exact Manual config component from /api-keys */}
-              <div className="flex flex-col gap-3">
-                <h2 className="type-label-14 m-0 text-foreground">
-                  2. Add the config
-                </h2>
+              {/* Step 2 — exact Manual config component from /api-keys.
+                  Dimmed until the user creates a key or cancels the dialog.
+                  The listening strip sits 12px below the snippet card (gap-3). */}
+              <div
+                className={cn(
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  configRevealed ? null : "pointer-events-none opacity-50"
+                )}
+              >
+                <StepHeading n={2}>Add the config</StepHeading>
                 <Card className="flex flex-1 flex-col" density="flush">
                   <div className="flex-1">
                     <ConnectTabs
@@ -282,18 +301,18 @@ export function SetupManual() {
                     />
                   </div>
                 </Card>
+                <WaitingStrip active={configRevealed}>
+                  Listening for you to send your first request
+                  {configRevealed ? <AnimatedEllipsis /> : null}
+                </WaitingStrip>
               </div>
-
-              <WaitingStrip>
-                Listening for you to send your first request
-                <AnimatedEllipsis />
-              </WaitingStrip>
             </>
           )}
         </div>
       </Card>
 
       <CreateKeyDialog
+        onCancel={() => setConfigRevealed(true)}
         onCreate={handleCreate}
         onOpenChange={setCreateOpen}
         open={createOpen}
@@ -306,9 +325,31 @@ export function SetupManual() {
           }
           setCreatedKey(null);
           setKeySaved(true);
+          setConfigRevealed(true);
         }}
       />
     </SetupScaffold>
+  );
+}
+
+/** Step heading with the green numbered circle (matches Gate Connect steps). */
+function StepHeading({
+  n,
+  children,
+}: {
+  n: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <h2 className="type-label-14 m-0 flex items-center gap-2 text-foreground">
+      <span
+        aria-hidden
+        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-success-600 bg-success-50 text-success-700 tabular-nums"
+      >
+        {n}
+      </span>
+      {children}
+    </h2>
   );
 }
 
