@@ -403,7 +403,7 @@ function CachingCard() {
     <Card>
       <CardChromeHeader
         action={<StatusBadge on={enabled} />}
-        description="Reuse identical or semantically similar responses"
+        description="Reuse identical responses."
         title="Caching"
       />
       <CardContent className="flex flex-col gap-3">
@@ -635,11 +635,6 @@ function CompressionCard({ plan }: { plan: Plan }) {
               size="lg"
             />
           </div>
-          <SavingsHeadline
-            caption="smaller requests"
-            value="4%"
-            valueClassName="text-success-700"
-          />
           <BenefitList
             benefits={FREE_COMPRESSION_BENEFITS}
             checkClassName="bg-muted text-muted-foreground"
@@ -704,11 +699,15 @@ function CompressionCard({ plan }: { plan: Plan }) {
               </Button>
             )}
           </div>
-          <SavingsHeadline
-            caption="smaller requests · up to ~25%"
-            value="~20%"
-            valueClassName="text-blue-700"
-          />
+          {/* KPI headline is an upsell hook — only the Free (CTA) version shows
+              it. On Pro the user already has the capability, so it's dropped. */}
+          {isPro ? null : (
+            <SavingsHeadline
+              caption="smaller requests on average"
+              value="~20%"
+              valueClassName="text-foreground text-xl"
+            />
+          )}
           <BenefitList
             benefits={PRO_COMPRESSION_BENEFITS}
             // Soft blue checks on both plans: the card already wins the eye via
@@ -728,7 +727,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
       <Card>
         <CardChromeHeader
           action={<StatusBadge on={isPro ? advancedEnabled : enabled} />}
-          description="Shrink prompts before they reach the provider"
+          description="Shrink prompts before they reach the provider, without affecting the model's output."
           title="Compression"
         />
         <CardContent className="flex flex-col gap-4">

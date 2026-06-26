@@ -67,7 +67,7 @@ function PageHeader() {
       <div className="flex max-w-1/2 flex-col gap-2">
         <PageTitle>Settings</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          Profile, security, logging, and integrations.
+          Profile, security, logging, and integrations
         </p>
       </div>
     </div>

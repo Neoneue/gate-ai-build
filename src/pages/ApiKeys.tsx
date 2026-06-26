@@ -252,6 +252,30 @@ export function ApiKeys() {
   );
 }
 
+// Shared "Create key" trigger — same chrome as the API Keys page header CTA.
+export function CreateKeyButton({
+  onClick,
+  children = "Create key",
+  size,
+  disabled,
+}: {
+  onClick: () => void;
+  children?: React.ReactNode;
+  size?: React.ComponentProps<typeof Button>["size"];
+  disabled?: boolean;
+}) {
+  return (
+    <Button disabled={disabled} onClick={onClick} size={size}>
+      <Plus
+        aria-hidden
+        className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+        data-icon="inline-start"
+      />
+      {children}
+    </Button>
+  );
+}
+
 // `onCreate` is optional: when omitted (the no-keys empty card is showing),
 // the header drops its "Create key" button so the only CTA is the card's
 // "Create your first key". The header button returns once keys exist.
@@ -267,14 +291,7 @@ export function PageHeader({ onCreate }: { onCreate?: () => void }) {
       </div>
       {onCreate ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={onCreate}>
-            <Plus
-              aria-hidden
-              className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
-              data-icon="inline-start"
-            />
-            Create key
-          </Button>
+          <CreateKeyButton onClick={onCreate} />
         </div>
       ) : null}
     </div>
@@ -286,14 +303,9 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
     <EmptyState
       action={
         <div className="flex items-center gap-2 pt-4">
-          <Button onClick={onCreate}>
-            <Plus
-              aria-hidden
-              className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
-              data-icon="inline-start"
-            />
+          <CreateKeyButton onClick={onCreate}>
             Create your first key
-          </Button>
+          </CreateKeyButton>
           <Button onClick={openDocs} variant="outline">
             <BookOpen aria-hidden data-icon="inline-start" />
             Read the quickstart
@@ -559,10 +571,13 @@ export function CreateKeyDialog({
   open,
   onOpenChange,
   onCreate,
+  onCancel,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   onCreate: (input: { name: string }) => void;
+  /** Optional — e.g. Gate Connect onboarding skips key creation on Cancel. */
+  onCancel?: () => void;
 }) {
   const [name, setName] = useState("");
 
@@ -637,7 +652,15 @@ export function CreateKeyDialog({
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={
+                <Button
+                  onClick={() => onCancel?.()}
+                  type="button"
+                  variant="outline"
+                />
+              }
+            >
               Cancel
             </DialogClose>
             <Button disabled={!isValid} type="submit" variant="default">

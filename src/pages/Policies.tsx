@@ -729,7 +729,7 @@ function ProBenefitsCard() {
             <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
               {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
                 <li className="flex items-start gap-3" key={benefit.title}>
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-blue-800">
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">

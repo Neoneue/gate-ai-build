@@ -66,7 +66,7 @@ const FREE_PLAN: PlanCardData = {
     {
       Icon: MessagesSquare,
       title: "Conversation threading",
-      detail: "Follow agent runs and chats end-to-end",
+      detail: "Follow agent runs and chats end-to-end.",
     },
   ],
   cta: {
@@ -87,12 +87,12 @@ const PRO_PLAN: PlanCardData = {
     {
       Icon: ShieldAlert,
       title: "Prompt injection scanning",
-      detail: "Block or flag before tokens reach the model",
+      detail: "Block or flag before tokens reach the model.",
     },
     {
       Icon: EyeOff,
       title: "PII, PHI & credential redaction",
-      detail: "Redacted before the response returns",
+      detail: "Redacted before the response returns.",
     },
     {
       Icon: SlidersHorizontal,

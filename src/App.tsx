@@ -183,6 +183,26 @@ const SettingsDefault = lazy(() =>
     default: m.SettingsDefault,
   }))
 );
+/* Overview onboarding subflows — dedicated `-default` subpages reached from
+ * the Overview get-started card. Each keeps the default-tier chrome and
+ * breadcrumbs back through the concept's multi-level flow. */
+const SetupConnect = lazy(() =>
+  import("@/pages/SetupConnect").then((m) => ({ default: m.SetupConnect }))
+);
+const SetupGateConnect = lazy(() =>
+  import("@/pages/SetupGateConnect").then((m) => ({
+    default: m.SetupGateConnect,
+  }))
+);
+const SetupManual = lazy(() =>
+  import("@/pages/SetupManual").then((m) => ({ default: m.SetupManual }))
+);
+const SetupCredits = lazy(() =>
+  import("@/pages/SetupCredits").then((m) => ({ default: m.SetupCredits }))
+);
+const SetupModels = lazy(() =>
+  import("@/pages/SetupModels").then((m) => ({ default: m.SetupModels }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -245,6 +265,15 @@ export default function App() {
             <Route element={<Navigate replace to="/overview" />} index />
             <Route element={<Dashboard />} path="/overview" />
             <Route element={<DashboardDefault />} path="/overview-default" />
+            {/* Overview onboarding subflows (multi-level back stack). */}
+            <Route element={<SetupConnect />} path="/setup-connect-default" />
+            <Route
+              element={<SetupGateConnect />}
+              path="/setup-gate-connect-default"
+            />
+            <Route element={<SetupManual />} path="/setup-manual-default" />
+            <Route element={<SetupCredits />} path="/setup-credits-default" />
+            <Route element={<SetupModels />} path="/setup-models-default" />
             <Route element={<Requests />} path="/requests" />
             <Route
               element={<RequestsFindings />}

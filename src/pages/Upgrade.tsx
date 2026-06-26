@@ -63,7 +63,7 @@ const FREE_PLAN: PlanCardData = {
     {
       Icon: MessagesSquare,
       title: "Conversation threading",
-      detail: "Follow agent runs and chats end-to-end",
+      detail: "Follow agent runs and chats end-to-end.",
     },
   ],
   cta: {
@@ -83,17 +83,18 @@ const PRO_PLAN: PlanCardData = {
     {
       Icon: ShieldAlert,
       title: "Prompt injection scanning",
-      detail: "Block or flag before tokens reach the model",
+      detail: "Block or flag before tokens reach the model.",
     },
     {
       Icon: EyeOff,
       title: "PII & PHI redaction",
-      detail: "Detect and redact before sensitive data reaches the model",
+      detail: "Detect and redact before sensitive data reaches the model.",
     },
     {
       Icon: KeyRound,
       title: "Credential leak prevention",
-      detail: "Stop API keys and secrets from leaking in requests or responses",
+      detail:
+        "Stop API keys and secrets from leaking in requests or responses.",
     },
     {
       Icon: SlidersHorizontal,

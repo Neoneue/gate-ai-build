@@ -491,3 +491,31 @@ body {
   }
 
 }
+
+/* Animated ellipsis — cycles . → .. → ... for "listening / waiting" copy.
+   Pure CSS (no JS timer); `content` is discrete so it jumps at each keyframe.
+   Decorative: the preceding text carries the meaning, so the call site marks
+   the span aria-hidden. Honors reduced-motion by pinning to a static "…". */
+@keyframes ellipsis-dots {
+  0% {
+    content: ".";
+  }
+  33% {
+    content: "..";
+  }
+  66% {
+    content: "...";
+  }
+}
+
+.animate-ellipsis::after {
+  content: ".";
+  animation: ellipsis-dots 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ellipsis::after {
+    content: "…";
+    animation: none;
+  }
+}

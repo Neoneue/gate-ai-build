@@ -1,22 +1,7 @@
 import { Radio } from "@base-ui/react/radio";
-import {
-  ArrowLeftRight,
-  BarChart2,
-  Check,
-  Download,
-  MessageSquare,
-  Plus,
-  ShieldAlert,
-  XIcon,
-  Zap,
-} from "lucide-react";
+import { BadgeCheck, Check, Coins, Download, Plus, XIcon } from "lucide-react";
 import { type ComponentType, type ElementType, useMemo, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useOutletContext,
-  useSearchParams,
-} from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   AnthropicIcon,
   GeminiIcon,
@@ -24,8 +9,9 @@ import {
   MetaIcon,
   OpenAIIcon,
 } from "@/components/icons/model-providers";
+import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
@@ -37,112 +23,81 @@ import {
 } from "@/components/ui/dialog";
 import { DownloadIcon } from "@/components/ui/download";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
-import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { SectionTitle } from "@/components/ui/section-title";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
+import { ChoiceCard } from "@/pages/onboarding-shared";
+import { PAYG_TOOL_CAPTIONS, paygConfigSnippet } from "@/pages/payg-config";
 
-const GATEWAY_URL = "https://gateway-staging.constellationgate.ai";
+const BYOK_GATEWAY_URL = "https://gateway.constellationgate.ai";
 
-// These tabs configure agent apps to route through the gateway — you point
-// the tool at Gate, not the model provider. Claude Code + Codex read base-URL
-// env vars; OpenClaw is Gate-native and takes a small plugin config.
-const HERO_CLAUDE_CODE_BYOK = `import Anthropic from "@anthropic-ai/sdk";
+// BYOK — Claude Code ~/.claude/settings.json
+const HERO_CLAUDE_CODE_BYOK = `{
+  "env": {
+    "ANTHROPIC_BASE_URL": "${BYOK_GATEWAY_URL}",
+    "ANTHROPIC_CUSTOM_HEADERS": "X-Gate-Api-Key: sk-gw-…your Gate key…\\nX-Gate-Upstream-Url: https://api.anthropic.com"
+  }
+}`;
 
-// BYOK — your own Anthropic key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new Anthropic({
-  baseURL: "${GATEWAY_URL}",
-  apiKey: "sk-ant-…YOUR_ANTHROPIC_KEY",
-  defaultHeaders: {
-    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-    "X-Gate-Upstream-Url": "https://api.anthropic.com",
-  },
-});
+const HERO_CLAUDE_CODE_PAYG = paygConfigSnippet("claude-code");
+const HERO_CODEX_PAYG = paygConfigSnippet("codex");
+const HERO_OPENCLAW_PAYG = paygConfigSnippet("openclaw");
+// BYOK — Codex ~/.codex/config.toml (subscription auth via credential helper)
+const HERO_CODEX_BYOK = `model_provider = "gate"
 
-const msg = await client.messages.create({
-  model: "claude-sonnet-4-5",
-  max_tokens: 256,
-  messages: [{ role: "user", content: "Hello!" }],
-});
-console.log(msg.content);`;
+[model_providers.gate]
+name = "Constellation Gate"
+base_url = "${BYOK_GATEWAY_URL}/codex"
+wire_api = "responses"
 
-// PAYG terminal config — Claude Code routes through the gateway via the
-// OpenRouter-compatible provider. Configs supplied by the gateway devs.
-const HERO_CLAUDE_CODE_PAYG = `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"
-export ANTHROPIC_API_KEY="sk-gw-..."
-export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
+[model_providers.gate.http_headers]
+"X-Gate-Api-Key" = "sk-gw-…your Gate key…"
+"X-Gate-Upstream-Url" = "https://chatgpt.com/backend-api"
 
-claude code "your prompt"`;
+[model_providers.gate.auth]
+command = "/Users/you/.codex/gate-credential-helper.sh"
 
-const HERO_CODEX_BYOK = `import OpenAI from "openai";
+# Subscription auth — no API key.
+# NOTE: Gate Connect would handle this for you automatically.
+# Run \`codex login\` once, then create the helper
+# that prints your ChatGPT OAuth bearer from ~/.codex/auth.json. Codex calls it on
+# every request, so token refresh is automatic. Use an absolute path above (no ~):
+#
+#   cat > ~/.codex/gate-credential-helper.sh <<'EOF'
+#   #!/bin/sh
+#   set -eu
+#   AUTH_FILE="$HOME/.codex/auth.json"
+#   TOKEN=$(sed -n 's/.*"access_token"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$AUTH_FILE" | head -1)
+#   [ -z "$TOKEN" ] && TOKEN=$(sed -n 's/.*"OPENAI_API_KEY"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' "$AUTH_FILE" | head -1)
+#   printf '%s' "$TOKEN"
+#   EOF
+#   chmod 700 ~/.codex/gate-credential-helper.sh`;
 
-// BYOK — your own OpenAI key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new OpenAI({
-  baseURL: "${GATEWAY_URL}/v1",
-  apiKey: "sk-…YOUR_OPENAI_KEY",
-  defaultHeaders: {
-    "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-    "X-Gate-Upstream-Url": "https://api.openai.com",
-  },
-});
-
-const msg = await client.chat.completions.create({
-  model: "gpt-4o",
-  messages: [{ role: "user", content: "Hello!" }],
-});
-console.log(msg.choices[0].message.content);`;
-
-const HERO_CODEX_PAYG = `export OPENAI_API_KEY="sk-gw-..."
-
-codex exec \\
-  -c 'model_providers.gateway.base_url="${GATEWAY_URL}/v1"' \\
-  -c 'model_providers.gateway.env_key="OPENAI_API_KEY"' \\
-  -c 'model_providers.gateway.wire_api="responses"' \\
-  -c 'model_providers.gateway.http_headers."X-Gate-Provider"="openai_compatible"' \\
-  -c 'model_provider="gateway"' \\
-  -m "anthropic/claude-sonnet-4-5" \\
-  "your prompt"`;
-
-const HERO_OPENCLAW_BYOK = `import { OpenClawGenAI } from "@openclaw/genai";
-
-// BYOK — your own OpenClaw API key. The gateway proxies to the upstream
-// you name in X-Gate-Upstream-Url and adds security + audit.
-const client = new OpenClawGenAI({
-  apiKey: "YOUR_OPENCLAW_API_KEY",
-  apiVersion: "v1",
-  httpOptions: {
-    baseUrl: "${GATEWAY_URL}/openclaw",
-    headers: {
-      "X-Gate-Api-Key": "sk-gw-…YOUR_GATEWAY_KEY",
-      "X-Gate-Upstream-Url": "https://generativelanguage.googleapis.com",
-    },
-  },
-});
-
-const res = await client.models.generateContent({
-  model: "gemini-2.5-pro",
-  contents: "Hello!",
-});
-console.log(res.text);`;
-
-const HERO_OPENCLAW_PAYG = `{
+// BYOK — OpenClaw openclaw.json + ~/.openclaw/.env
+const HERO_OPENCLAW_BYOK = `{
   "models": {
     "providers": {
-      "swarm-deck": {
-        "baseUrl": "${GATEWAY_URL}",
-        "apiKey": "sk-gw-...",
+      "openrouter": {
+        "baseUrl": "${BYOK_GATEWAY_URL}",
+        "apiKey": "\${OPENROUTER_API_KEY}",
         "api": "openai-completions",
-        "headers": { "X-Gate-Provider": "openai_compatible" },
-        "models": [{ "id": "anthropic/claude-sonnet-4-5", "name": "anthropic/claude-sonnet-4-5" }]
+        "headers": {
+          "X-Gate-Api-Key": "sk-gw-…your Gate key…",
+          "X-Gate-Upstream-Url": "https://openrouter.ai/api/v1"
+        },
+        "models": [
+          { "id": "openrouter/auto", "name": "openrouter/auto" },
+          { "id": "kimi-k2.5", "name": "kimi-k2.5" }
+        ]
       }
     }
   }
-}`;
+}
+
+// In ~/.openclaw/.env:  OPENROUTER_API_KEY=sk-or-…your OpenRouter key…
+// Validate with:  openclaw doctor`;
 
 const KEYWORDS = new Set([
   "import",
@@ -173,6 +128,10 @@ function tokenizeLine(line: string): CodeToken[] {
     // `//` inside a URL ("https://…") is tokenized as a string and never
     // reaches here.
     if (ch === "/" && line[i + 1] === "/") {
+      tokens.push({ text: line.slice(i), type: "comment" });
+      break;
+    }
+    if (ch === "#") {
       tokens.push({ text: line.slice(i), type: "comment" });
       break;
     }
@@ -272,6 +231,8 @@ function HeroCodeTab({
   byok,
   payg,
   paygOnly = false,
+  byokOnly = false,
+  hideStrip = false,
   caption,
   maxHeightClass = "max-h-[192px]",
   mode = "byok",
@@ -282,6 +243,10 @@ function HeroCodeTab({
   payg?: string;
   /** Force the PAYG snippet and drop the BYOK/PAYG selector (caption stays). */
   paygOnly?: boolean;
+  /** Force the BYOK snippet and drop the BYOK/PAYG selector (caption stays). */
+  byokOnly?: boolean;
+  /** Drop the mode/caption strip entirely (only meaningful when locked). */
+  hideStrip?: boolean;
   /** Overrides the mode caption with a fixed per-tab string. */
   caption?: string;
   /** Tailwind max-h class for the scrolling snippet panel. */
@@ -293,15 +258,16 @@ function HeroCodeTab({
   onModeChange?: (next: "byok" | "payg") => void;
 }) {
   const hasModes = Boolean(byok && payg);
-  const effectiveMode = paygOnly ? "payg" : mode;
+  const lockMode = paygOnly || byokOnly;
+  const effectiveMode = paygOnly ? "payg" : byokOnly ? "byok" : mode;
   const code = hasModes ? (effectiveMode === "byok" ? byok! : payg!) : snippet!;
   return (
     <div className="flex h-full flex-col">
-      {hasModes && (
+      {hasModes && !hideStrip && (
         <div
-          className={`flex items-center gap-4 border-border border-b px-4 ${paygOnly ? "h-10 justify-start" : "justify-between py-2"}`}
+          className={`flex items-center gap-4 border-border border-b px-4 ${lockMode ? "h-10 justify-start" : "justify-between py-2"}`}
         >
-          {!paygOnly && (
+          {!lockMode && (
             <div
               aria-label="Gateway billing mode"
               className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm border border-border bg-card px-1"
@@ -382,7 +348,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "Windows",
     icon: "/icons/os/windows-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires Windows 10 or later",
+    requires: "Requires Windows 10 or later.",
     defaultBuild: "win-x64",
     builds: [
       {
@@ -406,7 +372,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "macOS",
     icon: "/icons/os/macos-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires macOS 12 or later",
+    requires: "Requires macOS 12 or later.",
     defaultBuild: "mac-arm",
     builds: [
       {
@@ -430,7 +396,7 @@ const PLATFORMS: Record<PlatformId, PlatformSpec> = {
     label: "Linux",
     icon: "/icons/os/linux-color.svg",
     version: GATE_CONNECT_VERSION,
-    requires: "Requires a modern 64-bit Linux distribution",
+    requires: "Requires a modern 64-bit Linux distribution.",
     defaultBuild: "linux-x64",
     builds: [
       {
@@ -490,7 +456,11 @@ function detectPlatform(): PlatformId {
   return "windows";
 }
 
-function DownloadGateConnectDialog() {
+export function DownloadGateConnectDialog({
+  onDownload,
+}: {
+  onDownload?: () => void;
+} = {}) {
   const detected = useMemo(() => detectPlatform(), []);
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<PlatformId>(detected);
@@ -539,7 +509,7 @@ function DownloadGateConnectDialog() {
               Download Gate <span className="text-blue-700">Connect</span>
             </DialogTitle>
             <DialogDescription className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              The menu-bar app that connects your desktop agents to Gate
+              The menu-bar app that connects your desktop agents to Gate.
             </DialogDescription>
           </div>
           <DialogClose
@@ -651,7 +621,13 @@ function DownloadGateConnectDialog() {
 
         {/* FOOTER */}
         <div className="border-border border-t px-6 py-6">
-          <Button className="h-12 w-full" onClick={() => setOpen(false)}>
+          <Button
+            className="h-12 w-full"
+            onClick={() => {
+              onDownload?.();
+              setOpen(false);
+            }}
+          >
             <Download className="size-4" data-icon="inline-start" /> Download
             for {spec.label}
           </Button>
@@ -661,62 +637,64 @@ function DownloadGateConnectDialog() {
   );
 }
 
-function OverviewHeroCard() {
+/** New-workspace onboarding hero — two routing outcomes only (no outer card).
+ *  Page title + subtitle live in DashboardDefault. */
+function GetStartedCard() {
   const navigate = useNavigate();
 
   return (
-    <section className="flex flex-col gap-4">
-      <SectionTitle as="h2">Get started</SectionTitle>
-      <Card className="flex-1" density="flush">
-        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
-          <div className="flex max-w-1/2 flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
-              >
-                1
-              </span>
-              <h3 className="type-heading-18 m-0 text-foreground">
-                Create your first API key
-              </h3>
-            </div>
-            <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
-              Your API key is what routes traffic through Gate, adding
-              prompt-injection defense and a tamper-evident audit trail to every
-              request. Use it with our Gate Connect app, or any AI coding tools
-              you configure manually.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/api-keys")}>
-              <Plus
-                className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
-                data-icon="inline-start"
-              />{" "}
-              Create key
-            </Button>
-            <Button
-              onClick={() =>
-                window.open(
-                  "https://docs.constellationgate.ai",
-                  "_blank",
-                  "noopener,noreferrer"
-                )
-              }
-              variant="outline"
-            >
-              Read API docs{" "}
-              <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
-            </Button>
-          </div>
-        </div>
-        <div className="border-border border-t p-8 max-xl:p-6">
-          <FirstRequestInfo />
-        </div>
-        <WorksWithFooter />
-      </Card>
-    </section>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <ChoiceCard
+        body="Route the plans you already pay for through Gate. Manage your own keys and billing plans."
+        cta="Route my traffic"
+        ctaVariant="default"
+        icon={BadgeCheck}
+        onClick={() => navigate("/setup-connect-default")}
+        supports={
+          <>
+            Works with{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="anthropic" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Claude</span> and{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="openai" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Codex</span>{" "}
+            subscriptions, plus your own provider keys.
+          </>
+        }
+        title="Keep my existing subscriptions"
+        tone="blue"
+      />
+      <ChoiceCard
+        body="No provider accounts needed. Add credits and call any model, billed through Gate."
+        cta="Get started"
+        ctaVariant="default"
+        icon={Coins}
+        onClick={() => navigate("/setup-manual-default?bill=payg")}
+        supports={
+          <>
+            Choose from hundreds of models, including{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="anthropic" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Claude</span>,{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="openai" />
+            </span>{" "}
+            <span className="font-medium text-foreground">GPT</span>,{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="google" />
+            </span>{" "}
+            <span className="font-medium text-foreground">Gemini</span>, and
+            many more.
+          </>
+        }
+        title="Run models pay-as-you-go"
+        tone="success"
+      />
+    </div>
   );
 }
 
@@ -880,12 +858,7 @@ function WorksWithFooter({
 }
 
 /** Per-tab captions for the paygOnly strip (e.g. the Models page). */
-const PAYG_TAB_CAPTIONS: Record<"claude-code" | "codex" | "openclaw", string> =
-  {
-    "claude-code": "Anthropic-shape CLI. Point base URL + key at the gateway.",
-    codex: "OpenAI Responses CLI. Inline-config the gateway as a provider.",
-    openclaw: "Edit ~/.openclaw/openclaw.json — gateway as a provider.",
-  };
+const PAYG_TAB_CAPTIONS = PAYG_TOOL_CAPTIONS;
 
 /** Default per-breakpoint max-widths for the Gate Connect blurb. */
 const CONNECT_TEXT_MAXW =
@@ -913,6 +886,8 @@ export function ConnectTabs({
   titleAs: TitleTag = "h3",
   showGateConnect = true,
   paygOnly = false,
+  byokOnly = false,
+  hideStrip = false,
   gateConnectOnly = false,
   fillHeight = false,
   codeMaxHeight,
@@ -925,6 +900,8 @@ export function ConnectTabs({
   titleAs?: ElementType;
   showGateConnect?: boolean;
   paygOnly?: boolean;
+  byokOnly?: boolean;
+  hideStrip?: boolean;
   gateConnectOnly?: boolean;
   fillHeight?: boolean;
   codeMaxHeight?: string;
@@ -935,7 +912,7 @@ export function ConnectTabs({
     defaultTab ?? (showGateConnect ? "gate-connect" : "claude-code")
   );
   const [mode, setMode] = useState<"byok" | "payg">("byok");
-  const effectiveMode = paygOnly ? "payg" : mode;
+  const effectiveMode = paygOnly ? "payg" : byokOnly ? "byok" : mode;
   // Per-tab code, so a single card-level Copy button (rendered once, floating)
   // reflects the active tab + mode without a separate button per tab.
   const TAB_CODE: Record<string, { byok: string; payg: string }> = {
@@ -1027,7 +1004,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="claude-code">
         <HeroCodeTab
           byok={HERO_CLAUDE_CODE_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS["claude-code"] : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1038,7 +1017,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="codex">
         <HeroCodeTab
           byok={HERO_CODEX_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS.codex : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1049,7 +1030,9 @@ export function ConnectTabs({
       <TabsContent className="mt-0" value="openclaw">
         <HeroCodeTab
           byok={HERO_OPENCLAW_BYOK}
+          byokOnly={byokOnly}
           caption={paygOnly ? PAYG_TAB_CAPTIONS.openclaw : undefined}
+          hideStrip={hideStrip}
           maxHeightClass={codeMaxHeight}
           mode={mode}
           onModeChange={setMode}
@@ -1075,267 +1058,6 @@ export function ConnectTabs({
   );
 }
 
-function OverviewUsageChart() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Token usage</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <div
-            aria-hidden
-            className="flex size-12 items-center justify-center rounded-md bg-muted"
-          >
-            <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
-          </div>
-          <span className="type-copy-14 text-muted-foreground">
-            No usage data yet
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TokenSavingsStrip() {
-  return (
-    <KpiRail columns={3}>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <BarChart2 className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No requests yet
-        </span>
-      </div>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No token savings yet
-        </span>
-      </div>
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-md bg-muted"
-        >
-          <ShieldAlert className="size-5 text-neutral-700" strokeWidth={1.75} />
-        </div>
-        <span className="type-copy-14 text-muted-foreground">
-          No threats yet
-        </span>
-      </div>
-    </KpiRail>
-  );
-}
-
-function LatestRequestsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/requests"
-        >
-          View all →
-        </Link>
-      </div>
-      <table aria-label="Latest requests" className="type-copy-14 w-full">
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <ArrowLeftRight
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No requests yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function RecentConversationsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest conversations
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/conversations"
-        >
-          View all →
-        </Link>
-      </div>
-      <table aria-label="Latest conversations" className="type-copy-14 w-full">
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <MessageSquare
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No conversations yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function SecurityEventsTable() {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest security events
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/security"
-        >
-          View all →
-        </Link>
-      </div>
-      <table
-        aria-label="Latest security events"
-        className="type-copy-14 w-full"
-      >
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-md bg-muted"
-                >
-                  <ShieldAlert
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-                <span className="type-copy-14 text-muted-foreground">
-                  No security events yet
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-const FIRST_REQUEST_TAB_IDS = [
-  "gate-connect",
-  "claude-code",
-  "codex",
-  "openclaw",
-];
-
-function FirstRequestInfo() {
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const defaultTab =
-    tabParam && FIRST_REQUEST_TAB_IDS.includes(tabParam) ? tabParam : undefined;
-  const rightDefaultTab =
-    defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
-  return (
-    <section className="@container/connect flex flex-col gap-6">
-      <div className="flex max-w-1/2 flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="type-label-14 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 tabular-nums"
-          >
-            2
-          </span>
-          <h3 className="type-heading-18 m-0 text-balance text-foreground">
-            Making your first request
-          </h3>
-        </div>
-        <p className="type-copy-16 m-0 text-muted-foreground">
-          There are two ways to start making requests using your API key. With{" "}
-          <span className="font-medium">Gate Connect</span>, setup is automatic,
-          so you can skip the code entirely. Want to configure it yourself? Use
-          the code snippets to do it by hand.
-        </p>
-      </div>
-
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
-          the manual-setup code tabs (no Gate Connect tab) on the right.
-          Side-by-side with a 24px gap; stacks full-width below lg. */}
-      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
-        {/* Each card gets an h4 label above it (outside the card, so no
-            height impact) so the two setup paths — Automatic vs Manual — read
-            as a matched pair even though the right card is a code card with no
-            internal title slot. */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <CardTitle as="h4">Automatic</CardTitle>
-          <Card className="flex flex-1 flex-col" density="flush">
-            <div className="flex flex-1 flex-col">
-              <ConnectTabs
-                fillHeight
-                gateConnectOnly
-                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
-                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
-                titleAs="h4"
-                titleClassName="type-heading-18 text-foreground text-balance m-0"
-              />
-            </div>
-          </Card>
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <CardTitle as="h4">Manual</CardTitle>
-          <Card className="flex flex-1 flex-col" density="flush">
-            <div className="flex-1">
-              <ConnectTabs
-                codeMaxHeight="h-[216px]"
-                defaultTab={rightDefaultTab}
-                floatingCopy
-                showGateConnect={false}
-              />
-            </div>
-          </Card>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function DashboardDefault() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -1350,25 +1072,16 @@ export function DashboardDefault() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex max-w-1/2 flex-col gap-2">
-        <PageTitle>Overview</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          Monitor request volume, token usage, spend, and security signals
-          across your gateway.
-        </p>
-      </div>
-      <div className="mb-2">
-        <OverviewHeroCard />
-      </div>{" "}
-      <div className="flex flex-col gap-4">
-        <SectionTitle as="h2">Activity This Week</SectionTitle>
-        <TokenSavingsStrip />
-        <OverviewUsageChart />
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <LatestRequestsTable />
-        <RecentConversationsTable />
-        <SecurityEventsTable />
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <div className="flex flex-col gap-2">
+          <PageTitle>Choose how to use Gate</PageTitle>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
+            However you connect, every request flows through Gate with
+            prompt-injection defense, a tamper-evident audit trail, and lighter
+            token bills from built-in compression.
+          </p>
+        </div>
+        <GetStartedCard />
       </div>
     </DashboardChrome>
   );

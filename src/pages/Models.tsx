@@ -1,4 +1,5 @@
 import {
+  Bot,
   Braces,
   ChevronDown,
   ChevronLeft,
@@ -67,6 +68,11 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { CodePanel } from "@/pages/DashboardDefault";
+import {
+  PAYG_TOOL_CAPTIONS,
+  type PaygToolId,
+  paygConfigSnippet,
+} from "@/pages/payg-config";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-016 — Models
@@ -1188,6 +1194,19 @@ const MODALITY_COUNTS: Record<Modality, number> = (() => {
   return counts;
 })();
 
+/** Flat (handle, label, vendor) list of the full catalog — exported for the
+ *  PAYG Manual setup model picker so it stays in sync with the 23 models. */
+export type ModelOption = { handle: string; label: string; vendor: Vendor };
+
+// Derived from the local MODELS catalog (single source); relocating the whole
+// catalog to satisfy react-refresh would be disproportionate for one constant.
+// eslint-disable-next-line react-refresh/only-export-components
+export const MODEL_OPTIONS: ModelOption[] = MODELS.map((m) => ({
+  handle: m.defaultHandle,
+  label: m.name,
+  vendor: m.vendor,
+}));
+
 /* ─── Surface ────────────────────────────────────────────────────────────── */
 
 function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
@@ -1749,7 +1768,6 @@ function ModelDetailPage({
   const [lang, setLang] = useState<"TypeScript" | "Python" | "cURL">(
     "TypeScript"
   );
-  const [tool, setTool] = useState<ToolId>("claude-code");
   const [showFullDesc, setShowFullDesc] = useState(false);
   const activeLines = useMemo(() => {
     if (lang === "TypeScript") {
@@ -1899,67 +1917,9 @@ function ModelDetailPage({
               the exact configuration.
             </p>
           </div>
-          {/* Per-tool terminal/CLI config. Mirrors the Example request card:
-            flush Card, line tabs, per-tool caption row, 208px scroll, floating
-            Copy bottom-right. PAYG-only (OpenRouter / openai_compatible). */}
-          <Card className="relative" density="flush">
-            <Tabs
-              className="flex flex-col gap-0"
-              onValueChange={(v) => setTool(v as ToolId)}
-              value={tool}
-            >
-              <div className="flex items-center border-border border-b px-4">
-                <TabsList className="h-12 border-b-0 px-0" variant="line">
-                  <TabsTrigger value="claude-code">
-                    <AnthropicIcon className="size-4" />
-                    Claude Code
-                  </TabsTrigger>
-                  <TabsTrigger value="codex">
-                    <OpenAIIcon className="size-4" />
-                    Codex
-                  </TabsTrigger>
-                  <TabsTrigger value="opencode">
-                    <img
-                      alt=""
-                      aria-hidden
-                      className="h-4 w-auto"
-                      src="/icons/providers/opencode.svg"
-                    />
-                    OpenCode
-                  </TabsTrigger>
-                  <TabsTrigger value="openclaw">
-                    <img
-                      alt=""
-                      aria-hidden
-                      className="size-4"
-                      src="/icons/providers/openclaw.svg"
-                    />
-                    OpenClaw
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              <div className="flex h-10 items-center border-border border-b px-4">
-                <span className="type-copy-12 text-muted-foreground">
-                  {TOOL_CAPTIONS[tool]}
-                </span>
-              </div>
-              <div className="h-[216px] overflow-y-auto">
-                <CodePanel
-                  snippet={toolConfigSnippet(tool, model.defaultHandle)}
-                />
-              </div>
-            </Tabs>
-            <div className="absolute right-4 bottom-4">
-              <CopyButton
-                className="shadow-sm"
-                label="setup"
-                mode="label"
-                size="sm"
-                text="Copy code"
-                value={toolConfigSnippet(tool, model.defaultHandle)}
-              />
-            </div>
-          </Card>
+          {/* Per-tool terminal/CLI config. Shared with the PAYG Manual setup
+            page via <PaygToolConfigCard>. */}
+          <PaygToolConfigCard handle={model.defaultHandle} />
         </section>
 
         <section className="flex flex-col gap-4">
@@ -2427,60 +2387,64 @@ function tokenize(src: string, lang: Lang): CodeLine[] {
   return src.split("\n").map((line) => tokenizeLine(line, lang));
 }
 
-/* ── Quick start: per-tool terminal/CLI configuration ───────────────────────
- * The tool tabs (Claude Code / Codex / OpenCode / OpenClaw) are CLI/agent
- * tools, so the accurate setup is environment-variable config + a run command,
- * not SDK code. Routing is OpenRouter via `X-Gate-Provider: openai_compatible`;
- * `handle` is the current model's gateway handle. Configs supplied by the
- * gateway devs — keep verbatim. */
-type ToolId = "claude-code" | "codex" | "opencode" | "openclaw";
+/* ── Quick start: per-tool agent configuration (PAYG) ───────────────────────
+ * Shared snippets live in DashboardDefault.paygConfigSnippet — keep in sync. */
 
-const TOOL_CAPTIONS: Record<ToolId, string> = {
-  "claude-code": "Anthropic-shape CLI. Point base URL + key at the gateway.",
-  codex: "OpenAI Responses CLI. Inline-config the gateway as a provider.",
-  opencode: "OpenAI-compatible CLI. Point base URL + key at the gateway.",
-  openclaw: "Gate-native config — add the gateway as a provider.",
-};
-
-function toolConfigSnippet(tool: ToolId, handle: string): string {
-  switch (tool) {
-    case "claude-code":
-      return `export ANTHROPIC_BASE_URL="https://gateway-staging.constellationgate.ai"
-export ANTHROPIC_API_KEY="sk-gw-..."
-export ANTHROPIC_CUSTOM_HEADERS='X-Gate-Provider: openai_compatible'
-
-claude code "your prompt"`;
-    case "codex":
-      return `export OPENAI_API_KEY="sk-gw-..."
-
-codex exec \\
-  -c 'model_providers.gateway.base_url="https://gateway-staging.constellationgate.ai/v1"' \\
-  -c 'model_providers.gateway.env_key="OPENAI_API_KEY"' \\
-  -c 'model_providers.gateway.wire_api="responses"' \\
-  -c 'model_providers.gateway.http_headers."X-Gate-Provider"="openai_compatible"' \\
-  -c 'model_provider="gateway"' \\
-  -m "${handle}" \\
-  "your prompt"`;
-    case "opencode":
-      return `export OPENAI_API_KEY="sk-gw-..."
-export OPENAI_BASE_URL="https://gateway-staging.constellationgate.ai/v1"
-
-opencode "your prompt"`;
-    case "openclaw":
-      return `{
-  "models": {
-    "providers": {
-      "swarm-deck": {
-        "baseUrl": "https://gateway-staging.constellationgate.ai",
-        "apiKey": "sk-gw-...",
-        "api": "openai-completions",
-        "headers": { "X-Gate-Provider": "openai_compatible" },
-        "models": [{ "id": "${handle}", "name": "${handle}" }]
-      }
-    }
-  }
-}`;
-  }
+export function PaygToolConfigCard({ handle }: { handle: string }) {
+  const [tool, setTool] = useState<PaygToolId>("claude-code");
+  return (
+    <Card className="relative" density="flush">
+      <Tabs
+        className="flex flex-col gap-0"
+        onValueChange={(v) => setTool(v as PaygToolId)}
+        value={tool}
+      >
+        <div className="flex items-center border-border border-b px-4">
+          <TabsList className="h-12 border-b-0 px-0" variant="line">
+            <TabsTrigger value="claude-code">
+              <AnthropicIcon className="size-4" />
+              Claude Code
+            </TabsTrigger>
+            <TabsTrigger value="codex">
+              <OpenAIIcon className="size-4" />
+              Codex
+            </TabsTrigger>
+            <TabsTrigger value="hermes">
+              <Bot aria-hidden className="size-4" />
+              Hermes
+            </TabsTrigger>
+            <TabsTrigger value="openclaw">
+              <img
+                alt=""
+                aria-hidden
+                className="size-4"
+                src="/icons/providers/openclaw.svg"
+              />
+              OpenClaw
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="flex h-10 items-center border-border border-b px-4">
+          <span className="type-copy-12 text-muted-foreground">
+            {PAYG_TOOL_CAPTIONS[tool]}
+          </span>
+        </div>
+        <div className="h-[216px] overflow-y-auto">
+          <CodePanel snippet={paygConfigSnippet(tool, handle)} />
+        </div>
+      </Tabs>
+      <div className="absolute right-4 bottom-4">
+        <CopyButton
+          className="shadow-sm"
+          label="setup"
+          mode="label"
+          size="sm"
+          text="Copy code"
+          value={paygConfigSnippet(tool, handle)}
+        />
+      </div>
+    </Card>
+  );
 }
 
 function tsSnippet(handle: string, modality: Modality): CodeLine[] {
