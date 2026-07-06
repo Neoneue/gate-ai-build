@@ -8,6 +8,16 @@ Prior day: [`changelog-6-26.md`](./changelog-6-26.md)
 
 ## Conventions
 
+### Request-data optimization: transcript dedup + body split `e9a251d` `9de4175`
+
+**`src/data/requests.ts`, `src/data/request-bodies.ts` (new), `src/data/conversationDetail.ts`, `src/pages/requests/{types.ts,RequestDetailModal.tsx}`**
+
+Zero visual change. The eager `requests` data chunk carried every captured transcript inline and loaded on first paint of every page. Two phases, each proven byte-identical via sha256 baseline harnesses:
+
+- Phase 1 (`e9a251d`): hoisted the 6 groups of duplicated >2KB string literals into `SHARED_TRANSCRIPT_*` consts. Chunk 706 → 557 kB min.
+- Phase 2 (`9de4175`): moved the 6 heavy per-row fields (`userMessage`, `assistantResponse`, `requestBodyRaw`, `toolArgs`, `toolResult`, `errorBody`) off `RequestRow` into `src/data/request-bodies.ts`, keyed by `requestRowId`. Detail surfaces read via `getRequestBody(row)`. The bodies module is imported only by the request modal/findings page and the conversation trace, so it bundles as its own on-demand chunk (433 kB). Eager chunk now **125 kB min / 25 kB gzip** (was 706/145). `finding.evidence` stays eager — Security's `getEventFindingCopy` returns it.
+- Authoring rule going forward: new heavy message bodies go in `request-bodies.ts` (or reference a `SHARED_TRANSCRIPT_*` const), never inline on the row.
+
 ### Requests.tsx split into `src/pages/requests/` modules `4ede243`
 
 **`src/pages/Requests.tsx`, `src/pages/requests/*`, `src/pages/RequestsFindings.tsx`**
