@@ -8,7 +8,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { DeltaTag } from "@/components/ui/compact-kpi";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { StatusDot } from "@/components/ui/status-dot";
 import { buildCustomHeroView, HERO_VIEWS } from "./hero-data";
@@ -81,7 +80,6 @@ export function HeroMetricCard() {
     <Card className="px-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex shrink-0 flex-col gap-2">
-          <Eyebrow>{view.eyebrow}</Eyebrow>
           <div className="flex items-baseline gap-3">
             <HeroNumeric size="lg">{view.total.toLocaleString()}</HeroNumeric>
             <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />

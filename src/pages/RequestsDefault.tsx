@@ -1,6 +1,6 @@
 import { ArrowLeftRight, BarChart2 } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
@@ -33,9 +33,6 @@ export function RequestsDefault() {
       <div className="flex flex-col gap-4">
         <SectionTitle>Overview</SectionTitle>
         <Card>
-          <CardHeader>
-            <CardTitle>Messages</CardTitle>
-          </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center gap-3 py-16">
               <div
