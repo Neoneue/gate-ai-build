@@ -1154,7 +1154,7 @@ export function ConversationDetailBody({
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
-                            navigate(`/requests-findings/${activeRequestId}`);
+                            navigate(`/messages-findings/${activeRequestId}`);
                           }
                         }}
                         size="sm"
@@ -1226,7 +1226,7 @@ export function ConversationDetailBody({
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
-                            navigate(`/requests-findings/${activeRequestId}`);
+                            navigate(`/messages-findings/${activeRequestId}`);
                           }
                         }}
                         size="sm"
@@ -1300,7 +1300,7 @@ export function ConversationDetailBody({
                           disabled={!activeRequestId}
                           onClick={() => {
                             if (activeRequestId) {
-                              navigate(`/requests-findings/${activeRequestId}`);
+                              navigate(`/messages-findings/${activeRequestId}`);
                             }
                           }}
                           size="sm"

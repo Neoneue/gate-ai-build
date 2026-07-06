@@ -36,7 +36,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         id: "requests",
         icon: Mail,
         label: "Messages",
-        pageId: "/requests",
+        pageId: "/messages",
       },
       {
         id: "conversations",

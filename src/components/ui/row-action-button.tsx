@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
  *     content renders identically to a plain <span>/<div>
  *
  * `href`: when the drill-in target is a real, URL-addressable page
- * (e.g. /requests-findings/:id), pass `href` and the primary cell renders
+ * (e.g. /messages-findings/:id), pass `href` and the primary cell renders
  * a React Router <Link> (a real <a href>) instead of a <button>. This is
  * the correct role for navigation — it restores cmd/middle-click-to-new-tab
  * and "Copy link address", and announces as a link, not a button. Omit

@@ -6,7 +6,7 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { RequestDetailBodyV2 } from "./requests/RequestDetailModal";
 import type { RequestRow } from "./requests/types";
 
-/* ─── /requests-findings/:requestId ─────────────────────────────────────────
+/* ─── /messages-findings/:requestId ─────────────────────────────────────────
  * URL-addressable page for one request's findings — shareable, multi-tab
  * (the GitHub model). This is the default target when a Requests table row is
  * clicked. Renders the V2 Findings content EXACTLY as the dialog (same
@@ -38,7 +38,7 @@ export function RequestsFindings() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <button
           className="type-label-14 group relative inline-flex items-center gap-1 rounded-xs text-muted-foreground transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-          onClick={() => navigate("/requests")}
+          onClick={() => navigate("/messages")}
           type="button"
         >
           <ChevronLeft

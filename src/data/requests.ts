@@ -6,7 +6,7 @@ import type { RequestRow } from "@/pages/Requests";
 
 /** Stable, URL-safe id for a request row. Prefers the canonical `requestId`;
  *  falls back to a deterministic id derived from the conversation + code so
- *  every row is addressable. The /requests-findings page and the table row
+ *  every row is addressable. The /messages-findings page and the table row
  *  links both use this, so a row always resolves back to its source row. */
 export function requestRowId(row: RequestRow): string {
   return (

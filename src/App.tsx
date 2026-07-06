@@ -274,10 +274,10 @@ export default function App() {
             <Route element={<SetupManual />} path="/setup-manual-default" />
             <Route element={<SetupCredits />} path="/setup-credits-default" />
             <Route element={<SetupModels />} path="/setup-models-default" />
-            <Route element={<Requests />} path="/requests" />
+            <Route element={<Requests />} path="/messages" />
             <Route
               element={<RequestsFindings />}
-              path="/requests-findings/:requestId"
+              path="/messages-findings/:requestId"
             />
             <Route element={<Conversations />} path="/conversations" />
             <Route
@@ -306,7 +306,7 @@ export default function App() {
             <Route element={<Billing />} path="/billing" />
             <Route element={<BillingFree />} path="/billing-free" />
             {/* Default-workspace twins — reached via the workspace switcher. */}
-            <Route element={<RequestsDefault />} path="/requests-default" />
+            <Route element={<RequestsDefault />} path="/messages-default" />
             <Route
               element={<ConversationsDefault />}
               path="/conversations-default"
@@ -327,7 +327,7 @@ export default function App() {
             <Route element={<SettingsDefault />} path="/settings-default" />
             {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
-            <Route element={<RequestsFree />} path="/requests-free" />
+            <Route element={<RequestsFree />} path="/messages-free" />
             <Route element={<ConversationsFree />} path="/conversations-free" />
             <Route element={<ModelsFree />} path="/models-free" />
             <Route element={<PoliciesFree />} path="/policies-free" />

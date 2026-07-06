@@ -292,7 +292,7 @@ export function RequestDetailBodyV2({
 }: {
   row: RequestRow;
   /** 'modal' = fixed tab bar with an internal scroll region (the dialog).
-   *  'page'  = natural flow, no internal scroll (the /requests-findings page). */
+   *  'page'  = natural flow, no internal scroll (the /messages-findings page). */
   variant?: "modal" | "page";
 }) {
   const navigate = useNavigate();

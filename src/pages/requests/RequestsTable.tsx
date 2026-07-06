@@ -163,13 +163,13 @@ export function RequestsTableSection({
     },
     [pageScopeKey]
   );
-  // Row-click drill-in now navigates to the /requests-findings/:id page
+  // Row-click drill-in now navigates to the /messages-findings/:id page
   // (URL-addressable, shareable, multi-tab — the GitHub model). The modal
   // below is kept for `?open=` deep-links (e.g. Security events) but is no
   // longer the row-click target.
   const navigate = useNavigate();
   const openRow = (row: RequestRow) =>
-    navigate(`/requests-findings/${requestRowId(row)}`);
+    navigate(`/messages-findings/${requestRowId(row)}`);
 
   // `selectedRow` still drives the (stored) modal for `?open=` deep-links.
   const [selectedRow, setSelectedRow] = useState<RequestRow | null>(null);
@@ -635,7 +635,7 @@ export function RequestsTableSection({
                         <TableCell className="w-60 whitespace-nowrap">
                           <RowActionButton
                             aria-label={`Inspect ${row.code} message to ${row.model} at ${row.time}`}
-                            href={`/requests-findings/${requestRowId(row)}`}
+                            href={`/messages-findings/${requestRowId(row)}`}
                           >
                             <VendorAvatar vendor={row.vendor} />
                             <span

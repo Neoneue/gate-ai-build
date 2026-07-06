@@ -19,7 +19,7 @@ export const isNonProSurface = (pathname: string): boolean =>
 /** Nav bases that have a `-free` twin. */
 const FREE_TWINS = new Set([
   "/overview",
-  "/requests",
+  "/messages",
   "/conversations",
   "/models",
   "/token-savings",
@@ -37,7 +37,7 @@ const FREE_TWINS = new Set([
 /** Nav bases that have a `-default` twin. */
 export const DEFAULT_TWINS = new Set([
   "/overview",
-  "/requests",
+  "/messages",
   "/conversations",
   "/models",
   "/token-savings",
