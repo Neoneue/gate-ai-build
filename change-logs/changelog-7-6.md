@@ -33,6 +33,16 @@ Zero visual change — a five-slice mechanical split of the 4,006-line monolith 
 - `requests/RequestDetailModal.tsx` — V1 dialog, `REQUEST_MODAL_VERSION` toggle, `RequestDetailDialogV2`, `RequestDetailBodyV2` + all findings/security panels. `RequestsFindings.tsx` now imports `RequestDetailBodyV2` from here directly (Biome `noBarrelFile` bans a value re-export through `Requests.tsx`).
 - `Requests.tsx` — 122-line page shell: `Requests()` + `PageHeader` only.
 
+### Split oversized page files into focused modules `1f70ba5`
+
+**`src/pages/Models.tsx`, `Conversations.tsx`, `Activity.tsx` + new `src/data/models.ts`, `src/pages/conversations/`, `src/pages/activity/`, `src/lib/range.ts`, `src/lib/reduce-motion.ts`, `src/components/ui/code-panel.tsx`**
+
+- Continues the module-split convention (`4ede243`). No behavior change; tsc / lint / tests (29) / browser verified at each step.
+- **Models** 2634 → 1655: the `MODELS` catalog + types + config maps + `MODEL_OPTIONS` → `src/data/models.ts`.
+- **Conversations** 1926 → 721: shared types → `conversations/types.ts` (breaks the page↔data-module type cycle), request trace → `conversations/RequestTracePanel.tsx`, detail dialog/body → `conversations/ConversationDetail.tsx`.
+- **Activity** 1570 → 914: trend chart → `activity/TrendCard.tsx`, shared bucket/axis math + compact number formatters → `activity/chart-helpers.ts`, `Metric`/`METRIC_OPTIONS` → `activity-data.ts`.
+- **Shared**: `lib/range.ts` (range types + scale shared by Activity/Conversations/Security), `lib/reduce-motion.ts`, and `CodePanel` relocated out of `DashboardDefault.tsx` → `components/ui/code-panel.tsx`.
+
 ## Sections
 
 ### Rename Requests to Messages and regroup sidebar `c5553b2`
