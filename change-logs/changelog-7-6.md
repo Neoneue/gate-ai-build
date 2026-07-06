@@ -42,3 +42,17 @@ Zero visual change — a five-slice mechanical split of the 4,006-line monolith 
 - Findings page back breadcrumb `Requests` → `Messages` (`5147cab`).
 - Default page now matches Free/Pro (`5147cab`): title + overview card `Messages`, `Recent messages`, empty states `No messages yet` / `No messages`, body `Individual messages routed through the gateway will appear here.`
 - Pro/Free label tier (`2fc67e7`): hero eyebrow `REQUESTS` → `MESSAGES`, chart bucket labels `Requests/hr|6h|15m` → `Messages/*`, search `Search messages` / `Search message…`, table empty state and row `Inspect … message to …` aria-label.
+
+### Inner card title removed on all three Messages pages `842c717`
+
+**`src/pages/RequestsDefault.tsx`, `src/pages/requests/HeroMetric.tsx`**
+
+- Dropped the redundant in-card label under the `Overview` section title: the `CardHeader`/`CardTitle` (`Messages`) on the Default page and the `MESSAGES` `Eyebrow` inside the Pro/Free hero card. The section title above the card carries the label (per the titles-above-card convention).
+
+### Routes renamed `/requests*` → `/messages*` `8b3d78c`
+
+**`src/App.tsx`, `src/lib/plan.ts`, `src/layouts/nav-sections.ts`, deep-link call sites**
+
+- `/requests` → `/messages`, `/requests-free` → `/messages-free`, `/requests-default` → `/messages-default`, `/requests-findings/:requestId` → `/messages-findings/:requestId`.
+- Updated every deep link: nav `pageId`, plan twin sets, Dashboard `View all →`, findings breadcrumb `navigate`, Conversations per-step View Request, table row hrefs.
+- File names and code symbols (`Requests.tsx`, `RequestRow`, `requestRowId`, …) keep the request terminology — UI term and URLs are `messages`, code stays `request` (same pattern as fingerprint/anchor).
