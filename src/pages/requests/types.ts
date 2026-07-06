@@ -85,33 +85,26 @@ export type RequestRow = {
   /** Rich finding detail for the v2 Findings modal. When present this is the
    *  source of truth (overrides the single derived finding). */
   findings?: RequestFinding[];
-  /** Conversation-script content. `summary` is the trace step label;
-   * `userMessage`/`assistantResponse` override the generic Message-tab samplers. */
+  /** Conversation-script content. `summary` is the trace step label. The
+   * message bodies themselves (userMessage / assistantResponse / toolArgs /
+   * toolResult / requestBodyRaw / errorBody) live in
+   * `@/data/request-bodies` keyed by requestRowId — heavy strings split out
+   * so the eager requests module stays light. */
   summary?: string;
   traceKind?: "tool" | "reason";
-  userMessage?: string;
-  assistantResponse?: string;
   /** Provider/upstream failure attribution (mirrors the gateway's
    * error_source / error_code columns). Present only on rows the gateway
    * recorded as a non-policy error; drives the Details-tab Error response card
    * (origin badge + explanation + body). Absent on success and block rows. */
   errorSource?: string;
   errorCode?: string;
-  /** Raw error body the provider returned, rendered as a JSON code block. */
-  errorBody?: string;
   /** Human-readable detail line for the failure (the gateway's `error_detail`).
    * Shown as a text field under the User message on the detail card for
    * provider errors. */
   errorDetail?: string;
-  /** Verbatim request body to show in the Full request drawer, overriding the
-   * synthesized `buildRequestBodyLines` output. Placeholder real-capture JSON. */
-  requestBodyRaw?: string;
-  /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash'),
-   * its invocation args, and the result text. Drive the messages-panel
-   * tool bubble (`Tool · <toolName>` + result) and the trace `tool: X` label. */
+  /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash').
+   * Args/result text live in `@/data/request-bodies`. */
   toolName?: string;
-  toolArgs?: string;
-  toolResult?: string;
 };
 
 export type CheckStatus = "pass" | "flag" | "redact" | "block";

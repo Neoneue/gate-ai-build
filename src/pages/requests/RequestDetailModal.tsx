@@ -43,6 +43,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TextLink } from "@/components/ui/text-link";
+import { getRequestBody } from "@/data/request-bodies";
 import {
   CATEGORY_LABEL,
   entityLabel,
@@ -1170,7 +1171,7 @@ function PiiDetailPanel({
   // Heading reflects where the span actually fired: a user turn, a tool result
   // (e.g. a handoff.md read), or the assistant reply. Tool-origin findings are
   // tagged role 'assistant' but read from the tool result, so disambiguate.
-  const isToolRow = !row.userMessage && !!row.toolName;
+  const isToolRow = !getRequestBody(row).userMessage && !!row.toolName;
   // Split findings by the turn they fired on. When a request carries findings
   // on BOTH turns (the in/out case, e.g. req_8384d2 — PII in the user message
   // AND in the assistant response), we render one scrollable EvidenceWindow per
@@ -1766,12 +1767,12 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
           </div>
         </section>
       ) : null}
-      {row.errorBody ? (
+      {getRequestBody(row).errorBody ? (
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
             <pre className="overflow-auto bg-card px-4 py-4 font-mono text-foreground text-xs">
-              {row.errorBody}
+              {getRequestBody(row).errorBody}
             </pre>
           </div>
         </section>
@@ -1817,11 +1818,12 @@ function FullRequestCollapsible({
     }, 16);
     return () => clearTimeout(id);
   }, [revealSignal]);
-  const lines = row.requestBodyRaw
-    ? row.requestBodyRaw.split("\n").map((text): CodeLine => [{ text }])
+  const rawBody = getRequestBody(row).requestBodyRaw;
+  const lines = rawBody
+    ? rawBody.split("\n").map((text): CodeLine => [{ text }])
     : buildRequestBodyLines(row);
   const requestPayload =
-    row.requestBodyRaw ??
+    rawBody ??
     JSON.stringify(
       {
         model: `${row.vendor}/${row.model}`,
@@ -1887,18 +1889,18 @@ function resolveRequestTurns(row: RequestRow): {
   isErrorResponse: boolean;
 } {
   // A `sed`/`grep` tool step is not user input, so it renders as a tool call.
-  const isTool = !row.userMessage && !!row.toolName;
+  const isTool = !getRequestBody(row).userMessage && !!row.toolName;
   const userContent =
-    row.userMessage ??
+    getRequestBody(row).userMessage ??
     (isTool
-      ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
+      ? `${row.toolName}${getRequestBody(row).toolArgs ? ` · ${getRequestBody(row).toolArgs}` : ""}`
       : sampleRequestContent(row));
   // The response side switches to the Error variant when the gateway recorded a
   // provider/upstream failure; otherwise it's the assistant (or tool) turn.
   const isErrorResponse = errorOrigin(row.errorSource) !== null;
   const responseContent = isTool
-    ? (row.toolResult ?? "")
-    : (row.assistantResponse ?? sampleResponseText(row));
+    ? (getRequestBody(row).toolResult ?? "")
+    : (getRequestBody(row).assistantResponse ?? sampleResponseText(row));
   return { isTool, userContent, responseContent, isErrorResponse };
 }
 
@@ -2008,15 +2010,15 @@ function RequestBodyPanel({
   // render the user message + the Full request drawer only.
   // Tool-call rows render as a tool turn (call + result + optional reply),
   // never as a "User message" — a `sed`/`grep` command is not user input.
-  const isTool = !row.userMessage && !!row.toolName;
+  const isTool = !getRequestBody(row).userMessage && !!row.toolName;
   // When a finding is selected, the user content is the finding's evidence so
   // its matched substring actually appears in (and can be highlighted within)
   // the request body. Otherwise fall back to the per-row sample.
   const rawRequestContent =
     highlightEvidence ??
-    row.userMessage ??
+    getRequestBody(row).userMessage ??
     (row.toolName
-      ? `${row.toolName}${row.toolArgs ? ` · ${row.toolArgs}` : ""}`
+      ? `${row.toolName}${getRequestBody(row).toolArgs ? ` · ${getRequestBody(row).toolArgs}` : ""}`
       : sampleRequestContent(row));
   // Always redacted: mask EVERY finding's match in the Full request body (a
   // request can carry more than one, e.g. PII + credential), and highlight the
@@ -2029,8 +2031,10 @@ function RequestBodyPanel({
     : rawRequestContent;
   const effectiveHighlight = highlightFinding?.redactedAs ?? highlightMatch;
   const responseContent =
-    row.assistantResponse ??
-    (row.toolName ? (row.toolResult ?? "") : sampleResponseText(row));
+    getRequestBody(row).assistantResponse ??
+    (row.toolName
+      ? (getRequestBody(row).toolResult ?? "")
+      : sampleResponseText(row));
   const requestLines = buildRequestBodyLines(row, {
     content: requestContent,
     highlightMatch: effectiveHighlight,
@@ -2068,13 +2072,13 @@ function RequestBodyPanel({
       {!fullRequestOnly && (
         <MessageBlock
           content={
-            row.userMessage ??
+            getRequestBody(row).userMessage ??
             (isTool
-              ? (row.toolResult ?? "")
-              : (row.assistantResponse ?? responseContent))
+              ? (getRequestBody(row).toolResult ?? "")
+              : (getRequestBody(row).assistantResponse ?? responseContent))
           }
           label={
-            row.userMessage
+            getRequestBody(row).userMessage
               ? "User message"
               : isTool
                 ? "Tool result"
