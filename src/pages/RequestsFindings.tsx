@@ -3,7 +3,8 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { RequestDetailBodyV2, type RequestRow } from "./Requests";
+import { RequestDetailBodyV2 } from "./requests/RequestDetailModal";
+import type { RequestRow } from "./requests/types";
 
 /* ─── /requests-findings/:requestId ─────────────────────────────────────────
  * URL-addressable page for one request's findings — shareable, multi-tab
