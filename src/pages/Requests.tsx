@@ -116,6 +116,20 @@ import {
   requestRowId,
   resolveInjectionCopy,
 } from "@/data/requests";
+import type {
+  CheckKey,
+  CheckStatus,
+  CustomRange,
+  GuardrailAction,
+  HeroView,
+  RangeKey,
+  RequestRow,
+  ResponseStatus,
+} from "./requests/types";
+
+// Re-export for external importers of `@/pages/Requests`.
+export type { RequestRow } from "./requests/types";
+
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
@@ -301,27 +315,6 @@ function PageHeader() {
 }
 
 /* ─── Hero metric (REQUESTS / range + line chart + breakdown) ────────────── */
-
-type RangeKey = "all" | "24h" | "7d" | "30d" | "custom";
-
-/** Concrete custom range payload — populated by RequestsTableSection's
- *  DateRangePicker and read by HeroMetricCard via useRange() / the store.
- *  Kept on the store (not in React context) so siblings (Hero + Table)
- *  share state without lifting through Requests(). */
-type CustomRange = { from: Date; to: Date };
-
-type HeroView = {
-  eyebrow: string;
-  total: number;
-  success: number;
-  errors: number;
-  delta: string;
-  deltaNote: string;
-  data: Array<{ time: string; label: string; requests: number }>;
-  ticks: string[];
-  bucketLabel: string;
-  domainTop: number;
-};
 
 // Module-scoped range store. RequestsTableSection writes via the existing
 // SegmentedPill onValueChange; HeroMetricCard subscribes via useRange().
@@ -952,96 +945,6 @@ const RANGE_OPTIONS = [
 ];
 
 /* ─── Requests log table ─────────────────────────────────────────────────── */
-
-/** Two orthogonal axes per CTO direction (Marcus, 2026-05-12):
- *    `status`    — HTTP response outcome (did the provider respond OK?)
- *    `guardrail` — gateway action (did our guardrails intervene?)
- *  The previous five-value RequestStatus conflated these. The five valid
- *  combinations in current mock data are:
- *    success | allow   — common case, 200 with no gateway action
- *    error   | allow   — upstream provider failed, gateway passive
- *    error   | block   — gateway rejected before the provider was hit
- *    success | flag    — gateway flagged but allowed through (200)
- *    success | redact  — gateway stripped PII, provider returned 200
- *  `slow` is orthogonal to both and renders on the Latency column. */
-type ResponseStatus = "success" | "error";
-type GuardrailAction = "allow" | "flagged" | "redacted" | "block";
-
-/** Which guardrail check fired for non-`allow` rows. Maps 1:1 to the
- *  five runtime checks rendered in the modal's Audit tab so the row's
- *  guardrail action and the failing/flagging check stay in lock-step. */
-type GuardrailReason = "injection" | "pii" | "credential";
-
-export type RequestRow = {
-  /** Compact month/day for the cell ("May 12"); modal pairs it with 2026
-   *  for the full header. Per-row so 24H/7D/30D ranges that span multiple
-   *  days render the correct date next to each timestamp. */
-  day: string;
-  time: string;
-  /** Human-friendly relative time ("just now", "2m ago"). The cell renders
-   *  this as the primary scan target above the absolute date+time. */
-  relative: string;
-  /** HTTP response outcome: did the provider return OK or fail? */
-  status: ResponseStatus;
-  /** Gateway action: what did our guardrails do with this request? */
-  guardrail: GuardrailAction;
-  code: string;
-  vendor: Vendor;
-  model: string;
-  conversation: string;
-  keyId: string;
-  inTokens: string;
-  outTokens: string;
-  /** Latency in seconds. Stored as string with the `s` suffix already
-   *  attached so we can render typographic emphasis on slow values. */
-  latency: string;
-  /** True when this request crossed the 1s "slow" threshold. */
-  slow?: boolean;
-  cost: string;
-  /** Optional per-row compression override. When set, it wins over the
-   *  derived `compressionValue` (e.g. an error response that produced no
-   *  output reads as 100.0%). */
-  compression?: string;
-  /** Which guardrail check fired. Set for `block`, `flag`, and `redact`
-   *  rows; absent for plain `allow`. Drives the matching check state on
-   *  the modal's Audit tab so the row and the modal stay in lock-step. */
-  guardrailReason?: GuardrailReason;
-  /** Canonical `req_*` id. Optional so legacy rows compile without
-   *  changes — when absent the modal computes a fallback from the
-   *  conversation + code so display still works. Set on rows that need
-   *  to be deep-linkable from Security events. */
-  requestId?: string;
-  /** Rich finding detail for the v2 Findings modal. When present this is the
-   *  source of truth (overrides the single derived finding). */
-  findings?: RequestFinding[];
-  /** Conversation-script content. `summary` is the trace step label;
-   * `userMessage`/`assistantResponse` override the generic Message-tab samplers. */
-  summary?: string;
-  traceKind?: "tool" | "reason";
-  userMessage?: string;
-  assistantResponse?: string;
-  /** Provider/upstream failure attribution (mirrors the gateway's
-   * error_source / error_code columns). Present only on rows the gateway
-   * recorded as a non-policy error; drives the Details-tab Error response card
-   * (origin badge + explanation + body). Absent on success and block rows. */
-  errorSource?: string;
-  errorCode?: string;
-  /** Raw error body the provider returned, rendered as a JSON code block. */
-  errorBody?: string;
-  /** Human-readable detail line for the failure (the gateway's `error_detail`).
-   * Shown as a text field under the User message on the detail card for
-   * provider errors. */
-  errorDetail?: string;
-  /** Verbatim request body to show in the Full request drawer, overriding the
-   * synthesized `buildRequestBodyLines` output. Placeholder real-capture JSON. */
-  requestBodyRaw?: string;
-  /** Tool-call rows (traceKind === 'tool'): the tool name (e.g. 'Bash'),
-   * its invocation args, and the result text. Drive the messages-panel
-   * tool bubble (`Tool · <toolName>` + result) and the trace `tool: X` label. */
-  toolName?: string;
-  toolArgs?: string;
-  toolResult?: string;
-};
 
 /** Response axis — HTTP outcome from the provider. Pure 2-value mapping;
  *  `slow` short-circuits this in `responseVariant` below. */
@@ -3896,8 +3799,6 @@ function RequestBodyPanel({
      - anything else → all five checks `pass`
    Descriptions use live row values so the panel doesn't read as decoupled
    from the selected request. */
-type CheckStatus = "pass" | "flag" | "redact" | "block";
-type CheckKey = "injection" | "pii" | "credential";
 
 /** Maps a row's guardrail action to the check-level state that should
  *  render for its matching guardrail. `allow` rows pass all checks
