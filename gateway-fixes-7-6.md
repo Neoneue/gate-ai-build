@@ -25,7 +25,7 @@ lines > 1000). 15 files total: 9 in-scope source, 6 out-of-scope.
 | `data-model.md` | 1089 | Doc — reference contract | No |
 | `src/pages/Policies.tsx` | 1053 | Source — page | Yes |
 | `design.md` | 1042 | Doc — reference contract | No |
-| `src/pages/AuditRecordDialogMerkle.tsx` | 1024 | Source — component | Yes |
+| `src/pages/AuditRecordDialogMerkle.tsx` | 1024 | Source — component (DELETED: experimental, unrouted) | — |
 
 Out-of-scope rationale: `package-lock.json` is generated; `docs/message-script.md`
 and `.claude/skills/figma-design/*` are local-only / vendored; `data-model.md`
@@ -121,13 +121,21 @@ snapshot and drift as files change. The refactor tracking below covers only the
 
 ### Med-Low / Low
 
-- [ ] **`src/pages/Policies.tsx`** (1053) — Med-Low. Extract the 8 style-map
-  `Record`s + `POLICIES`/`INITIAL_POLICIES` data. Pro/free variant-in-one-file
-  is fine. VERIFY: `ICON_COLOR`/`ACTION_*` color maps map to `design.md` tokens,
-  not raw values.
-- [ ] **`src/pages/AuditRecordDialogMerkle.tsx`** (1024) — Low-Med. Cohesive;
-  extract `MerkleTreeViewer` (563) only if reused. NOT a copy of the 161-line
-  `AuditRecordDialog.tsx` sibling — it's a feature-expanded variant.
+- [x] **`src/pages/Policies.tsx`** (1053 → 733) — DONE. Extracted the style maps,
+  `PolicyConfig`/`PolicyState` types, `POLICIES`/`INITIAL_POLICIES` data, and free-tier
+  copy → `src/pages/policies/config.ts` (342 lines); page keeps the components +
+  `Policies({ variant })`. Verified: tsc 0, lint clean, tests 29/29, both `/policies`
+  and `/policies-free` render. Note: the `ICON_COLOR`/`ACTION_*` maps use `design.md`
+  semantic classes (e.g. `border-*-600`, `TYPE_META` colors), not raw values — moved
+  verbatim, lint:design still green.
+- [x] **`src/pages/AuditRecordDialogMerkle.tsx`** (1024) — DELETED (not refactored).
+  Investigation showed this + `AuditTrailMerkle.tsx` were an experimental Merkle-tree
+  audit design wired only to `/audit-trail-merkle` — a route with no sidebar link and
+  no tier twins; the live `/audit-trail` uses the simpler `AuditRecordDialog.tsx` (161
+  lines). Deleted both files, the App.tsx lazy import + route, and stale
+  `data-model.md` entries (mermaid node, Merkle-variant subsection, and a stale claim
+  that the live dialog had Merkle-path/How-it-works tabs). Verified: tsc 0, lint clean,
+  tests 29/29, live `/audit-trail` renders.
 - [ ] **`src/data/requests.ts`** (4144) — Low. Working as designed: ~86%
   (567–4119) is 5 `REQUEST_ROWS_*` data arrays, ~14% API; 24
   `SHARED_TRANSCRIPT_*` consts already dedupe. Optional: split the 5 range

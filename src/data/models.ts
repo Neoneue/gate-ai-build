@@ -983,7 +983,7 @@ export type ModelOption = { handle: string; label: string; vendor: Vendor };
 
 // Derived from the local MODELS catalog (single source); relocating the whole
 // catalog to satisfy react-refresh would be disproportionate for one constant.
- 
+
 export const MODEL_OPTIONS: ModelOption[] = MODELS.map((m) => ({
   handle: m.defaultHandle,
   label: m.name,

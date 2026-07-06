@@ -23,11 +23,6 @@ const ApiKeysDefault = lazy(() =>
 const AuditTrail = lazy(() =>
   import("@/pages/AuditTrail").then((m) => ({ default: m.AuditTrail }))
 );
-const AuditTrailMerkle = lazy(() =>
-  import("@/pages/AuditTrailMerkle").then((m) => ({
-    default: m.AuditTrailMerkle,
-  }))
-);
 const Billing = lazy(() =>
   import("@/pages/Billing").then((m) => ({ default: m.Billing }))
 );
@@ -297,7 +292,6 @@ export default function App() {
             <Route element={<SecurityFree />} path="/security-free" />
             <Route element={<Policies />} path="/policies" />
             <Route element={<AuditTrail />} path="/audit-trail" />
-            <Route element={<AuditTrailMerkle />} path="/audit-trail-merkle" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/team" />
             <Route element={<Settings />} path="/settings" />

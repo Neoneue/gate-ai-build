@@ -1,5 +1,5 @@
 // Audit Trail mock data + presentation helpers, shared by the Audit Trail
-// pages (classic + Merkle variant) and their record dialogs. NOW is the mock
+// pages and their record dialogs. NOW is the mock
 // clock every relative timestamp and range cutoff derives from.
 
 export const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00

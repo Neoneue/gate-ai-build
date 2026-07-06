@@ -46,7 +46,6 @@ graph LR
     LAYOUT --> SECDEF["/events-default → SecurityDefault.tsx (Pro upsell)"]
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
-  LAYOUT --> AUDM["/audit-trail-merkle → AuditTrailMerkle.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/team → Team.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
@@ -68,7 +67,7 @@ Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 | _(unnamed)_ | overview → `/overview`, requests → `/requests`, conversations → `/conversations` |
 | Gateway | models → `/models`, token-savings → `/token-savings`, limits → `/limits` |
 | Security | security-events → `/security`, policies → `/policies` |
-| Audit | audit-trail → `/audit-trail` _(built; `/audit-trail-merkle` is a route-only variant with the live Merkle viewer, not in nav)_ |
+| Audit | audit-trail → `/audit-trail` _(built)_ |
 | Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
@@ -242,7 +241,7 @@ interface Model {
 ### 3.7 Policies & Limits
 
 ```typescript
-// Defined in: src/pages/Policies.tsx
+// Defined in: src/pages/policies/config.ts
 interface ActionOption {
   value:       string
   name:        string
@@ -662,6 +661,8 @@ page, rowsPerPage: number
 
 **Purpose:** Configure 3 inline security scans: prompt injection, PII/PHI, credential & secrets.
 
+**Modules (2026-07-06 split):** components + `Policies({ variant })` in `Policies.tsx`; config/data (style maps, `PolicyConfig`/`PolicyState` types, `POLICIES` catalog, `INITIAL_POLICIES`, free-tier copy) in `src/pages/policies/config.ts`.
+
 **State:** `policies: PolicyState[]`
 
 **POLICIES seed:** 3 `PolicyConfig` objects with nested sensitivity / scan-direction / action options. Each policy card expands when enabled.
@@ -742,32 +743,10 @@ Structure (post-2026-05-18 trim):
 
 1. `DialogScrollHeader` → `DialogTitleBlock` with title "Audit record" (no badge slot)
 2. `DialogScrollSummary` → standalone `<VerifiedBySeal />` (no card chrome, no descriptive copy — info is duplicated by the Event detail rows below and the badge alt-text)
-3. `DialogScrollBody` → `<Tabs variant="line">` with three triggers:
-   - **Event** — `<DetailList>` with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Fingerprint (CircleCheck + truncateHex(anchor, 4, 4))
-   - **Merkle path** — `<MerklePathPanel>` inline SVG tree (ROOT + sibling + leaf) with mono path notation
-   - **How it works** — `<HowItWorksPanel>` four-step explainer + "Digital Evidence docs" link
+3. `DialogScrollBody` → a flat `<DetailList>` (no tabs) with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Fingerprint (CircleCheck + truncateHex(anchor, 4, 4))
 4. `DialogScrollFooter` → `Copy proof JSON` (outline) and `Open DE Explorer` (default)
 
-The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h-6 w-auto`. Sits standalone (no card wrapper) as a trust stamp between the header title and the tabbed body.
-
----
-
-### Audit Trail, Merkle variant (`/audit-trail-merkle` → `AuditTrailMerkle.tsx`)
-
-**Status:** Built (2026-06-01). Route-only evolution of the Audit Trail page; NOT in the sidebar nav. Reuses the same data: imports `EVENT_ROWS`, `KIND_BADGE_VARIANT`, and the `EventRow` type from `src/data/audit-trail.ts` (no separate feed). Same `NOW = 2026-05-16 16:00` mock anchor and `isWithinRange` range logic.
-
-**New vs. `/audit-trail`:**
-
-- `OverviewBar`: section-bar header treatment above the KPI rail.
-- `RANGE_DELTA_NOTE: Record<Range, string>`: per-range comparison copy ("vs last 7d", etc.) passed to `KpiTile` via the new `deltaNote` + `deltaRow` props.
-- `KpiRailSection({ rows, range })`: takes `range` so each tile renders its range-keyed delta row.
-- Drill-in opens `AuditRecordDialogMerkle` instead of `AuditRecordDialog`.
-
-**`AuditRecordDialogMerkle` (`src/pages/AuditRecordDialogMerkle.tsx`):** Same tabbed shell as `AuditRecordDialog`, but the **Merkle path** tab renders a _live_ tree instead of the static `MerklePathPanel`:
-
-- Deterministic FNV-32 hashing (`fnv32` / `fnv32Hex` / `fnv32HexLong`) computes the tree from the record; no hardcoded hashes.
-- `TREE_DEPTH = 3` gives `LEAF_COUNT = 8` (2^3): a full depth-3, 8-leaf binary Merkle tree (L0 ROOT down to L3 leaves).
-- Rendered as an inline SVG (`viewBox` 760 x 372, `NODE_W` 64) with an interactive zoom viewer; the highlighted inclusion path (leaf, siblings, root) is the verifiable proof.
+The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h-6 w-auto`. Sits standalone (no card wrapper) as a trust stamp between the header title and the detail body.
 
 ---
 
