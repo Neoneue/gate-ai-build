@@ -43,6 +43,18 @@ Zero visual change — a five-slice mechanical split of the 4,006-line monolith 
 - **Activity** 1570 → 914: trend chart → `activity/TrendCard.tsx`, shared bucket/axis math + compact number formatters → `activity/chart-helpers.ts`, `Metric`/`METRIC_OPTIONS` → `activity-data.ts`.
 - **Shared**: `lib/range.ts` (range types + scale shared by Activity/Conversations/Security), `lib/reduce-motion.ts`, and `CodePanel` relocated out of `DashboardDefault.tsx` → `components/ui/code-panel.tsx`.
 
+### Extract Policies config/data to `policies/config.ts` `4bbe47a`
+
+**`src/pages/Policies.tsx`, new `src/pages/policies/config.ts`**
+
+- Continues the module-split convention. Moved the title-icon color map + per-action style maps, the `PolicyConfig`/`PolicyState` types, the `POLICIES` catalog, `INITIAL_POLICIES` seed, and the free-tier copy → `src/pages/policies/config.ts`. The page keeps the components + `Policies({ variant })`. 1053 → 733. tsc / lint / tests / both variants verified.
+
+### Remove experimental Merkle audit variant `4bbe47a`
+
+**Deleted `src/pages/AuditRecordDialogMerkle.tsx`, `src/pages/AuditTrailMerkle.tsx`; `src/App.tsx`, `src/data/audit-trail.ts`, `README.md`, `data-model.md`**
+
+- The Merkle-tree audit design was wired only to `/audit-trail-merkle` — a route with no sidebar link and no tier twins, never shipped. Removed both files, the lazy import + route, and stale doc entries (mermaid node, Merkle-variant section, README route row, and a stale claim that the live `AuditRecordDialog` had Merkle-path/How-it-works tabs). The live `/audit-trail` (which uses `AuditRecordDialog`) is unaffected.
+
 ## Sections
 
 ### Rename Requests to Messages and regroup sidebar `c5553b2`
