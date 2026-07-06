@@ -518,3 +518,11 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     spend: 0.0,
   },
 ];
+
+/** Chart metric lens — shared by the trend chart and the top-by-axis selectors. */
+export type Metric = "tokens" | "spend";
+
+export const METRIC_OPTIONS: { value: Metric; label: string }[] = [
+  { value: "tokens", label: "Tokens" },
+  { value: "spend", label: "Spend" },
+];

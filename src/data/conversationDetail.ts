@@ -20,7 +20,7 @@ import type {
   ConversationStatus,
   TraceEvent,
   TraceStatus,
-} from "@/pages/Conversations";
+} from "@/pages/conversations/types";
 import type { RequestRow } from "@/pages/Requests";
 
 // ── number / format helpers ────────────────────────────────────────────────

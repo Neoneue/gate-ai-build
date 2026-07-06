@@ -97,14 +97,15 @@ content state). Naming contract:
 
 ## 3. TypeScript Type System
 
-All types live inline in their respective page files. There is no shared `types/` directory — cross-page reuse is via import from the page that defined the type.
+Most types live inline in their page file, but shared primitives and heavy data now live in dedicated modules: time-range types in `src/lib/range.ts`, the model catalog in `src/data/models.ts`, and the Conversations types in `src/pages/conversations/types.ts` (imported by the page, its component modules, and the data layer; this replaced the former page/data-module type cycle). Page-specific types still live inline and are reused by importing from the defining page.
 
 ### 3.1 Shared primitive types
 
 ```typescript
-// Time-range filtering (all pages that have a range selector)
+// Time-range filtering. Defined in src/lib/range.ts, shared by Activity/Conversations/Security.
+// Exports: PresetRange, Range, CustomRange, RANGE_OPTIONS, RANGE_SCALE, daysInRange, effectiveScale
 type PresetRange = 'all' | '24h' | '7d' | '30d'
-type RangeKey    = PresetRange | 'custom'
+type Range       = PresetRange | 'custom'
 type CustomRange = { from: Date; to: Date }
 type EventsRange = PresetRange | 'custom'
 
@@ -179,7 +180,7 @@ interface EventRow extends RequestRow {
 ### 3.5 Conversations
 
 ```typescript
-// Defined in: src/pages/Conversations.tsx
+// Defined in: src/pages/conversations/types.ts (also TraceEvent, TraceStatus, TraceRenderItem, ConversationMessage, ModelId)
 type ConversationStatus = 'active' | 'completed' | 'failed'
 
 interface ConversationRow {
@@ -202,7 +203,7 @@ interface ConversationRow {
 ### 3.6 Models & Providers
 
 ```typescript
-// Defined in: src/pages/Models.tsx
+// Defined in: src/data/models.ts (MODELS catalog, types, config maps, MODEL_OPTIONS)
 type ModelId   = 'claude-opus-4-7' | 'claude-sonnet-4-5' | 'claude-haiku-4-5'
                | 'gpt-5' | 'gpt-4o' | 'gpt-4o-mini'
                | 'gemini-3-pro' | 'gemini-3-flash' | 'gemini-3-flash-lite'
@@ -425,7 +426,7 @@ The app has no backend. All data is seeded in-file. The three rules:
 ### 5.2 Range scaling
 
 ```typescript
-// Activity.tsx
+// src/lib/range.ts (RANGE_SCALE + effectiveScale; shared by Activity + Conversations)
 const RANGE_SCALE: Record<PresetRange, number> = {
   '24h': 0.16,
   '7d':  1,
@@ -571,6 +572,8 @@ in here, Full request drawer open by default). Findings data contract:
 ### Conversations page (`/conversations` → `Conversations.tsx`)
 
 **Purpose:** Conversation-grouped view — each row is a multi-request session.
+
+**Modules (2026-07-06 split):** page shell + table in `Conversations.tsx`; detail dialog/body + KPI rail + messages panel in `src/pages/conversations/ConversationDetail.tsx`; request-trace timeline in `src/pages/conversations/RequestTracePanel.tsx`; shared types in `src/pages/conversations/types.ts`.
 
 **State:** Same `range/customRange/keyId/model/page/rowsPerPage` pattern + `selectedRow: ConversationRow | null`.
 
@@ -771,6 +774,8 @@ The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h
 ### Activity page (`/activity` → `Activity.tsx`)
 
 **Purpose:** Workspace usage analytics — cost, requests, tokens across model / provider / API-key dimensions.
+
+**Modules (2026-07-06 split):** page shell + KPI rail + top-by-axis tables in `Activity.tsx`; the stacked-bar trend chart in `src/pages/activity/TrendCard.tsx`; shared bucket/axis math + compact number formatters in `src/pages/activity/chart-helpers.ts`; `Metric`/`METRIC_OPTIONS` and the data series live in `src/pages/activity-data.ts`.
 
 **State:**
 
@@ -1054,7 +1059,7 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 | `src/layouts/DashboardChrome.tsx` | Layout shell — sidebar, breadcrumb, nav active state |
 | `src/layouts/nav-sections.ts` | Sidebar sections and route map |
 | `src/pages/Requests.tsx` | Canonical page pattern — range selector, filters, pagination, deep-link, detail modal |
-| `src/pages/Activity.tsx` | Canonical chart page — `distributeSeries`, `TOTAL_7D_BASE_*`, `RANGE_SCALE`, `rescaleToTotal` |
+| `src/pages/Activity.tsx` | Canonical chart page — `distributeSeries`, `TOTAL_7D_BASE_*`, `rescaleToTotal` (range types + `RANGE_SCALE` now in `src/lib/range.ts`) |
 | `src/pages/ApiKeys.tsx` | Canonical API key seed — used as cross-page source of truth for active keys |
 | `src/components/ui/dialog.tsx` | Canonical modal pattern — `data-closed:fill-mode-forwards`, `onOpenChangeComplete`, `DialogScrollContent` shells |
 | `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `PROVIDER_ORDER` — shared across all pages |

@@ -74,6 +74,7 @@ import {
   formatSparkLabel,
   formatTime,
 } from "@/lib/formatters";
+import { type CustomRange, type PresetRange, RANGE_OPTIONS } from "@/lib/range";
 import {
   ACTION_BADGE,
   EVENT_ROWS,
@@ -100,9 +101,7 @@ const WHITESPACE_GLOBAL_RE = /\s+/g;
  * danger / --destructive. No raw hex.
  * ───────────────────────────────────────────────────────────────────────── */
 
-type PresetRange = "all" | "24h" | "7d" | "30d";
 type EventsRange = PresetRange | "custom";
-type CustomRange = { from: Date; to: Date };
 
 // Per-range event totals. Every security event is a guardrail action
 // fired ON a request, so the event volume is strictly a fraction of
@@ -1048,13 +1047,6 @@ const TYPE_DETAILS: Record<
 function getEventDetail(row: EventRow) {
   return TYPE_DETAILS[row.type];
 }
-
-const RANGE_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "24h", label: "24H" },
-  { value: "7d", label: "7D" },
-  { value: "30d", label: "30D" },
-];
 
 // Distinct API keys present in the sample — drives the toolbar Key filter
 // so its options reconcile with the rows instead of being hand-listed.

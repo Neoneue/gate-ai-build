@@ -49,7 +49,7 @@ import {
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
 } from "@/pages/activity-data";
-import type { ConversationRow } from "@/pages/Conversations";
+import type { ConversationRow } from "@/pages/conversations/types";
 import type { RequestRow } from "@/pages/Requests";
 import {
   ACTION_BADGE,

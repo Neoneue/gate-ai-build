@@ -22,6 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TextLink } from "@/components/ui/text-link";
+import { MODEL_OPTIONS } from "@/data/models";
 import { cn, randomHex } from "@/lib/utils";
 import {
   CreateKeyButton,
@@ -29,7 +30,7 @@ import {
   KeyCreatedDialog,
 } from "@/pages/ApiKeys";
 import { ConnectTabs } from "@/pages/DashboardDefault";
-import { MODEL_OPTIONS, PaygToolConfigCard } from "@/pages/Models";
+import { PaygToolConfigCard } from "@/pages/Models";
 import {
   AnimatedEllipsis,
   SetupScaffold,
