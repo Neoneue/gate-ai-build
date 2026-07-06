@@ -33,4 +33,12 @@ Zero visual change — a five-slice mechanical split of the 4,006-line monolith 
 - Restructured `SIDEBAR_SECTIONS` from the old (ungrouped) / Gateway / Security / Audit / Workspace Admin grouping into **Monitor** (Messages, Conversations, Security Events, Audit Trail) / **Manage** (Policies, Limits, Token Savings) / **Gateway** (Models) / **Workspace** (Activity, Team, Billing, API Keys, Settings), with Overview ungrouped at top.
 - Renamed sidebar labels `Events` → `Security Events` and `Workspace Admin` → `Workspace`.
 - Page copy (shared `Requests.tsx`, so Pro + Free): `PageTitle` `Requests` → `Messages`, table `SectionTitle` `Recent requests` → `Recent messages`.
-- Default workspace keeps its `Requests` page body verbatim (`RequestsDefault.tsx` untouched); `buildVariantSections` gained an optional `labelOverrides` seam but the nav label now reads `Messages` on all tiers per the new sidenav.
+- Default workspace keeps its `Requests` page body verbatim (`RequestsDefault.tsx` untouched); `buildVariantSections` gained an optional `labelOverrides` seam but the nav label now reads `Messages` on all tiers per the new sidenav. *(Superseded same day by `5147cab` — Default matches Free/Pro after all.)*
+
+### Complete the Messages copy rename across all tiers `5147cab` `2fc67e7`
+
+**`src/pages/RequestsFindings.tsx`, `src/pages/RequestsDefault.tsx`, `src/pages/requests/{hero-data.ts,RequestsTable.tsx}`**
+
+- Findings page back breadcrumb `Requests` → `Messages` (`5147cab`).
+- Default page now matches Free/Pro (`5147cab`): title + overview card `Messages`, `Recent messages`, empty states `No messages yet` / `No messages`, body `Individual messages routed through the gateway will appear here.`
+- Pro/Free label tier (`2fc67e7`): hero eyebrow `REQUESTS` → `MESSAGES`, chart bucket labels `Requests/hr|6h|15m` → `Messages/*`, search `Search messages` / `Search message…`, table empty state and row `Inspect … message to …` aria-label.
