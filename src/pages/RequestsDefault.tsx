@@ -22,7 +22,7 @@ export function RequestsDefault() {
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex max-w-1/2 flex-col gap-2">
-          <PageTitle>Requests</PageTitle>
+          <PageTitle>Messages</PageTitle>
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             Every model call across your stack, inspected for injection, PII,
             and credentials before it reaches the model.
@@ -34,7 +34,7 @@ export function RequestsDefault() {
         <SectionTitle>Overview</SectionTitle>
         <Card>
           <CardHeader>
-            <CardTitle>Requests</CardTitle>
+            <CardTitle>Messages</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center gap-3 py-16">
@@ -48,7 +48,7 @@ export function RequestsDefault() {
                 />
               </div>
               <span className="type-copy-14 text-muted-foreground">
-                No requests yet
+                No messages yet
               </span>
             </div>
           </CardContent>
@@ -56,10 +56,10 @@ export function RequestsDefault() {
       </div>
 
       <div className="mt-2 flex flex-col gap-4">
-        <SectionTitle>Recent requests</SectionTitle>
+        <SectionTitle>Recent messages</SectionTitle>
         <Card density="flush">
           <TableEmptyState
-            body="Individual API requests routed through the gateway will appear here."
+            body="Individual messages routed through the gateway will appear here."
             icon={
               <div
                 aria-hidden
@@ -71,7 +71,7 @@ export function RequestsDefault() {
                 />
               </div>
             }
-            title="No requests"
+            title="No messages"
           />
         </Card>
       </div>

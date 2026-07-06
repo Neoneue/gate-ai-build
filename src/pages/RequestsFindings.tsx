@@ -46,7 +46,7 @@ export function RequestsFindings() {
             className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
             strokeWidth={1.75}
           />
-          Requests
+          Messages
         </button>
         {row && (
           <Button
