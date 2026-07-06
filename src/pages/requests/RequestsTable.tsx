@@ -247,9 +247,9 @@ export function RequestsTableSection({
           <SectionTitle>Recent messages</SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
-              ariaLabel="Search requests"
+              ariaLabel="Search messages"
               className="min-w-0 flex-1 shrink"
-              placeholder="Search request…"
+              placeholder="Search message…"
               surface="elevated"
             />
 
@@ -425,8 +425,8 @@ export function RequestsTableSection({
         <Card density="flush">
           {isEmpty ? (
             <TableEmptyState
-              body="Individual API requests routed through the gateway will appear here."
-              title="No requests"
+              body="Individual messages routed through the gateway will appear here."
+              title="No messages"
             />
           ) : (
             <>
@@ -634,7 +634,7 @@ export function RequestsTableSection({
                         </TableCell>
                         <TableCell className="w-60 whitespace-nowrap">
                           <RowActionButton
-                            aria-label={`Inspect ${row.code} request to ${row.model} at ${row.time}`}
+                            aria-label={`Inspect ${row.code} message to ${row.model} at ${row.time}`}
                             href={`/requests-findings/${requestRowId(row)}`}
                           >
                             <VendorAvatar vendor={row.vendor} />

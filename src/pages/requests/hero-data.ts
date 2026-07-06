@@ -220,7 +220,7 @@ const HERO_30D_TICKS = [
 
 export const HERO_VIEWS: Record<RangeKey, HeroView> = {
   all: {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total: HERO_ALL_TOTAL,
     // Two disjoint buckets summing to total: Success (HTTP-success, slow
     // and fast pooled) + Errors. Slow rows display Status = Success in the
@@ -233,11 +233,11 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
     deltaNote: "All time",
     data: HERO_ALL_DATA,
     ticks: HERO_ALL_TICKS,
-    bucketLabel: "Requests/6h",
+    bucketLabel: "Messages/6h",
     domainTop: Math.max(...HERO_ALL_BUCKETS, 1) + 1,
   },
   "24h": {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total: 48,
     success: 46,
     errors: 2,
@@ -245,11 +245,11 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
     deltaNote: "vs prior day",
     data: HERO_24H_DATA,
     ticks: HERO_24H_TICKS,
-    bucketLabel: "Requests/15m",
+    bucketLabel: "Messages/15m",
     domainTop: Math.max(...HERO_24H_BUCKETS, 1) + 1,
   },
   "7d": {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total: 468,
     success: 455,
     errors: 13,
@@ -257,11 +257,11 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
     deltaNote: "vs prior week",
     data: HERO_7D_DATA,
     ticks: HERO_7D_TICKS,
-    bucketLabel: "Requests/hr",
+    bucketLabel: "Messages/hr",
     domainTop: Math.max(...HERO_7D_BUCKETS, 1) + 1,
   },
   "30d": {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total: 2248,
     success: 2188,
     errors: 60,
@@ -269,14 +269,14 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
     deltaNote: "vs prior month",
     data: HERO_30D_DATA,
     ticks: HERO_30D_TICKS,
-    bucketLabel: "Requests/6h",
+    bucketLabel: "Messages/6h",
     domainTop: Math.max(...HERO_30D_BUCKETS, 1) + 1,
   },
   // Placeholder. HeroMetricCard derives the real `'custom'` view from
   // the active customRange via useMemo — the static entry exists only
   // so the `Record<RangeKey, HeroView>` type is total.
   custom: {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total: 0,
     success: 0,
     errors: 0,
@@ -284,7 +284,7 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
     deltaNote: "vs prior range",
     data: [],
     ticks: [],
-    bucketLabel: "Requests/hr",
+    bucketLabel: "Messages/hr",
     domainTop: 1,
   },
 };
@@ -347,7 +347,7 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
   const success = Math.max(0, total - errors);
 
   return {
-    eyebrow: "REQUESTS",
+    eyebrow: "MESSAGES",
     total,
     success,
     errors,
@@ -355,7 +355,7 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     deltaNote: "vs prior range",
     data,
     ticks,
-    bucketLabel: bucketSizeHours === 1 ? "Requests/hr" : "Requests/6h",
+    bucketLabel: bucketSizeHours === 1 ? "Messages/hr" : "Messages/6h",
     domainTop: Math.max(...buckets, 1) + 1,
   };
 }
