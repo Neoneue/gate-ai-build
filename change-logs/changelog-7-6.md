@@ -55,6 +55,16 @@ Zero visual change — a five-slice mechanical split of the 4,006-line monolith 
 
 - The Merkle-tree audit design was wired only to `/audit-trail-merkle` — a route with no sidebar link and no tier twins, never shipped. Removed both files, the lazy import + route, and stale doc entries (mermaid node, Merkle-variant section, README route row, and a stale claim that the live `AuditRecordDialog` had Merkle-path/How-it-works tabs). The live `/audit-trail` (which uses `AuditRecordDialog`) is unaffected.
 
+### Split Security.tsx into `src/pages/security/` modules `1cd350e`
+
+**`src/pages/Security.tsx`, new `src/pages/security/events-data.ts` + `src/pages/security/EventsTable.tsx`, `data-model.md`**
+
+Continues the module-split convention. `Security.tsx` 1762 → 551; no behavior change; tsc / lint / tests (29) / browser (`/security`) verified at each of the 2 steps.
+
+- `security/events-data.ts` — shared chart/spark math + detail/sort config: `eventsTotal`, `splitEventMix`, `buildSpark`, `buildEventsChartView`, `HERO_CHART_CONFIG`, `RANGE_DELTA_NOTE`, `DETECTION_CHECKS`, `TYPE_DETAILS`, `getEventDetail`, `EVENT_KEYS`, `eventSortValue`. Pure data, no JSX — the shared home that keeps the page (HeroMetricCard, breakdowns) and the events table from forming an import cycle.
+- `security/EventsTable.tsx` — `EventsTableSection` (sortable/paginated table, toolbar, filters) + the threat-event detail dialog, now file-local (no external consumer, so unexported). `ChartXAxisTick` (JSX) and `HeroMetricCard` stay in the page.
+- `data-model.md` — Modules note on the §6 Security page section; corrected the cross-page-imports pointer (the detail dialog is no longer a `Security.tsx` export).
+
 ## Sections
 
 ### Rename Requests to Messages and regroup sidebar `c5553b2`

@@ -102,9 +102,18 @@ snapshot and drift as files change. The refactor tracking below covers only the
   (KPI rail + messages + trace timeline) renders on
   `/conversations-trace/cnv_7a3f9e2b`. Table section (~340 lines) left in the page;
   file is comfortably under 1000 without it.
-- [ ] **`src/pages/Security.tsx`** (1769) — extract chart/spark helpers
-  (`buildSpark`, `buildEventsChartView`, `HeroMetricCard` 481–650) and the
-  detection/category config maps.
+- [x] **`src/pages/Security.tsx`** (1769 → 551) — DONE (2 steps, under 1000).
+  Step 1: shared chart/spark math + detail/sort config (`eventsTotal`, `splitEventMix`,
+  `buildSpark`, `buildEventsChartView`, `HERO_CHART_CONFIG`, `RANGE_DELTA_NOTE`,
+  `DETECTION_CHECKS`, `TYPE_DETAILS`, `getEventDetail`, `EVENT_KEYS`, `eventSortValue`)
+  → `src/pages/security/events-data.ts` (pure data, no JSX — the shared home that keeps
+  the page and the events table from an import cycle). Step 2: `EventsTableSection` +
+  the threat-event detail dialog (now file-local, unexported) → `src/pages/security/EventsTable.tsx`;
+  confirmed zero page-stay refs, so no cycle. `ChartXAxisTick` + `HeroMetricCard` stayed
+  in the page. Verified after each step: tsc 0, lint clean, tests 29/29, and in-browser
+  (`/security` — hero + chart + 25 table rows + attack-category cards render; threat-detail
+  dialog opens with DETECTION_CHECKS/TYPE_DETAILS content; 0 console errors). Commits
+  `1cd350e` + `3686241`. data-model.md kept in sync.
 - [x] **`src/pages/Activity.tsx`** (1570 → 914) — DONE (under 1000). Moved shared
   `Metric` + `METRIC_OPTIONS` to `src/pages/activity-data.ts`; extracted the trend
   cluster (`TrendCard`, `TrendBreakdownPanel`, trend consts, `DIMENSION_OPTIONS`) → `src/pages/activity/TrendCard.tsx`
