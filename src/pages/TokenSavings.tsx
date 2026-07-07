@@ -62,25 +62,29 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader />
-      <OverviewSection
-        customRange={customRange}
-        onCustomRangeChange={(r) => {
-          if (r) {
-            setCustomRange(r);
-            setRange("custom");
-          } else {
+      {/* Content stays fluid up to xl, then caps tighter so the cards don't
+          stretch across ultrawide displays. */}
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <PageHeader />
+        <OverviewSection
+          customRange={customRange}
+          onCustomRangeChange={(r) => {
+            if (r) {
+              setCustomRange(r);
+              setRange("custom");
+            } else {
+              setCustomRange(null);
+              setRange("all");
+            }
+          }}
+          onRangeChange={(r) => {
+            setRange(r);
             setCustomRange(null);
-            setRange("all");
-          }
-        }}
-        onRangeChange={(r) => {
-          setRange(r);
-          setCustomRange(null);
-        }}
-        range={range}
-      />
-      <SavingsOptionsSection plan={plan} />
+          }}
+          range={range}
+        />
+        <SavingsOptionsSection plan={plan} />
+      </div>
     </DashboardChrome>
   );
 }

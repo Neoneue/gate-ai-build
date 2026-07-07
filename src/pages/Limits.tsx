@@ -109,8 +109,12 @@ export function Limits() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader onCreate={openCreate} />
-      <LimitsSection limits={limits} onRemove={removeLimit} />
+      {/* Content stays fluid up to xl, then caps tighter so the cards don't
+          stretch across ultrawide displays. */}
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <PageHeader onCreate={openCreate} />
+        <LimitsSection limits={limits} onRemove={removeLimit} />
+      </div>
       <CreateLimitDialog
         onCreate={addLimit}
         onOpenChange={handleCreateOpenChange}

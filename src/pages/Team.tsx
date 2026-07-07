@@ -84,7 +84,11 @@ export function Team() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <TeamSurface />
+      {/* Content stays fluid up to xl, then caps tighter so the cards don't
+          stretch across ultrawide displays. */}
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <TeamSurface />
+      </div>
     </DashboardChrome>
   );
 }
