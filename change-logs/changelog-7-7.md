@@ -27,3 +27,21 @@ Prior day: [`changelog-7-6.md`](./changelog-7-6.md)
 - Extended the `flex w-full flex-col gap-6 xl:max-w-5xl` (1024px) content cap to API Keys, Team, Limits, and Token Savings (matching Policies/Billing). Verified at a 1700px viewport: all measure 1024px.
 - API Keys "How to make requests": stacked the Automatic / Manual cards onto their own full-width rows (dropped `@min-[993px]/connect:flex-row`); restored the Gate Connect image and pinned it flush right; removed its container-query dynamic sizing (now static `w-[467.756px]`, centered) so it no longer shrinks/shifts across widths — breakpoints to be re-added; Automatic copy block → 400px; intro copy → full width.
 - API Keys keys table: added `min-w-[1000px]` so it scrolls horizontally at reduced widths instead of overlapping columns (the shared `Table` container is already `overflow-x-auto`). Rebalanced columns — Key `w-[26%]`, Status `w-[14%]` (halved the Status gap, gave the room to Key); 7-day / Created / Last used unchanged.
+
+### API Keys: a11y heading hierarchy + default-variant cap `1a2a8fa`
+
+**`src/pages/ApiKeys.tsx`, `src/pages/ApiKeysDefault.tsx`, `src/components/ui/icon-action-button.tsx`**
+
+From a Rams design review of the API Keys pages.
+
+- `ApiKeysDefault` (`/api-keys-default`) — added the `xl:max-w-5xl` (1024px) content cap that `/api-keys` and `/api-keys-free` already had.
+- Heading hierarchy: "How to make requests" was an `<h3>` directly under the page `<h1>` (skipped h2, WCAG 1.3.1). Promoted to `<h2>` and sized to the H2 voice (`type-heading-18` → `type-heading-24`) so semantic level and visual size agree — hierarchy now reads 32 > 24 > 20 (h1 > section > card titles). Added `mt-2` above the section (24 → 32px) so the larger heading isn't tight against the table.
+- `IconActionButton`: hit-slop `after:-inset-2` → `after:-inset-3` — effective tap target 40 → 48px, meeting the documented ≥44 (WCAG 2.5.5). The docstring had claimed 44×44 but `-inset-2` only delivered 40; corrected it. Applies to every `IconActionButton` usage.
+
+### Cap remaining tier twins at 1024px `d6e2411`
+
+**`src/pages/LimitsFree.tsx`, `src/pages/TeamDefault.tsx`, `src/pages/TokenSavingsDefault.tsx`**
+
+- Three variant pages never got the `xl:max-w-5xl` (1024px) content cap, so their routes rendered full-width (1412px at a 1700px viewport) while their main/free siblings were capped. Added the same `flex w-full flex-col gap-6 xl:max-w-5xl` wrapper.
+- Fixes `/team-default`, `/limits-free` (and `/limits-default`, which re-exports LimitsFree), and `/token-savings-default`.
+- All 18 tier variants across Policies / Billing / API Keys / Team / Limits / Token Savings now measure 1024px (verified in-browser). Large diffs on TeamDefault/TokenSavingsDefault are indentation-only churn from the wrap.

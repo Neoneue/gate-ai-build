@@ -46,9 +46,13 @@ export function ApiKeysDefault() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader />
-      <KeysEmptyState onCreate={() => setCreateOpen(true)} />
-      <UsageInfo />
+      {/* Content stays fluid up to xl, then caps tighter so the cards don't
+          stretch across ultrawide displays. */}
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <PageHeader />
+        <KeysEmptyState onCreate={() => setCreateOpen(true)} />
+        <UsageInfo />
+      </div>
       <CreateKeyDialog
         onCreate={handleCreate}
         onOpenChange={setCreateOpen}

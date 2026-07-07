@@ -345,11 +345,11 @@ export function UsageInfo() {
   const rightDefaultTab =
     defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
   return (
-    <section className="@container/connect flex flex-col gap-6">
+    <section className="@container/connect mt-2 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h3 className="type-heading-18 m-0 text-balance text-foreground">
+        <h2 className="type-heading-24 m-0 text-balance text-foreground">
           How to make requests
-        </h3>
+        </h2>
         <p className="type-copy-14 m-0 text-muted-foreground">
           There are two ways to start making requests using your API key. With{" "}
           <span className="font-medium">Gate Connect</span>, setup is automatic,

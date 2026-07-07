@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils";
  *   hover: text-neutral-900 + bg-neutral-100
  *   focus-visible: ring-3 ring-ring/50
  *   active: scale-[0.98] (press affordance — subtle scale-down; gated for reduced-motion)
- *   after:absolute after:-inset-2 — pseudo-element expands the hit area
- *     by 8px in every direction (44×44 effective tap target without
+ *   after:absolute after:-inset-3 — pseudo-element expands the hit area
+ *     by 12px in every direction (48×48 effective tap target without
  *     inflating the visual footprint). The button itself is `relative`
  *     so the pseudo-element anchors correctly.
  *
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const ICON_ACTION_BUTTON_BASE =
-  'relative inline-flex items-center justify-center size-6 rounded-xs text-neutral-500 outline-none touch-manipulation will-change-transform transition-[color,background-color,transform,box-shadow] duration-150 ease-out hover:text-neutral-900 hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-[""]';
+  'relative inline-flex items-center justify-center size-6 rounded-xs text-neutral-500 outline-none touch-manipulation will-change-transform transition-[color,background-color,transform,box-shadow] duration-150 ease-out hover:text-neutral-900 hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-3 after:content-[""]';
 
 export type IconActionButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
