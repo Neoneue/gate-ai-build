@@ -508,7 +508,7 @@ function buildSpark(total: number, seed: number): number[]
 **Cross-page imports:**
 
 - `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
-- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime`, `ThreatEventDetailDialog`
+- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime` (the threat-event detail dialog is now file-local in `src/pages/security/EventsTable.tsx`, not a cross-page export)
 - `src/data/audit-trail.ts` → `EVENT_ROWS`, `EventRow`, `KIND_BADGE_VARIANT`, `NOW`, `fmtRelative`, `truncateHex` (extracted from `AuditTrail.tsx` 2026-06-10; both audit pages + both record dialogs import from here)
 - `Conversations.tsx` → `ConversationRow` + other types; `src/data/conversations.ts` → `CONVERSATION_ROWS` (values moved 2026-06-10, types stay with the page)
 - `AuditRecordDialog.tsx` → `AuditRecordDialog`
@@ -600,6 +600,13 @@ in here, Full request drawer open by default). Findings data contract:
 - `/requests?open=${requestId}`
 
 **Data:** `EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 }` ratio applied via `splitEventMix()` to `EVENTS_RANGE_TOTAL`.
+
+**Modules:** `Security.tsx` (~550: page shell, hero, breakdowns, attack-category cards) ·
+`src/pages/security/events-data.ts` (chart/spark math + detail/sort config: `eventsTotal`,
+`splitEventMix`, `buildEventsChartView`, `HERO_CHART_CONFIG`, `DETECTION_CHECKS`, `TYPE_DETAILS`,
+`getEventDetail`, `EVENT_KEYS`, `eventSortValue` — shared, no JSX) ·
+`src/pages/security/EventsTable.tsx` (`EventsTableSection` + file-local threat-event detail dialog).
+Row-level `EventRow`/`EVENT_ROWS`/`ACTION_BADGE`/`TYPE_META` still come from `src/pages/security-data.ts`.
 
 ---
 
