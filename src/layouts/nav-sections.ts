@@ -1,12 +1,12 @@
 import {
   Activity,
-  ArrowLeftRight,
   Box,
   Coins,
   CreditCard,
   Fingerprint,
   Home,
   KeyRound,
+  Mail,
   MessageSquare,
   Settings2,
   Shield,
@@ -27,11 +27,16 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     items: [
       { id: "overview", icon: Home, label: "Overview", pageId: "/overview" },
+    ],
+  },
+  {
+    label: "Monitor",
+    items: [
       {
         id: "requests",
-        icon: ArrowLeftRight,
-        label: "Requests",
-        pageId: "/requests",
+        icon: Mail,
+        label: "Messages",
+        pageId: "/messages",
       },
       {
         id: "conversations",
@@ -39,44 +44,13 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "Conversations",
         pageId: "/conversations",
       },
-    ],
-  },
-  {
-    label: "Gateway",
-    items: [
-      { id: "models", icon: Box, label: "Models", pageId: "/models" },
-      {
-        id: "token-savings",
-        icon: Coins,
-        label: "Token Savings",
-        pageId: "/token-savings",
-        locked: true,
-      },
-      {
-        id: "limits",
-        icon: ShieldCheck,
-        label: "Limits",
-        pageId: "/limits",
-        locked: true,
-      },
-    ],
-  },
-  {
-    label: "Security",
-    items: [
       {
         id: "security-events",
         icon: TriangleAlert,
-        label: "Events",
+        label: "Security Events",
         pageId: "/security",
         locked: true,
       },
-      { id: "policies", icon: Shield, label: "Policies", pageId: "/policies" },
-    ],
-  },
-  {
-    label: "Audit",
-    items: [
       {
         id: "audit-trail",
         icon: Fingerprint,
@@ -86,7 +60,31 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: "Workspace Admin",
+    label: "Manage",
+    items: [
+      { id: "policies", icon: Shield, label: "Policies", pageId: "/policies" },
+      {
+        id: "limits",
+        icon: ShieldCheck,
+        label: "Limits",
+        pageId: "/limits",
+        locked: true,
+      },
+      {
+        id: "token-savings",
+        icon: Coins,
+        label: "Token Savings",
+        pageId: "/token-savings",
+        locked: true,
+      },
+    ],
+  },
+  {
+    label: "Gateway",
+    items: [{ id: "models", icon: Box, label: "Models", pageId: "/models" }],
+  },
+  {
+    label: "Workspace",
     items: [
       {
         id: "activity",
@@ -118,19 +116,22 @@ const LOCKED_IN_FREE = new Set<string>([]);
 
 function buildVariantSections(
   suffix: string,
-  lockedIds: Set<string>
+  lockedIds: Set<string>,
+  labelOverrides: Record<string, string> = {}
 ): SidebarSection[] {
   return SIDEBAR_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.map((item) =>
-      lockedIds.has(item.id)
-        ? { ...item, locked: true, pageId: undefined }
+    items: section.items.map((item) => {
+      const label = labelOverrides[item.id] ?? item.label;
+      return lockedIds.has(item.id)
+        ? { ...item, label, locked: true, pageId: undefined }
         : {
             ...item,
+            label,
             locked: false,
             pageId: item.pageId ? `${item.pageId}${suffix}` : item.pageId,
-          }
-    ),
+          };
+    }),
   }));
 }
 
@@ -140,7 +141,9 @@ export const FREE_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
   LOCKED_IN_FREE
 );
 
-/** Sidebar for the Default workspace — unlocked items point at their `-default` twin. */
+/** Sidebar for the Default workspace — unlocked items point at their `-default`
+ *  twin. The nav label stays "Messages" across all tiers (only the Default
+ *  page body keeps the "Requests" copy). */
 export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
   "-default",
   new Set<string>()

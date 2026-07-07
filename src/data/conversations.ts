@@ -1,7 +1,7 @@
 // Conversations list mock rows + the sample trace, extracted from
 // pages/Conversations.tsx so the page module only exports components.
 // Types stay with the page (type-only import, no runtime cycle).
-import type { ConversationRow, TraceEvent } from "@/pages/Conversations";
+import type { ConversationRow, TraceEvent } from "@/pages/conversations/types";
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
   {

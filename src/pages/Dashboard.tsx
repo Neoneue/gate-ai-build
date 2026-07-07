@@ -49,7 +49,7 @@ import {
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
 } from "@/pages/activity-data";
-import type { ConversationRow } from "@/pages/Conversations";
+import type { ConversationRow } from "@/pages/conversations/types";
 import type { RequestRow } from "@/pages/Requests";
 import {
   ACTION_BADGE,
@@ -606,7 +606,7 @@ function LatestRequestsTable() {
         <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
         <Link
           className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/requests"
+          to="/messages"
         >
           View all →
         </Link>

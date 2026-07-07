@@ -2,8 +2,10 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/biome/core", "ultracite/biome/react"],
   // src/index.css is Tailwind v4 syntax (@theme, @custom-variant) that Biome's
-  // CSS parser cannot read; Tailwind owns that file.
-  "files": { "includes": ["!src/index.css"] },
+  // CSS parser cannot read; Tailwind owns that file. design-system.html is a
+  // standalone, hand-authored doc artifact (not app source) — its inlined CSS
+  // and static buttons shouldn't be policed by the app's React/CSS rules.
+  "files": { "includes": ["!src/index.css", "!design-system.html"] },
   // Adoption tuning (2026-06-10): ultracite preset kept for formatting and the
   // correctness/suspicious rule set. The opinion rules below conflicted with
   // established house conventions at adoption (423 violations) and are off
@@ -59,7 +61,7 @@
   // CSS parser cannot read; Tailwind owns that file entirely.
   "overrides": [
     {
-      "includes": ["src/index.css"],
+      "includes": ["src/index.css", "design-system.html"],
       "linter": { "enabled": false },
       "formatter": { "enabled": false },
       "assist": { "enabled": false }

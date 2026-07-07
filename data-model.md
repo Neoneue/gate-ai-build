@@ -46,7 +46,6 @@ graph LR
     LAYOUT --> SECDEF["/events-default → SecurityDefault.tsx (Pro upsell)"]
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
-  LAYOUT --> AUDM["/audit-trail-merkle → AuditTrailMerkle.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/team → Team.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
@@ -68,7 +67,7 @@ Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 | _(unnamed)_ | overview → `/overview`, requests → `/requests`, conversations → `/conversations` |
 | Gateway | models → `/models`, token-savings → `/token-savings`, limits → `/limits` |
 | Security | security-events → `/security`, policies → `/policies` |
-| Audit | audit-trail → `/audit-trail` _(built; `/audit-trail-merkle` is a route-only variant with the live Merkle viewer, not in nav)_ |
+| Audit | audit-trail → `/audit-trail` _(built)_ |
 | Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
@@ -97,14 +96,15 @@ content state). Naming contract:
 
 ## 3. TypeScript Type System
 
-All types live inline in their respective page files. There is no shared `types/` directory — cross-page reuse is via import from the page that defined the type.
+Most types live inline in their page file, but shared primitives and heavy data now live in dedicated modules: time-range types in `src/lib/range.ts`, the model catalog in `src/data/models.ts`, and the Conversations types in `src/pages/conversations/types.ts` (imported by the page, its component modules, and the data layer; this replaced the former page/data-module type cycle). Page-specific types still live inline and are reused by importing from the defining page.
 
 ### 3.1 Shared primitive types
 
 ```typescript
-// Time-range filtering (all pages that have a range selector)
+// Time-range filtering. Defined in src/lib/range.ts, shared by Activity/Conversations/Security.
+// Exports: PresetRange, Range, CustomRange, RANGE_OPTIONS, RANGE_SCALE, daysInRange, effectiveScale
 type PresetRange = 'all' | '24h' | '7d' | '30d'
-type RangeKey    = PresetRange | 'custom'
+type Range       = PresetRange | 'custom'
 type CustomRange = { from: Date; to: Date }
 type EventsRange = PresetRange | 'custom'
 
@@ -179,7 +179,7 @@ interface EventRow extends RequestRow {
 ### 3.5 Conversations
 
 ```typescript
-// Defined in: src/pages/Conversations.tsx
+// Defined in: src/pages/conversations/types.ts (also TraceEvent, TraceStatus, TraceRenderItem, ConversationMessage, ModelId)
 type ConversationStatus = 'active' | 'completed' | 'failed'
 
 interface ConversationRow {
@@ -202,7 +202,7 @@ interface ConversationRow {
 ### 3.6 Models & Providers
 
 ```typescript
-// Defined in: src/pages/Models.tsx
+// Defined in: src/data/models.ts (MODELS catalog, types, config maps, MODEL_OPTIONS)
 type ModelId   = 'claude-opus-4-7' | 'claude-sonnet-4-5' | 'claude-haiku-4-5'
                | 'gpt-5' | 'gpt-4o' | 'gpt-4o-mini'
                | 'gemini-3-pro' | 'gemini-3-flash' | 'gemini-3-flash-lite'
@@ -241,7 +241,7 @@ interface Model {
 ### 3.7 Policies & Limits
 
 ```typescript
-// Defined in: src/pages/Policies.tsx
+// Defined in: src/pages/policies/config.ts
 interface ActionOption {
   value:       string
   name:        string
@@ -425,7 +425,7 @@ The app has no backend. All data is seeded in-file. The three rules:
 ### 5.2 Range scaling
 
 ```typescript
-// Activity.tsx
+// src/lib/range.ts (RANGE_SCALE + effectiveScale; shared by Activity + Conversations)
 const RANGE_SCALE: Record<PresetRange, number> = {
   '24h': 0.16,
   '7d':  1,
@@ -508,7 +508,7 @@ function buildSpark(total: number, seed: number): number[]
 **Cross-page imports:**
 
 - `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
-- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime`, `ThreatEventDetailDialog`
+- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime` (the threat-event detail dialog is now file-local in `src/pages/security/EventsTable.tsx`, not a cross-page export)
 - `src/data/audit-trail.ts` → `EVENT_ROWS`, `EventRow`, `KIND_BADGE_VARIANT`, `NOW`, `fmtRelative`, `truncateHex` (extracted from `AuditTrail.tsx` 2026-06-10; both audit pages + both record dialogs import from here)
 - `Conversations.tsx` → `ConversationRow` + other types; `src/data/conversations.ts` → `CONVERSATION_ROWS` (values moved 2026-06-10, types stay with the page)
 - `AuditRecordDialog.tsx` → `AuditRecordDialog`
@@ -572,6 +572,8 @@ in here, Full request drawer open by default). Findings data contract:
 
 **Purpose:** Conversation-grouped view — each row is a multi-request session.
 
+**Modules (2026-07-06 split):** page shell + table in `Conversations.tsx`; detail dialog/body + KPI rail + messages panel in `src/pages/conversations/ConversationDetail.tsx`; request-trace timeline in `src/pages/conversations/RequestTracePanel.tsx`; shared types in `src/pages/conversations/types.ts`.
+
 **State:** Same `range/customRange/keyId/model/page/rowsPerPage` pattern + `selectedRow: ConversationRow | null`.
 
 **Deep-link:** `?open=cnv_xxx` → auto-opens conversation detail modal.
@@ -598,6 +600,13 @@ in here, Full request drawer open by default). Findings data contract:
 - `/requests?open=${requestId}`
 
 **Data:** `EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 }` ratio applied via `splitEventMix()` to `EVENTS_RANGE_TOTAL`.
+
+**Modules:** `Security.tsx` (~550: page shell, hero, breakdowns, attack-category cards) ·
+`src/pages/security/events-data.ts` (chart/spark math + detail/sort config: `eventsTotal`,
+`splitEventMix`, `buildEventsChartView`, `HERO_CHART_CONFIG`, `DETECTION_CHECKS`, `TYPE_DETAILS`,
+`getEventDetail`, `EVENT_KEYS`, `eventSortValue` — shared, no JSX) ·
+`src/pages/security/EventsTable.tsx` (`EventsTableSection` + file-local threat-event detail dialog).
+Row-level `EventRow`/`EVENT_ROWS`/`ACTION_BADGE`/`TYPE_META` still come from `src/pages/security-data.ts`.
 
 ---
 
@@ -658,6 +667,8 @@ page, rowsPerPage: number
 ### Policies page (`/policies` → `Policies.tsx`)
 
 **Purpose:** Configure 3 inline security scans: prompt injection, PII/PHI, credential & secrets.
+
+**Modules (2026-07-06 split):** components + `Policies({ variant })` in `Policies.tsx`; config/data (style maps, `PolicyConfig`/`PolicyState` types, `POLICIES` catalog, `INITIAL_POLICIES`, free-tier copy) in `src/pages/policies/config.ts`.
 
 **State:** `policies: PolicyState[]`
 
@@ -739,38 +750,18 @@ Structure (post-2026-05-18 trim):
 
 1. `DialogScrollHeader` → `DialogTitleBlock` with title "Audit record" (no badge slot)
 2. `DialogScrollSummary` → standalone `<VerifiedBySeal />` (no card chrome, no descriptive copy — info is duplicated by the Event detail rows below and the badge alt-text)
-3. `DialogScrollBody` → `<Tabs variant="line">` with three triggers:
-   - **Event** — `<DetailList>` with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Fingerprint (CircleCheck + truncateHex(anchor, 4, 4))
-   - **Merkle path** — `<MerklePathPanel>` inline SVG tree (ROOT + sibling + leaf) with mono path notation
-   - **How it works** — `<HowItWorksPanel>` four-step explainer + "Digital Evidence docs" link
+3. `DialogScrollBody` → a flat `<DetailList>` (no tabs) with rows: Time, Event ID, Event type (Badge using `KIND_BADGE_VARIANT`), Description, Member, Fingerprint (CircleCheck + truncateHex(anchor, 4, 4))
 4. `DialogScrollFooter` → `Copy proof JSON` (outline) and `Open DE Explorer` (default)
 
-The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h-6 w-auto`. Sits standalone (no card wrapper) as a trust stamp between the header title and the tabbed body.
-
----
-
-### Audit Trail, Merkle variant (`/audit-trail-merkle` → `AuditTrailMerkle.tsx`)
-
-**Status:** Built (2026-06-01). Route-only evolution of the Audit Trail page; NOT in the sidebar nav. Reuses the same data: imports `EVENT_ROWS`, `KIND_BADGE_VARIANT`, and the `EventRow` type from `src/data/audit-trail.ts` (no separate feed). Same `NOW = 2026-05-16 16:00` mock anchor and `isWithinRange` range logic.
-
-**New vs. `/audit-trail`:**
-
-- `OverviewBar`: section-bar header treatment above the KPI rail.
-- `RANGE_DELTA_NOTE: Record<Range, string>`: per-range comparison copy ("vs last 7d", etc.) passed to `KpiTile` via the new `deltaNote` + `deltaRow` props.
-- `KpiRailSection({ rows, range })`: takes `range` so each tile renders its range-keyed delta row.
-- Drill-in opens `AuditRecordDialogMerkle` instead of `AuditRecordDialog`.
-
-**`AuditRecordDialogMerkle` (`src/pages/AuditRecordDialogMerkle.tsx`):** Same tabbed shell as `AuditRecordDialog`, but the **Merkle path** tab renders a _live_ tree instead of the static `MerklePathPanel`:
-
-- Deterministic FNV-32 hashing (`fnv32` / `fnv32Hex` / `fnv32HexLong`) computes the tree from the record; no hardcoded hashes.
-- `TREE_DEPTH = 3` gives `LEAF_COUNT = 8` (2^3): a full depth-3, 8-leaf binary Merkle tree (L0 ROOT down to L3 leaves).
-- Rendered as an inline SVG (`viewBox` 760 x 372, `NODE_W` 64) with an interactive zoom viewer; the highlighted inclusion path (leaf, siblings, root) is the verifiable proof.
+The `VerifiedBySeal` is the 269×40 `de-verified-badge.svg` asset rendered at `h-6 w-auto`. Sits standalone (no card wrapper) as a trust stamp between the header title and the detail body.
 
 ---
 
 ### Activity page (`/activity` → `Activity.tsx`)
 
 **Purpose:** Workspace usage analytics — cost, requests, tokens across model / provider / API-key dimensions.
+
+**Modules (2026-07-06 split):** page shell + KPI rail + top-by-axis tables in `Activity.tsx`; the stacked-bar trend chart in `src/pages/activity/TrendCard.tsx`; shared bucket/axis math + compact number formatters in `src/pages/activity/chart-helpers.ts`; `Metric`/`METRIC_OPTIONS` and the data series live in `src/pages/activity-data.ts`.
 
 **State:**
 
@@ -1054,7 +1045,7 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 | `src/layouts/DashboardChrome.tsx` | Layout shell — sidebar, breadcrumb, nav active state |
 | `src/layouts/nav-sections.ts` | Sidebar sections and route map |
 | `src/pages/Requests.tsx` | Canonical page pattern — range selector, filters, pagination, deep-link, detail modal |
-| `src/pages/Activity.tsx` | Canonical chart page — `distributeSeries`, `TOTAL_7D_BASE_*`, `RANGE_SCALE`, `rescaleToTotal` |
+| `src/pages/Activity.tsx` | Canonical chart page — `distributeSeries`, `TOTAL_7D_BASE_*`, `rescaleToTotal` (range types + `RANGE_SCALE` now in `src/lib/range.ts`) |
 | `src/pages/ApiKeys.tsx` | Canonical API key seed — used as cross-page source of truth for active keys |
 | `src/components/ui/dialog.tsx` | Canonical modal pattern — `data-closed:fill-mode-forwards`, `onOpenChangeComplete`, `DialogScrollContent` shells |
 | `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `PROVIDER_ORDER` — shared across all pages |

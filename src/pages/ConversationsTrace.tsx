@@ -2,7 +2,8 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { ConversationDetailBody, type ConversationRow } from "./Conversations";
+import { ConversationDetailBody } from "./conversations/ConversationDetail";
+import type { ConversationRow } from "./conversations/types";
 
 /* ─── /conversations-trace/:conversationId ──────────────────────────────────
  * URL-addressable page for one conversation's messages + request trace —

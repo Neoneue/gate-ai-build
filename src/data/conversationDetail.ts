@@ -12,6 +12,7 @@
 // never reads CONVERSATION_ROWS or REQUEST_ROWS_* at module scope; callers pass
 // the request rows in, and derivation runs at render time.
 
+import { getRequestBody } from "@/data/request-bodies";
 import { requestRowId } from "@/data/requests";
 import type {
   ConversationMessage,
@@ -19,7 +20,7 @@ import type {
   ConversationStatus,
   TraceEvent,
   TraceStatus,
-} from "@/pages/Conversations";
+} from "@/pages/conversations/types";
 import type { RequestRow } from "@/pages/Requests";
 
 // ── number / format helpers ────────────────────────────────────────────────
@@ -186,27 +187,30 @@ export function getConversationDetail(
   // Script-backed conversations carry per-request user/assistant text, so we
   // render the real back-and-forth. Conversations without it fall back to the
   // opening title plus one derived bubble per request.
-  const scripted = rows.some((r) => r.userMessage || r.toolName);
+  const scripted = rows.some(
+    (r) => getRequestBody(r).userMessage || r.toolName
+  );
 
   const messages: ConversationMessage[] = scripted
     ? rows.flatMap((r): ConversationMessage[] => {
         const id = requestRowId(r);
         const time = `${r.day}, ${r.time}`;
+        const body = getRequestBody(r);
         const out: ConversationMessage[] = [];
-        if (r.userMessage) {
+        if (body.userMessage) {
           out.push({
             role: "user",
             time,
             requestId: id,
-            body: redactUserBody(r, r.userMessage),
+            body: redactUserBody(r, body.userMessage),
           });
         }
-        if (r.assistantResponse) {
+        if (body.assistantResponse) {
           out.push({
             role: "assistant",
             time,
             requestId: id,
-            body: r.assistantResponse,
+            body: body.assistantResponse,
           });
         }
         if (r.toolName) {
@@ -215,7 +219,7 @@ export function getConversationDetail(
             tool: r.toolName,
             time,
             requestId: id,
-            body: r.toolResult ?? "",
+            body: body.toolResult ?? "",
           });
         }
         return out;

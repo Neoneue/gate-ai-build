@@ -32,7 +32,6 @@ The live web application for Constellation Gate AI. Forked from the `mvp` design
 | --- | --- |
 | `/requests-findings/:requestId` | Request findings detail |
 | `/conversations-trace/:conversationId` | Conversation trace detail |
-| `/audit-trail-merkle` | Audit Trail, Merkle variant (not in nav) |
 | `/upgrade` | Plan upgrade |
 
 ### Tier / onboarding variants

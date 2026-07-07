@@ -16,6 +16,10 @@ lives in the reference docs linked below.
   same", PIN the surface (which route → which file) and confirm BEFORE editing
   or measuring. Revert failed fixes instead of patching forward. Full gate:
   @.claude/rules/no-thrash.md
+- **Never load capture data whole.** `src/data/request-bodies.ts` (~450 KB of
+  verbatim transcripts) is runtime lookup data — don't Read it; exclude it from
+  greps; answer questions about it with code, not reads. Scoped reads
+  everywhere. Full rule: @.claude/rules/token-efficient-reads.md
 
 ## Reference docs (repo root)
 
