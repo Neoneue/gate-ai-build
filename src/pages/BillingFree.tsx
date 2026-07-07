@@ -55,10 +55,14 @@ export function BillingFree() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader />
-      <PlanCreditsRow />
-      <PaymentMethodCard />
-      <HistorySection />
+      {/* Content stays fluid up to xl, then caps tighter so the cards don't
+      stretch across ultrawide displays. */}
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <PageHeader />
+        <PlanCreditsRow />
+        <PaymentMethodCard />
+        <HistorySection />
+      </div>
     </DashboardChrome>
   );
 }
@@ -75,11 +79,11 @@ function PageHeader() {
   );
 }
 
-/* ─── Plan + Credits row (3/2 split) ─────────────────────────────────── */
+/* ─── Plan + Credits (stacked, each full-width row) ──────────────────── */
 
 function PlanCreditsRow() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4">
       <PlanCard />
       <CreditsCard />
     </div>
