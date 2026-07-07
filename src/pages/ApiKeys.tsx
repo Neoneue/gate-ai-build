@@ -192,53 +192,55 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <PageHeader
-        onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
-      />
-      {keys.length === 0 ? (
-        <KeysEmptyState onCreate={() => setCreateOpen(true)} />
-      ) : (
-        <Tabs
-          className="gap-4"
-          onValueChange={(v) => setKeyStatus(v as "active" | "revoked")}
-          value={keyStatus}
-        >
-          <TabsList className="-mt-2 px-0" variant="line">
-            <TabsTrigger value="active">
-              Active
-              <TabsCount>{activeKeys.length}</TabsCount>
-            </TabsTrigger>
-            <TabsTrigger value="revoked">
-              Revoked
-              <TabsCount>{revokedKeys.length}</TabsCount>
-            </TabsTrigger>
-          </TabsList>
-          {visibleKeys.length === 0 ? (
-            <EmptyState
-              body={
-                keyStatus === "revoked"
-                  ? "Keys you revoke will appear here. Revoking a key stops it authenticating immediately."
-                  : "You have no active keys. Create one to start routing requests through the gateway."
-              }
-              icon={
-                <div
-                  aria-hidden
-                  className="flex size-12 items-center justify-center rounded-full bg-muted"
-                >
-                  <KeyRound
-                    className="size-5 text-neutral-700"
-                    strokeWidth={1.75}
-                  />
-                </div>
-              }
-              title={`No ${keyStatus} keys`}
-            />
-          ) : (
-            <KeysTable onRevoke={handleRevoke} rows={visibleKeys} />
-          )}
-        </Tabs>
-      )}
-      <UsageInfo />
+      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+        <PageHeader
+          onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
+        />
+        {keys.length === 0 ? (
+          <KeysEmptyState onCreate={() => setCreateOpen(true)} />
+        ) : (
+          <Tabs
+            className="gap-4"
+            onValueChange={(v) => setKeyStatus(v as "active" | "revoked")}
+            value={keyStatus}
+          >
+            <TabsList className="-mt-2 px-0" variant="line">
+              <TabsTrigger value="active">
+                Active
+                <TabsCount>{activeKeys.length}</TabsCount>
+              </TabsTrigger>
+              <TabsTrigger value="revoked">
+                Revoked
+                <TabsCount>{revokedKeys.length}</TabsCount>
+              </TabsTrigger>
+            </TabsList>
+            {visibleKeys.length === 0 ? (
+              <EmptyState
+                body={
+                  keyStatus === "revoked"
+                    ? "Keys you revoke will appear here. Revoking a key stops it authenticating immediately."
+                    : "You have no active keys. Create one to start routing requests through the gateway."
+                }
+                icon={
+                  <div
+                    aria-hidden
+                    className="flex size-12 items-center justify-center rounded-full bg-muted"
+                  >
+                    <KeyRound
+                      className="size-5 text-neutral-700"
+                      strokeWidth={1.75}
+                    />
+                  </div>
+                }
+                title={`No ${keyStatus} keys`}
+              />
+            ) : (
+              <KeysTable onRevoke={handleRevoke} rows={visibleKeys} />
+            )}
+          </Tabs>
+        )}
+        <UsageInfo />
+      </div>
       <CreateKeyDialog
         onCreate={handleCreate}
         onOpenChange={setCreateOpen}
@@ -344,7 +346,7 @@ export function UsageInfo() {
     defaultTab && defaultTab !== "gate-connect" ? defaultTab : undefined;
   return (
     <section className="@container/connect flex flex-col gap-6">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <h3 className="type-heading-18 m-0 text-balance text-foreground">
           How to make requests
         </h3>
@@ -368,10 +370,10 @@ export function UsageInfo() {
         </p>
       </div>
 
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) on the left,
-          the manual-setup code tabs (no Gate Connect tab) on the right.
-          Side-by-side with a 24px gap; stacks full-width below lg. */}
-      <div className="flex @min-[993px]/connect:flex-row flex-col gap-6">
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) on top,
+          the manual-setup code tabs (no Gate Connect tab) below.
+          Stacked full-width with a 24px gap, one card per row. */}
+      <div className="flex flex-col gap-6">
         {/* Each card gets an Eyebrow label above it (outside the card, so no
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no
@@ -383,8 +385,8 @@ export function UsageInfo() {
               <ConnectTabs
                 fillHeight
                 gateConnectOnly
-                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 @min-[1632px]/connect:translate-y-[calc(-50%_+_8px)] translate-x-[clamp(0px,calc(253px_-_34.375cqw),88px)] w-[491.144px] @min-[993px]/connect:translate-x-[calc(clamp(0px,calc(296.64px_-_18cqw),72px)_+_clamp(0px,calc(534.856px_-_42.857cqw),24px))] @min-[993px]/connect:w-[clamp(467.756px,calc(306.735px_+_12.9023cqw),517.301px)] scale-[0.6914426] origin-right @min-[992px]/connect:@max-[1192px]/connect:hidden"
-                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[clamp(302px,calc(42px_+_20.8333cqw),382px)]"
+                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
+                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[400px]"
                 titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
               />
             </div>
@@ -427,14 +429,14 @@ function KeysTable({
   return (
     <>
       <Card density="flush">
-        <Table className="table-fixed">
+        <Table className="min-w-[1000px] table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               {/* Five data columns at w-1/5 + a fixed-width Actions column.
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
               <SortableTableHead
-                className="w-1/5 whitespace-nowrap"
+                className="w-[26%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="name"
@@ -442,7 +444,7 @@ function KeysTable({
                 Key
               </SortableTableHead>
               <SortableTableHead
-                className="w-1/5 whitespace-nowrap"
+                className="w-[14%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="status"
