@@ -35,7 +35,9 @@ export function DeltaTag({
   const negative = trimmed.startsWith("-");
   const Icon = negative ? ArrowDownRight : ArrowUpRight;
   const isGood = inverted ? negative : !negative;
-  const toneCls = isGood ? "text-success-700" : "text-destructive";
+  const toneCls = isGood
+    ? "text-success-700 dark:text-success-300"
+    : "text-danger-700 dark:text-danger-300";
   // Preserve the leading +/- on the displayed value. Redundant with the
   // arrow on its own, but the explicit sign reinforces the magnitude
   // direction and is the convention readers expect for tabular deltas.
@@ -184,8 +186,8 @@ export function CompactSpark({
         {noGrid ? null : (
           <CartesianGrid
             horizontal
-            stroke="var(--color-neutral-200)"
-            strokeDasharray="6 3"
+            stroke="var(--color-chart-grid)"
+            strokeDasharray="6 5"
             vertical={false}
           />
         )}

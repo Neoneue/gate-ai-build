@@ -243,6 +243,11 @@ and (pointer: fine)) and (&:hover));
   --border: var(--color-neutral-200);
   --input: var(--color-neutral-300);
   --ring: var(--color-neutral-400);
+  /* Chart gridline / dashed baseline stroke. Palette-atom neutral-200 read
+     bright on the dark canvas; this token keeps neutral-200 in light and
+     steps to a darker, subtler neutral-700 in dark. Use via stroke-chart-grid
+     or var(--color-chart-grid) on Recharts CartesianGrid / ReferenceLine. */
+  --chart-grid: var(--color-neutral-200);
   /* Categorical chart palette — standalone, NOT tied to brand colors. Used
      for graph series across the app: each series picks a slot by index, in
      stable order, regardless of what the data represents. Per PM call
@@ -316,6 +321,7 @@ body {
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
+    --color-chart-grid: var(--chart-grid);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -397,6 +403,7 @@ body {
   --border: color-mix(in oklch, var(--color-white) 10%, transparent);
   --input: color-mix(in oklch, var(--color-white) 15%, transparent);
   --ring: var(--color-neutral-500);
+  --chart-grid: var(--color-neutral-700);
 
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);

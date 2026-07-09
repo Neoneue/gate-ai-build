@@ -370,8 +370,8 @@ export function TrendCard({
             >
               <CartesianGrid
                 horizontal
-                stroke="var(--color-neutral-200)"
-                strokeDasharray="8 3"
+                stroke="var(--color-chart-grid)"
+                strokeDasharray="8 5"
                 vertical={false}
               />
               <XAxis
