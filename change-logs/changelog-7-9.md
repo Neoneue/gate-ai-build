@@ -33,6 +33,20 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Surface + tint token sweep — primitives (pass 2) `0a32743`
+
+**16 primitives in `src/components/ui/` + `design.md`**
+
+Pass 2 of the dark sweep. The remaining raw `bg-*` / `border-*` / `fill`/`stroke-*` neutrals and the light status tints on the shared primitives now map to semantic tokens, so inputs, badges, menus, charts, and inner-card chrome invert under `.dark`. The user-visible complaints (inputs, badges, dashed chart lines, inner cards, menus) all trace to these primitives, so each fix cascades app-wide.
+
+- **Inputs / controls** — field wash `bg-neutral-50` retired to `bg-muted`: `Input`, `Textarea`, `InputGroup`, `SearchInput` icon, the `select-variants` trigger (+ `data-placeholder` text), `RadioGroup` unchecked fill. Disabled fills `bg-neutral-100` → `bg-muted`.
+- **Menus / dropdowns** — highlight fills `bg-neutral-100` → `bg-accent` (`Menu` item, `Select` item, `MultiSelect` options); `MenuSeparator` `bg-neutral-200` → `bg-border`; the destructive menu item gains a dark tint fill + `text-danger-300`.
+- **Badges / chips** — neutral `Badge` → `bg-muted` / `text-muted-foreground` / `hover:bg-accent`; the success / warning / danger / info status variants gain `dark:` tint variants (ramp mid at low alpha for the fill + `-300` text, mirroring the existing `dark:bg-destructive/20` idiom); `TabsCount`, `Tag`, `InlineCode` → `bg-muted`.
+- **Charts** — `Chart` gridlines / tooltip cursor / reference lines `stroke-neutral-200`/`-400` → `stroke-border`, axis ticks `fill-neutral-500` → `fill-muted-foreground`, background sectors + tooltip-cursor rectangle `fill-neutral-100` → `fill-muted`. Fixes the dashed data / KPI gridlines that did not invert.
+- **Inner cards** — `KpiRail` inset divider `before:bg-neutral-200` → `before:bg-border`; `CodeCard` header `bg-neutral-100` → `bg-muted`, tab hover `bg-white/60` → `bg-accent`, amber token-highlight gains a dark variant. The always-dark terminal chrome (`bg-neutral-800`/`-700`) is left intentional.
+
+**`design.md`** — added the **Dark mode (`.dark` theme)** subsection under §2 Colors: the full light/dark token contract table, the `--surface-strong` pair, the raw→token surface map, the status-tint dark convention, and the kept-intentional list. Retired the `bg-neutral-50` field-wash "permitted exception"; updated the quick-reference (`--muted-foreground` neutral-600, dark-aware header) and the step-950 role. This is the tracked contract for the theme.
+
 ## Components
 
 ### Overview preview tables → shared primitives + `NavTableRow` `253c8c0`
