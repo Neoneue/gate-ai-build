@@ -23,6 +23,16 @@ First dark theme. It is driven entirely by a `.dark` class on `<html>` that re-p
 
 Known follow-up: ~460 remaining raw color utilities (`text-neutral-*`, `bg-neutral-*`, `bg-white`) across pages/components do not invert yet; a semantic-token sweep is queued.
 
+### Text-color token sweep — pass 1 `4249b81`
+
+**~70 files across `src/pages` and `src/components/ui`**
+
+App-wide pass 1: every **standalone** text color now uses the semantic tokens so it inverts in dark. `text-neutral-900/800` → `text-foreground`; `text-neutral-700/600/500/400/300` → `text-muted-foreground` (interactive hover/focus states brighten to `foreground`). ~297 swaps, run by three parallel agents plus a reconciling pass.
+
+- Also retuned the light token: `--muted-foreground` `neutral-500` → `neutral-600` (darker/more legible muted text in light); dark stays `neutral-300`. Net pair: `foreground` = neutral-900 / white, `muted-foreground` = neutral-600 / neutral-300.
+- `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
+- **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
+
 ## Components
 
 ### Overview preview tables → shared primitives + `NavTableRow` `253c8c0`
