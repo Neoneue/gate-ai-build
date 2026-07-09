@@ -651,7 +651,7 @@ export function CreateKeyDialog({
             className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
             role="note"
           >
-            <p className="type-copy-14 m-0 text-warning-700">
+            <p className="type-copy-14 m-0 text-warning-700 dark:text-warning-300">
               The full key will only be shown once. Store it securely.
             </p>
           </div>
@@ -755,10 +755,10 @@ export function KeyCreatedDialog({
           className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
           role="note"
         >
-          <p className="type-label-14 m-0 text-warning-700">
+          <p className="type-label-14 m-0 text-warning-700 dark:text-warning-300">
             Store this somewhere safe
           </p>
-          <p className="type-copy-14 m-0 text-warning-700">
+          <p className="type-copy-14 m-0 text-warning-700 dark:text-warning-300">
             Paste it into your secret manager or .env before closing. Once you
             close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the
             key to get a new one.

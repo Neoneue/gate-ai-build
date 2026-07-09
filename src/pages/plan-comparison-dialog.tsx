@@ -150,7 +150,9 @@ function PlanCard({
                 aria-hidden
                 className={cn(
                   "mt-1 size-4 shrink-0",
-                  plan.featured ? "text-blue-700" : "text-muted-foreground"
+                  plan.featured
+                    ? "text-blue-700 dark:text-blue-400"
+                    : "text-muted-foreground"
                 )}
                 strokeWidth={1.75}
               />

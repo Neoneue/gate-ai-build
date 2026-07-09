@@ -392,7 +392,8 @@ export function DownloadGateConnectDialog({
         <div className="relative flex items-start border-border border-b px-6 pt-4 pb-4">
           <div className="flex min-w-0 flex-col gap-0 pr-8">
             <DialogTitle className="type-heading-18 m-0 text-foreground tracking-tight">
-              Download Gate <span className="text-blue-700">Connect</span>
+              Download Gate{" "}
+              <span className="text-blue-700 dark:text-blue-400">Connect</span>
             </DialogTitle>
             <DialogDescription className="type-copy-14 m-0 text-pretty text-muted-foreground">
               The menu-bar app that connects your desktop agents to Gate.

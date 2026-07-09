@@ -19,8 +19,8 @@ type ChoiceTone = "blue" | "success" | "neutral";
  *  gray (`bg-muted`) wrapper; the tone just colors the glyph. `blue` =
  *  primary path, `success` = pay-as-you-go / credits, `neutral` = manual. */
 const CHOICE_ICON_TONE: Record<ChoiceTone, string> = {
-  blue: "text-blue-600",
-  success: "text-success-600",
+  blue: "text-blue-600 dark:text-blue-400",
+  success: "text-success-600 dark:text-success-400",
   neutral: "text-muted-foreground",
 };
 
@@ -209,7 +209,9 @@ export function WaitingStrip({
         aria-hidden
         className={cn(
           "size-5 shrink-0 motion-reduce:animate-none",
-          active ? "animate-spin text-blue-600" : "text-muted-foreground"
+          active
+            ? "animate-spin text-blue-600 dark:text-blue-400"
+            : "text-muted-foreground"
         )}
         strokeWidth={1.75}
       />

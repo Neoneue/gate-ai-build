@@ -120,7 +120,7 @@ export function AuditRecordDialog({
                 <span className="inline-flex items-center gap-2">
                   <CircleCheck
                     aria-hidden
-                    className="size-4 shrink-0 text-success-600"
+                    className="size-4 shrink-0 text-success-600 dark:text-success-400"
                     strokeWidth={1.75}
                   />
                   <span className="sr-only">Verified fingerprint</span>

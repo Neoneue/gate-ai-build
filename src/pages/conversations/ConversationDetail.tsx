@@ -294,7 +294,7 @@ export function ConversationDetailBody({
                 "size-6 shrink-0",
                 bannerTone === "destructive"
                   ? "text-destructive"
-                  : "text-warning-600",
+                  : "text-warning-600 dark:text-warning-300",
               ].join(" ")}
               strokeWidth={1.75}
             />

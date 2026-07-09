@@ -37,7 +37,7 @@ export function ProUpgradeCard({
           aria-hidden
           className="flex size-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-500/15"
         >
-          <Icon className="size-5 text-blue-700" />
+          <Icon className="size-5 text-blue-700 dark:text-blue-400" />
         </div>
       }
       title={title}

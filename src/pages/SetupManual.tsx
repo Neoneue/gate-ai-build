@@ -106,15 +106,15 @@ export function SetupManual() {
         <div className="flex items-center gap-3 rounded-sm border border-success-200 bg-success-50 px-4 py-3 dark:border-success-500/30 dark:bg-success-500/15">
           <span
             aria-hidden
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700 dark:text-success-400"
           >
             <KeyRound className="size-4" />
           </span>
           <div className="flex flex-1 flex-col gap-1">
-            <span className="type-label-14 text-success-800">
+            <span className="type-label-14 text-success-800 dark:text-success-300">
               API key created
             </span>
-            <span className="font-mono text-success-800/80 text-xs tabular-nums">
+            <span className="font-mono text-success-800/80 text-xs tabular-nums dark:text-success-300/80">
               {maskedKey}
             </span>
           </div>
@@ -168,7 +168,7 @@ export function SetupManual() {
           <div className="flex items-center gap-3 rounded-sm border border-border px-4 py-3">
             <Info
               aria-hidden
-              className="size-4 shrink-0 text-blue-600"
+              className="size-4 shrink-0 text-blue-600 dark:text-blue-400"
               strokeWidth={1.75}
             />
             <span className="type-copy-14 flex-1 text-foreground">
@@ -438,7 +438,7 @@ function ModelPicker({
                 {m.handle === value ? (
                   <Check
                     aria-hidden
-                    className="size-4 shrink-0 text-blue-600"
+                    className="size-4 shrink-0 text-blue-600 dark:text-blue-400"
                     strokeWidth={2}
                   />
                 ) : null}

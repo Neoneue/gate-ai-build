@@ -30,8 +30,8 @@ const TRACE_NODE_BORDER: Record<TraceStatus, string> = {
   danger: "border-destructive",
 };
 const TRACE_NODE_ICON_TONE: Record<TraceStatus, string> = {
-  success: "text-success-700",
-  warn: "text-warning-700",
+  success: "text-success-700 dark:text-success-300",
+  warn: "text-warning-700 dark:text-warning-300",
   danger: "text-destructive",
 };
 // Selected-row OUTLINE color, keyed off status (mirrors the messages panel's
@@ -213,7 +213,7 @@ function TraceItem({
   const latencyMs = Number.parseInt(event.latency, 10);
   const isSlowLatency = latencyMs > 1000;
   const latencyTone = isSlowLatency
-    ? "text-warning-700"
+    ? "text-warning-700 dark:text-warning-300"
     : "text-muted-foreground";
 
   // Node ring + icon tone key off guardrail status ONLY: green = clean (no

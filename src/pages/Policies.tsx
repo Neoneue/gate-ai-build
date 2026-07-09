@@ -391,7 +391,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none">
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-500/30 dark:bg-blue-500/10">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -646,7 +646,7 @@ function DetailCard({
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-muted p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon aria-hidden className="size-4 text-blue-700" />
+        <Icon aria-hidden className="size-4 text-blue-700 dark:text-blue-400" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
