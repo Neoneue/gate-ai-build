@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### CTA blue brightened one step in dark mode `b3f623c`
+
+**`Policies.tsx`, `SetupCredits.tsx`, `pro-upgrade-card.tsx`, `plan-comparison-dialog.tsx`, `TokenSavings.tsx`**
+
+Dark-mode-only tweaks on the blue upsell CTAs; light unchanged. Card border `dark:border-blue-500/30` → `dark:border-blue-400/30` (Policies, SetupCredits, pro-upgrade-card); the "Upgrade to Pro" buttons gain `dark:bg-blue-600 dark:hover:bg-blue-700` — one step brighter than the `blue-700/800` they keep in light (Policies ×2, plan-comparison, pro-upgrade-card, TokenSavings).
+
 ### Dark-theme sidebar logo `eef5892`
 
 **`src/components/ui/sidebar.tsx`, `public/gate-ai-logo-dark.png`**
