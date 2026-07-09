@@ -51,4 +51,11 @@ The Overview's three "Latest …" preview tables were hand-rolled `<table>`/`<th
 
 `PageTitle` / `SectionTitle` / `SectionHeading` baked in raw `text-neutral-900`, and `Eyebrow` raw `text-neutral-500`, so titles and eyebrows rendered dark-on-dark in dark mode. Switched to `text-foreground` / `text-muted-foreground`. Light is identical (foreground=neutral-900, muted-foreground=neutral-500 in light); fixes every page title, section title, and eyebrow across the app in dark.
 
+### Dark-mode fixes: segmented controls + monochrome vendor icons `2d0d7a1`
+
+**`src/components/ui/segmented-pill.tsx`, `segmented.tsx`, `src/components/icons/vendor-meta.tsx`**
+
+- Segmented tracks used raw `bg-neutral-100` (near-white in dark) → `bg-background`. The pill's active thumb `bg-card` → `bg-popover` so it sits one elevation step lighter than the card in dark (still white in light). The connected-variant active segment `bg-neutral-900`/`text-white` → `surface-strong` tokens.
+- OpenAI and xAI brand marks used a fixed `#3D3D3D` and disappeared on dark; switched to `var(--foreground)` so the monochrome logos render near-black in light and white in dark. Colored brand marks (Anthropic, Gemini, etc.) unchanged.
+
 ## Sections
