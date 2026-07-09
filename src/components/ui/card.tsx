@@ -25,7 +25,7 @@ function Card({
         // (1px neutral-800/6%) plus subtle ambient lift in one token, replacing
         // the old hard `border + shadow-xs` combo. Adapts to any background
         // without re-tinting the edge.
-        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-neutral-900 text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         className
       )}
       data-density={density}
@@ -73,7 +73,7 @@ function CardTitle({
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("type-copy-14-tight text-neutral-500", className)}
+      className={cn("type-copy-14-tight text-muted-foreground", className)}
       data-slot="card-description"
       {...props}
     />

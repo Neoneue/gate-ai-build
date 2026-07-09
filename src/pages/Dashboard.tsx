@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -32,6 +32,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  NavTableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_RECENT } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -594,269 +603,194 @@ const GUARDRAIL_BADGE: Record<
   block: { variant: "destructive" },
 };
 
-/* ─── Latest Requests preview table ─────────────────────────────────────── */
+/* ─── Overview preview cards ─────────────────────────────────────────────
+ * The three "Latest …" tables share one shell: a flush Card with a title +
+ * "View all" header, then a shared <Table>. The Table sits as the Card's
+ * second child, so its header row picks up the top hairline automatically
+ * (the separator under the title); no border on the header div itself. */
+
+function PreviewCard({
+  title,
+  viewAllTo,
+  children,
+}: {
+  title: string;
+  viewAllTo: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="overflow-hidden" density="flush">
+      <div className="flex shrink-0 items-center justify-between px-4 py-3">
+        <CardTitle>{title}</CardTitle>
+        <Link
+          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          to={viewAllTo}
+        >
+          View all →
+        </Link>
+      </div>
+      {children}
+    </Card>
+  );
+}
 
 function LatestRequestsTable() {
   const navigate = useNavigate();
   const rows: RequestRow[] = REQUEST_ROWS_RECENT.slice(0, 5);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">Latest requests</h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/messages"
-        >
-          View all →
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table aria-label="Latest requests" className="type-copy-14 w-full">
-          <thead>
-            <tr className="border-border border-b bg-neutral-50">
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Time
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Model
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Status
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Security
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((row, i) => (
-              <tr
-                aria-label={
-                  row.requestId
-                    ? `Open request ${row.requestId}`
-                    : "Open request"
+    <PreviewCard title="Latest requests" viewAllTo="/messages">
+      <Table aria-label="Latest requests">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Time</TableHead>
+            <TableHead>Model</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Security</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, i) => (
+            <NavTableRow
+              aria-label={
+                row.requestId ? `Open request ${row.requestId}` : "Open request"
+              }
+              key={row.requestId ?? i}
+              onActivate={() => {
+                if (row.requestId) {
+                  navigate(`/requests?open=${row.requestId}`);
                 }
-                className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
-                key={row.requestId ?? i}
-                onClick={() =>
-                  row.requestId && navigate(`/requests?open=${row.requestId}`)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.currentTarget.click();
+              }}
+            >
+              <TableCell className="whitespace-nowrap font-mono">
+                {row.day} {row.time}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">{row.model}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                <Badge
+                  variant={
+                    row.slow
+                      ? "warning"
+                      : row.status === "success"
+                        ? "success"
+                        : "destructive"
                   }
-                }}
-                role="link"
-                tabIndex={0}
-              >
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
-                  {row.day} {row.time}
-                </td>
-                <td className="type-copy-12 whitespace-nowrap px-4 py-3 text-foreground">
-                  {row.model}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <Badge
-                    variant={
-                      row.slow
-                        ? "warning"
-                        : row.status === "success"
-                          ? "success"
-                          : "destructive"
-                    }
-                  >
-                    {row.slow ? "slow" : row.status}
-                  </Badge>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
-                    {row.guardrail}
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                >
+                  {row.slow ? "slow" : row.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
+                  {row.guardrail}
+                </Badge>
+              </TableCell>
+            </NavTableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </PreviewCard>
   );
 }
-
-/* ─── Recent Conversations preview table ────────────────────────────────── */
 
 function RecentConversationsTable() {
   const navigate = useNavigate();
   const rows: ConversationRow[] = CONVERSATION_ROWS.slice(0, 5);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest conversations
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/conversations"
-        >
-          View all →
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table
-          aria-label="Latest conversations"
-          className="type-copy-14 w-full"
-        >
-          <thead>
-            <tr className="border-border border-b bg-neutral-50">
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Conversation
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Updated
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-muted-foreground">
-                Turns
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-right text-muted-foreground">
-                Reqs
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((row) => (
-              <tr
-                aria-label={`Open conversation: ${row.title}`}
-                className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
-                key={row.conversationId}
-                onClick={() =>
-                  navigate(`/conversations?open=${row.conversationId}`)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.currentTarget.click();
-                  }
-                }}
-                role="link"
-                tabIndex={0}
-              >
-                <td className="w-full max-w-0 overflow-hidden px-4 py-3">
-                  <span className="type-copy-12 block truncate text-foreground">
-                    {row.title}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
-                  {formatTimestamp(row.updated)}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-foreground text-xs">
-                  {row.turns}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-foreground text-xs">
-                  {row.reqs}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <PreviewCard title="Latest conversations" viewAllTo="/conversations">
+      <Table aria-label="Latest conversations">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Conversation</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="text-right">Turns</TableHead>
+            <TableHead className="text-right">Reqs</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <NavTableRow
+              aria-label={`Open conversation: ${row.title}`}
+              key={row.conversationId}
+              onActivate={() =>
+                navigate(`/conversations?open=${row.conversationId}`)
+              }
+            >
+              <TableCell className="w-full max-w-0">
+                <span className="block truncate">{row.title}</span>
+              </TableCell>
+              <TableCell className="whitespace-nowrap font-mono">
+                {formatTimestamp(row.updated)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-right font-mono">
+                {row.turns}
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-right font-mono">
+                {row.reqs}
+              </TableCell>
+            </NavTableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </PreviewCard>
   );
 }
-
-/* ─── Security Events preview table ─────────────────────────────────────── */
 
 function SecurityEventsTable() {
   const navigate = useNavigate();
   const rows: EventRow[] = EVENT_ROWS.slice(0, 5);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs">
-      <div className="flex shrink-0 items-center justify-between border-border border-b px-4 py-3">
-        <h3 className="type-label-14 m-0 text-foreground">
-          Latest security events
-        </h3>
-        <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring/50"
-          to="/security"
-        >
-          View all →
-        </Link>
-      </div>
-      <div className="overflow-x-auto">
-        <table
-          aria-label="Latest security events"
-          className="type-copy-14 w-full"
-        >
-          <thead>
-            <tr className="border-border border-b bg-neutral-50">
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Time
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Type
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Action
-              </th>
-              <th className="type-label-12 whitespace-nowrap px-4 py-2 text-left text-muted-foreground">
-                Key
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((row, i) => {
-              const badge = ACTION_BADGE[row.action];
-              const typeMeta = TYPE_META[row.type];
-              const TypeIcon = typeMeta.Icon;
-              return (
-                <tr
-                  aria-label={
-                    row.requestId
-                      ? `View security event ${row.requestId}`
-                      : "View security event"
-                  }
-                  className="h-12 cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-neutral-100 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-neutral-50"
-                  key={row.requestId ?? i}
-                  onClick={() => navigate(`/security?open=${row.requestId}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      e.currentTarget.click();
-                    }
-                  }}
-                  role="link"
-                  tabIndex={0}
-                >
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-foreground text-xs">
-                    {formatTimestamp(parseEventTime(row.time))}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <span className="inline-flex items-center gap-2">
-                      <TypeIcon
-                        aria-hidden
-                        className="size-4 shrink-0"
-                        strokeWidth={1.75}
-                        style={{ color: typeMeta.color }}
-                      />
-                      <span className="type-copy-12 text-foreground">
-                        {typeMeta.label}
-                      </span>
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-muted-foreground text-xs">
-                    {row.key.split(" (")[0]}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <PreviewCard title="Latest security events" viewAllTo="/security">
+      <Table aria-label="Latest security events">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Time</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Key</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, i) => {
+            const badge = ACTION_BADGE[row.action];
+            const typeMeta = TYPE_META[row.type];
+            const TypeIcon = typeMeta.Icon;
+            return (
+              <NavTableRow
+                aria-label={
+                  row.requestId
+                    ? `View security event ${row.requestId}`
+                    : "View security event"
+                }
+                key={row.requestId ?? i}
+                onActivate={() => navigate(`/security?open=${row.requestId}`)}
+              >
+                <TableCell className="whitespace-nowrap font-mono">
+                  {formatTimestamp(parseEventTime(row.time))}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <span className="inline-flex items-center gap-2">
+                    <TypeIcon
+                      aria-hidden
+                      className="size-4 shrink-0"
+                      strokeWidth={1.75}
+                      style={{ color: typeMeta.color }}
+                    />
+                    <span>{typeMeta.label}</span>
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-muted-foreground">
+                  {row.key.split(" (")[0]}
+                </TableCell>
+              </NavTableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </PreviewCard>
   );
 }
