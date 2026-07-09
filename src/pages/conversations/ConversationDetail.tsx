@@ -351,7 +351,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -422,7 +422,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -496,7 +496,7 @@ export function ConversationDetailBody({
               <div
                 className={
                   variant === "page"
-                    ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                    ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                     : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                 }
               >
