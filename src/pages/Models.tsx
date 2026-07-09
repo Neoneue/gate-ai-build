@@ -598,7 +598,7 @@ function ModelsTable({
           const context = formatContext(head.contextK, model.modality);
           return (
             <TableRow
-              className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
+              className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
               key={model.id}
               onClick={() => onSelect(model)}
             >
@@ -1260,7 +1260,7 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
       className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
       title={PROVIDER_LABELS[provider]}
     >
-      <span className="size-2 rounded-full bg-neutral-400" />
+      <span className="size-2 rounded-full bg-muted-foreground" />
     </span>
   );
 }

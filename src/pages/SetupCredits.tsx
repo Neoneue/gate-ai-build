@@ -61,8 +61,8 @@ export function SetupCredits() {
                   className={cn(
                     "type-label-14 flex h-12 items-center justify-center rounded-sm border tabular-nums outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
                     selected
-                      ? "border-blue-200 bg-blue-50 text-blue-700"
-                      : "border-border bg-card text-foreground hover:border-neutral-300"
+                      ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300"
+                      : "border-border bg-card text-foreground hover:border-input"
                   )}
                   key={value}
                   onClick={() => setAmount(value)}

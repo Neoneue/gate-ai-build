@@ -622,7 +622,7 @@ function ConversationsTableSection({
                 <TableBody>
                   {visibleRows.map((row) => (
                     <TableRow
-                      className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
+                      className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
                       key={row.conversationId}
                       onClick={() =>
                         navigate(`/conversations-trace/${row.conversationId}`)

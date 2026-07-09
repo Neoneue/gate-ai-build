@@ -66,7 +66,7 @@ function TabsList({
       ) : null}
       {variant === "line" ? (
         <TabsPrimitive.Indicator
-          className="absolute bottom-[-1px] left-(--active-tab-left) z-0 h-0.5 w-(--active-tab-width) bg-neutral-900 transition-[left,width] duration-200 ease-out motion-reduce:transition-none"
+          className="absolute bottom-[-1px] left-(--active-tab-left) z-0 h-0.5 w-(--active-tab-width) bg-primary transition-[left,width] duration-200 ease-out motion-reduce:transition-none"
           data-slot="tabs-indicator"
         />
       ) : null}

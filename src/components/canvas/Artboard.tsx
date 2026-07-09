@@ -160,7 +160,7 @@ function CanvasControls({
         {Math.round(scale * 100)}%
       </span>
       <button
-        className="inline-flex h-7 items-center justify-center rounded-sm px-3 font-mono text-muted-foreground text-xs transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        className="inline-flex h-7 items-center justify-center rounded-sm px-3 font-mono text-muted-foreground text-xs transition-[colors,scale] duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
         onClick={onReset}
         type="button"
       >

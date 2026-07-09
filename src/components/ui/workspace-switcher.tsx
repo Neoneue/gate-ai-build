@@ -14,7 +14,7 @@ import {
  * name + current-tier badge. The dropdown lists all three tiers, each with
  * its own badge, so switching is a single click. */
 
-const ACTIVE_ITEM = "bg-neutral-100 data-[highlighted]:bg-neutral-100";
+const ACTIVE_ITEM = "bg-accent data-[highlighted]:bg-accent";
 
 export function WorkspaceSwitcher() {
   const { pathname } = useLocation();
@@ -31,7 +31,7 @@ export function WorkspaceSwitcher() {
       <MenuTrigger
         render={
           <button
-            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-neutral-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] aria-expanded:bg-neutral-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-accent focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] aria-expanded:bg-accent motion-reduce:transition-none motion-reduce:active:scale-100"
             type="button"
           />
         }

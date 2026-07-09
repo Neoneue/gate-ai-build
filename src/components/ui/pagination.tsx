@@ -53,9 +53,9 @@ function PaginationLink({
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "border-border font-normal text-muted-foreground tabular-nums -tracking-[0.01em]",
-        "hover:bg-neutral-50 hover:text-foreground",
+        "hover:bg-accent hover:text-foreground",
         isActive &&
-          "border-neutral-800 bg-neutral-800 font-medium text-white hover:bg-neutral-800 hover:text-white",
+          "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground",
         className
       )}
       data-active={isActive}

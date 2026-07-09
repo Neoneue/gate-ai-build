@@ -648,7 +648,7 @@ export function CreateKeyDialog({
           {/* Warning callout — tinted card, not inline-icon text. Modal-
               interior radius is rounded-md (8px) per design system. */}
           <div
-            className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
+            className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
             role="note"
           >
             <p className="type-copy-14 m-0 text-warning-700">
@@ -727,13 +727,13 @@ export function KeyCreatedDialog({
         {/* Key display — one merged surface: mono value + Copy split by a
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
-        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-neutral-100">
+        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-muted">
           <div className="flex-1 break-all px-3 py-2 font-mono text-foreground text-sm">
             {fullKey}
           </div>
           <button
             aria-label={copied ? "Copied" : "Copy API key"}
-            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-muted-foreground transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-muted-foreground transition-[colors,scale] duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
             type="button"
           >
@@ -752,7 +752,7 @@ export function KeyCreatedDialog({
 
         {/* Warning callout — same tinted-card recipe as <CreateKeyDialog>. */}
         <div
-          className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
+          className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
           role="note"
         >
           <p className="type-label-14 m-0 text-warning-700">

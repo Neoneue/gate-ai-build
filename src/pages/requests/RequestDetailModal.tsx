@@ -533,7 +533,7 @@ export function RequestDetailBodyV2({
                               the originating message above the No-findings card. */}
                         <RequestBodyPanel bare messagesOnly row={row} />
                         <div className="flex h-[304px] flex-col items-center justify-center gap-2 rounded-md border border-border bg-card text-center">
-                          <div className="flex size-10 items-center justify-center rounded-full bg-neutral-100">
+                          <div className="flex size-10 items-center justify-center rounded-full bg-muted">
                             <ShieldCheck
                               aria-hidden
                               className="size-5 text-muted-foreground"
@@ -926,7 +926,7 @@ function FindingSwitcherCard({
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-muted-foreground shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-muted-foreground shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-accent hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -1002,7 +1002,7 @@ function CountChip({
 }) {
   return (
     <span
-      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-neutral-100 px-2 font-medium font-mono text-muted-foreground tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
+      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-muted px-2 font-medium font-mono text-muted-foreground tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
     >
       {count}
     </span>
@@ -1103,8 +1103,8 @@ function EvidenceWindow({
     }
     const tone =
       f.action === "block"
-        ? "bg-danger-50 text-danger-700"
-        : "bg-warning-50 text-warning-700";
+        ? "bg-danger-50 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300"
+        : "bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300";
     const isSelectedSpan =
       f === selectedFinding && start === selectedFirstStart;
     evidenceNodes.push(
@@ -1243,8 +1243,8 @@ function PiiDetailPanel({
     }
     const tone =
       f.action === "block"
-        ? "bg-danger-50 text-danger-700"
-        : "bg-warning-50 text-warning-700";
+        ? "bg-danger-50 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300"
+        : "bg-warning-50 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300";
     const isSelectedSpan = f === finding && start === selectedFirstStart;
     evidenceNodes.push(
       <span
@@ -1841,7 +1841,7 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden

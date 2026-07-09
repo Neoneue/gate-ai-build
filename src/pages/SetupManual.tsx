@@ -103,7 +103,7 @@ export function SetupManual() {
   const createKeyStep = (
     <div className="rounded-md border border-border bg-card p-4">
       {keySaved && maskedKey ? (
-        <div className="flex items-center gap-3 rounded-sm border border-success-200 bg-success-50 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-sm border border-success-200 bg-success-50 px-4 py-3 dark:border-success-500/30 dark:bg-success-500/15">
           <span
             aria-hidden
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700"
@@ -345,7 +345,7 @@ function StepHeading({
     <h2 className="type-label-14 m-0 flex items-center gap-2 text-foreground">
       <span
         aria-hidden
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-success-600 bg-success-50 text-success-700 tabular-nums"
+        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-success-600 bg-success-50 text-success-700 tabular-nums dark:bg-success-500/15 dark:text-success-300"
       >
         {n}
       </span>
@@ -382,7 +382,7 @@ function ModelPicker({
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger
         aria-label="Choose a model"
-        className="group/select flex h-9 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-neutral-50 pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-72"
+        className="group/select flex h-9 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-72"
       >
         <span className="flex flex-1 items-center gap-2 overflow-hidden">
           {selected ? (
@@ -427,7 +427,7 @@ function ModelPicker({
           ) : (
             filtered.map((m) => (
               <button
-                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100 data-[active=true]:bg-neutral-100"
+                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-accent focus-visible:bg-accent data-[active=true]:bg-accent"
                 data-active={m.handle === value}
                 key={m.handle}
                 onClick={() => onSelect(m.handle)}

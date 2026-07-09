@@ -331,7 +331,7 @@ function PolicyCard({
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
@@ -409,7 +409,7 @@ function ProBenefitsCard() {
             <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
               {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
                 <li className="flex items-start gap-3" key={benefit.title}>
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-blue-800">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300">
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
@@ -547,7 +547,7 @@ function SettingsHalf({
             />
             <span
               aria-hidden
-              className="absolute top-1/2 left-2 h-1 -translate-y-1/2 rounded-full bg-neutral-400 transition-[width] duration-200 ease-out motion-reduce:transition-none"
+              className="absolute top-1/2 left-2 h-1 -translate-y-1/2 rounded-full bg-muted-foreground transition-[width] duration-200 ease-out motion-reduce:transition-none"
               style={{ width: `calc((100% - 1rem) * ${fillFraction})` }}
             />
             {/* Sliding thumb — glides between stops on the strong ease-out
@@ -564,9 +564,10 @@ function SettingsHalf({
                 className={cn(
                   // Hide the inner check dot — the floating thumb above is the
                   // handle. Grow + darken on hover so stops read as clickable.
-                  "relative z-10 transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-neutral-500 motion-reduce:transform-none [&_[data-slot=radio-group-indicator]]:hidden",
+                  "relative z-10 transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none [&_[data-slot=radio-group-indicator]]:hidden",
                   // Stops up to and including the selection read as "passed".
-                  i <= selectedIndex && "border-neutral-400 bg-neutral-400"
+                  i <= selectedIndex &&
+                    "border-muted-foreground bg-muted-foreground"
                 )}
                 key={opt.value}
                 value={opt.value}
@@ -643,7 +644,7 @@ function DetailCard({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-neutral-50 p-3">
+    <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-muted p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
         <Icon aria-hidden className="size-4 text-blue-700" />
       </span>

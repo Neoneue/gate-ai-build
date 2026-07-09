@@ -27,7 +27,7 @@ export const ICON_COLOR: Record<string, string> = {
  *  red — mirrors the finding-card action tones. */
 export const ACTION_ACTIVE_BORDER: Record<string, string> = {
   flag: "border-warning-500",
-  redact: "border-neutral-600",
+  redact: "border-muted-foreground",
   block: "border-destructive",
 };
 
@@ -53,7 +53,7 @@ export const SCAN_DIRECTION_ICON: Record<string, LucideIcon> = {
  *  keeps the neutral surface. */
 export const ACTION_ACTIVE_FILL: Record<string, string> = {
   flag: "bg-warning-25",
-  redact: "bg-neutral-50",
+  redact: "bg-muted",
   block: "bg-danger-25",
 };
 
@@ -62,7 +62,7 @@ export const ACTION_ACTIVE_FILL: Record<string, string> = {
  *  than going gray. */
 export const ACTION_HOVER: Record<string, string> = {
   flag: "hover:border-warning-200 hover:bg-warning-25",
-  redact: "hover:border-neutral-300 hover:bg-neutral-50",
+  redact: "hover:border-input hover:bg-accent",
   block: "hover:border-danger-200 hover:bg-danger-25",
 };
 

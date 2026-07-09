@@ -259,7 +259,7 @@ function TraceItem({
           the line where it crosses. */}
       <span
         aria-hidden
-        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-border ${trackSegment}`}
       />
       {/* Selected fill — an opaque card overlay that paints ABOVE the track
           (so the gray line doesn't show through the selected row) but below
@@ -384,13 +384,13 @@ function TracePassingSeparator({
     <div aria-hidden className="relative -mx-2 flex gap-3 px-3 py-3">
       {/* Continuous track segment at x=23 — same centerline as TraceItem. */}
       <span
-        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-border ${trackSegment}`}
       />
       {/* Node column placeholder — a small hollow dot centered on the rail
           (x=24) so the eye still tracks the timeline, but visibly lighter
           than a status node (no 2px ring, no icon). */}
       <div className="relative flex size-6 shrink-0 items-center justify-center">
-        <span className="size-1.5 rounded-full bg-neutral-300" />
+        <span className="size-1.5 rounded-full bg-muted-foreground" />
       </div>
       {/* Muted count copy. Mono so it sits in the data voice but quiet. */}
       <div className="flex min-w-0 flex-1 items-center">

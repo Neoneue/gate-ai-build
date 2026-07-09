@@ -283,8 +283,8 @@ export function ConversationDetailBody({
             className={[
               "flex items-center gap-4 rounded-md border p-4",
               bannerTone === "destructive"
-                ? "border-destructive/50 bg-danger-50"
-                : "border-warning-500/50 bg-warning-50",
+                ? "border-destructive/50 bg-danger-50 dark:bg-danger-500/15"
+                : "border-warning-500/50 bg-warning-50 dark:bg-warning-500/15",
             ].join(" ")}
             role="status"
           >

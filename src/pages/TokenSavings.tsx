@@ -718,7 +718,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
             // its gradient + CTA, so keeping checks light lets the saturated CTA
             // button stay the single loudest element instead of competing with
             // a mass of solid-blue dots.
-            checkClassName="bg-blue-100 text-blue-700"
+            checkClassName="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
             outlineClassName={isPro ? "border-border" : "border-blue-200"}
           />
         </div>

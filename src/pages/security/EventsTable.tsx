@@ -420,7 +420,7 @@ export function EventsTableSection({
                     const TypeIcon = typeMeta.Icon;
                     return (
                       <TableRow
-                        className="cursor-pointer transition-colors duration-150 ease-out hover:bg-neutral-50 motion-reduce:transition-none"
+                        className="cursor-pointer transition-colors duration-150 ease-out hover:bg-accent motion-reduce:transition-none"
                         key={`${row.time}-${i}`}
                         onClick={() => setSelectedRow(row)}
                         onKeyDown={(e) => {
