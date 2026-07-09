@@ -202,6 +202,8 @@ and (pointer: fine)) and (&:hover));
  * No raw hex / oklch / rgba in this block — the palette in @theme above
  * is the single source of truth for color values. */
 :root {
+  color-scheme: light;
+
   --canvas-bg:   var(--color-canvas);
   --canvas-grid: color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
@@ -211,6 +213,11 @@ and (pointer: fine)) and (&:hover));
   --card-foreground: var(--color-neutral-900);
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-900);
+  /* Intentional dark surfaces — the hero chart card, code cards, dark
+     tooltips. Deliberately dark in BOTH themes (a near-black panel on light,
+     stays dark on dark), so they never follow the theme like a normal card. */
+  --surface-strong: var(--color-neutral-900);
+  --surface-strong-foreground: var(--color-neutral-50);
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Gray-spectrum semantic tokens trace to the ink palette so `bg-muted`,
@@ -317,6 +324,8 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-strong-foreground: var(--surface-strong-foreground);
   --radius-xs: calc(var(--radius) * 0.4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -333,10 +342,62 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Dark mode block intentionally absent — sonner is hardcoded to "light"
-   and no `.dark` class is applied anywhere in the app. If dark mode is
-   ever activated, redefine these tokens against a dark ink/blue palette
-   here rather than re-introducing raw oklch values. */
+/* ─── Dark theme ────────────────────────────────────────────────────────
+ * Activated by the `.dark` class on <html> (set pre-paint by the inline
+ * script in index.html, owned at runtime by ThemeProvider). Same rule as
+ * `:root`: no raw oklch here — every token re-points at a palette atom.
+ *
+ * Values follow the shadcn/Geist dark scale. Elevation is INVERTED vs.
+ * light: light mode has a gray canvas with white cards raised above it; dark
+ * makes the base the DARKEST plane and steps raised surfaces LIGHTER. Hairline
+ * separation is carried by translucent-white borders, not shadows (near-black
+ * drop-shadows vanish on a dark ground).
+ *
+ *   elevation ladder:  bg / sidebar 950  ·  card 900  ·  popover / muted /
+ *   secondary 800  ·  accent (hover) 700    text: foreground white ·
+ *   muted-foreground 300    borders: white 10% / input white 15%
+ *
+ * Chart hues and radius inherit from `:root` (the bright OKLCH chart slots
+ * already read on dark). */
+.dark {
+  color-scheme: dark;
+
+  --canvas-bg:   var(--color-neutral-950);
+  --canvas-grid: color-mix(in oklch, var(--color-white) 8%, transparent);
+
+  --background: var(--color-neutral-950);
+  --foreground: var(--color-white);
+  --card: var(--color-neutral-900);
+  --card-foreground: var(--color-neutral-50);
+  --popover: var(--color-neutral-800);
+  --popover-foreground: var(--color-neutral-50);
+  --primary: var(--color-neutral-200);
+  --primary-foreground: var(--color-neutral-800);
+  --secondary: var(--color-neutral-800);
+  --secondary-foreground: var(--color-neutral-50);
+  --muted: var(--color-neutral-800);
+  --muted-foreground: var(--color-neutral-300);
+  --accent: var(--color-neutral-700);
+  --accent-foreground: var(--color-neutral-50);
+  --destructive: var(--color-danger-400);
+  /* Translucent white hairlines — read correctly on any dark surface
+     (Vercel/shadcn gray-alpha technique), unlike a fixed neutral step. */
+  --border: color-mix(in oklch, var(--color-white) 10%, transparent);
+  --input: color-mix(in oklch, var(--color-white) 15%, transparent);
+  --ring: var(--color-neutral-500);
+
+  --surface-strong: var(--color-neutral-900);
+  --surface-strong-foreground: var(--color-neutral-50);
+
+  --sidebar: var(--color-neutral-950);
+  --sidebar-foreground: var(--color-neutral-50);
+  --sidebar-primary: var(--color-neutral-50);
+  --sidebar-primary-foreground: var(--color-neutral-900);
+  --sidebar-accent: var(--color-neutral-800);
+  --sidebar-accent-foreground: var(--color-neutral-50);
+  --sidebar-border: color-mix(in oklch, var(--color-white) 10%, transparent);
+  --sidebar-ring: var(--color-neutral-500);
+}
 
 @layer base {
   * {

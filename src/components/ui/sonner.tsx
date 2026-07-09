@@ -6,8 +6,10 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { useTheme } from "@/hooks/use-theme";
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme } = useTheme();
   return (
     <Sonner
       className="toaster group"
@@ -20,15 +22,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          // Skill: emil-design-eng — no hardcoded hex; route through the
-          // theme background var so the toast surface tracks light/dark.
-          "--normal-bg": "var(--background)",
-          "--normal-text": "var(--color-neutral-900)",
-          "--normal-border": "var(--color-neutral-200)",
+          // No hardcoded hex — route through the semantic tokens so the toast
+          // surface + text + border all track light/dark. Popover tier gives
+          // it the right raised surface in both themes.
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
           "--border-radius": "var(--radius-md)",
         } as React.CSSProperties
       }
-      theme="light"
+      theme={theme}
       toastOptions={{
         classNames: {
           toast: "cn-toast",
