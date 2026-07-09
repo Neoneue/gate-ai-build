@@ -795,9 +795,13 @@ function FindingCard({
     finding.action === "block" ? "border-destructive" : "border-warning-500";
   // Active card background: ultralight action-tone tint (warning-25 flag/redact, danger-25 block).
   const activeBg =
-    finding.action === "block" ? "bg-danger-25" : "bg-warning-25";
+    finding.action === "block"
+      ? "bg-danger-25 dark:bg-danger-500/10"
+      : "bg-warning-25 dark:bg-warning-500/10";
   const hoverBg =
-    finding.action === "block" ? "hover:bg-danger-25" : "hover:bg-warning-25";
+    finding.action === "block"
+      ? "hover:bg-danger-25 dark:hover:bg-danger-500/15"
+      : "hover:bg-warning-25 dark:hover:bg-warning-500/15";
   const base =
     "flex flex-col gap-2 rounded-xs border px-4 py-3 text-left shadow-xs";
   const content = (
@@ -917,9 +921,13 @@ function FindingSwitcherCard({
       : "border-warning-200 hover:border-warning-300";
   // Active card background: ultralight action-tone tint (warning-25 flag/redact, danger-25 block).
   const activeBg =
-    current.action === "block" ? "bg-danger-25" : "bg-warning-25";
+    current.action === "block"
+      ? "bg-danger-25 dark:bg-danger-500/10"
+      : "bg-warning-25 dark:bg-warning-500/10";
   const hoverBg =
-    current.action === "block" ? "hover:bg-danger-25" : "hover:bg-warning-25";
+    current.action === "block"
+      ? "hover:bg-danger-25 dark:hover:bg-danger-500/15"
+      : "hover:bg-warning-25 dark:hover:bg-warning-500/15";
   // Inactive group: BOTH paddles are disabled. You click the card to enter the
   // group (lands on its first finding), then the paddles step. Keeps an
   // unselected group from offering controls that do nothing visible yet.

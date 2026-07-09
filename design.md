@@ -533,6 +533,7 @@ Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → *
 | `bg-danger-100 text-danger-800` | `dark:bg-destructive/20 dark:text-danger-300` |
 | `bg-blue-700/10 text-blue-600` | `dark:bg-blue-500/15 dark:text-blue-300` |
 | hover `hover:bg-*-200` | `dark:hover:bg-*-500/25` |
+| **ultralight `bg-*-25` large fills** (finding cards, callout `Card`s) | `dark:bg-*-500/10` (fill), `dark:bg-*-500/15` (hover); pair `border-*-200` → `dark:border-*-500/30` |
 
 The **neutral** badge / chip is NOT a tint — it tokenizes to `bg-muted text-muted-foreground` and needs no `dark:` variant.
 

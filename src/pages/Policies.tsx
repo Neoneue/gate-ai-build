@@ -116,7 +116,7 @@ function FreePlanNoticeBanner() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none">
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-500/30 dark:bg-blue-500/10">
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

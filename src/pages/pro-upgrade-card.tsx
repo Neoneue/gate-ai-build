@@ -31,7 +31,7 @@ export function ProUpgradeCard({
         </div>
       }
       body={body}
-      className="border-blue-200 bg-blue-25 shadow-sm [&_h3]:text-balance"
+      className="border-blue-200 bg-blue-25 shadow-sm dark:border-blue-500/30 dark:bg-blue-500/10 [&_h3]:text-balance"
       icon={
         <div
           aria-hidden

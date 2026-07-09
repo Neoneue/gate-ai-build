@@ -52,18 +52,19 @@ export const SCAN_DIRECTION_ICON: Record<string, LucideIcon> = {
  *  tone so the card reads colored, not gray. Redact has no color scale, so it
  *  keeps the neutral surface. */
 export const ACTION_ACTIVE_FILL: Record<string, string> = {
-  flag: "bg-warning-25",
+  flag: "bg-warning-25 dark:bg-warning-500/10",
   redact: "bg-muted",
-  block: "bg-danger-25",
+  block: "bg-danger-25 dark:bg-danger-500/10",
 };
 
 /** Hover preview for an unselected action — a lighter tone of the active
  *  border plus the -25 fill, so hovering previews the selected color rather
  *  than going gray. */
 export const ACTION_HOVER: Record<string, string> = {
-  flag: "hover:border-warning-200 hover:bg-warning-25",
+  flag: "hover:border-warning-200 hover:bg-warning-25 dark:hover:border-warning-500/30 dark:hover:bg-warning-500/15",
   redact: "hover:border-input hover:bg-accent",
-  block: "hover:border-danger-200 hover:bg-danger-25",
+  block:
+    "hover:border-danger-200 hover:bg-danger-25 dark:hover:border-danger-500/30 dark:hover:bg-danger-500/15",
 };
 
 /** Checked radio fill/border per action — matches ACTION_ACTIVE_BORDER so the
