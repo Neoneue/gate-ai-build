@@ -316,9 +316,15 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
     >
       <img
         alt="Constellation Gate AI"
-        className="h-8 w-auto"
+        className="h-8 w-auto dark:hidden"
         draggable={false}
         src="/gate-ai-logo.png"
+      />
+      <img
+        alt="Constellation Gate AI"
+        className="hidden h-8 w-auto dark:block"
+        draggable={false}
+        src="/gate-ai-logo-dark.png"
       />
     </button>
   );
