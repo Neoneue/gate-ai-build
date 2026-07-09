@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Conversations trace panels get a `bg-card` body `afb819b`
+
+**`src/pages/conversations/ConversationDetail.tsx`, `RequestTracePanel.tsx`**
+
+The Messages and Request Trace panel wrappers had a `border` + `rounded-md` shell but no fill, so their bodies were transparent and showed the neutral-50 page canvas through — grey `bg-muted` message bubbles sat on a grey background. Added `bg-card` to both panel wrappers so each body is white; the muted bubbles now read cleanly against it.
+
 ### `--card-muted` token replaces the neutral-50 wash hardcodes `225d4e8`
 
 **`src/index.css`, `table.tsx`, `segmented.tsx`, `segmented-pill.tsx`, `AuthLayout.tsx`, `DashboardChrome.tsx`, `Billing`/`BillingFree`/`Policies`/`onboarding-shared`, `design.md`**
