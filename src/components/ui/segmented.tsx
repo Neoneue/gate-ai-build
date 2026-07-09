@@ -140,7 +140,7 @@ function SegmentedPillVariant({
     <div
       aria-label={ariaLabel}
       className={cn(
-        "relative inline-flex self-start rounded-sm border border-border bg-background p-1",
+        "relative inline-flex self-start rounded-sm border border-border bg-muted p-1",
         className
       )}
       role="group"

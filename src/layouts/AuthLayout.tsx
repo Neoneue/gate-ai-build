@@ -194,7 +194,7 @@ export function AuthLayout() {
         >
           <DotRadar />
         </div>
-        <div className="hidden bg-background md:block" />
+        <div className="hidden bg-muted md:block" />
       </div>
 
       <div className="relative grid h-full grid-cols-1 grid-rows-[auto_1fr_auto] gap-x-4 px-6 py-8 md:grid-cols-12 md:px-16 md:py-10">

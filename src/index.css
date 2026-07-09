@@ -207,10 +207,19 @@ and (pointer: fine)) and (&:hover));
   --canvas-bg:   var(--color-canvas);
   --canvas-grid: color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
-  --background: var(--color-neutral-100);
+  /* Page canvas = neutral-50 wash. Consumed ONLY by the dashboard content
+     canvas (bg-background). Card/table washes use --card-muted instead, and
+     the segmented tracks use --muted — so bg-background is canvas-only. */
+  --background: var(--color-neutral-50);
   --foreground: var(--color-neutral-900);
   --card: var(--color-white);
   --card-foreground: var(--color-neutral-900);
+  /* Muted extension of the card surface — the neutral-50 wash for card-like
+     panels and table header/footer rows (bg-card-muted). Darker than --card
+     in light (neutral-50 on white), lighter than --card in dark (a raised
+     wash on the neutral-900 card). Distinct from --muted so chips / avatars /
+     segmented keep their neutral-100 fill. */
+  --card-muted: var(--color-neutral-50);
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-900);
   /* Intentional dark surfaces — the hero chart card, code cards, dark
@@ -322,6 +331,7 @@ body {
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+    --color-card-muted: var(--card-muted);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   --color-surface-strong: var(--surface-strong);
@@ -369,6 +379,8 @@ body {
   --foreground: var(--color-white);
   --card: var(--color-neutral-900);
   --card-foreground: var(--color-neutral-50);
+  /* Raised wash on the dark card — one step lighter than --card (neutral-900). */
+  --card-muted: var(--color-neutral-800);
   --popover: var(--color-neutral-800);
   --popover-foreground: var(--color-neutral-50);
   --primary: var(--color-neutral-200);

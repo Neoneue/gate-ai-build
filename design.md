@@ -403,7 +403,7 @@ Two layers: **palette atoms** (5 OKLCH ramps × 11 steps + atomic surfaces + 8-s
 
 **Neutral ramp = Tailwind v4 default neutral (chroma 0).** As of 2026-05-17 the custom `ink-*` ramp was renamed to `neutral-*` and the `@theme` block no longer declares `--color-neutral-*` — Tailwind's built-in values resolve through the semantic aliases. Do not re-add the declarations (it would override defaults). Use `text-neutral-500`, `bg-neutral-100`, `border-neutral-200` at callsites; do not reach for `ink-*` (that token name no longer exists).
 
-**Page canvas vs surface separation.** `--background` resolves to `var(--color-neutral-100)` (the page canvas); `--card` and `--popover` resolve to `var(--color-white)`. Cards visibly lift off the canvas via shadow elevation, not via a tinted card bg. **Surfaces that should remain white** (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome) bind to `bg-card`, NOT `bg-background`. `bg-background` is the canvas color and will render as neutral-100 anywhere it appears.
+**Page canvas vs surface separation.** `--background` resolves to `var(--color-neutral-50)` (the page canvas — the near-white wash the dashboard content area sits on); `--card` and `--popover` resolve to `var(--color-white)`. Cards visibly lift off the canvas via shadow elevation, not via a tinted card bg. `bg-background` is consumed ONLY by the dashboard content canvas — card/table wash panels use `bg-card-muted` and muted chips/fills use `bg-muted`, so `bg-background` never darkens a component. **Surfaces that should remain white** (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome) bind to `bg-card`, NOT `bg-background`.
 
 ### Primary & brand accent
 
@@ -467,7 +467,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 | `text-foreground` | neutral-900 | `text-neutral-900` for primary text, headlines, row identifiers |
 | `text-muted-foreground` | neutral-600 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
 
-**Field-wash (`bg-neutral-50`) — retired 2026-07-09.** Form-field surfaces (Input, Textarea, Select / MultiSelect trigger, InputGroup, table header) previously used a raw neutral-50 wash under a "one permitted exception" carve-out. The 2026-07-09 surface pass tokenized the wash to `bg-muted` (neutral-100 light / neutral-800 dark) so fields invert. The light wash is ~1.5% darker as a result (neutral-50 → neutral-100); accepted as imperceptible next to a white card. No dedicated `--input-bg` token was added — `bg-muted` is the field wash. There is now **no** permitted raw-ramp background exception.
+**Wash surfaces — `--card-muted` token (2026-07-09).** The neutral-50 wash that card-like panels and table header/footer rows sit on is the `--card-muted` token (neutral-50 light / neutral-800 dark) — an extension of `--card`, applied via `bg-card-muted`. It is deliberately separate from `--muted` (neutral-100 / neutral-800): chips, badges, count pills, avatar/icon placeholders, and the segmented-track container keep `bg-muted` at neutral-100, so lightening the panel washes never touches them. Consumers of `bg-card-muted`: shared `TableHeader`/`TableFooter`, and the bordered info-panels on Billing / BillingFree / Policies / onboarding. Form-field fills (Input, Textarea, Select trigger, InputGroup) stay on `bg-muted` for now. No raw `bg-neutral-50` in component code — the wash is a token.
 
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
@@ -484,9 +484,10 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--background` | neutral-100 | neutral-950 |
+| `--background` | neutral-50 | neutral-950 |
 | `--foreground` | neutral-900 | white |
 | `--card` / `-foreground` | white / neutral-900 | neutral-900 / neutral-50 |
+| `--card-muted` | neutral-50 | neutral-800 |
 | `--popover` / `-foreground` | white / neutral-900 | neutral-800 / neutral-50 |
 | `--muted`, `--secondary` | neutral-100 | neutral-800 |
 | `--accent` (hover / active fill) | neutral-100 | neutral-700 |

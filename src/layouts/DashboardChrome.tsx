@@ -73,7 +73,7 @@ export function DashboardChrome({
           sections={sections}
           showLocks={showLocks}
         />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50 dark:bg-neutral-950">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <DashTopBar
             hideDocsButton={hideDocsButton}
             onToggleSidebar={onToggleSidebar}

@@ -67,7 +67,7 @@ export function SegmentedPill({
         // border slot was always reserved (previously transparent) — no layout shift.
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
-        "relative gap-0 rounded-sm border border-border bg-background px-1 py-px",
+        "relative gap-0 rounded-sm border border-border bg-muted px-1 py-px",
         size === "sm" ? "h-8" : "h-10",
         className
       )}

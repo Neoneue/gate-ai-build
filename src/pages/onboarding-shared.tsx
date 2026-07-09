@@ -204,7 +204,7 @@ export function WaitingStrip({
   active?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-muted px-4 py-4 text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-md border border-border bg-card-muted px-4 py-4 text-muted-foreground">
       <Loader2
         aria-hidden
         className={cn(
