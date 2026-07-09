@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
  * site (the monospace grid carries its own optical density).
  * ───────────────────────────────────────────────────────────────────────── */
 
-const TOOL_RESULT_CODE_BASE = "font-mono text-sm text-neutral-900 break-all";
+const TOOL_RESULT_CODE_BASE = "font-mono text-sm text-foreground break-all";
 
 export type ToolResultCodeProps = React.HTMLAttributes<HTMLElement>;
 

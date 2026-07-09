@@ -156,11 +156,11 @@ function CanvasControls({
       className="fixed right-6 bottom-6 z-50 flex items-center gap-2 rounded-sm border border-border bg-card px-2 py-1 shadow-[0_4px_16px_rgba(17,20,23,0.10)]"
       onWheel={(e) => e.stopPropagation()}
     >
-      <span className="px-1 font-mono text-neutral-500 text-xs tabular-nums">
+      <span className="px-1 font-mono text-muted-foreground text-xs tabular-nums">
         {Math.round(scale * 100)}%
       </span>
       <button
-        className="inline-flex h-7 items-center justify-center rounded-sm px-3 font-mono text-neutral-600 text-xs transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        className="inline-flex h-7 items-center justify-center rounded-sm px-3 font-mono text-muted-foreground text-xs transition-[colors,scale] duration-150 ease-out hover:bg-neutral-50 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
         onClick={onReset}
         type="button"
       >

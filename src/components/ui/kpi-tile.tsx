@@ -65,7 +65,7 @@ export function KpiTile({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="type-heading-24 text-neutral-500">
+          <span className="type-heading-24 text-muted-foreground">
             {valueSuffix}
           </span>
         ) : null}
@@ -79,7 +79,7 @@ export function KpiTile({
         </div>
       ) : null}
       {caption ? (
-        <p className="type-copy-14 m-0 text-neutral-500">{caption}</p>
+        <p className="type-copy-14 m-0 text-muted-foreground">{caption}</p>
       ) : null}
       {spark ? <div className="mt-1">{spark}</div> : null}
     </div>

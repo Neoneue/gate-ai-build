@@ -100,10 +100,10 @@ export function SegmentedPill({
             // Paper spec WW7-0: h-8, px-3 (12px), text 12px/16px Geist medium.
             "relative z-10 min-w-0 rounded-xs! px-3 font-medium font-sans text-xs leading-4",
             size === "sm" ? "h-6" : "h-8",
-            "border-0 bg-transparent text-neutral-600",
-            "hover:bg-transparent hover:text-neutral-900",
-            "data-[pressed]:bg-transparent data-[pressed]:text-neutral-900",
-            "aria-pressed:bg-transparent aria-pressed:text-neutral-900"
+            "border-0 bg-transparent text-muted-foreground",
+            "hover:bg-transparent hover:text-foreground",
+            "data-[pressed]:bg-transparent data-[pressed]:text-foreground",
+            "aria-pressed:bg-transparent aria-pressed:text-foreground"
           )}
           key={opt.value}
           ref={(el: HTMLButtonElement | null) => {

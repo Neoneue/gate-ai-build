@@ -526,7 +526,7 @@ function OverviewUsageChart() {
                     <span className="text-right text-foreground">
                       {yFormatter(total)}
                     </span>
-                    <span className="text-neutral-400">·</span>
+                    <span className="text-muted-foreground">·</span>
                     <span className="text-right text-foreground">{pctStr}</span>
                   </div>
                 </div>

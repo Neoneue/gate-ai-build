@@ -295,7 +295,7 @@ export function RequestsTableSection({
                 </DialogHeader>
 
                 <div className="flex flex-col gap-2">
-                  <Label className="type-label-14 text-neutral-600">
+                  <Label className="type-label-14 text-muted-foreground">
                     Model
                   </Label>
                   <Select onValueChange={setDraftModel} value={draftModel}>
@@ -318,7 +318,9 @@ export function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="type-label-14 text-neutral-600">Key</Label>
+                  <Label className="type-label-14 text-muted-foreground">
+                    Key
+                  </Label>
                   <Select onValueChange={setDraftKeyId} value={draftKeyId}>
                     <SelectTrigger
                       aria-label="Key"
@@ -340,7 +342,7 @@ export function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="type-label-14 text-neutral-600">
+                  <Label className="type-label-14 text-muted-foreground">
                     Response
                   </Label>
                   <Select
@@ -363,7 +365,7 @@ export function RequestsTableSection({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="type-label-14 text-neutral-600">
+                  <Label className="type-label-14 text-muted-foreground">
                     Guardrail
                   </Label>
                   <Select
@@ -518,7 +520,7 @@ export function RequestsTableSection({
                               <span
                                 {...props}
                                 aria-label="About the Cost column"
-                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                               >
                                 <Info
                                   aria-hidden
@@ -531,7 +533,7 @@ export function RequestsTableSection({
                           <TooltipContent className="max-w-sm p-2 text-left">
                             <span className="flex flex-col gap-2">
                               <span className="flex items-start gap-2">
-                                <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                                <span className="flex shrink-0 items-center text-muted-foreground leading-5">
                                   <CreditCard
                                     aria-hidden
                                     className="size-3.5 shrink-0"
@@ -544,7 +546,7 @@ export function RequestsTableSection({
                                 </span>
                               </span>
                               <span className="flex items-start gap-2">
-                                <span className="flex shrink-0 items-center text-neutral-400 leading-5">
+                                <span className="flex shrink-0 items-center text-muted-foreground leading-5">
                                   <KeyRound
                                     aria-hidden
                                     className="size-3.5 shrink-0"
@@ -568,7 +570,7 @@ export function RequestsTableSection({
                   {pagedRows.map((row, i) => {
                     const isMissing = row.inTokens === "—";
                     const numericCls = isMissing
-                      ? "text-right whitespace-nowrap font-mono tabular-nums text-neutral-400"
+                      ? "text-right whitespace-nowrap font-mono tabular-nums text-muted-foreground"
                       : "text-right whitespace-nowrap font-mono tabular-nums text-foreground";
                     // Slow rows: leading amber TriangleAlert + neutral-900 (one step
                     // darker than the neutral-800 default). Same weight as non-slow rows
@@ -581,7 +583,7 @@ export function RequestsTableSection({
                     const isSlow = row.slow && row.latency !== "—";
                     const latencyTextCls =
                       row.latency === "—"
-                        ? "text-neutral-400"
+                        ? "text-muted-foreground"
                         : isSlow
                           ? "text-foreground"
                           : "text-foreground";
@@ -705,7 +707,7 @@ export function RequestsTableSection({
                                     <span
                                       {...props}
                                       aria-label="Billed by your provider (BYOK)"
-                                      className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                      className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                                     >
                                       <KeyRound
                                         aria-hidden
@@ -719,7 +721,7 @@ export function RequestsTableSection({
                                   Billed by your provider (BYOK)
                                 </TooltipContent>
                               </Tooltip>
-                              <span className="text-neutral-400">—</span>
+                              <span className="text-muted-foreground">—</span>
                             </span>
                           ) : (
                             <span className="inline-flex items-center justify-end gap-2">
@@ -729,7 +731,7 @@ export function RequestsTableSection({
                                     <span
                                       {...props}
                                       aria-label="Billed by Gate (PAYG)"
-                                      className="inline-flex cursor-help rounded-sm text-neutral-400 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                      className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                                     >
                                       <CreditCard
                                         aria-hidden
@@ -746,7 +748,7 @@ export function RequestsTableSection({
                               <span
                                 className={
                                   isMissing
-                                    ? "text-neutral-400"
+                                    ? "text-muted-foreground"
                                     : "text-foreground"
                                 }
                               >

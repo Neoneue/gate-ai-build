@@ -61,8 +61,8 @@ export interface CodeToken {
 export type CodeLine = CodeToken[];
 
 const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
-  default: "text-neutral-900",
-  muted: "text-neutral-500",
+  default: "text-foreground",
+  muted: "text-muted-foreground",
   keyword: "text-[var(--color-syntax-keyword)]",
   // Brand palette: keys = blue-700 (--color-syntax-property), all literal
   // values = success-700 green (--color-syntax-terminal-blue). One hue per
@@ -161,9 +161,9 @@ export function CodeCardTabs({
           // family's lift instead of inlining its own rgba shadow.
           "inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out",
           isActive
-            ? "border border-border bg-card font-medium text-neutral-900 shadow-xs"
-            : "border border-transparent font-medium text-neutral-600",
-          interactive && !isActive && "hover:bg-white/60 hover:text-neutral-900"
+            ? "border border-border bg-card font-medium text-foreground shadow-xs"
+            : "border border-transparent font-medium text-muted-foreground",
+          interactive && !isActive && "hover:bg-white/60 hover:text-foreground"
         );
         if (interactive) {
           return (

@@ -712,7 +712,7 @@ function InviteMemberDialog({
 
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="invite-email"
             >
               Email
@@ -741,7 +741,7 @@ function InviteMemberDialog({
 
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="invite-role"
             >
               Role

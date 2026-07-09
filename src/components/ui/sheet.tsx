@@ -98,7 +98,7 @@ function SheetContent({
           // wider inspector surfaces than centered modals (which ship gap-4),
           // so the section rhythm wants more air. Tightening at the call
           // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex w-full flex-col gap-6 overscroll-contain border-border border-l bg-card p-4 text-neutral-900 text-sm shadow-(--shadow-modal) outline-none sm:max-w-2xl",
+          "fixed inset-y-0 right-0 z-50 flex w-full flex-col gap-6 overscroll-contain border-border border-l bg-card p-4 text-foreground text-sm shadow-(--shadow-modal) outline-none sm:max-w-2xl",
           // Slide animation. Uses tw-animate keyframes (same plugin Dialog
           // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
           // Mixing tw-animate keyframes for the backdrop with CSS transitions
@@ -199,7 +199,7 @@ function SheetDescription({
   return (
     <DialogPrimitive.Description
       className={cn(
-        "text-neutral-600 text-sm *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
+        "text-muted-foreground text-sm *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
       data-slot="sheet-description"

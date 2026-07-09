@@ -106,7 +106,7 @@ export function CopyButton(props: CopyButtonProps) {
         aria-label={copied ? "Copied" : restingText}
         className={cn(
           labelSize === "compact" &&
-            "h-6 gap-1 px-2 font-medium text-neutral-600 hover:text-neutral-900",
+            "h-6 gap-1 px-2 font-medium text-muted-foreground hover:text-foreground",
           className
         )}
         onClick={trigger}
@@ -144,7 +144,7 @@ export function CopyButton(props: CopyButtonProps) {
       <button
         aria-label={ariaLabel}
         className={cn(
-          'relative inline-flex size-5 items-center justify-center rounded-xs text-neutral-500 transition-colors duration-150 ease-out before:absolute before:inset-[-2px] before:content-[""] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
+          'relative inline-flex size-5 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-[-2px] before:content-[""] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
           copied && "text-success-600 hover:text-success-600",
           className
         )}

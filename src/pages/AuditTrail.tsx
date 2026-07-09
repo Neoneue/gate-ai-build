@@ -171,7 +171,7 @@ function FingerprintInfoTooltip() {
           <button
             {...props}
             aria-label="What is a fingerprint?"
-            className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             type="button"
           />
         )}
@@ -450,7 +450,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">
+              <Label className="type-label-14 text-muted-foreground">
                 Event time
               </Label>
               <DateRangePicker
@@ -462,7 +462,9 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Member</Label>
+              <Label className="type-label-14 text-muted-foreground">
+                Member
+              </Label>
               <MultiSelect
                 aria-label="Filter by member"
                 onValueChange={setDraftMembers}
@@ -476,7 +478,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">
+              <Label className="type-label-14 text-muted-foreground">
                 Event type
               </Label>
               <MultiSelect

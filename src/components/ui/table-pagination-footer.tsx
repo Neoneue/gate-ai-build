@@ -86,17 +86,17 @@ export function TablePaginationFooter({
   return (
     <div className="flex items-center justify-between gap-3 border-border border-t px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-neutral-500 text-xs tabular-nums">
+        <span className="font-mono text-muted-foreground text-xs tabular-nums">
           Showing{" "}
           <span className="font-medium">
             {start.toLocaleString()}–{end.toLocaleString()}
           </span>{" "}
           of <span className="font-medium">{total.toLocaleString()}</span>
         </span>
-        <span aria-hidden className="text-neutral-400">
+        <span aria-hidden className="text-muted-foreground">
           ·
         </span>
-        <span className="font-medium font-mono text-neutral-500 text-xs">
+        <span className="font-medium font-mono text-muted-foreground text-xs">
           Rows
         </span>
         <Select
@@ -108,7 +108,7 @@ export function TablePaginationFooter({
         >
           <SelectTrigger
             aria-label="Rows per page"
-            className="border-border bg-card font-normal text-neutral-900"
+            className="border-border bg-card font-normal text-foreground"
             size="sm"
           >
             <SelectValue />

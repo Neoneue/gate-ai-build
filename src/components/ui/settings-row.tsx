@@ -78,8 +78,8 @@ export function SettingsRow({
 
   const titleClass =
     effectiveTitleAs === "h4"
-      ? "font-sans text-sm font-medium text-neutral-900 m-0"
-      : "font-sans text-neutral-900 font-medium text-sm leading-none";
+      ? "font-sans text-sm font-medium text-foreground m-0"
+      : "font-sans text-foreground font-medium text-sm leading-none";
 
   return (
     <div
@@ -92,7 +92,7 @@ export function SettingsRow({
     >
       <div className="flex min-w-0 flex-col gap-1">
         {effectiveTitleAs === "label" ? (
-          <Label className="type-label-14 text-neutral-900" htmlFor={id}>
+          <Label className="type-label-14 text-foreground" htmlFor={id}>
             {title}
           </Label>
         ) : effectiveTitleAs === "h4" ? (
@@ -100,7 +100,7 @@ export function SettingsRow({
         ) : (
           <span className={titleClass}>{title}</span>
         )}
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           {subtitle}
         </p>
       </div>

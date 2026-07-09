@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const heroNumericVariants = cva(
-  "font-medium font-sans text-neutral-900 tabular-nums tracking-tight",
+  "font-medium font-sans text-foreground tabular-nums tracking-tight",
   {
     variants: {
       size: {

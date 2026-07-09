@@ -646,7 +646,7 @@ function ModelsTable({
               <TableCell
                 className={
                   outputPrice === "—"
-                    ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
+                    ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
                     : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
                 }
               >
@@ -668,7 +668,7 @@ function ModelsTable({
 
 function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   if (capabilities.length === 0) {
-    return <span className="font-mono text-neutral-400 text-xs">—</span>;
+    return <span className="font-mono text-muted-foreground text-xs">—</span>;
   }
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Vision is always leftmost when present). Each icon
@@ -1060,7 +1060,7 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
       {isMissing ? (
-        <HeroNumeric className="text-neutral-400">
+        <HeroNumeric className="text-muted-foreground">
           <span aria-hidden="true">—</span>
           <span className="sr-only">Not available</span>
         </HeroNumeric>
@@ -1257,7 +1257,7 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
   return (
     <span
       aria-hidden
-      className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-neutral-400"
+      className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
       title={PROVIDER_LABELS[provider]}
     >
       <span className="size-2 rounded-full bg-neutral-400" />
@@ -1271,7 +1271,7 @@ function ProviderNumeric({ value }: { value: string }) {
     <TableCell
       className={
         isMissing
-          ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
+          ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
           : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
       }
     >

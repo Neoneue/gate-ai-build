@@ -227,7 +227,7 @@ and (pointer: fine)) and (&:hover));
   --secondary: var(--color-neutral-100);
   --secondary-foreground: var(--color-neutral-900);
   --muted: var(--color-neutral-100);
-  --muted-foreground: var(--color-neutral-500);
+  --muted-foreground: var(--color-neutral-600);
   --accent: var(--color-neutral-100);
   --accent-foreground: var(--color-neutral-900);
   --destructive: var(--color-danger-600);

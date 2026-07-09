@@ -40,7 +40,7 @@ export function RequestsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <BarChart2
-                  className="size-5 text-neutral-700"
+                  className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </div>
@@ -63,7 +63,7 @@ export function RequestsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <ArrowLeftRight
-                  className="size-5 text-neutral-700"
+                  className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </div>

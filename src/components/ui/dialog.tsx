@@ -85,7 +85,7 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-neutral-900 text-sm shadow-(--shadow-modal) outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
+          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground text-sm shadow-(--shadow-modal) outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
           className
         )}
         data-slot="dialog-content"
@@ -387,7 +387,7 @@ function DialogTitleBlock({
 }) {
   const titleClassName = cn(
     titleFont === "mono" ? "font-mono" : "font-sans",
-    "m-0 font-medium text-lg text-neutral-900 leading-none"
+    "m-0 font-medium text-foreground text-lg leading-none"
   );
   const titleNode =
     mode === "static" ? (
@@ -430,7 +430,7 @@ function DialogTitleBlock({
         {titleRow}
       </div>
       {meta ? (
-        <div className="type-copy-12 m-0 text-pretty text-neutral-500">
+        <div className="type-copy-12 m-0 text-pretty text-muted-foreground">
           {meta}
         </div>
       ) : null}
@@ -445,7 +445,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       className={cn(
-        "type-copy-14 text-neutral-600 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-neutral-900",
+        "type-copy-14 text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
       data-slot="dialog-description"

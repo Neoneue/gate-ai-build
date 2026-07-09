@@ -638,7 +638,7 @@ function AutoRechargeDialog({
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
-            <span className="font-normal text-neutral-400">
+            <span className="font-normal text-muted-foreground">
               (leave blank for no cap)
             </span>
           </label>

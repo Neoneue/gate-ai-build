@@ -73,7 +73,7 @@ function FeedbackFab() {
           // Pill shape, outlined surface, shadow elevation, fixed viewport anchor
           "fixed right-6 bottom-6 z-40",
           "inline-flex h-8 items-center gap-2 rounded-full px-4",
-          "type-label-14 whitespace-nowrap border border-border bg-card text-neutral-900",
+          "type-label-14 whitespace-nowrap border border-border bg-card text-foreground",
           "shadow-md",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
           "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-muted active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
@@ -128,7 +128,7 @@ function FeedbackFab() {
               <Label htmlFor="feedback-message">Message</Label>
               <span
                 aria-live="polite"
-                className="type-copy-12 text-neutral-500"
+                className="type-copy-12 text-muted-foreground"
               >
                 {message.length} / {MAX_MESSAGE_LENGTH}
               </span>
@@ -176,7 +176,7 @@ function FeedbackFab() {
                 Capture screen
               </Button>
             </div>
-            <p className="type-copy-12 text-neutral-500">
+            <p className="type-copy-12 text-muted-foreground">
               PNG, JPEG, or WEBP, up to 10&nbsp;MB.
             </p>
           </div>
@@ -185,7 +185,9 @@ function FeedbackFab() {
           <div className="flex flex-col gap-2">
             <Label htmlFor="feedback-email">
               Contact email{" "}
-              <span className="font-normal text-neutral-500">(optional)</span>
+              <span className="font-normal text-muted-foreground">
+                (optional)
+              </span>
             </Label>
             <Input
               id="feedback-email"

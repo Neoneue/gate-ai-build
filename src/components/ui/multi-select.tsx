@@ -105,7 +105,7 @@ function MultiSelect({
           // Match the call-site overrides the AuditTrail Selects apply so the
           // trigger reads identically in the filter row.
           "w-full border-border bg-card font-normal text-foreground",
-          value.length === 0 && "text-neutral-400",
+          value.length === 0 && "text-muted-foreground",
           className
         )}
         disabled={disabled}
@@ -119,10 +119,10 @@ function MultiSelect({
         {searchable ? (
           <div className="border-border border-b p-2">
             <div className="flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-              <Search className="size-4 shrink-0 text-neutral-400" />
+              <Search className="size-4 shrink-0 text-muted-foreground" />
               <input
                 aria-label="Search options"
-                className="type-copy-14 w-full min-w-0 bg-transparent text-neutral-800 outline-none placeholder:text-neutral-400"
+                className="type-copy-14 w-full min-w-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search options…"
                 type="text"
@@ -134,7 +134,7 @@ function MultiSelect({
 
         <div className="border-border border-b p-1">
           <button
-            className="type-copy-14 flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-neutral-800 outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:bg-neutral-100 motion-reduce:transition-none"
+            className="type-copy-14 flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-foreground outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:bg-neutral-100 motion-reduce:transition-none"
             onClick={toggleAll}
             type="button"
           >
@@ -145,13 +145,13 @@ function MultiSelect({
 
         <div className="max-h-56 overflow-y-auto overscroll-contain p-1">
           {filteredOptions.length === 0 ? (
-            <p className="type-copy-14 px-2 py-3 text-center text-neutral-400">
+            <p className="type-copy-14 px-2 py-3 text-center text-muted-foreground">
               No options found
             </p>
           ) : (
             filteredOptions.map((option) => (
               <label
-                className="type-copy-14 flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-neutral-800 transition-colors duration-150 ease-out hover:bg-neutral-100 has-focus-visible:bg-neutral-100 motion-reduce:transition-none"
+                className="type-copy-14 flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-foreground transition-colors duration-150 ease-out hover:bg-neutral-100 has-focus-visible:bg-neutral-100 motion-reduce:transition-none"
                 key={option.value}
               >
                 <Checkbox

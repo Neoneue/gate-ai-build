@@ -120,8 +120,8 @@ function FreePlanNoticeBanner() {
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="type-copy-14 m-0 text-pretty text-neutral-700">
-                <span className="type-label-14 text-neutral-900">
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+                <span className="type-label-14 text-foreground">
                   You&apos;re on the Free plan.
                 </span>{" "}
                 Pro unlocks full prompt-injection protection with advanced
@@ -155,7 +155,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-2xl flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>
@@ -317,11 +317,11 @@ function PolicyCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="type-heading-16 m-0 text-balance text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-balance text-foreground">
               {config.name}
             </h3>
           </div>
-          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
             {config.description}
           </p>
         </div>
@@ -331,7 +331,7 @@ function PolicyCard({
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
@@ -401,7 +401,7 @@ function ProBenefitsCard() {
                 </SectionHeading>
                 <Badge variant="info">Pro</Badge>
               </div>
-              <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
                 Catches advanced prompt-injection patterns beyond free Regex
                 checks.
               </p>
@@ -413,10 +413,10 @@ function ProBenefitsCard() {
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="type-copy-14 text-neutral-900">
+                    <span className="type-copy-14 text-foreground">
                       {benefit.title}
                     </span>
-                    <span className="type-copy-12 text-pretty text-neutral-500">
+                    <span className="type-copy-12 text-pretty text-muted-foreground">
                       {benefit.description}
                     </span>
                   </div>
@@ -476,7 +476,7 @@ function FreeToggleCard({
               {badge ? <Badge variant="neutral">{badge}</Badge> : null}
             </div>
             {description ? (
-              <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
+              <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -524,7 +524,7 @@ function SettingsHalf({
           <SectionHeading as="h4" className="type-heading-16">
             Sensitivity
           </SectionHeading>
-          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
             How aggressive to be when scoring inputs
           </p>
         </div>
@@ -578,7 +578,9 @@ function SettingsHalf({
               <span
                 className={cn(
                   "type-label-14",
-                  opt.value === value ? "text-neutral-900" : "text-neutral-500"
+                  opt.value === value
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 )}
                 key={opt.value}
               >
@@ -605,7 +607,7 @@ function SettingsHalf({
         <SectionHeading as="h4" className="type-heading-16">
           Scan direction
         </SectionHeading>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           Which side of the request to scan
         </p>
       </div>
@@ -647,9 +649,9 @@ function DetailCard({
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
-          <span className="type-label-14 text-neutral-900">{title}</span>
+          <span className="type-label-14 text-foreground">{title}</span>
         ) : null}
-        <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
           {description}
         </p>
       </div>
@@ -675,7 +677,7 @@ function ActionHalf({
         <SectionHeading as="h4" className="type-heading-16" id={headingId}>
           Action on detection
         </SectionHeading>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           {config.action.helper}
         </p>
       </div>
@@ -704,7 +706,7 @@ function ActionHalf({
             >
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="type-label-14 text-neutral-900" id={nameId}>
+                  <span className="type-label-14 text-foreground" id={nameId}>
                     {opt.name}
                   </span>
                   {opt.value === DEFAULT_ACTION[config.id] ? (
@@ -712,7 +714,7 @@ function ActionHalf({
                   ) : null}
                 </div>
                 <span
-                  className="type-copy-14 text-pretty text-neutral-500"
+                  className="type-copy-14 text-pretty text-muted-foreground"
                   id={descId}
                 >
                   {opt.description}

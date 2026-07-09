@@ -141,7 +141,7 @@ function ProfileCard() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
-                className="type-label-14 mb-1 block text-neutral-700"
+                className="type-label-14 mb-1 block text-muted-foreground"
                 htmlFor="settings-first-name"
               >
                 First name
@@ -155,7 +155,7 @@ function ProfileCard() {
             </div>
             <div>
               <label
-                className="type-label-14 mb-1 block text-neutral-700"
+                className="type-label-14 mb-1 block text-muted-foreground"
                 htmlFor="settings-last-name"
               >
                 Last name
@@ -169,7 +169,7 @@ function ProfileCard() {
             </div>
             <div>
               <label
-                className="type-label-14 mb-1 block text-neutral-700"
+                className="type-label-14 mb-1 block text-muted-foreground"
                 htmlFor="settings-email"
               >
                 Email
@@ -189,7 +189,7 @@ function ProfileCard() {
             </div>
             <div>
               <label
-                className="type-label-14 mb-1 block text-neutral-700"
+                className="type-label-14 mb-1 block text-muted-foreground"
                 htmlFor="settings-organization"
               >
                 Organization

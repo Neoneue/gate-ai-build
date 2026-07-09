@@ -45,7 +45,7 @@ export function SignUp() {
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel className="text-neutral-600" htmlFor="email">
+              <FieldLabel className="text-muted-foreground" htmlFor="email">
                 Work email
               </FieldLabel>
               <Input
@@ -60,7 +60,7 @@ export function SignUp() {
             </Field>
 
             <Field>
-              <FieldLabel className="text-neutral-600" htmlFor="invite">
+              <FieldLabel className="text-muted-foreground" htmlFor="invite">
                 Invite code
               </FieldLabel>
               <Input

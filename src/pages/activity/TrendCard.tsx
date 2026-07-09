@@ -139,7 +139,7 @@ function TrendBreakdownPanel({
               <span className="text-right text-foreground">
                 {fmtValue(total)}
               </span>
-              <span className="text-neutral-400">·</span>
+              <span className="text-muted-foreground">·</span>
               <span className="text-right text-foreground">{pctStr}</span>
             </div>
           </div>

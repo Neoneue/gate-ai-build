@@ -536,7 +536,7 @@ function CreateLimitDialog({
 
         <div className="flex flex-col gap-2">
           <Label
-            className="type-label-14 text-neutral-600"
+            className="type-label-14 text-muted-foreground"
             htmlFor="create-limit-name"
           >
             Name
@@ -552,7 +552,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-type"
             >
               Type
@@ -572,7 +572,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-threshold"
             >
               Threshold
@@ -594,7 +594,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-period"
             >
               Period
@@ -614,7 +614,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-scope"
             >
               Scope

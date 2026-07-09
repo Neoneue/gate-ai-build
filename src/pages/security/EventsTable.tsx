@@ -274,7 +274,9 @@ export function EventsTableSection({
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Type</Label>
+              <Label className="type-label-14 text-muted-foreground">
+                Type
+              </Label>
               <Select onValueChange={setDraftType} value={draftType}>
                 <SelectTrigger
                   aria-label="Type"
@@ -294,7 +296,9 @@ export function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Action</Label>
+              <Label className="type-label-14 text-muted-foreground">
+                Action
+              </Label>
               <Select onValueChange={setDraftAction} value={draftAction}>
                 <SelectTrigger
                   aria-label="Action"
@@ -313,7 +317,7 @@ export function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Key</Label>
+              <Label className="type-label-14 text-muted-foreground">Key</Label>
               <Select onValueChange={setDraftKeyFilter} value={draftKeyFilter}>
                 <SelectTrigger
                   aria-label="API key"

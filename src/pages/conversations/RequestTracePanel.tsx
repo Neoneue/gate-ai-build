@@ -314,13 +314,13 @@ function TraceItem({
             <ArrowRight aria-hidden className="size-3" strokeWidth={1.75} />
             {event.outTokens}
           </span>
-          <span aria-hidden className="text-neutral-300">
+          <span aria-hidden className="text-muted-foreground">
             ·
           </span>
           <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
             {event.latency}
           </span>
-          <span aria-hidden className="text-neutral-300">
+          <span aria-hidden className="text-muted-foreground">
             ·
           </span>
           <span className="flex-1 font-mono text-foreground text-xs tabular-nums">

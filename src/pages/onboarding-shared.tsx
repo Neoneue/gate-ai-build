@@ -21,7 +21,7 @@ type ChoiceTone = "blue" | "success" | "neutral";
 const CHOICE_ICON_TONE: Record<ChoiceTone, string> = {
   blue: "text-blue-600",
   success: "text-success-600",
-  neutral: "text-neutral-600",
+  neutral: "text-muted-foreground",
 };
 
 /**

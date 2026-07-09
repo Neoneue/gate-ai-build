@@ -382,7 +382,7 @@ function ModelPicker({
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger
         aria-label="Choose a model"
-        className="group/select flex h-9 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-neutral-50 pr-3 pl-4 text-neutral-800 text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-72"
+        className="group/select flex h-9 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-neutral-50 pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-72"
       >
         <span className="flex flex-1 items-center gap-2 overflow-hidden">
           {selected ? (
@@ -391,7 +391,7 @@ function ModelPicker({
               <span className="truncate">{selected.label}</span>
             </>
           ) : (
-            <span className="text-neutral-400">Choose a model</span>
+            <span className="text-muted-foreground">Choose a model</span>
           )}
         </span>
         <ChevronDown
@@ -427,7 +427,7 @@ function ModelPicker({
           ) : (
             filtered.map((m) => (
               <button
-                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-neutral-800 text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100 data-[active=true]:bg-neutral-100"
+                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100 data-[active=true]:bg-neutral-100"
                 data-active={m.handle === value}
                 key={m.handle}
                 onClick={() => onSelect(m.handle)}

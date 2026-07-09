@@ -50,7 +50,7 @@ export function SignIn() {
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel className="text-neutral-600" htmlFor="email">
+              <FieldLabel className="text-muted-foreground" htmlFor="email">
                 Email
               </FieldLabel>
               <Input
@@ -64,7 +64,7 @@ export function SignIn() {
             </Field>
 
             <Field>
-              <FieldLabel className="text-neutral-600" htmlFor="password">
+              <FieldLabel className="text-muted-foreground" htmlFor="password">
                 Password
               </FieldLabel>
               <InputGroup>

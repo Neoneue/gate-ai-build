@@ -52,7 +52,7 @@ export function DeltaTag({
         </span>
       </span>
       {note ? (
-        <span className={`${noteCls} text-neutral-500`}>
+        <span className={`${noteCls} text-muted-foreground`}>
           <span aria-hidden> · </span>
           {note}
         </span>
@@ -107,7 +107,7 @@ export function CompactKpi({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="inline-flex items-center text-neutral-500">
+          <span className="inline-flex items-center text-muted-foreground">
             <span aria-hidden className="inline-block h-3.5 w-0" />
             <span className="font-medium font-mono text-xs/4 tabular-nums">
               {valueSuffix}
@@ -122,7 +122,7 @@ export function CompactKpi({
             size={deltaSize}
           />
         ) : (
-          <span className="type-copy-14 text-neutral-500">{noteLine}</span>
+          <span className="type-copy-14 text-muted-foreground">{noteLine}</span>
         )}
       </div>
       {spark == null ? null : <div className="mt-3">{spark}</div>}

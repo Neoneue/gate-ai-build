@@ -36,11 +36,11 @@ export function WorkspaceSwitcher() {
           />
         }
       >
-        <span className="type-copy-14 text-neutral-900">Chad's workspace</span>
+        <span className="type-copy-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
-          className="size-4 text-neutral-500"
+          className="size-4 text-muted-foreground"
           strokeWidth={1.75}
         />
       </MenuTrigger>

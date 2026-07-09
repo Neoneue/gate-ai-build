@@ -62,7 +62,7 @@ function NotificationsMenu({
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-2 py-2 pr-2 pl-4">
-          <h2 className="type-label-14 m-0 text-neutral-900">Notifications</h2>
+          <h2 className="type-label-14 m-0 text-foreground">Notifications</h2>
           <Button
             aria-label="Notification settings"
             onClick={() => {
@@ -74,7 +74,7 @@ function NotificationsMenu({
           >
             <Settings
               aria-hidden
-              className="text-neutral-700"
+              className="text-muted-foreground"
               strokeWidth={1.75}
             />
           </Button>
@@ -90,7 +90,7 @@ function NotificationsMenu({
             value={tab}
           />
           <Button
-            className="text-neutral-700"
+            className="text-muted-foreground"
             size="sm"
             type="button"
             variant="ghost"
@@ -105,9 +105,9 @@ function NotificationsMenu({
             aria-hidden
             className="flex size-12 items-center justify-center rounded-full bg-muted"
           >
-            <Bell className="size-5 text-neutral-700" strokeWidth={1.75} />
+            <Bell className="size-5 text-muted-foreground" strokeWidth={1.75} />
           </div>
-          <p className="type-copy-14 m-0 text-neutral-500">{emptyLabel}</p>
+          <p className="type-copy-14 m-0 text-muted-foreground">{emptyLabel}</p>
         </div>
       </PopoverContent>
     </Popover>

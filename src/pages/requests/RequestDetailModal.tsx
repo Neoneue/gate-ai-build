@@ -512,7 +512,7 @@ export function RequestDetailBodyV2({
                           <section className="flex flex-col gap-2">
                             <PanelHeading title="Error detail" />
                             <div className="rounded-xs border border-border bg-card p-4">
-                              <p className="type-copy-14 text-pretty text-neutral-700">
+                              <p className="type-copy-14 text-pretty text-foreground">
                                 {row.errorDetail}
                               </p>
                             </div>
@@ -926,7 +926,7 @@ function FindingSwitcherCard({
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
   const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-neutral-700 shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
+    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-muted-foreground shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-neutral-100 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -1385,7 +1385,7 @@ function InjectionDetailPanel({
         title={isClassifierDeny ? "Assistant response" : "User message"}
       />
       <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
-        <p className="type-copy-14 whitespace-pre-wrap break-words text-neutral-700 leading-relaxed">
+        <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
           {evidence}
         </p>
       </div>

@@ -227,7 +227,7 @@ export function ApiKeys() {
                     className="flex size-12 items-center justify-center rounded-full bg-muted"
                   >
                     <KeyRound
-                      className="size-5 text-neutral-700"
+                      className="size-5 text-muted-foreground"
                       strokeWidth={1.75}
                     />
                   </div>
@@ -320,7 +320,10 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           aria-hidden
           className="flex size-12 items-center justify-center rounded-full bg-muted"
         >
-          <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
+          <KeyRound
+            className="size-5 text-muted-foreground"
+            strokeWidth={1.75}
+          />
         </div>
       }
       title="No API keys yet"
@@ -489,7 +492,7 @@ function KeysTable({
                     Events / Requests / Activity Key columns. */}
                 <TableCell className="whitespace-nowrap font-mono">
                   <span className="text-foreground">{row.name}</span>
-                  <span className="text-neutral-600"> ({row.masked})</span>
+                  <span className="text-muted-foreground"> ({row.masked})</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {row.revoked ? (
@@ -620,7 +623,7 @@ export function CreateKeyDialog({
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <Label
-                className="type-label-14 text-neutral-600"
+                className="type-label-14 text-muted-foreground"
                 htmlFor="apikey-name"
               >
                 Name
@@ -730,7 +733,7 @@ export function KeyCreatedDialog({
           </div>
           <button
             aria-label={copied ? "Copied" : "Copy API key"}
-            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-muted-foreground transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
             type="button"
           >
@@ -770,7 +773,7 @@ export function KeyCreatedDialog({
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
-            className="type-copy-14 text-neutral-700"
+            className="type-copy-14 text-muted-foreground"
             htmlFor="apikey-saved-confirm"
           >
             I&rsquo;ve saved this key to a secret manager.

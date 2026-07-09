@@ -165,7 +165,7 @@ function HeroCodeTab({
                   className={`type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
                       ? "bg-neutral-100 text-foreground"
-                      : "text-muted-foreground hover:text-neutral-700"
+                      : "text-muted-foreground hover:text-muted-foreground"
                   }`}
                   key={m}
                   onClick={() => onModeChange?.(m)}
@@ -695,11 +695,11 @@ function WorksWithFooter({
     const inner = (
       <>
         {Icon ? (
-          <Icon className="size-4 shrink-0 text-neutral-600" />
+          <Icon className="size-4 shrink-0 text-muted-foreground" />
         ) : (
           <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
         )}
-        <span className="type-copy-14 whitespace-nowrap text-neutral-700">
+        <span className="type-copy-14 whitespace-nowrap text-muted-foreground">
           {name}
         </span>
       </>

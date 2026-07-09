@@ -62,7 +62,7 @@ function TooltipContent({
       >
         <TooltipPrimitive.Popup
           className={cn(
-            "max-w-xs origin-[var(--transform-origin)] rounded-xs border border-border bg-card px-2 py-1 text-neutral-700 text-xs leading-snug shadow-(--shadow-popup)",
+            "max-w-xs origin-[var(--transform-origin)] rounded-xs border border-border bg-card px-2 py-1 text-muted-foreground text-xs leading-snug shadow-(--shadow-popup)",
             "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-[instant]:duration-0 data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
             className
           )}

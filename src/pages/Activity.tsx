@@ -788,7 +788,7 @@ function UsageByKey({
                             <button
                               {...props}
                               aria-label="What's the difference between Gate and BYOK?"
-                              className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               type="button"
                             />
                           )}
@@ -884,7 +884,7 @@ function UsageByKey({
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {row.path === "BYOK" ? (
                         <>
-                          <span aria-hidden className="text-neutral-400">
+                          <span aria-hidden className="text-muted-foreground">
                             —
                           </span>
                           <span className="sr-only">

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  *   as="a" + href    renders an <a> for real navigation.
  *
  * Visual recipe (locked):
- *   text-neutral-800 bg-transparent p-0 outline-none rounded-xs
+ *   text-foreground bg-transparent p-0 outline-none rounded-xs
  *   underline decoration-neutral-200 underline-offset-2
  *   hover:decoration-neutral-500 focus-visible:decoration-neutral-500
  *   focus-visible:ring-3 focus-visible:ring-ring/50
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TEXT_LINK_BASE =
-  "text-neutral-800 bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
+  "text-foreground bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
 
 type ButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
