@@ -35,4 +35,10 @@ The Overview's three "Latest …" preview tables were hand-rolled `<table>`/`<th
 - `table.tsx`: swept to semantic tokens — `TableCell` → `text-foreground`, `TableHead`/`TableCaption` → `text-muted-foreground`, `TableRow` hover/selected + `TableFooter` fills → `bg-accent`/`bg-muted`. Added `NavTableRow`: a keyboard-accessible clickable row (`role="link"`, `tabIndex`, `onClick`, Enter/Space) built on `TableRow`.
 - `card.tsx`: `Card` base `text-neutral-900` → `text-card-foreground`; `CardDescription` `text-neutral-500` → `text-muted-foreground`. Light unchanged, dark fixed.
 
+### Title + eyebrow primitives use semantic text tokens `ae3f47c`
+
+**`src/components/ui/page-title.tsx`, `section-title.tsx`, `section-heading.tsx`, `eyebrow.tsx`**
+
+`PageTitle` / `SectionTitle` / `SectionHeading` baked in raw `text-neutral-900`, and `Eyebrow` raw `text-neutral-500`, so titles and eyebrows rendered dark-on-dark in dark mode. Switched to `text-foreground` / `text-muted-foreground`. Light is identical (foreground=neutral-900, muted-foreground=neutral-500 in light); fixes every page title, section title, and eyebrow across the app in dark.
+
 ## Sections
