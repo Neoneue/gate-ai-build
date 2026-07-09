@@ -82,7 +82,7 @@ export function MessageBlock({
       ? "border-danger-200 bg-danger-50 dark:border-danger-500/30 dark:bg-danger-500/15"
       : tone === "warn"
         ? "border-warning-200 bg-warning-50 dark:border-warning-500/30 dark:bg-warning-500/15"
-        : "border-border bg-muted";
+        : "border-border bg-card-muted";
   // Selected ring color tracks tone so the status semantic stays intact
   // through the selection layer: green = normal/success, amber = warn
   // (flag/redact), red = danger (block/error). Matches the trace panel's
