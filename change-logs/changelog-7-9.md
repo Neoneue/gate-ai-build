@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Conversations trace panel height 600 → 640px `26fc94e`
+
+**`src/pages/conversations/ConversationDetail.tsx`**
+
+The Messages / Request Trace panel grid was locked to `h-[600px]` across all three tabs (All steps / Findings only / Errors). Raised to `h-[640px]` for a bit more visible content before internal scroll.
+
 ### Message bubbles lightened to `bg-card-muted` `978c62a`
 
 **`src/components/ui/message-block.tsx`**
