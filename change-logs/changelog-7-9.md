@@ -33,6 +33,19 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### `--card-muted` token replaces the neutral-50 wash hardcodes `225d4e8`
+
+**`src/index.css`, `table.tsx`, `segmented.tsx`, `segmented-pill.tsx`, `AuthLayout.tsx`, `DashboardChrome.tsx`, `Billing`/`BillingFree`/`Policies`/`onboarding-shared`, `design.md`**
+
+The two prior fixes (`db93eeb`, `2e195c9`) restored the neutral-50 washes with hardcoded `bg-neutral-50 dark:*` classes. This replaces them with a proper token and narrows the scope so only card/table washes lighten — chips, avatars, and segmented tracks are untouched.
+
+- New **`--card-muted`** token: neutral-50 (light) / neutral-800 (dark), an extension of `--card`, registered as `--color-card-muted` → `bg-card-muted`.
+- Applied to: shared `TableHeader`/`TableFooter` and the bordered info-panels on Billing / BillingFree / Policies / onboarding (all neutral-50 washes the sweep had darkened to `bg-muted`).
+- **`--muted` reverted to neutral-100**: chips, count pills, avatar/icon placeholders, and input fills keep their original fill — nothing else shifts.
+- **`--background` is now canvas-only** (stays neutral-50 / neutral-950): the two segmented tracks and the `AuthLayout` spacer that had misused `bg-background` move to `bg-muted`, so no component rides the page-canvas token.
+- `DashboardChrome` canvas + table header revert from the interim hardcodes back to the `bg-background` / `bg-card-muted` tokens.
+- `design.md`: token table gains `--card-muted`, `--background` corrected to neutral-50, wash-surface note rewritten around the token.
+
 ### Light table column headers restored to neutral-50 `2e195c9`
 
 **`src/components/ui/table.tsx`**
