@@ -25,4 +25,14 @@ Known follow-up: ~460 remaining raw color utilities (`text-neutral-*`, `bg-neutr
 
 ## Components
 
+### Overview preview tables → shared primitives + `NavTableRow` `253c8c0`
+
+**`src/pages/Dashboard.tsx`, `src/components/ui/table.tsx`, `src/components/ui/card.tsx`**
+
+The Overview's three "Latest …" preview tables were hand-rolled `<table>`/`<thead>`/`<h3>` with raw neutral colors that did not invert in dark. Rebuilt on shared components; themed the primitives they rely on.
+
+- `Dashboard.tsx`: `LatestRequestsTable` / `RecentConversationsTable` / `SecurityEventsTable` now compose `Card` + `CardTitle` + the shared `Table` primitives + `Badge`, wrapped in a local `PreviewCard` shell that DRYs the three identical card headers. Clickable rows use the new `NavTableRow`. Two intentional shifts from using the primitives: card titles move from `type-label-14` to the `CardTitle` voice (`type-heading-16`), and preview cells from 12px to the primitive's 14px.
+- `table.tsx`: swept to semantic tokens — `TableCell` → `text-foreground`, `TableHead`/`TableCaption` → `text-muted-foreground`, `TableRow` hover/selected + `TableFooter` fills → `bg-accent`/`bg-muted`. Added `NavTableRow`: a keyboard-accessible clickable row (`role="link"`, `tabIndex`, `onClick`, Enter/Space) built on `TableRow`.
+- `card.tsx`: `Card` base `text-neutral-900` → `text-card-foreground`; `CardDescription` `text-neutral-500` → `text-muted-foreground`. Light unchanged, dark fixed.
+
 ## Sections
