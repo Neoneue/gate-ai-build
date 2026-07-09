@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Segmented track restored to `bg-background` `05bd2ae`
+
+**`src/components/ui/segmented-pill.tsx`, `segmented.tsx`, `src/index.css`**
+
+The `--card-muted` refactor had moved the segmented-control tracks off `bg-background` onto `bg-muted`. In dark that made the track `neutral-800` — identical to the `bg-popover` thumb (also `neutral-800`) — so the active indicator disappeared. Reverted both tracks to `bg-background` (neutral-50 light / neutral-950 dark) so the raised thumb (white / neutral-800) reads against the recessed track in both themes. Updated the `--background` comment to list segmented tracks as a consumer.
+
 ### `--chart-grid` token + accessible KPI deltas `6e3d98b`
 
 **`src/index.css`, `HeroMetric.tsx`, `compact-kpi.tsx`, `Dashboard.tsx`, `activity/TrendCard.tsx`, `Security.tsx`**
