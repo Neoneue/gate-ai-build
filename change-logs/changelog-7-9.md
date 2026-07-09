@@ -33,6 +33,16 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### `--chart-grid` token + accessible KPI deltas `6e3d98b`
+
+**`src/index.css`, `HeroMetric.tsx`, `compact-kpi.tsx`, `Dashboard.tsx`, `activity/TrendCard.tsx`, `Security.tsx`**
+
+Chart dashed gridlines hardcoded `var(--color-neutral-200)` — a fixed palette atom that read bright on the dark canvas and never inverted — and the KPI delta tones failed contrast (success-700 green ≈ 4.0:1 on dark, danger-600 red ≈ 4.4:1 on light).
+
+- New **`--chart-grid`** token: neutral-200 (light) / neutral-700 (dark, darker + subtler), registered as `--color-chart-grid`. Every dashed gridline now maps to it: `HeroMetric`, `compact-kpi`, `Dashboard`, `activity/TrendCard`, `Security`. Hover cursor lines stay on neutral-500 (theme-neutral).
+- Dash gap widened so the dashes are less tight: gridlines `8 3` → `8 5`, compact-kpi `6 3` → `6 5`.
+- `DeltaTag` tones brighten per theme for WCAG AA: positive `text-success-700 dark:text-success-300` (12.8:1 on dark), negative `text-danger-700 dark:text-danger-300` (replacing `text-destructive`, which was borderline in light).
+
 ### Conversations trace panel height 600 → 640px `26fc94e`
 
 **`src/pages/conversations/ConversationDetail.tsx`**
