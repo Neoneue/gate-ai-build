@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const DIVIDER_CLS =
-  "relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-neutral-200";
+  "relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-border";
 
 /* Responsive column ladder. At narrow viewports (≤sm = 640px) KPI tiles
  * need at least ~180px each to read; below that the eyebrow + hero +

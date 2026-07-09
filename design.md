@@ -428,7 +428,7 @@ per step:
 | 700 | Saturated text on tinted bg, brand-mark anchor (blue-700 = logomark) |
 | 800 | Body text default (neutral-800) |
 | 900 | Primary text, headlines (`--primary`, `--foreground` resolve to neutral-900) |
-| 950 | Reserved — extreme contrast, future dark-mode anchor |
+| 950 | Page + sidebar canvas in the dark theme (`--background` / `--sidebar`); extreme-contrast anchor |
 
 **Note:** `--neutral-700` is intentionally avoided as a table body-cell tone — middle-tier neutrals collide with the three-tier table policy (see §7 Tables).
 
@@ -454,7 +454,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 
 **Hard rule: every Tailwind utility that targets a surface, border, ring, or foreground tone must bind to a semantic token — never a raw palette atom.** The `:root {}` semantic layer is the single reskin surface; components that bypass it (e.g. `border-neutral-200`, `bg-neutral-100`) couple themselves directly to the palette and break any future theme swap.
 
-| Use this class | Resolves to | Do NOT write |
+| Use this class | Resolves to (light — dark values in the Dark mode subsection) | Do NOT write |
 | --- | --- | --- |
 | `bg-background` | white | `bg-white` on page / dialog surfaces |
 | `bg-card` | white | `bg-white` on Card / KpiRail / table containers |
@@ -465,13 +465,76 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 | `border-border` | neutral-200 | `border-neutral-200` for dividers, table separators, list containers, form control edges |
 | `ring-ring` | neutral-400 | `ring-neutral-N` for focus rings |
 | `text-foreground` | neutral-900 | `text-neutral-900` for primary text, headlines, row identifiers |
-| `text-muted-foreground` | neutral-500 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
+| `text-muted-foreground` | neutral-600 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
 
-**Known gap — `bg-neutral-50`:** form-field surfaces (Input, Textarea, Select trigger, table header) use neutral-50 as a wash. A `--input-bg: var(--color-neutral-50)` semantic token has not yet been added to `:root {}`. Until it is, `bg-neutral-50` is the **one permitted ramp-token exception** in component code. Do not introduce any other ramp-token background; add a semantic alias first.
+**Field-wash (`bg-neutral-50`) — retired 2026-07-09.** Form-field surfaces (Input, Textarea, Select / MultiSelect trigger, InputGroup, table header) previously used a raw neutral-50 wash under a "one permitted exception" carve-out. The 2026-07-09 surface pass tokenized the wash to `bg-muted` (neutral-100 light / neutral-800 dark) so fields invert. The light wash is ~1.5% darker as a result (neutral-50 → neutral-100); accepted as imperceptible next to a white card. No dedicated `--input-bg` token was added — `bg-muted` is the field wash. There is now **no** permitted raw-ramp background exception.
 
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
 **Chart runtime colors** — `style={{ backgroundColor }}` / `style={{ color }}` from the chart palette helper are runtime values, not Tailwind classes. No token violation.
+
+### Dark mode (`.dark` theme) *(added 2026-07-09)*
+
+Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `:root {}` semantic tokens. **No component reads a palette atom for a themed surface.** Any surface already on a semantic token (`bg-card`, `text-foreground`, `border-border`, …) inverts for free — which is why the raw-ramp ban above is now a *functional* requirement, not just hygiene: a raw `bg-neutral-100` / `bg-white` / `text-neutral-700` does not invert and renders dark-on-dark (or light-on-light). ← code-direct: `src/index.css` `.dark {}`
+
+- **Provider:** `ThemeProvider` + `useTheme` (`src/hooks/use-theme.tsx`, mounted in `main.tsx`). Binary light/dark, follows OS until an explicit choice, persisted to `localStorage.theme`. No-flash guard = blocking inline script in `index.html` that sets the class before first paint. Toggle = top-bar sun/moon `ThemeToggle`.
+- **Scale = shadcn/Geist dark.** Elevation INVERTS vs light (darker sits lower): bg / sidebar `neutral-950` < card `neutral-900` < popover / muted / secondary `neutral-800` < accent (hover) `neutral-700`. Borders are translucent white so hairlines read on any elevation.
+
+**Token contract (light / dark).** Authoritative; every value is in `index.css` `:root` / `.dark`. ← code-direct
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--background` | neutral-100 | neutral-950 |
+| `--foreground` | neutral-900 | white |
+| `--card` / `-foreground` | white / neutral-900 | neutral-900 / neutral-50 |
+| `--popover` / `-foreground` | white / neutral-900 | neutral-800 / neutral-50 |
+| `--muted`, `--secondary` | neutral-100 | neutral-800 |
+| `--accent` (hover / active fill) | neutral-100 | neutral-700 |
+| `--primary` / `-foreground` | neutral-900 / white | neutral-200 / neutral-800 |
+| `--muted-foreground` | neutral-600 | neutral-300 |
+| `--border` | neutral-200 | white @ 10% |
+| `--input` | neutral-300 | white @ 15% |
+| `--ring` | neutral-400 | neutral-500 |
+| `--destructive` | danger-600 | danger-400 |
+| `--sidebar` | white (flush w/ bg) | neutral-950 |
+| `--sidebar-accent` / `--sidebar-border` | neutral-100 / neutral-200 | neutral-800 / white @ 10% |
+| `--surface-strong` / `-foreground` | neutral-900 / neutral-50 | **same in both themes** |
+
+Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
+
+**`--surface-strong` (new token pair).** For surfaces intentionally dark in BOTH themes: hero chart card, code / terminal cards, dark tooltips, the connected-segment active pill. Utilities `bg-surface-strong` + `text-surface-strong-foreground`. Use this INSTEAD of raw `bg-neutral-900` / `text-white` whenever the dark surface is deliberate.
+
+**Surface map (raw ramp → token), applied in the 2026-07-09 surface pass:**
+
+| Raw (does not invert) | Token |
+| --- | --- |
+| `bg-neutral-50` (field wash) · `bg-neutral-100` (chip / subtle fill) | `bg-muted` |
+| `hover:bg-neutral-50` / `-100` | `hover:bg-accent` |
+| `bg-white` (panel) | `bg-card` (surface) / `bg-background` (page region), by role |
+| `bg-neutral-900` / `-950` (deliberate dark) | `bg-surface-strong` + `text-surface-strong-foreground` |
+| `border-neutral-200` | `border-border` |
+| `border-neutral-300` | `border-input` |
+| `ring-neutral-*` | `ring-ring` |
+| `from-neutral-100 to-neutral-50` (sidebar active) | drop gradient → `bg-accent` + `text-accent-foreground` |
+| `data-checked:bg`/`border-neutral-700`/`-900` (checkbox / radio / switch) | `data-checked:bg`/`border-primary` |
+| selected `bg-neutral-900 text-white` (active tab / page / calendar day) | `bg-primary text-primary-foreground` |
+| chart gridline / cursor / reference `stroke-neutral-200`/`-400` | `stroke-border` |
+| chart axis tick `fill-neutral-500` | `fill-muted-foreground` |
+| chart bg sector / tooltip cursor `fill-neutral-100` | `fill-muted` |
+
+**Kept as-is (intentional, do NOT sweep):** `text-white` / white-on-color on brand or status fills (blue-700 monogram, colored status badges); the always-dark terminal chrome inside `code-card.tsx` (`bg-neutral-800`/`-700`, `border-neutral-900/60`); the modal scrim (`bg-neutral-900/40`, dark in both themes); captured-transcript strings in `src/data/*` (data, not UI).
+
+**Status-tint dark convention.** Light status tints (`bg-{success,warning,danger,blue}-100` + `text-*-700/800`) read wrong on dark. Add a `dark:` variant using the ramp mid at low alpha for the fill and the ramp light-end for text — mirrors the pre-existing `dark:bg-destructive/20` idiom:
+
+| Light | Add for dark |
+| --- | --- |
+| `bg-success-100 text-success-800` | `dark:bg-success-500/15 dark:text-success-300` |
+| `bg-warning-100 text-warning-700` | `dark:bg-warning-500/15 dark:text-warning-300` |
+| `bg-danger-100 text-danger-800` | `dark:bg-destructive/20 dark:text-danger-300` |
+| `bg-blue-700/10 text-blue-600` | `dark:bg-blue-500/15 dark:text-blue-300` |
+| hover `hover:bg-*-200` | `dark:hover:bg-*-500/25` |
+
+The **neutral** badge / chip is NOT a tint — it tokenizes to `bg-muted text-muted-foreground` and needs no `dark:` variant.
 
 ### Do not use
 
@@ -481,7 +544,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 - Blue for inline links — use ink + faint underline (see §7).
 - `text-neutral-600`/`text-neutral-700` as table body-cell tones — collides with three-tier policy.
 - Vendor colors as chart series colors by default — charts use `--chart-1..8` by index.
-- **Raw ramp classes where a semantic token exists** — see the semantic token quick-reference table above. Exceptions: `bg-neutral-50` (no `--input-bg` alias yet) and typography ramp tokens with no current alias (`text-neutral-800/600/400`). Every other ramp surface/border/ring/foreground token has a semantic alias — use it.
+- **Raw ramp classes where a semantic token exists** — see the semantic token quick-reference table above, and the Dark mode subsection for the full raw→token surface map. Since 2026-07-09 this is a **functional** requirement, not just hygiene: a raw ramp class does not invert under `.dark`. Exception: typography ramp tokens with no current alias (`text-neutral-800/600/400`). Every surface/border/ring/foreground ramp value has a semantic alias — use it. The old `bg-neutral-50` field-wash exception is retired: the input wash is now `bg-muted`.
 
 ---
 

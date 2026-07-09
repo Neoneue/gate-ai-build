@@ -134,7 +134,7 @@ function MultiSelect({
 
         <div className="border-border border-b p-1">
           <button
-            className="type-copy-14 flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-foreground outline-none transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:bg-neutral-100 motion-reduce:transition-none"
+            className="type-copy-14 flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-left text-foreground outline-none transition-colors duration-150 ease-out hover:bg-accent focus-visible:bg-accent motion-reduce:transition-none"
             onClick={toggleAll}
             type="button"
           >
@@ -151,7 +151,7 @@ function MultiSelect({
           ) : (
             filteredOptions.map((option) => (
               <label
-                className="type-copy-14 flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-foreground transition-colors duration-150 ease-out hover:bg-neutral-100 has-focus-visible:bg-neutral-100 motion-reduce:transition-none"
+                className="type-copy-14 flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-foreground transition-colors duration-150 ease-out hover:bg-accent has-focus-visible:bg-accent motion-reduce:transition-none"
                 key={option.value}
               >
                 <Checkbox

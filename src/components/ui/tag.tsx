@@ -16,7 +16,7 @@ export function Tag({ children, onRemove, className }: TagProps) {
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded-full border border-border bg-neutral-100",
+        "inline-flex h-6 items-center rounded-full border border-border bg-muted",
         "gap-2 font-sans text-foreground text-xs",
         onRemove ? "pr-1 pl-2" : "px-3",
         className
@@ -32,7 +32,7 @@ export function Tag({ children, onRemove, className }: TagProps) {
           aria-label={
             typeof children === "string" ? `Remove ${children}` : "Remove"
           }
-          className="relative inline-flex size-3.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-200 hover:text-foreground"
+          className="relative inline-flex size-3.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-accent hover:text-foreground"
           onClick={onRemove}
           type="button"
         >

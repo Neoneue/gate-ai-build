@@ -120,7 +120,7 @@ export function CodeCardHeader({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-border border-b bg-neutral-100 px-4 py-2",
+        "flex items-center justify-between gap-3 border-border border-b bg-muted px-4 py-2",
         className
       )}
       data-slot="code-card-header"
@@ -163,7 +163,7 @@ export function CodeCardTabs({
           isActive
             ? "border border-border bg-card font-medium text-foreground shadow-xs"
             : "border border-transparent font-medium text-muted-foreground",
-          interactive && !isActive && "hover:bg-white/60 hover:text-foreground"
+          interactive && !isActive && "hover:bg-accent hover:text-foreground"
         );
         if (interactive) {
           return (
@@ -283,7 +283,7 @@ export function CodeBlock({
                         {...p}
                         className={cn(
                           toneMap[tok.tone ?? "default"],
-                          "cursor-help rounded-xs bg-warning-100 text-warning-800"
+                          "cursor-help rounded-xs bg-warning-100 text-warning-800 dark:bg-warning-500/15 dark:text-warning-300"
                         )}
                         data-code-highlight=""
                       >
@@ -300,7 +300,7 @@ export function CodeBlock({
                   className={cn(
                     toneMap[tok.tone ?? "default"],
                     tok.highlight &&
-                      "rounded-xs bg-warning-100 text-warning-800"
+                      "rounded-xs bg-warning-100 text-warning-800 dark:bg-warning-500/15 dark:text-warning-300"
                   )}
                   data-code-highlight={tok.highlight ? "" : undefined}
                   key={j}

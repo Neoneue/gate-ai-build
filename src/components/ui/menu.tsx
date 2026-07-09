@@ -63,8 +63,8 @@ function MenuItem({
       className={cn(
         "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-xs px-2 text-sm outline-none transition-colors duration-100 ease-out data-disabled:pointer-events-none data-disabled:opacity-50 motion-reduce:transition-none",
         variant === "destructive"
-          ? "text-danger-700 focus-visible:bg-danger-50 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-700 [&_svg]:text-danger-700"
-          : "text-foreground focus-visible:bg-neutral-100 data-[highlighted]:bg-neutral-100 [&_svg]:text-muted-foreground",
+          ? "text-danger-700 focus-visible:bg-danger-50 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-700 dark:text-danger-300 dark:data-[highlighted]:bg-danger-500/15 dark:data-[highlighted]:text-danger-300 dark:focus-visible:bg-danger-500/15 [&_svg]:text-danger-700 dark:[&_svg]:text-danger-300"
+          : "text-foreground focus-visible:bg-accent data-[highlighted]:bg-accent [&_svg]:text-muted-foreground",
         "[&_svg]:size-4 [&_svg]:shrink-0",
         className
       )}
@@ -91,7 +91,7 @@ function MenuSeparator({
 }: React.ComponentProps<typeof MenuPrimitive.Separator>) {
   return (
     <MenuPrimitive.Separator
-      className={cn("my-1 h-px bg-neutral-200", className)}
+      className={cn("my-1 h-px bg-border", className)}
       data-slot="menu-separator"
       {...props}
     />
