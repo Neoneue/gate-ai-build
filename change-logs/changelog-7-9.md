@@ -33,6 +33,18 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Light table column headers restored to neutral-50 `2e195c9`
+
+**`src/components/ui/table.tsx`**
+
+Same regression as the content canvas: the dark foundation swapped the shared `TableHeader` `bg-neutral-50` → `bg-muted`, darkening light-mode column headers neutral-50 → neutral-100. Restored to `bg-neutral-50 dark:bg-muted` (dark stays neutral-800).
+
+### Light content canvas restored to neutral-50 `db93eeb`
+
+**`src/layouts/DashboardChrome.tsx`**
+
+The dark-mode foundation swapped the content canvas `bg-neutral-50` → `bg-background` so it would invert; in light mode that darkened the canvas neutral-50 → neutral-100 (rgb 251 → 245). Restored the original light value while keeping the dark inversion: `bg-neutral-50 dark:bg-neutral-950`. No light token resolves to neutral-50 (`--background` is neutral-100), so the explicit ramp pair carries the intended values.
+
 ### Code-snippet syntax legibility on dark `9e6f190`
 
 **`src/index.css`, `src/components/ui/code-card.tsx`**
