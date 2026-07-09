@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Message bubbles lightened to `bg-card-muted` `978c62a`
+
+**`src/components/ui/message-block.tsx`**
+
+With the trace panels now `bg-card` (white), the default message bubble at `bg-muted` (neutral-100) sat one step too dark. Moved it to the `--card-muted` token (neutral-50 light / neutral-800 dark) — the card-wash level — so it reads a step lighter and stays a card-relative surface. Tinted (warn/danger) bubbles unchanged.
+
 ### Conversations trace panels get a `bg-card` body `afb819b`
 
 **`src/pages/conversations/ConversationDetail.tsx`, `RequestTracePanel.tsx`**
