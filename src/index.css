@@ -427,6 +427,30 @@ body {
   --color-syntax-variable: #F0C674; /* lightened amber for dark */
   --color-syntax-property: var(--color-blue-400);
   --color-syntax-terminal-blue: var(--color-success-400);
+
+  /* Elevation shadows — dark theme. The light tokens mix from neutral-800 at
+     4-12%, which is invisible on a dark surface. Re-point to black at higher
+     alpha so popovers / dropdowns / dialogs cast a real ambient shadow where
+     they overlap lighter content; the border-border hairline still carries
+     the crisp edge. Offsets / blur match the light tokens 1:1. */
+  --shadow-border:
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 1px 2px -1px rgb(0 0 0 / 0.4),
+    0 2px 4px 0 rgb(0 0 0 / 0.3);
+  --shadow-border-hover:
+    0 0 0 1px rgb(0 0 0 / 0.5),
+    0 1px 2px -1px rgb(0 0 0 / 0.5),
+    0 2px 4px 0 rgb(0 0 0 / 0.4);
+  --shadow-popup:
+    0 4px 12px -2px rgb(0 0 0 / 0.5),
+    0 0 0 1px rgb(0 0 0 / 0.4);
+  --shadow-modal:
+    0 16px 32px -4px rgb(0 0 0 / 0.6),
+    0 0 0 1px rgb(0 0 0 / 0.5);
+  --shadow-card-soft:
+    0 4px 8px -1px rgb(0 0 0 / 0.35),
+    0 2px 6px -2px rgb(0 0 0 / 0.35);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
 }
 
 @layer base {
