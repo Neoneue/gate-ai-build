@@ -33,6 +33,18 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Code-snippet syntax legibility on dark `9e6f190`
+
+**`src/index.css`, `src/components/ui/code-card.tsx`**
+
+Code rendered on card surfaces (`TONE_CLASS_LIGHT`) used syntax colors tuned for white cards (blue-700 keys, success-700 literals, burnt-orange/amber keyword+variable hex), which read too dark on a `neutral-900` card in dark mode. The four `--color-syntax-*` vars now re-point to the ramp light-end in `.dark` (property → `blue-400`, terminal-blue → `success-400`, keyword + variable → lightened hex); the always-dark terminal (`TONE_CLASS_DARK`) only gets lighter, fine on its chrome. `TONE_CLASS_LIGHT.success` gains `dark:text-success-300`.
+
+### Saturated colored text/icons + pro-CTA token parity `6e0b0b5`
+
+**11 pages/components**
+
+Saturated status text and colored icons (600–800) had no dark variant, so amber/green/blue read too dark on the dark canvas and tinted callouts. Body text → `dark:text-*-300` (ApiKeys warning callouts, `ConversationDetail` + `RequestTracePanel` trace tones, `SetupManual` success text); icons / link accents → `dark:text-*-400` (success check icons in ApiKeys / AuditRecordDialog / AuditTrail / SetupManual; blue feature/link accents in Policies, pro-upgrade-card, plan-comparison, onboarding, DashboardDefault). `Policies` "Pro plan protection" block now shares the Free-plan banner's color tokens: dropped the `bg-gradient-to-b from-blue-50 to-blue-25` (no dark variant, near-white in dark) for the banner's flat `bg-blue-25` + `dark:bg-blue-500/10` + `dark:border-blue-500/30`.
+
 ### Ultralight `-25` tint surfaces get dark variants `f818e9e`
 
 **`RequestDetailModal`, `policies/config`, `Policies`, `pro-upgrade-card`, `design.md`**
