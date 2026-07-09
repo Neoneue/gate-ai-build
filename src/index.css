@@ -207,9 +207,11 @@ and (pointer: fine)) and (&:hover));
   --canvas-bg:   var(--color-canvas);
   --canvas-grid: color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
 
-  /* Page canvas = neutral-50 wash. Consumed ONLY by the dashboard content
-     canvas (bg-background). Card/table washes use --card-muted instead, and
-     the segmented tracks use --muted — so bg-background is canvas-only. */
+  /* Page canvas + recessed-container level = neutral-50 wash (neutral-950 in
+     dark). Consumers: the dashboard content canvas, and the segmented-control
+     tracks — which need to sit BELOW the raised bg-popover thumb in both
+     themes (white/neutral-800 thumb over neutral-50/neutral-950 track). Card
+     and table washes use --card-muted; muted chips/fills use --muted. */
   --background: var(--color-neutral-50);
   --foreground: var(--color-neutral-900);
   --card: var(--color-white);
