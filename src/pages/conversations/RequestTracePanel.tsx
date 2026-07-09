@@ -107,7 +107,7 @@ export function RequestTracePanel({
   }, [activeRequestId, selectionSource]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-card">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
