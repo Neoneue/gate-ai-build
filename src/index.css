@@ -397,6 +397,15 @@ body {
   --sidebar-accent-foreground: var(--color-neutral-50);
   --sidebar-border: color-mix(in oklch, var(--color-white) 10%, transparent);
   --sidebar-ring: var(--color-neutral-500);
+
+  /* Syntax palette re-points to the ramp light-end on dark: the :root values
+     (blue-700/success-700 + burnt-orange/amber hex) are tuned for code on
+     white cards and read too dark on a neutral-900 card. The always-dark
+     terminal (TONE_CLASS_DARK) only gets lighter, which is fine on its bg. */
+  --color-syntax-keyword:  #E0915E; /* lightened burnt-orange for dark */
+  --color-syntax-variable: #F0C674; /* lightened amber for dark */
+  --color-syntax-property: var(--color-blue-400);
+  --color-syntax-terminal-blue: var(--color-success-400);
 }
 
 @layer base {

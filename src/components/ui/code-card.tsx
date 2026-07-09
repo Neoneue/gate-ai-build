@@ -72,7 +72,7 @@ const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
   variable: "text-[var(--color-syntax-variable)]",
   property: "text-[var(--color-syntax-property)]",
   number: "text-[var(--color-syntax-terminal-blue)]",
-  success: "text-success-700",
+  success: "text-success-700 dark:text-success-300",
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
