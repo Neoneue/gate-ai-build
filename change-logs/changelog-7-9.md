@@ -33,6 +33,16 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Theme-aware elevation shadows + select trigger shadow `7256151`
+
+**`src/index.css`, `src/components/ui/select-variants.ts`**
+
+The elevation shadow tokens mixed from `neutral-800` at 4–12% and lived only in `:root`, so on the dark canvas they were invisible — popovers / dialogs leaned entirely on their border. And the Select trigger had no shadow in either theme.
+
+- `.dark` re-points every var-based shadow token to **black at higher alpha** (`--shadow-border`, `--shadow-border-hover`, `--shadow-popup`, `--shadow-modal`, `--shadow-card-soft`, `--shadow-xs`), offsets/blur unchanged, so popover / menu / dialog surfaces cast a real ambient shadow in dark.
+- Select (and MultiSelect) trigger gains `shadow-(--shadow-xs)` — the **var** form, so it shows the xs lift in both themes (0.055 light / 0.4 dark), unlike the inlined `shadow-xs` utility which is dark-invisible.
+- Known follow-up: the named `shadow-xs` utility is inlined by Tailwind and does not pick up the `.dark` override; a later pass can migrate remaining `shadow-xs` usages to the var form for a full theme-aware xxs–xl scale.
+
 ### Segmented track restored to `bg-background` `05bd2ae`
 
 **`src/components/ui/segmented-pill.tsx`, `segmented.tsx`, `src/index.css`**
