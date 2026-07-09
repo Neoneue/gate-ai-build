@@ -116,7 +116,7 @@ function FreePlanNoticeBanner() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-500/30 dark:bg-blue-500/10">
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-400/30 dark:bg-blue-500/10">
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -129,7 +129,7 @@ function FreePlanNoticeBanner() {
               </p>
             </div>
             <Button
-              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
               onClick={() => setCompareOpen(true)}
               size="sm"
               type="button"
@@ -391,7 +391,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-500/30 dark:bg-blue-500/10">
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-400/30 dark:bg-blue-500/10">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -425,7 +425,7 @@ function ProBenefitsCard() {
             </ul>
             <div className="pt-2">
               <Button
-                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={() => setCompareOpen(true)}
                 type="button"
               >

@@ -173,7 +173,7 @@ function PlanCard({
           className={cn(
             "w-full",
             plan.featured &&
-              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
           )}
           disabled={plan.cta.disabled}
           onClick={
