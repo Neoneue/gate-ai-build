@@ -33,6 +33,19 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Surface sweep pass 3 — nav / calendar / pagination + page layer `38e46c0`
+
+**29 files across `src/components/ui`, `src/pages`, `src/components/canvas`**
+
+Phase B of the surface pass. The raw neutral surfaces and light status tints that pass 2 left on the nav / date / pagination primitives and across the page layer now map to semantic tokens, so the last non-inverting surfaces track `.dark`. Completes the color sweep (a full-tree re-scan is clean except deliberately-dark surfaces).
+
+- **Nav / chrome primitives** — `sidebar` active-item + hover fills → `bg-accent` / `text-accent-foreground`, and the `from-neutral-100 to-neutral-50` active gradient is dropped for a flat `bg-accent`; `workspace-switcher`, `icon-action-button`, and the `alert-dialog` icon chip → accent / muted; `status-dot` neutral → `bg-muted-foreground`.
+- **Calendar** — day hover → `bg-accent`, range fills → `bg-accent`, selected day `bg-neutral-900 text-white` → `bg-primary text-primary-foreground`, focus ring → `ring-ring`.
+- **Pagination / tabs** — pager hover → `bg-accent`, active page `bg-neutral-800` → `bg-primary`; the `tabs` active underline `bg-neutral-900` → `bg-primary`.
+- **Pages** — `bg-neutral-50`/`-100` fills → `bg-muted`, row/control hovers → `hover:bg-accent`, `border-neutral-300` hovers → `border-input`, small status dots → `bg-muted-foreground`: `Billing`, `BillingFree`, `ApiKeys`, `Models`, `Conversations`, `Security/EventsTable`, `RequestsTable`, `RequestDetailModal`, `RequestTracePanel`, `onboarding-shared`, `Artboard`, `policies/config`. `DashboardDefault` platform-card selected border → `border-foreground`, its count badges → `surface-strong`; `Policies` step-slider fills → `muted-foreground` + `border-ring`.
+- **Status-tint callouts** gain `dark:` variants (ramp `-500/15` fill + `-300` text, per the design.md convention): `RequestDetailModal`, `ConversationDetail`, `ApiKeys`, `SetupManual`, `SetupCredits`, `SetupGateConnect`, `TokenSavings`, `pro-upgrade-card`, `Policies`, `message-block`.
+- **Left intentional** (dark in both themes by design): dialog / sheet scrims, `code-card` terminal chrome, the `AuthLayout` dark login hero.
+
 ### Surface + tint token sweep — primitives (pass 2) `0a32743`
 
 **16 primitives in `src/components/ui/` + `design.md`**
