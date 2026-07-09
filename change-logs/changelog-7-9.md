@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Dark-theme sidebar logo `eef5892`
+
+**`src/components/ui/sidebar.tsx`, `public/gate-ai-logo-dark.png`**
+
+The expanded sidebar rendered a single `/gate-ai-logo.png` in both themes, so the light wordmark sat low-contrast on the dark sidebar. Added the dark-theme full logo and swap by theme with a CSS-only pair — light `dark:hidden`, dark `hidden dark:block` (no flash, no JS). The collapsed logomark still uses the light `gate-ai-logo-mark.png`; the dark symbol will follow.
+
 ### Theme-aware elevation shadows + select trigger shadow `7256151`
 
 **`src/index.css`, `src/components/ui/select-variants.ts`**
