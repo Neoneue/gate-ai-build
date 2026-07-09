@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Ultralight `-25` tint surfaces get dark variants `f818e9e`
+
+**`RequestDetailModal`, `policies/config`, `Policies`, `pro-upgrade-card`, `design.md`**
+
+The findings cards, policy action tone-chips, and blue callout `Card`s use an ultralight `bg-*-25` fill that the `-50/100/200` sweep did not cover, so they rendered as near-white boxes (white-on-cream, unreadable) in dark. Added dark variants: finding-card `bg-warning-25`/`bg-danger-25` active fills → `dark:bg-*-500/10` (+ `dark:hover:bg-*-500/15`); the `policies/config` flag/block tone map; the `Policies` scope `Card` and `pro-upgrade-card` `bg-blue-25` → `dark:bg-blue-500/10` + `dark:border-blue-500/30`. `design.md`'s status-tint convention table gains the `-25` ultralight-fill row.
+
 ### Surface sweep pass 3 — nav / calendar / pagination + page layer `38e46c0`
 
 **29 files across `src/components/ui`, `src/pages`, `src/components/canvas`**
