@@ -555,7 +555,7 @@ function SettingsHalf({
                 the dots below via pointer-events-none. */}
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 z-20 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-primary shadow-xs transition-[left] duration-200 ease-out motion-reduce:transition-none"
+              className="pointer-events-none absolute top-1/2 z-20 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-muted-foreground bg-muted-foreground shadow-xs transition-[left] duration-200 ease-out motion-reduce:transition-none"
               style={{ left: `calc(0.5rem + (100% - 1rem) * ${fillFraction})` }}
             />
             {options.map((opt, i) => (
