@@ -858,7 +858,7 @@ function ModelDetailPage({
                 const meta = CAPABILITY_META[c];
                 const Icon = meta.icon;
                 return (
-                  <Badge key={c} variant="neutral">
+                  <Badge className="h-6" key={c} variant="neutral">
                     <Icon aria-hidden="true" data-icon="inline-start" />
                     {meta.label}
                   </Badge>
