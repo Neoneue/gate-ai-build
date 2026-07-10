@@ -81,7 +81,7 @@ const OTHERS_COLOR = "var(--color-neutral-300)";
  *  props each render and re-runs layout/style work it could otherwise skip.
  *  Module-level constants keep referential identity stable across renders. */
 const TREND_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
-const TREND_CHART_XAXIS_TICK = {
+const TREND_CHART_TICK = {
   fontSize: 11,
   fill: "var(--muted-foreground)",
 } as const;
@@ -383,42 +383,20 @@ export function TrendCard({
                 //   12 bars → interval 1 (every other, ~6 visible)
                 //   30 bars → interval 4 (every 5th, ~6 visible)
                 interval={Math.max(0, Math.ceil(data.length / 7) - 1)}
-                tick={TREND_CHART_XAXIS_TICK}
+                tick={TREND_CHART_TICK}
                 tickLine={false}
                 tickMargin={8}
               />
               <YAxis
                 axisLine={false}
-                tick={(props: {
-                  y?: string | number;
-                  payload?: { value?: string | number };
-                }) => {
-                  // Left-align every tick at x=0 of the chart container so the
-                  // left edges of all ticks sit at the same x — and that x
-                  // lines up with the title left edge. Default recharts tick is
-                  // right-anchored to the tick line, which makes "0" sit
-                  // visibly further right than the max tick.
-                  // Spend ticks get a `$` prefix; token ticks use fmtTokens
-                  // (compact "M"/"k") so the axis matches the tooltip rows.
-                  const raw = Number(props.payload?.value ?? 0);
-                  const label = isSpend
-                    ? `$${props.payload?.value}`
-                    : fmtTokens(raw);
-                  return (
-                    <text
-                      dy={4}
-                      fill="var(--muted-foreground)"
-                      fontSize={11}
-                      textAnchor="start"
-                      x={0}
-                      y={props.y}
-                    >
-                      {label}
-                    </text>
-                  );
-                }}
+                // Spend ticks get a `$` prefix; token ticks use fmtTokens
+                // (compact "M"/"k") so the axis matches the tooltip rows.
+                tick={TREND_CHART_TICK}
+                tickFormatter={(value: number) =>
+                  isSpend ? `$${value}` : fmtTokens(value)
+                }
                 tickLine={false}
-                tickMargin={0}
+                tickMargin={4}
                 width={44}
               />
               <ChartTooltip
@@ -452,7 +430,7 @@ export function TrendCard({
                 }
                 cursor={false}
               />
-              {cappedSeries.map((s) => {
+              {cappedSeries.map((s, i) => {
                 const color =
                   s.key === OTHERS_KEY ? OTHERS_COLOR : seriesColor(s);
                 return (
@@ -461,6 +439,9 @@ export function TrendCard({
                     fill={color}
                     isAnimationActive={false}
                     key={s.key}
+                    radius={
+                      i === cappedSeries.length - 1 ? [2, 2, 0, 0] : undefined
+                    }
                     stackId="spend"
                   />
                 );

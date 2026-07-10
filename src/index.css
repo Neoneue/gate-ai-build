@@ -406,6 +406,18 @@ body {
   --input: color-mix(in oklch, var(--color-white) 15%, transparent);
   --ring: var(--color-neutral-500);
   --chart-grid: var(--color-neutral-700);
+  /* Categorical palette, 5 points darker (L -0.05) than the light-mode
+  values above — same hue/chroma. Overview's "Tokens used" and Activity's
+  "Tokens over time" bar segments read too bright against the near-black
+  canvas at full lightness. */
+  --chart-1: oklch(0.57 0.18 255);
+  --chart-2: oklch(0.67 0.17 50);
+  --chart-3: oklch(0.67 0.20 145);
+  --chart-4: oklch(0.65 0.18 290);
+  --chart-5: oklch(0.60 0.20 18);
+  --chart-6: oklch(0.70 0.13 195);
+  --chart-7: oklch(0.80 0.16 88);
+  --chart-8: oklch(0.63 0.20 335);
 
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);

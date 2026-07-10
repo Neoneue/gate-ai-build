@@ -90,6 +90,9 @@ colors:
   chart-6: "oklch(0.75 0.13 195)"  # teal
   chart-7: "oklch(0.85 0.16 88)"  # amber
   chart-8: "oklch(0.68 0.20 335)"  # magenta
+  # Dark mode re-tunes chart-1..8 in place (`.dark`, src/index.css): same
+  # hue/chroma, lightness lowered 0.05 (5 points darker) against --canvas-bg.
+  # Light-mode values above are unchanged.
 
   syntax-keyword: "#B6491A"  # curl flags / orange-red
   syntax-variable: "#D69E2E"  # $KEY interpolations

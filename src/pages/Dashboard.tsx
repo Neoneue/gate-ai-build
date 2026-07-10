@@ -259,7 +259,10 @@ function makeStackedTokenRows(
 
 /** Stacked-by-model bar chart used in the Spend and Tokens tiles. */
 const STACKED_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
-const STACKED_CHART_TICK = { fontSize: 10 } as const;
+const STACKED_CHART_TICK = {
+  fontSize: 10,
+  fill: "var(--muted-foreground)",
+} as const;
 
 type StackedSeries = readonly {
   key: string;
@@ -310,6 +313,7 @@ function StackedKpiChart({
           tick={STACKED_CHART_TICK}
           tickFormatter={yFormatter}
           tickLine={false}
+          tickMargin={4}
           width={44}
         />
         <ChartTooltip
@@ -340,12 +344,13 @@ function StackedKpiChart({
           }
           cursor={false}
         />
-        {series.map((s) => (
+        {series.map((s, i) => (
           <Bar
             dataKey={s.key}
             fill={seriesColor(s)}
             isAnimationActive={false}
             key={s.key}
+            radius={i === series.length - 1 ? [2, 2, 0, 0] : undefined}
             stackId="s"
           />
         ))}
