@@ -44,3 +44,11 @@ Table/row hover used `transition-colors`, which animates `border-color` alongsid
 **`src/pages/activity-data.ts`, `src/pages/Dashboard.tsx`, `src/pages/TokenSavings.tsx`**
 
 Overview's Tokens Saved tile used a hardcoded `TOTAL_SAVED_RATE` (23%) with no relation to any other number in the app. `TokenSavings.tsx`'s real 7d "Total saved" rate (caching 0.18% + compression 14.0% = 14.2%) was 9 points off from what Overview showed for the same window. Exported `TOKEN_SAVINGS_RATE_7D = 0.142` from `activity-data.ts` and wired both pages to it, so the two can't diverge again. Also gave the Dashboard sparklines real day labels, hover tooltips, and value formatters (previously bare, unlabeled).
+
+### Requests → Messages: finish the terminology rename `233823a`
+
+**17 files** — Activity, ActivityDefault, ApiKeys, Billing, BillingFree, Conversations, ConversationsDefault, Dashboard, Limits, LimitsFree, Models, SetupManual, TokenSavings, Upgrade, `conversations/ConversationDetail`, `conversations/RequestTracePanel`, `security/EventsTable`
+
+Nav label and routes had already moved to `/messages` in an earlier pass, but page-body copy still said "Requests" — KPI titles, column headers, breadcrumb/empty-state text, dialog copy, aria-labels/sr-only strings. Also caught two `navigate()` calls still pointing at the stale `/requests` route (Dashboard's latest-messages table row, EventsTable's open-message link) — those were broken links, not just stale copy.
+
+Scope is rendered/AT-facing text only. Internal identifiers (`Requests.tsx`, `RequestRow`, `RequestsTable`, `requestRowId`, the `requests/` directory) are left as-is — same precedent as Digital Evidence's fingerprint/anchor split, where UI copy already diverges from code names. The Python `requests` library reference in `Models.tsx`'s code sample is untouched.
