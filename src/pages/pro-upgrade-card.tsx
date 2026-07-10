@@ -22,7 +22,7 @@ export function ProUpgradeCard({
       action={
         <div className="pt-4">
           <Button
-            className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+            className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
             onClick={() => navigate("/billing")}
           >
             <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
@@ -31,13 +31,13 @@ export function ProUpgradeCard({
         </div>
       }
       body={body}
-      className="border-blue-200 bg-blue-25 shadow-sm [&_h3]:text-balance"
+      className="border-blue-200 bg-blue-25 shadow-sm dark:border-blue-400/30 dark:bg-blue-500/10 [&_h3]:text-balance"
       icon={
         <div
           aria-hidden
-          className="flex size-12 items-center justify-center rounded-full bg-blue-100"
+          className="flex size-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-500/15"
         >
-          <Icon className="size-5 text-blue-700" />
+          <Icon className="size-5 text-blue-700 dark:text-blue-400" />
         </div>
       }
       title={title}

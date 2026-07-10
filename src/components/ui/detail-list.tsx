@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  *   list   rounded-md border border-border overflow-hidden
  *   row    flex items-start gap-4 px-4 py-3
  *          border-b border-border last:border-b-0
- *   label  w-32 shrink-0 text-sm text-neutral-500
+ *   label  w-32 shrink-0 text-sm text-muted-foreground
  *   value  flex-1 min-w-0 text-sm (consumer styles inner content)
  * ───────────────────────────────────────────────────────────────────── */
 
@@ -57,7 +57,7 @@ export function DetailRow({
       data-slot="detail-row"
       {...props}
     >
-      <span className="type-copy-14 w-32 shrink-0 text-neutral-500">
+      <span className="type-copy-14 w-32 shrink-0 text-muted-foreground">
         {label}
       </span>
       <div className="type-copy-14 min-w-0 flex-1">{value}</div>

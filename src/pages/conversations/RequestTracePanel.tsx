@@ -30,8 +30,8 @@ const TRACE_NODE_BORDER: Record<TraceStatus, string> = {
   danger: "border-destructive",
 };
 const TRACE_NODE_ICON_TONE: Record<TraceStatus, string> = {
-  success: "text-success-700",
-  warn: "text-warning-700",
+  success: "text-success-700 dark:text-success-300",
+  warn: "text-warning-700 dark:text-warning-300",
   danger: "text-destructive",
 };
 // Selected-row OUTLINE color, keyed off status (mirrors the messages panel's
@@ -51,9 +51,9 @@ const TRACE_SELECT_RING: Record<TraceStatus, string> = {
 // cleanly over the timeline track. -50 is near-white and reads as no color, so
 // -200 is the lightest step that still registers as the status hue.
 const TRACE_HOVER_RING: Record<TraceStatus, string> = {
-  success: "hover:after:ring-success-200",
-  warn: "hover:after:ring-warning-200",
-  danger: "hover:after:ring-danger-200",
+  success: "hover:after:ring-success-200 dark:hover:after:ring-success-500/25",
+  warn: "hover:after:ring-warning-200 dark:hover:after:ring-warning-500/25",
+  danger: "hover:after:ring-danger-200 dark:hover:after:ring-danger-500/25",
 };
 
 /** Interleaved timeline entry for the Findings-only view: either a finding
@@ -107,7 +107,7 @@ export function RequestTracePanel({
   }, [activeRequestId, selectionSource]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-card">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the messages panel. `flex-none`
           so it doesn't shrink when the body scrolls. */}
@@ -116,7 +116,7 @@ export function RequestTracePanel({
           Request Trace
         </span>
         <span className="font-mono text-muted-foreground text-xs tabular-nums">
-          {countLabel ?? `${(trace ?? []).length} requests`}
+          {countLabel ?? `${(trace ?? []).length} messages`}
         </span>
       </div>
 
@@ -213,7 +213,7 @@ function TraceItem({
   const latencyMs = Number.parseInt(event.latency, 10);
   const isSlowLatency = latencyMs > 1000;
   const latencyTone = isSlowLatency
-    ? "text-warning-700"
+    ? "text-warning-700 dark:text-warning-300"
     : "text-muted-foreground";
 
   // Node ring + icon tone key off guardrail status ONLY: green = clean (no
@@ -259,7 +259,7 @@ function TraceItem({
           the line where it crosses. */}
       <span
         aria-hidden
-        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-border ${trackSegment}`}
       />
       {/* Selected fill — an opaque card overlay that paints ABOVE the track
           (so the gray line doesn't show through the selected row) but below
@@ -314,13 +314,13 @@ function TraceItem({
             <ArrowRight aria-hidden className="size-3" strokeWidth={1.75} />
             {event.outTokens}
           </span>
-          <span aria-hidden className="text-neutral-300">
+          <span aria-hidden className="text-muted-foreground">
             ·
           </span>
           <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
             {event.latency}
           </span>
-          <span aria-hidden className="text-neutral-300">
+          <span aria-hidden className="text-muted-foreground">
             ·
           </span>
           <span className="flex-1 font-mono text-foreground text-xs tabular-nums">
@@ -384,13 +384,13 @@ function TracePassingSeparator({
     <div aria-hidden className="relative -mx-2 flex gap-3 px-3 py-3">
       {/* Continuous track segment at x=23 — same centerline as TraceItem. */}
       <span
-        className={`absolute left-[23px] w-[2px] bg-neutral-200 ${trackSegment}`}
+        className={`absolute left-[23px] w-[2px] bg-border ${trackSegment}`}
       />
       {/* Node column placeholder — a small hollow dot centered on the rail
           (x=24) so the eye still tracks the timeline, but visibly lighter
           than a status node (no 2px ring, no icon). */}
       <div className="relative flex size-6 shrink-0 items-center justify-center">
-        <span className="size-1.5 rounded-full bg-neutral-300" />
+        <span className="size-1.5 rounded-full bg-muted-foreground" />
       </div>
       {/* Muted count copy. Mono so it sits in the data voice but quiet. */}
       <div className="flex min-w-0 flex-1 items-center">

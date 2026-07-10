@@ -54,7 +54,7 @@ export function SearchInput({
     <div className={cn("relative w-96 min-w-0 shrink-0", className)}>
       <Search
         aria-hidden
-        className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-neutral-500"
+        className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground"
         strokeWidth={1.75}
       />
       <Input

@@ -37,6 +37,7 @@ import {
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatSparkLabel } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { TOKEN_SAVINGS_RATE_7D } from "@/pages/activity-data";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 type Plan = "pro" | "free";
@@ -187,7 +188,9 @@ const KPI_BY_RANGE: Record<PresetRange, SavingsKpi[]> = {
   "7d": [
     {
       title: "Total saved",
-      value: "14.2",
+      // Reconciles with Overview's Tokens Saved tile — both derive from
+      // TOKEN_SAVINGS_RATE_7D (activity-data.ts).
+      value: (TOKEN_SAVINGS_RATE_7D * 100).toFixed(1),
       colorVar: KPI_COLORS.total,
       spark: [12.4, 12.8, 13.2, 13.5, 13.8, 14.0, 14.2],
     },
@@ -423,7 +426,7 @@ function CachingCard() {
                 </p>
                 <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
                   Serve cached responses instead of round-tripping to providers.
-                  Identical concurrent requests are deduplicated automatically.
+                  Identical concurrent messages are deduplicated automatically.
                 </p>
               </div>
               <Switch
@@ -583,7 +586,7 @@ function BenefitList({
                     <span
                       {...props}
                       aria-label={`About ${benefit.title}`}
-                      className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-neutral-400 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                     >
                       <Info
                         aria-hidden
@@ -658,7 +661,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
       className={
         isPro
           ? "rounded-sm shadow-none"
-          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none"
+          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
       }
     >
       <CardContent className="flex flex-1 flex-col">
@@ -693,7 +696,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
               />
             ) : (
               <Button
-                className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+                className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={() => setCompareOpen(true)}
                 size="sm"
                 type="button"
@@ -707,7 +710,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
               it. On Pro the user already has the capability, so it's dropped. */}
           {isPro ? null : (
             <SavingsHeadline
-              caption="smaller requests on average"
+              caption="smaller messages on average"
               value="~20%"
               valueClassName="text-foreground text-xl"
             />
@@ -718,8 +721,12 @@ function CompressionCard({ plan }: { plan: Plan }) {
             // its gradient + CTA, so keeping checks light lets the saturated CTA
             // button stay the single loudest element instead of competing with
             // a mass of solid-blue dots.
-            checkClassName="bg-blue-100 text-blue-700"
-            outlineClassName={isPro ? "border-border" : "border-blue-200"}
+            checkClassName="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
+            outlineClassName={
+              isPro
+                ? "border-border"
+                : "border-blue-200 dark:border-blue-400/30"
+            }
           />
         </div>
       </CardContent>

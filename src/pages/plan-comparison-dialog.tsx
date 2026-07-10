@@ -125,7 +125,7 @@ function PlanCard({
       className={cn(
         "flex flex-col gap-4 rounded-md border p-4",
         plan.featured
-          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25"
+          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
           : "border-border bg-card"
       )}
       data-plan-card
@@ -150,7 +150,9 @@ function PlanCard({
                 aria-hidden
                 className={cn(
                   "mt-1 size-4 shrink-0",
-                  plan.featured ? "text-blue-700" : "text-neutral-700"
+                  plan.featured
+                    ? "text-blue-700 dark:text-blue-400"
+                    : "text-muted-foreground"
                 )}
                 strokeWidth={1.75}
               />
@@ -171,7 +173,7 @@ function PlanCard({
           className={cn(
             "w-full",
             plan.featured &&
-              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
           )}
           disabled={plan.cta.disabled}
           onClick={

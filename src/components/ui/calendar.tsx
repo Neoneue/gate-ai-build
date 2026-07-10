@@ -37,24 +37,24 @@ export function Calendar({
         months: "flex flex-col gap-4",
         month: "flex flex-col gap-3",
         month_caption: "relative flex items-center justify-center h-10",
-        caption_label: "font-sans text-sm font-medium text-neutral-900",
+        caption_label: "font-sans text-sm font-medium text-foreground",
         nav: "absolute inset-x-2 top-1 flex items-center justify-between h-8 pointer-events-none",
         button_previous: cn(
           "pointer-events-auto relative z-10 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xs",
-          "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+          "text-muted-foreground hover:bg-accent hover:text-foreground",
           "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "disabled:pointer-events-none disabled:opacity-40"
         ),
         button_next: cn(
           "pointer-events-auto relative z-10 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xs",
-          "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+          "text-muted-foreground hover:bg-accent hover:text-foreground",
           "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "disabled:pointer-events-none disabled:opacity-40"
         ),
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday:
-          "flex-1 font-sans uppercase text-xs text-neutral-500 font-normal pb-2",
+          "flex-1 font-sans uppercase text-xs text-muted-foreground font-normal pb-2",
         weeks: "flex flex-col gap-1",
         week: "flex w-full",
         // Base cell — range fills land here as a continuous band. The
@@ -67,25 +67,24 @@ export function Calendar({
         // reads as a soft swatch instead of a circle.
         day_button: cn(
           "mx-auto inline-flex size-8 items-center justify-center rounded-xs",
-          "text-neutral-800 hover:bg-neutral-100 hover:text-neutral-900",
+          "text-foreground hover:bg-accent hover:text-foreground",
           "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "transition-colors duration-100 ease-out motion-reduce:transition-none"
         ),
         // Range fills land on the <td>; end-caps round only the outer
         // edge so consecutive cells visually flow into each other.
-        range_start: "bg-neutral-100 rounded-l-xs",
-        range_end: "bg-neutral-100 rounded-r-xs",
-        range_middle: "bg-neutral-100",
+        range_start: "bg-accent rounded-l-xs",
+        range_end: "bg-accent rounded-r-xs",
+        range_middle: "bg-accent",
         // End caps repaint the button so the selected day reads as
         // the anchor of the band. `aria-selected:` reaches the button
         // through RDP's per-day `aria-selected` attribute on the <td>.
         selected:
-          "[&_button]:bg-neutral-900 [&_button]:text-white [&_button]:hover:bg-neutral-900 [&_button]:hover:text-white",
+          "[&_button]:bg-primary [&_button]:text-primary-foreground [&_button]:hover:bg-primary [&_button]:hover:text-primary-foreground",
         // Today: subtle ring on the button, no fill — so it never
         // outranks a real selection.
-        today:
-          "[&_button]:font-medium [&_button]:ring-1 [&_button]:ring-neutral-300",
-        outside: "[&_button]:text-neutral-300",
+        today: "[&_button]:font-medium [&_button]:ring-1 [&_button]:ring-ring",
+        outside: "[&_button]:text-muted-foreground",
         disabled: "[&_button]:opacity-40 [&_button]:pointer-events-none",
         hidden: "invisible",
         ...classNames,

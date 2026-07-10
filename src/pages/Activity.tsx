@@ -310,7 +310,7 @@ function KpiRail({
             valueFormatter={(v) => fmtInt(Math.round(v))}
           />
         }
-        title="Total Requests"
+        title="Total Messages"
         value={k.requests.value}
       />
       <CompactKpi
@@ -468,7 +468,7 @@ function TopList({
           <h3 className="type-heading-16 m-0 text-foreground leading-snug">
             {title}
           </h3>
-          <p className="type-copy-14 m-0 text-muted-foreground/5">{subtitle}</p>
+          <p className="type-copy-14 m-0 text-muted-foreground">{subtitle}</p>
         </div>
         <SegmentedPill
           onValueChange={(v) => onMetricChange(v as Metric)}
@@ -735,12 +735,12 @@ function UsageByKey({
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Recent key usage</SectionTitle>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="grid grid-cols-3 items-center gap-4">
+        <SectionTitle className="col-span-2">Recent key usage</SectionTitle>
+        <div className="flex items-center justify-end gap-2">
           <SearchInput
             ariaLabel="Search keys"
-            className="min-w-0 flex-1 shrink"
+            className="min-w-0 flex-1"
             onChange={setQuery}
             placeholder="Search key or member…"
             surface="elevated"
@@ -788,7 +788,7 @@ function UsageByKey({
                             <button
                               {...props}
                               aria-label="What's the difference between Gate and BYOK?"
-                              className="relative inline-flex items-center justify-center rounded-xs text-neutral-400 after:absolute after:-inset-2 after:content-[''] hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               type="button"
                             />
                           )}
@@ -827,7 +827,7 @@ function UsageByKey({
                     sort={sort}
                     sortKey="requests"
                   >
-                    Requests
+                    Messages
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
@@ -884,7 +884,7 @@ function UsageByKey({
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {row.path === "BYOK" ? (
                         <>
-                          <span aria-hidden className="text-neutral-400">
+                          <span aria-hidden className="text-muted-foreground">
                             —
                           </span>
                           <span className="sr-only">

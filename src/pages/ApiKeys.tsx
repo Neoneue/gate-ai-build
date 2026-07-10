@@ -219,7 +219,7 @@ export function ApiKeys() {
                 body={
                   keyStatus === "revoked"
                     ? "Keys you revoke will appear here. Revoking a key stops it authenticating immediately."
-                    : "You have no active keys. Create one to start routing requests through the gateway."
+                    : "You have no active keys. Create one to start routing messages through the gateway."
                 }
                 icon={
                   <div
@@ -227,7 +227,7 @@ export function ApiKeys() {
                     className="flex size-12 items-center justify-center rounded-full bg-muted"
                   >
                     <KeyRound
-                      className="size-5 text-neutral-700"
+                      className="size-5 text-muted-foreground"
                       strokeWidth={1.75}
                     />
                   </div>
@@ -314,13 +314,16 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           </Button>
         </div>
       }
-      body="Create a key to start routing requests through the gateway. The full key is shown only once."
+      body="Create a key to start routing messages through the gateway. The full key is shown only once."
       icon={
         <div
           aria-hidden
           className="flex size-12 items-center justify-center rounded-full bg-muted"
         >
-          <KeyRound className="size-5 text-neutral-700" strokeWidth={1.75} />
+          <KeyRound
+            className="size-5 text-muted-foreground"
+            strokeWidth={1.75}
+          />
         </div>
       }
       title="No API keys yet"
@@ -348,10 +351,10 @@ export function UsageInfo() {
     <section className="@container/connect mt-2 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-balance text-foreground">
-          How to make requests
+          How to make messages
         </h2>
         <p className="type-copy-14 m-0 text-muted-foreground">
-          There are two ways to start making requests using your API key. With{" "}
+          There are two ways to start making messages using your API key. With{" "}
           <span className="font-medium">Gate Connect</span>, setup is automatic,
           so you can skip the code entirely. Want to configure it yourself? Use
           the code snippets to do it by hand.
@@ -457,7 +460,7 @@ function KeysTable({
                 sort={sort}
                 sortKey="requests7d"
               >
-                7-day requests
+                7-day messages
               </SortableTableHead>
               <SortableTableHead
                 className="w-1/5 whitespace-nowrap"
@@ -489,7 +492,7 @@ function KeysTable({
                     Events / Requests / Activity Key columns. */}
                 <TableCell className="whitespace-nowrap font-mono">
                   <span className="text-foreground">{row.name}</span>
-                  <span className="text-neutral-600"> ({row.masked})</span>
+                  <span className="text-muted-foreground"> ({row.masked})</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {row.revoked ? (
@@ -499,7 +502,7 @@ function KeysTable({
                   )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
+                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} messages, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-foreground">
@@ -540,7 +543,7 @@ function KeysTable({
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
-              This key will stop authenticating requests immediately. Revocation
+              This key will stop authenticating messages immediately. Revocation
               can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>
@@ -620,7 +623,7 @@ export function CreateKeyDialog({
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <Label
-                className="type-label-14 text-neutral-600"
+                className="type-label-14 text-muted-foreground"
                 htmlFor="apikey-name"
               >
                 Name
@@ -645,10 +648,10 @@ export function CreateKeyDialog({
           {/* Warning callout — tinted card, not inline-icon text. Modal-
               interior radius is rounded-md (8px) per design system. */}
           <div
-            className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
+            className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
             role="note"
           >
-            <p className="type-copy-14 m-0 text-warning-700">
+            <p className="type-copy-14 m-0 text-warning-700 dark:text-warning-300">
               The full key will only be shown once. Store it securely.
             </p>
           </div>
@@ -724,13 +727,13 @@ export function KeyCreatedDialog({
         {/* Key display — one merged surface: mono value + Copy split by a
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
-        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-neutral-100">
+        <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-muted">
           <div className="flex-1 break-all px-3 py-2 font-mono text-foreground text-sm">
             {fullKey}
           </div>
           <button
             aria-label={copied ? "Copied" : "Copy API key"}
-            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-neutral-600 transition-[colors,scale] duration-150 ease-out hover:bg-neutral-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-muted-foreground transition-[colors,scale] duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             onClick={trigger}
             type="button"
           >
@@ -749,13 +752,13 @@ export function KeyCreatedDialog({
 
         {/* Warning callout — same tinted-card recipe as <CreateKeyDialog>. */}
         <div
-          className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3"
+          className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/15"
           role="note"
         >
-          <p className="type-label-14 m-0 text-warning-700">
+          <p className="type-label-14 m-0 text-warning-700 dark:text-warning-300">
             Store this somewhere safe
           </p>
-          <p className="type-copy-14 m-0 text-warning-700">
+          <p className="type-copy-14 m-0 text-warning-700 dark:text-warning-300">
             Paste it into your secret manager or .env before closing. Once you
             close, we can&rsquo;t show it again. You&rsquo;ll need to rotate the
             key to get a new one.
@@ -770,7 +773,7 @@ export function KeyCreatedDialog({
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
-            className="type-copy-14 text-neutral-700"
+            className="type-copy-14 text-muted-foreground"
             htmlFor="apikey-saved-confirm"
           >
             I&rsquo;ve saved this key to a secret manager.

@@ -283,8 +283,8 @@ export function ConversationDetailBody({
             className={[
               "flex items-center gap-4 rounded-md border p-4",
               bannerTone === "destructive"
-                ? "border-destructive/50 bg-danger-50"
-                : "border-warning-500/50 bg-warning-50",
+                ? "border-destructive/50 bg-danger-50 dark:bg-danger-500/15"
+                : "border-warning-500/50 bg-warning-50 dark:bg-warning-500/15",
             ].join(" ")}
             role="status"
           >
@@ -294,7 +294,7 @@ export function ConversationDetailBody({
                 "size-6 shrink-0",
                 bannerTone === "destructive"
                   ? "text-destructive"
-                  : "text-warning-600",
+                  : "text-warning-600 dark:text-warning-300",
               ].join(" ")}
               strokeWidth={1.75}
             />
@@ -351,7 +351,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -422,7 +422,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -496,7 +496,7 @@ export function ConversationDetailBody({
               <div
                 className={
                   variant === "page"
-                    ? "grid h-[600px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                    ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                     : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                 }
               >
@@ -566,7 +566,7 @@ function ConversationKpiRail({ row }: { row: ConversationRow }) {
   const view = getConversationView(row, REQUEST_ROWS_ALL);
   return (
     <KpiRailShell columns={6}>
-      <ConversationKpiTile label="Requests" value={String(view.reqs)} />
+      <ConversationKpiTile label="Messages" value={String(view.reqs)} />
       <ConversationKpiTile label="Turns" value={String(view.turns)} />
       <ConversationKpiTile label="Tokens In" value={view.inTokens} />
       <ConversationKpiTile label="Tokens Out" value={view.outTokens} />
@@ -660,7 +660,7 @@ function ConversationMessagesPanel({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-card">
       {/* Header strip — bordered tinted band carrying the eyebrow + count.
           Matches the framing pattern in the trace panel. `flex-none` so
           it doesn't shrink when the body scrolls. */}

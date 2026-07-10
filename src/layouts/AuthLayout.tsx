@@ -194,7 +194,7 @@ export function AuthLayout() {
         >
           <DotRadar />
         </div>
-        <div className="hidden bg-background md:block" />
+        <div className="hidden bg-muted md:block" />
       </div>
 
       <div className="relative grid h-full grid-cols-1 grid-rows-[auto_1fr_auto] gap-x-4 px-6 py-8 md:grid-cols-12 md:px-16 md:py-10">
@@ -217,7 +217,10 @@ export function AuthLayout() {
             </span>{" "}
             <span data-scramble>agent call</span>
           </h1>
-          <p className="mt-4 font-mono text-lg/8 text-neutral-400" data-anim>
+          <p
+            className="mt-4 font-mono text-lg/8 text-muted-foreground"
+            data-anim
+          >
             Catch prompt injection and credential leaks, contain runaway spend,
             and prove what your agents actually did. Free to start.
           </p>
@@ -236,7 +239,7 @@ export function AuthLayout() {
                 </span>
                 <div>
                   <p className="type-heading-16 text-white">{title}</p>
-                  <p className="type-copy-14 text-neutral-400 leading-6">
+                  <p className="type-copy-14 text-muted-foreground leading-6">
                     {sub}
                   </p>
                 </div>
@@ -253,7 +256,7 @@ export function AuthLayout() {
         </div>
 
         <p
-          className="type-label-12 row-start-3 self-end text-center text-neutral-400 uppercase tracking-widest md:col-span-5 md:col-start-1 md:text-left"
+          className="type-label-12 row-start-3 self-end text-center text-muted-foreground uppercase tracking-widest md:col-span-5 md:col-start-1 md:text-left"
           data-anim
         >
           &copy; 2026 Constellation Network

@@ -35,7 +35,9 @@ export function DeltaTag({
   const negative = trimmed.startsWith("-");
   const Icon = negative ? ArrowDownRight : ArrowUpRight;
   const isGood = inverted ? negative : !negative;
-  const toneCls = isGood ? "text-success-700" : "text-destructive";
+  const toneCls = isGood
+    ? "text-success-700 dark:text-success-300"
+    : "text-danger-700 dark:text-danger-300";
   // Preserve the leading +/- on the displayed value. Redundant with the
   // arrow on its own, but the explicit sign reinforces the magnitude
   // direction and is the convention readers expect for tabular deltas.
@@ -52,7 +54,7 @@ export function DeltaTag({
         </span>
       </span>
       {note ? (
-        <span className={`${noteCls} text-neutral-500`}>
+        <span className={`${noteCls} text-muted-foreground`}>
           <span aria-hidden> · </span>
           {note}
         </span>
@@ -107,7 +109,7 @@ export function CompactKpi({
       <div className="flex items-baseline gap-2">
         <HeroNumeric>{value}</HeroNumeric>
         {valueSuffix ? (
-          <span className="inline-flex items-center text-neutral-500">
+          <span className="inline-flex items-center text-muted-foreground">
             <span aria-hidden className="inline-block h-3.5 w-0" />
             <span className="font-medium font-mono text-xs/4 tabular-nums">
               {valueSuffix}
@@ -122,7 +124,7 @@ export function CompactKpi({
             size={deltaSize}
           />
         ) : (
-          <span className="type-copy-14 text-neutral-500">{noteLine}</span>
+          <span className="type-copy-14 text-muted-foreground">{noteLine}</span>
         )}
       </div>
       {spark == null ? null : <div className="mt-3">{spark}</div>}
@@ -184,8 +186,8 @@ export function CompactSpark({
         {noGrid ? null : (
           <CartesianGrid
             horizontal
-            stroke="var(--color-neutral-200)"
-            strokeDasharray="6 3"
+            stroke="var(--color-chart-grid)"
+            strokeDasharray="6 5"
             vertical={false}
           />
         )}
@@ -252,7 +254,7 @@ export function CompactSpark({
                 }
               />
             }
-            cursor={{ stroke: "var(--color-neutral-300)", strokeWidth: 1 }}
+            cursor={{ stroke: "var(--color-chart-grid)", strokeWidth: 1 }}
             isAnimationActive={false}
             position={{ y: -24 }}
           />

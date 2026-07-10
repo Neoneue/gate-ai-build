@@ -56,7 +56,10 @@ export function AuditTrailDefault() {
                 aria-hidden
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
-                <List className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <List
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
               <span className="type-copy-14 text-muted-foreground">
                 No events logged
@@ -70,7 +73,7 @@ export function AuditTrailDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Fingerprint
-                  className="size-5 text-neutral-700"
+                  className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </div>
@@ -92,7 +95,10 @@ export function AuditTrailDefault() {
                 aria-hidden
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
-                <List className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <List
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
             }
             title="No audit events"

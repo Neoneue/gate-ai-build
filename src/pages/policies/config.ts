@@ -26,8 +26,8 @@ export const ICON_COLOR: Record<string, string> = {
 /** Active (selected) action border tone: Flag amber, Redact gray-600, Block
  *  red — mirrors the finding-card action tones. */
 export const ACTION_ACTIVE_BORDER: Record<string, string> = {
-  flag: "border-warning-500",
-  redact: "border-neutral-600",
+  flag: "border-warning-500 dark:border-warning-400",
+  redact: "border-muted-foreground",
   block: "border-destructive",
 };
 
@@ -52,26 +52,29 @@ export const SCAN_DIRECTION_ICON: Record<string, LucideIcon> = {
  *  tone so the card reads colored, not gray. Redact has no color scale, so it
  *  keeps the neutral surface. */
 export const ACTION_ACTIVE_FILL: Record<string, string> = {
-  flag: "bg-warning-25",
-  redact: "bg-neutral-50",
-  block: "bg-danger-25",
+  flag: "bg-warning-25 dark:bg-warning-500/10",
+  redact: "bg-muted",
+  block: "bg-danger-25 dark:bg-danger-500/10",
 };
 
 /** Hover preview for an unselected action — a lighter tone of the active
  *  border plus the -25 fill, so hovering previews the selected color rather
  *  than going gray. */
 export const ACTION_HOVER: Record<string, string> = {
-  flag: "hover:border-warning-200 hover:bg-warning-25",
-  redact: "hover:border-neutral-300 hover:bg-neutral-50",
-  block: "hover:border-danger-200 hover:bg-danger-25",
+  flag: "hover:border-warning-200 hover:bg-warning-25 dark:hover:border-warning-500/30 dark:hover:bg-warning-500/15",
+  redact: "hover:border-input hover:bg-accent",
+  block:
+    "hover:border-danger-200 hover:bg-danger-25 dark:hover:border-danger-500/30 dark:hover:bg-danger-500/15",
 };
 
 /** Checked radio fill/border per action — matches ACTION_ACTIVE_BORDER so the
  *  radio dot and the card border read as one tone. Dot stays white. */
 export const ACTION_ACTIVE_RADIO: Record<string, string> = {
-  flag: "data-checked:border-warning-600 data-checked:bg-warning-600",
-  redact: "data-checked:border-neutral-700 data-checked:bg-neutral-700",
-  block: "data-checked:border-danger-700 data-checked:bg-danger-700",
+  flag: "data-checked:border-warning-600 data-checked:bg-warning-600 dark:data-checked:border-warning-400 dark:data-checked:bg-warning-400",
+  redact:
+    "data-checked:border-neutral-700 data-checked:bg-neutral-700 dark:data-checked:border-muted-foreground dark:data-checked:bg-muted-foreground",
+  block:
+    "data-checked:border-danger-700 data-checked:bg-danger-700 dark:data-checked:border-danger-400 dark:data-checked:bg-danger-400",
 };
 
 /* ─────────────────────────────────────────────────────────────────────────

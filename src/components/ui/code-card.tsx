@@ -61,8 +61,8 @@ export interface CodeToken {
 export type CodeLine = CodeToken[];
 
 const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
-  default: "text-neutral-900",
-  muted: "text-neutral-500",
+  default: "text-foreground",
+  muted: "text-muted-foreground",
   keyword: "text-[var(--color-syntax-keyword)]",
   // Brand palette: keys = blue-700 (--color-syntax-property), all literal
   // values = success-700 green (--color-syntax-terminal-blue). One hue per
@@ -72,7 +72,7 @@ const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
   variable: "text-[var(--color-syntax-variable)]",
   property: "text-[var(--color-syntax-property)]",
   number: "text-[var(--color-syntax-terminal-blue)]",
-  success: "text-success-700",
+  success: "text-success-700 dark:text-success-300",
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
@@ -120,7 +120,7 @@ export function CodeCardHeader({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-border border-b bg-neutral-100 px-4 py-2",
+        "flex items-center justify-between gap-3 border-border border-b bg-muted px-4 py-2",
         className
       )}
       data-slot="code-card-header"
@@ -161,9 +161,9 @@ export function CodeCardTabs({
           // family's lift instead of inlining its own rgba shadow.
           "inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out",
           isActive
-            ? "border border-border bg-card font-medium text-neutral-900 shadow-xs"
-            : "border border-transparent font-medium text-neutral-600",
-          interactive && !isActive && "hover:bg-white/60 hover:text-neutral-900"
+            ? "border border-border bg-card font-medium text-foreground shadow-xs"
+            : "border border-transparent font-medium text-muted-foreground",
+          interactive && !isActive && "hover:bg-accent hover:text-foreground"
         );
         if (interactive) {
           return (
@@ -283,7 +283,7 @@ export function CodeBlock({
                         {...p}
                         className={cn(
                           toneMap[tok.tone ?? "default"],
-                          "cursor-help rounded-xs bg-warning-100 text-warning-800"
+                          "cursor-help rounded-xs bg-warning-100 text-warning-800 dark:bg-warning-500/15 dark:text-warning-300"
                         )}
                         data-code-highlight=""
                       >
@@ -300,7 +300,7 @@ export function CodeBlock({
                   className={cn(
                     toneMap[tok.tone ?? "default"],
                     tok.highlight &&
-                      "rounded-xs bg-warning-100 text-warning-800"
+                      "rounded-xs bg-warning-100 text-warning-800 dark:bg-warning-500/15 dark:text-warning-300"
                   )}
                   data-code-highlight={tok.highlight ? "" : undefined}
                   key={j}

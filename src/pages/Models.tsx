@@ -598,7 +598,7 @@ function ModelsTable({
           const context = formatContext(head.contextK, model.modality);
           return (
             <TableRow
-              className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
+              className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
               key={model.id}
               onClick={() => onSelect(model)}
             >
@@ -646,7 +646,7 @@ function ModelsTable({
               <TableCell
                 className={
                   outputPrice === "—"
-                    ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
+                    ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
                     : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
                 }
               >
@@ -668,7 +668,7 @@ function ModelsTable({
 
 function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   if (capabilities.length === 0) {
-    return <span className="font-mono text-neutral-400 text-xs">—</span>;
+    return <span className="font-mono text-muted-foreground text-xs">—</span>;
   }
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Vision is always leftmost when present). Each icon
@@ -749,7 +749,7 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
             key={v}
             style={{
               filter:
-                "drop-shadow(0 0 1.5px var(--color-white)) drop-shadow(0 0 1.5px var(--color-white))",
+                "drop-shadow(0 0 1.5px var(--card)) drop-shadow(0 0 1.5px var(--card))",
             }}
           >
             <VendorAvatar decorative vendor={v} />
@@ -858,7 +858,7 @@ function ModelDetailPage({
                 const meta = CAPABILITY_META[c];
                 const Icon = meta.icon;
                 return (
-                  <Badge key={c} variant="neutral">
+                  <Badge className="h-6" key={c} variant="neutral">
                     <Icon aria-hidden="true" data-icon="inline-start" />
                     {meta.label}
                   </Badge>
@@ -909,7 +909,7 @@ function ModelDetailPage({
         <div className="flex flex-col gap-1">
           <h3 className="type-heading-16 m-0 text-foreground">Providers</h3>
           <p className="type-copy-14 m-0 text-muted-foreground">
-            Route requests across multiple providers. Copy a provider handle to
+            Route messages across multiple providers. Copy a provider handle to
             pin a specific one.
           </p>
         </div>
@@ -1060,7 +1060,7 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
       {isMissing ? (
-        <HeroNumeric className="text-neutral-400">
+        <HeroNumeric className="text-muted-foreground">
           <span aria-hidden="true">—</span>
           <span className="sr-only">Not available</span>
         </HeroNumeric>
@@ -1257,10 +1257,10 @@ function ProviderMark({ provider }: { provider: ProviderId }) {
   return (
     <span
       aria-hidden
-      className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-neutral-400"
+      className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
       title={PROVIDER_LABELS[provider]}
     >
-      <span className="size-2 rounded-full bg-neutral-400" />
+      <span className="size-2 rounded-full bg-muted-foreground" />
     </span>
   );
 }
@@ -1271,7 +1271,7 @@ function ProviderNumeric({ value }: { value: string }) {
     <TableCell
       className={
         isMissing
-          ? "whitespace-nowrap text-right font-mono text-neutral-400 text-sm tabular-nums"
+          ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
           : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
       }
     >

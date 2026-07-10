@@ -181,10 +181,10 @@ function SidebarCollapsed({
                     // matching the project's Button primitive press feel.
                     className={
                       isActive
-                        ? "flex size-9 items-center justify-center rounded-sm bg-neutral-200 text-neutral-900 transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        ? "flex size-9 items-center justify-center rounded-sm bg-accent text-accent-foreground transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                         : isDisabled
-                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-neutral-400 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                          : "flex size-9 items-center justify-center rounded-sm text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                          : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                     }
                     disabled={isDisabled}
                     key={item.id}
@@ -259,10 +259,10 @@ function SidebarExpanded({
                   aria-current={isActive ? "page" : undefined}
                   className={
                     isActive
-                      ? "flex items-center gap-3 rounded-sm border border-border bg-linear-to-r from-neutral-100 to-neutral-50 px-2 py-2 font-medium text-neutral-900 shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                      ? "flex items-center gap-3 rounded-sm border border-border bg-accent px-2 py-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                       : isDisabled
-                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-500 opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                        : "flex items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-neutral-700 transition-[color,background-color,transform] duration-150 ease-out hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        : "flex items-center gap-3 rounded-sm border border-transparent px-2 py-2 text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                   }
                   disabled={isDisabled}
                   key={item.id}
@@ -316,9 +316,15 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
     >
       <img
         alt="Constellation Gate AI"
-        className="h-8 w-auto"
+        className="h-8 w-auto dark:hidden"
         draggable={false}
         src="/gate-ai-logo.png"
+      />
+      <img
+        alt="Constellation Gate AI"
+        className="hidden h-8 w-auto dark:block"
+        draggable={false}
+        src="/gate-ai-logo-dark.png"
       />
     </button>
   );
@@ -338,7 +344,7 @@ function DefaultUserArea({
         >
           CP
         </span>
-        <span className="type-label-14 truncate text-neutral-900 leading-tight">
+        <span className="type-label-14 truncate text-foreground leading-tight">
           Chad Ponticas
         </span>
       </div>
@@ -350,7 +356,7 @@ function DefaultUserArea({
       >
         <button
           aria-label="User menu"
-          className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-neutral-500 transition-[color,background-color,transform] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 hover:text-neutral-900 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-accent hover:text-foreground active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           type="button"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />

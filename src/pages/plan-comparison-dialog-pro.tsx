@@ -153,7 +153,10 @@ function PlanCard({
                 aria-hidden
                 className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-sm bg-muted"
               >
-                <Icon className="size-4 text-neutral-700" strokeWidth={1.75} />
+                <Icon
+                  className="size-4 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </span>
               <div className="flex flex-col">
                 <span className="type-copy-14 text-foreground">{title}</span>

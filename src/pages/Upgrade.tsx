@@ -94,7 +94,7 @@ const PRO_PLAN: PlanCardData = {
       Icon: KeyRound,
       title: "Credential leak prevention",
       detail:
-        "Stop API keys and secrets from leaking in requests or responses.",
+        "Stop API keys and secrets from leaking in messages or responses.",
     },
     {
       Icon: SlidersHorizontal,
@@ -147,7 +147,7 @@ function PlanCard({
                 className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-sm bg-muted"
               >
                 <Icon
-                  className="size-3.5 text-neutral-700"
+                  className="size-3.5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </span>

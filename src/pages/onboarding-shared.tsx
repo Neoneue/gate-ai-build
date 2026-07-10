@@ -19,9 +19,9 @@ type ChoiceTone = "blue" | "success" | "neutral";
  *  gray (`bg-muted`) wrapper; the tone just colors the glyph. `blue` =
  *  primary path, `success` = pay-as-you-go / credits, `neutral` = manual. */
 const CHOICE_ICON_TONE: Record<ChoiceTone, string> = {
-  blue: "text-blue-600",
-  success: "text-success-600",
-  neutral: "text-neutral-600",
+  blue: "text-blue-600 dark:text-blue-400",
+  success: "text-success-600 dark:text-success-400",
+  neutral: "text-muted-foreground",
 };
 
 /**
@@ -84,7 +84,8 @@ export function ChoiceCard({
     <div
       className={cn(
         "flex h-full flex-col items-start gap-4 rounded-md border border-border bg-card p-5 text-left shadow-xs",
-        featured && "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25"
+        featured &&
+          "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
       )}
     >
       <SetupIconChip icon={Icon} tone={featured ? "blue" : tone} />
@@ -204,12 +205,14 @@ export function WaitingStrip({
   active?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-neutral-50 px-4 py-4 text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-md border border-border bg-card-muted px-4 py-4 text-muted-foreground">
       <Loader2
         aria-hidden
         className={cn(
           "size-5 shrink-0 motion-reduce:animate-none",
-          active ? "animate-spin text-blue-600" : "text-muted-foreground"
+          active
+            ? "animate-spin text-blue-600 dark:text-blue-400"
+            : "text-muted-foreground"
         )}
         strokeWidth={1.75}
       />

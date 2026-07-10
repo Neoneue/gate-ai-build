@@ -269,7 +269,7 @@ function PageHeader() {
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          A conversation is a chain of requests that share session context:
+          A conversation is a chain of messages that share session context:
           agent runs, multi-turn chats, tool-calling loops. Click any row to see
           its message thread.
         </p>
@@ -482,12 +482,14 @@ function ConversationsTableSection({
           live here as page-level section controls, so they always render
           (a query that returns zero results never hides them). isEmpty
           governs only the Card interior below. */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <SectionTitle>Recent conversations</SectionTitle>
+        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3 sm:gap-0">
+          <SectionTitle className="sm:col-span-2">
+            Recent conversations
+          </SectionTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <SearchInput
               ariaLabel="Search conversations"
-              className="min-w-0 flex-1 shrink"
+              className="min-w-0 flex-1"
               placeholder="Search by id, prompt, user, key…"
               surface="elevated"
             />
@@ -622,7 +624,7 @@ function ConversationsTableSection({
                 <TableBody>
                   {visibleRows.map((row) => (
                     <TableRow
-                      className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-neutral-50 motion-reduce:transition-none"
+                      className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
                       key={row.conversationId}
                       onClick={() =>
                         navigate(`/conversations-trace/${row.conversationId}`)

@@ -186,7 +186,7 @@ function LimitsSection({
             aria-hidden
             className="flex size-12 items-center justify-center rounded-full bg-muted"
           >
-            <Shield className="size-5 text-neutral-700" />
+            <Shield className="size-5 text-muted-foreground" />
           </div>
         }
         title="No limits configured"
@@ -352,7 +352,7 @@ function LimitActionsMenu({
 const LIMIT_TYPES = [
   { value: "spend", label: "Spend ($)" },
   { value: "tokens", label: "Tokens" },
-  { value: "requests", label: "Requests" },
+  { value: "requests", label: "Messages" },
 ] as const;
 
 const LIMIT_PERIODS = [
@@ -549,13 +549,13 @@ function CreateLimitDialog({
             Create limit
           </DialogTitle>
           <DialogDescription>
-            Block requests that exceed the threshold (returns 429).
+            Block messages that exceed the threshold (returns 429).
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
           <Label
-            className="type-label-14 text-neutral-600"
+            className="type-label-14 text-muted-foreground"
             htmlFor="create-limit-name"
           >
             Name
@@ -571,7 +571,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-type"
             >
               Type
@@ -591,7 +591,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-threshold"
             >
               Threshold
@@ -613,7 +613,7 @@ function CreateLimitDialog({
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-period"
             >
               Period
@@ -633,7 +633,7 @@ function CreateLimitDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label
-              className="type-label-14 text-neutral-600"
+              className="type-label-14 text-muted-foreground"
               htmlFor="create-limit-scope"
             >
               Scope

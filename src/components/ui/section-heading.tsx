@@ -32,7 +32,7 @@ export function SectionHeading({
 }: SectionHeadingProps) {
   return (
     <Tag
-      className={cn("type-label-14 m-0 text-neutral-900", className)}
+      className={cn("type-label-14 m-0 text-foreground", className)}
       data-slot="section-heading"
       {...props}
     >

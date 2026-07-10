@@ -44,11 +44,11 @@ function UserMenu({
             CP
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="type-label-14 truncate text-neutral-900 leading-tight">
+            <span className="type-label-14 truncate text-foreground leading-tight">
               Chad Ponticas
             </span>
             <span
-              className="type-copy-12 truncate text-neutral-500 leading-tight"
+              className="type-copy-12 truncate text-muted-foreground leading-tight"
               title="chad@constellationnetwork.io"
             >
               chad@constellationnetwork.io

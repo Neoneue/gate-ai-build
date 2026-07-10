@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import { Sidebar } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,7 @@ export function DashboardChrome({
           sections={sections}
           showLocks={showLocks}
         />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-neutral-50">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <DashTopBar
             hideDocsButton={hideDocsButton}
             onToggleSidebar={onToggleSidebar}
@@ -118,7 +119,7 @@ function DashTopBar({
         <Button
           aria-expanded={sidebarExpanded}
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 text-muted-foreground hover:text-neutral-700 aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-neutral-700"
+          className="-ml-2 text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground"
           onClick={onToggleSidebar}
           size="icon-sm"
           variant="ghost"
@@ -157,6 +158,7 @@ function DashTopBar({
         <WorkspaceSwitcher />
       </div>
       <div className="flex items-center gap-1">
+        <ThemeToggle />
         {hideDocsButton ? null : (
           <Button size="sm" variant="outline">
             Docs

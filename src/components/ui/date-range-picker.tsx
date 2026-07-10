@@ -218,7 +218,9 @@ export function DateRangePicker({
         />
         <div className="grid grid-cols-2 gap-3 border-border border-t p-3">
           <div className="flex flex-col gap-1">
-            <span className="type-label-12 text-neutral-600">Start time</span>
+            <span className="type-label-12 text-muted-foreground">
+              Start time
+            </span>
             <div className="flex items-center gap-1">
               <Select
                 onValueChange={(h) => setFromTime((t) => withHour(t, h))}
@@ -243,7 +245,10 @@ export function DateRangePicker({
                   ))}
                 </SelectContent>
               </Select>
-              <span aria-hidden className="font-mono text-neutral-400 text-xs">
+              <span
+                aria-hidden
+                className="font-mono text-muted-foreground text-xs"
+              >
                 :
               </span>
               <Select
@@ -272,7 +277,9 @@ export function DateRangePicker({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="type-label-12 text-neutral-600">End time</span>
+            <span className="type-label-12 text-muted-foreground">
+              End time
+            </span>
             <div className="flex items-center gap-1">
               <Select
                 onValueChange={(h) => setToTime((t) => withHour(t, h))}
@@ -297,7 +304,10 @@ export function DateRangePicker({
                   ))}
                 </SelectContent>
               </Select>
-              <span aria-hidden className="font-mono text-neutral-400 text-xs">
+              <span
+                aria-hidden
+                className="font-mono text-muted-foreground text-xs"
+              >
                 :
               </span>
               <Select

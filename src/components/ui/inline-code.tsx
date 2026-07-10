@@ -33,7 +33,7 @@ export function InlineCode({
   return (
     <code
       className={cn(
-        "rounded-xs bg-neutral-100 px-1 py-0 font-mono text-neutral-800",
+        "rounded-xs bg-muted px-1 py-0 font-mono text-foreground",
         size === "sm" ? "text-xs" : "text-sm",
         className
       )}

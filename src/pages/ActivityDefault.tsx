@@ -40,7 +40,7 @@ export function ActivityDefault() {
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <BarChart2
-                className="size-5 text-neutral-700"
+                className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />
             </div>
@@ -54,12 +54,12 @@ export function ActivityDefault() {
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <ArrowLeftRight
-                className="size-5 text-neutral-700"
+                className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />
             </div>
             <span className="type-copy-14 text-muted-foreground">
-              No requests yet
+              No messages yet
             </span>
           </div>
           <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
@@ -67,7 +67,10 @@ export function ActivityDefault() {
               aria-hidden
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
-              <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
+              <Zap
+                className="size-5 text-muted-foreground"
+                strokeWidth={1.75}
+              />
             </div>
             <span className="type-copy-14 text-muted-foreground">
               No tokens yet
@@ -82,7 +85,10 @@ export function ActivityDefault() {
                 aria-hidden
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
-                <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <Zap
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
               <span className="type-copy-14 text-muted-foreground">
                 No tokens used
@@ -96,13 +102,16 @@ export function ActivityDefault() {
         <SectionTitle>Recent key usage</SectionTitle>
         <Card density="flush">
           <TableEmptyState
-            body="Per-key usage across requests, tokens, and spend will appear here as your workspace routes traffic."
+            body="Per-key usage across messages, tokens, and spend will appear here as your workspace routes traffic."
             icon={
               <div
                 aria-hidden
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
-                <Key className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <Key
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
             }
             title="No usage yet"

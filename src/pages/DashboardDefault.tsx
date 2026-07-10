@@ -164,8 +164,8 @@ function HeroCodeTab({
                   aria-checked={mode === m}
                   className={`type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     mode === m
-                      ? "bg-neutral-100 text-foreground"
-                      : "text-muted-foreground hover:text-neutral-700"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-muted-foreground"
                   }`}
                   key={m}
                   onClick={() => onModeChange?.(m)}
@@ -392,7 +392,8 @@ export function DownloadGateConnectDialog({
         <div className="relative flex items-start border-border border-b px-6 pt-4 pb-4">
           <div className="flex min-w-0 flex-col gap-0 pr-8">
             <DialogTitle className="type-heading-18 m-0 text-foreground tracking-tight">
-              Download Gate <span className="text-blue-700">Connect</span>
+              Download Gate{" "}
+              <span className="text-blue-700 dark:text-blue-400">Connect</span>
             </DialogTitle>
             <DialogDescription className="type-copy-14 m-0 text-pretty text-muted-foreground">
               The menu-bar app that connects your desktop agents to Gate.
@@ -429,17 +430,17 @@ export function DownloadGateConnectDialog({
                 const p = PLATFORMS[id];
                 return (
                   <Radio.Root
-                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] data-checked:border-neutral-900 data-checked:shadow-xs motion-reduce:active:scale-100"
+                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-input focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] data-checked:border-foreground data-checked:shadow-xs motion-reduce:active:scale-100"
                     key={id}
                     value={id}
                   >
                     {detected === id && (
-                      <span className="absolute -top-2 left-1/2 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full bg-neutral-900 px-2 font-semibold text-[10px]/[16px] text-white tracking-wide">
+                      <span className="absolute -top-2 left-1/2 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full bg-surface-strong px-2 font-semibold text-[10px]/[16px] text-surface-strong-foreground tracking-wide">
                         Detected
                       </span>
                     )}
                     <Radio.Indicator
-                      className="absolute top-2 right-2 inline-flex size-4 items-center justify-center rounded-full bg-neutral-900 text-white"
+                      className="absolute top-2 right-2 inline-flex size-4 items-center justify-center rounded-full bg-surface-strong text-surface-strong-foreground"
                       keepMounted={false}
                     >
                       <Check aria-hidden className="size-3" strokeWidth={2.5} />
@@ -471,8 +472,8 @@ export function DownloadGateConnectDialog({
                   <label
                     className={`flex h-[52px] cursor-pointer items-center gap-3 rounded-lg border bg-card px-4 transition-colors duration-150 ease-out ${
                       selected
-                        ? "border-neutral-900"
-                        : "border-border hover:border-neutral-300"
+                        ? "border-foreground"
+                        : "border-border hover:border-input"
                     }`}
                     key={b.id}
                   >
@@ -695,18 +696,18 @@ function WorksWithFooter({
     const inner = (
       <>
         {Icon ? (
-          <Icon className="size-4 shrink-0 text-neutral-600" />
+          <Icon className="size-4 shrink-0 text-muted-foreground" />
         ) : (
           <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
         )}
-        <span className="type-copy-14 whitespace-nowrap text-neutral-700">
+        <span className="type-copy-14 whitespace-nowrap text-muted-foreground">
           {name}
         </span>
       </>
     );
     return asButtons ? (
       <button
-        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset ${hide ?? ""}`}
+        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset ${hide ?? ""}`}
         key={name}
         onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ""}`)}
         type="button"

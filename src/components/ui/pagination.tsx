@@ -52,10 +52,10 @@ function PaginationLink({
     <Button
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "border-border font-normal text-neutral-600 tabular-nums -tracking-[0.01em]",
-        "hover:bg-neutral-50 hover:text-neutral-900",
+        "border-border font-normal text-muted-foreground tabular-nums -tracking-[0.01em]",
+        "hover:bg-accent hover:text-foreground",
         isActive &&
-          "border-neutral-800 bg-neutral-800 font-medium text-white hover:bg-neutral-800 hover:text-white",
+          "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground",
         className
       )}
       data-active={isActive}
@@ -108,7 +108,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       className={cn(
-        "flex size-7 items-center justify-center text-neutral-400 [&_svg:not([class*='size-'])]:size-3.5",
+        "flex size-7 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
         className
       )}
       data-slot="pagination-ellipsis"

@@ -116,12 +116,12 @@ function FreePlanNoticeBanner() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none">
+      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-400/30 dark:bg-blue-500/10">
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="type-copy-14 m-0 text-pretty text-neutral-700">
-                <span className="type-label-14 text-neutral-900">
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+                <span className="type-label-14 text-foreground">
                   You&apos;re on the Free plan.
                 </span>{" "}
                 Pro unlocks full prompt-injection protection with advanced
@@ -129,7 +129,7 @@ function FreePlanNoticeBanner() {
               </p>
             </div>
             <Button
-              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
               onClick={() => setCompareOpen(true)}
               size="sm"
               type="button"
@@ -155,7 +155,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-2xl flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-neutral-500 tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>
@@ -317,11 +317,11 @@ function PolicyCard({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="type-heading-16 m-0 text-balance text-neutral-900">
+            <h3 className="type-heading-16 m-0 text-balance text-foreground">
               {config.name}
             </h3>
           </div>
-          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
             {config.description}
           </p>
         </div>
@@ -331,7 +331,7 @@ function PolicyCard({
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
           onClick={() => setExpanded((v) => !v)}
           type="button"
         >
@@ -391,7 +391,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none">
+      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -401,7 +401,7 @@ function ProBenefitsCard() {
                 </SectionHeading>
                 <Badge variant="info">Pro</Badge>
               </div>
-              <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
                 Catches advanced prompt-injection patterns beyond free Regex
                 checks.
               </p>
@@ -409,14 +409,14 @@ function ProBenefitsCard() {
             <ul className="m-0 mt-2 grid list-none grid-cols-1 gap-x-6 gap-y-4 p-0 md:grid-cols-2">
               {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
                 <li className="flex items-start gap-3" key={benefit.title}>
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-blue-800">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300">
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="type-copy-14 text-neutral-900">
+                    <span className="type-copy-14 text-foreground">
                       {benefit.title}
                     </span>
-                    <span className="type-copy-12 text-pretty text-neutral-500">
+                    <span className="type-copy-12 text-pretty text-muted-foreground">
                       {benefit.description}
                     </span>
                   </div>
@@ -425,7 +425,7 @@ function ProBenefitsCard() {
             </ul>
             <div className="pt-2">
               <Button
-                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800"
+                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={() => setCompareOpen(true)}
                 type="button"
               >
@@ -476,7 +476,7 @@ function FreeToggleCard({
               {badge ? <Badge variant="neutral">{badge}</Badge> : null}
             </div>
             {description ? (
-              <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
+              <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -524,7 +524,7 @@ function SettingsHalf({
           <SectionHeading as="h4" className="type-heading-16">
             Sensitivity
           </SectionHeading>
-          <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
             How aggressive to be when scoring inputs
           </p>
         </div>
@@ -547,7 +547,7 @@ function SettingsHalf({
             />
             <span
               aria-hidden
-              className="absolute top-1/2 left-2 h-1 -translate-y-1/2 rounded-full bg-neutral-400 transition-[width] duration-200 ease-out motion-reduce:transition-none"
+              className="absolute top-1/2 left-2 h-1 -translate-y-1/2 rounded-full bg-muted-foreground transition-[width] duration-200 ease-out motion-reduce:transition-none"
               style={{ width: `calc((100% - 1rem) * ${fillFraction})` }}
             />
             {/* Sliding thumb — glides between stops on the strong ease-out
@@ -555,7 +555,7 @@ function SettingsHalf({
                 the dots below via pointer-events-none. */}
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 z-20 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-primary shadow-xs transition-[left] duration-200 ease-out motion-reduce:transition-none"
+              className="pointer-events-none absolute top-1/2 z-20 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-muted-foreground bg-muted-foreground shadow-xs transition-[left] duration-200 ease-out motion-reduce:transition-none"
               style={{ left: `calc(0.5rem + (100% - 1rem) * ${fillFraction})` }}
             />
             {options.map((opt, i) => (
@@ -564,9 +564,15 @@ function SettingsHalf({
                 className={cn(
                   // Hide the inner check dot — the floating thumb above is the
                   // handle. Grow + darken on hover so stops read as clickable.
-                  "relative z-10 transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-neutral-500 motion-reduce:transform-none [&_[data-slot=radio-group-indicator]]:hidden",
+                  // Solid fill in both modes — the radio primitive's
+                  // translucent dark:bg-input/30 doesn't apply to slider stops.
+                  "relative z-10 bg-muted transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none dark:bg-muted [&_[data-slot=radio-group-indicator]]:hidden",
                   // Stops up to and including the selection read as "passed".
-                  i <= selectedIndex && "border-neutral-400 bg-neutral-400"
+                  // data-checked: qualifiers needed to out-specify the base
+                  // primitive's own data-checked:bg-primary on the exact
+                  // selected stop (plain classes lose that fight).
+                  i <= selectedIndex &&
+                    "border-muted-foreground bg-muted-foreground data-checked:border-muted-foreground data-checked:bg-muted-foreground dark:border-muted-foreground dark:bg-muted-foreground dark:data-checked:border-muted-foreground dark:data-checked:bg-muted-foreground"
                 )}
                 key={opt.value}
                 value={opt.value}
@@ -578,7 +584,9 @@ function SettingsHalf({
               <span
                 className={cn(
                   "type-label-14",
-                  opt.value === value ? "text-neutral-900" : "text-neutral-500"
+                  opt.value === value
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 )}
                 key={opt.value}
               >
@@ -605,7 +613,7 @@ function SettingsHalf({
         <SectionHeading as="h4" className="type-heading-16">
           Scan direction
         </SectionHeading>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           Which side of the request to scan
         </p>
       </div>
@@ -641,15 +649,15 @@ function DetailCard({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-neutral-50 p-3">
+    <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-card-muted p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon aria-hidden className="size-4 text-blue-700" />
+        <Icon aria-hidden className="size-4 text-blue-700 dark:text-blue-400" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (
-          <span className="type-label-14 text-neutral-900">{title}</span>
+          <span className="type-label-14 text-foreground">{title}</span>
         ) : null}
-        <p className="type-copy-14-tight m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
           {description}
         </p>
       </div>
@@ -675,7 +683,7 @@ function ActionHalf({
         <SectionHeading as="h4" className="type-heading-16" id={headingId}>
           Action on detection
         </SectionHeading>
-        <p className="type-copy-14 m-0 text-pretty text-neutral-500">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           {config.action.helper}
         </p>
       </div>
@@ -704,7 +712,7 @@ function ActionHalf({
             >
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="type-label-14 text-neutral-900" id={nameId}>
+                  <span className="type-label-14 text-foreground" id={nameId}>
                     {opt.name}
                   </span>
                   {opt.value === DEFAULT_ACTION[config.id] ? (
@@ -712,7 +720,7 @@ function ActionHalf({
                   ) : null}
                 </div>
                 <span
-                  className="type-copy-14 text-pretty text-neutral-500"
+                  className="type-copy-14 text-pretty text-muted-foreground"
                   id={descId}
                 >
                   {opt.description}

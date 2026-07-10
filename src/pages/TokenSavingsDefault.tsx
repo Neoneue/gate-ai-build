@@ -39,7 +39,7 @@ export function TokenSavingsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <BarChart2
-                  className="size-5 text-neutral-700"
+                  className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </div>
@@ -53,7 +53,7 @@ export function TokenSavingsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Layers
-                  className="size-5 text-neutral-700"
+                  className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
               </div>
@@ -66,7 +66,10 @@ export function TokenSavingsDefault() {
                 aria-hidden
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
-                <Zap className="size-5 text-neutral-700" strokeWidth={1.75} />
+                <Zap
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
               <span className="type-copy-14 text-muted-foreground">
                 No compression yet

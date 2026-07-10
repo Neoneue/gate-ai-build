@@ -52,8 +52,8 @@ export function EmptyState({
     >
       {icon}
       <div className="flex flex-col gap-3">
-        <h3 className="type-heading-18 m-0 text-neutral-900">{title}</h3>
-        <p className="type-copy-14 m-0 max-w-md text-pretty text-neutral-500">
+        <h3 className="type-heading-18 m-0 text-foreground">{title}</h3>
+        <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
           {body}
         </p>
       </div>

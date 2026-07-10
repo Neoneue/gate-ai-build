@@ -79,24 +79,24 @@ export function MessageBlock({
 }: MessageBlockProps) {
   const baseBubbleBorder =
     tone === "danger"
-      ? "border-danger-200 bg-danger-50"
+      ? "border-danger-200 bg-danger-50 dark:border-danger-500/30 dark:bg-danger-500/15"
       : tone === "warn"
-        ? "border-warning-200 bg-warning-50"
-        : "border-border bg-neutral-50";
+        ? "border-warning-200 bg-warning-50 dark:border-warning-500/30 dark:bg-warning-500/15"
+        : "border-border bg-card-muted";
   // Selected ring color tracks tone so the status semantic stays intact
   // through the selection layer: green = normal/success, amber = warn
   // (flag/redact), red = danger (block/error). Matches the trace panel's
   // status-tone outline + node color.
   const selectedTone =
     tone === "danger"
-      ? "border-destructive bg-danger-50 ring-1 ring-destructive"
+      ? "border-destructive bg-danger-50 ring-1 ring-destructive dark:bg-danger-500/15"
       : tone === "warn"
-        ? "border-warning-500 bg-warning-50 ring-1 ring-warning-500"
+        ? "border-warning-500 bg-warning-50 ring-1 ring-warning-500 dark:bg-warning-500/15"
         : "border-success-600 ring-1 ring-success-600";
   const bubbleClasses = cn(
-    "max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border p-4 text-neutral-900 text-sm transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
+    "max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border p-4 text-foreground text-sm transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
     selected ? selectedTone : baseBubbleBorder,
-    onClick && !selected && "cursor-pointer hover:border-neutral-400",
+    onClick && !selected && "cursor-pointer hover:border-ring",
     onClick && "w-full text-left"
   );
 
@@ -111,20 +111,20 @@ export function MessageBlock({
       className={cn("flex flex-col gap-2", className)}
       data-request-id={requestId}
     >
-      <div className="type-label-12 flex items-center justify-between text-neutral-900">
+      <div className="type-label-12 flex items-center justify-between text-foreground">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (
             <>
-              <span className="text-neutral-400"> · </span>
-              <span className="font-mono font-normal text-neutral-700">
+              <span className="text-muted-foreground"> · </span>
+              <span className="font-mono font-normal text-muted-foreground">
                 {tool}
               </span>
             </>
           ) : null}
         </span>
         {time ? (
-          <span className="ml-2 shrink-0 font-mono font-normal text-neutral-500 tabular-nums">
+          <span className="ml-2 shrink-0 font-mono font-normal text-muted-foreground tabular-nums">
             {time}
           </span>
         ) : null}
@@ -138,8 +138,8 @@ export function MessageBlock({
         {body}
       </Bubble>
       {requestId ? (
-        <span className="font-mono text-neutral-500 text-xs">
-          <span aria-hidden className="text-neutral-400">
+        <span className="font-mono text-muted-foreground text-xs">
+          <span aria-hidden className="text-muted-foreground">
             ↳{" "}
           </span>
           {requestId}

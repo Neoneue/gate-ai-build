@@ -274,7 +274,9 @@ export function EventsTableSection({
             </DialogHeader>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Type</Label>
+              <Label className="type-label-14 text-muted-foreground">
+                Type
+              </Label>
               <Select onValueChange={setDraftType} value={draftType}>
                 <SelectTrigger
                   aria-label="Type"
@@ -294,7 +296,9 @@ export function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Action</Label>
+              <Label className="type-label-14 text-muted-foreground">
+                Action
+              </Label>
               <Select onValueChange={setDraftAction} value={draftAction}>
                 <SelectTrigger
                   aria-label="Action"
@@ -313,7 +317,7 @@ export function EventsTableSection({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-neutral-600">Key</Label>
+              <Label className="type-label-14 text-muted-foreground">Key</Label>
               <Select onValueChange={setDraftKeyFilter} value={draftKeyFilter}>
                 <SelectTrigger
                   aria-label="API key"
@@ -416,7 +420,7 @@ export function EventsTableSection({
                     const TypeIcon = typeMeta.Icon;
                     return (
                       <TableRow
-                        className="cursor-pointer transition-colors duration-150 ease-out hover:bg-neutral-50 motion-reduce:transition-none"
+                        className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent motion-reduce:transition-none"
                         key={`${row.time}-${i}`}
                         onClick={() => setSelectedRow(row)}
                         onKeyDown={(e) => {
@@ -534,7 +538,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const conversationId = row.conversationId;
   const openConversation = () =>
     navigate(`/conversations?open=${conversationId}`);
-  const openRequest = () => navigate(`/requests?open=${requestId}`);
+  const openRequest = () => navigate(`/messages?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
 
   // Reconcile against the matching Requests row so the message + detection
@@ -561,7 +565,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             ) : (
               <button
                 aria-label="Mark event invalid"
-                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-foreground outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-neutral-50 focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-foreground outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-accent focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                 onClick={() => {
                   setMarked(true);
                   toast.success("Event marked as invalid");
@@ -739,7 +743,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 value={
                   <span className="font-mono tabular-nums">
                     <TextLink
-                      aria-label={`Open request ${requestId}`}
+                      aria-label={`Open message ${requestId}`}
                       onClick={openRequest}
                     >
                       {requestId}

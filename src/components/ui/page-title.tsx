@@ -40,7 +40,7 @@ export function PageTitle({
     <Tag
       className={cn(
         headingClass,
-        "m-0 text-balance text-neutral-900",
+        "m-0 text-balance text-foreground",
         className
       )}
       data-slot="page-title"

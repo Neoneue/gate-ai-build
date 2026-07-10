@@ -5,6 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Constellation Gate AI</title>
+    <script>
+    "use strict";
+    // Set the theme class before first paint so there's no flash. Reads the
+    // same localStorage key ThemeProvider owns; falls back to OS preference.
+    // Kept inline + blocking on purpose; a module script would run after paint.
+    (() => {
+      try {
+        const stored = localStorage.getItem("theme");
+        const dark =
+          stored === "dark" ||
+          (stored !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch {
+        // Theme is non-critical; ignore storage / matchMedia errors.
+      }
+    })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

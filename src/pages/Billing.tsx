@@ -121,7 +121,7 @@ function PlanCard() {
         </p>
 
         {/* Seats inset */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-neutral-50 p-4">
+        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-card-muted p-4">
           <div className="flex min-w-0 flex-col gap-1">
             <p className="type-label-14 m-0 text-foreground">Seats</p>
             <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -212,7 +212,7 @@ function CreditsCard() {
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">$24.99238</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
-          Used for requests routed through our gateway. Each call is charged at
+          Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
@@ -366,7 +366,7 @@ function AddCreditsDialog({
                   "inline-flex h-10 items-center justify-center rounded-md border font-medium font-sans text-sm tabular-nums transition-colors",
                   isSelected
                     ? "border-border bg-muted text-foreground"
-                    : "border-border bg-card text-foreground hover:bg-neutral-50"
+                    : "border-border bg-card text-foreground hover:bg-accent"
                 )}
                 key={value}
                 onClick={() => {
@@ -638,7 +638,7 @@ function AutoRechargeDialog({
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
-            <span className="font-normal text-neutral-400">
+            <span className="font-normal text-muted-foreground">
               (leave blank for no cap)
             </span>
           </label>
@@ -676,7 +676,7 @@ function AutoRechargeDialog({
         </div>
 
         {enabled && thresholdValid && topUpValid && (
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-neutral-50 px-4 py-3">
+          <div className="flex flex-col gap-2 rounded-md border border-border bg-card-muted px-4 py-3">
             <p className="type-copy-14 m-0 text-pretty text-foreground">
               When your balance drops below{" "}
               <span className="font-medium text-foreground">${threshold}</span>,
@@ -841,7 +841,7 @@ function PaymentMethodCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-50 p-4">
+        <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">
           <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
             VISA
           </span>

@@ -48,8 +48,8 @@ export function Segmented({
                 "inline-flex items-center justify-center px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
                 size === "sm" ? "h-7" : "h-8",
                 selected
-                  ? "border border-neutral-900 bg-neutral-900 text-white"
-                  : "border-border border-t border-r border-b bg-card text-neutral-900",
+                  ? "border border-surface-strong bg-surface-strong text-surface-strong-foreground"
+                  : "border-border border-t border-r border-b bg-card text-foreground",
                 i === 0 && !selected && "border-l"
               )}
               key={opt.value}
@@ -140,7 +140,7 @@ function SegmentedPillVariant({
     <div
       aria-label={ariaLabel}
       className={cn(
-        "relative inline-flex self-start rounded-sm border border-border bg-neutral-100 p-1",
+        "relative inline-flex self-start rounded-sm border border-border bg-background p-1",
         className
       )}
       role="group"
@@ -174,8 +174,8 @@ function SegmentedPillVariant({
               "relative z-10 inline-flex items-center justify-center rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
               size === "sm" ? "px-3 py-1" : "px-4 py-2",
               selected
-                ? "text-neutral-900"
-                : "text-neutral-600 hover:text-neutral-900"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
             key={opt.value}
             onClick={() => onChange?.(opt.value)}

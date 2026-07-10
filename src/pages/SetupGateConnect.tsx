@@ -149,7 +149,7 @@ function SetupStep({
           className={cn(
             "type-label-14 mt-px inline-flex size-6 shrink-0 items-center justify-center rounded-full border tabular-nums",
             active
-              ? "border-success-600 bg-success-50 text-success-700"
+              ? "border-success-600 bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-300"
               : "border-border text-muted-foreground"
           )}
         >

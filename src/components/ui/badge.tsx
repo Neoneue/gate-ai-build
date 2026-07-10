@@ -27,22 +27,22 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
-        secondary:
-          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+        default: "bg-primary text-primary-foreground",
+        secondary: "bg-secondary text-secondary-foreground",
         destructive:
-          "bg-danger-100 text-danger-800 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-danger-200",
-        outline:
-          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+          "bg-danger-100 text-danger-800 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:text-danger-300 dark:focus-visible:ring-destructive/40",
+        outline: "border-border text-foreground",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
 
         /* ─── Constellation Gate AI status variants ────────────── */
-        success: "bg-success-100 text-success-800 [a]:hover:bg-success-200",
-        warning: "bg-warning-100 text-warning-700 [a]:hover:bg-warning-200",
-        info: "bg-blue-700/10 text-blue-600 [a]:hover:bg-blue-700/20",
-        neutral: "bg-neutral-100 text-neutral-600 [a]:hover:bg-neutral-200",
+        success:
+          "bg-success-100 text-success-800 dark:bg-success-500/15 dark:text-success-300",
+        warning:
+          "bg-warning-100 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300",
+        info: "bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
+        neutral: "bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

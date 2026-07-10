@@ -43,7 +43,7 @@ export function Eyebrow({
   return (
     <Tag
       className={cn(
-        "font-medium font-mono text-neutral-500 text-xs uppercase tracking-widest",
+        "font-medium font-mono text-muted-foreground text-xs uppercase tracking-widest",
         className
       )}
       data-slot="eyebrow"

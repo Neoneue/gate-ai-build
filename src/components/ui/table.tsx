@@ -28,7 +28,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
-      className={cn("bg-neutral-50", className)}
+      className={cn("bg-card-muted", className)}
       data-slot="table-header"
       {...props}
     />
@@ -49,7 +49,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       className={cn(
-        "border-border border-t bg-neutral-50 font-medium [&>tr]:last:border-b-0",
+        "border-border border-t bg-card-muted font-medium [&>tr]:last:border-b-0",
         className
       )}
       data-slot="table-footer"
@@ -62,10 +62,51 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       className={cn(
-        "border-border border-b transition-colors hover:bg-neutral-50 data-[state=selected]:bg-neutral-50 motion-reduce:transition-none",
+        // transition-[background-color] (not transition-colors): the hover/
+        // selected fill should fade, but border-color must NOT — interpolating
+        // the divider between dark's translucent white/10% border and light's
+        // opaque neutral-200 produces a visible mid-transition gray smudge
+        // (verified: alpha and lightness ramp at different rates in OKLab).
+        // Letting the border snap instantly matches TableHeader/TableFooter,
+        // which already snap with no visible artifact.
+        "border-border border-b transition-[background-color] hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
         className
       )}
       data-slot="table-row"
+      {...props}
+    />
+  );
+}
+
+/* Keyboard-accessible clickable row. Built on <TableRow> so it inherits the
+ * hairline + hover; adds link semantics (role, tabIndex), pointer affordance,
+ * a focus ring, an active fill, and Enter/Space activation. `onActivate` fires
+ * on click and on Enter/Space. Pass `aria-label` via props. */
+function NavTableRow({
+  onActivate,
+  className,
+  ...props
+}: Omit<
+  React.ComponentProps<"tr">,
+  "onClick" | "onKeyDown" | "role" | "tabIndex"
+> & {
+  onActivate: () => void;
+}) {
+  return (
+    <TableRow
+      className={cn(
+        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-accent",
+        className
+      )}
+      onClick={onActivate}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onActivate();
+        }
+      }}
+      role="link"
+      tabIndex={0}
       {...props}
     />
   );
@@ -84,7 +125,7 @@ function TableHead({
         // the body cells; sans here keeps the voice split clean. font-medium
         // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "type-label-12 h-10 px-4 text-left align-middle text-neutral-500 [&:has([role=checkbox])]:pr-0",
+        "type-label-12 h-10 px-4 text-left align-middle text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-head"
@@ -129,7 +170,7 @@ function SortableTableHead({
       // Cell keeps the standard header padding/alignment; the trigger inside is
       // content-width so the hit area is the label + glyph, not the whole cell.
       className={cn(
-        "type-label-12 h-10 px-4 align-middle text-neutral-500",
+        "type-label-12 h-10 px-4 align-middle text-muted-foreground",
         numeric ? "text-right" : "text-left",
         className
       )}
@@ -142,12 +183,12 @@ function SortableTableHead({
         // is NOT a click target. A fixed-size glyph slot is always present
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
-          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-neutral-500 outline-none transition-colors duration-150 ease-out hover:text-neutral-900 focus-visible:ring-3 focus-visible:ring-ring/50",
+          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-muted-foreground outline-none transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
           // Numeric columns are right-aligned: put the glyph LEFT of the label
           // (flex-row-reverse) so the label stays flush to the column's right
           // edge and lines up with the right-aligned data below it.
           numeric && "flex-row-reverse",
-          active && "text-neutral-900"
+          active && "text-foreground"
         )}
         onClick={() => onSort(sortKey)}
         type="button"
@@ -157,20 +198,20 @@ function SortableTableHead({
           sort.dir === "asc" ? (
             <ArrowUp
               aria-hidden
-              className="size-3.5 shrink-0 text-neutral-900"
+              className="size-3.5 shrink-0 text-foreground"
               strokeWidth={2}
             />
           ) : (
             <ArrowDown
               aria-hidden
-              className="size-3.5 shrink-0 text-neutral-900"
+              className="size-3.5 shrink-0 text-foreground"
               strokeWidth={2}
             />
           )
         ) : (
           <ChevronsUpDown
             aria-hidden
-            className="size-3.5 shrink-0 text-neutral-400 opacity-0 transition-opacity duration-150 ease-out group-hover/sort:opacity-100 motion-reduce:transition-none"
+            className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/sort:opacity-100 motion-reduce:transition-none"
             strokeWidth={2}
           />
         )}
@@ -183,7 +224,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       className={cn(
-        "type-copy-14 px-4 py-3 align-middle text-neutral-900 [&:has([role=checkbox])]:pr-0",
+        "type-copy-14 px-4 py-3 align-middle text-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-cell"
@@ -198,7 +239,7 @@ function TableCaption({
 }: React.ComponentProps<"caption">) {
   return (
     <caption
-      className={cn("type-copy-14 mt-4 text-neutral-500", className)}
+      className={cn("type-copy-14 mt-4 text-muted-foreground", className)}
       data-slot="table-caption"
       {...props}
     />
@@ -206,6 +247,7 @@ function TableCaption({
 }
 
 export {
+  NavTableRow,
   SortableTableHead,
   Table,
   TableBody,
