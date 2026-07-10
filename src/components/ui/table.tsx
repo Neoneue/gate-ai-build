@@ -62,7 +62,14 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       className={cn(
-        "border-border border-b transition-colors hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
+        // transition-[background-color] (not transition-colors): the hover/
+        // selected fill should fade, but border-color must NOT — interpolating
+        // the divider between dark's translucent white/10% border and light's
+        // opaque neutral-200 produces a visible mid-transition gray smudge
+        // (verified: alpha and lightness ramp at different rates in OKLab).
+        // Letting the border snap instantly matches TableHeader/TableFooter,
+        // which already snap with no visible artifact.
+        "border-border border-b transition-[background-color] hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
         className
       )}
       data-slot="table-row"

@@ -598,7 +598,7 @@ function ModelsTable({
           const context = formatContext(head.contextK, model.modality);
           return (
             <TableRow
-              className="cursor-pointer transition-colors duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+              className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
               key={model.id}
               onClick={() => onSelect(model)}
             >
