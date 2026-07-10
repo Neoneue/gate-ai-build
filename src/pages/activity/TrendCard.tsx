@@ -340,6 +340,7 @@ export function TrendCard({
               </SelectContent>
             </Select>
             <SegmentedPill
+              aria-label="Chart metric"
               onValueChange={(v) => setMetric(v as Metric)}
               options={METRIC_OPTIONS}
               size="sm"

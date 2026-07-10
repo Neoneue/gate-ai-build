@@ -488,6 +488,7 @@ function OverviewUsageChart() {
           <div className="flex items-center gap-2">
             <DimSelector dim={dim} onDimChange={handleDimChange} />
             <SegmentedPill
+              aria-label="Chart metric"
               onValueChange={(v) => handleMetricChange(v as Metric)}
               options={OVERVIEW_METRIC_OPTIONS}
               size="sm"

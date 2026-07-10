@@ -427,7 +427,7 @@ function ModelPicker({
           ) : (
             filtered.map((m) => (
               <button
-                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-accent focus-visible:bg-accent data-[active=true]:bg-accent"
+                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[active=true]:bg-accent"
                 data-active={m.handle === value}
                 key={m.handle}
                 onClick={() => onSelect(m.handle)}

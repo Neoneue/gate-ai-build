@@ -471,6 +471,7 @@ function TopList({
           <p className="type-copy-14 m-0 text-muted-foreground">{subtitle}</p>
         </div>
         <SegmentedPill
+          aria-label="Chart metric"
           onValueChange={(v) => onMetricChange(v as Metric)}
           options={METRIC_OPTIONS}
           size="sm"
