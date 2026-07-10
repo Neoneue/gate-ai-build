@@ -917,8 +917,8 @@ function FindingSwitcherCard({
   // group still reads as flagged without competing with the active card.
   const inactiveBorder =
     current.action === "block"
-      ? "border-danger-200 hover:border-danger-300"
-      : "border-warning-200 hover:border-warning-300";
+      ? "border-danger-200 hover:border-danger-300 dark:border-danger-500/30 dark:hover:border-danger-500/40"
+      : "border-warning-200 hover:border-warning-300 dark:border-warning-500/30 dark:hover:border-warning-500/40";
   // Active card background: ultralight action-tone tint (warning-25 flag/redact, danger-25 block).
   const activeBg =
     current.action === "block"

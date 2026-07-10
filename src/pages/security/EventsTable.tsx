@@ -565,7 +565,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
             ) : (
               <button
                 aria-label="Mark event invalid"
-                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-foreground outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-neutral-50 focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-foreground outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-accent focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                 onClick={() => {
                   setMarked(true);
                   toast.success("Event marked as invalid");

@@ -51,9 +51,9 @@ const TRACE_SELECT_RING: Record<TraceStatus, string> = {
 // cleanly over the timeline track. -50 is near-white and reads as no color, so
 // -200 is the lightest step that still registers as the status hue.
 const TRACE_HOVER_RING: Record<TraceStatus, string> = {
-  success: "hover:after:ring-success-200",
-  warn: "hover:after:ring-warning-200",
-  danger: "hover:after:ring-danger-200",
+  success: "hover:after:ring-success-200 dark:hover:after:ring-success-500/25",
+  warn: "hover:after:ring-warning-200 dark:hover:after:ring-warning-500/25",
+  danger: "hover:after:ring-danger-200 dark:hover:after:ring-danger-500/25",
 };
 
 /** Interleaved timeline entry for the Findings-only view: either a finding

@@ -468,7 +468,7 @@ function TopList({
           <h3 className="type-heading-16 m-0 text-foreground leading-snug">
             {title}
           </h3>
-          <p className="type-copy-14 m-0 text-muted-foreground/5">{subtitle}</p>
+          <p className="type-copy-14 m-0 text-muted-foreground">{subtitle}</p>
         </div>
         <SegmentedPill
           onValueChange={(v) => onMetricChange(v as Metric)}

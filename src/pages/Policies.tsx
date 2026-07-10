@@ -391,7 +391,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-400/30 dark:bg-blue-500/10">
+      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -564,10 +564,15 @@ function SettingsHalf({
                 className={cn(
                   // Hide the inner check dot — the floating thumb above is the
                   // handle. Grow + darken on hover so stops read as clickable.
-                  "relative z-10 transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none [&_[data-slot=radio-group-indicator]]:hidden",
+                  // Solid fill in both modes — the radio primitive's
+                  // translucent dark:bg-input/30 doesn't apply to slider stops.
+                  "relative z-10 bg-muted transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none dark:bg-muted [&_[data-slot=radio-group-indicator]]:hidden",
                   // Stops up to and including the selection read as "passed".
+                  // data-checked: qualifiers needed to out-specify the base
+                  // primitive's own data-checked:bg-primary on the exact
+                  // selected stop (plain classes lose that fight).
                   i <= selectedIndex &&
-                    "border-muted-foreground bg-muted-foreground dark:border-muted-foreground dark:bg-muted-foreground"
+                    "border-muted-foreground bg-muted-foreground data-checked:border-muted-foreground data-checked:bg-muted-foreground dark:border-muted-foreground dark:bg-muted-foreground dark:data-checked:border-muted-foreground dark:data-checked:bg-muted-foreground"
                 )}
                 key={opt.value}
                 value={opt.value}

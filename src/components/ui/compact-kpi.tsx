@@ -254,7 +254,7 @@ export function CompactSpark({
                 }
               />
             }
-            cursor={{ stroke: "var(--color-neutral-300)", strokeWidth: 1 }}
+            cursor={{ stroke: "var(--color-chart-grid)", strokeWidth: 1 }}
             isAnimationActive={false}
             position={{ y: -24 }}
           />

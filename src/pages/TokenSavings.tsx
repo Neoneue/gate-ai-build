@@ -658,7 +658,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
       className={
         isPro
           ? "rounded-sm shadow-none"
-          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none"
+          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
       }
     >
       <CardContent className="flex flex-1 flex-col">
@@ -719,7 +719,11 @@ function CompressionCard({ plan }: { plan: Plan }) {
             // button stay the single loudest element instead of competing with
             // a mass of solid-blue dots.
             checkClassName="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
-            outlineClassName={isPro ? "border-border" : "border-blue-200"}
+            outlineClassName={
+              isPro
+                ? "border-border"
+                : "border-blue-200 dark:border-blue-400/30"
+            }
           />
         </div>
       </CardContent>

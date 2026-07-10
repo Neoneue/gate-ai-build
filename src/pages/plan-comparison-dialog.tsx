@@ -125,7 +125,7 @@ function PlanCard({
       className={cn(
         "flex flex-col gap-4 rounded-md border p-4",
         plan.featured
-          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25"
+          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
           : "border-border bg-card"
       )}
       data-plan-card

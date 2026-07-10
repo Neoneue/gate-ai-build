@@ -749,7 +749,7 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
             key={v}
             style={{
               filter:
-                "drop-shadow(0 0 1.5px var(--color-white)) drop-shadow(0 0 1.5px var(--color-white))",
+                "drop-shadow(0 0 1.5px var(--card)) drop-shadow(0 0 1.5px var(--card))",
             }}
           >
             <VendorAvatar decorative vendor={v} />

@@ -68,7 +68,7 @@ function ChartXAxisTick(props: {
   return (
     <text
       dy="0.71em"
-      fill="var(--color-neutral-500)"
+      fill="var(--muted-foreground)"
       fontSize={11}
       textAnchor={anchor}
       x={x}

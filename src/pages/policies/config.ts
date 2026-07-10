@@ -26,7 +26,7 @@ export const ICON_COLOR: Record<string, string> = {
 /** Active (selected) action border tone: Flag amber, Redact gray-600, Block
  *  red — mirrors the finding-card action tones. */
 export const ACTION_ACTIVE_BORDER: Record<string, string> = {
-  flag: "border-warning-500",
+  flag: "border-warning-500 dark:border-warning-400",
   redact: "border-muted-foreground",
   block: "border-destructive",
 };
@@ -70,9 +70,11 @@ export const ACTION_HOVER: Record<string, string> = {
 /** Checked radio fill/border per action — matches ACTION_ACTIVE_BORDER so the
  *  radio dot and the card border read as one tone. Dot stays white. */
 export const ACTION_ACTIVE_RADIO: Record<string, string> = {
-  flag: "data-checked:border-warning-600 data-checked:bg-warning-600",
-  redact: "data-checked:border-neutral-700 data-checked:bg-neutral-700",
-  block: "data-checked:border-danger-700 data-checked:bg-danger-700",
+  flag: "data-checked:border-warning-600 data-checked:bg-warning-600 dark:data-checked:border-warning-400 dark:data-checked:bg-warning-400",
+  redact:
+    "data-checked:border-neutral-700 data-checked:bg-neutral-700 dark:data-checked:border-muted-foreground dark:data-checked:bg-muted-foreground",
+  block:
+    "data-checked:border-danger-700 data-checked:bg-danger-700 dark:data-checked:border-danger-400 dark:data-checked:bg-danger-400",
 };
 
 /* ─────────────────────────────────────────────────────────────────────────
