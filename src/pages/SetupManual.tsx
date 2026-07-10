@@ -130,7 +130,7 @@ export function SetupManual() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-w-[180px] flex-1 flex-col gap-1">
             <span className="type-label-14 text-foreground">
-              Create a key to authenticate your requests
+              Create a key to authenticate your messages
             </span>
             <span className="type-copy-14 text-muted-foreground">
               Generated instantly. Shown once.

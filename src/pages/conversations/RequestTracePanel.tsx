@@ -116,7 +116,7 @@ export function RequestTracePanel({
           Request Trace
         </span>
         <span className="font-mono text-muted-foreground text-xs tabular-nums">
-          {countLabel ?? `${(trace ?? []).length} requests`}
+          {countLabel ?? `${(trace ?? []).length} messages`}
         </span>
       </div>
 

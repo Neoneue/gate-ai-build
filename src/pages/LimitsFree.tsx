@@ -333,7 +333,7 @@ function LimitActionsMenu({
 const LIMIT_TYPES = [
   { value: "spend", label: "Spend ($)" },
   { value: "tokens", label: "Tokens" },
-  { value: "requests", label: "Requests" },
+  { value: "requests", label: "Messages" },
 ] as const;
 
 const LIMIT_PERIODS = [
@@ -530,7 +530,7 @@ function CreateLimitDialog({
             Create limit
           </DialogTitle>
           <DialogDescription>
-            Block requests that exceed the threshold (returns 429).
+            Block messages that exceed the threshold (returns 429).
           </DialogDescription>
         </DialogHeader>
 

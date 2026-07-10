@@ -426,7 +426,7 @@ function CachingCard() {
                 </p>
                 <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
                   Serve cached responses instead of round-tripping to providers.
-                  Identical concurrent requests are deduplicated automatically.
+                  Identical concurrent messages are deduplicated automatically.
                 </p>
               </div>
               <Switch
@@ -710,7 +710,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
               it. On Pro the user already has the capability, so it's dropped. */}
           {isPro ? null : (
             <SavingsHeadline
-              caption="smaller requests on average"
+              caption="smaller messages on average"
               value="~20%"
               valueClassName="text-foreground text-xl"
             />

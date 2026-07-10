@@ -562,7 +562,7 @@ function TokenSavingsStrip() {
             }
           />
         }
-        title="Requests"
+        title="Messages"
         value={formatNumber(TOTAL_7D_BASE_REQUESTS, {
           notation: "compact",
           maximumFractionDigits: 1,
@@ -655,8 +655,8 @@ function LatestRequestsTable() {
   const rows: RequestRow[] = REQUEST_ROWS_RECENT.slice(0, 5);
 
   return (
-    <PreviewCard title="Latest requests" viewAllTo="/messages">
-      <Table aria-label="Latest requests">
+    <PreviewCard title="Latest messages" viewAllTo="/messages">
+      <Table aria-label="Latest messages">
         <TableHeader>
           <TableRow>
             <TableHead>Time</TableHead>
@@ -669,12 +669,12 @@ function LatestRequestsTable() {
           {rows.map((row, i) => (
             <NavTableRow
               aria-label={
-                row.requestId ? `Open request ${row.requestId}` : "Open request"
+                row.requestId ? `Open message ${row.requestId}` : "Open message"
               }
               key={row.requestId ?? i}
               onActivate={() => {
                 if (row.requestId) {
-                  navigate(`/requests?open=${row.requestId}`);
+                  navigate(`/messages?open=${row.requestId}`);
                 }
               }}
             >

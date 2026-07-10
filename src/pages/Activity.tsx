@@ -310,7 +310,7 @@ function KpiRail({
             valueFormatter={(v) => fmtInt(Math.round(v))}
           />
         }
-        title="Total Requests"
+        title="Total Messages"
         value={k.requests.value}
       />
       <CompactKpi
@@ -827,7 +827,7 @@ function UsageByKey({
                     sort={sort}
                     sortKey="requests"
                   >
-                    Requests
+                    Messages
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"

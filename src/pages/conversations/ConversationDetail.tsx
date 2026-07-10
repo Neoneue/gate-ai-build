@@ -566,7 +566,7 @@ function ConversationKpiRail({ row }: { row: ConversationRow }) {
   const view = getConversationView(row, REQUEST_ROWS_ALL);
   return (
     <KpiRailShell columns={6}>
-      <ConversationKpiTile label="Requests" value={String(view.reqs)} />
+      <ConversationKpiTile label="Messages" value={String(view.reqs)} />
       <ConversationKpiTile label="Turns" value={String(view.turns)} />
       <ConversationKpiTile label="Tokens In" value={view.inTokens} />
       <ConversationKpiTile label="Tokens Out" value={view.outTokens} />

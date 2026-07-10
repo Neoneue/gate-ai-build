@@ -219,7 +219,7 @@ export function ApiKeys() {
                 body={
                   keyStatus === "revoked"
                     ? "Keys you revoke will appear here. Revoking a key stops it authenticating immediately."
-                    : "You have no active keys. Create one to start routing requests through the gateway."
+                    : "You have no active keys. Create one to start routing messages through the gateway."
                 }
                 icon={
                   <div
@@ -314,7 +314,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           </Button>
         </div>
       }
-      body="Create a key to start routing requests through the gateway. The full key is shown only once."
+      body="Create a key to start routing messages through the gateway. The full key is shown only once."
       icon={
         <div
           aria-hidden
@@ -351,10 +351,10 @@ export function UsageInfo() {
     <section className="@container/connect mt-2 flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-balance text-foreground">
-          How to make requests
+          How to make messages
         </h2>
         <p className="type-copy-14 m-0 text-muted-foreground">
-          There are two ways to start making requests using your API key. With{" "}
+          There are two ways to start making messages using your API key. With{" "}
           <span className="font-medium">Gate Connect</span>, setup is automatic,
           so you can skip the code entirely. Want to configure it yourself? Use
           the code snippets to do it by hand.
@@ -460,7 +460,7 @@ function KeysTable({
                 sort={sort}
                 sortKey="requests7d"
               >
-                7-day requests
+                7-day messages
               </SortableTableHead>
               <SortableTableHead
                 className="w-1/5 whitespace-nowrap"
@@ -502,7 +502,7 @@ function KeysTable({
                   )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} requests, 7-day trend`}</span>
+                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} messages, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-foreground">
@@ -543,7 +543,7 @@ function KeysTable({
           <DialogHeader>
             <DialogTitle>Revoke {pendingRevoke?.name}?</DialogTitle>
             <DialogDescription>
-              This key will stop authenticating requests immediately. Revocation
+              This key will stop authenticating messages immediately. Revocation
               can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>

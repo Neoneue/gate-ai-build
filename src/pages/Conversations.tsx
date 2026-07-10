@@ -269,7 +269,7 @@ function PageHeader() {
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          A conversation is a chain of requests that share session context:
+          A conversation is a chain of messages that share session context:
           agent runs, multi-turn chats, tool-calling loops. Click any row to see
           its message thread.
         </p>

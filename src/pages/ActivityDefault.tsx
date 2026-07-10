@@ -59,7 +59,7 @@ export function ActivityDefault() {
               />
             </div>
             <span className="type-copy-14 text-muted-foreground">
-              No requests yet
+              No messages yet
             </span>
           </div>
           <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
@@ -102,7 +102,7 @@ export function ActivityDefault() {
         <SectionTitle>Recent key usage</SectionTitle>
         <Card density="flush">
           <TableEmptyState
-            body="Per-key usage across requests, tokens, and spend will appear here as your workspace routes traffic."
+            body="Per-key usage across messages, tokens, and spend will appear here as your workspace routes traffic."
             icon={
               <div
                 aria-hidden

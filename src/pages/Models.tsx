@@ -909,7 +909,7 @@ function ModelDetailPage({
         <div className="flex flex-col gap-1">
           <h3 className="type-heading-16 m-0 text-foreground">Providers</h3>
           <p className="type-copy-14 m-0 text-muted-foreground">
-            Route requests across multiple providers. Copy a provider handle to
+            Route messages across multiple providers. Copy a provider handle to
             pin a specific one.
           </p>
         </div>

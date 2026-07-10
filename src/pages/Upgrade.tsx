@@ -94,7 +94,7 @@ const PRO_PLAN: PlanCardData = {
       Icon: KeyRound,
       title: "Credential leak prevention",
       detail:
-        "Stop API keys and secrets from leaking in requests or responses.",
+        "Stop API keys and secrets from leaking in messages or responses.",
     },
     {
       Icon: SlidersHorizontal,

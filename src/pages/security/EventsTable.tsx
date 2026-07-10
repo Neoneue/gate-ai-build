@@ -538,7 +538,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const conversationId = row.conversationId;
   const openConversation = () =>
     navigate(`/conversations?open=${conversationId}`);
-  const openRequest = () => navigate(`/requests?open=${requestId}`);
+  const openRequest = () => navigate(`/messages?open=${requestId}`);
   const flaggedSet = new Set(detail.flagged);
 
   // Reconcile against the matching Requests row so the message + detection
@@ -743,7 +743,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 value={
                   <span className="font-mono tabular-nums">
                     <TextLink
-                      aria-label={`Open request ${requestId}`}
+                      aria-label={`Open message ${requestId}`}
                       onClick={openRequest}
                     >
                       {requestId}

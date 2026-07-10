@@ -212,7 +212,7 @@ function CreditsCard() {
       <CardContent className="flex flex-1 flex-col gap-3">
         <HeroNumeric size="lg">$24.99238</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
-          Used for requests routed through our gateway. Each call is charged at
+          Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
