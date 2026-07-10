@@ -491,7 +491,7 @@ export function RequestsTableSection({
                       sort={sort}
                       sortKey="inTokens"
                     >
-                      In
+                      Tokens In
                     </SortableTableHead>
                     <SortableTableHead
                       className="whitespace-nowrap"
@@ -500,7 +500,7 @@ export function RequestsTableSection({
                       sort={sort}
                       sortKey="outTokens"
                     >
-                      Out
+                      Tokens Out
                     </SortableTableHead>
                     <SortableTableHead
                       className="whitespace-nowrap"
