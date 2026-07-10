@@ -31,6 +31,12 @@ Ran a 5-way parallel audit over every page and shared UI component for dark-mode
 
 Two items were verified with a single in-browser computed-style measurement each (the slider specificity fix, and the redact/flag radio dot colors) rather than by inspection alone, per the project's cap on in-browser verification passes.
 
+### Table/row hover: stop border-color interpolating through theme transitions `911f186`
+
+**`src/components/ui/table.tsx`, `src/pages/{Conversations,Models}.tsx`, `src/pages/requests/RequestsTable.tsx`, `src/pages/security/EventsTable.tsx`**
+
+Table/row hover used `transition-colors`, which animates `border-color` alongside `background-color`. Interpolating the divider between dark's translucent white/10% border and light's opaque `neutral-200` produces a visible mid-transition gray smudge — alpha and lightness ramp at different rates in OKLab. Scoped to `transition-[background-color]` so the border snaps instantly, matching `TableHeader`/`TableFooter`, which already snap with no visible artifact.
+
 ## Sections
 
 ### Dashboard: reconcile Tokens Saved rate with TokenSavings 7d window `5bc3719`
