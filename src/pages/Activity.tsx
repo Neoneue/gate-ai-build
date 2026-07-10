@@ -735,12 +735,12 @@ function UsageByKey({
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Recent key usage</SectionTitle>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="grid grid-cols-3 items-center gap-4">
+        <SectionTitle className="col-span-2">Recent key usage</SectionTitle>
+        <div className="flex items-center justify-end gap-2">
           <SearchInput
             ariaLabel="Search keys"
-            className="min-w-0 flex-1 shrink"
+            className="min-w-0 flex-1"
             onChange={setQuery}
             placeholder="Search key or member…"
             surface="elevated"
