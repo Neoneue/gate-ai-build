@@ -33,6 +33,12 @@ App-wide pass 1: every **standalone** text color now uses the semantic tokens so
 - `RequestDetailModal` message bodies promoted `neutral-700` → `text-foreground` (primary content, not muted).
 - **Deferred to the surface pass** (text entangled with a raw background — must swap bg + text together): input/select/search controls (`bg-neutral-50`), the neutral `Badge` + count chips + `inline-code` (`bg-neutral-100`), the sidebar active-item chip, and the always-dark `code-card`/`code-panel` surfaces.
 
+### Sensitivity slider dot fills restored in dark `d4d3f5b`
+
+**`src/pages/Policies.tsx`**
+
+The sensitivity slider repurposes `RadioGroupItem` for its stops; the base carries `dark:bg-input/30` (~4% white). That `dark:` variant out-specifies the passed-state override (`border-muted-foreground bg-muted-foreground`) in dark, so the filled stops lost their fill and read empty. Added matching `dark:` variants to the override so the passed stops win in dark.
+
 ### CTA blue brightened one step in dark mode `b3f623c`
 
 **`Policies.tsx`, `SetupCredits.tsx`, `pro-upgrade-card.tsx`, `plan-comparison-dialog.tsx`, `TokenSavings.tsx`**
