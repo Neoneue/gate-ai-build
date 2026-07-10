@@ -567,7 +567,7 @@ function SettingsHalf({
                   "relative z-10 transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none [&_[data-slot=radio-group-indicator]]:hidden",
                   // Stops up to and including the selection read as "passed".
                   i <= selectedIndex &&
-                    "border-muted-foreground bg-muted-foreground"
+                    "border-muted-foreground bg-muted-foreground dark:border-muted-foreground dark:bg-muted-foreground"
                 )}
                 key={opt.value}
                 value={opt.value}
