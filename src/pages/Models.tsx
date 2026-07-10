@@ -433,11 +433,16 @@ function Toolbar({
         name="model-search"
         onChange={onSearchChange}
         placeholder="Search by name or handle…"
+        surface="elevated"
         value={search}
       />
 
       <Select onValueChange={onVendorChange} value={vendor}>
-        <SelectTrigger aria-label="Filter by vendor" size="sm">
+        <SelectTrigger
+          aria-label="Filter by vendor"
+          className="border-border bg-card font-normal text-foreground"
+          size="sm"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -454,7 +459,11 @@ function Toolbar({
       </Select>
 
       <Select onValueChange={onProviderChange} value={provider}>
-        <SelectTrigger aria-label="Filter by provider" size="sm">
+        <SelectTrigger
+          aria-label="Filter by provider"
+          className="border-border bg-card font-normal text-foreground"
+          size="sm"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -487,7 +496,11 @@ function Toolbar({
       <div className="ml-auto" />
 
       <Select onValueChange={onSortChange} value={sort}>
-        <SelectTrigger aria-label="Sort" size="sm">
+        <SelectTrigger
+          aria-label="Sort"
+          className="border-border bg-card font-normal text-foreground"
+          size="sm"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

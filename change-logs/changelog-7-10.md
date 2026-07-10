@@ -80,3 +80,19 @@ Every other table in the app labels these columns "Tokens In"/"Tokens Out"; the 
 **`src/pages/Models.tsx`**
 
 The capability strip (Vision, Tool use, JSON mode, Streaming, Prompt caching) used the shared `Badge`'s default `h-5` (20px), leaving the icon+label pinched top/bottom. Bumped to `h-6` (24px) on this usage only — `Badge`'s shared `h-5`/`px-2` contract is load-bearing everywhere else (status pills, findings chips) and stays untouched.
+
+### Models toolbar: match search + dropdowns to site convention `5b2fc78`
+
+**`src/pages/Models.tsx`**
+
+The Models toolbar looked off versus Conversations: the search fell back to the default `surface="card"` (gray `bg-neutral-50`) and the three Select triggers used the shared `SelectTrigger` default (`bg-muted` gray). Set search `surface="elevated"` and added the established `border-border bg-card font-normal text-foreground` override to all three triggers, matching the Conversations toolbar verbatim. Shared primitives untouched.
+
+### a11y: chart-metric toggle labels + SetupManual focus; bless blue Pro CTAs `d774dec`
+
+**`src/pages/Dashboard.tsx`, `src/pages/Activity.tsx`, `src/pages/activity/TrendCard.tsx`, `src/pages/SetupManual.tsx`, `design.md`**
+
+The three "quick serious wins" from the 2026-07-10 rams audit (`docs/rams-audit-2026-07-10.md`):
+
+- Three `SegmentedPill` chart-metric toggles had no accessible name (the component supports `aria-label`, used correctly for the time-range control, but omitted here). Added `aria-label="Chart metric"` to each — WCAG 1.3.1.
+- `SetupManual` model-picker rows set `focus-visible:bg-accent`, but `hover:` and `data-[active]:` selected also use `bg-accent`, so keyboard focus was visually identical to the selected row. Added a distinct `focus-visible:ring-2 ring-ring ring-inset` — WCAG 2.4.7.
+- `design.md` rule #1 ("blue is never a primary action") now carries one blessed exception: brand-blue Pro-upsell CTAs (`bg-blue-700 …`), naming the surfaces (pro-upgrade-card, Policies, TokenSavings, plan-comparison-dialog featured plan). Every other primary stays neutral-900 ink.
