@@ -74,3 +74,9 @@ Three fixes to the "Tokens used" (Overview) and "Tokens over time" (Activity) st
 **`src/pages/requests/RequestsTable.tsx`**
 
 Every other table in the app labels these columns "Tokens In"/"Tokens Out"; the Messages table just said "In"/"Out".
+
+### Models detail: more vertical room in capability badges `f779dbb`
+
+**`src/pages/Models.tsx`**
+
+The capability strip (Vision, Tool use, JSON mode, Streaming, Prompt caching) used the shared `Badge`'s default `h-5` (20px), leaving the icon+label pinched top/bottom. Bumped to `h-6` (24px) on this usage only — `Badge`'s shared `h-5`/`px-2` contract is load-bearing everywhere else (status pills, findings chips) and stays untouched.
