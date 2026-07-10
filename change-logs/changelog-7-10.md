@@ -30,3 +30,11 @@ Ran a 5-way parallel audit over every page and shared UI component for dark-mode
 - **`text-link.tsx`**: the "locked" ink-plus-faint-underline recipe had no dark variants at all, so the hover/focus state (`decoration-neutral-500`) computed to *lower* contrast than the resting state (`decoration-neutral-200`) in dark — the intended prominence progression ran backwards. Added `dark:decoration-border` (resting) and `dark:hover/focus-visible:decoration-muted-foreground` (prominent), both existing semantic tokens; light-mode values untouched.
 
 Two items were verified with a single in-browser computed-style measurement each (the slider specificity fix, and the redact/flag radio dot colors) rather than by inspection alone, per the project's cap on in-browser verification passes.
+
+## Sections
+
+### Dashboard: reconcile Tokens Saved rate with TokenSavings 7d window `5bc3719`
+
+**`src/pages/activity-data.ts`, `src/pages/Dashboard.tsx`, `src/pages/TokenSavings.tsx`**
+
+Overview's Tokens Saved tile used a hardcoded `TOTAL_SAVED_RATE` (23%) with no relation to any other number in the app. `TokenSavings.tsx`'s real 7d "Total saved" rate (caching 0.18% + compression 14.0% = 14.2%) was 9 points off from what Overview showed for the same window. Exported `TOKEN_SAVINGS_RATE_7D = 0.142` from `activity-data.ts` and wired both pages to it, so the two can't diverge again. Also gave the Dashboard sparklines real day labels, hover tooltips, and value formatters (previously bare, unlabeled).
