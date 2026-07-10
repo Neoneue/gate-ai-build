@@ -37,6 +37,7 @@ import {
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatSparkLabel } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { TOKEN_SAVINGS_RATE_7D } from "@/pages/activity-data";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 type Plan = "pro" | "free";
@@ -187,7 +188,9 @@ const KPI_BY_RANGE: Record<PresetRange, SavingsKpi[]> = {
   "7d": [
     {
       title: "Total saved",
-      value: "14.2",
+      // Reconciles with Overview's Tokens Saved tile — both derive from
+      // TOKEN_SAVINGS_RATE_7D (activity-data.ts).
+      value: (TOKEN_SAVINGS_RATE_7D * 100).toFixed(1),
       colorVar: KPI_COLORS.total,
       spark: [12.4, 12.8, 13.2, 13.5, 13.8, 14.0, 14.2],
     },

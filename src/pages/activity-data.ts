@@ -10,6 +10,12 @@ export const TOTAL_7D_BASE_DOLLARS = 238;
 export const TOTAL_7D_BASE_REQUESTS = 63_793;
 export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
+// Reconciles with TokenSavings.tsx's "7d" window Total-saved rate (caching
+// 0.18% + compression 14.0% ≈ 14.2%, both real product mechanisms, not a
+// flat estimate). Overview's Tokens Saved tile derives its dollar figure
+// from this rate × TOTAL_7D_BASE_DOLLARS so the two pages can't diverge.
+export const TOKEN_SAVINGS_RATE_7D = 0.142;
+
 /** ≤6 series per dimension. Model + provider stay fully enumerated (bounded
  * cardinality in MVP). API keys fall back to "top 5 + Other" since key
  * cardinality is unbounded — a 100-key workspace can't be stacked.

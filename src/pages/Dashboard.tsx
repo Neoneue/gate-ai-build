@@ -54,6 +54,7 @@ import {
   SPEND_BASE,
   SPEND_SERIES,
   seriesColor,
+  TOKEN_SAVINGS_RATE_7D,
   TOKENS_TOTALS_7D,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
@@ -71,12 +72,14 @@ import {
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
 
 /* ─── Token savings — derived from 7d spend + token totals ───────────────
- * Rates are fixed product constants (what the gateway achieved via caching
- * and compression). Dollar equivalent derives from the canonical spend
- * baseline so Overview, Activity, and the strip all reconcile. */
+ * Rate comes from TOKEN_SAVINGS_RATE_7D (activity-data.ts), the same
+ * caching+compression rate TokenSavings.tsx shows for its "7d" window —
+ * not a locally-guessed constant. Dollar equivalent derives from the
+ * canonical spend baseline so Overview and Token Savings reconcile. */
 
-const TOTAL_SAVED_RATE = 0.23; // slight overlap between the two mechanisms
-const DOLLARS_SAVED_7D = Math.round(TOTAL_SAVED_RATE * TOTAL_7D_BASE_DOLLARS);
+const DOLLARS_SAVED_7D = Math.round(
+  TOKEN_SAVINGS_RATE_7D * TOTAL_7D_BASE_DOLLARS
+);
 // Per-day averages derived from the same seeds the Activity KPI rail uses,
 // so the sparkline reflects real daily variation rather than seeded noise.
 const _REQUESTS_7D_SERIES = distributeSeries(
@@ -552,6 +555,11 @@ function TokenSavingsStrip() {
           <CompactSpark
             colorVar="var(--color-blue-500)"
             data={_REQUESTS_7D_SERIES}
+            labels={KPI_7D_LABELS}
+            tooltip
+            valueFormatter={(v) =>
+              formatNumber(v, { maximumFractionDigits: 0 })
+            }
           />
         }
         title="Requests"
@@ -568,10 +576,13 @@ function TokenSavingsStrip() {
           <CompactSpark
             colorVar="var(--color-success-500)"
             data={SAVINGS_SPARK}
+            labels={KPI_7D_LABELS}
+            tooltip
+            valueFormatter={(v) => formatCurrency(v)}
           />
         }
         title="Tokens saved"
-        value={`${(TOTAL_SAVED_RATE * 100).toFixed(0)}%`}
+        value={`${(TOKEN_SAVINGS_RATE_7D * 100).toFixed(1)}%`}
       />
       <CompactKpi
         delta="+22.4%"
@@ -582,6 +593,11 @@ function TokenSavingsStrip() {
           <CompactSpark
             colorVar="var(--color-destructive)"
             data={THREATS_SPARK}
+            labels={KPI_7D_LABELS}
+            tooltip
+            valueFormatter={(v) =>
+              formatNumber(v, { maximumFractionDigits: 0 })
+            }
           />
         }
         title="Threats detected"
