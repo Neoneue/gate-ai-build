@@ -37,6 +37,12 @@ Two items were verified with a single in-browser computed-style measurement each
 
 Table/row hover used `transition-colors`, which animates `border-color` alongside `background-color`. Interpolating the divider between dark's translucent white/10% border and light's opaque `neutral-200` produces a visible mid-transition gray smudge — alpha and lightness ramp at different rates in OKLab. Scoped to `transition-[background-color]` so the border snaps instantly, matching `TableHeader`/`TableFooter`, which already snap with no visible artifact.
 
+### Toolbar search bar aligns to the KPI/card grid above it `9fa7e80`
+
+**`src/pages/Activity.tsx`, `src/pages/Conversations.tsx`**
+
+The "Recent X" toolbar's search input flexed between the section title and the trailing controls with no relation to the KPI/card row above — its start position was whatever was left over. Rebuilt each toolbar as the *same* grid as the row above (`grid-cols-3` on Activity, `grid-cols-1 sm:grid-cols-3` on Conversations, matching `KpiRail`'s definition exactly), title in the first two columns, search+controls in the third. Because both rows now share one grid definition, the third column's left edge is identical by construction — measured in-browser: both start at the same x as the card/tile above (1019/1008 respectively).
+
 ## Sections
 
 ### Dashboard: reconcile Tokens Saved rate with TokenSavings 7d window `5bc3719`
@@ -52,3 +58,19 @@ Overview's Tokens Saved tile used a hardcoded `TOTAL_SAVED_RATE` (23%) with no r
 Nav label and routes had already moved to `/messages` in an earlier pass, but page-body copy still said "Requests" — KPI titles, column headers, breadcrumb/empty-state text, dialog copy, aria-labels/sr-only strings. Also caught two `navigate()` calls still pointing at the stale `/requests` route (Dashboard's latest-messages table row, EventsTable's open-message link) — those were broken links, not just stale copy.
 
 Scope is rendered/AT-facing text only. Internal identifiers (`Requests.tsx`, `RequestRow`, `RequestsTable`, `requestRowId`, the `requests/` directory) are left as-is — same precedent as Digital Evidence's fingerprint/anchor split, where UI copy already diverges from code names. The Python `requests` library reference in `Models.tsx`'s code sample is untouched.
+
+### Overview + Activity charts: dark-mode palette, axis labels, rounded stack tops `04440cf`
+
+**`design.md`, `src/index.css`, `src/pages/Dashboard.tsx`, `src/pages/activity/TrendCard.tsx`**
+
+Three fixes to the "Tokens used" (Overview) and "Tokens over time" (Activity) stacked bar charts, prompted by side-by-side screenshots:
+
+- The categorical palette (`--chart-1..8`) had no `.dark` override at all — same lightness in both themes, reading too bright against the near-black canvas. Added a `.dark` override 5 points darker (L −0.05, same hue/chroma); light mode untouched.
+- Dashboard's Y-axis tick had no `fill` (Recharts' hardcoded `#666`, not a token) and no `tickMargin` (labels sat flush against the dashed gridlines) → `var(--muted-foreground)` + `tickMargin={4}`. Activity's Y-axis had a bespoke left-anchored `<text>` renderer (added earlier to fix a different left/right-alignment complaint) — replaced with the same right-aligned `tickMargin={4}`/`width={44}` pattern via `tickFormatter`, so both charts' axis labels are now visually and structurally consistent.
+- Stacked bars: only the topmost series in each stack gets `radius={[2,2,0,0]}`; the bottom and every middle segment stay square.
+
+### Messages table: spell out "Tokens In" / "Tokens Out" `5aa9f3e`
+
+**`src/pages/requests/RequestsTable.tsx`**
+
+Every other table in the app labels these columns "Tokens In"/"Tokens Out"; the Messages table just said "In"/"Out".
