@@ -112,7 +112,7 @@ export function MessageBlock({
       className={cn("flex flex-col gap-2", className)}
       data-request-id={requestId}
     >
-      <div className="type-label-12 flex items-center justify-between text-foreground">
+      <div className="type-label-14 flex items-center justify-between text-foreground">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (

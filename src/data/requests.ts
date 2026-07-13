@@ -581,7 +581,7 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
     outTokens: "—",
     latency: "2.30s",
     cost: "—",
-    compression: "100.0%",
+    compression: "22.4%",
     requestId: "req_cd0e57",
     findings: [
       {

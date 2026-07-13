@@ -592,9 +592,7 @@ const PANEL_OUTER =
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
-      <h3 className="type-heading-16 m-0 text-foreground tracking-snug">
-        {title}
-      </h3>
+      <h3 className="type-label-14 m-0 text-foreground">{title}</h3>
       {aside}
     </div>
   );
@@ -1457,7 +1455,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
  * Tool call / Tool result). 16px medium, no h3 chrome, matching the
  * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
-  return <span className="type-heading-16 text-foreground">{label}</span>;
+  return <span className="type-label-14 text-foreground">{label}</span>;
 }
 
 /* A single conversation turn as a Details-tab subcard: a plain-text heading
@@ -1579,7 +1577,7 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-label-14 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
