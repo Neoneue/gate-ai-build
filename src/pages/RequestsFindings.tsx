@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { RequestDetailBodyV2 } from "./requests/RequestDetailModal";
+import { RequestDetailBodyV2 } from "./requests/RequestDetailBody";
 import type { RequestRow } from "./requests/types";
 
 /* ─── /messages-findings/:requestId ─────────────────────────────────────────

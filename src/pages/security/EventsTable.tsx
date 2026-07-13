@@ -538,7 +538,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const conversationId = row.conversationId;
   const openConversation = () =>
     navigate(`/conversations?open=${conversationId}`);
-  const openRequest = () => navigate(`/messages?open=${requestId}`);
+  const openRequest = () => navigate(`/messages-findings/${requestId}`);
   const flaggedSet = new Set(detail.flagged);
 
   // Reconcile against the matching Requests row so the message + detection

@@ -680,7 +680,7 @@ function LatestRequestsTable() {
               key={row.requestId ?? i}
               onActivate={() => {
                 if (row.requestId) {
-                  navigate(`/messages?open=${row.requestId}`);
+                  navigate(`/messages-findings/${row.requestId}`);
                 }
               }}
             >
