@@ -39,6 +39,12 @@ App audit (`src/`) run alongside: typography is correctly tokenized (root sets `
 
 ## Sections
 
+### Messages detail: flatten section titles to type-label-14 `55ed83a`
+
+**`src/pages/requests/RequestDetailBody.tsx`**, **`src/components/ui/message-block.tsx`**, **`src/data/requests.ts`**
+
+Every column section label on the message-findings detail page now reads at one flat 14px voice. `PanelHeading` (User message / Provider context / Error response / How to fix / Findings / Passed / Details), `SubcardHeading`, and the "Full request" collapsible trigger moved `type-heading-16` -> `type-label-14`, dropping `tracking-snug`. All three route through the shared `PanelHeading`, so nothing in the header above the two-column grid (page title, KPI bar) is touched. before -> after: 16px medium heading -> 14px flat label. `message-block.tsx` role label bumped `type-label-12` -> `type-label-14` to sit in the same voice. Also set the `req_cd0e57` compression override `100.0%` -> `22.4%` (one-decimal is the field's format convention).
+
 ### Messages: soften danger/warn message tint + drop dead modal variant `f93986b` `3d780d0`
 
 **`src/components/ui/message-block.tsx`**, **`src/pages/requests/RequestDetailBody.tsx`**, **`src/pages/RequestsFindings.tsx`**
