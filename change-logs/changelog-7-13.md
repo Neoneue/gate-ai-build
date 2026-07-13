@@ -39,6 +39,15 @@ App audit (`src/`) run alongside: typography is correctly tokenized (root sets `
 
 ## Sections
 
+### Messages: soften danger/warn message tint + drop dead modal variant `f93986b` `3d780d0`
+
+**`src/components/ui/message-block.tsx`**, **`src/pages/requests/RequestDetailBody.tsx`**, **`src/pages/RequestsFindings.tsx`**
+
+Two related passes on the Messages trace + detail surfaces:
+
+- **Message tint (`f93986b`).** The `danger`/`warn` message-bubble tones used solid ramp fills in light (`bg-danger-50`, `border-danger-200`) while dark already used color+opacity, so light read as solid red. Both modes now use color+opacity on `danger`/`warning-500`, dialed down: border `/15`, bg `/8` light `/10` dark. before -> after: solid ramp fill -> subtle translucent tint. Also removed the `ring-1` from the selected state so an active bubble keeps the same 1px border width as its neighbors, distinguished only by the deeper border color .
+- **Modal variant cleanup (`3d780d0`).** After the dialog deletion , `RequestDetailBodyV2`'s `variant` prop was always `"page"` . Removed the prop and resolved every `variant === "page"` branch to the page path (static title, natural-flow layout, no internal scroll), deleted the modal-only footer block, and dropped the now-unused `DialogScrollFooter`/`ExternalLink` imports. Recessed the Full request content well to `bg-background` so it matches the User message well; the collapsible trigger and its footer stay on `bg-card`.
+
 ### Messages detail: delete dead request modal, rename file to RequestDetailBody `2754b77`
 
 **`src/pages/requests/RequestDetailBody.tsx`** (renamed from `RequestDetailModal.tsx`), **`src/pages/requests/RequestsTable.tsx`**, **`src/pages/Dashboard.tsx`**, **`src/pages/security/EventsTable.tsx`**, **`src/pages/RequestsFindings.tsx`**, **`src/data/requests.ts`**
