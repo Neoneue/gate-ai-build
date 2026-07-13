@@ -170,8 +170,8 @@ interface EventRow extends RequestRow {
   type:           EventCategory
   key:            string
   action:         EventAction
-  requestId:      string          // cross-link → /messages?open=req_xxx
-  conversationId?: string         // cross-link → /conversations?open=cnv_xxx
+  requestId:      string          // cross-link → /messages-findings/:requestId
+  conversationId?: string         // cross-link → /conversations-trace/:conversationId
   keyTier:        string
 }
 ```
@@ -517,9 +517,10 @@ function buildSpark(total: number, seed: number): number[]
 
 ### Messages page (`/messages` → `Requests.tsx`)
 
-**Purpose:** Full request log. Row-click drills into the URL-addressable
-**Findings page** (`/messages-findings/:requestId`, see next entry); the stored
-v2 modal is kept ONLY for `?open=` deep-links (Security events).
+**Purpose:** Full request log. Row-click navigates to the URL-addressable
+**Findings page** (`/messages-findings/:requestId`, see next entry). The old
+request-detail modal was deleted (2026-07); the row is a real `<a href>` that
+routes, and there is no `?open=` deep-link for requests.
 
 **State:**
 
@@ -529,13 +530,11 @@ customRange: CustomRange | null
 keyId, model, status, code: string  // filters (committed via the Filters modal)
 sort:        SortState              // useTableSort — click-to-sort headers (default unsorted)
 page, rowsPerPage: number
-selectedRow: RequestRow | null     // drives the STORED modal (?open= only)
-searchParams: URLSearchParams       // for ?open= deep-link
 ```
 
 **Row click:** `navigate('/messages-findings/' + requestRowId(row))` (a real
-`<a href>` on the model cell). **Deep-link:** `?open=req_xxx` → opens the stored
-v2 modal for the matching row; URL cleaned via `onOpenChangeComplete`.
+`<a href>` on the model cell). No `?open=` modal for requests; the detail is
+page-only.
 
 **Table:** sortable columns via `<SortableTableHead>` + `requestSortValue(row,key)`
 accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
@@ -550,11 +549,12 @@ accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
 request (the GitHub model) — the default row-click target from `/messages`.
 
 **Composition:** reads `:requestId`, finds the row in `REQUEST_ROWS_ALL` via
-`requestRowId(row)` (unknown id → "Request not found" alert). Renders the SAME
-`RequestDetailBodyV2` as the stored modal through a `variant: 'modal' | 'page'`
-prop, so page and modal can't drift. Page mode: no modal shell, flows full-width
-(`-mx-6` cancels the chrome gutter), no internal scroll, no footer; back
-breadcrumb (top-left) + "View Conversation" (top-right).
+`requestRowId(row)` (unknown id → "Request not found" alert). Renders
+`RequestDetailBodyV2({ row })` from `src/pages/requests/RequestDetailBody.tsx`
+(page-only; the old `variant: 'modal' | 'page'` prop and the stored modal were
+removed 2026-07). Flows full-width (`-mx-6` cancels the chrome gutter), no
+internal scroll, no footer; back breadcrumb (top-left) + "View Conversation"
+(top-right).
 
 **Body (`RequestDetailBodyV2`):** title+badge → KPI rail → finding banner → tabs.
 Two tabs: **Findings** (left finding list + Passed detectors / right polymorphic
@@ -564,7 +564,7 @@ in here, Full request drawer open by default). Findings data contract:
 `RequestFinding` (`+verdicts?`/`reasoning?`), `getRequestFindings`/`deriveFinding`,
 `DETECTOR_CATALOG`, `SHOWCASE_FINDINGS` (on `req_8f3a1c4`).
 
-**Outbound:** `/conversations?open=${conversationId}`.
+**Outbound:** `/conversations-trace/${conversationId}` ("View Conversation").
 
 ---
 
@@ -576,13 +576,15 @@ in here, Full request drawer open by default). Findings data contract:
 
 **State:** Same `range/customRange/keyId/model/page/rowsPerPage` pattern + `selectedRow: ConversationRow | null`.
 
-**Deep-link:** `?open=cnv_xxx` → auto-opens conversation detail modal.
+**Row click:** `navigate('/conversations-trace/${conversationId}')` → the
+URL-addressable Trace page (`ConversationsTrace.tsx` → `ConversationDetailBody`).
+Legacy `?open=cnv_xxx` opens the `ConversationDetailDialog`, kept for deep-links.
 
-**Modal sections:** ConversationKpiRail (6 tiles) → ConversationMessagesPanel → RequestTracePanel
+**Detail sections (`ConversationDetailBody`):** ConversationKpiRail (6 tiles) → ConversationMessagesPanel → RequestTracePanel
 
 **Cross-panel linking:** `activeRequestId` state shared between Messages and Trace panels for synchronized highlights.
 
-**Outbound links from modal:** `/messages?open=${requestId}` (from trace entries)
+**Outbound:** `/messages-findings/${requestId}` ("View Request" on each trace step)
 
 ---
 
@@ -597,7 +599,7 @@ in here, Full request drawer open by default). Findings data contract:
 **Outbound links from modal:**
 
 - `/conversations?open=${conversationId}`
-- `/messages?open=${requestId}`
+- `/messages-findings/${requestId}`
 
 **Data:** `EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 }` ratio applied via `splitEventMix()` to `EVENTS_RANGE_TOTAL`.
 
@@ -843,17 +845,17 @@ sequenceDiagram
     participant R as Requests.tsx
     participant C as Conversations.tsx
 
-    S->>R: navigate("/messages?open=req_xxx")
+    S->>R: navigate("/messages-findings/:requestId")
     Note over R: useSearchParams reads "open" on mount
     R->>R: find row where row.requestId === "req_xxx"
     R->>R: setSelectedRow(row) → opens RequestDetailDialog
     Note over R: onOpenChangeComplete clears ?open= from URL
 
-    S->>C: navigate("/conversations?open=cnv_xxx")
+    S->>C: navigate("/conversations-trace/:conversationId")
     Note over C: same pattern — finds row, opens ConversationDetailDialog
 
-    R->>C: modal footer link → navigate("/conversations?open=cnv_xxx")
-    C->>R: modal footer link → navigate("/messages?open=req_xxx")
+    R->>C: modal footer link → navigate("/conversations-trace/:conversationId")
+    C->>R: modal footer link → navigate("/messages-findings/:requestId")
 ```
 
 **Pattern (canonical, all 3 deep-link pages):**
