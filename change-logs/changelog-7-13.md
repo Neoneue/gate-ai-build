@@ -6,6 +6,27 @@ Prior day: [`changelog-7-10.md`](./changelog-7-10.md)
 
 ---
 
+## Conventions
+
+### No-hardcode rule + design-system reference page fully tokenized for dark mode `d151a6a`
+
+**`.claude/rules/no-hardcoding.md`** (new), **`CLAUDE.md`**, **`public/design-system.html`**, **`design.md`**
+
+New closed-set discipline: a raw ramp step used for a semantic role (`var(--neutral-900)` for body text, `var(--white)` for a surface, `bg-success-100` on a themed pill) is still hardcoding, because raw ramps are theme-independent and do not invert under `.dark`. The prior `design-tokens.md` rule caught hex but missed this trap. Added `.claude/rules/no-hardcoding.md` (literals live only in the token-definition layer; UI code maps intent to a semantic token) and linked it from `CLAUDE.md`'s local reminders.
+
+Applied the rule to `public/design-system.html`, whose specimens had been hand-authored with hardcoded colors so they did not flip when the dark toggle landed. Before → after, dark mode:
+
+- **Nav / chrome:** `.nav .brand b`/`.nav a.active`/`:hover` used `var(--neutral-900)` text on a `--card` surface that flips to `neutral-900` → invisible text. Now `--foreground` / `--muted` / `--muted-foreground`.
+- **Foundations, inputs, cards, motion:** group/spec/caption text and track/tag surfaces moved off raw ramps to `--foreground` / `--muted-foreground` / `--card` / `--muted`. Input placeholder → `--muted-foreground`; nested surface → `--muted`.
+- **Badges + callout:** kept the light base rules, added `[data-theme="dark"]` overrides mirroring `badge.tsx` (`{tone}-500 @15% / {tone}-300`, danger via `--destructive @20%`).
+- **Destructive button:** was solid red + `var(--white)` (matched no app variant); now the app's tint (`--destructive` text on `--destructive @10%/@20%`).
+- **Card edge:** unified to `border: 1px solid var(--border)` + shadow across `.demo-card` and the elevation cards; repointed the dark `--shadow-*` rings from black `rgb(0 0 0 / N)` to `color-mix(var(--foreground) 10%)` so cards keep a visible edge on the dark canvas.
+- **Kept intentional:** color-ramp swatches, token catalog, `.space-row .bar` / `.ease-ball` brand accents, and the token-definition layer. The `data (mono)` specimen mapped to `--foreground` (no data-tier token exists).
+
+Verified in-browser: nav brand, buttons, badges, inputs, and both card surfaces flip correctly light↔dark; braces balanced 182/182. Also corrected three stale "no dark mode" claims in `design.md` (Not-yet-captured list, Key characteristics, the Don't list) to present tense; the §"Dark mode (`.dark` theme)" section remains the source of truth for how the app drives it (`ThemeProvider`, follows OS until toggled, persisted to `localStorage`).
+
+App audit (`src/`) run alongside: typography is correctly tokenized (root sets `body { color: var(--foreground) }`; every live raw/hardcoded text color is a justified fill/code-surface/CTA case). The defect was specific to the hand-authored HTML page, not the product.
+
 ## Sections
 
 ### Design system reference page: dark mode + theme toggle + token catalog `e6663e4`
