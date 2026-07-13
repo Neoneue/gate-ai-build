@@ -33,8 +33,8 @@ export function requestRowId(row: RequestRow): string {
   );
 }
 
-/* ─── Findings model (v2 Request modal) ───────────────────────────────────
- * One source of truth for the rich detail in RequestDetailDialogV2. A row's
+/* ─── Findings model (v2 request detail) ───────────────────────────────────
+ * One source of truth for the rich detail in RequestDetailBodyV2. A row's
  * `findings` seed wins; otherwise deriveFinding() produces a single finding
  * from the legacy `guardrailReason`, so every flagged/redacted request still
  * has a populated tab. Offsets are NEVER stored — the highlight derives them
@@ -581,7 +581,7 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
     outTokens: "—",
     latency: "2.30s",
     cost: "—",
-    compression: "100.0%",
+    compression: "22.4%",
     requestId: "req_cd0e57",
     findings: [
       {

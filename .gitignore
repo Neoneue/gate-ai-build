@@ -38,3 +38,6 @@ gateway-fixes.md
 handoff.md
 .rams-capture/
 .playwright-mcp/
+
+# Editor workspace files
+*.code-workspace

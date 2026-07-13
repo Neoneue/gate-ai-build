@@ -12,6 +12,12 @@ lives in the reference docs linked below.
 - **Visual values are a closed set.** Never invent a color, type size, or
   tracking — map every value to a token/voice in `design.md`, or stop and ask.
   Enforced by `npm run lint:design`. Full rule: @.claude/rules/design-tokens.md
+- **Never hardcode a color. Tokenize by intent.** Every color in UI code
+  references a SEMANTIC token that flips with the theme. A raw ramp step
+  (`var(--neutral-900)`, `bg-neutral-100`, `text-blue-700`) used for a
+  semantic role is still hardcoding: it will not flip and is a defect.
+  Literals live ONLY in the token-definition layer. No hand-rolling, no
+  ad-hoc values. Full rule: @.claude/rules/no-hardcoding.md
 - **Don't thrash.** When the user says something "isn't working" / "still the
   same", PIN the surface (which route → which file) and confirm BEFORE editing
   or measuring. Revert failed fixes instead of patching forward. Full gate:

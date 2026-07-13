@@ -3,7 +3,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Flag,
   Settings2,
   ShieldCheck,
@@ -31,17 +30,12 @@ import {
 import { CopyButton } from "@/components/ui/copy-button";
 import { DetailList, DetailRow } from "@/components/ui/detail-list";
 import {
-  Dialog,
-  DialogScrollBody,
-  DialogScrollContent,
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TextLink } from "@/components/ui/text-link";
 import { getRequestBody } from "@/data/request-bodies";
 import {
@@ -59,243 +53,9 @@ import {
   responseVariant,
   VENDOR_ENDPOINT,
 } from "./data";
-import type {
-  CheckKey,
-  CheckStatus,
-  GuardrailAction,
-  RequestRow,
-} from "./types";
+import type { RequestRow } from "./types";
 
-/* ─── Request detail dialog ────────────────────────────────────────────────
- * Drill-in panel opened from a row click. Mirrors the table's per-row data
- * (model, vendor, key, latency, cost, tokens) and adds context the row
- * doesn't carry (provider name, endpoint, cache status).
- *
- * Centered modal (Dialog primitive) matching CMP-014's ConversationDetail
- * pattern. sm:max-w-3xl gives the tabbed body breathing room without
- * overpowering the dimmed page behind. max-h-[90vh] keeps the modal inside
- * the viewport on shorter screens; the tabbed area scrolls internally.
- * ────────────────────────────────────────────────────────────────────── */
-
-const REQUEST_MODAL_VERSION: "v1" | "v2" = "v2";
-export const RequestDetailDialog =
-  REQUEST_MODAL_VERSION === "v2"
-    ? RequestDetailDialogV2
-    : RequestDetailDialogV1;
-
-function RequestDetailDialogV1({
-  row,
-  onOpenChange,
-  onOpenChangeComplete,
-}: {
-  row: RequestRow | null;
-  onOpenChange: (open: boolean) => void;
-  onOpenChangeComplete?: (open: boolean) => void;
-}) {
-  return (
-    <Dialog
-      onOpenChange={onOpenChange}
-      onOpenChangeComplete={onOpenChangeComplete}
-      open={!!row}
-    >
-      <DialogScrollContent className="sm:max-w-[960px]">
-        {row ? <RequestDetailBody row={row} /> : null}
-      </DialogScrollContent>
-    </Dialog>
-  );
-}
-
-function RequestDetailBody({ row }: { row: RequestRow }) {
-  const navigate = useNavigate();
-  const openConversation = () =>
-    navigate(`/conversations-trace/${row.conversation}`);
-  const badge = RESPONSE_BADGE[row.status];
-  // Prefer the explicit `requestId` on rows that carry one (Security deep-link
-  // targets). Older rows fall back to a synthesized id so display still works
-  // without forcing every legacy row to be backfilled.
-  const requestId =
-    row.requestId ??
-    `req_${row.conversation.replace("cnv_", "").slice(0, 8)}${row.code}`;
-  const provider = VENDOR_META[row.vendor].label;
-  // Tabs is controlled so the panel footer can swap actions per active
-  // tab (Audit gets Copy Proof / View on DE; everyone else gets Copy ID /
-  // Open Conversation). Defaults to "messages" so the prompt/response is
-  // visible on first open.
-  const [activeTab, setActiveTab] = useState("messages");
-  return (
-    <>
-      {/* Top section — canonical title block primitive (eyebrow + title +
-          status badge + meta line). All type sizes / spacing live in
-          DialogTitleBlock, so this surface stays in lock-step with every
-          other modal header. */}
-      <DialogScrollHeader>
-        <DialogTitleBlock
-          badge={
-            <Badge variant={responseVariant(row)}>{responseLabel(row)}</Badge>
-          }
-          titleAriaLabel={`Request ${requestId}`}
-          titleFont="mono"
-        >
-          {requestId}
-        </DialogTitleBlock>
-      </DialogScrollHeader>
-
-      {/* Persistent KPI rail — sits below the header, above the tabs. */}
-      <DialogScrollSummary>
-        <KpiRail row={row} />
-      </DialogScrollSummary>
-
-      {/* Scrollable tabbed body. `pt-2` tightens the gap below the
-          KPI rail above (matches AuditRecordDialog). */}
-      <DialogScrollBody className="pt-4 pb-4">
-        {/* Tabs default to Messages so the prompt/response — the load-bearing
-            content of any request inspection — is visible on first open. */}
-        <Tabs onValueChange={setActiveTab} value={activeTab}>
-          <TabsList className="mb-2 px-0" variant="line">
-            <TabsTrigger className="pl-0" value="messages">
-              Message
-            </TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="audit">Security</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="messages">
-            <RequestBodyPanel row={row} />
-          </TabsContent>
-
-          {/* `pt-2` on this and the Audit panel: the global Tabs `gap-2`
-              (8px) sits tight against the messages body card chrome (its
-              border + shadow buffer the gap visually). Details/Audit have
-              no chrome, so without the extra 8px the table's top border
-              reads as touching the tabs. */}
-          <TabsContent className="pt-2" value="details">
-            <DetailList>
-              <DetailRow
-                label="Timestamp"
-                value={
-                  <span className="font-mono text-foreground tabular-nums">
-                    {row.day}, {row.time}
-                  </span>
-                }
-              />
-              <DetailRow
-                label="Conversation"
-                value={
-                  <span className="font-mono tabular-nums">
-                    <TextLink
-                      aria-label={`Open conversation ${row.conversation}`}
-                      onClick={openConversation}
-                    >
-                      {row.conversation}
-                    </TextLink>
-                  </span>
-                }
-              />
-              <DetailRow
-                label="Model"
-                value={
-                  <div className="flex items-center gap-2">
-                    <VendorAvatar vendor={row.vendor} />
-                    <span className="font-mono text-foreground">
-                      {row.model}
-                    </span>
-                  </div>
-                }
-              />
-              <DetailRow
-                label="Provider"
-                value={<span className="text-foreground">{provider}</span>}
-              />
-              <DetailRow
-                label="API Key"
-                value={
-                  <span className="font-mono text-foreground">{row.keyId}</span>
-                }
-              />
-              <DetailRow
-                label="Endpoint"
-                value={
-                  <span className="font-mono text-foreground">
-                    <span className="text-muted-foreground">POST</span>{" "}
-                    {VENDOR_ENDPOINT[row.vendor]}
-                  </span>
-                }
-              />
-              <DetailRow
-                label="HTTP status"
-                value={<Badge variant={badge.variant}>{row.code}</Badge>}
-              />
-              <DetailRow
-                label="Cache"
-                value={<Badge variant="info">miss</Badge>}
-              />
-            </DetailList>
-          </TabsContent>
-
-          {/* Audit tab — runtime guardrail checks (did this request pass
-              policy at runtime?). */}
-          <TabsContent className="pt-2" value="audit">
-            <SecurityPanel row={row} />
-          </TabsContent>
-        </Tabs>
-      </DialogScrollBody>
-
-      <DialogScrollFooter>
-        <Button onClick={openConversation} size="sm" type="button">
-          View Conversation
-          <ExternalLink
-            aria-hidden
-            className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0"
-            data-icon="inline-end"
-          />
-        </Button>
-      </DialogScrollFooter>
-    </>
-  );
-}
-
-/* ─── V2 Request detail modal — Findings-first ────────────────────────────
- * Identical Dialog scaffold to V1. Adds:
- *   • Tabs order: Findings (default) · Message · Details
- *   • Two-column Findings tab: card list (left) + evidence panel (right)
- *   • Highlight popover (method/score/threshold)
- *   • "Why this fired" detail surface
- *   • Footer adapts to active tab (Copy Fingerprint / Dismiss on Findings)
- * Sensitive values are ALWAYS masked — every finding renders its
- * `redactedAs` placeholder, never the raw `match`.
- * ────────────────────────────────────────────────────────────────────── */
-
-function RequestDetailDialogV2({
-  row,
-  onOpenChange,
-  onOpenChangeComplete,
-}: {
-  row: RequestRow | null;
-  onOpenChange: (open: boolean) => void;
-  onOpenChangeComplete?: (open: boolean) => void;
-}) {
-  return (
-    <Dialog
-      onOpenChange={onOpenChange}
-      onOpenChangeComplete={onOpenChangeComplete}
-      open={!!row}
-    >
-      <DialogScrollContent className="sm:max-w-[960px]">
-        {row ? <RequestDetailBodyV2 row={row} /> : null}
-      </DialogScrollContent>
-    </Dialog>
-  );
-}
-
-export function RequestDetailBodyV2({
-  row,
-  variant = "modal",
-}: {
-  row: RequestRow;
-  /** 'modal' = fixed tab bar with an internal scroll region (the dialog).
-   *  'page'  = natural flow, no internal scroll (the /messages-findings page). */
-  variant?: "modal" | "page";
-}) {
+export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
   const navigate = useNavigate();
   const openConversation = () =>
     navigate(`/conversations-trace/${row.conversation}`);
@@ -445,12 +205,12 @@ export function RequestDetailBodyV2({
       {/* Page mode: drop the header's own pt-6 — the chrome's gap-6 already
           separates the title from the back breadcrumb above (modal has no
           breadcrumb, so it keeps pt-6 as its top padding). */}
-      <DialogScrollHeader className={variant === "page" ? "pt-0" : undefined}>
+      <DialogScrollHeader className="pt-0">
         <DialogTitleBlock
           badge={
             <Badge variant={responseVariant(row)}>{responseLabel(row)}</Badge>
           }
-          mode={variant === "page" ? "static" : "dialog"}
+          mode="static"
           titleAriaLabel={`Request ${requestId}`}
           titleFont="mono"
         >
@@ -461,22 +221,10 @@ export function RequestDetailBodyV2({
       <DialogScrollSummary>
         <KpiRail row={row} />
       </DialogScrollSummary>
-      <div
-        className={
-          variant === "page" ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"
-        }
-      >
-        {/* Body region. Modal: the only element that scrolls. Page: natural
-            height, no internal scroll. */}
-        <div
-          className={[
-            variant === "page"
-              ? "px-6 pb-6"
-              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
-            // Always 24px below the KPI rail.
-            "pt-6",
-          ].join(" ")}
-        >
+      <div className="flex flex-col">
+        {/* Body region — natural height, no internal scroll. */}
+        {/* px-6 pb-6, plus pt-6 for 24px below the KPI rail. */}
+        <div className="px-6 pt-6 pb-6">
           <div className="grid gap-4 md:grid-cols-3" ref={gridRef}>
             {/* Left column (2/3): an OUTER card wrapping the per-finding
                   detail sections, or a calm "No findings" default when
@@ -511,7 +259,7 @@ export function RequestDetailBodyV2({
                         {row.errorDetail ? (
                           <section className="flex flex-col gap-2">
                             <PanelHeading title="Error detail" />
-                            <div className="rounded-xs border border-border bg-card p-4">
+                            <div className="rounded-xs border border-border bg-background p-4">
                               <p className="type-copy-14 text-pretty text-foreground">
                                 {row.errorDetail}
                               </p>
@@ -749,24 +497,6 @@ export function RequestDetailBodyV2({
           </div>
         </div>
       </div>
-      {/* Footer is modal-only chrome. On the page, "View Conversation" lives
-          at the top-left (rendered by the page itself), so no footer here. */}
-      {variant !== "page" && (
-        <DialogScrollFooter>
-          {/* Finding-scoped actions (Mark false positive / Tune policy) never
-              live in the footer — they render only inside a finding's "How to
-              fix" card, and only when there is an action to take. The footer
-              keeps navigation only. */}
-          <Button onClick={openConversation} size="sm" type="button">
-            View Conversation
-            <ExternalLink
-              aria-hidden
-              className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0"
-              data-icon="inline-end"
-            />
-          </Button>
-        </DialogScrollFooter>
-      )}
     </>
   );
 }
@@ -862,9 +592,7 @@ const PANEL_OUTER =
 function PanelHeading({ title, aside }: { title: string; aside?: ReactNode }) {
   return (
     <div className="flex min-h-6 items-center justify-between gap-2">
-      <h3 className="type-heading-16 m-0 text-foreground tracking-snug">
-        {title}
-      </h3>
+      <h3 className="type-label-14 m-0 text-foreground">{title}</h3>
       {aside}
     </div>
   );
@@ -1153,7 +881,7 @@ function EvidenceWindow({
     <section className="flex flex-col gap-2">
       <PanelHeading title={label} />
       <div
-        className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+        className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-background p-4"
         ref={evidenceBoxRef}
       >
         <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
@@ -1317,7 +1045,7 @@ function PiiDetailPanel({
           <section className="flex flex-col gap-2">
             <PanelHeading title={evidenceLabel} />
             <div
-              className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+              className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-background p-4"
               ref={evidenceBoxRef}
             >
               <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
@@ -1340,7 +1068,7 @@ function PiiDetailPanel({
       {/* Why this fired — label/value rows. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="Why this fired" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
+        <div className="flex flex-col gap-2 rounded-xs border border-border bg-background p-4">
           <KvRow label="Rule" value={rule} />
           <KvRow
             label="Offset in evidence"
@@ -1392,7 +1120,7 @@ function InjectionDetailPanel({
       <PanelHeading
         title={isClassifierDeny ? "Assistant response" : "User message"}
       />
-      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
+      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-background p-4">
         <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
           {evidence}
         </p>
@@ -1433,7 +1161,7 @@ function InjectionDetailPanel({
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
-        <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
+        <div className="flex flex-col gap-4 rounded-xs border border-border bg-background p-4">
           <p className="type-copy-14 text-pretty text-foreground">{howToFix}</p>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -1716,7 +1444,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   return (
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
-      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-foreground">
+      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border bg-background px-4 py-3 text-foreground">
         {content}
       </div>
     </section>
@@ -1727,7 +1455,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
  * Tool call / Tool result). 16px medium, no h3 chrome, matching the
  * PanelHeading section titles so every label in the stack is one size. */
 function SubcardHeading({ label }: { label: string }) {
-  return <span className="type-heading-16 text-foreground">{label}</span>;
+  return <span className="type-label-14 text-foreground">{label}</span>;
 }
 
 /* A single conversation turn as a Details-tab subcard: a plain-text heading
@@ -1749,7 +1477,7 @@ function DetailMessageSubcard({
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
       <div
-        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-foreground"
+        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border bg-background px-4 py-4 text-foreground"
         data-grow-well={growWell ? "" : undefined}
       >
         {content}
@@ -1770,7 +1498,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
       {explanation ? (
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Provider context" />
-          <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
+          <div className="flex flex-col gap-2 rounded-xs border border-border bg-background px-4 py-4">
             <p className="type-copy-14 text-foreground">{explanation}</p>
           </div>
         </section>
@@ -1779,7 +1507,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-foreground text-xs">
+            <pre className="overflow-auto bg-background px-4 py-4 font-mono text-foreground text-xs">
               {getRequestBody(row).errorBody}
             </pre>
           </div>
@@ -1849,7 +1577,7 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="type-heading-16 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-label-14 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden
@@ -1859,7 +1587,7 @@ function FullRequestCollapsible({
       </Collapsible.Trigger>
       <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-card"
+          className="max-h-80 overflow-auto overscroll-contain bg-background"
           ref={panelRef}
         >
           <CodeBlock density="compact" lines={lines} wrap />
@@ -2103,122 +1831,6 @@ function RequestBodyPanel({
           revealSignal={revealSignal}
         />
       )}
-    </div>
-  );
-}
-
-/* Security scan report — every gateway request runs the same set of
-   guardrails (prompt-injection, PII, toxicity, model allowlist, spend cap).
-   The check state is driven by `row.status` + `row.guardrailReason`:
-     - `blocked` row → matching check renders as `block` (destructive)
-     - `flagged` row → matching check renders as `flag` (warning)
-     - `redacted` row → matching check renders as `redact` (info)
-     - anything else → all five checks `pass`
-   Descriptions use live row values so the panel doesn't read as decoupled
-   from the selected request. */
-
-/** Maps a row's guardrail action to the check-level state that should
- *  render for its matching guardrail. `allow` rows pass all checks
- *  (any provider error was upstream, not a policy decision). */
-function rowActionToCheckStatus(action: GuardrailAction): CheckStatus {
-  switch (action) {
-    case "block":
-      return "block";
-    case "flagged":
-      return "flag";
-    case "redacted":
-      return "redact";
-    case "allow":
-      return "pass";
-  }
-}
-
-function SecurityPanel({ row }: { row: RequestRow }) {
-  const reason = row.guardrailReason;
-  const matchState = rowActionToCheckStatus(row.guardrail);
-  const stateFor = (key: CheckKey): CheckStatus =>
-    reason === key && matchState !== "pass" ? matchState : "pass";
-  const checks: {
-    key: CheckKey;
-    title: string;
-    description: string;
-    status: CheckStatus;
-  }[] = [
-    {
-      key: "injection",
-      title: "Prompt injection scan",
-      description:
-        stateFor("injection") === "block"
-          ? "Injection pattern matched · request rejected before model call"
-          : stateFor("injection") === "flag"
-            ? "Injection signal detected · request allowed but flagged"
-            : "No injection patterns detected · 0/247 rules matched",
-      status: stateFor("injection"),
-    },
-    {
-      key: "pii",
-      title: "PII redaction",
-      description:
-        stateFor("pii") === "block"
-          ? "PII detected in outbound payload · request rejected before model call"
-          : stateFor("pii") === "redact"
-            ? "PII redacted from outbound payload before model call"
-            : stateFor("pii") === "flag"
-              ? "PII detected · request allowed but flagged"
-              : "No PII detected",
-      status: stateFor("pii"),
-    },
-    {
-      key: "credential",
-      title: "Credential leak detection",
-      description:
-        stateFor("credential") === "block"
-          ? "API credential detected in payload · request rejected before model call"
-          : stateFor("credential") === "redact"
-            ? "Credential pattern redacted from payload before model call"
-            : stateFor("credential") === "flag"
-              ? "Possible credential pattern detected · request allowed but flagged"
-              : "No credentials detected · 0/64 patterns matched",
-      status: stateFor("credential"),
-    },
-  ];
-  return (
-    <div className="flex flex-col gap-2">
-      {checks.map(({ key, ...rest }) => (
-        <SecurityCheckRow key={key} {...rest} />
-      ))}
-    </div>
-  );
-}
-
-const CHECK_BADGE_VARIANT: Record<
-  CheckStatus,
-  "success" | "warning" | "destructive"
-> = {
-  pass: "success",
-  flag: "warning",
-  redact: "warning",
-  block: "destructive",
-};
-
-function SecurityCheckRow({
-  title,
-  description,
-  status,
-}: {
-  title: string;
-  description: string;
-  status: CheckStatus;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-3 rounded-md border border-border p-4">
-      <div className="flex min-w-0 flex-col gap-1">
-        <span className="type-label-14 text-foreground">{title}</span>
-        <span className="type-copy-12 text-pretty text-muted-foreground">
-          {description}
-        </span>
-      </div>
-      <Badge variant={CHECK_BADGE_VARIANT[status]}>{status}</Badge>
     </div>
   );
 }

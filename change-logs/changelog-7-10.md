@@ -4,95 +4,293 @@ Running log of every UI change made to the dashboard. Written to diff against an
 
 Prior day: [`changelog-7-9.md`](./changelog-7-9.md)
 
+**Organized by surface.** **Global** (shared primitives, design tokens, and
+sitewide sweeps) comes first, then one section per page. A commit that touched
+more than one surface appears under each surface it affected, with the same
+hash — so you can read any single page top-to-bottom and see exactly how it
+changed and which commits did it.
+
+Commits this day: `8cecf87` (dark-mode audit) · `911f186` (table hover
+transition) · `9fa7e80` (toolbar search align) · `5bc3719` (Tokens Saved
+reconcile) · `233823a` (Requests→Messages) · `04440cf` (chart palette/axis/
+radius) · `5aa9f3e` (Messages token columns) · `f779dbb` (Models badges) ·
+`5b2fc78` (Models toolbar) · `d774dec` (a11y wins + blue-CTA rule).
+
 ---
 
-## Conventions
+## Global
 
-### Dark-mode audit: 15 fixes across shared primitives and pages `8cecf87`
+### Dark-mode audit — shared primitives `8cecf87`
 
-**`src/components/ui/{tabs,badge,compact-kpi,text-link}.tsx`, `src/components/canvas/Artboard.tsx`, `src/pages/{Activity,Models,Policies,Security,TokenSavings,onboarding-shared,plan-comparison-dialog}.tsx`, `src/pages/conversations/RequestTracePanel.tsx`, `src/pages/policies/config.ts`, `src/pages/requests/RequestDetailModal.tsx`, `src/pages/security/EventsTable.tsx`**
+**`src/components/ui/{tabs,badge,compact-kpi,text-link}.tsx`, `src/components/canvas/Artboard.tsx`**
 
-Ran a 5-way parallel audit over every page and shared UI component for dark-mode visual defects (invisible fills, missing `dark:` variants, contrast failures, inconsistent tokens across twins), then fixed every confirmed finding:
+Part of a 5-way parallel dark-mode audit over every page + shared component
+(per-page fixes from the same commit are under each page section below). The
+shared-primitive fixes, which propagate everywhere:
 
-- **`tabs.tsx`**: "line" variant tab hover fill (`hover:bg-neutral-100`, no dark pairing) → `hover:bg-accent`, which already inverts correctly. Was hitting ApiKeys, Team, and Models' tab groups.
-- **`badge.tsx`**: removed the `[a]:hover:*` classes from all 8 status-tint variants — dead code, since no `Badge` in the app is ever rendered as a link (`render={<a/>}`), confirmed by a full-repo grep.
-- **`canvas/Artboard.tsx`**: two hardcoded `rgba(17,20,23,…)` shadows bypassed the dark-aware shadow-token ladder entirely (no elevation cue on dark cards) → `shadow-(--shadow-popup)`, matching the documented 6px-radius/`bg-card` convention.
-- **`Policies.tsx`**: the sensitivity slider's checked stop lost its intended `muted-foreground` fill to the base `RadioGroupItem`'s higher-specificity `dark:data-checked:bg-primary` — confirmed via computed-style measurement in dark (`oklch(0.922 …)` instead of the expected `0.87`). Fixed by adding matching `data-checked:` qualified overrides so ours out-specifies the base, re-verified in-browser post-fix.
-- **`policies/config.ts`**: `ACTION_ACTIVE_RADIO` (flag/redact/block checked-dot colors) and `ACTION_ACTIVE_BORDER.flag` had no `dark:` pairing at all — redact's dot (`neutral-700` on a `neutral-800` dark card fill) was nearly invisible. Added `dark:` variants for all three, following the same brightening step the semantic `--destructive` token already uses (600→400); redact now routes through the semantic `muted-foreground` token to match its sibling border.
-- **`conversations/RequestTracePanel.tsx`**: trace-row hover rings (`hover:after:ring-{success,warn,danger}-200`) had no dark pairing, rendering a near-white flash on hover → added `dark:hover:after:ring-*-500/25`, the documented `*-200`→`*-500/25` conversion.
-- **`security/EventsTable.tsx`**: "Mark event invalid" button's `hover:bg-neutral-50` (unpaired) made the label/icon vanish on hover in dark (both landing on near-white) → `hover:bg-accent`.
-- **`Activity.tsx`**: Top Models/API Keys/Users card subtitle was `text-muted-foreground/5` — a stray 5% opacity modifier making it invisible in both themes → plain `text-muted-foreground`, matching every sibling subtitle in the codebase.
-- **`TokenSavings.tsx`, `plan-comparison-dialog.tsx`, `onboarding-shared.tsx`, `Policies.tsx`**: the "featured plan" gradient card (`bg-gradient-to-b from-blue-50 to-blue-25`) had zero dark coverage across four call sites, rendering a near-white card with white text in dark — the most severe finding of the audit. Fixed using the working reference pattern already in `pro-upgrade-card.tsx`: added `dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5`. Also applied to the Policies "Pro plan protection" upsell card, which previously used the flat (non-gradient) recipe and was brought in line with the others per follow-up request.
-- **`requests/RequestDetailModal.tsx`**: `FindingSwitcherCard`'s unselected-card border (`border-{danger,warning}-200`, unpaired) rendered a pastel outline on dark cards → added `dark:border-*-500/30` + hover variant.
-- **`Models.tsx`**: the stacked-provider-icon separator ring hardcoded `var(--color-white)`, producing a bright white halo around vendor icons in dark → swapped for the theme-aware `var(--card)`.
-- **`Security.tsx`**: hero-chart axis-tick text used a raw `var(--color-neutral-500)` fill, computing to 3.79–4.18:1 (below the 4.5:1 floor) → semantic `var(--muted-foreground)`, already calibrated for both themes.
-- **`compact-kpi.tsx`**: chart tooltip cursor stroke used a raw `var(--color-neutral-300)` instead of the dark-aware grid token, reading mismatched against the grid it sits on → `var(--color-chart-grid)`. (`sparkline.tsx`'s analogous raw-neutral usage was left as-is — it's deliberately scoped to the chart-only palette per its own code comment and already passes contrast in both themes.)
-- **`text-link.tsx`**: the "locked" ink-plus-faint-underline recipe had no dark variants at all, so the hover/focus state (`decoration-neutral-500`) computed to *lower* contrast than the resting state (`decoration-neutral-200`) in dark — the intended prominence progression ran backwards. Added `dark:decoration-border` (resting) and `dark:hover/focus-visible:decoration-muted-foreground` (prominent), both existing semantic tokens; light-mode values untouched.
+- **`tabs.tsx`**: "line" variant tab hover fill (`hover:bg-neutral-100`, no dark pairing) → `hover:bg-accent`, which already inverts correctly. Was hitting ApiKeys, Team, and Models tab groups.
+- **`badge.tsx`**: removed the `[a]:hover:*` classes from all 8 status-tint variants — dead code, since no `Badge` in the app is ever rendered as a link, confirmed by a full-repo grep.
+- **`canvas/Artboard.tsx`**: two hardcoded `rgba(17,20,23,…)` shadows bypassed the dark-aware shadow-token ladder (no elevation cue on dark cards) → `shadow-(--shadow-popup)`.
+- **`compact-kpi.tsx`**: chart tooltip cursor stroke used a raw `var(--color-neutral-300)` instead of the dark-aware grid token → `var(--color-chart-grid)`.
+- **`text-link.tsx`**: the "locked" ink-plus-faint-underline recipe had no dark variants, so hover/focus (`decoration-neutral-500`) computed to *lower* contrast than resting (`decoration-neutral-200`) in dark — progression ran backwards. Added `dark:decoration-border` (resting) + `dark:hover/focus-visible:decoration-muted-foreground` (prominent); light mode untouched.
 
-Two items were verified with a single in-browser computed-style measurement each (the slider specificity fix, and the redact/flag radio dot colors) rather than by inspection alone, per the project's cap on in-browser verification passes.
+### Dark-mode audit — featured-plan gradient card `8cecf87`
 
-### Table/row hover: stop border-color interpolating through theme transitions `911f186`
+**`src/pages/TokenSavings.tsx`, `src/pages/plan-comparison-dialog.tsx`, `src/pages/onboarding-shared.tsx`, `src/pages/Policies.tsx`**
 
-**`src/components/ui/table.tsx`, `src/pages/{Conversations,Models}.tsx`, `src/pages/requests/RequestsTable.tsx`, `src/pages/security/EventsTable.tsx`**
+The "featured plan" gradient card (`bg-gradient-to-b from-blue-50 to-blue-25`)
+had zero dark coverage across four call sites, rendering a near-white card with
+white text in dark — the most severe finding of the audit. Fixed using the
+working reference in `pro-upgrade-card.tsx`: `dark:border-blue-400/30
+dark:from-blue-500/10 dark:to-blue-500/5`. Also applied to the Policies "Pro
+plan protection" upsell card, brought in line with the others per follow-up.
 
-Table/row hover used `transition-colors`, which animates `border-color` alongside `background-color`. Interpolating the divider between dark's translucent white/10% border and light's opaque `neutral-200` produces a visible mid-transition gray smudge — alpha and lightness ramp at different rates in OKLab. Scoped to `transition-[background-color]` so the border snaps instantly, matching `TableHeader`/`TableFooter`, which already snap with no visible artifact.
+### Table/row hover — stop border-color interpolating through theme transitions `911f186`
+
+**`src/components/ui/table.tsx`** · pages affected: **Conversations, Models, Messages, Security**
+
+Table/row hover used `transition-colors`, which animates `border-color`
+alongside `background-color`. Interpolating the divider between dark's
+translucent white/10% border and light's opaque `neutral-200` produces a visible
+mid-transition gray smudge — alpha and lightness ramp at different rates in
+OKLab. Scoped to `transition-[background-color]` so the border snaps instantly,
+matching `TableHeader`/`TableFooter`. Applied identically in the four page-level
+row components (`Conversations.tsx`, `Models.tsx`, `requests/RequestsTable.tsx`,
+`security/EventsTable.tsx`).
+
+### Requests → Messages terminology rename `233823a`
+
+**17 files, sitewide** · pages affected: **Overview, Activity, Messages, Conversations, Security, Models, Billing, Limits, Token Savings, Setup, Upgrade**
+
+Nav label and routes had already moved to `/messages`; this finished the page-body
+copy — KPI titles, column headers, breadcrumb/empty-state text, dialog copy,
+aria-labels/sr-only strings. Also fixed two `navigate()` calls still pointing at
+the stale `/requests` route (Dashboard's latest-messages row, EventsTable's
+open-message link) — broken links, not just stale copy.
+
+Scope is rendered/AT-facing text only. Internal identifiers (`Requests.tsx`,
+`RequestRow`, `RequestsTable`, `requestRowId`, the `requests/` directory) are
+left as-is — same precedent as Digital Evidence's fingerprint/anchor split. The
+Python `requests` library reference in `Models.tsx`'s code sample is untouched.
+
+### Categorical chart palette — dark-mode override `04440cf`
+
+**`src/index.css`, `design.md`**
+
+The categorical palette (`--chart-1..8`) had no `.dark` override — same lightness
+in both themes, reading too bright against the near-black canvas. Added a `.dark`
+override 5 points darker (L −0.05, same hue/chroma); light mode untouched.
+Consumed by every chart in the app; the visible drivers were Overview's "Tokens
+used" and Activity's "Tokens over time" (see those pages for the per-chart axis
+and radius work in the same commit).
+
+### design.md — blue Pro-CTA exception `d774dec`
+
+**`design.md`**
+
+Rule #1 ("blue is never a primary action") now carries one blessed exception:
+brand-blue Pro-upsell CTAs (`bg-blue-700 …`), naming the surfaces
+(pro-upgrade-card, Policies, TokenSavings, plan-comparison-dialog featured plan).
+Every other primary stays neutral-900 ink.
+
+---
+
+## Overview (`Dashboard.tsx`)
+
+### Reconcile Tokens Saved rate with the Token Savings 7d window `5bc3719`
+
+**`src/pages/activity-data.ts`, `src/pages/Dashboard.tsx`** (also Token Savings)
+
+Overview's Tokens Saved tile used a hardcoded `TOTAL_SAVED_RATE` (23%) unrelated
+to any other number in the app — 9 points off the Token Savings page's real 7d
+rate (caching 0.18% + compression 14.0% = 14.2%). Exported
+`TOKEN_SAVINGS_RATE_7D = 0.142` from `activity-data.ts` and wired both pages to
+it. Also gave the Dashboard sparklines real day labels, hover tooltips, and value
+formatters (previously bare).
+
+### "Tokens used" chart — axis labels + rounded stack tops `04440cf`
+
+**`src/pages/Dashboard.tsx`**
+
+Y-axis tick had no `fill` (Recharts' hardcoded `#666`, not a token) and no
+`tickMargin` (labels flush against the gridlines) → `var(--muted-foreground)` +
+`tickMargin={4}`. Stacked bars: only the topmost series gets `radius={[2,2,0,0]}`;
+bottom and middle stay square. (Palette `.dark` override is the Global
+`04440cf` entry.)
+
+### Chart-metric toggle — accessible name `d774dec`
+
+**`src/pages/Dashboard.tsx`**
+
+The `SegmentedPill` metric toggle had no accessible name → `aria-label="Chart metric"` (WCAG 1.3.1).
+
+---
+
+## Activity (`Activity.tsx`, `activity/TrendCard.tsx`)
+
+### Dark-mode: Top-cards subtitle opacity `8cecf87`
+
+**`src/pages/Activity.tsx`**
+
+Top Models/API Keys/Users card subtitle was `text-muted-foreground/5` — a stray
+5% opacity modifier making it invisible in both themes → plain
+`text-muted-foreground`.
 
 ### Toolbar search bar aligns to the KPI/card grid above it `9fa7e80`
 
-**`src/pages/Activity.tsx`, `src/pages/Conversations.tsx`**
+**`src/pages/Activity.tsx`** (same fix on Conversations)
 
-The "Recent X" toolbar's search input flexed between the section title and the trailing controls with no relation to the KPI/card row above — its start position was whatever was left over. Rebuilt each toolbar as the *same* grid as the row above (`grid-cols-3` on Activity, `grid-cols-1 sm:grid-cols-3` on Conversations, matching `KpiRail`'s definition exactly), title in the first two columns, search+controls in the third. Because both rows now share one grid definition, the third column's left edge is identical by construction — measured in-browser: both start at the same x as the card/tile above (1019/1008 respectively).
+The "Recent X" toolbar search flexed with no relation to the KPI row above.
+Rebuilt the toolbar as the *same* grid as the row above (`grid-cols-3`), title in
+the first two columns, search+controls in the third — so the third column's left
+edge is identical by construction. Verified: search starts at the same x as the
+3rd KPI tile (1019).
 
-## Sections
+### "Tokens over time" chart — axis right-align + rounded stack tops `04440cf`
 
-### Dashboard: reconcile Tokens Saved rate with TokenSavings 7d window `5bc3719`
+**`src/pages/activity/TrendCard.tsx`**
 
-**`src/pages/activity-data.ts`, `src/pages/Dashboard.tsx`, `src/pages/TokenSavings.tsx`**
+Y-axis had a bespoke left-anchored `<text>` renderer (from an earlier alignment
+fix) — replaced with the right-aligned `tickMargin={4}`/`width={44}` pattern via
+`tickFormatter`, matching Overview. Topmost stack series gets `radius={[2,2,0,0]}`.
 
-Overview's Tokens Saved tile used a hardcoded `TOTAL_SAVED_RATE` (23%) with no relation to any other number in the app. `TokenSavings.tsx`'s real 7d "Total saved" rate (caching 0.18% + compression 14.0% = 14.2%) was 9 points off from what Overview showed for the same window. Exported `TOKEN_SAVINGS_RATE_7D = 0.142` from `activity-data.ts` and wired both pages to it, so the two can't diverge again. Also gave the Dashboard sparklines real day labels, hover tooltips, and value formatters (previously bare, unlabeled).
+### Chart-metric toggle — accessible name `d774dec`
 
-### Requests → Messages: finish the terminology rename `233823a`
+**`src/pages/Activity.tsx`, `src/pages/activity/TrendCard.tsx`**
 
-**17 files** — Activity, ActivityDefault, ApiKeys, Billing, BillingFree, Conversations, ConversationsDefault, Dashboard, Limits, LimitsFree, Models, SetupManual, TokenSavings, Upgrade, `conversations/ConversationDetail`, `conversations/RequestTracePanel`, `security/EventsTable`
+Both metric `SegmentedPill` toggles → `aria-label="Chart metric"` (WCAG 1.3.1).
 
-Nav label and routes had already moved to `/messages` in an earlier pass, but page-body copy still said "Requests" — KPI titles, column headers, breadcrumb/empty-state text, dialog copy, aria-labels/sr-only strings. Also caught two `navigate()` calls still pointing at the stale `/requests` route (Dashboard's latest-messages table row, EventsTable's open-message link) — those were broken links, not just stale copy.
+---
 
-Scope is rendered/AT-facing text only. Internal identifiers (`Requests.tsx`, `RequestRow`, `RequestsTable`, `requestRowId`, the `requests/` directory) are left as-is — same precedent as Digital Evidence's fingerprint/anchor split, where UI copy already diverges from code names. The Python `requests` library reference in `Models.tsx`'s code sample is untouched.
+## Messages (`Requests.tsx`, `requests/*`)
 
-### Overview + Activity charts: dark-mode palette, axis labels, rounded stack tops `04440cf`
+### Dark-mode: FindingSwitcherCard border `8cecf87`
 
-**`design.md`, `src/index.css`, `src/pages/Dashboard.tsx`, `src/pages/activity/TrendCard.tsx`**
+**`src/pages/requests/RequestDetailModal.tsx`**
 
-Three fixes to the "Tokens used" (Overview) and "Tokens over time" (Activity) stacked bar charts, prompted by side-by-side screenshots:
+`FindingSwitcherCard`'s unselected-card border (`border-{danger,warning}-200`,
+unpaired) rendered a pastel outline on dark cards → `dark:border-*-500/30` + hover
+variant.
 
-- The categorical palette (`--chart-1..8`) had no `.dark` override at all — same lightness in both themes, reading too bright against the near-black canvas. Added a `.dark` override 5 points darker (L −0.05, same hue/chroma); light mode untouched.
-- Dashboard's Y-axis tick had no `fill` (Recharts' hardcoded `#666`, not a token) and no `tickMargin` (labels sat flush against the dashed gridlines) → `var(--muted-foreground)` + `tickMargin={4}`. Activity's Y-axis had a bespoke left-anchored `<text>` renderer (added earlier to fix a different left/right-alignment complaint) — replaced with the same right-aligned `tickMargin={4}`/`width={44}` pattern via `tickFormatter`, so both charts' axis labels are now visually and structurally consistent.
-- Stacked bars: only the topmost series in each stack gets `radius={[2,2,0,0]}`; the bottom and every middle segment stay square.
-
-### Messages table: spell out "Tokens In" / "Tokens Out" `5aa9f3e`
+### Table columns — spell out "Tokens In" / "Tokens Out" `5aa9f3e`
 
 **`src/pages/requests/RequestsTable.tsx`**
 
-Every other table in the app labels these columns "Tokens In"/"Tokens Out"; the Messages table just said "In"/"Out".
+Every other table in the app labels these columns "Tokens In"/"Tokens Out"; the
+Messages table just said "In"/"Out".
 
-### Models detail: more vertical room in capability badges `f779dbb`
+*Also affected by Global commits: `911f186` (row hover transition), `233823a`
+(rename — page copy + the `?open=` navigate targets).*
+
+---
+
+## Conversations (`Conversations.tsx`, `conversations/*`)
+
+### Dark-mode: trace-row hover ring `8cecf87`
+
+**`src/pages/conversations/RequestTracePanel.tsx`**
+
+Trace-row hover rings (`hover:after:ring-{success,warn,danger}-200`) had no dark
+pairing, rendering a near-white flash on hover → `dark:hover:after:ring-*-500/25`.
+
+### Toolbar search bar aligns to the KPI/card grid above it `9fa7e80`
+
+**`src/pages/Conversations.tsx`** (same fix on Activity)
+
+Rebuilt the toolbar as the KPI rail's grid (`grid-cols-1 sm:grid-cols-3`), title
+in the first two columns, search+controls in the third. Verified: search starts
+at the same x as the 3rd KPI tile (1008).
+
+*Also affected by Global commits: `911f186` (row hover transition), `233823a` (rename).*
+
+---
+
+## Security (`Security.tsx`, `security/*`)
+
+### Dark-mode: Mark-invalid button hover + hero axis-tick contrast `8cecf87`
+
+**`src/pages/Security.tsx`, `src/pages/security/EventsTable.tsx`**
+
+- EventsTable "Mark event invalid" button's `hover:bg-neutral-50` (unpaired) made the label/icon vanish on hover in dark → `hover:bg-accent`.
+- Security hero-chart axis-tick text used a raw `var(--color-neutral-500)` fill, computing to 3.79–4.18:1 (below the 4.5:1 floor) → semantic `var(--muted-foreground)`.
+
+*Also affected by Global commits: `911f186` (row hover transition), `233823a` (rename — EventsTable open-message link).*
+
+---
+
+## Models (`Models.tsx`)
+
+### Dark-mode: provider-icon separator ring `8cecf87`
 
 **`src/pages/Models.tsx`**
 
-The capability strip (Vision, Tool use, JSON mode, Streaming, Prompt caching) used the shared `Badge`'s default `h-5` (20px), leaving the icon+label pinched top/bottom. Bumped to `h-6` (24px) on this usage only — `Badge`'s shared `h-5`/`px-2` contract is load-bearing everywhere else (status pills, findings chips) and stays untouched.
+The stacked-provider-icon separator ring hardcoded `var(--color-white)`,
+producing a bright white halo around vendor icons in dark → theme-aware
+`var(--card)`. (The `tabs.tsx` dark fix in the Global entry also fixes the Models
+tab group.)
 
-### Models toolbar: match search + dropdowns to site convention `5b2fc78`
+### Capability badges — more vertical room `f779dbb`
 
 **`src/pages/Models.tsx`**
 
-The Models toolbar looked off versus Conversations: the search fell back to the default `surface="card"` (gray `bg-neutral-50`) and the three Select triggers used the shared `SelectTrigger` default (`bg-muted` gray). Set search `surface="elevated"` and added the established `border-border bg-card font-normal text-foreground` override to all three triggers, matching the Conversations toolbar verbatim. Shared primitives untouched.
+The capability strip (Vision, Tool use, JSON mode, Streaming, Prompt caching)
+used the shared `Badge`'s default `h-5` (20px), pinching the icon+label. Bumped to
+`h-6` (24px) on this usage only — `Badge`'s shared `h-5`/`px-2` contract is
+load-bearing elsewhere and stays untouched.
 
-### a11y: chart-metric toggle labels + SetupManual focus; bless blue Pro CTAs `d774dec`
+### Toolbar — match search + dropdowns to site convention `5b2fc78`
 
-**`src/pages/Dashboard.tsx`, `src/pages/Activity.tsx`, `src/pages/activity/TrendCard.tsx`, `src/pages/SetupManual.tsx`, `design.md`**
+**`src/pages/Models.tsx`**
 
-The three "quick serious wins" from the 2026-07-10 rams audit (`docs/rams-audit-2026-07-10.md`):
+Search fell back to the default `surface="card"` (gray) and the three Select
+triggers used the shared `bg-muted` default. Set search `surface="elevated"` and
+added the established `border-border bg-card font-normal text-foreground`
+override to all three triggers, matching the Conversations toolbar. Shared
+primitives untouched.
 
-- Three `SegmentedPill` chart-metric toggles had no accessible name (the component supports `aria-label`, used correctly for the time-range control, but omitted here). Added `aria-label="Chart metric"` to each — WCAG 1.3.1.
-- `SetupManual` model-picker rows set `focus-visible:bg-accent`, but `hover:` and `data-[active]:` selected also use `bg-accent`, so keyboard focus was visually identical to the selected row. Added a distinct `focus-visible:ring-2 ring-ring ring-inset` — WCAG 2.4.7.
-- `design.md` rule #1 ("blue is never a primary action") now carries one blessed exception: brand-blue Pro-upsell CTAs (`bg-blue-700 …`), naming the surfaces (pro-upgrade-card, Policies, TokenSavings, plan-comparison-dialog featured plan). Every other primary stays neutral-900 ink.
+*Also affected by Global commits: `911f186` (row hover transition), `233823a` (rename).*
+
+---
+
+## Policies (`Policies.tsx`, `policies/*`)
+
+### Dark-mode: sensitivity slider fill + action radio/border variants `8cecf87`
+
+**`src/pages/Policies.tsx`, `src/pages/policies/config.ts`**
+
+- The sensitivity slider's checked stop lost its `muted-foreground` fill to the base `RadioGroupItem`'s higher-specificity `dark:data-checked:bg-primary` (confirmed by computed-style measurement) → added `data-checked:`-qualified overrides so ours out-specifies the base.
+- `ACTION_ACTIVE_RADIO` (flag/redact/block checked-dot colors) and `ACTION_ACTIVE_BORDER.flag` had no `dark:` pairing — redact's dot (`neutral-700` on `neutral-800`) was nearly invisible. Added `dark:` variants for all three; redact now routes through semantic `muted-foreground`.
+
+*Also affected by Global commit `8cecf87` (featured-plan gradient card, Policies upsell).*
+
+---
+
+## Token Savings (`TokenSavings.tsx`)
+
+### Tokens Saved rate wired to the shared constant `5bc3719`
+
+**`src/pages/TokenSavings.tsx`** (with Overview)
+
+The page's real 7d "Total saved" value now reads from the shared
+`TOKEN_SAVINGS_RATE_7D = 0.142` so it can't diverge from Overview's tile.
+
+*Also affected by Global commit `8cecf87` (featured-plan gradient card).*
+
+---
+
+## Setup (`SetupManual.tsx`)
+
+### Model-picker focus ring `d774dec`
+
+**`src/pages/SetupManual.tsx`**
+
+Rows set `focus-visible:bg-accent`, but `hover:` and `data-[active]:` selected
+also use `bg-accent`, so keyboard focus was invisible against the selected row.
+Added a distinct `focus-visible:ring-2 ring-ring ring-inset` — WCAG 2.4.7.
+
+---
+
+*Two dark-mode items (`8cecf87`) were verified with a single in-browser
+computed-style measurement each (the Policies slider fill, the redact/flag radio
+dot colors) rather than by inspection alone, per the project's cap on in-browser
+verification passes.*

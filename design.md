@@ -372,7 +372,7 @@ components:
 **Extraction mode:** code-direct (read from the source files in this repo — these files ARE the contract; no transpile loss)
 **Confidence summary:** 14 sections strong, 0 partial, 1 TBD (wordmark + lockups not finalized). **61 primitives** live in `src/components/ui/*.tsx` (count taken 2026-05-20). Last surgical refactor pass: 2026-05-17 (Overview redesign — 4-tile KPI rail with `<KpiTile>`, three preview tables, workspace switcher migrated to the top bar, `<FilterToolbar>` / `<Monogram>` / `<SearchInput>` extracted). Preceded by 2026-05-15 (border-token migration: Card / KpiRail / Tabs line variant moved from `shadow-(--shadow-border)` → `border border-border shadow-xs`; `--input` bumped to neutral-300) and the 2026-05-11 modal-chrome + typography-primitive passes.
 **Captured states:** light mode @ 1440×900 default; modal (Dialog), drawer (Sheet), toast, segmented selectors, tabs (default + line + count chips), pagination, table sortable + drill-in, dropdown menu (Menu / UserMenu / workspace switcher), list ↔ detail swap with entrance animation (Models), in-modal action slide (Security Mark-PIJ panel)
-**Not yet captured (TBD):** wordmark + horizontal/stacked lockups (logomark only, finalized); dark mode (intentionally absent — `:root.dark` block omitted; `@custom-variant dark` declared for future activation); mobile / touch state
+**Not yet captured (TBD):** wordmark + horizontal/stacked lockups (logomark only, finalized); mobile / touch state
 
 ---
 
@@ -396,7 +396,7 @@ components:
 
 Operator dashboard for an AI gateway. Read-heavy interaction (filter, sort, drill in, copy). Information density is high: three-tier table ink (500/800/900), right-aligned mono-tabular numerics, KPI rails (4-tile on Overview) with sparklines + delta tags, modals as drill-ins (not splash dialogs). Neutral-100 page canvas under white cards bordered at `border-border` + `shadow-xs`.
 
-**Key characteristics:** 5 OKLCH ramps × 11 steps · three-tier material ladder (4/6/8/16px) · five-voice typography · no dark mode · neutral-900 primary, not blue · `border + shadow-xs` cards (not shadow-as-border, not heavy drop-shadows) · workspace switcher in the top bar, not the sidebar.
+**Key characteristics:** 5 OKLCH ramps × 11 steps · three-tier material ladder (4/6/8/16px) · five-voice typography · light + dark themes (`.dark` class on `<html>`, follows OS until toggled) · neutral-900 primary, not blue · `border + shadow-xs` cards (not shadow-as-border, not heavy drop-shadows) · workspace switcher in the top bar, not the sidebar.
 
 ---
 
@@ -1034,7 +1034,7 @@ Copy is part of the design: precise, plain, no marketing superlatives. This is a
 - **Don't symmetrize `<SelectTrigger>` padding** without re-litigating the optical-balance discussion.
 - **Don't reintroduce the `VendorAvatar` chip wrapper** — locked at iteration 7.
 - **Don't add a "Lower is better" qualifier sub-line** to inverted DeltaTags — tried and rejected.
-- **Don't reintroduce dark-mode raw values** — when activated, redefine semantic tokens in a `:root.dark` block, not by re-introducing oklch values inline.
+- **Don't reintroduce dark-mode raw values.** Dark mode is live via the `.dark` class (see the Dark mode section). Themed surfaces must ride semantic tokens that re-point under `.dark`; never inline oklch or raw-ramp values (they don't invert and render dark-on-dark).
 - **Don't hand-roll a recipe in 2+ sites.** Survey `src/components/ui/` first; if no primitive matches and you'll need the recipe twice, extract a primitive *before* writing it inline. If an audit finds the same bug in two files, extract before fixing — fixing two copies in place is the symptom of missing the primitive.
 - **Don't put `role="button"` on `<tr>`.** Use the row-as-button pattern in §7 Lists/Tables — `<button>` inside the primary cell, `<tr>` keeps default semantics with `onClick` as mouse-only convenience.
 - **Don't use odd 4-multiples (12, 20, 28, 36) for surface-tier spacing.** Surface tier is 8-multiples only — those odd values belong to compound tier (within a primitive's row/group), never to page/section/card rhythm. Specifically: no `p-7`, `gap-7`, `mb-7`, `gap-3` between-card gaps, `gap-5` between sections.

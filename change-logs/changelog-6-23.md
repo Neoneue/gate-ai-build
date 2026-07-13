@@ -43,6 +43,7 @@ Replaced remaining raw Tailwind font/size combinations with named type-voice
 utilities across 44 files (components + all pages).
 
 **Pattern replaced → replacement:**
+
 - `text-sm` body copy → `type-copy-14`
 - `text-xs` body copy → `type-copy-12`
 - `font-medium font-sans text-base` headings → `type-heading-16`
@@ -60,6 +61,7 @@ multi-select.tsx, compact-kpi.tsx, date-range-picker.tsx, feedback-fab.tsx,
 notifications-menu.tsx, user-menu.tsx, AuthLayout.tsx, and all page files.
 
 **Also shipped in this commit:**
+
 - `DateRangePicker`: new `emptyLabel` prop (default `"Custom"`); AuditTrail
   filters dialog passes `emptyLabel="Select"`.
 - `Policies` — `DetailCard`: `Info` icon stays `text-neutral-500`; all other
@@ -80,6 +82,7 @@ Before: `Info` icon `text-neutral-500`; others `text-blue-700`.
 After: all icons `text-blue-700`.
 
 **Copy — prompt-injection**
+
 - Block description: "Reject the request before it reaches the model." → "Request rejected before it reaches the model. Trace annotated. Alert fired."
 - Policy description: "jailbreak attempts" → "jailbreaks".
 - Pro toggle title: "Enable advanced protection"; description updated to match.

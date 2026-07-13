@@ -170,4 +170,3 @@ Prior day: [`changelog-6-24.md`](./changelog-6-24.md)
 
 - Steps dim (`opacity-50 pointer-events-none`, 150ms) until their prerequisite is met: step 2 unlocks once a key is created or the create-key dialog is cancelled (`CreateKeyDialog onCancel`); PAYG steps 3-4 unlock on first interaction with the model selector, and the `WaitingStrip` spinner only starts then (`active` prop).
 - New `StepHeading` swaps the plain "N. Title" labels for the green numbered circle matching the Gate Connect steps; the `SetupIconChip` on the create-key row was dropped.
-

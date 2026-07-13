@@ -159,6 +159,7 @@ tab with a 548px three-region modal matching Figma node `514:42`. → **Header**
 (BrandMark + "Download Gate **Connect**" with Connect in `text-blue-700` + muted
 subtitle + custom X, bottom divider). **Body**: a "Choose your platform" radiogroup
 of three 92px toggle cards (brand-colored 24px OS icons, selected = `border-neutral-900`
+
 - `shadow-xs`) with a dark "Detected" pill on the auto-detected OS; a "Choose your
 build" Base UI `RadioGroup` of two 52px rows per platform (Installer + arch + muted
 detail + right-aligned file size); a `v1.4.2 · Requires …` line. **Footer**: full-width

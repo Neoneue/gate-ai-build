@@ -47,12 +47,13 @@ export type MessageBlockProps = {
   /** Gateway request ID, e.g. "req_92cf2a". Renders below the bubble with
    *  a `↳` corner glyph. Omit for user-input turns (no gateway call). */
   requestId?: string;
-  /** Tone — escape from outline-only default for warn-state messages.
-   *  When `warn`, the bubble picks up a `bg-warning-50` fill +
-   *  `border-warning-200` so the data state (e.g. a tool result that
-   *  flagged something) reads at the message level instead of only on
-   *  the matching trace event. Default `default` keeps the outline-only
-   *  treatment per the project's primitive policy. */
+  /** Tone — escape from outline-only default for warn/danger-state messages.
+   *  When `warn` or `danger`, the bubble picks up a color+opacity tint fill +
+   *  matching translucent border (danger/warning-500 at low alpha, tuned per
+   *  theme) so the data state (e.g. a tool result that flagged something)
+   *  reads at the message level instead of only on the matching trace event.
+   *  Default `default` keeps the outline-only treatment per the project's
+   *  primitive policy. */
   tone?: "default" | "warn" | "danger";
   /** Selection state — paints a ring around the bubble. Drives the
    *  cross-link highlight when paired with a trace event of the same
@@ -79,20 +80,20 @@ export function MessageBlock({
 }: MessageBlockProps) {
   const baseBubbleBorder =
     tone === "danger"
-      ? "border-danger-200 bg-danger-50 dark:border-danger-500/30 dark:bg-danger-500/15"
+      ? "border-danger-500/15 bg-danger-500/8 dark:bg-danger-500/10"
       : tone === "warn"
-        ? "border-warning-200 bg-warning-50 dark:border-warning-500/30 dark:bg-warning-500/15"
-        : "border-border bg-card-muted";
+        ? "border-warning-500/15 bg-warning-500/8 dark:bg-warning-500/10"
+        : "border-border bg-background";
   // Selected ring color tracks tone so the status semantic stays intact
   // through the selection layer: green = normal/success, amber = warn
   // (flag/redact), red = danger (block/error). Matches the trace panel's
   // status-tone outline + node color.
   const selectedTone =
     tone === "danger"
-      ? "border-destructive bg-danger-50 ring-1 ring-destructive dark:bg-danger-500/15"
+      ? "border-destructive bg-danger-500/10 dark:bg-danger-500/15"
       : tone === "warn"
-        ? "border-warning-500 bg-warning-50 ring-1 ring-warning-500 dark:bg-warning-500/15"
-        : "border-success-600 ring-1 ring-success-600";
+        ? "border-warning-500 bg-warning-500/10 dark:bg-warning-500/15"
+        : "border-success-600";
   const bubbleClasses = cn(
     "max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border p-4 text-foreground text-sm transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
     selected ? selectedTone : baseBubbleBorder,
@@ -111,7 +112,7 @@ export function MessageBlock({
       className={cn("flex flex-col gap-2", className)}
       data-request-id={requestId}
     >
-      <div className="type-label-12 flex items-center justify-between text-foreground">
+      <div className="type-label-14 flex items-center justify-between text-foreground">
         <span className="min-w-0 truncate">
           {ROLE_LABEL[role]}
           {tool ? (
