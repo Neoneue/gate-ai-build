@@ -20,7 +20,7 @@ Three tiers, and only the middle one is for UI code:
    `@theme` block in `src/index.css`. This is the single place a value is
    declared. Nowhere else.
 2. **Semantic tokens** are what UI code uses: `--foreground` / `text-foreground`,
-   `--card` / `bg-card`, `--muted`, `--muted-foreground`, `--border`,
+   `--card` / `bg-card`, `--card-muted`, `--muted`, `--muted-foreground`, `--border`,
    `--input`, `--ring`, `--primary` / `--primary-foreground`, `--secondary`,
    `--destructive`, plus the status families. These flip between themes.
 3. **Raw ramp steps** (`--neutral-900`, `bg-neutral-100`, `--success-100`,
@@ -36,7 +36,8 @@ Three tiers, and only the middle one is for UI code:
 | primary text, headline, row identifier | `--foreground` / `text-foreground` |
 | secondary, meta, caption, code, placeholder | `--muted-foreground` |
 | card / panel surface | `--card` / `bg-card` |
-| nested / inset / recessed surface, subtle or hover fill | `--muted` |
+| nested card / panel inset surface | `--card-muted` |
+| subtle fill, hover / active fill | `--muted` |
 | page background | `--background` |
 | border, divider, hairline | `--border` |
 | form-control border | `--input` |

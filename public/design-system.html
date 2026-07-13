@@ -123,6 +123,7 @@
       --primary: var(--neutral-900);
       --primary-foreground: var(--white);
       --muted: var(--neutral-100);
+      --card-muted: var(--neutral-50);
 
       /* Tracking */
       --tracking-tight: -0.025em;
@@ -171,6 +172,7 @@
       --primary: var(--neutral-200);
       --primary-foreground: var(--neutral-800);
       --muted: var(--neutral-800);
+      --card-muted: var(--neutral-800);
       --canvas: var(--neutral-950);
 
       /* Categorical palette — 5 points darker (L −0.05) for the dark canvas. */
@@ -727,7 +729,7 @@
     .nested {
       padding: 14px;
       margin-top: 16px;
-      background: var(--muted);
+      background: var(--card-muted);
       border: 1px solid var(--border);
       border-radius: var(--radius-xs);
     }
@@ -756,7 +758,7 @@
       padding: 14px 0;
       font: 500 12px / 1 var(--font-mono);
       color: var(--muted-foreground);
-      background: var(--muted);
+      background: var(--card-muted);
     }
     .outline-demo .txt {
       display: flex;

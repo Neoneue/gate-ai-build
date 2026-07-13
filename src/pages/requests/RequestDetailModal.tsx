@@ -511,7 +511,7 @@ export function RequestDetailBodyV2({
                         {row.errorDetail ? (
                           <section className="flex flex-col gap-2">
                             <PanelHeading title="Error detail" />
-                            <div className="rounded-xs border border-border bg-card p-4">
+                            <div className="rounded-xs border border-border bg-background p-4">
                               <p className="type-copy-14 text-pretty text-foreground">
                                 {row.errorDetail}
                               </p>
@@ -1153,7 +1153,7 @@ function EvidenceWindow({
     <section className="flex flex-col gap-2">
       <PanelHeading title={label} />
       <div
-        className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+        className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-background p-4"
         ref={evidenceBoxRef}
       >
         <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
@@ -1317,7 +1317,7 @@ function PiiDetailPanel({
           <section className="flex flex-col gap-2">
             <PanelHeading title={evidenceLabel} />
             <div
-              className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-card p-4"
+              className="max-h-[300px] overflow-y-auto rounded-xs border border-border bg-background p-4"
               ref={evidenceBoxRef}
             >
               <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
@@ -1340,7 +1340,7 @@ function PiiDetailPanel({
       {/* Why this fired — label/value rows. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="Why this fired" />
-        <div className="flex flex-col gap-2 rounded-xs border border-border bg-card p-4">
+        <div className="flex flex-col gap-2 rounded-xs border border-border bg-background p-4">
           <KvRow label="Rule" value={rule} />
           <KvRow
             label="Offset in evidence"
@@ -1392,7 +1392,7 @@ function InjectionDetailPanel({
       <PanelHeading
         title={isClassifierDeny ? "Assistant response" : "User message"}
       />
-      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-card p-4">
+      <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto rounded-xs border border-border bg-background p-4">
         <p className="type-copy-14 whitespace-pre-wrap break-words text-foreground leading-relaxed">
           {evidence}
         </p>
@@ -1433,7 +1433,7 @@ function InjectionDetailPanel({
       {/* How to fix — curated remedy + finding-scoped actions in this card. */}
       <section className="flex flex-col gap-2">
         <PanelHeading title="How to fix" />
-        <div className="flex flex-col gap-4 rounded-xs border border-border bg-card p-4">
+        <div className="flex flex-col gap-4 rounded-xs border border-border bg-background p-4">
           <p className="type-copy-14 text-pretty text-foreground">{howToFix}</p>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -1716,7 +1716,7 @@ function MessageBlock({ label, content }: { label: string; content: string }) {
   return (
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
-      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-3 text-foreground">
+      <div className="type-copy-14 max-h-[300px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border bg-background px-4 py-3 text-foreground">
         {content}
       </div>
     </section>
@@ -1749,7 +1749,7 @@ function DetailMessageSubcard({
     <section className="flex flex-col gap-2">
       <SubcardHeading label={label} />
       <div
-        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border px-4 py-4 text-foreground"
+        className="type-copy-14 max-h-[200px] overflow-y-auto whitespace-pre-wrap text-pretty break-words rounded-xs border border-border bg-background px-4 py-4 text-foreground"
         data-grow-well={growWell ? "" : undefined}
       >
         {content}
@@ -1770,7 +1770,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
       {explanation ? (
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Provider context" />
-          <div className="flex flex-col gap-2 rounded-xs border border-border px-4 py-4">
+          <div className="flex flex-col gap-2 rounded-xs border border-border bg-background px-4 py-4">
             <p className="type-copy-14 text-foreground">{explanation}</p>
           </div>
         </section>
@@ -1779,7 +1779,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-card px-4 py-4 font-mono text-foreground text-xs">
+            <pre className="overflow-auto bg-background px-4 py-4 font-mono text-foreground text-xs">
               {getRequestBody(row).errorBody}
             </pre>
           </div>
