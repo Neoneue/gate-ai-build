@@ -147,6 +147,40 @@
       --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
+    [data-theme="dark"] {
+      color-scheme: dark;
+      /* Semantic overrides — mirror .dark in src/index.css. Raw ramps
+         (neutral/blue/success/warning/danger) are theme-independent and stay
+         as declared in :root above. */
+      --background: var(--neutral-950);
+      --foreground: var(--white);
+      --card: var(--neutral-900);
+      --muted-foreground: var(--neutral-300);
+      --border: color-mix(in oklch, var(--white) 10%, transparent);
+      --input: color-mix(in oklch, var(--white) 15%, transparent);
+      --ring: var(--neutral-500);
+      --destructive: var(--danger-400);
+      --canvas: var(--neutral-950);
+
+      /* Categorical palette — 5 points darker (L −0.05) for the dark canvas. */
+      --chart-1: oklch(0.57 0.18 255);
+      --chart-2: oklch(0.67 0.17 50);
+      --chart-3: oklch(0.67 0.20 145);
+      --chart-4: oklch(0.65 0.18 290);
+      --chart-5: oklch(0.60 0.20 18);
+      --chart-6: oklch(0.70 0.13 195);
+      --chart-7: oklch(0.80 0.16 88);
+      --chart-8: oklch(0.63 0.20 335);
+
+      /* Elevation — dark (black-based ambient, mirrors .dark). */
+      --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+      --shadow-card-soft: 0 4px 8px -1px rgb(0 0 0 / 0.35), 0 2px 6px -2px rgb(0 0 0 / 0.35);
+      --shadow-border: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px 0 rgb(0 0 0 / 0.3);
+      --shadow-border-hover: 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5), 0 2px 4px 0 rgb(0 0 0 / 0.4);
+      --shadow-popup: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(0 0 0 / 0.4);
+      --shadow-modal: 0 16px 32px -4px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(0 0 0 / 0.5);
+    }
+
     /* ─── Type-role utilities (mirror src/index.css) ─── */
     .type-heading-72 {
       font: 500 72px / 1 var(--font-sans);
@@ -261,6 +295,7 @@
       color: var(--foreground);
       text-wrap: pretty;
       background-color: var(--canvas);
+      transition: background-color 0.2s ease, color 0.2s ease;
       background-image:
         linear-gradient(
           color-mix(in oklch, var(--neutral-800) 6%, transparent) 1px,
@@ -861,6 +896,10 @@
           <header class="page">
         <span class="eyebrow">Constellation Gate AI</span>
         <h1 class="type-heading-32" style="margin:8px 0 0">Design System</h1>
+        <button id="theme-toggle" type="button" aria-label="Toggle light and dark theme" style="position:fixed;top:16px;right:16px;z-index:100;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--card);color:var(--foreground);font:500 13px/1 var(--font-sans);cursor:pointer;box-shadow:var(--shadow-xs)">
+          <span id="theme-toggle-icon" aria-hidden="true">☾</span>
+          <span id="theme-toggle-label">Dark</span>
+        </button>
         <p class="lede type-copy-16">
           A living reference for the dashboard's visual contract: color,
           typography, radius, spacing, elevation, and core component recipes.
@@ -880,7 +919,21 @@
       </header>
 
       <!-- COLOR -->
-      <section class="block" id="color">
+      <section class="block" id="tokens">
+          <div class="section-head">
+            <span class="eyebrow">Reference</span>
+            <h2 class="type-heading-24">Tokens</h2>
+            <p>
+              Every design token, live. Swatches and values read from the page's
+              own custom properties and follow the active theme — flip the
+              toggle to compare light and dark. Raw ramps are theme-independent;
+              semantic, chart, and elevation tokens change between themes.
+            </p>
+          </div>
+          <div id="token-catalog"></div>
+        </section>
+
+        <section class="block" id="color">
         <div class="section-head">
           <span class="eyebrow">Foundations</span>
           <h2 class="type-heading-24">Color</h2>
@@ -1897,6 +1950,105 @@
         sections.forEach(function (s) {
           observer.observe(s);
         });
+      })();
+      // ── Theme toggle + live token catalog ─────────────────────────
+      (function () {
+        var root = document.documentElement;
+        var stored = null;
+        try { stored = localStorage.getItem("ds-theme"); } catch (e) {}
+        var prefersDark = window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var initialTheme = stored || (prefersDark ? "dark" : "light");
+
+        var btn = document.getElementById("theme-toggle");
+        if (btn) {
+          btn.addEventListener("click", function () {
+            var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            applyTheme(next);
+            try { localStorage.setItem("ds-theme", next); } catch (e) {}
+          });
+        }
+
+        function applyTheme(theme) {
+          root.setAttribute("data-theme", theme);
+          var icon = document.getElementById("theme-toggle-icon");
+          var label = document.getElementById("theme-toggle-label");
+          if (icon) { icon.textContent = theme === "dark" ? "☀" : "☾"; }
+          if (label) { label.textContent = theme === "dark" ? "Light" : "Dark"; }
+          renderCatalog();
+        }
+
+        // Resolve a token to its computed value by probing a real property.
+        function resolve(name, prop) {
+          var probe = document.createElement("span");
+          probe.style.position = "absolute";
+          probe.style.setProperty(prop, "var(" + name + ")");
+          document.body.appendChild(probe);
+          var v = getComputedStyle(probe).getPropertyValue(prop).trim();
+          probe.parentNode.removeChild(probe);
+          return v;
+        }
+
+        function ramp(prefix, steps) {
+          return steps.map(function (s) { return "--" + prefix + "-" + s; });
+        }
+        var STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+        var GROUPS = [
+          { title: "Neutral ramp", kind: "color", tokens: ramp("neutral", STEPS) },
+          { title: "Blue (brand) ramp", kind: "color", tokens: ramp("blue", STEPS) },
+          { title: "Success ramp", kind: "color", tokens: ramp("success", STEPS) },
+          { title: "Warning ramp", kind: "color", tokens: ramp("warning", STEPS) },
+          { title: "Danger ramp", kind: "color", tokens: ramp("danger", STEPS) },
+          { title: "Semantic", kind: "color", tokens: ["--background", "--foreground", "--card", "--muted-foreground", "--border", "--input", "--ring", "--destructive", "--canvas"] },
+          { title: "Chart palette", kind: "color", tokens: ramp("chart", [1, 2, 3, 4, 5, 6, 7, 8]) },
+          { title: "Radius", kind: "radius", tokens: ["--radius-xs", "--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] },
+          { title: "Elevation", kind: "shadow", tokens: ["--shadow-xs", "--shadow-card-soft", "--shadow-border", "--shadow-border-hover", "--shadow-popup", "--shadow-modal"] }
+        ];
+
+        function renderCatalog() {
+          var mount = document.getElementById("token-catalog");
+          if (!mount) { return; }
+          mount.innerHTML = "";
+          GROUPS.forEach(function (g) {
+            var h = document.createElement("h3");
+            h.textContent = g.title;
+            h.style.cssText = "margin:24px 0 8px;font:500 14px/1.2 var(--font-sans);color:var(--muted-foreground)";
+            mount.appendChild(h);
+            var grid = document.createElement("div");
+            grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:8px";
+            g.tokens.forEach(function (name) {
+              var raw = getComputedStyle(root).getPropertyValue(name).trim();
+              if (!raw) { return; }
+              var display = g.kind === "color" ? resolve(name, "color") : raw;
+              var row = document.createElement("div");
+              row.style.cssText = "display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--card)";
+              var sw = document.createElement("span");
+              if (g.kind === "color") {
+                sw.style.cssText = "flex:0 0 auto;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(" + name + ")";
+              } else if (g.kind === "radius") {
+                sw.style.cssText = "flex:0 0 auto;width:28px;height:28px;background:var(--neutral-400);border-radius:var(" + name + ")";
+              } else {
+                sw.style.cssText = "flex:0 0 auto;width:28px;height:28px;border-radius:4px;background:var(--card);box-shadow:var(" + name + ")";
+              }
+              var meta = document.createElement("div");
+              meta.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:2px";
+              var nm = document.createElement("code");
+              nm.textContent = name;
+              nm.style.cssText = "font:500 12px/1.3 var(--font-mono);color:var(--foreground)";
+              var vv = document.createElement("span");
+              vv.textContent = display || "—";
+              vv.style.cssText = "font:400 11px/1.3 var(--font-mono);color:var(--muted-foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+              meta.appendChild(nm);
+              meta.appendChild(vv);
+              row.appendChild(sw);
+              row.appendChild(meta);
+              grid.appendChild(row);
+            });
+            mount.appendChild(grid);
+          });
+        }
+
+        applyTheme(initialTheme);
       })();
     </script>
   </body>
