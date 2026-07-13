@@ -3,7 +3,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Flag,
   Settings2,
   ShieldCheck,
@@ -31,7 +30,6 @@ import {
 import { CopyButton } from "@/components/ui/copy-button";
 import { DetailList, DetailRow } from "@/components/ui/detail-list";
 import {
-  DialogScrollFooter,
   DialogScrollHeader,
   DialogScrollSummary,
   DialogTitleBlock,
@@ -57,15 +55,7 @@ import {
 } from "./data";
 import type { RequestRow } from "./types";
 
-export function RequestDetailBodyV2({
-  row,
-  variant = "modal",
-}: {
-  row: RequestRow;
-  /** 'modal' = fixed tab bar with an internal scroll region (the dialog).
-   *  'page'  = natural flow, no internal scroll (the /messages-findings page). */
-  variant?: "modal" | "page";
-}) {
+export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
   const navigate = useNavigate();
   const openConversation = () =>
     navigate(`/conversations-trace/${row.conversation}`);
@@ -215,12 +205,12 @@ export function RequestDetailBodyV2({
       {/* Page mode: drop the header's own pt-6 — the chrome's gap-6 already
           separates the title from the back breadcrumb above (modal has no
           breadcrumb, so it keeps pt-6 as its top padding). */}
-      <DialogScrollHeader className={variant === "page" ? "pt-0" : undefined}>
+      <DialogScrollHeader className="pt-0">
         <DialogTitleBlock
           badge={
             <Badge variant={responseVariant(row)}>{responseLabel(row)}</Badge>
           }
-          mode={variant === "page" ? "static" : "dialog"}
+          mode="static"
           titleAriaLabel={`Request ${requestId}`}
           titleFont="mono"
         >
@@ -231,22 +221,10 @@ export function RequestDetailBodyV2({
       <DialogScrollSummary>
         <KpiRail row={row} />
       </DialogScrollSummary>
-      <div
-        className={
-          variant === "page" ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"
-        }
-      >
-        {/* Body region. Modal: the only element that scrolls. Page: natural
-            height, no internal scroll. */}
-        <div
-          className={[
-            variant === "page"
-              ? "px-6 pb-6"
-              : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6",
-            // Always 24px below the KPI rail.
-            "pt-6",
-          ].join(" ")}
-        >
+      <div className="flex flex-col">
+        {/* Body region — natural height, no internal scroll. */}
+        {/* px-6 pb-6, plus pt-6 for 24px below the KPI rail. */}
+        <div className="px-6 pt-6 pb-6">
           <div className="grid gap-4 md:grid-cols-3" ref={gridRef}>
             {/* Left column (2/3): an OUTER card wrapping the per-finding
                   detail sections, or a calm "No findings" default when
@@ -519,24 +497,6 @@ export function RequestDetailBodyV2({
           </div>
         </div>
       </div>
-      {/* Footer is modal-only chrome. On the page, "View Conversation" lives
-          at the top-left (rendered by the page itself), so no footer here. */}
-      {variant !== "page" && (
-        <DialogScrollFooter>
-          {/* Finding-scoped actions (Mark false positive / Tune policy) never
-              live in the footer — they render only inside a finding's "How to
-              fix" card, and only when there is an action to take. The footer
-              keeps navigation only. */}
-          <Button onClick={openConversation} size="sm" type="button">
-            View Conversation
-            <ExternalLink
-              aria-hidden
-              className="transition-transform duration-150 ease-out group-hover/button:translate-x-px group-hover/button:-translate-y-px motion-reduce:transition-none motion-reduce:group-hover/button:translate-x-0 motion-reduce:group-hover/button:translate-y-0"
-              data-icon="inline-end"
-            />
-          </Button>
-        </DialogScrollFooter>
-      )}
     </>
   );
 }
@@ -1629,7 +1589,7 @@ function FullRequestCollapsible({
       </Collapsible.Trigger>
       <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
         <div
-          className="max-h-80 overflow-auto overscroll-contain bg-card"
+          className="max-h-80 overflow-auto overscroll-contain bg-background"
           ref={panelRef}
         >
           <CodeBlock density="compact" lines={lines} wrap />
