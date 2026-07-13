@@ -8,6 +8,16 @@ Prior day: [`changelog-7-10.md`](./changelog-7-10.md)
 
 ## Conventions
 
+### Recessed-surface tokens: nested inset -> --card-muted, message wells -> --background `13db63a`
+
+**`public/design-system.html`**, **`src/components/ui/message-block.tsx`**, **`src/pages/requests/RequestDetailModal.tsx`**, **`.claude/rules/no-hardcoding.md`**
+
+Recessed surfaces must map to a token that steps the RIGHT direction per theme (in dark, a recessed surface is darker than the card, not lighter). Two fixes:
+
+- **Nested card inset.** On the design-system page, added `--card-muted` (neutral-50 light / neutral-800 dark, mirroring `src/index.css`) and repointed `.nested` + `.outline-demo .tag` to it. They had been set to `--muted` (neutral-100 / neutral-800) during the tokenization pass, but `--muted` is the subtle/hover-fill role; a nested card inset is `--card-muted`. Identical in dark, one step off in light (was neutral-100, now neutral-50).
+- **Message wells.** The conversation/request message bubbles rode `bg-card-muted` (MessageBlock) or the card surface, so in dark they read lighter than or equal to the card. Repointed to `bg-background` (neutral-950 dark / neutral-50 light) so a well sits one surface BELOW the card in both themes, following the Vercel two-surface model . Applied to `message-block.tsx` and the request-detail message wells.
+- **Rule fix.** Split the `no-hardcoding.md` mapping table row so "nested card / panel inset surface -> `--card-muted`" and "subtle / hover / active fill -> `--muted`" are distinct intents .
+
 ### No-hardcode rule + design-system reference page fully tokenized for dark mode `d151a6a`
 
 **`.claude/rules/no-hardcoding.md`** (new), **`CLAUDE.md`**, **`public/design-system.html`**, **`design.md`**
