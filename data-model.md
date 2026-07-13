@@ -30,14 +30,14 @@
 
 ```mermaid
 graph LR
-    ROOT["/"] -->|redirect| REQ["/requests"]
-    WILD["*"] -->|redirect| REQ
+    ROOT["/"] -->|redirect| OV
+    WILD["*"] -->|redirect| OV
 
     LAYOUT["DashboardChrome (layout)"]
 
     LAYOUT --> OV["/overview → Dashboard.tsx"]
-    LAYOUT --> REQ["/requests → Requests.tsx"]
-    LAYOUT --> REQF["/requests-findings/:requestId → RequestsFindings.tsx"]
+    LAYOUT --> REQ["/messages → Requests.tsx"]
+    LAYOUT --> REQF["/messages-findings/:requestId → RequestsFindings.tsx"]
     LAYOUT --> CONV["/conversations → Conversations.tsx"]
     LAYOUT --> MOD["/models → Models.tsx"]
     LAYOUT --> TOK["/token-savings → TokenSavings.tsx"]
@@ -64,7 +64,7 @@ Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
 
 | Section | Nav items (id → path) |
 | --- | --- |
-| _(unnamed)_ | overview → `/overview`, requests → `/requests`, conversations → `/conversations` |
+| _(unnamed)_ | overview → `/overview`, requests → `/messages` (label "Messages"), conversations → `/conversations` |
 | Gateway | models → `/models`, token-savings → `/token-savings`, limits → `/limits` |
 | Security | security-events → `/security`, policies → `/policies` |
 | Audit | audit-trail → `/audit-trail` _(built)_ |
@@ -137,7 +137,7 @@ interface ApiKeyRow {
 
 Canonical seed: 3 keys (prod-web, prod-agent active; test-key revoked). Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
 
-### 3.3 Requests
+### 3.3 Requests (Messages page)
 
 ```typescript
 // Defined in: src/pages/Requests.tsx
@@ -170,7 +170,7 @@ interface EventRow extends RequestRow {
   type:           EventCategory
   key:            string
   action:         EventAction
-  requestId:      string          // cross-link → /requests?open=req_xxx
+  requestId:      string          // cross-link → /messages?open=req_xxx
   conversationId?: string         // cross-link → /conversations?open=cnv_xxx
   keyTier:        string
 }
@@ -184,7 +184,7 @@ type ConversationStatus = 'active' | 'completed' | 'failed'
 
 interface ConversationRow {
   title:          string
-  conversationId: string          // cross-link from Security / Requests
+  conversationId: string          // cross-link from Security / Messages
   initiator:      string
   turns:          number
   reqs:           number          // count of RequestRows referencing this
@@ -515,10 +515,10 @@ function buildSpark(total: number, seed: number): number[]
 
 ---
 
-### Requests page (`/requests` → `Requests.tsx`)
+### Messages page (`/messages` → `Requests.tsx`)
 
 **Purpose:** Full request log. Row-click drills into the URL-addressable
-**Findings page** (`/requests-findings/:requestId`, see next entry); the stored
+**Findings page** (`/messages-findings/:requestId`, see next entry); the stored
 v2 modal is kept ONLY for `?open=` deep-links (Security events).
 
 **State:**
@@ -533,7 +533,7 @@ selectedRow: RequestRow | null     // drives the STORED modal (?open= only)
 searchParams: URLSearchParams       // for ?open= deep-link
 ```
 
-**Row click:** `navigate('/requests-findings/' + requestRowId(row))` (a real
+**Row click:** `navigate('/messages-findings/' + requestRowId(row))` (a real
 `<a href>` on the model cell). **Deep-link:** `?open=req_xxx` → opens the stored
 v2 modal for the matching row; URL cleaned via `onOpenChangeComplete`.
 
@@ -544,10 +544,10 @@ accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
 
 ---
 
-### Requests Findings page (`/requests-findings/:requestId` → `RequestsFindings.tsx`)
+### Requests Findings page (`/messages-findings/:requestId` → `RequestsFindings.tsx`)
 
 **Purpose:** URL-addressable, shareable, multi-tab findings detail for one
-request (the GitHub model) — the default row-click target from `/requests`.
+request (the GitHub model) — the default row-click target from `/messages`.
 
 **Composition:** reads `:requestId`, finds the row in `REQUEST_ROWS_ALL` via
 `requestRowId(row)` (unknown id → "Request not found" alert). Renders the SAME
@@ -582,7 +582,7 @@ in here, Full request drawer open by default). Findings data contract:
 
 **Cross-panel linking:** `activeRequestId` state shared between Messages and Trace panels for synchronized highlights.
 
-**Outbound links from modal:** `/requests?open=${requestId}` (from trace entries)
+**Outbound links from modal:** `/messages?open=${requestId}` (from trace entries)
 
 ---
 
@@ -597,7 +597,7 @@ in here, Full request drawer open by default). Findings data contract:
 **Outbound links from modal:**
 
 - `/conversations?open=${conversationId}`
-- `/requests?open=${requestId}`
+- `/messages?open=${requestId}`
 
 **Data:** `EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 }` ratio applied via `splitEventMix()` to `EVENTS_RANGE_TOTAL`.
 
@@ -843,7 +843,7 @@ sequenceDiagram
     participant R as Requests.tsx
     participant C as Conversations.tsx
 
-    S->>R: navigate("/requests?open=req_xxx")
+    S->>R: navigate("/messages?open=req_xxx")
     Note over R: useSearchParams reads "open" on mount
     R->>R: find row where row.requestId === "req_xxx"
     R->>R: setSelectedRow(row) → opens RequestDetailDialog
@@ -853,7 +853,7 @@ sequenceDiagram
     Note over C: same pattern — finds row, opens ConversationDetailDialog
 
     R->>C: modal footer link → navigate("/conversations?open=cnv_xxx")
-    C->>R: modal footer link → navigate("/requests?open=req_xxx")
+    C->>R: modal footer link → navigate("/messages?open=req_xxx")
 ```
 
 **Pattern (canonical, all 3 deep-link pages):**
@@ -966,7 +966,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
   crisply. Replaced the old `active:translate-y-px`. Lives on Button /
   IconActionButton / TabsTrigger primitives; hand-rolled pressables match.
 - Modal dismiss: every Dialog, Tooltip, Popover popup AND overlay needs `data-closed:fill-mode-forwards` alongside `animate-out` classes
-- Tooltip open: 200ms global default delay; popup padding 8px (`p-2`). Cost-column legend tooltip added on Requests 2026-06-01
+- Tooltip open: 200ms global default delay; popup padding 8px (`p-2`). Cost-column legend tooltip added on Messages 2026-06-01
 
 ---
 
@@ -986,7 +986,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `HeroNumeric` | custom div | Single source for sans tabular numerics ≥24px. Sizes: default (24px) / lg (32px) |
 | `CompactKpi` | `HeroNumeric` + `DeltaTag` | Standalone or `flat` (no card chrome). `onClick` + `ariaLabel` props render as interactive `<button>` with ChevronRight in title row, hover + focus ring (used on Overview rail for deep-link tiles). `deltaSize` prop (`sm`/`md`) controls delta type-step. |
 | `KpiTile` | `Eyebrow` + `HeroNumeric` | Shared hero-numeric KPI tile (AuditTrail, TokenSavings). Props: title / value / valueSuffix (sized to HeroNumeric, muted) / liveDot / delta / deltaRow (opt-in: delta tag on a dedicated third row) / deltaNote (trailing comparison copy, e.g. "vs last 7d") / caption / spark. Extracted 2026-05-17 from 3 duplicates; deltaRow + deltaNote added 2026-06-01. |
-| `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Requests, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
+| `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |

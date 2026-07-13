@@ -81,7 +81,7 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 ### Audit trail Filters: Export dropdown `7deb172`
 
 - New Export control after the Filters button (`AuditTrail.tsx`): icon + "Export"
-  + chevron, opening a menu with `Export as PDF` / `Export as CSV` (Base UI
+  - chevron, opening a menu with `Export as PDF` / `Export as CSV` (Base UI
   `Menu`). Menu aligns to the right edge of the trigger (`align="end"`).
 - Disabled when the table has no rows to export, reusing the existing
   `isEmpty = filteredRows.length === 0` so it stays in sync with the empty state.
@@ -206,7 +206,7 @@ Prior day: [`changelog-6-19.md`](./changelog-6-19.md).
 - Tunable sensitivity copy corrected to
   `Low, Medium, or High sensitivity per workspace`.
 - CTA uses the same modal-upgrade flow wiring as Billing (`PlanComparisonDialog`
-  + `onUpgrade` route to `/billing`) with a single `Upgrade to Pro` action.
+  - `onUpgrade` route to `/billing`) with a single `Upgrade to Pro` action.
 - Spacing tuned to reduce cramping while preserving page rhythm:
   extra 8px between subtitle and benefits grid, increased row/item breathing in
   the benefits list, and heading/subtitle kept on the page-standard `gap-1`.
