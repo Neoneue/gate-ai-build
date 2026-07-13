@@ -39,6 +39,17 @@ App audit (`src/`) run alongside: typography is correctly tokenized (root sets `
 
 ## Sections
 
+### Messages detail: delete dead request modal, rename file to RequestDetailBody `2754b77`
+
+**`src/pages/requests/RequestDetailBody.tsx`** (renamed from `RequestDetailModal.tsx`), **`src/pages/requests/RequestsTable.tsx`**, **`src/pages/Dashboard.tsx`**, **`src/pages/security/EventsTable.tsx`**, **`src/pages/RequestsFindings.tsx`**, **`src/data/requests.ts`**
+
+Request detail became a URL-addressable page some time ago (`/messages-findings/:requestId` -> `RequestsFindings` -> `RequestDetailBodyV2`), but a leftover dialog lived on in the same file, still opened by `?open=req_*` deep-links. Removed it end to end:
+
+- **Repointed the two deep-links** that fed the modal to the page instead: Dashboard recent-request row and Security `EventsTable` "open request" now `navigate('/messages-findings/:id')` . Behavior change: those land on the full page, matching the row-click path. Conversation `?open=cnv_*` deep-links are a separate system, untouched.
+- **Deleted the modal:** `RequestDetailDialog` + `RequestDetailDialogV1`/`V2` + the `REQUEST_MODAL_VERSION` toggle + the V1-only body, and the dead chain that left behind (`SecurityPanel`, `SecurityCheckRow`, `rowActionToCheckStatus`, `CHECK_BADGE_VARIANT`, and now-unused `Tabs`/dialog/type imports). ~350 lines out of the detail file.
+- **Cleaned `RequestsTable`:** removed the `RequestDetailDialog` render, the `?open=` sync (`selectedRow`, `useSearchParams`), and the now-redundant fragment wrapper.
+- **Renamed** `RequestDetailModal.tsx` -> `RequestDetailBody.tsx` (git mv, 85% similarity), updated the one importer and a stale doc comment. No component or domain renames — `requestId`, `RequestRow` unchanged. tsc + lint clean; page verified in-browser with 0 console errors.
+
 ### Design system reference page: dark mode + theme toggle + token catalog `e6663e4`
 
 **`public/design-system.html`** (relocated from repo root), **`biome.jsonc`**
