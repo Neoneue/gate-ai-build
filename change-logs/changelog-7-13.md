@@ -39,6 +39,10 @@ App audit (`src/`) run alongside: typography is correctly tokenized (root sets `
 
 ## Sections
 
+### data-model.md: sync detail surfaces to page-only `c1890f3`
+
+Not dashboard UI, logged for traceability. Brought `data-model.md` in line with the already-shipped request-modal deletion (documented above, `2754b77`/`3d780d0`): Messages/Conversations detail now documented as page-primary. Row-click navigates to `/messages-findings/:requestId` (`RequestDetailBodyV2`, no `?open=`) and `/conversations-trace/:conversationId` (`ConversationDetailBody`; legacy `?open=cnv_*` dialog noted). Fixed stale `EventRow` and findings/Security outbound cross-links; Security's `/conversations?open=` left intact since it still resolves via the legacy dialog.
+
 ### Messages detail: flatten section titles to type-label-14 `55ed83a`
 
 **`src/pages/requests/RequestDetailBody.tsx`**, **`src/components/ui/message-block.tsx`**, **`src/data/requests.ts`**
