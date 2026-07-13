@@ -9,6 +9,10 @@
 
     /* ─── Tokens copied verbatim from src/index.css (single source of truth) ─── */
     :root {
+      /* Declare supported schemes up front so a browser-level dark override
+         (Brave / Chrome "Auto Dark Mode for Web Contents") never force-darkens
+         this already-themed page to solid black before the theme JS runs. */
+      color-scheme: light dark;
       --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
       --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 
@@ -115,6 +119,10 @@
       --input: var(--neutral-300);
       --ring: var(--neutral-400);
       --destructive: var(--danger-600);
+      /* Primary action — mirrors src/index.css :root; flips in dark below. */
+      --primary: var(--neutral-900);
+      --primary-foreground: var(--white);
+      --muted: var(--neutral-100);
 
       /* Tracking */
       --tracking-tight: -0.025em;
@@ -160,6 +168,9 @@
       --input: color-mix(in oklch, var(--white) 15%, transparent);
       --ring: var(--neutral-500);
       --destructive: var(--danger-400);
+      --primary: var(--neutral-200);
+      --primary-foreground: var(--neutral-800);
+      --muted: var(--neutral-800);
       --canvas: var(--neutral-950);
 
       /* Categorical palette — 5 points darker (L −0.05) for the dark canvas. */
@@ -175,10 +186,10 @@
       /* Elevation — dark (black-based ambient, mirrors .dark). */
       --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
       --shadow-card-soft: 0 4px 8px -1px rgb(0 0 0 / 0.35), 0 2px 6px -2px rgb(0 0 0 / 0.35);
-      --shadow-border: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px 0 rgb(0 0 0 / 0.3);
-      --shadow-border-hover: 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5), 0 2px 4px 0 rgb(0 0 0 / 0.4);
-      --shadow-popup: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(0 0 0 / 0.4);
-      --shadow-modal: 0 16px 32px -4px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(0 0 0 / 0.5);
+      --shadow-border: 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px 0 rgb(0 0 0 / 0.3);
+      --shadow-border-hover: 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent), 0 1px 2px -1px rgb(0 0 0 / 0.5), 0 2px 4px 0 rgb(0 0 0 / 0.4);
+      --shadow-popup: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);
+      --shadow-modal: 0 16px 32px -4px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);
     }
 
     /* ─── Type-role utilities (mirror src/index.css) ─── */
@@ -270,7 +281,7 @@
 
     .eyebrow {
       font: 500 12px / 16px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
@@ -298,12 +309,12 @@
       transition: background-color 0.2s ease, color 0.2s ease;
       background-image:
         linear-gradient(
-          color-mix(in oklch, var(--neutral-800) 6%, transparent) 1px,
+          color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
           transparent 1px
         ),
         linear-gradient(
           90deg,
-          color-mix(in oklch, var(--neutral-800) 6%, transparent) 1px,
+          color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
           transparent 1px
         );
       background-size: 32px 32px;
@@ -345,11 +356,11 @@
     .nav .brand b {
       display: block;
       font: 500 14px / 18px var(--font-sans);
-      color: var(--neutral-900);
+      color: var(--foreground);
     }
     .nav .brand span {
       font: 400 11px / 16px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
     .nav .section-label {
       display: block;
@@ -368,19 +379,19 @@
       padding: 7px 12px;
       border-radius: var(--radius-sm);
       font: 500 13px / 18px var(--font-sans);
-      color: var(--neutral-600);
+      color: var(--muted-foreground);
       text-decoration: none;
       transition:
         background 120ms var(--ease-out),
         color 120ms var(--ease-out);
     }
     .nav a:hover {
-      background: var(--neutral-100);
-      color: var(--neutral-900);
+      background: var(--muted);
+      color: var(--foreground);
     }
     .nav a.active {
-      background: var(--neutral-100);
-      color: var(--neutral-900);
+      background: var(--muted);
+      color: var(--foreground);
     }
 
     header.page {
@@ -393,7 +404,7 @@
     header.page p.lede {
       max-width: 64ch;
       margin: 12px 0 0;
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
     header.page .meta {
       display: flex;
@@ -404,8 +415,8 @@
     .pill {
       padding: 4px 10px;
       font: 400 12px / 16px var(--font-mono);
-      color: var(--neutral-700);
-      background: var(--neutral-100);
+      color: var(--muted-foreground);
+      background: var(--muted);
       border: 1px solid var(--border);
       border-radius: 999px;
     }
@@ -427,7 +438,7 @@
     section.block > .section-head p {
       max-width: 72ch;
       margin: 8px 0 0;
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
 
     .grp {
@@ -436,12 +447,12 @@
     .grp > h3 {
       margin: 0 0 12px;
       font: 500 14px / 20px var(--font-sans);
-      color: var(--neutral-900);
+      color: var(--foreground);
     }
     .grp > .note {
       margin: 0 0 14px;
       font-size: 13px;
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
 
     /* Color swatches */
@@ -489,7 +500,7 @@
     }
     .swatches .tok .lbl code {
       font: 400 11px / 15px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
 
     /* Type specimens */
@@ -507,15 +518,15 @@
     .type-row .spec code {
       display: block;
       font: 400 12px / 16px var(--font-mono);
-      color: var(--neutral-900);
+      color: var(--foreground);
     }
     .type-row .spec small {
       font: 400 11px / 16px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
     .type-row .demo {
       overflow: hidden;
-      color: var(--neutral-900);
+      color: var(--foreground);
     }
 
     /* Radius / spacing / shadow */
@@ -527,16 +538,11 @@
     .tile {
       text-align: center;
     }
-    .tile .box {
-      height: 88px;
-      margin-bottom: 10px;
-      background: var(--blue-100);
-      border: 1px solid var(--blue-300);
-    }
     .tile .swatch-card {
       height: 88px;
       margin-bottom: 10px;
       background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-md);
     }
     .tile b {
@@ -545,7 +551,7 @@
     }
     .tile code {
       font: 400 11px / 15px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
 
     .space-row {
@@ -562,7 +568,7 @@
     .space-row code {
       width: 160px;
       font: 400 12px / 16px var(--font-mono);
-      color: var(--neutral-700);
+      color: var(--muted-foreground);
     }
 
     /* Components */
@@ -585,33 +591,36 @@
       scale: 0.98;
     }
     .btn-primary {
-      color: var(--white);
-      background: var(--neutral-900);
+      color: var(--primary-foreground);
+      background: var(--primary);
       box-shadow: var(--shadow-xs);
     }
     .btn-primary:hover {
-      background: var(--neutral-800);
+      background: color-mix(in oklch, var(--primary) 85%, transparent);
     }
     .btn-secondary {
-      color: var(--neutral-900);
-      background: var(--white);
+      color: var(--foreground);
+      background: var(--card);
       border-color: var(--border);
       box-shadow: var(--shadow-xs);
     }
     .btn-secondary:hover {
-      background: var(--neutral-100);
+      background: var(--muted);
     }
     .btn-ghost {
-      color: var(--neutral-900);
+      color: var(--foreground);
       background: transparent;
     }
     .btn-ghost:hover {
-      background: var(--neutral-100);
+      background: var(--muted);
     }
     .btn-destructive {
-      color: var(--white);
-      background: var(--destructive);
+      color: var(--destructive);
+      background: color-mix(in oklch, var(--destructive) 10%, transparent);
       box-shadow: var(--shadow-xs);
+    }
+    [data-theme="dark"] .btn-destructive {
+      background: color-mix(in oklch, var(--destructive) 20%, transparent);
     }
     .btn-sm {
       height: 32px;
@@ -660,20 +669,43 @@
       background: var(--blue-100);
     }
 
+    /* Dark-theme badge tints — mirror the dark: variants in
+       src/components/ui/badge.tsx (soft -500/15% fill, -300 text). */
+    [data-theme="dark"] .badge-neutral {
+      color: var(--muted-foreground);
+      background: var(--muted);
+    }
+    [data-theme="dark"] .badge-success {
+      color: var(--success-300);
+      background: color-mix(in oklch, var(--success-500) 15%, transparent);
+    }
+    [data-theme="dark"] .badge-warning {
+      color: var(--warning-300);
+      background: color-mix(in oklch, var(--warning-500) 15%, transparent);
+    }
+    [data-theme="dark"] .badge-danger {
+      color: var(--danger-300);
+      background: color-mix(in oklch, var(--destructive) 20%, transparent);
+    }
+    [data-theme="dark"] .badge-info {
+      color: var(--blue-300);
+      background: color-mix(in oklch, var(--blue-500) 15%, transparent);
+    }
+
     .input {
       width: 280px;
       max-width: 100%;
       height: 36px;
       padding: 0 12px;
       font: 400 14px / 20px var(--font-sans);
-      color: var(--neutral-900);
+      color: var(--foreground);
       outline: none;
-      background: var(--white);
+      background: var(--card);
       border: 1px solid var(--input);
       border-radius: var(--radius-md);
     }
     .input::placeholder {
-      color: var(--neutral-400);
+      color: var(--muted-foreground);
     }
     .input:focus-visible {
       border-color: var(--ring);
@@ -684,17 +716,18 @@
       max-width: 360px;
       padding: 20px;
       background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-border);
     }
     .demo-card .desc {
       margin: 6px 0 0;
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
     .nested {
       padding: 14px;
       margin-top: 16px;
-      background: var(--neutral-50);
+      background: var(--muted);
       border: 1px solid var(--border);
       border-radius: var(--radius-xs);
     }
@@ -722,8 +755,8 @@
       justify-content: center;
       padding: 14px 0;
       font: 500 12px / 1 var(--font-mono);
-      color: var(--neutral-500);
-      background: var(--neutral-50);
+      color: var(--muted-foreground);
+      background: var(--muted);
     }
     .outline-demo .txt {
       display: flex;
@@ -745,17 +778,17 @@
     }
     table.spec th {
       font: 500 12px / 16px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       border-top: 0;
     }
     table.spec td code {
       font: 400 12px / 16px var(--font-mono);
-      color: var(--neutral-900);
+      color: var(--foreground);
     }
     table.spec td .muted {
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
 
     .callout {
@@ -769,11 +802,19 @@
     .callout b {
       color: var(--neutral-900);
     }
+    [data-theme="dark"] .callout {
+      color: var(--muted-foreground);
+      background: color-mix(in oklch, var(--blue-500) 15%, transparent);
+      border-left-color: var(--blue-400);
+    }
+    [data-theme="dark"] .callout b {
+      color: var(--foreground);
+    }
 
     footer.foot {
       margin-top: 40px;
       font-size: 12px;
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
       text-align: center;
     }
     footer.foot code {
@@ -799,7 +840,7 @@
     }
     .ease-card .curve-base {
       fill: none;
-      stroke: var(--neutral-200);
+      stroke: var(--border);
       stroke-width: 1.5;
     }
     .ease-card .curve-path {
@@ -815,13 +856,13 @@
     }
     .ease-card code {
       font: 400 11px / 16px var(--font-mono);
-      color: var(--neutral-500);
+      color: var(--muted-foreground);
     }
     .ease-track {
       position: relative;
       height: 8px;
       margin-top: 14px;
-      background: var(--neutral-100);
+      background: var(--muted);
       border-radius: 999px;
     }
     .ease-ball {
@@ -952,7 +993,7 @@
         <div class="grp">
           <h3>
             Neutral
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— Tailwind v4 default ramp (chroma 0)</span
             >
           </h3>
@@ -996,7 +1037,7 @@
         <div class="grp">
           <h3>
             Blue / brand
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— anchored to the logomark at blue-700 (#1F2FCE)</span
             >
           </h3>
@@ -1169,7 +1210,7 @@
         <div class="grp">
           <h3>
             Semantic tokens
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— prefer these aliases over raw ramp steps</span
             >
           </h3>
@@ -1221,7 +1262,7 @@
         <div class="grp">
           <h3>
             Categorical chart palette
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— 8 slots, picked by index, never tied to brand</span
             >
           </h3>
@@ -1264,7 +1305,7 @@
         <div class="grp">
           <h3>
             Syntax tokens
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— code cards; named by intent, not hue</span
             >
           </h3>
@@ -1291,7 +1332,7 @@
         <div class="grp">
           <h3>
             Traffic-light tokens
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— macOS window-control chrome; isolated from the semantic ramps</span
             >
           </h3>
@@ -1479,7 +1520,7 @@
             </div>
             <div
               class="demo"
-              style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:14px;color:var(--neutral-800)"
+              style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:14px;color:var(--foreground)"
             >
               req_aurora_4200 · 8,241 · $0.07
             </div>
@@ -1721,7 +1762,7 @@
                 <path class="curve-base" d="M0,100 L100,0" />
                 <path class="curve-path" d="M0,100 C23,0 32,0 100,0" />
               </svg>
-              <b>ease-out <span style="color:var(--neutral-500);font-weight:400">· default</span></b>
+              <b>ease-out <span style="color:var(--muted-foreground);font-weight:400">· default</span></b>
               <code>cubic-bezier(0.23, 1, 0.32, 1)</code>
               <div class="ease-track">
                 <div class="ease-ball" style="animation-timing-function:var(--ease-out)"></div>
@@ -1757,7 +1798,7 @@
                 <path class="curve-base" d="M0,100 L100,0" />
                 <path class="curve-path" d="M0,100 C32,28 0,0 100,0" />
               </svg>
-              <b>ease-drawer <span style="color:var(--neutral-500);font-weight:400">· slide-in</span></b>
+              <b>ease-drawer <span style="color:var(--muted-foreground);font-weight:400">· slide-in</span></b>
               <code>cubic-bezier(0.32, 0.72, 0, 1)</code>
               <div class="ease-track">
                 <div class="ease-ball" style="animation-timing-function:var(--ease-drawer)"></div>
@@ -1858,7 +1899,7 @@
         <div class="grp">
           <h3>
             Badges
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— mono, tabular-nums, soft tint = bg-*-100 / text-*-700</span
             >
           </h3>
@@ -1888,7 +1929,7 @@
         <div class="grp">
           <h3>
             Card
-            <span style="color:var(--neutral-500);font-weight:400"
+            <span style="color:var(--muted-foreground);font-weight:400"
               >— rounded-md + shadow-border; nested surface steps down to
               rounded-xs</span
             >
@@ -1901,7 +1942,7 @@
             <div class="nested">
               <span class="eyebrow">This period</span>
               <div
-                style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:500;letter-spacing:var(--tracking-tight);color:var(--neutral-900)"
+                style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:500;letter-spacing:var(--tracking-tight);color:var(--foreground)"
               >
                 1,284,930
               </div>
