@@ -20,6 +20,12 @@ Prior day: [`changelog-7-13.md`](./changelog-7-13.md)
 
 The pill's active thumb (white on a neutral-100 track) was hard to see. New semantic token `--border-active` — neutral-100 in light, neutral-800 in dark — defined in `:root` / `.dark` and mapped in `@theme inline` (`border-border-active`). Applied as a 1px border on the shared `SegmentedPill` indicator, so every pill gets it. Dark deliberately equals the thumb surface (`--popover` neutral-800): the hairline disappears there and the lighter thumb carries the active state on its own. Documented in `design.md` (token table + paragraph). Not a substitute for `--border` on containers.
 
+### Stacked bar charts: top-corner rounding halved to 1px `1c28d3a`
+
+**`src/pages/Dashboard.tsx`**, **`src/pages/activity/TrendCard.tsx`**
+
+The two stacked bar charts (Dashboard spend stack, Activity TrendCard spend/savings stack) rounded their top corners at `[2, 2, 0, 0]`. Halved to `[1, 1, 0, 0]` — the radius still only applies to the topmost series in each stack, so the seam between stacked segments stays square. Only these two charts carry top rounding; no other chart touched.
+
 ## Sections
 
 ### Activity: Alerts column on Usage by key `00662fa`
