@@ -104,6 +104,31 @@ export function splitEventMix(total: number): EventMixSplit {
   return { blocked: out[0], flagged: out[1], redacted: out[2] };
 }
 
+// Attack-detection mix. 1× baseline units for the 3 enforced checks —
+// Prompt injection, PII / PHI (combined, since PHI is medical PII),
+// Credential leak. Each unit is worth (rangeTotal / EVENT_MIX_TOTAL)
+// events. Shared by Security's Attack-types card and Activity's
+// "Top attack types" card so the two surfaces reconcile for every range.
+export const ATTACK_MIX = [
+  { key: "pii", label: "PII / PHI", units: 8 },
+  { key: "injection", label: "Prompt injection", units: 5 },
+  { key: "credential", label: "Credential leak", units: 3 },
+] as const;
+
+/** Attack-type counts for the active range — `units × (rangeTotal /
+ *  EVENT_MIX_TOTAL)`, rounded, in ATTACK_MIX (descending) order. */
+export function attackTypeCounts(
+  range: EventsRange,
+  customRange: CustomRange | null
+): { key: string; label: string; count: number }[] {
+  const perUnit = eventsTotal(range, customRange) / EVENT_MIX_TOTAL;
+  return ATTACK_MIX.map((c) => ({
+    key: c.key,
+    label: c.label,
+    count: Math.round(c.units * perUnit),
+  }));
+}
+
 /** Per-range sparkline shape. Distributes the actual event count across
  *  time buckets weighted by an upward trend curve, so sparseness emerges
  *  from the data: 2 redacted events at 1h = 2 spikes against zero; 200

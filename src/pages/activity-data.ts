@@ -44,7 +44,7 @@ export const SPEND_SERIES: Record<
   apiKey: [
     { key: "prod-agent", label: "prod-agent", slot: 1 },
     { key: "prod-web", label: "prod-web", slot: 2 },
-    { key: "staging-web", label: "staging-web", slot: 3 },
+    { key: "design-agent", label: "design-agent", slot: 3 },
     { key: "atlas-eval", label: "atlas-eval", slot: 4 },
     { key: "development", label: "development", slot: 5 },
     { key: "ci-runner", label: "ci-runner", slot: 6 },
@@ -172,13 +172,13 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     },
   ],
   // Per-key 7d sums match the Gate rows in API_KEY_ROWS:
-  // prod-agent 92.31, prod-web 90.00, staging-web 21.00, atlas-eval 20.00,
+  // prod-agent 92.31, prod-web 90.00, design-agent 21.00, atlas-eval 20.00,
   // dev 13.20, ci-runner 1.42. Total ≈ $238.
   apiKey: [
     {
       "prod-agent": 10.36,
       "prod-web": 10.29,
-      "staging-web": 2.53,
+      "design-agent": 2.53,
       "atlas-eval": 2.38,
       dev: 1.72,
       "ci-runner": 0.16,
@@ -186,7 +186,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 11.93,
       "prod-web": 11.45,
-      "staging-web": 2.53,
+      "design-agent": 2.53,
       "atlas-eval": 2.38,
       dev: 1.72,
       "ci-runner": 0.16,
@@ -194,7 +194,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 12.61,
       "prod-web": 12.39,
-      "staging-web": 2.9,
+      "design-agent": 2.9,
       "atlas-eval": 2.86,
       dev: 1.72,
       "ci-runner": 0.16,
@@ -202,7 +202,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 13.06,
       "prod-web": 12.86,
-      "staging-web": 2.9,
+      "design-agent": 2.9,
       "atlas-eval": 2.86,
       dev: 1.72,
       "ci-runner": 0.16,
@@ -210,7 +210,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 13.73,
       "prod-web": 13.32,
-      "staging-web": 3.26,
+      "design-agent": 3.26,
       "atlas-eval": 2.86,
       dev: 1.72,
       "ci-runner": 0.16,
@@ -218,7 +218,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 14.63,
       "prod-web": 14.03,
-      "staging-web": 3.26,
+      "design-agent": 3.26,
       "atlas-eval": 3.33,
       dev: 2.3,
       "ci-runner": 0.32,
@@ -226,7 +226,7 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     {
       "prod-agent": 15.99,
       "prod-web": 15.66,
-      "staging-web": 3.62,
+      "design-agent": 3.62,
       "atlas-eval": 3.33,
       dev: 2.3,
       "ci-runner": 0.32,
@@ -331,13 +331,13 @@ export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
     TOTAL_7D_BASE_TOKENS
   ),
   // API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted Gate keys:
-  // prod-web 18_000_000, prod-agent 16_000_000, staging-web 4_200_000,
+  // prod-web 18_000_000, prod-agent 16_000_000, design-agent 4_200_000,
   // atlas-eval 3_200_000, dev 2_200_000, ci-runner 850_000.
   apiKey: rescaleToTotal(
     {
       "prod-agent": 16_000_000,
       "prod-web": 18_000_000,
-      "staging-web": 4_200_000,
+      "design-agent": 4_200_000,
       "atlas-eval": 3_200_000,
       dev: 2_200_000,
       "ci-runner": 850_000,
@@ -411,6 +411,9 @@ export type ApiKeyRow = {
   tokensIn: number;
   tokensOut: number;
   spend: number;
+  /** Mirrors the Keys page status — greys the row and is hidden by the
+   *  table's "Hide revoked" toggle when true. */
+  revoked?: boolean;
 };
 
 /** Five workspace keys — matches the canonical set used on Requests
@@ -474,8 +477,8 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     spend: 13.2,
   },
   {
-    key: "staging-web",
-    label: "staging-web",
+    key: "design-agent",
+    label: "design-agent",
     owner: "Chad Ponticas",
     path: "Gate",
     requests: 13_000,
@@ -492,6 +495,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 708_333,
     tokensOut: 141_667,
     spend: 1.42,
+    revoked: true,
   },
   {
     key: "nova-chat",
@@ -512,16 +516,20 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 3_000_000,
     tokensOut: 200_000,
     spend: 20.0,
+    revoked: true,
   },
+  // Matches the Keys page's revoked test-key (sk-gw-…255e): never used, so
+  // every usage figure is a real zero, not a scaled-down count.
   {
     key: "test-key",
     label: "test-key",
-    owner: "Mateus Silva",
+    owner: "Chad Ponticas",
     path: "BYOK",
-    requests: 2800,
-    tokensIn: 4_571_429,
-    tokensOut: 228_571,
+    requests: 0,
+    tokensIn: 0,
+    tokensOut: 0,
     spend: 0.0,
+    revoked: true,
   },
 ];
 
