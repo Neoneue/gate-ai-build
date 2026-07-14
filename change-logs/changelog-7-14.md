@@ -14,6 +14,12 @@ Prior day: [`changelog-7-13.md`](./changelog-7-13.md)
 
 `TopList` hardcoded the `Tokens | Spend` `METRIC_OPTIONS` in its `SegmentedPill`, which blocked the new attack-types card from carrying a different lens. Genericized the component (`TopList<T extends string>`) with a required `options: { value: T; label: string }[]` prop; the three existing call sites now pass `METRIC_OPTIONS` explicitly, the new fourth card passes `ATTACK_METRIC_OPTIONS` (`Amount | Percent`). No visual change to the existing cards.
 
+### New token: `--border-active` on the SegmentedPill indicator `6c5f51b`
+
+**`src/index.css`**, **`src/components/ui/segmented-pill.tsx`**, **`design.md`**
+
+The pill's active thumb (white on a neutral-100 track) was hard to see. New semantic token `--border-active` — neutral-100 in light, neutral-800 in dark — defined in `:root` / `.dark` and mapped in `@theme inline` (`border-border-active`). Applied as a 1px border on the shared `SegmentedPill` indicator, so every pill gets it. Dark deliberately equals the thumb surface (`--popover` neutral-800): the hairline disappears there and the lighter thumb carries the active state on its own. Documented in `design.md` (token table + paragraph). Not a substitute for `--border` on containers.
+
 ## Sections
 
 ### Activity: Alerts column on Usage by key `00662fa`
@@ -49,3 +55,25 @@ The Top models / Top API keys / Top users row is now `grid-cols-4` with a fourth
 - **Shared mix, single source.** The 8:5:3 attack baseline moved out of `Security.tsx` into `ATTACK_MIX` + `attackTypeCounts(range, customRange)` in `events-data.ts` (units x `eventsTotal / EVENT_MIX_TOTAL`, rounded). Security's `ATTACK_CATEGORIES` now derives from it (chart colors mapped locally via `ATTACK_COLORS`), so the Activity card and Security's Attack types card show the SAME integers for every range including custom (All: 207 / 129 / 78).
 - **Percent lens** derives from those rounded counts as each type's share of the attack-type sum (50.0% / 31.2% / 18.8%), one decimal.
 - **Icons** come straight from the Security events table's `TYPE_META` mapping — `Icon` + `color` (`chart-3` / `danger-600` / `chart-4`), `size-4`, `strokeWidth 1.75` — via a hoisted `ATTACK_AVATARS`, so the card cannot drift from the table's type treatment. PII/PHI merged onto the `pii` entry (`UserRound`).
+
+### Activity: Saved column on Usage by key `6c5f51b`
+
+**`src/pages/Activity.tsx`**, **`src/pages/activity-data.ts`**
+
+New sortable `Saved` column after Tokens out — each key's Total-saved rate, rendered `N.N%` (one-decimal convention). `ApiKeyRow` gained a `savings` base rate (7d fraction, spread 9.6%–17.3%) authored so the token-weighted mean lands exactly on `TOKEN_SAVINGS_RATE_7D` (14.2%) — the column reconciles with the TokenSavings page. New `TOKEN_SAVINGS_RATE_BY_RANGE` (24h 12.8 / 7d 14.2 / 30d 13.5 / All 13.9, mirroring the TokenSavings hero) + `savingsRateFor(range, customRange)` (custom resolves by day span) drive the range scaling: per-key value = base × rangeRate/7dRate. Never-used `test-key` renders an em dash (`saved: null`) and sorts last, same pattern as BYOK spend.
+
+### Activity: Savings lens on the trend chart `6c5f51b`
+
+**`src/pages/activity/TrendCard.tsx`**
+
+The chart pill is now `Tokens | Spend | Savings` via chart-local `TrendMetric` / `TREND_METRIC_OPTIONS` (the Top cards keep the plain pair). Under Savings ("Savings over time"):
+
+- **Stack semantics:** each bucket's total stack height = the workspace % saved that bucket (`distributeSeries` around `savingsRateFor(range)`, so the bucket mean equals the range's rate), split across the model/provider/key series by their 7d token share. The stack total is the meaningful "% saved" figure and reconciles with the TokenSavings page.
+- **Axis:** YAxis `domain=[0,30]` (hoisted `SAVINGS_DOMAIN`) with `%` tick labels; tooltip values format `N.N%`.
+- **Breakdown panel:** shows each series' share alone under Savings — its "value" is also a percentage, and two `%` columns read as noise (user call). Tokens/Spend keep the `value · share` pair.
+
+### Trend chart: auto-width YAxis + tooltip spacing `6c5f51b`
+
+**`src/pages/activity/TrendCard.tsx`**
+
+Two fixes on the chart chrome. (1) YAxis `width` 44 → `"auto"` (recharts 3): the fixed width clipped wide token ticks ("10.00M" lost its leading digit past the card padding), and a wider fixed value left a gap on the narrow `$`/`%` lenses — auto sizes each lens to its own rendered labels. (2) Tooltip rows: label→value gap `gap-3` → `gap-7` (12px → 28px, requested +16px).
