@@ -52,6 +52,8 @@ import {
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
+  savingsRateFor,
+  TOKEN_SAVINGS_RATE_7D,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
   TOTAL_7D_BASE_TOKENS,
@@ -718,6 +720,9 @@ type ScaledKeyRow = (typeof API_KEY_ROWS)[number] & {
   tokensIn: number;
   tokensOut: number;
   alerts: number;
+  /** Saved % for the active range (display value, e.g. 14.7). Null when
+   *  the key was never used — renders "—" and sorts last. */
+  saved: number | null;
 };
 
 function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
@@ -737,6 +742,9 @@ function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
     // BYOK has no Gateway spend ("—") → null so those rows sort last.
     case "spend":
       return row.path === "BYOK" ? null : parseNumeric(row.spend);
+    // Never-used keys have no savings ("—") → null so they sort last.
+    case "saved":
+      return row.saved;
     default:
       return null;
   }
@@ -771,6 +779,10 @@ function UsageByKey({
 
   const scaledRows = useMemo<ScaledKeyRow[]>(() => {
     const scale = effectiveScale(range, customRange);
+    // Savings is a rate, not a volume — per-key values shift with the
+    // range's workspace rate (savingsRateFor), not with effectiveScale.
+    const savingsScale =
+      savingsRateFor(range, customRange) / TOKEN_SAVINGS_RATE_7D;
     return API_KEY_ROWS.map((k) => {
       const requests = Math.round(k.requests * scale);
       return {
@@ -783,6 +795,7 @@ function UsageByKey({
         // 1/8th of the key's message count, so the column tracks the range
         // selector through `requests`.
         alerts: Math.round(requests / 8),
+        saved: k.requests === 0 ? null : k.savings * savingsScale * 100,
       };
     });
   }, [range, customRange]);
@@ -956,6 +969,15 @@ function UsageByKey({
                     numeric
                     onSort={toggleSort}
                     sort={sort}
+                    sortKey="saved"
+                  >
+                    Saved
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
                     sortKey="spend"
                   >
                     Spend
@@ -992,6 +1014,20 @@ function UsageByKey({
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtTokens(row.tokensOut)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {row.saved === null ? (
+                        <>
+                          <span aria-hidden className="text-muted-foreground">
+                            —
+                          </span>
+                          <span className="sr-only">
+                            No savings (never used)
+                          </span>
+                        </>
+                      ) : (
+                        `${row.saved.toFixed(1)}%`
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {row.path === "BYOK" ? (

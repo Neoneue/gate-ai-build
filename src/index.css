@@ -243,6 +243,11 @@ and (pointer: fine)) and (&:hover));
   --accent-foreground: var(--color-neutral-900);
   --destructive: var(--color-danger-600);
   --border: var(--color-neutral-200);
+  /* Active-control edge — 1px hairline around a raised active thumb (the
+     segmented pill's indicator). A whisper-light crispening in light
+     (neutral-100 on the white thumb), a visible step off the track in dark
+     (neutral-700). */
+  --border-active: var(--color-neutral-100);
   --input: var(--color-neutral-300);
   --ring: var(--color-neutral-400);
   /* Chart gridline / dashed baseline stroke. Palette-atom neutral-200 read
@@ -326,6 +331,7 @@ body {
     --color-chart-grid: var(--chart-grid);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-active: var(--border-active);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -403,6 +409,10 @@ body {
   /* Translucent white hairlines — read correctly on any dark surface
      (Vercel/shadcn gray-alpha technique), unlike a fixed neutral step. */
   --border: color-mix(in oklch, var(--color-white) 10%, transparent);
+  /* Matches the dark thumb surface (--popover neutral-800), so the hairline
+     visually disappears in dark — the lighter thumb already carries the
+     active state there; the crispening is a light-mode device. */
+  --border-active: var(--color-neutral-800);
   --input: color-mix(in oklch, var(--color-white) 15%, transparent);
   --ring: var(--color-neutral-500);
   --chart-grid: var(--color-neutral-700);

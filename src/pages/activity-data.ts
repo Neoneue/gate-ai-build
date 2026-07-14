@@ -1,4 +1,10 @@
 import { CHART_PALETTE } from "@/lib/chart-palette";
+import {
+  type CustomRange,
+  daysInRange,
+  type PresetRange,
+  type Range,
+} from "@/lib/range";
 
 export type Dimension = "model" | "provider" | "apiKey";
 
@@ -15,6 +21,40 @@ export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 // flat estimate). Overview's Tokens Saved tile derives its dollar figure
 // from this rate × TOTAL_7D_BASE_DOLLARS so the two pages can't diverge.
 export const TOKEN_SAVINGS_RATE_7D = 0.142;
+
+// Per-range Total-saved rate. 7d is the canonical TOKEN_SAVINGS_RATE_7D;
+// the other windows mirror the TokenSavings hero values (caching +
+// compression per window: 24h 0.11+12.7, 30d 0.14+13.4, all 0.15+13.7).
+// Savings is a RATE, so the values hover near each other instead of
+// scaling with volume like the KPI totals do.
+export const TOKEN_SAVINGS_RATE_BY_RANGE: Record<PresetRange, number> = {
+  "24h": 0.128,
+  "7d": TOKEN_SAVINGS_RATE_7D,
+  "30d": 0.135,
+  all: 0.139,
+};
+
+/** Workspace savings rate for the active range. Custom ranges resolve by
+ *  span — ≤1 day reads the 24h rate, ≤7 the 7d, ≤30 the 30d, else all. */
+export function savingsRateFor(
+  range: Range,
+  customRange: CustomRange | null
+): number {
+  if (range === "custom" && customRange) {
+    const days = daysInRange(customRange);
+    if (days <= 1) {
+      return TOKEN_SAVINGS_RATE_BY_RANGE["24h"];
+    }
+    if (days <= 7) {
+      return TOKEN_SAVINGS_RATE_BY_RANGE["7d"];
+    }
+    if (days <= 30) {
+      return TOKEN_SAVINGS_RATE_BY_RANGE["30d"];
+    }
+    return TOKEN_SAVINGS_RATE_BY_RANGE.all;
+  }
+  return TOKEN_SAVINGS_RATE_BY_RANGE[range === "custom" ? "7d" : range];
+}
 
 /** ≤6 series per dimension. Model + provider stay fully enumerated (bounded
  * cardinality in MVP). API keys fall back to "top 5 + Other" since key
@@ -411,6 +451,10 @@ export type ApiKeyRow = {
   tokensIn: number;
   tokensOut: number;
   spend: number;
+  /** 7d Total-saved rate for the key (caching + compression, fraction).
+   *  Token-weighted mean across keys = TOKEN_SAVINGS_RATE_7D (14.2%), so
+   *  the table's Saved column reconciles with the TokenSavings page. */
+  savings: number;
   /** Mirrors the Keys page status — greys the row and is hidden by the
    *  table's "Hide revoked" toggle when true. */
   revoked?: boolean;
@@ -435,6 +479,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 15_000_000,
     tokensOut: 3_000_000,
     spend: 90.0,
+    savings: 0.1468,
   },
   {
     key: "prod-agent",
@@ -445,6 +490,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 15_384_615,
     tokensOut: 615_385,
     spend: 92.31,
+    savings: 0.168,
   },
   {
     key: "openclaw",
@@ -455,6 +501,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 10_096_154,
     tokensOut: 403_846,
     spend: 0.0,
+    savings: 0.121,
   },
   {
     key: "hermes-agent",
@@ -465,6 +512,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 6_923_077,
     tokensOut: 276_923,
     spend: 0.0,
+    savings: 0.108,
   },
   {
     key: "development",
@@ -475,6 +523,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 1_650_000,
     tokensOut: 550_000,
     spend: 13.2,
+    savings: 0.132,
   },
   {
     key: "design-agent",
@@ -485,6 +534,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 3_500_000,
     tokensOut: 700_000,
     spend: 21.0,
+    savings: 0.149,
   },
   {
     key: "ci-runner",
@@ -495,6 +545,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 708_333,
     tokensOut: 141_667,
     spend: 1.42,
+    savings: 0.096,
     revoked: true,
   },
   {
@@ -506,6 +557,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 5_416_667,
     tokensOut: 1_083_333,
     spend: 0.0,
+    savings: 0.126,
   },
   {
     key: "atlas-eval",
@@ -516,6 +568,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 3_000_000,
     tokensOut: 200_000,
     spend: 20.0,
+    savings: 0.173,
     revoked: true,
   },
   // Matches the Keys page's revoked test-key (sk-gw-…255e): never used, so
@@ -529,6 +582,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 0,
     tokensOut: 0,
     spend: 0.0,
+    savings: 0,
     revoked: true,
   },
 ];
