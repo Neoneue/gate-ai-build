@@ -556,7 +556,7 @@ export function TrendCard({
                     isAnimationActive={false}
                     key={s.key}
                     radius={
-                      i === cappedSeries.length - 1 ? [2, 2, 0, 0] : undefined
+                      i === cappedSeries.length - 1 ? [1, 1, 0, 0] : undefined
                     }
                     stackId="spend"
                   />
