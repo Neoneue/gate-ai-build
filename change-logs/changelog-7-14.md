@@ -77,3 +77,26 @@ The chart pill is now `Tokens | Spend | Savings` via chart-local `TrendMetric` /
 **`src/pages/activity/TrendCard.tsx`**
 
 Two fixes on the chart chrome. (1) YAxis `width` 44 → `"auto"` (recharts 3): the fixed width clipped wide token ticks ("10.00M" lost its leading digit past the card padding), and a wider fixed value left a gap on the narrow `$`/`%` lenses — auto sizes each lens to its own rendered labels. (2) Tooltip rows: label→value gap `gap-3` → `gap-7` (12px → 28px, requested +16px).
+
+### Activity: savings maturation curve (chart + Saved column) `d069080`
+
+**`src/pages/activity-data.ts`**, **`src/pages/activity/TrendCard.tsx`**, **`src/pages/Activity.tsx`**
+
+Replaced the flat savings band with a maturation model — caching/compression climbing over time toward a plateau. New `savingsCurve(range, customRange, count, seed)` in activity-data draws a concave √ ramp from each window's floor to a ~25% ceiling (hard-clamped under the 30% cap), with seeded jitter scaled to the window span. Measured: **All** climbs 9.1% → 23.9% across 30 buckets; **7d** sits flat-high 21.7% → 23.6%. `savingsRateFor()` now returns each curve's MEAN (`floor + (ceiling − floor)·2/3`), so the chart average and the table Saved column reconcile.
+
+- **Raised to the 20-25% product goal.** Per the 2026-07-14 call (caching + compression realistically tops out ~25-30%), Activity savings moved off the old ~14% band onto a dedicated `ACTIVITY_SAVINGS_RATE_7D` (0.243). Per-key `savings` and the per-model/provider `SAVINGS_RATES_7D` were rebased to a 19-29% spread; token-weighted 7d mean = 24.3%. `SAVINGS_CURVE_BOUNDS` holds the per-range floor/ceiling (24h 24-25, 7d 23-25, 30d 22-25, all 10-25).
+- **Decoupled from TokenSavings.** The shared `TOKEN_SAVINGS_RATE_7D` stays 0.142 and still drives the TokenSavings hero + Overview "Tokens Saved" tile — those are intentionally left at 14.2%. Activity now shows a higher savings number than those two surfaces by design.
+- **Panel fix:** the Savings breakdown panel shows each series' OWN saved rate (it was echoing token share). For the apiKey dimension these equal the table's Saved column.
+- **Pre-existing bug fixed:** `SPEND_BASE` / token buckets keyed the dev series `"dev"` while `SPEND_SERIES` + `API_KEY_ROWS` used `"development"`, so the development series rendered as 0 across Tokens/Spend/Savings. Unified to `"development"`.
+
+### Activity: Top cards wrap 2×2 below 2xl `d069080`
+
+**`src/pages/Activity.tsx`**
+
+The four Top cards (models / API keys / users / attack types) row went `grid-cols-4` → `grid-cols-2 2xl:grid-cols-4`. The tightest card (Top attack types title + its Amount|Percent pill) needs ~316px, which a 4-up row only clears above a ~1424px viewport; `2xl` (1536) is the nearest breakpoint that never squeezes the headers. Verified 2×2 at 1512, 4-up at 1600.
+
+### Feedback FAB: round messenger button `d069080`
+
+**`src/components/ui/feedback-fab.tsx`**
+
+Replaced the outlined "Feedback" pill trigger with a round messenger-style FAB (48×48, bottom-right, filled `MessageCircle` icon, `aria-label="Send feedback"`). Uses the brand-blue CTA recipe verbatim (`bg-blue-700 … hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700` + blue shadow) shared with the Policies / TokenSavings / plan CTAs, and the standard pressable motion (`-translate-y-px` hover, `active:scale-[0.98]`). Opens the same existing feedback dialog — only the trigger changed.
