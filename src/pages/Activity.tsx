@@ -841,6 +841,10 @@ function UsageByKey({
             surface="elevated"
             value={query}
           />
+          <Button size="sm" type="button" variant="outline">
+            <UploadIcon aria-hidden data-icon="inline-start" size={16} />
+            Export CSV
+          </Button>
           <span className="flex shrink-0 items-center gap-2">
             <span
               className="type-label-14 whitespace-nowrap text-muted-foreground"
@@ -854,10 +858,6 @@ function UsageByKey({
               onCheckedChange={setHideRevoked}
             />
           </span>
-          <Button size="sm" type="button" variant="outline">
-            <UploadIcon aria-hidden data-icon="inline-start" size={16} />
-            Export CSV
-          </Button>
         </div>
       </div>
       <Card density="flush" id="usage-by-key">
