@@ -1,4 +1,4 @@
-import { Camera, MessageSquare, Upload } from "lucide-react";
+import { Camera, MessageCircle, Upload } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -66,29 +66,29 @@ function FeedbackFab() {
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      {/* FAB trigger — fixed viewport anchor */}
+      {/* FAB trigger — fixed viewport anchor. Round messenger-style
+          launcher (mirrors staging's Intercom bubble): filled chat icon on
+          the brand-blue CTA recipe (same classes as the Policies /
+          TokenSavings / plan CTAs). */}
       <button
         aria-label="Send feedback"
         className={cn(
-          // Pill shape, outlined surface, shadow elevation, fixed viewport anchor
           "fixed right-6 bottom-6 z-40",
-          "inline-flex h-8 items-center gap-2 rounded-full px-4",
-          "type-label-14 whitespace-nowrap border border-border bg-card text-foreground",
-          "shadow-md",
+          "inline-flex size-12 items-center justify-center rounded-full",
+          "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700",
           "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
-          "cursor-pointer will-change-transform hover-fine:-translate-y-px hover:bg-muted active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
-          "focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "cursor-pointer will-change-transform hover-fine:-translate-y-px active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
+          "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           "select-none"
         )}
         onClick={() => setOpen(true)}
         type="button"
       >
-        <MessageSquare
+        <MessageCircle
           aria-hidden
-          className="size-4 shrink-0"
+          className="size-5 shrink-0 fill-current"
           strokeWidth={1.75}
         />
-        <span>Feedback</span>
       </button>
 
       {/* Dialog — sm:max-w-lg, p-6 */}

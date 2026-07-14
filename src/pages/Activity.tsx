@@ -48,12 +48,12 @@ import {
   type Range,
 } from "@/lib/range";
 import {
+  ACTIVITY_SAVINGS_RATE_7D,
   API_KEY_ROWS,
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
   savingsRateFor,
-  TOKEN_SAVINGS_RATE_7D,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
   TOTAL_7D_BASE_TOKENS,
@@ -667,7 +667,11 @@ function TopByAxisRow({
     m === "spend" ? "By total spend" : "By total tokens used";
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    // 2×2 below 2xl: the tightest card (Top attack types title + its
+    // Amount|Percent pill) needs ~316px, which a 4-up row only clears
+    // above a ~1424px viewport — 2xl (1536) is the nearest breakpoint
+    // that never squeezes the headers.
+    <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
       <TopList
         metric={modelMetric}
         onMetricChange={setModelMetric}
@@ -782,7 +786,7 @@ function UsageByKey({
     // Savings is a rate, not a volume — per-key values shift with the
     // range's workspace rate (savingsRateFor), not with effectiveScale.
     const savingsScale =
-      savingsRateFor(range, customRange) / TOKEN_SAVINGS_RATE_7D;
+      savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D;
     return API_KEY_ROWS.map((k) => {
       const requests = Math.round(k.requests * scale);
       return {

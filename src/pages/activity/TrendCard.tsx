@@ -24,12 +24,15 @@ import {
 } from "@/components/ui/select";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
+  ACTIVITY_SAVINGS_RATE_7D,
   type Dimension,
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
+  SAVINGS_RATES_7D,
   SPEND_SERIES,
   SPEND_TOTALS_7D,
+  savingsCurve,
   savingsRateFor,
   seriesColor,
   TOKENS_TOTALS_7D,
@@ -112,6 +115,7 @@ function TrendBreakdownPanel({
   metric,
   series,
   seriesTotals,
+  savingsRates,
 }: {
   metric: TrendMetric;
   series: readonly {
@@ -121,9 +125,13 @@ function TrendBreakdownPanel({
     color?: string;
   }[];
   /** Aggregated totals for this range — keyed by series key. Under the
-   *  savings lens only the relative shares are read (the row shows share
-   *  alone), so no normalization is needed. */
+   *  savings lens these only drive the sort order; the displayed value
+   *  comes from savingsRates. */
   seriesTotals: Record<string, number>;
+  /** Savings lens only: each series' OWN saved rate for the range, as a
+   *  display percentage (14.7 -> "14.7%"). Same numbers as the table's
+   *  Saved column for the apiKey dimension. */
+  savingsRates?: Record<string, number>;
 }) {
   const isSpend = metric === "spend";
   const grandTotal =
@@ -141,8 +149,8 @@ function TrendBreakdownPanel({
         // live in the UsageByKey table below — duplicating the split here
         // adds noise without information. Single shape for tokens/spend so
         // toggling those lenses doesn't reflow the panel. Savings shows the
-        // share alone — its "value" is also a percentage, and two % columns
-        // read as noise.
+        // series' own saved rate alone — a share column here would just
+        // echo the token split.
         return (
           <div
             className="flex min-w-0 items-center gap-2 rounded-xs px-2 py-1"
@@ -158,7 +166,7 @@ function TrendBreakdownPanel({
             </span>
             {metric === "savings" ? (
               <span className="shrink-0 text-right font-mono text-foreground text-sm tabular-nums">
-                {pctStr}
+                {`${(savingsRates?.[s.key] ?? 0).toFixed(1)}%`}
               </span>
             ) : (
               <div
@@ -220,20 +228,31 @@ export function TrendCard({
               : 99;
     const seriesBuckets: Record<string, number[]> = {};
 
-    // Savings lens: the stack total per bucket IS the workspace % saved
-    // for that bucket (mean = the range's savingsRateFor, same anchor as
-    // the TokenSavings page), split across the series by their token
-    // share. distributeSeries supplies the organic per-bucket variation.
+    // Savings lens: the stack total per bucket IS the workspace % saved for
+    // that bucket, following the maturation curve (savingsCurve) — a concave
+    // climb from the window's floor to its ~25% ceiling as caching/
+    // compression mature. Each series' segment is weighted by token share ×
+    // its OWN saved rate (SAVINGS_RATES_7D), normalized so segments still sum
+    // to the bucket total — a high-saving series carries more of the stack
+    // than its token share alone.
     if (isSavings) {
       const tokenTotals = TOKENS_TOTALS_7D[dimension];
-      const grand = Object.values(tokenTotals).reduce((a, b) => a + b, 0) || 1;
-      const pctBuckets = distributeSeries(
-        savingsRateFor(range, customRange) * 100 * count,
+      const rates = SAVINGS_RATES_7D[dimension];
+      const weights: Record<string, number> = {};
+      for (const [key, tokens7d] of Object.entries(tokenTotals)) {
+        weights[key] = tokens7d * (rates[key] ?? 0);
+      }
+      const weightSum = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+      const pctBuckets = savingsCurve(
+        range,
+        customRange,
         count,
         rangeSeed * 31
       );
-      for (const [key, tokens7d] of Object.entries(tokenTotals)) {
-        seriesBuckets[key] = pctBuckets.map((pct) => (pct * tokens7d) / grand);
+      for (const [key, weight] of Object.entries(weights)) {
+        seriesBuckets[key] = pctBuckets.map(
+          (pct) => (pct * weight) / weightSum
+        );
       }
       return Array.from({ length: count }, (_, i) => {
         const row: Record<string, number | string> = { date: labels[i] ?? "" };
@@ -353,6 +372,36 @@ export function TrendCard({
       ) as ChartConfig,
     [cappedSeries]
   );
+
+  // Panel display under Savings: each series' OWN saved rate for the
+  // active range (same range scaling as the table's Saved column, so the
+  // apiKey dimension shows identical numbers). Others = token-weighted
+  // mean of the overflow keys it aggregates.
+  const savingsRates = useMemo<Record<string, number> | undefined>(() => {
+    if (!isSavings) {
+      return;
+    }
+    const factor =
+      (savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D) * 100;
+    const rates = SAVINGS_RATES_7D[dimension];
+    const tokenTotals = TOKENS_TOTALS_7D[dimension];
+    const named = new Set(cappedSeries.map((s) => s.key));
+    const out: Record<string, number> = {};
+    let overflowTokens = 0;
+    let overflowWeighted = 0;
+    for (const [key, tokens7d] of Object.entries(tokenTotals)) {
+      if (named.has(key)) {
+        out[key] = (rates[key] ?? 0) * factor;
+      } else {
+        overflowTokens += tokens7d;
+        overflowWeighted += tokens7d * (rates[key] ?? 0);
+      }
+    }
+    if (named.has(OTHERS_KEY) && overflowTokens > 0) {
+      out[OTHERS_KEY] = (overflowWeighted / overflowTokens) * factor;
+    }
+    return out;
+  }, [isSavings, dimension, range, customRange, cappedSeries]);
 
   // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
   // use fmtTokens directly under the tokens metric so the axis reads in
@@ -521,6 +570,7 @@ export function TrendCard({
         <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
           <TrendBreakdownPanel
             metric={metric}
+            savingsRates={savingsRates}
             series={cappedSeries}
             seriesTotals={cappedTotals}
           />
