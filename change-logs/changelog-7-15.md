@@ -25,3 +25,9 @@ Removed the Billing column (the `GATE` / `BYOK` badge) from the "Recent key usag
 **`src/pages/Security.tsx`**
 
 The Action-categories and Attack-categories cards above the Security events table sat in a fixed `grid grid-cols-2 gap-4` that never stacked. Made it mobile-first — `grid-cols-1` base, `lg:grid-cols-2` — so the two cards drop to a single column on smaller screens and return to side-by-side at `lg`+. Applied via `/impeccable adapt`.
+
+### Full-width ApiKeys, xl card stacking, Activity "Users" header `a629c9d`
+
+**`src/pages/ApiKeys.tsx`**, **`src/pages/Security.tsx`**, **`src/pages/Activity.tsx`**
+
+Three layout tweaks aligning on `xl` as the card-wrap breakpoint. ApiKeys: dropped the `xl:max-w-5xl` cap so the page fills the full 1920px width again, and set the two setup cards (Gate Connect + manual-setup tabs) to `xl:flex-row` so they sit side by side at `xl`+ and stack full-width (one per row, 24px gap) below. Security: raised the MiddleRow two-card grid stack point from `lg:grid-cols-2` to `xl:grid-cols-2` (the pair set by `de97fa7` earlier today). Activity: renamed the `UsageByKey` table header "Member" to "Users".
