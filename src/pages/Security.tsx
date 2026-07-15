@@ -383,7 +383,7 @@ function MiddleRow({
   customRange: CustomRange | null;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <ActionCategoriesCard customRange={customRange} range={range} />
       <AttackCategoriesCard customRange={customRange} range={range} />
     </div>
