@@ -482,11 +482,9 @@ function ConversationsTableSection({
           live here as page-level section controls, so they always render
           (a query that returns zero results never hides them). isEmpty
           governs only the Card interior below. */}
-        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3 sm:gap-0">
-          <SectionTitle className="sm:col-span-2">
-            Recent conversations
-          </SectionTitle>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-col gap-4">
+          <SectionTitle>Recent conversations</SectionTitle>
+          <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search conversations"
               className="min-w-0 flex-1"

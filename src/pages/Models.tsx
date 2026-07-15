@@ -23,7 +23,6 @@ import {
 import { CodePanel } from "@/components/ui/code-panel";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { InlineCode } from "@/components/ui/inline-code";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
@@ -314,32 +313,32 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           </TabsTrigger>
         </TabsList>
 
-        <Card density="flush">
-          {isEmpty ? null : (
-            <Toolbar
-              onProviderChange={(v) => {
-                setProvider(v);
-                resetToFirstPage();
-              }}
-              onSearchChange={(v) => {
-                setSearch(v);
-                resetToFirstPage();
-              }}
-              onSortChange={(v) => {
-                setSort(v);
-                resetToFirstPage();
-              }}
-              onVendorChange={(v) => {
-                setVendor(v);
-                resetToFirstPage();
-              }}
-              provider={provider}
-              search={search}
-              sort={sort}
-              vendor={vendor}
-            />
-          )}
+        {isEmpty ? null : (
+          <Toolbar
+            onProviderChange={(v) => {
+              setProvider(v);
+              resetToFirstPage();
+            }}
+            onSearchChange={(v) => {
+              setSearch(v);
+              resetToFirstPage();
+            }}
+            onSortChange={(v) => {
+              setSort(v);
+              resetToFirstPage();
+            }}
+            onVendorChange={(v) => {
+              setVendor(v);
+              resetToFirstPage();
+            }}
+            provider={provider}
+            search={search}
+            sort={sort}
+            vendor={vendor}
+          />
+        )}
 
+        <Card density="flush">
           {isEmpty ? (
             <TableEmptyState
               action={
@@ -427,9 +426,10 @@ function Toolbar({
   onSortChange: (v: string) => void;
 }) {
   return (
-    <FilterToolbar>
+    <div className="flex flex-wrap items-center gap-2">
       <SearchInput
         ariaLabel="Search models"
+        className="min-w-0 flex-1"
         name="model-search"
         onChange={onSearchChange}
         placeholder="Search by name or handle…"
@@ -493,8 +493,6 @@ function Toolbar({
         </SelectContent>
       </Select>
 
-      <div className="ml-auto" />
-
       <Select onValueChange={onSortChange} value={sort}>
         <SelectTrigger
           aria-label="Sort"
@@ -510,7 +508,7 @@ function Toolbar({
           <SelectItem value="largest-context">Largest context</SelectItem>
         </SelectContent>
       </Select>
-    </FilterToolbar>
+    </div>
   );
 }
 

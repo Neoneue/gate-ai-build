@@ -1,4 +1,4 @@
-import { Info, Key } from "lucide-react";
+import { Key } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   useNavigate,
@@ -25,17 +25,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -834,9 +828,9 @@ function UsageByKey({
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      <div className="grid grid-cols-3 items-center gap-4">
-        <SectionTitle className="col-span-2">Recent key usage</SectionTitle>
-        <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col gap-4">
+        <SectionTitle>Recent key usage</SectionTitle>
+        <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search keys"
             className="min-w-0 flex-1"
@@ -872,7 +866,7 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
@@ -891,47 +885,6 @@ function UsageByKey({
                   >
                     Member
                   </SortableTableHead>
-                  <TableHead className="w-20 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1">
-                      Billing
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={(props) => (
-                            <button
-                              {...props}
-                              aria-label="What's the difference between Gate and BYOK?"
-                              className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              type="button"
-                            />
-                          )}
-                        >
-                          <Info
-                            aria-hidden
-                            className="size-3.5"
-                            strokeWidth={2}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="flex flex-col gap-1">
-                            <div>
-                              <span className="font-medium font-mono text-foreground">
-                                Gate
-                              </span>
-                              {": "}debits the workspace prepaid Gateway
-                              balance.
-                            </div>
-                            <div>
-                              <span className="font-medium font-mono text-foreground">
-                                BYOK
-                              </span>
-                              {": "}bills the customer's own provider account
-                              directly; Gateway sees $0.
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </span>
-                  </TableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
                     numeric
@@ -1003,9 +956,6 @@ function UsageByKey({
                       <span className="type-copy-14 text-foreground">
                         {row.owner}
                       </span>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <Badge variant="outline">{row.path}</Badge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtInt(row.requests)}
