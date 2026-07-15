@@ -19,3 +19,9 @@ The five large-table section headers each laid their search + controls out diffe
 **`src/pages/Activity.tsx`**
 
 Removed the Billing column (the `GATE` / `BYOK` badge) from the "Recent key usage" table — header cell, per-row cell, and the now-unused `Info` / `Tooltip` / `TableHead` imports. Switched the `<Table>` to `table-fixed` so the eight remaining columns (Key, Member, Messages, Alerts, Tokens in, Tokens out, Saved, Spend) split evenly instead of pooling the full-width slack into the Member→Messages seam.
+
+### Security MiddleRow: stack the two category cards below `lg` `de97fa7`
+
+**`src/pages/Security.tsx`**
+
+The Action-categories and Attack-categories cards above the Security events table sat in a fixed `grid grid-cols-2 gap-4` that never stacked. Made it mobile-first — `grid-cols-1` base, `lg:grid-cols-2` — so the two cards drop to a single column on smaller screens and return to side-by-side at `lg`+. Applied via `/impeccable adapt`.
