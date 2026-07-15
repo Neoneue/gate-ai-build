@@ -205,12 +205,12 @@ export function EventsTableSection({
           page-level section controls, so they always render (a query that
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <SectionTitle>Recent events</SectionTitle>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search events"
-              className="min-w-0 flex-1 shrink"
+              className="min-w-0 flex-1"
               onChange={setQuery}
               placeholder="Search events…"
               surface="elevated"

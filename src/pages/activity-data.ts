@@ -1,4 +1,10 @@
 import { CHART_PALETTE } from "@/lib/chart-palette";
+import {
+  type CustomRange,
+  daysInRange,
+  type PresetRange,
+  type Range,
+} from "@/lib/range";
 
 export type Dimension = "model" | "provider" | "apiKey";
 
@@ -14,7 +20,88 @@ export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 // 0.18% + compression 14.0% ≈ 14.2%, both real product mechanisms, not a
 // flat estimate). Overview's Tokens Saved tile derives its dollar figure
 // from this rate × TOTAL_7D_BASE_DOLLARS so the two pages can't diverge.
+// Activity's Savings surfaces intentionally do NOT use this — they run on
+// the higher ACTIVITY_SAVINGS_* model below (product goal 20-25%), decoupled
+// per the 2026-07-14 call; TokenSavings + Overview stay at 14.2% for now.
 export const TOKEN_SAVINGS_RATE_7D = 0.142;
+
+// Activity savings model — the maturation story the trend chart's Savings
+// lens and the table's Saved column tell. Caching + compression matures
+// from a ~10% cold start toward a ~25% plateau; steady-state (recent) sits
+// near 24%. Per-range bounds drive a concave √ ramp (see savingsCurve): the
+// window MEAN = floor + (ceiling - floor) × 2/3, which savingsRateFor returns
+// so the Saved column and the chart reconcile.
+const SAVINGS_CURVE_BOUNDS: Record<
+  PresetRange,
+  { floor: number; ceiling: number }
+> = {
+  "24h": { floor: 24, ceiling: 25 }, // recent, plateaued — mean 24.7%
+  "7d": { floor: 23, ceiling: 25 }, // mean 24.3%
+  "30d": { floor: 22, ceiling: 25 }, // last month, mostly matured — mean 24.0%
+  all: { floor: 10, ceiling: 25 }, // full lifetime climb 10 → 25 — mean 20.0%
+};
+
+/** 7d reference rate for Activity's Saved column — the token-weighted mean of
+ *  API_KEY_ROWS.savings, and the divisor the per-range scaling hangs off. */
+export const ACTIVITY_SAVINGS_RATE_7D = 0.243;
+
+const curveBounds = (
+  range: Range,
+  customRange: CustomRange | null
+): { floor: number; ceiling: number } => {
+  if (range === "custom" && customRange) {
+    const days = daysInRange(customRange);
+    if (days <= 1) {
+      return SAVINGS_CURVE_BOUNDS["24h"];
+    }
+    if (days <= 7) {
+      return SAVINGS_CURVE_BOUNDS["7d"];
+    }
+    if (days <= 30) {
+      return SAVINGS_CURVE_BOUNDS["30d"];
+    }
+    return SAVINGS_CURVE_BOUNDS.all;
+  }
+  return SAVINGS_CURVE_BOUNDS[range === "custom" ? "7d" : range];
+};
+
+/** Workspace savings RATE (fraction) for the active range — the mean of the
+ *  maturation curve for that window. Custom ranges resolve by day span. */
+export function savingsRateFor(
+  range: Range,
+  customRange: CustomRange | null
+): number {
+  const { floor, ceiling } = curveBounds(range, customRange);
+  return (floor + ((ceiling - floor) * 2) / 3) / 100;
+}
+
+/** Per-bucket saved % across the active range — a concave √ ramp from the
+ *  window's floor to its ceiling (caching/compression maturing over time),
+ *  with seeded jitter for organic variation, clamped under the 30% cap. The
+ *  bucket mean equals savingsRateFor(range) × 100 by construction, so the
+ *  chart's average reconciles with the Saved column. */
+export function savingsCurve(
+  range: Range,
+  customRange: CustomRange | null,
+  count: number,
+  seed: number
+): number[] {
+  const { floor, ceiling } = curveBounds(range, customRange);
+  let s = (seed * 2_654_435_769) >>> 0 || 1;
+  const rand = () => {
+    s = (s * 1_664_525 + 1_013_904_223) >>> 0;
+    return s / 0xff_ff_ff_ff;
+  };
+  const span = ceiling - floor;
+  return Array.from({ length: count }, (_, i) => {
+    const t = count <= 1 ? 1 : i / (count - 1);
+    const base = floor + span * Math.sqrt(t);
+    // Jitter scales with the window span so flat recent windows stay tight
+    // and the long "all" ramp reads organic. Never exceed the 30% cap.
+    const jitter = (rand() - 0.5) * Math.min(span * 0.18, 2.2);
+    return +Math.min(29.5, Math.max(0, base + jitter)).toFixed(2);
+  });
+}
 
 /** ≤6 series per dimension. Model + provider stay fully enumerated (bounded
  * cardinality in MVP). API keys fall back to "top 5 + Other" since key
@@ -44,7 +131,7 @@ export const SPEND_SERIES: Record<
   apiKey: [
     { key: "prod-agent", label: "prod-agent", slot: 1 },
     { key: "prod-web", label: "prod-web", slot: 2 },
-    { key: "staging-web", label: "staging-web", slot: 3 },
+    { key: "design-agent", label: "design-agent", slot: 3 },
     { key: "atlas-eval", label: "atlas-eval", slot: 4 },
     { key: "development", label: "development", slot: 5 },
     { key: "ci-runner", label: "ci-runner", slot: 6 },
@@ -172,63 +259,63 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
     },
   ],
   // Per-key 7d sums match the Gate rows in API_KEY_ROWS:
-  // prod-agent 92.31, prod-web 90.00, staging-web 21.00, atlas-eval 20.00,
-  // dev 13.20, ci-runner 1.42. Total ≈ $238.
+  // prod-agent 92.31, prod-web 90.00, design-agent 21.00, atlas-eval 20.00,
+  // development 13.20, ci-runner 1.42. Total ≈ $238.
   apiKey: [
     {
       "prod-agent": 10.36,
       "prod-web": 10.29,
-      "staging-web": 2.53,
+      "design-agent": 2.53,
       "atlas-eval": 2.38,
-      dev: 1.72,
+      development: 1.72,
       "ci-runner": 0.16,
     },
     {
       "prod-agent": 11.93,
       "prod-web": 11.45,
-      "staging-web": 2.53,
+      "design-agent": 2.53,
       "atlas-eval": 2.38,
-      dev: 1.72,
+      development: 1.72,
       "ci-runner": 0.16,
     },
     {
       "prod-agent": 12.61,
       "prod-web": 12.39,
-      "staging-web": 2.9,
+      "design-agent": 2.9,
       "atlas-eval": 2.86,
-      dev: 1.72,
+      development: 1.72,
       "ci-runner": 0.16,
     },
     {
       "prod-agent": 13.06,
       "prod-web": 12.86,
-      "staging-web": 2.9,
+      "design-agent": 2.9,
       "atlas-eval": 2.86,
-      dev: 1.72,
+      development: 1.72,
       "ci-runner": 0.16,
     },
     {
       "prod-agent": 13.73,
       "prod-web": 13.32,
-      "staging-web": 3.26,
+      "design-agent": 3.26,
       "atlas-eval": 2.86,
-      dev: 1.72,
+      development: 1.72,
       "ci-runner": 0.16,
     },
     {
       "prod-agent": 14.63,
       "prod-web": 14.03,
-      "staging-web": 3.26,
+      "design-agent": 3.26,
       "atlas-eval": 3.33,
-      dev: 2.3,
+      development: 2.3,
       "ci-runner": 0.32,
     },
     {
       "prod-agent": 15.99,
       "prod-web": 15.66,
-      "staging-web": 3.62,
+      "design-agent": 3.62,
       "atlas-eval": 3.33,
-      dev: 2.3,
+      development: 2.3,
       "ci-runner": 0.32,
     },
   ],
@@ -331,15 +418,15 @@ export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
     TOTAL_7D_BASE_TOKENS
   ),
   // API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted Gate keys:
-  // prod-web 18_000_000, prod-agent 16_000_000, staging-web 4_200_000,
-  // atlas-eval 3_200_000, dev 2_200_000, ci-runner 850_000.
+  // prod-web 18_000_000, prod-agent 16_000_000, design-agent 4_200_000,
+  // atlas-eval 3_200_000, development 2_200_000, ci-runner 850_000.
   apiKey: rescaleToTotal(
     {
       "prod-agent": 16_000_000,
       "prod-web": 18_000_000,
-      "staging-web": 4_200_000,
+      "design-agent": 4_200_000,
       "atlas-eval": 3_200_000,
-      dev: 2_200_000,
+      development: 2_200_000,
       "ci-runner": 850_000,
     },
     TOTAL_7D_BASE_TOKENS
@@ -411,17 +498,26 @@ export type ApiKeyRow = {
   tokensIn: number;
   tokensOut: number;
   spend: number;
+  /** 7d Total-saved rate for the key (caching + compression, fraction).
+   *  Token-weighted mean across keys = ACTIVITY_SAVINGS_RATE_7D (24.3%), the
+   *  steady-state Activity savings goal. The Saved column and the trend
+   *  chart's Savings lens both hang off this; NOT tied to the TokenSavings
+   *  page's 14.2% (decoupled 2026-07-14). */
+  savings: number;
+  /** Mirrors the Keys page status — greys the row and is hidden by the
+   *  table's "Hide revoked" toggle when true. */
+  revoked?: boolean;
 };
 
 /** Five workspace keys — matches the canonical set used on Requests
- *  (prod-web, prod-agent, dev, byok-*) re-spun with the two BYOK slots
+ *  (prod-web, prod-agent, development, byok-*) re-spun with the two BYOK slots
  *  given product names (openclaw, hermes-agent). Sums reconcile with the
  *  7d KPI rail: $1,247.82 spend, 48,293 requests, 18.4M tokens.
  *
  *  Resulting top-5 leaders (only 5 keys, so all show):
- *  Spend  → prod-agent, prod-web, openclaw, hermes-agent, dev
- *  Requests  → prod-web, prod-agent, openclaw, dev, hermes-agent
- *  Tokens  → prod-web, prod-agent, openclaw, hermes-agent, dev */
+ *  Spend  → prod-agent, prod-web, openclaw, hermes-agent, development
+ *  Requests  → prod-web, prod-agent, openclaw, development, hermes-agent
+ *  Tokens  → prod-web, prod-agent, openclaw, hermes-agent, development */
 export const API_KEY_ROWS: ApiKeyRow[] = [
   {
     key: "prod-web",
@@ -432,6 +528,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 15_000_000,
     tokensOut: 3_000_000,
     spend: 90.0,
+    savings: 0.2563,
   },
   {
     key: "prod-agent",
@@ -442,6 +539,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 15_384_615,
     tokensOut: 615_385,
     spend: 92.31,
+    savings: 0.27,
   },
   {
     key: "openclaw",
@@ -452,6 +550,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 10_096_154,
     tokensOut: 403_846,
     spend: 0.0,
+    savings: 0.21,
   },
   {
     key: "hermes-agent",
@@ -462,6 +561,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 6_923_077,
     tokensOut: 276_923,
     spend: 0.0,
+    savings: 0.2,
   },
   {
     key: "development",
@@ -472,16 +572,18 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 1_650_000,
     tokensOut: 550_000,
     spend: 13.2,
+    savings: 0.235,
   },
   {
-    key: "staging-web",
-    label: "staging-web",
+    key: "design-agent",
+    label: "design-agent",
     owner: "Chad Ponticas",
     path: "Gate",
     requests: 13_000,
     tokensIn: 3_500_000,
     tokensOut: 700_000,
     spend: 21.0,
+    savings: 0.25,
   },
   {
     key: "ci-runner",
@@ -492,6 +594,8 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 708_333,
     tokensOut: 141_667,
     spend: 1.42,
+    savings: 0.19,
+    revoked: true,
   },
   {
     key: "nova-chat",
@@ -502,6 +606,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 5_416_667,
     tokensOut: 1_083_333,
     spend: 0.0,
+    savings: 0.225,
   },
   {
     key: "atlas-eval",
@@ -512,18 +617,56 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     tokensIn: 3_000_000,
     tokensOut: 200_000,
     spend: 20.0,
+    savings: 0.285,
+    revoked: true,
   },
+  // Matches the Keys page's revoked test-key (sk-gw-…255e): never used, so
+  // every usage figure is a real zero, not a scaled-down count.
   {
     key: "test-key",
     label: "test-key",
-    owner: "Mateus Silva",
+    owner: "Chad Ponticas",
     path: "BYOK",
-    requests: 2800,
-    tokensIn: 4_571_429,
-    tokensOut: 228_571,
+    requests: 0,
+    tokensIn: 0,
+    tokensOut: 0,
     spend: 0.0,
+    savings: 0,
+    revoked: true,
   },
 ];
+
+/** Per-series 7d Total-saved rates for the trend chart's Savings lens —
+ *  each series' OWN rate (what % of its tokens caching + compression save),
+ *  NOT its share of anything. apiKey derives from API_KEY_ROWS.savings so
+ *  the chart panel shows the same numbers as the table's Saved column;
+ *  model / provider are authored data like the per-key rates (cache-heavy
+ *  Haiku saves the most, long-context Opus the least). The chart normalizes
+ *  per-series contributions (token share × rate) so the stack total stays
+ *  anchored to savingsRateFor(range) regardless of these spreads. */
+export const SAVINGS_RATES_7D: Record<Dimension, Record<string, number>> = {
+  model: {
+    sonnet: 0.25,
+    gpt: 0.235,
+    gemini: 0.215,
+    opus: 0.19,
+    llama: 0.205,
+    haiku: 0.29,
+  },
+  provider: {
+    anthropic: 0.26,
+    openai: 0.235,
+    google: 0.22,
+    bedrock: 0.205,
+    openrouter: 0.2,
+  },
+  apiKey: Object.fromEntries(
+    SPEND_SERIES.apiKey.map((s) => [
+      s.key,
+      API_KEY_ROWS.find((k) => k.label === s.key)?.savings ?? 0,
+    ])
+  ),
+};
 
 /** Chart metric lens — shared by the trend chart and the top-by-axis selectors. */
 export type Metric = "tokens" | "spend";

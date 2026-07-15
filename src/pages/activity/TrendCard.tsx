@@ -24,12 +24,16 @@ import {
 } from "@/components/ui/select";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
+  ACTIVITY_SAVINGS_RATE_7D,
   type Dimension,
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
+  SAVINGS_RATES_7D,
   SPEND_SERIES,
   SPEND_TOTALS_7D,
+  savingsCurve,
+  savingsRateFor,
   seriesColor,
   TOKENS_TOTALS_7D,
 } from "@/pages/activity-data";
@@ -86,22 +90,48 @@ const TREND_CHART_TICK = {
   fill: "var(--muted-foreground)",
 } as const;
 
+/** Hoisted YAxis domain for the savings lens — % saved tops out at 30. */
+const SAVINGS_DOMAIN = [0, 30] as const;
+
+/** Trend-chart-only lens: the shared Tokens | Spend pair plus Savings —
+ *  percentage of tokens saved (caching + compression) over time. The Top
+ *  cards keep the plain Tokens | Spend METRIC_OPTIONS. */
+type TrendMetric = Metric | "savings";
+
+const TREND_METRIC_OPTIONS: { value: TrendMetric; label: string }[] = [
+  ...METRIC_OPTIONS,
+  { value: "savings", label: "Savings" },
+];
+
+const TREND_TITLE: Record<TrendMetric, string> = {
+  tokens: "Tokens over time",
+  spend: "Spend over time",
+  savings: "Savings over time",
+};
+
 /** Right-panel breakdown: renders up to 6 pre-sorted rows. Caller is
  *  responsible for sorting and injecting the synthetic "Others" entry. */
 function TrendBreakdownPanel({
   metric,
   series,
   seriesTotals,
+  savingsRates,
 }: {
-  metric: Metric;
+  metric: TrendMetric;
   series: readonly {
     key: string;
     label: string;
     slot: number;
     color?: string;
   }[];
-  /** Aggregated totals for this range — keyed by series key. */
+  /** Aggregated totals for this range — keyed by series key. Under the
+   *  savings lens these only drive the sort order; the displayed value
+   *  comes from savingsRates. */
   seriesTotals: Record<string, number>;
+  /** Savings lens only: each series' OWN saved rate for the range, as a
+   *  display percentage (14.7 -> "14.7%"). Same numbers as the table's
+   *  Saved column for the apiKey dimension. */
+  savingsRates?: Record<string, number>;
 }) {
   const isSpend = metric === "spend";
   const grandTotal =
@@ -117,8 +147,10 @@ function TrendBreakdownPanel({
 
         // Right-side value cluster: cumulative value · pct. Tokens in/out
         // live in the UsageByKey table below — duplicating the split here
-        // adds noise without information. Single shape for both metrics so
-        // toggling the lens doesn't reflow the panel.
+        // adds noise without information. Single shape for tokens/spend so
+        // toggling those lenses doesn't reflow the panel. Savings shows the
+        // series' own saved rate alone — a share column here would just
+        // echo the token split.
         return (
           <div
             className="flex min-w-0 items-center gap-2 rounded-xs px-2 py-1"
@@ -132,16 +164,22 @@ function TrendBreakdownPanel({
             <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
               {s.label}
             </span>
-            <div
-              className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
-              style={{ gridTemplateColumns: "9ch min-content 4ch" }}
-            >
-              <span className="text-right text-foreground">
-                {fmtValue(total)}
+            {metric === "savings" ? (
+              <span className="shrink-0 text-right font-mono text-foreground text-sm tabular-nums">
+                {`${(savingsRates?.[s.key] ?? 0).toFixed(1)}%`}
               </span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-right text-foreground">{pctStr}</span>
-            </div>
+            ) : (
+              <div
+                className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
+                style={{ gridTemplateColumns: "9ch min-content 4ch" }}
+              >
+                <span className="text-right text-foreground">
+                  {fmtValue(total)}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-right text-foreground">{pctStr}</span>
+              </div>
+            )}
           </div>
         );
       })}
@@ -162,9 +200,10 @@ export function TrendCard({
 }) {
   const [dimension, setDimension] = useState<Dimension>("model");
   // Local metric lens — independent from the other three surfaces.
-  const [metric, setMetric] = useState<Metric>("tokens");
+  const [metric, setMetric] = useState<TrendMetric>("tokens");
   const rawSeries = SPEND_SERIES[dimension];
   const isSpend = metric === "spend";
+  const isSavings = metric === "savings";
 
   const data = useMemo(() => {
     const count = getBucketCount(range, customRange);
@@ -188,6 +227,42 @@ export function TrendCard({
               ? 303
               : 99;
     const seriesBuckets: Record<string, number[]> = {};
+
+    // Savings lens: the stack total per bucket IS the workspace % saved for
+    // that bucket, following the maturation curve (savingsCurve) — a concave
+    // climb from the window's floor to its ~25% ceiling as caching/
+    // compression mature. Each series' segment is weighted by token share ×
+    // its OWN saved rate (SAVINGS_RATES_7D), normalized so segments still sum
+    // to the bucket total — a high-saving series carries more of the stack
+    // than its token share alone.
+    if (isSavings) {
+      const tokenTotals = TOKENS_TOTALS_7D[dimension];
+      const rates = SAVINGS_RATES_7D[dimension];
+      const weights: Record<string, number> = {};
+      for (const [key, tokens7d] of Object.entries(tokenTotals)) {
+        weights[key] = tokens7d * (rates[key] ?? 0);
+      }
+      const weightSum = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+      const pctBuckets = savingsCurve(
+        range,
+        customRange,
+        count,
+        rangeSeed * 31
+      );
+      for (const [key, weight] of Object.entries(weights)) {
+        seriesBuckets[key] = pctBuckets.map(
+          (pct) => (pct * weight) / weightSum
+        );
+      }
+      return Array.from({ length: count }, (_, i) => {
+        const row: Record<string, number | string> = { date: labels[i] ?? "" };
+        for (const [key, buckets] of Object.entries(seriesBuckets)) {
+          row[key] = buckets[i] ?? 0;
+        }
+        return row;
+      });
+    }
+
     let seedOffset = 0;
     for (const [key, total7d] of Object.entries(totals)) {
       seedOffset++;
@@ -207,7 +282,7 @@ export function TrendCard({
       }
       return row;
     });
-  }, [dimension, range, customRange, isSpend]);
+  }, [dimension, range, customRange, isSpend, isSavings]);
 
   /** Aggregate each raw series's total across all buckets in the active range.
    *  Derived from `data` so it's always in sync with what the chart shows. */
@@ -298,18 +373,50 @@ export function TrendCard({
     [cappedSeries]
   );
 
+  // Panel display under Savings: each series' OWN saved rate for the
+  // active range (same range scaling as the table's Saved column, so the
+  // apiKey dimension shows identical numbers). Others = token-weighted
+  // mean of the overflow keys it aggregates.
+  const savingsRates = useMemo<Record<string, number> | undefined>(() => {
+    if (!isSavings) {
+      return;
+    }
+    const factor =
+      (savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D) * 100;
+    const rates = SAVINGS_RATES_7D[dimension];
+    const tokenTotals = TOKENS_TOTALS_7D[dimension];
+    const named = new Set(cappedSeries.map((s) => s.key));
+    const out: Record<string, number> = {};
+    let overflowTokens = 0;
+    let overflowWeighted = 0;
+    for (const [key, tokens7d] of Object.entries(tokenTotals)) {
+      if (named.has(key)) {
+        out[key] = (rates[key] ?? 0) * factor;
+      } else {
+        overflowTokens += tokens7d;
+        overflowWeighted += tokens7d * (rates[key] ?? 0);
+      }
+    }
+    if (named.has(OTHERS_KEY) && overflowTokens > 0) {
+      out[OTHERS_KEY] = (overflowWeighted / overflowTokens) * factor;
+    }
+    return out;
+  }, [isSavings, dimension, range, customRange, cappedSeries]);
+
   // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
   // use fmtTokens directly under the tokens metric so the axis reads in
-  // "1 M" / "5 M" units that match the tooltip.
-  const valueFormatter = (v: number) =>
-    isSpend ? fmtUsd(v) : fmtTokens(Math.round(v));
+  // "1 M" / "5 M" units that match the tooltip; savings reads in "N.N%".
+  const valueFormatter = (v: number) => {
+    if (isSavings) {
+      return `${v.toFixed(1)}%`;
+    }
+    return isSpend ? fmtUsd(v) : fmtTokens(Math.round(v));
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {isSpend ? "Spend over time" : "Tokens over time"}
-        </CardTitle>
+        <CardTitle>{TREND_TITLE[metric]}</CardTitle>
         <CardDescription>
           Stacked by{" "}
           {DIMENSION_OPTIONS.find(
@@ -341,8 +448,8 @@ export function TrendCard({
             </Select>
             <SegmentedPill
               aria-label="Chart metric"
-              onValueChange={(v) => setMetric(v as Metric)}
-              options={METRIC_OPTIONS}
+              onValueChange={(v) => setMetric(v as TrendMetric)}
+              options={TREND_METRIC_OPTIONS}
               size="sm"
               value={metric}
             />
@@ -390,15 +497,23 @@ export function TrendCard({
               />
               <YAxis
                 axisLine={false}
-                // Spend ticks get a `$` prefix; token ticks use fmtTokens
-                // (compact "M"/"k") so the axis matches the tooltip rows.
+                // Savings caps the axis at 30% with `%` ticks; spend ticks
+                // get a `$` prefix; token ticks use fmtTokens (compact
+                // "M"/"k") so the axis matches the tooltip rows.
+                domain={isSavings ? SAVINGS_DOMAIN : undefined}
                 tick={TREND_CHART_TICK}
-                tickFormatter={(value: number) =>
-                  isSpend ? `$${value}` : fmtTokens(value)
-                }
+                tickFormatter={(value: number) => {
+                  if (isSavings) {
+                    return `${value}%`;
+                  }
+                  return isSpend ? `$${value}` : fmtTokens(value);
+                }}
                 tickLine={false}
                 tickMargin={4}
-                width={44}
+                // Auto-sizes to the rendered tick labels (recharts 3), so
+                // wide token ticks ("127.50M") never spill past the card
+                // padding and narrow ones ("30%", "$100") don't leave a gap.
+                width="auto"
               />
               <ChartTooltip
                 content={
@@ -406,7 +521,7 @@ export function TrendCard({
                     formatter={(value, name) => {
                       const cfg = chartConfig[name as string];
                       return (
-                        <div className="flex w-full items-center justify-between gap-3">
+                        <div className="flex w-full items-center justify-between gap-7">
                           <span className="flex items-center gap-1">
                             <span
                               aria-hidden
@@ -441,7 +556,7 @@ export function TrendCard({
                     isAnimationActive={false}
                     key={s.key}
                     radius={
-                      i === cappedSeries.length - 1 ? [2, 2, 0, 0] : undefined
+                      i === cappedSeries.length - 1 ? [1, 1, 0, 0] : undefined
                     }
                     stackId="spend"
                   />
@@ -455,6 +570,7 @@ export function TrendCard({
         <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
           <TrendBreakdownPanel
             metric={metric}
+            savingsRates={savingsRates}
             series={cappedSeries}
             seriesTotals={cappedTotals}
           />

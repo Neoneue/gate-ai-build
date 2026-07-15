@@ -217,12 +217,12 @@ export function RequestsTableSection({
           page-level section controls, so they always render (a query that
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <SectionTitle>Recent messages</SectionTitle>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search messages"
-            className="min-w-0 flex-1 shrink"
+            className="min-w-0 flex-1"
             placeholder="Search message…"
             surface="elevated"
           />

@@ -350,7 +350,7 @@ function StackedKpiChart({
             fill={seriesColor(s)}
             isAnimationActive={false}
             key={s.key}
-            radius={i === series.length - 1 ? [2, 2, 0, 0] : undefined}
+            radius={i === series.length - 1 ? [1, 1, 0, 0] : undefined}
             stackId="s"
           />
         ))}

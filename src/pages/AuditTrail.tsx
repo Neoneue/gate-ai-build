@@ -384,12 +384,12 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             lands on the 3rd KPI tile within ~one grid gap. Below md the
             controls drop onto their own row (grid-cols-1) so the row never
             crushes on narrow screens. */}
-        <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-12">
-          <SectionTitle className="md:col-span-8">Recent events</SectionTitle>
-          <div className="flex items-center gap-2 md:col-span-4">
+        <div className="flex flex-col gap-4">
+          <SectionTitle>Recent events</SectionTitle>
+          <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search audit events"
-              className="min-w-0 flex-1 shrink"
+              className="min-w-0 flex-1"
               onChange={setQuery}
               placeholder="Search events, users, hashes…"
               surface="elevated"

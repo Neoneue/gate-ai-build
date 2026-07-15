@@ -497,6 +497,7 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--primary` / `-foreground` | neutral-900 / white | neutral-200 / neutral-800 |
 | `--muted-foreground` | neutral-600 | neutral-300 |
 | `--border` | neutral-200 | white @ 10% |
+| `--border-active` (active-thumb hairline) | neutral-100 | neutral-800 (= thumb, invisible) |
 | `--input` | neutral-300 | white @ 15% |
 | `--ring` | neutral-400 | neutral-500 |
 | `--destructive` | danger-600 | danger-400 |
@@ -507,6 +508,8 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
 
 **`--surface-strong` (new token pair).** For surfaces intentionally dark in BOTH themes: hero chart card, code / terminal cards, dark tooltips, the connected-segment active pill. Utilities `bg-surface-strong` + `text-surface-strong-foreground`. Use this INSTEAD of raw `bg-neutral-900` / `text-white` whenever the dark surface is deliberate.
+
+**`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
 
 **Surface map (raw ramp → token), applied in the 2026-07-09 surface pass:**
 

@@ -24,6 +24,7 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { type CustomRange, type PresetRange, RANGE_OPTIONS } from "@/lib/range";
 import { EventsTableSection } from "@/pages/security/EventsTable";
 import {
+  ATTACK_MIX,
   buildEventsChartView,
   EVENT_MIX_TOTAL,
   type EventsRange,
@@ -401,14 +402,21 @@ type AttackCategory = {
 // Right card. Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt
 // injection, PII / PHI (combined, since PHI is medical PII), Credential
 // leak. No Content Policy / Encoding / Jailbreak buckets: we don't ship
-// those detectors yet, so don't show counts we can't back. These are a
-// 1× baseline mix; the card scales them proportionally to the range total
-// the same way the old model did (per-baseline-unit share of the total).
-const ATTACK_CATEGORIES: AttackCategory[] = [
-  { label: "PII / PHI", count: 8, color: "var(--color-chart-3)" },
-  { label: "Prompt injection", count: 5, color: "var(--color-chart-1)" },
-  { label: "Credential leak", count: 3, color: "var(--color-chart-4)" },
-];
+// those detectors yet, so don't show counts we can't back. Baseline units
+// come from the shared ATTACK_MIX (events-data.ts) — also the source for
+// Activity's "Top attack types" card — with the chart colors mapped here;
+// the card scales them proportionally to the range total the same way the
+// old model did (per-baseline-unit share of the total).
+const ATTACK_COLORS: Record<(typeof ATTACK_MIX)[number]["key"], string> = {
+  pii: "var(--color-chart-3)",
+  injection: "var(--color-chart-1)",
+  credential: "var(--color-chart-4)",
+};
+const ATTACK_CATEGORIES: AttackCategory[] = ATTACK_MIX.map((c) => ({
+  label: c.label,
+  count: c.units,
+  color: ATTACK_COLORS[c.key],
+}));
 
 // Static label + color metadata — counts are range-dependent and injected at
 // render time via useMemo.

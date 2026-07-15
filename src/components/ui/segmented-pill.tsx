@@ -80,8 +80,10 @@ export function SegmentedPill({
         className={cn(
           // Paper spec WW9-0: rounded-[4px], white, shadow #11141714 0 1 2.
           // The hardcoded shadow has been replaced with `shadow-xs`, which
-          // collapses to the same 1px/2px rgba(17,20,23) ramp.
-          "absolute top-0 left-0 rounded-xs bg-popover shadow-xs",
+          // collapses to the same 1px/2px rgba(17,20,23) ramp. The
+          // border-active hairline lifts the thumb off the track (subtle in
+          // light, a visible step in dark) so the active state reads.
+          "absolute top-0 left-0 rounded-xs border border-border-active bg-popover shadow-xs",
           indicator.ready ? "opacity-100" : "opacity-0",
           // Gate the slide behind reduced-motion; only enable the transition
           // once measured so the indicator never slides in from origin (0,0).

@@ -1,4 +1,4 @@
-import { Info, Key } from "lucide-react";
+import { Key } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   useNavigate,
@@ -19,22 +19,17 @@ import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
+import { Switch } from "@/components/ui/switch";
 import {
   SortableTableHead,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -47,14 +42,18 @@ import {
   type Range,
 } from "@/lib/range";
 import {
+  ACTIVITY_SAVINGS_RATE_7D,
   API_KEY_ROWS,
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
+  savingsRateFor,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
   TOTAL_7D_BASE_TOKENS,
 } from "@/pages/activity-data";
+import { attackTypeCounts } from "@/pages/security/events-data";
+import { TYPE_META } from "@/pages/security-data";
 import {
   fmtInt,
   fmtTokens,
@@ -448,18 +447,20 @@ type TopRow = {
   avatar: React.ReactNode;
 };
 
-function TopList({
+function TopList<T extends string>({
   title,
   subtitle,
   rows,
   metric,
+  options,
   onMetricChange,
 }: {
   title: string;
   subtitle: string;
   rows: TopRow[];
-  metric: Metric;
-  onMetricChange: (m: Metric) => void;
+  metric: T;
+  options: { value: T; label: string }[];
+  onMetricChange: (m: T) => void;
 }) {
   return (
     <Card density="flush">
@@ -472,8 +473,8 @@ function TopList({
         </div>
         <SegmentedPill
           aria-label="Chart metric"
-          onValueChange={(v) => onMetricChange(v as Metric)}
-          options={METRIC_OPTIONS}
+          onValueChange={(v) => onMetricChange(v as T)}
+          options={options}
           size="sm"
           value={metric}
         />
@@ -508,6 +509,34 @@ const KEY_AVATAR = (
   />
 );
 
+/* ─── Top attack types — Amount | Percent lens over the Security mix ────── */
+
+type AttackMetric = "amount" | "percent";
+
+const ATTACK_METRIC_OPTIONS: { value: AttackMetric; label: string }[] = [
+  { value: "amount", label: "Amount" },
+  { value: "percent", label: "Percent" },
+];
+
+/** Hoisted like KEY_AVATAR — icon + color per attack type, straight from
+ *  the Security events table's TYPE_META mapping (PII/PHI merged). */
+const attackAvatar = (kind: "pii" | "injection" | "credential") => {
+  const { Icon, color } = TYPE_META[kind];
+  return (
+    <Icon
+      aria-hidden
+      className="size-4 shrink-0"
+      strokeWidth={1.75}
+      style={{ color }}
+    />
+  );
+};
+const ATTACK_AVATARS: Record<string, React.ReactNode> = {
+  pii: attackAvatar("pii"),
+  injection: attackAvatar("injection"),
+  credential: attackAvatar("credential"),
+};
+
 function TopByAxisRow({
   range,
   customRange,
@@ -517,10 +546,11 @@ function TopByAxisRow({
 }) {
   const scale = effectiveScale(range, customRange);
 
-  // Each card owns its own metric lens — no shared state across the three.
+  // Each card owns its own metric lens — no shared state across the four.
   const [modelMetric, setModelMetric] = useState<Metric>("tokens");
   const [keyMetric, setKeyMetric] = useState<Metric>("tokens");
   const [userMetric, setUserMetric] = useState<Metric>("tokens");
+  const [attackMetric, setAttackMetric] = useState<AttackMetric>("amount");
 
   // Spend → fmtUsd, with 2dp scaled values; tokens → fmtTokens (compact
   // "M"/"k") on rounded integers. Each card computes from its own metric.
@@ -609,14 +639,37 @@ function TopByAxisRow({
       }));
   }, [scale, userMetric]);
 
+  // Counts come from the shared Security attack mix (attackTypeCounts), so
+  // this card and Security's Attack-types card show the SAME integers for
+  // every range. Percent = each type's share of the attack-type sum,
+  // derived from those rounded counts.
+  const attackRows: TopRow[] = useMemo(() => {
+    const counts = attackTypeCounts(range, customRange);
+    const totalCount = counts.reduce((a, c) => a + c.count, 0) || 1;
+    return counts.map((c) => ({
+      rowKey: c.key,
+      label: c.label,
+      value:
+        attackMetric === "percent"
+          ? `${((100 * c.count) / totalCount).toFixed(1)}%`
+          : fmtInt(c.count),
+      avatar: ATTACK_AVATARS[c.key],
+    }));
+  }, [range, customRange, attackMetric]);
+
   const subtitleFor = (m: Metric) =>
     m === "spend" ? "By total spend" : "By total tokens used";
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    // 2×2 below 2xl: the tightest card (Top attack types title + its
+    // Amount|Percent pill) needs ~316px, which a 4-up row only clears
+    // above a ~1424px viewport — 2xl (1536) is the nearest breakpoint
+    // that never squeezes the headers.
+    <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
       <TopList
         metric={modelMetric}
         onMetricChange={setModelMetric}
+        options={METRIC_OPTIONS}
         rows={modelRows}
         subtitle={subtitleFor(modelMetric)}
         title="Top models"
@@ -624,6 +677,7 @@ function TopByAxisRow({
       <TopList
         metric={keyMetric}
         onMetricChange={setKeyMetric}
+        options={METRIC_OPTIONS}
         rows={keyRows}
         subtitle={subtitleFor(keyMetric)}
         title="Top API keys"
@@ -631,9 +685,22 @@ function TopByAxisRow({
       <TopList
         metric={userMetric}
         onMetricChange={setUserMetric}
+        options={METRIC_OPTIONS}
         rows={userRows}
         subtitle={subtitleFor(userMetric)}
         title="Top users"
+      />
+      <TopList
+        metric={attackMetric}
+        onMetricChange={setAttackMetric}
+        options={ATTACK_METRIC_OPTIONS}
+        rows={attackRows}
+        subtitle={
+          attackMetric === "percent"
+            ? "By total attack percentage"
+            : "By total attack amount"
+        }
+        title="Top attack types"
       />
     </div>
   );
@@ -650,6 +717,10 @@ type ScaledKeyRow = (typeof API_KEY_ROWS)[number] & {
   requests: number;
   tokensIn: number;
   tokensOut: number;
+  alerts: number;
+  /** Saved % for the active range (display value, e.g. 14.7). Null when
+   *  the key was never used — renders "—" and sorts last. */
+  saved: number | null;
 };
 
 function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
@@ -660,6 +731,8 @@ function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
       return row.owner;
     case "requests":
       return parseNumeric(row.requests);
+    case "alerts":
+      return parseNumeric(row.alerts);
     case "tokensIn":
       return parseNumeric(row.tokensIn);
     case "tokensOut":
@@ -667,6 +740,9 @@ function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
     // BYOK has no Gateway spend ("—") → null so those rows sort last.
     case "spend":
       return row.path === "BYOK" ? null : parseNumeric(row.spend);
+    // Never-used keys have no savings ("—") → null so they sort last.
+    case "saved":
+      return row.saved;
     default:
       return null;
   }
@@ -683,6 +759,7 @@ function UsageByKey({
   // (key=null) preserves API_KEY_ROWS' authored order.
   const { sort, toggle: toggleSort } = useTableSort();
   const [query, setQuery] = useState("");
+  const [hideRevoked, setHideRevoked] = useState(true);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("10");
 
@@ -692,7 +769,7 @@ function UsageByKey({
   // ranking — possibly past the last page. Rows-per-page already resets
   // inside TablePaginationFooter.
   const [prevResetKey, setPrevResetKey] = useState("");
-  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort.key}|${sort.dir}|${query}`;
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${sort.key}|${sort.dir}|${query}|${hideRevoked}`;
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setPage(1);
@@ -700,25 +777,40 @@ function UsageByKey({
 
   const scaledRows = useMemo<ScaledKeyRow[]>(() => {
     const scale = effectiveScale(range, customRange);
-    return API_KEY_ROWS.map((k) => ({
-      ...k,
-      spend: +(k.spend * scale).toFixed(2),
-      requests: Math.round(k.requests * scale),
-      tokensIn: Math.round(k.tokensIn * scale),
-      tokensOut: Math.round(k.tokensOut * scale),
-    }));
+    // Savings is a rate, not a volume — per-key values shift with the
+    // range's workspace rate (savingsRateFor), not with effectiveScale.
+    const savingsScale =
+      savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D;
+    return API_KEY_ROWS.map((k) => {
+      const requests = Math.round(k.requests * scale);
+      return {
+        ...k,
+        spend: +(k.spend * scale).toFixed(2),
+        requests,
+        tokensIn: Math.round(k.tokensIn * scale),
+        tokensOut: Math.round(k.tokensOut * scale),
+        // Placeholder rate until per-key alert data exists: alerts run at
+        // 1/8th of the key's message count, so the column tracks the range
+        // selector through `requests`.
+        alerts: Math.round(requests / 8),
+        saved: k.requests === 0 ? null : k.savings * savingsScale * 100,
+      };
+    });
   }, [range, customRange]);
 
   const searchedRows = useMemo(() => {
+    const base = hideRevoked
+      ? scaledRows.filter((r) => !r.revoked)
+      : scaledRows;
     const q = query.trim().toLowerCase();
     if (!q) {
-      return scaledRows;
+      return base;
     }
-    return scaledRows.filter(
+    return base.filter(
       (r) =>
         r.label.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q)
     );
-  }, [scaledRows, query]);
+  }, [scaledRows, query, hideRevoked]);
 
   // Sort AFTER filtering, BEFORE the pagination slice.
   const filteredRows = useMemo(
@@ -736,9 +828,9 @@ function UsageByKey({
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      <div className="grid grid-cols-3 items-center gap-4">
-        <SectionTitle className="col-span-2">Recent key usage</SectionTitle>
-        <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col gap-4">
+        <SectionTitle>Recent key usage</SectionTitle>
+        <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search keys"
             className="min-w-0 flex-1"
@@ -751,6 +843,19 @@ function UsageByKey({
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
+          <span className="flex shrink-0 items-center gap-2">
+            <span
+              className="type-label-14 whitespace-nowrap text-muted-foreground"
+              id="hide-revoked-label"
+            >
+              Hide revoked
+            </span>
+            <Switch
+              aria-labelledby="hide-revoked-label"
+              checked={hideRevoked}
+              onCheckedChange={setHideRevoked}
+            />
+          </span>
         </div>
       </div>
       <Card density="flush" id="usage-by-key">
@@ -761,7 +866,7 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
@@ -780,47 +885,6 @@ function UsageByKey({
                   >
                     Member
                   </SortableTableHead>
-                  <TableHead className="whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1">
-                      Billing
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={(props) => (
-                            <button
-                              {...props}
-                              aria-label="What's the difference between Gate and BYOK?"
-                              className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              type="button"
-                            />
-                          )}
-                        >
-                          <Info
-                            aria-hidden
-                            className="size-3.5"
-                            strokeWidth={2}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="flex flex-col gap-1">
-                            <div>
-                              <span className="font-medium font-mono text-foreground">
-                                Gate
-                              </span>
-                              {": "}debits the workspace prepaid Gateway
-                              balance.
-                            </div>
-                            <div>
-                              <span className="font-medium font-mono text-foreground">
-                                BYOK
-                              </span>
-                              {": "}bills the customer's own provider account
-                              directly; Gateway sees $0.
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </span>
-                  </TableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
                     numeric
@@ -829,6 +893,15 @@ function UsageByKey({
                     sortKey="requests"
                   >
                     Messages
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="alerts"
+                  >
+                    Alerts
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
@@ -853,6 +926,15 @@ function UsageByKey({
                     numeric
                     onSort={toggleSort}
                     sort={sort}
+                    sortKey="saved"
+                  >
+                    Saved
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="whitespace-nowrap"
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
                     sortKey="spend"
                   >
                     Spend
@@ -863,24 +945,43 @@ function UsageByKey({
                 {pageRows.map((row) => (
                   <TableRow className="hover:bg-transparent" key={row.key}>
                     <TableCell className="whitespace-nowrap font-mono">
-                      <span className="text-foreground">{row.label}</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-foreground">{row.label}</span>
+                        {row.revoked ? (
+                          <Badge variant="neutral">Revoked</Badge>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <span className="type-copy-14 text-foreground">
                         {row.owner}
                       </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <Badge variant="outline">{row.path}</Badge>
-                    </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtInt(row.requests)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {fmtInt(row.alerts)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtTokens(row.tokensIn)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {fmtTokens(row.tokensOut)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                      {row.saved === null ? (
+                        <>
+                          <span aria-hidden className="text-muted-foreground">
+                            —
+                          </span>
+                          <span className="sr-only">
+                            No savings (never used)
+                          </span>
+                        </>
+                      ) : (
+                        `${row.saved.toFixed(1)}%`
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
                       {row.path === "BYOK" ? (
