@@ -192,7 +192,7 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      <div className="flex w-full flex-col gap-6">
         <PageHeader
           onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
         />
@@ -373,10 +373,10 @@ export function UsageInfo() {
         </p>
       </div>
 
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) on top,
-          the manual-setup code tabs (no Gate Connect tab) below.
-          Stacked full-width with a 24px gap, one card per row. */}
-      <div className="flex flex-col gap-6">
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) and the
+          manual-setup code tabs (no Gate Connect tab). Side by side at xl+,
+          stacked full-width (one card per row, 24px gap) below xl. */}
+      <div className="flex flex-col gap-6 xl:flex-row">
         {/* Each card gets an Eyebrow label above it (outside the card, so no
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no

@@ -883,7 +883,7 @@ function UsageByKey({
                     sort={sort}
                     sortKey="owner"
                   >
-                    Member
+                    Users
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
