@@ -6,6 +6,10 @@
           {
             "command": "npm run fix -- --skip=correctness/noUnusedImports",
             "type": "command"
+          },
+          {
+            "command": "out=$(node scripts/check-design-tokens.mjs 2>&1) || { printf '%s\\n' \"$out\" >&2; echo '^ DESIGN-TOKEN VIOLATION (design.md is the authority): tokenize the value(s) above per design.md. No hardcoded colors, no text-[Npx]. Fix before continuing.' >&2; exit 2; }",
+            "type": "command"
           }
         ],
         "matcher": "Write|Edit"

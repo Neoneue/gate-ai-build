@@ -7,13 +7,7 @@ import {
 } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -181,7 +175,7 @@ export function Dashboard() {
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />
@@ -194,7 +188,7 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-1/2 flex-col gap-2">
+    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
       <PageTitle>Overview</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
@@ -390,7 +384,7 @@ function DimSelector({
     <Select onValueChange={(v) => onDimChange(v as Dimension)} value={dim}>
       <SelectTrigger
         className="border-border bg-card font-normal text-foreground"
-        size="sm"
+        size="lg"
       >
         <SelectValue />
       </SelectTrigger>
@@ -482,20 +476,20 @@ function OverviewUsageChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardAction>
-          <div className="flex items-center gap-2">
-            <DimSelector dim={dim} onDimChange={handleDimChange} />
-            <SegmentedPill
-              aria-label="Chart metric"
-              onValueChange={(v) => handleMetricChange(v as Metric)}
-              options={OVERVIEW_METRIC_OPTIONS}
-              size="sm"
-              value={metric}
-            />
-          </div>
-        </CardAction>
+      <CardHeader className="flex xs:flex-row flex-col items-start xs:items-center xs:justify-between gap-2">
+        <CardTitle className="type-heading-18 lg:type-heading-16">
+          {title}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          <DimSelector dim={dim} onDimChange={handleDimChange} />
+          <SegmentedPill
+            aria-label="Chart metric"
+            onValueChange={(v) => handleMetricChange(v as Metric)}
+            options={OVERVIEW_METRIC_OPTIONS}
+            size="default"
+            value={metric}
+          />
+        </div>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* chart — col-span-8 */}
@@ -508,7 +502,7 @@ function OverviewUsageChart() {
           />
         </div>
         {/* breakdown panel — col-span-4 */}
-        <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
+        <div className="border-border border-t pt-4 md:col-span-4 md:border-t-0 md:border-l md:pt-0 md:pl-3">
           <div className="flex flex-col gap-1">
             {series.map((s) => {
               const total = seriesTotals[s.key] ?? 0;
@@ -552,7 +546,7 @@ function OverviewUsageChart() {
 
 function TokenSavingsStrip() {
   return (
-    <KpiRail columns={3}>
+    <KpiRail className="sm:grid-cols-1 lg:grid-cols-3" columns={3}>
       <CompactKpi
         delta="+8.2%"
         deltaNote="vs last week"

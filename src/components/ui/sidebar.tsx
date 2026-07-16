@@ -84,7 +84,7 @@ export function Sidebar({
       aria-label="Primary navigation"
       className={cn(
         "relative shrink-0 overflow-hidden border-border border-r bg-card transition-[width] duration-300 motion-reduce:transition-none",
-        expanded ? "w-60" : "w-16"
+        expanded ? "w-66" : "w-16"
       )}
       style={{ transitionTimingFunction: "var(--ease-drawer)" }}
     >
@@ -210,7 +210,34 @@ function SidebarCollapsed({
 
 /* ─── Expanded (240px full nav) ─────────────────────────────────────────── */
 
-function SidebarExpanded({
+export interface SidebarPanelProps {
+  activeId: string;
+  brand?: React.ReactNode;
+  onNavigate?: (pageId: string) => void;
+  overviewPath?: string;
+  sections: SidebarSection[];
+  showLocks?: boolean;
+  /** Optional node rendered above the nav sections (below the brand header).
+   *  Used by the mobile drawer to host the workspace switcher above Overview
+   *  at the compact `xs` breakpoint. */
+  topSlot?: React.ReactNode;
+  userArea?: React.ReactNode;
+}
+
+/* Desktop expanded rail: the shared panel pinned at the 240px sidebar width. */
+function SidebarExpanded(props: SidebarPanelProps) {
+  return (
+    <div className="h-full w-66 shrink-0">
+      <SidebarPanel {...props} />
+    </div>
+  );
+}
+
+/* SidebarPanel — brand + nav + user area. Shared verbatim by the desktop
+ * expanded rail and the mobile nav Sheet (DashboardChrome) so the two never
+ * drift. Fills its container width (w-full); the consumer owns the width
+ * (w-66 for the desktop rail, the Sheet width on mobile). */
+export function SidebarPanel({
   sections,
   activeId,
   onNavigate,
@@ -218,25 +245,20 @@ function SidebarExpanded({
   brand,
   userArea,
   showLocks,
-}: {
-  sections: SidebarSection[];
-  activeId: string;
-  onNavigate?: (pageId: string) => void;
-  overviewPath?: string;
-  brand?: React.ReactNode;
-  userArea?: React.ReactNode;
-  showLocks?: boolean;
-}) {
+  topSlot,
+}: SidebarPanelProps) {
   const onLogoClick = overviewPath
     ? () => onNavigate?.(overviewPath)
     : undefined;
   return (
-    <div className="flex h-full w-60 shrink-0 flex-col">
+    <div className="flex h-full w-full flex-col">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-border border-b px-4">
         {brand ?? <DefaultBrand onLogoClick={onLogoClick} />}
       </div>
+
+      {topSlot}
 
       {/* Nav sections */}
       <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pt-3 pb-6">
@@ -297,7 +319,7 @@ function SidebarExpanded({
       </nav>
 
       {/* Bottom user area */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-3">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-4">
         {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
       </div>
     </div>

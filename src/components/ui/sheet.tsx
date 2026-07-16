@@ -1,14 +1,16 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { cva } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /* ─── Sheet ───────────────────────────────────────────────────────────────
- * Right-docked drawer for inspection workflows (row drill-ins, detail
- * panels). Built on the same `@base-ui/react/dialog` primitive that the
+ * Docked drawer built on the same `@base-ui/react/dialog` primitive that the
  * Dialog wrap uses, so focus management, escape-to-close, scroll-lock,
- * and aria wiring come for free.
+ * and aria wiring come for free. `SheetContent` takes a shadcn-style `side`
+ * prop (top/right/bottom/left, default right) — right/left for inspection
+ * workflows (row drill-ins, detail panels), top/bottom for mobile menus.
  *
  * Why a separate primitive instead of a `position` prop on Dialog:
  *   - Visual ladder is different. Centered modals are surface-floated
@@ -62,13 +64,41 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   );
 }
 
+/* sheetVariants — shadcn `side` API (top/right/bottom/left, default right),
+ * ported onto Base UI + tw-animate. Shared base holds the surface tokens and
+ * the enter/exit timing (300ms enter / 200ms exit, `will-change-transform` for
+ * a dedicated compositor layer, motion-reduce gate). Each `side` sets its
+ * viewport anchor, the border on the docked edge, and the matching
+ * tw-animate slide keyframe. No corner radius: a docked panel meets the
+ * viewport edge, so rounding reads as a disconnected card. Width/height for
+ * left/right default to `w-full sm:max-w-2xl` (wide inspector rail); top/bottom
+ * are content-height, full width. Tighten per call site via `className`. */
+const sheetVariants = cva(
+  "fixed z-50 flex flex-col gap-6 overscroll-contain border-border bg-card p-4 text-foreground text-sm shadow-(--shadow-modal) outline-none duration-300 ease-out will-change-transform data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 motion-reduce:animate-none motion-reduce:duration-0",
+  {
+    defaultVariants: { side: "right" },
+    variants: {
+      side: {
+        top: "data-open:slide-in-from-top data-closed:slide-out-to-top inset-x-0 top-0 w-full border-b",
+        bottom:
+          "data-open:slide-in-from-bottom data-closed:slide-out-to-bottom inset-x-0 bottom-0 w-full border-t",
+        left: "data-open:slide-in-from-left data-closed:slide-out-to-left inset-y-0 left-0 w-full border-r sm:max-w-2xl",
+        right:
+          "data-open:slide-in-from-right data-closed:slide-out-to-right inset-y-0 right-0 w-full border-l sm:max-w-2xl",
+      },
+    },
+  }
+);
+
 function SheetContent({
   className,
   children,
   showCloseButton = true,
+  side = "right",
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
 }) {
   // Dev-only guard: Base UI wires `aria-labelledby` from <SheetTitle> onto
   // the popup, so a missing title leaves the dialog unnamed for AT. CMP-013
@@ -89,29 +119,7 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Popup
-        className={cn(
-          // Anchoring: full viewport height, flush against the right edge.
-          // No rounded corners — the right edge is the viewport edge, and
-          // rounding the left edge while the right edge is anchored reads
-          // as a disconnected card rather than a docked panel.
-          // Default gap-6 (24px) between header / body / footer — sheets are
-          // wider inspector surfaces than centered modals (which ship gap-4),
-          // so the section rhythm wants more air. Tightening at the call
-          // site is allowed via `className` override.
-          "fixed inset-y-0 right-0 z-50 flex w-full flex-col gap-6 overscroll-contain border-border border-l bg-card p-4 text-foreground text-sm shadow-(--shadow-modal) outline-none sm:max-w-2xl",
-          // Slide animation. Uses tw-animate keyframes (same plugin Dialog
-          // uses for fade-in/zoom-in) — NOT a CSS `transition-transform`.
-          // Mixing tw-animate keyframes for the backdrop with CSS transitions
-          // for the panel runs them on different schedulers and reads as
-          // choppy. Using tw-animate for both keeps the slide and the dim
-          // synced. 300ms is longer than Dialog's 200ms because the slide
-          // distance (640px across) is bigger than a center zoom; matches
-          // shadcn Sheet's open duration. `will-change-transform` keeps the
-          // panel on its own compositor layer so the GPU doesn't allocate
-          // mid-slide.
-          "data-open:slide-in-from-right data-closed:slide-out-to-right duration-300 ease-out will-change-transform data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 motion-reduce:animate-none motion-reduce:duration-0",
-          className
-        )}
+        className={cn(sheetVariants({ side }), className)}
         data-slot="sheet-content"
         ref={popupRef}
         {...props}
@@ -123,7 +131,7 @@ function SheetContent({
             render={
               <Button
                 className="absolute top-2 right-2"
-                size="icon-sm"
+                size="icon-lg"
                 variant="ghost"
               />
             }

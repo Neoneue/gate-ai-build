@@ -1056,15 +1056,17 @@ Copy is part of the design: precise, plain, no marketing superlatives. This is a
 
 The product targets desktop-first operator workflows; no mobile-shipped state today. Composed pages (`src/pages/*`) are responsive but tuned for ≥1280px. **Mobile not observed in the current state — flagged TBD.**
 
-### Breakpoints (Tailwind v4 defaults — no overrides in `@theme`)
+### Breakpoints (Tailwind v4 defaults + custom `xs` / `3xl` in `@theme`)
 
 | Name | Width | Key Changes |
 | --- | --- | --- |
+| xs | 450px | Custom (`--breakpoint-xs`). Compact-mobile chrome line: card-header toolbars stack below their title; the workspace switcher moves into the hamburger menu (above the nav) and the top bar shows the logomark in its place. |
 | sm | 640px | (no specific overrides) |
-| md | 768px | (no specific overrides) |
-| lg | 1024px | Outer page padding `lg:p-6` (24px) |
-| xl | 1280px | Composed-page target |
+| md | 768px | Sidebar ↔ hamburger switch: below `md` the rail is hidden and nav moves into a right-docked Sheet drawer; `md+` shows the persistent sidebar. |
+| lg | 1024px | Outer page padding `lg:p-6` (24px). Overview KPI row goes 3-up. |
+| xl | 1280px | Composed-page target. Overview preview tables go 3-up (card-wrap standard). |
 | 2xl | 1536px | Composed-page comfortable |
+| 3xl | 1920px | Custom (`--breakpoint-3xl`). Band above the 1536 content lock. |
 
 ### Touch Targets
 
