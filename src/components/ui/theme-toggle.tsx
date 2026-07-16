@@ -22,7 +22,7 @@ export function ThemeToggle() {
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       className="text-muted-foreground hover:text-foreground"
       onClick={toggle}
-      size="icon"
+      size="icon-lg"
       variant="ghost"
     >
       <span className="relative inline-flex size-4 items-center justify-center">

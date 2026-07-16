@@ -13,7 +13,7 @@ import { Segmented } from "@/components/ui/segmented";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * NotificationsMenu — top-bar bell dropdown. Follows the user-menu pattern:
- * takes the bell <Button> as `children` and wraps it as the PopoverTrigger
+ * takes the bell <Button size="lg"> as `children` and wraps it as the PopoverTrigger
  * via the `render` prop. Built on our Popover, so it inherits the standard
  * dropdown enter/exit animation + the `data-closed:fill-mode-forwards`
  * flicker fix automatically (no hand-rolled animation).

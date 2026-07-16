@@ -150,7 +150,7 @@ function DashTopBar({
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
           className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground md:inline-flex"
           onClick={onToggleSidebar}
-          size="icon"
+          size="icon-lg"
           variant="ghost"
         >
           {/* Contextual icon cross-fade. Both icons stay in DOM,
@@ -198,7 +198,7 @@ function DashTopBar({
       <div className="flex items-center gap-2">
         <ThemeToggle />
         {hideDocsButton ? null : (
-          <Button size="default" variant="outline">
+          <Button size="lg" variant="outline">
             Docs
             <ExternalLinkIcon
               aria-hidden
@@ -263,7 +263,7 @@ function MobileNav({
           <Button
             aria-label="Open navigation menu"
             className="md:hidden"
-            size="icon"
+            size="icon-lg"
             variant="outline"
           />
         }

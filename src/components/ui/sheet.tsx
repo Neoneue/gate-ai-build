@@ -179,7 +179,7 @@ function SheetFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
+        <DialogPrimitive.Close render={<Button size="lg" variant="outline" />}>
           Close
         </DialogPrimitive.Close>
       )}

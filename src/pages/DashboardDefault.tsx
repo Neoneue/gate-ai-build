@@ -376,7 +376,7 @@ export function DownloadGateConnectDialog({
     >
       <DialogTrigger
         render={
-          <Button>
+          <Button size="lg">
             <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}
             Download Gate Connect
           </Button>
@@ -514,6 +514,7 @@ export function DownloadGateConnectDialog({
               onDownload?.();
               setOpen(false);
             }}
+            size="lg"
           >
             <Download className="size-4" data-icon="inline-start" /> Download
             for {spec.label}
@@ -621,7 +622,7 @@ export function HeroCard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/api-keys")}>
+            <Button onClick={() => navigate("/api-keys")} size="lg">
               <Plus
                 className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
                 data-icon="inline-start"
@@ -636,6 +637,7 @@ export function HeroCard() {
                   "noopener,noreferrer"
                 )
               }
+              size="lg"
               variant="outline"
             >
               Read API docs{" "}

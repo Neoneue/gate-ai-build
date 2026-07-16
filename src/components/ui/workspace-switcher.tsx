@@ -1,6 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import {
   isDefaultSurface,
@@ -9,7 +10,6 @@ import {
   toFreePath,
   toProPath,
 } from "@/lib/plan";
-import { cn } from "@/lib/utils";
 
 /* Workspace switcher — top-bar scope chrome. The trigger shows the workspace
  * name + current-tier badge. The dropdown lists all three tiers, each with
@@ -30,15 +30,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
   return (
     <Menu>
       <MenuTrigger
-        render={
-          <button
-            className={cn(
-              "inline-flex h-10 items-center gap-2 rounded-sm border border-border bg-card pr-2 pl-3 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-accent focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] aria-expanded:bg-accent motion-reduce:transition-none motion-reduce:active:scale-100",
-              className
-            )}
-            type="button"
-          />
-        }
+        render={<Button className={className} size="lg" variant="outline" />}
       >
         <span className="type-copy-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>

@@ -258,7 +258,7 @@ export function ApiKeys() {
 export function CreateKeyButton({
   onClick,
   children = "Create key",
-  size,
+  size = "lg",
   disabled,
 }: {
   onClick: () => void;
@@ -308,7 +308,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           <CreateKeyButton onClick={onCreate}>
             Create your first key
           </CreateKeyButton>
-          <Button onClick={openDocs} variant="outline">
+          <Button onClick={openDocs} size="lg" variant="outline">
             <BookOpen aria-hidden data-icon="inline-start" />
             Read the quickstart
           </Button>
@@ -548,7 +548,9 @@ function KeysTable({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
             <Button
@@ -558,6 +560,7 @@ function KeysTable({
                 }
                 setPendingRevoke(null);
               }}
+              size="lg"
               type="button"
               variant="destructive"
             >
@@ -661,6 +664,7 @@ export function CreateKeyDialog({
               render={
                 <Button
                   onClick={() => onCancel?.()}
+                  size="lg"
                   type="button"
                   variant="outline"
                 />
@@ -668,7 +672,12 @@ export function CreateKeyDialog({
             >
               Cancel
             </DialogClose>
-            <Button disabled={!isValid} type="submit" variant="default">
+            <Button
+              disabled={!isValid}
+              size="lg"
+              type="submit"
+              variant="default"
+            >
               Create key
             </Button>
           </DialogFooter>
@@ -783,7 +792,12 @@ export function KeyCreatedDialog({
         <DialogFooter>
           <DialogClose
             render={
-              <Button disabled={!saved} type="button" variant="default" />
+              <Button
+                disabled={!saved}
+                size="lg"
+                type="button"
+                variant="default"
+              />
             }
           >
             Done

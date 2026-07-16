@@ -52,7 +52,7 @@ export function TeamDefault() {
               Ponticas&rsquo;s workspace.
             </p>
           </div>
-          <Button size="default" variant="default">
+          <Button size="lg" variant="default">
             <UserPlus aria-hidden data-icon="inline-start" />
             Invite member
           </Button>

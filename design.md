@@ -262,7 +262,7 @@ spacing:
   # Compound tier — within a primitive's row/group, between icon + label,
   # badge + text, label + control — any n × 4 is legal:
   "1":  "4px"   # compound only — micro gap (icon adjacency)
-  "3":  "12px"  # compound only — button px-3 (sm/xs), Input px-3, table inner cells
+  "3":  "12px"  # compound only — button px-3 (all sizes), Input px-3, Select pl-3, table inner cells
   "5":  "20px"  # compound only — chart legend gap
   "7":  "28px"  # banned — odd 4-multiple, surface or compound (no use case)
   "9":  "36px"  # banned — odd 4-multiple, surface or compound (no use case)
@@ -273,12 +273,15 @@ components:
     textColor: "{colors.primary-foreground}"
     typography: "{typography.body-sm}"   # text-sm font-medium
     rounded: "{rounded.sm}"
-    height: 40                           # h-10 (default)
-    padding: "0 16"                      # px-4 — pr-3 with icon (asymmetric)
-    # Size ramp (2026-06-09): heights on the 8px scale — 24 / 32 / 40 / 48 for
-    # xs (h-6) / sm (h-8) / default (h-10) / lg (h-12). Icon variants mirror:
-    # icon-xs size-6 / icon-sm size-8 / icon size-10 / icon-lg size-12. Replaces
-    # the prior 28/32/36/40 ramp; default went 36→40, no more h-9/h-7 buttons.
+    height: 32                           # h-8 (default)
+    padding: "0 12"                      # px-3 — pr-2 with icon (asymmetric)
+    # Size ramp (2026-07-16, shadcn-aligned): 24 / 32 / 32 / 36 for
+    # xs (h-6) / sm (h-8) / default (h-8) / lg (h-9), all px-3 (12px L/R).
+    # Icon variants mirror: icon-xs size-6 / icon-sm size-8 / icon size-8 /
+    # icon-lg size-9. Migrated from the prior 24/32/40/48 ramp: every control
+    # that was 40px (old default) moved to lg, 32px stayed default/sm. All
+    # <Button> now carry an EXPLICIT size prop (no implicit default) so sizes
+    # can go responsive per breakpoint.
   button-outline:    { backgroundColor: "{colors.card}", textColor: "{colors.foreground}", rounded: "{rounded.sm}", elevation: "shadow-xs" }  # border-border + shadow-xs (2026-06-04) — subtle lift, same recipe as Card
   button-secondary:  { backgroundColor: "{colors.secondary}", textColor: "{colors.secondary-foreground}" }
   button-ghost:      { backgroundColor: "transparent", textColor: "{colors.foreground}" }
@@ -288,8 +291,8 @@ components:
     backgroundColor: "{colors.neutral-50}"
     textColor: "{colors.neutral-800}"
     rounded: "{rounded.sm}"
-    height: 36
-    padding: "0 16"  # px-4 (default), px-3 at sm/xs; focus = border-ring + ring-3/50; disabled = bg-neutral-100 text-neutral-500
+    height: 32
+    padding: "0 12"  # px-3 (all sizes); focus = border-ring + ring-3/50; disabled = bg-neutral-100 text-neutral-500
 
   textarea:    { backgroundColor: "{colors.neutral-50}", textColor: "{colors.neutral-800}", rounded: "{rounded.sm}", padding: "12 16" }
   input-group: { backgroundColor: "{colors.neutral-50}", textColor: "{colors.neutral-800}", rounded: "{rounded.sm}", height: 36 }
@@ -319,8 +322,8 @@ components:
     backgroundColor: "{colors.neutral-50}"
     textColor: "{colors.neutral-800}"
     rounded: "{rounded.sm}"
-    height: 36
-    padding: "0 12 0 16"  # pl-4 pr-3 default; pl-3 pr-2 at sm/xs (asymmetric for chevron)
+    height: 32
+    padding: "0 8 0 12"  # pl-3 pr-2 all sizes (asymmetric for chevron: 12px text side / 8px chevron side)
 
   tabs-list: { backgroundColor: "{colors.muted}", rounded: "{rounded.sm}", height: 32, padding: 4 }  # active trigger: bg-background rounded-xs
   segmented: { backgroundColor: "{colors.muted}", rounded: "{rounded.sm}", height: 32 }              # active item: bg-background rounded-xs
@@ -678,7 +681,7 @@ Within a primitive's row/group: between icon + label, badge + text, label + cont
 | --- | --- | --- | --- |
 | `spacing.1` | 4px | compound | Micro gap (icon adjacency, internal grouping) |
 | `spacing.2` | 8px | surface OK | Badge gap, button icon gap, between dense siblings |
-| `spacing.3` | 12px | compound only | Button px-3 (sm/xs), Input px-3, inner table cells |
+| `spacing.3` | 12px | compound only | Button px-3 (all sizes), Input px-3, Select pl-3, inner table cells |
 | **`spacing.4`** | **16px** | **surface — dominant** | **Card padding, table outer cells, page gutter, section gap, between cards in a grid** |
 | `spacing.5` | 20px | compound only | Chart legend gap, hero internal rhythm |
 | `spacing.6` | 24px | surface OK | Outer page margins at lg/xl/2xl breakpoints (`lg:p-6`); spec-sheet panel padding |
@@ -768,16 +771,16 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 `src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with 4 size variants (xs/sm/default/lg) and 6 style variants (default/outline/secondary/ghost/destructive/link).
 
-- **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 36px tall (`h-9`), `px-4` (`pr-3` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.98]` (scale-down) + `will-change-transform` (standardized 2026-06-18, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
-- **Sizes:** xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-9 px-4 text-sm · lg h-10 px-4 text-sm (brand tightening from shadcn's px-6 default — operator-tool register, not marketing CTA; size differentiates by height only)
+- **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 32px tall (`h-8`), `px-3` (`pr-2` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.98]` (scale-down) + `will-change-transform` (standardized 2026-06-18, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
+- **Sizes:** xs h-6 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm (2026-07-16, shadcn-aligned: default 32px / lg 36px, flat 12px L/R padding — operator-tool register, not marketing CTA). **Every `<Button>` carries an explicit `size`** (no implicit default) so sizes can vary by breakpoint. Migration: what was 40px (old default) → `lg`; 32px → `default`/`sm`.
 - **Outline:** `border-border bg-card` + **`shadow-xs`** (added 2026-06-04, primitive-level so it cascades to every `variant="outline"`) — the subtle lift matches the Card recipe and reads against any backdrop. `box-shadow` is in the button's transition list, so it does not snap on hover.
-- **Asymmetric icon padding:** `has-data-[icon=inline-start]:pl-3` / `has-data-[icon=inline-end]:pr-3` (default size). Mirrors `SelectTrigger` rule (see below).
+- **Asymmetric icon padding:** `has-data-[icon=inline-start]:pl-2` / `has-data-[icon=inline-end]:pr-2` (default/lg — 8px on the icon side vs 12px text side). Mirrors `SelectTrigger` rule (see below).
 
 **Rule:** Primary action = `default` (neutral-900). Use `outline` for secondary, `ghost` for tertiary in toolbars/menus. `link` variant is for standalone link-buttons; **inline body-text links** use `<button>` with the underline affordance (see Inline links below).
 
 ### Inputs & Forms
 
-- **Input** (`input.tsx`) — `bg-neutral-50 border-border rounded-sm h-9 px-4 text-sm text-neutral-800`. **`bg-neutral-50` is the contract** — sits flush in filter rows. Sizes: xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-9 px-4 text-sm · lg h-10 px-4 text-sm. **`surface` variant:** `card` (default) = bg-neutral-50 for inputs on card/modal surfaces; `background` = bg-neutral-100 for inputs on the page background layer (matches the SegmentedPill track) — use the variant, not a per-page `[&_input]` override. Focus: `border-ring ring-3 ring-ring/50` (neutral-tinted, not blue). Disabled: `bg-neutral-100 text-neutral-500`. Invalid: `border-destructive ring-destructive/20`. **`--input` resolves to neutral-300** (bumped 2026-05-15 from neutral-200) — the stroke is one ramp step stronger than `--border` so unfilled form controls read as actionable.
+- **Input** (`input.tsx`) — `bg-neutral-50 border-border rounded-sm h-8 px-3 text-sm text-neutral-800`. **`bg-neutral-50` is the contract** — sits flush in filter rows. Sizes: xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm. **`surface` variant:** `card` (default) = bg-neutral-50 for inputs on card/modal surfaces; `background` = bg-neutral-100 for inputs on the page background layer (matches the SegmentedPill track) — use the variant, not a per-page `[&_input]` override. Focus: `border-ring ring-3 ring-ring/50` (neutral-tinted, not blue). Disabled: `bg-neutral-100 text-neutral-500`. Invalid: `border-destructive ring-destructive/20`. **`--input` resolves to neutral-300** (bumped 2026-05-15 from neutral-200) — the stroke is one ramp step stronger than `--border` so unfilled form controls read as actionable.
 - **Textarea** (`textarea.tsx`) — same surface as Input. `min-h-16`, `field-sizing-content`, `py-3 px-4`.
 - **InputGroup** (`input-group.tsx`) — wrapper for inputs with addons (icon, kbd, button). `h-9`, same surface as Input.
 - **Field** (`field.tsx`) — composes `<FieldLabel>` + `<FieldDescription>` + `<FieldError>` + control. Default gap-y between fields = 16px. No surface chrome.
@@ -809,7 +812,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 - **Trigger vertical padding is `pt-2 pb-3`** (8px top, 12px bottom). Codified 2026-05-21 — earlier `pt-4 pb-3` was disproportionate for the page-level register where most line tabs live (dialog headers, page sub-nav). Every line-variant tab strip site-wide uses this rhythm; no usage-site overrides needed.
 - **Active trigger never gets a hover background.** The trigger's height is `calc(100%-1px)` (1px short of the TabsList) and the indicator (`bottom-[-1px] h-0.5`) overlaps the trigger's bottom 1px by one pixel — so any `hover:bg-*` on the active trigger would clip the indicator from 2px to 1px on rollover. The primitive applies `data-active:hover:bg-transparent` for `variant="line"` to lock this; the indicator stays full height. Hover affordance still fires on non-active triggers (`bg-neutral-100`) because those don't carry an indicator. Codified 2026-05-21 after the Audit-record modal regression.
 - **Segmented** (`segmented.tsx`) — pill-style selector, same sliding-indicator idiom as Tabs default. `bg-muted rounded-sm overflow-clip`. Sizes: default `h-8`, sm `h-7`. Variants: `pill` (default) and `group` (adjacent borders, neutral-900 fill on selected — rare).
-- **SegmentedPill** (`segmented-pill.tsx`) — view-scope toggles in toolbars. **Don't add as an extra row** — view-scope controls live in the existing toolbar. Requests uses `<SegmentedPill size="sm">` (1H / 24H / 7D / 30D) anchored right via `ml-auto` so the toolbar splits cleanly into facets-left + time-scope-right. Pairs with a custom-range `<DateRangePicker>` (Base UI Popover + react-day-picker v10) for ranges outside the preset window; selecting one clears the other.
+- **SegmentedPill** (`segmented-pill.tsx`) — view-scope toggles in toolbars. **Don't add as an extra row** — view-scope controls live in the existing toolbar. Requests uses `<SegmentedPill size="sm">` (1H / 24H / 7D / 30D) anchored right via `ml-auto` so the toolbar splits cleanly into facets-left + time-scope-right. Pairs with a custom-range `<DateRangePicker>` (Base UI Popover + react-day-picker v10) for ranges outside the preset window; selecting one clears the other. **Internal-button padding (2026-07-16):** the rail sets `data-spacing=0`, whose `ToggleGroupItem` variant forces `px-2` (8px) — so a plain `px-*` base can't win. Both sizes override that same variant to `px-3` (12px L/R); only the box height is size-aware (rail `sm` h-8 / `default` h-10; item `sm` h-6 / `default` h-8).
 - **SegmentedPill track border (codified 2026-06-01):** the track carries a `border-border` hairline — **not** a borderless `border-transparent` track. The track fill is `bg-neutral-100`, the *same* tone as the page surface (`--background` = neutral-100), so without an edge the unselected segments read as floating on the canvas and only the white selected thumb is legible. The border gives the control a defined boundary against the same-tone surface and keeps it a visual peer of the bordered controls it sits beside — Select triggers and outline Buttons like the `Custom` range button it pairs with. The border slot was always reserved (previously `transparent`), so making it visible is a **zero-layout-shift** change. `segmented.tsx`'s pill variant already used `border-border`; the two segmented primitives are now aligned. Supersedes the earlier Paper spec WW0-0 "effectively borderless track" note.
 
 **Rule (Tabs vs Segmented — when to pick which):**
@@ -820,7 +823,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 The semantic test: are these *pages of the surface* (line tabs) or *filters/views of the same data* (segmented)? If you'd give each one its own URL, it's a tab. If they're alternate lenses on shared content, they're segmented.
 
-- **Select** (`select.tsx`) — Base UI. Trigger: `bg-neutral-50 border-neutral-200 rounded-sm h-9 text-sm`. Content: `rounded-sm shadow-(--shadow-popup) bg-popover` with **`p-1`** (2026-06-04, was `py-1`) so each `rounded-xs` item insets 4px from the popup edge and the highlighted/selected row never bleeds edge-to-edge — same inset recipe as `Menu`. Item: `rounded-xs px-3 py-1.5 text-sm`. **Asymmetric padding** `pl-N pr-(N-1)` across all sizes (`pl-3 pr-2` xs/sm, `pl-4 pr-3` default/lg) — optical balance: text side wants more air, chevron has built-in bounding-box whitespace. Long lists use `<SelectGroup>` + `<SelectLabel>` + `<SelectSeparator>` to group (e.g. First-party vs Marketplace). **Chevron rotates 180° while open** (2026-06-04): trigger carries `group/select`, the `ChevronDownIcon` is `group-aria-expanded/select:rotate-180 transition-transform duration-150 ease-out motion-reduce:transition-none` — transform-only, 150ms, the `--ease-out` curve; transitions back to 0 on close. **SelectValue shows the item label, not the raw value** — a context map collects `value → children` from `SelectItem`s (Base UI's `Select.Value` would otherwise render the raw value, e.g. `all` instead of `All models`). **The field `<Label>` must NOT use `htmlFor` pointing at the trigger** — a `<label for>` forwards clicks to its control, so clicking the field title would open the dropdown; give the trigger an `aria-label` for the accessible name instead.
+- **Select** (`select.tsx`) — Base UI. Trigger: `bg-neutral-50 border-neutral-200 rounded-sm h-8 text-sm`. Content: `rounded-sm shadow-(--shadow-popup) bg-popover` with **`p-1`** (2026-06-04, was `py-1`) so each `rounded-xs` item insets 4px from the popup edge and the highlighted/selected row never bleeds edge-to-edge — same inset recipe as `Menu`. Item: `rounded-xs px-3 py-1.5 text-sm`. **Asymmetric padding** `pl-3 pr-2` across all sizes (12px text side / 8px chevron side; default/lg dropped from `pl-4 pr-3` on 2026-07-16) — optical balance: text side wants more air, chevron has built-in bounding-box whitespace. Long lists use `<SelectGroup>` + `<SelectLabel>` + `<SelectSeparator>` to group (e.g. First-party vs Marketplace). **Chevron rotates 180° while open** (2026-06-04): trigger carries `group/select`, the `ChevronDownIcon` is `group-aria-expanded/select:rotate-180 transition-transform duration-150 ease-out motion-reduce:transition-none` — transform-only, 150ms, the `--ease-out` curve; transitions back to 0 on close. **SelectValue shows the item label, not the raw value** — a context map collects `value → children` from `SelectItem`s (Base UI's `Select.Value` would otherwise render the raw value, e.g. `all` instead of `All models`). **The field `<Label>` must NOT use `htmlFor` pointing at the trigger** — a `<label for>` forwards clicks to its control, so clicking the field title would open the dropdown; give the trigger an `aria-label` for the accessible name instead.
 - **Dropdown positioning standard (codified 2026-06-04):** every overlay primitive — `Select`, `Popover`, `Menu`, `DateRangePicker` — defaults to open BELOW the trigger (`side="bottom"`), right-aligned to it (`align="end"`), with an 8px gap (`sideOffset={8}`). `Select` sets `alignItemWithTrigger={false}` so it renders as a real dropdown that **flips up** when near the viewport bottom (Base UI collision avoidance), NOT the macOS-style overlay that centered the selected item over the trigger. Left-anchored triggers (sidebar workspace switcher, side-opening user menu) keep their intentional `align="start"` / non-bottom side.
 - **Toggle** (`toggle.tsx`) — `rounded-sm h-8 px-3 text-sm font-medium`, `data-[state=on]:bg-muted`. Wrap with `<ToggleGroup>` for multi-select.
 
@@ -1070,9 +1073,9 @@ The product targets desktop-first operator workflows; no mobile-shipped state to
 
 ### Touch Targets
 
-- Buttons: 36px minimum height (`h-9` default). 32px (`h-8`) sm only in dense toolbars.
-- Inputs / Selects: same 36px minimum.
-- Icon-only buttons: `size-9` (36×36) hit area; the icon itself is 16px (`size-4`).
+- Buttons: `default` 32px (`h-8`); `lg` 36px (`h-9`) for primary / touch-forward contexts. Controls that were 40px pre-2026-07-16 migrated to `lg`.
+- Inputs / Selects: `default` 32px (`h-8`), `lg` 36px (`h-9`) — match the Button scale.
+- Icon-only buttons: `icon` / `icon-sm` = 32×32 (`size-8`), `icon-lg` = 36×36 (`size-9`), `icon-xs` = 24×24 (`size-6`); the icon itself is 16px (`size-4`).
 - Checkbox / Radio: `size-4` (16px) visual + `after:-inset-x-3 after:-inset-y-2` hit-target padding.
 
 ### Collapsing Strategy

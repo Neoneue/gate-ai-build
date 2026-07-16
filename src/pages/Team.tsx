@@ -146,7 +146,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onInvite} size="default" variant="default">
+        <Button onClick={onInvite} size="lg" variant="default">
           <UserPlus aria-hidden data-icon="inline-start" />
           Invite member
         </Button>
@@ -398,7 +398,9 @@ function MembersPane() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
             <Button
@@ -407,6 +409,7 @@ function MembersPane() {
                 // Wire to a real mutation handler when the backend lands.
                 setPendingRemove(null);
               }}
+              size="lg"
               type="button"
               variant="destructive"
             >
@@ -783,10 +786,17 @@ function InviteMemberDialog({
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
-            <Button disabled={!isValid} type="submit" variant="default">
+            <Button
+              disabled={!isValid}
+              size="lg"
+              type="submit"
+              variant="default"
+            >
               <Send aria-hidden data-icon="inline-start" />
               Send invitation
             </Button>

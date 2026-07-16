@@ -179,6 +179,7 @@ function PlanCard({
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
           }
+          size="lg"
           variant={plan.cta.variant}
         >
           {plan.featured ? (

@@ -76,7 +76,7 @@ export function SetupCredits() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button>
+            <Button size="lg">
               <CreditCard aria-hidden data-icon="inline-start" />
               Add ${amount} in credits
             </Button>

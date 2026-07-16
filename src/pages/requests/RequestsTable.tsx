@@ -367,6 +367,7 @@ export function RequestsTableSection({
                 <Button
                   disabled={draftActiveFilterCount === 0}
                   onClick={resetFilters}
+                  size="lg"
                   type="button"
                   variant="ghost"
                 >
@@ -374,11 +375,13 @@ export function RequestsTableSection({
                 </Button>
                 <div className="flex items-center gap-2">
                   <DialogClose
-                    render={<Button type="button" variant="outline" />}
+                    render={
+                      <Button size="lg" type="button" variant="outline" />
+                    }
                   >
                     Cancel
                   </DialogClose>
-                  <Button onClick={applyFilters} type="button">
+                  <Button onClick={applyFilters} size="lg" type="button">
                     Apply
                   </Button>
                 </div>

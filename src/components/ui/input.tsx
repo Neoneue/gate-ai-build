@@ -9,11 +9,11 @@ const inputVariants = cva(
   {
     variants: {
       size: {
-        // Paper CMP-001.2 spec — heights and L/R padding step together.
+        // shadcn-aligned scale — default 32px / lg 36px, 12px L/R padding (px-3).
         xs: "h-7 px-3 text-xs",
         sm: "h-8 px-3 text-xs",
-        default: "h-9 px-4 text-sm",
-        lg: "h-10 px-4 text-sm",
+        default: "h-8 px-3 text-sm",
+        lg: "h-9 px-3 text-sm",
       },
       // `card` (default) reads as recessed: one step darker than the white/card
       // surface it sits on. `elevated` is the opposite — a white, raised field

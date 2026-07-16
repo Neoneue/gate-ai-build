@@ -200,12 +200,15 @@ function FeedbackFab() {
 
         {/* Footer */}
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="lg" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
           <Button
             disabled={messageIsEmpty}
             onClick={handleSubmit}
+            size="lg"
             type="button"
           >
             Send feedback

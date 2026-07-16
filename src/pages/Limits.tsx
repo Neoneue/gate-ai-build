@@ -138,7 +138,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onCreate}>
+        <Button onClick={onCreate} size="lg">
           <Plus
             aria-hidden
             className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
@@ -673,10 +673,17 @@ function CreateLimitDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="lg" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+          <Button
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            size="lg"
+            type="button"
+          >
             Create
           </Button>
         </DialogFooter>

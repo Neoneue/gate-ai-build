@@ -654,10 +654,17 @@ function CreateLimitDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="lg" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+          <Button
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            size="lg"
+            type="button"
+          >
             Create
           </Button>
         </DialogFooter>

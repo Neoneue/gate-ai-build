@@ -100,7 +100,12 @@ export function ChoiceCard({
           {supports}
         </span>
       ) : null}
-      <Button className="mt-auto" onClick={onClick} variant={ctaVariant}>
+      <Button
+        className="mt-auto"
+        onClick={onClick}
+        size="lg"
+        variant={ctaVariant}
+      >
         {cta}
         <ArrowRight
           aria-hidden
