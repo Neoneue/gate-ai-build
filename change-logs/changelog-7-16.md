@@ -22,6 +22,12 @@ Prior day: [`changelog-7-15.md`](./changelog-7-15.md)
 
 The rail sets `data-spacing=0`, whose `ToggleGroupItem` variant `group-data-[spacing=0]/toggle-group:px-2` forced 8px side padding on every rail button — a plain `px-*` base could never beat it, so earlier padding edits were no-ops. Now both sizes override that same variant to `px-3` (12px L/R): `default` and `sm` rail buttons both read 12px, matching the `default` Select trigger's airier feel. Only the box height stays size-aware (`default` 32px / `sm` 24px). Affects the six `sm` consumers (Activity, Conversations, Requests, Security, TokenSavings, TrendCard), which move 8px -> 12px internal padding.
 
+### Button / Input / Select: shadcn-aligned size scale `70b9b6e`
+
+**`src/components/ui/button.tsx`**, **`input.tsx`**, **`select-variants.ts`** (+ ~28 call sites)
+
+Adopted the shadcn size scale on form controls (desktop sizing): `default` = 32px (`h-8`), `lg` = 36px (`h-9`), flat 12px (`px-3`) L/R padding — was 24/32/40/48 with `px-4` on default/lg. Button icon sizes follow (`icon` size-8, `icon-lg` size-9); Select keeps asymmetric chevron padding (`pl-3 pr-2`). **Every `<Button>` now carries an explicit `size` prop** (no implicit default), swept via the TypeScript AST across ~46 call sites (no-size -> `lg`, `default` -> `lg`, `icon` -> `icon-lg`) so sizes can go responsive per breakpoint. Migration rule: any control that was 40px (old default) -> `lg`; 32px stayed `default`/`sm`. `WorkspaceSwitcher` refactored from a hand-rolled `<button>` to the `Button` primitive (`variant="outline"`, `lg`); `AlertDialogCancel` + ApiKeys `CreateKeyButton` defaults bumped to `lg`. Docs: `design.md` token block + component prose + touch-target minimums updated; `data-model.md` primitive-mapping fix.
+
 ## Sections
 
 ### Overview "Tokens used" chart title -> 18/16 responsive `9a9cfd5`
