@@ -65,3 +65,9 @@ The stacked-chart tooltips (label column vs. value column) were cramped and inco
 **`src/pages/activity-data.ts`**
 
 The 6th `by model` series (`key: "haiku"`) now labels as `Others` instead of `Claude Haiku`, reading as the combined-other-models bucket. Label-only change on the shared `SPEND_SERIES.model`, so it updates both the legend and hover tooltip on the Overview "Tokens used" chart and the Activity trend chart (the tooltip pulls its label from the same series `config`). Series key and color unchanged.
+
+### Overview preview tables: uniform 48px rows + Type-cell alignment `45f98ba`
+
+**`src/pages/Dashboard.tsx`**
+
+All three Overview preview tables (Latest messages / conversations / security events) get `h-12` (48px) on their `NavTableRow`, so rows no longer vary in height between badge-bearing and plain-text rows. The security Type cell's icon+label `inline-flex` span gains `align-middle` (was `vertical-align: baseline`, sitting a hair high) so it centers in line with the Time / Action / Key cells — matching the standalone Security `EventsTable` pattern.
