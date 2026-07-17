@@ -6,9 +6,14 @@ lives in the reference docs linked below.
 
 ## Local reminders
 
-- Work on `dev`, never push to `main` directly.
+- Work on `dev` (permanent preview branch); never commit directly to `main`
+  (prod). Promote by opening a PR `dev` -> `main`, merged with a **merge commit**
+  (never squash/rebase — `dev` is long-lived and would diverge), then sync
+  `main` back into `dev`. Branch protection on `main` enforces a required PR plus
+  a passing `verify` CI check before merge.
 - Keep changes scoped to the literal request.
-- Run `npx tsc -b` before any merge or promotion step.
+- Run `npx tsc -b` before any promotion; CI's `verify` job also gates lint,
+  tests, and build on every PR.
 - **UI work routes to the agent.** Substantive UI / component / layout /
   chart / animation / visual work MUST be delegated to the
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
