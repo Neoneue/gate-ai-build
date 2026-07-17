@@ -54,6 +54,17 @@ The persistent sidebar rail now renders at `lg`+ only; tablet and mobile use the
 
 ## Sections
 
+### Activity TrendCard: mobile header stack, divider, fewer bars, aligned ticks `38c953b`
+
+**`src/pages/activity/TrendCard.tsx`**, **`src/pages/Dashboard.tsx`**, **`src/hooks/use-media-query.ts`** (new)
+
+Four changes to the "Tokens over time" card (plus a shared tick fix on the Dashboard usage chart):
+
+- **Header stacks on mobile.** The `CardHeader` is `flex flex-col` below `md` so the By-model `<Select>` + metric `<SegmentedPill>` drop under the title block (left-aligned) instead of crushing the title; `md:grid` restores the inline right-aligned layout at `md`+.
+- **Chart / key divider.** The breakdown-panel pane gains a top border on mobile (`border-t pt-4`) so a divider sits between the chart and the key when they stack; at `md`+ it reverts to the existing vertical left divider (`md:border-l md:pl-3`).
+- **~25% fewer bars on tablet and below.** New `useMediaQuery` hook (SSR-safe `matchMedia` with listener cleanup) drives the bucket count: below `lg` (≤1023px) the chart renders `Math.max(4, round(count * 0.75))` buckets (e.g. 30 → 23), desktop keeps the full count. Buckets and labels resample together so `labels.length === count`, dates stay correct, and totals still reconcile (`distributeSeries` spreads the same range total across fewer, taller bars).
+- **X-axis first/last tick alignment.** New `TrendXAxisTick` / `StackedXAxisTick` renderers apply the hero-chart anchoring (`textAnchor` start for the first tick, end for the last, middle otherwise) so the first date no longer renders under the Y-axis number column and the last never overflows the card; both axes switched to `interval="preserveStartEnd"` + `minTickGap={16}`. Hero charts already used this pattern (unchanged); sparklines untouched.
+
 ### Hero cards: delta under the KPI number, key bottom-aligned `0712c53`
 
 **`src/pages/Security.tsx`**, **`src/pages/requests/HeroMetric.tsx`**
