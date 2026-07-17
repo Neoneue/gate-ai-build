@@ -8,6 +8,12 @@ Prior day: [`changelog-7-16.md`](./changelog-7-16.md)
 
 ## Conventions
 
+### Site margins 16px on mobile `b3d77c7`
+
+**`src/layouts/DashboardChrome.tsx`**
+
+The shell site margins dropped from 24px to 16px below the `sm` breakpoint. Both the `<main>` content column and the top bar changed `px-6` → `px-4 sm:px-6`: 16px horizontal padding on phones (<640px), 24px restored from 640px up. The pagination footer lives inside `<main>`, so it inherits the new margin; there is no separate shell footer. No vertical padding change.
+
 ### Subtitles full-width on mobile and tablet `b576c2c`
 
 **22 page files** (Activity, ApiKeys, AuditTrail, Billing, Conversations, Limits, Models, Requests, Security, Settings, Team, TokenSavings, Upgrade + their `*Default`/`*Free` twins)
