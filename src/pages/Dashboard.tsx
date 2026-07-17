@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -260,6 +260,36 @@ const STACKED_CHART_TICK = {
   fill: "var(--muted-foreground)",
 } as const;
 
+/** X-axis tick renderer: left-anchor the first label and right-anchor the
+ *  last so the first date doesn't slide under the Y-axis number column and the
+ *  last doesn't overflow the card. Mirrors the hero charts' ChartXAxisTick;
+ *  keeps the full label (no space-truncation). */
+function StackedXAxisTick(props: {
+  x?: string | number;
+  y?: string | number;
+  payload?: { value: string };
+  firstTick: string;
+  lastTick: string;
+}) {
+  const { x, y, payload, firstTick, lastTick } = props;
+  const value = payload?.value ?? "";
+  const anchor =
+    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
+  return (
+    <text
+      dy="0.71em"
+      fill="var(--muted-foreground)"
+      fontFamily="var(--font-mono)"
+      fontSize={10}
+      textAnchor={anchor}
+      x={x}
+      y={y}
+    >
+      {value}
+    </text>
+  );
+}
+
 type StackedSeries = readonly {
   key: string;
   label: string;
@@ -282,6 +312,24 @@ function StackedKpiChart({
     series.map((s) => [s.key, { label: s.label, color: seriesColor(s) }])
   ) as ChartConfig;
 
+  // First/last axis labels drive the tick anchoring (see StackedXAxisTick).
+  const firstTick = String(data[0]?.date ?? "");
+  const lastTick = String(data.at(-1)?.date ?? "");
+  const renderXAxisTick = useCallback(
+    (tickProps: {
+      x?: string | number;
+      y?: string | number;
+      payload?: { value: string };
+    }) => (
+      <StackedXAxisTick
+        {...tickProps}
+        firstTick={firstTick}
+        lastTick={lastTick}
+      />
+    ),
+    [firstTick, lastTick]
+  );
+
   return (
     <ChartContainer className={className ?? "h-[180px] w-full"} config={config}>
       <BarChart
@@ -301,7 +349,8 @@ function StackedKpiChart({
           dataKey="date"
           height={24}
           interval="preserveStartEnd"
-          tick={STACKED_CHART_TICK}
+          minTickGap={16}
+          tick={renderXAxisTick}
           tickLine={false}
         />
         <YAxis
