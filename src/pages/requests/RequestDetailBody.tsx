@@ -47,6 +47,7 @@ import {
   resolveInjectionCopy,
 } from "@/data/requests";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
+import { formatCompactCount } from "@/lib/formatters";
 import {
   RESPONSE_BADGE,
   responseLabel,
@@ -1205,12 +1206,23 @@ function compressionValue(row: RequestRow): string {
 }
 
 function KpiRail({ row }: { row: RequestRow }) {
+  // `row.inTokens/outTokens` are comma-grouped strings; parse to the raw
+  // integer so the KPI tiles use the shared compact "M" formatter (no visual
+  // change below 1M — per-request counts stay full commas).
+  const toRawInt = (s: string): number =>
+    Number.parseInt(s.replace(/[^0-9-]/g, ""), 10) || 0;
   return (
     <KpiRailShell className="border border-border shadow-xs" columns={5}>
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
-      <KpiTile label="Tokens In" value={row.inTokens} />
-      <KpiTile label="Tokens Out" value={row.outTokens} />
+      <KpiTile
+        label="Tokens In"
+        value={formatCompactCount(toRawInt(row.inTokens))}
+      />
+      <KpiTile
+        label="Tokens Out"
+        value={formatCompactCount(toRawInt(row.outTokens))}
+      />
       <KpiTile label="Compression" value={compressionValue(row)} />
     </KpiRailShell>
   );

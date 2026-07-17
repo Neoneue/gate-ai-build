@@ -30,6 +30,19 @@ export function formatNumber(
   return new Intl.NumberFormat(LOCALE, options).format(n);
 }
 
+/** Compact "millions" formatter for KPI-tile COUNT values (tokens, messages,
+ *  requests, turns, detections…). At or above 1,000,000 the value collapses to
+ *  one rounded decimal + "M" (19_386_865 → "19.4M"); below that it renders the
+ *  full comma-grouped integer (59_938 → "59,938"). M tier only — no K, no B.
+ *  KPI tiles only; tables and chart axes/tooltips keep full numbers. Not for
+ *  currency, durations, or percentages. */
+export function formatCompactCount(n: number): string {
+  if (Math.abs(n) >= 1_000_000) {
+    return `${(n / 1_000_000).toFixed(1)}M`;
+  }
+  return n.toLocaleString();
+}
+
 export function formatDate(
   date: Date,
   options: Intl.DateTimeFormatOptions = {

@@ -33,7 +33,7 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { UploadIcon } from "@/components/ui/upload";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
 import {
   type CustomRange,
   effectiveScale,
@@ -245,12 +245,12 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
       spark: spendSpark,
     },
     requests: {
-      value: fmtInt(Math.round(requestsCount)),
+      value: formatCompactCount(Math.round(requestsCount)),
       delta: base.requests.delta,
       spark: requestsSpark,
     },
     tokens: {
-      value: fmtTokens(Math.round(tokensCount)),
+      value: formatCompactCount(Math.round(tokensCount)),
       delta: base.tokens.delta,
       spark: tokensSpark,
     },

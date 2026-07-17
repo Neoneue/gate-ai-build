@@ -21,6 +21,7 @@ import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { formatCompactCount } from "@/lib/formatters";
 import { type CustomRange, type PresetRange, RANGE_OPTIONS } from "@/lib/range";
 import { EventsTableSection } from "@/pages/security/EventsTable";
 import {
@@ -123,7 +124,7 @@ function HeroMetricCard({
         <div className="flex shrink-0 flex-col gap-2">
           <Eyebrow>Total events</Eyebrow>
           <div className="flex items-baseline gap-3">
-            <HeroNumeric size="lg">{fmtCount(total)}</HeroNumeric>
+            <HeroNumeric size="lg">{formatCompactCount(total)}</HeroNumeric>
             <DeltaTag delta="+22.4%" note={note} size="md" />
           </div>
         </div>
@@ -138,17 +139,17 @@ function HeroMetricCard({
           <BreakdownRow
             label="Blocked"
             tone="danger"
-            value={fmtCount(blocked)}
+            value={formatCompactCount(blocked)}
           />
           <BreakdownRow
             label="Flagged"
             tone="warning"
-            value={fmtCount(flagged)}
+            value={formatCompactCount(flagged)}
           />
           <BreakdownRow
             label="Redacted"
             tone="warning"
-            value={fmtCount(redacted)}
+            value={formatCompactCount(redacted)}
           />
         </div>
       </div>

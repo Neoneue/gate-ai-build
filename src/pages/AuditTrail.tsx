@@ -49,7 +49,7 @@ import {
 } from "@/data/audit-trail";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatNumber } from "@/lib/formatters";
+import { formatCompactCount } from "@/lib/formatters";
 import { AuditRecordDialog } from "./AuditRecordDialog";
 
 /** Comparable value per sortable column for the audit event log. Time sorts
@@ -202,7 +202,10 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
-        <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
+        <KpiTile
+          title="Events logged"
+          value={formatCompactCount(eventsLogged)}
+        />
       </div>
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile

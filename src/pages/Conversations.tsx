@@ -38,7 +38,7 @@ import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
 import {
   type CustomRange,
   effectiveScale,
@@ -290,7 +290,7 @@ function KpiRail({
   const conversationsTotal = Math.round(
     100 * effectiveScale(range, customRange)
   );
-  const conversationsValue = conversationsTotal.toLocaleString("en-US");
+  const conversationsValue = formatCompactCount(conversationsTotal);
   const spark = SPARK[range];
   const sparkLabels = sparkDates(range, customRange);
   const conversationsSpark = distributeTotal(

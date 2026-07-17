@@ -39,6 +39,7 @@ import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_RECENT } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
+  formatCompactCount,
   formatCurrency,
   formatNumber,
   formatTimestamp,
@@ -564,10 +565,7 @@ function TokenSavingsStrip() {
           />
         }
         title="Messages"
-        value={formatNumber(TOTAL_7D_BASE_REQUESTS, {
-          notation: "compact",
-          maximumFractionDigits: 1,
-        })}
+        value={formatCompactCount(TOTAL_7D_BASE_REQUESTS)}
       />
       <CompactKpi
         delta="+8.7%"
@@ -602,7 +600,7 @@ function TokenSavingsStrip() {
           />
         }
         title="Threats detected"
-        value={formatNumber(THREATS_DETECTED_COUNT)}
+        value={formatCompactCount(THREATS_DETECTED_COUNT)}
       />
     </KpiRail>
   );

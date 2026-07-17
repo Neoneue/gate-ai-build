@@ -10,6 +10,7 @@ import {
 import { DeltaTag } from "@/components/ui/compact-kpi";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { StatusDot } from "@/components/ui/status-dot";
+import { formatCompactCount } from "@/lib/formatters";
 import { buildCustomHeroView, HERO_VIEWS } from "./hero-data";
 import { useCustomRange, useRange } from "./range-store";
 import type { HeroView } from "./types";
@@ -82,7 +83,9 @@ export function HeroMetricCard() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex shrink-0 flex-col gap-2">
           <div className="flex items-baseline gap-3">
-            <HeroNumeric size="lg">{view.total.toLocaleString()}</HeroNumeric>
+            <HeroNumeric size="lg">
+              {formatCompactCount(view.total)}
+            </HeroNumeric>
             <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />
           </div>
         </div>
@@ -98,12 +101,12 @@ export function HeroMetricCard() {
           <BreakdownRow
             label="Success"
             tone="success"
-            value={view.success.toLocaleString()}
+            value={formatCompactCount(view.success)}
           />
           <BreakdownRow
             label="Errors"
             tone="danger"
-            value={view.errors.toLocaleString()}
+            value={formatCompactCount(view.errors)}
           />
         </div>
       </div>
