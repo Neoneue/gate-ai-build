@@ -71,3 +71,9 @@ The 6th `by model` series (`key: "haiku"`) now labels as `Others` instead of `Cl
 **`src/pages/Dashboard.tsx`**
 
 All three Overview preview tables (Latest messages / conversations / security events) get `h-12` (48px) on their `NavTableRow`, so rows no longer vary in height between badge-bearing and plain-text rows. The security Type cell's icon+label `inline-flex` span gains `align-middle` (was `vertical-align: baseline`, sitting a hair high) so it centers in line with the Time / Action / Key cells — matching the standalone Security `EventsTable` pattern.
+
+### Models page: subtitle -> tabs gap to 32px `c8278b6`
+
+**`src/pages/Models.tsx`**
+
+The modality tab row (`All types / Text / …`) sat too close to the page subtitle. `TabsList` flips from `-mt-2` to `mt-2`, so the gap composes to 24px (layout `<main>` `gap-6`) + 8px = 32px. Layout `gap-6` and the `Tabs` internal `gap-4` are unchanged; only the tab-row's own margin-top moved.
