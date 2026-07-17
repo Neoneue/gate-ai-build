@@ -8,6 +8,12 @@ Prior day: [`changelog-7-15.md`](./changelog-7-15.md)
 
 ## Conventions
 
+### Mono data voice: `type-mono-*` tokens; all data numerics tokenized `3dc5fd5`
+
+**`src/index.css`**, **`design.md`** (+ ~27 page files)
+
+Added `type-mono-16/14/12` utilities (`font-mono` + `tabular-nums`, per size) codifying the long-documented `data` voice, and routed every data value across the app through them. Root cause fixed: `table.tsx` sets `type-copy-14` (sans) on the `<table>`, inherited by all cells; a cell's own `font-mono` beats that inheritance, but a cell carrying BOTH `type-copy-14` and `font-mono` lost to `type-copy-14` by source order — so date/timestamp cells were silently rendering sans. Now data values (table cells, timestamps, IDs, hashes, token counts, currency, %, latencies, masked keys, currency/invite `<input>`s) use a `type-mono-*` token instead of hand-rolled `font-mono … tabular-nums` strings. Chart axis numerics also made mono: `STACKED_CHART_TICK` / `TREND_CHART_TICK` and the `ChartXAxisTick` `<text>` (HeroMetric, Security) gained `fontFamily: var(--font-mono)`. Text/names/descriptions stay sans (`type-copy-*`/`type-label-*`); hero numerics ≥24px stay sans + `tabular-nums` per design.md §648; code/`<pre>`, eyebrows, and 18px modal `KpiTile` numerics keep their own voices.
+
 ### twMerge: custom `type-*` utilities join the `font-size` group `9a9cfd5`
 
 **`src/lib/utils.ts`**
@@ -35,3 +41,9 @@ Adopted the shadcn size scale on form controls (desktop sizing): `default` = 32p
 **`src/pages/Dashboard.tsx`**
 
 The `OverviewUsageChart` card title now renders `type-heading-18 lg:type-heading-16` (18px tablet/mobile, 16px at `lg`+). It previously carried the same intent but was overridden by `CardTitle`'s baked-in `type-heading-16` and rendered flat 16px; the twMerge fix above makes the responsive size actually apply.
+
+### Overview "Tokens used" selector + toggle sized to `sm` (32px) `3dc5fd5`
+
+**`src/pages/Dashboard.tsx`**
+
+The `By model` Select trigger (was `size="lg"` = 36px) and the Tokens/Spend `SegmentedPill` (was `size="default"` = 40px) both drop to `size="sm"` (32px), matching the header-toolbar convention. The control row was rendering 40px tall (driven by the pill); it is now a consistent 32px. No control uses the old 40px tier.
