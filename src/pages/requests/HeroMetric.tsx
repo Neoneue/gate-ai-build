@@ -80,9 +80,9 @@ export function HeroMetricCard() {
 
   return (
     <Card className="px-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex shrink-0 flex-col gap-2">
-          <div className="flex items-baseline gap-3">
+          <div className="flex flex-col gap-1">
             <HeroNumeric size="lg">
               {formatCompactCount(view.total)}
             </HeroNumeric>
@@ -112,85 +112,98 @@ export function HeroMetricCard() {
       </div>
 
       {/* Full-width line chart with range-aware axis + per-point tooltip */}
-      <ChartContainer className="aspect-auto h-24 w-full" config={config}>
-        <AreaChart
-          accessibilityLayer
-          data={view.data}
-          margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="cmp013-hero-spark" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor="var(--color-chart-1)"
-                stopOpacity={0.35}
-              />
-              <stop
-                offset="100%"
-                stopColor="var(--color-chart-1)"
-                stopOpacity={0}
-              />
-            </linearGradient>
-          </defs>
-          {/* Dynamic domain: top is `max(values) + 1` so the tallest
+      <div className="w-full">
+        <ChartContainer className="aspect-auto h-24 w-full" config={config}>
+          <AreaChart
+            accessibilityLayer
+            data={view.data}
+            margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient
+                id="cmp013-hero-spark"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="var(--color-chart-1)"
+                  stopOpacity={0.35}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--color-chart-1)"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+            </defs>
+            {/* Dynamic domain: top is `max(values) + 1` so the tallest
               spike never touches the chart ceiling and the y-axis
               scales with whatever data the gateway is producing. */}
-          <YAxis
-            axisLine={false}
-            domain={[0, view.domainTop]}
-            tick={false}
-            tickLine={false}
-            width={0}
-          />
-          {/* Dashed horizontal gridlines — matches the Security events chart. */}
-          <CartesianGrid
-            horizontal
-            stroke="var(--color-chart-grid)"
-            strokeDasharray="8 5"
-            vertical={false}
-          />
-          <XAxis
-            axisLine={false}
-            dataKey="time"
-            height={24}
-            interval={0}
-            tick={renderTick}
-            tickLine={false}
-            tickMargin={8}
-            ticks={view.ticks}
-          />
-          <ChartTooltip
-            content={
-              <ChartTooltipContent
-                className="gap-1"
-                formatter={(value) => (
-                  <span className="type-label-14 text-foreground">
-                    {Number(value).toLocaleString("en-US")}
-                  </span>
-                )}
-                hideIndicator
-                labelClassName="font-normal text-muted-foreground"
-                labelFormatter={(_label, items) =>
-                  (items?.[0]?.payload as { label?: string } | undefined)
-                    ?.label ?? ""
-                }
-              />
-            }
-            cursor={{
-              stroke: "var(--color-neutral-500)",
-              strokeDasharray: "3 3",
-            }}
-          />
-          <Area
-            dataKey="requests"
-            fill="url(#cmp013-hero-spark)"
-            isAnimationActive={false}
-            stroke="var(--color-chart-1)"
-            strokeWidth={1.5}
-            type="linear"
-          />
-        </AreaChart>
-      </ChartContainer>
+            <YAxis
+              axisLine={false}
+              domain={[0, view.domainTop]}
+              tick={false}
+              tickLine={false}
+              width={0}
+            />
+            {/* Dashed horizontal gridlines — matches the Security events chart. */}
+            <CartesianGrid
+              horizontal
+              stroke="var(--color-chart-grid)"
+              strokeDasharray="8 5"
+              vertical={false}
+            />
+            {/* Ticks are real data points (see deriveTicks in hero-data);
+              interval="preserveStartEnd" + minTickGap lets recharts width-thin
+              the labels natively (always keeping first + last), so narrow
+              cards drop labels instead of overlapping — no custom JS hook. */}
+            <XAxis
+              axisLine={false}
+              dataKey="time"
+              height={24}
+              interval="preserveStartEnd"
+              minTickGap={16}
+              tick={renderTick}
+              tickLine={false}
+              tickMargin={8}
+              ticks={view.ticks}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  className="gap-1"
+                  formatter={(value) => (
+                    <span className="type-label-14 text-foreground">
+                      {Number(value).toLocaleString("en-US")}
+                    </span>
+                  )}
+                  hideIndicator
+                  labelClassName="font-normal text-muted-foreground"
+                  labelFormatter={(_label, items) =>
+                    (items?.[0]?.payload as { label?: string } | undefined)
+                      ?.label ?? ""
+                  }
+                />
+              }
+              cursor={{
+                stroke: "var(--color-neutral-500)",
+                strokeDasharray: "3 3",
+              }}
+            />
+            <Area
+              dataKey="requests"
+              fill="url(#cmp013-hero-spark)"
+              isAnimationActive={false}
+              stroke="var(--color-chart-1)"
+              strokeWidth={1.5}
+              type="linear"
+            />
+          </AreaChart>
+        </ChartContainer>
+      </div>
     </Card>
   );
 }

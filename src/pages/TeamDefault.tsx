@@ -76,7 +76,7 @@ export function TeamDefault() {
 
           <TabsContent value="members">
             <Card density="flush">
-              <Table className="table-fixed">
+              <Table className="min-w-[560px] table-fixed">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[40%] whitespace-nowrap">

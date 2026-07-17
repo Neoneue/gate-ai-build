@@ -196,7 +196,7 @@ function LimitsSection({
 
   return (
     <Card density="flush">
-      <Table className="table-fixed">
+      <Table className="min-w-[1000px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {/* `table-fixed` + explicit widths keeps the column gaps

@@ -493,7 +493,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               />
             </div>
 
-            <DialogFooter className="sm:justify-between">
+            <DialogFooter className="flex-row items-center justify-between sm:justify-between">
               <Button
                 onClick={resetFilters}
                 size="lg"
@@ -536,7 +536,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             />
           ) : (
             <>
-              <Table className="table-fixed">
+              <Table className="min-w-[1000px] table-fixed">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     {/* `table-fixed` + percentage widths is the canonical pattern
@@ -544,7 +544,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                         share since it's the wrap-tolerant column; the rest hold
                         their content. */}
                     <SortableTableHead
-                      className="w-[14%] whitespace-nowrap"
+                      className="w-[18%] whitespace-nowrap"
                       onSort={toggleSort}
                       sort={sort}
                       sortKey="at"
@@ -563,7 +563,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       Event type
                     </SortableTableHead>
                     <SortableTableHead
-                      className="w-[30%] whitespace-nowrap"
+                      className="w-[26%] whitespace-nowrap"
                       onSort={toggleSort}
                       sort={sort}
                       sortKey="description"

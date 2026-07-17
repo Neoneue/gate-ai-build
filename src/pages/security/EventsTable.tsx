@@ -342,7 +342,7 @@ export function EventsTableSection({
               </Select>
             </div>
 
-            <DialogFooter className="sm:justify-between">
+            <DialogFooter className="flex-row items-center justify-between sm:justify-between">
               <Button
                 disabled={draftActiveFilterCount === 0}
                 onClick={resetFilters}

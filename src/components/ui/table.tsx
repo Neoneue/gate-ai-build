@@ -125,7 +125,7 @@ function TableHead({
         // the body cells; sans here keeps the voice split clean. font-medium
         // + neutral-600 gives 12px sans enough presence to register as a header
         // row without competing with the body.
-        "type-label-12 h-10 px-4 text-left align-middle text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "type-label-12 h-10 px-3 text-left align-middle text-muted-foreground first:pl-4 last:pr-4 [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-head"
@@ -170,7 +170,7 @@ function SortableTableHead({
       // Cell keeps the standard header padding/alignment; the trigger inside is
       // content-width so the hit area is the label + glyph, not the whole cell.
       className={cn(
-        "type-label-12 h-10 px-4 align-middle text-muted-foreground",
+        "type-label-12 h-10 px-3 align-middle text-muted-foreground first:pl-4 last:pr-4",
         numeric ? "text-right" : "text-left",
         className
       )}
@@ -224,7 +224,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       className={cn(
-        "type-copy-14 px-4 py-3 align-middle text-foreground [&:has([role=checkbox])]:pr-0",
+        "type-copy-14 px-3 py-3 align-middle text-foreground first:pl-4 last:pr-4 [&:has([role=checkbox])]:pr-0",
         className
       )}
       data-slot="table-cell"

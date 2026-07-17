@@ -320,7 +320,7 @@ function MembersPane() {
           />
         ) : (
           <>
-            <Table className="table-fixed">
+            <Table className="min-w-[680px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   {/* `table-fixed` + percentage widths on the header row is the
@@ -574,7 +574,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
   }
   return (
     <Card density="flush">
-      <Table className="table-fixed">
+      <Table className="min-w-[860px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead

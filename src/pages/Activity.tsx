@@ -661,11 +661,11 @@ function TopByAxisRow({
     m === "spend" ? "By total spend" : "By total tokens used";
 
   return (
-    // 2×2 below 2xl: the tightest card (Top attack types title + its
-    // Amount|Percent pill) needs ~316px, which a 4-up row only clears
-    // above a ~1424px viewport — 2xl (1536) is the nearest breakpoint
-    // that never squeezes the headers.
-    <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
+    // Stacked (1-up) on mobile + tablet so each card's title, subtitle, and
+    // control get full width without squeezing; 2-up at lg, 4-up at 2xl (1536),
+    // the nearest breakpoint that clears a 4-up row without crushing the
+    // tightest card's header (Top attack types + its Amount|Percent pill).
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-4">
       <TopList
         metric={modelMetric}
         onMetricChange={setModelMetric}
@@ -871,7 +871,7 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table className="table-fixed">
+            <Table className="min-w-[1000px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
