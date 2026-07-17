@@ -119,7 +119,7 @@ export const SPEND_SERIES: Record<
     { key: "gemini", label: "Gemini 3 Pro", slot: 4 },
     { key: "opus", label: "Claude Opus 4.7", slot: 7 },
     { key: "llama", label: "Llama 4.2 405B", slot: 6 },
-    { key: "haiku", label: "Claude Haiku", slot: 3 },
+    { key: "haiku", label: "Others", slot: 3 },
   ],
   provider: [
     { key: "anthropic", label: "Anthropic", slot: 2 },

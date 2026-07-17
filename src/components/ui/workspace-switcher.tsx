@@ -1,6 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import {
   isDefaultSurface,
@@ -16,7 +17,7 @@ import {
 
 const ACTIVE_ITEM = "bg-accent data-[highlighted]:bg-accent";
 
-export function WorkspaceSwitcher() {
+export function WorkspaceSwitcher({ className }: { className?: string }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isDefault = isDefaultSurface(pathname);
@@ -29,18 +30,13 @@ export function WorkspaceSwitcher() {
   return (
     <Menu>
       <MenuTrigger
-        render={
-          <button
-            className="inline-flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 outline-none transition-[colors,box-shadow,scale] duration-150 ease-out hover:bg-accent focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] aria-expanded:bg-accent motion-reduce:transition-none motion-reduce:active:scale-100"
-            type="button"
-          />
-        }
+        render={<Button className={className} size="lg" variant="outline" />}
       >
         <span className="type-copy-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
-          className="size-4 text-muted-foreground"
+          className="ml-auto size-4 text-muted-foreground"
           strokeWidth={1.75}
         />
       </MenuTrigger>

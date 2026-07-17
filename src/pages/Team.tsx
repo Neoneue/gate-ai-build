@@ -146,7 +146,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onInvite} size="default" variant="default">
+        <Button onClick={onInvite} size="lg" variant="default">
           <UserPlus aria-hidden data-icon="inline-start" />
           Invite member
         </Button>
@@ -298,7 +298,7 @@ function MembersPane() {
               <SelectTrigger
                 aria-label="Filter by role"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -398,7 +398,9 @@ function MembersPane() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
             <Button
@@ -407,6 +409,7 @@ function MembersPane() {
                 // Wire to a real mutation handler when the backend lands.
                 setPendingRemove(null);
               }}
+              size="lg"
               type="button"
               variant="destructive"
             >
@@ -452,7 +455,7 @@ function MemberRowView({
           </div>
         </div>
       </TableCell>
-      <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
         <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
       <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
@@ -631,13 +634,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                   {row.invitedBy}
                 </span>
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                 <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
               <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                 <Timestamp anchor={NOW} date={row.expires} format="relative" />
               </TableCell>
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -783,10 +786,17 @@ function InviteMemberDialog({
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
-            <Button disabled={!isValid} type="submit" variant="default">
+            <Button
+              disabled={!isValid}
+              size="lg"
+              type="submit"
+              variant="default"
+            >
               <Send aria-hidden data-icon="inline-start" />
               Send invitation
             </Button>

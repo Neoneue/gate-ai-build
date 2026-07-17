@@ -408,7 +408,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               }
               className="border-border bg-card font-normal text-foreground"
               onClick={openFilters}
-              size="sm"
+              size="lg"
               type="button"
               variant="outline"
             >
@@ -430,7 +430,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             <Button
               className="border-border bg-card font-normal text-foreground"
               disabled={isEmpty}
-              size="sm"
+              size="lg"
               type="button"
               variant="outline"
             >
@@ -493,7 +493,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             <DialogFooter className="sm:justify-between">
               <Button
                 onClick={resetFilters}
-                size="sm"
+                size="lg"
                 type="button"
                 variant="ghost"
               >
@@ -501,11 +501,11 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               </Button>
               <div className="flex items-center gap-2">
                 <DialogClose
-                  render={<Button size="sm" type="button" variant="outline" />}
+                  render={<Button size="lg" type="button" variant="outline" />}
                 >
                   Cancel
                 </DialogClose>
-                <Button onClick={applyFilters} size="sm" type="button">
+                <Button onClick={applyFilters} size="lg" type="button">
                   Apply
                 </Button>
               </div>
@@ -598,10 +598,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       role="button"
                       tabIndex={0}
                     >
-                      <TableCell className="whitespace-nowrap text-foreground">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                         <Timestamp date={row.at} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-foreground">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                         {truncateHex(row.eventId)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -628,7 +628,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                             strokeWidth={1.75}
                           />
                           <span className="sr-only">Verified fingerprint</span>
-                          <span className="font-mono text-foreground">
+                          <span className="type-mono-14 text-foreground">
                             {truncateHex(row.anchor, 4, 4)}
                           </span>
                         </span>

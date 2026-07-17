@@ -77,7 +77,8 @@ export function RequestsFindings() {
             Request not found
           </h2>
           <p className="type-copy-14 mt-1 text-muted-foreground">
-            No request matches <span className="font-mono">{requestId}</span>.
+            No request matches <span className="type-mono-14">{requestId}</span>
+            .
           </p>
         </div>
       )}

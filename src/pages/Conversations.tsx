@@ -495,7 +495,7 @@ function ConversationsTableSection({
               <SelectTrigger
                 aria-label="Key"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Key" />
               </SelectTrigger>
@@ -510,7 +510,7 @@ function ConversationsTableSection({
               <SelectTrigger
                 aria-label="Model"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
@@ -644,12 +644,12 @@ function ConversationsTableSection({
                           >
                             {row.title}
                           </span>
-                          <span className="font-mono text-muted-foreground text-xs">
+                          <span className="type-mono-12 text-muted-foreground">
                             {row.conversationId}
                           </span>
                         </RowActionButton>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-sm">
+                      <TableCell className="type-mono-14 whitespace-nowrap">
                         <span className="text-foreground">{row.initiator}</span>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -663,22 +663,22 @@ function ConversationsTableSection({
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         {row.turns}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         {row.reqs}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         {scaleTokenStr(row.inTokens, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         {scaleTokenStr(row.outTokens, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         {scaleCostStr(row.cost, scale)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                         <Timestamp date={row.updated} />
                       </TableCell>
                     </TableRow>

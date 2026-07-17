@@ -138,7 +138,7 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onCreate}>
+        <Button onClick={onCreate} size="lg">
           <Plus
             aria-hidden
             className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
@@ -281,7 +281,7 @@ function LimitsSection({
                       {scopeNameText}
                     </span>
                     {scope?.masked ? (
-                      <span className="truncate font-mono text-muted-foreground text-xs">
+                      <span className="type-mono-12 truncate text-muted-foreground">
                         {scope.masked}
                       </span>
                     ) : null}
@@ -290,16 +290,16 @@ function LimitsSection({
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {typeLabel(limit.type)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                   {thresholdLabel(limit.type, limit.threshold)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+                <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                   {usedLabel(limit.type, limit.used, limit.threshold)}
                 </TableCell>
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {periodLabel(limit.period)}
                 </TableCell>
-                <TableCell className="type-copy-14 whitespace-nowrap text-muted-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
                   {resetsAtMap.get(limit.id) ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -597,7 +597,7 @@ function CreateLimitDialog({
               Threshold
             </Label>
             <Input
-              className="font-mono text-sm tabular-nums"
+              className="type-mono-14"
               id="create-limit-threshold"
               inputMode="decimal"
               onChange={(e) =>
@@ -658,7 +658,7 @@ function CreateLimitDialog({
                         <span className="type-copy-14 text-foreground">
                           {s.name}
                         </span>
-                        <span className="font-mono text-muted-foreground text-xs">
+                        <span className="type-mono-12 text-muted-foreground">
                           {s.masked}
                         </span>
                       </span>
@@ -673,10 +673,17 @@ function CreateLimitDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button size="lg" type="button" variant="outline" />}
+          >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+          <Button
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            size="lg"
+            type="button"
+          >
             Create
           </Button>
         </DialogFooter>

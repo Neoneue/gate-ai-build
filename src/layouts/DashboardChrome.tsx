@@ -1,10 +1,20 @@
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import type * as React from "react";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
-import { Sidebar } from "@/components/ui/sidebar";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Sidebar,
+  SidebarPanel,
+  type SidebarSection,
+} from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
@@ -28,7 +38,7 @@ import {
 export interface DashboardChromeProps {
   /** id of the active sidebar item. */
   activeNavId: string;
-  children: React.ReactNode;
+  children: ReactNode;
   /** Hide the global "Documentation" button in the top bar. Used on
    *  pages that surface their own docs entrypoint (e.g. ApiKeys' "Key
    *  docs" button + inline link inside the Using your key section). */
@@ -65,18 +75,27 @@ export function DashboardChrome({
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 flex-row">
-        <Sidebar
-          activeId={activeNavId}
-          expanded={sidebarExpanded}
-          onNavigate={onNavigate}
-          overviewPath={overviewPath}
-          sections={sections}
-          showLocks={showLocks}
-        />
+        {/* Persistent rail on tablet/desktop (md+). Below md it is hidden and
+            the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
+        <div className="hidden shrink-0 md:flex">
+          <Sidebar
+            activeId={activeNavId}
+            expanded={sidebarExpanded}
+            onNavigate={onNavigate}
+            overviewPath={overviewPath}
+            sections={sections}
+            showLocks={showLocks}
+          />
+        </div>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <DashTopBar
+            activeNavId={activeNavId}
             hideDocsButton={hideDocsButton}
+            onNavigate={onNavigate}
             onToggleSidebar={onToggleSidebar}
+            overviewPath={overviewPath}
+            sections={sections}
+            showLocks={showLocks}
             sidebarExpanded={sidebarExpanded}
           />
           {/* Content pane fills the remaining column height and scrolls
@@ -108,10 +127,20 @@ function DashTopBar({
   sidebarExpanded,
   onToggleSidebar,
   hideDocsButton = false,
+  sections,
+  activeNavId,
+  onNavigate,
+  overviewPath,
+  showLocks,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
   hideDocsButton?: boolean;
+  sections: SidebarSection[];
+  activeNavId: string;
+  onNavigate?: (pageId: string) => void;
+  overviewPath?: string;
+  showLocks?: boolean;
 }) {
   return (
     <div className="flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-6">
@@ -119,9 +148,9 @@ function DashTopBar({
         <Button
           aria-expanded={sidebarExpanded}
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground"
+          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground md:inline-flex"
           onClick={onToggleSidebar}
-          size="icon-sm"
+          size="icon-lg"
           variant="ghost"
         >
           {/* Contextual icon cross-fade. Both icons stay in DOM,
@@ -153,14 +182,23 @@ function DashTopBar({
           </span>
         </Button>
         {/* Workspace switcher promoted from the sidebar (2026-05-17) — global
-         *  scope chrome belongs in the top bar alongside other account-level
-         *  controls (Docs, notifications), not in the navigation pane. */}
-        <WorkspaceSwitcher />
+         *  scope chrome belongs in the top bar. Below xs (450px) it moves into
+         *  the hamburger menu (above the nav) and the logomark takes its place
+         *  here — mirroring the collapsed-sidebar mark. */}
+        <img
+          alt=""
+          aria-hidden
+          className="xs:hidden h-8 w-auto"
+          src="/gate-ai-logo-mark.png"
+        />
+        <div className="xs:block hidden">
+          <WorkspaceSwitcher />
+        </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
         {hideDocsButton ? null : (
-          <Button size="sm" variant="outline">
+          <Button size="lg" variant="outline">
             Docs
             <ExternalLinkIcon
               aria-hidden
@@ -170,7 +208,83 @@ function DashTopBar({
             />
           </Button>
         )}
+        <MobileNav
+          activeId={activeNavId}
+          onNavigate={onNavigate}
+          overviewPath={overviewPath}
+          sections={sections}
+          showLocks={showLocks}
+        />
       </div>
     </div>
+  );
+}
+
+/* ─── Mobile nav (below md) ─────────────────────────────────────────────────
+ * Below md the persistent rail is hidden, so the primary nav lives behind a
+ * hamburger in the top-bar right group (after Docs). It opens the shared
+ * <SidebarPanel> in a right-docked Sheet (shadcn `side` API), so mobile and
+ * desktop navigation never drift. A nav tap closes the sheet. */
+function MobileNav({
+  sections,
+  activeId,
+  onNavigate,
+  overviewPath,
+  showLocks,
+}: {
+  sections: SidebarSection[];
+  activeId: string;
+  onNavigate?: (pageId: string) => void;
+  overviewPath?: string;
+  showLocks?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  // Close the drawer when the viewport grows to md+, where the persistent rail
+  // returns and the hamburger hides — otherwise the portaled SheetContent would
+  // stay open orphaned beside the desktop sidebar.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setOpen(false);
+      }
+    };
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+  const handleNavigate = (pageId: string) => {
+    onNavigate?.(pageId);
+    setOpen(false);
+  };
+  return (
+    <Sheet onOpenChange={setOpen} open={open}>
+      <SheetTrigger
+        render={
+          <Button
+            aria-label="Open navigation menu"
+            className="md:hidden"
+            size="icon-lg"
+            variant="outline"
+          />
+        }
+      >
+        <Menu aria-hidden className="size-4" strokeWidth={1.75} />
+      </SheetTrigger>
+      <SheetContent className="w-75 gap-0 p-0" side="right">
+        <SheetTitle className="sr-only">Navigation</SheetTitle>
+        <SidebarPanel
+          activeId={activeId}
+          onNavigate={handleNavigate}
+          overviewPath={overviewPath}
+          sections={sections}
+          showLocks={showLocks}
+          topSlot={
+            <div className="xs:hidden border-border border-b px-3 pt-3 pb-3">
+              <WorkspaceSwitcher className="w-full" />
+            </div>
+          }
+        />
+      </SheetContent>
+    </Sheet>
   );
 }

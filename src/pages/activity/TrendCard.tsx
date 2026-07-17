@@ -87,6 +87,7 @@ const OTHERS_COLOR = "var(--color-neutral-300)";
 const TREND_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
 const TREND_CHART_TICK = {
   fontSize: 11,
+  fontFamily: "var(--font-mono)",
   fill: "var(--muted-foreground)",
 } as const;
 
@@ -165,12 +166,12 @@ function TrendBreakdownPanel({
               {s.label}
             </span>
             {metric === "savings" ? (
-              <span className="shrink-0 text-right font-mono text-foreground text-sm tabular-nums">
+              <span className="type-mono-14 shrink-0 text-right text-foreground">
                 {`${(savingsRates?.[s.key] ?? 0).toFixed(1)}%`}
               </span>
             ) : (
               <div
-                className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
+                className="type-mono-14 grid shrink-0 items-center gap-x-2"
                 style={{ gridTemplateColumns: "9ch min-content 4ch" }}
               >
                 <span className="text-right text-foreground">
@@ -521,7 +522,7 @@ export function TrendCard({
                     formatter={(value, name) => {
                       const cfg = chartConfig[name as string];
                       return (
-                        <div className="flex w-full items-center justify-between gap-7">
+                        <div className="flex w-full items-center justify-between gap-6">
                           <span className="flex items-center gap-1">
                             <span
                               aria-hidden
@@ -532,7 +533,7 @@ export function TrendCard({
                               {cfg?.label ?? name}
                             </span>
                           </span>
-                          <span className="font-mono text-foreground tabular-nums">
+                          <span className="type-mono-14 text-foreground">
                             {valueFormatter(Number(value))}
                           </span>
                         </div>

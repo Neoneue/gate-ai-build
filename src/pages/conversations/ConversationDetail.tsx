@@ -249,10 +249,10 @@ export function ConversationDetailBody({
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
             footer-right; the header carries identity only. */}
         <div className="flex flex-wrap items-center gap-3">
-          <span className="font-medium font-mono text-foreground text-sm">
+          <span className="type-mono-14 font-medium text-foreground">
             {row.conversationId}
           </span>
-          <span className="font-mono text-muted-foreground text-xs">
+          <span className="type-mono-12 text-muted-foreground">
             {row.initiator}
           </span>
         </div>
@@ -366,7 +366,7 @@ export function ConversationDetailBody({
                 activeRequestId={activeRequestId}
                 footer={
                   <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                    <span className="font-mono text-muted-foreground text-xs">
+                    <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
                       started{" "}
@@ -438,7 +438,7 @@ export function ConversationDetailBody({
                 countLabel={`${findingCount} findings`}
                 footer={
                   <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                    <span className="font-mono text-muted-foreground text-xs">
+                    <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
                       started{" "}
@@ -512,7 +512,7 @@ export function ConversationDetailBody({
                   countLabel={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
                   footer={
                     <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
-                      <span className="font-mono text-muted-foreground text-xs">
+                      <span className="type-mono-12 text-muted-foreground">
                         Key{" "}
                         <span className="text-foreground">{row.initiator}</span>{" "}
                         · started{" "}
@@ -671,7 +671,7 @@ function ConversationMessagesPanel({
         >
           Messages
         </span>
-        <span className="font-mono text-muted-foreground text-xs tabular-nums">
+        <span className="type-mono-12 text-muted-foreground">
           {(messages ?? []).filter((m) => m.role === "assistant").length}{" "}
           {(messages ?? []).filter((m) => m.role === "assistant").length === 1
             ? "turn"

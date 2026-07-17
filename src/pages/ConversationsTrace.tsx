@@ -73,7 +73,7 @@ export function ConversationsTrace() {
           </h2>
           <p className="type-copy-14 mt-1 text-muted-foreground">
             No conversation matches{" "}
-            <span className="font-mono">{conversationId}</span>.
+            <span className="type-mono-14">{conversationId}</span>.
           </p>
         </div>
       )}

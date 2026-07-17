@@ -70,6 +70,7 @@ function ChartXAxisTick(props: {
     <text
       dy="0.71em"
       fill="var(--muted-foreground)"
+      fontFamily="var(--font-mono)"
       fontSize={11}
       textAnchor={anchor}
       x={x}
@@ -280,7 +281,7 @@ function BreakdownRow({
         className="size-2 shrink-0 rounded-full"
         style={{ backgroundColor: BREAKDOWN_DOT[tone] }}
       />
-      <span className="justify-self-end font-medium font-mono text-foreground text-xs tabular-nums">
+      <span className="type-mono-12 justify-self-end font-medium text-foreground">
         {value}
       </span>
     </>
@@ -383,7 +384,7 @@ function MiddleRow({
   customRange: CustomRange | null;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <ActionCategoriesCard customRange={customRange} range={range} />
       <AttackCategoriesCard customRange={customRange} range={range} />
     </div>
@@ -532,7 +533,7 @@ function CategoryBreakdownCard({
                   style={{ width: `${pct}%`, backgroundColor: cat.color }}
                 />
               </div>
-              <span className="justify-self-end whitespace-nowrap pl-2 font-mono text-foreground text-sm tabular-nums">
+              <span className="type-mono-14 justify-self-end whitespace-nowrap pl-2 text-foreground">
                 {fmtCount(cat.count)}
               </span>
             </div>

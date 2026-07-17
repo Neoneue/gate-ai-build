@@ -32,6 +32,7 @@ function ChartXAxisTick(props: {
     <text
       dy="0.71em"
       fill="var(--color-neutral-500)"
+      fontFamily="var(--font-mono)"
       fontSize={11}
       textAnchor={anchor}
       x={x}
@@ -209,7 +210,7 @@ function BreakdownRow({
         {label}
       </span>
       <StatusDot kind={tone} />
-      <span className="justify-self-end font-medium font-mono text-foreground text-xs tabular-nums">
+      <span className="type-mono-12 justify-self-end font-medium text-foreground">
         {value}
       </span>
     </>

@@ -7,13 +7,7 @@ import {
 } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -181,7 +175,7 @@ export function Dashboard() {
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />
@@ -194,7 +188,7 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-1/2 flex-col gap-2">
+    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
       <PageTitle>Overview</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
@@ -261,6 +255,7 @@ function makeStackedTokenRows(
 const STACKED_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
 const STACKED_CHART_TICK = {
   fontSize: 10,
+  fontFamily: "var(--font-mono)",
   fill: "var(--muted-foreground)",
 } as const;
 
@@ -322,7 +317,7 @@ function StackedKpiChart({
               formatter={(value, name) => {
                 const cfg = config[name as string];
                 return (
-                  <div className="flex w-full items-center justify-between gap-3">
+                  <div className="flex w-full items-center justify-between gap-6">
                     <span className="flex items-center gap-1">
                       <span
                         aria-hidden
@@ -333,7 +328,7 @@ function StackedKpiChart({
                         {cfg?.label ?? name}
                       </span>
                     </span>
-                    <span className="font-mono text-foreground tabular-nums">
+                    <span className="type-mono-14 text-foreground">
                       {yFormatter(Number(value))}
                     </span>
                   </div>
@@ -482,20 +477,20 @@ function OverviewUsageChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardAction>
-          <div className="flex items-center gap-2">
-            <DimSelector dim={dim} onDimChange={handleDimChange} />
-            <SegmentedPill
-              aria-label="Chart metric"
-              onValueChange={(v) => handleMetricChange(v as Metric)}
-              options={OVERVIEW_METRIC_OPTIONS}
-              size="sm"
-              value={metric}
-            />
-          </div>
-        </CardAction>
+      <CardHeader className="flex xs:flex-row flex-col items-start xs:items-center xs:justify-between gap-2">
+        <CardTitle className="type-heading-18 lg:type-heading-16">
+          {title}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          <DimSelector dim={dim} onDimChange={handleDimChange} />
+          <SegmentedPill
+            aria-label="Chart metric"
+            onValueChange={(v) => handleMetricChange(v as Metric)}
+            options={OVERVIEW_METRIC_OPTIONS}
+            size="sm"
+            value={metric}
+          />
+        </div>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* chart — col-span-8 */}
@@ -508,7 +503,7 @@ function OverviewUsageChart() {
           />
         </div>
         {/* breakdown panel — col-span-4 */}
-        <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
+        <div className="border-border border-t pt-4 md:col-span-4 md:border-t-0 md:border-l md:pt-0 md:pl-3">
           <div className="flex flex-col gap-1">
             {series.map((s) => {
               const total = seriesTotals[s.key] ?? 0;
@@ -529,7 +524,7 @@ function OverviewUsageChart() {
                     {s.label}
                   </span>
                   <div
-                    className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
+                    className="type-mono-14 grid shrink-0 items-center gap-x-2"
                     style={{ gridTemplateColumns: "9ch min-content 4ch" }}
                   >
                     <span className="text-right text-foreground">
@@ -552,7 +547,7 @@ function OverviewUsageChart() {
 
 function TokenSavingsStrip() {
   return (
-    <KpiRail columns={3}>
+    <KpiRail className="sm:grid-cols-1 lg:grid-cols-3" columns={3}>
       <CompactKpi
         delta="+8.2%"
         deltaNote="vs last week"
@@ -677,6 +672,7 @@ function LatestRequestsTable() {
               aria-label={
                 row.requestId ? `Open message ${row.requestId}` : "Open message"
               }
+              className="h-12"
               key={row.requestId ?? i}
               onActivate={() => {
                 if (row.requestId) {
@@ -684,7 +680,7 @@ function LatestRequestsTable() {
                 }
               }}
             >
-              <TableCell className="whitespace-nowrap font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap">
                 {row.day} {row.time}
               </TableCell>
               <TableCell className="whitespace-nowrap">{row.model}</TableCell>
@@ -733,6 +729,7 @@ function RecentConversationsTable() {
           {rows.map((row) => (
             <NavTableRow
               aria-label={`Open conversation: ${row.title}`}
+              className="h-12"
               key={row.conversationId}
               onActivate={() =>
                 navigate(`/conversations?open=${row.conversationId}`)
@@ -741,13 +738,13 @@ function RecentConversationsTable() {
               <TableCell className="w-full max-w-0">
                 <span className="block truncate">{row.title}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap">
                 {formatTimestamp(row.updated)}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right">
                 {row.turns}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right">
                 {row.reqs}
               </TableCell>
             </NavTableRow>
@@ -785,14 +782,15 @@ function SecurityEventsTable() {
                     ? `View security event ${row.requestId}`
                     : "View security event"
                 }
+                className="h-12"
                 key={row.requestId ?? i}
                 onActivate={() => navigate(`/security?open=${row.requestId}`)}
               >
-                <TableCell className="whitespace-nowrap font-mono">
+                <TableCell className="type-mono-14 whitespace-nowrap">
                   {formatTimestamp(parseEventTime(row.time))}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 align-middle">
                     <TypeIcon
                       aria-hidden
                       className="size-4 shrink-0"
@@ -805,7 +803,7 @@ function SecurityEventsTable() {
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={badge.variant}>{badge.label}</Badge>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-muted-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
                   {row.key.split(" (")[0]}
                 </TableCell>
               </NavTableRow>

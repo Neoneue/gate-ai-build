@@ -170,6 +170,7 @@ function PlanCard({
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
           }
+          size="lg"
           variant={plan.cta.variant}
         >
           {CtaIcon ? <CtaIcon aria-hidden size={16} /> : null}

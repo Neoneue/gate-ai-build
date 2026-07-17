@@ -15,9 +15,12 @@ and (pointer: fine)) and (&:hover));
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 
-  /* Screens — Tailwind defaults (sm 640 … 2xl 1536) plus one custom step.
-     `3xl` (1920px) is the largest breakpoint; content locks at 1536 so this
-     targets the band above the lock. Enables `3xl:` / `max-3xl:` variants. */
+  /* Screens — Tailwind defaults (sm 640 … 2xl 1536) plus two custom steps.
+     `xs` (450px) is a small-phone breakpoint below sm — the point where the
+     compact mobile chrome kicks in. `3xl` (1920px) is the largest, targeting
+     the band above the 1536 content lock. Enables `xs:` / `3xl:` (and their
+     `max-*`) variants. */
+  --breakpoint-xs: 450px;
   --breakpoint-3xl: 1920px;
 
   /* ─── Color ramps — all OKLCH, all 11-step (50–950), Tailwind-aligned naming.
@@ -605,6 +608,24 @@ body {
 
   .type-copy-12 {
     @apply font-sans text-xs font-normal;
+  }
+
+  /* Mono data voice — Geist Mono + tabular figures for every DATA value in a
+     table/row (numbers, counts, tokens, currency, %, dates, IDs, hashes).
+     Mirrors the copy sizes so a sans copy cell becomes its mono twin by
+     swapping the class. Element-level font wins over the sans font the
+     `<table>` inherits from `type-copy-14`. Non-data text keeps type-copy-*;
+     code/eyebrow/terminal keep their own voices. */
+  .type-mono-16 {
+    @apply font-mono text-base font-normal tabular-nums;
+  }
+
+  .type-mono-14 {
+    @apply font-mono text-sm font-normal tabular-nums;
+  }
+
+  .type-mono-12 {
+    @apply font-mono text-xs font-normal tabular-nums;
   }
 
   /* Form/input helper copy: 12px tier + 8px separation from control. */

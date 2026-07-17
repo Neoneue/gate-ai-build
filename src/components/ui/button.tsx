@@ -28,18 +28,18 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline active:opacity-80",
       },
       size: {
-        // Paper CMP-001.2 spec — Tiny / Small / Medium / Large.
-        // height ↑ + horizontal padding ↑ for each step.
+        // shadcn-aligned scale — default 32px / lg 36px, both with 12px L/R
+        // padding (px-3). Heights step; H-padding is flat 12px across default/lg.
         xs: "h-6 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         sm: "h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
         default:
-          "h-10 gap-2 px-4 text-sm has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        lg: "h-12 gap-2 px-4 text-sm has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+          "h-8 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        lg: "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         // Icon-only — square buttons matching each text-size step.
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
-        icon: "size-10",
-        "icon-lg": "size-12",
+        icon: "size-8",
+        "icon-lg": "size-9",
       },
     },
     defaultVariants: {

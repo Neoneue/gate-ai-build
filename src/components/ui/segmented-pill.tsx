@@ -99,8 +99,11 @@ export function SegmentedPill({
       {options.map((opt) => (
         <ToggleGroupItem
           className={cn(
-            // Paper spec WW7-0: h-8, px-3 (12px), text 12px/16px Geist medium.
-            "relative z-10 min-w-0 rounded-xs! px-3 font-medium font-sans text-xs leading-4",
+            // Paper spec WW7-0: text 12px/16px Geist medium. The rail sets
+            // data-spacing=0, whose ToggleGroupItem variant forces px-2 (8px) —
+            // so a plain px-* base can't win. Both sizes override that SAME
+            // variant to px-3 (12px L/R); only the box height is size-aware.
+            "relative z-10 min-w-0 rounded-xs! px-3 font-medium font-sans text-xs leading-4 group-data-[spacing=0]/toggle-group:px-3",
             size === "sm" ? "h-6" : "h-8",
             "border-0 bg-transparent text-muted-foreground",
             "hover:bg-transparent hover:text-foreground",

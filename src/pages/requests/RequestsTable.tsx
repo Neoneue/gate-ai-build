@@ -241,7 +241,7 @@ export function RequestsTableSection({
             }
             className="border-border bg-card font-normal text-foreground"
             onClick={openFilters}
-            size="sm"
+            size="lg"
             type="button"
             variant="outline"
           >
@@ -367,6 +367,7 @@ export function RequestsTableSection({
                 <Button
                   disabled={draftActiveFilterCount === 0}
                   onClick={resetFilters}
+                  size="lg"
                   type="button"
                   variant="ghost"
                 >
@@ -374,11 +375,13 @@ export function RequestsTableSection({
                 </Button>
                 <div className="flex items-center gap-2">
                   <DialogClose
-                    render={<Button type="button" variant="outline" />}
+                    render={
+                      <Button size="lg" type="button" variant="outline" />
+                    }
                   >
                     Cancel
                   </DialogClose>
-                  <Button onClick={applyFilters} type="button">
+                  <Button onClick={applyFilters} size="lg" type="button">
                     Apply
                   </Button>
                 </div>
@@ -386,7 +389,7 @@ export function RequestsTableSection({
             </DialogContent>
           </Dialog>
 
-          <Button className="ml-auto" size="sm" type="button" variant="outline">
+          <Button className="ml-auto" size="lg" type="button" variant="outline">
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
@@ -539,8 +542,8 @@ export function RequestsTableSection({
                 {pagedRows.map((row, i) => {
                   const isMissing = row.inTokens === "—";
                   const numericCls = isMissing
-                    ? "text-right whitespace-nowrap font-mono tabular-nums text-muted-foreground"
-                    : "text-right whitespace-nowrap font-mono tabular-nums text-foreground";
+                    ? "type-mono-14 text-right whitespace-nowrap text-muted-foreground"
+                    : "type-mono-14 text-right whitespace-nowrap text-foreground";
                   // Slow rows: leading amber TriangleAlert + neutral-900 (one step
                   // darker than the neutral-800 default). Same weight as non-slow rows
                   // so `tabular-nums` keeps the column tracks aligned — font-medium
@@ -580,7 +583,7 @@ export function RequestsTableSection({
                             render={(props) => (
                               <span
                                 {...props}
-                                className="font-mono text-foreground text-sm tabular-nums"
+                                className="type-mono-14 text-foreground"
                               >
                                 {row.day}, {row.time}
                               </span>
@@ -606,7 +609,7 @@ export function RequestsTableSection({
                         >
                           <VendorAvatar vendor={row.vendor} />
                           <span
-                            className="truncate font-mono text-foreground text-sm"
+                            className="type-mono-14 truncate text-foreground"
                             title={row.model}
                           >
                             {row.model}
@@ -622,20 +625,20 @@ export function RequestsTableSection({
                             >
                               {conversationName}
                             </span>
-                            <span className="block font-mono text-muted-foreground text-xs">
+                            <span className="type-mono-12 block text-muted-foreground">
                               {row.conversation}
                             </span>
                           </>
                         ) : (
                           <span
-                            className="block max-w-full truncate font-mono text-foreground text-sm tabular-nums"
+                            className="type-mono-14 block max-w-full truncate text-foreground"
                             title={row.conversation}
                           >
                             {row.conversation}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono">
+                      <TableCell className="type-mono-14 whitespace-nowrap">
                         <span className="text-foreground">{row.keyId}</span>
                       </TableCell>
                       <TableCell className={numericCls}>
@@ -644,7 +647,7 @@ export function RequestsTableSection({
                       <TableCell className={numericCls}>
                         {row.outTokens}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right">
                         <span className="inline-flex items-center justify-end gap-1">
                           {isSlow ? (
                             <TriangleAlert
@@ -661,7 +664,7 @@ export function RequestsTableSection({
                           <span className={latencyTextCls}>{row.latency}</span>
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right">
                         {isByokKey(row.keyId) ? (
                           <span className="inline-flex items-center justify-end gap-2">
                             <Tooltip>

@@ -9,14 +9,16 @@ const selectTriggerVariants = cva(
   {
     variants: {
       size: {
+        // shadcn-aligned scale — default 32px / lg 36px. Asymmetric padding
+        // (pl-3 pr-2 = 12px text side / 8px chevron side) per design.md.
         xs: "h-7 gap-2 pr-2 pl-3 text-xs",
         sm: "h-8 gap-2 pr-2 pl-3 text-xs",
-        default: "h-9 gap-2 pr-3 pl-4 text-sm",
-        lg: "h-10 gap-2 pr-3 pl-4 text-sm",
+        default: "h-8 gap-2 pr-2 pl-3 text-sm",
+        lg: "h-9 gap-2 pr-2 pl-3 text-sm",
       },
     },
     defaultVariants: {
-      size: "default",
+      size: "lg",
     },
   }
 );

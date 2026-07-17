@@ -52,7 +52,7 @@ export function TeamDefault() {
               Ponticas&rsquo;s workspace.
             </p>
           </div>
-          <Button size="default" variant="default">
+          <Button size="lg" variant="default">
             <UserPlus aria-hidden data-icon="inline-start" />
             Invite member
           </Button>
@@ -105,7 +105,7 @@ export function TeamDefault() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                       <Timestamp date={OWNER.joined} format="dateNumeric" />
                     </TableCell>
                     <TableCell className="type-copy-14 whitespace-nowrap text-foreground">

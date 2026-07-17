@@ -64,7 +64,7 @@ export function SearchInput({
         name={name}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         placeholder={placeholder}
-        size="sm"
+        size="lg"
         spellCheck={false}
         surface={surface}
         type="search"

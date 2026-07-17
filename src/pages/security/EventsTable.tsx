@@ -233,7 +233,7 @@ export function EventsTableSection({
               }
               className="border-border bg-card font-normal text-foreground"
               onClick={openFilters}
-              size="sm"
+              size="lg"
               type="button"
               variant="outline"
             >
@@ -253,7 +253,7 @@ export function EventsTableSection({
               ) : null}
             </Button>
 
-            <Button size="sm" type="button" variant="outline">
+            <Button size="lg" type="button" variant="outline">
               <UploadIcon aria-hidden data-icon="inline-start" size={16} />
               Export CSV
             </Button>
@@ -341,6 +341,7 @@ export function EventsTableSection({
               <Button
                 disabled={draftActiveFilterCount === 0}
                 onClick={resetFilters}
+                size="lg"
                 type="button"
                 variant="ghost"
               >
@@ -348,11 +349,11 @@ export function EventsTableSection({
               </Button>
               <div className="flex items-center gap-2">
                 <DialogClose
-                  render={<Button type="button" variant="outline" />}
+                  render={<Button size="lg" type="button" variant="outline" />}
                 >
                   Cancel
                 </DialogClose>
-                <Button onClick={applyFilters} type="button">
+                <Button onClick={applyFilters} size="lg" type="button">
                   Apply
                 </Button>
               </div>
@@ -434,7 +435,7 @@ export function EventsTableSection({
                       >
                         <TableCell className="whitespace-nowrap">
                           <Timestamp
-                            className="font-mono text-foreground text-sm tabular-nums"
+                            className="type-mono-14 text-foreground"
                             date={parseEventTime(row.time)}
                           />
                         </TableCell>
@@ -453,13 +454,13 @@ export function EventsTableSection({
                         </TableCell>
                         <TableCell className="max-w-[200px] whitespace-nowrap">
                           <span
-                            className="block max-w-full truncate font-mono text-foreground text-sm tabular-nums"
+                            className="type-mono-14 block max-w-full truncate text-foreground"
                             title={row.conversationId}
                           >
                             {row.conversationId}
                           </span>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap font-mono">
+                        <TableCell className="type-mono-14 whitespace-nowrap">
                           <span className="text-foreground">
                             {row.key.split(" (")[0]}
                           </span>
@@ -698,7 +699,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 label="Timestamp"
                 value={
                   <Timestamp
-                    className="font-mono text-foreground tabular-nums"
+                    className="type-mono-14 text-foreground"
                     date={parseEventTime(row.time)}
                   />
                 }
@@ -708,7 +709,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 value={(() => {
                   const parenIdx = row.key.indexOf(" (");
                   return (
-                    <span className="font-mono tabular-nums">
+                    <span className="type-mono-14">
                       {parenIdx === -1 ? (
                         <span className="text-foreground">{row.key}</span>
                       ) : (
@@ -728,7 +729,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-mono tabular-nums">
+                  <span className="type-mono-14">
                     <TextLink
                       aria-label={`Open conversation ${conversationId}`}
                       onClick={openConversation}
@@ -741,7 +742,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Request"
                 value={
-                  <span className="font-mono tabular-nums">
+                  <span className="type-mono-14">
                     <TextLink
                       aria-label={`Open message ${requestId}`}
                       onClick={openRequest}

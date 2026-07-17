@@ -441,7 +441,7 @@ function Toolbar({
         <SelectTrigger
           aria-label="Filter by vendor"
           className="border-border bg-card font-normal text-foreground"
-          size="sm"
+          size="lg"
         >
           <SelectValue />
         </SelectTrigger>
@@ -462,7 +462,7 @@ function Toolbar({
         <SelectTrigger
           aria-label="Filter by provider"
           className="border-border bg-card font-normal text-foreground"
-          size="sm"
+          size="lg"
         >
           <SelectValue />
         </SelectTrigger>
@@ -637,7 +637,7 @@ function ModelsTable({
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  <span className="select-text font-mono text-foreground text-sm">
+                  <span className="type-mono-14 select-text text-foreground">
                     {model.defaultHandle}
                   </span>
                   <CopyButton
@@ -648,10 +648,10 @@ function ModelsTable({
                   />
                 </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                 {context}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                 {inputPrice}
               </TableCell>
               <TableCell
@@ -679,7 +679,7 @@ function ModelsTable({
 
 function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   if (capabilities.length === 0) {
-    return <span className="font-mono text-muted-foreground text-xs">—</span>;
+    return <span className="type-mono-12 text-muted-foreground">—</span>;
   }
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Vision is always leftmost when present). Each icon
@@ -774,7 +774,7 @@ function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
         // glyph height; inline-flex centers the text inside h-4.
         <span
           aria-hidden
-          className="inline-flex h-4 items-center font-mono text-muted-foreground text-xs tabular-nums leading-none"
+          className="type-mono-12 inline-flex h-4 items-center text-muted-foreground leading-none"
         >
           +{overflow}
         </span>
@@ -850,7 +850,7 @@ function ModelDetailPage({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-foreground text-sm">
+            <span className="type-mono-14 text-foreground">
               {model.defaultHandle}
             </span>
             <CopyButton

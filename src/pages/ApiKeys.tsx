@@ -192,7 +192,7 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      <div className="flex w-full flex-col gap-6">
         <PageHeader
           onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
         />
@@ -258,7 +258,7 @@ export function ApiKeys() {
 export function CreateKeyButton({
   onClick,
   children = "Create key",
-  size,
+  size = "lg",
   disabled,
 }: {
   onClick: () => void;
@@ -308,7 +308,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           <CreateKeyButton onClick={onCreate}>
             Create your first key
           </CreateKeyButton>
-          <Button onClick={openDocs} variant="outline">
+          <Button onClick={openDocs} size="lg" variant="outline">
             <BookOpen aria-hidden data-icon="inline-start" />
             Read the quickstart
           </Button>
@@ -373,10 +373,10 @@ export function UsageInfo() {
         </p>
       </div>
 
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) on top,
-          the manual-setup code tabs (no Gate Connect tab) below.
-          Stacked full-width with a 24px gap, one card per row. */}
-      <div className="flex flex-col gap-6">
+      {/* Two cards: Gate Connect (1-click setup, no tab strip) and the
+          manual-setup code tabs (no Gate Connect tab). Side by side at xl+,
+          stacked full-width (one card per row, 24px gap) below xl. */}
+      <div className="flex flex-col gap-6 xl:flex-row">
         {/* Each card gets an Eyebrow label above it (outside the card, so no
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no
@@ -490,7 +490,7 @@ function KeysTable({
                 {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                     to neutral-600. Single-line two-tone form shared with the
                     Events / Requests / Activity Key columns. */}
-                <TableCell className="whitespace-nowrap font-mono">
+                <TableCell className="type-mono-14 whitespace-nowrap">
                   <span className="text-foreground">{row.name}</span>
                   <span className="text-muted-foreground"> ({row.masked})</span>
                 </TableCell>
@@ -505,10 +505,10 @@ function KeysTable({
                   <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} messages, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.createdAt} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.lastUsed} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right">
@@ -548,7 +548,9 @@ function KeysTable({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={<Button size="lg" type="button" variant="outline" />}
+            >
               Cancel
             </DialogClose>
             <Button
@@ -558,6 +560,7 @@ function KeysTable({
                 }
                 setPendingRevoke(null);
               }}
+              size="lg"
               type="button"
               variant="destructive"
             >
@@ -634,7 +637,7 @@ export function CreateKeyDialog({
             </div>
             <Input
               autoComplete="off"
-              className="font-mono text-sm"
+              className="type-mono-14"
               id="apikey-name"
               onChange={(e) => setName(e.target.value)}
               placeholder="server · new-service"
@@ -661,6 +664,7 @@ export function CreateKeyDialog({
               render={
                 <Button
                   onClick={() => onCancel?.()}
+                  size="lg"
                   type="button"
                   variant="outline"
                 />
@@ -668,7 +672,12 @@ export function CreateKeyDialog({
             >
               Cancel
             </DialogClose>
-            <Button disabled={!isValid} type="submit" variant="default">
+            <Button
+              disabled={!isValid}
+              size="lg"
+              type="submit"
+              variant="default"
+            >
               Create key
             </Button>
           </DialogFooter>
@@ -728,7 +737,7 @@ export function KeyCreatedDialog({
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
         <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-muted">
-          <div className="flex-1 break-all px-3 py-2 font-mono text-foreground text-sm">
+          <div className="type-mono-14 flex-1 break-all px-3 py-2 text-foreground">
             {fullKey}
           </div>
           <button
@@ -783,7 +792,12 @@ export function KeyCreatedDialog({
         <DialogFooter>
           <DialogClose
             render={
-              <Button disabled={!saved} type="button" variant="default" />
+              <Button
+                disabled={!saved}
+                size="lg"
+                type="button"
+                variant="default"
+              />
             }
           >
             Done

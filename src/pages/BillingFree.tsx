@@ -381,7 +381,7 @@ function AddCreditsDialog({
           <div className="relative">
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
+              className="type-mono-14 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
             >
               $
             </span>
@@ -392,7 +392,7 @@ function AddCreditsDialog({
                   : undefined
               }
               aria-invalid={custom.length > 0 && !customValid}
-              className="pl-7 font-mono text-sm tabular-nums"
+              className="type-mono-14 pl-7"
               id="add-credits-custom"
               inputMode="decimal"
               max="1000"
@@ -532,7 +532,7 @@ function AutoRechargeDialog({
             <div className="relative">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
+                className="type-mono-14 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
               >
                 $
               </span>
@@ -541,7 +541,7 @@ function AutoRechargeDialog({
                   thresholdInvalid ? "ar-threshold-error" : undefined
                 }
                 aria-invalid={thresholdInvalid}
-                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                className="type-mono-14 pl-7 disabled:opacity-50"
                 disabled={!enabled}
                 id="ar-threshold"
                 inputMode="decimal"
@@ -575,14 +575,14 @@ function AutoRechargeDialog({
             <div className="relative">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
+                className="type-mono-14 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
               >
                 $
               </span>
               <Input
                 aria-describedby={topUpInvalid ? "ar-topup-error" : undefined}
                 aria-invalid={topUpInvalid}
-                className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+                className="type-mono-14 pl-7 disabled:opacity-50"
                 disabled={!enabled}
                 id="ar-topup"
                 inputMode="decimal"
@@ -620,14 +620,14 @@ function AutoRechargeDialog({
           <div className="relative">
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-muted-foreground text-sm"
+              className="type-mono-14 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
             >
               $
             </span>
             <Input
               aria-describedby={capInvalid ? "ar-cap-error" : undefined}
               aria-invalid={capInvalid}
-              className="pl-7 font-mono text-sm tabular-nums disabled:opacity-50"
+              className="type-mono-14 pl-7 disabled:opacity-50"
               disabled={!enabled}
               id="ar-cap"
               inputMode="decimal"

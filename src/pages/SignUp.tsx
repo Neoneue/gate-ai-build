@@ -65,7 +65,7 @@ export function SignUp() {
               </FieldLabel>
               <Input
                 autoComplete="off"
-                className="font-mono"
+                className="type-mono-14"
                 id="invite"
                 onChange={(e) => setInvite(e.target.value)}
                 placeholder="e.g. ABC123-XYZ789"
