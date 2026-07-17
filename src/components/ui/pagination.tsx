@@ -44,7 +44,7 @@ type PaginationLinkProps = {
 function PaginationLink({
   className,
   isActive,
-  size = "xs",
+  size = "icon-sm",
   type = "button",
   ...props
 }: PaginationLinkProps) {
@@ -55,7 +55,7 @@ function PaginationLink({
         "border-border font-normal text-muted-foreground tabular-nums -tracking-[0.01em]",
         "hover:bg-accent hover:text-foreground",
         isActive &&
-          "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+          "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary",
         className
       )}
       data-active={isActive}
@@ -76,7 +76,7 @@ function PaginationPrevious({
     <PaginationLink
       aria-label="Go to previous page"
       className={className}
-      size="icon-xs"
+      size="icon-sm"
       {...props}
     >
       <ChevronLeftIcon />
@@ -92,7 +92,7 @@ function PaginationNext({
     <PaginationLink
       aria-label="Go to next page"
       className={className}
-      size="icon-xs"
+      size="icon-sm"
       {...props}
     >
       <ChevronRightIcon />
@@ -108,7 +108,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       className={cn(
-        "flex size-7 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
+        "flex size-8 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
         className
       )}
       data-slot="pagination-ellipsis"
