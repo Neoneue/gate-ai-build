@@ -21,7 +21,7 @@ export function RequestsDefault() {
       sidebarExpanded={sidebarExpanded}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex max-w-1/2 flex-col gap-2">
+        <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
           <PageTitle>Messages</PageTitle>
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             Every model call across your stack, inspected for injection, PII,

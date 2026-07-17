@@ -359,7 +359,7 @@ export function Security() {
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. ArtboardHeader emits the outer
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}

@@ -390,7 +390,7 @@ function PageHeader({
   providerCount: number;
 }) {
   return (
-    <div className="flex max-w-1/2 flex-col gap-2">
+    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
       <PageTitle>Models</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Route to{" "}

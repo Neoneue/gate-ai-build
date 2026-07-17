@@ -284,7 +284,7 @@ export function CreateKeyButton({
 export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         <PageTitle>API Keys</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
