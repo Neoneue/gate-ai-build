@@ -35,3 +35,20 @@ A single request can carry two security findings (e.g. `req_8389e4` has both a P
 **`src/components/ui/pagination.tsx`**, **`src/components/ui/table-pagination-footer.tsx`**
 
 Four fixes to the table pagination footer. (1) The active page number was invisible in dark mode: the Button `outline` variant carries `dark:bg-input/30` + `dark:border-input`, which tailwind-merge does not treat as conflicting with `bg-primary`, so the `.dark` rule won and left dark `text-primary-foreground` on a translucent dark fill; added `dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary` to the active state so it reads in both themes. (2) Added an always-present Previous (`<`) button, disabled + `pointer-events-none opacity-50` on page 1 (mirrors the existing Next pattern). (3) `buildPageWindow` is now constant-width: any gap of one or more hidden pages collapses to an ellipsis (removed the lone-page-to-number fill), so a 7-page table shows e.g. `‹ 1 … 3 4 5 … 7 ›` at page 4 and never balloons back to all seven numbers. (4) All controls (numbers, `<`, `>`, ellipsis) sized to 32px (`icon-sm` / `size-8`), numbered links `min-w-8 px-2` so multi-digit pages don't clip. Verified against canonical shadcn (via the shadcn skill): all a11y/semantics already match; prev/next stay icon-only (accessible name via `aria-label`).
+
+### Mobile-responsive pass: content-flow shell, toolbar/footer stacking, Policies cards `94b34ec`
+
+**`src/layouts/DashboardChrome.tsx`**, **`src/components/ui/filter-toolbar.tsx`**, **`src/components/ui/table-pagination-footer.tsx`**, **`src/pages/Policies.tsx`** + 7 page toolbars (Activity, AuditTrail, Conversations, Models, Team, requests/RequestsTable, security/EventsTable)
+
+Broad mobile/tablet layout pass, all gated at `lg` (nav) / `md` (toolbars):
+
+- **Shell sizes to content below `lg`.** The viewport-lock + internal scroll (`h-screen`/`overflow-hidden` root, `<main>` `overflow-y-auto flex-1`) are now `lg:`-only; below `lg` the document flows to content height so short pages no longer show a large dead scroll region. Root bottom padding `pb-20`→`pb-8` base (`lg:pb-20`); top bar `sticky top-0 z-40 lg:static` so the hamburger stays reachable. MobileNav auto-close threshold moved 768→1024.
+- **Shell background.** Root paints `bg-background` (was `bg-card`), so the area exposed below content on small screens matches the page background in BOTH themes (light neutral-50, dark neutral-950) instead of the lighter card surface (white / neutral-900).
+- **Table toolbars stack on mobile.** Below `md`: search input full-width on its own row, trailing controls (Filters / Export / Selects) split evenly on the row below (2→50%, 3→33%); single inline row at `md`+. Applied to the shared `FilterToolbar` and 7 page toolbars.
+- **Pagination footer stacks on mobile.** The "Showing … · Rows" summary group sits above the pagination below `md`, inline space-between at `md`+; summary gains `whitespace-nowrap`.
+
+### Policies cards: full-width description + spacing `94b34ec`
+
+**`src/pages/Policies.tsx`**
+
+The `PolicyCard` header is now a `flex-col` — a top flex row holds the icon, title, ON badge, and expand chevron; the description sits on its own full-width row below (was nested in a column beside the icon, so at 449px it was indented to ~237px). Description now spans the full card width (~367px). Title→description gap `gap-1`→`gap-3` (12px). Page header→cards gap `gap-6`→`gap-8` on mobile (`md:gap-6`). Covers all three routes (`/policies`, `/policies-free`, `/policies-default`) via the single component.
