@@ -672,6 +672,7 @@ function LatestRequestsTable() {
               aria-label={
                 row.requestId ? `Open message ${row.requestId}` : "Open message"
               }
+              className="h-12"
               key={row.requestId ?? i}
               onActivate={() => {
                 if (row.requestId) {
@@ -728,6 +729,7 @@ function RecentConversationsTable() {
           {rows.map((row) => (
             <NavTableRow
               aria-label={`Open conversation: ${row.title}`}
+              className="h-12"
               key={row.conversationId}
               onActivate={() =>
                 navigate(`/conversations?open=${row.conversationId}`)
@@ -780,6 +782,7 @@ function SecurityEventsTable() {
                     ? `View security event ${row.requestId}`
                     : "View security event"
                 }
+                className="h-12"
                 key={row.requestId ?? i}
                 onActivate={() => navigate(`/security?open=${row.requestId}`)}
               >
@@ -787,7 +790,7 @@ function SecurityEventsTable() {
                   {formatTimestamp(parseEventTime(row.time))}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 align-middle">
                     <TypeIcon
                       aria-hidden
                       className="size-4 shrink-0"
