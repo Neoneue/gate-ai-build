@@ -52,3 +52,18 @@ Broad mobile/tablet layout pass, all gated at `lg` (nav) / `md` (toolbars):
 **`src/pages/Policies.tsx`**
 
 The `PolicyCard` header is now a `flex-col` — a top flex row holds the icon, title, ON badge, and expand chevron; the description sits on its own full-width row below (was nested in a column beside the icon, so at 449px it was indented to ~237px). Description now spans the full card width (~367px). Title→description gap `gap-1`→`gap-3` (12px). Page header→cards gap `gap-6`→`gap-8` on mobile (`md:gap-6`). Covers all three routes (`/policies`, `/policies-free`, `/policies-default`) via the single component.
+
+### Mobile polish: pagination footer centered, tabs side-scroll, conversation-trace `98163ab`
+
+**`src/components/ui/table-pagination-footer.tsx`**, **`src/components/ui/tabs.tsx`**, **`src/pages/conversations/ConversationDetail.tsx`**
+
+- **Pagination footer** centers both rows on mobile (`flex-col items-center`), reverting to the inline space-between row at `md`+; numbered pagination retained.
+- **Tabs (`line` variant)** in the primitive gained `min-w-0 flex-nowrap overflow-x-auto` with `shrink-0` triggers, so an overflowing tab bar (e.g. the conversation-trace All steps / Findings only / Errors) scrolls left-to-right on mobile instead of forcing horizontal page overflow. Applies to every `line` tab bar; those that fit are visually unchanged. Verified page `scrollWidth === innerWidth` (no page overflow) and single-row/no vertical scroll.
+- **Conversation-trace panels** (Messages + Request Trace) are +100px on mobile: the grid is `h-[840px]` below `lg` (was 640px), `lg:h-[640px]` for the 2-column desktop layout; measured 312px→412px per card at 390px. Applied to both the All-steps and Findings tab grids.
+- **Conversation-trace footer** stacks the `Key … started` meta above the actions with a 16px gap below `lg`, buttons full-width 50/50; inline space-between (meta left, buttons right) at `lg`+.
+
+### Compact-millions KPI formatter (1M+ → N.NM) across KPI tiles `98163ab`
+
+**`src/lib/formatters.ts`** + KPI tiles in **Dashboard**, **Activity**, **AuditTrail**, **Security**, **Conversations**, **requests/HeroMetric**, **requests/RequestDetailBody**, **conversations/ConversationDetail**
+
+New `formatCompactCount(n)`: raw counts with `abs(n) >= 1_000_000` render as `(n/1e6).toFixed(1) + "M"` (rounded one decimal, e.g. 19,386,869 → `19.4M`); sub-1M values keep full comma formatting (`toLocaleString`). M tier only (no K, no B). Routed the raw count values on KPI tiles site-wide (tokens in/out, messages, requests, turns, events, threats/blocked/flagged/redacted) through it. Currency (Cost/Spend), durations, and percentages are unchanged; table cells and chart axes/tooltips keep full numbers (KPI tiles only). Note: the Overview "Messages" tile previously used Intl compact (`63.8K`) and now shows full commas (`63,793`) under the no-K rule.
