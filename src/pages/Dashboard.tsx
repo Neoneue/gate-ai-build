@@ -783,7 +783,7 @@ function SecurityEventsTable() {
                     : "View security event"
                 }
                 className="h-12"
-                key={row.requestId ?? i}
+                key={`${row.requestId}-${i}`}
                 onActivate={() => navigate(`/security?open=${row.requestId}`)}
               >
                 <TableCell className="type-mono-14 whitespace-nowrap">
