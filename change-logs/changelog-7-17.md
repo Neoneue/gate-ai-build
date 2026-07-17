@@ -54,6 +54,12 @@ The persistent sidebar rail now renders at `lg`+ only; tablet and mobile use the
 
 ## Sections
 
+### Activity mobile tweaks: right-aligned toggle, TrendCard button-row spacing `7af5fb8`
+
+**`src/pages/Activity.tsx`**, **`src/pages/activity/TrendCard.tsx`**
+
+Two mobile polish follow-ups. (1) In the "Recent key usage" toolbar, the Hide-revoked toggle sat left-aligned inside its 50% half below `md`, floating mid-row; added `justify-end` so it hugs the right edge (Export CSV left / toggle right, space-between). Inert at `md`+ where the control is content-width. (2) On the stacked TrendCard mobile header, `my-1` on the `CardAction` adds 4px above and below the dropdown + metric-toggle button row (`md:my-0`, so the desktop inline header is unchanged); leaves the title→subtitle gap alone.
+
 ### Activity TrendCard: mobile header stack, divider, fewer bars, aligned ticks `38c953b`
 
 **`src/pages/activity/TrendCard.tsx`**, **`src/pages/Dashboard.tsx`**, **`src/hooks/use-media-query.ts`** (new)
