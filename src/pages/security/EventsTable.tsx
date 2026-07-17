@@ -435,7 +435,7 @@ export function EventsTableSection({
                       >
                         <TableCell className="whitespace-nowrap">
                           <Timestamp
-                            className="font-mono text-foreground text-sm tabular-nums"
+                            className="type-mono-14 text-foreground"
                             date={parseEventTime(row.time)}
                           />
                         </TableCell>
@@ -454,13 +454,13 @@ export function EventsTableSection({
                         </TableCell>
                         <TableCell className="max-w-[200px] whitespace-nowrap">
                           <span
-                            className="block max-w-full truncate font-mono text-foreground text-sm tabular-nums"
+                            className="type-mono-14 block max-w-full truncate text-foreground"
                             title={row.conversationId}
                           >
                             {row.conversationId}
                           </span>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap font-mono">
+                        <TableCell className="type-mono-14 whitespace-nowrap">
                           <span className="text-foreground">
                             {row.key.split(" (")[0]}
                           </span>
@@ -699,7 +699,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 label="Timestamp"
                 value={
                   <Timestamp
-                    className="font-mono text-foreground tabular-nums"
+                    className="type-mono-14 text-foreground"
                     date={parseEventTime(row.time)}
                   />
                 }
@@ -709,7 +709,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 value={(() => {
                   const parenIdx = row.key.indexOf(" (");
                   return (
-                    <span className="font-mono tabular-nums">
+                    <span className="type-mono-14">
                       {parenIdx === -1 ? (
                         <span className="text-foreground">{row.key}</span>
                       ) : (
@@ -729,7 +729,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Conversation"
                 value={
-                  <span className="font-mono tabular-nums">
+                  <span className="type-mono-14">
                     <TextLink
                       aria-label={`Open conversation ${conversationId}`}
                       onClick={openConversation}
@@ -742,7 +742,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               <DetailRow
                 label="Request"
                 value={
-                  <span className="font-mono tabular-nums">
+                  <span className="type-mono-14">
                     <TextLink
                       aria-label={`Open message ${requestId}`}
                       onClick={openRequest}

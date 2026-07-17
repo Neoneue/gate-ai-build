@@ -455,7 +455,7 @@ function MemberRowView({
           </div>
         </div>
       </TableCell>
-      <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
         <Timestamp date={row.joined} format="dateNumeric" />
       </TableCell>
       <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
@@ -634,13 +634,13 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                   {row.invitedBy}
                 </span>
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                 <Timestamp date={row.sent} format="dateNumeric" />
               </TableCell>
               <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                 {ROLE_LABEL[row.role]}
               </TableCell>
-              <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+              <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                 <Timestamp anchor={NOW} date={row.expires} format="relative" />
               </TableCell>
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">

@@ -262,7 +262,7 @@ function LimitsSection({
                       {scopeNameText}
                     </span>
                     {scope?.masked ? (
-                      <span className="truncate font-mono text-muted-foreground text-xs">
+                      <span className="type-mono-12 truncate text-muted-foreground">
                         {scope.masked}
                       </span>
                     ) : null}
@@ -271,16 +271,16 @@ function LimitsSection({
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {typeLabel(limit.type)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-foreground text-sm tabular-nums">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   {thresholdLabel(limit.type, limit.threshold)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-foreground text-sm tabular-nums">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   {usedLabel(limit.type, limit.used, limit.threshold)}
                 </TableCell>
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {periodLabel(limit.period)}
                 </TableCell>
-                <TableCell className="type-copy-14 whitespace-nowrap text-muted-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
                   {resetsAtMap.get(limit.id) ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
@@ -578,7 +578,7 @@ function CreateLimitDialog({
               Threshold
             </Label>
             <Input
-              className="font-mono text-sm tabular-nums"
+              className="type-mono-14"
               id="create-limit-threshold"
               inputMode="decimal"
               onChange={(e) =>
@@ -639,7 +639,7 @@ function CreateLimitDialog({
                         <span className="type-copy-14 text-foreground">
                           {s.name}
                         </span>
-                        <span className="font-mono text-muted-foreground text-xs">
+                        <span className="type-mono-12 text-muted-foreground">
                           {s.masked}
                         </span>
                       </span>

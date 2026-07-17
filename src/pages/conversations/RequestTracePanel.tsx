@@ -115,7 +115,7 @@ export function RequestTracePanel({
         <span className="type-label-14 text-foreground" id="conv-trace-eyebrow">
           Request Trace
         </span>
-        <span className="font-mono text-muted-foreground text-xs tabular-nums">
+        <span className="type-mono-12 text-muted-foreground">
           {countLabel ?? `${(trace ?? []).length} messages`}
         </span>
       </div>
@@ -295,10 +295,10 @@ function TraceItem({
         {/* Row 1 — primary. Agent step label takes the slot the model
             previously occupied; timestamp right-aligned. */}
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex-1 truncate font-mono text-foreground text-sm">
+          <span className="type-mono-14 flex-1 truncate text-foreground">
             {event.label}
           </span>
-          <span className="shrink-0 font-mono text-muted-foreground text-xs tabular-nums">
+          <span className="type-mono-12 shrink-0 text-muted-foreground">
             {event.time}
           </span>
         </div>
@@ -309,7 +309,7 @@ function TraceItem({
             three-tier table ink policy. Separators drop to neutral-300 so they
             read as hairline scaffolding, not data. */}
         <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
-          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
+          <span className="type-mono-12 inline-flex items-center gap-1">
             {event.inTokens}
             <ArrowRight aria-hidden className="size-3" strokeWidth={1.75} />
             {event.outTokens}
@@ -317,16 +317,14 @@ function TraceItem({
           <span aria-hidden className="text-muted-foreground">
             ·
           </span>
-          <span className={`font-mono text-xs tabular-nums ${latencyTone}`}>
-            {event.latency}
-          </span>
+          <span className={`type-mono-12 ${latencyTone}`}>{event.latency}</span>
           <span aria-hidden className="text-muted-foreground">
             ·
           </span>
-          <span className="flex-1 font-mono text-foreground text-xs tabular-nums">
+          <span className="type-mono-12 flex-1 text-foreground">
             {event.cost}
           </span>
-          <span className="shrink-0 font-mono text-muted-foreground text-xs">
+          <span className="type-mono-12 shrink-0 text-muted-foreground">
             {event.requestId}
           </span>
         </div>
@@ -394,7 +392,7 @@ function TracePassingSeparator({
       </div>
       {/* Muted count copy. Mono so it sits in the data voice but quiet. */}
       <div className="flex min-w-0 flex-1 items-center">
-        <span className="font-mono text-muted-foreground text-xs tabular-nums">
+        <span className="type-mono-12 text-muted-foreground">
           {count} passing request{count === 1 ? "" : "s"}
         </span>
       </div>

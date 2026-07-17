@@ -490,7 +490,7 @@ export function DownloadGateConnectDialog({
                     <span className="type-copy-14 text-muted-foreground">
                       {b.detail}
                     </span>
-                    <span className="type-copy-14 ml-auto whitespace-nowrap text-muted-foreground tabular-nums">
+                    <span className="type-mono-14 ml-auto whitespace-nowrap text-muted-foreground">
                       {b.size}
                     </span>
                   </label>

@@ -87,7 +87,7 @@ export function AuditRecordDialog({
               label="Time"
               value={
                 <Timestamp
-                  className="font-mono text-foreground"
+                  className="type-mono-14 text-foreground"
                   date={row.at}
                 />
               }
@@ -95,7 +95,7 @@ export function AuditRecordDialog({
             <DetailRow
               label="Event ID"
               value={
-                <span className="break-all font-mono text-foreground">
+                <span className="type-mono-14 break-all text-foreground">
                   {row.eventId}
                 </span>
               }
@@ -124,7 +124,7 @@ export function AuditRecordDialog({
                     strokeWidth={1.75}
                   />
                   <span className="sr-only">Verified fingerprint</span>
-                  <span className="whitespace-nowrap font-mono text-foreground">
+                  <span className="type-mono-14 whitespace-nowrap text-foreground">
                     {truncateHex(row.anchor, 4, 4)}
                   </span>
                 </span>

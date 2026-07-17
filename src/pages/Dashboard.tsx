@@ -255,6 +255,7 @@ function makeStackedTokenRows(
 const STACKED_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
 const STACKED_CHART_TICK = {
   fontSize: 10,
+  fontFamily: "var(--font-mono)",
   fill: "var(--muted-foreground)",
 } as const;
 
@@ -327,7 +328,7 @@ function StackedKpiChart({
                         {cfg?.label ?? name}
                       </span>
                     </span>
-                    <span className="font-mono text-foreground tabular-nums">
+                    <span className="type-mono-14 text-foreground">
                       {yFormatter(Number(value))}
                     </span>
                   </div>
@@ -384,7 +385,7 @@ function DimSelector({
     <Select onValueChange={(v) => onDimChange(v as Dimension)} value={dim}>
       <SelectTrigger
         className="border-border bg-card font-normal text-foreground"
-        size="lg"
+        size="sm"
       >
         <SelectValue />
       </SelectTrigger>
@@ -486,7 +487,7 @@ function OverviewUsageChart() {
             aria-label="Chart metric"
             onValueChange={(v) => handleMetricChange(v as Metric)}
             options={OVERVIEW_METRIC_OPTIONS}
-            size="default"
+            size="sm"
             value={metric}
           />
         </div>
@@ -523,7 +524,7 @@ function OverviewUsageChart() {
                     {s.label}
                   </span>
                   <div
-                    className="grid shrink-0 items-center gap-x-2 font-mono text-sm tabular-nums"
+                    className="type-mono-14 grid shrink-0 items-center gap-x-2"
                     style={{ gridTemplateColumns: "9ch min-content 4ch" }}
                   >
                     <span className="text-right text-foreground">
@@ -678,7 +679,7 @@ function LatestRequestsTable() {
                 }
               }}
             >
-              <TableCell className="whitespace-nowrap font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap">
                 {row.day} {row.time}
               </TableCell>
               <TableCell className="whitespace-nowrap">{row.model}</TableCell>
@@ -735,13 +736,13 @@ function RecentConversationsTable() {
               <TableCell className="w-full max-w-0">
                 <span className="block truncate">{row.title}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap">
                 {formatTimestamp(row.updated)}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right">
                 {row.turns}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-right font-mono">
+              <TableCell className="type-mono-14 whitespace-nowrap text-right">
                 {row.reqs}
               </TableCell>
             </NavTableRow>
@@ -782,7 +783,7 @@ function SecurityEventsTable() {
                 key={row.requestId ?? i}
                 onActivate={() => navigate(`/security?open=${row.requestId}`)}
               >
-                <TableCell className="whitespace-nowrap font-mono">
+                <TableCell className="type-mono-14 whitespace-nowrap">
                   {formatTimestamp(parseEventTime(row.time))}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
@@ -799,7 +800,7 @@ function SecurityEventsTable() {
                 <TableCell className="whitespace-nowrap">
                   <Badge variant={badge.variant}>{badge.label}</Badge>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-muted-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
                   {row.key.split(" (")[0]}
                 </TableCell>
               </NavTableRow>

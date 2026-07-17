@@ -81,10 +81,10 @@ export function SetupModels() {
                     {VENDOR_META[row.vendor].label}
                   </span>
                 </TableCell>
-                <TableCell className="text-right text-muted-foreground tabular-nums">
+                <TableCell className="type-mono-14 text-right text-muted-foreground">
                   {row.input}
                 </TableCell>
-                <TableCell className="text-right text-muted-foreground tabular-nums">
+                <TableCell className="type-mono-14 text-right text-muted-foreground">
                   {row.output}
                 </TableCell>
                 <TableCell>

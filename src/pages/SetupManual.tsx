@@ -114,7 +114,7 @@ export function SetupManual() {
             <span className="type-label-14 text-success-800 dark:text-success-300">
               API key created
             </span>
-            <span className="font-mono text-success-800/80 text-xs tabular-nums dark:text-success-300/80">
+            <span className="type-mono-12 text-success-800/80 dark:text-success-300/80">
               {maskedKey}
             </span>
           </div>

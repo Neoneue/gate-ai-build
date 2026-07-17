@@ -490,7 +490,7 @@ function KeysTable({
                 {/* `name (sk-gw-…NNNN)` — name in dark ink, masked id dimmed
                     to neutral-600. Single-line two-tone form shared with the
                     Events / Requests / Activity Key columns. */}
-                <TableCell className="whitespace-nowrap font-mono">
+                <TableCell className="type-mono-14 whitespace-nowrap">
                   <span className="text-foreground">{row.name}</span>
                   <span className="text-muted-foreground"> ({row.masked})</span>
                 </TableCell>
@@ -505,10 +505,10 @@ function KeysTable({
                   <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} messages, 7-day trend`}</span>
                   <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.createdAt} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-foreground">
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.lastUsed} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right">
@@ -637,7 +637,7 @@ export function CreateKeyDialog({
             </div>
             <Input
               autoComplete="off"
-              className="font-mono text-sm"
+              className="type-mono-14"
               id="apikey-name"
               onChange={(e) => setName(e.target.value)}
               placeholder="server · new-service"
@@ -737,7 +737,7 @@ export function KeyCreatedDialog({
             hairline divider. Custom button chrome (via useCopyFeedback) so the
             Copy segment sits flush inside the neutral-100 well, no nested border. */}
         <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-muted">
-          <div className="flex-1 break-all px-3 py-2 font-mono text-foreground text-sm">
+          <div className="type-mono-14 flex-1 break-all px-3 py-2 text-foreground">
             {fullKey}
           </div>
           <button

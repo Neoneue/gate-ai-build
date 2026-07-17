@@ -416,7 +416,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                     <DetailRow
                       label="Timestamp"
                       value={
-                        <span className="font-mono text-foreground tabular-nums">
+                        <span className="type-mono-14 text-foreground">
                           {row.day}, {row.time}
                         </span>
                       }
@@ -424,7 +424,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                     <DetailRow
                       label="Conversation"
                       value={
-                        <span className="font-mono tabular-nums">
+                        <span className="type-mono-14">
                           <TextLink
                             aria-label={`Open conversation ${row.conversation}`}
                             onClick={openConversation}
@@ -439,7 +439,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       value={
                         <div className="flex items-center gap-2">
                           <VendorAvatar vendor={row.vendor} />
-                          <span className="font-mono text-foreground">
+                          <span className="type-mono-14 text-foreground">
                             {row.model}
                           </span>
                         </div>
@@ -454,7 +454,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                     <DetailRow
                       label="API Key"
                       value={
-                        <span className="font-mono text-foreground">
+                        <span className="type-mono-14 text-foreground">
                           {row.keyId}
                         </span>
                       }
@@ -462,7 +462,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                     <DetailRow
                       label="Endpoint"
                       value={
-                        <span className="break-all font-mono text-foreground">
+                        <span className="type-mono-14 break-all text-foreground">
                           <span className="text-muted-foreground">POST</span>{" "}
                           {VENDOR_ENDPOINT[row.vendor]}
                         </span>
@@ -1073,7 +1073,7 @@ function PiiDetailPanel({
           <KvRow
             label="Offset in evidence"
             value={
-              <span className="font-mono text-foreground text-sm">
+              <span className="type-mono-14 text-foreground">
                 {offsetLabel}
               </span>
             }

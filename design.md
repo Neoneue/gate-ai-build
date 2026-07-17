@@ -623,6 +623,20 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
 | Copy 14 tight | `type-copy-14-tight` | `font-sans text-sm/5 font-normal` |
 | Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |
+| Mono 16 | `type-mono-16` | `font-mono text-base font-normal tabular-nums` |
+| Mono 14 | `type-mono-14` | `font-mono text-sm font-normal tabular-nums` |
+| Mono 12 | `type-mono-12` | `font-mono text-xs font-normal tabular-nums` |
+
+**Data-voice rule (mono).** The `type-mono-*` utilities are the codified
+`data` voice (see the taxonomy below). **Every data value — number, count,
+token total, currency, percentage, date/timestamp, ID, hash, key/model
+identifier — uses a `type-mono-*` token, never a hand-rolled
+`font-mono … tabular-nums` string.** Pick the size to match the sans copy tier
+it sits beside (`type-mono-14` is the default, twinning `type-copy-14`). Apply
+color (`text-foreground` / `text-muted-foreground`), alignment (`text-right`),
+and `whitespace-nowrap` at the call site; the token owns only font + size +
+weight + tabular figures. Non-data text keeps `type-copy-*` / `type-label-*`;
+code blocks, eyebrows, and terminal chrome keep their own voices.
 
 **Usage rule:** when one of the semantic roles above fits, use it in page code.
 Only compose raw text utilities when a role truly does not exist yet; then

@@ -105,7 +105,7 @@ export function TeamDefault() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="type-copy-14 whitespace-nowrap text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                       <Timestamp date={OWNER.joined} format="dateNumeric" />
                     </TableCell>
                     <TableCell className="type-copy-14 whitespace-nowrap text-foreground">

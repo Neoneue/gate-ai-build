@@ -598,10 +598,10 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       role="button"
                       tabIndex={0}
                     >
-                      <TableCell className="whitespace-nowrap text-foreground">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                         <Timestamp date={row.at} />
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-foreground">
+                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                         {truncateHex(row.eventId)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -628,7 +628,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                             strokeWidth={1.75}
                           />
                           <span className="sr-only">Verified fingerprint</span>
-                          <span className="font-mono text-foreground">
+                          <span className="type-mono-14 text-foreground">
                             {truncateHex(row.anchor, 4, 4)}
                           </span>
                         </span>

@@ -610,6 +610,24 @@ body {
     @apply font-sans text-xs font-normal;
   }
 
+  /* Mono data voice — Geist Mono + tabular figures for every DATA value in a
+     table/row (numbers, counts, tokens, currency, %, dates, IDs, hashes).
+     Mirrors the copy sizes so a sans copy cell becomes its mono twin by
+     swapping the class. Element-level font wins over the sans font the
+     `<table>` inherits from `type-copy-14`. Non-data text keeps type-copy-*;
+     code/eyebrow/terminal keep their own voices. */
+  .type-mono-16 {
+    @apply font-mono text-base font-normal tabular-nums;
+  }
+
+  .type-mono-14 {
+    @apply font-mono text-sm font-normal tabular-nums;
+  }
+
+  .type-mono-12 {
+    @apply font-mono text-xs font-normal tabular-nums;
+  }
+
   /* Form/input helper copy: 12px tier + 8px separation from control. */
   .type-input-helper {
     @apply m-0 mt-2 font-sans text-xs font-normal text-pretty text-neutral-500 tracking-tight;

@@ -489,7 +489,7 @@ function TopList<T extends string>({
             >
               {row.label}
             </span>
-            <span className="whitespace-nowrap font-mono text-foreground text-sm tabular-nums">
+            <span className="type-mono-14 whitespace-nowrap text-foreground">
               {row.value}
             </span>
           </div>
@@ -944,7 +944,7 @@ function UsageByKey({
               <TableBody>
                 {pageRows.map((row) => (
                   <TableRow className="hover:bg-transparent" key={row.key}>
-                    <TableCell className="whitespace-nowrap font-mono">
+                    <TableCell className="type-mono-14 whitespace-nowrap">
                       <span className="inline-flex items-center gap-2">
                         <span className="text-foreground">{row.label}</span>
                         {row.revoked ? (
@@ -957,19 +957,19 @@ function UsageByKey({
                         {row.owner}
                       </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtInt(row.requests)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtInt(row.alerts)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtTokens(row.tokensIn)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtTokens(row.tokensOut)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {row.saved === null ? (
                         <>
                           <span aria-hidden className="text-muted-foreground">
@@ -983,7 +983,7 @@ function UsageByKey({
                         `${row.saved.toFixed(1)}%`
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono text-foreground tabular-nums">
+                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {row.path === "BYOK" ? (
                         <>
                           <span aria-hidden className="text-muted-foreground">
