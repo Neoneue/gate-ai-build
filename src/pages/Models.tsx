@@ -290,7 +290,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         }}
         value={modality}
       >
-        <TabsList className="-mt-2 px-0" variant="line">
+        <TabsList className="mt-2 px-0" variant="line">
           <TabsTrigger value="all">
             All types
             <TabsCount>{MODELS.length}</TabsCount>
