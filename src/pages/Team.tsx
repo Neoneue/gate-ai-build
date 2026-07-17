@@ -298,7 +298,7 @@ function MembersPane() {
               <SelectTrigger
                 aria-label="Filter by role"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Role" />
               </SelectTrigger>

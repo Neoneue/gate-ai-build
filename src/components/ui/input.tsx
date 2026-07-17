@@ -25,7 +25,7 @@ const inputVariants = cva(
       },
     },
     defaultVariants: {
-      size: "default",
+      size: "lg",
       surface: "card",
     },
   }
@@ -34,7 +34,7 @@ const inputVariants = cva(
 function Input({
   className,
   type,
-  size = "default",
+  size = "lg",
   surface = "card",
   ...props
 }: Omit<React.ComponentProps<"input">, "size"> &

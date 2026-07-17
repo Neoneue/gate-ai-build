@@ -317,7 +317,7 @@ function StackedKpiChart({
               formatter={(value, name) => {
                 const cfg = config[name as string];
                 return (
-                  <div className="flex w-full items-center justify-between gap-3">
+                  <div className="flex w-full items-center justify-between gap-6">
                     <span className="flex items-center gap-1">
                       <span
                         aria-hidden

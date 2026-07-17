@@ -18,7 +18,7 @@ const selectTriggerVariants = cva(
       },
     },
     defaultVariants: {
-      size: "default",
+      size: "lg",
     },
   }
 );

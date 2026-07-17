@@ -495,7 +495,7 @@ function ConversationsTableSection({
               <SelectTrigger
                 aria-label="Key"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Key" />
               </SelectTrigger>
@@ -510,7 +510,7 @@ function ConversationsTableSection({
               <SelectTrigger
                 aria-label="Model"
                 className="border-border bg-card font-normal text-foreground"
-                size="sm"
+                size="lg"
               >
                 <SelectValue placeholder="Model" />
               </SelectTrigger>

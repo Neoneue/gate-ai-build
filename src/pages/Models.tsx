@@ -441,7 +441,7 @@ function Toolbar({
         <SelectTrigger
           aria-label="Filter by vendor"
           className="border-border bg-card font-normal text-foreground"
-          size="sm"
+          size="lg"
         >
           <SelectValue />
         </SelectTrigger>
@@ -462,7 +462,7 @@ function Toolbar({
         <SelectTrigger
           aria-label="Filter by provider"
           className="border-border bg-card font-normal text-foreground"
-          size="sm"
+          size="lg"
         >
           <SelectValue />
         </SelectTrigger>

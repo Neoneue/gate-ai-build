@@ -233,7 +233,7 @@ export function EventsTableSection({
               }
               className="border-border bg-card font-normal text-foreground"
               onClick={openFilters}
-              size="sm"
+              size="lg"
               type="button"
               variant="outline"
             >
@@ -253,7 +253,7 @@ export function EventsTableSection({
               ) : null}
             </Button>
 
-            <Button size="sm" type="button" variant="outline">
+            <Button size="lg" type="button" variant="outline">
               <UploadIcon aria-hidden data-icon="inline-start" size={16} />
               Export CSV
             </Button>

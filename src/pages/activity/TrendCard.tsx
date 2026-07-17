@@ -522,7 +522,7 @@ export function TrendCard({
                     formatter={(value, name) => {
                       const cfg = chartConfig[name as string];
                       return (
-                        <div className="flex w-full items-center justify-between gap-7">
+                        <div className="flex w-full items-center justify-between gap-6">
                           <span className="flex items-center gap-1">
                             <span
                               aria-hidden

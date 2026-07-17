@@ -839,7 +839,7 @@ function UsageByKey({
             surface="elevated"
             value={query}
           />
-          <Button size="sm" type="button" variant="outline">
+          <Button size="lg" type="button" variant="outline">
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>

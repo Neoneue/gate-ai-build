@@ -794,7 +794,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 ### Inputs & Forms
 
-- **Input** (`input.tsx`) — `bg-neutral-50 border-border rounded-sm h-8 px-3 text-sm text-neutral-800`. **`bg-neutral-50` is the contract** — sits flush in filter rows. Sizes: xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm. **`surface` variant:** `card` (default) = bg-neutral-50 for inputs on card/modal surfaces; `background` = bg-neutral-100 for inputs on the page background layer (matches the SegmentedPill track) — use the variant, not a per-page `[&_input]` override. Focus: `border-ring ring-3 ring-ring/50` (neutral-tinted, not blue). Disabled: `bg-neutral-100 text-neutral-500`. Invalid: `border-destructive ring-destructive/20`. **`--input` resolves to neutral-300** (bumped 2026-05-15 from neutral-200) — the stroke is one ramp step stronger than `--border` so unfilled form controls read as actionable.
+- **Input** (`input.tsx`) — `bg-neutral-50 border-border rounded-sm h-9 px-3 text-sm text-neutral-800`. **`bg-neutral-50` is the contract** — sits flush in filter rows. Sizes: xs h-7 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm. **`lg` (36px) is the primitive default (set 2026-07-16) — 32px read too small for text entry, and `lg` is the shadcn standard. Reach for `default`/`sm` only for deliberately compact inline chrome.** **`surface` variant:** `card` (default) = bg-neutral-50 for inputs on card/modal surfaces; `background` = bg-neutral-100 for inputs on the page background layer (matches the SegmentedPill track) — use the variant, not a per-page `[&_input]` override. Focus: `border-ring ring-3 ring-ring/50` (neutral-tinted, not blue). Disabled: `bg-neutral-100 text-neutral-500`. Invalid: `border-destructive ring-destructive/20`. **`--input` resolves to neutral-300** (bumped 2026-05-15 from neutral-200) — the stroke is one ramp step stronger than `--border` so unfilled form controls read as actionable.
 - **Textarea** (`textarea.tsx`) — same surface as Input. `min-h-16`, `field-sizing-content`, `py-3 px-4`.
 - **InputGroup** (`input-group.tsx`) — wrapper for inputs with addons (icon, kbd, button). `h-9`, same surface as Input.
 - **Field** (`field.tsx`) — composes `<FieldLabel>` + `<FieldDescription>` + `<FieldError>` + control. Default gap-y between fields = 16px. No surface chrome.
@@ -1088,7 +1088,7 @@ The product targets desktop-first operator workflows; no mobile-shipped state to
 ### Touch Targets
 
 - Buttons: `default` 32px (`h-8`); `lg` 36px (`h-9`) for primary / touch-forward contexts. Controls that were 40px pre-2026-07-16 migrated to `lg`.
-- Inputs / Selects: `default` 32px (`h-8`), `lg` 36px (`h-9`) — match the Button scale.
+- Inputs / Selects: **default to `lg` 36px (`h-9`)** as of 2026-07-16 — `lg` is the shadcn standard and 32px reads too small for text entry. `default` 32px (`h-8`) and `sm` stay available for deliberately compact inline chrome. Table-toolbar controls (SearchInput, filter Selects, Filters/Export buttons) all sit at `lg`.
 - Icon-only buttons: `icon` / `icon-sm` = 32×32 (`size-8`), `icon-lg` = 36×36 (`size-9`), `icon-xs` = 24×24 (`size-6`); the icon itself is 16px (`size-4`).
 - Checkbox / Radio: `size-4` (16px) visual + `after:-inset-x-3 after:-inset-y-2` hit-target padding.
 
