@@ -29,3 +29,9 @@ The persistent sidebar rail now renders at `lg`+ only; tablet and mobile use the
 **`src/pages/Dashboard.tsx`**
 
 A single request can carry two security findings (e.g. `req_8389e4` has both a PII and a credential finding), so keying the "Latest security events" preview rows by `requestId` produced a duplicate-React-key warning. Rows are now keyed by `requestId`-plus-index, matching the `EventsTable` house pattern. Cosmetic fix; no rows were dropped.
+
+### Table pagination: legible active page, prev button, compact window, 32px `9d53976`
+
+**`src/components/ui/pagination.tsx`**, **`src/components/ui/table-pagination-footer.tsx`**
+
+Four fixes to the table pagination footer. (1) The active page number was invisible in dark mode: the Button `outline` variant carries `dark:bg-input/30` + `dark:border-input`, which tailwind-merge does not treat as conflicting with `bg-primary`, so the `.dark` rule won and left dark `text-primary-foreground` on a translucent dark fill; added `dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary` to the active state so it reads in both themes. (2) Added an always-present Previous (`<`) button, disabled + `pointer-events-none opacity-50` on page 1 (mirrors the existing Next pattern). (3) `buildPageWindow` is now constant-width: any gap of one or more hidden pages collapses to an ellipsis (removed the lone-page-to-number fill), so a 7-page table shows e.g. `‹ 1 … 3 4 5 … 7 ›` at page 4 and never balloons back to all seven numbers. (4) All controls (numbers, `<`, `>`, ellipsis) sized to 32px (`icon-sm` / `size-8`), numbered links `min-w-8 px-2` so multi-digit pages don't clip. Verified against canonical shadcn (via the shadcn skill): all a11y/semantics already match; prev/next stay icon-only (accessible name via `aria-label`).
