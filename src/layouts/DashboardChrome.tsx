@@ -75,9 +75,9 @@ export function DashboardChrome({
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 flex-row">
-        {/* Persistent rail on tablet/desktop (md+). Below md it is hidden and
+        {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
-        <div className="hidden shrink-0 md:flex">
+        <div className="hidden shrink-0 lg:flex">
           <Sidebar
             activeId={activeNavId}
             expanded={sidebarExpanded}
@@ -148,7 +148,7 @@ function DashTopBar({
         <Button
           aria-expanded={sidebarExpanded}
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground md:inline-flex"
+          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground lg:inline-flex"
           onClick={onToggleSidebar}
           size="icon-lg"
           variant="ghost"
@@ -181,17 +181,17 @@ function DashTopBar({
             />
           </span>
         </Button>
-        {/* Workspace switcher promoted from the sidebar (2026-05-17) — global
-         *  scope chrome belongs in the top bar. Below xs (450px) it moves into
-         *  the hamburger menu (above the nav) and the logomark takes its place
-         *  here — mirroring the collapsed-sidebar mark. */}
+        {/* Below lg there's no rail, so the top bar carries the logomark and
+         *  the nav moves into the hamburger Sheet; the workspace switcher lives
+         *  in that Sheet below lg. At lg+ the rail carries the brand and the
+         *  switcher sits here in the top bar. */}
         <img
           alt=""
           aria-hidden
-          className="xs:hidden h-8 w-auto"
+          className="h-8 w-auto lg:hidden"
           src="/gate-ai-logo-mark.png"
         />
-        <div className="xs:block hidden">
+        <div className="hidden lg:block">
           <WorkspaceSwitcher />
         </div>
       </div>
@@ -243,7 +243,7 @@ function MobileNav({
   // returns and the hamburger hides — otherwise the portaled SheetContent would
   // stay open orphaned beside the desktop sidebar.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const handleChange = (event: MediaQueryListEvent) => {
       if (event.matches) {
         setOpen(false);
@@ -262,7 +262,7 @@ function MobileNav({
         render={
           <Button
             aria-label="Open navigation menu"
-            className="md:hidden"
+            className="lg:hidden"
             size="icon-lg"
             variant="outline"
           />
@@ -279,7 +279,7 @@ function MobileNav({
           sections={sections}
           showLocks={showLocks}
           topSlot={
-            <div className="xs:hidden border-border border-b px-3 pt-3 pb-3">
+            <div className="border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />
             </div>
           }
