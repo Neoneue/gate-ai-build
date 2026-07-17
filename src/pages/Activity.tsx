@@ -833,17 +833,22 @@ function UsageByKey({
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search keys"
-            className="min-w-0 flex-1"
+            className="w-full min-w-0 md:w-auto md:flex-1"
             onChange={setQuery}
             placeholder="Search key or member…"
             surface="elevated"
             value={query}
           />
-          <Button size="lg" type="button" variant="outline">
+          <Button
+            className="flex-1 md:flex-none"
+            size="lg"
+            type="button"
+            variant="outline"
+          >
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
-          <span className="flex shrink-0 items-center gap-2">
+          <span className="flex flex-1 items-center gap-2 md:flex-none">
             <span
               className="type-label-14 whitespace-nowrap text-muted-foreground"
               id="hide-revoked-label"

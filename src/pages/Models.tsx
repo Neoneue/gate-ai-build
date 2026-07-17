@@ -429,7 +429,7 @@ function Toolbar({
     <div className="flex flex-wrap items-center gap-2">
       <SearchInput
         ariaLabel="Search models"
-        className="min-w-0 flex-1"
+        className="w-full min-w-0 md:w-auto md:flex-1"
         name="model-search"
         onChange={onSearchChange}
         placeholder="Search by name or handle…"
@@ -440,7 +440,7 @@ function Toolbar({
       <Select onValueChange={onVendorChange} value={vendor}>
         <SelectTrigger
           aria-label="Filter by vendor"
-          className="border-border bg-card font-normal text-foreground"
+          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
           size="lg"
         >
           <SelectValue />
@@ -461,7 +461,7 @@ function Toolbar({
       <Select onValueChange={onProviderChange} value={provider}>
         <SelectTrigger
           aria-label="Filter by provider"
-          className="border-border bg-card font-normal text-foreground"
+          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
           size="lg"
         >
           <SelectValue />
@@ -496,7 +496,7 @@ function Toolbar({
       <Select onValueChange={onSortChange} value={sort}>
         <SelectTrigger
           aria-label="Sort"
-          className="border-border bg-card font-normal text-foreground"
+          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
           size="sm"
         >
           <SelectValue />

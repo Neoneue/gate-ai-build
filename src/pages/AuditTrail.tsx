@@ -389,7 +389,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search audit events"
-              className="min-w-0 flex-1"
+              className="w-full min-w-0 md:w-auto md:flex-1"
               onChange={setQuery}
               placeholder="Search events, users, hashes…"
               surface="elevated"
@@ -406,7 +406,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="border-border bg-card font-normal text-foreground"
+              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
               onClick={openFilters}
               size="lg"
               type="button"
@@ -428,7 +428,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ) : null}
             </Button>
             <Button
-              className="border-border bg-card font-normal text-foreground"
+              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
               disabled={isEmpty}
               size="lg"
               type="button"

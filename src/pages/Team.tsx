@@ -285,6 +285,7 @@ function MembersPane() {
           <FilterToolbar>
             <SearchInput
               ariaLabel="Search members"
+              className="w-full md:w-96"
               onChange={setQuery}
               placeholder="Search by name or email…"
               value={query}
@@ -297,7 +298,7 @@ function MembersPane() {
             >
               <SelectTrigger
                 aria-label="Filter by role"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Role" />

@@ -487,14 +487,14 @@ function ConversationsTableSection({
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search conversations"
-              className="min-w-0 flex-1"
+              className="w-full min-w-0 md:w-auto md:flex-1"
               placeholder="Search by id, prompt, user, key…"
               surface="elevated"
             />
             <Select onValueChange={setKeyId} value={keyId}>
               <SelectTrigger
                 aria-label="Key"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Key" />
@@ -509,7 +509,7 @@ function ConversationsTableSection({
             <Select onValueChange={setModel} value={model}>
               <SelectTrigger
                 aria-label="Model"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Model" />
