@@ -512,7 +512,7 @@ export function TrendCard({
           {" · "}
           {bucketLabel}
         </CardDescription>
-        <CardAction>
+        <CardAction className="my-1 md:my-0">
           <div className="flex items-center gap-2">
             <Select
               onValueChange={(v: string) => setDimension(v as Dimension)}

@@ -848,7 +848,7 @@ function UsageByKey({
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
-          <span className="flex flex-1 items-center gap-2 md:flex-none">
+          <span className="flex flex-1 items-center justify-end gap-2 md:flex-none">
             <span
               className="type-label-14 whitespace-nowrap text-muted-foreground"
               id="hide-revoked-label"
