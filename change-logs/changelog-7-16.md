@@ -34,6 +34,12 @@ The rail sets `data-spacing=0`, whose `ToggleGroupItem` variant `group-data-[spa
 
 Adopted the shadcn size scale on form controls (desktop sizing): `default` = 32px (`h-8`), `lg` = 36px (`h-9`), flat 12px (`px-3`) L/R padding — was 24/32/40/48 with `px-4` on default/lg. Button icon sizes follow (`icon` size-8, `icon-lg` size-9); Select keeps asymmetric chevron padding (`pl-3 pr-2`). **Every `<Button>` now carries an explicit `size` prop** (no implicit default), swept via the TypeScript AST across ~46 call sites (no-size -> `lg`, `default` -> `lg`, `icon` -> `icon-lg`) so sizes can go responsive per breakpoint. Migration rule: any control that was 40px (old default) -> `lg`; 32px stayed `default`/`sm`. `WorkspaceSwitcher` refactored from a hand-rolled `<button>` to the `Button` primitive (`variant="outline"`, `lg`); `AlertDialogCancel` + ApiKeys `CreateKeyButton` defaults bumped to `lg`. Docs: `design.md` token block + component prose + touch-target minimums updated; `data-model.md` primitive-mapping fix.
 
+### Input / Select default bumped to `lg` (36px); table toolbars sized up `5463e82`
+
+**`src/components/ui/input.tsx`**, **`select.tsx`**, **`select-variants.ts`**, **`search-input.tsx`** (+ 7 table pages)
+
+`lg` (36px, `h-9`) is now the primitive default for `Input` and `SelectTrigger` — set on both the function-param default and the cva `defaultVariants`, so unspecified inputs/selects and the MultiSelect trigger all land at 36px. Rationale: 32px read too small for text entry, and `lg` is the shadcn standard. Explicit `sm`/`default` call sites are unaffected (e.g. the Overview chart selector stays `sm`). `SearchInput` now renders `size="lg"`, so every table-toolbar search field is 36px. Each table toolbar's controls moved `sm`/`default` -> `lg`: Filters + Export CSV buttons (Requests, Security, Activity, AuditTrail) and filter Selects (Conversations Key/Model, Team Role, Models Vendor/Provider). The AuditTrail Filters-modal footer (Reset/Cancel/Apply) moved `sm` -> `lg` to match the Requests/Security filter modals. `design.md` input/select default + touch-target notes updated.
+
 ## Sections
 
 ### Overview "Tokens used" chart title -> 18/16 responsive `9a9cfd5`
@@ -47,3 +53,15 @@ The `OverviewUsageChart` card title now renders `type-heading-18 lg:type-heading
 **`src/pages/Dashboard.tsx`**
 
 The `By model` Select trigger (was `size="lg"` = 36px) and the Tokens/Spend `SegmentedPill` (was `size="default"` = 40px) both drop to `size="sm"` (32px), matching the header-toolbar convention. The control row was rendering 40px tall (driven by the pill); it is now a consistent 32px. No control uses the old 40px tier.
+
+### Overview + Activity chart tooltips: 2-column gap -> 24px `5463e82`
+
+**`src/pages/Dashboard.tsx`**, **`src/pages/activity/TrendCard.tsx`**
+
+The stacked-chart tooltips (label column vs. value column) were cramped and inconsistent — Overview at `gap-3` (12px), Activity at `gap-7` (28px). Both now use `gap-6` (24px) between the two columns. Only these two large breakdown charts carry 2-column tooltips; the HeroMetric / Security charts use single-value tooltips and are unchanged.
+
+### Model breakdown: `Claude Haiku` series relabeled `Others` `5463e82`
+
+**`src/pages/activity-data.ts`**
+
+The 6th `by model` series (`key: "haiku"`) now labels as `Others` instead of `Claude Haiku`, reading as the combined-other-models bucket. Label-only change on the shared `SPEND_SERIES.model`, so it updates both the legend and hover tooltip on the Overview "Tokens used" chart and the Activity trend chart (the tooltip pulls its label from the same series `config`). Series key and color unchanged.
