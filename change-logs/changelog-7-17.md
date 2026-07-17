@@ -54,6 +54,12 @@ The persistent sidebar rail now renders at `lg`+ only; tablet and mobile use the
 
 ## Sections
 
+### Billing: Seats inset stacked (title, seat-count, full-width copy) `95f9242`
+
+**`src/pages/Billing.tsx`**
+
+The "Your plan" Seats inset put the seat-count line (`1 seat × $20 = $20 / month`) to the right of the title, which squeezed the billing copy into a narrow left column that wrapped tall. Flattened the two-column `flex items-start justify-between` into a single `flex-col gap-1`: Seats title, then the seat-count line (kept in the `text-foreground` value tier), then the `text-muted-foreground` copy full-width beneath. Dropped the `whitespace-nowrap` on the seat-count so nothing forces a squeeze at any width.
+
 ### Activity mobile tweaks: right-aligned toggle, TrendCard button-row spacing `7af5fb8`
 
 **`src/pages/Activity.tsx`**, **`src/pages/activity/TrendCard.tsx`**
