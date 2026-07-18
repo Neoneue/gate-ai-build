@@ -54,6 +54,15 @@ The persistent sidebar rail now renders at `lg`+ only; tablet and mobile use the
 
 ## Sections
 
+### API Keys: responsive setup cards, 1024 max width, drop 7-day column `3b4e5c3`
+
+**`src/pages/ApiKeys.tsx`**
+
+- **Gate Connect setup card.** Below `lg` (tablet + mobile) the app mockup image is hidden (`hidden lg:block`) and the text block goes full width (`max-w-full`, capped again at `lg`+ via the existing container-query clamp). The card title steps down one size on mobile — base `text-2xl` (24px) → `text-xl` (20px); the `@min-[993px]/connect` desktop clamp is unchanged.
+- **Setup cards always stacked.** The Automatic + Manual cards were side-by-side at `xl`+; dropped `xl:flex-row` so they stack one-per-row at every width.
+- **Page width cap.** The page content is capped at `max-w-5xl` (1024px), left-aligned in the shell (extra space falls right); only constrains above 1024px.
+- **Keys table: 7-day messages column removed.** Dropped the sparkline column (header, cell, `requests7d` sort case, `Sparkline` import) and rebalanced the remaining four columns to 100%: Key 32% / Status 16% / Created 26% / Last used 26% (Actions stays `w-12`).
+
 ### Billing: Seats inset stacked (title, seat-count, full-width copy) `95f9242`
 
 **`src/pages/Billing.tsx`**
