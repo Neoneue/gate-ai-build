@@ -81,7 +81,7 @@ export function Billing() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-1/2 flex-col gap-2">
+    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
       <PageTitle>Billing</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Manage your plan, track credit usage, and review every gateway
@@ -120,17 +120,15 @@ function PlanCard() {
           Renews on Jun 12, 2026 · $20 / month
         </p>
 
-        {/* Seats inset */}
-        <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-card-muted p-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="type-label-14 m-0 text-foreground">Seats</p>
-            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              Billed per seat. Accepting an invite adds a prorated seat; removed
-              seats stop billing next cycle.
-            </p>
-          </div>
-          <p className="type-copy-14 m-0 whitespace-nowrap text-foreground">
+        {/* Seats inset — stacked: title, seat-count line, full-width copy */}
+        <div className="flex flex-col gap-1 rounded-md border border-border bg-card-muted p-4">
+          <p className="type-label-14 m-0 text-foreground">Seats</p>
+          <p className="type-copy-14 m-0 text-foreground">
             1 seat × $20 = $20 / month
+          </p>
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            Billed per seat. Accepting an invite adds a prorated seat; removed
+            seats stop billing next cycle.
           </p>
         </div>
       </CardContent>

@@ -73,11 +73,11 @@ export function DashboardChrome({
       ? "/overview-free"
       : "/overview";
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-card">
-      <div className="flex min-h-0 flex-1 flex-row">
-        {/* Persistent rail on tablet/desktop (md+). Below md it is hidden and
+    <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
+      <div className="flex flex-row lg:min-h-0 lg:flex-1">
+        {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
-        <div className="hidden shrink-0 md:flex">
+        <div className="hidden shrink-0 lg:flex">
           <Sidebar
             activeId={activeNavId}
             expanded={sidebarExpanded}
@@ -87,7 +87,7 @@ export function DashboardChrome({
             showLocks={showLocks}
           />
         </div>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+        <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
           <DashTopBar
             activeNavId={activeNavId}
             hideDocsButton={hideDocsButton}
@@ -98,16 +98,17 @@ export function DashboardChrome({
             showLocks={showLocks}
             sidebarExpanded={sidebarExpanded}
           />
-          {/* Content pane fills the remaining column height and scrolls
-              internally — `flex-1 min-h-0` makes it a bounded flex child
-              (without `min-h-0` a flex item won't shrink below its
-              content and the scroll container never forms). `[&>*]:shrink-0`
-              keeps direct children at their natural heights so the pane
-              scrolls instead of squashing them. */}
+          {/* Content pane. Below lg the document flows and scrolls naturally
+              (no forced fill, no internal scroll). At lg+ the pane becomes a
+              bounded flex child that scrolls internally — `flex-1 min-h-0`
+              (without `min-h-0` a flex item won't shrink below its content and
+              the scroll container never forms). `[&>*]:shrink-0` keeps direct
+              children at their natural heights so the pane scrolls instead of
+              squashing them. */}
           {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main className="flex min-h-0 max-w-[1920px] flex-1 flex-col gap-6 overflow-y-auto px-6 pt-6 pb-20 [&>*]:shrink-0">
+          <main className="flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0">
             {children}
           </main>
         </div>
@@ -143,12 +144,12 @@ function DashTopBar({
   showLocks?: boolean;
 }) {
   return (
-    <div className="flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-6">
+    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
       <div className="flex items-center gap-2">
         <Button
           aria-expanded={sidebarExpanded}
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground md:inline-flex"
+          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground lg:inline-flex"
           onClick={onToggleSidebar}
           size="icon-lg"
           variant="ghost"
@@ -181,17 +182,17 @@ function DashTopBar({
             />
           </span>
         </Button>
-        {/* Workspace switcher promoted from the sidebar (2026-05-17) — global
-         *  scope chrome belongs in the top bar. Below xs (450px) it moves into
-         *  the hamburger menu (above the nav) and the logomark takes its place
-         *  here — mirroring the collapsed-sidebar mark. */}
+        {/* Below lg there's no rail, so the top bar carries the logomark and
+         *  the nav moves into the hamburger Sheet; the workspace switcher lives
+         *  in that Sheet below lg. At lg+ the rail carries the brand and the
+         *  switcher sits here in the top bar. */}
         <img
           alt=""
           aria-hidden
-          className="xs:hidden h-8 w-auto"
+          className="h-8 w-auto lg:hidden"
           src="/gate-ai-logo-mark.png"
         />
-        <div className="xs:block hidden">
+        <div className="hidden lg:block">
           <WorkspaceSwitcher />
         </div>
       </div>
@@ -243,7 +244,7 @@ function MobileNav({
   // returns and the hamburger hides — otherwise the portaled SheetContent would
   // stay open orphaned beside the desktop sidebar.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const handleChange = (event: MediaQueryListEvent) => {
       if (event.matches) {
         setOpen(false);
@@ -262,7 +263,7 @@ function MobileNav({
         render={
           <Button
             aria-label="Open navigation menu"
-            className="md:hidden"
+            className="lg:hidden"
             size="icon-lg"
             variant="outline"
           />
@@ -279,7 +280,7 @@ function MobileNav({
           sections={sections}
           showLocks={showLocks}
           topSlot={
-            <div className="xs:hidden border-border border-b px-3 pt-3 pb-3">
+            <div className="border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />
             </div>
           }

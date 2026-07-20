@@ -96,7 +96,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="type-copy-16 m-0 max-w-1/2 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-16 m-0 max-w-full text-pretty text-muted-foreground tracking-snug xl:max-w-1/2">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>

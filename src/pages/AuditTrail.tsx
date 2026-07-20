@@ -49,7 +49,7 @@ import {
 } from "@/data/audit-trail";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatNumber } from "@/lib/formatters";
+import { formatCompactCount } from "@/lib/formatters";
 import { AuditRecordDialog } from "./AuditRecordDialog";
 
 /** Comparable value per sortable column for the audit event log. Time sorts
@@ -122,7 +122,7 @@ const DIGITAL_EVIDENCE_DOCS_URL =
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         <PageTitle>Audit trail</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           A tamper-evident record of every request, response, and policy
@@ -202,7 +202,10 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
-        <KpiTile title="Events logged" value={formatNumber(eventsLogged)} />
+        <KpiTile
+          title="Events logged"
+          value={formatCompactCount(eventsLogged)}
+        />
       </div>
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile
@@ -389,7 +392,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search audit events"
-              className="min-w-0 flex-1"
+              className="w-full min-w-0 md:w-auto md:flex-1"
               onChange={setQuery}
               placeholder="Search events, users, hashes…"
               surface="elevated"
@@ -406,7 +409,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="border-border bg-card font-normal text-foreground"
+              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
               onClick={openFilters}
               size="lg"
               type="button"
@@ -428,7 +431,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ) : null}
             </Button>
             <Button
-              className="border-border bg-card font-normal text-foreground"
+              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
               disabled={isEmpty}
               size="lg"
               type="button"
@@ -490,7 +493,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               />
             </div>
 
-            <DialogFooter className="sm:justify-between">
+            <DialogFooter className="flex-row items-center justify-between sm:justify-between">
               <Button
                 onClick={resetFilters}
                 size="lg"
@@ -533,7 +536,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             />
           ) : (
             <>
-              <Table className="table-fixed">
+              <Table className="min-w-[1000px] table-fixed">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     {/* `table-fixed` + percentage widths is the canonical pattern
@@ -541,7 +544,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                         share since it's the wrap-tolerant column; the rest hold
                         their content. */}
                     <SortableTableHead
-                      className="w-[14%] whitespace-nowrap"
+                      className="w-[18%] whitespace-nowrap"
                       onSort={toggleSort}
                       sort={sort}
                       sortKey="at"
@@ -560,7 +563,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                       Event type
                     </SortableTableHead>
                     <SortableTableHead
-                      className="w-[30%] whitespace-nowrap"
+                      className="w-[26%] whitespace-nowrap"
                       onSort={toggleSort}
                       sort={sort}
                       sortKey="description"

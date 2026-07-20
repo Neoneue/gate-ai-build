@@ -10,9 +10,15 @@ import { cn } from "@/lib/utils";
  * Select controls, trailing buttons) inside the standard layout shell.
  *
  * Layout contract:
- *   - flex row, gap-2 (8px — compound tier per design.md §4)
+ *   - below md: stacked column (search full-width own row, trailing controls
+ *     split evenly on the row below); gap-2 (8px)
+ *   - md+: flex row, gap-2 (8px — compound tier per design.md §4)
  *   - p-4 (16px — surface tier, dominant step)
  *   - items-center (vertically aligned row)
+ *
+ * Callers give the SearchInput `w-full md:w-96` (or `md:flex-1`) and each
+ * trailing control `flex-1 md:flex-none` so the mobile split works and the
+ * md+ inline row is unchanged.
  *
  * Children are caller-supplied primitives — SearchInput, Select, Button, etc.
  * No baked-in select shapes; callers pass their own fully-configured selects.
@@ -32,7 +38,10 @@ export function FilterToolbar({
   ...props
 }: FilterToolbarProps) {
   return (
-    <div className={cn("flex items-center gap-2 p-4", className)} {...props}>
+    <div
+      className={cn("flex flex-wrap items-center gap-2 p-4", className)}
+      {...props}
+    >
       {children}
     </div>
   );

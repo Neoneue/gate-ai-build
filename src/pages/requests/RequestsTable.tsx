@@ -222,7 +222,7 @@ export function RequestsTableSection({
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search messages"
-            className="min-w-0 flex-1"
+            className="w-full min-w-0 md:w-auto md:flex-1"
             placeholder="Search message…"
             surface="elevated"
           />
@@ -239,7 +239,7 @@ export function RequestsTableSection({
                 ? `Filters (${activeFilterCount} active)`
                 : "Filters"
             }
-            className="border-border bg-card font-normal text-foreground"
+            className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
             onClick={openFilters}
             size="lg"
             type="button"
@@ -363,7 +363,7 @@ export function RequestsTableSection({
                 </Select>
               </div>
 
-              <DialogFooter className="sm:justify-between">
+              <DialogFooter className="flex-row items-center justify-between sm:justify-between">
                 <Button
                   disabled={draftActiveFilterCount === 0}
                   onClick={resetFilters}
@@ -389,7 +389,12 @@ export function RequestsTableSection({
             </DialogContent>
           </Dialog>
 
-          <Button className="ml-auto" size="lg" type="button" variant="outline">
+          <Button
+            className="flex-1 md:ml-auto md:flex-none"
+            size="lg"
+            type="button"
+            variant="outline"
+          >
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>

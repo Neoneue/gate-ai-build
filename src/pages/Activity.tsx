@@ -33,7 +33,7 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { UploadIcon } from "@/components/ui/upload";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
 import {
   type CustomRange,
   effectiveScale,
@@ -161,7 +161,7 @@ export function Activity() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-1/2 flex-col gap-2">
+    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
       <PageTitle>Activity</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Cost, request volume, and token usage by model, API key, and team
@@ -245,12 +245,12 @@ function getKpiSpec(range: Range, customRange: CustomRange | null) {
       spark: spendSpark,
     },
     requests: {
-      value: fmtInt(Math.round(requestsCount)),
+      value: formatCompactCount(Math.round(requestsCount)),
       delta: base.requests.delta,
       spark: requestsSpark,
     },
     tokens: {
-      value: fmtTokens(Math.round(tokensCount)),
+      value: formatCompactCount(Math.round(tokensCount)),
       delta: base.tokens.delta,
       spark: tokensSpark,
     },
@@ -661,11 +661,11 @@ function TopByAxisRow({
     m === "spend" ? "By total spend" : "By total tokens used";
 
   return (
-    // 2×2 below 2xl: the tightest card (Top attack types title + its
-    // Amount|Percent pill) needs ~316px, which a 4-up row only clears
-    // above a ~1424px viewport — 2xl (1536) is the nearest breakpoint
-    // that never squeezes the headers.
-    <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
+    // Stacked (1-up) on mobile + tablet so each card's title, subtitle, and
+    // control get full width without squeezing; 2-up at lg, 4-up at 2xl (1536),
+    // the nearest breakpoint that clears a 4-up row without crushing the
+    // tightest card's header (Top attack types + its Amount|Percent pill).
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-4">
       <TopList
         metric={modelMetric}
         onMetricChange={setModelMetric}
@@ -833,17 +833,22 @@ function UsageByKey({
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search keys"
-            className="min-w-0 flex-1"
+            className="w-full min-w-0 md:w-auto md:flex-1"
             onChange={setQuery}
             placeholder="Search key or member…"
             surface="elevated"
             value={query}
           />
-          <Button size="lg" type="button" variant="outline">
+          <Button
+            className="flex-1 md:flex-none"
+            size="lg"
+            type="button"
+            variant="outline"
+          >
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
-          <span className="flex shrink-0 items-center gap-2">
+          <span className="flex flex-1 items-center justify-end gap-2 md:flex-none">
             <span
               className="type-label-14 whitespace-nowrap text-muted-foreground"
               id="hide-revoked-label"
@@ -866,7 +871,7 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table className="table-fixed">
+            <Table className="min-w-[1000px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead

@@ -31,7 +31,6 @@ import { IconActionButton } from "@/components/ui/icon-action-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
-import { Sparkline } from "@/components/ui/sparkline";
 import {
   SortableTableHead,
   Table,
@@ -90,8 +89,6 @@ function apiKeySortValue(row: ApiKeyRow, key: string): string | number | null {
       return row.name;
     case "status":
       return row.revoked ? "Revoked" : "Active";
-    case "requests7d":
-      return row.requests7d.at(-1) ?? 0;
     case "createdAt":
       return row.createdAt.getTime();
     case "lastUsed":
@@ -192,7 +189,7 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full flex-col gap-6">
+      <div className="flex w-full max-w-5xl flex-col gap-6">
         <PageHeader
           onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
         />
@@ -284,7 +281,7 @@ export function CreateKeyButton({
 export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         <PageTitle>API Keys</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
@@ -373,10 +370,9 @@ export function UsageInfo() {
         </p>
       </div>
 
-      {/* Two cards: Gate Connect (1-click setup, no tab strip) and the
-          manual-setup code tabs (no Gate Connect tab). Side by side at xl+,
-          stacked full-width (one card per row, 24px gap) below xl. */}
-      <div className="flex flex-col gap-6 xl:flex-row">
+      {/* Automatic + Manual setup cards, always stacked full-width (one card
+          per row, 24px gap) at every width. */}
+      <div className="flex flex-col gap-6">
         {/* Each card gets an Eyebrow label above it (outside the card, so no
             height impact) so the two setup paths — Automatic vs Manual — read
             as a matched pair even though the right card is a code card with no
@@ -388,9 +384,9 @@ export function UsageInfo() {
               <ConnectTabs
                 fillHeight
                 gateConnectOnly
-                imageClassName="pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
-                textMaxWidth="max-w-[350px] @min-[993px]/connect:max-w-[400px]"
-                titleClassName="text-2xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
+                imageClassName="hidden lg:block pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
+                textMaxWidth="max-w-full lg:max-w-[350px] @min-[993px]/connect:lg:max-w-[400px]"
+                titleClassName="text-xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
               />
             </div>
           </Card>
@@ -439,7 +435,7 @@ function KeysTable({
                *  Created and Last used sit at the right of the row — the date
                *  pair is the row's "freshness" data, so they cluster. */}
               <SortableTableHead
-                className="w-[26%] whitespace-nowrap"
+                className="w-[32%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="name"
@@ -447,7 +443,7 @@ function KeysTable({
                 Key
               </SortableTableHead>
               <SortableTableHead
-                className="w-[14%] whitespace-nowrap"
+                className="w-[16%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="status"
@@ -455,15 +451,7 @@ function KeysTable({
                 Status
               </SortableTableHead>
               <SortableTableHead
-                className="w-1/5 whitespace-nowrap"
-                onSort={toggleSort}
-                sort={sort}
-                sortKey="requests7d"
-              >
-                7-day messages
-              </SortableTableHead>
-              <SortableTableHead
-                className="w-1/5 whitespace-nowrap"
+                className="w-[26%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="createdAt"
@@ -471,7 +459,7 @@ function KeysTable({
                 Created
               </SortableTableHead>
               <SortableTableHead
-                className="w-1/5 whitespace-nowrap"
+                className="w-[26%] whitespace-nowrap"
                 onSort={toggleSort}
                 sort={sort}
                 sortKey="lastUsed"
@@ -500,10 +488,6 @@ function KeysTable({
                   ) : (
                     <Badge variant="success">Active</Badge>
                   )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <span className="sr-only">{`${row.requests7d.at(-1)?.toLocaleString()} messages, 7-day trend`}</span>
-                  <Sparkline points={row.requests7d} width={96} />
                 </TableCell>
                 <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.createdAt} />

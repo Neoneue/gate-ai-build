@@ -29,6 +29,7 @@ import {
   getConversationView,
 } from "@/data/conversationDetail";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
+import { formatCompactCount } from "@/lib/formatters";
 import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { RequestTracePanel } from "./RequestTracePanel";
 import type {
@@ -351,7 +352,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -365,7 +366,7 @@ export function ConversationDetailBody({
               <RequestTracePanel
                 activeRequestId={activeRequestId}
                 footer={
-                  <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                  <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -377,6 +378,7 @@ export function ConversationDetailBody({
                     </span>
                     <div className="flex items-center gap-2">
                       <CopyButton
+                        className="flex-1 lg:flex-none"
                         label="conversation ID"
                         mode="label"
                         size="sm"
@@ -384,6 +386,7 @@ export function ConversationDetailBody({
                         value={row.conversationId}
                       />
                       <Button
+                        className="flex-1 lg:flex-none"
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
@@ -422,7 +425,7 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
                   : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
               }
             >
@@ -437,7 +440,7 @@ export function ConversationDetailBody({
                 activeRequestId={activeRequestId}
                 countLabel={`${findingCount} findings`}
                 footer={
-                  <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                  <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -449,6 +452,7 @@ export function ConversationDetailBody({
                     </span>
                     <div className="flex items-center gap-2">
                       <CopyButton
+                        className="flex-1 lg:flex-none"
                         label="conversation ID"
                         mode="label"
                         size="sm"
@@ -456,6 +460,7 @@ export function ConversationDetailBody({
                         value={row.conversationId}
                       />
                       <Button
+                        className="flex-1 lg:flex-none"
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
@@ -496,7 +501,7 @@ export function ConversationDetailBody({
               <div
                 className={
                   variant === "page"
-                    ? "grid h-[640px] grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                    ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
                     : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
                 }
               >
@@ -511,7 +516,7 @@ export function ConversationDetailBody({
                   activeRequestId={activeRequestId}
                   countLabel={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
                   footer={
-                    <div className="flex flex-none items-center justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                    <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                       <span className="type-mono-12 text-muted-foreground">
                         Key{" "}
                         <span className="text-foreground">{row.initiator}</span>{" "}
@@ -564,12 +569,30 @@ export function ConversationDetailBody({
 
 function ConversationKpiRail({ row }: { row: ConversationRow }) {
   const view = getConversationView(row, REQUEST_ROWS_ALL);
+  // `view.inTokens/outTokens` are comma-grouped strings from getConversationView
+  // (shared with the Conversations table, which keeps full numbers). Parse back
+  // to the raw integer so the KPI tiles can render the compact "M" form without
+  // changing the table's formatting.
+  const toRawInt = (s: string): number =>
+    Number.parseInt(s.replace(/[^0-9-]/g, ""), 10) || 0;
   return (
     <KpiRailShell columns={6}>
-      <ConversationKpiTile label="Messages" value={String(view.reqs)} />
-      <ConversationKpiTile label="Turns" value={String(view.turns)} />
-      <ConversationKpiTile label="Tokens In" value={view.inTokens} />
-      <ConversationKpiTile label="Tokens Out" value={view.outTokens} />
+      <ConversationKpiTile
+        label="Messages"
+        value={formatCompactCount(view.reqs)}
+      />
+      <ConversationKpiTile
+        label="Turns"
+        value={formatCompactCount(view.turns)}
+      />
+      <ConversationKpiTile
+        label="Tokens In"
+        value={formatCompactCount(toRawInt(view.inTokens))}
+      />
+      <ConversationKpiTile
+        label="Tokens Out"
+        value={formatCompactCount(toRawInt(view.outTokens))}
+      />
       <ConversationKpiTile label="Cost" value={view.cost} />
       <ConversationKpiTile label="Duration" value={view.duration} />
     </KpiRailShell>

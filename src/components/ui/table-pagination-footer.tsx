@@ -5,6 +5,7 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
+  PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
   Select,
@@ -33,30 +34,33 @@ import {
 const ROWS_PER_PAGE_OPTIONS = ["10", "25", "50", "100"];
 
 /**
- * Canonical truncated-pagination window. For totalPages ≤ 7 returns every
- * page; otherwise returns [1, optional left ellipsis, current ± 1 clipped,
- * optional right ellipsis, last page]. 1-based.
+ * Constant-width truncated-pagination window (`1 … 3 4 5 … 7` shape, GitHub
+ * style). Anchors are always page 1, the last page, and the current page with
+ * its immediate neighbors; ANY gap of one or more hidden pages collapses to an
+ * ellipsis (no lone-gap-to-number fill), so the control keeps a stable compact
+ * shape while paging and never grows back to every number. Caps at 5 numeric
+ * buttons and stays correct at both edges. 1-based.
  */
 function buildPageWindow(
   current: number,
   totalPages: number
 ): (number | "ellipsis-l" | "ellipsis-r")[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const out: (number | "ellipsis-l" | "ellipsis-r")[] = [1];
-  if (current > 3) {
-    out.push("ellipsis-l");
-  }
-  for (let p = current - 1; p <= current + 1; p++) {
-    if (p > 1 && p < totalPages) {
-      out.push(p);
+  // Always-shown anchors: first, last, current and its two neighbors.
+  const anchors = [1, totalPages, current - 1, current, current + 1];
+  const pages = [...new Set(anchors)]
+    .filter((p) => p >= 1 && p <= totalPages)
+    .sort((a, b) => a - b);
+
+  const out: (number | "ellipsis-l" | "ellipsis-r")[] = [];
+  let prev = 0;
+  for (const p of pages) {
+    if (p - prev > 1) {
+      // Any hidden page(s) collapse to a single ellipsis.
+      out.push(p <= current ? "ellipsis-l" : "ellipsis-r");
     }
+    out.push(p);
+    prev = p;
   }
-  if (current < totalPages - 2) {
-    out.push("ellipsis-r");
-  }
-  out.push(totalPages);
   return out;
 }
 
@@ -84,9 +88,9 @@ export function TablePaginationFooter({
   const atLastPage = safePage >= totalPages;
 
   return (
-    <div className="flex items-center justify-between gap-3 border-border border-t px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-muted-foreground text-xs tabular-nums">
+    <div className="flex flex-col items-center gap-3 border-border border-t px-4 py-3 pb-4 md:flex-row md:justify-between lg:pb-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="whitespace-nowrap font-mono text-muted-foreground text-xs tabular-nums">
           Showing{" "}
           <span className="font-medium">
             {start.toLocaleString()}–{end.toLocaleString()}
@@ -125,6 +129,20 @@ export function TablePaginationFooter({
 
       <Pagination className="mx-0 w-fit justify-end">
         <PaginationContent className="gap-1">
+          <PaginationItem>
+            <PaginationPrevious
+              aria-disabled={safePage <= 1 || undefined}
+              className={
+                safePage <= 1 ? "pointer-events-none opacity-50" : undefined
+              }
+              disabled={safePage <= 1}
+              onClick={() => {
+                if (safePage > 1) {
+                  onPageChange(Math.max(1, safePage - 1));
+                }
+              }}
+            />
+          </PaginationItem>
           {pageWindow.map((entry, idx) =>
             entry === "ellipsis-l" || entry === "ellipsis-r" ? (
               <PaginationItem key={`${entry}-${idx}`}>
@@ -133,6 +151,7 @@ export function TablePaginationFooter({
             ) : (
               <PaginationItem key={entry}>
                 <PaginationLink
+                  className="w-auto min-w-8 px-2"
                   isActive={safePage === entry}
                   onClick={() => onPageChange(entry)}
                 >

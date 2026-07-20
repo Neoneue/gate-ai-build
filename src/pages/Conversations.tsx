@@ -38,7 +38,7 @@ import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
 import {
   type CustomRange,
   effectiveScale,
@@ -265,7 +265,7 @@ function OverviewBar({
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
@@ -290,7 +290,7 @@ function KpiRail({
   const conversationsTotal = Math.round(
     100 * effectiveScale(range, customRange)
   );
-  const conversationsValue = conversationsTotal.toLocaleString("en-US");
+  const conversationsValue = formatCompactCount(conversationsTotal);
   const spark = SPARK[range];
   const sparkLabels = sparkDates(range, customRange);
   const conversationsSpark = distributeTotal(
@@ -487,14 +487,14 @@ function ConversationsTableSection({
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search conversations"
-              className="min-w-0 flex-1"
+              className="w-full min-w-0 md:w-auto md:flex-1"
               placeholder="Search by id, prompt, user, key…"
               surface="elevated"
             />
             <Select onValueChange={setKeyId} value={keyId}>
               <SelectTrigger
                 aria-label="Key"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Key" />
@@ -509,7 +509,7 @@ function ConversationsTableSection({
             <Select onValueChange={setModel} value={model}>
               <SelectTrigger
                 aria-label="Model"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Model" />

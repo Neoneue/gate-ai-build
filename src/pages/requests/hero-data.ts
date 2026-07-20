@@ -128,6 +128,30 @@ function pad2(n: number): string {
   return n.toString().padStart(2, "0");
 }
 
+// Derive axis ticks from REAL data points at evenly-spaced indices, so every
+// tick value exactly matches a data-point `time` string. recharts only renders
+// a tick from an explicit `ticks` array when the value matches a data point;
+// hardcoding "nice" values (e.g. midnight "May 12 00:00") that never occur in
+// the 6h-bucket data (hours land on 14/08/02/20, never 00) renders zero ticks.
+// Picking real data points guarantees they show. First and last data points are
+// always included; the XAxis then width-thins via interval="preserveStartEnd".
+function deriveTicks(data: { time: string }[], tickCount = 7): string[] {
+  const n = data.length;
+  if (n === 0) {
+    return [];
+  }
+  const count = Math.min(tickCount, Math.max(2, n));
+  const ticks: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const idx = Math.round((i * (n - 1)) / (count - 1));
+    const t = data[idx]?.time;
+    if (t && !ticks.includes(t)) {
+      ticks.push(t);
+    }
+  }
+  return ticks;
+}
+
 // ── All-time view (240 × 6-hour buckets ≈ 60-day lifetime window) ─────────
 // The widest preset: the lifetime cumulative request volume for this mock
 // account. Sits above 30D — same 6-hour bucketing as 30D extended back to
@@ -150,15 +174,7 @@ const HERO_ALL_DATA = HERO_ALL_BUCKETS.map((requests, i) => {
     requests,
   };
 });
-const HERO_ALL_TICKS = [
-  "Mar 14 00:00",
-  "Mar 24 00:00",
-  "Apr 3 00:00",
-  "Apr 13 00:00",
-  "Apr 23 00:00",
-  "May 3 00:00",
-  "May 12 00:00",
-];
+const HERO_ALL_TICKS = deriveTicks(HERO_ALL_DATA);
 
 // ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
 const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, "daily", 0xc5_7e_11_a7);
@@ -172,7 +188,7 @@ const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
     requests,
   };
 });
-const HERO_24H_TICKS = ["15:00", "20:00", "01:00", "06:00", "11:00", "14:30"];
+const HERO_24H_TICKS = deriveTicks(HERO_24H_DATA, 6);
 
 // ── 7D view (168 × 1-hour buckets) ────────────────────────────────────────
 const HERO_7D_BUCKETS = makeHeroBuckets(168, 468, "weekly", 0x7d_c0_ff_ee);
@@ -186,15 +202,7 @@ const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
     requests,
   };
 });
-const HERO_7D_TICKS = [
-  "May 6 00:00",
-  "May 7 00:00",
-  "May 8 00:00",
-  "May 9 00:00",
-  "May 10 00:00",
-  "May 11 00:00",
-  "May 12 00:00",
-];
+const HERO_7D_TICKS = deriveTicks(HERO_7D_DATA);
 
 // ── 30D view (120 × 6-hour buckets) ───────────────────────────────────────
 const HERO_30D_BUCKETS = makeHeroBuckets(120, 2248, "monthly", 0x30_dc_af_e0);
@@ -208,15 +216,7 @@ const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
     requests,
   };
 });
-const HERO_30D_TICKS = [
-  "Apr 13 00:00",
-  "Apr 18 00:00",
-  "Apr 23 00:00",
-  "Apr 28 00:00",
-  "May 3 00:00",
-  "May 8 00:00",
-  "May 12 00:00",
-];
+const HERO_30D_TICKS = deriveTicks(HERO_30D_DATA);
 
 export const HERO_VIEWS: Record<RangeKey, HeroView> = {
   all: {
@@ -330,14 +330,10 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     };
   });
 
-  // 4–7 evenly spaced ticks from start to end, formatted "Mon D" (the
-  // existing axis renderer strips the trailing " HH:00" segment).
-  const tickCount = Math.min(7, Math.max(4, Math.min(bucketCount, 7)));
-  const ticks: string[] = [];
-  for (let i = 0; i < tickCount; i++) {
-    const t = Math.round((i * (bucketCount - 1)) / (tickCount - 1));
-    ticks.push(data[t]?.time ?? "");
-  }
+  // Up-to-7 evenly spaced ticks from real data points (the axis renderer
+  // strips the trailing " HH:00" segment down to "Mon D"). Same derivation as
+  // the preset views, so tick values always match a data point and render.
+  const ticks = deriveTicks(data);
 
   // Two disjoint buckets summing to total: Success (HTTP-success, slow
   // and fast pooled) + Errors. ~1% errors, remainder success. Slow rows

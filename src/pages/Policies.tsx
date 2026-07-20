@@ -87,7 +87,7 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
     >
       {/* Content stays fluid up to xl, then caps tighter so the cards don't
           stretch across ultrawide displays. */}
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      <div className="flex w-full flex-col gap-8 md:gap-6 xl:max-w-5xl">
         <PageHeader />
         {variant === "free" ? <FreePlanNoticeBanner /> : null}
         {/* KPI rail hidden for now — restore <KpiSection /> when wired. */}
@@ -305,45 +305,46 @@ function PolicyCard({
     // variant or tailwind-merge won't override the Card's `py-4`.
     // Collapsed cards keep the default py-4.
     <Card className={bodyOpen ? "data-[density=default]:pb-0" : undefined}>
-      {/* Header row — always visible. */}
-      <div className="flex items-start gap-3 px-4">
-        {/* Bare lucide icon — no wrapper box. Centered on the title line. */}
-        <span className="flex h-6 shrink-0 items-center">
-          <Icon
-            aria-hidden
-            className="size-5"
-            style={{ color: ICON_COLOR[config.id] }}
-          />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Header — top row (icon + title + badge + chevron), then the
+          description on its own full-width row below. */}
+      <div className="flex flex-col gap-3 px-4">
+        <div className="flex items-center gap-3">
+          {/* Bare lucide icon — no wrapper box. Centered on the title line. */}
+          <span className="flex h-6 shrink-0 items-center">
+            <Icon
+              aria-hidden
+              className="size-5"
+              style={{ color: ICON_COLOR[config.id] }}
+            />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <h3 className="type-heading-16 m-0 text-balance text-foreground">
               {config.name}
             </h3>
           </div>
-          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-            {config.description}
-          </p>
+          <span className="flex h-6 shrink-0 items-center">
+            <StatusBadge on={state.enabled} />
+          </span>
+          <button
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
+            className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+            onClick={() => setExpanded((v) => !v)}
+            type="button"
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-5 transition-transform duration-150 ease-out motion-reduce:transition-none",
+                expanded && "rotate-180"
+              )}
+              strokeWidth={1.75}
+            />
+          </button>
         </div>
-        <span className="flex h-6 shrink-0 items-center">
-          <StatusBadge on={state.enabled} />
-        </span>
-        <button
-          aria-expanded={expanded}
-          aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
-          onClick={() => setExpanded((v) => !v)}
-          type="button"
-        >
-          <ChevronDown
-            aria-hidden
-            className={cn(
-              "size-5 transition-transform duration-150 ease-out motion-reduce:transition-none",
-              expanded && "rotate-180"
-            )}
-            strokeWidth={1.75}
-          />
-        </button>
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+          {config.description}
+        </p>
       </div>
 
       {/* Expanded settings body. The panels (enable toggle, Action,

@@ -138,7 +138,7 @@ function TeamSurface() {
 function PageHeader({ onInvite }: { onInvite: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         <PageTitle>Team</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Manage roles, invite teammates, and remove access from Chad
@@ -285,6 +285,7 @@ function MembersPane() {
           <FilterToolbar>
             <SearchInput
               ariaLabel="Search members"
+              className="w-full md:w-96"
               onChange={setQuery}
               placeholder="Search by name or email…"
               value={query}
@@ -297,7 +298,7 @@ function MembersPane() {
             >
               <SelectTrigger
                 aria-label="Filter by role"
-                className="border-border bg-card font-normal text-foreground"
+                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Role" />
@@ -319,7 +320,7 @@ function MembersPane() {
           />
         ) : (
           <>
-            <Table className="table-fixed">
+            <Table className="min-w-[680px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   {/* `table-fixed` + percentage widths on the header row is the
@@ -573,7 +574,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
   }
   return (
     <Card density="flush">
-      <Table className="table-fixed">
+      <Table className="min-w-[860px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead

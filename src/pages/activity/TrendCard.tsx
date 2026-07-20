@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
@@ -90,6 +91,37 @@ const TREND_CHART_TICK = {
   fontFamily: "var(--font-mono)",
   fill: "var(--muted-foreground)",
 } as const;
+
+/** X-axis tick renderer that left-anchors the first label and right-anchors
+ *  the last so neither the first date slides under the Y-axis number column
+ *  nor the last spills past the card's right edge — the rest stay centered.
+ *  Mirrors the hero charts' ChartXAxisTick (HeroMetric / Security) but keeps
+ *  the full label (TrendCard's "Feb 27" must not be truncated at the space). */
+function TrendXAxisTick(props: {
+  x?: string | number;
+  y?: string | number;
+  payload?: { value: string };
+  firstTick: string;
+  lastTick: string;
+}) {
+  const { x, y, payload, firstTick, lastTick } = props;
+  const value = payload?.value ?? "";
+  const anchor =
+    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
+  return (
+    <text
+      dy="0.71em"
+      fill="var(--muted-foreground)"
+      fontFamily="var(--font-mono)"
+      fontSize={11}
+      textAnchor={anchor}
+      x={x}
+      y={y}
+    >
+      {value}
+    </text>
+  );
+}
 
 /** Hoisted YAxis domain for the savings lens — % saved tops out at 30. */
 const SAVINGS_DOMAIN = [0, 30] as const;
@@ -192,6 +224,18 @@ function TrendBreakdownPanel({
  *  When a dimension has more entries, the remainder collapse into "Others". */
 const TREND_SERIES_CAP = 6;
 
+/** Below `lg` (max-width 1023px — tablet + mobile) the bars are too thin and
+ *  packed to read, so the trend chart drops to ~75% of its bucket count
+ *  (25% fewer bars). Desktop keeps the full count. The series totals still
+ *  reconcile to the range total — distributeSeries spreads the same scaled
+ *  total across however many buckets it's given, so fewer buckets just means
+ *  taller bars, not a different sum. */
+const COMPACT_BAR_QUERY = "(max-width: 1023px)";
+const COMPACT_BAR_FACTOR = 0.75;
+/** Fewest bars we'll ever render — guards the label resample (needs count ≥ 2
+ *  for its `count - 1` divisor) and keeps a short custom range legible. */
+const COMPACT_BAR_FLOOR = 2;
+
 export function TrendCard({
   range,
   customRange,
@@ -205,10 +249,31 @@ export function TrendCard({
   const rawSeries = SPEND_SERIES[dimension];
   const isSpend = metric === "spend";
   const isSavings = metric === "savings";
+  // Tablet + mobile render ~25% fewer bars (see COMPACT_BAR_* above).
+  const isCompactBars = useMediaQuery(COMPACT_BAR_QUERY);
 
   const data = useMemo(() => {
-    const count = getBucketCount(range, customRange);
-    const labels = getRangeLabels(range, customRange);
+    const fullCount = getBucketCount(range, customRange);
+    // Tablet/mobile: drop to ~75% of the buckets. Desktop keeps every bar.
+    const count = isCompactBars
+      ? Math.max(COMPACT_BAR_FLOOR, Math.round(fullCount * COMPACT_BAR_FACTOR))
+      : fullCount;
+    const fullLabels = getRangeLabels(range, customRange);
+    // getRangeLabels always emits one label per FULL bucket. When we've
+    // reduced the count, resample to `count` labels spread evenly across the
+    // window so the first and last stay anchored to the true range endpoints
+    // (round(i·(N-1)/(count-1)) hits index 0 and N-1 exactly). This keeps
+    // labels.length === count, which the row builder below relies on.
+    const labels =
+      count === fullCount
+        ? fullLabels
+        : Array.from(
+            { length: count },
+            (_, i) =>
+              fullLabels[
+                Math.round((i * (fullLabels.length - 1)) / (count - 1))
+              ] ?? ""
+          );
     const scale = effectiveScale(range, customRange);
     const totals = (isSpend ? SPEND_TOTALS_7D : TOKENS_TOTALS_7D)[dimension];
 
@@ -283,7 +348,7 @@ export function TrendCard({
       }
       return row;
     });
-  }, [dimension, range, customRange, isSpend, isSavings]);
+  }, [dimension, range, customRange, isSpend, isSavings, isCompactBars]);
 
   /** Aggregate each raw series's total across all buckets in the active range.
    *  Derived from `data` so it's always in sync with what the chart shows. */
@@ -360,6 +425,24 @@ export function TrendCard({
 
   const bucketLabel = getBucketLabel(range, customRange);
 
+  // First/last axis labels drive the tick anchoring (see TrendXAxisTick).
+  const firstTick = String(data[0]?.date ?? "");
+  const lastTick = String(data.at(-1)?.date ?? "");
+  const renderXAxisTick = useCallback(
+    (tickProps: {
+      x?: string | number;
+      y?: string | number;
+      payload?: { value: string };
+    }) => (
+      <TrendXAxisTick
+        {...tickProps}
+        firstTick={firstTick}
+        lastTick={lastTick}
+      />
+    ),
+    [firstTick, lastTick]
+  );
+
   const chartConfig: ChartConfig = useMemo(
     () =>
       Object.fromEntries(
@@ -416,7 +499,10 @@ export function TrendCard({
 
   return (
     <Card>
-      <CardHeader>
+      {/* Mobile: flex-col so the Select + metric pill stack below the title
+          block (left-aligned) instead of crushing the title. md+: restore the
+          grid header so the controls sit inline on the right. */}
+      <CardHeader className="flex flex-col gap-2 md:grid md:gap-x-2 md:gap-y-0">
         <CardTitle>{TREND_TITLE[metric]}</CardTitle>
         <CardDescription>
           Stacked by{" "}
@@ -426,7 +512,7 @@ export function TrendCard({
           {" · "}
           {bucketLabel}
         </CardDescription>
-        <CardAction>
+        <CardAction className="my-1 md:my-0">
           <div className="flex items-center gap-2">
             <Select
               onValueChange={(v: string) => setDimension(v as Dimension)}
@@ -487,12 +573,14 @@ export function TrendCard({
                 axisLine={false}
                 dataKey="date"
                 height={24}
-                // Target ~7 visible labels regardless of bucket count:
-                //   7 bars  → interval 0 (show all)
-                //   12 bars → interval 1 (every other, ~6 visible)
-                //   30 bars → interval 4 (every 5th, ~6 visible)
-                interval={Math.max(0, Math.ceil(data.length / 7) - 1)}
-                tick={TREND_CHART_TICK}
+                // preserveStartEnd + minTickGap lets recharts width-thin the
+                // labels natively while always keeping the first + last tick,
+                // so the end-anchored last label is guaranteed to render (a
+                // numeric interval could drop it and leave the right edge
+                // ragged). Anchoring lives in renderXAxisTick.
+                interval="preserveStartEnd"
+                minTickGap={16}
+                tick={renderXAxisTick}
                 tickLine={false}
                 tickMargin={8}
               />
@@ -567,8 +655,9 @@ export function TrendCard({
           </ChartContainer>
         </div>
 
-        {/* Right pane — breakdown panel */}
-        <div className="md:col-span-4 md:border-border md:border-l md:pl-3">
+        {/* Right pane — breakdown panel. Mobile: divider above the key
+            (chart stacks above it); md+: vertical left divider instead. */}
+        <div className="border-border border-t pt-4 md:col-span-4 md:border-t-0 md:border-l md:pt-0 md:pl-3">
           <TrendBreakdownPanel
             metric={metric}
             savingsRates={savingsRates}

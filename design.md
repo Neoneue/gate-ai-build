@@ -252,7 +252,7 @@ spacing:
   # empty-state heights — values are n × 8 only:
   "2":  "8px"   # surface OK
   "4":  "16px"  # surface OK — dominant step (Card padding, page gutter, section gap)
-  "6":  "24px"  # surface OK — outer page margins at lg+
+  "6":  "24px"  # surface OK — outer page margins from `sm`+ (16px below via `px-4`)
   "8":  "32px"  # surface OK — between-section gap
   "10": "40px"  # surface OK
   "12": "48px"  # surface OK — page-bottom rhythm
@@ -375,7 +375,7 @@ components:
 **Extraction mode:** code-direct (read from the source files in this repo — these files ARE the contract; no transpile loss)
 **Confidence summary:** 14 sections strong, 0 partial, 1 TBD (wordmark + lockups not finalized). **61 primitives** live in `src/components/ui/*.tsx` (count taken 2026-05-20). Last surgical refactor pass: 2026-05-17 (Overview redesign — 4-tile KPI rail with `<KpiTile>`, three preview tables, workspace switcher migrated to the top bar, `<FilterToolbar>` / `<Monogram>` / `<SearchInput>` extracted). Preceded by 2026-05-15 (border-token migration: Card / KpiRail / Tabs line variant moved from `shadow-(--shadow-border)` → `border border-border shadow-xs`; `--input` bumped to neutral-300) and the 2026-05-11 modal-chrome + typography-primitive passes.
 **Captured states:** light mode @ 1440×900 default; modal (Dialog), drawer (Sheet), toast, segmented selectors, tabs (default + line + count chips), pagination, table sortable + drill-in, dropdown menu (Menu / UserMenu / workspace switcher), list ↔ detail swap with entrance animation (Models), in-modal action slide (Security Mark-PIJ panel)
-**Not yet captured (TBD):** wordmark + horizontal/stacked lockups (logomark only, finalized); mobile / touch state
+**Not yet captured (TBD):** wordmark + horizontal/stacked lockups (logomark only, finalized). Mobile / touch state shipped 2026-07-16..17 (Thread B) — see §Responsive Behavior.
 
 ---
 
@@ -698,7 +698,7 @@ Within a primitive's row/group: between icon + label, badge + text, label + cont
 | `spacing.3` | 12px | compound only | Button px-3 (all sizes), Input px-3, Select pl-3, inner table cells |
 | **`spacing.4`** | **16px** | **surface — dominant** | **Card padding, table outer cells, page gutter, section gap, between cards in a grid** |
 | `spacing.5` | 20px | compound only | Chart legend gap, hero internal rhythm |
-| `spacing.6` | 24px | surface OK | Outer page margins at lg/xl/2xl breakpoints (`lg:p-6`); spec-sheet panel padding |
+| `spacing.6` | 24px | surface OK | Outer page margins from `sm`+ (`px-4 sm:px-6` — 16px below `sm`); spec-sheet panel padding |
 | `spacing.8` | 32px | surface OK | Between-section gap on spec-sheet artboards |
 | `spacing.12` | 48px | surface OK | Page-bottom rhythm |
 | `spacing.16` | 64px | surface OK | Hero strip spacing |
@@ -708,7 +708,7 @@ Within a primitive's row/group: between icon + label, badge + text, label + cont
 ### Grid & Container
 
 - **Composed pages:** 12-column grid + 16px gutters (`grid grid-cols-12 gap-4`). Asymmetric layouts via `col-span-N` (row sums to 12).
-- **Outer page margins:** 24px (`lg:p-6`) at `lg`/`xl`/`2xl`; less below.
+- **Outer page margins:** horizontal `px-4 sm:px-6` — **16px on mobile** (<640px), 24px from `sm` up (updated 2026-07-17; was a flat 24px). Vertical `pt-6 pb-8` (`lg:pb-20`). Set on the shell `<main>` in `DashboardChrome.tsx` and mirrored on the sticky top bar. The pagination footer sits inside `<main>` and inherits the margin.
 - **All pages** are responsive but tuned for ≥1280px. (The MVP-era `src/artboards/` spec sheets, which used a fixed `w-[1440px]` column to mirror Paper, were stripped on 2026-05-11.)
 - **Page-header subtitle:** `text-base text-neutral-500 tracking-snug` (see §typography tracking rule — `tracking-snug`, not `tracking-tight`). Width: `max-w-1/2` on the *wrapper column* (not the `<p>` — fractional max-w on a leaf doesn't behave).
 
@@ -1071,16 +1071,16 @@ Copy is part of the design: precise, plain, no marketing superlatives. This is a
 
 ## Responsive Behavior *(our extension)*
 
-The product targets desktop-first operator workflows; no mobile-shipped state today. Composed pages (`src/pages/*`) are responsive but tuned for ≥1280px. **Mobile not observed in the current state — flagged TBD.**
+The product is desktop-first (operator workflows tuned for ≥1280px), but a mobile / responsive pass shipped 2026-07-16..17 (Thread B): the shell flows to content height below `lg`, the sidebar collapses to a hamburger Sheet below `lg`, table toolbars and pagination footers stack below `md`, site margins drop to 16px below `sm`, and KPI-tile counts use a compact-millions formatter. Composed pages (`src/pages/*`) still target ≥1280px for the full multi-column experience; small-screen is functional, not the design center.
 
 ### Breakpoints (Tailwind v4 defaults + custom `xs` / `3xl` in `@theme`)
 
 | Name | Width | Key Changes |
 | --- | --- | --- |
-| xs | 450px | Custom (`--breakpoint-xs`). Compact-mobile chrome line: card-header toolbars stack below their title; the workspace switcher moves into the hamburger menu (above the nav) and the top bar shows the logomark in its place. |
-| sm | 640px | (no specific overrides) |
-| md | 768px | Sidebar ↔ hamburger switch: below `md` the rail is hidden and nav moves into a right-docked Sheet drawer; `md+` shows the persistent sidebar. |
-| lg | 1024px | Outer page padding `lg:p-6` (24px). Overview KPI row goes 3-up. |
+| xs | 450px | Custom (`--breakpoint-xs`). Minor tweak only: one Overview card header (`Dashboard.tsx`) stacks its toolbar below the title (`xs:flex-row`). The nav / switcher / logomark moves are at `lg` now (not `xs`) — see below. |
+| sm | 640px | **Outer site margins step 16px → 24px** (`px-4 sm:px-6`) on the shell `<main>` and top bar. |
+| md | 768px | **Table toolbars + pagination footers stack below `md`** (search full-width on its own row, trailing controls split evenly) and collapse to a single inline row at `md`+ (`FilterToolbar` + 7 page toolbars). Nav no longer switches here — moved to `lg` on 2026-07-16. |
+| lg | 1024px | **Sidebar rail ↔ hamburger switch:** below `lg` the persistent rail is hidden and nav moves into a right-docked Sheet; `lg`+ shows the rail. Workspace switcher lives in the top bar at `lg`+ and in the Sheet below `lg`; the top-bar logomark shows below `lg` (no rail to carry the brand). **Shell viewport-lock + internal `<main>` scroll are `lg:`-only** — below `lg` the document flows to content height with a sticky top bar. Overview KPI row goes 3-up. |
 | xl | 1280px | Composed-page target. Overview preview tables go 3-up (card-wrap standard). |
 | 2xl | 1536px | Composed-page comfortable |
 | 3xl | 1920px | Custom (`--breakpoint-3xl`). Band above the 1536 content lock. |
@@ -1094,9 +1094,9 @@ The product targets desktop-first operator workflows; no mobile-shipped state to
 
 ### Collapsing Strategy
 
-- **Sidebar** (left nav): expanded 240px (`w-60`) / collapsed 64px (`w-16`) in `sidebar.tsx`. Collapse toggle lives in the sidebar header; the workspace switcher sits in the top bar (not the sidebar — see §7 UserMenu / WorkspaceSwitcher).
-- **KPI rail:** four sections side-by-side at composed widths. Mobile collapse strategy TBD.
-- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper). Column priority not codified.
+- **Sidebar** (left nav): expanded 240px (`w-60`) / collapsed 64px (`w-16`) in `sidebar.tsx`, rendered at `lg`+ only; below `lg` the whole rail is replaced by the right-docked hamburger Sheet. Collapse toggle lives in the sidebar header; the workspace switcher sits in the top bar at `lg`+ (in the Sheet below `lg`) — not in the sidebar (see §7 UserMenu / WorkspaceSwitcher).
+- **KPI rail:** four sections side-by-side at composed widths; wraps to a stacked grid on small screens. Raw counts ≥1M render compact (`N.NM` via `formatCompactCount`, KPI tiles only — see §7 Hero Numerics & KPIs / memory), so long numbers don't overflow the tile on mobile.
+- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper); toolbars and the pagination footer stack below `md` (see breakpoints). Column priority not codified.
 
 ---
 

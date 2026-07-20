@@ -224,22 +224,8 @@ function Layout() {
     );
   }, [sidebarExpanded]);
 
-  // Force-collapse at ≤1024px. The user's stored preference is preserved and
-  // restored once the viewport widens past 1024.
-  const [isNarrow, setIsNarrow] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 1024px)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1024px)");
-    const onChange = (e: MediaQueryListEvent) => setIsNarrow(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
   const ctx: LayoutContext = {
-    sidebarExpanded: sidebarExpanded && !isNarrow,
+    sidebarExpanded,
     toggleSidebar: () => setSidebarExpanded((v) => !v),
   };
 

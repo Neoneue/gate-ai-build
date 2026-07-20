@@ -28,7 +28,7 @@ const tabsListVariants = cva(
       variant: {
         default:
           "w-fit justify-center rounded-sm bg-muted p-1 group-data-horizontal/tabs:h-8",
-        line: "w-full justify-start gap-0 border-border border-b bg-transparent px-4",
+        line: "w-full min-w-0 flex-nowrap justify-start gap-0 overflow-x-auto border-border border-b bg-transparent px-4",
       },
     },
     defaultVariants: {
@@ -89,7 +89,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // Default variant active text only — bg + shadow now live on
         // the sliding TabsIndicator.
         "group-data-[variant=default]/tabs-list:data-active:text-foreground dark:group-data-[variant=default]/tabs-list:data-active:text-foreground",
-        "group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:px-4 group-data-[variant=line]/tabs-list:pt-2 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:text-muted-foreground group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:font-medium group-data-[variant=line]/tabs-list:data-active:text-foreground group-data-[variant=line]/tabs-list:hover:bg-accent group-data-[variant=line]/tabs-list:hover:text-foreground group-data-[variant=line]/tabs-list:data-active:hover:bg-transparent",
+        "group-data-[variant=line]/tabs-list:shrink-0 group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:px-4 group-data-[variant=line]/tabs-list:pt-2 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:text-muted-foreground group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:font-medium group-data-[variant=line]/tabs-list:data-active:text-foreground group-data-[variant=line]/tabs-list:hover:bg-accent group-data-[variant=line]/tabs-list:hover:text-foreground group-data-[variant=line]/tabs-list:data-active:hover:bg-transparent",
         // Per-trigger `after:` pseudo retained ONLY for the default variant
         // vertical orientation (right-edge underline on a vertical pill list,
         // not driven by Base UI's --active-tab vars). Line variant's underline

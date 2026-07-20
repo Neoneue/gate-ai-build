@@ -129,7 +129,7 @@ export function Limits() {
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-1/2 flex-col gap-2">
+      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or
@@ -196,7 +196,7 @@ function LimitsSection({
 
   return (
     <Card density="flush">
-      <Table className="table-fixed">
+      <Table className="min-w-[1000px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {/* `table-fixed` + explicit widths keeps the column gaps
