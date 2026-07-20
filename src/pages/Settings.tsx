@@ -75,28 +75,25 @@ function PageHeader() {
 }
 
 /* ─── Profile & organization card ──────────────────────────────────────────
- * Four fields share a single dirty state. Dirty = any field differs from
- * its last-saved value. Save commits all four; Reset reverts all four. */
+ * Three fields share a single dirty state. Dirty = any field differs from
+ * its last-saved value. Save commits all three; Reset reverts all three. */
 
 const PROFILE_DEFAULTS = {
-  firstName: "Chad",
-  lastName: "Ponticas",
+  fullName: "Chad Ponticas",
   email: "chad@constellationnetwork.io",
   organization: "Chad Ponticas's workspace",
 };
 
 function ProfileCard() {
   const [saved, setSaved] = useState(PROFILE_DEFAULTS);
-  const [firstName, setFirstName] = useState(PROFILE_DEFAULTS.firstName);
-  const [lastName, setLastName] = useState(PROFILE_DEFAULTS.lastName);
+  const [fullName, setFullName] = useState(PROFILE_DEFAULTS.fullName);
   const [email, setEmail] = useState(PROFILE_DEFAULTS.email);
   const [organization, setOrganization] = useState(
     PROFILE_DEFAULTS.organization
   );
 
   const dirty =
-    firstName !== saved.firstName ||
-    lastName !== saved.lastName ||
+    fullName !== saved.fullName ||
     email !== saved.email ||
     organization !== saved.organization;
 
@@ -118,12 +115,11 @@ function ProfileCard() {
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaved({ firstName, lastName, email, organization });
+    setSaved({ fullName, email, organization });
   }
 
   function handleReset() {
-    setFirstName(saved.firstName);
-    setLastName(saved.lastName);
+    setFullName(saved.fullName);
     setEmail(saved.email);
     setOrganization(saved.organization);
   }
@@ -132,39 +128,25 @@ function ProfileCard() {
     <Card>
       <CardHeader className="gap-y-1">
         <CardTitle>Profile</CardTitle>
-        <CardDescription>
+        <CardDescription className="text-wrap">
           View and update your personal and organization's information.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form id="profile-form" onSubmit={handleSave}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
               <label
                 className="type-label-14 mb-1 block text-muted-foreground"
-                htmlFor="settings-first-name"
+                htmlFor="settings-full-name"
               >
-                First name
+                Full name
               </label>
               <Input
-                autoComplete="given-name"
-                id="settings-first-name"
-                onChange={(e) => setFirstName(e.target.value)}
-                value={firstName}
-              />
-            </div>
-            <div>
-              <label
-                className="type-label-14 mb-1 block text-muted-foreground"
-                htmlFor="settings-last-name"
-              >
-                Last name
-              </label>
-              <Input
-                autoComplete="family-name"
-                id="settings-last-name"
-                onChange={(e) => setLastName(e.target.value)}
-                value={lastName}
+                autoComplete="name"
+                id="settings-full-name"
+                onChange={(e) => setFullName(e.target.value)}
+                value={fullName}
               />
             </div>
             <div>
@@ -234,19 +216,19 @@ function SecurityCard() {
     <Card>
       <CardHeader className="gap-y-1">
         <CardTitle>Security</CardTitle>
-        <CardDescription>
+        <CardDescription className="text-wrap">
           Passkeys — phishing-resistant, no password required.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex items-center">
+        <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:gap-4">
           <div className="flex flex-col gap-1">
             <p className="type-label-14 m-0 text-foreground">Passkey</p>
             <p className="type-copy-14 m-0 text-muted-foreground">
               Sign in with Touch ID, Windows Hello, or a hardware key.
             </p>
           </div>
-          <Button className="ml-auto" size="sm" variant="default">
+          <Button className="lg:ml-auto" size="sm" variant="default">
             <KeyRound aria-hidden data-icon="inline-start" />
             Add a passkey
           </Button>
