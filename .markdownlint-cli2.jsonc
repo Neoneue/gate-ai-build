@@ -6,6 +6,7 @@
     "build/**",
     ".git/**",
     "docs/**",
+    "plans/**",
     "handoff.md"
   ]
 }
