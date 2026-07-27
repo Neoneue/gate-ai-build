@@ -129,7 +129,6 @@ Code rendered on card surfaces (`TONE_CLASS_LIGHT`) used syntax colors tuned for
 ### Saturated colored text/icons + pro-CTA token parity `6e0b0b5`
 
 **11 pages/components**
-
 Saturated status text and colored icons (600–800) had no dark variant, so amber/green/blue read too dark on the dark canvas and tinted callouts. Body text → `dark:text-*-300` (ApiKeys warning callouts, `ConversationDetail` + `RequestTracePanel` trace tones, `SetupManual` success text); icons / link accents → `dark:text-*-400` (success check icons in ApiKeys / AuditRecordDialog / AuditTrail / SetupManual; blue feature/link accents in Policies, pro-upgrade-card, plan-comparison, onboarding, DashboardDefault). `Policies` "Pro plan protection" block now shares the Free-plan banner's color tokens: dropped the `bg-gradient-to-b from-blue-50 to-blue-25` (no dark variant, near-white in dark) for the banner's flat `bg-blue-25` + `dark:bg-blue-500/10` + `dark:border-blue-500/30`.
 
 ### Ultralight `-25` tint surfaces get dark variants `f818e9e`

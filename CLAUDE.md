@@ -19,7 +19,7 @@ lives in the reference docs linked below.
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
   **regardless of the active model** — don't hand-edit UI yourself. It
   self-loads its design knowledge and binds to `design.md` + `src/index.css`
-  + `.claude/rules/`. Only trivial mechanical relocations (verbatim class
+  - `.claude/rules/`. Only trivial mechanical relocations (verbatim class
   moves, no design judgment) may be direct-edited.
 - **Visual values are a closed set.** Never invent a color, type size, or
   tracking — map every value to a token/voice in `design.md`, or stop and ask.

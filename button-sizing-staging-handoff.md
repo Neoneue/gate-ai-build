@@ -106,6 +106,7 @@ When eliminating hand-rolled `<button>` elements, **convert only real buttons**:
 **Audit result in this repo (for reference):** the genuine action buttons already use `<Button>`. The remaining raw `<button>`s are either DS primitives (`row-action-button`, `text-link`, `icon-action-button`, `tag`, `segmented`, `sidebar`, `calendar`, `table` sort-header, etc.) or the card/row/tile/toggle category above — all correctly left raw.
 
 **4 deferred borderline cases** (genuine buttons that resist a clean swap — decide per-case, do NOT force `className` overrides onto a variant):
+
 - `security/EventsTable.tsx` "Mark invalid" — width-morphs on hover (no variant reproduces the reveal).
 - `ApiKeys.tsx` copy segment — fused flush into the key well (`border-l`, no own radius).
 - `AuditTrail.tsx` info-icon — a `TooltipTrigger` render target; a ghost icon Button adds hover fill.

@@ -81,6 +81,7 @@ After: `RadioGroupItem` on right (`shrink-0`), `items-center`, `p-4` to match ad
 Before: `Info` icon `text-neutral-500`; others `text-blue-700`.
 After: all icons `text-blue-700`.
 
+<!-- markdownlint-disable-next-line MD036 -->
 **Copy — prompt-injection**
 
 - Block description: "Reject the request before it reaches the model." → "Request rejected before it reaches the model. Trace annotated. Alert fired."
