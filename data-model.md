@@ -58,6 +58,32 @@ graph LR
 - All routes share `DashboardChrome` as their layout wrapper.
 - Sidebar expand/collapse state lives in `App.tsx` with `localStorage` persistence; passed to pages via `useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>()`.
 
+### Chrome shell layout
+
+`DashboardChrome` composes a flex row of three columns: the persistent nav
+rail (`lg+`, hidden below), the main column (top bar + scrollable `<main>`
+content), and — added 2026-07-27 — the **Ask AI docked panel** on the right.
+
+- **Ask AI panel.** Toggled by the "Ask AI" top-bar button (left of Docs) and
+  by the panel's own collapse control; both flip a chrome-internal `askAiOpen`
+  state (`useState`, not part of the public `DashboardChromeProps`).
+  `AskAiPanel` (`src/components/ui/ask-ai-panel.tsx`) is a skeleton shell only
+  (header with "New session" trigger + `PanelRightClose` collapse, empty body —
+  inner chat UI deferred). At `lg+` it is a third flex sibling that animates its
+  width `0 → 368px` (`transition-[width]`, `var(--ease-out)`, 300ms) so the top
+  bar and content condense in step; below `lg` the same shell opens in a
+  right-docked `Sheet`. The `FeedbackFab` shifts left with the panel
+  (`right-6 → lg:right-[392px]`) on the same curve.
+- **Container-query content pane.** `<main>` carries `@container`
+  (`container-type: inline-size`), so page grids can respond to the actual
+  content width — which already nets out both the rail and the panel — via
+  **container** variants (`@sm`/`@lg`/`@2xl`/`@4xl`…) instead of viewport
+  breakpoints. This is the convention for making content "collapse earlier" when
+  the panel or rail eats horizontal space. Thresholds are container-width values
+  (`@lg` = 512px, not the 1024px viewport `lg`), so conversion is not a 1:1
+  rename — pick each per real content width. Overview is converted first (see
+  §6); other content pages follow the same pattern.
+
 ### Sidebar navigation
 
 Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
@@ -504,6 +530,8 @@ function buildSpark(total: number, seed: number): number[]
 - `DAILY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS / 7`
 - Sparklines: every spark derives from its tile's canonical total via `distributeSeries(total, count, seed)` (exported from `Activity.tsx`). Bucket sums equal the KPI value by construction (single source of truth: total → spark → tile).
 - Preview tables sort by `at`/`updated`/`time` desc and `.slice(0, 8)` for the canonical 8-row glance cap.
+
+**Responsive (2026-07-27):** first page converted to container queries (see §2 → Chrome shell layout). Its grids key off the content-pane width rather than the viewport, so they collapse when the Ask AI panel and/or nav rail narrow the content — including the compound worst case (rail expanded + panel open, ~760px). KPI stat rail `@2xl:grid-cols-3` (672px; `sm:grid-cols-1` added at the call site to neutralize the shared `KpiRail` primitive's viewport `sm:grid-cols-3`, primitive untouched). "Tokens used" chart + side legend `@4xl:grid-cols-12` (two-column at 896px, legend stacks below when narrower — also resolves the tablet legend-clip finding). 3-up preview tables `@4xl:grid-cols-3` (held at 896px so rail-expanded 1280–1439 laptops keep 3-col instead of regressing). No change to the panel-closed desktop layout. File: `src/pages/Dashboard.tsx`.
 
 **Cross-page imports:**
 
@@ -991,6 +1019,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
+| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome` (skeleton: header with "New session" trigger + `SquarePen` + `PanelRightClose` collapse, empty body — inner chat UI deferred). Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |
 | `SortableTableHead` | native `<th>` + `<button>` | Click-to-sort header (2026-06-04). `⇅` fades in on hover, persists as `↑`/`↓` when active. Three-state cycle (asc→desc→unsorted). Content-width hit area (`max-w-1/2`), `aria-sort`. `numeric` columns (right-aligned) put the glyph left of the label (`flex-row-reverse`) so the label aligns with the data. Pairs with the `useTableSort` hook + `sortRows`/`parseNumeric` in `src/hooks/use-table-sort.ts` (local state, no TanStack); table supplies a `getValue(row,key)` accessor. |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
