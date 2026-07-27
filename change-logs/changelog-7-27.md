@@ -38,6 +38,24 @@ New "Ask AI" affordance in the top bar, left of Docs: outline `Button` (`size="l
 
 The Docs top-bar button's trailing `ExternalLinkIcon` was replaced by a single leading lucide `BookOpen` (`data-icon="inline-start"`, `size={16}`), mirroring the Ask AI button. The now-unused `external-link` import was removed. The external-link arrow is gone.
 
+### Pagination footer wraps on content width `2d2ef8a`
+
+**`src/components/ui/table-pagination-footer.tsx`**
+
+The shared table pagination footer stayed a cramped single row when the Ask AI panel narrowed the content pane, because its wrap keyed off viewport breakpoints. Converted to container variants: `md:flex-row md:justify-between` → `@xl:flex-row @xl:justify-between`, `lg:pb-3` → `@xl:pb-3`. `@xl` (576px) clears the footer's ~534px natural single-row width, so it wraps to two lines based on the pane, not the browser. Shared primitive, so it fixes every table page at once.
+
+### Top-bar workspace switcher relocates to the rail when cramped `2d2ef8a`
+
+**`src/layouts/DashboardChrome.tsx`** · **`src/components/ui/sidebar.tsx`**
+
+When the expanded rail and the Ask AI panel are both open, the top bar ran out of room and its actions collided with the panel header. Below ~1280px viewport in that state (`switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight`, where `isTight` is a `max-width: 1280px` matchMedia), the `WorkspaceSwitcher` hides from the top bar and renders full-width at the top of the expanded rail via a new `topSlot` prop on `Sidebar` (mirroring the tablet/mobile Sheet treatment). Reverses on rail collapse, panel close, or widening past 1280. Only one switcher instance is ever active. Collision measured at ~1150px, so 1280 swaps with margin.
+
+### Ask AI panel state persists across navigation `2d2ef8a`
+
+**`src/App.tsx`** · **`src/layouts/DashboardChrome.tsx`**
+
+The panel closed on every route change because `askAiOpen` was local `useState` in the per-page-mounted `DashboardChrome`. Hoisted it into `App.tsx`'s `Layout` with `localStorage` (key `askai`, default closed), mirroring `sidebarExpanded`; `DashboardChrome` now reads `askAiOpen`/`setAskAiOpen` via `useOutletContext<LayoutContext>()`. The panel stays open across navigation and refresh once opened, like the side nav.
+
 ## Sections
 
 ### Overview: container-query responsive conversion `389f73e`
@@ -49,3 +67,17 @@ Overview's major grids were moved from viewport variants to container variants s
 - **3-up preview tables** (Latest messages / conversations / security events): `xl:grid-cols-3` → `@4xl:grid-cols-3` (896px). Held at `@4xl` rather than `@lg` so 1280–1439 laptops with the rail expanded keep their current 3-col layout instead of regressing to stacked.
 - **"Tokens used" chart + legend:** `md:grid-cols-12` → `@4xl:grid-cols-12`; chart `md:col-span-8` → `@4xl:col-span-8`, breakdown `md:col-span-4 …` → `@4xl:…`. Legend sits below the chart when narrow, two-column only at `@4xl`. This also resolves the audit's tablet legend-clip finding.
 - **KPI stat rail** (Messages / Tokens saved / Threats detected): call-site `lg:grid-cols-3` → `@2xl:grid-cols-3` (672px), with `sm:grid-cols-1` added to neutralize the shared `KpiRail` primitive's baked-in viewport `sm:grid-cols-3` (primitive untouched). Stays a horizontal rail down to 672px, single column on mobile.
+
+### Container-query rollout to the remaining pages `2d2ef8a`
+
+**Conversations, Models, Activity (+ `activity/TrendCard.tsx`), TokenSavings, Security, Policies, Settings, AuditTrail (+ `AuditTrailDefault`), SetupConnect, SetupCredits, Upgrade, DashboardDefault**
+
+Extends the Overview proof-of-pattern (above) to the rest of the navigable pages + twins. Page grids moved from viewport to container variants so they collapse on the content-pane width when the rail and/or panel narrow it. Thresholds by archetype:
+
+- KPI / stat rails → `@2xl:grid-cols-3` (+ `sm:grid-cols-1` to neutralize the `KpiRail` primitive); Models 4-up → `@4xl:grid-cols-4`
+- chart + side legend (`TrendCard`) → `@4xl` (matches Overview)
+- 2-up stat pairs → `@xl` (AuditTrail + Default); breakdown-card pairs → `@3xl` (Security)
+- 2-col forms / option lists → `@lg` (Settings, Policies, TokenSavings)
+- card pairs → `@xl` / `@3xl` (SetupConnect, Upgrade, DashboardDefault); Activity Top-lists → `@3xl` / `@7xl`
+
+Call-site only, no shared primitives touched. Messages / Team / SecurityDefault / LimitsDefault had no page-level grids (tables + single-column). Billing / Limits multi-col grids are dialog-bound (fixed overlays, not converted). Deferred to a later wave: the heavy detail surfaces (Request / Conversation detail).
