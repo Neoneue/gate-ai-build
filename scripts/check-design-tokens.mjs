@@ -43,8 +43,14 @@ function walk(dir) {
   return out;
 }
 
+// Accept explicit file paths (lint-staged passes staged filenames). With no
+// arguments, fall back to a full `src` walk so `npm run lint:design` and CI
+// keep scanning everything.
+const argFiles = process.argv.slice(2).filter((f) => /\.(tsx?|css)$/.test(f));
+const files = argFiles.length > 0 ? argFiles : walk(ROOT);
+
 const violations = [];
-for (const file of walk(ROOT)) {
+for (const file of files) {
   const lines = readFileSync(file, "utf8").split("\n");
   lines.forEach((line, i) => {
     const colorM = line.match(COLOR_RE);
