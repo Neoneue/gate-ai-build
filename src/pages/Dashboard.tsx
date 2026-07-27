@@ -176,7 +176,7 @@ export function Dashboard() {
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <div className="grid @4xl:grid-cols-3 grid-cols-1 gap-6">
         <LatestRequestsTable />
         <RecentConversationsTable />
         <SecurityEventsTable />
@@ -542,9 +542,9 @@ function OverviewUsageChart() {
           />
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <CardContent className="grid @4xl:grid-cols-12 grid-cols-1 gap-4">
         {/* chart — col-span-8 */}
-        <div className="md:col-span-8">
+        <div className="@4xl:col-span-8">
           <StackedKpiChart
             className="aspect-auto h-[184px] w-full"
             data={data}
@@ -553,7 +553,7 @@ function OverviewUsageChart() {
           />
         </div>
         {/* breakdown panel — col-span-4 */}
-        <div className="border-border border-t pt-4 md:col-span-4 md:border-t-0 md:border-l md:pt-0 md:pl-3">
+        <div className="@4xl:col-span-4 border-border border-t @4xl:border-t-0 @4xl:border-l @4xl:pt-0 pt-4 @4xl:pl-3">
           <div className="flex flex-col gap-1">
             {series.map((s) => {
               const total = seriesTotals[s.key] ?? 0;
@@ -597,7 +597,7 @@ function OverviewUsageChart() {
 
 function TokenSavingsStrip() {
   return (
-    <KpiRail className="sm:grid-cols-1 lg:grid-cols-3" columns={3}>
+    <KpiRail className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
       <CompactKpi
         delta="+8.2%"
         deltaNote="vs last week"

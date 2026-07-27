@@ -36,7 +36,7 @@ const DEFAULT_EMAIL = "chad@constellationnetwork.io";
 
 type FeedbackCategory = "bug" | "feature" | "question" | "other";
 
-function FeedbackFab() {
+function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
   const [open, setOpen] = React.useState(false);
   const [category, setCategory] = React.useState<FeedbackCategory>("bug");
   const [message, setMessage] = React.useState("");
@@ -76,10 +76,25 @@ function FeedbackFab() {
           "fixed right-6 bottom-6 z-40",
           "inline-flex size-12 items-center justify-center rounded-full",
           "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700",
-          "transition-[colors,transform] duration-150 ease-out motion-reduce:transition-none",
+          // colors/transform keep their 150ms feel; `right` glides at 300ms
+          // on the panel's exact curve so the FAB pushes left in lockstep with
+          // the docked Ask AI panel. The panel animates `width` with the
+          // `ease-out` utility, which Tailwind v4 resolves to the `--ease-out`
+          // token (cubic-bezier(0.23,1,0.32,1)) in src/index.css; referencing
+          // `var(--ease-out)` here shares that single source instead of a bare
+          // `ease-out` keyword (cubic-bezier(0,0,0.58,1)), which lagged.
+          // `motion-reduce:transition-none` drops all animation (shift lands
+          // instantly). Composed as one arbitrary `transition` because the two
+          // durations can't share a single Tailwind utility.
+          "[transition:background-color_150ms_ease-out,transform_150ms_ease-out,right_300ms_var(--ease-out)] motion-reduce:transition-none",
           "cursor-pointer will-change-transform hover-fine:-translate-y-px active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
           "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-          "select-none"
+          "select-none",
+          // lg+ only: when the docked panel is open, shift left by its width
+          // (24px + 368px) so the FAB stays over the main content, clear of the
+          // panel. Below lg the panel is a z-50 Sheet overlay that covers the
+          // FAB, so it stays at right-6 there.
+          askAiOpen && "lg:right-[392px]"
         )}
         onClick={() => setOpen(true)}
         type="button"

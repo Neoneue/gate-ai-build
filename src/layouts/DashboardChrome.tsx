@@ -1,8 +1,14 @@
-import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  BookOpen,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sparkles,
+} from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { AskAiPanel } from "@/components/ui/ask-ai-panel";
 import { Button } from "@/components/ui/button";
-import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import {
   Sheet,
@@ -72,6 +78,26 @@ export function DashboardChrome({
     : isFree
       ? "/overview-free"
       : "/overview";
+  // Chrome-internal state for the right-docked "Ask AI" panel. Default closed;
+  // the top-bar button and the panel's collapse control toggle the same flag.
+  const [askAiOpen, setAskAiOpen] = useState(false);
+  // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
+  // content in sync). Below lg there's no rail and no horizontal room, so the
+  // same shell opens in a right-docked Sheet instead. `isDesktop` gates which
+  // mount is live so the Sheet never portals open alongside the docked column.
+  const [isDesktop, setIsDesktop] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 1024px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsDesktop(event.matches);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+  const closeAskAi = () => setAskAiOpen(false);
   return (
     <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
       <div className="flex flex-row lg:min-h-0 lg:flex-1">
@@ -90,8 +116,10 @@ export function DashboardChrome({
         <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
           <DashTopBar
             activeNavId={activeNavId}
+            askAiOpen={askAiOpen}
             hideDocsButton={hideDocsButton}
             onNavigate={onNavigate}
+            onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
             onToggleSidebar={onToggleSidebar}
             overviewPath={overviewPath}
             sections={sections}
@@ -108,16 +136,53 @@ export function DashboardChrome({
           {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main className="flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0">
+          <main className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0">
             {children}
           </main>
         </div>
+        {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
+            `hidden … lg:flex` pattern). As a `shrink-0` sibling of the
+            `flex-1 min-w-0` main column, animating its width from 0 → 368px
+            condenses the top bar AND content together (the push effect). The
+            outer column clips (`overflow-hidden`) while the inner surface stays
+            a fixed 368px, so panel content never reflows mid-transition. Width
+            animation is the sanctioned mechanism here (per the build brief);
+            `motion-reduce` snaps it instantly. `inert` when closed drops the
+            offscreen skeleton out of the tab order. */}
+        <div
+          className={cn(
+            "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
+            askAiOpen ? "lg:w-[368px]" : "lg:w-0"
+          )}
+        >
+          <div
+            className="flex h-full w-[368px] flex-col border-border border-l bg-card"
+            inert={!askAiOpen}
+          >
+            <AskAiPanel onClose={closeAskAi} />
+          </div>
+        </div>
       </div>
+      {/* Below lg the docked column is hidden (no rail, no horizontal room), so
+          the same shell opens in a right-docked Sheet. `isDesktop` keeps this
+          closed on lg+ so it never portals open beside the docked column; the
+          Base-UI flicker fix (`data-closed:fill-mode-forwards`) is inherited
+          from SheetContent. */}
+      <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
+        <SheetContent
+          className="w-full gap-0 p-0 sm:max-w-[368px]"
+          showCloseButton={false}
+          side="right"
+        >
+          <SheetTitle className="sr-only">Ask AI</SheetTitle>
+          <AskAiPanel onClose={closeAskAi} />
+        </SheetContent>
+      </Sheet>
       {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
           not to this scroll container — placing it here as a sibling keeps
           the stacking context clean while the `fixed` rule escapes any
           overflow clipping from the scrollable content pane above. */}
-      <FeedbackFab />
+      <FeedbackFab askAiOpen={askAiOpen} />
     </div>
   );
 }
@@ -133,6 +198,8 @@ function DashTopBar({
   onNavigate,
   overviewPath,
   showLocks,
+  askAiOpen,
+  onToggleAskAi,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -142,6 +209,8 @@ function DashTopBar({
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   showLocks?: boolean;
+  askAiOpen: boolean;
+  onToggleAskAi: () => void;
 }) {
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -198,15 +267,19 @@ function DashTopBar({
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
+        <Button
+          aria-expanded={askAiOpen}
+          onClick={onToggleAskAi}
+          size="lg"
+          variant="outline"
+        >
+          <Sparkles aria-hidden data-icon="inline-start" size={16} />
+          Ask AI
+        </Button>
         {hideDocsButton ? null : (
           <Button size="lg" variant="outline">
+            <BookOpen aria-hidden data-icon="inline-start" size={16} />
             Docs
-            <ExternalLinkIcon
-              aria-hidden
-              className="relative -top-px"
-              data-icon="inline-end"
-              size={16}
-            />
           </Button>
         )}
         <MobileNav
