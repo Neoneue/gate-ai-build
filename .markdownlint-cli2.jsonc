@@ -1,3 +1,11 @@
 {
-  "ignores": ["node_modules/**", ".claude/**", "dist/**", "build/**", ".git/**"]
+  "ignores": [
+    "node_modules/**",
+    ".claude/**",
+    "dist/**",
+    "build/**",
+    ".git/**",
+    "docs/**",
+    "handoff.md"
+  ]
 }
