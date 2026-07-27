@@ -200,7 +200,7 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   }, [rows]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid @xl:grid-cols-2 grid-cols-1 gap-4">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile
           title="Events logged"

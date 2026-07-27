@@ -531,7 +531,7 @@ function GetStartedCard() {
   const navigate = useNavigate();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid @xl:grid-cols-2 gap-4">
       <ChoiceCard
         body="Route the plans you already pay for through Gate. Manage your own keys and billing plans."
         cta="Route my traffic"
@@ -590,10 +590,10 @@ export function HeroCard() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col gap-4 xl:flex-row xl:gap-0">
+    <div className="flex @4xl:flex-row flex-col @4xl:gap-0 gap-4">
       {/* Connect card */}
       <Card
-        className="flex flex-1 flex-col xl:rounded-r-none xl:border-r-0"
+        className="flex flex-1 flex-col @4xl:rounded-r-none @4xl:border-r-0"
         density="flush"
       >
         <div className="flex-1">
@@ -608,8 +608,8 @@ export function HeroCard() {
       </Card>
 
       {/* Get started card */}
-      <Card className="flex-1 xl:rounded-l-none" density="flush">
-        <div className="flex flex-1 flex-col gap-6 p-8 max-xl:p-6">
+      <Card className="flex-1 @4xl:rounded-l-none" density="flush">
+        <div className="flex flex-1 flex-col gap-6 @max-4xl:p-6 p-8">
           <div className="flex flex-col gap-2">
             <h2 className="type-heading-24 m-0 text-foreground tracking-tight">
               Create your first API key

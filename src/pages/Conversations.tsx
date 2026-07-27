@@ -298,7 +298,7 @@ function KpiRail({
     spark.conversations
   );
   return (
-    <KpiRailShell columns={3}>
+    <KpiRailShell className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
       <CompactKpi
         delta="+6.4%"
         flat

@@ -18,7 +18,7 @@ export function SetupConnect() {
       subtitle="Two ways to route the plans you already pay for. Switch anytime."
       title="Pick how to connect"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid @xl:grid-cols-2 gap-4">
         <ChoiceCard
           body="A menu-bar app routes your Claude app, Cowork, Codex, and Cursor automatically. No keys to copy."
           cta="Set up Gate Connect"

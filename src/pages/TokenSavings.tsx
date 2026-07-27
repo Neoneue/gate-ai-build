@@ -326,7 +326,7 @@ function OverviewSection({
           />
         </div>
       </div>
-      <KpiRail columns={3}>
+      <KpiRail className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
         {kpis.map((k) => (
           <KpiTile
             delta={sparkDelta(k.spark)}
@@ -565,7 +565,7 @@ function BenefitList({
 }) {
   return (
     <div className={`rounded-sm border bg-card/40 p-4 ${outlineClassName}`}>
-      <ul className="m-0 grid list-none grid-cols-2 gap-4 p-0">
+      <ul className="m-0 grid list-none @lg:grid-cols-2 grid-cols-1 gap-4 p-0">
         {benefits.map((benefit) => (
           <li className="flex items-center gap-2" key={benefit.title}>
             <span

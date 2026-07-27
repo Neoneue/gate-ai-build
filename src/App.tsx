@@ -205,6 +205,8 @@ const SetupModels = lazy(() =>
 export type LayoutContext = {
   sidebarExpanded: boolean;
   toggleSidebar: () => void;
+  askAiOpen: boolean;
+  setAskAiOpen: (open: boolean | ((v: boolean) => boolean)) => void;
 };
 
 function Layout() {
@@ -224,9 +226,25 @@ function Layout() {
     );
   }, [sidebarExpanded]);
 
+  // Ask AI panel state — hoisted here (not inside DashboardChrome, which
+  // remounts per page) so the panel stays open across navigation. Defaults
+  // CLOSED (opposite of the sidebar's default-open); localStorage persists
+  // the user's choice across refresh.
+  const [askAiOpen, setAskAiOpen] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem("askai") === "open"
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem("askai", askAiOpen ? "open" : "closed");
+  }, [askAiOpen]);
+
   const ctx: LayoutContext = {
     sidebarExpanded,
     toggleSidebar: () => setSidebarExpanded((v) => !v),
+    askAiOpen,
+    setAskAiOpen,
   };
 
   return <Outlet context={ctx} />;

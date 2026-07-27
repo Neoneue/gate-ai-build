@@ -63,6 +63,12 @@ export interface SidebarProps {
    * the lock mirrors the workspace PRO/FREE badge. Defaults to false (PRO,
    * unlocked). */
   showLocks?: boolean;
+  /** Optional node rendered above the nav sections in the EXPANDED rail
+   *  (below the brand, full-width). Used to relocate the workspace switcher
+   *  into the rail when the top bar is too tight to hold it (desktop rail +
+   *  Ask AI panel both open in the narrow band). Never reaches the collapsed
+   *  icon rail — only the expanded variant renders it. */
+  topSlot?: React.ReactNode;
   /** Bottom user area slot (expanded variant only). Defaults to "CP avatar
    *  + Chad + MoreHorizontal user-menu button". The collapsed rail always
    *  renders just a CP monogram. */
@@ -78,6 +84,7 @@ export function Sidebar({
   brand,
   userArea,
   showLocks = false,
+  topSlot,
 }: SidebarProps) {
   return (
     <aside
@@ -120,6 +127,7 @@ export function Sidebar({
           overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
+          topSlot={topSlot}
           userArea={userArea}
         />
       </div>

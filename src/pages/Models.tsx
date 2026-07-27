@@ -929,7 +929,7 @@ function ModelDetailPage({
 
       {/* Quick start + Example request — two-column grid (24px gap),
           stacks below lg. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid @3xl:grid-cols-2 grid-cols-1 gap-6">
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h3 className="type-heading-16 m-0 text-foreground">Quick start</h3>
@@ -1037,7 +1037,7 @@ function ModelKpiRail({
   head: ProviderOffering;
 }) {
   return (
-    <KpiRailShell columns={4}>
+    <KpiRailShell className="@4xl:grid-cols-4 md:grid-cols-2" columns={4}>
       <ModelKpiTile
         label="Context"
         value={formatContext(head.contextK, model.modality)}

@@ -546,9 +546,9 @@ export function TrendCard({
 
       {/* Two-pane layout: chart left (8/12 cols), breakdown panel right (4/12 cols).
           Collapses to single column below md breakpoint (panel below chart). */}
-      <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <CardContent className="grid @4xl:grid-cols-12 grid-cols-1 gap-4">
         {/* Left pane — chart */}
-        <div className="md:col-span-8">
+        <div className="@4xl:col-span-8">
           {/* 184px gives the stacked layers enough vertical room to read as
               distinct bands without the chart taking over the page. YAxis
               ticks are left-aligned (custom tick renderer below) so they
@@ -657,7 +657,7 @@ export function TrendCard({
 
         {/* Right pane — breakdown panel. Mobile: divider above the key
             (chart stacks above it); md+: vertical left divider instead. */}
-        <div className="border-border border-t pt-4 md:col-span-4 md:border-t-0 md:border-l md:pt-0 md:pl-3">
+        <div className="@4xl:col-span-4 border-border border-t @4xl:border-t-0 @4xl:border-l @4xl:pt-0 pt-4 @4xl:pl-3">
           <TrendBreakdownPanel
             metric={metric}
             savingsRates={savingsRates}

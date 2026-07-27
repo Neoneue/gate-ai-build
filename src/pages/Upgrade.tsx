@@ -216,7 +216,7 @@ export function Upgrade() {
             billing settings.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid @xl:grid-cols-2 grid-cols-1 gap-4">
           <PlanCard onUpgrade={() => navigate("/billing")} plan={FREE_PLAN} />
           <PlanCard onUpgrade={() => navigate("/billing")} plan={PRO_PLAN} />
         </div>

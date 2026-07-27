@@ -88,7 +88,7 @@ export function TablePaginationFooter({
   const atLastPage = safePage >= totalPages;
 
   return (
-    <div className="flex flex-col items-center gap-3 border-border border-t px-4 py-3 pb-4 md:flex-row md:justify-between lg:pb-3">
+    <div className="flex @xl:flex-row flex-col items-center @xl:justify-between gap-3 border-border border-t px-4 py-3 @xl:pb-3 pb-4">
       <div className="flex flex-wrap items-center gap-3">
         <span className="whitespace-nowrap font-mono text-muted-foreground text-xs tabular-nums">
           Showing{" "}

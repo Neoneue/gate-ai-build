@@ -279,7 +279,7 @@ function KpiRail({
   );
   const note = RANGE_DELTA_NOTE[range];
   return (
-    <KpiRailShell columns={3}>
+    <KpiRailShell className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
       <CompactKpi
         delta={k.spend.delta}
         deltaNote={note}
@@ -665,7 +665,7 @@ function TopByAxisRow({
     // control get full width without squeezing; 2-up at lg, 4-up at 2xl (1536),
     // the nearest breakpoint that clears a 4-up row without crushing the
     // tightest card's header (Top attack types + its Amount|Percent pill).
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid @3xl:grid-cols-2 @7xl:grid-cols-4 grid-cols-1 gap-4">
       <TopList
         metric={modelMetric}
         onMetricChange={setModelMetric}

@@ -6,7 +6,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useOutletContext } from "react-router-dom";
+import type { LayoutContext } from "@/App";
 import { AskAiPanel } from "@/components/ui/ask-ai-panel";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
@@ -78,9 +79,10 @@ export function DashboardChrome({
     : isFree
       ? "/overview-free"
       : "/overview";
-  // Chrome-internal state for the right-docked "Ask AI" panel. Default closed;
-  // the top-bar button and the panel's collapse control toggle the same flag.
-  const [askAiOpen, setAskAiOpen] = useState(false);
+  // Ask AI panel state is hoisted to App.tsx's Layout (localStorage-backed)
+  // and read via the outlet context, so it survives navigation (each page
+  // remounts its own DashboardChrome) and refresh. Default closed.
+  const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
   // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
   // content in sync). Below lg there's no rail and no horizontal room, so the
   // same shell opens in a right-docked Sheet instead. `isDesktop` gates which
@@ -97,6 +99,27 @@ export function DashboardChrome({
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+  // Top-bar tight band. With the rail expanded AND the Ask AI panel open, the
+  // main column narrows enough that the top-bar left group (toggle + workspace
+  // switcher) crowds the right group (Ask AI / Docs) and the panel header.
+  // Measured collision onset ~1150px viewport; 1280 sits above it so the swap
+  // fires before any overlap. Below this we relocate the switcher into the rail.
+  const [isTight, setIsTight] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1280px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1280px)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsTight(event.matches);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+  // Relocate the workspace switcher from the top bar into the expanded rail
+  // only in the tight desktop band with both rail and panel open. Auto-reverses
+  // via state (rail collapse / panel close) or matchMedia (viewport widens).
+  const switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight;
   const closeAskAi = () => setAskAiOpen(false);
   return (
     <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
@@ -111,6 +134,13 @@ export function DashboardChrome({
             overviewPath={overviewPath}
             sections={sections}
             showLocks={showLocks}
+            topSlot={
+              switcherInRail ? (
+                <div className="border-border border-b px-3 pt-3 pb-3">
+                  <WorkspaceSwitcher className="w-full" />
+                </div>
+              ) : undefined
+            }
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
@@ -125,6 +155,7 @@ export function DashboardChrome({
             sections={sections}
             showLocks={showLocks}
             sidebarExpanded={sidebarExpanded}
+            switcherInRail={switcherInRail}
           />
           {/* Content pane. Below lg the document flows and scrolls naturally
               (no forced fill, no internal scroll). At lg+ the pane becomes a
@@ -200,6 +231,7 @@ function DashTopBar({
   showLocks,
   askAiOpen,
   onToggleAskAi,
+  switcherInRail,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -211,6 +243,7 @@ function DashTopBar({
   showLocks?: boolean;
   askAiOpen: boolean;
   onToggleAskAi: () => void;
+  switcherInRail: boolean;
 }) {
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -261,9 +294,14 @@ function DashTopBar({
           className="h-8 w-auto lg:hidden"
           src="/gate-ai-logo-mark.png"
         />
-        <div className="hidden lg:block">
-          <WorkspaceSwitcher />
-        </div>
+        {/* At lg+ the switcher normally lives here. In the tight band (rail +
+            Ask AI panel both open) it relocates into the expanded rail so the
+            top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
+        {switcherInRail ? null : (
+          <div className="hidden lg:block">
+            <WorkspaceSwitcher />
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
