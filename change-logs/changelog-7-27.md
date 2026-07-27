@@ -56,6 +56,12 @@ When the expanded rail and the Ask AI panel are both open, the top bar ran out o
 
 The panel closed on every route change because `askAiOpen` was local `useState` in the per-page-mounted `DashboardChrome`. Hoisted it into `App.tsx`'s `Layout` with `localStorage` (key `askai`, default closed), mirroring `sidebarExpanded`; `DashboardChrome` now reads `askAiOpen`/`setAskAiOpen` via `useOutletContext<LayoutContext>()`. The panel stays open across navigation and refresh once opened, like the side nav.
 
+### Accessible name on the Overview chart select; Policies check bullet realigned `2d39b5a`
+
+**`src/pages/Dashboard.tsx`** · **`src/pages/Policies.tsx`**
+
+A rams accessibility and design pass over the 14 main pages (16,175 lines) returned zero critical issues, one serious and two moderate; all three are fixed here. Overview's chart dimension `Select` (`DimSelector`) exposed no accessible name, because `SelectValue` announces the current value ("By model") but never the control's purpose, leaving it unidentifiable out of visual context. Added `aria-label="Chart dimension"` on `SelectTrigger`, parallel to the sibling `SegmentedPill`'s existing `aria-label="Chart metric"`; the wrapper spreads `...props` onto `SelectPrimitive.Trigger`, so the attribute reaches the DOM. On Policies, the Pro-benefits check bullet used `mt-0.5` (2px, off the 4px grid) plus `bg-blue-200 text-blue-800`, where the identical bullet in `TokenSavings` and design.md's `badge-info` token both use `blue-100`/`blue-700`. Dropped the top margin in favor of `items-center` on the `<li>`, which is the canonical `BenefitList` treatment rather than a new 4px value, and aligned the tone pair. Dark variants unchanged. Cleared as non-defects in the same pass: the brand-blue Pro-upsell CTAs (design.md §388 blessed exception), `outline-none` on Base UI menus (keyboard position shows via `data-[highlighted]`), and the `<tr onClick>` row drill-in (the keyboard/AT target is the real `<a href>` in the model cell).
+
 ## Sections
 
 ### Overview: container-query responsive conversion `389f73e`
