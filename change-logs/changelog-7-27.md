@@ -18,6 +18,14 @@ New convention for page layout: responsive grids inside the content pane should 
 
 Note: container thresholds are NOT the viewport values (`@lg` = 512px container width, not 1024px viewport) — pick each per real content width. Overview is converted as the proof-of-pattern (see Sections); the remaining content pages roll out the same way.
 
+### Design-token guard runs at commit time; markdown gated in CI only `fa8e937`
+
+**`.lintstagedrc.json`** · **`.markdownlint-cli2.jsonc`** · **`scripts/check-design-tokens.mjs`** · **`.github/workflows/ci.yml`**
+
+`npm run lint:design` previously ran only via `npm run lint`, so a token violation surfaced at push or in CI, the slowest possible point for the change type this repo makes most often. The guard now runs on every commit touching `.ts` / `.tsx` / `.css`. To make that scoped rather than a full-tree rescan, `check-design-tokens.mjs` learned to accept file paths (`process.argv.slice(2)`, filtered to `.tsx?`/`.css`) and falls back to the full `src` walk when given none, so `npm run lint:design` and CI keep their existing whole-tree behavior. The `FONT_ALLOW` allowlist is unchanged.
+
+Markdown went the other way. `markdownlint-cli2` was installed and configured but invoked by nothing, so `npm run lint:md` is now a CI step, while markdown is deliberately NOT on the pre-commit path: nits break nothing, a changelog lands most working days, and CI already covers it. It is check-only wherever it runs, never `--fix` — during rollout `markdownlint --fix` read the wrapped `+` conjunction in `CLAUDE.md` (`binds to design.md + src/index.css + .claude/rules/`) as a `+`-style list bullet and rewrote it to `-`, changing the file's meaning while leaving lint green. That sentence was reflowed so the `+` ends the line and the rule can no longer fire on it. Ignores gained `docs/**`, `plans/**`, and `handoff.md` (gitignored or generated); the 9 real violations in tracked files were fixed.
+
 ## Components
 
 ### Ask AI top-bar button + docked chat-panel shell `389f73e`
