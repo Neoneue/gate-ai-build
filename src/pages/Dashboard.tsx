@@ -434,6 +434,7 @@ function DimSelector({
   return (
     <Select onValueChange={(v) => onDimChange(v as Dimension)} value={dim}>
       <SelectTrigger
+        aria-label="Chart dimension"
         className="border-border bg-card font-normal text-foreground"
         size="sm"
       >
