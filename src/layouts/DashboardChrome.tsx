@@ -190,7 +190,7 @@ export function DashboardChrome({
             className="flex h-full w-[368px] flex-col border-border border-l bg-card"
             inert={!askAiOpen}
           >
-            <AskAiPanel onClose={closeAskAi} />
+            <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
           </div>
         </div>
       </div>
@@ -206,7 +206,7 @@ export function DashboardChrome({
           side="right"
         >
           <SheetTitle className="sr-only">Ask AI</SheetTitle>
-          <AskAiPanel onClose={closeAskAi} />
+          <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
         </SheetContent>
       </Sheet>
       {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,

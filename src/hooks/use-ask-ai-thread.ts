@@ -47,6 +47,11 @@ export interface AskAiThread {
   isBusy: boolean;
   messages: AskAiMessage[];
   phase: AskAiPhase;
+  /**
+   * Start a new chat: drop every turn, abort anything in flight, return to
+   * `idle` — which is what the panel's empty state renders from.
+   */
+  reset: () => void;
   /** Send a question. No-ops on empty/whitespace input or while busy. */
   send: (input: string) => void;
   /** Halt the reply where it is, keeping the partial text. */
@@ -93,6 +98,15 @@ export function useAskAiThreadState(): AskAiThread {
 
   const stop = useCallback(() => {
     interrupt();
+    setPhase("idle");
+  }, [interrupt]);
+
+  /* New chat. Goes through the same `interrupt()` as `stop()` so there stays
+     exactly one abort path — the `stopped` marking it does is moot here since
+     the very next statement drops the messages anyway. */
+  const reset = useCallback(() => {
+    interrupt();
+    setMessages([]);
     setPhase("idle");
   }, [interrupt]);
 
@@ -186,10 +200,11 @@ export function useAskAiThreadState(): AskAiThread {
       phase,
       isBusy:
         phase === "sending" || phase === "thinking" || phase === "replying",
+      reset,
       send,
       stop,
     }),
-    [messages, phase, send, stop]
+    [messages, phase, reset, send, stop]
   );
 }
 

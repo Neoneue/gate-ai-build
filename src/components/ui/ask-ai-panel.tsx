@@ -1,8 +1,9 @@
 import { ChevronsUpDown, PanelRightClose, SquarePen } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AskAiComposer } from "@/components/ui/ask-ai-composer";
+import { AskAiEmptyState } from "@/components/ui/ask-ai-empty-state";
 import {
   AgentMessage,
   MessageThread,
@@ -32,20 +33,44 @@ export interface AskAiPanelProps {
   className?: string;
   /** Collapse the panel (push-out on desktop, close the Sheet below lg). */
   onClose: () => void;
+  /** Panel visibility. The docked column stays mounted when collapsed, so
+      opening is a prop flip, not a mount — the caret lands off this. */
+  open?: boolean;
 }
 
-export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
+export function AskAiPanel({
+  onClose,
+  open = false,
+  className,
+}: AskAiPanelProps) {
   // Conversation state lives above the router outlet (App.tsx) so the thread
   // survives navigation, the same way `askAiOpen` does.
-  const { messages, phase, send, stop } = useAskAiThread();
+  const { messages, phase, reset, send, stop } = useAskAiThread();
 
   // The scrolling message region and the zero-height marker at its very end.
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const stick = useStickToBottom(scrollRef, sentinelRef);
 
+  // The composer field, so the panel can put the caret in it.
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+
+  /* Opening arms the field — the user types straight away without a click.
+     Deferred a frame so the Sheet's own initial-focus pass (below lg) has
+     already run and cannot steal the caret back. Collapsed, the docked column
+     is `inert`, so a stale focus call there is a no-op. */
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => composerRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
+
   // Sending re-arms following and snaps to the end, so the new turn is in view
-  // however far up the thread the user had scrolled.
+  // however far up the thread the user had scrolled. It deliberately does NOT
+  // take the caret back: the composer only lights up at the two moments the
+  // user is being invited to type (open, new chat), and reads quiet otherwise.
   const handleSend = useCallback(
     (text: string) => {
       send(text);
@@ -53,6 +78,13 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
     },
     [send, stick]
   );
+
+  // New chat returns to the empty state, which is the same invitation to type
+  // as a fresh open — so the caret goes back to the field.
+  const handleReset = useCallback(() => {
+    reset();
+    composerRef.current?.focus();
+  }, [reset]);
 
   return (
     <div
@@ -74,9 +106,10 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
           />
         </Button>
         <div className="flex items-center gap-1">
-          {/* Secondary action for visual fidelity with the mock — unwired. */}
+          {/* New chat — drops the thread and returns to the empty state. */}
           <Button
             aria-label="New chat"
+            onClick={handleReset}
             size="icon-lg"
             type="button"
             variant="ghost"
@@ -96,16 +129,16 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
       </div>
       {/* Body — 16px inset on left/right/bottom; the scrolling message region
           carries its own 16px top padding so the first message clears the top
-          bar by 16px while the scroll track still runs edge-to-edge. `gap-4`
-          keeps the thread 16px clear of the composer — Figma's inter-turn
-          spacing (8px thread gap + 8px turn bottom padding) applied to the
-          thread/composer boundary. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pb-4">
+          bar by 16px while the scroll track still runs edge-to-edge. `gap-6`
+          keeps the thread 24px clear of the composer: the boundary between the
+          thread and the input needs more air than the 16px body inset, or the
+          last turn's action row crowds the field. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-6 px-4 pb-4">
         {/* Non-scrolling wrapper: owns the flex sizing so the scroll-to-latest
             control can anchor to the region's box without riding the scroll.
             Its right edge is the body's `px-4` and its bottom edge is the
-            body's `gap-4`, which is exactly Figma's 16px / 16px offset pair —
-            so the FAB needs no hard-coded position of its own. */}
+            body's `gap-6`, so the FAB sits 16px in from the right and 24px
+            above the composer with no hard-coded position of its own. */}
         <div className="relative min-h-0 flex-1">
           {/* Scrolling turn list.
               Scroll anchoring: the content wrapper opts OUT and the sentinel
@@ -139,6 +172,16 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
             </div>
             <ScrollBottomSentinel ref={sentinelRef} />
           </div>
+          {/* Empty state overlays the (zero-height) thread rather than
+              replacing it, so `scrollRef`/`sentinelRef` never unmount and
+              `useStickToBottom` keeps one stable set of nodes for the whole
+              panel lifetime. It also gets `inset-0` centring for free. */}
+          {messages.length === 0 && (
+            <AskAiEmptyState
+              className="absolute inset-0"
+              onSelect={handleSend}
+            />
+          )}
           <ScrollToLatestFab
             className="absolute right-0 bottom-0"
             onClick={stick.jumpToLatest}
@@ -150,6 +193,7 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
           onSend={handleSend}
           onStop={stop}
           phase={phase}
+          textareaRef={composerRef}
         />
       </div>
     </div>

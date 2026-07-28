@@ -228,18 +228,11 @@ function Layout() {
   }, [sidebarExpanded]);
 
   // Ask AI panel state — hoisted here (not inside DashboardChrome, which
-  // remounts per page) so the panel stays open across navigation. Defaults
-  // CLOSED (opposite of the sidebar's default-open); localStorage persists
-  // the user's choice across refresh.
-  const [askAiOpen, setAskAiOpen] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.localStorage.getItem("askai") === "open"
-  );
-
-  useEffect(() => {
-    window.localStorage.setItem("askai", askAiOpen ? "open" : "closed");
-  }, [askAiOpen]);
+  // remounts per page) so the panel stays open across navigation. Deliberately
+  // NOT persisted, unlike the sidebar: every page load starts CLOSED, the user
+  // opens it once, and it then stays open for the rest of the session until
+  // they close it.
+  const [askAiOpen, setAskAiOpen] = useState(false);
 
   const ctx: LayoutContext = {
     sidebarExpanded,

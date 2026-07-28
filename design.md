@@ -508,6 +508,7 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--muted-foreground` | neutral-600 | neutral-300 |
 | `--border` | neutral-200 | white @ 10% |
 | `--border-active` (active-thumb hairline) | neutral-100 | neutral-800 (= thumb, invisible) |
+| `--border-hover` (hover / pressed edge) *(added 2026-07-28)* | neutral-300 | white @ 20% |
 | `--input` | neutral-300 | white @ 15% |
 | `--ring` | neutral-400 | neutral-500 |
 | `--destructive` | danger-600 | danger-400 |
@@ -575,6 +576,8 @@ they are not a general elevation tier (use `--card-muted` / `--control-raised`
 for that).
 
 **`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
+
+**`--border-hover` (2026-07-28).** The hover *and* active/pressed edge on a bordered control — one token, both states, because a control that raises its edge on hover should hold that edge while pressed rather than flicker to a third value. It is always a step of MORE contrast against the surface than `--border`: neutral-300 in light (darker), white @ 20% in dark (lighter, one step past `--border` @ 10% and `--input` @ 15%). Utility `border-border-hover`. **Not a substitute for `--ring`, which means focus** — `--ring` answers "keyboard is here", `--border-hover` answers "this is pointing at you". A control can show both at once. First and only use: the Ask AI empty-state suggestion rows, via a `Button` compound variant scoped to `variant="outline" + shape="pill"`. Deliberately NOT on the whole `outline` variant — raising the edge on every outline button in the app is a site-wide change and is its own decision. Nothing else uses `shape="pill"`, so nothing else moved.
 
 **Surface map (raw ramp → token), applied in the 2026-07-09 surface pass:**
 
@@ -935,11 +938,12 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 ### Buttons — `{components.button-default}` and variants
 
-`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with 4 size variants (xs/sm/default/lg) and 6 style variants (default/outline/secondary/ghost/destructive/link).
+`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with 5 size variants (xs/sm/default/lg/xl), 6 style variants (default/outline/secondary/ghost/destructive/link), and a `shape` variant (default/pill).
 
 - **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 32px tall (`h-8`), `px-3` (`pr-2` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.98]` (scale-down) + `will-change-transform` (standardized 2026-06-18, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
 - **Sizes:** xs h-6 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm (2026-07-16, shadcn-aligned: default 32px / lg 36px, flat 12px L/R padding — operator-tool register, not marketing CTA). **Every `<Button>` carries an explicit `size`** (no implicit default) so sizes can vary by breakpoint. Migration: what was 40px (old default) → `lg`; 32px → `default`/`sm`.
 - **Outline:** `border-border bg-card` + **`shadow-xs`** (added 2026-06-04, primitive-level so it cascades to every `variant="outline"`) — the subtle lift matches the Card recipe and reads against any backdrop. `box-shadow` is in the button's transition list, so it does not snap on hover.
+- **`xl` size (44px) + `shape="pill"`** (added 2026-07-28 for the Ask AI empty state). `xl` = `h-11 gap-3 px-4 text-sm` — one step above `lg`, for full-width list-style actions where the control *is* the row rather than a toolbar chip; 16px L/R padding and a 12px icon gap, both on the 4px grid. `shape` carries radius so no call site ever has to: `default` inherits the base `rounded-sm`, `pill` = `rounded-full`. Canonical use: the four suggestion rows in `ask-ai-empty-state.tsx` (`variant="outline" shape="pill" size="xl"` + `className="w-full justify-between"` — layout only). Radius is a primitive concern; do not reach for `rounded-full` on a `<Button>` className.
 - **Asymmetric icon padding:** `has-data-[icon=inline-start]:pl-2` / `has-data-[icon=inline-end]:pr-2` (default/lg — 8px on the icon side vs 12px text side). Mirrors `SelectTrigger` rule (see below).
 
 **Rule:** Primary action = `default` (neutral-900). Use `outline` for secondary, `ghost` for tertiary in toolbars/menus. `link` variant is for standalone link-buttons; **inline body-text links** use `<button>` with the underline affordance (see Inline links below).

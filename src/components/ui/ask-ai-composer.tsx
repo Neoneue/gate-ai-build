@@ -1,5 +1,5 @@
 import { Plus, Send, Square } from "lucide-react";
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, type RefObject, useState } from "react";
 import type { AskAiPhase } from "@/hooks/use-ask-ai-thread";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +47,8 @@ export interface AskAiComposerProps {
   onStop?: () => void;
   /** Drives the placeholder and the send/stop swap. */
   phase?: AskAiPhase;
+  /** Handed up so the panel can put the caret here (open, post-send). */
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
 export function AskAiComposer({
@@ -54,6 +56,7 @@ export function AskAiComposer({
   phase = "idle",
   onSend,
   onStop,
+  textareaRef,
 }: AskAiComposerProps) {
   const [value, setValue] = useState("");
   const hasText = value.trim().length > 0;
@@ -98,6 +101,7 @@ export function AskAiComposer({
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={onKeyDown}
         placeholder={PLACEHOLDER_BY_PHASE[phase] ?? PLACEHOLDER}
+        ref={textareaRef}
         rows={1}
         value={value}
       />

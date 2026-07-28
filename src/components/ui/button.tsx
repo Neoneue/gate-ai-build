@@ -35,16 +35,43 @@ const buttonVariants = cva(
         default:
           "h-8 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         lg: "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        // 44px — the one step above `lg`, for full-width list-style actions
+        // where the control IS the row (Ask AI suggestion pills). 16px L/R
+        // padding and a 12px gap, both on the 4px grid.
+        xl: "h-11 gap-3 px-4 text-sm",
         // Icon-only — square buttons matching each text-size step.
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
         icon: "size-8",
         "icon-lg": "size-9",
       },
+      // Radius belongs to the primitive, never to a call site. `pill` is the
+      // fully-rounded track used by full-width suggestion rows; everything
+      // else stays on the `rounded-sm` chrome tier.
+      shape: {
+        default: "",
+        pill: "rounded-full",
+      },
     },
+    // Pill-shaped outline rows (the Ask AI suggestions) are list rows, not
+    // toolbar buttons: the control IS the row, so the edge has to move on
+    // hover/press, not just the fill. --border-hover is one step of extra
+    // contrast against the surface in BOTH themes. Deliberately scoped to
+    // `outline + pill` rather than all of `outline` — raising the edge on
+    // every outline button in the app is a site-wide visual change and
+    // belongs in its own decision.
+    compoundVariants: [
+      {
+        variant: "outline",
+        shape: "pill",
+        className:
+          "hover:border-border-hover active:border-border-hover dark:active:border-border-hover dark:hover:border-border-hover",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "default",
     },
   }
 );
@@ -53,11 +80,12 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  shape = "default",
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, shape, className }))}
       data-slot="button"
       {...props}
     />

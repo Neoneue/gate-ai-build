@@ -285,6 +285,10 @@ and (pointer: fine)) and (&:hover));
      (neutral-100 on the white thumb), a visible step off the track in dark
      (neutral-700). */
   --border-active: var(--color-neutral-100);
+  /* Hover / pressed edge on a bordered control — always one step MORE
+     contrast against the surface than --border. Darker in light, lighter in
+     dark. One token covers both states. Not a focus ring; that's --ring. */
+  --border-hover: var(--color-neutral-300);
   --input: var(--color-neutral-300);
   --ring: var(--color-neutral-400);
   /* Chart gridline / dashed baseline stroke. Palette-atom neutral-200 read
@@ -369,6 +373,7 @@ body {
   --color-input: var(--input);
   --color-border: var(--border);
   --color-border-active: var(--border-active);
+  --color-border-hover: var(--border-hover);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -460,6 +465,9 @@ body {
      visually disappears in dark — the lighter thumb already carries the
      active state there; the crispening is a light-mode device. */
   --border-active: var(--color-neutral-800);
+  /* One step brighter than --border (10%) and --input (15%) — the hover edge
+     has to read as a lift on any dark surface, same alpha-hairline technique. */
+  --border-hover: color-mix(in oklch, var(--color-white) 20%, transparent);
   --input: color-mix(in oklch, var(--color-white) 15%, transparent);
   --ring: var(--color-neutral-500);
   --chart-grid: var(--color-neutral-700);
