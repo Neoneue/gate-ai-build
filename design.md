@@ -18,6 +18,7 @@ colors:
   # stroke. Cards / popovers stay white via `--card` / `--popover`.
   primary: "oklch(0.090 0 0)"            # neutral-900
   primary-foreground: "#FFFFFF"
+  primary-foreground-soft: "oklch(0.922 0 0)"  # neutral-200 — icon-only on-primary ink (dark: neutral-800)
   background: "oklch(0.960 0 0)"         # neutral-100 — page canvas (NOT white)
   foreground: "oklch(0.090 0 0)"         # neutral-900
   card: "#FFFFFF"
@@ -30,6 +31,7 @@ colors:
   muted-foreground: "oklch(0.530 0 0)"   # neutral-500
   accent: "oklch(0.960 0 0)"             # neutral-100
   accent-foreground: "oklch(0.090 0 0)"
+  control-raised: "#FFFFFF"              # raised icon-only control chip on a muted surface (dark: neutral-700)
   destructive: "oklch(0.577 0.245 27.325)"  # danger-600
   border: "oklch(0.910 0 0)"             # neutral-200
   input: "oklch(0.820 0 0)"              # neutral-300 (bumped from neutral-200 on 2026-05-15)
@@ -498,6 +500,7 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--muted`, `--secondary` | neutral-100 | neutral-800 |
 | `--accent` (hover / active fill) | neutral-100 | neutral-700 |
 | `--primary` / `-foreground` | neutral-900 / white | neutral-200 / neutral-800 |
+| `--primary-foreground-soft` *(added 2026-07-27)* | neutral-200 | neutral-800 |
 | `--muted-foreground` | neutral-600 | neutral-300 |
 | `--border` | neutral-200 | white @ 10% |
 | `--border-active` (active-thumb hairline) | neutral-100 | neutral-800 (= thumb, invisible) |
@@ -507,10 +510,37 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--sidebar` | white (flush w/ bg) | neutral-950 |
 | `--sidebar-accent` / `--sidebar-border` | neutral-100 / neutral-200 | neutral-800 / white @ 10% |
 | `--surface-strong` / `-foreground` | neutral-900 / neutral-50 | **same in both themes** |
+| `--control-raised` *(added 2026-07-27)* | white | neutral-700 |
 
 Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
 
 **`--surface-strong` (new token pair).** For surfaces intentionally dark in BOTH themes: hero chart card, code / terminal cards, dark tooltips, the connected-segment active pill. Utilities `bg-surface-strong` + `text-surface-strong-foreground`. Use this INSTEAD of raw `bg-neutral-900` / `text-white` whenever the dark surface is deliberate.
+
+**`--primary-foreground-soft` (added 2026-07-27).** A softened on-primary ink
+for **icon-only** primary actions — currently the `AskAiComposer` send button.
+Full white (`--primary-foreground`) is too hot for a 16px glyph on the
+neutral-900 fill: it flares and the stroke reads heavier than it is, so the ink
+steps back one notch to neutral-200. In dark it is **deliberately identical to
+`--primary-foreground`** (neutral-800) — the fill already inverts to light and
+the ink is already dark, so the token is a visual no-op there and stays safe to
+use in either theme. Utility: `text-primary-foreground-soft`. **Text-sized
+on-primary content (button labels, badges) stays on `--primary-foreground`** —
+neutral-200 on neutral-900 is 14.2:1, fine for a glyph, but do not use it to
+quietly dim body copy.
+
+**`--control-raised` (added 2026-07-27).** Fill for a **small icon-only control
+that sits on a muted card surface** and has to read as a discrete chip —
+currently the `AskAiComposer` 24px plus button on `bg-card-muted`. White in
+light: `--accent` (neutral-100) is only one ramp step off the neutral-50
+composer shell, which at 24px reads as a smudge rather than a control. Dark
+keeps neutral-700 on the neutral-800 shell, which is what `--accent` already
+resolved to there, so **dark is a visual no-op**. Utility:
+`bg-control-raised`; pair it with `border-border` + `shadow-xs`.
+**Not a substitute for `--card`.** A card inverts with the theme (white →
+neutral-900); this token deliberately stays *lighter than whatever surface is
+beneath it* in both themes, because it is a raised control, not a panel. For
+hover / active fills keep using `--accent`; for panels keep `--card` /
+`--card-muted`.
 
 **`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
 
@@ -1096,7 +1126,8 @@ The product is desktop-first (operator workflows tuned for ≥1280px), but a mob
 
 - **Sidebar** (left nav): expanded 240px (`w-60`) / collapsed 64px (`w-16`) in `sidebar.tsx`, rendered at `lg`+ only; below `lg` the whole rail is replaced by the right-docked hamburger Sheet. Collapse toggle lives in the sidebar header; the workspace switcher sits in the top bar at `lg`+ (in the Sheet below `lg`) — not in the sidebar (see §7 UserMenu / WorkspaceSwitcher).
 - **KPI rail:** four sections side-by-side at composed widths; wraps to a stacked grid on small screens. Raw counts ≥1M render compact (`N.NM` via `formatCompactCount`, KPI tiles only — see §7 Hero Numerics & KPIs / memory), so long numbers don't overflow the tile on mobile.
-- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper); toolbars and the pagination footer stack below `md` (see breakpoints). Column priority not codified.
+- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper); toolbars and the pagination footer stack below `md` (see breakpoints). **`table-fixed` tables get a `min-w-[Npx]` floor** sized to their column count so they side-scroll on mobile/tablet instead of crushing columns (a `table-fixed` table otherwise always equals its container and never overflows, so the `overflow-x-auto` wrapper has nothing to scroll). Floor stays ≤ the desktop content width so desktop never scrolls: canonical `min-w-[1000px]` for 6–8-col tables (ApiKeys, AuditTrail, Activity, Limits), scaled down for narrow tables (Team members `680px`, TeamDefault `560px`). Column priority not codified.
+- **Charts (axis):** x-axis date labels use recharts' native collision handling — `interval="preserveStartEnd"` + `minTickGap` (NOT `interval={0}`, which forces every tick with no overlap removal). Explicit `ticks` arrays must be derived from real data points (never hardcoded time strings, which silently render nothing when they don't match a datum). The custom tick renderer anchors the **first tick `textAnchor="start"`, last `"end"`, middle `"middle"`** so the first label starts at the plot's left edge (not under the Y-axis column) and the last never overflows the card — applied to every axis chart (hero area charts, Activity TrendCard, Dashboard usage chart). Bar charts additionally thin their bar count ~25% below `lg` (tablet + mobile) via `useMediaQuery` so bars don't pack too tight; totals still reconcile (same total across fewer buckets).
 
 ---
 

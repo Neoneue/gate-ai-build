@@ -26,6 +26,15 @@ Note: container thresholds are NOT the viewport values (`@lg` = 512px container 
 
 Markdown went the other way. `markdownlint-cli2` was installed and configured but invoked by nothing, so `npm run lint:md` is now a CI step, while markdown is deliberately NOT on the pre-commit path: nits break nothing, a changelog lands most working days, and CI already covers it. It is check-only wherever it runs, never `--fix` — during rollout `markdownlint --fix` read the wrapped `+` conjunction in `CLAUDE.md` (`binds to design.md + src/index.css + .claude/rules/`) as a `+`-style list bullet and rewrote it to `-`, changing the file's meaning while leaving lint green. That sentence was reflowed so the `+` ends the line and the rule can no longer fire on it. Ignores gained `docs/**`, `plans/**`, and `handoff.md` (gitignored or generated); the 9 real violations in tracked files were fixed.
 
+### Two semantic tokens for icon-only controls: `--primary-foreground-soft`, `--control-raised` `6e42286`
+
+**`src/index.css`** · **`design.md`**
+
+The Ask AI composer's two icon buttons needed color pairs no existing semantic token supplied, and a raw ramp step would not have flipped with the theme. Both were added to `:root`, `.dark`, and `@theme`, and documented in `design.md` (token-contract table + scoping prose + the `colors:` manifest).
+
+- **`--primary-foreground-soft`** — light neutral-200 / dark neutral-800. A softened on-primary ink for **icon-only** primary actions. Full white flares against the neutral-900 fill at 16px and reads heavier than the stroke is. Deliberately identical to `--primary-foreground` in dark, so it is a no-op there. Text-sized on-primary content stays on `--primary-foreground`.
+- **`--control-raised`** — light white / dark neutral-700. Fill for a small icon-only control that must read as a discrete chip on a muted card surface. `--accent` (neutral-100) sits one ramp step off the neutral-50 shell and smudges at 24px. Dark matches what `--accent` already resolved to, so it is a no-op there too. Not a substitute for `--card`: a card inverts with the theme, this token stays lighter than whatever is beneath it in both.
+
 ## Components
 
 ### Ask AI top-bar button + docked chat-panel shell `389f73e`
@@ -69,6 +78,25 @@ The panel closed on every route change because `askAiOpen` was local `useState` 
 **`src/pages/Dashboard.tsx`** · **`src/pages/Policies.tsx`**
 
 A rams accessibility and design pass over the 14 main pages (16,175 lines) returned zero critical issues, one serious and two moderate; all three are fixed here. Overview's chart dimension `Select` (`DimSelector`) exposed no accessible name, because `SelectValue` announces the current value ("By model") but never the control's purpose, leaving it unidentifiable out of visual context. Added `aria-label="Chart dimension"` on `SelectTrigger`, parallel to the sibling `SegmentedPill`'s existing `aria-label="Chart metric"`; the wrapper spreads `...props` onto `SelectPrimitive.Trigger`, so the attribute reaches the DOM. On Policies, the Pro-benefits check bullet used `mt-0.5` (2px, off the 4px grid) plus `bg-blue-200 text-blue-800`, where the identical bullet in `TokenSavings` and design.md's `badge-info` token both use `blue-100`/`blue-700`. Dropped the top margin in favor of `items-center` on the `<li>`, which is the canonical `BenefitList` treatment rather than a new 4px value, and aligned the tone pair. Dark variants unchanged. Cleared as non-defects in the same pass: the brand-blue Pro-upsell CTAs (design.md §388 blessed exception), `outline-none` on Base UI menus (keyboard position shows via `data-[highlighted]`), and the `<tr onClick>` row drill-in (the keyboard/AT target is the real `<a href>` in the model cell).
+
+### Ask AI chat composer `6e42286`
+
+**`src/components/ui/ask-ai-composer.tsx`** (new) · **`src/components/ui/ask-ai-panel.tsx`**
+
+The panel's empty scroll body becomes a real chat layout, built to Figma node `1125:5376`. `AskAiPanel` now owns a `px-4 pb-4` column stacking an empty scrolling message region (`min-h-0 flex-1 overflow-y-auto pt-4`, bubbles deferred) above the composer, so the first message will clear the top bar by 16px and the box sits 16px off the bottom, flush inset 16px left and right.
+
+`AskAiComposer` is a `bg-card-muted` shell: `p-4`, `rounded-md` (8px, card tier — Figma's value, not the 16px modal tier), `border-border` stepping to `focus-within:border-primary` on focus.
+
+- **Textarea** — borderless and transparent inside the shell, `field-sizing-content` at `type-copy-14-tight` (14/20), clamped `min-h-5` → `max-h-20`. Exact multiples of the 20px leading, so it hugs content from 1 line to 4, then holds and scrolls (`overflow-y-auto`). Placeholder "Ask Gatekeeper a question or type /help to see a list of options".
+- **Action row** — `gap-3` (12px) below the field, `flex h-8 items-center justify-between`. 24px `Plus` left on `bg-control-raised` + `border-border`; 32px `Send` right on `bg-primary` with a `text-primary-foreground-soft` glyph, `opacity-50` until the field has text. Both carry `shadow-xs` and the standard press recipe (`active:scale-[0.98]`, 150ms `ease-out`, `motion-reduce` opt-out). Both unwired.
+
+### Pagination ellipsis let the whole site scroll past the shell `d7ffcd0`
+
+**`src/components/ui/pagination.tsx`**
+
+`PaginationEllipsis` renders a `.sr-only` span, which Tailwind styles `position: absolute`. The wrapper was static, so the span's containing block was the initial containing block rather than the scroll container. Deep inside a scrolled table it resolved to a document offset far below the viewport (y 2035 against a 762px viewport on `/security`), inflating `<html>`'s scroll height while `body` and `#root` stayed at 762 — the page scrolled well past the app shell into empty background. The shell's `lg:overflow-hidden` could not clip it: an absolutely positioned element escapes an overflow ancestor that is not its containing block.
+
+Fixed by adding `relative` to the wrapper. It is `flex size-8` with no offsets, so this is containment only, no visual change. Hit every page whose paginated table showed the ellipsis.
 
 ## Sections
 

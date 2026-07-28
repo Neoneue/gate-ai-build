@@ -67,9 +67,16 @@ content), and — added 2026-07-27 — the **Ask AI docked panel** on the right.
 - **Ask AI panel.** Toggled by the "Ask AI" top-bar button (left of Docs) and
   by the panel's own collapse control; both flip a chrome-internal `askAiOpen`
   state (`useState`, not part of the public `DashboardChromeProps`).
-  `AskAiPanel` (`src/components/ui/ask-ai-panel.tsx`) is a skeleton shell only
-  (header with "New session" trigger + `PanelRightClose` collapse, empty body —
-  inner chat UI deferred). At `lg+` it is a third flex sibling that animates its
+  `AskAiPanel` (`src/components/ui/ask-ai-panel.tsx`) owns the panel layout:
+  header ("New session" trigger + `PanelRightClose` collapse) over a
+  `px-4 pb-4` body that stacks an empty scrolling message region (`pt-4`,
+  bubbles deferred) above `AskAiComposer`
+  (`src/components/ui/ask-ai-composer.tsx`) — the chat box, built to Figma
+  node `1125:5376`: `bg-card-muted` shell, 16px padding, 8px radius,
+  `focus-within:border-primary`, a `field-sizing-content` textarea that grows
+  1 → 4 lines of the 20px `type-copy-14-tight` leading then scrolls, and an
+  unwired 24px `Plus` / 32px `Send` action row. At `lg+` it is a third flex
+  sibling that animates its
   width `0 → 368px` (`transition-[width]`, `var(--ease-out)`, 300ms) so the top
   bar and content condense in step; below `lg` the same shell opens in a
   right-docked `Sheet`. The `FeedbackFab` shifts left with the panel
@@ -805,6 +812,8 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 **Charts:** TrendCard = stacked bar; TopByAxisRow = 3 metric cards (TopByModel, TopByKey, TopByUser)
 
+**Responsive (2026-07-17):** the four bottom breakdown cards stack to one column below `lg`. TrendCard header stacks its dropdown + metric toggle under the title on mobile (inline-right at `md`+), with a divider between chart and key; its bar count reduces ~25% below `lg` (via `useMediaQuery`, `src/hooks/use-media-query.ts`) and its x-axis uses first/last tick anchoring (see design.md §Responsive → Charts). Per-key rows in the UsageByKey table derive from the canonical `API_KEY_ROWS` in `activity-data.ts` (the shared per-key source).
+
 ---
 
 ### Team page (`/team` → `Team.tsx`)
@@ -836,6 +845,10 @@ sort, query, page, rowsPerPage              // UsageByKey table
 **Flow:** CreateKeyDialog (step 1: name) → KeyCreatedDialog (step 2: display full key + copy + confirm saved)
 
 **hideDocsButton:** `true` — replaces the shared Docs button with a custom "Key docs" link.
+
+**Table columns:** Key · Status · Created · Last used · (row actions). The former "7-day messages" sparkline column was removed 2026-07-17; the four data columns were rebalanced to 100% (Key 32% / Status 16% / Created 26% / Last used 26%). `ApiKeyRow.requests7d` still exists on the type/seed data but no longer renders. `table-fixed` + `min-w-[1000px]` for mobile side-scroll.
+
+**Layout (2026-07-17):** page content capped at `max-w-5xl` (1024px), left-aligned in the shell. The "How to make messages" section is two cards — Automatic (Gate Connect via `<ConnectTabs>`) and Manual (code tabs) — **always stacked one-per-row** at every width. On the Gate Connect card the app-mockup image hides below `lg` and the text block goes full width; its title steps down one size on mobile (`text-2xl` → `text-xl`).
 
 ---
 
@@ -1019,7 +1032,8 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
-| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome` (skeleton: header with "New session" trigger + `SquarePen` + `PanelRightClose` collapse, empty body — inner chat UI deferred). Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
+| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking an empty scrolling message region (`pt-4`, bubbles deferred) above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
+| `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14-tight` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` (`bg-control-raised`) left, 32px `Send` (`bg-primary` + `text-primary-foreground-soft`, `opacity-50` until the field has text) right. Both buttons carry `shadow-xs` and are unwired. Added 2026-07-27. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |
 | `SortableTableHead` | native `<th>` + `<button>` | Click-to-sort header (2026-06-04). `⇅` fades in on hover, persists as `↑`/`↓` when active. Three-state cycle (asc→desc→unsorted). Content-width hit area (`max-w-1/2`), `aria-sort`. `numeric` columns (right-aligned) put the glyph left of the label (`flex-row-reverse`) so the label aligns with the data. Pairs with the `useTableSort` hook + `sortRows`/`parseNumeric` in `src/hooks/use-table-sort.ts` (local state, no TanStack); table supplies a `getValue(row,key)` accessor. |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
