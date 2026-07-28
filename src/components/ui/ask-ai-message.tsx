@@ -6,6 +6,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /* ─── Ask AI chat bubbles ────────────────────────────────────────────────────
@@ -167,8 +168,8 @@ const REPLY_ACTIONS = [
   { icon: RotateCcw, label: "Regenerate reply" },
 ] as const;
 
-const REPLY_ACTION_BUTTON =
-  "flex size-6 shrink-0 select-none items-center justify-center rounded-xs text-muted-foreground outline-none transition-[colors,scale] duration-150 ease-out will-change-transform hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+/* The action glyphs are `Button variant="ghost" size="icon-xs"`. The
+   hand-rolled recipe that used to live here was a copy of that variant. */
 
 export function AgentMessage({
   children,
@@ -201,15 +202,16 @@ export function AgentMessage({
         )}
       >
         {REPLY_ACTIONS.map(({ icon: Icon, label }) => (
-          <button
+          <Button
             aria-label={label}
-            className={REPLY_ACTION_BUTTON}
             key={label}
+            size="icon-xs"
             tabIndex={showActions ? 0 : -1}
             type="button"
+            variant="ghost"
           >
-            <Icon aria-hidden className="size-3.5" strokeWidth={1.75} />
-          </button>
+            <Icon aria-hidden strokeWidth={1.75} />
+          </Button>
         ))}
       </div>
     </div>

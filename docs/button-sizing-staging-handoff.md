@@ -1,5 +1,27 @@
 # Handoff — Button & Form-Control Sizing System (2026-07-16)
 
+> **⚠️ SUPERSEDED — 2026-07-28. DO NOT IMPLEMENT THIS DOCUMENT.**
+>
+> **The Button size scale described below was replaced on 2026-07-28.** Acting
+> on this file will re-introduce exactly what that work removed.
+>
+> Specifically, the following statements in this document are **now false**:
+>
+> - ~~`default` = 32px (`h-8`)~~ → **`default` = 36px (`h-9`)**
+> - ~~`lg` = 36px (`h-9`)~~ → **`lg` DOES NOT EXIST.** It was deleted from the
+>   type, along with `xl` and `icon-lg`. `default` is the largest size.
+> - ~~"any control that was 40px → `lg`"~~ → migrate to **`default`**.
+> - ~~asymmetric icon padding (`pl-2` / `pr-2`)~~ → **symmetric `px-2.5`**
+>   (10px both sides), which is shadcn's own value.
+>
+> **→ Use [`button-audit-7-28.md`](./button-audit-7-28.md) instead.** It is the
+> single comprehensive parity document: it supersedes this file entirely,
+> restates everything below that is still true, and adds detection scanners so
+> you only fix what your build actually has.
+>
+> This file is kept for historical trace only — it explains how the scale that
+> was corrected on 07-28 came to exist in the first place.
+
 **Audience:** the engineering agent applying these changes to the **staging build**.
 **Source of truth:** this repo (`gate-ai-build`, branch `dev`) + [`design.md`](./design.md).
 **Trace the work:** `change-logs/changelog-7-16.md` and the commits below.

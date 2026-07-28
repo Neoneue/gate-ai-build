@@ -148,7 +148,7 @@ function AlertDialogAction({
     <Button
       className={cn(className)}
       data-slot="alert-dialog-action"
-      size="lg"
+      size="default"
       {...props}
     />
   );
@@ -157,7 +157,7 @@ function AlertDialogAction({
 function AlertDialogCancel({
   className,
   variant = "outline",
-  size = "lg",
+  size = "default",
   ...props
 }: AlertDialogPrimitive.Close.Props &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {

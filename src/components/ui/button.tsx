@@ -26,31 +26,54 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 dark:hover:bg-destructive/30",
         link: "text-primary underline-offset-4 hover:underline active:opacity-80",
+        // Raised control on a panel surface — the `--control-raised` token
+        // (white in light, neutral-700 in dark, i.e. LIGHTER than a card in
+        // dark). Distinct from `outline`, which sits on `--card`. Added
+        // 2026-07-28 because three hand-rolled controls (the Ask AI composer's
+        // add-context key, the scroll-to-latest FAB, the message copy glyph)
+        // had each pasted this exact recipe rather than ask for a variant.
+        raised:
+          "border-border bg-control-raised text-accent-foreground shadow-(--shadow-card-soft) hover:bg-muted hover:text-foreground",
       },
       size: {
-        // shadcn-aligned scale — default 32px / lg 36px, both with 12px L/R
-        // padding (px-3). Heights step; H-padding is flat 12px across default/lg.
-        xs: "h-6 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        // shadcn-aligned scale (realigned 2026-07-28) — xs 24 / sm 32 /
+        // default 36. `default` IS shadcn's `h-9`; the old `lg` (36px) and
+        // `xl` (44px) are GONE. Before the realign this scale sat one step
+        // below shadcn's (`default` was 32px), so every call site reached for
+        // `lg` to get an ordinary button: 62 uses of `lg` against 0 uses of
+        // `default` across 120 buttons. The rename is pixel-identical — `lg`'s
+        // recipe simply became `default`'s. There is no size in this API that
+        // shadcn does not have.
+        //
+        // Icon padding is SYMMETRIC (2026-07-28). A button holding an icon
+        // draws in to 10px on BOTH sides — shadcn's `has-[>svg]:px-2.5` on the
+        // h-8 size, expressed through this repo's `data-icon` markers. It
+        // replaces a local `pl-2`/`pr-2` (8px icon side / 12px text side) that
+        // shipped on 2026-07-16: shadcn has no asymmetric button padding, and
+        // the lopsided edge was visible on every icon+label button in the app.
+        // 10px is deliberately OFF the 4px grid — it is shadcn's value, and
+        // the grid rule carves this one case out. See design.md §Buttons.
+        xs: "h-6 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
         default:
-          "h-8 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        lg: "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        // 44px — the one step above `lg`, for full-width list-style actions
-        // where the control IS the row (Ask AI suggestion pills). 16px L/R
-        // padding and a 12px gap, both on the 4px grid.
-        xl: "h-11 gap-3 px-4 text-sm",
-        // Icon-only — square buttons matching each text-size step.
+          "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
+        // Icon-only — one square per text-size step, same heights: xs 24 /
+        // sm 32 / icon 36. `icon-lg` is deleted along with `lg`; there is no
+        // "lg" anywhere in this API. `icon` tracks `default` at 36px.
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
-        icon: "size-8",
-        "icon-lg": "size-9",
+        icon: "size-9",
       },
       // Radius belongs to the primitive, never to a call site. `pill` is the
-      // fully-rounded track used by full-width suggestion rows; everything
-      // else stays on the `rounded-sm` chrome tier.
+      // fully-rounded track used by full-width suggestion rows; `circle` is
+      // the round icon button — a chat send key, a FAB, a scroll-to-latest
+      // control. `circle` exists because FOUR separate files had hand-rolled
+      // the same `rounded-full` + press + focus recipe rather than ask the
+      // primitive for it (see docs/button-audit-7-28.md §2b).
       shape: {
         default: "",
         pill: "rounded-full",
+        circle: "rounded-full",
       },
     },
     // Pill-shaped outline rows (the Ask AI suggestions) are list rows, not

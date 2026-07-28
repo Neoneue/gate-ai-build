@@ -2,8 +2,8 @@ import { CreditCard, Lock, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { OptionTile } from "@/components/ui/option-tile";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
 import { SetupIconChip, SetupScaffold } from "@/pages/onboarding-shared";
 
 /* ─── /setup-credits-default ────────────────────────────────────────────────
@@ -56,27 +56,21 @@ export function SetupCredits() {
             {AMOUNTS.map((value) => {
               const selected = amount === value;
               return (
-                <button
-                  aria-checked={selected}
-                  className={cn(
-                    "type-label-14 flex h-12 items-center justify-center rounded-sm border tabular-nums outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-                    selected
-                      ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/15 dark:text-blue-300"
-                      : "border-border bg-card text-foreground hover:border-input"
-                  )}
+                <OptionTile
                   key={value}
                   onClick={() => setAmount(value)}
-                  role="radio"
-                  type="button"
+                  selected={selected}
+                  size="lg"
+                  tone="accent"
                 >
                   ${value}
-                </button>
+                </OptionTile>
               );
             })}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg">
+            <Button size="default">
               <CreditCard aria-hidden data-icon="inline-start" />
               Add ${amount} in credits
             </Button>

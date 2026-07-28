@@ -1,5 +1,6 @@
-import { ChevronLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -36,18 +37,7 @@ export function RequestsFindings() {
     >
       {/* Back breadcrumb to Requests (top-left); View Conversation (top-right). */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <button
-          className="type-label-14 group relative inline-flex items-center gap-1 rounded-xs text-muted-foreground transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-          onClick={() => navigate("/messages")}
-          type="button"
-        >
-          <ChevronLeft
-            aria-hidden
-            className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-            strokeWidth={1.75}
-          />
-          Messages
-        </button>
+        <BackLink label="Messages" onClick={() => navigate("/messages")} />
         {row && (
           <Button
             onClick={() => navigate(`/conversations-trace/${row.conversation}`)}

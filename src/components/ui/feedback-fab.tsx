@@ -177,7 +177,12 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
                 type="button"
                 variant="outline"
               >
-                <Upload aria-hidden className="size-3.5" strokeWidth={1.75} />
+                <Upload
+                  aria-hidden
+                  className="size-3.5"
+                  data-icon="inline-start"
+                  strokeWidth={1.75}
+                />
                 Upload file
               </Button>
               <Button
@@ -187,7 +192,12 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
                 type="button"
                 variant="outline"
               >
-                <Camera aria-hidden className="size-3.5" strokeWidth={1.75} />
+                <Camera
+                  aria-hidden
+                  className="size-3.5"
+                  data-icon="inline-start"
+                  strokeWidth={1.75}
+                />
                 Capture screen
               </Button>
             </div>
@@ -216,14 +226,14 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
         {/* Footer */}
         <DialogFooter>
           <DialogClose
-            render={<Button size="lg" type="button" variant="outline" />}
+            render={<Button size="default" type="button" variant="outline" />}
           >
             Cancel
           </DialogClose>
           <Button
             disabled={messageIsEmpty}
             onClick={handleSubmit}
-            size="lg"
+            size="default"
             type="button"
           >
             Send feedback

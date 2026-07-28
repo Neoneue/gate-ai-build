@@ -30,13 +30,16 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
   return (
     <Menu>
       <MenuTrigger
-        render={<Button className={className} size="lg" variant="outline" />}
+        render={
+          <Button className={className} size="default" variant="outline" />
+        }
       >
         <span className="type-label-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
           className="ml-auto size-4 text-muted-foreground"
+          data-icon="inline-end"
           strokeWidth={1.75}
         />
       </MenuTrigger>

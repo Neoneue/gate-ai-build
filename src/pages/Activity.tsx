@@ -841,7 +841,7 @@ function UsageByKey({
           />
           <Button
             className="flex-1 md:flex-none"
-            size="lg"
+            size="default"
             type="button"
             variant="outline"
           >

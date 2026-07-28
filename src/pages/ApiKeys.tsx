@@ -1,11 +1,4 @@
-import {
-  BookOpen,
-  CircleCheck,
-  Copy,
-  KeyRound,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { BookOpen, CircleCheck, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   useNavigate,
@@ -16,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
   DialogClose,
@@ -44,7 +38,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
-import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { randomHex } from "@/lib/utils";
@@ -255,7 +248,7 @@ export function ApiKeys() {
 export function CreateKeyButton({
   onClick,
   children = "Create key",
-  size = "lg",
+  size = "default",
   disabled,
 }: {
   onClick: () => void;
@@ -305,7 +298,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           <CreateKeyButton onClick={onCreate}>
             Create your first key
           </CreateKeyButton>
-          <Button onClick={openDocs} size="lg" variant="outline">
+          <Button onClick={openDocs} size="default" variant="outline">
             <BookOpen aria-hidden data-icon="inline-start" />
             Read the quickstart
           </Button>
@@ -533,7 +526,7 @@ function KeysTable({
           </DialogHeader>
           <DialogFooter>
             <DialogClose
-              render={<Button size="lg" type="button" variant="outline" />}
+              render={<Button size="default" type="button" variant="outline" />}
             >
               Cancel
             </DialogClose>
@@ -544,7 +537,7 @@ function KeysTable({
                 }
                 setPendingRevoke(null);
               }}
-              size="lg"
+              size="default"
               type="button"
               variant="destructive"
             >
@@ -648,7 +641,7 @@ export function CreateKeyDialog({
               render={
                 <Button
                   onClick={() => onCancel?.()}
-                  size="lg"
+                  size="default"
                   type="button"
                   variant="outline"
                 />
@@ -658,7 +651,7 @@ export function CreateKeyDialog({
             </DialogClose>
             <Button
               disabled={!isValid}
-              size="lg"
+              size="default"
               type="submit"
               variant="default"
             >
@@ -684,10 +677,6 @@ export function KeyCreatedDialog({
   onClose: () => void;
 }) {
   const [saved, setSaved] = useState(false);
-  const { copied, trigger } = useCopyFeedback({
-    value: fullKey ?? "",
-    label: "API key",
-  });
 
   return (
     <Dialog
@@ -724,23 +713,12 @@ export function KeyCreatedDialog({
           <div className="type-mono-14 flex-1 break-all px-3 py-2 text-foreground">
             {fullKey}
           </div>
-          <button
-            aria-label={copied ? "Copied" : "Copy API key"}
-            className="type-label-14 flex shrink-0 items-center gap-2 border-border border-l px-4 text-muted-foreground transition-[colors,scale] duration-150 ease-out hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-            onClick={trigger}
-            type="button"
-          >
-            {copied ? (
-              <CircleCheck
-                aria-hidden
-                className="size-4 text-success-600"
-                strokeWidth={1.75}
-              />
-            ) : (
-              <Copy aria-hidden className="size-4" strokeWidth={1.75} />
-            )}
-            {copied ? "Copied!" : "Copy"}
-          </button>
+          <CopyButton
+            label="API key"
+            mode="label"
+            size="segment"
+            value={fullKey ?? ""}
+          />
         </div>
 
         {/* Warning callout — same tinted-card recipe as <CreateKeyDialog>. */}
@@ -778,7 +756,7 @@ export function KeyCreatedDialog({
             render={
               <Button
                 disabled={!saved}
-                size="lg"
+                size="default"
                 type="button"
                 variant="default"
               />

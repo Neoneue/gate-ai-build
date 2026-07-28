@@ -14,9 +14,11 @@ import { cn } from "@/lib/utils";
 /* ─── AskAiEmptyState — the panel's zero-message surface ─────────────────────
  * Shown while `messages.length === 0`; the thread replaces it the moment the
  * first turn exists. Layout is Figma (node 1114:6477): 32px agent mark, 24px
- * gap, the 18px title, 24px gap, then four 44px pills at 8px pitch.
+ * gap, the 18px title, 24px gap, then four pills at 8px pitch. The pills are
+ * 36px, not the mock's 44px: `xl` was deleted on 2026-07-28 when the size scale
+ * was realigned to shadcn's (`default` is the largest). Reconcile with Figma.
  *
- * The pills are `<Button shape="pill" size="xl" variant="outline">` — the
+ * The pills are `<Button shape="pill" size="default" variant="outline">` — the
  * outline recipe already IS the mock's resting chrome (`border-border bg-card
  * shadow-xs`), so nothing about how they look is set here. `className` carries
  * layout only (`w-full justify-between`).
@@ -78,12 +80,16 @@ export function AskAiEmptyState({ className, onSelect }: AskAiEmptyStateProps) {
               className="w-full justify-between"
               onClick={() => onSelect(label)}
               shape="pill"
-              size="xl"
+              size="default"
               type="button"
               variant="outline"
             >
               <span className="flex items-center gap-3">
-                <Icon aria-hidden className="size-5" strokeWidth={1.75} />
+                {/* No size class — the Button primitive sizes unclassed SVGs
+                    to 16px, which is the step below the 20px this used to
+                    hard-code. shadcn's icons.md: no sizing classes on icons
+                    inside a component that already sizes them. */}
+                <Icon aria-hidden strokeWidth={1.75} />
                 <span className="type-label-14">{label}</span>
               </span>
               <ArrowRight

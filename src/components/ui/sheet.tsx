@@ -131,7 +131,7 @@ function SheetContent({
             render={
               <Button
                 className="absolute top-2 right-2"
-                size="icon-lg"
+                size="icon"
                 variant="ghost"
               />
             }
@@ -179,7 +179,9 @@ function SheetFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button size="lg" variant="outline" />}>
+        <DialogPrimitive.Close
+          render={<Button size="default" variant="outline" />}
+        >
           Close
         </DialogPrimitive.Close>
       )}

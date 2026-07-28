@@ -1,5 +1,6 @@
 import { Plus, Send, Square } from "lucide-react";
 import { type KeyboardEvent, type RefObject, useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { AskAiPhase } from "@/hooks/use-ask-ai-thread";
 import { cn } from "@/lib/utils";
 
@@ -31,13 +32,10 @@ const PLACEHOLDER_BY_PHASE: Partial<Record<AskAiPhase, string>> = {
   replying: "The Gatekeeper is replying…",
 };
 
-/* Shared circular-action recipe. Mirrors the <Button> press convention:
-   scale-DOWN to 0.98 over 150ms ease-out, promoted with will-change-transform,
-   and dropped entirely under prefers-reduced-motion. `shadow-xs` is the repo's
-   button/card lift tier (design.md §5) and the equivalent of the mock's
-   `shadow/sm` — it is theme-aware, unlike Tailwind's stock shadow. */
-const ACTION_BUTTON =
-  "flex shrink-0 select-none items-center justify-center rounded-full shadow-xs outline-none transition-[colors,opacity,box-shadow,scale] duration-150 ease-out will-change-transform focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+/* The two action keys are `Button shape="circle"` — the press convention,
+   focus ring, and reduced-motion handling all come from the primitive. This
+   file used to carry its own hand-rolled copy of that recipe; it doesn't
+   any more. */
 
 export interface AskAiComposerProps {
   className?: string;
@@ -106,35 +104,34 @@ export function AskAiComposer({
         value={value}
       />
       <div className="flex h-8 items-center justify-between">
-        <button
+        <Button
           aria-label="Add context"
-          className={cn(
-            ACTION_BUTTON,
-            "size-6 border border-border bg-control-raised text-accent-foreground"
-          )}
+          shape="circle"
+          size="icon-xs"
           type="button"
+          variant="raised"
         >
-          <Plus aria-hidden className="size-4" strokeWidth={1.75} />
-        </button>
+          <Plus aria-hidden strokeWidth={1.75} />
+        </Button>
         {/* One 32px circle in two roles — send, or stop while the agent works
             (Figma swaps the glyph to `Icon / Square`, node `1125:5428`). The
-            BUTTON stops without sending; Enter with text sends and interrupts. */}
-        <button
+            BUTTON stops without sending; Enter with text sends and interrupts.
+            `opacity-*` is state, not chrome — the only thing this call site is
+            allowed to say about how the control looks. */}
+        <Button
           aria-label={isBusy ? "Stop replying" : "Send message"}
-          className={cn(
-            ACTION_BUTTON,
-            "size-8 bg-primary text-primary-foreground-soft",
-            hasText || isBusy ? "opacity-100" : "opacity-50"
-          )}
+          className={hasText || isBusy ? "opacity-100" : "opacity-50"}
           onClick={isBusy ? onStop : submit}
+          shape="circle"
+          size="icon-sm"
           type="button"
         >
           {isBusy ? (
-            <Square aria-hidden className="size-4" strokeWidth={1.75} />
+            <Square aria-hidden strokeWidth={1.75} />
           ) : (
-            <Send aria-hidden className="size-4" strokeWidth={1.75} />
+            <Send aria-hidden strokeWidth={1.75} />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

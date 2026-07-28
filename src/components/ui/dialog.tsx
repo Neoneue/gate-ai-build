@@ -314,7 +314,9 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button size="lg" variant="outline" />}>
+        <DialogPrimitive.Close
+          render={<Button size="default" variant="outline" />}
+        >
           Close
         </DialogPrimitive.Close>
       )}

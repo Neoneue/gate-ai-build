@@ -92,7 +92,7 @@ export function SignIn() {
               </InputGroup>
             </Field>
 
-            <Button className="relative w-full" size="lg" type="submit">
+            <Button className="relative w-full" size="default" type="submit">
               Sign in
               <ArrowRight
                 aria-hidden
@@ -104,17 +104,17 @@ export function SignIn() {
 
             <Button
               className="w-full"
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >
-              <KeyRound className="size-4" />
+              <KeyRound className="size-4" data-icon="inline-start" />
               Continue with a passkey
             </Button>
 
             <Button
               className="w-full"
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >

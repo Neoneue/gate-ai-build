@@ -97,11 +97,12 @@ export function AskAiPanel({
         {/* Session picker affordance — visual only (unwired). Matches the
             WorkspaceSwitcher trigger: outline button, copy-14 label, muted
             ChevronsUpDown caret. */}
-        <Button size="lg" type="button" variant="outline">
+        <Button size="default" type="button" variant="outline">
           <span className="type-label-14 text-foreground">New session</span>
           <ChevronsUpDown
             aria-hidden
             className="size-4 text-muted-foreground"
+            data-icon="inline-end"
             strokeWidth={1.75}
           />
         </Button>
@@ -110,7 +111,7 @@ export function AskAiPanel({
           <Button
             aria-label="New chat"
             onClick={handleReset}
-            size="icon-lg"
+            size="icon"
             type="button"
             variant="ghost"
           >
@@ -119,7 +120,7 @@ export function AskAiPanel({
           <Button
             aria-label="Collapse Ask AI panel"
             onClick={onClose}
-            size="icon-lg"
+            size="icon"
             type="button"
             variant="ghost"
           >

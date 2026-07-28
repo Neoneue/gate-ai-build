@@ -71,8 +71,15 @@ interface CopyButtonIconProps extends CopyButtonBaseProps {
  *   - 'sm'      : 32px tall (h-8) — matches `<Button size="sm">` so a copy
  *                 button can sit alongside other `sm` buttons in modal
  *                 footers (CMP-013 / CMP-014) without optical mismatch.
+ *   - 'segment' : full-height flush segment of a SPLIT WELL — no radius, no
+ *                 border except the left hairline divider, stretches to the
+ *                 well's height. For the "value | Copy" merged surface (the
+ *                 ApiKeys reveal-key dialog). Added 2026-07-28: that dialog
+ *                 had hand-rolled this exact chrome because no mode fit, and
+ *                 `compact`/`sm` would float a short button inside a taller
+ *                 well. The recipe below is the hand-rolled one verbatim.
  */
-export type CopyLabelSize = "compact" | "sm";
+export type CopyLabelSize = "compact" | "sm" | "segment";
 
 interface CopyButtonLabelProps extends CopyButtonBaseProps {
   mode: "label";
@@ -107,10 +114,14 @@ export function CopyButton(props: CopyButtonProps) {
         className={cn(
           labelSize === "compact" &&
             "h-6 gap-1 px-2 font-medium text-muted-foreground hover:text-foreground",
+          // Flush split-well segment: kill the primitive's radius, border,
+          // and fixed height so the segment IS the well's right-hand half.
+          labelSize === "segment" &&
+            "type-label-14 h-auto self-stretch rounded-none border-0 border-border border-l bg-transparent px-4 text-muted-foreground shadow-none hover:bg-accent hover:text-foreground",
           className
         )}
         onClick={trigger}
-        size={labelSize === "sm" ? "sm" : "xs"}
+        size={labelSize === "sm" || labelSize === "segment" ? "sm" : "xs"}
         type="button"
         variant="outline"
       >

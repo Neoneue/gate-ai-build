@@ -662,8 +662,6 @@ function FindingSwitcherCard({
   // unselected group from offering controls that do nothing visible yet.
   const atStart = !isActive || pos <= 0;
   const atEnd = !isActive || pos >= total - 1;
-  const paddle =
-    "inline-flex size-8 items-center justify-center rounded-xs border border-border bg-card text-muted-foreground shadow-xs outline-none transition-[colors,scale] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 hover:bg-accent hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100";
   return (
     <div
       className={[
@@ -705,24 +703,26 @@ function FindingSwitcherCard({
           Finding {pos + 1} of {total}
         </span>
         <div className="relative z-10 flex items-center gap-1">
-          <button
+          <Button
             aria-label={`Previous ${CATEGORY_LABEL[current.category]} finding`}
-            className={paddle}
             disabled={atStart}
             onClick={() => onSelect(items[Math.max(0, pos - 1)].idx)}
+            size="icon-sm"
             type="button"
+            variant="outline"
           >
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
+            <ChevronLeft />
+          </Button>
+          <Button
             aria-label={`Next ${CATEGORY_LABEL[current.category]} finding`}
-            className={paddle}
             disabled={atEnd}
             onClick={() => onSelect(items[Math.min(total - 1, pos + 1)].idx)}
+            size="icon-sm"
             type="button"
+            variant="outline"
           >
-            <ChevronRight className="size-4" />
-          </button>
+            <ChevronRight />
+          </Button>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
-import { ChevronLeft } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { BackLink } from "@/components/ui/back-link";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { ConversationDetailBody } from "./conversations/ConversationDetail";
@@ -37,18 +37,10 @@ export function ConversationsTrace() {
       {/* Back breadcrumb to Conversations (top-left); Copy ID + View Request
           (top-right), mirroring the Requests findings page. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <button
-          className="type-label-14 group relative inline-flex items-center gap-1 rounded-xs text-muted-foreground transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        <BackLink
+          label="Conversations"
           onClick={() => navigate("/conversations")}
-          type="button"
-        >
-          <ChevronLeft
-            aria-hidden
-            className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-            strokeWidth={1.75}
-          />
-          Conversations
-        </button>
+        />
       </div>
 
       {row ? (

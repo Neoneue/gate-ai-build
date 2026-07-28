@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
+import { ExpandingAction } from "@/components/ui/expanding-action";
 import { Label } from "@/components/ui/label";
 import { SearchInput } from "@/components/ui/search-input";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -233,7 +234,7 @@ export function EventsTableSection({
               }
               className="flex-1 border-border bg-card text-foreground md:flex-none"
               onClick={openFilters}
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >
@@ -255,7 +256,7 @@ export function EventsTableSection({
 
             <Button
               className="flex-1 md:flex-none"
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >
@@ -346,7 +347,7 @@ export function EventsTableSection({
               <Button
                 disabled={draftActiveFilterCount === 0}
                 onClick={resetFilters}
-                size="lg"
+                size="default"
                 type="button"
                 variant="ghost"
               >
@@ -354,11 +355,13 @@ export function EventsTableSection({
               </Button>
               <div className="flex items-center gap-2">
                 <DialogClose
-                  render={<Button size="lg" type="button" variant="outline" />}
+                  render={
+                    <Button size="default" type="button" variant="outline" />
+                  }
                 >
                   Cancel
                 </DialogClose>
-                <Button onClick={applyFilters} size="lg" type="button">
+                <Button onClick={applyFilters} size="default" type="button">
                   Apply
                 </Button>
               </div>
@@ -569,22 +572,15 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 Invalid
               </Badge>
             ) : (
-              <button
+              <ExpandingAction
                 aria-label="Mark event invalid"
-                className="type-label-12 group/mark relative inline-flex h-8 w-8 shrink-0 items-center overflow-hidden whitespace-nowrap rounded-sm border border-border bg-card text-foreground outline-none [transition:width_300ms_var(--ease-drawer),scale_150ms_var(--ease-out)] after:absolute after:-inset-2 after:content-[''] hover:w-30 hover:bg-accent focus-visible:w-30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                icon={Flag}
+                label="Mark invalid"
                 onClick={() => {
                   setMarked(true);
                   toast.success("Event marked as invalid");
                 }}
-                type="button"
-              >
-                <span className="inline-flex size-8 shrink-0 items-center justify-center">
-                  <Flag aria-hidden className="size-3.5" strokeWidth={1.75} />
-                </span>
-                <span className="pr-3 opacity-0 transition-opacity duration-200 ease-out group-hover/mark:opacity-100 group-focus-visible/mark:opacity-100">
-                  Mark invalid
-                </span>
-              </button>
+              />
             )
           }
           titleAriaLabel={`Security event ${requestId}`}

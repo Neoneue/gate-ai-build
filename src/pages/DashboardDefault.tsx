@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { DownloadIcon } from "@/components/ui/download";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
+import { MiniRadio, MiniRadioGroup } from "@/components/ui/mini-radio-group";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -154,28 +155,17 @@ function HeroCodeTab({
           className={`flex items-center gap-4 border-border border-b px-4 ${lockMode ? "h-10 justify-start" : "justify-between py-2"}`}
         >
           {!lockMode && (
-            <div
-              aria-label="Gateway billing mode"
-              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm border border-border bg-card px-1"
-              role="radiogroup"
-            >
+            <MiniRadioGroup aria-label="Gateway billing mode">
               {(["byok", "payg"] as const).map((m) => (
-                <button
-                  aria-checked={mode === m}
-                  className={`type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${
-                    mode === m
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-muted-foreground"
-                  }`}
+                <MiniRadio
                   key={m}
                   onClick={() => onModeChange?.(m)}
-                  role="radio"
-                  type="button"
+                  selected={mode === m}
                 >
                   {m.toUpperCase()}
-                </button>
+                </MiniRadio>
               ))}
-            </div>
+            </MiniRadioGroup>
           )}
           <span className="type-copy-12 text-muted-foreground">
             {caption ?? HERO_MODE_CAPTIONS[effectiveMode]}
@@ -376,7 +366,7 @@ export function DownloadGateConnectDialog({
     >
       <DialogTrigger
         render={
-          <Button size="lg">
+          <Button size="default">
             <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}
             Download Gate Connect
           </Button>
@@ -514,7 +504,7 @@ export function DownloadGateConnectDialog({
               onDownload?.();
               setOpen(false);
             }}
-            size="lg"
+            size="default"
           >
             <Download className="size-4" data-icon="inline-start" /> Download
             for {spec.label}
@@ -622,7 +612,7 @@ export function HeroCard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/api-keys")} size="lg">
+            <Button onClick={() => navigate("/api-keys")} size="default">
               <Plus
                 className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
                 data-icon="inline-start"
@@ -637,7 +627,7 @@ export function HeroCard() {
                   "noopener,noreferrer"
                 )
               }
-              size="lg"
+              size="default"
               variant="outline"
             >
               Read API docs{" "}
