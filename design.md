@@ -32,6 +32,10 @@ colors:
   accent: "oklch(0.960 0 0)"             # neutral-100
   accent-foreground: "oklch(0.090 0 0)"
   control-raised: "#FFFFFF"              # raised icon-only control chip on a muted surface (dark: neutral-700)
+  chat-bubble-user: "oklch(0.970 0 0)"   # neutral-100 — Ask AI user bubble (dark: neutral-800)
+  chat-bubble-user-foreground: "oklch(0.145 0 0)"  # neutral-950 (dark: neutral-100)
+  chat-bubble-agent: "#FFFFFF"           # Ask AI agent bubble (dark: neutral-950)
+  chat-bubble-agent-foreground: "oklch(0.205 0 0)" # neutral-900 (dark: neutral-200)
   destructive: "oklch(0.577 0.245 27.325)"  # danger-600
   border: "oklch(0.910 0 0)"             # neutral-200
   input: "oklch(0.820 0 0)"              # neutral-300 (bumped from neutral-200 on 2026-05-15)
@@ -511,6 +515,10 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--sidebar-accent` / `--sidebar-border` | neutral-100 / neutral-200 | neutral-800 / white @ 10% |
 | `--surface-strong` / `-foreground` | neutral-900 / neutral-50 | **same in both themes** |
 | `--control-raised` *(added 2026-07-27)* | white | neutral-700 |
+| `--chat-bubble-user` *(added 2026-07-27)* | neutral-100 | neutral-800 |
+| `--chat-bubble-user-foreground` *(added 2026-07-27)* | neutral-950 | neutral-100 |
+| `--chat-bubble-agent` *(added 2026-07-27)* | white | neutral-950 |
+| `--chat-bubble-agent-foreground` *(added 2026-07-27)* | neutral-900 | neutral-200 |
 
 Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
 
@@ -541,6 +549,30 @@ neutral-900); this token deliberately stays *lighter than whatever surface is
 beneath it* in both themes, because it is a raised control, not a panel. For
 hover / active fills keep using `--accent`; for panels keep `--card` /
 `--card-muted`.
+
+**Ask AI chat bubbles (added 2026-07-27).** Two surface+ink pairs for the two
+conversational surfaces in the Ask AI panel: `--chat-bubble-user` /
+`-foreground` and `--chat-bubble-agent` / `-foreground`. Values transcribed
+from the Figma light/dark twins (Research `1096:5471` / `1114:7141` light,
+`1108:4193` / `1125:4374` dark). Utilities: `bg-chat-bubble-user`,
+`text-chat-bubble-user-foreground`, and the agent equivalents.
+
+Neither pair can reuse an existing token, which is why they exist:
+
+- The **agent** bubble must sit **lighter than the panel in light** (white on
+  the white card, edge carried by `border-border`) and **darker in dark**
+  (neutral-950 recessed under the neutral-900 card). No token inverts that way.
+  `--card` follows the card (white / neutral-900), so dark would read flush
+  rather than recessed; `--background` is the page canvas, which §2 bars from
+  darkening a component.
+- The **user** bubble cannot take `--secondary` or `--muted`: both are
+  neutral-800 in dark — identical to `--card-muted` on the composer — so the
+  user chip and the composer would collapse into one value.
+
+Together the tokens keep the two bubbles distinguishable from each other, from
+the composer, and from the panel, in both themes. Scoped to the Ask AI panel;
+they are not a general elevation tier (use `--card-muted` / `--control-raised`
+for that).
 
 **`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
 
@@ -666,7 +698,7 @@ it sits beside (`type-mono-14` is the default, twinning `type-copy-14`). Apply
 color (`text-foreground` / `text-muted-foreground`), alignment (`text-right`),
 and `whitespace-nowrap` at the call site; the token owns only font + size +
 weight + tabular figures. Non-data text keeps `type-copy-*` / `type-label-*`;
-code blocks, eyebrows, and terminal chrome keep their own voices.
+code blocks, eyebrows, and terminal chrome keep their own voices. **One scoped exception exists — see "Exception: Ask AI reply prose" below; it does NOT relax this rule anywhere else.**
 
 **Usage rule:** when one of the semantic roles above fits, use it in page code.
 Only compose raw text utilities when a role truly does not exist yet; then
@@ -690,6 +722,29 @@ Each voice has a single job; mixing them is the drift surface. **Critical rule:*
 | **Data** | `font-mono tabular-nums` | Table cells, IDs, codes, hashes, model identifiers, modal sub-tier numerics — *raw data* |
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
+
+### Exception: Ask AI reply prose *(2026-07-27)*
+
+**What.** Inside an **Ask AI agent reply**, inline `code` and fenced `pre`
+render in the **sans body voice** (`type-copy-14-tight`) on a `bg-muted` chip /
+block — **not** the mono `type-mono-*` Data voice that the rule above would
+otherwise require for code.
+
+**Why.** Replies are long-form reading. Mono degrades legibility across that
+length, and a reply can be many screens of it. Figma renders the reply's code
+spans in sans (`1125:4374`, chip e.g. `1125:4391`), and the user confirmed the
+reasoning on 2026-07-27.
+
+**Scope — Ask AI reply content ONLY.** This applies to markdown rendered inside
+`AgentMessage` / `ReplyProse` (`src/components/ui/ask-ai-message.tsx`) and
+nowhere else. The mono Data voice still governs, unchanged, for: table cells
+and all numerics, IDs, hashes, key and model identifiers, request/transcript
+surfaces, `CodeCard` / `CodeBlock`, `InlineCode`, `CodePanel`, badges,
+eyebrows, and terminal chrome. Do not generalise this exception outward from
+the chat panel.
+
+**Do not revert.** Sans code inside a reply looks like a violation of the
+five-voice rule and is intentional. Do not "fix" it back to mono.
 
 ### Principles
 

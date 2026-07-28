@@ -35,6 +35,21 @@ The Ask AI composer's two icon buttons needed color pairs no existing semantic t
 - **`--primary-foreground-soft`** — light neutral-200 / dark neutral-800. A softened on-primary ink for **icon-only** primary actions. Full white flares against the neutral-900 fill at 16px and reads heavier than the stroke is. Deliberately identical to `--primary-foreground` in dark, so it is a no-op there. Text-sized on-primary content stays on `--primary-foreground`.
 - **`--control-raised`** — light white / dark neutral-700. Fill for a small icon-only control that must read as a discrete chip on a muted card surface. `--accent` (neutral-100) sits one ramp step off the neutral-50 shell and smudges at 24px. Dark matches what `--accent` already resolved to, so it is a no-op there too. Not a substitute for `--card`: a card inverts with the theme, this token stays lighter than whatever is beneath it in both.
 
+### Four chat-bubble tokens, and a sans exception for reply prose `68d0b9a`
+
+**`src/index.css`** · **`design.md`**
+
+Bubble surfaces and inks needed pairs no existing semantic token supplied — `--card` is white/neutral-900, `--secondary` neutral-100/neutral-800, neither of which reproduces the Figma twins. Values re-read from the light/dark twins rather than carried over from the interim build, which had two inks wrong.
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--chat-bubble-user` | neutral-100 | neutral-800 |
+| `--chat-bubble-user-foreground` | neutral-950 | neutral-100 |
+| `--chat-bubble-agent` | white | neutral-950 |
+| `--chat-bubble-agent-foreground` | neutral-900 | neutral-200 |
+
+`design.md` also gains a first-class **"Exception: Ask AI reply prose"** block in §3 Typography, cross-referenced from the Data-voice rule: inline `code` and `pre` inside an agent reply render in the **sans** body voice, not the mono Data voice, because replies are long-form reading and mono degrades legibility at that length. Figma renders it sans and the user confirmed the reasoning. Scope is bounded to reply content — table cells, numerics, IDs, hashes, transcript surfaces, `InlineCode`, `CodePanel`, and `CodeCard` all stay mono — with a do-not-revert line, since it reads like a violation of the five-voice rule and is intentional.
+
 ## Components
 
 ### Ask AI top-bar button + docked chat-panel shell `389f73e`
@@ -97,6 +112,33 @@ The panel's empty scroll body becomes a real chat layout, built to Figma node `1
 `PaginationEllipsis` renders a `.sr-only` span, which Tailwind styles `position: absolute`. The wrapper was static, so the span's containing block was the initial containing block rather than the scroll container. Deep inside a scrolled table it resolved to a document offset far below the viewport (y 2035 against a 762px viewport on `/security`), inflating `<html>`'s scroll height while `body` and `#root` stayed at 762 — the page scrolled well past the app shell into empty background. The shell's `lg:overflow-hidden` could not clip it: an absolutely positioned element escapes an overflow ancestor that is not its containing block.
 
 Fixed by adding `relative` to the wrapper. It is `flex size-8` with no offsets, so this is containment only, no visual change. Hit every page whose paginated table showed the ellipsis.
+
+### Ask AI chat bubbles + markdown reply scope `68d0b9a`
+
+**`src/components/ui/ask-ai-message.tsx`** (new) · **`src/components/ui/ask-ai-placeholder-thread.tsx`** (new) · **`src/components/ui/ask-ai-panel.tsx`**
+
+The panel's empty message region becomes the conversation surface. `MessageThread` stacks turns at `gap-4`; `UserMessage` is right-aligned at `px-4 py-3` on `bg-chat-bubble-user`; `AgentMessage` is left-aligned at `p-4` on `bg-chat-bubble-agent` with `border-border`. Both `rounded-md`, 16px inset from each panel edge, 16px clear of the composer.
+
+- **`ReplyProse` is a descendant-selector scope, not a layout.** It styles by element type (`[&_h3]:…`, `[&_p]:…`), so when the real agent's markdown lands it needs no restyling. Voices mapped from Figma: `p`/`li` → `type-copy-14-tight`, `h3` → `type-heading-16` + rule + `pb-2`, `strong` → `font-medium`, links underline-only. `h1`/`h2`/`h4` take the neighbouring rungs of the same ladder — Figma's source markdown only used `###`.
+- **Block rhythm: 20px between blocks, 28px above a heading, 4px between list items.** Figma's *declared* 8px auto-layout gap and its *rendered* 20–36px disagree, because the mock's text frames carry pasted-markdown blank lines a renderer never emits; the values come from pixel-measuring the render. Built on flex `gap-5` + `[&>*+h1,…]:mt-2` rather than `[&>*+*]:mt-5` — the sibling selector is (0,1,0) and silently loses to the `[&_p]:m-0` reset at (0,1,1), so the first implementation did nothing at all.
+- **Inline `code` is sans**, per the new design.md exception. Chips render on `bg-muted rounded-xs` with no literal backticks (Figma's are a paste artifact).
+- Each reply carries the completion action row — 4 × 24px unwired icon buttons at `text-muted-foreground`.
+- **Placeholder copy is doc-sourced, not mock-sourced.** Reconciled against [the live quickstart](https://docs.constellationgate.ai/getting-started/quickstart-gate-connect): Figma's "Step 3. Turn off your apps" is a typo (the doc says *Turn on*), its download link label was wrong, and it added five bolds the doc doesn't have. The doc's routing screenshot is omitted — agents can't render images. Marked as placeholder in its own file so the swap to live data is obvious.
+
+### Ask AI scroll-to-latest FAB `68d0b9a`
+
+**`src/components/ui/ask-ai-scroll-to-latest.tsx`** (new) · **`src/components/ui/ask-ai-panel.tsx`**
+
+32px circular control with a 16px `ArrowDown`, floating 16px above the composer and 16px off the panel's right edge (Figma `1149:10955` light / `1125:4280` dark). Positioned against the body wrapper's existing `px-4` / `gap-4`, so both offsets survive the composer growing. Fill is `bg-control-raised` — the same token as the composer's plus button, so the two circular controls stay consistent — with `shadow-(--shadow-card-soft)` in the runtime `var()` form so the shadow actually flips between themes.
+
+Visible only when the thread **both** overflows and sits **more than 60px** off the bottom. A smaller threshold is a known bug source: ordinary content growth briefly opens a gap and reads as a user scroll.
+
+- **IntersectionObserver sentinel, not a scroll handler** — a zero-height last child observed against the region with `rootMargin: "0px 0px 60px 0px"`. Overflow is tracked by a `ResizeObserver`, so it will follow streaming growth without a scroll listener anywhere.
+- **`overflow-anchor` does the pinning in CSS** — `none` on the thread wrapper, `auto` on the sentinel. The view stays pinned to the bottom as content grows and releases when the user scrolls the sentinel out of view, with no JS. The wrapper exists specifically so the two rules sit on different elements; as a `[&>*]` rule plus a sentinel override they would tie at (0,1,0) and be decided by emit order.
+- **A gesture mid-animation cancels the smooth scroll** via `scrollTo({top: el.scrollTop, behavior: "instant"})` bound to `wheel`/`touchmove`/`keydown`, so a user scrolling during the animation doesn't fight it into a bounce.
+- Hidden state is `aria-hidden` + `tabIndex -1` + `pointer-events-none`. `motion-reduce` drops both the smooth scroll and the press scale.
+
+Behavior follows the established streaming-chat pattern rather than the mock, which can only draw the control statically. Deliberately **not** copied from ChatGPT: its habit of stopping auto-follow once one response fills the viewport. Verified in both themes — hidden at 30px scrolled up, visible at 200px, never present on a non-overflowing thread, and no layout shift between states.
 
 ## Sections
 
