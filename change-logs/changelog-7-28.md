@@ -24,6 +24,18 @@ The pattern for any future streaming surface, and a correction to a claim made e
 
 No scroll listener anywhere — it reuses the FAB's existing IntersectionObserver and the input handlers already bound for smooth-scroll cancellation. Verified: gap held at `0` across 12 samples through a full reply; scrolling up mid-stream stopped the follow and surfaced the FAB; the FAB press resumed it.
 
+### Every label takes the label voice, at `font-medium` `30de622`
+
+**`design.md` §3 · `.claude/rules/no-handrolling.md` (new) · `scripts/check-design-tokens.mjs`**
+
+The sidebar's active nav item had regressed to 400, and the sweep that followed found the same defect everywhere: `type-copy-*` is body text at `font-normal`, and putting it on a label silently drops the label to 400. Because the voice sits on an inner `<span>`, it also overrides the `font-medium` the parent `Button` already set, which is invisible in review.
+
+**Before → after.** Nav items, tabs, pagination, select and multi-select items, table pagination footers, the workspace switcher, KPI tiles, and the page-level controls across ApiKeys, AuditTrail, Billing, BillingFree, Conversations, Dashboard, Limits, LimitsFree, Models, Team, TrendCard, RequestsTable, and EventsTable move `type-copy-*` → `type-label-*`. Pasted `font-normal` overrides come off `Button` call sites entirely: weight belongs to the primitive.
+
+**The test, applied in order:** if you can click it or it names something → Label; if it is prose the user reads → Copy; if it heads a section → Heading. Two carve-outs: segmented-control labels are the Eyebrow voice, and inline text links mid-sentence stay Copy. Quiet-looking labels still take the label voice — colour does the quiet work (`text-muted-foreground`), weight does the structural work.
+
+`design.md` §3 "Label voice — the enumeration" is the single source for which role takes which voice; `no-handrolling.md` deliberately does not keep a second list. `lint:design` now fails on a copy voice in the `className` of a button / trigger / menu-or-select item / `Label` / `CardTitle` / `SectionTitle` / `TableHead`, or on a `<span>` nested inside one. The check is conservative by design: it cannot see a voice applied through a shared `cva` recipe, passed as a prop, inherited from an ancestor, or *absent* altogether. Green lint is necessary, not sufficient.
+
 ## Components
 
 ### Ask AI panel becomes a working chat (scripted agent) `2cb2fe0`
@@ -41,6 +53,23 @@ The thread starts empty. Send a question and the user bubble appears immediately
 **Built for the swap.** `streamReply(question, { signal })` is an async generator yielding text chunks; replacing its body with a `fetch` + reader loop changes nothing else. No timers live in any component, and the `AbortController` is already threaded through so an interrupt will cancel the request rather than merely stopping the render. Plan for the real agent: [`plans/ask-ai-live-agent.md`](../plans/ask-ai-live-agent.md).
 
 The thinking row has **no Figma node** — none of the panel frames contains a thinking state — so it is built to a documented fallback: lucide `Brain`, `type-copy-14-tight`, `text-muted-foreground`, with the repo's `animate-ellipsis`. Reconcile when a node exists.
+
+### Manage subscription: the Pro dialog matches the Free one `8518ab2`
+
+**`src/pages/plan-comparison-dialog-pro.tsx`**
+
+The modal on `/billing` had lost the featured-card blue that `/billing-free` still showed. The two dialogs are separate files and had drifted well past that one difference.
+
+**Before → after**, each value copied verbatim from `plan-comparison-dialog.tsx`:
+
+- **Featured card** — `border-primary/30 ring-1 ring-primary/20` → the blue border + gradient (`border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25`, `dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5`). The root cause of the missing blue was upstream of the border: `bg-card` sat in the card's *base* class string and painted over any gradient. It now lives in the non-featured branch only.
+- **Benefit icons** — the `size-7 rounded-sm bg-muted` chip wrapper comes off; the bare `mt-1 size-4 shrink-0` icon takes the featured / unfeatured split (`text-blue-700 dark:text-blue-400` vs `text-muted-foreground`). `aria-hidden` moves onto the icon.
+- **Price** — `type-heading-24` → `type-heading-32`. **CTA** — `size="sm"` → `size="lg"`.
+- **Sizing** — `sm:max-w-3xl` → `w-full … md:max-w-[720px]`, and the card grid `sm:grid-cols-2` → `md:grid-cols-2`. These move together: the cards must split at the same breakpoint the dialog reaches its cap, or they go side-by-side while it is still narrow.
+
+`PRO_PLAN` already carried `featured: true`, so the blue lands on the Pro card with no data change. Pro-state copy and CTAs are untouched (Free = enabled outline "Downgrade plan", Pro = disabled outline "Your current plan"), and the Free dialog's blue filled button + `SparklesIcon` are deliberately **not** ported — those belong to the "Upgrade to Pro" action. The blue on this dialog is card chrome, not button.
+
+**Open, not fixed.** The Pro card's CTA is a disabled outline button on the blue gradient, so the featured card has no accent-coloured element below the icon list. If that reads hollow, the fix is a `Button` variant, not a call-site override.
 
 ## Sections
 
