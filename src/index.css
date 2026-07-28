@@ -241,6 +241,23 @@ and (pointer: fine)) and (&:hover));
      is a control chip, not a panel, and it must stay LIGHTER than the surface
      under it in both themes rather than following the card inversion. */
   --control-raised: var(--color-white);
+  /* Ask AI chat bubbles. Two conversational surfaces that must stay legible
+     against the panel AND distinguishable from each other and from the
+     composer, in both themes. Neither can reuse an existing pair:
+       - The AGENT bubble has to sit LIGHTER than the panel in light (white on
+         the card) and DARKER in dark (neutral-950 under the neutral-900 card).
+         No token inverts that way — --card follows the card (white/neutral-900,
+         so dark reads flush, not recessed) and --background is the page canvas,
+         which design.md bars from darkening a component.
+       - The USER bubble cannot take --secondary/--muted: both are neutral-800
+         in dark, identical to --card-muted on the composer, so the user chip
+         and the composer would collapse into one value.
+     Values are transcribed from the Figma light/dark twins (Research
+     1096:5471 / 1114:7141 light, 1108:4193 / 1125:4374 dark). */
+  --chat-bubble-user: var(--color-neutral-100);
+  --chat-bubble-user-foreground: var(--color-neutral-950);
+  --chat-bubble-agent: var(--color-white);
+  --chat-bubble-agent-foreground: var(--color-neutral-900);
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Softened on-primary ink for icon-only primary actions (the Ask AI send
@@ -372,6 +389,10 @@ body {
   --color-surface-strong: var(--surface-strong);
   --color-surface-strong-foreground: var(--surface-strong-foreground);
   --color-control-raised: var(--control-raised);
+  --color-chat-bubble-user: var(--chat-bubble-user);
+  --color-chat-bubble-user-foreground: var(--chat-bubble-user-foreground);
+  --color-chat-bubble-agent: var(--chat-bubble-agent);
+  --color-chat-bubble-agent-foreground: var(--chat-bubble-agent-foreground);
   --radius-xs: calc(var(--radius) * 0.4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -461,6 +482,14 @@ body {
      on — the same value --accent carries in dark, so this is a visual no-op
      here. See the light definition for why the pair can't reuse --accent. */
   --control-raised: var(--color-neutral-700);
+  /* Chat bubbles invert as a pair — see the light definitions for why neither
+     can reuse --card or --secondary. The agent bubble goes RECESSED here
+     (neutral-950 under the neutral-900 panel), the mirror of the white-on-card
+     lift it has in light; the user chip stays raised at neutral-800. */
+  --chat-bubble-user: var(--color-neutral-800);
+  --chat-bubble-user-foreground: var(--color-neutral-100);
+  --chat-bubble-agent: var(--color-neutral-950);
+  --chat-bubble-agent-foreground: var(--color-neutral-200);
 
   --sidebar: var(--color-neutral-950);
   --sidebar-foreground: var(--color-neutral-50);

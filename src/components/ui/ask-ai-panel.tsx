@@ -1,5 +1,11 @@
 import { ChevronsUpDown, PanelRightClose, SquarePen } from "lucide-react";
+import { useRef } from "react";
 import { AskAiComposer } from "@/components/ui/ask-ai-composer";
+import { AskAiPlaceholderThread } from "@/components/ui/ask-ai-placeholder-thread";
+import {
+  ScrollBottomSentinel,
+  ScrollToLatestFab,
+} from "@/components/ui/ask-ai-scroll-to-latest";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +26,11 @@ export interface AskAiPanelProps {
 }
 
 export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
+  // The scrolling message region and the zero-height marker at its very end;
+  // ScrollToLatestFab watches one against the other.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   return (
     <div
       className={cn(
@@ -62,10 +73,36 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
       </div>
       {/* Body — 16px inset on left/right/bottom; the scrolling message region
           carries its own 16px top padding so the first message clears the top
-          bar by 16px while the scroll track still runs edge-to-edge. */}
-      <div className="flex min-h-0 flex-1 flex-col px-4 pb-4">
-        {/* Message region — intentionally empty; bubbles are a later step. */}
-        <div className="min-h-0 flex-1 overflow-y-auto pt-4" />
+          bar by 16px while the scroll track still runs edge-to-edge. `gap-4`
+          keeps the thread 16px clear of the composer — Figma's inter-turn
+          spacing (8px thread gap + 8px turn bottom padding) applied to the
+          thread/composer boundary. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pb-4">
+        {/* Non-scrolling wrapper: owns the flex sizing so the scroll-to-latest
+            control can anchor to the region's box without riding the scroll.
+            Its right edge is the body's `px-4` and its bottom edge is the
+            body's `gap-4`, which is exactly Figma's 16px / 16px offset pair —
+            so the FAB needs no hard-coded position of its own. */}
+        <div className="relative min-h-0 flex-1">
+          {/* Scrolling turn list. Placeholder content — see the const's header.
+              Scroll anchoring: the content wrapper opts OUT and the sentinel
+              opts IN, so the browser pins to the bottom for free while content
+              grows and releases once the user scrolls the sentinel out of view.
+              The two are separate elements rather than a `[&>*]` rule + an
+              override, so there is no specificity tie to lose. CSS only — the
+              streaming JS is a separate task. */}
+          <div className="h-full overflow-y-auto pt-4" ref={scrollRef}>
+            <div className="[overflow-anchor:none]">
+              <AskAiPlaceholderThread />
+            </div>
+            <ScrollBottomSentinel ref={sentinelRef} />
+          </div>
+          <ScrollToLatestFab
+            className="absolute right-0 bottom-0"
+            scrollRef={scrollRef}
+            sentinelRef={sentinelRef}
+          />
+        </div>
         <AskAiComposer className="shrink-0" />
       </div>
     </div>
