@@ -108,7 +108,12 @@ function PaginationEllipsis({
     <span
       aria-hidden
       className={cn(
-        "flex size-8 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
+        // `relative` is load-bearing: the nested .sr-only span is
+        // position:absolute, so without a positioned ancestor its containing
+        // block is the ICB. Deep inside the scrolled table it then lands at a
+        // document offset past the viewport and inflates <html>'s scroll
+        // height, letting the whole page scroll past the app shell.
+        "relative flex size-8 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
         className
       )}
       data-slot="pagination-ellipsis"
