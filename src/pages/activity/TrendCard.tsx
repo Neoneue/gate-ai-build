@@ -520,7 +520,7 @@ export function TrendCard({
             >
               <SelectTrigger
                 aria-label="Group spend by"
-                className="border-border bg-card font-normal text-foreground"
+                className="border-border bg-card text-foreground"
                 size="sm"
               >
                 <SelectValue />

@@ -691,9 +691,25 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 
 **Data-voice rule (mono).** The `type-mono-*` utilities are the codified
 `data` voice (see the taxonomy below). **Every data value — number, count,
-token total, currency, percentage, date/timestamp, ID, hash, key/model
+token total, currency, percentage, date/timestamp, ID, hash, and machine
 identifier — uses a `type-mono-*` token, never a hand-rolled
-`font-mono … tabular-nums` string.** Pick the size to match the sans copy tier
+`font-mono … tabular-nums` string.**
+
+**Carve-out: display names are NOT data *(ruled 2026-07-28)*.** Mono applies to
+the *machine* string, never to the human-readable name beside it. The test is
+whether a user would copy-paste it into a config file:
+
+| Mono (`type-mono-*`) | Sans (label or copy) |
+| --- | --- |
+| `anthropic/claude-opus-4.7` — the model **slug** | "Claude Opus 4.7" — the model **display name** |
+| `key_live_a1b2…`, request/conversation IDs, hashes | "Chad's workspace", a team member's name |
+| `gpt-4o-mini`, provider slugs, endpoint paths | "OpenAI", "Anthropic" as vendor labels |
+
+Model, vendor, workspace, key and project **display names take the sans voice**
+— `type-label-*` when they name a clickable row or control (the usual case in a
+table), `type-copy-*` only when they sit inside running prose. Do **not**
+re-mono them: they have always rendered sans, and the earlier wording ("key/model
+identifier") was read as covering display names, which it never did. Pick the size to match the sans copy tier
 it sits beside (`type-mono-14` is the default, twinning `type-copy-14`). Apply
 color (`text-foreground` / `text-muted-foreground`), alignment (`text-right`),
 and `whitespace-nowrap` at the call site; the token owns only font + size +
@@ -711,15 +727,66 @@ helper text size or spacing with one-off `text-*` / `mt-*` values.
 
 ### Five-voice taxonomy (codified 2026-05-07)
 
-Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
+Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum.
+
+**Split into separate Body and Label rows 2026-07-28**, after a site-wide audit. The
+single "Body / label" row read *"regular or `font-medium`"* while the rule below
+said labels are `font-medium` minimum — a contradiction inside one section, and
+the exact ambiguity that let ~20 call sites drift to 400. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
 
 | Voice | Recipe | Use |
 | ------- | -------- | ----- |
 | **Display headline / hero numeric** | `font-sans tabular-nums font-medium tracking-tight` (via `<HeroNumeric>`) | Page titles, KPI hero values (24px), full-page hero metrics (32px), panel heroes — *summary, look at this* |
-| **Body / label** | `font-sans` (regular or `font-medium`) | Card titles, page subtitles, button labels, key/project names, table column headers, **form / input labels** (`<Label>` primitive) — *human, read this* |
+| **Body** | `font-sans font-normal` (`type-copy-*`) | Paragraphs, descriptions, helper text, empty-state body, table cell content, timestamps, captions, inline text links mid-sentence, typed input values — *prose the user reads* |
+| **Label** | `font-sans font-medium` (`type-label-*`) | Anything the user can click, and anything that names something. See the enumeration below — *this names it, or you press it* |
 | **Eyebrow** | `font-mono uppercase tracking-[0.1em] font-medium` | Section eyebrows, KPI labels, segmented control labels, chrome strips — *what is this*. **Never use this for form/input labels** — those go in the Body/label row above. Mono UPPERCASE on a field label reads as a chrome strip, not as something the user is meant to fill in. |
 | **Badge / pill** | `font-mono tabular-nums font-medium text-xs` (via Badge default) | Status codes (`200`/`500`), counters, deltas, inline pills — *operational chrome* |
-| **Data** | `font-mono tabular-nums` | Table cells, IDs, codes, hashes, model identifiers, modal sub-tier numerics — *raw data* |
+| **Data** | `font-mono tabular-nums` | Table numerics, IDs, codes, hashes, slugs and machine identifiers, modal sub-tier numerics — *raw data*. **Display names are excluded** — see the carve-out above |
+
+### Label voice — the enumeration *(ruled 2026-07-28)*
+
+**The classification test.** Apply it in this order:
+
+1. **If you can click it, or it names something → Label** (`type-label-*`).
+2. **If it is prose the user reads → Copy** (`type-copy-*`).
+3. **If it heads a section → Heading** (`type-heading-*`).
+
+**Corollary — quiet labels stay 500.** A label that should recede goes quiet
+with `text-muted-foreground`, **never** with a lighter weight. Colour does the
+quiet work; weight does the structural work. Inactive nav items, inactive tabs,
+secondary actions and disabled controls are all still 500.
+
+**Every interactive and naming role takes `type-label-*`.** This list is
+exhaustive and is the single source — `.claude/rules/no-handrolling.md` cites
+it rather than restating it:
+
+| Role | Examples |
+| --- | --- |
+| Button labels | `<Button>`, raw `<button>`, icon+text buttons |
+| Nav items | Sidebar rail and expanded nav, mobile Sheet nav — **active and inactive alike** |
+| Tabs | `TabsTrigger`, both `default` and `line` variants, **active and inactive alike** |
+| Menu items | `SelectItem`, `MenuItem`, `DropdownMenuItem`, command-palette rows |
+| Select / combobox triggers | `SelectTrigger`, the MultiSelect `PopoverTrigger`, workspace switcher |
+| Dialog / popover / menu triggers | `DialogTrigger`, `PopoverTrigger`, `DropdownMenuTrigger`, `MenuTrigger` |
+| Link-buttons | Standalone `TextLink` controls — "Back to Models", "Show more", "Open in Explorer" |
+| Clickable card affordances | A whole card or KPI tile that navigates on click |
+| Pagination controls | Page numbers and prev/next — **current and non-current alike** |
+| Table column headers | `TableHead`, `SortableTableHead` |
+| Card titles | `CardTitle` |
+| Form / input labels | The `<Label>` primitive and any raw `<label>` |
+| `<dt>` terms | The term in a `<dl>`; the `<dd>` value stays Copy |
+| Key / project / entity display names | Model, vendor, workspace, API-key and team-member names — including when they are the clickable identifier of a table row |
+
+**Explicitly NOT Label** — these keep their own voice:
+
+| Not a label | Voice | Why |
+| --- | --- | --- |
+| Inline text links mid-sentence | Copy | It is prose that happens to be clickable |
+| Typed input values | Copy | A value the user entered, not a label on it |
+| Secondary identity lines (e.g. the email under a user's name) | Copy | A value beneath its label |
+| `<dd>` values | Copy | The term is the label; this is its value |
+| Segmented control labels | **Eyebrow** | Chrome strip — see the Eyebrow row above |
+| Table cell content | Copy, or Data when numeric/machine | Content, not a control |
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
 

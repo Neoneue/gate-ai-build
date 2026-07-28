@@ -494,7 +494,7 @@ function ConversationsTableSection({
             <Select onValueChange={setKeyId} value={keyId}>
               <SelectTrigger
                 aria-label="Key"
-                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+                className="flex-1 border-border bg-card text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Key" />
@@ -509,7 +509,7 @@ function ConversationsTableSection({
             <Select onValueChange={setModel} value={model}>
               <SelectTrigger
                 aria-label="Model"
-                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+                className="flex-1 border-border bg-card text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Model" />
@@ -639,7 +639,7 @@ function ConversationsTableSection({
                           }
                         >
                           <span
-                            className="type-copy-14 truncate text-foreground"
+                            className="type-label-14 truncate text-foreground"
                             title={row.title}
                           >
                             {row.title}

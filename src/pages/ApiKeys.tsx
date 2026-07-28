@@ -766,7 +766,7 @@ export function KeyCreatedDialog({
             onCheckedChange={(next) => setSaved(next === true)}
           />
           <Label
-            className="type-copy-14 text-muted-foreground"
+            className="type-label-14 text-muted-foreground"
             htmlFor="apikey-saved-confirm"
           >
             I&rsquo;ve saved this key to a secret manager.

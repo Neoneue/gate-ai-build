@@ -435,7 +435,7 @@ function DimSelector({
     <Select onValueChange={(v) => onDimChange(v as Dimension)} value={dim}>
       <SelectTrigger
         aria-label="Chart dimension"
-        className="border-border bg-card font-normal text-foreground"
+        className="border-border bg-card text-foreground"
         size="sm"
       >
         <SelectValue />
@@ -688,7 +688,7 @@ function PreviewCard({
       <div className="flex shrink-0 items-center justify-between px-4 py-3">
         <CardTitle>{title}</CardTitle>
         <Link
-          className="type-copy-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
           to={viewAllTo}
         >
           View all →

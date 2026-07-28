@@ -409,7 +409,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+              className="flex-1 border-border bg-card text-foreground md:flex-none"
               onClick={openFilters}
               size="lg"
               type="button"
@@ -431,7 +431,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ) : null}
             </Button>
             <Button
-              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+              className="flex-1 border-border bg-card text-foreground md:flex-none"
               disabled={isEmpty}
               size="lg"
               type="button"

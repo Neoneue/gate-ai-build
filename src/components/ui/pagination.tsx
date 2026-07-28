@@ -52,7 +52,7 @@ function PaginationLink({
     <Button
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "border-border font-normal text-muted-foreground tabular-nums -tracking-[0.01em]",
+        "border-border text-muted-foreground tabular-nums -tracking-[0.01em]",
         "hover:bg-accent hover:text-foreground",
         isActive &&
           "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary",

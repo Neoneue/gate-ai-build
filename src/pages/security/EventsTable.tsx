@@ -231,7 +231,7 @@ export function EventsTableSection({
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+              className="flex-1 border-border bg-card text-foreground md:flex-none"
               onClick={openFilters}
               size="lg"
               type="button"
@@ -285,7 +285,7 @@ export function EventsTableSection({
               <Select onValueChange={setDraftType} value={draftType}>
                 <SelectTrigger
                   aria-label="Type"
-                  className="w-full border-border bg-card font-normal text-foreground"
+                  className="w-full border-border bg-card text-foreground"
                   id="filter-type"
                 >
                   <SelectValue />
@@ -307,7 +307,7 @@ export function EventsTableSection({
               <Select onValueChange={setDraftAction} value={draftAction}>
                 <SelectTrigger
                   aria-label="Action"
-                  className="w-full border-border bg-card font-normal text-foreground"
+                  className="w-full border-border bg-card text-foreground"
                   id="filter-action"
                 >
                   <SelectValue />
@@ -326,7 +326,7 @@ export function EventsTableSection({
               <Select onValueChange={setDraftKeyFilter} value={draftKeyFilter}>
                 <SelectTrigger
                   aria-label="API key"
-                  className="w-full border-border bg-card font-normal text-foreground"
+                  className="w-full border-border bg-card text-foreground"
                   id="filter-key"
                 >
                   <SelectValue />

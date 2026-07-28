@@ -298,7 +298,7 @@ function MembersPane() {
             >
               <SelectTrigger
                 aria-label="Filter by role"
-                className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+                className="flex-1 border-border bg-card text-foreground md:flex-none"
                 size="lg"
               >
                 <SelectValue placeholder="Role" />
@@ -466,7 +466,7 @@ function MemberRowView({
           <Select onValueChange={(v) => setRole(v as MemberRole)} value={role}>
             <SelectTrigger
               aria-label={`Role for ${row.name}`}
-              className="w-28 border-border bg-card font-normal text-foreground"
+              className="w-28 border-border bg-card text-foreground"
               size="sm"
             >
               <SelectValue />

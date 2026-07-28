@@ -66,7 +66,7 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
             WorkspaceSwitcher trigger: outline button, copy-14 label, muted
             ChevronsUpDown caret. */}
         <Button size="lg" type="button" variant="outline">
-          <span className="type-copy-14 text-foreground">New session</span>
+          <span className="type-label-14 text-foreground">New session</span>
           <ChevronsUpDown
             aria-hidden
             className="size-4 text-muted-foreground"

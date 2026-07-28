@@ -30,6 +30,15 @@ lives in the reference docs linked below.
   semantic role is still hardcoding: it will not flip and is a defect.
   Literals live ONLY in the token-definition layer. No hand-rolling, no
   ad-hoc values. Full rule: @.claude/rules/no-hardcoding.md
+- **Never hand-roll a component. Compose the primitives.** The components in
+  `src/components/ui/` are a closed set, like the tokens. Never write a raw
+  `<button>` when `Button` exists; never re-specify what a `variant` already
+  gives you; never override a primitive's typography. A `className` on a
+  primitive is for LAYOUT ONLY (`flex-1`, `w-full`, `md:ml-auto`) — colors,
+  borders, radius, and font weight belong to the component. **All button
+  labels are `font-medium` (500)**, no exceptions. If a primitive doesn't fit,
+  change the primitive and document it in `design.md` — don't patch the call
+  site. Full rule: @.claude/rules/no-handrolling.md
 - **Don't thrash.** When the user says something "isn't working" / "still the
   same", PIN the surface (which route → which file) and confirm BEFORE editing
   or measuring. Revert failed fixes instead of patching forward. Full gate:

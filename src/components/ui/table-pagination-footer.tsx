@@ -112,7 +112,7 @@ export function TablePaginationFooter({
         >
           <SelectTrigger
             aria-label="Rows per page"
-            className="border-border bg-card font-normal text-foreground"
+            className="border-border bg-card text-foreground"
             size="sm"
           >
             <SelectValue />
