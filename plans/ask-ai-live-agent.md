@@ -119,11 +119,15 @@ guessing either.
 
 - Auto-scroll to bottom on new content, **suppressed if the user has scrolled
   up** (standard "stick to bottom unless they moved" check).
-- The **scroll-to-bottom FAB** (built separately, ahead of this work) already
-  keys its visibility off scroll position, so it needs no streaming-specific
-  wiring — it surfaces on its own when streamed content pushes below the fold.
-  Pressing it should also re-arm stick-to-bottom, so the thread resumes
-  following the stream.
+- **`overflow-anchor` does NOT do this** — corrected 2026-07-28 after
+  measurement. Scroll anchoring stabilises content changing *above* the
+  viewport; it never follows content appended *below* it. There is no native
+  CSS stick-to-bottom. The JS is small: the sentinel's IntersectionObserver
+  already tracks `isAtBottom`, so auto-follow is "when `isAtBottom` and content
+  grows, set `scrollTop = scrollHeight`".
+- The **scroll-to-bottom FAB** keys its visibility off scroll position, so it
+  needs no streaming-specific wiring. Pressing it should re-arm stick-to-bottom
+  so the thread resumes following the stream.
 - `aria-live="polite"` on the message region; `aria-label` on the stop button.
 - Announce the thinking state so it isn't a silent gap for screen readers.
 
