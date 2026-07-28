@@ -126,10 +126,10 @@ function PlanCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-md border bg-card p-4",
+        "flex flex-col gap-4 rounded-md border p-4",
         plan.featured
-          ? "border-primary/30 ring-1 ring-primary/20"
-          : "border-border"
+          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          : "border-border bg-card"
       )}
       data-plan-card
     >
@@ -137,7 +137,7 @@ function PlanCard({
         <p className="type-heading-18 m-0 text-foreground">{plan.title}</p>
       </div>
 
-      <h3 className="type-heading-24 m-0 text-foreground tabular-nums tracking-tight">
+      <h3 className="type-heading-32 m-0 text-foreground tabular-nums tracking-tight">
         {plan.price}
         <span className="type-copy-18 text-muted-foreground"> per month</span>
       </h3>
@@ -149,15 +149,16 @@ function PlanCard({
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {plan.features.map(({ Icon, title, detail }) => (
             <li className="flex items-start gap-3" key={title}>
-              <span
+              <Icon
                 aria-hidden
-                className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-sm bg-muted"
-              >
-                <Icon
-                  className="size-4 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </span>
+                className={cn(
+                  "mt-1 size-4 shrink-0",
+                  plan.featured
+                    ? "text-blue-700 dark:text-blue-400"
+                    : "text-muted-foreground"
+                )}
+                strokeWidth={1.75}
+              />
               <div className="flex flex-col">
                 <span className="type-copy-14 text-foreground">{title}</span>
                 <span className="type-copy-12 text-pretty text-muted-foreground">
@@ -177,7 +178,7 @@ function PlanCard({
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
           }
-          size="sm"
+          size="lg"
           variant={plan.cta.variant}
         >
           {CtaIcon ? <CtaIcon className="size-4" /> : null}
@@ -231,14 +232,14 @@ export function PlanComparisonDialogPro({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-4 overflow-hidden p-4 sm:max-w-3xl sm:p-6">
+      <DialogContent className="flex max-h-[90vh] w-full flex-col gap-4 overflow-hidden p-4 sm:p-6 md:max-w-[720px]">
         <DialogHeader>
           <DialogTitle className="type-heading-18 text-foreground">
             Manage subscription
           </DialogTitle>
         </DialogHeader>
         <div
-          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2"
+          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2"
           ref={cardsRef}
         >
           <PlanCard onUpgrade={onUpgrade} plan={FREE_PLAN} />
