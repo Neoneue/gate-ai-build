@@ -239,7 +239,7 @@ export function RequestsTableSection({
                 ? `Filters (${activeFilterCount} active)`
                 : "Filters"
             }
-            className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+            className="flex-1 border-border bg-card text-foreground md:flex-none"
             onClick={openFilters}
             size="lg"
             type="button"
@@ -275,7 +275,7 @@ export function RequestsTableSection({
                 <Select onValueChange={setDraftModel} value={draftModel}>
                   <SelectTrigger
                     aria-label="Model"
-                    className="w-full border-border bg-card font-normal text-foreground"
+                    className="w-full border-border bg-card text-foreground"
                     id="filter-model"
                   >
                     <SelectValue placeholder="Model" />
@@ -298,7 +298,7 @@ export function RequestsTableSection({
                 <Select onValueChange={setDraftKeyId} value={draftKeyId}>
                   <SelectTrigger
                     aria-label="Key"
-                    className="w-full border-border bg-card font-normal text-foreground"
+                    className="w-full border-border bg-card text-foreground"
                     id="filter-key"
                   >
                     <SelectValue placeholder="Key" />
@@ -325,7 +325,7 @@ export function RequestsTableSection({
                 >
                   <SelectTrigger
                     aria-label="Response"
-                    className="w-full border-border bg-card font-normal text-foreground"
+                    className="w-full border-border bg-card text-foreground"
                     id="filter-response"
                   >
                     <SelectValue placeholder="Response" />
@@ -348,7 +348,7 @@ export function RequestsTableSection({
                 >
                   <SelectTrigger
                     aria-label="Guardrail"
-                    className="w-full border-border bg-card font-normal text-foreground"
+                    className="w-full border-border bg-card text-foreground"
                     id="filter-guardrail"
                   >
                     <SelectValue placeholder="Guardrail" />

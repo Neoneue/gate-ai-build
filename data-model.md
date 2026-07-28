@@ -58,6 +58,39 @@ graph LR
 - All routes share `DashboardChrome` as their layout wrapper.
 - Sidebar expand/collapse state lives in `App.tsx` with `localStorage` persistence; passed to pages via `useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>()`.
 
+### Chrome shell layout
+
+`DashboardChrome` composes a flex row of three columns: the persistent nav
+rail (`lg+`, hidden below), the main column (top bar + scrollable `<main>`
+content), and — added 2026-07-27 — the **Ask AI docked panel** on the right.
+
+- **Ask AI panel.** Toggled by the "Ask AI" top-bar button (left of Docs) and
+  by the panel's own collapse control; both flip a chrome-internal `askAiOpen`
+  state (`useState`, not part of the public `DashboardChromeProps`).
+  `AskAiPanel` (`src/components/ui/ask-ai-panel.tsx`) owns the panel layout:
+  header ("New session" trigger + `PanelRightClose` collapse) over a
+  `px-4 pb-4` body that stacks an empty scrolling message region (`pt-4`,
+  bubbles deferred) above `AskAiComposer`
+  (`src/components/ui/ask-ai-composer.tsx`) — the chat box, built to Figma
+  node `1125:5376`: `bg-card-muted` shell, 16px padding, 8px radius,
+  `focus-within:border-primary`, a `field-sizing-content` textarea that grows
+  1 → 4 lines of the 20px `type-copy-14-tight` leading then scrolls, and an
+  unwired 24px `Plus` / 32px `Send` action row. At `lg+` it is a third flex
+  sibling that animates its
+  width `0 → 368px` (`transition-[width]`, `var(--ease-out)`, 300ms) so the top
+  bar and content condense in step; below `lg` the same shell opens in a
+  right-docked `Sheet`. The `FeedbackFab` shifts left with the panel
+  (`right-6 → lg:right-[392px]`) on the same curve.
+- **Container-query content pane.** `<main>` carries `@container`
+  (`container-type: inline-size`), so page grids can respond to the actual
+  content width — which already nets out both the rail and the panel — via
+  **container** variants (`@sm`/`@lg`/`@2xl`/`@4xl`…) instead of viewport
+  breakpoints. This is the convention for making content "collapse earlier" when
+  the panel or rail eats horizontal space. Thresholds are container-width values
+  (`@lg` = 512px, not the 1024px viewport `lg`), so conversion is not a 1:1
+  rename — pick each per real content width. Overview is converted first (see
+  §6); other content pages follow the same pattern.
+
 ### Sidebar navigation
 
 Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
@@ -505,6 +538,8 @@ function buildSpark(total: number, seed: number): number[]
 - Sparklines: every spark derives from its tile's canonical total via `distributeSeries(total, count, seed)` (exported from `Activity.tsx`). Bucket sums equal the KPI value by construction (single source of truth: total → spark → tile).
 - Preview tables sort by `at`/`updated`/`time` desc and `.slice(0, 8)` for the canonical 8-row glance cap.
 
+**Responsive (2026-07-27):** first page converted to container queries (see §2 → Chrome shell layout). Its grids key off the content-pane width rather than the viewport, so they collapse when the Ask AI panel and/or nav rail narrow the content — including the compound worst case (rail expanded + panel open, ~760px). KPI stat rail `@2xl:grid-cols-3` (672px; `sm:grid-cols-1` added at the call site to neutralize the shared `KpiRail` primitive's viewport `sm:grid-cols-3`, primitive untouched). "Tokens used" chart + side legend `@4xl:grid-cols-12` (two-column at 896px, legend stacks below when narrower — also resolves the tablet legend-clip finding). 3-up preview tables `@4xl:grid-cols-3` (held at 896px so rail-expanded 1280–1439 laptops keep 3-col instead of regressing). No change to the panel-closed desktop layout. File: `src/pages/Dashboard.tsx`.
+
 **Cross-page imports:**
 
 - `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
@@ -777,6 +812,8 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 **Charts:** TrendCard = stacked bar; TopByAxisRow = 3 metric cards (TopByModel, TopByKey, TopByUser)
 
+**Responsive (2026-07-17):** the four bottom breakdown cards stack to one column below `lg`. TrendCard header stacks its dropdown + metric toggle under the title on mobile (inline-right at `md`+), with a divider between chart and key; its bar count reduces ~25% below `lg` (via `useMediaQuery`, `src/hooks/use-media-query.ts`) and its x-axis uses first/last tick anchoring (see design.md §Responsive → Charts). Per-key rows in the UsageByKey table derive from the canonical `API_KEY_ROWS` in `activity-data.ts` (the shared per-key source).
+
 ---
 
 ### Team page (`/team` → `Team.tsx`)
@@ -808,6 +845,10 @@ sort, query, page, rowsPerPage              // UsageByKey table
 **Flow:** CreateKeyDialog (step 1: name) → KeyCreatedDialog (step 2: display full key + copy + confirm saved)
 
 **hideDocsButton:** `true` — replaces the shared Docs button with a custom "Key docs" link.
+
+**Table columns:** Key · Status · Created · Last used · (row actions). The former "7-day messages" sparkline column was removed 2026-07-17; the four data columns were rebalanced to 100% (Key 32% / Status 16% / Created 26% / Last used 26%). `ApiKeyRow.requests7d` still exists on the type/seed data but no longer renders. `table-fixed` + `min-w-[1000px]` for mobile side-scroll.
+
+**Layout (2026-07-17):** page content capped at `max-w-5xl` (1024px), left-aligned in the shell. The "How to make messages" section is two cards — Automatic (Gate Connect via `<ConnectTabs>`) and Manual (code tabs) — **always stacked one-per-row** at every width. On the Gate Connect card the app-mockup image hides below `lg` and the text block goes full width; its title steps down one size on mobile (`text-2xl` → `text-xl`).
 
 ---
 
@@ -991,6 +1032,14 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
+| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking an empty scrolling message region (`pt-4`, bubbles deferred) above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
+| `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14-tight` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` (`bg-control-raised`) left, 32px `Send` (`bg-primary` + `text-primary-foreground-soft`, `opacity-50` until the field has text) right. Both buttons carry `shadow-xs` and are unwired. Added 2026-07-27. |
+| `AskAiMessage` (`ask-ai-message.tsx`) | custom divs | Ask AI chat bubbles (Figma `1125:4374`, light twins `1096:5471`/`1114:7141`, dark `1108:4193`). `UserMessage` right-aligned `bg-secondary` chip, `rounded-md`, `px-4 py-3`, `max-w-[85%]`. `AgentMessage` left, `bg-card` + `border-border` + `p-4`, 16px `BotMessageSquare`, with a 4-button completion row (ThumbsUp/ThumbsDown/Copy/RotateCcw, 24px targets, 14px glyphs) as a sibling 8px BELOW the bubble. `ReplyProse` is a scoped typographic treatment keyed off element type (`[&_h3]:…`) so rendered markdown from the live agent needs no restyling. `MessageThread` = `gap-4` turn list. Added 2026-07-27. |
+| `AskAiThinkingRow` (`ask-ai-thinking-row.tsx`) | custom div | "Thinking …" placeholder between send and first token. lucide `Brain` + `type-copy-14-tight` in `text-muted-foreground`, left-aligned, no bubble; ellipsis via the repo's pure-CSS `animate-ellipsis`. No Figma node exists for this state — built to the agreed fallback. Added 2026-07-28. |
+| `useAskAiThread` (`src/hooks/use-ask-ai-thread.ts`) + `AskAiThreadProvider` (`ask-ai-thread-provider.tsx`) | React context | Ask AI conversation state: `{id, role, content, status}[]` plus an `idle → sending → thinking → replying → complete` phase machine that the composer and thinking row both read. Provider mounts in `App.tsx` ABOVE the outlet so the thread survives navigation (like `askAiOpen`). All timers and the canned responder live behind `streamReply()` in `src/data/ask-ai-script.ts` — components hold no `setTimeout`. Added 2026-07-28. |
+| `src/data/ask-ai-script.ts` | data + async generator | SCRIPTED demo responder, no backend. Doc-sourced Gate Connect reply as a markdown string, an honest fallback for unmatched input, loose keyword intent matching, and `streamReply()` — an async generator yielding word-boundary chunks. **Swap point:** replacing that one function body with a real `/api/ask` fetch changes nothing else. Added 2026-07-28. |
+| `ScrollToLatestFab` + `ScrollBottomSentinel` (`ask-ai-scroll-to-latest.tsx`) | custom button + marker div | Jump-to-bottom control (Figma `1149:10955` light / `1125:4280` dark). 32px circle, 16px `ArrowDown`, `bg-control-raised` + `border-border` + `shadow-(--shadow-card-soft)`; absolutely positioned against the message region's wrapper so the panel's `px-4` / `gap-4` supply Figma's 16px offsets with no hard-coded position and no layout shift. Presentational — visibility and the click handler come from `useStickToBottom`. Added 2026-07-27. |
+| `useStickToBottom` (`src/hooks/use-stick-to-bottom.ts`) | hook | Auto-follow for the streaming thread. `following` is a user-intent flag, NOT a geometry read (the sentinel briefly leaves the threshold on every chunk, which would false-disarm). Content growth (ResizeObserver) + following → instant snap to the end; user wheel/touch/key recomputes intent from real position on the next frame, so scrolling up disarms and scrolling back re-arms; FAB press and a new send re-arm explicitly. Verified: CSS `overflow-anchor` does NOT do this — it drifted 0 → 819px over ~10s of streaming. Added 2026-07-28. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |
 | `SortableTableHead` | native `<th>` + `<button>` | Click-to-sort header (2026-06-04). `⇅` fades in on hover, persists as `↑`/`↓` when active. Three-state cycle (asc→desc→unsorted). Content-width hit area (`max-w-1/2`), `aria-sort`. `numeric` columns (right-aligned) put the glyph left of the label (`flex-row-reverse`) so the label aligns with the data. Pairs with the `useTableSort` hook + `sortRows`/`parseNumeric` in `src/hooks/use-table-sort.ts` (local state, no TanStack); table supplies a `getValue(row,key)` accessor. |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |

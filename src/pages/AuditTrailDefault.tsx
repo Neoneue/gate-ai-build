@@ -49,7 +49,7 @@ export function AuditTrailDefault() {
 
       <div className="flex flex-col gap-4">
         <SectionTitle>Overview</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid @xl:grid-cols-2 grid-cols-1 gap-4">
           <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
             <div className="flex flex-col items-center justify-center gap-3 p-6">
               <div

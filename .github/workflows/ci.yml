@@ -23,6 +23,9 @@ jobs:
       - name: Lint (eslint + biome)
         run: npm run lint
 
+      - name: Lint (markdown)
+        run: npm run lint:md
+
       - name: Test
         run: npm test
 

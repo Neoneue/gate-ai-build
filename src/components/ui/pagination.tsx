@@ -52,7 +52,7 @@ function PaginationLink({
     <Button
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "border-border font-normal text-muted-foreground tabular-nums -tracking-[0.01em]",
+        "border-border text-muted-foreground tabular-nums -tracking-[0.01em]",
         "hover:bg-accent hover:text-foreground",
         isActive &&
           "border-primary bg-primary font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:border-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary",
@@ -108,7 +108,12 @@ function PaginationEllipsis({
     <span
       aria-hidden
       className={cn(
-        "flex size-8 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
+        // `relative` is load-bearing: the nested .sr-only span is
+        // position:absolute, so without a positioned ancestor its containing
+        // block is the ICB. Deep inside the scrolled table it then lands at a
+        // document offset past the viewport and inflates <html>'s scroll
+        // height, letting the whole page scroll past the app shell.
+        "relative flex size-8 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5",
         className
       )}
       data-slot="pagination-ellipsis"

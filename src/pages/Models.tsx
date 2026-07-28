@@ -440,7 +440,7 @@ function Toolbar({
       <Select onValueChange={onVendorChange} value={vendor}>
         <SelectTrigger
           aria-label="Filter by vendor"
-          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
           size="lg"
         >
           <SelectValue />
@@ -461,7 +461,7 @@ function Toolbar({
       <Select onValueChange={onProviderChange} value={provider}>
         <SelectTrigger
           aria-label="Filter by provider"
-          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
           size="lg"
         >
           <SelectValue />
@@ -496,7 +496,7 @@ function Toolbar({
       <Select onValueChange={onSortChange} value={sort}>
         <SelectTrigger
           aria-label="Sort"
-          className="min-w-0 flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
           size="sm"
         >
           <SelectValue />
@@ -620,7 +620,7 @@ function ModelsTable({
                 >
                   <VendorAvatar vendor={model.vendor} />
                   <span
-                    className="type-copy-14 truncate text-foreground"
+                    className="type-label-14 truncate text-foreground"
                     title={model.name}
                   >
                     {model.name}
@@ -818,7 +818,7 @@ function ModelDetailPage({
       <div className="flex items-center justify-between gap-4">
         <TextLink
           aria-label="Back to Models"
-          className="type-copy-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
+          className="type-label-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
           onClick={onBack}
         >
           <ChevronLeft
@@ -896,7 +896,7 @@ function ModelDetailPage({
           <TextLink
             aria-controls="model-description"
             aria-expanded={showFullDesc}
-            className="type-copy-14 group inline-flex w-fit items-center gap-1 hover:text-foreground focus-visible:text-foreground"
+            className="type-label-14 group inline-flex w-fit items-center gap-1 hover:text-foreground focus-visible:text-foreground"
             onClick={() => setShowFullDesc((v) => !v)}
           >
             {showFullDesc ? "Show less" : "Show more"}
@@ -929,7 +929,7 @@ function ModelDetailPage({
 
       {/* Quick start + Example request — two-column grid (24px gap),
           stacks below lg. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid @3xl:grid-cols-2 grid-cols-1 gap-6">
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h3 className="type-heading-16 m-0 text-foreground">Quick start</h3>
@@ -1037,7 +1037,7 @@ function ModelKpiRail({
   head: ProviderOffering;
 }) {
   return (
-    <KpiRailShell columns={4}>
+    <KpiRailShell className="@4xl:grid-cols-4 md:grid-cols-2" columns={4}>
       <ModelKpiTile
         label="Context"
         value={formatContext(head.contextK, model.modality)}

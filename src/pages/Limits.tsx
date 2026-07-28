@@ -655,7 +655,7 @@ function CreateLimitDialog({
                   >
                     {s.masked ? (
                       <span className="flex flex-col">
-                        <span className="type-copy-14 text-foreground">
+                        <span className="type-label-14 text-foreground">
                           {s.name}
                         </span>
                         <span className="type-mono-12 text-muted-foreground">

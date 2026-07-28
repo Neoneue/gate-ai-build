@@ -200,7 +200,7 @@ function KpiRailSection({ rows }: { rows: EventRow[] }) {
   }, [rows]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid @xl:grid-cols-2 grid-cols-1 gap-4">
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-xs">
         <KpiTile
           title="Events logged"
@@ -409,7 +409,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+              className="flex-1 border-border bg-card text-foreground md:flex-none"
               onClick={openFilters}
               size="lg"
               type="button"
@@ -431,7 +431,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ) : null}
             </Button>
             <Button
-              className="flex-1 border-border bg-card font-normal text-foreground md:flex-none"
+              className="flex-1 border-border bg-card text-foreground md:flex-none"
               disabled={isEmpty}
               size="lg"
               type="button"

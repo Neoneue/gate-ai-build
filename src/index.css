@@ -232,8 +232,42 @@ and (pointer: fine)) and (&:hover));
      stays dark on dark), so they never follow the theme like a normal card. */
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);
+  /* Fill for a small icon-only control that must lift off a MUTED card surface
+     (the Ask AI composer's 24px plus button, sitting on --card-muted). Goes
+     white in light, where --accent (neutral-100) is too close to the neutral-50
+     composer shell to read as a discrete chip; steps one notch up from the
+     shell in dark (neutral-700 on neutral-800), which is what --accent already
+     did there. Pair with border-border + shadow-xs. Distinct from --card: this
+     is a control chip, not a panel, and it must stay LIGHTER than the surface
+     under it in both themes rather than following the card inversion. */
+  --control-raised: var(--color-white);
+  /* Ask AI chat bubbles. Two conversational surfaces that must stay legible
+     against the panel AND distinguishable from each other and from the
+     composer, in both themes. Neither can reuse an existing pair:
+       - The AGENT bubble has to sit LIGHTER than the panel in light (white on
+         the card) and DARKER in dark (neutral-950 under the neutral-900 card).
+         No token inverts that way — --card follows the card (white/neutral-900,
+         so dark reads flush, not recessed) and --background is the page canvas,
+         which design.md bars from darkening a component.
+       - The USER bubble cannot take --secondary/--muted: both are neutral-800
+         in dark, identical to --card-muted on the composer, so the user chip
+         and the composer would collapse into one value.
+     Values are transcribed from the Figma light/dark twins (Research
+     1096:5471 / 1114:7141 light, 1108:4193 / 1125:4374 dark). */
+  --chat-bubble-user: var(--color-neutral-100);
+  --chat-bubble-user-foreground: var(--color-neutral-950);
+  --chat-bubble-agent: var(--color-white);
+  --chat-bubble-agent-foreground: var(--color-neutral-900);
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
+  /* Softened on-primary ink for icon-only primary actions (the Ask AI send
+     button). Full white is too hot for a 16px glyph on the neutral-900 fill —
+     it flares and the stroke reads thicker than it is. Steps back one notch to
+     neutral-200 in light, and is deliberately IDENTICAL to --primary-foreground
+     in dark (neutral-800), where the fill already inverts and the ink is dark:
+     a visual no-op there, so the token is safe to reach for in either theme.
+     Text-sized on-primary content stays on --primary-foreground. */
+  --primary-foreground-soft: var(--color-neutral-200);
   /* Gray-spectrum semantic tokens trace to the ink palette so `bg-muted`,
      `bg-secondary`, `bg-accent`, `border-border`, etc. cascade onto one
      gray family. Step numbers shifted up one position vs. the legacy
@@ -343,6 +377,7 @@ body {
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-foreground-soft: var(--primary-foreground-soft);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -353,6 +388,11 @@ body {
   --color-background: var(--background);
   --color-surface-strong: var(--surface-strong);
   --color-surface-strong-foreground: var(--surface-strong-foreground);
+  --color-control-raised: var(--control-raised);
+  --color-chat-bubble-user: var(--chat-bubble-user);
+  --color-chat-bubble-user-foreground: var(--chat-bubble-user-foreground);
+  --color-chat-bubble-agent: var(--chat-bubble-agent);
+  --color-chat-bubble-agent-foreground: var(--chat-bubble-agent-foreground);
   --radius-xs: calc(var(--radius) * 0.4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -402,6 +442,10 @@ body {
   --popover-foreground: var(--color-neutral-50);
   --primary: var(--color-neutral-200);
   --primary-foreground: var(--color-neutral-800);
+  /* Intentionally identical to --primary-foreground in dark — see the light
+     definition. The softening is a light-theme device (white flare on a dark
+     fill); dark already inverts to dark ink, so this is a visual no-op. */
+  --primary-foreground-soft: var(--color-neutral-800);
   --secondary: var(--color-neutral-800);
   --secondary-foreground: var(--color-neutral-50);
   --muted: var(--color-neutral-800);
@@ -434,6 +478,18 @@ body {
 
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);
+  /* One step up from the --card-muted (neutral-800) surface the control sits
+     on — the same value --accent carries in dark, so this is a visual no-op
+     here. See the light definition for why the pair can't reuse --accent. */
+  --control-raised: var(--color-neutral-700);
+  /* Chat bubbles invert as a pair — see the light definitions for why neither
+     can reuse --card or --secondary. The agent bubble goes RECESSED here
+     (neutral-950 under the neutral-900 panel), the mirror of the white-on-card
+     lift it has in light; the user chip stays raised at neutral-800. */
+  --chat-bubble-user: var(--color-neutral-800);
+  --chat-bubble-user-foreground: var(--color-neutral-100);
+  --chat-bubble-agent: var(--color-neutral-950);
+  --chat-bubble-agent-foreground: var(--color-neutral-200);
 
   --sidebar: var(--color-neutral-950);
   --sidebar-foreground: var(--color-neutral-50);

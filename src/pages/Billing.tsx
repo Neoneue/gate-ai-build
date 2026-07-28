@@ -396,7 +396,7 @@ function AddCreditsDialog({
         {/* Custom amount */}
         <div className="flex flex-col gap-2">
           <label
-            className="type-copy-14 m-0 font-medium text-muted-foreground"
+            className="type-label-14 m-0 text-muted-foreground"
             htmlFor="add-credits-custom"
           >
             Amount (USD)
@@ -547,7 +547,7 @@ function AutoRechargeDialog({
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
-              className="type-copy-14 m-0 font-medium text-muted-foreground"
+              className="type-label-14 m-0 text-muted-foreground"
               htmlFor="ar-threshold"
             >
               When balance drops below
@@ -590,7 +590,7 @@ function AutoRechargeDialog({
           {/* Top-up amount */}
           <div className="flex flex-col gap-2">
             <label
-              className="type-copy-14 m-0 font-medium text-muted-foreground"
+              className="type-label-14 m-0 text-muted-foreground"
               htmlFor="ar-topup"
             >
               Top-up amount
@@ -632,7 +632,7 @@ function AutoRechargeDialog({
         {/* Monthly cap */}
         <div className="flex flex-col gap-2">
           <label
-            className="type-copy-14 m-0 font-medium text-muted-foreground"
+            className="type-label-14 m-0 text-muted-foreground"
             htmlFor="ar-cap"
           >
             Monthly cap{" "}
@@ -740,7 +740,7 @@ function CreditStatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
         className={
           mono

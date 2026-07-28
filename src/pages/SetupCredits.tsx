@@ -50,7 +50,7 @@ export function SetupCredits() {
           <h3 className="type-label-14 m-0 text-foreground">Add credits</h3>
           <div
             aria-label="Credit amount"
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+            className="grid @xl:grid-cols-4 grid-cols-2 gap-3"
             role="radiogroup"
           >
             {AMOUNTS.map((value) => {

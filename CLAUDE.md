@@ -18,8 +18,8 @@ lives in the reference docs linked below.
   chart / animation / visual work MUST be delegated to the
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
   **regardless of the active model** — don't hand-edit UI yourself. It
-  self-loads its design knowledge and binds to `design.md` + `src/index.css`
-  + `.claude/rules/`. Only trivial mechanical relocations (verbatim class
+  self-loads its design knowledge and binds to `design.md` + `src/index.css` +
+  `.claude/rules/`. Only trivial mechanical relocations (verbatim class
   moves, no design judgment) may be direct-edited.
 - **Visual values are a closed set.** Never invent a color, type size, or
   tracking — map every value to a token/voice in `design.md`, or stop and ask.
@@ -30,6 +30,15 @@ lives in the reference docs linked below.
   semantic role is still hardcoding: it will not flip and is a defect.
   Literals live ONLY in the token-definition layer. No hand-rolling, no
   ad-hoc values. Full rule: @.claude/rules/no-hardcoding.md
+- **Never hand-roll a component. Compose the primitives.** The components in
+  `src/components/ui/` are a closed set, like the tokens. Never write a raw
+  `<button>` when `Button` exists; never re-specify what a `variant` already
+  gives you; never override a primitive's typography. A `className` on a
+  primitive is for LAYOUT ONLY (`flex-1`, `w-full`, `md:ml-auto`) — colors,
+  borders, radius, and font weight belong to the component. **All button
+  labels are `font-medium` (500)**, no exceptions. If a primitive doesn't fit,
+  change the primitive and document it in `design.md` — don't patch the call
+  site. Full rule: @.claude/rules/no-handrolling.md
 - **Don't thrash.** When the user says something "isn't working" / "still the
   same", PIN the surface (which route → which file) and confirm BEFORE editing
   or measuring. Revert failed fixes instead of patching forward. Full gate:

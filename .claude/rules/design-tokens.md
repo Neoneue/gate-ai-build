@@ -38,5 +38,21 @@ Don't silently ship the arbitrary value.
 ## Enforcement
 
 `npm run lint` runs `lint:design` (`scripts/check-design-tokens.mjs`), which
-fails the build on arbitrary colors and literal `text-[Npx]` sizes. Green lint
-is necessary, not sufficient — this rule covers more than the script can catch.
+fails the build on arbitrary colors and literal `text-[Npx]` sizes. It also
+fails on a **copy voice applied to a label** — a `type-copy-*` in the
+`className` of a button / trigger / menu-or-select item / `Label` / `CardTitle`
+/ `SectionTitle` / `TableHead`, or on a `<span>` nested inside one. Labels take
+`type-label-*` (font-medium); `type-copy-*` is body text and silently renders a
+label at 400. See [`no-handrolling.md`](./no-handrolling.md).
+
+The voice check is deliberately conservative — it declines to guess on
+ambiguous nesting, so it will miss some cases. Notably it cannot see a voice
+applied through a shared variant/`cva` recipe, a `cn()` helper defined away
+from the element, or a voice passed in as a prop. It also cannot see an
+**inherited** voice: `<dl className="type-copy-14">` silently puts every child
+`<dt>` at 400 with no `type-copy-*` on the `<dt>` itself for the scanner to
+find. Set the voice on the element that needs it, not on an ancestor, and the
+gate can see it. Nor can it see the *absence* of a voice — a hand-rolled
+control with no voice at all inherits 400, which is exactly how
+`select-variants.ts` drifted. Green lint is necessary, not
+sufficient — this rule covers more than the script can catch.

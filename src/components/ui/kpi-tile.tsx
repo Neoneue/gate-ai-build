@@ -41,7 +41,7 @@ export function KpiTile({
   const linkEl = href ? (
     <TextLink
       as="a"
-      className="type-copy-14 inline-flex shrink-0 items-center gap-1"
+      className="type-label-14 inline-flex shrink-0 items-center gap-1"
       href={href}
       rel="noopener noreferrer"
       target="_blank"

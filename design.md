@@ -18,6 +18,7 @@ colors:
   # stroke. Cards / popovers stay white via `--card` / `--popover`.
   primary: "oklch(0.090 0 0)"            # neutral-900
   primary-foreground: "#FFFFFF"
+  primary-foreground-soft: "oklch(0.922 0 0)"  # neutral-200 — icon-only on-primary ink (dark: neutral-800)
   background: "oklch(0.960 0 0)"         # neutral-100 — page canvas (NOT white)
   foreground: "oklch(0.090 0 0)"         # neutral-900
   card: "#FFFFFF"
@@ -30,6 +31,11 @@ colors:
   muted-foreground: "oklch(0.530 0 0)"   # neutral-500
   accent: "oklch(0.960 0 0)"             # neutral-100
   accent-foreground: "oklch(0.090 0 0)"
+  control-raised: "#FFFFFF"              # raised icon-only control chip on a muted surface (dark: neutral-700)
+  chat-bubble-user: "oklch(0.970 0 0)"   # neutral-100 — Ask AI user bubble (dark: neutral-800)
+  chat-bubble-user-foreground: "oklch(0.145 0 0)"  # neutral-950 (dark: neutral-100)
+  chat-bubble-agent: "#FFFFFF"           # Ask AI agent bubble (dark: neutral-950)
+  chat-bubble-agent-foreground: "oklch(0.205 0 0)" # neutral-900 (dark: neutral-200)
   destructive: "oklch(0.577 0.245 27.325)"  # danger-600
   border: "oklch(0.910 0 0)"             # neutral-200
   input: "oklch(0.820 0 0)"              # neutral-300 (bumped from neutral-200 on 2026-05-15)
@@ -498,6 +504,7 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--muted`, `--secondary` | neutral-100 | neutral-800 |
 | `--accent` (hover / active fill) | neutral-100 | neutral-700 |
 | `--primary` / `-foreground` | neutral-900 / white | neutral-200 / neutral-800 |
+| `--primary-foreground-soft` *(added 2026-07-27)* | neutral-200 | neutral-800 |
 | `--muted-foreground` | neutral-600 | neutral-300 |
 | `--border` | neutral-200 | white @ 10% |
 | `--border-active` (active-thumb hairline) | neutral-100 | neutral-800 (= thumb, invisible) |
@@ -507,10 +514,65 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--sidebar` | white (flush w/ bg) | neutral-950 |
 | `--sidebar-accent` / `--sidebar-border` | neutral-100 / neutral-200 | neutral-800 / white @ 10% |
 | `--surface-strong` / `-foreground` | neutral-900 / neutral-50 | **same in both themes** |
+| `--control-raised` *(added 2026-07-27)* | white | neutral-700 |
+| `--chat-bubble-user` *(added 2026-07-27)* | neutral-100 | neutral-800 |
+| `--chat-bubble-user-foreground` *(added 2026-07-27)* | neutral-950 | neutral-100 |
+| `--chat-bubble-agent` *(added 2026-07-27)* | white | neutral-950 |
+| `--chat-bubble-agent-foreground` *(added 2026-07-27)* | neutral-900 | neutral-200 |
 
 Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
 
 **`--surface-strong` (new token pair).** For surfaces intentionally dark in BOTH themes: hero chart card, code / terminal cards, dark tooltips, the connected-segment active pill. Utilities `bg-surface-strong` + `text-surface-strong-foreground`. Use this INSTEAD of raw `bg-neutral-900` / `text-white` whenever the dark surface is deliberate.
+
+**`--primary-foreground-soft` (added 2026-07-27).** A softened on-primary ink
+for **icon-only** primary actions — currently the `AskAiComposer` send button.
+Full white (`--primary-foreground`) is too hot for a 16px glyph on the
+neutral-900 fill: it flares and the stroke reads heavier than it is, so the ink
+steps back one notch to neutral-200. In dark it is **deliberately identical to
+`--primary-foreground`** (neutral-800) — the fill already inverts to light and
+the ink is already dark, so the token is a visual no-op there and stays safe to
+use in either theme. Utility: `text-primary-foreground-soft`. **Text-sized
+on-primary content (button labels, badges) stays on `--primary-foreground`** —
+neutral-200 on neutral-900 is 14.2:1, fine for a glyph, but do not use it to
+quietly dim body copy.
+
+**`--control-raised` (added 2026-07-27).** Fill for a **small icon-only control
+that sits on a muted card surface** and has to read as a discrete chip —
+currently the `AskAiComposer` 24px plus button on `bg-card-muted`. White in
+light: `--accent` (neutral-100) is only one ramp step off the neutral-50
+composer shell, which at 24px reads as a smudge rather than a control. Dark
+keeps neutral-700 on the neutral-800 shell, which is what `--accent` already
+resolved to there, so **dark is a visual no-op**. Utility:
+`bg-control-raised`; pair it with `border-border` + `shadow-xs`.
+**Not a substitute for `--card`.** A card inverts with the theme (white →
+neutral-900); this token deliberately stays *lighter than whatever surface is
+beneath it* in both themes, because it is a raised control, not a panel. For
+hover / active fills keep using `--accent`; for panels keep `--card` /
+`--card-muted`.
+
+**Ask AI chat bubbles (added 2026-07-27).** Two surface+ink pairs for the two
+conversational surfaces in the Ask AI panel: `--chat-bubble-user` /
+`-foreground` and `--chat-bubble-agent` / `-foreground`. Values transcribed
+from the Figma light/dark twins (Research `1096:5471` / `1114:7141` light,
+`1108:4193` / `1125:4374` dark). Utilities: `bg-chat-bubble-user`,
+`text-chat-bubble-user-foreground`, and the agent equivalents.
+
+Neither pair can reuse an existing token, which is why they exist:
+
+- The **agent** bubble must sit **lighter than the panel in light** (white on
+  the white card, edge carried by `border-border`) and **darker in dark**
+  (neutral-950 recessed under the neutral-900 card). No token inverts that way.
+  `--card` follows the card (white / neutral-900), so dark would read flush
+  rather than recessed; `--background` is the page canvas, which §2 bars from
+  darkening a component.
+- The **user** bubble cannot take `--secondary` or `--muted`: both are
+  neutral-800 in dark — identical to `--card-muted` on the composer — so the
+  user chip and the composer would collapse into one value.
+
+Together the tokens keep the two bubbles distinguishable from each other, from
+the composer, and from the panel, in both themes. Scoped to the Ask AI panel;
+they are not a general elevation tier (use `--card-muted` / `--control-raised`
+for that).
 
 **`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
 
@@ -629,14 +691,30 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 
 **Data-voice rule (mono).** The `type-mono-*` utilities are the codified
 `data` voice (see the taxonomy below). **Every data value — number, count,
-token total, currency, percentage, date/timestamp, ID, hash, key/model
+token total, currency, percentage, date/timestamp, ID, hash, and machine
 identifier — uses a `type-mono-*` token, never a hand-rolled
-`font-mono … tabular-nums` string.** Pick the size to match the sans copy tier
+`font-mono … tabular-nums` string.**
+
+**Carve-out: display names are NOT data *(ruled 2026-07-28)*.** Mono applies to
+the *machine* string, never to the human-readable name beside it. The test is
+whether a user would copy-paste it into a config file:
+
+| Mono (`type-mono-*`) | Sans (label or copy) |
+| --- | --- |
+| `anthropic/claude-opus-4.7` — the model **slug** | "Claude Opus 4.7" — the model **display name** |
+| `key_live_a1b2…`, request/conversation IDs, hashes | "Chad's workspace", a team member's name |
+| `gpt-4o-mini`, provider slugs, endpoint paths | "OpenAI", "Anthropic" as vendor labels |
+
+Model, vendor, workspace, key and project **display names take the sans voice**
+— `type-label-*` when they name a clickable row or control (the usual case in a
+table), `type-copy-*` only when they sit inside running prose. Do **not**
+re-mono them: they have always rendered sans, and the earlier wording ("key/model
+identifier") was read as covering display names, which it never did. Pick the size to match the sans copy tier
 it sits beside (`type-mono-14` is the default, twinning `type-copy-14`). Apply
 color (`text-foreground` / `text-muted-foreground`), alignment (`text-right`),
 and `whitespace-nowrap` at the call site; the token owns only font + size +
 weight + tabular figures. Non-data text keeps `type-copy-*` / `type-label-*`;
-code blocks, eyebrows, and terminal chrome keep their own voices.
+code blocks, eyebrows, and terminal chrome keep their own voices. **One scoped exception exists — see "Exception: Ask AI reply prose" below; it does NOT relax this rule anywhere else.**
 
 **Usage rule:** when one of the semantic roles above fits, use it in page code.
 Only compose raw text utilities when a role truly does not exist yet; then
@@ -649,17 +727,91 @@ helper text size or spacing with one-off `text-*` / `mt-*` values.
 
 ### Five-voice taxonomy (codified 2026-05-07)
 
-Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
+Each voice has a single job; mixing them is the drift surface. **Critical rule:** sans labels are `font-medium` minimum.
+
+**Split into separate Body and Label rows 2026-07-28**, after a site-wide audit. The
+single "Body / label" row read *"regular or `font-medium`"* while the rule below
+said labels are `font-medium` minimum — a contradiction inside one section, and
+the exact ambiguity that let ~20 call sites drift to 400. `font-normal` reads as ambient body, not a label. Color does the *quiet* work; weight does the *structural* work.
 
 | Voice | Recipe | Use |
 | ------- | -------- | ----- |
 | **Display headline / hero numeric** | `font-sans tabular-nums font-medium tracking-tight` (via `<HeroNumeric>`) | Page titles, KPI hero values (24px), full-page hero metrics (32px), panel heroes — *summary, look at this* |
-| **Body / label** | `font-sans` (regular or `font-medium`) | Card titles, page subtitles, button labels, key/project names, table column headers, **form / input labels** (`<Label>` primitive) — *human, read this* |
+| **Body** | `font-sans font-normal` (`type-copy-*`) | Paragraphs, descriptions, helper text, empty-state body, table cell content, timestamps, captions, inline text links mid-sentence, typed input values — *prose the user reads* |
+| **Label** | `font-sans font-medium` (`type-label-*`) | Anything the user can click, and anything that names something. See the enumeration below — *this names it, or you press it* |
 | **Eyebrow** | `font-mono uppercase tracking-[0.1em] font-medium` | Section eyebrows, KPI labels, segmented control labels, chrome strips — *what is this*. **Never use this for form/input labels** — those go in the Body/label row above. Mono UPPERCASE on a field label reads as a chrome strip, not as something the user is meant to fill in. |
 | **Badge / pill** | `font-mono tabular-nums font-medium text-xs` (via Badge default) | Status codes (`200`/`500`), counters, deltas, inline pills — *operational chrome* |
-| **Data** | `font-mono tabular-nums` | Table cells, IDs, codes, hashes, model identifiers, modal sub-tier numerics — *raw data* |
+| **Data** | `font-mono tabular-nums` | Table numerics, IDs, codes, hashes, slugs and machine identifiers, modal sub-tier numerics — *raw data*. **Display names are excluded** — see the carve-out above |
+
+### Label voice — the enumeration *(ruled 2026-07-28)*
+
+**The classification test.** Apply it in this order:
+
+1. **If you can click it, or it names something → Label** (`type-label-*`).
+2. **If it is prose the user reads → Copy** (`type-copy-*`).
+3. **If it heads a section → Heading** (`type-heading-*`).
+
+**Corollary — quiet labels stay 500.** A label that should recede goes quiet
+with `text-muted-foreground`, **never** with a lighter weight. Colour does the
+quiet work; weight does the structural work. Inactive nav items, inactive tabs,
+secondary actions and disabled controls are all still 500.
+
+**Every interactive and naming role takes `type-label-*`.** This list is
+exhaustive and is the single source — `.claude/rules/no-handrolling.md` cites
+it rather than restating it:
+
+| Role | Examples |
+| --- | --- |
+| Button labels | `<Button>`, raw `<button>`, icon+text buttons |
+| Nav items | Sidebar rail and expanded nav, mobile Sheet nav — **active and inactive alike** |
+| Tabs | `TabsTrigger`, both `default` and `line` variants, **active and inactive alike** |
+| Menu items | `SelectItem`, `MenuItem`, `DropdownMenuItem`, command-palette rows |
+| Select / combobox triggers | `SelectTrigger`, the MultiSelect `PopoverTrigger`, workspace switcher |
+| Dialog / popover / menu triggers | `DialogTrigger`, `PopoverTrigger`, `DropdownMenuTrigger`, `MenuTrigger` |
+| Link-buttons | Standalone `TextLink` controls — "Back to Models", "Show more", "Open in Explorer" |
+| Clickable card affordances | A whole card or KPI tile that navigates on click |
+| Pagination controls | Page numbers and prev/next — **current and non-current alike** |
+| Table column headers | `TableHead`, `SortableTableHead` |
+| Card titles | `CardTitle` |
+| Form / input labels | The `<Label>` primitive and any raw `<label>` |
+| `<dt>` terms | The term in a `<dl>`; the `<dd>` value stays Copy |
+| Key / project / entity display names | Model, vendor, workspace, API-key and team-member names — including when they are the clickable identifier of a table row |
+
+**Explicitly NOT Label** — these keep their own voice:
+
+| Not a label | Voice | Why |
+| --- | --- | --- |
+| Inline text links mid-sentence | Copy | It is prose that happens to be clickable |
+| Typed input values | Copy | A value the user entered, not a label on it |
+| Secondary identity lines (e.g. the email under a user's name) | Copy | A value beneath its label |
+| `<dd>` values | Copy | The term is the label; this is its value |
+| Segmented control labels | **Eyebrow** | Chrome strip — see the Eyebrow row above |
+| Table cell content | Copy, or Data when numeric/machine | Content, not a control |
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
+
+### Exception: Ask AI reply prose *(2026-07-27)*
+
+**What.** Inside an **Ask AI agent reply**, inline `code` and fenced `pre`
+render in the **sans body voice** (`type-copy-14-tight`) on a `bg-muted` chip /
+block — **not** the mono `type-mono-*` Data voice that the rule above would
+otherwise require for code.
+
+**Why.** Replies are long-form reading. Mono degrades legibility across that
+length, and a reply can be many screens of it. Figma renders the reply's code
+spans in sans (`1125:4374`, chip e.g. `1125:4391`), and the user confirmed the
+reasoning on 2026-07-27.
+
+**Scope — Ask AI reply content ONLY.** This applies to markdown rendered inside
+`AgentMessage` / `ReplyProse` (`src/components/ui/ask-ai-message.tsx`) and
+nowhere else. The mono Data voice still governs, unchanged, for: table cells
+and all numerics, IDs, hashes, key and model identifiers, request/transcript
+surfaces, `CodeCard` / `CodeBlock`, `InlineCode`, `CodePanel`, badges,
+eyebrows, and terminal chrome. Do not generalise this exception outward from
+the chat panel.
+
+**Do not revert.** Sans code inside a reply looks like a violation of the
+five-voice rule and is intentional. Do not "fix" it back to mono.
 
 ### Principles
 
@@ -1096,7 +1248,8 @@ The product is desktop-first (operator workflows tuned for ≥1280px), but a mob
 
 - **Sidebar** (left nav): expanded 240px (`w-60`) / collapsed 64px (`w-16`) in `sidebar.tsx`, rendered at `lg`+ only; below `lg` the whole rail is replaced by the right-docked hamburger Sheet. Collapse toggle lives in the sidebar header; the workspace switcher sits in the top bar at `lg`+ (in the Sheet below `lg`) — not in the sidebar (see §7 UserMenu / WorkspaceSwitcher).
 - **KPI rail:** four sections side-by-side at composed widths; wraps to a stacked grid on small screens. Raw counts ≥1M render compact (`N.NM` via `formatCompactCount`, KPI tiles only — see §7 Hero Numerics & KPIs / memory), so long numbers don't overflow the tile on mobile.
-- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper); toolbars and the pagination footer stack below `md` (see breakpoints). Column priority not codified.
+- **Tables:** horizontal scroll within container (`overflow-x-auto` on Table wrapper); toolbars and the pagination footer stack below `md` (see breakpoints). **`table-fixed` tables get a `min-w-[Npx]` floor** sized to their column count so they side-scroll on mobile/tablet instead of crushing columns (a `table-fixed` table otherwise always equals its container and never overflows, so the `overflow-x-auto` wrapper has nothing to scroll). Floor stays ≤ the desktop content width so desktop never scrolls: canonical `min-w-[1000px]` for 6–8-col tables (ApiKeys, AuditTrail, Activity, Limits), scaled down for narrow tables (Team members `680px`, TeamDefault `560px`). Column priority not codified.
+- **Charts (axis):** x-axis date labels use recharts' native collision handling — `interval="preserveStartEnd"` + `minTickGap` (NOT `interval={0}`, which forces every tick with no overlap removal). Explicit `ticks` arrays must be derived from real data points (never hardcoded time strings, which silently render nothing when they don't match a datum). The custom tick renderer anchors the **first tick `textAnchor="start"`, last `"end"`, middle `"middle"`** so the first label starts at the plot's left edge (not under the Y-axis column) and the last never overflows the card — applied to every axis chart (hero area charts, Activity TrendCard, Dashboard usage chart). Bar charts additionally thin their bar count ~25% below `lg` (tablet + mobile) via `useMediaQuery` so bars don't pack too tight; totals still reconcile (same total across fewer buckets).
 
 ---
 

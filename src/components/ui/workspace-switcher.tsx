@@ -32,7 +32,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
       <MenuTrigger
         render={<Button className={className} size="lg" variant="outline" />}
       >
-        <span className="type-copy-14 text-foreground">Chad's workspace</span>
+        <span className="type-label-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden

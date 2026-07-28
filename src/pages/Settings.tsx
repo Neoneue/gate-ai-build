@@ -134,8 +134,8 @@ function ProfileCard() {
       </CardHeader>
       <CardContent>
         <form id="profile-form" onSubmit={handleSave}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <div className="grid @lg:grid-cols-2 grid-cols-1 gap-4">
+            <div className="@lg:col-span-2">
               <label
                 className="type-label-14 mb-1 block text-muted-foreground"
                 htmlFor="settings-full-name"

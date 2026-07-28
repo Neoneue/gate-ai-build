@@ -73,6 +73,7 @@ Three `Billing.tsx` changes:
 - **Input validation helper text** — both dialogs' error lines
   (`text-destructive`) went `text-sm` → `text-xs` (12px/16px).
 
+<!-- markdownlint-disable-next-line MD024 -->
 ## Components
 
 ### `formatSparkLabel` — one tooltip date-label format for every chart `9d1133d`
@@ -86,6 +87,7 @@ sub-daily buckets: the three rails pass `withTime` for 24H only (All/7D/30D/cust
 are date-only — no meaningless `00:00`); the Requests/Security area charts bucket
 sub-daily on every range, so they pass `withTime=true` throughout.
 
+<!-- markdownlint-disable-next-line MD024 -->
 ## Sections
 
 ### Conversations / Token Savings / Activity KPI rails — dated hover tooltips `9d1133d`
@@ -121,6 +123,7 @@ item navigates to the current page's twin via `toFreePath` / `toProPath`
 (`lib/plan.ts`), with a check on the active one. Badge stays driven by
 `isFreeSurface`, so it never disagrees with the sidebar locks.
 
+<!-- markdownlint-disable-next-line MD024 -->
 ## Sections
 
 ### Free workspace: `-free` page twins for every unlocked surface `37ae83e`
@@ -145,6 +148,7 @@ The locked Free-tier items (Events + Limits) were nearly invisible. Disabled
 label color bumped one stop — collapsed rail `text-neutral-300 → neutral-400`,
 expanded `text-neutral-400 → neutral-500`; `opacity-50` unchanged.
 
+<!-- markdownlint-disable-next-line MD024 -->
 ## Sections
 
 ### Requests detail: Findings/Details tabs merged into one view `2a9ed1d`
@@ -158,6 +162,7 @@ labels still vary by error type — while the findings list and a request-metada
 card move into the right rail. The orphaned `DetailMessageSubcards` is removed.
 Gap below the finding banner set to 24px (`pt-6`).
 
+<!-- markdownlint-disable-next-line MD024 -->
 ## Sections
 
 ### Requests detail: provider-error main card `6ac3c13`
