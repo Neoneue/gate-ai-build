@@ -54,6 +54,19 @@ The thread starts empty. Send a question and the user bubble appears immediately
 
 The thinking row has **no Figma node** — none of the panel frames contains a thinking state — so it is built to a documented fallback: lucide `Brain`, `type-copy-14-tight`, `text-muted-foreground`, with the repo's `animate-ellipsis`. Reconcile when a node exists.
 
+### Ask AI: an empty state, a new chat, and a composer that arms itself `6f73a79`
+
+**`src/components/ui/ask-ai-empty-state.tsx`** (new) · **`ask-ai-panel.tsx`** · **`ask-ai-composer.tsx`** · **`button.tsx`** · **`src/hooks/use-ask-ai-thread.ts`** · **`src/App.tsx`** · **`DashboardChrome.tsx`** · **`src/index.css`** · **`design.md`**
+
+The panel opened onto a blank surface, offered no way back to a clean thread, and needed a click before it would take a keystroke. Four changes close that.
+
+- **Empty state.** Four suggestion rows, centred over the (zero-height) thread rather than replacing it, so `scrollRef` / `sentinelRef` never unmount and `useStickToBottom` keeps one stable set of nodes for the panel's whole lifetime. Selecting a row sends it as a normal question.
+- **Two new Button axes.** `size="xl"` (44px — `h-11 gap-3 px-4`) is the step above `lg`, for full-width list-style actions where the control *is* the row. `shape` (`default` / `pill`) carries radius so no call site reaches for `rounded-full`. An `outline + pill` **compound variant** raises the edge on hover *and* press via the new `--border-hover` token — always one step more contrast than `--border` (neutral-300 light, white @ 20% dark). Deliberately scoped to that pair: raising the edge on every outline button is a site-wide change and its own decision.
+- **New chat.** `reset()` on the thread hook drops every turn through the same `interrupt()` path as `stop()`, so there stays exactly one abort path, and returns the panel to the empty state.
+- **The composer arms itself, then goes quiet.** It takes focus at the two moments the user is being invited to type — panel open (deferred one frame so the Sheet's own initial-focus pass below `lg` cannot steal the caret back) and new chat. Send deliberately does **not** pull the caret back: the field was sitting lit through the whole reply, which read as active when nothing was expected of the user.
+- **Ask AI starts closed on every page load.** The `askai` localStorage persist is gone; state still lives above the router outlet, so one open holds for the session across navigation until the user closes it.
+- **Thread → composer spacing** `gap-4` → `gap-6` (16px → 24px). 16px crowded the last turn's action row against the field. The scroll-to-latest FAB anchors to the same gap, so it moved up with it.
+
 ### Manage subscription: the Pro dialog matches the Free one `8518ab2`
 
 **`src/pages/plan-comparison-dialog-pro.tsx`**
