@@ -1,4 +1,5 @@
 import { ChevronsUpDown, PanelRightClose, SquarePen } from "lucide-react";
+import { AskAiComposer } from "@/components/ui/ask-ai-composer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +60,14 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
           </Button>
         </div>
       </div>
-      {/* Empty body surface — inner chat elements are out of scope. */}
-      <div className="min-h-0 flex-1 overflow-y-auto" />
+      {/* Body — 16px inset on left/right/bottom; the scrolling message region
+          carries its own 16px top padding so the first message clears the top
+          bar by 16px while the scroll track still runs edge-to-edge. */}
+      <div className="flex min-h-0 flex-1 flex-col px-4 pb-4">
+        {/* Message region — intentionally empty; bubbles are a later step. */}
+        <div className="min-h-0 flex-1 overflow-y-auto pt-4" />
+        <AskAiComposer className="shrink-0" />
+      </div>
     </div>
   );
 }
