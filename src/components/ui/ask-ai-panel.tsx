@@ -1,12 +1,21 @@
 import { ChevronsUpDown, PanelRightClose, SquarePen } from "lucide-react";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { AskAiComposer } from "@/components/ui/ask-ai-composer";
-import { AskAiPlaceholderThread } from "@/components/ui/ask-ai-placeholder-thread";
+import {
+  AgentMessage,
+  MessageThread,
+  UserMessage,
+} from "@/components/ui/ask-ai-message";
 import {
   ScrollBottomSentinel,
   ScrollToLatestFab,
 } from "@/components/ui/ask-ai-scroll-to-latest";
+import { AskAiThinkingRow } from "@/components/ui/ask-ai-thinking-row";
 import { Button } from "@/components/ui/button";
+import { useAskAiThread } from "@/hooks/use-ask-ai-thread";
+import { useStickToBottom } from "@/hooks/use-stick-to-bottom";
 import { cn } from "@/lib/utils";
 
 /* ─── AskAiPanel — right-docked "Ask AI" chat shell ─────────────────────────
@@ -26,10 +35,24 @@ export interface AskAiPanelProps {
 }
 
 export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
-  // The scrolling message region and the zero-height marker at its very end;
-  // ScrollToLatestFab watches one against the other.
+  // Conversation state lives above the router outlet (App.tsx) so the thread
+  // survives navigation, the same way `askAiOpen` does.
+  const { messages, phase, send, stop } = useAskAiThread();
+
+  // The scrolling message region and the zero-height marker at its very end.
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const stick = useStickToBottom(scrollRef, sentinelRef);
+
+  // Sending re-arms following and snaps to the end, so the new turn is in view
+  // however far up the thread the user had scrolled.
+  const handleSend = useCallback(
+    (text: string) => {
+      send(text);
+      stick.pinToBottom();
+    },
+    [send, stick]
+  );
 
   return (
     <div
@@ -84,26 +107,50 @@ export function AskAiPanel({ onClose, className }: AskAiPanelProps) {
             body's `gap-4`, which is exactly Figma's 16px / 16px offset pair —
             so the FAB needs no hard-coded position of its own. */}
         <div className="relative min-h-0 flex-1">
-          {/* Scrolling turn list. Placeholder content — see the const's header.
+          {/* Scrolling turn list.
               Scroll anchoring: the content wrapper opts OUT and the sentinel
-              opts IN, so the browser pins to the bottom for free while content
-              grows and releases once the user scrolls the sentinel out of view.
-              The two are separate elements rather than a `[&>*]` rule + an
-              override, so there is no specificity tie to lose. CSS only — the
-              streaming JS is a separate task. */}
+              opts IN. The two are separate elements rather than a `[&>*]` rule
+              plus an override, so there is no specificity tie to lose. It
+              prevents JUMPS when content changes above the viewport, but it
+              does NOT follow content appended below (measured 2026-07-28:
+              0 → 819px drift over ~10s of streaming). Auto-follow is
+              `useStickToBottom`, which owns that. */}
           <div className="h-full overflow-y-auto pt-4" ref={scrollRef}>
             <div className="[overflow-anchor:none]">
-              <AskAiPlaceholderThread />
+              <MessageThread>
+                {messages.map((message) =>
+                  message.role === "user" ? (
+                    <UserMessage key={message.id}>
+                      {message.content}
+                    </UserMessage>
+                  ) : (
+                    <AgentMessage
+                      key={message.id}
+                      showActions={message.status !== "streaming"}
+                    >
+                      <Markdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </Markdown>
+                    </AgentMessage>
+                  )
+                )}
+                {phase === "thinking" && <AskAiThinkingRow />}
+              </MessageThread>
             </div>
             <ScrollBottomSentinel ref={sentinelRef} />
           </div>
           <ScrollToLatestFab
             className="absolute right-0 bottom-0"
-            scrollRef={scrollRef}
-            sentinelRef={sentinelRef}
+            onClick={stick.jumpToLatest}
+            visible={stick.showFab}
           />
         </div>
-        <AskAiComposer className="shrink-0" />
+        <AskAiComposer
+          className="shrink-0"
+          onSend={handleSend}
+          onStop={stop}
+          phase={phase}
+        />
       </div>
     </div>
   );

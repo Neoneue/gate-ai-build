@@ -1,11 +1,5 @@
 import { ArrowDown } from "lucide-react";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import type { RefObject } from "react";
 import { cn } from "@/lib/utils";
 
 /* ─── ScrollToLatestFab — jump-to-bottom control for the Ask AI thread ───────
@@ -30,23 +24,18 @@ import { cn } from "@/lib/utils";
  * every pixel, and needs no rAF throttling.
  * ────────────────────────────────────────────────────────────────────────── */
 
-/** Slack at the bottom, in px, within which the user counts as pinned.
-    60px is the conventional value: a tighter threshold misfires because
-    ordinary content growth (one new line rendering) briefly opens a small gap
-    that a naive `scrollHeight - scrollTop - clientHeight` check misreads as
-    "the user scrolled away". Supplied to the observer as `rootMargin`. */
-const BOTTOM_THRESHOLD_PX = 60;
-
-const prefersReducedMotion = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
 /**
  * Zero-height marker. Must be the LAST child of the scroll region.
  *
- * `overflow-anchor: auto` (against `none` on the content beside it) makes the
- * browser pin scroll to this node while content grows above it, and stop on
- * its own once the user scrolls it out of view — native stick-to-bottom, no JS.
+ * Serves two purposes: it is the IntersectionObserver target below, and it
+ * carries `overflow-anchor: auto` (against `none` on the content beside it) so
+ * the browser does not jump the scroll position when content changes above it.
+ *
+ * It does NOT produce stick-to-bottom. Measured 2026-07-28: while a reply
+ * streams, scroll anchoring holds only until the thread outgrows the region,
+ * after which the gap climbs monotonically (0 → 819px over ~10s). CSS anchoring
+ * stabilises content changing ABOVE the viewport; it never follows content
+ * appended BELOW it. Auto-follow, if wanted, is a separate JS decision.
  */
 export function ScrollBottomSentinel({
   ref,
@@ -60,103 +49,16 @@ export function ScrollBottomSentinel({
 
 export interface ScrollToLatestFabProps {
   className?: string;
-  /** The scrolling message region. */
-  scrollRef: RefObject<HTMLElement | null>;
-  /** The <ScrollBottomSentinel /> rendered as that region's last child. */
-  sentinelRef: RefObject<HTMLElement | null>;
+  onClick: () => void;
+  /** From `useStickToBottom`. */
+  visible: boolean;
 }
 
 export function ScrollToLatestFab({
-  scrollRef,
-  sentinelRef,
+  visible,
+  onClick,
   className,
 }: ScrollToLatestFabProps) {
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [hasOverflow, setHasOverflow] = useState(false);
-  // True while a smooth scroll we started is still animating.
-  const smoothingRef = useRef(false);
-
-  // Is the sentinel within BOTTOM_THRESHOLD_PX of the visible bottom?
-  useEffect(() => {
-    const root = scrollRef.current;
-    const sentinel = sentinelRef.current;
-    if (!(root && sentinel)) {
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsAtBottom(entry.isIntersecting);
-        if (entry.isIntersecting) {
-          // Arrived — any smooth scroll we started is done.
-          smoothingRef.current = false;
-        }
-      },
-      { root, rootMargin: `0px 0px ${BOTTOM_THRESHOLD_PX}px 0px`, threshold: 0 }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [scrollRef, sentinelRef]);
-
-  /* Does the thread overflow at all? Gated separately so a short thread never
-     flashes the control during layout. Not a scroll listener — ResizeObserver
-     covers both panel resizes and the thread growing under streaming. */
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) {
-      return;
-    }
-    const measure = () => setHasOverflow(el.scrollHeight > el.clientHeight + 1);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    for (const child of el.children) {
-      observer.observe(child);
-    }
-    return () => observer.disconnect();
-  }, [scrollRef]);
-
-  /* If the user grabs the scroll while our smooth scroll is animating, the two
-     fight and the view bounces. Stop ours dead by scrolling to where it
-     already is. Bound to input events, not `scroll`, so this stays off the
-     scroll path. */
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) {
-      return;
-    }
-    const cancelSmoothScroll = () => {
-      if (!smoothingRef.current) {
-        return;
-      }
-      smoothingRef.current = false;
-      el.scrollTo({ top: el.scrollTop, behavior: "instant" });
-    };
-    const passive = { passive: true } as const;
-    el.addEventListener("wheel", cancelSmoothScroll, passive);
-    el.addEventListener("touchmove", cancelSmoothScroll, passive);
-    el.addEventListener("keydown", cancelSmoothScroll);
-    return () => {
-      el.removeEventListener("wheel", cancelSmoothScroll);
-      el.removeEventListener("touchmove", cancelSmoothScroll);
-      el.removeEventListener("keydown", cancelSmoothScroll);
-    };
-  }, [scrollRef]);
-
-  const scrollToBottom = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) {
-      return;
-    }
-    const reduced = prefersReducedMotion();
-    smoothingRef.current = !reduced;
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: reduced ? "instant" : "smooth",
-    });
-  }, [scrollRef]);
-
-  const visible = !isAtBottom && hasOverflow;
-
   return (
     <button
       aria-hidden={!visible}
@@ -171,7 +73,7 @@ export function ScrollToLatestFab({
           : "pointer-events-none scale-95 opacity-0",
         className
       )}
-      onClick={scrollToBottom}
+      onClick={onClick}
       tabIndex={visible ? 0 : -1}
       type="button"
     >

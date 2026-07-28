@@ -7,6 +7,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
 import { AuthLayout } from "@/layouts/AuthLayout";
 
 /* Route-level code splitting: each page loads as its own chunk on first
@@ -247,7 +248,11 @@ function Layout() {
     setAskAiOpen,
   };
 
-  return <Outlet context={ctx} />;
+  return (
+    <AskAiThreadProvider>
+      <Outlet context={ctx} />
+    </AskAiThreadProvider>
+  );
 }
 
 export default function App() {

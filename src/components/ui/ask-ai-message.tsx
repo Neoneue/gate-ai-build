@@ -173,9 +173,15 @@ const REPLY_ACTION_BUTTON =
 export function AgentMessage({
   children,
   className,
+  showActions = true,
 }: {
   children: ReactNode;
   className?: string;
+  /** Reply affordances only make sense once the reply is whole — copying a
+      half-streamed answer or "regenerating" mid-stream are both meaningless.
+      The row still RENDERS while false so its 24px box keeps reserving space:
+      revealing it must not shift the bubble or the thread. */
+  showActions?: boolean;
 }) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -187,12 +193,19 @@ export function AgentMessage({
         />
         <ReplyProse>{children}</ReplyProse>
       </div>
-      <div className="flex items-center gap-1 px-1">
+      <div
+        aria-hidden={!showActions}
+        className={cn(
+          "flex items-center gap-1 px-1 transition-opacity duration-150 ease-out motion-reduce:transition-none",
+          showActions ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
+      >
         {REPLY_ACTIONS.map(({ icon: Icon, label }) => (
           <button
             aria-label={label}
             className={REPLY_ACTION_BUTTON}
             key={label}
+            tabIndex={showActions ? 0 : -1}
             type="button"
           >
             <Icon aria-hidden className="size-3.5" strokeWidth={1.75} />

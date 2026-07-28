@@ -1,5 +1,6 @@
-import { Plus, Send } from "lucide-react";
-import { useState } from "react";
+import { Plus, Send, Square } from "lucide-react";
+import { type KeyboardEvent, useState } from "react";
+import type { AskAiPhase } from "@/hooks/use-ask-ai-thread";
 import { cn } from "@/lib/utils";
 
 /* ─── AskAiComposer — the Ask AI chat box ───────────────────────────────────
@@ -20,8 +21,15 @@ import { cn } from "@/lib/utils";
  * Both buttons are intentionally unwired; they carry the press affordance and
  * labels so wiring them later is a no-op on the visuals. ─────────────────── */
 
+/* Placeholder swaps with the agent's phase (Figma frames `1107:2962` /
+   `1096:5471` show the replying copy in the field). The field stays editable
+   throughout — only the prompt text changes. */
 const PLACEHOLDER =
   "Ask Gatekeeper a question or type /help to see a list of options";
+const PLACEHOLDER_BY_PHASE: Partial<Record<AskAiPhase, string>> = {
+  thinking: "The Gatekeeper is thinking…",
+  replying: "The Gatekeeper is replying…",
+};
 
 /* Shared circular-action recipe. Mirrors the <Button> press convention:
    scale-DOWN to 0.98 over 150ms ease-out, promoted with will-change-transform,
@@ -33,11 +41,46 @@ const ACTION_BUTTON =
 
 export interface AskAiComposerProps {
   className?: string;
+  /** Called with the trimmed text. The field clears itself on submit. */
+  onSend?: (text: string) => void;
+  /** Halt an in-flight reply, keeping whatever has already streamed. */
+  onStop?: () => void;
+  /** Drives the placeholder and the send/stop swap. */
+  phase?: AskAiPhase;
 }
 
-export function AskAiComposer({ className }: AskAiComposerProps) {
+export function AskAiComposer({
+  className,
+  phase = "idle",
+  onSend,
+  onStop,
+}: AskAiComposerProps) {
   const [value, setValue] = useState("");
   const hasText = value.trim().length > 0;
+  const isBusy =
+    phase === "sending" || phase === "thinking" || phase === "replying";
+
+  /* Sends even while the agent is busy — that is an INTERRUPT: the in-flight
+     reply is aborted where it stands and this question takes over. Empty or
+     whitespace-only input is still rejected, busy or not. */
+  const submit = () => {
+    if (!hasText) {
+      return;
+    }
+    onSend?.(value);
+    setValue("");
+  };
+
+  // Enter sends, Shift+Enter (and IME composition) inserts a newline.
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (
+      event.key === "Enter" &&
+      !(event.shiftKey || event.nativeEvent.isComposing)
+    ) {
+      event.preventDefault();
+      submit();
+    }
+  };
 
   return (
     <div
@@ -53,7 +96,8 @@ export function AskAiComposer({ className }: AskAiComposerProps) {
         aria-label="Ask Gatekeeper"
         className="type-copy-14-tight field-sizing-content block max-h-20 min-h-5 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"
         onChange={(event) => setValue(event.target.value)}
-        placeholder={PLACEHOLDER}
+        onKeyDown={onKeyDown}
+        placeholder={PLACEHOLDER_BY_PHASE[phase] ?? PLACEHOLDER}
         rows={1}
         value={value}
       />
@@ -68,16 +112,24 @@ export function AskAiComposer({ className }: AskAiComposerProps) {
         >
           <Plus aria-hidden className="size-4" strokeWidth={1.75} />
         </button>
+        {/* One 32px circle in two roles — send, or stop while the agent works
+            (Figma swaps the glyph to `Icon / Square`, node `1125:5428`). The
+            BUTTON stops without sending; Enter with text sends and interrupts. */}
         <button
-          aria-label="Send message"
+          aria-label={isBusy ? "Stop replying" : "Send message"}
           className={cn(
             ACTION_BUTTON,
             "size-8 bg-primary text-primary-foreground-soft",
-            hasText ? "opacity-100" : "opacity-50"
+            hasText || isBusy ? "opacity-100" : "opacity-50"
           )}
+          onClick={isBusy ? onStop : submit}
           type="button"
         >
-          <Send aria-hidden className="size-4" strokeWidth={1.75} />
+          {isBusy ? (
+            <Square aria-hidden className="size-4" strokeWidth={1.75} />
+          ) : (
+            <Send aria-hidden className="size-4" strokeWidth={1.75} />
+          )}
         </button>
       </div>
     </div>
