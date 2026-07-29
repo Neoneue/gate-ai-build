@@ -20,6 +20,8 @@ tokens; this index exists so nothing has to glob the directory.
 - The Ask AI composer floats over the thread
 - The Ask AI header trigger becomes a real chat picker
 - The thinking row swaps lucide `Brain` for the `@dotmatrix` 3×3 pulse
+- The Ask AI chat body gets its dot-matrix canvas — drawn in CSS, not shipped
+- Security event modal — verdict footer replaces the title-row flag button
 
 ### [2026-07-28](./2026-07/changelog-7-28.md)
 
