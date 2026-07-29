@@ -22,6 +22,8 @@ tokens; this index exists so nothing has to glob the directory.
 - The thinking row swaps lucide `Brain` for the `@dotmatrix` 3×3 pulse
 - The Ask AI chat body gets its dot-matrix canvas — drawn in CSS, not shipped
 - Security event modal — verdict footer replaces the title-row flag button
+- `Button variant="outline"` — the dark fill was see-through
+- Ask AI canvas — strength and floor retuned
 
 ### [2026-07-28](./2026-07/changelog-7-28.md)
 
