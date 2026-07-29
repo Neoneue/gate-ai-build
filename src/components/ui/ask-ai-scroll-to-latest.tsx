@@ -1,5 +1,6 @@
 import { ArrowDown } from "lucide-react";
 import type { RefObject } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /* ─── ScrollToLatestFab — jump-to-bottom control for the Ask AI thread ───────
@@ -60,24 +61,25 @@ export function ScrollToLatestFab({
   className,
 }: ScrollToLatestFabProps) {
   return (
-    <button
+    <Button
       aria-hidden={!visible}
       aria-label="Scroll to latest"
       className={cn(
-        "flex size-8 shrink-0 select-none items-center justify-center rounded-full border border-border bg-control-raised text-accent-foreground shadow-(--shadow-card-soft) outline-none",
-        // Press convention, plus a subtle fade/scale so it does not hard-pop.
-        "transition-[colors,opacity,scale] duration-150 ease-out will-change-transform focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]",
-        "motion-reduce:transition-none motion-reduce:active:scale-100",
+        // Visibility STATE only — the chrome (circle, raised surface, press,
+        // focus ring, reduced-motion) all comes from the primitive.
         visible
           ? "scale-100 opacity-100"
           : "pointer-events-none scale-95 opacity-0",
         className
       )}
       onClick={onClick}
+      shape="circle"
+      size="icon-sm"
       tabIndex={visible ? 0 : -1}
       type="button"
+      variant="raised"
     >
-      <ArrowDown aria-hidden className="size-4" strokeWidth={1.75} />
-    </button>
+      <ArrowDown aria-hidden strokeWidth={1.75} />
+    </Button>
   );
 }

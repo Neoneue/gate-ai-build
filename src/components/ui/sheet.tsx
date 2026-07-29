@@ -74,7 +74,7 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
  * left/right default to `w-full sm:max-w-2xl` (wide inspector rail); top/bottom
  * are content-height, full width. Tighten per call site via `className`. */
 const sheetVariants = cva(
-  "fixed z-50 flex flex-col gap-6 overscroll-contain border-border bg-card p-4 text-foreground text-sm shadow-(--shadow-modal) outline-none duration-300 ease-out will-change-transform data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 motion-reduce:animate-none motion-reduce:duration-0",
+  "fixed z-50 flex flex-col gap-6 overscroll-contain border-border bg-card p-4 text-foreground text-sm shadow-lg outline-none duration-300 ease-out will-change-transform data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 motion-reduce:animate-none motion-reduce:duration-0",
   {
     defaultVariants: { side: "right" },
     variants: {
@@ -131,7 +131,7 @@ function SheetContent({
             render={
               <Button
                 className="absolute top-2 right-2"
-                size="icon-lg"
+                size="icon"
                 variant="ghost"
               />
             }
@@ -179,7 +179,9 @@ function SheetFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button size="lg" variant="outline" />}>
+        <DialogPrimitive.Close
+          render={<Button size="default" variant="outline" />}
+        >
           Close
         </DialogPrimitive.Close>
       )}

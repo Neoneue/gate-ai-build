@@ -1,6 +1,7 @@
-import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/page-title";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -103,7 +104,7 @@ export function ChoiceCard({
       <Button
         className="mt-auto"
         onClick={onClick}
-        size="lg"
+        size="default"
         variant={ctaVariant}
       >
         {cta}
@@ -126,20 +127,7 @@ export function SetupBackLink({
   label: string;
   onClick: () => void;
 }) {
-  return (
-    <button
-      className="type-label-14 group relative inline-flex w-fit items-center gap-1 rounded-xs text-muted-foreground transition-[colors,scale] duration-150 ease-out after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-      onClick={onClick}
-      type="button"
-    >
-      <ChevronLeft
-        aria-hidden
-        className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-        strokeWidth={1.75}
-      />
-      {label}
-    </button>
-  );
+  return <BackLink label={label} onClick={onClick} />;
 }
 
 /**

@@ -2,7 +2,7 @@
 
 Running log of every UI change made to the dashboard. Written to diff against and replicate across surfaces.
 
-Prior day: [`changelog-6-26.md`](./changelog-6-26.md)
+Prior day: [`changelog-6-26.md`](../2026-06/changelog-6-26.md)
 
 ---
 

@@ -4,6 +4,7 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { IconActionButton } from "@/components/ui/icon-action-button";
 // KPI rail hidden for now — see commented KpiSection below.
 // import { CompactKpi, CompactSpark } from '@/components/ui/compact-kpi';
 // import { KpiRail } from '@/components/ui/kpi-rail';
@@ -325,12 +326,11 @@ function PolicyCard({
           <span className="flex h-6 shrink-0 items-center">
             <StatusBadge on={state.enabled} />
           </span>
-          <button
+          <IconActionButton
             aria-expanded={expanded}
             aria-label={`${expanded ? "Collapse" : "Expand"} ${config.name} settings`}
-            className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out will-change-transform after:absolute after:-inset-2 after:content-[''] hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+            className="shrink-0"
             onClick={() => setExpanded((v) => !v)}
-            type="button"
           >
             <ChevronDown
               aria-hidden
@@ -340,7 +340,7 @@ function PolicyCard({
               )}
               strokeWidth={1.75}
             />
-          </button>
+          </IconActionButton>
         </div>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           {config.description}
@@ -428,7 +428,7 @@ function ProBenefitsCard() {
               <Button
                 className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={() => setCompareOpen(true)}
-                size="lg"
+                size="default"
                 type="button"
               >
                 <SparklesIcon aria-hidden data-icon="inline-start" size={16} />

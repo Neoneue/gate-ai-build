@@ -21,6 +21,10 @@ every value you write must map to a named token or voice defined in `design.md`.
   (`gap-0.5`, `mt-1.5`, `p-2.5` = 2/6/10px), which break the 4px unit. Prefer
   the 8px steps (`2`/`4`/`6`/`8`) for layout rhythm where they fit; reach for the
   odd 4px steps (`1`/`3`/`5`) when 8px is too coarse.
+  - **One sanctioned exception:** `Button`'s icon padding, `px-2.5` (10px), which
+    is shadcn's own `has-[>svg]:px-2.5` value. Adopting upstream verbatim beats
+    rounding it to keep a grid. It is the only `*.5` in the system; a second one
+    needs the same justification, in writing, in `design.md`.
 
 ## When no token fits
 

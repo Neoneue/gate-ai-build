@@ -190,7 +190,7 @@ export function DashboardChrome({
             className="flex h-full w-[368px] flex-col border-border border-l bg-card"
             inert={!askAiOpen}
           >
-            <AskAiPanel onClose={closeAskAi} />
+            <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
           </div>
         </div>
       </div>
@@ -206,7 +206,7 @@ export function DashboardChrome({
           side="right"
         >
           <SheetTitle className="sr-only">Ask AI</SheetTitle>
-          <AskAiPanel onClose={closeAskAi} />
+          <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
         </SheetContent>
       </Sheet>
       {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
@@ -253,7 +253,7 @@ function DashTopBar({
           aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
           className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground lg:inline-flex"
           onClick={onToggleSidebar}
-          size="icon-lg"
+          size="icon"
           variant="ghost"
         >
           {/* Contextual icon cross-fade. Both icons stay in DOM,
@@ -308,14 +308,14 @@ function DashTopBar({
         <Button
           aria-expanded={askAiOpen}
           onClick={onToggleAskAi}
-          size="lg"
+          size="default"
           variant="outline"
         >
           <Sparkles aria-hidden data-icon="inline-start" size={16} />
           Ask AI
         </Button>
         {hideDocsButton ? null : (
-          <Button size="lg" variant="outline">
+          <Button size="default" variant="outline">
             <BookOpen aria-hidden data-icon="inline-start" size={16} />
             Docs
           </Button>
@@ -375,7 +375,7 @@ function MobileNav({
           <Button
             aria-label="Open navigation menu"
             className="lg:hidden"
-            size="icon-lg"
+            size="icon"
             variant="outline"
           />
         }

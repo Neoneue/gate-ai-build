@@ -473,13 +473,18 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 | `bg-popover` | white | `bg-white` on dropdown / Select / Tooltip surfaces |
 | `bg-muted` | neutral-100 | `bg-neutral-100` on secondary / count-chip / tag surfaces |
 | `bg-secondary` | neutral-100 | `bg-neutral-100` on interactive secondary fills |
-| `bg-accent` | neutral-100 | `bg-neutral-100` on hover/accent fills |
+| `bg-accent` | neutral-100 | `bg-neutral-100` on selected/active fills |
+| `bg-accent-muted` | accent at 50% | `bg-accent/50` — the half-strength accent is a token, not a modifier |
 | `border-border` | neutral-200 | `border-neutral-200` for dividers, table separators, list containers, form control edges |
 | `ring-ring` | neutral-400 | `ring-neutral-N` for focus rings |
 | `text-foreground` | neutral-900 | `text-neutral-900` for primary text, headlines, row identifiers |
 | `text-muted-foreground` | neutral-600 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
 
 **Wash surfaces — `--card-muted` token (2026-07-09).** The neutral-50 wash that card-like panels and table header/footer rows sit on is the `--card-muted` token (neutral-50 light / neutral-800 dark) — an extension of `--card`, applied via `bg-card-muted`. It is deliberately separate from `--muted` (neutral-100 / neutral-800): chips, badges, count pills, avatar/icon placeholders, and the segmented-track container keep `bg-muted` at neutral-100, so lightening the panel washes never touches them. Consumers of `bg-card-muted`: shared `TableHeader`/`TableFooter`, and the bordered info-panels on Billing / BillingFree / Policies / onboarding. Form-field fills (Input, Textarea, Select trigger, InputGroup) stay on `bg-muted` for now. No raw `bg-neutral-50` in component code — the wash is a token.
+
+**Highlight vs selected — `--accent-muted` token (2026-07-29).** In any list where a row can be *selected*, hover and selected were the same fill (`bg-accent`) and read as equally solid — you could not tell the row you were pointing at from the row you were on. The two states now split: **`--accent` is the SELECTED fill, `--accent-muted` is the HIGHLIGHT fill (hover + focus-visible), and it is the same accent at half strength.** Named for its strength rather than its state, matching `--card-muted`, because focus-visible uses it too — it is not exclusively a hover color.
+
+Defined once, in both themes, as `color-mix(in oklab, var(--accent) 50%, transparent)` — derived, not resolved, for two reasons. It tracks `--accent` automatically if that ever moves; and being translucent it lands half-way toward the accent from *whatever surface it sits on*, which is what keeps it at the same relative strength on `--card` (Menu popup), `--popover` (Select popup), and `--sidebar` (nav rail) — three values that diverge in dark. An opaque token cannot do this: the midpoint between dark's `--accent` (neutral-700) and `--card` (neutral-900) is neutral-800, which *is* the `--popover` surface, so it would vanish inside every Select. Consumers: `MenuItem`, `SelectItem`, `MultiSelect` rows, sidebar nav items (both the collapsed icon rail and the expanded list). In light the highlight resolves to ≈ neutral-50 — deliberately quiet, one existing surface step off white, and always weaker than the selected row, which is the point. Never write `bg-accent/50` at a call site.
 
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
@@ -505,9 +510,10 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--accent` (hover / active fill) | neutral-100 | neutral-700 |
 | `--primary` / `-foreground` | neutral-900 / white | neutral-200 / neutral-800 |
 | `--primary-foreground-soft` *(added 2026-07-27)* | neutral-200 | neutral-800 |
-| `--muted-foreground` | neutral-600 | neutral-300 |
+| `--muted-foreground` | neutral-600 | neutral-400 *(was neutral-300, retuned 2026-07-29)* |
 | `--border` | neutral-200 | white @ 10% |
 | `--border-active` (active-thumb hairline) | neutral-100 | neutral-800 (= thumb, invisible) |
+| `--border-hover` (hover / pressed edge) *(added 2026-07-28)* | neutral-300 | white @ 20% |
 | `--input` | neutral-300 | white @ 15% |
 | `--ring` | neutral-400 | neutral-500 |
 | `--destructive` | danger-600 | danger-400 |
@@ -521,6 +527,8 @@ Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `
 | `--chat-bubble-agent-foreground` *(added 2026-07-27)* | neutral-900 | neutral-200 |
 
 Two light retunes shipped alongside dark: `--muted-foreground` neutral-500 → **neutral-600** (more legible muted text), `--input` neutral-200 → **neutral-300**.
+
+**Dark `--muted-foreground` retune (2026-07-29): neutral-300 → neutral-400.** At neutral-300 (#d4d4d4) secondary text sat one ramp step from `--foreground` (white) and stopped reading as secondary — the Ask AI composer's placeholder was indistinguishable from a typed question. Figma's dark nodes place secondary text at neutral-400/500 against primary at neutral-200, a consistently wider gap than the code carried; neutral-400 (#a1a1a1) is Figma's own placeholder value. Still clears AA (~7:1 on `--background`). **Light is unchanged** — neutral-600 against neutral-900 was already a clear separation, which is the point of fixing this at the token rather than at a call site: one semantic pair, `text-muted-foreground` / `text-foreground`, now reads correctly in both modes.
 
 **`--surface-strong` (new token pair).** For surfaces intentionally dark in BOTH themes: hero chart card, code / terminal cards, dark tooltips, the connected-segment active pill. Utilities `bg-surface-strong` + `text-surface-strong-foreground`. Use this INSTEAD of raw `bg-neutral-900` / `text-white` whenever the dark surface is deliberate.
 
@@ -575,6 +583,8 @@ they are not a general elevation tier (use `--card-muted` / `--control-raised`
 for that).
 
 **`--border-active` (2026-07-14).** 1px hairline for a raised *active thumb* — the segmented pill's indicator. Neutral-100 in light (a whisper of crispening on the white thumb); in dark it's neutral-800, which matches the thumb surface (`--popover`) so the hairline visually disappears — the lighter thumb already carries the active state there. Utility `border-border-active`. Not a substitute for `--border` on containers.
+
+**`--border-hover` (2026-07-28).** The hover *and* active/pressed edge on a bordered control — one token, both states, because a control that raises its edge on hover should hold that edge while pressed rather than flicker to a third value. It is always a step of MORE contrast against the surface than `--border`: neutral-300 in light (darker), white @ 20% in dark (lighter, one step past `--border` @ 10% and `--input` @ 15%). Utility `border-border-hover`. **Not a substitute for `--ring`, which means focus** — `--ring` answers "keyboard is here", `--border-hover` answers "this is pointing at you". A control can show both at once. First and only use: the Ask AI empty-state suggestion rows, via a `Button` compound variant scoped to `variant="outline" + shape="pill"`. Deliberately NOT on the whole `outline` variant — raising the edge on every outline button in the app is a site-wide change and is its own decision. Nothing else uses `shape="pill"`, so nothing else moved.
 
 **Surface map (raw ramp → token), applied in the 2026-07-09 surface pass:**
 
@@ -870,22 +880,59 @@ Whitespace carries hierarchy. Cards never touch — shadow-as-border does the se
 
 ## 5. Elevation & Depth *(Google canonical §5)*
 
-Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popup`, `--shadow-border`, `--shadow-border-hover`, `--shadow-modal`) still live in `index.css:117–138` and remain the source of truth for menus, popovers, and modals; and **the Card / KpiRail / Tabs-line family** which migrated 2026-05-15 onto an explicit `border border-border shadow-xs` recipe (1px neutral-200 stroke + Tailwind's built-in `shadow-xs` for subtle lift). The migration trades ring-only edges for an honest border that survives any backdrop, any zoom — operator-tool surfaces look brittle at >1× zoom when the only edge is a ring shadow.
+### 5.0 The shadow scale — Tailwind's, verbatim (ruled 2026-07-29)
+
+**The elevation scale is Tailwind's named steps and nothing else.** The Figma
+file scales elevation on Tailwind's shadows, so the code uses the same ladder,
+at the same values. There are no bespoke shadow families, no retuned alphas, no
+per-theme alpha overrides, and no arbitrary `shadow-[…]`. A shadow that is not
+one of these five utilities is a defect.
+
+| Utility | Value (exact, from `tailwindcss/theme.css` v4.2.4) |
+| --- | --- |
+| `shadow-2xs` | `0 1px rgb(0 0 0 / 0.05)` |
+| `shadow-xs` | `0 1px 2px 0 rgb(0 0 0 / 0.05)` |
+| `shadow-sm` | `0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)` |
+| `shadow-md` | `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)` |
+| `shadow-lg` | `0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)` |
+
+Restated in `src/index.css`'s `@theme` block so the scale is visible in the
+token layer and any drift from upstream shows up as a diff. Two things changed
+when it landed: `--shadow-xs` lost its retuned `0.055` alpha (back to stock
+`0.05`), and the dark theme's `--shadow-xs: … / 0.4` override was **removed** —
+one scale, one set of values, both themes. Dark elevation therefore reads
+softer than it did; the `border-border` hairline still carries the crisp edge.
+
+### 5.1 Tier → utility (assigned 2026-07-29)
+
+The five legacy shadow families are **deleted** from `index.css`, light and
+dark. Every surface below now names a Tailwind step directly.
 
 | Tier | Recipe | Radius | Surfaces |
 | --- | --- | --- | --- |
 | Sub-element | none | `rounded-xs` (4px) | Tabs trigger, Segmented item, SelectItem, Badge, MenuItem |
-| Menu / Chrome | `--shadow-popup` token (4px lift 8% + 1px ring 4%) | `rounded-sm` (6px) | Select content, Menu popup, Popover, Tooltip, Toast, Button, Input |
-| **Card / Surface** | **`border border-border shadow-xs`** (migrated 2026-05-15) | **`rounded-md` (8px)** | **Card, KpiRail, Tabs `line` variant border-b, MessageBlock outline** |
-| Hover (card) | `border-border` + `hover:shadow-sm` where interactive (most cards are static) | (same as card) | Hovered card variant — rare in operator surfaces |
-| Modal | `--shadow-modal` token (16px lift 12% + 1px ring 6%) | `rounded-xl` (**16px LOCKED**) | Dialog, AlertDialog, Sheet (right-docked = `rounded-none` left edge) |
-| Soft card (in colored panel) | `--shadow-card-soft` token (8/6px lift 5% — two layers, same `color-mix` family) | `rounded-md` (8px) | Cards sitting inside a non-white panel where standard chrome would compete with the panel bg (canonical: SecurityDefault events ticker inside the right `bg-neutral-50` panel). Added 2026-05-26 — defined in `index.css` alongside `--shadow-popup`/`--shadow-modal`. |
+| **Card / Surface** | **`border border-border shadow-xs`** | **`rounded-md` (8px)** | Card, KpiRail, EmptyState, CompactKpi, CodeCard (flat), Tabs `line` variant, MessageBlock outline. Tables carry NO shadow of their own — they sit inside a Card |
+| Hover (card) | `hover:shadow-sm` where interactive (most cards are static) | (same as card) | Hovered card variant — rare in operator surfaces |
+| **Soft lift** | **`shadow-sm`** | (varies) | `Button variant="raised"`, the Ask AI scroll-to-latest FAB, the composer's Add-context button |
+| **Menu / Chrome** | **`shadow-md`** | `rounded-sm` (6px) | Menu popup, Popover, Tooltip, Select content, chart tooltip, CodeCard `raised`, Artboard shell, Team's member menu |
+| **Modal** | **`shadow-lg`** | `rounded-xl` (**16px LOCKED**) | Dialog, AlertDialog, Sheet (right-docked = `rounded-none` left edge), the SignIn / SignUp auth cards |
 
-**Legacy `--shadow-border` token.** Still defined in `index.css:117–120`. No primitive currently consumes it after the 2026-05-15 migration. Don't re-introduce it on new Cards or KpiRails — they take the `border + shadow-xs` recipe. Keep the token for the rare case where a surface genuinely wants a ring-only edge (none today).
+**The ring layer is gone; borders replace it.** Every deleted token bundled a
+`0 0 0 1px` ring *plus* a lift into one value. Tailwind's steps are lift only,
+so any surface that relied on the ring for its edge now carries an explicit
+`border border-border`. Most already did. Two did not and were given one:
+`CompactKpi` and the `Artboard` shell. **If a converted surface looks
+edgeless, it is missing its border — do not reach for a bigger shadow.**
+
+**Dark mode reads softer than it did.** The deleted dark tokens ran at
+0.3–0.6 alpha, tuned for near-black grounds; Tailwind's steps are 0.05–0.1,
+tuned for light. On dark surfaces the `border-border` hairline is now doing
+most of the separation work. That is the cost of one scale across both themes,
+and it was accepted knowingly.
 
 **Three-tier material ladder (codified 2026-05-10).** The prior two-tier (6/12) collapsed cards and buttons onto the same radius (6px) and put modals one step up (12px). Migration to three-tier opens a discrete *card / surface* tier at 8px — Card, KpiRail, and table containers now read distinct from buttons / inputs / menus (6px). Modal radius bumps to 16px to preserve the 2× tier ratio against cards (`8 → 16`). Sub-element radius (4px) is unchanged. Token: `--radius-xl: 1rem` in `@theme inline` (`index.css:305`).
 
-**Rules:** Card-tier surfaces wear an honest `border-border` plus `shadow-xs`. Menus and modals stay on their shadow tokens. **Concentric rule:** item radius < container radius (4px badge inside 8px card inside 16px modal). Don't override `rounded-xl` on modals — locked.
+**Rules:** Card-tier surfaces wear an honest `border-border` plus `shadow-xs`. Menus are `shadow-md`, modals `shadow-lg`, soft lifts `shadow-sm` — never a bespoke token. **Concentric rule:** item radius < container radius (4px badge inside 8px card inside 16px modal). Don't override `rounded-xl` on modals — locked.
 
 ---
 
@@ -935,12 +982,25 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 ### Buttons — `{components.button-default}` and variants
 
-`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with 4 size variants (xs/sm/default/lg) and 6 style variants (default/outline/secondary/ghost/destructive/link).
+`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with **3 text sizes (xs/sm/default) + 3 icon sizes (icon-xs/icon-sm/icon)**, 7 style variants (default/outline/secondary/ghost/destructive/link/raised), and a `shape` variant (default/pill/circle).
+
+> **`default` is the largest size. There is no `lg`, no `xl`, no `icon-lg`.**
+> Removed 2026-07-28 — see the Sizes bullet below.
 
 - **Default:** `bg-primary text-primary-foreground` (neutral-900 / white). 32px tall (`h-8`), `px-3` (`pr-2` with icon). `rounded-sm`. `text-sm font-medium`. Press: `active:not-aria-[haspopup]:scale-[0.98]` (scale-down) + `will-change-transform` (standardized 2026-06-18, replaced `active:translate-y-px`; the `not-aria-[haspopup]` gate keeps popover triggers from scaling). ← `button.tsx`
-- **Sizes:** xs h-6 px-3 text-xs · sm h-8 px-3 text-xs · default h-8 px-3 text-sm · lg h-9 px-3 text-sm (2026-07-16, shadcn-aligned: default 32px / lg 36px, flat 12px L/R padding — operator-tool register, not marketing CTA). **Every `<Button>` carries an explicit `size`** (no implicit default) so sizes can vary by breakpoint. Migration: what was 40px (old default) → `lg`; 32px → `default`/`sm`.
+- **Sizes (realigned 2026-07-28):** xs `h-6 px-3 text-xs` (24px) · sm `h-8 px-3 text-xs` (32px) · **default `h-9 px-3 text-sm` (36px, the largest)**. Icon-only squares track the same heights: `icon-xs` 24 · `icon-sm` 32 · `icon` 36. **Every `<Button>` carries an explicit `size`** (no implicit default) so sizes can vary by breakpoint.
+  - **Why it moved.** The 2026-07-16 scale sat one step BELOW shadcn's (`default` = 32px where shadcn's is 36px), so every call site reached for `lg` to get an ordinary button. The audit found **62 uses of `lg` against 0 uses of `default`** across 120 buttons — the API's default was dead and `lg` was the real default. `lg` was renamed to `default` (pixel-identical, 63 call sites), then `lg` / `xl` / `icon-lg` were deleted outright. Audit: `docs/button-audit-7-28.md`.
+  - **`lg` is not coming back.** If a control needs to be bigger than 36px it is not a button — it is a row, a card, or a tile. Ask before adding a size.
+- **`icon-action` — the one responsive size** (added 2026-07-29). `size-8` below `lg`, `size-6` from `lg`, with the glyph stepping 16px → 14px to match. For a **dense action row** (reply feedback, message tools) that wants a compact box on a pointer device and a real tap target on touch. Consumer: the Ask AI reply feedback row.
+  - **Pair it with `gap-0 px-0` → `lg:gap-1 lg:px-1` on the row.** The 8px the box gains on touch is exactly the 8px the gap gives up, so every glyph stays at the same x and the icon **pitch is unchanged** — the target grows into space the row already owned, moving no pixels.
+  - **Pitch caps a non-overlapping target.** At a 32px pitch you cannot reach the 44px of WCAG 2.5.5 (AAA) / Apple HIG without widening the row or letting neighbouring targets overlap — and overlapping targets steal each other's taps, which fails worse than a small one. 32px clears **WCAG 2.2 SC 2.5.8 (AA, 24×24)** with room, on the surfaces where it matters.
+  - **Why the breakpoint is inside the recipe.** `size` is a prop and cannot carry a breakpoint; overriding a primitive's size via a call-site `className` is hand-rolling. Putting the responsive step in the variant is the only form that stays composable and reusable — reach for this size rather than re-deriving it. It is deliberately the ONLY responsive entry in the scale; a second one needs the same justification, in writing, here.
 - **Outline:** `border-border bg-card` + **`shadow-xs`** (added 2026-06-04, primitive-level so it cascades to every `variant="outline"`) — the subtle lift matches the Card recipe and reads against any backdrop. `box-shadow` is in the button's transition list, so it does not snap on hover.
-- **Asymmetric icon padding:** `has-data-[icon=inline-start]:pl-2` / `has-data-[icon=inline-end]:pr-2` (default/lg — 8px on the icon side vs 12px text side). Mirrors `SelectTrigger` rule (see below).
+- **`shape` — radius belongs to the primitive.** `default` inherits the base `rounded-sm`; `pill` = `rounded-full` for full-width list-style rows; `circle` = `rounded-full` for round icon keys. Never reach for `rounded-full` in a `<Button>` className. `circle` was added 2026-07-28 after the audit found **four** files that had each hand-rolled the same round-button recipe (Ask AI composer ×2, scroll-to-latest FAB, feedback FAB) instead of asking the primitive for it. Canonical uses: `ask-ai-empty-state.tsx` (`variant="outline" shape="pill" size="default"`), `ask-ai-composer.tsx` (`shape="circle" size="icon-xs|icon-sm"`).
+- **`raised` variant** (added 2026-07-28). `border-border bg-control-raised text-accent-foreground shadow-(--shadow-card-soft)`. A control that sits ON a panel and must read lifted off it — `--control-raised` is white in light and **neutral-700 in dark, i.e. lighter than a card**, which `outline` (on `--card`) cannot express. Consumers: the composer's add-context key, the scroll-to-latest FAB. Reach for `outline` first; `raised` only when the control must lift off a panel surface.
+- **Icon padding is symmetric — 10px both sides** (revised 2026-07-28). A button that holds an icon draws its L/R padding in from 12px to **10px on BOTH sides**: `has-data-[icon=inline-start]:px-2.5` / `has-data-[icon=inline-end]:px-2.5`, on xs/sm/default/lg. This is shadcn's own rule (`sm: "h-8 px-3 has-[>svg]:px-2.5"`) expressed through this repo's `data-icon` markers instead of `>svg`. **10px is a deliberate carve-out from the 4px grid** — it is upstream's value and the one place `*.5` is sanctioned; see [`.claude/rules/design-tokens.md`](./.claude/rules/design-tokens.md).
+  - **Superseded:** `pl-2`/`pr-2` (8px icon side vs 12px text side), which shipped 2026-07-16 and was retired 2026-07-28. It was a local invention — shadcn has no asymmetric button padding at any size — and the lopsided edge was visible on every icon+label button in the app (the top bar's Ask AI / Docs pair being the clearest case). `xl` is excluded: it is a full-width `justify-between` row, so drawing its edges in would fight the layout.
+  - `SelectTrigger`'s `pl-3 pr-2` (see below) is a **separate** rule and still asymmetric — its chevron is trailing chrome the component owns, not a caller-supplied icon.
 
 **Rule:** Primary action = `default` (neutral-900). Use `outline` for secondary, `ghost` for tertiary in toolbars/menus. `link` variant is for standalone link-buttons; **inline body-text links** use `<button>` with the underline affordance (see Inline links below).
 
@@ -1070,7 +1130,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
   **Body section pattern:** sections inside `<DialogScrollBody>` use `<section className="flex flex-col gap-3"><h3 className="font-sans text-sm font-medium text-neutral-900 m-0">…</h3>{content}</section>`. Section h3 is `text-sm font-medium` (NOT mono uppercase eyebrow — that's reserved for the title block's `eyebrow` slot). Between sections: `gap-6` (24px) on the body's flex column.
 - **AlertDialog** (`alert-dialog.tsx`) — same modal-tier surface (rounded-xl / 16px); content `p-6` (bumped from `p-4` on 2026-05-11 to match `<DialogContent>`); used for destructive confirmations.
 - **Sheet** (`sheet.tsx`) — right-docked drawer. Flush against viewport edge (`rounded-none`), only a left border + modal-tier shadow.
-- **Menu** (`menu.tsx`, codified 2026-05-10) — shadcn-style wrapper over Base UI Menu. Exports: `Menu` / `MenuTrigger` / `MenuContent` / `MenuItem` / `MenuLabel` / `MenuSeparator`. Recipe: content `min-w-44 rounded-sm bg-white border border-neutral-200 shadow-(--shadow-popup) p-1 origin-[var(--transform-origin)]` (the transform-origin variable is published by Base UI's Positioner, so popups scale *from the trigger*, not the popup's geometric center — small detail, big feel). Item: `rounded-xs h-8 px-2 text-sm text-neutral-900 [&_svg]:text-neutral-500` with `transition-colors duration-100 ease-out` so keyboard arrow-through fades highlight states rather than snapping. `variant="destructive"` swaps colors to `text-danger-700 / data-[highlighted]:bg-danger-50` — used for Sign-out in `<UserMenu>`. Consumers: `<UserMenu>`, sidebar workspace switcher.
+- **Menu** (`menu.tsx`, codified 2026-05-10) — shadcn-style wrapper over Base UI Menu. Exports: `Menu` / `MenuTrigger` / `MenuContent` / `MenuItem` / `MenuLabel` / `MenuSeparator`. Recipe: content `min-w-44 rounded-sm bg-white border border-neutral-200 shadow-(--shadow-popup) p-1 origin-[var(--transform-origin)]` (the transform-origin variable is published by Base UI's Positioner, so popups scale *from the trigger*, not the popup's geometric center — small detail, big feel). Item: `rounded-xs h-8 px-2 text-sm text-neutral-900 [&_svg]:text-neutral-500` with `transition-colors duration-100 ease-out` so keyboard arrow-through fades highlight states rather than snapping. `variant="destructive"` swaps colors to `text-danger-700 / data-[highlighted]:bg-danger-50` — used for Sign-out in `<UserMenu>`. **`active` prop (2026-07-29)** — marks the currently-selected row (the chat you are in, the workspace you are on). It sets `data-active="true"` on the item; the recipe then paints active at full `bg-accent` while every other row highlights at `bg-accent-muted`. Hovering the active row does NOT lighten it: the active-and-highlighted rules stack two data-attribute selectors, so they outrank the plain highlighted rule on **specificity** rather than on source order. This is why the state is a prop and not a pasted call-site class string — a call-site `data-[highlighted]:bg-accent` ties on specificity with the recipe's muted fill and the winner becomes an accident of Tailwind's output order. Replaced the duplicated `ACTIVE_ITEM` constants in `ask-ai-panel.tsx` and `workspace-switcher.tsx`. Consumers: `<UserMenu>`, `<NotificationsMenu>`, `<WorkspaceSwitcher>`, the Ask AI session picker.
 - **UserMenu** (`user-menu.tsx`, codified 2026-05-10) — shared dropdown content (Chad Ponticas avatar + name + "Free plan" pill, separator, Upgrade to Pro / Account, separator, Sign out destructive). Accepts the trigger element as `children` (render-prop forwarded to `<MenuTrigger>`). `min-w-50` content. Consumed by the sidebar's 3-dot user-area button AND `DashboardChrome`'s top-right avatar (now an interactive `<button>`, was a static `<span>`). Single source of truth — both surfaces open the exact same menu.
 
 **Rule:** Sheet for **inspection** (drill into a row, persist while reading). Dialog for **confirmation** or **paired-panel cross-link inspection** (selection state shared via single `activeRequestId`, auto-scroll-into-view on counterpart).
@@ -1115,6 +1175,11 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 - **TextLink** (`text-link.tsx`, codified 2026-05-10) — **inline link affordance, button-by-default.** Renders `<button type="button">` (correct for this codebase's no-router architecture); pass `as="a" href={...}` for a real anchor when navigation is needed. Locked visual recipe: `text-neutral-800 underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 focus-visible:ring-3 focus-visible:ring-ring/50 rounded-xs`. **No blue** — blue is reserved for info / completed / active-tab / focus. Don't hand-roll the recipe; the className convention block in this doc still exists as the underlying contract, but `<TextLink>` is the single canonical consumer-facing primitive.
 - **IconActionButton** (`icon-action-button.tsx`, codified 2026-05-10) — 24px (`size-6`) icon-only button with `after:-inset-2` pseudo-element expanding the hit target to 40×40 without inflating the visual footprint. Recipe: `rounded-xs text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px motion-reduce:active:translate-y-0`. `touch-manipulation` kills the 300ms tap delay. **`aria-label` is required** at the type level — icon-only buttons have no accessible name from text content. Extracted from CMP-012's `TopKeysCard` overflow `MoreHorizontal`; any second site would have silently drifted.
+- **CopyButton** (`copy-button.tsx`) — the one copy affordance. Two modes: `mode="icon"` (sizes `icon-sm` / `inline-xs` — a 20×20 glyph with a 24×24 `before:` hit target for inline use next to `<code>`) and `mode="label"` (sizes below). Success state always reads "Copied!". Label sizes: `compact` 24px (code-card header), `sm` 32px (modal footers, matches `Button size="sm"`), and **`segment`** (added 2026-07-28) — a full-height flush segment of a SPLIT WELL: no radius, no border except the left hairline divider, `self-stretch` to the well's height. For the "value | Copy" merged surface in the ApiKeys reveal-key dialog, which had hand-rolled that chrome because no mode fit and `compact`/`sm` would float a short button inside a taller well.
+- **BackLink** (`back-link.tsx`, codified 2026-07-28) — the **back breadcrumb** above a detail page. `<BackLink label="Conversations" onClick={...} />`. Recipe: `type-label-14 group relative inline-flex w-fit items-center gap-1 rounded-xs text-muted-foreground hover:text-foreground` + `after:-inset-y-3` (invisible 12px hit area) + a `ChevronLeft` that nudges `-translate-x-px` on hover + the standard `active:scale-[0.98]` press. **Not `TextLink`** — TextLink is the *underlined* inline-prose affordance; a breadcrumb has no underline. Extracted from three byte-identical hand-rolled copies (`ConversationsTrace`, `RequestsFindings`, `SetupBackLink`); `SetupBackLink` now delegates to it.
+- **OptionTile** (`option-tile.tsx`, codified 2026-07-28) — one choice in a `role="radiogroup"`. `<OptionTile selected size="md|lg" tone="neutral|accent">`. **Deliberately not a `Button`**: these carry `role="radio"` + `aria-checked` so a screen reader announces "2 of 4 selected", not "button". The element stays a native `<button>` with the radio role on top (standard composite-widget pattern); the PARENT owns arrow-key roving tabindex where it wants it (Billing does, SetupCredits doesn't). `size`: md = `h-10 rounded-md` (billing credit grid), lg = `h-12 rounded-sm` (setup-credits grid). `tone`: neutral = `bg-muted` selected, accent = blue selected. **The two tones encode a real inconsistency that predates the extraction** — /billing marks the chosen amount neutral, /setup-credits marks it blue; both reproduced verbatim so the refactor moved no pixels. Picking one is an open design decision.
+- **MiniRadioGroup / MiniRadio** (`mini-radio-group.tsx`, codified 2026-07-28) — 32px bordered track of 24px choices (`h-8 rounded-sm border-border bg-card px-1` track; `h-6 rounded-xs type-label-12` items, `bg-muted` when selected). **Not `Segmented`, and the difference is not size**: Segmented is a MUTED track with a raised card thumb; this is a CARD track with a muted thumb — inverted. It is also a true `role="radiogroup"` (single choice), where Segmented is a view switcher. One consumer: the BYOK/PAYG mode switch on `DashboardDefault`. If a second appears, reconcile the two rather than adding a third look.
+- **ExpandingAction** (`expanding-action.tsx`, codified 2026-07-28) — 32px icon key that opens on hover/focus to reveal its label (`w-8` → `hover:w-30`, `[transition:width_300ms_var(--ease-drawer)]`). **Deliberately not a `Button` variant**: width-on-hover is not button behavior — a Button is a fixed box whose contents may change; this is a box that changes size and reflows its neighbours. Putting it on `Button` would give every button in the app the ability to resize itself. The label is always in the DOM (`opacity-0` → `100`) so the accessible name never depends on hover. One consumer: "Mark invalid" in the Security event dialog.
 - **TabsCount** (`tabs-count.tsx`, codified 2026-05-10) — mono count chip sitting inside a `<TabsTrigger>`. Recipe: `inline-flex items-center justify-center min-w-5 h-5 px-2 rounded-xs bg-neutral-100 text-neutral-500 font-mono text-xs font-medium tabular-nums`. Consumers: Models modality tabs (All types `(146)` / Text / Embeddings / Audio / Rerank), Team line-variant tab counts.
 - **SettingsRow** (`settings-row.tsx`, codified 2026-05-10) — title + subtitle on the left, control on the right. Lifted from CMP-018's local definition after the same shape appeared in `SecurityCard`'s passkey row with two minor variants. API exposes three modes: default (input-bearing, title renders as `<Label htmlFor={id}>`), `static` (title renders as heading-styled `<span>` — read-only state with a Badge), and `titleAs="h4"` (title as `<h4>` heading — used when the row sits inside a Card whose CardTitle is the section heading and this row needs a sub-heading semantically). Vertical alignment via `alignTop` (`items-start`). Rhythm: first row gets no top border; subsequent rows get `border-t border-neutral-200`. Rendered as `flex justify-between gap-6 py-4`.
 

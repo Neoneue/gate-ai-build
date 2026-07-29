@@ -1,5 +1,5 @@
 {
   "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": ["npx ultracite fix"],
-  "*.{ts,tsx}": ["npx eslint --fix --max-warnings=0"],
+  "*.{ts,tsx}": ["npx eslint --fix --max-warnings=0 --no-warn-ignored"],
   "*.{ts,tsx,css}": ["node scripts/check-design-tokens.mjs"]
 }

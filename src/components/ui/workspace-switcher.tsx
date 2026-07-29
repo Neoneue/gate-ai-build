@@ -15,8 +15,6 @@ import {
  * name + current-tier badge. The dropdown lists all three tiers, each with
  * its own badge, so switching is a single click. */
 
-const ACTIVE_ITEM = "bg-accent data-[highlighted]:bg-accent";
-
 export function WorkspaceSwitcher({ className }: { className?: string }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -30,13 +28,16 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
   return (
     <Menu>
       <MenuTrigger
-        render={<Button className={className} size="lg" variant="outline" />}
+        render={
+          <Button className={className} size="default" variant="outline" />
+        }
       >
         <span className="type-label-14 text-foreground">Chad's workspace</span>
         <Badge variant={badgeVariant}>{plan}</Badge>
         <ChevronsUpDown
           aria-hidden
           className="ml-auto size-4 text-muted-foreground"
+          data-icon="inline-end"
           strokeWidth={1.75}
         />
       </MenuTrigger>
@@ -46,10 +47,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
         side="bottom"
         sideOffset={8}
       >
-        <MenuItem
-          className={isPro ? ACTIVE_ITEM : undefined}
-          onClick={() => navigate(toProPath(pathname))}
-        >
+        <MenuItem active={isPro} onClick={() => navigate(toProPath(pathname))}>
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>
             <Badge variant="info">Pro</Badge>
@@ -59,7 +57,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
           ) : null}
         </MenuItem>
         <MenuItem
-          className={isDefault ? ACTIVE_ITEM : undefined}
+          active={isDefault}
           onClick={() => navigate(toDefaultPath(pathname))}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -71,7 +69,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
           ) : null}
         </MenuItem>
         <MenuItem
-          className={isFree ? ACTIVE_ITEM : undefined}
+          active={isFree}
           onClick={() => navigate(toFreePath(pathname))}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">

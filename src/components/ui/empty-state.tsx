@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * `shadow-(--shadow-border)` ring so empty states match real cards). The
  * `icon` slot is optional — CMP-017's invitations pane omits it; CMP-018's
  * integrations tab includes a Layers chip above the heading. The `action`
- * slot accepts any React node — typically a `<Button size="lg">`, sometimes wired
+ * slot accepts any React node — typically a `<Button size="default">`, sometimes wired
  * to a click handler, sometimes inert in showcase contexts.
  *
  * Note: this is the *page-level* empty state. CMP-007's modal-internal
@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface EmptyStateProps {
-  /** Optional action node (typically a `<Button size="lg">`). */
+  /** Optional action node (typically a `<Button size="default">`). */
   action?: React.ReactNode;
   body: string;
   className?: string;

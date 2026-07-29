@@ -100,11 +100,14 @@ export function CodeCard({
   return (
     <div
       className={cn(
-        // flat default uses the everyday material tier (shadow-as-border);
-        // raised promotes to the popup elevation token so all floating
-        // surfaces (cards, selects, dialogs, tooltips) read as one family.
-        "flex flex-col overflow-hidden rounded-md bg-card shadow-(--shadow-border)",
-        elevation === "raised" && "shadow-(--shadow-popup)",
+        // flat default is the card tier: an explicit 1px border carries the
+        // edge and `shadow-xs` adds the lift, same recipe as Card (design.md
+        // §5.0 — the elevation scale is Tailwind's steps, nothing else). The
+        // legacy `--shadow-border` ring it used to carry bundled both jobs
+        // into one token; the border is what replaces the ring layer.
+        // `raised` promotes to the menu/popup tier, `shadow-md`.
+        "flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs",
+        elevation === "raised" && "shadow-md",
         className
       )}
       data-slot="code-card"

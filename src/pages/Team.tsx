@@ -146,7 +146,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={onInvite} size="lg" variant="default">
+        <Button onClick={onInvite} size="default" variant="default">
           <UserPlus aria-hidden data-icon="inline-start" />
           Invite member
         </Button>
@@ -400,7 +400,7 @@ function MembersPane() {
           </DialogHeader>
           <DialogFooter>
             <DialogClose
-              render={<Button size="lg" type="button" variant="outline" />}
+              render={<Button size="default" type="button" variant="outline" />}
             >
               Cancel
             </DialogClose>
@@ -410,7 +410,7 @@ function MembersPane() {
                 // Wire to a real mutation handler when the backend lands.
                 setPendingRemove(null);
               }}
-              size="lg"
+              size="default"
               type="button"
               variant="destructive"
             >
@@ -788,13 +788,13 @@ function InviteMemberDialog({
 
           <DialogFooter>
             <DialogClose
-              render={<Button size="lg" type="button" variant="outline" />}
+              render={<Button size="default" type="button" variant="outline" />}
             >
               Cancel
             </DialogClose>
             <Button
               disabled={!isValid}
-              size="lg"
+              size="default"
               type="submit"
               variant="default"
             >
@@ -872,7 +872,7 @@ function RowActionsMenu({
         >
           <MenuPrimitive.Popup
             className={cn(
-              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-(--shadow-popup) outline-none",
+              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-md outline-none",
               "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0"
             )}
           >

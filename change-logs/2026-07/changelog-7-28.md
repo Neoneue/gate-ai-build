@@ -24,6 +24,25 @@ The pattern for any future streaming surface, and a correction to a claim made e
 
 No scroll listener anywhere — it reuses the FAB's existing IntersectionObserver and the input handlers already bound for smooth-scroll cancellation. Verified: gap held at `0` across 12 samples through a full reply; scrolling up mid-stream stopped the follow and surfaced the FAB; the FAB press resumed it.
 
+### The Button size scale realigns to shadcn — `default` is the largest `f6df27a`
+
+**`button.tsx`** · **`design.md`** · **`.claude/rules/design-tokens.md`** · 69 call sites across 30 files
+
+The scale sat **one step below shadcn's** — `default` was 32px where shadcn's is 36px — so every author reached for `lg` to get an ordinary button. The census across **120 buttons: 62 uses of `lg`, zero uses of `default`.** The API's default was dead code and `lg` was the real one.
+
+| | xs | sm | default | lg | xl |
+| --- | --- | --- | --- | --- | --- |
+| shadcn | 24 | 32 | **36** | 40 | — |
+| before | 24 | 32 | **32** | 36 | 44 |
+| after | 24 | 32 | **36** | *gone* | *gone* |
+
+- **`lg`, `xl`, and `icon-lg` are deleted from the type**, not deprecated. A previous sweep left them defined and they came back; now `tsc` rejects every stale call site. Migration ran as an **AST codemod** (63 `lg`/`xl` → `default`, then 6 `icon-lg` → `icon`) because `size="lg"` appears 84 times in `src` but only 62 are on a `<Button>` — `Switch`, `Input`, `Select`, and `HeroNumeric` take it too and a find-replace would have corrupted them. Two `size = "lg"` prop defaults (`alert-dialog`, `ApiKeys`) were invisible to the codemod and caught by `tsc`. **Pixel-identical:** `lg`'s recipe simply became `default`'s.
+- **Icon padding is symmetric now** — `px-2.5` (10px both sides), which is shadcn's own `has-[>svg]:px-2.5`. It replaces a local `pl-2`/`pr-2` (8px icon side vs 12px text side) that upstream has at **no** size. **10px is a deliberate carve-out from the 4px grid** — the only sanctioned `*.5` in the system, recorded in `design-tokens.md`.
+- **Seven icons inside Buttons had no `data-icon`**, so the padding rule matched nothing and they rendered 12px. The top bar (Ask AI / Docs / workspace switcher) was the visible case. Five more were checked and deliberately left unmarked: two aren't inside a Button at all, two are absolutely-positioned arrows out of flow.
+- **New:** `shape` (`default` / `pill` / `circle`) and `variant="raised"` (`--control-raised`, lighter than a card in dark, which `outline` can't express).
+
+Verified across 16 routes: **no button above 36px**, heights cluster 24 / 32 / 36, console clean.
+
 ### Every label takes the label voice, at `font-medium` `30de622`
 
 **`design.md` §3 · `.claude/rules/no-handrolling.md` (new) · `scripts/check-design-tokens.mjs`**
@@ -50,9 +69,42 @@ The thread starts empty. Send a question and the user bubble appears immediately
 - **Sending while busy interrupts rather than queues**, so a new request can push through. It shares one `interrupt()` path with the stop button. The partial reply stays in the thread as a truncated turn — the user read that text, and removing it would rewrite history under them. `abort()` runs its listeners synchronously and the consumer re-checks `signal.aborted` each iteration, so no chunk from the aborted reply can land after the new user bubble (verified: frozen at 1224 chars at interrupt, still 1224 at +500ms).
 - **The reply action row is gated on completion.** Copy on a half-streamed answer captures a partial and retry is meaningless mid-stream, so the row renders but stays `opacity-0` / `aria-hidden` / `tabIndex -1` while streaming and fades in when the turn completes. It keeps its 24px box reserved throughout, so completion causes no layout shift.
 
-**Built for the swap.** `streamReply(question, { signal })` is an async generator yielding text chunks; replacing its body with a `fetch` + reader loop changes nothing else. No timers live in any component, and the `AbortController` is already threaded through so an interrupt will cancel the request rather than merely stopping the render. Plan for the real agent: [`plans/ask-ai-live-agent.md`](../plans/ask-ai-live-agent.md).
+**Built for the swap.** `streamReply(question, { signal })` is an async generator yielding text chunks; replacing its body with a `fetch` + reader loop changes nothing else. No timers live in any component, and the `AbortController` is already threaded through so an interrupt will cancel the request rather than merely stopping the render. Plan for the real agent: [`plans/ask-ai-live-agent.md`](../../plans/ask-ai-live-agent.md).
 
 The thinking row has **no Figma node** — none of the panel frames contains a thinking state — so it is built to a documented fallback: lucide `Brain`, `type-copy-14-tight`, `text-muted-foreground`, with the repo's `animate-ellipsis`. Reconcile when a node exists.
+
+### Ask AI: an empty state, a new chat, and a composer that arms itself `6f73a79`
+
+**`src/components/ui/ask-ai-empty-state.tsx`** (new) · **`ask-ai-panel.tsx`** · **`ask-ai-composer.tsx`** · **`button.tsx`** · **`src/hooks/use-ask-ai-thread.ts`** · **`src/App.tsx`** · **`DashboardChrome.tsx`** · **`src/index.css`** · **`design.md`**
+
+The panel opened onto a blank surface, offered no way back to a clean thread, and needed a click before it would take a keystroke. Four changes close that.
+
+- **Empty state.** Four suggestion rows, centred over the (zero-height) thread rather than replacing it, so `scrollRef` / `sentinelRef` never unmount and `useStickToBottom` keeps one stable set of nodes for the panel's whole lifetime. Selecting a row sends it as a normal question.
+- **Two new Button axes.** `size="xl"` (44px — `h-11 gap-3 px-4`) is the step above `lg`, for full-width list-style actions where the control *is* the row. `shape` (`default` / `pill`) carries radius so no call site reaches for `rounded-full`. An `outline + pill` **compound variant** raises the edge on hover *and* press via the new `--border-hover` token — always one step more contrast than `--border` (neutral-300 light, white @ 20% dark). Deliberately scoped to that pair: raising the edge on every outline button is a site-wide change and its own decision.
+- **New chat.** `reset()` on the thread hook drops every turn through the same `interrupt()` path as `stop()`, so there stays exactly one abort path, and returns the panel to the empty state.
+- **The composer arms itself, then goes quiet.** It takes focus at the two moments the user is being invited to type — panel open (deferred one frame so the Sheet's own initial-focus pass below `lg` cannot steal the caret back) and new chat. Send deliberately does **not** pull the caret back: the field was sitting lit through the whole reply, which read as active when nothing was expected of the user.
+- **Ask AI starts closed on every page load.** The `askai` localStorage persist is gone; state still lives above the router outlet, so one open holds for the session across navigation until the user closes it.
+- **Thread → composer spacing** `gap-4` → `gap-6` (16px → 24px). 16px crowded the last turn's action row against the field. The scroll-to-latest FAB anchors to the same gap, so it moved up with it.
+
+### Hand-rolled buttons: 19 page-level raw `<button>` down to 6 `f6df27a`
+
+**5 new/extended primitives** · **17 call sites** · full parity spec in [`button-audit-7-28.md`](../../audits/button-audit-7-28.md)
+
+An AST sweep of all 120 `<Button>` instances and every raw `<button>` in `src` found 19 page-level hand-rolls — including **three byte-identical copies** of the back breadcrumb and **three copies** of the credit-amount tile. Every new primitive carries the old recipe **verbatim**, so the extraction moves zero pixels.
+
+| New | Replaces | Why not an existing primitive |
+| --- | --- | --- |
+| `BackLink` | 3 back breadcrumbs | **Not `TextLink`** — TextLink is *underlined*; breadcrumbs are not |
+| `OptionTile` | 3 credit-preset grids | **Not `Button`** — needs `role="radio"` + `aria-checked` so it announces "2 of 4 selected" |
+| `MiniRadioGroup` / `MiniRadio` | BYOK/PAYG switch | **Not `Segmented`** — Segmented is a muted track with a card thumb; this is a card track with a muted thumb, i.e. inverted |
+| `ExpandingAction` | "Mark invalid" | **Not a `Button` variant** — width-on-hover is not button behavior |
+| `CopyButton size="segment"` | ApiKeys copy-key | flush split-well segment; `compact`/`sm` float a short button inside a taller well |
+
+Also converted: **four hand-rolled circular buttons** (Ask AI composer ×2, scroll-to-latest FAB, reply-action glyphs) now compose `Button shape="circle"` — that variant exists *because* four files had each pasted the same `rounded-full` + press + focus recipe. Three local class-string constants deleted. The AuditTrail info glyph and Policies chevron move to `IconActionButton`; the finding paddles to `Button size="icon-sm"`.
+
+**Three of the audit's own mappings were wrong and were reversed at the code** — each would have repainted working UI. They're recorded so the same wrong mapping isn't proposed again: the `TextLink`, `Segmented`, and `RowActionButton` rows above and in §8 of the audit.
+
+**Six raw `<button>`s stay, deliberately.** The test: is this a *single definition* (a component whose job is to be that control), or *duplicated chrome pasted across files*? Only the second is what the no-handrolling rule targets. A disclosure trigger with `aria-expanded` **is** the correct element; a card-list row and a timeline step have no primitive that owns them (`RowActionButton` is table-cell only); `feedback-fab` stays at 48px by direction.
 
 ### Manage subscription: the Pro dialog matches the Free one `8518ab2`
 

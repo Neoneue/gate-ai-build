@@ -31,7 +31,7 @@ export function SignUp() {
   }
 
   return (
-    <Card className="w-100 rounded-lg shadow-(--shadow-modal) data-[density=default]:py-6">
+    <Card className="w-100 rounded-lg shadow-lg data-[density=default]:py-6">
       <CardHeader className="gap-y-2 px-6">
         <CardTitle className="type-heading-20">
           Enter your invite code
@@ -75,7 +75,7 @@ export function SignUp() {
               />
             </Field>
 
-            <Button className="relative w-full" size="lg" type="submit">
+            <Button className="relative w-full" size="default" type="submit">
               Continue with email
               <ArrowRight
                 aria-hidden
@@ -87,7 +87,7 @@ export function SignUp() {
 
             <Button
               className="w-full"
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >

@@ -15,6 +15,10 @@
  * JSX form and the full list of Figma-vs-doc corrections.
  * ────────────────────────────────────────────────────────────────────────── */
 
+/** SCRIPTED. The session name this intent takes in the chat picker. Approved
+ *  copy — verbatim, not derived from the question. */
+export const GATE_CONNECT_TITLE = "Setup Gate Connect app";
+
 /** SCRIPTED. Doc-sourced answer to the Gate Connect setup question. */
 export const GATE_CONNECT_REPLY = `Gate Connect routes the AI apps you already run through Gate, with no code changes. You sign in once, turn on the apps you want covered, and they keep working exactly as before, with Gate's security scanning, audit trail, and cost tracking running underneath. The same flow covers Claude Code, Claude Desktop, Codex, and the other apps Gate Connect supports.
 
@@ -100,13 +104,24 @@ export function selectReply(input: string): string {
   return matchesGateConnectSetup(input) ? GATE_CONNECT_REPLY : UNMATCHED_REPLY;
 }
 
+/**
+ * Pick the scripted CHAT TITLE for a question, or `null` when the script does
+ * not cover it (the caller falls back to the heuristic in
+ * `src/lib/ask-ai-title.ts`). It lives next to the reply on purpose: a scripted
+ * intent owns both its answer and the name the session takes in the picker, so
+ * the two cannot drift apart.
+ */
+export function selectTitle(input: string): string | null {
+  return matchesGateConnectSetup(input) ? GATE_CONNECT_TITLE : null;
+}
+
 /* ─── Timing (SCRIPTED — tuned by eye, safe to adjust) ────────────────────── */
 
 export const TIMING = {
   /** Beat between the user's bubble landing and the thinking row appearing. */
   beforeThinking: 400,
   /** How long "Thinking" holds before the first token. */
-  thinking: 1500,
+  thinking: 2500,
   /** Target reading cadence. ~20 words/sec. */
   wordsPerSecond: 20,
   /** Words emitted per chunk — a few at a time reads better than one-by-one. */

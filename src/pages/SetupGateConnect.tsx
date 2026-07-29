@@ -68,7 +68,7 @@ export function SetupGateConnect() {
                       "noopener,noreferrer"
                     )
                   }
-                  size="lg"
+                  size="default"
                   variant="outline"
                 >
                   API docs

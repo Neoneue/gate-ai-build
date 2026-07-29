@@ -144,7 +144,7 @@ export function SetupManual() {
                 "noopener,noreferrer"
               )
             }
-            size="lg"
+            size="default"
             variant="outline"
           >
             API docs
@@ -238,7 +238,7 @@ export function SetupManual() {
                     <Button
                       className="ml-auto"
                       onClick={() => navigate("/setup-credits-default")}
-                      size="lg"
+                      size="default"
                       variant="outline"
                     >
                       <Plus aria-hidden data-icon="inline-start" />

@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { IconActionButton } from "@/components/ui/icon-action-button";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -168,12 +169,7 @@ function FingerprintInfoTooltip() {
     <Tooltip>
       <TooltipTrigger
         render={(props) => (
-          <button
-            {...props}
-            aria-label="What is a fingerprint?"
-            className="relative inline-flex items-center justify-center rounded-xs text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            type="button"
-          />
+          <IconActionButton {...props} aria-label="What is a fingerprint?" />
         )}
       >
         <Info aria-hidden className="size-3.5" strokeWidth={2} />
@@ -411,7 +407,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               }
               className="flex-1 border-border bg-card text-foreground md:flex-none"
               onClick={openFilters}
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >
@@ -433,7 +429,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             <Button
               className="flex-1 border-border bg-card text-foreground md:flex-none"
               disabled={isEmpty}
-              size="lg"
+              size="default"
               type="button"
               variant="outline"
             >
@@ -496,7 +492,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             <DialogFooter className="flex-row items-center justify-between sm:justify-between">
               <Button
                 onClick={resetFilters}
-                size="lg"
+                size="default"
                 type="button"
                 variant="ghost"
               >
@@ -504,11 +500,13 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               </Button>
               <div className="flex items-center gap-2">
                 <DialogClose
-                  render={<Button size="lg" type="button" variant="outline" />}
+                  render={
+                    <Button size="default" type="button" variant="outline" />
+                  }
                 >
                   Cancel
                 </DialogClose>
-                <Button onClick={applyFilters} size="lg" type="button">
+                <Button onClick={applyFilters} size="default" type="button">
                   Apply
                 </Button>
               </div>

@@ -56,7 +56,7 @@ Read the relevant doc before working in its area. Do not re-inject on every prom
 | --- | --- |
 | [`design.md`](./design.md) | Design-system contract — tokens, radius/spacing tiers, typography voices, component specs, do/don't. Authoritative for all visual decisions. |
 | [`data-model.md`](./data-model.md) | Dashboard architecture — routes, TypeScript types, mock-data model, entity relationships, deep-links, page inventory. |
-| [`change-logs/`](./change-logs/) | Running UI change logs (one file per stretch of days, e.g. `change-logs/changelog-6-6.md`). Append an entry for every UI change so devs/agents can diff against it. |
+| [`change-logs/`](./change-logs/) | Running UI change logs, one file per day, grouped by month (`change-logs/2026-07/changelog-7-6.md`). Append an entry for every UI change so devs/agents can diff against it. **Start at [`change-logs/INDEX.md`](./change-logs/INDEX.md)** — it lists every entry by date so you open one file, not thirty (~90k tokens if globbed). |
 | [`docs/Presidio-findings.md`](./docs/Presidio-findings.md) | PII detection truth — built-in Presidio recognizers. Read before authoring any PII finding value. |
 | [`docs/Credentials-findings.md`](./docs/Credentials-findings.md) | Credential/secret detection — regex + Shannon entropy (NOT Presidio). |
 | [`docs/Injection-findings.md`](./docs/Injection-findings.md) | Prompt-injection detection — ML classifier (NOT Presidio/regex); §3 = the 10 verdict enums. |

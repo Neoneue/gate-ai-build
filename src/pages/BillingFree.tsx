@@ -23,13 +23,13 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
+import { OptionTile } from "@/components/ui/option-tile";
 import { PageTitle } from "@/components/ui/page-title";
 import { RefreshCWIcon } from "@/components/ui/refresh-cw";
 import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -335,14 +335,7 @@ function AddCreditsDialog({
           {CREDIT_PRESETS.map((value, index) => {
             const isSelected = custom.length === 0 && selected === value;
             return (
-              <button
-                aria-checked={isSelected}
-                className={cn(
-                  "inline-flex h-10 items-center justify-center rounded-md border font-medium font-sans text-sm tabular-nums transition-colors",
-                  isSelected
-                    ? "border-border bg-muted text-foreground"
-                    : "border-border bg-card text-foreground hover:bg-accent"
-                )}
+              <OptionTile
                 key={value}
                 onClick={() => {
                   setSelected(value);
@@ -352,7 +345,7 @@ function AddCreditsDialog({
                 ref={(el) => {
                   presetRefs.current[index] = el;
                 }}
-                role="radio"
+                selected={isSelected}
                 tabIndex={
                   selectedPreset === null
                     ? index === 0
@@ -362,10 +355,9 @@ function AddCreditsDialog({
                       ? 0
                       : -1
                 }
-                type="button"
               >
                 {formatCurrency(value, { minFrac: 0, maxFrac: 0 })}
-              </button>
+              </OptionTile>
             );
           })}
         </div>

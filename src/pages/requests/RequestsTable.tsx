@@ -241,7 +241,7 @@ export function RequestsTableSection({
             }
             className="flex-1 border-border bg-card text-foreground md:flex-none"
             onClick={openFilters}
-            size="lg"
+            size="default"
             type="button"
             variant="outline"
           >
@@ -367,7 +367,7 @@ export function RequestsTableSection({
                 <Button
                   disabled={draftActiveFilterCount === 0}
                   onClick={resetFilters}
-                  size="lg"
+                  size="default"
                   type="button"
                   variant="ghost"
                 >
@@ -376,12 +376,12 @@ export function RequestsTableSection({
                 <div className="flex items-center gap-2">
                   <DialogClose
                     render={
-                      <Button size="lg" type="button" variant="outline" />
+                      <Button size="default" type="button" variant="outline" />
                     }
                   >
                     Cancel
                   </DialogClose>
-                  <Button onClick={applyFilters} size="lg" type="button">
+                  <Button onClick={applyFilters} size="default" type="button">
                     Apply
                   </Button>
                 </div>
@@ -391,7 +391,7 @@ export function RequestsTableSection({
 
           <Button
             className="flex-1 md:ml-auto md:flex-none"
-            size="lg"
+            size="default"
             type="button"
             variant="outline"
           >
