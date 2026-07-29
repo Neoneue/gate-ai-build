@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  * parallel implementations of the same shell.
  *
  * Recipe:
- *   container  rounded-md bg-white shadow-(--shadow-border) overflow-hidden
+ *   container  rounded-md border border-border bg-card shadow-xs overflow-hidden
  *              grid grid-cols-{columns}
  *   divider    on every child after the first — a wrapper <div> with a
  *              `before:` pseudo-element drawing a 1px hairline at

@@ -122,44 +122,22 @@ and (pointer: fine)) and (&:hover));
   --color-traffic-amber:  #FEBC2E;
   --color-traffic-green:  #28C840;
 
-  /* Shadow-as-border tokens (skill: surfaces.md — prefer layered shadows
-     over solid borders for depth). Three-layer light-mode shadow:
-     1px ring + subtle lift + ambient depth. The shadow color is mixed
-     from `--color-neutral-800` rather than inlined as rgba so the shadow
-     family tracks the ink ramp. */
-  --shadow-border:
-    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent),
-    0 1px 2px -1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent),
-    0 2px 4px 0 color-mix(in oklch, var(--color-neutral-800) 4%, transparent);
-  --shadow-border-hover:
-    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
-    0 1px 2px -1px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
-    0 2px 4px 0 color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
+  /* ── Elevation scale — Tailwind's own, verbatim ──────────────────────────
+     Copied byte-for-byte from `node_modules/tailwindcss/theme.css` (v4.2.4,
+     lines 406-410). These are the ONLY shadows the design system has. The
+     Figma file scales elevation on Tailwind's steps, so the code must too —
+     no retuned alphas, no bespoke families, no arbitrary values. Restated
+     here rather than left implicit so the scale is visible in the token layer
+     and any drift from upstream is a diff, not a discovery.
 
-  /* Floating-surface elevation — two-tier ladder aligned to Vercel Geist's
-     material system (menu tier sits close to the page; modal tier separates).
-     Each tier pairs lift + 1px ring; both colors mixed from --color-neutral-800
-     so the shadow family tracks the ink ramp.
-       Menu (selects, popovers)    → 6px radius (rounded-sm) + --shadow-popup
-       Card / surface              → 8px radius (rounded-md) + --shadow-border
-       Modal (dialogs, drill-ins)  → 16px radius (rounded-xl) + --shadow-modal */
-  --shadow-popup:
-    0 4px 12px -2px color-mix(in oklch, var(--color-neutral-800) 8%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 4%, transparent);
-  --shadow-modal:
-    0 16px 32px -4px color-mix(in oklch, var(--color-neutral-800) 12%, transparent),
-    0 0 0 1px color-mix(in oklch, var(--color-neutral-800) 6%, transparent);
-
-  /* Soft card lift — used on upsell hero surfaces where the card sits inside
-     a coloured panel and needs a hint of elevation without competing with
-     the bordered chrome. Sits below --shadow-popup on the elevation ladder. */
-  --shadow-card-soft:
-    0 4px 8px -1px color-mix(in oklch, var(--color-neutral-800) 5%, transparent),
-    0 2px 6px -2px color-mix(in oklch, var(--color-neutral-800) 5%, transparent);
-
-  /* shadow-xs: Tailwind default darkened ~10% (0.05 -> 0.055 alpha) for a
-     touch more lift on cards / buttons. */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.055);
+     `--shadow-xs` previously carried a retuned 0.055 alpha ("Tailwind default
+     darkened ~10%"). That is exactly the kind of invented value this scale
+     replaces; it is back to stock 0.05. */
+  --shadow-2xs: 0 1px rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
   /* Typescale overrides — align Tailwind's named sizes to Vercel Geist's
      heading scale (even-numbered, larger increments at the top). Sizes not
@@ -278,6 +256,18 @@ and (pointer: fine)) and (&:hover));
   --muted-foreground: var(--color-neutral-600);
   --accent: var(--color-neutral-100);
   --accent-foreground: var(--color-neutral-900);
+  /* Half-strength accent — the HIGHLIGHT fill (hover + focus-visible) on rows
+     that also have a selected state, so hovering can never read as solid as
+     selected. --accent stays the SELECTED fill. Named for its strength, not
+     its state (focus-visible uses it too), matching --card-muted.
+     Derived rather than resolved: it tracks --accent automatically, and being
+     translucent it lands half-way toward the accent from WHATEVER surface it
+     sits on — which is what keeps it reading the same relative strength on
+     --card (Menu popup) and --popover (Select popup), values that diverge in
+     dark. An opaque value cannot: the midpoint between dark's --accent
+     (neutral-700) and --card (neutral-900) is neutral-800, which IS the
+     --popover surface, so it would vanish inside every Select. */
+  --accent-muted: color-mix(in oklab, var(--accent) 50%, transparent);
   --destructive: var(--color-danger-600);
   --border: var(--color-neutral-200);
   /* Active-control edge — 1px hairline around a raised active thumb (the
@@ -377,6 +367,7 @@ body {
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -465,6 +456,10 @@ body {
   --muted-foreground: var(--color-neutral-400);
   --accent: var(--color-neutral-700);
   --accent-foreground: var(--color-neutral-50);
+  /* Same derivation as light — see the note there. Re-declared (rather than
+     inherited) so the pair reads together and a future dark-only override has
+     an obvious home. */
+  --accent-muted: color-mix(in oklab, var(--accent) 50%, transparent);
   --destructive: var(--color-danger-400);
   /* Translucent white hairlines — read correctly on any dark surface
      (Vercel/shadcn gray-alpha technique), unlike a fixed neutral step. */
@@ -525,29 +520,11 @@ body {
   --color-syntax-property: var(--color-blue-400);
   --color-syntax-terminal-blue: var(--color-success-400);
 
-  /* Elevation shadows — dark theme. The light tokens mix from neutral-800 at
-     4-12%, which is invisible on a dark surface. Re-point to black at higher
-     alpha so popovers / dropdowns / dialogs cast a real ambient shadow where
-     they overlap lighter content; the border-border hairline still carries
-     the crisp edge. Offsets / blur match the light tokens 1:1. */
-  --shadow-border:
-    0 0 0 1px rgb(0 0 0 / 0.4),
-    0 1px 2px -1px rgb(0 0 0 / 0.4),
-    0 2px 4px 0 rgb(0 0 0 / 0.3);
-  --shadow-border-hover:
-    0 0 0 1px rgb(0 0 0 / 0.5),
-    0 1px 2px -1px rgb(0 0 0 / 0.5),
-    0 2px 4px 0 rgb(0 0 0 / 0.4);
-  --shadow-popup:
-    0 4px 12px -2px rgb(0 0 0 / 0.5),
-    0 0 0 1px rgb(0 0 0 / 0.4);
-  --shadow-modal:
-    0 16px 32px -4px rgb(0 0 0 / 0.6),
-    0 0 0 1px rgb(0 0 0 / 0.5);
-  --shadow-card-soft:
-    0 4px 8px -1px rgb(0 0 0 / 0.35),
-    0 2px 6px -2px rgb(0 0 0 / 0.35);
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  /* NOTE: the dark `--shadow-xs: … / 0.4` override is deliberately GONE.
+     The Tailwind scale is one set of values, not a per-theme retune — a
+     theme-specific alpha is an invented value by another name. Dark elevation
+     therefore reads softer than it did; that is the scale, and the hairline
+     `border-border` still carries the crisp edge on dark surfaces. */
 }
 
 @layer base {

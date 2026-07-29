@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * (filters, pickers, small forms). Wraps `@base-ui/react/popover`.
  *
  * Surface style sits on the menu/chrome ladder per design.md:
- *   rounded-sm (6px) · border neutral-200 · shadow-(--shadow-popup).
+ *   rounded-sm (6px) · border neutral-200 · shadow-md.
  *
  * The `data-closed:fill-mode-forwards` rule on the popup mirrors Dialog
  * (see `dialog.tsx`) — without it the Base UI + tw-animate-css exit
@@ -47,7 +47,7 @@ function PopoverContent({
       >
         <PopoverPrimitive.Popup
           className={cn(
-            "origin-[var(--transform-origin)] rounded-sm border border-border bg-card text-foreground shadow-(--shadow-popup) outline-none",
+            "origin-[var(--transform-origin)] rounded-sm border border-border bg-card text-foreground shadow-md outline-none",
             "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
             className
           )}

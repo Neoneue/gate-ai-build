@@ -39,7 +39,7 @@ primitive means every screen in both builds drifts.
 >
 > **Read these two documents first, completely, before editing anything:**
 >
-> 1. **`button-audit-7-28.md`** (this file, at the repo root) — every change,
+> 1. **`audits/button-audit-7-28.md`** (this file) — every change,
 >    with before/after, file paths, full source for the new primitives, and the
 >    reasoning behind each.
 > 2. **`design.md`** — the authoritative design-system contract. It has been
@@ -830,7 +830,7 @@ const optionTileVariants = cva(
          that predates this extraction — /billing marks the chosen amount with
          a neutral fill, /setup-credits marks it blue. Both are reproduced
          verbatim so this refactor moves no pixels. Picking one is a design
-         decision, not a refactor; flagged in docs/button-audit-7-28.md. */
+         decision, not a refactor; flagged in audits/button-audit-7-28.md. */
       tone: {
         neutral: "",
         accent: "",

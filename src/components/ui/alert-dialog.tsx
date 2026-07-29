@@ -49,7 +49,7 @@ function AlertDialogContent({
         className={cn(
           // Skill: emil-design-eng — see <DialogContent /> for the duration
           // rationale; modals stay center-origin.
-          "group/alert-dialog-content data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground shadow-(--shadow-modal) outline-none duration-200 ease-out data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 data-[size=default]:sm:max-w-sm",
+          "group/alert-dialog-content data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground shadow-lg outline-none duration-200 ease-out data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 data-[size=default]:sm:max-w-sm",
           className
         )}
         data-size={size}

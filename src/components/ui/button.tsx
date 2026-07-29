@@ -33,7 +33,7 @@ const buttonVariants = cva(
         // add-context key, the scroll-to-latest FAB, the message copy glyph)
         // had each pasted this exact recipe rather than ask for a variant.
         raised:
-          "border-border bg-control-raised text-accent-foreground shadow-(--shadow-card-soft) hover:bg-muted hover:text-foreground",
+          "border-border bg-control-raised text-accent-foreground shadow-sm hover:bg-muted hover:text-foreground",
       },
       size: {
         // shadcn-aligned scale (realigned 2026-07-28) — xs 24 / sm 32 /

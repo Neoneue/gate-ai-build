@@ -20,7 +20,7 @@ export function Artboard({ id, name, top, left, children }: ArtboardProps) {
       <Eyebrow as="div" className="pb-2 pl-1">
         {id} · {name}
       </Eyebrow>
-      <div className="artboard-shell overflow-hidden rounded-sm bg-card shadow-(--shadow-popup)">
+      <div className="artboard-shell overflow-hidden rounded-sm border border-border bg-card shadow-md">
         {children}
       </div>
     </div>
@@ -147,7 +147,7 @@ function CanvasControls({
 }) {
   return (
     <div
-      className="fixed right-6 bottom-6 z-50 flex items-center gap-2 rounded-sm border border-border bg-card px-2 py-1 shadow-(--shadow-popup)"
+      className="fixed right-6 bottom-6 z-50 flex items-center gap-2 rounded-sm border border-border bg-card px-2 py-1 shadow-md"
       onWheel={(e) => e.stopPropagation()}
     >
       <span className="px-1 font-mono text-muted-foreground text-xs tabular-nums">

@@ -85,7 +85,7 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground text-sm shadow-(--shadow-modal) outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
+          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground text-sm shadow-lg outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
           className
         )}
         data-slot="dialog-content"
@@ -179,7 +179,7 @@ function DialogStaticContent({
   return (
     <div
       className={cn(
-        "relative flex flex-col overflow-clip rounded-xl border border-border bg-card shadow-(--shadow-modal)",
+        "relative flex flex-col overflow-clip rounded-xl border border-border bg-card shadow-lg",
         className
       )}
       data-slot="dialog-static-content"

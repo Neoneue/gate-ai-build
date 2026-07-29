@@ -872,7 +872,7 @@ function RowActionsMenu({
         >
           <MenuPrimitive.Popup
             className={cn(
-              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-(--shadow-popup) outline-none",
+              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-md outline-none",
               "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0"
             )}
           >

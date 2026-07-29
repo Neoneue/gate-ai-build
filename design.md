@@ -473,13 +473,18 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 | `bg-popover` | white | `bg-white` on dropdown / Select / Tooltip surfaces |
 | `bg-muted` | neutral-100 | `bg-neutral-100` on secondary / count-chip / tag surfaces |
 | `bg-secondary` | neutral-100 | `bg-neutral-100` on interactive secondary fills |
-| `bg-accent` | neutral-100 | `bg-neutral-100` on hover/accent fills |
+| `bg-accent` | neutral-100 | `bg-neutral-100` on selected/active fills |
+| `bg-accent-muted` | accent at 50% | `bg-accent/50` — the half-strength accent is a token, not a modifier |
 | `border-border` | neutral-200 | `border-neutral-200` for dividers, table separators, list containers, form control edges |
 | `ring-ring` | neutral-400 | `ring-neutral-N` for focus rings |
 | `text-foreground` | neutral-900 | `text-neutral-900` for primary text, headlines, row identifiers |
 | `text-muted-foreground` | neutral-600 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
 
 **Wash surfaces — `--card-muted` token (2026-07-09).** The neutral-50 wash that card-like panels and table header/footer rows sit on is the `--card-muted` token (neutral-50 light / neutral-800 dark) — an extension of `--card`, applied via `bg-card-muted`. It is deliberately separate from `--muted` (neutral-100 / neutral-800): chips, badges, count pills, avatar/icon placeholders, and the segmented-track container keep `bg-muted` at neutral-100, so lightening the panel washes never touches them. Consumers of `bg-card-muted`: shared `TableHeader`/`TableFooter`, and the bordered info-panels on Billing / BillingFree / Policies / onboarding. Form-field fills (Input, Textarea, Select trigger, InputGroup) stay on `bg-muted` for now. No raw `bg-neutral-50` in component code — the wash is a token.
+
+**Highlight vs selected — `--accent-muted` token (2026-07-29).** In any list where a row can be *selected*, hover and selected were the same fill (`bg-accent`) and read as equally solid — you could not tell the row you were pointing at from the row you were on. The two states now split: **`--accent` is the SELECTED fill, `--accent-muted` is the HIGHLIGHT fill (hover + focus-visible), and it is the same accent at half strength.** Named for its strength rather than its state, matching `--card-muted`, because focus-visible uses it too — it is not exclusively a hover color.
+
+Defined once, in both themes, as `color-mix(in oklab, var(--accent) 50%, transparent)` — derived, not resolved, for two reasons. It tracks `--accent` automatically if that ever moves; and being translucent it lands half-way toward the accent from *whatever surface it sits on*, which is what keeps it at the same relative strength on `--card` (Menu popup), `--popover` (Select popup), and `--sidebar` (nav rail) — three values that diverge in dark. An opaque token cannot do this: the midpoint between dark's `--accent` (neutral-700) and `--card` (neutral-900) is neutral-800, which *is* the `--popover` surface, so it would vanish inside every Select. Consumers: `MenuItem`, `SelectItem`, `MultiSelect` rows, sidebar nav items (both the collapsed icon rail and the expanded list). In light the highlight resolves to ≈ neutral-50 — deliberately quiet, one existing surface step off white, and always weaker than the selected row, which is the point. Never write `bg-accent/50` at a call site.
 
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
@@ -875,22 +880,59 @@ Whitespace carries hierarchy. Cards never touch — shadow-as-border does the se
 
 ## 5. Elevation & Depth *(Google canonical §5)*
 
-Elevation runs on two parallel systems: **legacy shadow tokens** (`--shadow-popup`, `--shadow-border`, `--shadow-border-hover`, `--shadow-modal`) still live in `index.css:117–138` and remain the source of truth for menus, popovers, and modals; and **the Card / KpiRail / Tabs-line family** which migrated 2026-05-15 onto an explicit `border border-border shadow-xs` recipe (1px neutral-200 stroke + Tailwind's built-in `shadow-xs` for subtle lift). The migration trades ring-only edges for an honest border that survives any backdrop, any zoom — operator-tool surfaces look brittle at >1× zoom when the only edge is a ring shadow.
+### 5.0 The shadow scale — Tailwind's, verbatim (ruled 2026-07-29)
+
+**The elevation scale is Tailwind's named steps and nothing else.** The Figma
+file scales elevation on Tailwind's shadows, so the code uses the same ladder,
+at the same values. There are no bespoke shadow families, no retuned alphas, no
+per-theme alpha overrides, and no arbitrary `shadow-[…]`. A shadow that is not
+one of these five utilities is a defect.
+
+| Utility | Value (exact, from `tailwindcss/theme.css` v4.2.4) |
+| --- | --- |
+| `shadow-2xs` | `0 1px rgb(0 0 0 / 0.05)` |
+| `shadow-xs` | `0 1px 2px 0 rgb(0 0 0 / 0.05)` |
+| `shadow-sm` | `0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)` |
+| `shadow-md` | `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)` |
+| `shadow-lg` | `0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)` |
+
+Restated in `src/index.css`'s `@theme` block so the scale is visible in the
+token layer and any drift from upstream shows up as a diff. Two things changed
+when it landed: `--shadow-xs` lost its retuned `0.055` alpha (back to stock
+`0.05`), and the dark theme's `--shadow-xs: … / 0.4` override was **removed** —
+one scale, one set of values, both themes. Dark elevation therefore reads
+softer than it did; the `border-border` hairline still carries the crisp edge.
+
+### 5.1 Tier → utility (assigned 2026-07-29)
+
+The five legacy shadow families are **deleted** from `index.css`, light and
+dark. Every surface below now names a Tailwind step directly.
 
 | Tier | Recipe | Radius | Surfaces |
 | --- | --- | --- | --- |
 | Sub-element | none | `rounded-xs` (4px) | Tabs trigger, Segmented item, SelectItem, Badge, MenuItem |
-| Menu / Chrome | `--shadow-popup` token (4px lift 8% + 1px ring 4%) | `rounded-sm` (6px) | Select content, Menu popup, Popover, Tooltip, Toast, Button, Input |
-| **Card / Surface** | **`border border-border shadow-xs`** (migrated 2026-05-15) | **`rounded-md` (8px)** | **Card, KpiRail, Tabs `line` variant border-b, MessageBlock outline** |
-| Hover (card) | `border-border` + `hover:shadow-sm` where interactive (most cards are static) | (same as card) | Hovered card variant — rare in operator surfaces |
-| Modal | `--shadow-modal` token (16px lift 12% + 1px ring 6%) | `rounded-xl` (**16px LOCKED**) | Dialog, AlertDialog, Sheet (right-docked = `rounded-none` left edge) |
-| Soft card (in colored panel) | `--shadow-card-soft` token (8/6px lift 5% — two layers, same `color-mix` family) | `rounded-md` (8px) | Cards sitting inside a non-white panel where standard chrome would compete with the panel bg (canonical: SecurityDefault events ticker inside the right `bg-neutral-50` panel). Added 2026-05-26 — defined in `index.css` alongside `--shadow-popup`/`--shadow-modal`. |
+| **Card / Surface** | **`border border-border shadow-xs`** | **`rounded-md` (8px)** | Card, KpiRail, EmptyState, CompactKpi, CodeCard (flat), Tabs `line` variant, MessageBlock outline. Tables carry NO shadow of their own — they sit inside a Card |
+| Hover (card) | `hover:shadow-sm` where interactive (most cards are static) | (same as card) | Hovered card variant — rare in operator surfaces |
+| **Soft lift** | **`shadow-sm`** | (varies) | `Button variant="raised"`, the Ask AI scroll-to-latest FAB, the composer's Add-context button |
+| **Menu / Chrome** | **`shadow-md`** | `rounded-sm` (6px) | Menu popup, Popover, Tooltip, Select content, chart tooltip, CodeCard `raised`, Artboard shell, Team's member menu |
+| **Modal** | **`shadow-lg`** | `rounded-xl` (**16px LOCKED**) | Dialog, AlertDialog, Sheet (right-docked = `rounded-none` left edge), the SignIn / SignUp auth cards |
 
-**Legacy `--shadow-border` token.** Still defined in `index.css:117–120`. No primitive currently consumes it after the 2026-05-15 migration. Don't re-introduce it on new Cards or KpiRails — they take the `border + shadow-xs` recipe. Keep the token for the rare case where a surface genuinely wants a ring-only edge (none today).
+**The ring layer is gone; borders replace it.** Every deleted token bundled a
+`0 0 0 1px` ring *plus* a lift into one value. Tailwind's steps are lift only,
+so any surface that relied on the ring for its edge now carries an explicit
+`border border-border`. Most already did. Two did not and were given one:
+`CompactKpi` and the `Artboard` shell. **If a converted surface looks
+edgeless, it is missing its border — do not reach for a bigger shadow.**
+
+**Dark mode reads softer than it did.** The deleted dark tokens ran at
+0.3–0.6 alpha, tuned for near-black grounds; Tailwind's steps are 0.05–0.1,
+tuned for light. On dark surfaces the `border-border` hairline is now doing
+most of the separation work. That is the cost of one scale across both themes,
+and it was accepted knowingly.
 
 **Three-tier material ladder (codified 2026-05-10).** The prior two-tier (6/12) collapsed cards and buttons onto the same radius (6px) and put modals one step up (12px). Migration to three-tier opens a discrete *card / surface* tier at 8px — Card, KpiRail, and table containers now read distinct from buttons / inputs / menus (6px). Modal radius bumps to 16px to preserve the 2× tier ratio against cards (`8 → 16`). Sub-element radius (4px) is unchanged. Token: `--radius-xl: 1rem` in `@theme inline` (`index.css:305`).
 
-**Rules:** Card-tier surfaces wear an honest `border-border` plus `shadow-xs`. Menus and modals stay on their shadow tokens. **Concentric rule:** item radius < container radius (4px badge inside 8px card inside 16px modal). Don't override `rounded-xl` on modals — locked.
+**Rules:** Card-tier surfaces wear an honest `border-border` plus `shadow-xs`. Menus are `shadow-md`, modals `shadow-lg`, soft lifts `shadow-sm` — never a bespoke token. **Concentric rule:** item radius < container radius (4px badge inside 8px card inside 16px modal). Don't override `rounded-xl` on modals — locked.
 
 ---
 
@@ -1088,7 +1130,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
   **Body section pattern:** sections inside `<DialogScrollBody>` use `<section className="flex flex-col gap-3"><h3 className="font-sans text-sm font-medium text-neutral-900 m-0">…</h3>{content}</section>`. Section h3 is `text-sm font-medium` (NOT mono uppercase eyebrow — that's reserved for the title block's `eyebrow` slot). Between sections: `gap-6` (24px) on the body's flex column.
 - **AlertDialog** (`alert-dialog.tsx`) — same modal-tier surface (rounded-xl / 16px); content `p-6` (bumped from `p-4` on 2026-05-11 to match `<DialogContent>`); used for destructive confirmations.
 - **Sheet** (`sheet.tsx`) — right-docked drawer. Flush against viewport edge (`rounded-none`), only a left border + modal-tier shadow.
-- **Menu** (`menu.tsx`, codified 2026-05-10) — shadcn-style wrapper over Base UI Menu. Exports: `Menu` / `MenuTrigger` / `MenuContent` / `MenuItem` / `MenuLabel` / `MenuSeparator`. Recipe: content `min-w-44 rounded-sm bg-white border border-neutral-200 shadow-(--shadow-popup) p-1 origin-[var(--transform-origin)]` (the transform-origin variable is published by Base UI's Positioner, so popups scale *from the trigger*, not the popup's geometric center — small detail, big feel). Item: `rounded-xs h-8 px-2 text-sm text-neutral-900 [&_svg]:text-neutral-500` with `transition-colors duration-100 ease-out` so keyboard arrow-through fades highlight states rather than snapping. `variant="destructive"` swaps colors to `text-danger-700 / data-[highlighted]:bg-danger-50` — used for Sign-out in `<UserMenu>`. Consumers: `<UserMenu>`, sidebar workspace switcher.
+- **Menu** (`menu.tsx`, codified 2026-05-10) — shadcn-style wrapper over Base UI Menu. Exports: `Menu` / `MenuTrigger` / `MenuContent` / `MenuItem` / `MenuLabel` / `MenuSeparator`. Recipe: content `min-w-44 rounded-sm bg-white border border-neutral-200 shadow-(--shadow-popup) p-1 origin-[var(--transform-origin)]` (the transform-origin variable is published by Base UI's Positioner, so popups scale *from the trigger*, not the popup's geometric center — small detail, big feel). Item: `rounded-xs h-8 px-2 text-sm text-neutral-900 [&_svg]:text-neutral-500` with `transition-colors duration-100 ease-out` so keyboard arrow-through fades highlight states rather than snapping. `variant="destructive"` swaps colors to `text-danger-700 / data-[highlighted]:bg-danger-50` — used for Sign-out in `<UserMenu>`. **`active` prop (2026-07-29)** — marks the currently-selected row (the chat you are in, the workspace you are on). It sets `data-active="true"` on the item; the recipe then paints active at full `bg-accent` while every other row highlights at `bg-accent-muted`. Hovering the active row does NOT lighten it: the active-and-highlighted rules stack two data-attribute selectors, so they outrank the plain highlighted rule on **specificity** rather than on source order. This is why the state is a prop and not a pasted call-site class string — a call-site `data-[highlighted]:bg-accent` ties on specificity with the recipe's muted fill and the winner becomes an accident of Tailwind's output order. Replaced the duplicated `ACTIVE_ITEM` constants in `ask-ai-panel.tsx` and `workspace-switcher.tsx`. Consumers: `<UserMenu>`, `<NotificationsMenu>`, `<WorkspaceSwitcher>`, the Ask AI session picker.
 - **UserMenu** (`user-menu.tsx`, codified 2026-05-10) — shared dropdown content (Chad Ponticas avatar + name + "Free plan" pill, separator, Upgrade to Pro / Account, separator, Sign out destructive). Accepts the trigger element as `children` (render-prop forwarded to `<MenuTrigger>`). `min-w-50` content. Consumed by the sidebar's 3-dot user-area button AND `DashboardChrome`'s top-right avatar (now an interactive `<button>`, was a static `<span>`). Single source of truth — both surfaces open the exact same menu.
 
 **Rule:** Sheet for **inspection** (drill into a row, persist while reading). Dialog for **confirmation** or **paired-panel cross-link inspection** (selection state shared via single `activeRequestId`, auto-scroll-into-view on counterpart).

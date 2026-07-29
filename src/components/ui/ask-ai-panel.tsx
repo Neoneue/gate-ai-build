@@ -1,4 +1,9 @@
-import { ChevronsUpDown, PanelRightClose, SquarePen } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  PanelRightClose,
+  SquarePen,
+} from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -15,8 +20,10 @@ import {
 } from "@/components/ui/ask-ai-scroll-to-latest";
 import { AskAiThinkingRow } from "@/components/ui/ask-ai-thinking-row";
 import { Button } from "@/components/ui/button";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { useAskAiThread } from "@/hooks/use-ask-ai-thread";
 import { useStickToBottom } from "@/hooks/use-stick-to-bottom";
+import { truncateTitle } from "@/lib/ask-ai-title";
 import { cn } from "@/lib/utils";
 
 /* ─── AskAiPanel — right-docked "Ask AI" chat shell ─────────────────────────
@@ -28,6 +35,10 @@ import { cn } from "@/lib/utils";
  *
  * The header is `h-16` to line up flush with the 64px DashTopBar so the collapse
  * control sits on the same baseline as the top-bar actions. ──────────────── */
+
+/* An unnamed chat reads the same on the picker as on the button that opens
+   one — they are the same idea, so they carry the same word. */
+const NEW_CHAT_LABEL = "New message";
 
 export interface AskAiPanelProps {
   className?: string;
@@ -45,7 +56,22 @@ export function AskAiPanel({
 }: AskAiPanelProps) {
   // Conversation state lives above the router outlet (App.tsx) so the thread
   // survives navigation, the same way `askAiOpen` does.
-  const { messages, phase, regenerate, reset, send, stop } = useAskAiThread();
+  const {
+    activeSessionId,
+    messages,
+    phase,
+    regenerate,
+    reset,
+    selectSession,
+    send,
+    sessions,
+    stop,
+  } = useAskAiThread();
+
+  // Trigger label: the chat's derived name, or the same word an unnamed chat
+  // carries in the list.
+  const activeTitle =
+    sessions.find((s) => s.id === activeSessionId)?.title ?? NEW_CHAT_LABEL;
 
   // The scrolling message region and the zero-height marker at its very end.
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,22 +120,75 @@ export function AskAiPanel({
       )}
     >
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-border border-b px-4">
-        {/* Session picker affordance — visual only (unwired). Matches the
-            WorkspaceSwitcher trigger: outline button, copy-14 label, muted
-            ChevronsUpDown caret. */}
-        <Button size="default" type="button" variant="outline">
-          <span className="type-label-14 text-foreground">New session</span>
-          <ChevronsUpDown
-            aria-hidden
-            className="size-4 text-muted-foreground"
-            data-icon="inline-end"
-            strokeWidth={1.75}
-          />
-        </Button>
+        {/* Chat picker. Built on the WorkspaceSwitcher recipe — outline
+            trigger, label-14 label, muted ChevronsUpDown caret, and the same
+            `active` MenuItem + Check treatment on the current row.
+
+            The trigger is `min-w-0` so a long chat name shrinks the BUTTON
+            rather than growing the 64px header, and the label truncates inside
+            it; the caret is `shrink-0` so it can never be pushed out of view.
+            The untruncated name stays reachable in the `title` attribute. */}
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button className="min-w-0" size="default" variant="outline" />
+            }
+          >
+            <span
+              className="type-label-14 truncate text-foreground"
+              title={activeTitle}
+            >
+              {truncateTitle(activeTitle)}
+            </span>
+            <ChevronsUpDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+              data-icon="inline-end"
+              strokeWidth={1.75}
+            />
+          </MenuTrigger>
+          {/* Four rows, then it scrolls. 152px = the popup's own `p-2` (8 top +
+              8 bottom) + 4 × the MenuItem's `h-8` (32px) + a 16px half-row —
+              measured off the primitives rather than picked, so it stays right
+              if either changes. That half row is deliberate: at a flush 144px
+              the 5th row hides under the bottom padding and nothing signals
+              there is more below. The peek IS the scroll affordance. */}
+          <MenuContent
+            align="start"
+            className="max-h-38 min-w-[var(--anchor-width)] overflow-y-auto p-2"
+            side="bottom"
+            sideOffset={8}
+          >
+            {sessions.map((session) => {
+              const title = session.title ?? NEW_CHAT_LABEL;
+              return (
+                <MenuItem
+                  active={session.id === activeSessionId}
+                  key={session.id}
+                  onClick={() => selectSession(session.id)}
+                >
+                  <span
+                    className="type-label-14 min-w-0 flex-1 truncate"
+                    title={title}
+                  >
+                    {truncateTitle(title)}
+                  </span>
+                  {session.id === activeSessionId ? (
+                    <Check
+                      aria-hidden
+                      className="text-primary"
+                      strokeWidth={1.75}
+                    />
+                  ) : null}
+                </MenuItem>
+              );
+            })}
+          </MenuContent>
+        </Menu>
         <div className="flex items-center gap-1">
-          {/* New chat — drops the thread and returns to the empty state. */}
+          {/* New chat — opens a fresh session and returns to the empty state. */}
           <Button
-            aria-label="New chat"
+            aria-label={NEW_CHAT_LABEL}
             onClick={handleReset}
             size="icon"
             type="button"

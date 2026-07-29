@@ -100,7 +100,7 @@ export function CompactKpi({
 }) {
   const baseCls = flat
     ? "flex flex-col gap-2 bg-card p-4"
-    : "flex flex-col rounded-md gap-2 bg-card shadow-(--shadow-border) p-4";
+    : "flex flex-col gap-2 rounded-md border border-border bg-card p-4 shadow-xs";
   return (
     <div className={baseCls}>
       <div className="flex items-center justify-between gap-2">
