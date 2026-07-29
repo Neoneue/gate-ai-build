@@ -63,6 +63,27 @@ const buttonVariants = cva(
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
         icon: "size-9",
+        /* The ONE responsive size (added 2026-07-29). A dense action row —
+           reply feedback, message tools — wants a 24px box on a pointer
+           device and a bigger TAP target on touch. 32px below `lg`, 24px from
+           `lg`; the glyph steps 16 → 14px with it.
+
+           Why it lives here and not in a call-site `className`: overriding a
+           primitive's own size at the call site is hand-rolling
+           (`.claude/rules/no-handrolling.md`), and `size` is a prop, so it
+           cannot carry a breakpoint on its own. Putting the breakpoint INSIDE
+           the recipe is the only form that stays composable and reusable.
+
+           Pair it with `gap-0 lg:gap-1` on the row: the 8px the box gains on
+           touch is exactly the gap it gives up, so the icon PITCH — and every
+           glyph position — is unchanged. The target grows into space the row
+           already owned. That matters because pitch caps a non-overlapping
+           target: at a 32px pitch you cannot reach 44px without either
+           widening the row or letting neighbouring targets overlap and steal
+           each other's taps. WCAG 2.2 SC 2.5.8 (AA) asks 24×24; this clears
+           it with room on the hand-held surfaces where it counts. */
+        "icon-action":
+          "size-8 lg:size-6 [&_svg:not([class*='size-'])]:size-4 lg:[&_svg:not([class*='size-'])]:size-3.5",
       },
       // Radius belongs to the primitive, never to a call site. `pill` is the
       // fully-rounded track used by full-width suggestion rows; `circle` is

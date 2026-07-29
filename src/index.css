@@ -454,7 +454,15 @@ body {
   --secondary: var(--color-neutral-800);
   --secondary-foreground: var(--color-neutral-50);
   --muted: var(--color-neutral-800);
-  --muted-foreground: var(--color-neutral-300);
+  /* neutral-400, not -300 (2026-07-29). At -300 (#d4d4d4) secondary text sat
+     one ramp step off `--foreground` (white) and stopped reading as secondary
+     at all — the Ask AI composer's placeholder was indistinguishable from a
+     typed question. Figma's dark nodes put secondary text at neutral-400/500
+     and primary at neutral-200, i.e. a consistently wider gap than the code
+     had. -400 (#a1a1a1) is Figma's own placeholder value and still clears AA
+     against every dark surface (~7:1 on --background). Light is untouched:
+     neutral-600 vs neutral-900 was already a clear separation. */
+  --muted-foreground: var(--color-neutral-400);
   --accent: var(--color-neutral-700);
   --accent-foreground: var(--color-neutral-50);
   --destructive: var(--color-danger-400);

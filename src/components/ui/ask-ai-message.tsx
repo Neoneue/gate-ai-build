@@ -1,12 +1,15 @@
 import {
   BotMessageSquare,
+  CircleCheck,
   Copy,
   RotateCcw,
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { cn } from "@/lib/utils";
 
 /* ─── Ask AI chat bubbles ────────────────────────────────────────────────────
@@ -156,34 +159,115 @@ export function UserMessage({ children }: { children: ReactNode }) {
   );
 }
 
-/* Completion affordances, Figma `1125:6296`: 14px glyphs, sitting BELOW the
-   bubble as a sibling (not inside it) with an 8px gap. Unwired — real buttons
-   with labels so wiring them later is a visual no-op. Figma also holds a
-   hidden `copy/12` "Thanks for your feedback!" confirmation at opacity-0;
-   not built, since there is no feedback event to reveal it yet. */
-const REPLY_ACTIONS = [
-  { icon: ThumbsUp, label: "Good response" },
-  { icon: ThumbsDown, label: "Bad response" },
-  { icon: Copy, label: "Copy reply" },
-  { icon: RotateCcw, label: "Regenerate reply" },
-] as const;
+/* ─── Reply feedback row — Figma `1125:6235` (desktop) / `1125:5937` (mobile)
+ * Three affordances (thumb up / thumb down / copy) plus a right-aligned
+ * `copy/12` confirmation. Both nodes carry the same six states: resting, each
+ * thumb FILLED with "Thanks for your feedback!", copy swapped to CircleCheck
+ * with "Copied!", and the two combinations of the above (a rating and a copy
+ * confirmation coexist).
+ *
+ * Measured, and how each measurement is expressed here:
+ *   glyph      14px desktop / 16px mobile+tablet. NOT set here — `size-action`
+ *              on the Button owns it, so the row cannot drift from the box.
+ *   pitch      icon-centre to icon-centre 26px desktop / 32px mobile.
+ *              `size="icon-action"` is 32px below `lg` and 24px from `lg`, and
+ *              the row trades its gap and padding away on touch (`gap-0 px-0`
+ *              → `lg:gap-1 lg:px-1`). The 8px the box gains is exactly the 8px
+ *              the gap gives up, so every glyph sits at the same x it did
+ *              before and the mobile pitch stays EXACT at 32px — the tap
+ *              target grew from 24px to 32px without moving a pixel.
+ *              Desktop is 28px, 2px wider than Figma's 26, because the exact
+ *              value needs a 2px gap and `gap-0.5` is off the 4px grid
+ *              (.claude/rules/design-tokens.md). Flagged, not silently shipped.
+ *              32px is also the ceiling for a NON-OVERLAPPING target here: at a
+ *              32px pitch, anything larger makes neighbours steal each other's
+ *              taps, which fails worse than a small target.
+ *   ink        neutral/500 resting → `text-muted-foreground`; neutral/200
+ *              active glyph + helper text → `text-foreground`. Semantic
+ *              tokens, so both flip with the theme.
+ *   helper     `copy/12` = Geist Regular 12/16 → `type-copy-12`, pushed to the
+ *              row's right edge with `ml-auto`.
+ *
+ * Timing: the confirmation holds 3s. The RATING persists past it (the thumb
+ * stays filled) — only the copy glyph and the helper text are on the clock,
+ * which is exactly what Figma's states 5/6 show.
+ * ────────────────────────────────────────────────────────────────────────── */
 
-/* The action glyphs are `Button variant="ghost" size="icon-xs"`. The
-   hand-rolled recipe that used to live here was a copy of that variant. */
+/** How long the inline confirmation holds. Figma/product spec: 3 seconds. */
+const FEEDBACK_HOLD_MS = 3000;
+
+const THANKS_TEXT = "Thanks for your feedback!";
+
+type ReplyRating = "up" | "down" | null;
 
 export function AgentMessage({
   children,
   className,
+  copyText = "",
+  onRegenerate,
   showActions = true,
 }: {
   children: ReactNode;
   className?: string;
+  /** The RAW markdown of the reply. `children` is already-rendered JSX, so the
+      copy affordance has no text of its own to put on the clipboard. */
+  copyText?: string;
+  /** Re-answer this turn. Omitted → the control renders disabled rather than
+      inert, so it never looks pressable while doing nothing. */
+  onRegenerate?: () => void;
   /** Reply affordances only make sense once the reply is whole — copying a
       half-streamed answer or "regenerating" mid-stream are both meaningless.
       The row still RENDERS while false so its 24px box keeps reserving space:
       revealing it must not shift the bubble or the thread. */
   showActions?: boolean;
 }) {
+  const [rating, setRating] = React.useState<ReplyRating>(null);
+  const [thanksVisible, setThanksVisible] = React.useState(false);
+  const thanksTimerRef = React.useRef<number | null>(null);
+
+  React.useEffect(
+    () => () => {
+      if (thanksTimerRef.current !== null) {
+        window.clearTimeout(thanksTimerRef.current);
+      }
+    },
+    []
+  );
+
+  /* Copy runs through the shared hook rather than a second timer: same
+     clipboard call, same re-click guard, same failure toast. `notify: false`
+     because this consumer confirms INLINE, and `holdMs` matches the rating
+     clock so the two confirmations cannot disagree on screen. */
+  const { copied, trigger: copyReply } = useCopyFeedback({
+    value: copyText,
+    label: "reply",
+    holdMs: FEEDBACK_HOLD_MS,
+    notify: false,
+  });
+
+  const rate = React.useCallback((next: Exclude<ReplyRating, null>) => {
+    // Mutually exclusive by construction — a single value, never two booleans.
+    setRating(next);
+    setThanksVisible(true);
+    if (thanksTimerRef.current !== null) {
+      window.clearTimeout(thanksTimerRef.current);
+    }
+    thanksTimerRef.current = window.setTimeout(() => {
+      setThanksVisible(false);
+      thanksTimerRef.current = null;
+    }, FEEDBACK_HOLD_MS);
+  }, []);
+
+  // Copy is the later signal when both are live, which is Figma states 5 / 6.
+  let helperText = "";
+  if (copied) {
+    helperText = "Copied!";
+  } else if (thanksVisible) {
+    helperText = THANKS_TEXT;
+  }
+
+  const CopyGlyph = copied ? CircleCheck : Copy;
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex flex-col gap-3 rounded-md border border-border bg-chat-bubble-agent p-4 text-chat-bubble-agent-foreground shadow-xs">
@@ -197,22 +281,94 @@ export function AgentMessage({
       <div
         aria-hidden={!showActions}
         className={cn(
-          "flex items-center gap-1 px-1 transition-opacity duration-150 ease-out motion-reduce:transition-none",
+          "flex items-center gap-0 px-0 transition-opacity duration-150 ease-out motion-reduce:transition-none lg:gap-1 lg:px-1",
           showActions ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >
-        {REPLY_ACTIONS.map(({ icon: Icon, label }) => (
-          <Button
-            aria-label={label}
-            key={label}
-            size="icon-xs"
-            tabIndex={showActions ? 0 : -1}
-            type="button"
-            variant="ghost"
-          >
-            <Icon aria-hidden strokeWidth={1.75} />
-          </Button>
-        ))}
+        <Button
+          aria-label="Good response"
+          aria-pressed={rating === "up"}
+          className={
+            rating === "up" ? "text-foreground" : "text-muted-foreground"
+          }
+          onClick={() => rate("up")}
+          size="icon-action"
+          tabIndex={showActions ? 0 : -1}
+          type="button"
+          variant="ghost"
+        >
+          <ThumbsUp
+            aria-hidden
+            /* Figma renders the SELECTED thumb as a solid glyph, not a
+               recoloured outline. `currentColor` keeps the fill on the same
+               semantic token as the stroke. */
+            fill={rating === "up" ? "currentColor" : "none"}
+            strokeWidth={1.75}
+          />
+        </Button>
+        <Button
+          aria-label="Bad response"
+          aria-pressed={rating === "down"}
+          className={
+            rating === "down" ? "text-foreground" : "text-muted-foreground"
+          }
+          onClick={() => rate("down")}
+          size="icon-action"
+          tabIndex={showActions ? 0 : -1}
+          type="button"
+          variant="ghost"
+        >
+          <ThumbsDown
+            aria-hidden
+            fill={rating === "down" ? "currentColor" : "none"}
+            strokeWidth={1.75}
+          />
+        </Button>
+        <Button
+          aria-label="Copy reply"
+          className={copied ? "text-foreground" : "text-muted-foreground"}
+          onClick={copyReply}
+          size="icon-action"
+          tabIndex={showActions ? 0 : -1}
+          type="button"
+          variant="ghost"
+        >
+          <CopyGlyph aria-hidden strokeWidth={1.75} />
+        </Button>
+        {/* NOT in Figma's feedback node — the fourth action predates it and is
+            kept deliberately. Wired 2026-07-29: it re-answers this turn, which
+            is what makes a STOPPED reply recoverable. `showActions` is false
+            while streaming, so it is only reachable once the turn is whole or
+            frozen — never mid-stream, where re-answering is meaningless. */}
+        <Button
+          aria-label="Regenerate reply"
+          className="text-muted-foreground"
+          disabled={!onRegenerate}
+          onClick={onRegenerate}
+          size="icon-action"
+          tabIndex={showActions ? 0 : -1}
+          type="button"
+          variant="ghost"
+        >
+          <RotateCcw aria-hidden strokeWidth={1.75} />
+        </Button>
+        {/* The live region is always mounted so a state change is ANNOUNCED
+            rather than only rendered; the text inside it swaps. Entry fades;
+            `motion-reduce` drops the animation, not the message. */}
+        <span
+          aria-live="polite"
+          className="type-copy-12 ml-auto text-foreground"
+          role="status"
+        >
+          {helperText ? (
+            <span
+              className="fade-in-0 animate-in duration-150 ease-out motion-reduce:animate-none"
+              key={helperText}
+            >
+              {helperText}
+            </span>
+          ) : null}
+        </span>
       </div>
     </div>
   );

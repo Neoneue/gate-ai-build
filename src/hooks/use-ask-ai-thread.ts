@@ -48,6 +48,13 @@ export interface AskAiThread {
   messages: AskAiMessage[];
   phase: AskAiPhase;
   /**
+   * Re-answer a turn: drop that agent reply and stream a fresh one for the
+   * question that prompted it. The primary case is a reply the user STOPPED —
+   * the partial turn is frozen in the thread, and this is how they get a whole
+   * answer without retyping.
+   */
+  regenerate: (agentMessageId: string) => void;
+  /**
    * Start a new chat: drop every turn, abort anything in flight, return to
    * `idle` — which is what the panel's empty state renders from.
    */
@@ -110,6 +117,67 @@ export function useAskAiThreadState(): AskAiThread {
     setPhase("idle");
   }, [interrupt]);
 
+  /* One agent turn: beat, think, stream. It assumes the prompting user bubble
+     is ALREADY in the thread — `send()` appends a new one first, `regenerate()`
+     reuses the one that is already there. Extracted so the two entry points
+     share a single state machine and cannot drift apart. */
+  const runAgentTurn = useCallback((question: string) => {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const { signal } = controller;
+    const immediate = prefersReducedMotion();
+    setPhase("sending");
+
+    const run = async () => {
+      const agentId = nextId("agent");
+      try {
+        // 2. Beat, then the thinking row.
+        await wait(TIMING.beforeThinking, signal);
+        setPhase("thinking");
+
+        // 3. Thinking holds.
+        await wait(TIMING.thinking, signal);
+
+        // 4. Reply streams in.
+        setPhase("replying");
+        setMessages((prev) => [
+          ...prev,
+          { id: agentId, role: "agent", content: "", status: "streaming" },
+        ]);
+
+        for await (const chunk of streamReply(question, {
+          signal,
+          immediate,
+        })) {
+          if (signal.aborted) {
+            break;
+          }
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === agentId ? { ...m, content: m.content + chunk } : m
+            )
+          );
+        }
+
+        if (signal.aborted) {
+          return;
+        }
+        setMessages((prev) =>
+          prev.map((m) => (m.id === agentId ? { ...m, status: "complete" } : m))
+        );
+        setPhase("complete");
+      } catch {
+        // Aborted mid-flight — `interrupt()` already froze the partial turn.
+      } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
+      }
+    };
+
+    void run();
+  }, []);
+
   const send = useCallback(
     (input: string) => {
       const question = input.trim();
@@ -123,12 +191,7 @@ export function useAskAiThreadState(): AskAiThread {
          further chunk can be appended after the new user bubble below. */
       interrupt();
 
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const { signal } = controller;
-      const immediate = prefersReducedMotion();
-
-      // 1. User bubble lands immediately.
+      // The user bubble lands immediately; the agent turn follows it.
       setMessages((prev) => [
         ...prev,
         {
@@ -138,60 +201,50 @@ export function useAskAiThreadState(): AskAiThread {
           status: "complete",
         },
       ]);
-      setPhase("sending");
-
-      const run = async () => {
-        const agentId = nextId("agent");
-        try {
-          // 2. Beat, then the thinking row.
-          await wait(TIMING.beforeThinking, signal);
-          setPhase("thinking");
-
-          // 3. Thinking holds.
-          await wait(TIMING.thinking, signal);
-
-          // 4. Reply streams in.
-          setPhase("replying");
-          setMessages((prev) => [
-            ...prev,
-            { id: agentId, role: "agent", content: "", status: "streaming" },
-          ]);
-
-          for await (const chunk of streamReply(question, {
-            signal,
-            immediate,
-          })) {
-            if (signal.aborted) {
-              break;
-            }
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === agentId ? { ...m, content: m.content + chunk } : m
-              )
-            );
-          }
-
-          if (signal.aborted) {
-            return;
-          }
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === agentId ? { ...m, status: "complete" } : m
-            )
-          );
-          setPhase("complete");
-        } catch {
-          // Aborted mid-flight — `interrupt()` already froze the partial turn.
-        } finally {
-          if (abortRef.current === controller) {
-            abortRef.current = null;
-          }
-        }
-      };
-
-      void run();
+      runAgentTurn(question);
     },
-    [interrupt]
+    [interrupt, runAgentTurn]
+  );
+
+  /* Regenerate one agent turn. The question is the nearest USER message above
+     it, so nothing is retyped and the scripted responder is re-entered exactly
+     as it was the first time.
+
+     Truncate-and-rerun: the target reply AND anything after it are dropped
+     before the new turn streams. Replacing it in place would leave later turns
+     answering a reply that no longer exists. In practice the target is almost
+     always the last turn — that is the STOP case this exists for, where the
+     frozen partial is the thing being replaced.
+
+     Unlike `send()`, this appends no user bubble: the prompt is already in the
+     thread and duplicating it would rewrite history. */
+  const regenerate = useCallback(
+    (agentMessageId: string) => {
+      const idx = messages.findIndex((m) => m.id === agentMessageId);
+      if (idx === -1) {
+        return;
+      }
+      let question: string | null = null;
+      for (let i = idx - 1; i >= 0; i -= 1) {
+        if (messages[i].role === "user") {
+          question = messages[i].content;
+          break;
+        }
+      }
+      // An agent turn with no user turn above it cannot be re-answered.
+      if (question === null) {
+        return;
+      }
+
+      interrupt();
+      // Re-find inside the updater: `idx` was read from a possibly stale render.
+      setMessages((prev) => {
+        const at = prev.findIndex((m) => m.id === agentMessageId);
+        return at === -1 ? prev : prev.slice(0, at);
+      });
+      runAgentTurn(question);
+    },
+    [messages, interrupt, runAgentTurn]
   );
 
   return useMemo(
@@ -200,11 +253,12 @@ export function useAskAiThreadState(): AskAiThread {
       phase,
       isBusy:
         phase === "sending" || phase === "thinking" || phase === "replying",
+      regenerate,
       reset,
       send,
       stop,
     }),
-    [messages, phase, reset, send, stop]
+    [messages, phase, regenerate, reset, send, stop]
   );
 }
 
