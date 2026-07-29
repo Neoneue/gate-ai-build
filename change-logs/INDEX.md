@@ -13,8 +13,13 @@ tokens; this index exists so nothing has to glob the directory.
 
 - `Button` gains `icon-action`, the one responsive size
 - Dark `--muted-foreground` retunes neutral-300 → neutral-400
+- Elevation moves to Tailwind's shadow scale — five bespoke families deleted
+- New `--accent-muted` token — hover is half of selected
+- Menus, Select, and the sidebar split hover from active
 - Ask AI reply feedback row — thumbs, copy, and a wired retry
 - The Ask AI composer floats over the thread
+- The Ask AI header trigger becomes a real chat picker
+- The thinking row swaps lucide `Brain` for the `@dotmatrix` 3×3 pulse
 
 ### [2026-07-28](./2026-07/changelog-7-28.md)
 

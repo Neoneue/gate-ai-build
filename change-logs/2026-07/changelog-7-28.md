@@ -88,7 +88,7 @@ The panel opened onto a blank surface, offered no way back to a clean thread, an
 
 ### Hand-rolled buttons: 19 page-level raw `<button>` down to 6 `f6df27a`
 
-**5 new/extended primitives** · **17 call sites** · full parity spec in [`button-audit-7-28.md`](../../button-audit-7-28.md)
+**5 new/extended primitives** · **17 call sites** · full parity spec in [`button-audit-7-28.md`](../../audits/button-audit-7-28.md)
 
 An AST sweep of all 120 `<Button>` instances and every raw `<button>` in `src` found 19 page-level hand-rolls — including **three byte-identical copies** of the back breadcrumb and **three copies** of the credit-amount tile. Every new primitive carries the old recipe **verbatim**, so the extraction moves zero pixels.
 
