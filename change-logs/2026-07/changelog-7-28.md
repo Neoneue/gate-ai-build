@@ -69,7 +69,7 @@ The thread starts empty. Send a question and the user bubble appears immediately
 - **Sending while busy interrupts rather than queues**, so a new request can push through. It shares one `interrupt()` path with the stop button. The partial reply stays in the thread as a truncated turn — the user read that text, and removing it would rewrite history under them. `abort()` runs its listeners synchronously and the consumer re-checks `signal.aborted` each iteration, so no chunk from the aborted reply can land after the new user bubble (verified: frozen at 1224 chars at interrupt, still 1224 at +500ms).
 - **The reply action row is gated on completion.** Copy on a half-streamed answer captures a partial and retry is meaningless mid-stream, so the row renders but stays `opacity-0` / `aria-hidden` / `tabIndex -1` while streaming and fades in when the turn completes. It keeps its 24px box reserved throughout, so completion causes no layout shift.
 
-**Built for the swap.** `streamReply(question, { signal })` is an async generator yielding text chunks; replacing its body with a `fetch` + reader loop changes nothing else. No timers live in any component, and the `AbortController` is already threaded through so an interrupt will cancel the request rather than merely stopping the render. Plan for the real agent: [`plans/ask-ai-live-agent.md`](../plans/ask-ai-live-agent.md).
+**Built for the swap.** `streamReply(question, { signal })` is an async generator yielding text chunks; replacing its body with a `fetch` + reader loop changes nothing else. No timers live in any component, and the `AbortController` is already threaded through so an interrupt will cancel the request rather than merely stopping the render. Plan for the real agent: [`plans/ask-ai-live-agent.md`](../../plans/ask-ai-live-agent.md).
 
 The thinking row has **no Figma node** — none of the panel frames contains a thinking state — so it is built to a documented fallback: lucide `Brain`, `type-copy-14-tight`, `text-muted-foreground`, with the repo's `animate-ellipsis`. Reconcile when a node exists.
 
@@ -88,7 +88,7 @@ The panel opened onto a blank surface, offered no way back to a clean thread, an
 
 ### Hand-rolled buttons: 19 page-level raw `<button>` down to 6 `f6df27a`
 
-**5 new/extended primitives** · **17 call sites** · full parity spec in [`button-audit-7-28.md`](../button-audit-7-28.md)
+**5 new/extended primitives** · **17 call sites** · full parity spec in [`button-audit-7-28.md`](../../button-audit-7-28.md)
 
 An AST sweep of all 120 `<Button>` instances and every raw `<button>` in `src` found 19 page-level hand-rolls — including **three byte-identical copies** of the back breadcrumb and **three copies** of the credit-amount tile. Every new primitive carries the old recipe **verbatim**, so the extraction moves zero pixels.
 

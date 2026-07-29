@@ -22,8 +22,10 @@ Optional hint for the commit scope/subject (use as guidance, not verbatim): $ARG
 2. Review `git status --short` + `git diff`; choose the files to stage.
 3. `npx tsc -b` — must be clean (exit 0). Abort on error.
 4. Stage the chosen files and commit with a Conventional Commit message + the Co-Authored-By trailer. Capture the short hash (`git rev-parse --short HEAD`).
-5. Stamp the day's changelog at `change-logs/changelog-<M>-<D>.md` for **today** (local date; month/day are NOT zero-padded — e.g. `changelog-6-16.md`):
-   - If the file does not exist, create it: a `# UI Changelog: YYYY-MM-DD` title, the standard "Running log … written to diff against and replicate …" intro, a `Prior day: [\`changelog-<prev>.md\`](./changelog-<prev>.md)` link to the most recent existing changelog, then a `---` rule.
+5. Stamp the day's changelog at **`change-logs/<YYYY>-<MM>/changelog-<M>-<D>.md`** for **today** (local date). The MONTH FOLDER is zero-padded (`2026-07/`); the filename's month/day are NOT (`changelog-7-6.md`). Files were grouped into month folders on 2026-07-29 — never write a changelog to `change-logs/` directly.
+   - If the month folder does not exist, create it.
+   - If the file does not exist, create it: a `# UI Changelog: YYYY-MM-DD` title, the standard "Running log … written to diff against and replicate …" intro, a `Prior day: [\`changelog-<prev>.md\`](./changelog-<prev>.md)` link to the most recent existing changelog, then a `---` rule. **If the previous day sits in a different month folder, the link is `../<YYYY>-<MM>/changelog-<prev>.md`** — that is the one link that breaks silently.
    - Append a `### <short title> \`<hash>\`` entry under the right `##` section (`Conventions`, `Components`, or `Sections`). The body states: what changed, before → after, and where (file / component), stamped with the feature hash from step 4. Match the voice of existing entries.
-6. Commit the changelog by itself: `docs(changelog): <summary> (<hash>)` + the Co-Authored-By trailer.
-7. Report the two commit hashes with one-line summaries. **Do not push.**
+6. Add the new entries to **`change-logs/INDEX.md`** — a `### [<date>](./<YYYY>-<MM>/<file>)` block with one bullet per `###` heading (title only, no hash), newest first. The index is how anyone finds a change without globbing ~30 files.
+7. Commit the changelog + index together: `docs(changelog): <summary> (<hash>)` + the Co-Authored-By trailer.
+8. Report the two commit hashes with one-line summaries. **Do not push.**
