@@ -254,14 +254,15 @@ and (pointer: fine)) and (&:hover));
      symmetric: dark ink on a white card carries further than light ink on a
      neutral-900 card, but the light texture still needed more weight to read
      at all. Tuned in place 2026-07-29: both started at 0.5, dark went to 0.6,
-     light to 0.7. Consumed by .ask-ai-canvas. */
-  --ask-ai-canvas-strength: 0.7;
+     light to 0.7 and then 0.8. Consumed by .ask-ai-canvas. */
+  --ask-ai-canvas-strength: 0.8;
   /* Where the top-to-bottom fade LANDS, not where it starts. At 0 the texture
      dissolves completely and the bottom of the panel goes bare, which read as
-     too aggressive in place; 0.1 keeps a trace of grid all the way down. Shared
-     across themes — only the top stop (--ask-ai-canvas-strength) is per-theme.
-     Raised from 0 on 2026-07-29. */
-  --ask-ai-canvas-fade-floor: 0.1;
+     too aggressive in place; 0.15 keeps a legible trace of grid all the way
+     down. Shared across BOTH themes — only the top stop
+     (--ask-ai-canvas-strength) is per-theme. Raised 0 -> 0.1 -> 0.15 across
+     2026-07-29. */
+  --ask-ai-canvas-fade-floor: 0.15;
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Softened on-primary ink for icon-only primary actions (the Ask AI send

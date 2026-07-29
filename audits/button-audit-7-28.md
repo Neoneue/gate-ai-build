@@ -14,6 +14,12 @@ primitive means every screen in both builds drifts.
 > The only other file you need is **`design.md`**, which is tracked in the repo
 > and has been updated to match. Everything else — including full source for the
 > new primitives — is inlined here.
+>
+> **Amended 2026-07-29** — §3.6 (the `outline` variant's dark fill goes opaque)
+> and Scanner 5 (translucent-fill detection) were added a day after the rest,
+> from a defect the original pass did not catch. They are part of the same port,
+> not a follow-up. If you already ran this document before that date, run
+> Scanner 5 and apply §3.6.
 
 ---
 
@@ -57,7 +63,7 @@ primitive means every screen in both builds drifts.
 >
 > **Execute in this order. Do not reorder — later steps depend on earlier ones.**
 >
-> 0. **§0 Detect** — run all four scanners and write down what each returns.
+> 0. **§0 Detect** — run all five scanners and write down what each returns.
 >    That output is your actual work list. If a scanner comes back clean, that
 >    problem does not exist in your build: **skip that section entirely** and
 >    record it as "already correct". Do not manufacture work.
@@ -67,6 +73,10 @@ primitive means every screen in both builds drifts.
 >    `lg`, `xl`, and `icon-lg` must end up **deleted**, not deprecated. Deleting
 >    them makes `tsc` fail on every stale call site, which is how you find them.
 >    If your build never had `xl`, there is nothing to delete — that is fine.
+>    **This includes §3.6** — delete the `outline` variant's `dark:bg-input/30`
+>    and `dark:hover:bg-input/50`. Nothing replaces them; `bg-card` /
+>    `hover:bg-muted` then apply in both themes. `tsc` and lint will NOT catch
+>    this one — a translucent fill is valid CSS. Scanner 5 is how you find it.
 > 3. **§4 Call-site migration** — run the AST codemod in §4.1 against whatever
 >    §0's census found. **Never find-and-replace `size="lg"`**: `Switch`,
 >    `Input`, `Select`, `HeroNumeric`, and `Avatar` also take `size="lg"` and
@@ -89,7 +99,7 @@ primitive means every screen in both builds drifts.
 >    the browser checks. The height census is the real proof: **no button above
 >    36px anywhere**.
 >
-> **Three traps that already caught me — do not repeat them:**
+> **Four traps that already caught me — do not repeat them:**
 >
 > - `TextLink` is **underlined**; back breadcrumbs are not. Do not route
 >   breadcrumbs into `TextLink`.
@@ -97,6 +107,10 @@ primitive means every screen in both builds drifts.
 >   card track with a muted thumb. They are **inverted**, not different sizes.
 > - `RowActionButton` is **table-cell specific**. Do not use it for card-list
 >   rows or timeline steps.
+> - **Green `tsc` and green lint prove nothing about §3.6.** A translucent fill
+>   is valid CSS and valid TypeScript. The dark `outline` button was
+>   see-through for the entire life of the repo and every gate passed the whole
+>   time. Run Scanner 5 and look at a dark button over a textured surface.
 >
 > If your build has diverged such that a step does not apply cleanly, **stop and
 > report** rather than improvising a variant. A one-off variant at a call site is
@@ -111,7 +125,7 @@ primitive means every screen in both builds drifts.
 
 ## 0. Detect what YOUR build actually has
 
-Run these four before touching anything. Each prints a work list. **A clean
+Run these five before touching anything. Each prints a work list. **A clean
 result means that problem does not exist in your build — skip its section.**
 
 These are the exact scanners used to produce this audit. They are AST-based, not
@@ -253,6 +267,40 @@ icons in `<span>` wrappers, in `icon={}` props, and absolutely-positioned ones.
 The browser script in §9. Run it **before** you start, to see what your build
 currently renders, and **after**, to prove it. Anything stably above 36px before
 you start is a size problem; after you finish there must be none.
+
+### Scanner 5 — translucent fills → drives §3.6 *(added 2026-07-29)*
+
+```bash
+# every fractional-opacity fill on a control primitive
+grep -rnE "bg-input/[0-9]+|dark:bg-input/[0-9]+" src
+
+# broader: any fractional bg on a ui/ primitive, which is where inherited
+# shadcn alphas hide
+grep -rnE "bg-[a-z-]+/[0-9]+" src/components/ui
+```
+
+Expect hits in `button.tsx`, `checkbox.tsx`, `radio-group.tsx`, `switch.tsx`
+and possibly a page. Each is an **inherited upstream alpha, not a decision** —
+see §3.6.
+
+**A fractional fill is not automatically wrong.** `hover:bg-primary/85` is a
+deliberate hover tint on an opaque base, and `--accent-muted` is a deliberate
+half-strength highlight. The defect is specifically a fraction applied to a
+token that is *already translucent* (`--input` in dark), or a fraction used as
+a surface's **resting** fill where the design calls for solid. Test each hit by
+asking: *is this the button's resting fill, and is the underlying token opaque?*
+
+The fast empirical check — put something textured behind it and see if it shows
+through:
+
+```js
+// devtools, on any dark-theme view
+[...document.querySelectorAll('[data-slot="button"]')]
+  .map(b => getComputedStyle(b).backgroundColor)
+  .filter(c => /\/|rgba\(.*0\.\d+\)/.test(c))
+```
+
+Any resting-state result with an alpha channel is a hit.
 
 ---
 
@@ -402,6 +450,51 @@ Pill-shaped outline rows are list rows, not toolbar buttons — the control IS t
 row, so the edge moves on hover/press, not just the fill. **Deliberately scoped
 to `outline + pill`**, not to all of `outline`: raising the edge on every outline
 button is a site-wide visual change and is its own decision.
+
+### 3.6 `outline` fill goes OPAQUE in dark *(added 2026-07-29)*
+
+**This is the sixth change and it was found a day after the rest.** Treat it as
+part of the same port.
+
+```diff
+  outline:
+-   "border-border bg-card shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
++   "border-border bg-card shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input",
+```
+
+Delete `dark:bg-input/30` and `dark:hover:bg-input/50`. Nothing replaces them —
+the point is that the unqualified `bg-card` / `hover:bg-muted` then hold in
+**both** themes, so the two can never drift apart again. **Keep
+`dark:border-input`**: a translucent *border* is intentional; only the *fill*
+must go opaque.
+
+**Why this is a real bug and not a taste change.** In dark, `--input` is itself
+translucent — `color-mix(in oklch, var(--color-white) 15%, transparent)`. So
+`bg-input/30` is 30% of an already-15% white: an **~4.5% white veil**. The
+button is effectively see-through. It survived months of review because nothing
+textured was ever behind a button; the moment a dot-matrix canvas was added
+behind the Ask AI panel, the grid showed straight through the suggestion pills
+while the light theme rendered them solid white.
+
+**Provenance:** `git log -S` puts `dark:bg-input/30` in the repo's *initial
+commit*. It is shadcn's stock `outline` recipe, inherited at scaffold time and
+never a decision anyone made here. **Your build almost certainly has it too, for
+the same reason** — check rather than assume, but expect a hit.
+
+**The same inherited pattern is in four more places** and is the same latent
+bug. It was scoped out of the button work but is listed here because a porting
+agent should fix them in the same pass rather than rediscover them one textured
+surface at a time:
+
+| File | Value |
+| --- | --- |
+| `src/components/ui/checkbox.tsx` | `dark:bg-input/30` |
+| `src/components/ui/radio-group.tsx` | `dark:bg-input/30` |
+| `src/components/ui/switch.tsx` | `bg-input/80` |
+| `src/pages/Policies.tsx` | `dark:bg-input/30` — **at a call site**, which is a `no-hardcoding` violation on its own |
+
+Apply the same treatment: an opaque semantic fill, and for `Policies.tsx` the
+value belongs in the primitive, not the page.
 
 ---
 
@@ -720,6 +813,10 @@ parity requirement. Port these too or the two builds diverge:
 - [ ] §3.3 `shape` variant (default / pill / circle)
 - [ ] §3.4 `variant="raised"`
 - [ ] §3.5 `outline + pill` compound variant
+- [ ] §3.6 `outline` dark fill goes OPAQUE — delete `dark:bg-input/30` +
+      `dark:hover:bg-input/50`, keep `dark:border-input`
+- [ ] §3.6 the four sibling translucent fills (`checkbox`, `radio-group`,
+      `switch`, and the `Policies.tsx` call site)
 - [ ] §4.1 codemod, both passes (63 + 6)
 - [ ] §4.2 two prop defaults
 - [ ] §4.3 four stale comments
@@ -728,7 +825,7 @@ parity requirement. Port these too or the two builds diverge:
 - [ ] §7.1 four circular buttons → `Button`
 - [ ] §7.2 thirteen page-level conversions
 - [ ] §8 confirm the six exceptions are **left alone**
-- [ ] §9 tsc + lint + browser census + AST scan
+- [ ] §9 tsc + lint + browser census + AST scan + Scanner 5 (translucency)
 - [ ] Appendix A — five non-Button changes
 - [ ] Appendix B — full primitive source copied verbatim
 
