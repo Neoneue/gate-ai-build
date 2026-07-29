@@ -249,8 +249,22 @@ export function AskAiPanel({
           pinned turn.
 
           Measured 2026-07-29 at 1512×900: scroll region 836px, empty-state
-          title y=321, and every thread y constant at all four field sizes. */}
-      <div className="relative flex min-h-0 flex-1 flex-col px-4">
+          title y=321, and every thread y constant at all four field sizes.
+
+          `ask-ai-canvas` is the dot-matrix field from the design — a 16px
+          gradient texture on a ::before layer, drawn in CSS rather than
+          shipped as an image (see index.css). It goes on THIS element for two
+          reasons. It does not scroll — the turn list is a child that does — so
+          the pattern stays put while messages travel over it, which is what
+          the Figma frame shows. And it inherits this wrapper's existing
+          `relative` as its containing block, so `inset-0` covers the full box:
+          the `px-4` does not inset it and the pattern runs edge to edge. It is
+          backmost by tree order alone (no z-index added anywhere, no new
+          stacking context) and `pointer-events-none`, so it cannot occlude or
+          intercept a bubble, the empty state, the FAB, or the composer. It
+          starts directly under the 64px header, which keeps its own
+          surface. */}
+      <div className="ask-ai-canvas relative flex min-h-0 flex-1 flex-col px-4">
         {/* Non-scrolling wrapper: owns the flex sizing so the scroll-to-latest
             control can anchor to the region's box without riding the scroll.
             Its right edge is the body's `px-4`, so the FAB sits 16px in from

@@ -5,8 +5,8 @@
  * the threat-event detail dialog. Shared data/config comes from ./events-data;
  * only EventsTableSection is exported (the detail dialog is file-local).
  * ───────────────────────────────────────────────────────────────────────── */
-import { ArrowLeftRight, FileText, Flag, ShieldCheck } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { ArrowLeftRight, FileText, ShieldCheck } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +21,11 @@ import {
   DialogHeader,
   DialogScrollBody,
   DialogScrollContent,
+  DialogScrollFooter,
   DialogScrollHeader,
   DialogTitle,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
-import { ExpandingAction } from "@/components/ui/expanding-action";
 import { Label } from "@/components/ui/label";
 import { SearchInput } from "@/components/ui/search-input";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -530,14 +530,43 @@ function ThreatEventDetailDialog({
   selection: EventRow | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  // Base UI focuses the first tabbable descendant on open. In this modal that
+  // is a TextLink near the BOTTOM of the scroll body, so the default would
+  // scroll the body to its end before the user reads a word. Focus the popup
+  // itself instead (it carries tabIndex={-1}); Base UI passes preventScroll
+  // when the focus target IS the popup, so the body opens at the top.
+  const popupRef = useRef<HTMLDivElement>(null);
+
   return (
     <Dialog onOpenChange={onOpenChange} open={!!selection}>
-      <DialogScrollContent className="sm:max-w-[640px]">
+      <DialogScrollContent
+        className="sm:max-w-[640px]"
+        initialFocus={popupRef}
+        ref={popupRef}
+      >
         {selection ? <ThreatEventDetailBody row={selection} /> : null}
       </DialogScrollContent>
     </Dialog>
   );
 }
+
+/* Analyst verdict on a security event — one mutually exclusive state, not
+ * three toggles. `unreviewed` is where every event starts. */
+type EventVerdict = "unreviewed" | "confirmed" | "invalid";
+
+const VERDICT_LABEL: Record<EventVerdict, string> = {
+  unreviewed: "Unreviewed",
+  confirmed: "Confirmed",
+  invalid: "Invalid",
+};
+
+// Confirmation copy per verdict. `unreviewed` is a revert, so it's worded as
+// one rather than as a fresh decision.
+const VERDICT_TOAST: Record<EventVerdict, string> = {
+  unreviewed: "Event returned to unreviewed",
+  confirmed: "Event confirmed as a real threat",
+  invalid: "Event marked as invalid",
+};
 
 function ThreatEventDetailBody({ row }: { row: EventRow }) {
   const navigate = useNavigate();
@@ -556,35 +585,17 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   // the standalone per-type copy in TYPE_DETAILS.
   const reconciled = getEventFindingCopy(requestId, row.type);
 
-  // Marked state — flips the dialog badge to "Marked false" and converts
-  // the footer button to a disabled "Event marked" confirmation in place.
-  // State resets naturally on unmount when the dialog closes (selection →
-  // null unmounts this component).
-  const [marked, setMarked] = useState(false);
+  // Analyst verdict — one mutually exclusive state, owned by the footer
+  // Select (replaces the former title-row flag button + "Invalid" badge,
+  // 2026-07-29). `unreviewed` is the default; State resets naturally on
+  // unmount when the dialog closes (selection → null unmounts this
+  // component).
+  const [verdict, setVerdict] = useState<EventVerdict>("unreviewed");
 
   return (
     <>
       <DialogScrollHeader>
-        <DialogTitleBlock
-          badge={
-            marked ? (
-              <Badge className="h-8 px-3" variant="secondary">
-                Invalid
-              </Badge>
-            ) : (
-              <ExpandingAction
-                aria-label="Mark event invalid"
-                icon={Flag}
-                label="Mark invalid"
-                onClick={() => {
-                  setMarked(true);
-                  toast.success("Event marked as invalid");
-                }}
-              />
-            )
-          }
-          titleAriaLabel={`Security event ${requestId}`}
-        >
+        <DialogTitleBlock titleAriaLabel={`Security event ${requestId}`}>
           Security event
         </DialogTitleBlock>
       </DialogScrollHeader>
@@ -757,6 +768,36 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           </section>
         </div>
       </DialogScrollBody>
+
+      <DialogScrollFooter className="justify-between">
+        <Label className="type-label-14" htmlFor="event-verdict">
+          Mark event
+        </Label>
+        <Select
+          onValueChange={(next) => {
+            const value = next as EventVerdict;
+            setVerdict(value);
+            toast.success(VERDICT_TOAST[value]);
+          }}
+          value={verdict}
+        >
+          <SelectTrigger
+            aria-label="Mark event"
+            className="w-40"
+            id="event-verdict"
+            size="default"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unreviewed">
+              {VERDICT_LABEL.unreviewed}
+            </SelectItem>
+            <SelectItem value="confirmed">{VERDICT_LABEL.confirmed}</SelectItem>
+            <SelectItem value="invalid">{VERDICT_LABEL.invalid}</SelectItem>
+          </SelectContent>
+        </Select>
+      </DialogScrollFooter>
     </>
   );
 }

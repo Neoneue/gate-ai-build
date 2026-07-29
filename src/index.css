@@ -236,6 +236,32 @@ and (pointer: fine)) and (&:hover));
   --chat-bubble-user-foreground: var(--color-neutral-950);
   --chat-bubble-agent: var(--color-white);
   --chat-bubble-agent-foreground: var(--color-neutral-900);
+  /* Ask AI chat canvas — ink for the dot-matrix field behind the thread body.
+     Drawn in CSS, not shipped as an image: the pattern is perfectly regular
+     (16px pitch, 1px dot, linear top-down fade), so a gradient reproduces the
+     Figma export exactly, at any size, at any DPR, for no bytes.
+
+     The dot inverts with the panel under it, so the theme flip happens HERE
+     and the utility names one token. Measured off the export and matched to
+     the nearest palette atom: light #202020 -> neutral-900 (#262626) on the
+     white card; dark #E2E2E2 -> neutral-200 (#e5e5e5) on the neutral-900 card.
+     It needs its own token rather than borrowing --foreground, which goes
+     white in dark and would blow the texture out. Same shape as
+     --canvas-grid, which inks the page grid. Consumed by .ask-ai-canvas. */
+  --ask-ai-canvas-dot: var(--color-neutral-900);
+  /* Texture strength — the mask's TOP stop, i.e. how strong the dot grid reads
+     before the fade takes it down. Per-theme because the two grounds are not
+     symmetric: dark ink on a white card carries further than light ink on a
+     neutral-900 card, but the light texture still needed more weight to read
+     at all. Tuned in place 2026-07-29: both started at 0.5, dark went to 0.6,
+     light to 0.7. Consumed by .ask-ai-canvas. */
+  --ask-ai-canvas-strength: 0.7;
+  /* Where the top-to-bottom fade LANDS, not where it starts. At 0 the texture
+     dissolves completely and the bottom of the panel goes bare, which read as
+     too aggressive in place; 0.1 keeps a trace of grid all the way down. Shared
+     across themes — only the top stop (--ask-ai-canvas-strength) is per-theme.
+     Raised from 0 on 2026-07-29. */
+  --ask-ai-canvas-fade-floor: 0.1;
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Softened on-primary ink for icon-only primary actions (the Ask AI send
@@ -501,6 +527,9 @@ body {
   --chat-bubble-user-foreground: var(--color-neutral-100);
   --chat-bubble-agent: var(--color-neutral-950);
   --chat-bubble-agent-foreground: var(--color-neutral-200);
+  /* Dark twin of the chat canvas — light dots on the dark panel. */
+  --ask-ai-canvas-dot: var(--color-neutral-200);
+  --ask-ai-canvas-strength: 0.6;
 
   --sidebar: var(--color-neutral-950);
   --sidebar-foreground: var(--color-neutral-50);
@@ -680,6 +709,97 @@ body {
   /* Form/input helper copy: 12px tier + 8px separation from control. */
   .type-input-helper {
     @apply m-0 mt-2 font-sans text-xs font-normal text-pretty text-neutral-500 tracking-tight;
+  }
+
+  /* Ask AI chat canvas — the dot-matrix field behind the thread.
+
+     Transcribed from the Figma export rather than shipping it. The pattern is
+     perfectly regular, so it reproduces exactly in CSS and the two 196 KB PNGs
+     went away: 16px pitch and a 1px dot (measured off the @2x export as 32px
+     and 2px), with a LINEAR top-down fade. Being a gradient it is
+     resolution-independent and tiles from the top by definition, so it grows
+     with the panel for free — the pitch stays 16px at every size, which is
+     what a texture should do. Ink is --ask-ai-canvas-dot, which flips theme.
+
+     The fade is an opacity fade on the DOTS — full at the top, out to nothing
+     at the bottom. Figma builds it by overlaying a rectangle in the surface
+     colour at 0% -> 100%; that is visually identical over this panel but ties
+     the effect to a surface value it would then have to track per theme, so
+     the mask is the better implementation and no colour is overlaid. The
+     requested strength is folded into the same stops rather than adding a
+     second opacity layer: the top stop carries it. One expression holds both
+     the fade and the strength, and there is one place to tune it. Started at
+     0.5 (the "half strength" ask), raised to 0.6 on 2026-07-29 when the
+     texture read too faint in place.
+
+     Why a ::before and not the wrapper's own background: `mask-image` applies
+     to an element AND its descendants, so masking the wrapper would fade every
+     bubble, the empty state and the composer with the dots — and would compound
+     with the scroll region's own mask below. The pseudo-element confines the
+     mask to the texture. (Tailwind's mask utilities emit the unprefixed
+     property only, hence the -webkit- twin, same as the scroll region.)
+
+     Backmost with no z-index anywhere. `inset: 0` resolves against the
+     wrapper's PADDING box and the wrapper has no border, so the layer covers
+     the full box edge to edge — its px-4 does not inset the pattern. In paint
+     order the ::before is a positioned descendant preceding every child in
+     tree order, and the wrapper's children (the thread region, the composer)
+     are themselves positioned, so they paint above it on tree order alone.
+     Nothing here creates a stacking context, so the FAB and the composer
+     cannot be trapped under it. `pointer-events: none` so it can never take a
+     click or swallow a scroll.
+
+     The transparent stop is 0.75px, not the dot's own 0.5px radius. That is
+     the ONE place this departs from the measured spec, and it is a rasteriser
+     workaround, not a design change: with both stops at 0.5px Chromium rounds
+     the sub-pixel circle away on a 1x display and the pattern renders
+     COMPLETELY INVISIBLE there (measured: 0 dots at DPR 1, in both themes).
+     Carrying the stop out to 0.75px costs nothing on retina — at DPR 2 the
+     render is identical, still a 1px dot on a 16px pitch at the same peak
+     contrast — and at DPR 1 it antialiases to a faint dot instead of nothing.
+     Do not "simplify" it back to 0.5px.
+
+     STAGGERED, not square. Figma's `_dot-tile` is set to Hexagonal, so every
+     other row shifts by half the horizontal pitch. Measured off the @2x
+     export: rows at y=7.5 start at x=15.5, rows at y=39.5 start at x=31.5 —
+     a 16px (@2x) shift, exactly half the 32px (@2x) pitch, alternating all the
+     way down. In CSS px that is a 16px pitch with an 8px offset on alternate
+     rows, and 16px between rows.
+
+     It takes TWO gradient layers on a 16 x 32px tile: the first paints the
+     even rows at the tile's top, the second paints the odd rows 16px down and
+     8px across. Density is unchanged from the square grid it replaced — two
+     dots per 16 x 32 tile is the same one-per-256px as one dot per 16 x 16. */
+  .ask-ai-canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        circle,
+        var(--ask-ai-canvas-dot) 0.5px,
+        transparent 0.75px
+      ),
+      radial-gradient(
+        circle,
+        var(--ask-ai-canvas-dot) 0.5px,
+        transparent 0.75px
+      );
+    background-size: 16px 32px;
+    background-position:
+      top center,
+      calc(50% + 8px) 16px;
+    mask-image: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / var(--ask-ai-canvas-strength)),
+      rgb(0 0 0 / var(--ask-ai-canvas-fade-floor))
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / var(--ask-ai-canvas-strength)),
+      rgb(0 0 0 / var(--ask-ai-canvas-fade-floor))
+    );
   }
 
 }
