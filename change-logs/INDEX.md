@@ -9,6 +9,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## July 2026
 
+### [2026-07-30](./2026-07/changelog-7-30.md)
+
+- Ask AI canvas — the dark dot grid was carrying too much texture
+- Ask AI empty state — the support suggestion read as a command
+
 ### [2026-07-29](./2026-07/changelog-7-29.md)
 
 - `Button` gains `icon-action`, the one responsive size
