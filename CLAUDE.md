@@ -14,6 +14,9 @@ lives in the reference docs linked below.
 - Keep changes scoped to the literal request.
 - Run `npx tsc -b` before any promotion; CI's `verify` job also gates lint,
   tests, and build on every PR.
+- Lint/format is Ultracite over Biome: `npm exec -- ultracite check` to inspect,
+  `ultracite fix` to apply. `fix` applies UNSAFE fixes, so read the diff. The
+  pre-commit and `PostToolUse` hooks both run a fix pass already.
 - **UI work routes to the agent.** Substantive UI / component / layout /
   chart / animation / visual work MUST be delegated to the
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
@@ -21,32 +24,20 @@ lives in the reference docs linked below.
   self-loads its design knowledge and binds to `design.md` + `src/index.css` +
   `.claude/rules/`. Only trivial mechanical relocations (verbatim class
   moves, no design judgment) may be direct-edited.
+Detailed rules live in `.claude/rules/` and are auto-discovered. The design
+ones (`design-tokens`, `no-hardcoding`, `no-handrolling`) are path-scoped to
+`src/**` and load only when you touch code. `no-thrash` and
+`token-efficient-reads` load always.
+
 - **Visual values are a closed set.** Never invent a color, type size, or
-  tracking — map every value to a token/voice in `design.md`, or stop and ask.
-  Enforced by `npm run lint:design`. Full rule: @.claude/rules/design-tokens.md
-- **Never hardcode a color. Tokenize by intent.** Every color in UI code
-  references a SEMANTIC token that flips with the theme. A raw ramp step
-  (`var(--neutral-900)`, `bg-neutral-100`, `text-blue-700`) used for a
-  semantic role is still hardcoding: it will not flip and is a defect.
-  Literals live ONLY in the token-definition layer. No hand-rolling, no
-  ad-hoc values. Full rule: @.claude/rules/no-hardcoding.md
-- **Never hand-roll a component. Compose the primitives.** The components in
-  `src/components/ui/` are a closed set, like the tokens. Never write a raw
-  `<button>` when `Button` exists; never re-specify what a `variant` already
-  gives you; never override a primitive's typography. A `className` on a
-  primitive is for LAYOUT ONLY (`flex-1`, `w-full`, `md:ml-auto`) — colors,
-  borders, radius, and font weight belong to the component. **All button
-  labels are `font-medium` (500)**, no exceptions. If a primitive doesn't fit,
-  change the primitive and document it in `design.md` — don't patch the call
-  site. Full rule: @.claude/rules/no-handrolling.md
-- **Don't thrash.** When the user says something "isn't working" / "still the
-  same", PIN the surface (which route → which file) and confirm BEFORE editing
-  or measuring. Revert failed fixes instead of patching forward. Full gate:
-  @.claude/rules/no-thrash.md
-- **Never load capture data whole.** `src/data/request-bodies.ts` (~450 KB of
-  verbatim transcripts) is runtime lookup data — don't Read it; exclude it from
-  greps; answer questions about it with code, not reads. Scoped reads
-  everywhere. Full rule: @.claude/rules/token-efficient-reads.md
+  tracking. Tokens are defined in `src/index.css`; `npm run lint:design` fails
+  the build on arbitrary colors and `text-[Npx]`.
+- **Never hardcode a color. Tokenize by intent.** A raw ramp step used for a
+  semantic role is still hardcoding, and the linter does NOT catch it.
+- **Never hand-roll a component.** `src/components/ui/` is a closed set. A
+  `className` on a primitive is for LAYOUT ONLY.
+- **Never load capture data whole.** `src/data/request-bodies.ts` is ~450 KB of
+  runtime lookup data, not a file to Read. Exclude it from greps.
 
 ## Reference docs (repo root)
 
