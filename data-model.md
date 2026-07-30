@@ -230,7 +230,38 @@ interface ConversationRow {
   updated:        Date
   duration:       string
 }
+
+interface ConversationMessage {
+  role:       MessageRole      // 'system' | 'user' | 'tool' | 'assistant'
+  tool?:      string           // tool name — only on role 'tool' (the RESULT)
+  body:       React.ReactNode  // null on a call-only assistant turn
+  time:       string
+  requestId?: string           // cross-link key into TraceEvent
+  toolCalls?: ConversationToolCall[]   // only on role 'assistant' (the INPUT)
+}
+
+// One tool invocation on an assistant turn. Array so a turn can carry several
+// calls; the captured data yields exactly one per request today.
+interface ConversationToolCall {
+  name: string   // = RequestRow.toolName
+  args: string   // = getRequestBody(row).toolArgs, "<name>: " prefix stripped
+}
 ```
+
+**`toolCalls` derivation (`src/data/conversationDetail.ts`, scripted branch).**
+For every request row carrying `toolName`, one call is built: `name` from
+`row.toolName`, `args` from `getRequestBody(row).toolArgs` with the redundant
+leading `"<name>: "` prefix removed (88 of the 89 captures carry it; the render
+surface already names the tool). Args are otherwise **verbatim** — no wrapping,
+re-indenting, or JSON envelope, since 76 of the 88 are bare shell commands.
+
+The call hangs off the **assistant** message, not the `tool` message: the model
+is what asked for it, and the `role: 'tool'` message that follows carries the
+**result**. Consequence — a row with a tool but no captured `assistantResponse`
+now still emits an assistant message (body `null`, `toolCalls` set). That moves
+the scripted conversation from **43 → 100 assistant messages** and takes
+orphaned tool calls from 57 → 0. The Messages panel's "N turns" counter reads
+that same set and rises with it. The unscripted fallback branch is untouched.
 
 ### 3.6 Models & Providers
 
@@ -616,6 +647,13 @@ URL-addressable Trace page (`ConversationsTrace.tsx` → `ConversationDetailBody
 Legacy `?open=cnv_xxx` opens the `ConversationDetailDialog`, kept for deep-links.
 
 **Detail sections (`ConversationDetailBody`):** ConversationKpiRail (6 tiles) → ConversationMessagesPanel → RequestTracePanel
+
+**Message bubble contents (`messageBody()` in `ConversationDetail.tsx`):** a
+`tool` message renders its result through `<ToolResultCode>`; an `assistant`
+message renders optional prose followed by one `<ToolCallCard>` per entry in
+`message.toolCalls`, stacked at 8px. Both mounts get this — the
+`ConversationsTrace` page and the legacy `ConversationDetailDialog` render the
+same `ConversationDetailBody`.
 
 **Cross-panel linking:** `activeRequestId` state shared between Messages and Trace panels for synchronized highlights.
 
@@ -1045,7 +1083,8 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
 | `Badge` | custom div | `font-mono text-xs uppercase`. No icons inside. Symmetric padding locked. `success`/`destructive` text meet WCAG 4.5:1 (success-800; destructive solid `danger-100/800`). Uppercase + contrast fixes 2026-06-04. |
 | `Eyebrow` | custom span | `font-mono uppercase tracking-[0.1em]`. Default `as="span"`, pass `as="div"` when block |
-| `MessageBlock` | custom div | Conversation bubble — border-only, no fill. Blue outline = model output |
+| `MessageBlock` | custom div | Conversation bubble. Default tone `bg-card-muted` (2026-07-30, was `bg-background` — the nested `ToolCallCard` needs a surface it can sit darker than in dark); `warn` / `danger` tones keep translucent tinted fills |
+| `ToolCallCard` | custom flex `span` | Nested `CALL <Tool>` card inside an assistant bubble — the tool INPUT (args). `rounded-xs` on `bg-card`, one radius tier below the bubble. `span`, not `div`, because the bubble is a `button` when selectable |
 | `CodeCard` | custom | Syntax-highlighted code with `CodeLine[]` / `CodeToken[]`. Tabs per language |
 | `DetailList` / `DetailRow` | custom ul/li | Modal detail section. 4-col grid, label col-1 / value col-3 |
 | `UserMenu` | custom | Shared avatar dropdown — workspace identity, plan pill, sign-out |

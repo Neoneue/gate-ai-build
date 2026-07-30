@@ -5,7 +5,7 @@
  * the ConversationsTrace page. KPI/messages subcomponents are private helpers.
  */
 import { ExternalLink, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
 import { MessageBlock } from "@/components/ui/message-block";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Timestamp } from "@/components/ui/timestamp";
+import { ToolCallCard } from "@/components/ui/tool-call-card";
 import { ToolResultCode } from "@/components/ui/tool-result-code";
 import {
   getConversationDetail,
@@ -269,12 +270,21 @@ export function ConversationDetailBody({
       {/* Body — two-panel grid where each panel scrolls independently.
           Override the body's default `overflow-y-auto` to `overflow-hidden`
           and add `flex flex-col` so the inner grid manages overflow per
-          panel rather than scrolling the whole body. */}
+          panel rather than scrolling the whole body.
+
+          `@container` is established HERE, not inherited from the chrome's
+          `<main>`: the modal mount renders through `DialogPortal`, so it has
+          no `@container` ancestor and viewport-anchored `lg:` breakpoints
+          left it squished whenever the surrounding page column narrowed
+          (sidebar + Ask AI panel both open). This element's content box is
+          exactly the two-panel grid's width — `Tabs` / `TabsContent` add no
+          horizontal padding — so every `@4xl:` variant below measures the
+          space the panels actually get, in both mounts. */}
       <DialogScrollBody
         className={
           variant === "page"
-            ? "flex min-h-fit flex-initial flex-col gap-4 overflow-y-visible overscroll-auto pt-4"
-            : "flex flex-col gap-4 overflow-hidden pt-4"
+            ? "@container flex min-h-fit flex-initial flex-col gap-4 overflow-y-visible overscroll-auto pt-4"
+            : "@container flex flex-col gap-4 overflow-hidden pt-4"
         }
       >
         {/* Finding banner — same pattern as the Requests modal. Hidden
@@ -352,8 +362,8 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
-                  : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid @4xl:h-[640px] h-[840px] @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
+                  : "grid min-h-0 flex-1 @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
               }
             >
               <ConversationMessagesPanel
@@ -366,7 +376,7 @@ export function ConversationDetailBody({
               <RequestTracePanel
                 activeRequestId={activeRequestId}
                 footer={
-                  <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -378,7 +388,7 @@ export function ConversationDetailBody({
                     </span>
                     <div className="flex items-center gap-2">
                       <CopyButton
-                        className="flex-1 lg:flex-none"
+                        className="@4xl:flex-none flex-1"
                         label="conversation ID"
                         mode="label"
                         size="sm"
@@ -386,7 +396,7 @@ export function ConversationDetailBody({
                         value={row.conversationId}
                       />
                       <Button
-                        className="flex-1 lg:flex-none"
+                        className="@4xl:flex-none flex-1"
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
@@ -425,8 +435,8 @@ export function ConversationDetailBody({
             <div
               className={
                 variant === "page"
-                  ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
-                  : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                  ? "grid @4xl:h-[640px] h-[840px] @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
+                  : "grid min-h-0 flex-1 @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
               }
             >
               <ConversationMessagesPanel
@@ -440,7 +450,7 @@ export function ConversationDetailBody({
                 activeRequestId={activeRequestId}
                 countLabel={`${findingCount} findings`}
                 footer={
-                  <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -452,7 +462,7 @@ export function ConversationDetailBody({
                     </span>
                     <div className="flex items-center gap-2">
                       <CopyButton
-                        className="flex-1 lg:flex-none"
+                        className="@4xl:flex-none flex-1"
                         label="conversation ID"
                         mode="label"
                         size="sm"
@@ -460,7 +470,7 @@ export function ConversationDetailBody({
                         value={row.conversationId}
                       />
                       <Button
-                        className="flex-1 lg:flex-none"
+                        className="@4xl:flex-none flex-1"
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
@@ -501,8 +511,8 @@ export function ConversationDetailBody({
               <div
                 className={
                   variant === "page"
-                    ? "grid h-[840px] grid-cols-1 gap-4 overflow-hidden lg:h-[640px] lg:grid-cols-2"
-                    : "grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-2"
+                    ? "grid @4xl:h-[640px] h-[840px] @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
+                    : "grid min-h-0 flex-1 @4xl:grid-cols-2 grid-cols-1 gap-4 overflow-hidden"
                 }
               >
                 <ConversationMessagesPanel
@@ -516,7 +526,7 @@ export function ConversationDetailBody({
                   activeRequestId={activeRequestId}
                   countLabel={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
                   footer={
-                    <div className="flex flex-none flex-col gap-4 border-border border-t bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
                       <span className="type-mono-12 text-muted-foreground">
                         Key{" "}
                         <span className="text-foreground">{row.initiator}</span>{" "}
@@ -637,6 +647,42 @@ function ConversationKpiTile({
 
 // Static derivation — computed once at module load from the fixed message list.
 
+/**
+ * Bubble contents for one message.
+ *
+ * - `tool` (the RESULT) keeps its existing ToolResultCode treatment, untouched.
+ * - `assistant` renders optional prose first, then one <ToolCallCard> per call
+ *   the model made on that turn, stacked at 8px. This is the real Gate build's
+ *   reply pattern: the bubble narrates, the nested cards show what it invoked.
+ * - Everything else renders its body as-is.
+ *
+ * Prose is emitted bare (not wrapped) so it inherits the bubble's own type
+ * exactly as it does today, and so a call-only turn produces no empty flex
+ * item eating a gap.
+ */
+function messageBody(m: ConversationMessage): ReactNode {
+  if (m.role === "tool" && typeof m.body === "string") {
+    return <ToolResultCode>{m.body}</ToolResultCode>;
+  }
+  if (m.toolCalls?.length) {
+    return (
+      // Flex <span>, not <div> — the bubble is a <button> when the message is
+      // cross-link selectable, and a button takes phrasing content only.
+      <span className="flex min-w-0 flex-col gap-2">
+        {m.body}
+        {m.toolCalls.map((call) => (
+          <ToolCallCard
+            args={call.args}
+            key={`${call.name}:${call.args.slice(0, 32)}`}
+            name={call.name}
+          />
+        ))}
+      </span>
+    );
+  }
+  return m.body;
+}
+
 function ConversationMessagesPanel({
   messages,
   trace,
@@ -723,13 +769,7 @@ function ConversationMessagesPanel({
                 : "default";
           return (
             <MessageBlock
-              body={
-                m.role === "tool" && typeof m.body === "string" ? (
-                  <ToolResultCode>{m.body}</ToolResultCode>
-                ) : (
-                  m.body
-                )
-              }
+              body={messageBody(m)}
               key={i}
               // Only assistant + tool turns participate in cross-link
               // selection — user input has no gateway request to pair with.

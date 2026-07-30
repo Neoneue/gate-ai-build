@@ -18,6 +18,7 @@ import type {
   ConversationMessage,
   ConversationRow,
   ConversationStatus,
+  ConversationToolCall,
   TraceEvent,
   TraceStatus,
 } from "@/pages/conversations/types";
@@ -42,6 +43,20 @@ const FINDING_ACTION: Record<string, "Flag" | "Redact" | "Block"> = {
   redacted: "Redact",
   block: "Block",
 };
+
+// Tool-call args are captured verbatim off the real session, and 88 of the 89
+// captured values open with a redundant `"<ToolName>: "` prefix. The call card
+// header already names the tool, so strip it — but only when the prefix
+// actually matches THIS row's tool, so the one value that carries no prefix
+// (and any future args string that legitimately opens `word: `) renders whole.
+// Nothing else is touched: no wrapping, no re-indenting, no JSON envelope.
+// 76 of the 88 are bare shell commands, and synthesising `{"command": …}`
+// around them would fabricate payload structure that was never captured.
+function stripToolPrefix(name: string, raw: string | undefined): string {
+  const args = raw ?? "";
+  const prefix = `${name}: `;
+  return args.startsWith(prefix) ? args.slice(prefix.length) : args;
+}
 
 // The Messages panel is a reconstruction from gateway logs, where PII and
 // credentials were already redacted on ingress before the prompt reached the
@@ -205,12 +220,28 @@ export function getConversationDetail(
             body: redactUserBody(r, body.userMessage),
           });
         }
-        if (body.assistantResponse) {
+        // A tool call belongs to the ASSISTANT turn — the model is the one
+        // that asked for it. The `role: "tool"` message below carries the
+        // RESULT and is unchanged.
+        const toolCalls: ConversationToolCall[] | undefined = r.toolName
+          ? [
+              {
+                name: r.toolName,
+                args: stripToolPrefix(r.toolName, body.toolArgs),
+              },
+            ]
+          : undefined;
+        // Emit the assistant turn when there is prose OR a call. A row that
+        // called a tool without any captured narration still gets a bubble:
+        // 57 of the 89 captured calls sit on such rows, and without this they
+        // would be invisible even though their result renders right below.
+        if (body.assistantResponse || toolCalls) {
           out.push({
             role: "assistant",
             time,
             requestId: id,
-            body: body.assistantResponse,
+            body: body.assistantResponse ?? null,
+            toolCalls,
           });
         }
         if (r.toolName) {
