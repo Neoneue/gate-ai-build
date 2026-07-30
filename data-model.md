@@ -39,11 +39,12 @@ graph LR
     LAYOUT --> REQ["/messages → Requests.tsx"]
     LAYOUT --> REQF["/messages-findings/:requestId → RequestsFindings.tsx"]
     LAYOUT --> CONV["/conversations → Conversations.tsx"]
+    LAYOUT --> CONVT["/conversations-trace/:conversationId → ConversationsTrace.tsx"]
     LAYOUT --> MOD["/models → Models.tsx"]
     LAYOUT --> TOK["/token-savings → TokenSavings.tsx"]
     LAYOUT --> LIM["/limits → Limits.tsx"]
     LAYOUT --> SEC["/security → Security.tsx"]
-    LAYOUT --> SECDEF["/events-default → SecurityDefault.tsx (Pro upsell)"]
+    LAYOUT --> SECDEF["/events-default + /security-default → SecurityDefault.tsx (empty state)"]
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
@@ -93,17 +94,29 @@ content), and — added 2026-07-27 — the **Ask AI docked panel** on the right.
 
 ### Sidebar navigation
 
-Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`:
+Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`.
+Each item is `{ id, icon, label, pageId?, locked? }` — `pageId` holds the URL
+path handed straight to `navigate()`; an item without one is an inert
+affordance.
 
-| Section | Nav items (id → path) |
+| Section | Nav items (id → pageId) |
 | --- | --- |
-| _(unnamed)_ | overview → `/overview`, requests → `/messages` (label "Messages"), conversations → `/conversations` |
-| Gateway | models → `/models`, token-savings → `/token-savings`, limits → `/limits` |
-| Security | security-events → `/security`, policies → `/policies` |
-| Audit | audit-trail → `/audit-trail` _(built)_ |
-| Workspace Admin | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
+| _(unnamed)_ | overview → `/overview` |
+| Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
+| Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
+| Gateway | models → `/models` |
+| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
+
+The two variant sidebars are **derived**, not hand-maintained:
+`buildVariantSections(suffix, lockedIds, labelOverrides)` maps
+`SIDEBAR_SECTIONS`, rewriting each `pageId` to `${pageId}${suffix}`.
+
+- `FREE_SIDEBAR_SECTIONS` — suffix `-free`, `lockedIds = LOCKED_IN_FREE`.
+- `DEFAULT_SIDEBAR_SECTIONS` — suffix `-default`, empty lock set. The nav label
+  stays "Messages" across all tiers; only the Default page body keeps the
+  "Requests" copy.
 
 ### Tier & onboarding variants
 
@@ -111,13 +124,14 @@ Several sidebar pages have standalone route variants (same chrome, different
 content state). Naming contract:
 
 - `*Default.tsx` (`/overview-default`, `/api-keys-default`, `/limits-default`,
-  `/events-default`) — the page as a NEW workspace sees it: empty-state hero
-  or Pro-upsell pitch (SecurityDefault/LimitsDefault share the `HeroCard`
-  upsell pattern).
+  `/events-default`) — the page as a NEW workspace sees it: empty-state hero,
+  zeroed KPI cards, and `TableEmptyState` in place of each table.
 - `*Free.tsx` (`/security-free`, `/limits-free`, `/token-savings-free`) — the
   page as a FREE-tier workspace sees it: feature gated, upgrade CTA.
-- Pro-gated nav items carry `locked: true` in `nav-sections.ts`, which renders
-  the sidebar lock icon (Token Savings, Limits, Security events on free tier).
+- `locked: true` in `nav-sections.ts` renders the sidebar lock icon on the
+  PRODUCTION shell for the three Pro surfaces (Security Events, Limits, Token
+  Savings). Note that `LOCKED_IN_FREE` is currently an **empty set**, so the
+  Free sidebar locks nothing — every item routes to its `-free` twin instead.
 - Variants are reached by direct route only — there is no runtime tier switch;
   the variants exist so each state can be designed/reviewed at its own URL.
 - `/upgrade` is the plan-comparison page the upsell CTAs link to.
@@ -381,7 +395,7 @@ interface MarketplaceMeta {
 
 // VENDOR_META: Record<Vendor, VendorMeta>
 // Vendors: anthropic, xai, google, openai, meta, mistral, deepseek, cohere
-// PROVIDER_ORDER: ProviderId[] — canonical sort for provider tables
+// MARKETPLACE_META: Record<MarketplaceProvider, MarketplaceMeta>
 ```
 
 ---
@@ -477,14 +491,18 @@ The app has no backend. All data is seeded in-file. The three rules:
 | Page | Constant | Value |
 | --- | --- | --- |
 | Requests | `HERO_ALL_TOTAL` | 4,860 |
-| Requests | `HERO_24H_TOTAL` | 48 |
-| Requests | `HERO_7D_TOTAL` | 468 |
-| Requests | `HERO_30D_TOTAL` | 2,248 |
+| Requests | `HERO_VIEWS['24h'].total` | 48 |
+| Requests | `HERO_VIEWS['7d'].total` | 468 |
+| Requests | `HERO_VIEWS['30d'].total` | 2,248 |
 | Security | `EVENTS_RANGE_TOTAL['all']` | 1,215 |
 | Security | `EVENTS_RANGE_TOTAL['7d']` | 117 |
 | Activity | `TOTAL_7D_BASE_DOLLARS` | $238 |
 | Activity | `TOTAL_7D_BASE_REQUESTS` | 63,793 |
 | Activity | `TOTAL_7D_BASE_TOKENS` | 73,450,000 |
+
+Only `HERO_ALL_TOTAL` is a standalone const; the other three per-range totals
+are literals inside the `HERO_VIEWS` record in `src/pages/requests/hero-data.ts`
+(the old `HERO_24H_TOTAL` / `HERO_7D_TOTAL` / `HERO_30D_TOTAL` names are gone).
 
 ### 5.2 Range scaling
 
@@ -526,16 +544,24 @@ function buildSpark(total: number, seed: number): number[]
 | `REQUEST_ROWS` | `src/data/requests.ts` | `RequestRow[]` | 17 (cumulative: 24h ⊂ 7d ⊂ 30d ⊂ all) |
 | `EVENT_ROWS` | Security | `EventRow[]` | 17 |
 | `CONVERSATION_ROWS` | `src/data/conversations.ts` | `ConversationRow[]` | 8 |
-| `CONVERSATION_MESSAGES` | Conversations | message thread | 8 |
-| `SAMPLE_TRACE` | Conversations | trace events | 7 |
+| `SAMPLE_TRACE` | `src/data/conversations.ts` | `TraceEvent[]` | 7 |
+| `SECURITY_FEED` | `src/pages/security-feed.ts` | `EventRow[]`, chronological ASC | 48 |
 | `MODELS` | Models | `Model[]` | 25 |
 | `MODEL_ROWS` | Activity | usage rows | 7 |
 | `API_KEY_ROWS` | Activity | key usage rows | 10 |
 | `MEMBER_ROWS` | Team | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
-| `VOLUME_DATA` | Dashboard | 7-day bar data | 7 bars × 6 series |
-| `RECENT_REQUESTS` | Dashboard | summary rows | 8 |
+
+Conversation message threads are no longer a static array — `getConversationDetail()`
+(`src/data/conversationDetail.ts`) derives `{ trace, messages }` per conversation
+id, so the old `CONVERSATION_MESSAGES` const is gone. Overview likewise dropped
+its `VOLUME_DATA` / `RECENT_REQUESTS` seeds; it reads `REQUEST_ROWS_RECENT`,
+`CONVERSATION_ROWS`, and the Activity series instead (see §6).
+
+`SECURITY_FEED` currently has **no importers** — it fed the SecurityDefault
+upsell ticker that was replaced by the empty state. Kept as a ready-made
+48-event array; delete it or wire it up rather than letting it rot silently.
 
 ---
 
@@ -547,37 +573,48 @@ function buildSpark(total: number, seed: number): number[]
 
 **Sections (top → bottom):**
 
-1. `PageHeader` — title + subtitle sourced from Notion H1 Narrative & Positioning ("Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.")
-2. `KpiRail` (4 tiles, all click-through):
-   - Daily spend → `/activity?range=24h`
-   - Monthly spend → `/activity?range=30d`
-   - Threats detected → `/security`
-   - Events anchored → `/audit-trail`
-3. `QuickActionsRow` — 4 evenly-styled tiles: Set a spend limit (`/limits?create=1`) · Review Security Events · Rotate API Key · Read Integration Guide
-4. `RecentConversationsCard` — top 8 conversations preview (columns mirror Conversations page)
-5. `RecentSecurityEventsCard` — top 8 blocked/flagged events (preview of Security page log)
-6. `RecentAnchoredEventsCard` — top 8 audit-trail entries (columns mirror AuditTrail page; row click opens `AuditRecordDialog`)
+1. `PageHeader` — `PageTitle` "Overview" + subtitle sourced from Notion H1 Narrative & Positioning ("Cost controls, inline security, and a tamper-evident audit trail. Anchored to Constellation's Digital Evidence layer.")
+2. `SectionTitle as="h2"` "Activity This Week"
+3. `TokenSavingsStrip` — `KpiRail columns={3}` of three `flat` `CompactKpi` tiles, each with a `CompactSpark` over `KPI_7D_LABELS`. Not click-through:
+   - "Messages" — `TOTAL_7D_BASE_REQUESTS`, +8.2%
+   - "Tokens saved" — `TOKEN_SAVINGS_RATE_7D` as a percent, +8.7%
+   - "Threats detected" — `THREATS_DETECTED_COUNT`, +22.4% (`deltaInverted`)
+4. `OverviewUsageChart` — one `Card` whose header carries `DimSelector`
+   (By model / By provider / By API key) + a `SegmentedPill` over
+   `OVERVIEW_METRIC_OPTIONS` (Tokens / Spend); title flips "Tokens used" ↔
+   "Total spent" with the metric. Body is `@4xl:grid-cols-12`:
+   `StackedKpiChart` (Recharts `BarChart`, stacked `Bar` per series) beside
+   `HorizontalLegend`, which stacks below when narrower.
+5. Three `PreviewCard` shells (`density="flush"` Card + title + "View all"
+   link, then a shared `<Table>`): "Latest messages" → `/messages` ·
+   "Latest conversations" → `/conversations` · "Latest security events" →
+   `/security`
 
-**State:** None beyond sidebar context.
+**State:** `metric` + `dim` inside `OverviewUsageChart`, both mirrored to the URL (see §7). Nothing else beyond sidebar context.
 
 **Data:**
 
-- `THREATS_DETECTED_COUNT` = `EVENT_ROWS.length` (from `Security.tsx`)
-- `ANCHORED_EVENTS_COUNT` = `AUDIT_EVENT_ROWS.length` (from `AuditTrail.tsx`)
-- `MONTHLY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS * 4.2` (reconciles to Activity 30d window)
-- `DAILY_SPEND_DOLLARS` = `TOTAL_7D_BASE_DOLLARS / 7`
-- Sparklines: every spark derives from its tile's canonical total via `distributeSeries(total, count, seed)` (exported from `Activity.tsx`). Bucket sums equal the KPI value by construction (single source of truth: total → spark → tile).
-- Preview tables sort by `at`/`updated`/`time` desc and `.slice(0, 8)` for the canonical 8-row glance cap.
+- `THREATS_DETECTED_COUNT` = 117 — the Security 7d total, and equal to
+  `splitEventMix(117)` = 77 blocked + 35 flagged + 5 redacted.
+- `DOLLARS_SAVED_7D` = `round(TOKEN_SAVINGS_RATE_7D * TOTAL_7D_BASE_DOLLARS)`
+- Series come from `src/pages/activity-data.ts` — `SPEND_SERIES[dim]`,
+  `makeStackedTokenRows(dim)`, `makeStackedSpendRows(dim)`. Small series that
+  are not in the shared module are built locally with `distributeSeries`
+  (`_REQUESTS_7D_SERIES`, `SAVINGS_SPARK`, `THREATS_SPARK`), so every spark's
+  buckets sum to its tile's canonical total by construction.
+- Preview tables sort desc and `.slice(0, 8)` for the canonical 8-row glance cap.
+- The 4-tile click-through KPI rail, `QuickActionsRow`, and
+  `RecentAnchoredEventsCard` were removed — Overview no longer touches
+  `src/data/audit-trail.ts` or `AuditRecordDialog`.
 
 **Responsive (2026-07-27):** first page converted to container queries (see §2 → Chrome shell layout). Its grids key off the content-pane width rather than the viewport, so they collapse when the Ask AI panel and/or nav rail narrow the content — including the compound worst case (rail expanded + panel open, ~760px). KPI stat rail `@2xl:grid-cols-3` (672px; `sm:grid-cols-1` added at the call site to neutralize the shared `KpiRail` primitive's viewport `sm:grid-cols-3`, primitive untouched). "Tokens used" chart + side legend `@4xl:grid-cols-12` (two-column at 896px, legend stacks below when narrower — also resolves the tablet legend-clip finding). 3-up preview tables `@4xl:grid-cols-3` (held at 896px so rail-expanded 1280–1439 laptops keep 3-col instead of regressing). No change to the panel-closed desktop layout. File: `src/pages/Dashboard.tsx`.
 
 **Cross-page imports:**
 
-- `Activity.tsx` → `TOTAL_7D_BASE_DOLLARS`, `distributeSeries`
-- `Security.tsx` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime` (the threat-event detail dialog is now file-local in `src/pages/security/EventsTable.tsx`, not a cross-page export)
-- `src/data/audit-trail.ts` → `EVENT_ROWS`, `EventRow`, `KIND_BADGE_VARIANT`, `NOW`, `fmtRelative`, `truncateHex` (extracted from `AuditTrail.tsx` 2026-06-10; both audit pages + both record dialogs import from here)
-- `Conversations.tsx` → `ConversationRow` + other types; `src/data/conversations.ts` → `CONVERSATION_ROWS` (values moved 2026-06-10, types stay with the page)
-- `AuditRecordDialog.tsx` → `AuditRecordDialog`
+- `src/pages/activity-data.ts` → `TOTAL_7D_BASE_REQUESTS`, `TOTAL_7D_BASE_DOLLARS`, `TOKEN_SAVINGS_RATE_7D`, `SPEND_SERIES`, `distributeSeries` (the Activity math moved out of `Activity.tsx` into this module)
+- `src/pages/security-data.ts` → `EventRow`, `EVENT_ROWS`, `ACTION_BADGE`, `TYPE_META`, `formatEventTime` (the threat-event detail dialog is file-local in `src/pages/security/EventsTable.tsx`, not a cross-page export)
+- `src/data/requests.ts` → `REQUEST_ROWS_RECENT`; `src/pages/Requests.tsx` → `RequestRow` (type-only)
+- `src/data/conversations.ts` → `CONVERSATION_ROWS`; `src/pages/conversations/types.ts` → `ConversationRow` (type-only)
 
 ---
 
@@ -624,11 +661,14 @@ internal scroll, no footer; back breadcrumb (top-left) + "View Conversation"
 
 **Body (`RequestDetailBodyV2`):** title+badge → KPI rail → finding banner → tabs.
 Two tabs: **Findings** (left finding list + Passed detectors / right polymorphic
-panel: `PiiRightPanel` for PII/credential, `InjectionRightPanel` for injection)
+panel: `PiiDetailPanel` for PII/credential, `InjectionDetailPanel` for injection)
 and **Details** (Findings-style 2/3 message + 1/3 metadata grid; Message folded
-in here, Full request drawer open by default). Findings data contract:
-`RequestFinding` (`+verdicts?`/`reasoning?`), `getRequestFindings`/`deriveFinding`,
-`DETECTOR_CATALOG`, `SHOWCASE_FINDINGS` (on `req_8f3a1c4`).
+in here, Full request drawer open by default). Panels are file-local to
+`RequestDetailBody.tsx`: `PiiDetailPanel`, `InjectionDetailPanel`,
+`RequestBodyPanel`, with `PanelHeading` as the shared header. Findings data
+contract: `RequestFinding` (`+verdicts?`/`reasoning?`),
+`getRequestFindings`/`deriveFinding`, `DETECTOR_CATALOG`, `SHOWCASE_FINDINGS`
+(on `req_8f3a1c4`).
 
 **Outbound:** `/conversations-trace/${conversationId}` ("View Conversation").
 
@@ -685,19 +725,26 @@ Row-level `EventRow`/`EVENT_ROWS`/`ACTION_BADGE`/`TYPE_META` still come from `sr
 
 ---
 
-### Security Default page (`/events-default` → `SecurityDefault.tsx`)
+### Security Default page (`/events-default` + `/security-default` → `SecurityDefault.tsx`)
 
-**Purpose:** Pro upsell teaser shown to Free-tier workspaces in place of the real Security Events page. Hero left = headline + benefits + CTAs; hero right = decorative rotating events ticker.
+**Purpose:** The Security Events page as a NEW workspace sees it — nothing has
+been captured yet. Both routes render the same component.
 
-**Self-contained data:** `SECURITY_FEED` is a local flat 48-event `EventRow[]` array in chronological ASC order — Early (09:09–09:20, 8) + Mid (09:21–09:46, 16) + Late (09:49–09:56, 8) + Trail (09:57–10:28, 16). **No import dependency on `EVENT_ROWS` from `Security.tsx`** — the dev rebuilding this animation can lift the array wholesale. Decision made 2026-05-26.
+**Composition (81 lines, no state, no animation):** `PageHeader` (PageTitle
+"Security events" + the same subtitle as the live page) → "Overview" section
+with a single "Total events" `Card` whose body is a centered `ShieldCheck`
+badge over "No events yet" → "Recent events" section with a
+`density="flush"` Card wrapping `TableEmptyState` ("No security events" /
+"Prompt injection, PII, and credential leak events flagged by your policies
+will appear here.").
 
-**Ticker mechanics:** `<tbody>` translates `-(ROW_HEIGHT+1) → -1px` over `SLIDE_MS` (600ms) with `SLIDE_DELAY` (100ms) so the bottom row begins fading/blurring before the rest of the rows move. Bottom row gets `opacity 1→0` + `filter blur(0)→3px` over `FADE_DURATION` (360ms). On `transitionend` (guarded to `target===currentTarget && propertyName==='transform'`) data shifts: prepend next event, drop oldest. Cursor wraps with modulo. Visibility-pause via `visibilitychange` listener. `aria-hidden` on `<tbody>` — decorative motion, not an a11y feed.
-
-**`reducedMotion`:** read once via `useState` lazy initializer (`window.matchMedia('(prefers-reduced-motion: reduce)').matches`) — avoids cascading-render warning that a `useEffect` setState would trigger.
-
-**Compare plans modal (`PlanComparisonDialog`):** 720px `Dialog` with `grid-cols-2 gap-4`, two `PlanCard`s. Free + Pro plan structure is data-driven via `PlanCardData` (`badge`, `price`, `benefitsLabel`, `features[]`, `featured?`, `cta`). Pro card gets `border-primary/30 ring-1 ring-primary/20` emphasis. Cards GSAP-stagger in (320ms duration, 80ms stagger, 120ms delay) keyed off `open` via `useGSAP`. Disabled Free CTA carries `aria-label="Free plan is your current plan"`.
-
-**Hero card animation:** static (no entry animation). Removed 2026-05-26 after the GSAP timeline was deemed unnecessary for this surface.
+**Superseded:** this page used to be a Pro upsell — a `HeroCard` pitch beside a
+rotating decorative events ticker, plus a `PlanComparisonDialog`. All of it is
+gone; the ticker constants (`SLIDE_MS`, `SLIDE_DELAY`, `FADE_DURATION`,
+`ROW_HEIGHT`) no longer exist anywhere in `src/`. The 48-event array that fed
+it now sits unused at `src/pages/security-feed.ts` as `SECURITY_FEED` (see
+§5.4). `PlanComparisonDialog` still lives at
+`src/pages/plan-comparison-dialog.tsx` for the surfaces that do upsell.
 
 ---
 
@@ -817,7 +864,7 @@ LIMITS  → 'secondary'    (gray-ish; no LIMITS rows in mock yet)
 EVENT   → 'neutral'      (gray; one row in mock)
 ```
 
-**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "fingerprinted to Constellation's Digital Evidence layer." The Digital Evidence verb was renamed from "anchored" to "fingerprinted" in UI copy on 2026-06-01; code identifiers (the `anchor` field, `ANCHORED_EVENTS_COUNT`, `RecentAnchoredEventsCard`) intentionally keep the old name, so do not blind find-replace. Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page references "a public chain" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
+**Vocabulary contract (per CLAUDE.md):** "tamper-evident," "cryptographically verifiable," "fingerprinted to Constellation's Digital Evidence layer." The Digital Evidence verb was renamed from "anchored" to "fingerprinted" in UI copy on 2026-06-01; code identifiers (the `anchor` field on audit rows) intentionally keep the old name, so do not blind find-replace. Forbidden across the codebase: "platform" as noun for Gate, "enterprise-grade," "blockchain"/"on-chain"/Web3, "industry-leading"/"best-in-class." Note: user-provided copy on this page references "a public chain" — adjacent to the forbidden DLT family but kept verbatim per execute-the-literal-ask.
 
 **AuditRecordDialog drill-in modal** (`src/pages/AuditRecordDialog.tsx`, also opened from Overview's `RecentAnchoredEventsCard`):
 
@@ -902,14 +949,17 @@ Not specced in full above; see "Tier & onboarding variants" in §2 for the
 pattern:
 
 - `/conversations-trace/:conversationId` → `ConversationsTrace.tsx` — full-page
-  conversation trace (route-only; the Conversations modal is the primary surface).
+  conversation trace, and the primary detail surface: it is what a
+  Conversations row click navigates to. Renders `ConversationDetailBody`; back
+  breadcrumb returns to `/conversations`.
 - `/upgrade` → `Upgrade.tsx` — plan cards; Pro CTA carries the animated
   SparklesIcon.
 - `/overview-default` → `DashboardDefault.tsx` — also exports `ConnectTabs` /
   `CodePanel` reused by ApiKeys and Models.
 - `/api-keys-default` → `ApiKeysDefault.tsx` — reuses ApiKeys page components.
-- `/limits-default` → `LimitsDefault.tsx`, `/events-default` →
-  `SecurityDefault.tsx` — HeroCard upsell surfaces (GSAP page animation).
+- `/limits-default` → `LimitsDefault.tsx` — HeroCard upsell surface (GSAP page
+  animation). `/events-default` + `/security-default` → `SecurityDefault.tsx`,
+  now an empty state rather than an upsell (see §6).
 - `/token-savings-free`, `/limits-free`, `/security-free` — free-tier gated
   variants.
 - `/sign-in`, `/sign-up` — AuthLayout pages (GSAP).
@@ -920,34 +970,47 @@ pattern:
 
 ```mermaid
 sequenceDiagram
-    participant S as Security.tsx
-    participant R as Requests.tsx
+    participant S as security/EventsTable.tsx
+    participant RF as RequestsFindings.tsx
     participant C as Conversations.tsx
+    participant CT as ConversationsTrace.tsx
 
-    S->>R: navigate("/messages-findings/:requestId")
-    Note over R: useSearchParams reads "open" on mount
-    R->>R: find row where row.requestId === "req_xxx"
-    R->>R: setSelectedRow(row) → opens RequestDetailDialog
-    Note over R: onOpenChangeComplete clears ?open= from URL
+    S->>RF: navigate("/messages-findings/:requestId")
+    Note over RF: reads :requestId param, no ?open= involved
 
-    S->>C: navigate("/conversations-trace/:conversationId")
-    Note over C: same pattern — finds row, opens ConversationDetailDialog
+    S->>C: navigate("/conversations?open=cnv_xxx")
+    Note over C: useSearchParams reads "open" on mount
+    C->>C: find row, setSelectedRow → ConversationDetailDialog
+    Note over C: onOpenChangeComplete clears ?open= from URL
 
-    R->>C: modal footer link → navigate("/conversations-trace/:conversationId")
-    C->>R: modal footer link → navigate("/messages-findings/:requestId")
+    RF->>CT: "View Conversation" → navigate("/conversations-trace/:conversationId")
+    CT->>RF: per-step "View Request" → navigate("/messages-findings/:requestId")
 ```
 
-**Pattern (canonical, all 3 deep-link pages):**
+**Two mechanisms, not one.** Detail surfaces are now PAGES; `?open=` survives
+only where a modal is still the target:
 
-1. `useSearchParams()` reads `"open"` param on mount
-2. Match against seed array by `requestId` / `conversationId`
-3. `setSelectedRow(matched)` opens the detail modal
-4. URL cleaned via `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker
+- **Route params (primary).** `/messages-findings/:requestId` and
+  `/conversations-trace/:conversationId` read the param via `useParams`, look
+  the row up in the seed array, and render the detail body. No search param, no
+  URL cleanup. `Requests.tsx` no longer calls `useSearchParams` at all.
+- **`?open=` (legacy, 2 call sites).** `Conversations.tsx` and
+  `src/pages/security/EventsTable.tsx` still accept `?open=` to open their
+  dialog on mount. Pattern: `useSearchParams()` reads `"open"` → match by
+  `conversationId` / row id → `setSelectedRow(matched)` → URL cleaned via
+  `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker.
 
-**Other deep-link params (one-way, read-once on mount):**
+**Other deep-link params:**
 
-- `Activity.tsx?range=24h|7d|30d|all` — Overview KPI tiles call into Activity scoped to a range. Read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
-- `Limits.tsx?create=1` — Overview "Set a spend limit" Quick Action opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+- `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
+- `Activity.tsx?range=24h|7d|30d|all` — read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
+- `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+
+**Both of the last two are currently orphaned entry points.** They were fed by
+the Overview KPI tiles (`/activity?range=…`) and the "Set a spend limit" Quick
+Action (`/limits?create=1`); both affordances were removed from Overview, and
+nothing in `src/` navigates to either param today. The receiving code still
+works — re-link it or retire it deliberately.
 
 ---
 
@@ -1073,7 +1136,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking an empty scrolling message region (`pt-4`, bubbles deferred) above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14-tight` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` (`bg-control-raised`) left, 32px `Send` (`bg-primary` + `text-primary-foreground-soft`, `opacity-50` until the field has text) right. Both buttons carry `shadow-xs` and are unwired. Added 2026-07-27. |
 | `AskAiMessage` (`ask-ai-message.tsx`) | custom divs | Ask AI chat bubbles (Figma `1125:4374`, light twins `1096:5471`/`1114:7141`, dark `1108:4193`). `UserMessage` right-aligned `bg-secondary` chip, `rounded-md`, `px-4 py-3`, `max-w-[85%]`. `AgentMessage` left, `bg-card` + `border-border` + `p-4`, 16px `BotMessageSquare`, with a 4-button completion row (ThumbsUp/ThumbsDown/Copy/RotateCcw, 24px targets, 14px glyphs) as a sibling 8px BELOW the bubble. `ReplyProse` is a scoped typographic treatment keyed off element type (`[&_h3]:…`) so rendered markdown from the live agent needs no restyling. `MessageThread` = `gap-4` turn list. Added 2026-07-27. |
-| `AskAiThinkingRow` (`ask-ai-thinking-row.tsx`) | custom div | "Thinking …" placeholder between send and first token. lucide `Brain` + `type-copy-14-tight` in `text-muted-foreground`, left-aligned, no bubble; ellipsis via the repo's pure-CSS `animate-ellipsis`. No Figma node exists for this state — built to the agreed fallback. Added 2026-07-28. |
+| `AskAiThinkingRow` (`ask-ai-thinking-row.tsx`) | custom div | "Thinking …" placeholder between send and first token. Animated `Dotm3x3_11` dot-matrix mark + `type-copy-14-tight` in `text-muted-foreground`, left-aligned, no bubble; ellipsis via the repo's pure-CSS `animate-ellipsis`. No Figma node exists for this state — built to the agreed fallback. Added 2026-07-28. |
 | `useAskAiThread` (`src/hooks/use-ask-ai-thread.ts`) + `AskAiThreadProvider` (`ask-ai-thread-provider.tsx`) | React context | Ask AI conversation state: `{id, role, content, status}[]` plus an `idle → sending → thinking → replying → complete` phase machine that the composer and thinking row both read. Provider mounts in `App.tsx` ABOVE the outlet so the thread survives navigation (like `askAiOpen`). All timers and the canned responder live behind `streamReply()` in `src/data/ask-ai-script.ts` — components hold no `setTimeout`. Added 2026-07-28. |
 | `src/data/ask-ai-script.ts` | data + async generator | SCRIPTED demo responder, no backend. Doc-sourced Gate Connect reply as a markdown string, an honest fallback for unmatched input, loose keyword intent matching, and `streamReply()` — an async generator yielding word-boundary chunks. **Swap point:** replacing that one function body with a real `/api/ask` fetch changes nothing else. Added 2026-07-28. |
 | `ScrollToLatestFab` + `ScrollBottomSentinel` (`ask-ai-scroll-to-latest.tsx`) | custom button + marker div | Jump-to-bottom control (Figma `1149:10955` light / `1125:4280` dark). 32px circle, 16px `ArrowDown`, `bg-control-raised` + `border-border` + `shadow-(--shadow-card-soft)`; absolutely positioned against the message region's wrapper so the panel's `px-4` / `gap-4` supply Figma's 16px offsets with no hard-coded position and no layout shift. Presentational — visibility and the click handler come from `useStickToBottom`. Added 2026-07-27. |
@@ -1099,7 +1162,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | File | What it provides |
 | --- | --- |
 | `src/components/icons/brand-mark.tsx` | `<BrandMark>` — 7-path constellation. `fill="currentColor"`. Default size-8 at `text-blue-700` |
-| `src/components/icons/vendor-meta.tsx` | `VENDOR_META: Record<Vendor, VendorMeta>`, `PROVIDER_ORDER`, `<VendorAvatar>` |
+| `src/components/icons/vendor-meta.tsx` | `VENDOR_META: Record<Vendor, VendorMeta>`, `MARKETPLACE_META`, `<VendorAvatar>` |
 | `src/components/icons/model-providers.tsx` | 8 SVG components: AnthropicIcon, GrokIcon, GeminiIcon, OpenAIIcon, MetaIcon, MistralIcon, DeepSeekIcon, CohereIcon |
 | `src/components/icons/marketplace-providers.tsx` | 6 SVG components: AzureIcon, BedrockIcon, FireworksIcon, GroqIcon, TogetherIcon, VertexIcon |
 
@@ -1134,11 +1197,11 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 | `src/index.css` | All CSS custom properties — palette, semantic layer, radius, shadows, fonts |
 | `src/layouts/DashboardChrome.tsx` | Layout shell — sidebar, breadcrumb, nav active state |
 | `src/layouts/nav-sections.ts` | Sidebar sections and route map |
-| `src/pages/Requests.tsx` | Canonical page pattern — range selector, filters, pagination, deep-link, detail modal |
-| `src/pages/Activity.tsx` | Canonical chart page — `distributeSeries`, `TOTAL_7D_BASE_*`, `rescaleToTotal` (range types + `RANGE_SCALE` now in `src/lib/range.ts`) |
+| `src/pages/requests/RequestsTable.tsx` | Canonical table pattern — filters, sort, pagination, row-click navigation. `Requests.tsx` itself is now a 122-line shell (header + range selector + `HeroMetricCard` + this table) |
+| `src/pages/activity-data.ts` | Canonical chart math — `distributeSeries`, `TOTAL_7D_BASE_*`, `TOKEN_SAVINGS_RATE_7D`, `SPEND_SERIES`, `rescaleToTotal` (range types + `RANGE_SCALE` in `src/lib/range.ts`) |
 | `src/pages/ApiKeys.tsx` | Canonical API key seed — used as cross-page source of truth for active keys |
 | `src/components/ui/dialog.tsx` | Canonical modal pattern — `data-closed:fill-mode-forwards`, `onOpenChangeComplete`, `DialogScrollContent` shells |
-| `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `PROVIDER_ORDER` — shared across all pages |
+| `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `MARKETPLACE_META` — shared across all pages |
 | `CLAUDE.md` | Project-specific rules for this repo — branching, design system hard rules, workflow |
 
 ---
