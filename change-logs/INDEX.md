@@ -11,8 +11,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-07-30](./2026-07/changelog-7-30.md)
 
+- `DialogContent` gains `density` — a dialog is 16px, a modal is 24px
+- `ToolResultCode` goes sans, and breaks at words
 - Ask AI canvas — the dark dot grid was carrying too much texture
 - Ask AI empty state — the support suggestion read as a command
+- New primitive: `ToolCallCard` — the CALL card inside an assistant bubble
+- `MessageBlock` default fill: `bg-background` → `bg-card-muted`
+- Security event modal — an "Add note" button and its dialog
+- Conversations trace — assistant tool calls, and a reflow that finally respects its container
 
 ### [2026-07-29](./2026-07/changelog-7-29.md)
 
