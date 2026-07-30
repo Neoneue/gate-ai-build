@@ -9,6 +9,17 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## July 2026
 
+### [2026-07-30](./2026-07/changelog-7-30.md)
+
+- `DialogContent` gains `density` — a dialog is 16px, a modal is 24px
+- `ToolResultCode` goes sans, and breaks at words
+- Ask AI canvas — the dark dot grid was carrying too much texture
+- Ask AI empty state — the support suggestion read as a command
+- New primitive: `ToolCallCard` — the CALL card inside an assistant bubble
+- `MessageBlock` default fill: `bg-background` → `bg-card-muted`
+- Security event modal — an "Add note" button and its dialog
+- Conversations trace — assistant tool calls, and a reflow that finally respects its container
+
 ### [2026-07-29](./2026-07/changelog-7-29.md)
 
 - `Button` gains `icon-action`, the one responsive size
@@ -22,6 +33,8 @@ tokens; this index exists so nothing has to glob the directory.
 - The thinking row swaps lucide `Brain` for the `@dotmatrix` 3×3 pulse
 - The Ask AI chat body gets its dot-matrix canvas — drawn in CSS, not shipped
 - Security event modal — verdict footer replaces the title-row flag button
+- `Button variant="outline"` — the dark fill was see-through
+- Ask AI canvas — strength and floor retuned
 
 ### [2026-07-28](./2026-07/changelog-7-28.md)
 

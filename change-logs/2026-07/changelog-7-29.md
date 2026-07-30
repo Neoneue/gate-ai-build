@@ -183,6 +183,28 @@ Verified in **both themes** at DPR 1 and 2: pitch **16px** both axes, dot **1 ×
 
 Verified in **both themes** at 1440×900: label at x=425 and trigger at x=855 inside a 638px footer, trigger 160×32, footer 65px, defaults to `Unreviewed`, value round-trips across all three, zero flag buttons and zero header badges left, body still scrolls with the footer pinned.
 
+### `Button variant="outline"` — the dark fill was see-through `1fcb5a3`
+
+**`button.tsx`** · **`audits/button-audit-7-28.md`**
+
+Reported from the Ask AI empty state: the suggestion pills render solid white in light and **transparent in dark**, with the new dot-matrix canvas showing straight through them.
+
+- **The fill was ~4.5% white.** The variant carried `dark:bg-input/30` and `dark:hover:bg-input/50`. In dark, `--input` is ITSELF translucent — `color-mix(in oklch, var(--color-white) 15%, transparent)` — so a `/30` on top of it composites to roughly a 4.5% veil. Not a subtle fill: a see-through button.
+- **Nobody chose it.** `git log -S "dark:bg-input/30"` puts the value in `52d3a2a`, the repo's **initial commit** ("live product app extracted from mvp design lab"). It is shadcn's stock `outline` recipe, inherited at scaffold time.
+- **Both overrides are deleted, not replaced.** The unqualified `bg-card` / `hover:bg-muted` then hold in **both** themes, so light and dark are symmetric by construction and cannot drift apart again. `dark:border-input` **stays** — a translucent border is intentional; only the fill had to go opaque.
+- **Measured after:** dark pills at `oklch(0.205 0 0)` with no alpha channel, light unchanged at `rgb(255,255,255)`.
+- **Why every gate missed it for the life of the repo.** A translucent fill is valid CSS and valid TypeScript. `tsc`, eslint, ultracite, and `lint:design` all passed the whole time. It took putting a texture behind a button to expose it — nothing before that had ever sat behind one.
+
+**The parity audit is amended so the product build fixes this in one pass**, not on its own rediscovery: new **§3.6** (diff + provenance), new **Scanner 5** for translucent fills — with the discriminator that a deliberate hover tint (`hover:bg-primary/85`) or a deliberate half-strength token (`--accent-muted`) is NOT the defect, only a fraction on an already-translucent token or a fraction used as a **resting** fill — a fourth trap recording that green gates prove nothing here, two checklist items, and a dated amendment banner for anyone who ran the doc before today.
+
+**Four sibling cases are tabled there and deliberately NOT changed here:** `checkbox.tsx`, `radio-group.tsx`, `switch.tsx` (all `bg-input/30` or `/80`), and `Policies.tsx:570`, which has `dark:bg-input/30` pasted at a **call site** — a `no-hardcoding` violation on its own. Same origin, same latent bug the moment anything textured sits behind them.
+
+### Ask AI canvas — strength and floor retuned `1fcb5a3`
+
+**`index.css`**
+
+Tuned in place against the live panel. `--ask-ai-canvas-strength` **0.7 → 0.8 in light only** (dark stays 0.6 — the grounds are not symmetric, and light needed more weight to register). `--ask-ai-canvas-fade-floor` **0.1 → 0.15**, shared across both themes, so the grid keeps a legible trace to the bottom edge instead of thinning out.
+
 ## Sections
 
 *No section-level changes today.*

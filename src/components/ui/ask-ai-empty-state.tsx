@@ -41,7 +41,7 @@ const SUGGESTIONS: Suggestion[] = [
   { icon: BookOpenText, label: "Learn the basics of Gate AI" },
   { icon: AppWindow, label: "How to set up Gate Connect app" },
   { icon: Users, label: "Adding new members to a team" },
-  { icon: Headset, label: "Help contact customer support" },
+  { icon: Headset, label: "Help contacting customer support" },
 ];
 
 export interface AskAiEmptyStateProps {

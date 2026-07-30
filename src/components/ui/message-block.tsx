@@ -16,6 +16,20 @@ import { cn } from "@/lib/utils";
  * keeps per-message container shape without the visual weight. Assistant
  * gets a blue-100 border to separate model output from user/tool input.
  *
+ * Default-tone fill is `bg-card-muted` (2026-07-30, was `bg-background`).
+ * Two reasons, one change:
+ *   1. The bubble now nests a <ToolCallCard> on `bg-card`, and that inner
+ *      card has to invert against its parent — lighter in light, DARKER in
+ *      dark. `--background` is neutral-950 in dark, the floor of the ramp,
+ *      so nothing could sit below it. `--card-muted` is neutral-800 there,
+ *      which leaves the headroom the pattern needs (card = neutral-900).
+ *   2. `bg-background` was already off-contract: design.md §2 reserves it
+ *      for the dashboard content canvas and bars it from darkening a
+ *      component.
+ * No-op in light — `--background` and `--card-muted` both resolve to
+ * neutral-50. Only the `default` tone moved; the warn / danger tinted fills
+ * and the whole `selectedTone` ladder below are untouched.
+ *
  * Optional metadata (codified 2026-05-07):
  *   `time`       — timestamp shown right-aligned next to the role label
  *   `requestId`  — gateway request ID shown below the bubble with a `↳`
@@ -83,7 +97,7 @@ export function MessageBlock({
       ? "border-danger-500/15 bg-danger-500/8 dark:bg-danger-500/10"
       : tone === "warn"
         ? "border-warning-500/15 bg-warning-500/8 dark:bg-warning-500/10"
-        : "border-border bg-background";
+        : "border-border bg-card-muted";
   // Selected ring color tracks tone so the status semantic stays intact
   // through the selection layer: green = normal/success, amber = warn
   // (flag/redact), red = danger (block/error). Matches the trace panel's

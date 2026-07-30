@@ -42,12 +42,30 @@ export type ConversationRow = {
   duration: string;
 };
 
+/**
+ * One tool invocation the model asked for on an assistant turn. Rendered as a
+ * nested "CALL <Tool>" card inside the assistant bubble; the tool RESULT is a
+ * separate `role: "tool"` message that follows.
+ */
+export type ConversationToolCall = {
+  /** Tool name, e.g. "Bash", "Read", "mcp__chrome-devtools__evaluate_script". */
+  name: string;
+  /** Verbatim captured arguments, with the redundant "<name>: " prefix removed
+   *  (the card header already names the tool). Not reformatted or wrapped —
+   *  most captures are bare command strings, not JSON. */
+  args: string;
+};
+
 export type ConversationMessage = {
   role: MessageRole;
   tool?: string;
   body: React.ReactNode;
   time: string;
   requestId?: string;
+  /** Tool calls made on this turn. Only meaningful on `role: "assistant"`.
+   *  An array so a turn can carry several calls; today's captured data yields
+   *  exactly one per request. */
+  toolCalls?: ConversationToolCall[];
 };
 
 export type TraceStatus = "success" | "warn" | "danger";

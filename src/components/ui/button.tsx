@@ -17,8 +17,17 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground hover:bg-primary/85 [a]:hover:bg-primary/80",
+        // `bg-card` / `hover:bg-muted` are UNQUALIFIED — they hold in both
+        // themes, so the fill is opaque everywhere. This variant used to carry
+        // `dark:bg-input/30 dark:hover:bg-input/50` (shadcn's stock recipe,
+        // inherited in the initial commit, never a decision here). That is
+        // 30% of `--input`, which in dark is ITSELF translucent
+        // (`color-mix(white 15%, transparent)`) — a ~4.5% white veil, i.e. a
+        // see-through button. It went unnoticed until a textured surface sat
+        // behind one and the dot grid showed straight through the Ask AI
+        // suggestion pills. Never reintroduce a translucent fill here.
         outline:
-          "border-border bg-card shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-card shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:

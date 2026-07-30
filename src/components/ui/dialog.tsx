@@ -41,15 +41,32 @@ function DialogOverlay({
   );
 }
 
+/* Internal padding, keyed by density. Two surfaces, two paddings:
+ * a **modal** is a full card (header + meta + body) and keeps 24px;
+ * a **dialog** is single-purpose (one field, one decision) and takes 16px.
+ * `default` stays 24px because that is what the live detail modals were
+ * bumped to on 2026-05-11. Lifted out of the popup recipe so the density
+ * value supplies it and a consumer `className` (e.g. `DialogScrollContent`'s
+ * `p-0`) still wins — `className` comes last in the `cn()`. */
+const DIALOG_DENSITY_PADDING = {
+  default: "p-6",
+  compact: "p-4",
+} as const;
+
 function DialogContent({
   className,
   overlayClassName,
   nestedBackdrop = false,
+  density = "default",
   children,
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  /** Internal padding. `default` = `p-6` (24px), the modal shape — full
+   *  card with header, meta, and body. `compact` = `p-4` (16px), the
+   *  dialog shape — a single-purpose surface holding one control. */
+  density?: "default" | "compact";
   /** Optional override for the backdrop (e.g. darker scrim on nested dialogs). */
   overlayClassName?: string;
   /** Render a manual (non-deduped) backdrop. Base UI's Dialog.Backdrop
@@ -85,7 +102,8 @@ function DialogContent({
           // their end state after the 200ms exit animation finishes, so
           // the popup doesn't snap back to opacity 1 / zoom 1 for the
           // ~28ms between animation-end and React unmount.
-          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card p-6 text-foreground text-sm shadow-lg outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
+          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overscroll-contain rounded-xl border border-border bg-card text-foreground text-sm shadow-lg outline-none duration-200 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-[120ms] motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-sm",
+          DIALOG_DENSITY_PADDING[density],
           className
         )}
         data-slot="dialog-content"

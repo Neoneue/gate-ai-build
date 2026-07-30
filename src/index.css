@@ -254,14 +254,17 @@ and (pointer: fine)) and (&:hover));
      symmetric: dark ink on a white card carries further than light ink on a
      neutral-900 card, but the light texture still needed more weight to read
      at all. Tuned in place 2026-07-29: both started at 0.5, dark went to 0.6,
-     light to 0.7. Consumed by .ask-ai-canvas. */
-  --ask-ai-canvas-strength: 0.7;
+     light to 0.7 and then 0.8. Dark came back down to 0.3 on 2026-07-30 — the
+     light dots were reading too hot on the dark panel. Consumed by
+     .ask-ai-canvas. */
+  --ask-ai-canvas-strength: 0.8;
   /* Where the top-to-bottom fade LANDS, not where it starts. At 0 the texture
      dissolves completely and the bottom of the panel goes bare, which read as
-     too aggressive in place; 0.1 keeps a trace of grid all the way down. Shared
-     across themes — only the top stop (--ask-ai-canvas-strength) is per-theme.
-     Raised from 0 on 2026-07-29. */
-  --ask-ai-canvas-fade-floor: 0.1;
+     too aggressive in place; 0.15 keeps a legible trace of grid all the way
+     down. Raised 0 -> 0.1 -> 0.15 across 2026-07-29. Went per-theme on
+     2026-07-30: dark takes a stronger fade (a LOWER floor) because the light
+     dots on the dark panel need to give out sooner. */
+  --ask-ai-canvas-fade-floor: 0.15;
   --primary: var(--color-neutral-900);
   --primary-foreground: var(--color-white);
   /* Softened on-primary ink for icon-only primary actions (the Ask AI send
@@ -529,7 +532,8 @@ body {
   --chat-bubble-agent-foreground: var(--color-neutral-200);
   /* Dark twin of the chat canvas — light dots on the dark panel. */
   --ask-ai-canvas-dot: var(--color-neutral-200);
-  --ask-ai-canvas-strength: 0.6;
+  --ask-ai-canvas-strength: 0.3;
+  --ask-ai-canvas-fade-floor: 0.05;
 
   --sidebar: var(--color-neutral-950);
   --sidebar-foreground: var(--color-neutral-50);

@@ -5,7 +5,12 @@
  * the threat-event detail dialog. Shared data/config comes from ./events-data;
  * only EventsTableSection is exported (the detail dialog is file-local).
  * ───────────────────────────────────────────────────────────────────────── */
-import { ArrowLeftRight, FileText, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeftRight,
+  FileText,
+  NotebookPen,
+  ShieldCheck,
+} from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -48,6 +53,7 @@ import {
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
+import { Textarea } from "@/components/ui/textarea";
 import { Timestamp } from "@/components/ui/timestamp";
 import { UploadIcon } from "@/components/ui/upload";
 import { getEventFindingCopy } from "@/data/requests";
@@ -592,6 +598,30 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
   // component).
   const [verdict, setVerdict] = useState<EventVerdict>("unreviewed");
 
+  // Analyst note — a free-text annotation on the event, authored in a nested
+  // dialog that opens OVER this one (the event detail stays behind it).
+  // `note` is the committed value; `noteDraft` is what the textarea binds to,
+  // so Close can discard an edit without touching what was saved. Mock UI:
+  // there is no backend, and the state unmounts with the dialog exactly like
+  // `verdict` above.
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [noteDraft, setNoteDraft] = useState("");
+  const noteDraftIsEmpty = noteDraft.trim().length === 0;
+
+  // Both entry and exit reseed the draft from the committed note: opening
+  // restores a previously saved note, closing discards an uncommitted edit.
+  const handleNoteOpenChange = (open: boolean) => {
+    setNoteDraft(note);
+    setNoteOpen(open);
+  };
+
+  const handleSaveNote = () => {
+    setNote(noteDraft);
+    setNoteOpen(false);
+    toast.success("Note added to security event.");
+  };
+
   return (
     <>
       <DialogScrollHeader>
@@ -641,7 +671,8 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
 
           {/* Detection — per-detector verdict list. Mirrors the Requests
               modal Security panel: each check is its own bordered card
-              with title + description + verdict badge. */}
+              with title + verdict badge. Only a firing check adds a second
+              line explaining why; a passing check is title + badge alone. */}
           <section className="flex flex-col gap-2">
             <h3 className="type-heading-16 m-0 text-foreground tracking-snug">
               <span className="inline-flex items-center gap-2">
@@ -676,11 +707,11 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                       <span className="type-label-14 text-foreground">
                         {check.label}
                       </span>
-                      <span className="type-copy-14-tight text-pretty font-normal text-muted-foreground">
-                        {firing
-                          ? (reconciled?.message ?? detail.reason)
-                          : check.passText}
-                      </span>
+                      {firing && (
+                        <span className="type-copy-14-tight text-pretty font-normal text-muted-foreground">
+                          {reconciled?.message ?? detail.reason}
+                        </span>
+                      )}
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </div>
@@ -773,31 +804,106 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
         <Label className="type-label-14" htmlFor="event-verdict">
           Mark event
         </Label>
-        <Select
-          onValueChange={(next) => {
-            const value = next as EventVerdict;
-            setVerdict(value);
-            toast.success(VERDICT_TOAST[value]);
-          }}
-          value={verdict}
-        >
-          <SelectTrigger
-            aria-label="Mark event"
-            className="w-40"
-            id="event-verdict"
-            size="default"
+        <div className="flex items-center gap-3">
+          {/* Note action — 32px (`sm`) so it matches the verdict trigger's own
+              height. The trigger is `size="default"`, which in
+              `select-variants.ts` is `h-8`, NOT the 36px `Button size="default"`;
+              this repo's Select scale sits one step below the Button scale, so
+              `sm` is the button size that pairs off against it. `text-xs` comes
+              with that step — height parity across a 12px-gap pair reads louder
+              than the 2px type delta, and the recipe is the recipe. */}
+          <Button
+            onClick={() => handleNoteOpenChange(true)}
+            size="sm"
+            type="button"
+            variant="outline"
           >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="unreviewed">
-              {VERDICT_LABEL.unreviewed}
-            </SelectItem>
-            <SelectItem value="confirmed">{VERDICT_LABEL.confirmed}</SelectItem>
-            <SelectItem value="invalid">{VERDICT_LABEL.invalid}</SelectItem>
-          </SelectContent>
-        </Select>
+            <NotebookPen
+              aria-hidden
+              data-icon="inline-start"
+              strokeWidth={1.75}
+            />
+            Add note
+          </Button>
+          <Select
+            onValueChange={(next) => {
+              const value = next as EventVerdict;
+              setVerdict(value);
+              toast.success(VERDICT_TOAST[value]);
+            }}
+            value={verdict}
+          >
+            <SelectTrigger
+              aria-label="Mark event"
+              className="w-40"
+              id="event-verdict"
+              size="default"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unreviewed">
+                {VERDICT_LABEL.unreviewed}
+              </SelectItem>
+              <SelectItem value="confirmed">
+                {VERDICT_LABEL.confirmed}
+              </SelectItem>
+              <SelectItem value="invalid">{VERDICT_LABEL.invalid}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </DialogScrollFooter>
+
+      {/* Add a note — nested dialog. Opens over the event detail, which stays
+          mounted and open behind it. `nestedBackdrop` is what dims and blurs
+          that parent surface: Base UI's `Dialog.Backdrop` dedups when dialogs
+          nest, so only the outermost one reaches the DOM and the inner dialog
+          would otherwise open over an undimmed modal. Single-purpose surface
+          holding one control, so it takes the compact (16px) density. */}
+      <Dialog onOpenChange={handleNoteOpenChange} open={noteOpen}>
+        <DialogContent className="sm:max-w-lg" density="compact" nestedBackdrop>
+          <DialogHeader>
+            <DialogTitle>Add a note</DialogTitle>
+          </DialogHeader>
+
+          {/* Fixed 140px well. The primitive ships `field-sizing-content` +
+              `min-h-16`, which auto-grows with the text; `field-sizing-fixed`
+              + `h-35` pin it and `overflow-y-auto` scrolls the overflow
+              instead. Sizing utilities only — the surface, radius, and border
+              stay the primitive's. */}
+          <Textarea
+            aria-label="Note"
+            className="field-sizing-fixed h-35 resize-none overflow-y-auto"
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder="Write a note here about the event you marked."
+            value={noteDraft}
+          />
+
+          <DialogFooter className="flex-row items-center justify-between sm:justify-between">
+            <Button
+              disabled={noteDraftIsEmpty}
+              onClick={() => setNoteDraft("")}
+              size="default"
+              type="button"
+              variant="ghost"
+            >
+              Clear
+            </Button>
+            <div className="flex items-center gap-2">
+              <DialogClose
+                render={
+                  <Button size="default" type="button" variant="outline" />
+                }
+              >
+                Close
+              </DialogClose>
+              <Button onClick={handleSaveNote} size="default" type="button">
+                Save
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

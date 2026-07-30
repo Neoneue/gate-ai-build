@@ -407,8 +407,9 @@ export const HERO_CHART_CONFIG = {
 // PHI is medical PII — surfaced as one combined check row rather than
 // two separate rows. A PHI event flags both 'pii' and 'phi' in detail.flagged,
 // so either match firing means the combined row fires.
-// `passText` is the description shown when a check does NOT fire. Kept plain
-// and honest — no fabricated rule counts (cf. Requests' "0/247 matched").
+// `passText` is no longer rendered — as of 2026-07-30 a passing check shows
+// its title and `pass` badge alone, and only a firing check carries a reason
+// line. The strings are kept here for reference.
 export const DETECTION_CHECKS: {
   keys: EventCategory[];
   label: string;
