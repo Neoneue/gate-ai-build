@@ -695,9 +695,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Label 16 | `type-label-16` | `font-sans text-base font-medium tracking-tight` |
 | Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
 | Label 12 | `type-label-12` | `font-sans text-xs font-medium` |
-| Copy 24 | `type-copy-24` | `font-sans text-2xl/9 font-normal tracking-snug` |
-| Copy 20 | `type-copy-20` | `font-sans text-xl/9 font-normal tracking-snug` |
-| Copy 18 | `type-copy-18` | `font-sans text-lg/7 font-normal tracking-snug` |
+| Copy 18 | `type-copy-18` | `font-sans text-lg font-normal tracking-snug` |
 | Copy 16 | `type-copy-16` | `font-sans text-base font-normal tracking-snug` |
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
 | Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |

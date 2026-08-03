@@ -27,8 +27,6 @@ const TYPE_FONT_SIZE_UTILITIES = [
   "type-copy-14",
   "type-copy-16",
   "type-copy-18",
-  "type-copy-20",
-  "type-copy-24",
   "type-label-12",
   "type-label-14",
   "type-label-16",

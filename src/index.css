@@ -664,16 +664,8 @@ body {
     @apply font-sans text-xs font-medium;
   }
 
-  .type-copy-24 {
-    @apply font-sans text-2xl/9 font-normal tracking-snug;
-  }
-
-  .type-copy-20 {
-    @apply font-sans text-xl/9 font-normal tracking-snug;
-  }
-
   .type-copy-18 {
-    @apply font-sans text-lg/7 font-normal tracking-snug;
+    @apply font-sans text-lg font-normal tracking-snug;
   }
 
   .type-copy-16 {
