@@ -18,7 +18,17 @@ The scale carried two tokens at 14px. `type-copy-14` is `text-sm`; `type-copy-14
 - **Three raw `text-sm/5` in the Ask AI prose recipe** (`code`, `pre`) were the same redundancy spelled inline. They are now `text-sm`; `text-sm/5` no longer appears anywhere in `src`.
 - **The copy scale is Tailwind's own size/line-height pairing** at the three sizes that matter: 12/16, 14/20, 16/24. `design.md` §"Type scale" drops the duplicate row.
 
-Still outstanding, deliberately untouched: `type-copy-18` is `text-lg/7`, and `/7` is *also* Tailwind's default for `text-lg` — the same redundancy one rung up. `type-copy-20` (`text-xl/9` = 20/36) and `type-copy-24` (`text-2xl/9` = 24/36) genuinely deviate from the defaults (28 and 32). Those are real decisions and were left alone pending a call.
+Still outstanding, deliberately untouched: `type-copy-18` is `text-lg/7`, and `/7` is *also* Tailwind's default for `text-lg` — the same redundancy one rung up. `type-copy-20` (`text-xl/9` = 20/36) and `type-copy-24` (`text-2xl/9` = 24/36) genuinely deviate from the defaults (28 and 32). **Resolved the same day — see the entry below.**
+
+### The copy scale is finished — `type-copy-20` and `-24` deleted `281ecda`
+
+**`index.css`** · **`lib/utils.ts`** · **`design.md`** · **`public/design-system.html`**
+
+Follow-up to the entry above, closing the three sizes it left open.
+
+- **`type-copy-18` drops its `/7`.** `text-lg/7` is 28px and Tailwind's `text-lg` already resolves to 28px, so the override said nothing. Verified live on `/upgrade`, where all three call sites live (the " per month" beside a price): 18px / 28px / -0.18px before and after.
+- **`type-copy-20` and `type-copy-24` are deleted.** Neither had a single call site — only a definition and an allowlist entry — so their deviation from Tailwind's 20/28 and 24/32 (both were `/9`, 36px) never rendered anywhere. There was no design decision to preserve. Removed from `index.css`, the voice allowlist in `lib/utils.ts`, the `design.md` scale table, and the mirrored token layer in `public/design-system.html`, which defined them too. No specimen on that page referenced either, so nothing lost content.
+- **The copy scale is now four tokens, each a bare Tailwind size class** with the line-height implied: 12/16, 14/20, 16/24, 18/28. `tracking-snug` still applies at 16 and above — tighter tracking as size grows is deliberate, not drift.
 
 ## Sections
 
