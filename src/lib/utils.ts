@@ -25,7 +25,6 @@ const TYPE_FONT_SIZE_UTILITIES = [
   "type-heading-72",
   "type-copy-12",
   "type-copy-14",
-  "type-copy-14-tight",
   "type-copy-16",
   "type-copy-18",
   "type-copy-20",

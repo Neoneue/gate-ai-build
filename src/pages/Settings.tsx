@@ -2,17 +2,11 @@ import { KeyRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { SectionTitle } from "@/components/ui/section-title";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -20,10 +14,15 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
  *
  * Profile / security configuration surface.
  *
- * Composition: two cards stacked in a `flex flex-col gap-4` container.
- *   1. ProfileCard   — three fields (display name, email, org) with a single
- *                      unified dirty state and shared Save / Reset footer.
- *   2. SecurityCard  — passkey registration (static, no dirty state).
+ * Composition: two titled sections stacked in the page column.
+ *   1. Profile   — section title + subtitle ABOVE the card; three fields
+ *                  (display name, email, org) with a single unified dirty
+ *                  state and shared Save / Reset footer.
+ *   2. Security  — section title + subtitle ABOVE the card; passkey
+ *                  registration (static, no dirty state).
+ *
+ * Section titles sit above their card, never inside it (design.md §3 /
+ * SectionTitle). The cards carry data only — no CardHeader.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Settings() {
@@ -45,14 +44,28 @@ export function Settings() {
   );
 }
 
-/* ─── Page surface — header + cards container ───────────────────────────── */
+/* ─── Page surface — header + titled sections ───────────────────────────── */
 
 function SettingsSurface() {
   return (
     <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
       <PageHeader />
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <SectionTitle as="h2">Profile</SectionTitle>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+            View and update your personal and organization's information.
+          </p>
+        </div>
         <ProfileCard />
+      </div>
+      <div className="mt-2 flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <SectionTitle as="h2">Security</SectionTitle>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+            Passkeys — phishing-resistant, no password required.
+          </p>
+        </div>
         <SecurityCard />
       </div>
     </div>
@@ -126,12 +139,6 @@ function ProfileCard() {
 
   return (
     <Card>
-      <CardHeader className="gap-y-1">
-        <CardTitle>Profile</CardTitle>
-        <CardDescription className="text-wrap">
-          View and update your personal and organization's information.
-        </CardDescription>
-      </CardHeader>
       <CardContent>
         <form id="profile-form" onSubmit={handleSave}>
           <div className="grid @lg:grid-cols-2 grid-cols-1 gap-4">
@@ -214,12 +221,6 @@ function ProfileCard() {
 function SecurityCard() {
   return (
     <Card>
-      <CardHeader className="gap-y-1">
-        <CardTitle>Security</CardTitle>
-        <CardDescription className="text-wrap">
-          Passkeys — phishing-resistant, no password required.
-        </CardDescription>
-      </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:gap-4">
           <div className="flex flex-col gap-1">
@@ -234,7 +235,7 @@ function SecurityCard() {
           </Button>
         </div>
         <div className="flex flex-col gap-1">
-          <SectionHeading as="h4">Registered passkeys</SectionHeading>
+          <SectionHeading as="h3">Registered passkeys</SectionHeading>
           <p className="type-copy-14 m-0 text-muted-foreground">
             No passkeys registered yet.
           </p>

@@ -684,10 +684,6 @@ body {
     @apply font-sans text-sm font-normal;
   }
 
-  .type-copy-14-tight {
-    @apply font-sans text-sm/5 font-normal;
-  }
-
   .type-copy-12 {
     @apply font-sans text-xs font-normal;
   }

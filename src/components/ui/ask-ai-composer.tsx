@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * not eyeballed:
  *
  *   shell      16px padding all sides · 8px radius · 1px border
- *   textarea   Geist Regular 14/20 (`copy/14` variable → type-copy-14-tight)
+ *   textarea   Geist Regular 14/20 (`copy/14` variable → type-copy-14)
  *   gap        12px between textarea and the actions row  (gap-3)
  *   actions    32px tall · plus 24×24 · send 32×32 · both circular, 16px icon
  *
@@ -95,7 +95,7 @@ export function AskAiComposer({
     >
       <textarea
         aria-label="Ask Gatekeeper"
-        className="type-copy-14-tight field-sizing-content block max-h-20 min-h-5 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"
+        className="type-copy-14 field-sizing-content block max-h-20 min-h-5 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={onKeyDown}
         placeholder={PLACEHOLDER_BY_PHASE[phase] ?? PLACEHOLDER}
