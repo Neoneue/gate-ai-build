@@ -16,6 +16,8 @@ tokens; this index exists so nothing has to glob the directory.
 - Money is never authored — every dollar derives from the catalog
 - Activity's spend engine inverted — tokens are authored, dollars are derived
 - BYOK means one thing on every surface
+- Top users ranked BYOK owners out of existence
+- The trend chart named a fixed five and buried the 3rd-heaviest model
 - Settings — section titles move above their cards
 - Models — catalog and providers rebuilt from production
 - Activity — the provider dimension was three names out of date

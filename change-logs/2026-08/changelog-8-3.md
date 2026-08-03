@@ -124,6 +124,34 @@ Worse, the trend charts never read `SPEND_BASE` at all. `TrendCard` and `Dashboa
 - **28 measurements across both pages, four ranges, three lenses: 0.0000px.** Six regression tests pin it, including one asserting the daily curve is identical regardless of series count. The old data fails that test at day 0.
 - **"By api key" → "By API key."** The label was Title Case run through `.toLowerCase()`, in two places (the Select option and the card description). `DIMENSION_OPTIONS` now carries an authored `noun`, removing the mechanism rather than patching the output.
 
+### Top users ranked BYOK owners out of existence `2f63d51`
+
+**`Activity.tsx`**
+
+The Spend leaderboard excluded any member who owned **any** BYOK key. That is not a stricter reading of "a BYOK key never outranks a real spender" — it is a different rule, and a member with $500 of Gateway spend on one key plus one BYOK key vanished from the card entirely. It was masked because `test-key` is the only such key, so the card rendered a single row and looked plausible.
+
+- **Production ranks, it does not exclude.** `dashboard-web/Activity.tsx` `keySortValue`, case `"spend"`, sorts on the numeric Gateway spend and lets ~0 fall last; the em dash is a display concern, not the sort value. The API Keys table on this same page already did exactly that, so the two surfaces contradicted each other.
+- **Every member now ranks on every metric.** A BYOK key contributes 0 to Spend, so a BYOK-only member sinks on its own arithmetic. The card goes 1 row → 4: Chad $1,842.29, Jordan $156.91, Mateus $105.31, Kira $0.00. Chad — previously dropped — is the top spender by an order of magnitude.
+- **Card visibility is deliberately NOT gated.** Prod wraps it in `useTeamVisibility("activity")`, a role check. Chad is `role: "owner"`, so it resolves true; adding the plumbing to arrive at a constant would be machinery for its own sake.
+
+### The trend chart named a fixed five and buried the 3rd-heaviest model `e975620`
+
+**`activity-data.ts`** · **`activity/TrendCard.tsx`** · **`Dashboard.tsx`** · **`activity-data.test.ts`** · **`data/pricing.test.ts`** · **`data/models-catalog.test.ts`**
+
+`SPEND_SERIES.model` was an authored list: five named models plus a fixed `others`. The list was wrong and could not be right. By tokens the workspace runs Sonnet 169.66M, Qwen 125.38M, **Haiku 106.42M**, Gemini 104.89M, DeepSeek 74.12M, Opus 34.68M, Kimi 9.18M — so the chart named DeepSeek and Opus while burying Haiku. `Others` came out 115.60M, **92% of it one model**, and ranked 3rd in the legend directly above a Top Models card that correctly listed Haiku 3rd. Two surfaces on one page disagreed about the same workload.
+
+It was also metric-blind. Opus is 5.6% of tokens and 24.7% of spend; no single fixed ordering can describe both lenses.
+
+- **The selection layer is derived, not authored.** `rankSeries` / `rankChartSeries` in `activity-data.ts` implement production's rule (`dashboard-web/Activity.tsx`) verbatim: rank DESC by the ACTIVE metric, drop anything not finite or ≤ 0, cap at 6 series total, and only when that overflows keep the top 5 and roll the remainder into one synthetic `__other`. Under the cap everything passes through and **there is no Others bucket at all**.
+- **The model dimension is one series per catalog model.** `DIMENSION_KEY.model` groups `USAGE_7D` by `cell.model` instead of by the authoring bucket, so the 7 real models rank against each other. `MODEL_SERIES_7D` keeps its authored numbers and its grouping untouched — its top-level keys are now authoring buckets that decide nothing.
+- **The candidate pool is read off the workload.** `SERIES_POOL` is `Object.keys(TOKENS_TOTALS_7D[dim])`, so a model, route or key cannot be charted without carrying metered traffic and cannot carry metered traffic without being chartable. Labels resolve through `modelName` / `PROVIDER_META` / `API_KEY_ROWS` — none are authored on the chart any more.
+- **Colors are positional.** Slot = rank (`paletteColor(i + 1)`), so a series' color describes its size, not its identity. `Others` sits outside the palette at neutral-300, unchanged.
+- **Result, tokens lens:** Sonnet · Qwen · **Haiku** · Gemini · DeepSeek, Others = Opus + Kimi (7.03%, down from 18.5%). **Spend lens re-ranks:** Sonnet · Gemini · **Opus** · Haiku · DeepSeek, Others = Qwen + Kimi. Provider (3 routes) and API key (5 Gate keys) sit under the cap and grow no Others in either lens; both still re-rank (`prod-web` leads tokens, `prod-agent` leads spend).
+- **One rule, one implementation.** `Dashboard.tsx`'s `capWithOthers` and TrendCard's 50-line capping memo were the same logic pasted twice; both now call `rankChartSeries`. The Overview and Activity charts can no longer name different series for the same workload.
+- **The Others fold is unrounded.** The old projection did `+othersVal.toFixed(2)`, which reintroduced up to 0.005 per bucket in whichever dimension happened to overflow — the exact count-dependent error `splitAcrossBuckets` exists to remove.
+- **48 measurements — 3 lenses × 4 ranges × desktop and compact bucket counts: 0.0000px** cross-dimension drift (worst raw Δ 1.2e-7 tokens on a 43.9M domain). Legend percentages sum to 100.0000% with Others included. 10 new regression tests; 72 pass.
+- **`pricing.test.ts`'s `SPEND_SERIES` ⇄ `MODEL_SERIES_7D` key assertion** was pinning the bug in place — it asserted the chart's series set equals the authoring groups. It now asserts the pool equals the workload's distinct **catalog ids**, that both metrics offer the same series in every dimension, and that every charted key is a Gate key. `models-catalog.test.ts` drops its `"Others"` exemption: every named model series is a catalog id labelled with a catalog name, and the rollup label is asserted not to collide with one.
+
 ### Messages, Conversations, Activity and Setup now name the same fleet as Models `2be812a`
 
 **`data/models.ts`** · **`data/requests.ts`** · **`data/conversations.ts`** · **`data/conversationDetail.ts`** · **`data/models-catalog.test.ts`** · **`requests/types.ts`** · **`requests/data.ts`** · **`RequestsTable.tsx`** · **`RequestDetailBody.tsx`** · **`conversations/types.ts`** · **`conversations/data.ts`** · **`Conversations.tsx`** · **`Activity.tsx`** · **`activity-data.ts`** · **`Dashboard.tsx`** · **`DashboardDefault.tsx`** · **`SetupModels.tsx`** · **`icons/vendor-meta.tsx`** · **`data-model.md`**
