@@ -11,28 +11,26 @@ import type { MessageRole } from "@/components/ui/message-block";
 
 export type ConversationStatus = "active" | "completed" | "failed";
 
-export type ModelId =
-  | "claude-opus-4-8"
-  | "claude-opus-4-7"
-  | "claude-sonnet-4-5"
-  | "claude-haiku-4-5"
-  | "gpt-5"
-  | "gpt-5.3-codex"
-  | "gpt-4o"
-  | "gpt-4o-mini"
-  | "gemini-3-pro"
-  | "gemini-3-flash"
-  | "gemini-3-flash-lite"
-  | "llama-3-3-70b";
-
 export type ConversationRow = {
   title: string;
   conversationId: string;
   initiator: string;
   turns: number;
   reqs: number;
+  /** Model creators seen across the conversation's request rows. Derived by
+   *  `getConversationView()`; the authored value on `CONVERSATION_ROWS` is the
+   *  fallback for a conversation that owns no rows. */
   vendors: Vendor[];
-  models: ModelId[];
+  /** Canonical catalog ids (`vendor/model`), same shape as `RequestRow.model`.
+   *
+   *  Was a hand-maintained `ModelId` union until 2026-08-03. That union was a
+   *  second, independent claim about which models a conversation used, and it
+   *  had drifted from the conversation's own request rows on 7 of 8 rows —
+   *  cnv_lyra_92 listed `gpt-4o-mini` while its requests ran Haiku, Gemini,
+   *  and two others. Derivation replaced it; the type is `string` because the
+   *  values now come from the rows, and `models-catalog.test.ts` is what pins
+   *  each one to a real catalog entry. */
+  models: string[];
   inTokens: string;
   outTokens: string;
   cost: string;
@@ -73,6 +71,7 @@ export type TraceStatus = "success" | "warn" | "danger";
 export type TraceEvent = {
   id: string;
   vendor: Vendor;
+  /** Canonical catalog id, copied off the request row this step came from. */
   model: string;
   label: string;
   /** "tool" = wrench glyph in the timeline node; everything else gets the

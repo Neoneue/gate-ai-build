@@ -91,7 +91,7 @@ const HERO_OPENCLAW_BYOK = `{
         },
         "models": [
           { "id": "openrouter/auto", "name": "openrouter/auto" },
-          { "id": "kimi-k2.5", "name": "kimi-k2.5" }
+          { "id": "moonshotai/kimi-k2-thinking", "name": "moonshotai/kimi-k2-thinking" }
         ]
       }
     }
@@ -553,19 +553,24 @@ function GetStartedCard() {
         onClick={() => navigate("/setup-manual-default?bill=payg")}
         supports={
           <>
+            {/* PAYG runs on the Gate catalog, so this list names vendors the
+                catalog actually carries. It read "Claude, GPT, Gemini" until
+                2026-08-03; there is no OpenAI model in the pooled catalog, and
+                the BYOK card one column left is where a ChatGPT subscription
+                belongs. */}
             Choose from hundreds of models, including{" "}
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="anthropic" />
             </span>{" "}
             <span className="font-medium text-foreground">Claude</span>,{" "}
             <span className="inline-flex align-middle">
-              <VendorAvatar decorative vendor="openai" />
-            </span>{" "}
-            <span className="font-medium text-foreground">GPT</span>,{" "}
-            <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="google" />
             </span>{" "}
-            <span className="font-medium text-foreground">Gemini</span>, and
+            <span className="font-medium text-foreground">Gemini</span>,{" "}
+            <span className="inline-flex align-middle">
+              <VendorAvatar decorative vendor="deepseek" />
+            </span>{" "}
+            <span className="font-medium text-foreground">DeepSeek</span>, and
             many more.
           </>
         }

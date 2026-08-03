@@ -49,10 +49,17 @@ export interface VendorMeta {
   label: string;
 }
 
-// `openai`, `meta`, `mistral`, `xai`, and `cohere` no longer appear in the
-// Models catalog (2026-08-03 prod rebuild), but they are NOT dead: they still
-// key mock rows in `data/requests.ts`, `data/conversations.ts`, Activity,
-// Conversations, DashboardDefault, and SetupModels. The union stays complete.
+// `openai`, `meta`, `mistral`, `xai`, and `cohere` are not in the Models
+// catalog (2026-08-03 prod rebuild). After the Messages/Conversations catalog
+// reconciliation later the same day, only `openai` still keys anything: the
+// BYOK surfaces on DashboardDefault, where a Codex/ChatGPT subscription is a
+// real thing to route. The other four are unreferenced and CAN now be deleted
+// — this comment is the record that the mock rows which used to block it are
+// gone. Deleting them is one edit here plus VENDOR_ENDPOINT in
+// `pages/requests/data.ts` (a `Record<Vendor, string>`, so the two move
+// together) and would strand GrokIcon/MetaIcon, which DashboardDefault's
+// "Works with" footer still imports directly. Left in deliberately: an
+// unreferenced union member costs nothing and the BYOK story may want them.
 export const VENDOR_META: Record<Vendor, VendorMeta> = {
   anthropic: { color: "#D97757", icon: AnthropicIcon, label: "Anthropic" },
   xai: { color: "var(--foreground)", icon: GrokIcon, label: "xAI" },

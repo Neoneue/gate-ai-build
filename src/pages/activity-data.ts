@@ -1,3 +1,4 @@
+import type { Vendor } from "@/components/icons/vendor-meta";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
@@ -113,13 +114,27 @@ export const SPEND_SERIES: Record<
   Dimension,
   readonly { key: string; label: string; slot: number; color?: string }[]
 > = {
+  // Model names come from the catalog (`@/data/models`) and are the models
+  // that actually carry request rows in `data/requests.ts` — reconciled
+  // 2026-08-03, when this list still read Claude Sonnet 4.5 / GPT-5.1 /
+  // Gemini 3 Pro / Llama 4.2 405B, three of which existed nowhere else in the
+  // app. Keys were renamed with the labels so a future reader isn't chasing a
+  // `gpt` key that charts DeepSeek. Per-day VALUES were deliberately not
+  // touched: they are what the cross-dimension reconciliation invariant below
+  // is built on. They are authored workspace aggregates and were never
+  // price-derived — do not try to reconcile spend ÷ tokens here against the
+  // catalog's per-1M rates.
+  //
+  // Claude Opus 4.8 is absent on purpose. It is 102 of the 153 request rows,
+  // but every one of them belongs to the BYOK session cnv_7a3f9e2b, and this
+  // chart is Gate-metered spend only.
   model: [
-    { key: "sonnet", label: "Claude Sonnet 4.5", slot: 2 },
-    { key: "gpt", label: "GPT-5.1", slot: 1 },
-    { key: "gemini", label: "Gemini 3 Pro", slot: 4 },
+    { key: "sonnet", label: "Claude Sonnet 5", slot: 2 },
+    { key: "deepseek", label: "DeepSeek V4 Pro", slot: 1 },
+    { key: "gemini", label: "Gemini 3.1 Pro Preview", slot: 4 },
     { key: "opus", label: "Claude Opus 4.7", slot: 7 },
-    { key: "llama", label: "Llama 4.2 405B", slot: 6 },
-    { key: "haiku", label: "Others", slot: 3 },
+    { key: "qwen", label: "Qwen3 Next 80B A3B Instruct", slot: 6 },
+    { key: "others", label: "Others", slot: 3 },
   ],
   // Gateway PROVIDERS — the upstream routes Gate dispatches to. NOT model
   // vendors: Anthropic/OpenAI/Google-the-vendor are reachable *through* these
@@ -165,59 +180,59 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
   model: [
     {
       sonnet: 6.68,
-      gpt: 5.14,
+      deepseek: 5.14,
       gemini: 3.34,
       opus: 8.73,
-      llama: 2.31,
-      haiku: 1.54,
+      qwen: 2.31,
+      others: 1.54,
     },
     {
       sonnet: 7.19,
-      gpt: 5.39,
+      deepseek: 5.39,
       gemini: 3.6,
       opus: 9.76,
-      llama: 2.57,
-      haiku: 1.54,
+      qwen: 2.57,
+      others: 1.54,
     },
     {
       sonnet: 7.7,
-      gpt: 5.65,
+      deepseek: 5.65,
       gemini: 3.85,
       opus: 10.53,
-      llama: 2.57,
-      haiku: 1.8,
+      qwen: 2.57,
+      others: 1.8,
     },
     {
       sonnet: 8.22,
-      gpt: 5.91,
+      deepseek: 5.91,
       gemini: 4.11,
       opus: 11.3,
-      llama: 2.82,
-      haiku: 1.8,
+      qwen: 2.82,
+      others: 1.8,
     },
     {
       sonnet: 8.73,
-      gpt: 6.16,
+      deepseek: 6.16,
       gemini: 4.37,
       opus: 12.07,
-      llama: 2.82,
-      haiku: 1.8,
+      qwen: 2.82,
+      others: 1.8,
     },
     {
       sonnet: 8.99,
-      gpt: 6.68,
+      deepseek: 6.68,
       gemini: 4.37,
       opus: 13.09,
-      llama: 2.82,
-      haiku: 2.05,
+      qwen: 2.82,
+      others: 2.05,
     },
     {
       sonnet: 9.5,
-      gpt: 6.68,
+      deepseek: 6.68,
       gemini: 4.62,
       opus: 14.12,
-      llama: 3.08,
-      haiku: 2.05,
+      qwen: 3.08,
+      others: 2.05,
     },
   ],
   // Routing split, day-for-day reconciled against the `model` rows above:
@@ -403,18 +418,18 @@ function rescaleToTotal(
  * carry a larger share of TOKENS than of SPEND. */
 export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
   // 7d window token totals (independent from the workspace-lifetime numbers
-  // in MODEL_ROWS — Llama's 7d rate and Opus' 7d rate are tuned for this
-  // window only): sonnet 6_550_000, llama 4_840_000, haiku 4_460_000,
-  // gemini 4_050_000, gpt 2_860_000, opus 1_340_000. Sonnet dominates on
+  // in MODEL_ROWS — Qwen's 7d rate and Opus' 7d rate are tuned for this
+  // window only): sonnet 6_550_000, qwen 4_840_000, others 4_460_000,
+  // gemini 4_050_000, deepseek 2_860_000, opus 1_340_000. Sonnet dominates on
   // token volume; Opus' high price-per-token keeps it near the bottom.
   model: rescaleToTotal(
     {
       sonnet: 6_550_000,
-      gpt: 2_860_000,
+      deepseek: 2_860_000,
       gemini: 4_050_000,
       opus: 1_340_000,
-      llama: 4_840_000,
-      haiku: 4_460_000,
+      qwen: 4_840_000,
+      others: 4_460_000,
     },
     TOTAL_7D_BASE_TOKENS
   ),
@@ -724,22 +739,119 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
   },
 ];
 
+export type ModelRow = {
+  /** Canonical catalog id. The label is looked up from it, never authored. */
+  key: string;
+  vendor: Vendor;
+  requests: number;
+  tokensIn: number;
+  tokensOut: number;
+  spend: number;
+};
+
+/** Numbers are tuned so the three Top-by-axis cards diverge realistically.
+ *  Price-per-token differs by ~25× between Qwen3 Next and Opus, and
+ *  tokens-per-request differs by ~5× between short-classification (Haiku) and
+ *  long-context (Qwen). Sums reconcile with the 7d KPI rail (~$1,248 spend,
+ *  ~48,293 requests, ~18.4M tokens).
+ *
+ *  Resulting top-5 leaders:
+ *    Spend     → Opus 4.7, Sonnet 5, DeepSeek V4 Pro, Gemini 3.1 Pro, Qwen3 Next
+ *    Requests  → Haiku 4.5, Sonnet 5, Gemini 3.1 Pro, DeepSeek V4 Pro, Qwen3 Next
+ *    Tokens    → Sonnet 5, Qwen3 Next, Haiku 4.5, Gemini 3.1 Pro, DeepSeek V4 Pro
+ *
+ *  Labels are read from the catalog (`modelName`) off the canonical id, so
+ *  this card can never re-spell a model the Models page names differently —
+ *  the drift that had it advertising GPT-5.1, Llama 4.2 405B and Mistral
+ *  Large 3 until 2026-08-03. */
+// MODEL_ROWS is the source of truth for the Top Models card. tokensIn /
+// tokensOut are the per-model workspace aggregates; the card computes total
+// tokens at the call site (tokensIn + tokensOut). The trend breakdown panel
+// no longer reads in/out — cumulative only; see TrendBreakdownPanel. The
+// table at the bottom (UsageByKey) is where in/out lives. Production reads
+// these from real traffic; replace the rows.
+//
+// Seven rows, unchanged in count and in every number: the KPI-rail sums above
+// depend on them. Only the identities moved, 1:1 onto the catalog models that
+// carry request rows. Claude Opus 4.8 stays out for the same reason it is out
+// of SPEND_SERIES — its 102 rows are all the BYOK session, which Gate does
+// not meter.
+export const MODEL_ROWS: ModelRow[] = [
+  {
+    key: "anthropic/claude-opus-4-7",
+    vendor: "anthropic",
+    requests: 34_400,
+    tokensIn: 7_370_000,
+    tokensOut: 6_030_000,
+    spend: 120.6,
+  },
+  {
+    key: "anthropic/claude-sonnet-5",
+    vendor: "anthropic",
+    requests: 14_900,
+    tokensIn: 5_371_000,
+    tokensOut: 1_179_000,
+    spend: 35.4,
+  },
+  {
+    key: "anthropic/claude-haiku-4-5",
+    vendor: "anthropic",
+    requests: 25_030,
+    tokensIn: 2_676_000,
+    tokensOut: 1_784_000,
+    spend: 8.5,
+  },
+  {
+    key: "deepseek/deepseek-v4-pro",
+    vendor: "deepseek",
+    requests: 6670,
+    tokensIn: 1_859_000,
+    tokensOut: 1_001_000,
+    spend: 14.0,
+  },
+  {
+    key: "google/gemini-3-1-pro-preview",
+    vendor: "google",
+    requests: 8720,
+    tokensIn: 2_835_000,
+    tokensOut: 1_215_000,
+    spend: 9.5,
+  },
+  {
+    key: "qwen/qwen3-next-80b-a3b-instruct",
+    vendor: "qwen",
+    requests: 5280,
+    tokensIn: 936_000,
+    tokensOut: 264_000,
+    spend: 6.0,
+  },
+  {
+    key: "moonshotai/kimi-k2-thinking",
+    vendor: "moonshotai",
+    requests: 690,
+    tokensIn: 247_000,
+    tokensOut: 133_000,
+    spend: 2.3,
+  },
+];
+
 /** Per-series 7d Total-saved rates for the trend chart's Savings lens —
  *  each series' OWN rate (what % of its tokens caching + compression save),
  *  NOT its share of anything. apiKey derives from API_KEY_ROWS.savings so
  *  the chart panel shows the same numbers as the table's Saved column;
- *  model / provider are authored data like the per-key rates (cache-heavy
- *  Haiku saves the most, long-context Opus the least). The chart normalizes
- *  per-series contributions (token share × rate) so the stack total stays
- *  anchored to savingsRateFor(range) regardless of these spreads. */
+ *  model / provider are authored data like the per-key rates (the cache-heavy
+ *  short-prompt tail in Others saves the most, long-context Opus the least).
+ *  The chart normalizes per-series contributions (token share × rate) so the
+ *  stack total stays anchored to savingsRateFor(range) regardless of these
+ *  spreads. */
 export const SAVINGS_RATES_7D: Record<Dimension, Record<string, number>> = {
   model: {
     sonnet: 0.25,
-    gpt: 0.235,
+    deepseek: 0.235,
     gemini: 0.215,
     opus: 0.19,
-    llama: 0.205,
-    haiku: 0.29,
+    qwen: 0.205,
+    others: 0.29,
   },
   // Per-route saved rate, in the same 0.20–0.26 band the model rates sit in.
   // The biggest route is deliberately not the best saver: OpenRouter's all-25

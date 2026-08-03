@@ -1405,3 +1405,62 @@ export const MODEL_OPTIONS: ModelOption[] = MODELS.map((m) => ({
   label: m.name,
   vendor: m.vendor,
 }));
+
+/* ─── Catalog lookup ─────────────────────────────────────────────────────── */
+
+const MODEL_BY_ID: ReadonlyMap<string, Model> = new Map(
+  MODELS.map((m) => [m.id, m])
+);
+
+/**
+ * The catalog is the single source for model naming across the app.
+ *
+ * Every surface that names a model stores the canonical `vendor/model` id —
+ * the same string the gateway takes as a handle — and renders the human label
+ * through `modelName()`. Before 2026-08-03 each surface carried its own
+ * spelling (`claude-opus-4.7` in Messages, "Claude Opus 4.7" in Activity,
+ * "GPT-5.2" in Setup), which is how Messages, Activity, and Models ended up
+ * describing three different fleets. Look the name up; never re-type it.
+ */
+export function modelById(id: string): Model | undefined {
+  return MODEL_BY_ID.get(id);
+}
+
+/** Display name for a canonical id ("anthropic/claude-opus-4-8" → "Claude
+ *  Opus 4.8"). Falls back to the bare model segment so an unknown id degrades
+ *  to something readable instead of blank — `models-catalog.test.ts` is what
+ *  guarantees no shipped id ever takes that branch. */
+export function modelName(id: string): string {
+  const model = MODEL_BY_ID.get(id);
+  if (model) {
+    return model.name;
+  }
+  const [, bare] = id.split("/");
+  return bare ?? id;
+}
+
+/** Every canonical id in the catalog. Used by the coverage test that pins
+ *  every model reference in the app to a real catalog entry. */
+export const MODEL_IDS: readonly string[] = MODELS.map((m) => m.id);
+
+/**
+ * The seven models the PAYG pricing table (`/setup-models-default`) quotes —
+ * five vendors, a full price spread from Opus at the top to Qwen3 Next at the
+ * bottom. Ids only: the page reads name, vendor, and both per-1M rates back
+ * through `modelById` + `listPrice`, so it cannot quote a figure the Models
+ * page disagrees with.
+ *
+ * It lives here rather than in the page because the page module exports only
+ * components (react-refresh), and because a list of catalog ids is catalog
+ * business. Until 2026-08-03 the page hand-typed all four columns and four of
+ * its seven rows named models that do not exist.
+ */
+export const PAYG_PRICING_MODEL_IDS: readonly string[] = [
+  "anthropic/claude-opus-4-8",
+  "anthropic/claude-sonnet-4-6",
+  "deepseek/deepseek-v4-pro",
+  "moonshotai/kimi-k2-thinking",
+  "google/gemini-2-5-pro",
+  "deepseek/deepseek-v4-flash",
+  "qwen/qwen3-next-80b-a3b-instruct",
+];

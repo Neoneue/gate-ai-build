@@ -37,6 +37,7 @@ import {
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
 import { TextLink } from "@/components/ui/text-link";
+import { modelName } from "@/data/models";
 import { getRequestBody } from "@/data/request-bodies";
 import {
   CATEGORY_LABEL,
@@ -440,8 +441,15 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       value={
                         <div className="flex items-center gap-2">
                           <VendorAvatar vendor={row.vendor} />
-                          <span className="type-mono-14 text-foreground">
-                            {row.model}
+                          {/* Name over handle — the row stores the canonical
+                              catalog id, and the catalog owns the label. */}
+                          <span className="flex min-w-0 flex-col">
+                            <span className="type-label-14 truncate text-foreground">
+                              {modelName(row.model)}
+                            </span>
+                            <span className="type-mono-12 truncate text-muted-foreground">
+                              {row.model}
+                            </span>
                           </span>
                         </div>
                       }
@@ -1289,7 +1297,9 @@ function buildRequestBodyLines(
   row: RequestRow,
   opts: { content?: string; highlightMatch?: string } = {}
 ): CodeLine[] {
-  const modelId = `${row.vendor}/${row.model}`;
+  // `row.model` IS the canonical `vendor/model` handle as of 2026-08-03 —
+  // it used to be a bare name that had to be re-namespaced here.
+  const modelId = row.model;
   const content = opts.content ?? sampleRequestContent(row);
   // When a match is supplied, split the content token so the matched
   // substring renders highlighted (and carries `data-code-highlight`).
@@ -1367,7 +1377,12 @@ function sampleResponseText(row: RequestRow): string {
   if (row.guardrail === "redacted") {
     return "I will draft the order confirmation now. The recipient address was redacted from my view; the gateway will fill it back in on send.";
   }
-  return "I'm an AI developed by OpenAI called GPT-4, and I'm not able to send emails or do any kind of transactions. I'm here to provide information and answer your questions to the best of my knowledge and ability. If you have any questions about sending reports, I'd be more than happy to guide you through.";
+  // The model introduces itself as the model that served the request. This
+  // read "I'm an AI developed by OpenAI called GPT-4" until 2026-08-03 — a
+  // fixed string on every row, so a Claude row's own transcript claimed it
+  // was GPT-4, and after the catalog reconciliation it named a vendor the
+  // gateway no longer serves at all.
+  return `I'm ${modelName(row.model)}, and I'm not able to send emails or do any kind of transactions. I'm here to provide information and answer your questions to the best of my knowledge and ability. If you have any questions about sending reports, I'd be more than happy to guide you through.`;
 }
 
 function BodySection({
@@ -1574,7 +1589,7 @@ function FullRequestCollapsible({
     rawBody ??
     JSON.stringify(
       {
-        model: `${row.vendor}/${row.model}`,
+        model: row.model,
         messages: [{ role: "user", content: sampleRequestContent(row) }],
         max_tokens: 1024,
         temperature: 0.7,
@@ -1793,7 +1808,7 @@ function RequestBodyPanel({
   // `requestContent` derives solely from `row`, so `[row]` covers both.
   const requestPayload = JSON.stringify(
     {
-      model: `${row.vendor}/${row.model}`,
+      model: row.model,
       messages: [{ role: "user", content: requestContent }],
       max_tokens: 1024,
       temperature: 0.7,

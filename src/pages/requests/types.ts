@@ -57,7 +57,13 @@ export type RequestRow = {
   /** Gateway action: what did our guardrails do with this request? */
   guardrail: GuardrailAction;
   code: string;
+  /** Model creator. Redundant with the `vendor/` prefix on `model` and kept
+   *  because it types the VendorAvatar / filter surfaces directly. */
   vendor: Vendor;
+  /** Canonical catalog id — `vendor/model`, exactly the handle the gateway
+   *  takes and exactly the `id` on a `@/data/models` entry. Render the human
+   *  label through `modelName()`; never re-spell it at a call site.
+   *  `models-catalog.test.ts` pins every value here to a real catalog row. */
   model: string;
   conversation: string;
   keyId: string;

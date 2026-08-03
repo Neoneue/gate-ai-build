@@ -187,7 +187,7 @@ Canonical seed: 3 keys (prod-web, prod-agent active; test-key revoked). Revoked 
 ### 3.3 Requests (Messages page)
 
 ```typescript
-// Defined in: src/pages/Requests.tsx
+// Defined in: src/pages/requests/types.ts
 interface RequestRow {
   day:             string
   time:            string
@@ -196,7 +196,7 @@ interface RequestRow {
   guardrail:       GuardrailAction
   code:            number
   vendor:          Vendor
-  model:           ModelId
+  model:           string         // canonical catalog id, `vendor/model`
   conversation:    string         // conversationId cross-link
   keyId:           string
   inTokens:        number
@@ -208,6 +208,11 @@ interface RequestRow {
   requestId?:      string         // links Security events → this request
 }
 ```
+
+`model` is the canonical `@/data/models` id (`anthropic/claude-opus-4-8`) —
+the same string the gateway takes as a handle. It is **not** a display name:
+surfaces render `modelName(row.model)` and keep the id visible as the mono
+sub-line. See §3.6a.
 
 ### 3.4 Security Events
 
@@ -226,7 +231,7 @@ interface EventRow extends RequestRow {
 ### 3.5 Conversations
 
 ```typescript
-// Defined in: src/pages/conversations/types.ts (also TraceEvent, TraceStatus, TraceRenderItem, ConversationMessage, ModelId)
+// Defined in: src/pages/conversations/types.ts (also TraceEvent, TraceStatus, TraceRenderItem, ConversationMessage)
 type ConversationStatus = 'active' | 'completed' | 'failed'
 
 interface ConversationRow {
@@ -235,8 +240,8 @@ interface ConversationRow {
   initiator:      string
   turns:          number
   reqs:           number          // count of RequestRows referencing this
-  vendors:        Vendor[]
-  models:         ModelId[]
+  vendors:        Vendor[]        // DERIVED from the owned rows
+  models:         string[]        // DERIVED — canonical catalog ids
   inTokens:       number
   outTokens:      number
   cost:           number
@@ -244,7 +249,18 @@ interface ConversationRow {
   updated:        Date
   duration:       string
 }
+```
 
+`vendors` / `models` joined `reqs`, `inTokens`, `outTokens`, `cost` and
+`status` as fields `getConversationView()` re-derives from the conversation's
+own request rows (2026-08-03). The authored values on `CONVERSATION_ROWS` are
+the fallback for a conversation that owns no rows, and are written to match
+the derivation; `models-catalog.test.ts` asserts the two stay equal. The
+hand-maintained `ModelId` union that used to type `models` is gone — it was a
+second, independent claim about which models a conversation ran, and it had
+drifted from the rows on 7 of 8 conversations.
+
+```typescript
 interface ConversationMessage {
   role:       MessageRole      // 'system' | 'user' | 'tool' | 'assistant'
   tool?:      string           // tool name — only on role 'tool' (the RESULT)
@@ -334,10 +350,12 @@ interface Model {
 
 **25 models across 5 vendors** (`anthropic` 11, `google` 10, `deepseek` 2,
 `qwen` 1, `moonshotai` 1) served by **3 providers**. `openai`, `meta`,
-`mistral`, `xai`, and `cohere` no longer appear in the catalog but stay in
-`Vendor` and `VENDOR_META` — they still key mock rows in `data/requests.ts`,
-`data/conversations.ts`, Activity, Conversations, DashboardDefault, and
-SetupModels.
+`mistral`, `xai`, and `cohere` are not in the catalog. After the model
+reconciliation later on 2026-08-03 (§3.6a) only `openai` still keys anything —
+the BYOK "works with a ChatGPT subscription" surfaces on DashboardDefault. The
+other four are unreferenced and stay in `Vendor` / `VENDOR_META` deliberately;
+removing them is one edit there plus `VENDOR_ENDPOINT` (a `Record<Vendor,
+string>`, so the two move together) and costs nothing to defer.
 
 Provider distribution: OpenRouter 25/25, Google Vertex 23/25, Alibaba 3/25 (the
 Qwen row and both DeepSeek rows). Vertex is absent only from the two DeepSeek
@@ -354,6 +372,51 @@ inconsistencies.** Anthropic reports a decimal 1,000,000 context and renders
 `1M`; Google and DeepSeek report a binary 1,048,576 and render `1.0M`. Same
 `formatTokenCount`, different inputs. Sorting runs on the raw numbers, so
 `1.0M` correctly outranks `1M`.
+
+### 3.6a The catalog is the only place a model is introduced
+
+Reconciled 2026-08-03, immediately after the catalog rebuild above. The rebuild
+left Messages, Conversations, Activity and Setup each describing a different
+fleet: 35 of 153 request rows named models that had stopped existing, Activity
+charted four more that never existed anywhere, and the Setup pricing page
+quoted rates for GPT-5.2, o4, Grok 4 and Llama 4 Maverick. Each surface carried
+its own spelling and nothing checked them against anything.
+
+**The contract now:**
+
+- A model is referenced everywhere by its canonical `vendor/model` id — the
+  gateway handle, and the `Model.id` in `data/models.ts`.
+- The human label is read back with `modelName(id)`. No surface re-types a
+  model name.
+- `data/models.ts` exports the lookup (`modelById`, `modelName`, `MODEL_IDS`)
+  and the one curated id list a page needs (`PAYG_PRICING_MODEL_IDS`).
+- Filter dropdowns derive from `MODEL_OPTIONS`, narrowed to the models that
+  actually carry rows, so an option can never return an empty table.
+- `src/data/models-catalog.test.ts` asserts all of it: every request row,
+  conversation (seed _and_ derived), trace step, filter option, Activity series
+  and Setup price row resolves to a catalog id with the catalog's vendor and
+  the catalog's name.
+
+The remap applied to the 35 orphaned rows, chosen to hold the "one gateway,
+many vendors" story with real models:
+
+| Retired | Rows | Now |
+| --- | --- | --- |
+| `claude-sonnet-4.8` | 10 | `anthropic/claude-sonnet-5` |
+| `gemini-3-pro` | 9 | `google/gemini-3-1-pro-preview` |
+| `gpt-5.1` | 6 | `deepseek/deepseek-v4-pro` |
+| `llama-4.2-405b` | 4 | `qwen/qwen3-next-80b-a3b-instruct` |
+| `grok-4.1-fast` | 3 | `deepseek/deepseek-v4-flash` |
+| `mistral-large-3` | 3 | `moonshotai/kimi-k2-thinking` |
+
+The other 118 rows already named catalog models and only needed the
+vendor-namespaced, dashed form. **No transcript was edited** — `REQUEST_BODIES`
+is keyed by request id, so a row's captured body cannot detach from it.
+
+**Rendering:** Messages' Model cell and the request detail's Model row show the
+catalog name over the canonical id (`type-label-14` / `type-mono-12`), the same
+two-line shape the Conversation cell uses and the same split prod draws across
+its Model / Model ID columns. Overview's compact preview shows the name only.
 
 ### 3.7 Policies & Limits
 
@@ -596,8 +659,8 @@ function buildSpark(total: number, seed: number): number[]
 | `CONVERSATION_ROWS` | `src/data/conversations.ts` | `ConversationRow[]` | 8 |
 | `SAMPLE_TRACE` | `src/data/conversations.ts` | `TraceEvent[]` | 7 |
 | `SECURITY_FEED` | `src/pages/security-feed.ts` | `EventRow[]`, chronological ASC | 48 |
-| `MODELS` | Models | `Model[]` | 25 |
-| `MODEL_ROWS` | Activity | usage rows | 7 |
+| `MODELS` | `src/data/models.ts` | `Model[]` | 25 |
+| `MODEL_ROWS` | `src/pages/activity-data.ts` | usage rows, keyed by catalog id | 7 |
 | `API_KEY_ROWS` | Activity | key usage rows | 10 |
 | `MEMBER_ROWS` | Team | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |

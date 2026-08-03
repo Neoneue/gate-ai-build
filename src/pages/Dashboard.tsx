@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CONVERSATION_ROWS } from "@/data/conversations";
+import { modelName } from "@/data/models";
 import { REQUEST_ROWS_RECENT } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
@@ -729,7 +730,9 @@ function LatestRequestsTable() {
               <TableCell className="type-mono-14 whitespace-nowrap">
                 {row.day} {row.time}
               </TableCell>
-              <TableCell className="whitespace-nowrap">{row.model}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                {modelName(row.model)}
+              </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Badge
                   variant={
