@@ -614,25 +614,15 @@ export function RequestsTableSection({
                           href={`/messages-findings/${requestRowId(row)}`}
                         >
                           <VendorAvatar vendor={row.vendor} />
-                          {/* Name over id, the same two-line shape the
-                              Conversation cell uses — and the same split
-                              production draws across its Model / Model ID
-                              columns. The id is the gateway handle, so it has
-                              to stay visible and copyable; the name is what
-                              the eye scans. */}
-                          <span className="flex min-w-0 flex-col">
-                            <span
-                              className="type-label-14 block truncate text-foreground"
-                              title={modelName(row.model)}
-                            >
-                              {modelName(row.model)}
-                            </span>
-                            <span
-                              className="type-mono-12 block truncate text-muted-foreground"
-                              title={row.model}
-                            >
-                              {row.model}
-                            </span>
+                          {/* Name only. A canonical-id second line was added
+                              here on 2026-08-03 and removed the same day —
+                              the catalog reconciliation was a DATA change and
+                              had no business restructuring this cell. */}
+                          <span
+                            className="type-label-14 block truncate text-foreground"
+                            title={modelName(row.model)}
+                          >
+                            {modelName(row.model)}
                           </span>
                         </RowActionButton>
                       </TableCell>

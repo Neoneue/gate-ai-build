@@ -26,11 +26,14 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
+  type ChartSeries,
   type Dimension,
   METRIC_OPTIONS,
   type Metric,
+  OTHERS_COLOR,
+  OTHERS_KEY,
+  rankChartSeries,
   SAVINGS_RATES_7D,
-  SPEND_SERIES,
   SPEND_TOTALS_7D,
   savingsCurve,
   savingsRateFor,
@@ -74,17 +77,6 @@ const DIMENSION_OPTIONS: { value: Dimension; noun: string }[] = [
  *  24H's trailing bucket is the 14:30 anchor. Kept in lockstep with
  *  getRangeLabels below (same anchor + stepping); getRangeLabels renders the
  *  short axis labels, the KPI rail renders these via formatSparkLabel. */
-
-/** Synthetic key used for the "Others" rollup series when a dimension has
- *  more than 6 real series. This value must never collide with a real series
- *  key — the double-underscore prefix keeps it isolated from any workspace
- *  entity key. */
-const OTHERS_KEY = "__others";
-
-/** Ink-300 — visually subordinate to the saturated CHART_PALETTE slots but
- *  still clearly distinguishable from the card background. Used for the
- *  Others rollup bar segment and panel swatch. */
-const OTHERS_COLOR = "var(--color-neutral-300)";
 
 /** Hoisted BarChart prop literals. Recharts treats inline objects as new
  *  props each render and re-runs layout/style work it could otherwise skip.
@@ -146,8 +138,8 @@ const TREND_TITLE: Record<TrendMetric, string> = {
   savings: "Savings over time",
 };
 
-/** Right-panel breakdown: renders up to 6 pre-sorted rows. Caller is
- *  responsible for sorting and injecting the synthetic "Others" entry. */
+/** Right-panel breakdown: renders the ranked series `rankChartSeries` picked,
+ *  Others included, in rank order. */
 function TrendBreakdownPanel({
   metric,
   series,
@@ -155,12 +147,7 @@ function TrendBreakdownPanel({
   savingsRates,
 }: {
   metric: TrendMetric;
-  series: readonly {
-    key: string;
-    label: string;
-    slot: number;
-    color?: string;
-  }[];
+  series: readonly ChartSeries[];
   /** Aggregated totals for this range — keyed by series key. Under the
    *  savings lens these only drive the sort order; the displayed value
    *  comes from savingsRates. */
@@ -224,10 +211,6 @@ function TrendBreakdownPanel({
   );
 }
 
-/** Maximum number of individually-named series in the trend chart/panel.
- *  When a dimension has more entries, the remainder collapse into "Others". */
-const TREND_SERIES_CAP = 6;
-
 /** Below `lg` (max-width 1023px — tablet + mobile) the bars are too thin and
  *  packed to read, so the trend chart drops to ~75% of its bucket count
  *  (25% fewer bars). Desktop keeps the full count. The series totals still
@@ -250,7 +233,6 @@ export function TrendCard({
   const [dimension, setDimension] = useState<Dimension>("model");
   // Local metric lens — independent from the other three surfaces.
   const [metric, setMetric] = useState<TrendMetric>("tokens");
-  const rawSeries = SPEND_SERIES[dimension];
   const isSpend = metric === "spend";
   const isSavings = metric === "savings";
   // Tablet + mobile render ~25% fewer bars (see COMPACT_BAR_* above).
@@ -350,78 +332,33 @@ export function TrendCard({
     });
   }, [dimension, range, customRange, isSpend, isSavings, isCompactBars]);
 
-  /** Aggregate each raw series's total across all buckets in the active range.
-   *  Derived from `data` so it's always in sync with what the chart shows. */
+  /** Aggregate every plotted series across all buckets in the active range.
+   *  Read off `data`'s own keys rather than an authored series list, so the
+   *  totals describe exactly what the chart holds. */
   const rawSeriesTotals = useMemo<Record<string, number>>(() => {
     const acc: Record<string, number> = {};
     for (const row of data) {
-      for (const s of rawSeries) {
-        acc[s.key] = (acc[s.key] ?? 0) + (Number(row[s.key]) || 0);
+      for (const [key, value] of Object.entries(row)) {
+        if (key !== "date") {
+          acc[key] = (acc[key] ?? 0) + (Number(value) || 0);
+        }
       }
     }
     return acc;
-  }, [data, rawSeries]);
+  }, [data]);
 
-  /** Sort raw series desc by aggregate total, then apply the 6-series cap.
-   *  This is the single source of truth for both the chart render loop and
-   *  the breakdown panel. When rawSeries.length > TREND_SERIES_CAP:
-   *    - visible = top (TREND_SERIES_CAP - 1) real series
-   *    - 6th entry = synthetic __others rollup
-   *  Otherwise all real series pass through unchanged. */
-  const { cappedSeries, cappedTotals, dataWithOthers } = useMemo(() => {
-    // Sort desc by aggregate total in the active metric.
-    const sorted = [...rawSeries].sort(
-      (a, b) => (rawSeriesTotals[b.key] ?? 0) - (rawSeriesTotals[a.key] ?? 0)
-    );
-
-    if (sorted.length <= TREND_SERIES_CAP) {
-      return {
-        cappedSeries: sorted,
-        cappedTotals: rawSeriesTotals,
-        dataWithOthers: data,
-      };
-    }
-
-    // Split: top (CAP-1) named + everything else rolls into Others.
-    const namedCount = TREND_SERIES_CAP - 1;
-    const named = sorted.slice(0, namedCount);
-    const overflow = sorted.slice(namedCount);
-
-    // Synthetic Others entry — no slot (uses OTHERS_COLOR directly).
-    const othersSeries = {
-      key: OTHERS_KEY,
-      label: "Others",
-      slot: 0,
-      color: OTHERS_COLOR,
-    } as const;
-    const series = [...named, othersSeries];
-
-    // Totals: named keys unchanged; __others = sum of overflow keys.
-    const totals: Record<string, number> = {};
-    for (const s of named) {
-      totals[s.key] = rawSeriesTotals[s.key] ?? 0;
-    }
-    totals[OTHERS_KEY] = overflow.reduce(
-      (sum, s) => sum + (rawSeriesTotals[s.key] ?? 0),
-      0
-    );
-
-    // Project __others into each data row = sum of overflow series values.
-    const overflowKeys = overflow.map((s) => s.key);
-    const projected = data.map((row) => {
-      const othersVal = overflowKeys.reduce(
-        (sum, k) => sum + (Number(row[k]) || 0),
-        0
-      );
-      return { ...row, [OTHERS_KEY]: +othersVal.toFixed(2) };
-    });
-
-    return {
-      cappedSeries: series,
-      cappedTotals: totals,
-      dataWithOthers: projected,
-    };
-  }, [rawSeries, rawSeriesTotals, data]);
+  /** Rank by the ACTIVE metric, cap at 6, roll the remainder into Others.
+   *  Single source of truth for the chart render loop and the breakdown
+   *  panel. The named set is metric-dependent by design: Opus is 5.6% of
+   *  tokens and 24.7% of spend, so toggling the lens re-ranks the legend. */
+  const {
+    series: cappedSeries,
+    totals: cappedTotals,
+    rows: dataWithOthers,
+  } = useMemo(
+    () => rankChartSeries(dimension, rawSeriesTotals, data),
+    [dimension, rawSeriesTotals, data]
+  );
 
   const bucketLabel = getBucketLabel(range, customRange);
 

@@ -46,9 +46,12 @@ import {
   formatTimestamp,
 } from "@/lib/formatters";
 import {
+  type ChartSeries,
   distributeSeries,
+  OTHERS_COLOR,
+  OTHERS_KEY,
+  rankChartSeries,
   SPEND_BASE,
-  SPEND_SERIES,
   seriesColor,
   splitAcrossBuckets,
   TOKEN_SAVINGS_RATE_7D,
@@ -89,57 +92,6 @@ const SAVINGS_SPARK = distributeSeries(DOLLARS_SAVED_7D, 7, 211);
 const THREATS_SPARK = distributeSeries(THREATS_DETECTED_COUNT, 7, 144);
 
 type Dimension = "model" | "provider" | "apiKey";
-
-const OTHERS_KEY = "__others";
-const OTHERS_COLOR = "var(--color-neutral-300)";
-
-/** Cap a series list + data to ≤6 entries, collapsing overflow into an
- *  "__others" rollup. Sorts by descending total across all rows. Top 5
- *  stay named; remainder collapse into Others. If ≤6 series, returns
- *  unchanged. Mirrors the pattern Activity.tsx uses for its trend chart. */
-function capWithOthers(
-  series: StackedSeries,
-  data: Array<Record<string, number | string>>
-): { series: StackedSeries; data: Array<Record<string, number | string>> } {
-  if (series.length <= 6) {
-    return { series, data };
-  }
-
-  // Sum each series key across all rows.
-  const totals: Record<string, number> = {};
-  for (const s of series) {
-    totals[s.key] = data.reduce(
-      (acc, row) => acc + (Number(row[s.key]) || 0),
-      0
-    );
-  }
-
-  // Sort descending by total; keep top 5, collapse rest.
-  const sorted = [...series].sort(
-    (a, b) => (totals[b.key] ?? 0) - (totals[a.key] ?? 0)
-  );
-  const top5 = sorted.slice(0, 5);
-  const rest = sorted.slice(5);
-
-  const cappedData = data.map((row) => {
-    const newRow: Record<string, number | string> = { date: row["date"] ?? "" };
-    for (const s of top5) {
-      newRow[s.key] = row[s.key] ?? 0;
-    }
-    newRow[OTHERS_KEY] = rest.reduce(
-      (acc, s) => acc + (Number(row[s.key]) || 0),
-      0
-    );
-    return newRow;
-  });
-
-  const cappedSeries: StackedSeries = [
-    ...top5,
-    { key: OTHERS_KEY, label: "Others", slot: 0, color: OTHERS_COLOR },
-  ];
-
-  return { series: cappedSeries, data: cappedData };
-}
 
 const fmtTokens = (n: number) =>
   n >= 1_000_000
@@ -238,14 +190,13 @@ function makeStackedSpendRows(
 function makeStackedTokenRows(
   dim: Dimension
 ): Array<Record<string, number | string>> {
-  const dimSeries = SPEND_SERIES[dim];
   const buckets = splitAcrossBuckets(TOKENS_TOTALS_7D[dim], 7, 77 * 31 + 200);
   return Array.from({ length: 7 }, (_, i) => {
     const row: Record<string, number | string> = {
       date: KPI_7D_LABELS[i] ?? "",
     };
-    for (const s of dimSeries) {
-      row[s.key] = buckets[s.key]?.[i] ?? 0;
+    for (const [key, series] of Object.entries(buckets)) {
+      row[key] = series[i] ?? 0;
     }
     return row;
   });
@@ -289,12 +240,7 @@ function StackedXAxisTick(props: {
   );
 }
 
-type StackedSeries = readonly {
-  key: string;
-  label: string;
-  slot: number;
-  color?: string;
-}[];
+type StackedSeries = readonly ChartSeries[];
 
 function StackedKpiChart({
   data,
@@ -499,28 +445,33 @@ function OverviewUsageChart() {
     );
   };
 
-  const { series, data } = useMemo(() => {
-    const rawSeries = SPEND_SERIES[dim];
-    const rawData =
+  /** Rank by the ACTIVE metric, cap at 6, roll the remainder into Others —
+   *  the same selection rule Activity's TrendCard runs, so the two charts
+   *  never name different series for the same workload. */
+  const { series, data, seriesTotals } = useMemo(() => {
+    const rows =
       metric === "spend"
         ? makeStackedSpendRows(dim)
         : makeStackedTokenRows(dim);
-    return capWithOthers(rawSeries, rawData);
+    const rowTotals: Record<string, number> = {};
+    for (const row of rows) {
+      for (const [key, value] of Object.entries(row)) {
+        if (key !== "date") {
+          rowTotals[key] = (rowTotals[key] ?? 0) + (Number(value) || 0);
+        }
+      }
+    }
+    const ranked = rankChartSeries(dim, rowTotals, rows);
+    return {
+      series: ranked.series,
+      data: ranked.rows,
+      seriesTotals: ranked.totals,
+    };
   }, [metric, dim]);
 
   const yFormatter = metric === "spend" ? fmtSpend : fmtTokens;
 
   const title = metric === "spend" ? "Total spent" : "Tokens used";
-
-  const seriesTotals = useMemo(() => {
-    const acc: Record<string, number> = {};
-    for (const row of data) {
-      for (const s of series) {
-        acc[s.key] = (acc[s.key] ?? 0) + (Number(row[s.key]) || 0);
-      }
-    }
-    return acc;
-  }, [data, series]);
 
   const grandTotal =
     Object.values(seriesTotals).reduce((a, b) => a + b, 0) || 1;

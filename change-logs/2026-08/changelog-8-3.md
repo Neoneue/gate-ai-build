@@ -30,6 +30,42 @@ Follow-up to the entry above, closing the three sizes it left open.
 - **`type-copy-20` and `type-copy-24` are deleted.** Neither had a single call site — only a definition and an allowlist entry — so their deviation from Tailwind's 20/28 and 24/32 (both were `/9`, 36px) never rendered anywhere. There was no design decision to preserve. Removed from `index.css`, the voice allowlist in `lib/utils.ts`, the `design.md` scale table, and the mirrored token layer in `public/design-system.html`, which defined them too. No specimen on that page referenced either, so nothing lost content.
 - **The copy scale is now four tokens, each a bare Tailwind size class** with the line-height implied: 12/16, 14/20, 16/24, 18/28. `tracking-snug` still applies at 16 and above — tighter tracking as size grows is deliberate, not drift.
 
+### Money is never authored — every dollar derives from the catalog `52fa629`
+
+**`data/models.ts`** · **`data/requests.ts`** · **`data/conversations.ts`** · **`data/conversationDetail.ts`** · **`pages/activity-data.ts`** · **`pages/Conversations.tsx`** · **`data/pricing.test.ts`** · **`data-model.md`**
+
+Spend and tokens had no price relationship anywhere on the site. Divide one by the other on any surface and you got a rate that appears in no catalog — on pages one click from the Models table that prints the real one.
+
+- **`costOf(modelId, tokensIn, tokensOut)` is the only place a dollar figure may originate.** It reads `listPrice`, so a model's own markup rides along (the two DeepSeek rows bill at 1.1× upstream). `blendedRate(modelId, outShare)` gives the $/M a mixed workload actually pays, which is what makes an aggregate checkable. Every `$` in the app is now one of those calls or a sum of them.
+- **51 request rows were mispriced by 0.48× to 14.7×.** A DeepSeek V4 Pro call showed $0.0169 against a real $0.0012, one column from the model name; a Sonnet 5 call showed $0.1842 against $0.0615. All recomputed. Metered costs now span $0.0009 to $0.2325 — a 250× spread, because that is what a fleet holding Opus 4.7 and Qwen3 Next actually costs.
+- **Conversation seeds were re-synced to their own rows.** They had drifted on volume as well as money: `cnv_orion_70` claimed 38 requests over 9 real ones, `cnv_vela_21` claimed 86,735 input tokens against a real 40,658. Overview's preview table reads the raw seed while the list renders the derivation, so the same conversation showed two different figures depending on which page you opened.
+- **Conversations' "Avg Cost / Conv" was the string `"$0.082"`.** Its own rows average $0.134. It now derives from them, and the sparkline is rescaled so its last dot and the number beside it are the same fact.
+- **`SAMPLE_TRACE` was repriced too.** It is exported reference data rather than a render path, which is exactly how it kept a Sonnet 5 step at $0.0142 against a real $0.0042. Stale money in an exported constant is still wrong money.
+- **`pricing.test.ts` pins all of it** — 15 assertions across request rows, conversations, the workload model, and both Activity tables. A failure means a page is quoting a price the gateway does not charge.
+
+### Activity's spend engine inverted — tokens are authored, dollars are derived `52fa629`
+
+**`pages/activity-data.ts`**
+
+The file hand-authored roughly 110 dollar values (a 3 × 7 × N matrix of daily spend) and authored the token splits separately. Both were internally consistent; neither agreed with the price list. The header said so out loud: *"do not try to reconcile spend ÷ tokens here against the catalog's per-1M rates."*
+
+- **The workload is declared once, as tokens.** `MODEL_SERIES_7D` (per-model 7d in/out), `PROVIDER_MIX_7D` (share across the three routes), `KEY_MIX_7D` (share across the Gate keys). Their product is `USAGE_7D`, one cell per (model, provider, key), each priced by `costOf` × that route's catalog `paygMarkup`. `SPEND_TOTALS_7D`, `TOKENS_TOTALS_7D`, `SPEND_BASE`, `TOTAL_7D_BASE_DOLLARS` and `TOTAL_7D_BASE_TOKENS` are all groupings of it.
+- **The cross-dimension invariant is now arithmetic, not tuning.** Every dimension sums to the same total on every day because they group the same cells and share one day shape. The regression test that used to guard 110 hand-tuned numbers still passes, and can no longer be broken by an edit.
+- **Total 7d spend moves $238 → $247.59.** Nobody chose that; it is what the catalog charges for the same 73,450,000 tokens. Tokens and requests are untouched.
+- **Routing is catalog-constrained and the test enforces it.** Alibaba serves only DeepSeek and Qwen, so it carries 11% of tokens and 1.7% of dollars — a hairline on the spend lens, an 11% band on the tokens lens. That contrast is the finding. OpenRouter runs the other way: its +10% PAYG markup lifts its dollar share (66%) above its token share (63%).
+- **The model lens now tells the truth it always claimed to.** Opus 4.7 is 5.6% of tokens and 24.7% of spend; Qwen3 Next is 20.1% of tokens and 2.4% of spend. Before, the card billed Qwen3 Next at 13× list and Gemini 3.1 Pro at 0.47×.
+- **Top Models authors `tokensPerRequest`, not `requests`.** Opus' 9,000-token agentic runs and Haiku's 450-token classification calls are why one leads on spend and the other on requests. Counts derive from tokens ÷ call size, rescaled onto `TOTAL_7D_BASE_REQUESTS`, so the card sums to the KPI rail above it — which the old comment claimed and the old numbers had not done for some time.
+
+### BYOK means one thing on every surface `52fa629`
+
+**`pages/activity-data.ts`** · **`data/requests.ts`** · **`data/conversations.ts`**
+
+Three definitions of "this key is BYOK" had to agree, and none of them did.
+
+- **`design-agent` was charted as a Gate key with $21.00 of spend** while all 102 of its request rows carry no cost, because the session is BYOK. The Activity page and the Messages page disagreed about whether the gateway bills it. It is BYOK: spend $0, and it drops out of `SPEND_SERIES.apiKey`, which now lists 5 keys. Its Activity token counts are the real ones off its own 102 rows.
+- **Ten rows on `openclaw`, `hermes-agent`, `nova-chat` and `test-key` carried a dollar figure** even though `isByokKey` already listed those keys, so the Messages table showed the "billed by your provider" badge while `getConversationView` quietly summed their money into the conversation total — $0.2565 of one 9-request conversation, 64% of another. Those rows are now unmetered. 41 rows carry a cost; 112 read "—".
+- **The three definitions are now equivalent and asserted:** `isByokKey(keyId)` ⟺ `row.cost === "—"` ⟺ `API_KEY_ROWS.path === "BYOK"`. The comment in `data/requests.ts` claiming its set "mirrors the BYOK rows in Activity.tsx API_KEY_ROWS" is finally true.
+
 ## Sections
 
 ### Settings — section titles move above their cards `a1279c9`
@@ -87,6 +123,34 @@ Worse, the trend charts never read `SPEND_BASE` at all. `TrendCard` and `Dashboa
 - **`distributeSeries` is untouched** — it has a determinism test and five other callers, all single-series, all unaffected.
 - **28 measurements across both pages, four ranges, three lenses: 0.0000px.** Six regression tests pin it, including one asserting the daily curve is identical regardless of series count. The old data fails that test at day 0.
 - **"By api key" → "By API key."** The label was Title Case run through `.toLowerCase()`, in two places (the Select option and the card description). `DIMENSION_OPTIONS` now carries an authored `noun`, removing the mechanism rather than patching the output.
+
+### Top users ranked BYOK owners out of existence `2f63d51`
+
+**`Activity.tsx`**
+
+The Spend leaderboard excluded any member who owned **any** BYOK key. That is not a stricter reading of "a BYOK key never outranks a real spender" — it is a different rule, and a member with $500 of Gateway spend on one key plus one BYOK key vanished from the card entirely. It was masked because `test-key` is the only such key, so the card rendered a single row and looked plausible.
+
+- **Production ranks, it does not exclude.** `dashboard-web/Activity.tsx` `keySortValue`, case `"spend"`, sorts on the numeric Gateway spend and lets ~0 fall last; the em dash is a display concern, not the sort value. The API Keys table on this same page already did exactly that, so the two surfaces contradicted each other.
+- **Every member now ranks on every metric.** A BYOK key contributes 0 to Spend, so a BYOK-only member sinks on its own arithmetic. The card goes 1 row → 4: Chad $1,842.29, Jordan $156.91, Mateus $105.31, Kira $0.00. Chad — previously dropped — is the top spender by an order of magnitude.
+- **Card visibility is deliberately NOT gated.** Prod wraps it in `useTeamVisibility("activity")`, a role check. Chad is `role: "owner"`, so it resolves true; adding the plumbing to arrive at a constant would be machinery for its own sake.
+
+### The trend chart named a fixed five and buried the 3rd-heaviest model `e975620`
+
+**`activity-data.ts`** · **`activity/TrendCard.tsx`** · **`Dashboard.tsx`** · **`activity-data.test.ts`** · **`data/pricing.test.ts`** · **`data/models-catalog.test.ts`**
+
+`SPEND_SERIES.model` was an authored list: five named models plus a fixed `others`. The list was wrong and could not be right. By tokens the workspace runs Sonnet 169.66M, Qwen 125.38M, **Haiku 106.42M**, Gemini 104.89M, DeepSeek 74.12M, Opus 34.68M, Kimi 9.18M — so the chart named DeepSeek and Opus while burying Haiku. `Others` came out 115.60M, **92% of it one model**, and ranked 3rd in the legend directly above a Top Models card that correctly listed Haiku 3rd. Two surfaces on one page disagreed about the same workload.
+
+It was also metric-blind. Opus is 5.6% of tokens and 24.7% of spend; no single fixed ordering can describe both lenses.
+
+- **The selection layer is derived, not authored.** `rankSeries` / `rankChartSeries` in `activity-data.ts` implement production's rule (`dashboard-web/Activity.tsx`) verbatim: rank DESC by the ACTIVE metric, drop anything not finite or ≤ 0, cap at 6 series total, and only when that overflows keep the top 5 and roll the remainder into one synthetic `__other`. Under the cap everything passes through and **there is no Others bucket at all**.
+- **The model dimension is one series per catalog model.** `DIMENSION_KEY.model` groups `USAGE_7D` by `cell.model` instead of by the authoring bucket, so the 7 real models rank against each other. `MODEL_SERIES_7D` keeps its authored numbers and its grouping untouched — its top-level keys are now authoring buckets that decide nothing.
+- **The candidate pool is read off the workload.** `SERIES_POOL` is `Object.keys(TOKENS_TOTALS_7D[dim])`, so a model, route or key cannot be charted without carrying metered traffic and cannot carry metered traffic without being chartable. Labels resolve through `modelName` / `PROVIDER_META` / `API_KEY_ROWS` — none are authored on the chart any more.
+- **Colors are positional.** Slot = rank (`paletteColor(i + 1)`), so a series' color describes its size, not its identity. `Others` sits outside the palette at neutral-300, unchanged.
+- **Result, tokens lens:** Sonnet · Qwen · **Haiku** · Gemini · DeepSeek, Others = Opus + Kimi (7.03%, down from 18.5%). **Spend lens re-ranks:** Sonnet · Gemini · **Opus** · Haiku · DeepSeek, Others = Qwen + Kimi. Provider (3 routes) and API key (5 Gate keys) sit under the cap and grow no Others in either lens; both still re-rank (`prod-web` leads tokens, `prod-agent` leads spend).
+- **One rule, one implementation.** `Dashboard.tsx`'s `capWithOthers` and TrendCard's 50-line capping memo were the same logic pasted twice; both now call `rankChartSeries`. The Overview and Activity charts can no longer name different series for the same workload.
+- **The Others fold is unrounded.** The old projection did `+othersVal.toFixed(2)`, which reintroduced up to 0.005 per bucket in whichever dimension happened to overflow — the exact count-dependent error `splitAcrossBuckets` exists to remove.
+- **48 measurements — 3 lenses × 4 ranges × desktop and compact bucket counts: 0.0000px** cross-dimension drift (worst raw Δ 1.2e-7 tokens on a 43.9M domain). Legend percentages sum to 100.0000% with Others included. 10 new regression tests; 72 pass.
+- **`pricing.test.ts`'s `SPEND_SERIES` ⇄ `MODEL_SERIES_7D` key assertion** was pinning the bug in place — it asserted the chart's series set equals the authoring groups. It now asserts the pool equals the workload's distinct **catalog ids**, that both metrics offer the same series in every dimension, and that every charted key is a Gate key. `models-catalog.test.ts` drops its `"Others"` exemption: every named model series is a catalog id labelled with a catalog name, and the rollup label is asserted not to collide with one.
 
 ### Messages, Conversations, Activity and Setup now name the same fleet as Models `2be812a`
 
@@ -151,6 +215,16 @@ Messages' Filters modal offered six models, four invented. Conversations' toolba
 - **"Claude, GPT, Gemini" → "Claude, Gemini, DeepSeek"** on the pay-as-you-go choice card. That card is the pooled-catalog path, and there is no OpenAI model in it. The BYOK card one column left still says Claude and Codex, which is correct — a ChatGPT subscription is exactly what it routes.
 - **The OpenClaw BYOK snippet names `moonshotai/kimi-k2-thinking`** instead of `kimi-k2.5`. Same model, and now a handle that resolves.
 - **The "Works with" footer is untouched** — OpenAI, xAI, Anthropic, Google, Meta are BYOK provider brands, not catalog entries, and Gate does route your own key to all five.
+
+### Messages Model cell drops the canonical-id subtext `dc8311d`
+
+**`requests/RequestsTable.tsx`** · **`requests/RequestDetailBody.tsx`**
+
+`2be812a` restructured the Model cell in both the Messages table and the request Details list into two lines — name over `anthropic/claude-opus-4-8` — on the reasoning that prod splits Model and Model ID into separate columns. That reasoning does not transfer, and more to the point it was scope creep: a data change had no business touching JSX.
+
+- **Both surfaces are back to a single line** showing the catalog name beside the vendor mark. The Details list shows every value exactly once, and the canonical id is already in the Quick start snippet on the same page, which is where you copy it from.
+- **The Details row's voice moved `type-mono-14` → `type-label-14`** with the content. Mono is the data voice for ids, hashes, and numerics; a product name is not data-tier.
+- **Audited the rest of `2be812a`**: these two cells were its only structural UI changes. `Conversations.tsx` and `Activity.tsx` had zero JSX changes; `SetupModels`, `DashboardDefault`, and `Dashboard` were label and data swaps.
 
 ### Models table — provider marks sit on 8px, not on top of each other `6bdc828`
 

@@ -3216,7 +3216,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "1,718",
     latency: "11.40s",
     slow: true,
-    cost: "$0.0346",
+    cost: "—",
     requestId: "req_b3e9c27",
   },
   {
@@ -3234,7 +3234,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "4,512",
     latency: "14.80s",
     slow: true,
-    cost: "$0.1842",
+    cost: "$0.0615",
     requestId: "req_5c1a8f4",
   },
   {
@@ -3252,7 +3252,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "722",
     latency: "13.60s",
     slow: true,
-    cost: "$0.0124",
+    cost: "$0.0261",
     requestId: "req_e72d4a9",
   },
   {
@@ -3269,7 +3269,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "8,010",
     outTokens: "1,120",
     latency: "1.40s",
-    cost: "$0.0651",
+    cost: "$0.0680",
     requestId: "req_a2f6c8",
   },
   {
@@ -3286,7 +3286,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "942",
     outTokens: "481",
     latency: "6.40s",
-    cost: "$0.0058",
+    cost: "$0.0077",
     guardrailReason: "credential",
     requestId: "req_1d6b9e2",
   },
@@ -3305,7 +3305,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "2,944",
     latency: "14.20s",
     slow: true,
-    cost: "$0.0172",
+    cost: "$0.0018",
   },
   {
     day: "May 12",
@@ -3321,7 +3321,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "7,260",
     outTokens: "340",
     latency: "2.10s",
-    cost: "$0.0602",
+    cost: "$0.0448",
     requestId: "req_3c7e58",
   },
   {
@@ -3338,7 +3338,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "2,108",
     outTokens: "1,012",
     latency: "4.50s",
-    cost: "$0.0241",
+    cost: "$0.0143",
     guardrailReason: "pii",
     requestId: "req_8f3a1c4",
     findings: SHOWCASE_FINDINGS,
@@ -3357,7 +3357,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "6,680",
     outTokens: "910",
     latency: "0.80s",
-    cost: "$0.0531",
+    cost: "$0.0561",
     requestId: "req_5b9d41",
   },
   {
@@ -3375,7 +3375,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "2,104",
     latency: "12.80s",
     slow: true,
-    cost: "$0.0512",
+    cost: "—",
   },
   {
     day: "May 11",
@@ -3391,7 +3391,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "1,318",
     outTokens: "602",
     latency: "3.40s",
-    cost: "$0.0094",
+    cost: "$0.0099",
   },
   {
     day: "May 11",
@@ -3408,7 +3408,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "3,820",
     latency: "13.20s",
     slow: true,
-    cost: "$0.0098",
+    cost: "$0.0057",
   },
   // Rows tied to Security event ids — these are the canonical req_* targets
   // the Security event-detail modal deep-links into via ?open=req_*. Keep
@@ -3429,7 +3429,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "612",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0043",
+    cost: "$0.0012",
     guardrailReason: "injection",
     requestId: "req_aurora_4200",
   },
@@ -3447,7 +3447,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "1,408",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0099",
+    cost: "$0.0070",
     guardrailReason: "credential",
     requestId: "req_orion_4203",
   },
@@ -3465,7 +3465,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "412",
     outTokens: "188",
     latency: "3.20s",
-    cost: "$0.0036",
+    cost: "$0.0014",
     guardrailReason: "injection",
     requestId: "req_lyra_4207",
   },
@@ -3483,7 +3483,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "5,940",
     outTokens: "480",
     latency: "2.10s",
-    cost: "$0.0496",
+    cost: "$0.0417",
     requestId: "req_1e5a7d",
   },
   {
@@ -3500,7 +3500,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "742",
     outTokens: "318",
     latency: "3.80s",
-    cost: "$0.0078",
+    cost: "—",
     guardrailReason: "pii",
     requestId: "req_skylark_4209",
   },
@@ -3518,7 +3518,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "3,902",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0273",
+    cost: "—",
     guardrailReason: "injection",
     requestId: "req_vela_4209",
   },
@@ -3536,7 +3536,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     inTokens: "484",
     outTokens: "220",
     latency: "5.20s",
-    cost: "$0.0048",
+    cost: "—",
     guardrailReason: "pii",
     requestId: "req_polaris_4210",
   },
@@ -3562,7 +3562,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "2,094",
     latency: "12.80s",
     slow: true,
-    cost: "$0.0418",
+    cost: "—",
   },
   {
     day: "May 11",
@@ -3579,7 +3579,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "6,820",
     latency: "12.30s",
     slow: true,
-    cost: "$0.2104",
+    cost: "$0.2325",
   },
   {
     day: "May 10",
@@ -3595,7 +3595,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "2,012",
     outTokens: "988",
     latency: "5.20s",
-    cost: "$0.0148",
+    cost: "$0.0159",
     guardrailReason: "credential",
   },
   {
@@ -3612,7 +3612,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "5,210",
     outTokens: "610",
     latency: "4.10s",
-    cost: "$0.0431",
+    cost: "$0.0413",
     requestId: "req_c6b2f9",
   },
   {
@@ -3630,7 +3630,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "742",
     latency: "13.40s",
     slow: true,
-    cost: "$0.0086",
+    cost: "$0.0028",
   },
   {
     day: "May 9",
@@ -3646,7 +3646,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "2,418",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0169",
+    cost: "$0.0012",
     guardrailReason: "pii",
   },
   {
@@ -3664,7 +3664,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "4,210",
     latency: "14.60s",
     slow: true,
-    cost: "$0.0228",
+    cost: "$0.0026",
   },
   {
     day: "May 8",
@@ -3681,7 +3681,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "1,564",
     latency: "11.80s",
     slow: true,
-    cost: "$0.0382",
+    cost: "—",
   },
   {
     day: "May 12",
@@ -3697,7 +3697,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "4,802",
     outTokens: "705",
     latency: "0.60s",
-    cost: "$0.0388",
+    cost: "$0.0416",
     requestId: "req_4d8e13",
   },
   {
@@ -3714,7 +3714,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "5,108",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0358",
+    cost: "$0.0102",
     guardrailReason: "credential",
   },
   {
@@ -3731,7 +3731,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     inTokens: "1,448",
     outTokens: "702",
     latency: "5.40s",
-    cost: "$0.0118",
+    cost: "$0.0113",
     guardrailReason: "pii",
   },
   {
@@ -3749,7 +3749,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "3,108",
     latency: "14.80s",
     slow: true,
-    cost: "$0.0084",
+    cost: "$0.0047",
   },
   {
     day: "May 6",
@@ -3766,7 +3766,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "1,248",
     latency: "12.40s",
     slow: true,
-    cost: "$0.0298",
+    cost: "$0.0175",
   },
 ];
 
@@ -3790,7 +3790,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "1,812",
     latency: "12.20s",
     slow: true,
-    cost: "$0.0368",
+    cost: "—",
   },
   {
     day: "May 9",
@@ -3807,7 +3807,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "7,420",
     latency: "22.40s",
     slow: true,
-    cost: "$0.2418",
+    cost: "—",
   },
   {
     day: "May 6",
@@ -3823,7 +3823,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "2,108",
     outTokens: "1,042",
     latency: "5.40s",
-    cost: "$0.0158",
+    cost: "$0.0167",
     guardrailReason: "pii",
   },
   {
@@ -3840,7 +3840,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "4,180",
     outTokens: "520",
     latency: "3.90s",
-    cost: "$0.0312",
+    cost: "$0.0339",
     guardrailReason: "pii",
     requestId: "req_9a6c24",
   },
@@ -3858,7 +3858,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "1,924",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0135",
+    cost: "$0.0009",
     guardrailReason: "injection",
   },
   {
@@ -3876,7 +3876,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "892",
     latency: "13.40s",
     slow: true,
-    cost: "$0.0098",
+    cost: "$0.0033",
   },
   {
     day: "Apr 25",
@@ -3893,7 +3893,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "4,820",
     latency: "14.80s",
     slow: true,
-    cost: "$0.0264",
+    cost: "$0.0029",
   },
   {
     day: "Apr 22",
@@ -3909,7 +3909,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "3,408",
     outTokens: "1,718",
     latency: "3.90s",
-    cost: "$0.0418",
+    cost: "—",
     guardrailReason: "credential",
   },
   {
@@ -3926,7 +3926,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "2,608",
     outTokens: "0",
     latency: "2.10s",
-    cost: "$0.0183",
+    cost: "$0.0052",
     guardrailReason: "pii",
   },
   {
@@ -3943,7 +3943,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     inTokens: "3,420",
     outTokens: "540",
     latency: "0.90s",
-    cost: "$0.0258",
+    cost: "$0.0306",
     requestId: "req_e3f1b6",
   },
   {
@@ -3961,7 +3961,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "742",
     latency: "13.20s",
     slow: true,
-    cost: "$0.0128",
+    cost: "$0.0120",
   },
   {
     day: "Apr 15",
@@ -3978,7 +3978,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "3,408",
     latency: "11.80s",
     slow: true,
-    cost: "$0.0094",
+    cost: "$0.0051",
   },
   {
     day: "Apr 13",
@@ -3995,7 +3995,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "1,408",
     latency: "14.40s",
     slow: true,
-    cost: "$0.0342",
+    cost: "$0.0197",
   },
 ];
 
@@ -4019,7 +4019,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     inTokens: "3,108",
     outTokens: "1,542",
     latency: "4.20s",
-    cost: "$0.0318",
+    cost: "$0.0030",
   },
   {
     day: "May 12",
@@ -4035,7 +4035,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     inTokens: "2,610",
     outTokens: "680",
     latency: "2.10s",
-    cost: "$0.0205",
+    cost: "$0.0301",
     requestId: "req_7c2a85",
   },
   {
@@ -4052,7 +4052,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     inTokens: "1,948",
     outTokens: "942",
     latency: "5.60s",
-    cost: "$0.0148",
+    cost: "$0.0152",
     guardrailReason: "pii",
   },
   {
@@ -4070,7 +4070,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     outTokens: "3,608",
     latency: "13.80s",
     slow: true,
-    cost: "$0.0098",
+    cost: "$0.0054",
   },
   {
     day: "Mar 22",
@@ -4086,7 +4086,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     inTokens: "2,012",
     outTokens: "988",
     latency: "6.20s",
-    cost: "$0.0064",
+    cost: "$0.0037",
     guardrailReason: "credential",
   },
   {
@@ -4103,7 +4103,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     inTokens: "1,840",
     outTokens: "412",
     latency: "3.40s",
-    cost: "$0.0142",
+    cost: "$0.0195",
     requestId: "req_b1d4e9",
   },
 ];

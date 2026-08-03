@@ -14,7 +14,14 @@ import {
   REQUEST_ROWS_30D,
   REQUEST_ROWS_ALL,
 } from "@/data/requests";
-import { MODEL_ROWS, SPEND_SERIES } from "@/pages/activity-data";
+import {
+  MODEL_ROWS,
+  OTHERS_KEY,
+  OTHERS_LABEL,
+  rankSeries,
+  SERIES_POOL,
+  TOKENS_TOTALS_7D,
+} from "@/pages/activity-data";
 import { MODEL_FILTER_OPTIONS as CONVERSATION_MODEL_FILTERS } from "@/pages/conversations/data";
 import { MODEL_FILTER_OPTIONS as REQUEST_MODEL_FILTERS } from "@/pages/requests/data";
 
@@ -145,13 +152,27 @@ describe("model catalog coverage", () => {
     }
   });
 
-  it("Activity's model series are labelled with catalog names", () => {
-    const names = new Set(MODELS.map((m) => m.name));
-    const unknown = SPEND_SERIES.model
-      .map((s) => s.label)
-      // "Others" is the deliberate long-tail bucket, not a model.
-      .filter((label) => label !== "Others" && !names.has(label));
+  it("Activity's model series are catalog ids labelled with catalog names", () => {
+    // The chart's model dimension is one series per catalog model since
+    // 2026-08-03. Before that it charted six authored labels, one of which
+    // ("Others") was a bucket that happened to hold the 3rd-heaviest model in
+    // the workspace — so this test could pass while the legend misranked it.
+    const unknown = catalogIds(
+      SERIES_POOL.model.filter((id) => !CATALOG.has(id))
+    );
     expect(unknown).toEqual([]);
+
+    // Labels are resolved through the catalog at rank time, never authored.
+    const names = new Set(MODELS.map((m) => m.name));
+    const { series } = rankSeries("model", TOKENS_TOTALS_7D.model);
+    const mislabelled = series
+      .filter((s) => s.key !== OTHERS_KEY)
+      .map((s) => s.label)
+      .filter((label) => !names.has(label));
+    expect(mislabelled).toEqual([]);
+
+    // The rollup is synthesised, so its label must not collide with a model.
+    expect(names.has(OTHERS_LABEL)).toBe(false);
   });
 
   it("the Setup pricing table quotes catalog models", () => {

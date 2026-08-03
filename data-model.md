@@ -609,13 +609,80 @@ The app has no backend. All data is seeded in-file. The three rules:
 | Requests | `HERO_VIEWS['30d'].total` | 2,248 |
 | Security | `EVENTS_RANGE_TOTAL['all']` | 1,215 |
 | Security | `EVENTS_RANGE_TOTAL['7d']` | 117 |
-| Activity | `TOTAL_7D_BASE_DOLLARS` | $238 |
+| Activity | `TOTAL_7D_BASE_DOLLARS` | $247.59 (derived) |
 | Activity | `TOTAL_7D_BASE_REQUESTS` | 63,793 |
-| Activity | `TOTAL_7D_BASE_TOKENS` | 73,450,000 |
+| Activity | `TOTAL_7D_BASE_TOKENS` | 73,450,000 (derived) |
 
 Only `HERO_ALL_TOTAL` is a standalone const; the other three per-range totals
 are literals inside the `HERO_VIEWS` record in `src/pages/requests/hero-data.ts`
 (the old `HERO_24H_TOTAL` / `HERO_7D_TOTAL` / `HERO_30D_TOTAL` names are gone).
+
+`TOTAL_7D_BASE_DOLLARS` and `TOTAL_7D_BASE_TOKENS` are no longer authored — see
+§5.1.1. `TOTAL_7D_BASE_REQUESTS` still is, because a request count is not a
+function of price.
+
+### 5.1.1 The pricing contract (2026-08-03)
+
+**No dollar figure in this app is authored.** Every `$` is
+`costOf(modelId, tokensIn, tokensOut)` from `src/data/models.ts` — catalog list
+price × tokens — or a sum of those calls. Tokens are the authored fact; dollars
+are what the catalog charges for them. `src/data/pricing.test.ts` pins every
+surface.
+
+Before this, spend and tokens had no price relationship anywhere: request rows
+were mispriced by 0.48×–14.7×, the Activity Top Models card billed Qwen3 Next at
+13× list and Gemini 3.1 Pro at 0.47×, and `activity-data.ts` carried a comment
+telling readers not to reconcile spend ÷ tokens against the catalog.
+
+The derivation chain:
+
+```text
+data/models.ts          costOf(model, in, out)      ← catalog list price × tokens
+                        blendedRate(model, outShare) ← $/1M at a given output mix
+   ↓
+data/requests.ts        row.cost                     ← per-row costOf, 4dp
+   ↓
+data/conversationDetail getConversationView().cost   ← sum over the conversation's rows
+                        avgCostPerConversation()     ← Conversations "Avg Cost / Conv" KPI
+   ↓
+data/conversations.ts   CONVERSATION_ROWS seeds      ← written to match the derivation
+```
+
+Activity inverts what used to be a hand-authored 3 × 7 × N matrix of daily
+dollars. `src/pages/activity-data.ts` now declares the 7d workload as tokens and
+derives all money from it:
+
+```text
+MODEL_SERIES_7D      per-model 7d tokensIn/tokensOut (authored — the traffic)
+PROVIDER_MIX_7D      per-model share across openrouter / vertex / alibaba
+KEY_MIX_7D           per-model share across the 5 Gate keys
+   ↓  product form → USAGE_7D: one cell per (model, provider, key)
+   ↓  cell.spend = costOf(model, in, out) × that route's catalog paygMarkup
+SPEND_TOTALS_7D · TOKENS_TOTALS_7D   grouped by dimension
+TOTAL_7D_BASE_DOLLARS · TOTAL_7D_BASE_TOKENS   summed
+SPEND_BASE           per-day = DAY_SHAPE_7D weight × each series' 7d total
+MODEL_ROWS.spend · API_KEY_ROWS.spend          grouped from the same cells
+```
+
+Consequences worth knowing:
+
+- **All three dimensions reconcile by construction**, on both metrics and on
+  every day, because they group one set of cells and share one day shape. The
+  cross-dimension invariant is arithmetic now, not tuning.
+- **Routing is catalog-constrained.** Alibaba serves only DeepSeek and Qwen, so
+  it carries 11% of tokens and under 2% of dollars — a hairline band on the
+  spend lens. That is the finding, not a rendering bug.
+- **OpenRouter's +10% PAYG markup** is read per (model, provider) off the
+  catalog, which is why its dollar share runs ahead of its token share.
+- **BYOK means one thing.** `isByokKey` (`src/data/requests.ts`), a `"—"` cost on
+  a request row, and `API_KEY_ROWS.path === "BYOK"` are now equivalent, and the
+  test asserts it. `design-agent` moved Gate → BYOK: it was charted at $21.00 of
+  spend while all 102 of its request rows were unmetered. It is no longer a
+  charted key, so `SPEND_SERIES.apiKey` has 5 entries, not 6.
+- **`MODEL_ROWS` authors `tokensPerRequest`, not `requests`.** Request counts
+  derive from tokens ÷ call size and rescale onto `TOTAL_7D_BASE_REQUESTS`, so
+  the card sums to the KPI rail above it. Gate keys in `API_KEY_ROWS` rescale the
+  same way.
 
 ### 5.2 Range scaling
 
@@ -1318,7 +1385,7 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 | `src/layouts/DashboardChrome.tsx` | Layout shell — sidebar, breadcrumb, nav active state |
 | `src/layouts/nav-sections.ts` | Sidebar sections and route map |
 | `src/pages/requests/RequestsTable.tsx` | Canonical table pattern — filters, sort, pagination, row-click navigation. `Requests.tsx` itself is now a 122-line shell (header + range selector + `HeroMetricCard` + this table) |
-| `src/pages/activity-data.ts` | Canonical chart math — `distributeSeries`, `TOTAL_7D_BASE_*`, `TOKEN_SAVINGS_RATE_7D`, `SPEND_SERIES`, `rescaleToTotal` (range types + `RANGE_SCALE` in `src/lib/range.ts`) |
+| `src/pages/activity-data.ts` | Canonical chart math + the 7d workload every dollar derives from — `MODEL_SERIES_7D`, `PROVIDER_MIX_7D`, `KEY_MIX_7D`, `USAGE_7D`, `distributeSeries`, `TOTAL_7D_BASE_*`, `TOKEN_SAVINGS_RATE_7D`, `SPEND_SERIES` (range types + `RANGE_SCALE` in `src/lib/range.ts`) |
 | `src/pages/ApiKeys.tsx` | Canonical API key seed — used as cross-page source of truth for active keys |
 | `src/components/ui/dialog.tsx` | Canonical modal pattern — `data-closed:fill-mode-forwards`, `onOpenChangeComplete`, `DialogScrollContent` shells |
 | `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `PROVIDER_META`, `ProviderAvatar` — shared across all pages |

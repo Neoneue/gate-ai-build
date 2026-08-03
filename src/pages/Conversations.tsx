@@ -33,7 +33,10 @@ import {
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Timestamp } from "@/components/ui/timestamp";
-import { getConversationView } from "@/data/conversationDetail";
+import {
+  avgCostPerConversation,
+  getConversationView,
+} from "@/data/conversationDetail";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
@@ -98,6 +101,28 @@ const SPARK: Record<
 // show a date beside each value — the values themselves stay illustrative.
 const SPARK_POINTS = 9;
 const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
+
+/** Avg Cost / Conv — the mean of what these conversations actually cost,
+ *  Gate-metered rows only. Every term is a `costOf` sum over one
+ *  conversation's request rows, so the tile agrees with the Cost column two
+ *  inches below it and with the Models page's per-1M rates. It was hardcoded
+ *  at "$0.082" until 2026-08-03, which no row on the page added up to. */
+const AVG_COST_PER_CONVERSATION = avgCostPerConversation(
+  CONVERSATION_ROWS,
+  REQUEST_ROWS_ALL
+);
+
+/** The authored `avgCost` arrays are trend SHAPE, not money — all five ranges
+ *  land on the same terminal point. Rescale so that terminal point IS the
+ *  derived KPI: the sparkline's last dot and the number beside it are the same
+ *  fact, and a reader hovering the tile cannot be shown two different answers. */
+function avgCostSeries(shape: number[]): number[] {
+  const last = shape.at(-1) ?? 0;
+  if (last === 0) {
+    return shape;
+  }
+  return shape.map((v) => (v / last) * AVG_COST_PER_CONVERSATION);
+}
 
 function sparkDates(range: Range, customRange: CustomRange | null): string[] {
   const last = SPARK_POINTS - 1;
@@ -309,7 +334,7 @@ function KpiRail({
         spark={
           <CompactSpark
             colorVar="var(--color-chart-1)"
-            data={spark.avgCost}
+            data={avgCostSeries(spark.avgCost)}
             endDot
             labels={sparkLabels}
             tooltip
@@ -317,7 +342,7 @@ function KpiRail({
           />
         }
         title="Avg Cost / Conv"
-        value="$0.082"
+        value={`$${AVG_COST_PER_CONVERSATION.toFixed(3)}`}
       />
     </KpiRailShell>
   );

@@ -159,6 +159,32 @@ export function getConversationView(
   };
 }
 
+/** Mean Gate-metered cost per conversation, in dollars.
+ *
+ * Averages only the conversations Gate actually billed. A BYOK session's spend
+ * lands on the customer's own provider account, so it carries no cost at all —
+ * counting it as a $0 conversation would drag the mean toward zero and quietly
+ * understate what the gateway charges. With 102 of 153 request rows belonging
+ * to one BYOK session, that is not a rounding difference: it is most of the
+ * denominator.
+ *
+ * Every term is a `costOf` sum over that conversation's own rows, so this KPI
+ * traces back to the catalog like every other dollar on the site. It replaced
+ * a hardcoded "$0.082" that was 1.6× under what these conversations cost. */
+export function avgCostPerConversation(
+  seeds: ConversationRow[],
+  allRows: RequestRow[]
+): number {
+  const metered = seeds
+    .map((seed) => getConversationView(seed, allRows).cost)
+    .filter((cost) => cost.trim() !== "—")
+    .map(toMoney);
+  if (metered.length === 0) {
+    return 0;
+  }
+  return metered.reduce((sum, c) => sum + c, 0) / metered.length;
+}
+
 // ── detail body (trace + messages) ──────────────────────────────────────────
 export type ConversationDetail = {
   trace: TraceEvent[];
