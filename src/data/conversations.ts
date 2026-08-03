@@ -2,13 +2,21 @@
 // pages/Conversations.tsx so the page module only exports components.
 // Types stay with the page (type-only import, no runtime cycle).
 //
-// `vendors` / `models` on every row below are the SEED values. The list and
-// the detail sheet both render `getConversationView()`, which re-derives them
-// from the conversation's own request rows — so what ships here is only what a
-// raw consumer (Overview's preview table, ConversationsTrace's lookup) reads.
-// They are written to match the derivation exactly. Reconciled 2026-08-03 with
-// the production model catalog: before that, 7 of these 8 rows advertised
-// models their own requests never ran.
+// `vendors` / `models` / `reqs` / `turns` / `inTokens` / `outTokens` / `cost`
+// on every row below are the SEED values. The list and the detail sheet both
+// render `getConversationView()`, which re-derives all seven from the
+// conversation's own request rows — so what ships here is only what a raw
+// consumer (Overview's preview table, ConversationsTrace's lookup) reads.
+// They are written to match the derivation exactly, and `pricing.test.ts`
+// pins them to it.
+//
+// Reconciled 2026-08-03 with the production model catalog: before that, 7 of
+// these 8 rows advertised models their own requests never ran. Reconciled
+// again 2026-08-03 against `costOf` — the seeds had also drifted on volume and
+// money. cnv_orion_70 claimed 38 requests over 9 real ones and cnv_vela_21
+// claimed 86,735 input tokens against a real 40,658, so the Overview preview
+// table and the Conversations list disagreed about the same conversation.
+// `cost` is now the sum of the rows' own `costOf` figures, never authored.
 import type { ConversationRow, TraceEvent } from "@/pages/conversations/types";
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
@@ -17,14 +25,14 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     conversationId: "cnv_7a3f9e2b",
     initiator: "design-agent",
     turns: 10,
-    reqs: 101,
+    reqs: 102,
     // The real captured 102-request session, Opus 4.8 end to end. It carried
     // a second, invented `gpt-5.3-codex` entry until 2026-08-03; not one of
     // its requests ever ran an OpenAI model.
     vendors: ["anthropic"],
     models: ["anthropic/claude-opus-4-8"],
-    inTokens: "19,358,990",
-    outTokens: "62,494",
+    inTokens: "19,386,869",
+    outTokens: "59,938",
     cost: "—",
     status: "active",
     updated: new Date(2026, 5, 6, 0, 50, 45),
@@ -35,12 +43,12 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     conversationId: "cnv_aurora_42",
     initiator: "prod-web",
     turns: 3,
-    reqs: 7,
+    reqs: 5,
     vendors: ["anthropic"],
     models: ["anthropic/claude-sonnet-5"],
-    inTokens: "3,438",
-    outTokens: "613",
-    cost: "$0.1042",
+    inTokens: "14,354",
+    outTokens: "4,294",
+    cost: "$0.0257",
     status: "active",
     updated: new Date(2026, 4, 12, 14, 28, 4),
     duration: "3m 53s",
@@ -50,16 +58,16 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     conversationId: "cnv_skylark_18",
     initiator: "prod-agent",
     turns: 6,
-    reqs: 11,
+    reqs: 6,
     vendors: ["moonshotai", "deepseek", "google"],
     models: [
       "moonshotai/kimi-k2-thinking",
       "deepseek/deepseek-v4-pro",
       "google/gemini-3-1-pro-preview",
     ],
-    inTokens: "6,897",
-    outTokens: "1,217",
-    cost: "$0.4218",
+    inTokens: "9,056",
+    outTokens: "3,421",
+    cost: "$0.0184",
     status: "active",
     updated: new Date(2026, 4, 12, 14, 22, 11),
     duration: "5m 12s",
@@ -69,12 +77,12 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     conversationId: "cnv_meridian_07",
     initiator: "prod-agent",
     turns: 3,
-    reqs: 4,
+    reqs: 10,
     vendors: ["anthropic"],
     models: ["anthropic/claude-opus-4-7"],
-    inTokens: "1,788",
-    outTokens: "316",
-    cost: "$0.3104",
+    inTokens: "49,952",
+    outTokens: "6,317",
+    cost: "$0.4076",
     status: "active",
     updated: new Date(2026, 4, 12, 14, 15, 22),
     duration: "0m 47s",
@@ -83,8 +91,8 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     title: "Investigate the variance in YOY revenue between segments",
     conversationId: "cnv_orion_70",
     initiator: "prod-web",
-    turns: 18,
-    reqs: 38,
+    turns: 9,
+    reqs: 9,
     vendors: ["deepseek", "google", "anthropic", "qwen"],
     models: [
       "deepseek/deepseek-v4-pro",
@@ -92,9 +100,9 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
       "anthropic/claude-opus-4-7",
       "qwen/qwen3-next-80b-a3b-instruct",
     ],
-    inTokens: "44,889",
-    outTokens: "7,921",
-    cost: "$0.5841",
+    inTokens: "45,590",
+    outTokens: "21,768",
+    cost: "$0.2988",
     status: "completed",
     updated: new Date(2026, 4, 12, 14, 2, 48),
     duration: "14m 06s",
@@ -112,9 +120,9 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
       "deepseek/deepseek-v4-pro",
       "deepseek/deepseek-v4-flash",
     ],
-    inTokens: "2,892",
-    outTokens: "510",
-    cost: "$0.1102",
+    inTokens: "17,690",
+    outTokens: "8,792",
+    cost: "$0.0868",
     status: "active",
     updated: new Date(2026, 4, 12, 13, 48, 33),
     duration: "2m 18s",
@@ -123,8 +131,8 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     title: "Customer requesting a refund on order ORD-89412",
     conversationId: "cnv_lyra_92",
     initiator: "prod-web",
-    turns: 14,
-    reqs: 32,
+    turns: 7,
+    reqs: 7,
     vendors: ["google", "deepseek", "anthropic"],
     models: [
       "google/gemini-3-1-pro-preview",
@@ -132,9 +140,9 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
       "deepseek/deepseek-v4-pro",
       "anthropic/claude-haiku-4-5",
     ],
-    inTokens: "10,717",
-    outTokens: "1,891",
-    cost: "$0.0812",
+    inTokens: "29,232",
+    outTokens: "13,350",
+    cost: "$0.0220",
     status: "failed",
     updated: new Date(2026, 4, 12, 13, 36, 10),
     duration: "8m 41s",
@@ -143,17 +151,17 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     title: "Summarize Q1 2026 earnings call for top 10 holdings",
     conversationId: "cnv_vela_21",
     initiator: "test-key",
-    turns: 12,
-    reqs: 26,
+    turns: 7,
+    reqs: 7,
     vendors: ["qwen", "deepseek", "anthropic"],
     models: [
       "qwen/qwen3-next-80b-a3b-instruct",
       "deepseek/deepseek-v4-pro",
       "anthropic/claude-sonnet-5",
     ],
-    inTokens: "86,735",
-    outTokens: "15,306",
-    cost: "$0.1402",
+    inTokens: "40,658",
+    outTokens: "18,834",
+    cost: "$0.0767",
     status: "completed",
     updated: new Date(2026, 4, 12, 13, 18, 55),
     duration: "11m 27s",
@@ -171,7 +179,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "1.2k",
     outTokens: "184",
     latency: "1240ms",
-    cost: "$0.0142",
+    cost: "$0.0042",
     time: "May 12, 14:24:14",
     requestId: "req_92cf2a",
   },
@@ -185,7 +193,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "0.4k",
     outTokens: "92",
     latency: "620ms",
-    cost: "$0.0008",
+    cost: "$0.0003",
     time: "May 12, 14:24:38",
     requestId: "req_70a48a",
   },
@@ -199,7 +207,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "2.1k",
     outTokens: "312",
     latency: "1480ms",
-    cost: "$0.0241",
+    cost: "$0.0073",
     time: "May 12, 14:24:54",
     requestId: "req_2e1f9d",
   },
@@ -214,7 +222,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "0.5k",
     outTokens: "142",
     latency: "940ms",
-    cost: "$0.0014",
+    cost: "$0.0004",
     time: "May 12, 14:25:11",
     requestId: "req_3a5fb8",
   },
@@ -228,7 +236,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "1.8k",
     outTokens: "276",
     latency: "1160ms",
-    cost: "$0.0184",
+    cost: "$0.0011",
     time: "May 12, 14:25:34",
     requestId: "req_7f0218",
   },
@@ -242,7 +250,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "2.4k",
     outTokens: "380",
     latency: "3120ms",
-    cost: "$0.0260",
+    cost: "$0.0086",
     time: "May 12, 14:26:14",
     requestId: "req_da46b8",
   },
@@ -256,7 +264,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     inTokens: "0.7k",
     outTokens: "104",
     latency: "720ms",
-    cost: "$0.0060",
+    cost: "$0.0004",
     time: "May 12, 14:27:31",
     requestId: "req_4c91a2",
   },

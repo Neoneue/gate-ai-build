@@ -1443,6 +1443,73 @@ export function modelName(id: string): string {
  *  every model reference in the app to a real catalog entry. */
 export const MODEL_IDS: readonly string[] = MODELS.map((m) => m.id);
 
+/* ─── The price of a call ─────────────────────────────────────────────────
+ *
+ * `costOf` is the ONLY place in the app a dollar figure may originate.
+ *
+ * Before 2026-08-03 every surface authored its own money. Messages priced a
+ * DeepSeek V4 Pro call at 14.7× what DeepSeek charges and a Gemini 3.1 Pro
+ * call at 0.47× what Google charges; Activity's Top Models card billed Qwen3
+ * Next at 13× list. Nothing was wrong in isolation — each number looked like a
+ * plausible small dollar amount — but the three columns sitting side by side
+ * on one row (model, tokens, cost) did not describe the same transaction, and
+ * dividing the second into the third contradicted the Models page two clicks
+ * away.
+ *
+ * The fix is structural, not arithmetic: money is never authored. Tokens are
+ * the authored fact (they are what traffic produces); dollars are what the
+ * catalog charges for them. Every $ in this app is a `costOf` call or a sum of
+ * `costOf` calls, and `pricing.test.ts` pins each one.
+ */
+
+/**
+ * Gate-metered cost of one call, in dollars — catalog list price × tokens.
+ *
+ * `listPrice` (not the raw `pricing` field) so the model's own markup is
+ * carried: the two DeepSeek rows bill at 1.1× upstream, and a cost computed
+ * off the raw rate would undercharge them by 10% against the rate the Models
+ * page prints in the very next column.
+ *
+ * Provider markup is deliberately NOT applied here. A request row records the
+ * model it ran, not the route it took, so the only rate we can honestly quote
+ * per request is the gateway's list price. Where the route IS known — the
+ * Activity page's provider dimension — the caller multiplies by the
+ * provider's `paygMarkup` itself (see `providerPrice`).
+ *
+ * Returns 0 for an unknown id rather than throwing: a bad id is a data defect
+ * the catalog-coverage test catches at build time, and no render path should
+ * blow up over one.
+ */
+export function costOf(
+  modelId: string,
+  inTokens: number,
+  outTokens: number
+): number {
+  const model = MODEL_BY_ID.get(modelId);
+  if (!model) {
+    return 0;
+  }
+  return (
+    ((listPrice(model, "inputPer1M") ?? 0) * inTokens +
+      (listPrice(model, "outputPer1M") ?? 0) * outTokens) /
+    1_000_000
+  );
+}
+
+/**
+ * What a model actually costs per 1M tokens at a given output share — the
+ * blended rate a real mixed workload pays, as opposed to either sticker rate
+ * on its own.
+ *
+ * This is the number that makes an aggregate legible. Opus 4.7 lists at
+ * $5/$25, but a workload that is 45% output pays $14/M; Qwen3 Next at 22%
+ * output pays $0.38/M. A 37× spread between two rows of the same chart is not
+ * a bug in the chart — and this function is how a reviewer checks that.
+ */
+export function blendedRate(modelId: string, outShare: number): number {
+  return costOf(modelId, 1_000_000 * (1 - outShare), 1_000_000 * outShare);
+}
+
 /**
  * The seven models the PAYG pricing table (`/setup-models-default`) quotes —
  * five vendors, a full price spread from Opus at the top to Qwen3 Next at the

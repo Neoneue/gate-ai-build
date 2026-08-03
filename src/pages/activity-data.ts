@@ -1,4 +1,5 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
+import { costOf, modelById, type ProviderId } from "@/data/models";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
@@ -13,9 +14,11 @@ export type Dimension = "model" | "provider" | "apiKey";
 // value AND sparkline shape are computed from these × effectiveScale, so
 // the KPIs reconcile with the underlying data and the spark shapes reflect
 // real per-bucket variation rather than hand-drawn arrays.
-export const TOTAL_7D_BASE_DOLLARS = 238;
+//
+// Requests is the only one still authored: a request count is not a function
+// of price. TOTAL_7D_BASE_DOLLARS and TOTAL_7D_BASE_TOKENS are DERIVED from
+// the workload model further down and are exported from there.
 export const TOTAL_7D_BASE_REQUESTS = 63_793;
-export const TOTAL_7D_BASE_TOKENS = 73_450_000;
 
 // Reconciles with TokenSavings.tsx's "7d" window Total-saved rate (caching
 // 0.18% + compression 14.0% ≈ 14.2%, both real product mechanisms, not a
@@ -119,11 +122,11 @@ export const SPEND_SERIES: Record<
   // 2026-08-03, when this list still read Claude Sonnet 4.5 / GPT-5.1 /
   // Gemini 3 Pro / Llama 4.2 405B, three of which existed nowhere else in the
   // app. Keys were renamed with the labels so a future reader isn't chasing a
-  // `gpt` key that charts DeepSeek. Per-day VALUES were deliberately not
-  // touched: they are what the cross-dimension reconciliation invariant below
-  // is built on. They are authored workspace aggregates and were never
-  // price-derived — do not try to reconcile spend ÷ tokens here against the
-  // catalog's per-1M rates.
+  // `gpt` key that charts DeepSeek.
+  //
+  // The keys here and in MODEL_SERIES_7D are the same set — `pricing.test.ts`
+  // asserts it — because that block is where these series' tokens and dollars
+  // come from. `others` is the long-tail bucket: Haiku 4.5 plus Kimi K2.
   //
   // Claude Opus 4.8 is absent on purpose. It is 102 of the 153 request rows,
   // but every one of them belongs to the BYOK session cnv_7a3f9e2b, and this
@@ -144,17 +147,23 @@ export const SPEND_SERIES: Record<
   // Only three bands stack here, so the slots are picked for maximum hue AND
   // chroma separation rather than by index order: blue(255°) / orange(50°) /
   // green(145°) is the most evenly spread triad in the 8-slot palette, and
-  // green is the highest-chroma of the three so Alibaba's thin ~8% band still
-  // reads at small chart heights.
+  // green is the highest-chroma of the three, which is what Alibaba's band
+  // needs: the catalog only lets it serve DeepSeek and Qwen, the two cheapest
+  // models in the fleet, so on the SPEND lens it is under 2% and reads as a
+  // hairline. That is the finding, not a rendering bug — toggle to the TOKENS
+  // lens and the same route is 11%. Do not "fix" it by inventing spend for it.
   provider: [
     { key: "openrouter", label: "OpenRouter", slot: 1 },
     { key: "vertex", label: "Google Vertex", slot: 2 },
     { key: "alibaba", label: "Alibaba", slot: 3 },
   ],
+  // Gate keys only. `design-agent` was charted here with $21.00 of spend until
+  // 2026-08-03, while all 102 of its request rows carry no cost at all because
+  // the key is BYOK — the Activity page and the Messages page disagreed about
+  // whether Gate bills it. It is BYOK, so it bills nothing and does not chart.
   apiKey: [
     { key: "prod-agent", label: "prod-agent", slot: 1 },
     { key: "prod-web", label: "prod-web", slot: 2 },
-    { key: "design-agent", label: "design-agent", slot: 3 },
     { key: "atlas-eval", label: "atlas-eval", slot: 4 },
     { key: "development", label: "development", slot: 5 },
     { key: "ci-runner", label: "ci-runner", slot: 6 },
@@ -172,295 +181,452 @@ export const SPEND_SERIES: Record<
  * `provider` and `apiKey` values sum to that day's `model` total, and all
  * three weeks total $238.05.
  * If you change any row, verify the per-day sums still match `model`. */
-export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
-  // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all land on
-  // $238 (= TOTAL_7D_BASE_DOLLARS) so toggling Model / Provider / API key
-  // keeps the same workspace total (and that total = the Total Spend KPI by
-  // construction).
-  model: [
+/* ─── The 7d Gate-metered workload ────────────────────────────────────────
+ *
+ * Everything below this comment that is measured in dollars is DERIVED from
+ * this block. Nothing here is money; it is tokens, plus the two routing splits
+ * that say who ran them and where. `costOf` (data/models.ts) turns that into
+ * spend at catalog rates.
+ *
+ * Why it works this way. Until 2026-08-03 this file authored ~110 dollar
+ * values by hand — a 3 × 7 × N matrix of daily spend — and authored the token
+ * splits separately. Both were internally consistent and neither agreed with
+ * the price list: the Top Models card billed Qwen3 Next at 13× list and Gemini
+ * 3.1 Pro at 0.47×, so a reader who divided the Spend column by the Tokens
+ * column got a rate that appears nowhere in the catalog, on a page one click
+ * from the Models table that prints the real one. The old header said, in as
+ * many words, "do not try to reconcile spend ÷ tokens here against the
+ * catalog's per-1M rates." That instruction is now obsolete: reconciling is
+ * the point, and it is enforced by `pricing.test.ts`.
+ *
+ * The shape is a product form — per-model tokens × provider share × key share
+ * — rather than a hand-written 3-way table. That is what makes all three
+ * dimensions sum to the same totals on both metrics by construction rather
+ * than by tuning, and it is why the cross-dimension invariant the charts rely
+ * on is no longer something a future edit can quietly break.
+ *
+ * BYOK traffic is out of scope by definition: the customer's own provider
+ * account is billed, so Gate meters no dollars for it. That is why Claude Opus
+ * 4.8 (102 of the 153 request rows, all one BYOK session) does not appear
+ * here, and why `design-agent` is not a charted key.
+ */
+
+/** One model's 7d Gate-metered volume, split the way the workload actually
+ *  splits it. Output share is the expensive half of the bill — Opus at 45%
+ *  output pays $14/M against a $5 sticker rate — so it is authored per model
+ *  rather than assumed flat. Values carry over from MODEL_ROWS' own in/out
+ *  ratios, which is where they were measured. */
+type ModelUsage = {
+  /** Canonical catalog id. `models-catalog.test.ts` pins it to a real row. */
+  id: string;
+  tokensIn: number;
+  tokensOut: number;
+};
+
+/** Chart series → the models it aggregates. Five named models plus the
+ *  `others` long-tail bucket, which is where Haiku 4.5 and Kimi K2 Thinking
+ *  live. Series keys and labels are SPEND_SERIES.model's; the parity is
+ *  asserted, not assumed. */
+export const MODEL_SERIES_7D: Record<string, ModelUsage[]> = {
+  // 27.2% of tokens, 29.6% of spend — the workhorse, and the only series
+  // whose two shares are close to each other.
+  sonnet: [
     {
-      sonnet: 6.68,
-      deepseek: 5.14,
-      gemini: 3.34,
-      opus: 8.73,
-      qwen: 2.31,
-      others: 1.54,
-    },
-    {
-      sonnet: 7.19,
-      deepseek: 5.39,
-      gemini: 3.6,
-      opus: 9.76,
-      qwen: 2.57,
-      others: 1.54,
-    },
-    {
-      sonnet: 7.7,
-      deepseek: 5.65,
-      gemini: 3.85,
-      opus: 10.53,
-      qwen: 2.57,
-      others: 1.8,
-    },
-    {
-      sonnet: 8.22,
-      deepseek: 5.91,
-      gemini: 4.11,
-      opus: 11.3,
-      qwen: 2.82,
-      others: 1.8,
-    },
-    {
-      sonnet: 8.73,
-      deepseek: 6.16,
-      gemini: 4.37,
-      opus: 12.07,
-      qwen: 2.82,
-      others: 1.8,
-    },
-    {
-      sonnet: 8.99,
-      deepseek: 6.68,
-      gemini: 4.37,
-      opus: 13.09,
-      qwen: 2.82,
-      others: 2.05,
-    },
-    {
-      sonnet: 9.5,
-      deepseek: 6.68,
-      gemini: 4.62,
-      opus: 14.12,
-      qwen: 3.08,
-      others: 2.05,
+      id: "anthropic/claude-sonnet-5",
+      tokensIn: 16_367_200,
+      tokensOut: 3_592_800,
     },
   ],
-  // Routing split, day-for-day reconciled against the `model` rows above:
-  // openrouter 68% / vertex 24% / alibaba 8%, with alibaba carrying the
-  // rounding remainder so each day's three values sum EXACTLY to that day's
-  // model total. Ordering + dominance come from production (OpenRouter 98.6%
-  // of real spend); the gap is softened using catalog coverage (OpenRouter
-  // 25/25 models, Vertex 23/25, Alibaba 3/25), which makes Vertex a genuine
-  // second source. Prod's literal 98.6/1.4/0 renders as one bar with two
-  // hairlines, so it is not the shape we chart. 7d: $161.87 / $57.13 / $19.05.
-  provider: [
+  // 11.9% of tokens, 2.4% of spend. DeepSeek V4 Pro lists at $0.48/$0.96
+  // after its 1.1 model markup, so a tenth of the traffic costs a fortieth
+  // of the money.
+  deepseek: [
     {
-      openrouter: 18.86,
-      vertex: 6.66,
-      alibaba: 2.22,
-    },
-    {
-      openrouter: 20.43,
-      vertex: 7.21,
-      alibaba: 2.41,
-    },
-    {
-      openrouter: 21.83,
-      vertex: 7.7,
-      alibaba: 2.57,
-    },
-    {
-      openrouter: 23.23,
-      vertex: 8.2,
-      alibaba: 2.73,
-    },
-    {
-      openrouter: 24.45,
-      vertex: 8.63,
-      alibaba: 2.87,
-    },
-    {
-      openrouter: 25.84,
-      vertex: 9.12,
-      alibaba: 3.04,
-    },
-    {
-      openrouter: 27.23,
-      vertex: 9.61,
-      alibaba: 3.21,
+      id: "deepseek/deepseek-v4-pro",
+      tokensIn: 5_668_000,
+      tokensOut: 3_052_000,
     },
   ],
-  // Day-for-day reconciled against the `model` rows above (was drifting
-  // -$0.90 to +$1.17 per day, grand total $237.95 vs $238.05). The four small
-  // keys keep their authored step pattern untouched — the paired-day repeats
-  // ARE their character — so the whole daily correction lands on prod-agent
-  // and prod-web, split by their existing ratio, with prod-agent taking the
-  // rounding remainder. Both stay monotonically rising; their 7d totals moved
-  // +$0.06 / +$0.04, and no key's share of the workspace moved by more than
-  // 0.01pp. Per-key 7d sums equal the Gate rows in API_KEY_ROWS exactly:
-  // prod-agent 92.37, prod-web 90.04, design-agent 21.00, atlas-eval 20.00,
-  // development 13.20, ci-runner 1.44. Total $238.05.
-  apiKey: [
+  // 16.8% of tokens, 26.2% of spend — the $12/M output rate does that.
+  gemini: [
     {
-      "prod-agent": 10.51,
-      "prod-web": 10.44,
-      "design-agent": 2.53,
-      "atlas-eval": 2.38,
-      development: 1.72,
-      "ci-runner": 0.16,
+      id: "google/gemini-3-1-pro-preview",
+      tokensIn: 8_638_000,
+      tokensOut: 3_702_000,
+    },
+  ],
+  // 5.6% of tokens, 24.7% of spend. The single most useful fact this page
+  // has, and it only reads as a fact because both numbers now come from the
+  // same place.
+  opus: [
+    {
+      id: "anthropic/claude-opus-4-7",
+      tokensIn: 2_244_000,
+      tokensOut: 1_836_000,
+    },
+  ],
+  // 20.1% of tokens — second only to Sonnet — and 2.4% of spend, dead last.
+  // Cheap tokens buy a lot of tokens.
+  qwen: [
+    {
+      id: "qwen/qwen3-next-80b-a3b-instruct",
+      tokensIn: 11_505_000,
+      tokensOut: 3_245_000,
+    },
+  ],
+  // The long tail: high-volume short classification on Haiku, plus a thin
+  // slice of Kimi reasoning.
+  others: [
+    {
+      id: "anthropic/claude-haiku-4-5",
+      tokensIn: 7_512_000,
+      tokensOut: 5_008_000,
     },
     {
-      "prod-agent": 11.87,
-      "prod-web": 11.39,
-      "design-agent": 2.53,
-      "atlas-eval": 2.38,
-      development: 1.72,
-      "ci-runner": 0.16,
-    },
-    {
-      "prod-agent": 12.34,
-      "prod-web": 12.12,
-      "design-agent": 2.9,
-      "atlas-eval": 2.86,
-      development: 1.72,
-      "ci-runner": 0.16,
-    },
-    {
-      "prod-agent": 13.36,
-      "prod-web": 13.16,
-      "design-agent": 2.9,
-      "atlas-eval": 2.86,
-      development: 1.72,
-      "ci-runner": 0.16,
-    },
-    {
-      "prod-agent": 14.19,
-      "prod-web": 13.76,
-      "design-agent": 3.26,
-      "atlas-eval": 2.86,
-      development: 1.72,
-      "ci-runner": 0.16,
-    },
-    {
-      "prod-agent": 14.7,
-      "prod-web": 14.09,
-      "design-agent": 3.26,
-      "atlas-eval": 3.33,
-      development: 2.3,
-      "ci-runner": 0.32,
-    },
-    {
-      "prod-agent": 15.4,
-      "prod-web": 15.08,
-      "design-agent": 3.62,
-      "atlas-eval": 3.33,
-      development: 2.3,
-      "ci-runner": 0.32,
+      id: "moonshotai/kimi-k2-thinking",
+      tokensIn: 702_000,
+      tokensOut: 378_000,
     },
   ],
 };
 
-/** Per-series 7d totals, derived once from SPEND_BASE. These are the
- * canonical "how much did series X spend across the workspace 7d"
- * numbers; the chart distributes them across N buckets per range via
- * distributeSeries(). Sum across series = TOTAL_7D_BASE_DOLLARS = $238. */
-export const SPEND_TOTALS_7D: Record<
-  Dimension,
-  Record<string, number>
-> = Object.fromEntries(
-  Object.entries(SPEND_BASE).map(([dim, rows]) => [
-    dim,
-    rows.reduce(
-      (acc, row) => {
-        for (const [k, v] of Object.entries(row)) {
-          acc[k] = (acc[k] || 0) + v;
-        }
-        return acc;
-      },
-      {} as Record<string, number>
-    ),
-  ])
-) as Record<Dimension, Record<string, number>>;
+/** How each model's tokens divide across the three gateway routes.
+ *
+ * Constrained by the catalog, not by taste: Alibaba serves only DeepSeek and
+ * Qwen, Vertex serves everything except DeepSeek, and `pricing.test.ts` fails
+ * on any pair the catalog does not list. Each model's shares sum to 1.
+ *
+ * This split is also where OpenRouter's +10% PAYG markup enters the bill —
+ * read per (model, provider) off the catalog, never typed here — which is why
+ * OpenRouter's share of dollars runs ahead of its share of tokens. */
+export const PROVIDER_MIX_7D: Record<
+  string,
+  Partial<Record<ProviderId, number>>
+> = {
+  "anthropic/claude-sonnet-5": { openrouter: 0.66, vertex: 0.34 },
+  "anthropic/claude-opus-4-7": { openrouter: 0.72, vertex: 0.28 },
+  "anthropic/claude-haiku-4-5": { openrouter: 0.76, vertex: 0.24 },
+  "moonshotai/kimi-k2-thinking": { openrouter: 0.7, vertex: 0.3 },
+  "google/gemini-3-1-pro-preview": { openrouter: 0.5, vertex: 0.5 },
+  "deepseek/deepseek-v4-pro": { openrouter: 0.56, alibaba: 0.44 },
+  "qwen/qwen3-next-80b-a3b-instruct": {
+    openrouter: 0.58,
+    vertex: 0.13,
+    alibaba: 0.29,
+  },
+};
 
-/** Scale a raw per-series split so it sums *exactly* to `target`, absorbing
- * the rounding remainder in the largest series. Used to anchor each
- * dimension's request totals to TOTAL_7D_BASE_REQUESTS — same single-
- * source-of-truth invariant the spend path gets from SPEND_BASE summing
- * to $238. */
-function rescaleToTotal(
-  raw: Record<string, number>,
-  target: number
-): Record<string, number> {
-  const entries = Object.entries(raw);
-  const rawSum = entries.reduce((a, [, v]) => a + v, 0) || 1;
-  const scaled = entries.map(
-    ([k, v]) => [k, Math.round((v * target) / rawSum)] as const
+/** How each model's tokens divide across the workspace's Gate keys.
+ *
+ * Read down a column, not across a row: each model's shares sum to 1. The
+ * mixes carry the keys' jobs — `prod-web` is user-facing chat and leans
+ * Sonnet, `prod-agent` is agentic and takes most of the Opus, `atlas-eval` is
+ * an evaluation harness and buys the cheap models by the million. Only Gate
+ * keys appear; BYOK keys bill the customer's own provider account. */
+export const KEY_MIX_7D: Record<string, Record<string, number>> = {
+  "anthropic/claude-sonnet-5": {
+    "prod-agent": 0.34,
+    "prod-web": 0.56,
+    "atlas-eval": 0.03,
+    development: 0.05,
+    "ci-runner": 0.02,
+  },
+  "anthropic/claude-opus-4-7": {
+    "prod-agent": 0.62,
+    "prod-web": 0.28,
+    "atlas-eval": 0.04,
+    development: 0.05,
+    "ci-runner": 0.01,
+  },
+  "google/gemini-3-1-pro-preview": {
+    "prod-agent": 0.44,
+    "prod-web": 0.42,
+    "atlas-eval": 0.06,
+    development: 0.06,
+    "ci-runner": 0.02,
+  },
+  "deepseek/deepseek-v4-pro": {
+    "prod-agent": 0.3,
+    "prod-web": 0.42,
+    "atlas-eval": 0.18,
+    development: 0.07,
+    "ci-runner": 0.03,
+  },
+  "qwen/qwen3-next-80b-a3b-instruct": {
+    "prod-agent": 0.38,
+    "prod-web": 0.38,
+    "atlas-eval": 0.14,
+    development: 0.07,
+    "ci-runner": 0.03,
+  },
+  "anthropic/claude-haiku-4-5": {
+    "prod-agent": 0.42,
+    "prod-web": 0.44,
+    "atlas-eval": 0.05,
+    development: 0.05,
+    "ci-runner": 0.04,
+  },
+  "moonshotai/kimi-k2-thinking": {
+    "prod-agent": 0.4,
+    "prod-web": 0.36,
+    "atlas-eval": 0.14,
+    development: 0.07,
+    "ci-runner": 0.03,
+  },
+};
+
+/** Gateway markup for one route, read off the catalog entry rather than
+ *  restated here — OpenRouter's 1.1 lives in `data/models.ts` and the badge on
+ *  the Models detail page reads the same field. An unlisted pair returns 1 and
+ *  is caught by `pricing.test.ts`, which fails on routes the catalog does not
+ *  serve. */
+function routeMarkup(modelId: string, provider: ProviderId): number {
+  return (
+    modelById(modelId)?.providers.find((p) => p.id === provider)?.paygMarkup ??
+    1
   );
-  const scaledSum = scaled.reduce((a, [, v]) => a + v, 0);
-  // Largest series absorbs the remainder so the total lands exactly.
-  let maxIdx = 0;
-  for (let i = 1; i < scaled.length; i++) {
-    if (scaled[i]![1] > scaled[maxIdx]![1]) {
-      maxIdx = i;
-    }
-  }
+}
+
+/** Every (model, provider, key) atom of the 7d workload, with its tokens and
+ *  what it cost. This is the one table; every total on this page is a
+ *  `groupBy` over it, which is why the dimensions cannot disagree. */
+export type UsageCell = {
+  series: string;
+  model: string;
+  provider: ProviderId;
+  apiKey: string;
+  tokensIn: number;
+  tokensOut: number;
+  tokens: number;
+  spend: number;
+};
+
+export const USAGE_7D: UsageCell[] = Object.entries(MODEL_SERIES_7D).flatMap(
+  ([series, models]) =>
+    models.flatMap((m) => {
+      const listCost = costOf(m.id, m.tokensIn, m.tokensOut);
+      const tokens = m.tokensIn + m.tokensOut;
+      return Object.entries(PROVIDER_MIX_7D[m.id] ?? {}).flatMap(
+        ([provider, providerShare]) =>
+          Object.entries(KEY_MIX_7D[m.id] ?? {}).map(([apiKey, keyShare]) => {
+            const share = (providerShare ?? 0) * keyShare;
+            return {
+              series,
+              model: m.id,
+              provider: provider as ProviderId,
+              apiKey,
+              tokensIn: m.tokensIn * share,
+              tokensOut: m.tokensOut * share,
+              tokens: tokens * share,
+              spend:
+                listCost * share * routeMarkup(m.id, provider as ProviderId),
+            };
+          })
+      );
+    })
+);
+
+/** Group the workload by a dimension. `metric` picks tokens or dollars; both
+ *  come off the same rows, so a series' spend and its tokens are two readings
+ *  of one fact rather than two authored numbers that happen to sit together. */
+function groupUsage(
+  by: (cell: UsageCell) => string,
+  metric: (cell: UsageCell) => number
+): Record<string, number> {
   const out: Record<string, number> = {};
-  scaled.forEach(([k, v], i) => {
-    out[k] = i === maxIdx ? v + (target - scaledSum) : v;
-  });
+  for (const cell of USAGE_7D) {
+    out[by(cell)] = (out[by(cell)] ?? 0) + metric(cell);
+  }
   return out;
 }
 
-/** Per-series 7d *token* totals per dimension. Mirrors SPEND_TOTALS_7D
- * but for the tokens metric. Every dimension's totals sum to exactly
- * TOTAL_7D_BASE_TOKENS (= 24,500,000) via rescaleToTotal, so the chart-sum
- * = Tokens Used KPI invariant holds under any dimension.
- *
- * Splits are sourced from real per-entity token counts, NOT scaled from
- * spend — so the token distribution genuinely differs in shape:
- * • model → from MODEL_ROWS (tokensIn + tokensOut). Sonnet leads on
- * token volume; Opus, which leads on spend, is near the
- * bottom — high price per token vs. high token volume.
- * • apiKey → from API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted
- * Gate keys.
- * • provider → the routing split, tilted toward volume: cheap tokens buy
- * more of them, so Vertex (Gemini) and Alibaba (Qwen) each
- * carry a larger share of TOKENS than of SPEND. */
-export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
-  // 7d window token totals (independent from the workspace-lifetime numbers
-  // in MODEL_ROWS — Qwen's 7d rate and Opus' 7d rate are tuned for this
-  // window only): sonnet 6_550_000, qwen 4_840_000, others 4_460_000,
-  // gemini 4_050_000, deepseek 2_860_000, opus 1_340_000. Sonnet dominates on
-  // token volume; Opus' high price-per-token keeps it near the bottom.
-  model: rescaleToTotal(
-    {
-      sonnet: 6_550_000,
-      deepseek: 2_860_000,
-      gemini: 4_050_000,
-      opus: 1_340_000,
-      qwen: 4_840_000,
-      others: 4_460_000,
-    },
-    TOTAL_7D_BASE_TOKENS
-  ),
-  // Provider token split = 62 / 27 / 11, vs the 68 / 24 / 8 SPEND split.
-  // Same routing, different denominator: Vertex's Gemini and Alibaba's Qwen
-  // models are materially cheaper per token, so both buy a bigger slice of
-  // token volume than of dollars. Raw values already sum to
-  // TOTAL_7D_BASE_TOKENS, so rescaleToTotal is a no-op pass-through here.
-  provider: rescaleToTotal(
-    {
-      openrouter: 45_540_000,
-      vertex: 19_830_000,
-      alibaba: 8_080_000,
-    },
-    TOTAL_7D_BASE_TOKENS
-  ),
-  // API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted Gate keys:
-  // prod-web 18_000_000, prod-agent 16_000_000, design-agent 4_200_000,
-  // atlas-eval 3_200_000, development 2_200_000, ci-runner 850_000.
-  apiKey: rescaleToTotal(
-    {
-      "prod-agent": 16_000_000,
-      "prod-web": 18_000_000,
-      "design-agent": 4_200_000,
-      "atlas-eval": 3_200_000,
-      development: 2_200_000,
-      "ci-runner": 850_000,
-    },
-    TOTAL_7D_BASE_TOKENS
-  ),
+const cellTokens = (c: UsageCell) => c.tokens;
+const cellSpend = (c: UsageCell) => c.spend;
+const DIMENSION_KEY: Record<Dimension, (cell: UsageCell) => string> = {
+  model: (c) => c.series,
+  provider: (c) => c.provider,
+  apiKey: (c) => c.apiKey,
 };
+
+/** The in/out split behind an entity's totals. The tables render both columns,
+ *  and output tokens are where the money is (5× the input rate on every
+ *  Anthropic model, 6× on Gemini 3.1 Pro), so a row whose in/out split did not
+ *  match the split its cost was computed from would be lying twice over. */
+export type TokenSplit = { tokensIn: number; tokensOut: number };
+
+function splitBy(by: (cell: UsageCell) => string): Record<string, TokenSplit> {
+  const out: Record<string, TokenSplit> = {};
+  for (const cell of USAGE_7D) {
+    const k = by(cell);
+    const acc = out[k] ?? { tokensIn: 0, tokensOut: 0 };
+    acc.tokensIn += cell.tokensIn;
+    acc.tokensOut += cell.tokensOut;
+    out[k] = acc;
+  }
+  return out;
+}
+
+const rounded = (s: TokenSplit): TokenSplit => ({
+  tokensIn: Math.round(s.tokensIn),
+  tokensOut: Math.round(s.tokensOut),
+});
+
+/** 7d in/out tokens per Gate key — what UsageByKey's Tokens In / Tokens Out
+ *  columns show, and the exact tokens its Spend column was priced from. */
+export const KEY_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
+  Object.entries(splitBy((c) => c.apiKey)).map(([k, v]) => [k, rounded(v)])
+);
+
+/** 7d in/out tokens per catalog model — the Top Models card's two columns. */
+export const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
+  Object.entries(splitBy((c) => c.model)).map(([k, v]) => [k, rounded(v)])
+);
+
+/** 7d spend per catalog model, routing markup included. Not simply
+ *  `costOf(model, in, out)`: OpenRouter bills 10% over list, so what a model
+ *  actually costs depends on where its traffic was sent. Grouping the same
+ *  cells that produced MODEL_TOKENS_7D is what keeps the Spend column and the
+ *  token columns beside it describing one transaction. */
+export const MODEL_SPEND_7D: Record<string, number> = settle(
+  groupUsage((c) => c.model, cellSpend),
+  2
+);
+
+/** Per-series 7d totals in each unit, grouped out of USAGE_7D.
+ *
+ * These are the canonical "how much did series X spend / send across the
+ * workspace in 7d" numbers; the chart distributes them across N buckets per
+ * range via distributeSeries(). Both metrics come off the same rows, so every
+ * dimension sums to the same workspace total in both units — the
+ * charts-must-reconcile contract, now structural rather than tuned.
+ *
+ * Money is rounded to the cent and tokens to whole tokens, with the largest
+ * series absorbing the remainder so the rounded parts still sum exactly to the
+ * rounded whole. */
+function settle(
+  totals: Record<string, number>,
+  decimals: number
+): Record<string, number> {
+  const scale = 10 ** decimals;
+  const round = (n: number) => Math.round(n * scale) / scale;
+  const entries = Object.entries(totals);
+  const target = round(entries.reduce((a, [, v]) => a + v, 0));
+  let biggest = entries[0]?.[0] ?? "";
+  for (const [k, v] of entries) {
+    if (v > (totals[biggest] ?? 0)) {
+      biggest = k;
+    }
+  }
+  const out: Record<string, number> = {};
+  let rest = 0;
+  for (const [k, v] of entries) {
+    if (k !== biggest) {
+      out[k] = round(v);
+      rest += out[k];
+    }
+  }
+  out[biggest] = round(target - rest);
+  return out;
+}
+
+const byDimension = (metric: (cell: UsageCell) => number, decimals: number) =>
+  Object.fromEntries(
+    Object.entries(DIMENSION_KEY).map(([dim, key]) => [
+      dim,
+      settle(groupUsage(key, metric), decimals),
+    ])
+  ) as Record<Dimension, Record<string, number>>;
+
+export const SPEND_TOTALS_7D: Record<
+  Dimension,
+  Record<string, number>
+> = byDimension(cellSpend, 2);
+
+/** Per-series 7d *token* totals per dimension. Mirrors SPEND_TOTALS_7D and
+ * shares its source rows, which is the whole point: the token distribution
+ * genuinely differs in shape from the spend distribution, and now it differs
+ * for the reason the page claims rather than because two arrays were authored
+ * independently.
+ *
+ * • model → Sonnet leads on volume (27%) and on spend (30%); Qwen3 Next is
+ *   second on volume (20%) and last on spend (2%); Opus 4.7 is 6% of tokens
+ *   and 25% of spend. Divide any pair and you get that model's blended rate
+ *   at its own output share, which is what `blendedRate` returns.
+ * • provider → cheap tokens buy more of them, so Alibaba (DeepSeek + Qwen
+ *   only, per the catalog) carries 11% of tokens against under 2% of dollars.
+ *   OpenRouter runs the other way: its +10% PAYG markup lifts its dollar
+ *   share above its token share.
+ * • apiKey → `atlas-eval` buys the cheap models by the million and lands far
+ *   down the spend order; `prod-agent` takes most of the Opus and leads it. */
+export const TOKENS_TOTALS_7D: Record<
+  Dimension,
+  Record<string, number>
+> = byDimension(cellTokens, 0);
+
+const sumValues = (r: Record<string, number>) =>
+  Object.values(r).reduce((a, b) => a + b, 0);
+
+/** Workspace 7d spend — the sum of what the catalog charges for the workload
+ *  above, and the Total Spend KPI by construction. It was authored as a flat
+ *  `238` until 2026-08-03; at real prices the same traffic costs ~$248, and
+ *  the difference is no longer a number anyone gets to choose. */
+export const TOTAL_7D_BASE_DOLLARS = +sumValues(SPEND_TOTALS_7D.model).toFixed(
+  2
+);
+
+/** Workspace 7d tokens — the sum of MODEL_SERIES_7D. Unchanged at 73,450,000:
+ *  tokens are the authored fact here, and this reconciliation deliberately did
+ *  not move them. Only the dollars they imply changed. */
+export const TOTAL_7D_BASE_TOKENS = sumValues(TOKENS_TOTALS_7D.model);
+
+/** Relative weight of each of the 7 base days — the authored daily shape,
+ *  carried over unchanged from the hand-written SPEND_BASE matrix this
+ *  replaced. A workspace ramping up over the week. */
+const DAY_SHAPE_7D = [27.74, 30.05, 32.1, 34.16, 35.95, 38.0, 40.05];
+
+/** Base (7d) chart data: each series' 7d total spread over the 7 days on the
+ * shared daily shape. Other ranges derive from this by scaling values and
+ * relabeling the x-axis.
+ *
+ * INVARIANT (charts-must-reconcile): every dimension sums to the SAME value on
+ * EVERY day, not merely across the week — otherwise toggling the dimension
+ * selector silently rewrites the daily bar heights while the KPI total holds
+ * still. That used to be a property of ~110 hand-tuned numbers and a test that
+ * checked them. It is now a property of the arithmetic: every dimension has
+ * the same grand total (they group the same rows) and every dimension uses the
+ * same day shape, so day d is `round2(grand × shape[d] / Σshape)` in all
+ * three. The test stays as a regression guard. */
+export const SPEND_BASE: Record<
+  Dimension,
+  Array<Record<string, number>>
+> = Object.fromEntries(
+  Object.entries(SPEND_TOTALS_7D).map(([dim, totals]) => {
+    const grand = sumValues(totals);
+    const shapeSum = DAY_SHAPE_7D.reduce((a, b) => a + b, 0);
+    let biggest = Object.keys(totals)[0] ?? "";
+    for (const [k, v] of Object.entries(totals)) {
+      if (v > (totals[biggest] ?? 0)) {
+        biggest = k;
+      }
+    }
+    return [
+      dim,
+      DAY_SHAPE_7D.map((weight) => {
+        const dayTotal = +((grand * weight) / shapeSum).toFixed(2);
+        const row: Record<string, number> = {};
+        let rest = 0;
+        for (const [k, v] of Object.entries(totals)) {
+          if (k !== biggest) {
+            row[k] = +((dayTotal * v) / grand).toFixed(2);
+            rest += row[k];
+          }
+        }
+        row[biggest] = +(dayTotal - rest).toFixed(2);
+        return row;
+      }),
+    ];
+  })
+) as Record<Dimension, Array<Record<string, number>>>;
 
 /** Distribute `total` across `count` buckets with a mild upward trend
  * (0.7 → 1.3) and per-bucket noise that mimics real time-series:
@@ -608,29 +774,40 @@ export type ApiKeyRow = {
   revoked?: boolean;
 };
 
-/** Five workspace keys — matches the canonical set used on Requests
- *  (prod-web, prod-agent, development, byok-*) re-spun with the two BYOK slots
- *  given product names (openclaw, hermes-agent).
+/** The workspace's keys. Two kinds, and the difference is the whole reason
+ *  this table has a Spend column at all:
  *
- *  `spend` on the six Gate keys is the per-key 7d total of SPEND_BASE.apiKey,
- *  so the table's Spend column and the chart's breakdown panel cannot drift.
- *  The six sum to $238.05 = TOTAL_7D_BASE_DOLLARS; BYOK keys are $0 by
- *  definition (their spend lands on the user's own provider bill).
+ *  Gate keys are metered by the gateway, so their `tokensIn` / `tokensOut` /
+ *  `spend` are DERIVED — the same USAGE_7D cells the trend chart groups, read
+ *  by key. The table's Spend column and the chart's breakdown panel are the
+ *  same numbers, and the Spend column divided by the two token columns is the
+ *  blended rate the catalog charges for that key's model mix. None of it is
+ *  authored.
  *
- *  Resulting top-5 leaders (only 5 keys, so all show):
- *  Spend  → prod-agent, prod-web, openclaw, hermes-agent, development
- *  Requests  → prod-web, prod-agent, openclaw, development, hermes-agent
- *  Tokens  → prod-web, prod-agent, openclaw, hermes-agent, development */
-export const API_KEY_ROWS: ApiKeyRow[] = [
+ *  BYOK keys bill the customer's own provider account. Gate sees the traffic
+ *  but never the invoice, so their tokens stay authored and their spend is $0
+ *  by definition, not by omission.
+ *
+ *  `design-agent` moved from Gate to BYOK on 2026-08-03. It was charted with
+ *  $21.00 of spend while all 102 of its request rows on the Messages page
+ *  carry no cost, because the session is BYOK — the two pages disagreed about
+ *  whether the gateway bills this key. The request rows are the primary
+ *  evidence, so BYOK is what it is.
+ *
+ *  Resulting top-4 leaders:
+ *  Spend    → prod-agent, prod-web, development, atlas-eval
+ *  Requests → prod-web, nova-chat, design-agent, development
+ *  Tokens   → prod-web, prod-agent, design-agent, openclaw */
+type ApiKeySeed = Omit<ApiKeyRow, "tokensIn" | "tokensOut" | "spend"> &
+  Partial<TokenSplit>;
+
+const API_KEY_SEEDS: ApiKeySeed[] = [
   {
     key: "prod-web",
     label: "prod-web",
     owner: "Chad Ponticas",
     path: "Gate",
     requests: 60_000,
-    tokensIn: 15_000_000,
-    tokensOut: 3_000_000,
-    spend: 90.04,
     savings: 0.2563,
   },
   {
@@ -639,9 +816,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     owner: "Chad Ponticas",
     path: "Gate",
     requests: 12_000,
-    tokensIn: 15_384_615,
-    tokensOut: 615_385,
-    spend: 92.37,
     savings: 0.27,
   },
   {
@@ -652,7 +826,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 8000,
     tokensIn: 10_096_154,
     tokensOut: 403_846,
-    spend: 0.0,
     savings: 0.21,
   },
   {
@@ -663,7 +836,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 5500,
     tokensIn: 6_923_077,
     tokensOut: 276_923,
-    spend: 0.0,
     savings: 0.2,
   },
   {
@@ -672,20 +844,18 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     owner: "Jordan Lee",
     path: "Gate",
     requests: 15_000,
-    tokensIn: 1_650_000,
-    tokensOut: 550_000,
-    spend: 13.2,
     savings: 0.235,
   },
+  // Tokens are the real counts off its own 102 request rows (conversation
+  // cnv_7a3f9e2b), which is the session that makes this key BYOK.
   {
     key: "design-agent",
     label: "design-agent",
     owner: "Chad Ponticas",
-    path: "Gate",
+    path: "BYOK",
     requests: 13_000,
-    tokensIn: 3_500_000,
-    tokensOut: 700_000,
-    spend: 21.0,
+    tokensIn: 19_386_869,
+    tokensOut: 59_938,
     savings: 0.25,
   },
   {
@@ -694,9 +864,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     owner: "Jordan Lee",
     path: "Gate",
     requests: 6500,
-    tokensIn: 708_333,
-    tokensOut: 141_667,
-    spend: 1.44,
     savings: 0.19,
     revoked: true,
   },
@@ -708,7 +875,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 18_000,
     tokensIn: 5_416_667,
     tokensOut: 1_083_333,
-    spend: 0.0,
     savings: 0.225,
   },
   {
@@ -717,9 +883,6 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     owner: "Mateus Silva",
     path: "Gate",
     requests: 2000,
-    tokensIn: 3_000_000,
-    tokensOut: 200_000,
-    spend: 20.0,
     savings: 0.285,
     revoked: true,
   },
@@ -733,11 +896,47 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 0,
     tokensIn: 0,
     tokensOut: 0,
-    spend: 0.0,
     savings: 0,
     revoked: true,
   },
 ];
+
+export const API_KEY_ROWS: ApiKeyRow[] = (() => {
+  // Gate-key request counts are rescaled onto TOTAL_7D_BASE_REQUESTS so this
+  // table sums to the same workspace the Top Models card and the KPI rail
+  // describe. The authored shape (and so the leaderboard order) is preserved;
+  // only the scale moves. BYOK keys keep their authored counts — they are not
+  // part of the metered universe, which is the same reason their spend is $0.
+  const gate = API_KEY_SEEDS.filter((s) => s.path === "Gate");
+  const gateTotal = gate.reduce((a, s) => a + s.requests, 0) || 1;
+  const requests = settle(
+    Object.fromEntries(
+      gate.map((s) => [
+        s.key,
+        (s.requests * TOTAL_7D_BASE_REQUESTS) / gateTotal,
+      ])
+    ),
+    0
+  );
+  return API_KEY_SEEDS.map((seed) => {
+    if (seed.path === "BYOK") {
+      return {
+        ...seed,
+        tokensIn: seed.tokensIn ?? 0,
+        tokensOut: seed.tokensOut ?? 0,
+        spend: 0,
+      };
+    }
+    const tokens = KEY_TOKENS_7D[seed.key];
+    return {
+      ...seed,
+      requests: requests[seed.key] ?? 0,
+      tokensIn: tokens?.tokensIn ?? 0,
+      tokensOut: tokens?.tokensOut ?? 0,
+      spend: SPEND_TOTALS_7D.apiKey[seed.key] ?? 0,
+    };
+  });
+})();
 
 export type ModelRow = {
   /** Canonical catalog id. The label is looked up from it, never authored. */
@@ -749,91 +948,115 @@ export type ModelRow = {
   spend: number;
 };
 
-/** Numbers are tuned so the three Top-by-axis cards diverge realistically.
- *  Price-per-token differs by ~25× between Qwen3 Next and Opus, and
- *  tokens-per-request differs by ~5× between short-classification (Haiku) and
- *  long-context (Qwen). Sums reconcile with the 7d KPI rail (~$1,248 spend,
- *  ~48,293 requests, ~18.4M tokens).
+/** The Top Models card. Seven catalog models, and only two of the four
+ *  columns are authored.
  *
- *  Resulting top-5 leaders:
- *    Spend     → Opus 4.7, Sonnet 5, DeepSeek V4 Pro, Gemini 3.1 Pro, Qwen3 Next
- *    Requests  → Haiku 4.5, Sonnet 5, Gemini 3.1 Pro, DeepSeek V4 Pro, Qwen3 Next
- *    Tokens    → Sonnet 5, Qwen3 Next, Haiku 4.5, Gemini 3.1 Pro, DeepSeek V4 Pro
+ *  `tokensIn` / `tokensOut` / `spend` are DERIVED from MODEL_SERIES_7D — the
+ *  same cells the trend chart groups — so this card and the chart above it
+ *  describe one workload rather than two. They did not before 2026-08-03:
+ *  this card put Opus 4.7 at 13.4M tokens while the chart's token lens put it
+ *  at 4.1M, and priced Qwen3 Next at $6.00 for volume the catalog charges
+ *  $0.46 for. Spend includes routing markup, because OpenRouter bills 10% over
+ *  list and where the traffic went is part of what it cost.
+ *
+ *  `requests` stays authored — a request count is not a function of price —
+ *  but is rescaled onto TOTAL_7D_BASE_REQUESTS so the card sums to the KPI
+ *  rail above it. The old comment here claimed that reconciliation and quoted
+ *  "~$1,248 spend, ~48,293 requests, ~18.4M tokens", none of which were this
+ *  table's totals by then.
+ *
+ *  Resulting top-4 leaders:
+ *    Spend     → Sonnet 5, Gemini 3.1 Pro, Opus 4.7, Haiku 4.5
+ *    Requests  → Haiku 4.5, Sonnet 5, Gemini 3.1 Pro, DeepSeek V4 Pro
+ *    Tokens    → Sonnet 5, Qwen3 Next, Haiku 4.5, Gemini 3.1 Pro
+ *
+ *  Read the Spend and Tokens rows against each other: Qwen3 Next is second on
+ *  volume and last on money, Opus 4.7 is second-to-last on volume and third on
+ *  money. That contrast is the card's entire job, and it is only true because
+ *  both columns now come from the catalog.
  *
  *  Labels are read from the catalog (`modelName`) off the canonical id, so
  *  this card can never re-spell a model the Models page names differently —
  *  the drift that had it advertising GPT-5.1, Llama 4.2 405B and Mistral
- *  Large 3 until 2026-08-03. */
-// MODEL_ROWS is the source of truth for the Top Models card. tokensIn /
-// tokensOut are the per-model workspace aggregates; the card computes total
-// tokens at the call site (tokensIn + tokensOut). The trend breakdown panel
-// no longer reads in/out — cumulative only; see TrendBreakdownPanel. The
-// table at the bottom (UsageByKey) is where in/out lives. Production reads
-// these from real traffic; replace the rows.
-//
-// Seven rows, unchanged in count and in every number: the KPI-rail sums above
-// depend on them. Only the identities moved, 1:1 onto the catalog models that
-// carry request rows. Claude Opus 4.8 stays out for the same reason it is out
-// of SPEND_SERIES — its 102 rows are all the BYOK session, which Gate does
-// not meter.
-export const MODEL_ROWS: ModelRow[] = [
+ *  Large 3 until 2026-08-03. Claude Opus 4.8 stays out for the same reason it
+ *  is out of SPEND_SERIES: its 102 request rows are all the BYOK session,
+ *  which Gate does not meter. */
+const MODEL_ROW_SEEDS: {
+  key: string;
+  vendor: Vendor;
+  /** Average call size for this model's workload, which is what actually
+   *  determines how many requests its token volume represents. Authoring the
+   *  call size instead of the request count is what keeps the two lenses of
+   *  this card honest against each other: Haiku's 450-token classification
+   *  calls and Opus' 9,000-token agentic runs are why one leads on requests
+   *  and the other leads on spend. Authoring requests directly is how the
+   *  table ended up implying 119-token Opus calls. */
+  tokensPerRequest: number;
+}[] = [
   {
     key: "anthropic/claude-opus-4-7",
     vendor: "anthropic",
-    requests: 34_400,
-    tokensIn: 7_370_000,
-    tokensOut: 6_030_000,
-    spend: 120.6,
+    tokensPerRequest: 9000,
   },
   {
     key: "anthropic/claude-sonnet-5",
     vendor: "anthropic",
-    requests: 14_900,
-    tokensIn: 5_371_000,
-    tokensOut: 1_179_000,
-    spend: 35.4,
+    tokensPerRequest: 1400,
   },
   {
     key: "anthropic/claude-haiku-4-5",
     vendor: "anthropic",
-    requests: 25_030,
-    tokensIn: 2_676_000,
-    tokensOut: 1_784_000,
-    spend: 8.5,
+    tokensPerRequest: 450,
   },
   {
     key: "deepseek/deepseek-v4-pro",
     vendor: "deepseek",
-    requests: 6670,
-    tokensIn: 1_859_000,
-    tokensOut: 1_001_000,
-    spend: 14.0,
+    tokensPerRequest: 2500,
   },
   {
     key: "google/gemini-3-1-pro-preview",
     vendor: "google",
-    requests: 8720,
-    tokensIn: 2_835_000,
-    tokensOut: 1_215_000,
-    spend: 9.5,
+    tokensPerRequest: 2000,
   },
   {
     key: "qwen/qwen3-next-80b-a3b-instruct",
     vendor: "qwen",
-    requests: 5280,
-    tokensIn: 936_000,
-    tokensOut: 264_000,
-    spend: 6.0,
+    tokensPerRequest: 6000,
   },
   {
     key: "moonshotai/kimi-k2-thinking",
     vendor: "moonshotai",
-    requests: 690,
-    tokensIn: 247_000,
-    tokensOut: 133_000,
-    spend: 2.3,
+    tokensPerRequest: 4500,
   },
 ];
+
+export const MODEL_ROWS: ModelRow[] = (() => {
+  const modelTokens = (key: string) => {
+    const split = MODEL_TOKENS_7D[key];
+    return (split?.tokensIn ?? 0) + (split?.tokensOut ?? 0);
+  };
+  const raw = Object.fromEntries(
+    MODEL_ROW_SEEDS.map((s) => [s.key, modelTokens(s.key) / s.tokensPerRequest])
+  );
+  const rawTotal = Object.values(raw).reduce((a, b) => a + b, 0) || 1;
+  const requests = settle(
+    Object.fromEntries(
+      Object.entries(raw).map(([k, v]) => [
+        k,
+        (v * TOTAL_7D_BASE_REQUESTS) / rawTotal,
+      ])
+    ),
+    0
+  );
+  return MODEL_ROW_SEEDS.map((seed) => ({
+    key: seed.key,
+    vendor: seed.vendor,
+    requests: requests[seed.key] ?? 0,
+    tokensIn: MODEL_TOKENS_7D[seed.key]?.tokensIn ?? 0,
+    tokensOut: MODEL_TOKENS_7D[seed.key]?.tokensOut ?? 0,
+    spend: MODEL_SPEND_7D[seed.key] ?? 0,
+  }));
+})();
 
 /** Per-series 7d Total-saved rates for the trend chart's Savings lens —
  *  each series' OWN rate (what % of its tokens caching + compression save),
