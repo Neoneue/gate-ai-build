@@ -162,6 +162,11 @@ export const VENDOR_ENDPOINT: Record<Vendor, string> = {
   mistral: "/v1/chat/completions",
   deepseek: "/v1/chat/completions",
   cohere: "/v2/chat",
+  // Added 2026-08-03 with the Models rebuild, which widened `Vendor` by two.
+  // Both serve an OpenAI-compatible surface (Alibaba Model Studio, Moonshot
+  // open platform), so neither needs a bespoke wire format.
+  moonshotai: "/v1/chat/completions",
+  qwen: "/v1/chat/completions",
 };
 
 export function responseVariant(row: RequestRow): "success" | "destructive" {

@@ -155,10 +155,10 @@ type Range       = PresetRange | 'custom'
 type CustomRange = { from: Date; to: Date }
 type EventsRange = PresetRange | 'custom'
 
-// Vendor & provider dimensions
-type Vendor = 'anthropic' | 'xai' | 'google' | 'openai' | 'meta' | 'mistral' | 'deepseek' | 'cohere'
-type MarketplaceProvider = 'bedrock' | 'azure' | 'vertex' | 'together' | 'fireworks' | 'groq'
-type ProviderId = Vendor | MarketplaceProvider
+// Vendor & provider dimensions — two independent axes. `Vendor` is who
+// CREATED the model; `ProviderId` is which gateway upstream SERVES it.
+type Vendor = 'anthropic' | 'xai' | 'google' | 'openai' | 'meta' | 'mistral' | 'deepseek' | 'cohere' | 'moonshotai' | 'qwen'
+type ProviderId = 'alibaba' | 'vertex' | 'openrouter'
 
 // Response statuses
 type ResponseStatus  = 'success' | 'error'
@@ -279,42 +279,81 @@ that same set and rises with it. The unscripted fallback branch is untouched.
 
 ### 3.6 Models & Providers
 
+Rebuilt 2026-08-03 from the live production API (`GET /api/v1/available-models`,
+gate-v1.27.1) — the 25 models prod's page 1 renders, in its "Most popular"
+order. The previous invented 23-model / 14-provider catalog is gone, along with
+the First-party / Marketplace split, which does not exist in prod.
+
 ```typescript
-// Defined in: src/data/models.ts (MODELS catalog, types, config maps, MODEL_OPTIONS)
-type ModelId   = 'claude-opus-4-7' | 'claude-sonnet-4-5' | 'claude-haiku-4-5'
-               | 'gpt-5' | 'gpt-4o' | 'gpt-4o-mini'
-               | 'gemini-3-pro' | 'gemini-3-flash' | 'gemini-3-flash-lite'
-               | 'llama-3-3-70b'
+// Defined in: src/data/models.ts (MODELS catalog, types, formatters, sort, MODEL_OPTIONS)
 
-type Modality  = 'text' | 'embeddings' | 'audio' | 'rerank'
-type Capability = 'vision' | 'tools' | 'json' | 'streaming' | 'cache' | 'webSearch'
+// Every model in prod's catalog is text. The former 'embeddings' | 'audio' |
+// 'rerank' members went with the invented catalog; the tab strip is
+// "All types" + "Text".
+type Modality   = 'text'
 
-interface ProviderOffering {
-  provider:        ProviderId
-  handle:          string
-  contextK:        number
-  maxOutputK:      number
-  latencyP50Ms?:   number
-  throughputTps?:  number
-  inputPricePerM:  number
-  outputPricePerM: number
-  cacheReadPerM?:  number
-  cacheWritePerM?: number
+// 11 of the API's 13 capability flags. `systemMessages` and
+// `parallelToolCalls` are exposed by the API but have no icon in the table.
+type Capability = 'tools' | 'vision' | 'reasoning' | 'promptCaching'
+                | 'responseSchema' | 'streaming' | 'webSearch'
+                | 'audioInput' | 'pdfInput' | 'videoInput' | 'audioOutput'
+
+type ModelSort  = 'popular' | 'newest' | 'cheapest' | 'largest-context'
+
+interface ModelPricing {
+  inputPer1M:             number
+  outputPer1M:            number
+  cachedInputReadPer1M:   number | null
+  cachedInputWritePer1M:  number | null
+}
+
+interface ModelProvider {
+  id:            ProviderId
+  nativeModelId: string        // what the upstream calls it
+  paygMarkup:    number        // openrouter 1.1, alibaba/vertex 1.0
+  latencyP50Ms:  number | null // null until the model is actually called
+  throughputTps: number | null
+  sampleCount:   number
 }
 
 interface Model {
-  id:             string
+  id:             string       // canonical `vendor/model` — this IS the handle
   vendor:         Vendor
   name:           string
   description:    string
   modality:       Modality
+  contextWindow:  number | null // null on Qwen3 Next; renders as an em dash
+  maxOutputTokens:number | null
+  pricing:        ModelPricing
+  pricingMarkup:  number        // 1.1 on the two DeepSeek rows, else 1
   capabilities:   Capability[]
-  defaultHandle:  string
-  offerings:      ProviderOffering[]
+  releasedAt:     string | null // only 3 of 25 have one
+  providers:      ModelProvider[]
 }
 ```
 
-25 models across 8 vendors seeded in `MODELS`. Each model lists all provider offerings (e.g., Claude Opus 4.7 available via anthropic, bedrock, vertex).
+**25 models across 5 vendors** (`anthropic` 11, `google` 10, `deepseek` 2,
+`qwen` 1, `moonshotai` 1) served by **3 providers**. `openai`, `meta`,
+`mistral`, `xai`, and `cohere` no longer appear in the catalog but stay in
+`Vendor` and `VENDOR_META` — they still key mock rows in `data/requests.ts`,
+`data/conversations.ts`, Activity, Conversations, DashboardDefault, and
+SetupModels.
+
+Provider distribution: OpenRouter 25/25, Google Vertex 23/25, Alibaba 3/25 (the
+Qwen row and both DeepSeek rows). Vertex is absent only from the two DeepSeek
+rows. `TOTAL_PROVIDERS` derives from the catalog and lands on 3.
+
+**Prices are derived in two stages, never stored twice.** The list table shows
+`pricing.X × pricingMarkup`; each provider row on the detail page shows that
+list price × its own `paygMarkup`, which is why OpenRouter's row reads 10%
+above Vertex's on the same model and carries a `+10%` badge computed from the
+same number.
+
+**Display strings mirror prod verbatim, including its apparent
+inconsistencies.** Anthropic reports a decimal 1,000,000 context and renders
+`1M`; Google and DeepSeek report a binary 1,048,576 and render `1.0M`. Same
+`formatTokenCount`, different inputs. Sorting runs on the raw numbers, so
+`1.0M` correctly outranks `1M`.
 
 ### 3.7 Policies & Limits
 
@@ -387,15 +426,24 @@ interface VendorMeta {
   icon:  ComponentType
   label: string
 }
-interface MarketplaceMeta {
-  color: string
-  icon:  ComponentType
-  label: string
+interface ProviderMeta {
+  color:       string
+  icon:        ComponentType
+  label:       string   // row cells + the providers-stack label  ("Google Vertex")
+  filterLabel: string   // the "All providers" dropdown           ("Alibaba Direct")
+  detailLabel: string   // the detail page's providers table      ("Google Vertex AI")
 }
 
 // VENDOR_META: Record<Vendor, VendorMeta>
-// Vendors: anthropic, xai, google, openai, meta, mistral, deepseek, cohere
-// MARKETPLACE_META: Record<MarketplaceProvider, MarketplaceMeta>
+// Vendors: anthropic, xai, google, openai, meta, mistral, deepseek, cohere,
+//          moonshotai, qwen
+// PROVIDER_META: Record<ProviderId, ProviderMeta>   (alibaba, vertex, openrouter)
+// PROVIDER_ORDER: ProviderId[]                      (dropdown order, alphabetical)
+//
+// Three label fields because prod uses three different strings for the same
+// provider and all three are real. Renamed from MarketplaceMeta /
+// MARKETPLACE_META on 2026-08-03 — the First-party / Marketplace split it
+// named does not exist in prod.
 ```
 
 ---
@@ -434,13 +482,15 @@ erDiagram
         string id PK
         string vendor
         Modality modality
-        ProviderOffering[] offerings
+        number contextWindow
+        number pricingMarkup
+        ModelProvider[] providers
     }
-    ProviderOffering {
-        string provider
-        string handle
-        number inputPricePerM
-        number outputPricePerM
+    ModelProvider {
+        ProviderId id
+        string nativeModelId
+        number paygMarkup
+        number latencyP50Ms
     }
     PolicyState {
         string id PK
@@ -458,7 +508,7 @@ erDiagram
     RequestRow }o--|| ConversationRow : "conversation"
     EventRow ||--|| RequestRow : "requestId (1:1 subset)"
     EventRow }o--o| ConversationRow : "conversationId"
-    Model ||--o{ ProviderOffering : "offerings"
+    Model ||--o{ ModelProvider : "providers"
 ```
 
 **Key coupling rules:**
@@ -756,13 +806,20 @@ it now sits unused at `src/pages/security-feed.ts` as `SECURITY_FEED` (see
 
 ```typescript
 selectedModel: Model | null        // list ↔ detail toggle (no URL change)
-modality:      'all' | Modality
-search, vendor, provider: string
-sort: 'newest' | 'popular' | 'cheapest' | 'largest-context'
+modality:      'all' | Modality    // tabs: All types / Text
+search, provider: string           // no vendor filter — prod has no such control
+sort: ModelSort                    // 'popular' (default) | 'newest' | 'cheapest' | 'largest-context'
 page, rowsPerPage: number
 ```
 
-**Detail view sections:** Hero → ModelKpiRail (4 tiles) → ProvidersTable → Quick start PlatformPanel (6 platforms) → CodeCard (TypeScript / Python / cURL tabs)
+The detail view is keyed on `selectedModel.id`, so it remounts per model and no
+state (expanded description, column sort) can leak between models.
+
+**Detail view sections:** Hero → ModelKpiRail (4 tiles: Context / Max output /
+Input / Output) → ProvidersTable (8 columns, `+10%` markup badge, em-dash
+telemetry empty state + "No telemetry yet" note when a model has never been
+called) → Quick start `PaygToolConfigCard` (4 tools) → CodeCard (TypeScript /
+Python / cURL tabs)
 
 ---
 
@@ -1162,9 +1219,9 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 | File | What it provides |
 | --- | --- |
 | `src/components/icons/brand-mark.tsx` | `<BrandMark>` — 7-path constellation. `fill="currentColor"`. Default size-8 at `text-blue-700` |
-| `src/components/icons/vendor-meta.tsx` | `VENDOR_META: Record<Vendor, VendorMeta>`, `MARKETPLACE_META`, `<VendorAvatar>` |
+| `src/components/icons/vendor-meta.tsx` | `VENDOR_META: Record<Vendor, VendorMeta>`, `PROVIDER_META`, `PROVIDER_ORDER`, `<VendorAvatar>`, `<ProviderAvatar>` |
 | `src/components/icons/model-providers.tsx` | 8 SVG components: AnthropicIcon, GrokIcon, GeminiIcon, OpenAIIcon, MetaIcon, MistralIcon, DeepSeekIcon, CohereIcon |
-| `src/components/icons/marketplace-providers.tsx` | 6 SVG components: AzureIcon, BedrockIcon, FireworksIcon, GroqIcon, TogetherIcon, VertexIcon |
+| `src/components/icons/gateway-providers.tsx` | 3 SVG components: AlibabaIcon, VertexIcon, OpenRouterIcon. Replaced `marketplace-providers.tsx` (Azure / Bedrock / Fireworks / Groq / Together deleted) on 2026-08-03. |
 
 All provider SVGs moved to `public/icons/providers/` for standalone rendering. Colors are explicit brand hex (not `currentColor`) so they render correctly outside a Tailwind context.
 
@@ -1201,7 +1258,7 @@ Chart palette is **brand-decoupled** — assigned by slot index, not by vendor. 
 | `src/pages/activity-data.ts` | Canonical chart math — `distributeSeries`, `TOTAL_7D_BASE_*`, `TOKEN_SAVINGS_RATE_7D`, `SPEND_SERIES`, `rescaleToTotal` (range types + `RANGE_SCALE` in `src/lib/range.ts`) |
 | `src/pages/ApiKeys.tsx` | Canonical API key seed — used as cross-page source of truth for active keys |
 | `src/components/ui/dialog.tsx` | Canonical modal pattern — `data-closed:fill-mode-forwards`, `onOpenChangeComplete`, `DialogScrollContent` shells |
-| `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `MARKETPLACE_META` — shared across all pages |
+| `src/components/icons/vendor-meta.tsx` | `VENDOR_META`, `VendorAvatar`, `PROVIDER_META`, `ProviderAvatar` — shared across all pages |
 | `CLAUDE.md` | Project-specific rules for this repo — branching, design system hard rules, workflow |
 
 ---

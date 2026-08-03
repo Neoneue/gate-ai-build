@@ -121,12 +121,20 @@ export const SPEND_SERIES: Record<
     { key: "llama", label: "Llama 4.2 405B", slot: 6 },
     { key: "haiku", label: "Others", slot: 3 },
   ],
+  // Gateway PROVIDERS — the upstream routes Gate dispatches to. NOT model
+  // vendors: Anthropic/OpenAI/Google-the-vendor are reachable *through* these
+  // routes, so listing them here double-counted the model dimension. Confirmed
+  // against the production API 2026-08-03: exactly three routes, no Bedrock.
+  //
+  // Only three bands stack here, so the slots are picked for maximum hue AND
+  // chroma separation rather than by index order: blue(255°) / orange(50°) /
+  // green(145°) is the most evenly spread triad in the 8-slot palette, and
+  // green is the highest-chroma of the three so Alibaba's thin ~8% band still
+  // reads at small chart heights.
   provider: [
-    { key: "anthropic", label: "Anthropic", slot: 2 },
-    { key: "openai", label: "OpenAI", slot: 1 },
-    { key: "google", label: "Google", slot: 4 },
-    { key: "bedrock", label: "Bedrock", slot: 7 },
-    { key: "openrouter", label: "OpenRouter", slot: 6 },
+    { key: "openrouter", label: "OpenRouter", slot: 1 },
+    { key: "vertex", label: "Google Vertex", slot: 2 },
+    { key: "alibaba", label: "Alibaba", slot: 3 },
   ],
   apiKey: [
     { key: "prod-agent", label: "prod-agent", slot: 1 },
@@ -141,14 +149,19 @@ export const SPEND_SERIES: Record<
 /** Base (7d) chart data. Other ranges derive from this by scaling values and
  * relabeling the x-axis. Mock-realistic, not aggregated.
  *
- * INVARIANT: every dimension's 7d row sums equal $927 — this is the
- * canonical workspace 7d spend. The Total Spend KPI is computed from this
- * base × the active range's effectiveScale, so chart and KPI cannot drift.
- * If you change any row, verify the per-dimension total still equals 238. */
+ * INVARIANT (charts-must-reconcile): `model` is the reference dimension.
+ * Every other dimension must sum to the SAME value as `model` on EVERY day,
+ * not merely across the week — otherwise toggling the dimension selector
+ * silently rewrites the daily bar heights while the KPI total holds still.
+ * All three dimensions satisfy this exactly as of 2026-08-03: each day's
+ * `provider` and `apiKey` values sum to that day's `model` total, and all
+ * three weeks total $238.05.
+ * If you change any row, verify the per-day sums still match `model`. */
 export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
-  // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all equal
-  // $238 so toggling Model / Provider / API key keeps the same workspace
-  // total (and that total = the Total Spend KPI by construction).
+  // Gate-only — BYOK spend isn't tracked. Per-dimension 7d sums all land on
+  // $238 (= TOTAL_7D_BASE_DOLLARS) so toggling Model / Provider / API key
+  // keeps the same workspace total (and that total = the Total Spend KPI by
+  // construction).
   model: [
     {
       sonnet: 6.68,
@@ -207,112 +220,113 @@ export const SPEND_BASE: Record<Dimension, Array<Record<string, number>>> = {
       haiku: 2.05,
     },
   ],
+  // Routing split, day-for-day reconciled against the `model` rows above:
+  // openrouter 68% / vertex 24% / alibaba 8%, with alibaba carrying the
+  // rounding remainder so each day's three values sum EXACTLY to that day's
+  // model total. Ordering + dominance come from production (OpenRouter 98.6%
+  // of real spend); the gap is softened using catalog coverage (OpenRouter
+  // 25/25 models, Vertex 23/25, Alibaba 3/25), which makes Vertex a genuine
+  // second source. Prod's literal 98.6/1.4/0 renders as one bar with two
+  // hairlines, so it is not the shape we chart. 7d: $161.87 / $57.13 / $19.05.
   provider: [
     {
-      anthropic: 12.84,
-      openai: 4.88,
-      google: 3.08,
-      bedrock: 2.57,
-      openrouter: 1.54,
+      openrouter: 18.86,
+      vertex: 6.66,
+      alibaba: 2.22,
     },
     {
-      anthropic: 14.89,
-      openai: 5.39,
-      google: 3.59,
-      bedrock: 2.82,
-      openrouter: 1.8,
+      openrouter: 20.43,
+      vertex: 7.21,
+      alibaba: 2.41,
     },
     {
-      anthropic: 15.92,
-      openai: 5.91,
-      google: 3.34,
-      bedrock: 3.34,
-      openrouter: 2.05,
+      openrouter: 21.83,
+      vertex: 7.7,
+      alibaba: 2.57,
     },
     {
-      anthropic: 17.2,
-      openai: 5.91,
-      google: 4.11,
-      bedrock: 3.59,
-      openrouter: 2.57,
+      openrouter: 23.23,
+      vertex: 8.2,
+      alibaba: 2.73,
     },
     {
-      anthropic: 18.74,
-      openai: 6.68,
-      google: 4.62,
-      bedrock: 4.11,
-      openrouter: 3.08,
+      openrouter: 24.45,
+      vertex: 8.63,
+      alibaba: 2.87,
     },
     {
-      anthropic: 20.28,
-      openai: 7.19,
-      google: 4.88,
-      bedrock: 4.62,
-      openrouter: 3.34,
+      openrouter: 25.84,
+      vertex: 9.12,
+      alibaba: 3.04,
     },
     {
-      anthropic: 21.31,
-      openai: 7.45,
-      google: 5.39,
-      bedrock: 4.88,
-      openrouter: 4.11,
+      openrouter: 27.23,
+      vertex: 9.61,
+      alibaba: 3.21,
     },
   ],
-  // Per-key 7d sums match the Gate rows in API_KEY_ROWS:
-  // prod-agent 92.31, prod-web 90.00, design-agent 21.00, atlas-eval 20.00,
-  // development 13.20, ci-runner 1.42. Total ≈ $238.
+  // Day-for-day reconciled against the `model` rows above (was drifting
+  // -$0.90 to +$1.17 per day, grand total $237.95 vs $238.05). The four small
+  // keys keep their authored step pattern untouched — the paired-day repeats
+  // ARE their character — so the whole daily correction lands on prod-agent
+  // and prod-web, split by their existing ratio, with prod-agent taking the
+  // rounding remainder. Both stay monotonically rising; their 7d totals moved
+  // +$0.06 / +$0.04, and no key's share of the workspace moved by more than
+  // 0.01pp. Per-key 7d sums equal the Gate rows in API_KEY_ROWS exactly:
+  // prod-agent 92.37, prod-web 90.04, design-agent 21.00, atlas-eval 20.00,
+  // development 13.20, ci-runner 1.44. Total $238.05.
   apiKey: [
     {
-      "prod-agent": 10.36,
-      "prod-web": 10.29,
+      "prod-agent": 10.51,
+      "prod-web": 10.44,
       "design-agent": 2.53,
       "atlas-eval": 2.38,
       development: 1.72,
       "ci-runner": 0.16,
     },
     {
-      "prod-agent": 11.93,
-      "prod-web": 11.45,
+      "prod-agent": 11.87,
+      "prod-web": 11.39,
       "design-agent": 2.53,
       "atlas-eval": 2.38,
       development: 1.72,
       "ci-runner": 0.16,
     },
     {
-      "prod-agent": 12.61,
-      "prod-web": 12.39,
+      "prod-agent": 12.34,
+      "prod-web": 12.12,
       "design-agent": 2.9,
       "atlas-eval": 2.86,
       development: 1.72,
       "ci-runner": 0.16,
     },
     {
-      "prod-agent": 13.06,
-      "prod-web": 12.86,
+      "prod-agent": 13.36,
+      "prod-web": 13.16,
       "design-agent": 2.9,
       "atlas-eval": 2.86,
       development: 1.72,
       "ci-runner": 0.16,
     },
     {
-      "prod-agent": 13.73,
-      "prod-web": 13.32,
+      "prod-agent": 14.19,
+      "prod-web": 13.76,
       "design-agent": 3.26,
       "atlas-eval": 2.86,
       development: 1.72,
       "ci-runner": 0.16,
     },
     {
-      "prod-agent": 14.63,
-      "prod-web": 14.03,
+      "prod-agent": 14.7,
+      "prod-web": 14.09,
       "design-agent": 3.26,
       "atlas-eval": 3.33,
       development: 2.3,
       "ci-runner": 0.32,
     },
     {
-      "prod-agent": 15.99,
-      "prod-web": 15.66,
+      "prod-agent": 15.4,
+      "prod-web": 15.08,
       "design-agent": 3.62,
       "atlas-eval": 3.33,
       development: 2.3,
@@ -347,7 +361,7 @@ export const SPEND_TOTALS_7D: Record<
  * the rounding remainder in the largest series. Used to anchor each
  * dimension's request totals to TOTAL_7D_BASE_REQUESTS — same single-
  * source-of-truth invariant the spend path gets from SPEND_BASE summing
- * to $927. */
+ * to $238. */
 function rescaleToTotal(
   raw: Record<string, number>,
   target: number
@@ -384,9 +398,9 @@ function rescaleToTotal(
  * bottom — high price per token vs. high token volume.
  * • apiKey → from API_KEY_ROWS (tokensIn + tokensOut) for the 6 charted
  * Gate keys.
- * • provider → authored to mirror the model breakdown's vendor
- * groupings (anthropic carries opus+sonnet+haiku token
- * volume; openai/google/bedrock pick up the rest). */
+ * • provider → the routing split, tilted toward volume: cheap tokens buy
+ * more of them, so Vertex (Gemini) and Alibaba (Qwen) each
+ * carry a larger share of TOKENS than of SPEND. */
 export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
   // 7d window token totals (independent from the workspace-lifetime numbers
   // in MODEL_ROWS — Llama's 7d rate and Opus' 7d rate are tuned for this
@@ -404,16 +418,16 @@ export const TOKENS_TOTALS_7D: Record<Dimension, Record<string, number>> = {
     },
     TOTAL_7D_BASE_TOKENS
   ),
-  // Provider splits mirror MODEL_ROWS vendor groupings: anthropic =
-  // opus+sonnet+haiku, openai = gpt, google = gemini, bedrock = llama,
-  // openrouter gets a small residual slice.
+  // Provider token split = 62 / 27 / 11, vs the 68 / 24 / 8 SPEND split.
+  // Same routing, different denominator: Vertex's Gemini and Alibaba's Qwen
+  // models are materially cheaper per token, so both buy a bigger slice of
+  // token volume than of dollars. Raw values already sum to
+  // TOTAL_7D_BASE_TOKENS, so rescaleToTotal is a no-op pass-through here.
   provider: rescaleToTotal(
     {
-      anthropic: 12_350_000,
-      openai: 2_860_000,
-      google: 4_050_000,
-      bedrock: 4_840_000,
-      openrouter: 400_000,
+      openrouter: 45_540_000,
+      vertex: 19_830_000,
+      alibaba: 8_080_000,
     },
     TOTAL_7D_BASE_TOKENS
   ),
@@ -478,6 +492,76 @@ export function distributeSeries(
   return out;
 }
 
+/** Split every series' total across `count` buckets for a stacked chart, so
+ *  that BOTH axes reconcile: each bucket sums to one dimension-INDEPENDENT
+ *  daily curve, and each series still sums to its own scaled total.
+ *
+ *  The daily curve comes from a SINGLE distributeSeries call on the workspace
+ *  total, with no per-series seed. Seeding per series (what TrendCard and
+ *  Dashboard both did before 2026-08-03) let the series COUNT change the
+ *  summed shape: a 3-series provider stack drew seeds +1..+3 while a 6-series
+ *  model stack drew +1..+6, so toggling the chart's dimension silently
+ *  rewrote every bar height while the KPI total held still — up to 40px of
+ *  drift on a 135px bar.
+ *
+ *  The cost is per-series daily texture: every series now moves in lockstep
+ *  within a bucket. That is the more truthful reading — a heavy-traffic day
+ *  genuinely lifts every model, provider and key together, whereas the
+ *  independent jitter was asserting that some series FELL on a day the
+ *  workspace rose. distributeSeries keeps its trend + spike/dip character on
+ *  the workspace curve, so the chart still reads organic.
+ *
+ *  Exactness holds on two orthogonal axes:
+ *  • bucket i sums to dayTotals[i] — the largest series takes the bucket's
+ *    remainder rather than its own rounded share (the rescaleToTotal idiom)
+ *  • series s sums to totals[s] × scale — the last bucket carries that
+ *    series' remainder (the trick distributeSeries itself uses), left
+ *    UNROUNDED because a 2dp round there costs up to 0.005 × seriesCount,
+ *    which is exactly the count-dependent error this function removes. */
+export function splitAcrossBuckets(
+  totals: Record<string, number>,
+  count: number,
+  seed: number,
+  scale = 1
+): Record<string, number[]> {
+  const entries = Object.entries(totals);
+  const out: Record<string, number[]> = {};
+  for (const [key] of entries) {
+    out[key] = Array.from({ length: count }, () => 0);
+  }
+  const grandTotal = entries.reduce((sum, [, v]) => sum + v, 0);
+  if (count <= 0 || grandTotal <= 0) {
+    return out;
+  }
+  const dayTotals = distributeSeries(grandTotal * scale, count, seed);
+  const maxKey = entries.reduce(
+    (best, [key, total]) => (total > (totals[best] ?? 0) ? key : best),
+    entries[0]![0]
+  );
+  for (let i = 0; i < count - 1; i++) {
+    const day = dayTotals[i] ?? 0;
+    let othersSum = 0;
+    for (const [key, total] of entries) {
+      if (key !== maxKey) {
+        const v = +((day * total) / grandTotal).toFixed(2);
+        out[key]![i] = v;
+        othersSum += v;
+      }
+    }
+    out[maxKey]![i] = day - othersSum;
+  }
+  // Every earlier bucket sums to dayTotals[i] and dayTotals sums to
+  // grandTotal × scale, so the last bucket lands on dayTotals.at(-1) exactly.
+  for (const [key, total] of entries) {
+    let accumulated = 0;
+    for (let i = 0; i < count - 1; i++) {
+      accumulated += out[key]![i] ?? 0;
+    }
+    out[key]![count - 1] = total * scale - accumulated;
+  }
+  return out;
+}
+
 export function paletteColor(slot: number): string {
   return CHART_PALETTE[(slot - 1) % CHART_PALETTE.length]!;
 }
@@ -511,8 +595,12 @@ export type ApiKeyRow = {
 
 /** Five workspace keys — matches the canonical set used on Requests
  *  (prod-web, prod-agent, development, byok-*) re-spun with the two BYOK slots
- *  given product names (openclaw, hermes-agent). Sums reconcile with the
- *  7d KPI rail: $1,247.82 spend, 48,293 requests, 18.4M tokens.
+ *  given product names (openclaw, hermes-agent).
+ *
+ *  `spend` on the six Gate keys is the per-key 7d total of SPEND_BASE.apiKey,
+ *  so the table's Spend column and the chart's breakdown panel cannot drift.
+ *  The six sum to $238.05 = TOTAL_7D_BASE_DOLLARS; BYOK keys are $0 by
+ *  definition (their spend lands on the user's own provider bill).
  *
  *  Resulting top-5 leaders (only 5 keys, so all show):
  *  Spend  → prod-agent, prod-web, openclaw, hermes-agent, development
@@ -527,7 +615,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 60_000,
     tokensIn: 15_000_000,
     tokensOut: 3_000_000,
-    spend: 90.0,
+    spend: 90.04,
     savings: 0.2563,
   },
   {
@@ -538,7 +626,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 12_000,
     tokensIn: 15_384_615,
     tokensOut: 615_385,
-    spend: 92.31,
+    spend: 92.37,
     savings: 0.27,
   },
   {
@@ -593,7 +681,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = [
     requests: 6500,
     tokensIn: 708_333,
     tokensOut: 141_667,
-    spend: 1.42,
+    spend: 1.44,
     savings: 0.19,
     revoked: true,
   },
@@ -653,12 +741,16 @@ export const SAVINGS_RATES_7D: Record<Dimension, Record<string, number>> = {
     llama: 0.205,
     haiku: 0.29,
   },
+  // Per-route saved rate, in the same 0.20–0.26 band the model rates sit in.
+  // The biggest route is deliberately not the best saver: OpenRouter's all-25
+  // catalog mixes cache-friendly chat with long-context work; Vertex is
+  // Gemini-heavy and long-context, so it compresses least (tracks the 0.215
+  // gemini rate above); Alibaba's 3 Qwen models take short, highly repetitive
+  // prompts and get the best cache hit rate.
   provider: {
-    anthropic: 0.26,
-    openai: 0.235,
-    google: 0.22,
-    bedrock: 0.205,
-    openrouter: 0.2,
+    openrouter: 0.245,
+    vertex: 0.22,
+    alibaba: 0.26,
   },
   apiKey: Object.fromEntries(
     SPEND_SERIES.apiKey.map((s) => [

@@ -27,7 +27,6 @@ import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
   type Dimension,
-  distributeSeries,
   METRIC_OPTIONS,
   type Metric,
   SAVINGS_RATES_7D,
@@ -36,6 +35,7 @@ import {
   savingsCurve,
   savingsRateFor,
   seriesColor,
+  splitAcrossBuckets,
   TOKENS_TOTALS_7D,
 } from "@/pages/activity-data";
 import {
@@ -48,10 +48,14 @@ import {
 
 /* ─── Spend trend — stacked bars, Model / Provider / API key toggle ─────── */
 
-const DIMENSION_OPTIONS: { value: Dimension; label: string }[] = [
-  { value: "model", label: "Model" },
-  { value: "provider", label: "Provider" },
-  { value: "apiKey", label: "API key" },
+/** `noun` is the authored phrasing shared by the Select option ("By …") and
+ *  the card description ("Stacked by …"). Authored rather than derived from a
+ *  Title Case label because `"API key".toLowerCase()` renders "api key", which
+ *  had shipped in both places. */
+const DIMENSION_OPTIONS: { value: Dimension; noun: string }[] = [
+  { value: "model", noun: "model" },
+  { value: "provider", noun: "provider" },
+  { value: "apiKey", noun: "API key" },
 ];
 
 /** Bar count per range. The Spend over time chart distributes each
@@ -277,11 +281,9 @@ export function TrendCard({
     const scale = effectiveScale(range, customRange);
     const totals = (isSpend ? SPEND_TOTALS_7D : TOKENS_TOTALS_7D)[dimension];
 
-    // Distribute each series's range-scaled total across N buckets via
-    // distributeSeries (trend + spike/dip noise). Each series gets its
-    // own seed so adjacent series don't sync into matching ripples —
-    // keeps stacked bars looking organic. Range-aware base seed so ranges
-    // with matching bucket counts don't produce identical shapes.
+    // Range-aware base seed so ranges with matching bucket counts don't
+    // produce identical shapes. Deliberately NOT combined with a per-series
+    // offset — see the daily-curve block below for why.
     const rangeSeed =
       range === "all"
         ? 11
@@ -329,15 +331,13 @@ export function TrendCard({
       });
     }
 
-    let seedOffset = 0;
-    for (const [key, total7d] of Object.entries(totals)) {
-      seedOffset++;
-      seriesBuckets[key] = distributeSeries(
-        total7d * scale,
-        count,
-        rangeSeed * 31 + seedOffset
-      );
-    }
+    // One dimension-independent daily curve, then a fixed per-series share of
+    // every bucket. See splitAcrossBuckets for why this must not be seeded per
+    // series and what the lockstep tradeoff buys.
+    Object.assign(
+      seriesBuckets,
+      splitAcrossBuckets(totals, count, rangeSeed, scale)
+    );
 
     // Per-bucket sum equals scaled 7d total by construction (distributeSeries
     // sums each series exactly, then sums across series).
@@ -506,9 +506,7 @@ export function TrendCard({
         <CardTitle>{TREND_TITLE[metric]}</CardTitle>
         <CardDescription>
           Stacked by{" "}
-          {DIMENSION_OPTIONS.find(
-            (d) => d.value === dimension
-          )?.label.toLowerCase()}
+          {DIMENSION_OPTIONS.find((d) => d.value === dimension)?.noun}
           {" · "}
           {bucketLabel}
         </CardDescription>
@@ -528,7 +526,7 @@ export function TrendCard({
               <SelectContent>
                 {DIMENSION_OPTIONS.map((d) => (
                   <SelectItem key={d.value} value={d.value}>
-                    By {d.label.toLowerCase()}
+                    By {d.noun}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -2,16 +2,8 @@ import { Bot, ChevronDown, ChevronLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { AnthropicIcon, OpenAIIcon } from "@/components/icons/model-providers";
-import {
-  MarketplaceAvatar,
-  VendorAvatar,
-} from "@/components/icons/vendor-avatar";
-import {
-  MARKETPLACE_META,
-  type MarketplaceProvider,
-  VENDOR_META,
-  type Vendor,
-} from "@/components/icons/vendor-meta";
+import { ProviderAvatar, VendorAvatar } from "@/components/icons/vendor-avatar";
+import { PROVIDER_META, PROVIDER_ORDER } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,10 +24,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -57,19 +46,25 @@ import {
   CAPABILITY_META,
   CAPABILITY_ORDER,
   type Capability,
+  EM_DASH,
+  formatPricePerM,
+  formatTokenCount,
+  hasTelemetry,
+  listPrice,
   MODALITY_COUNTS,
   MODELS,
   type Modality,
   type Model,
-  PROVIDER_LABELS,
-  PROVIDER_VENDOR,
-  type ProviderId,
-  type ProviderOffering,
+  type ModelProvider,
+  type ModelSort,
+  providerHandle,
+  providerPrice,
+  sortModels,
   TOTAL_PROVIDERS,
 } from "@/data/models";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatCurrency, formatNumber, linesToString } from "@/lib/formatters";
+import { formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   PAYG_TOOL_CAPTIONS,
@@ -80,21 +75,27 @@ import {
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-016 — Models
  *
- * Operational catalog of every model routable through the gateway. Same
- * production frame as CMP-012 / CMP-013 / CMP-014 / CMP-015. The page is
- * a routing-config tool, not a marketplace: surface capabilities, context,
+ * Operational catalog of every model routable through the gateway. The page
+ * is a routing-config tool, not a marketplace: surface capabilities, context,
  * pricing, and which providers serve each model. No status column (every
  * model is "available" — health belongs on a separate surface).
  *
- * Synthesis target: best parts of OpenRouter (modality tabs), Helicone
- * (code-sample tabs in detail), Vercel AI Gateway (dense table + per-row
- * capabilities + multi-provider per model). Skip Helicone's left filter
- * sidebar — DashboardChrome's outer sidebar is enough; toolbar carries
- * search / vendor / provider / sort.
+ * REBUILT 2026-08-03 against the production build. The catalog, the provider
+ * set, the filter chrome, and the sort options are all prod's, sourced from
+ * `GET /api/v1/available-models` — see the header of `data/models.ts`. What
+ * changed structurally:
+ *   · 14 invented providers → the 3 real ones, as ONE flat list. Prod has no
+ *     First-party / Marketplace grouping, so the grouped <SelectGroup> chrome
+ *     is gone with it.
+ *   · The "All vendors" filter is REMOVED. Prod has no such control.
+ *   · Tabs are All types + Text. Embeddings / Audio / Rerank went with the
+ *     invented catalog; no model in prod's is anything but text.
+ *   · Sort gained Newest / Cheapest input / Largest context alongside the
+ *     default Most popular, and all four actually sort (see sortModels).
  *
- * Filtering: search (name + handle + per-offering handle), modality,
- * vendor, provider, and sort are all wired to the in-memory MODELS list.
- * No URL sync — controls are local state, same pattern as CMP-013 / CMP-014.
+ * Filtering: search (name + id + per-provider native id), provider, and sort
+ * are wired to the in-memory MODELS list. No URL sync — controls are local
+ * state, same pattern as CMP-013 / CMP-014.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Models() {
@@ -118,6 +119,10 @@ export function Models() {
       {selectedModel ? (
         <div className="flex flex-col gap-6">
           <ModelDetailPage
+            // Remount on id change so no state from a previously inspected
+            // model (expanded description, column sort) can leak into the
+            // next one. Detail parity is per-model.
+            key={selectedModel.id}
             model={selectedModel}
             onBack={() => setSelectedModel(null)}
           />
@@ -131,101 +136,16 @@ export function Models() {
   );
 }
 
-/* ─── Formatting helpers ─────────────────────────────────────────────────── */
-
-function formatContext(contextK: number, modality: Modality): string {
-  if (modality === "audio") {
-    return "30 min";
-  }
-  if (modality === "rerank") {
-    return `${contextK}K`;
-  }
-  if (contextK >= 1000) {
-    return `${(contextK / 1000).toFixed(0)}M`;
-  }
-  if (contextK >= 1) {
-    return `${contextK}K`;
-  }
-  return `${Math.round(contextK * 1000)}`;
-}
-
-function formatPrice(amount: number, modality: Modality): string {
-  if (amount === 0) {
-    return "—";
-  }
-  // Audio pricing is per minute (per spec); rerank is per 1k searches.
-  if (modality === "audio") {
-    return formatCurrency(amount, { minFrac: 3, maxFrac: 3 }) + "/min";
-  }
-  if (modality === "rerank") {
-    return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + "/1k";
-  }
-  // 0.05 → "$0.05/M", 15 → "$15.00/M"
-  return formatCurrency(amount, { minFrac: 2, maxFrac: 2 }) + "/M";
-}
-
-function formatNumeric(value: number | undefined, suffix: string): string {
-  if (value === undefined || value === 0) {
-    return "—";
-  }
-  return `${formatNumber(value)}${suffix}`;
-}
-
-function formatPriceCell(
-  amount: number | undefined,
-  modality: Modality
-): string {
-  if (amount === undefined || amount === 0) {
-    return "—";
-  }
-  return formatPrice(amount, modality);
-}
+/* ─── Filtering helpers ──────────────────────────────────────────────────── */
 
 function matchesQuery(model: Model, q: string): boolean {
   if (model.name.toLowerCase().includes(q)) {
     return true;
   }
-  if (model.defaultHandle.toLowerCase().includes(q)) {
+  if (model.id.toLowerCase().includes(q)) {
     return true;
   }
-  return model.offerings.some((o) => o.handle.toLowerCase().includes(q));
-}
-
-// "popular" has no telemetry in mock data — offering count is the proxy
-// (more providers ≈ more demand routing through the gateway).
-function sortModels(rows: Model[], sort: string): Model[] {
-  const sorted = rows.slice();
-  switch (sort) {
-    case "cheapest":
-      return sorted.sort((a, b) => minInputPrice(a) - minInputPrice(b));
-    case "largest-context":
-      return sorted.sort((a, b) => maxContextK(b) - maxContextK(a));
-    case "popular":
-      return sorted.sort((a, b) => b.offerings.length - a.offerings.length);
-    case "newest":
-    default:
-      return sorted;
-  }
-}
-
-function minInputPrice(model: Model): number {
-  let min = Number.POSITIVE_INFINITY;
-  for (const o of model.offerings) {
-    if (o.inputPricePerM > 0 && o.inputPricePerM < min) {
-      min = o.inputPricePerM;
-    }
-  }
-  return min === Number.POSITIVE_INFINITY ? 0 : min;
-}
-
-function maxContextK(model: Model): number {
-  let max = 0;
-  for (const o of model.offerings) {
-    if (o.contextK > max) {
-      max = o.contextK;
-    }
-  }
-  return max;
+  return model.providers.some((p) => p.nativeModelId.toLowerCase().includes(q));
 }
 
 /* ─── Surface ────────────────────────────────────────────────────────────── */
@@ -233,9 +153,8 @@ function maxContextK(model: Model): number {
 function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const [modality, setModality] = useState<"all" | Modality>("all");
   const [search, setSearch] = useState("");
-  const [vendor, setVendor] = useState("all");
   const [provider, setProvider] = useState("all");
-  const [sort, setSort] = useState("newest");
+  const [sort, setSort] = useState<ModelSort>("popular");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
 
@@ -245,13 +164,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       if (modality !== "all" && m.modality !== modality) {
         return false;
       }
-      if (vendor !== "all" && m.vendor !== vendor) {
-        return false;
-      }
-      if (
-        provider !== "all" &&
-        !m.offerings.some((o) => o.provider === provider)
-      ) {
+      if (provider !== "all" && !m.providers.some((p) => p.id === provider)) {
         return false;
       }
       if (q && !matchesQuery(m, q)) {
@@ -260,7 +173,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       return true;
     });
     return sortModels(rows, sort);
-  }, [modality, search, vendor, provider, sort]);
+  }, [modality, search, provider, sort]);
 
   const resetToFirstPage = () => setPage(1);
 
@@ -269,7 +182,6 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const clearFilters = () => {
     setSearch("");
     setModality("all");
-    setVendor("all");
     setProvider("all");
     resetToFirstPage();
   };
@@ -281,7 +193,8 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       {/* Modality tabs — promoted out of the filter-pill row so each
           modality is a visible peer scope. Underline `line` variant
           matches the Settings / Team tab register elsewhere in the
-          shell. Count chip uses the shared <TabsCount> primitive. */}
+          shell. Count chip uses the shared <TabsCount> primitive.
+          Two tabs, because prod has two: every model is text. */}
       <Tabs
         className="gap-4"
         onValueChange={(v) => {
@@ -299,18 +212,6 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             Text
             <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
           </TabsTrigger>
-          <TabsTrigger value="embeddings">
-            Embeddings
-            <TabsCount>{MODALITY_COUNTS.embeddings}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="audio">
-            Audio
-            <TabsCount>{MODALITY_COUNTS.audio}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="rerank">
-            Rerank
-            <TabsCount>{MODALITY_COUNTS.rerank}</TabsCount>
-          </TabsTrigger>
         </TabsList>
 
         {isEmpty ? null : (
@@ -327,14 +228,9 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
               setSort(v);
               resetToFirstPage();
             }}
-            onVendorChange={(v) => {
-              setVendor(v);
-              resetToFirstPage();
-            }}
             provider={provider}
             search={search}
             sort={sort}
-            vendor={vendor}
           />
         )}
 
@@ -351,7 +247,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                   Clear filters
                 </Button>
               }
-              body="Try a broader search, a different modality, or clear the filter pills to see every routable model."
+              body="Try a broader search, a different type, or clear the filters to see every routable model."
               title="No models match these filters"
             />
           ) : (
@@ -373,7 +269,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
         preferred provider, or{" "}
-        <InlineCode size="sm">bedrock/claude-haiku-4-5</InlineCode> to pin a
+        <InlineCode size="sm">openrouter/claude-haiku-4-5</InlineCode> to pin a
         specific one.
       </p>
     </>
@@ -409,8 +305,6 @@ function PageHeader({
 function Toolbar({
   search,
   onSearchChange,
-  vendor,
-  onVendorChange,
   provider,
   onProviderChange,
   sort,
@@ -418,12 +312,10 @@ function Toolbar({
 }: {
   search: string;
   onSearchChange: (v: string) => void;
-  vendor: string;
-  onVendorChange: (v: string) => void;
   provider: string;
   onProviderChange: (v: string) => void;
-  sort: string;
-  onSortChange: (v: string) => void;
+  sort: ModelSort;
+  onSortChange: (v: ModelSort) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -437,27 +329,9 @@ function Toolbar({
         value={search}
       />
 
-      <Select onValueChange={onVendorChange} value={vendor}>
-        <SelectTrigger
-          aria-label="Filter by vendor"
-          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
-          size="lg"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All vendors</SelectItem>
-          <SelectItem value="anthropic">Anthropic</SelectItem>
-          <SelectItem value="cohere">Cohere</SelectItem>
-          <SelectItem value="deepseek">DeepSeek</SelectItem>
-          <SelectItem value="google">Google</SelectItem>
-          <SelectItem value="meta">Meta</SelectItem>
-          <SelectItem value="mistral">Mistral</SelectItem>
-          <SelectItem value="openai">OpenAI</SelectItem>
-          <SelectItem value="xai">xAI</SelectItem>
-        </SelectContent>
-      </Select>
-
+      {/* Flat list. The dropdown uses `filterLabel`, which is why Alibaba
+          reads "Alibaba Direct" here and plain "Alibaba" in a row tooltip —
+          both strings are prod's. */}
       <Select onValueChange={onProviderChange} value={provider}>
         <SelectTrigger
           aria-label="Filter by provider"
@@ -468,32 +342,15 @@ function Toolbar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All providers</SelectItem>
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel>First-party</SelectLabel>
-            <SelectItem value="anthropic">Anthropic Direct</SelectItem>
-            <SelectItem value="cohere">Cohere Direct</SelectItem>
-            <SelectItem value="deepseek">DeepSeek Direct</SelectItem>
-            <SelectItem value="google">Google Direct</SelectItem>
-            <SelectItem value="meta">Meta Direct</SelectItem>
-            <SelectItem value="mistral">Mistral Direct</SelectItem>
-            <SelectItem value="openai">OpenAI Direct</SelectItem>
-            <SelectItem value="xai">xAI Direct</SelectItem>
-          </SelectGroup>
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel>Marketplace</SelectLabel>
-            <SelectItem value="azure">Azure OpenAI</SelectItem>
-            <SelectItem value="bedrock">AWS Bedrock</SelectItem>
-            <SelectItem value="fireworks">Fireworks AI</SelectItem>
-            <SelectItem value="groq">Groq</SelectItem>
-            <SelectItem value="together">Together AI</SelectItem>
-            <SelectItem value="vertex">Google Vertex</SelectItem>
-          </SelectGroup>
+          {PROVIDER_ORDER.map((id) => (
+            <SelectItem key={id} value={id}>
+              {PROVIDER_META[id].filterLabel}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
-      <Select onValueChange={onSortChange} value={sort}>
+      <Select onValueChange={(v) => onSortChange(v as ModelSort)} value={sort}>
         <SelectTrigger
           aria-label="Sort"
           className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
@@ -502,8 +359,8 @@ function Toolbar({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="newest">Newest</SelectItem>
           <SelectItem value="popular">Most popular</SelectItem>
+          <SelectItem value="newest">Newest</SelectItem>
           <SelectItem value="cheapest">Cheapest input</SelectItem>
           <SelectItem value="largest-context">Largest context</SelectItem>
         </SelectContent>
@@ -514,22 +371,21 @@ function Toolbar({
 
 /* ─── Models table ───────────────────────────────────────────────────────── */
 
-// Numeric columns sort on the raw underlying value of the default (head)
-// offering — the same anchor the row's formatted cells render from. Output
-// price of 0 ("—") sorts last via the null contract.
+// Column sort runs on the raw underlying value, not the formatted string, so
+// "1M" and "1.0M" order by their real 1,000,000 vs 1,048,576. Null context
+// and null prices sort last via the null contract in `sortRows`.
 function modelSortValue(model: Model, key: string): string | number | null {
-  const head = model.offerings[0];
   switch (key) {
     case "name":
       return model.name;
     case "handle":
-      return model.defaultHandle;
+      return model.id;
     case "context":
-      return head.contextK;
+      return model.contextWindow;
     case "input":
-      return head.inputPricePerM || null;
+      return listPrice(model, "inputPer1M");
     case "output":
-      return head.outputPricePerM || null;
+      return listPrice(model, "outputPer1M");
     default:
       return null;
   }
@@ -600,13 +456,12 @@ function ModelsTable({
       </TableHeader>
       <TableBody>
         {sortedRows.map((model) => {
-          // Default offering is the first one — typically the vendor-direct
-          // entry. Pricing in the row reflects that anchor; the modal shows
-          // every provider's price alongside.
-          const head = model.offerings[0];
-          const inputPrice = formatPrice(head.inputPricePerM, model.modality);
-          const outputPrice = formatPrice(head.outputPricePerM, model.modality);
-          const context = formatContext(head.contextK, model.modality);
+          // Context and price are per-MODEL in prod, not per-provider: the
+          // gateway quotes one list price and each provider row on the detail
+          // page marks it up. So the row reads straight off the model.
+          const context = formatTokenCount(model.contextWindow);
+          const inputPrice = formatPricePerM(listPrice(model, "inputPer1M"));
+          const outputPrice = formatPricePerM(listPrice(model, "outputPer1M"));
           return (
             <TableRow
               className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
@@ -638,36 +493,24 @@ function ModelsTable({
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <span className="type-mono-14 select-text text-foreground">
-                    {model.defaultHandle}
+                    {model.id}
                   </span>
                   <CopyButton
-                    ariaLabel={`Copy ${model.defaultHandle}`}
+                    ariaLabel={`Copy ${model.id}`}
                     label="model handle"
                     size="inline-xs"
-                    value={model.defaultHandle}
+                    value={model.id}
                   />
                 </span>
               </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                {context}
-              </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                {inputPrice}
-              </TableCell>
-              <TableCell
-                className={
-                  outputPrice === "—"
-                    ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
-                    : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
-                }
-              >
-                {outputPrice}
-              </TableCell>
+              <NumericCell value={context} />
+              <NumericCell value={inputPrice} />
+              <NumericCell value={outputPrice} />
               <TableCell>
                 <CapabilityStrip capabilities={model.capabilities} />
               </TableCell>
               <TableCell>
-                <ProviderStack offerings={model.offerings} />
+                <ProviderStack providers={model.providers} />
               </TableCell>
             </TableRow>
           );
@@ -677,27 +520,51 @@ function ModelsTable({
   );
 }
 
+/** Right-aligned mono numeric cell. An em dash is a real state here (Qwen3
+ *  Next reports no context window; most provider rows have no telemetry yet),
+ *  so it recedes to muted and carries an sr-only explanation rather than
+ *  announcing as bare punctuation. */
+function NumericCell({ value }: { value: string }) {
+  const isMissing = value === EM_DASH;
+  return (
+    <TableCell
+      className={cn(
+        "type-mono-14 whitespace-nowrap text-right",
+        isMissing ? "text-muted-foreground" : "text-foreground"
+      )}
+    >
+      {isMissing ? (
+        <>
+          <span aria-hidden="true">{EM_DASH}</span>
+          <span className="sr-only">Not available</span>
+        </>
+      ) : (
+        value
+      )}
+    </TableCell>
+  );
+}
+
 function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   if (capabilities.length === 0) {
-    return <span className="type-mono-12 text-muted-foreground">—</span>;
+    return (
+      <span className="type-mono-12 text-muted-foreground">{EM_DASH}</span>
+    );
   }
   // Render in canonical order so cross-row scanning lands on the same icon
-  // in the same x-slot (Vision is always leftmost when present). Each icon
+  // in the same x-slot (Tool use is always leftmost when present). Each icon
   // carries `aria-label` for SR identification AND a native `title` so
   // sighted-mouse users get the capability name on hover — without
-  // introducing a Tooltip primitive (the showcase doesn't ship one yet
-  // and a single-purpose addition would be a primitive proliferation).
-  const ordered = (() => {
-    const have = new Set(capabilities);
-    return CAPABILITY_ORDER.filter((c) => have.has(c));
-  })();
+  // introducing a Tooltip primitive.
+  const have = new Set(capabilities);
+  const ordered = CAPABILITY_ORDER.filter((c) => have.has(c));
   return (
     <div className="flex items-center gap-1">
       {ordered.map((c) => {
         const meta = CAPABILITY_META[c];
         const Icon = meta.icon;
         return (
-          <span className="inline-flex shrink-0" key={c}>
+          <span className="inline-flex shrink-0" key={c} title={meta.label}>
             <Icon
               aria-label={meta.label}
               className="size-4 shrink-0 text-muted-foreground"
@@ -711,83 +578,36 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   );
 }
 
-function ProviderStack({ offerings }: { offerings: ProviderOffering[] }) {
-  // Deduplicate by vendor (marketplace providers w/o a Vendor identity are
-  // counted in the +n overflow). First three vendor-glyphs render as an
-  // overlapping stack; remainder collapses to a +N chip.
-  const vendors: Vendor[] = [];
-  const vendorSet = new Set<Vendor>();
-  const unmappedNames: string[] = [];
-  for (const o of offerings) {
-    const v = PROVIDER_VENDOR[o.provider];
-    if (v && !vendorSet.has(v)) {
-      vendors.push(v);
-      vendorSet.add(v);
-    } else if (!v) {
-      const meta =
-        o.provider in MARKETPLACE_META
-          ? MARKETPLACE_META[o.provider as keyof typeof MARKETPLACE_META]
-          : null;
-      if (meta) {
-        unmappedNames.push(meta.label);
-      }
-    }
-  }
-  const unmappedCount = unmappedNames.length;
-  const visible = vendors.slice(0, 3);
-  const overflow = vendors.length - visible.length + unmappedCount;
-  const totalProviders = vendors.length + unmappedCount;
-  const allNames = [
-    ...vendors.map((v) => VENDOR_META[v].label),
-    ...unmappedNames,
-  ].join(", ");
-  const ariaLabel = `Available from ${totalProviders} providers: ${allNames}`;
+function ProviderStack({ providers }: { providers: ModelProvider[] }) {
+  // Order is the model's OWN provider order, straight from the API — it
+  // varies row to row (Qwen leads with Alibaba, most Anthropic rows lead
+  // with Vertex, the Gemini rows lead with OpenRouter) and the label reads
+  // in that same order, exactly like prod.
+  const names = providers.map((p) => PROVIDER_META[p.id].label);
+  const ariaLabel = `Available from ${providers.length} providers: ${names.join(", ")}`;
   return (
-    <div aria-label={ariaLabel} className="flex items-center gap-1" role="img">
-      <div className="flex items-center">
-        {visible.map((v, i) => (
-          // `inline-flex items-center` on the wrapper so the inline-flex
-          // VendorAvatar inside centers vertically. A plain `<span>` here
-          // inherits the cell's 21px line-box and the SVG hangs from the
-          // baseline instead — visibly higher than the sibling +N text.
-          //
-          // Stacked drop-shadows synthesize a 1px white ring around the
-          // SVG paths so overlapping glyphs read as a separated stack
-          // rather than a collided silhouette. (No chip wrapper — the
-          // bare-icon VendorAvatar treatment is preserved.)
-          <span
-            className={`inline-flex items-center ${i === 0 ? "" : "-ml-1"}`}
-            key={v}
-            style={{
-              filter:
-                "drop-shadow(0 0 1.5px var(--card)) drop-shadow(0 0 1.5px var(--card))",
-            }}
-          >
-            <VendorAvatar decorative vendor={v} />
-          </span>
-        ))}
-      </div>
-      {overflow > 0 ? (
-        // h-4 matches the icon's `size-4` so items-center on the parent
-        // aligns the visual middle of the glyph with the visual middle
-        // of the avatar. leading-none collapses the line-box to the
-        // glyph height; inline-flex centers the text inside h-4.
-        <span
-          aria-hidden
-          className="type-mono-12 inline-flex h-4 items-center text-muted-foreground leading-none"
-        >
-          +{overflow}
+    <div aria-label={ariaLabel} className="flex items-center gap-2" role="img">
+      {providers.map((p) => (
+        // `inline-flex items-center` on the wrapper so the inline-flex
+        // ProviderAvatar inside centers vertically. A plain `<span>` here
+        // inherits the cell's 21px line-box and the SVG hangs from the
+        // baseline instead — visibly higher than its siblings.
+        //
+        // The marks sit on an 8px gap and do NOT overlap. They were a
+        // `-ml-1` stack until 2026-08-03, with two stacked drop-shadows
+        // synthesizing a card-colored ring so the collided silhouettes stayed
+        // legible. Separating them makes the ring unnecessary, so both the
+        // negative margin and the filter are gone rather than left inert.
+        <span className="inline-flex items-center" key={p.id}>
+          <ProviderAvatar decorative provider={p.id} />
         </span>
-      ) : null}
+      ))}
     </div>
   );
 }
 
 /* ─── Detail page ────────────────────────────────────────────────────────── */
 
-// Platform link list — names provided by the user. Hrefs are placeholders
-// (design-system showcase, not a docs site). Notes are generic; per-tool
-// setup paths can be filled in later when the docs are wired up.
 function ModelDetailPage({
   model,
   onBack,
@@ -795,22 +615,19 @@ function ModelDetailPage({
   model: Model;
   onBack: () => void;
 }) {
-  // Default offering anchors the KPI strip + hero code preview — same pattern
-  // as the table row's pricing.
-  const head = model.offerings[0];
   const [lang, setLang] = useState<"TypeScript" | "Python" | "cURL">(
     "TypeScript"
   );
   const [showFullDesc, setShowFullDesc] = useState(false);
   const activeLines = useMemo(() => {
     if (lang === "TypeScript") {
-      return tsSnippet(model.defaultHandle, model.modality);
+      return tsSnippet(model.id);
     }
     if (lang === "Python") {
-      return pySnippet(model.defaultHandle, model.modality);
+      return pySnippet(model.id);
     }
-    return curlSnippet(model.defaultHandle, model.modality);
-  }, [lang, model.defaultHandle, model.modality]);
+    return curlSnippet(model.id);
+  }, [lang, model.id]);
 
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -831,33 +648,29 @@ function ModelDetailPage({
       </div>
 
       {/* Hero — logo + H2 inline, then handle / capabilities / description.
-          The old vendor-eyebrow tier was removed 2026-05-16 (Eyebrow rule:
-          only nav + KPI tiles); the model handle below (`anthropic/claude-sonnet-4.8`)
-          still encodes the vendor for anyone scanning, and the avatar's
-          sr-only label fires now that there's no adjacent eyebrow text
-          to double-announce. */}
+          The vendor-eyebrow tier was removed 2026-05-16 (Eyebrow rule: only
+          nav + KPI tiles); the model id below still encodes the vendor for
+          anyone scanning, and the avatar's sr-only label fires now that
+          there's no adjacent eyebrow text to double-announce. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <VendorAvatar size="md" vendor={model.vendor} />
-            {/* Scaled down from text-3xl/9 (32px) → text-xl (20px). The
-                page-level h1 ("Models") on ArtboardHeader and the
-                breadcrumb already carry the model name, so a third
-                32px appearance over-anchors identity. */}
+            {/* 20px, not 32px: the page-level h1 ("Models") and the back
+                link already carry the model name, so a third 32px
+                appearance over-anchors identity. */}
             <h2 className="type-heading-20 m-0 text-foreground">
               {model.name}
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="type-mono-14 text-foreground">
-              {model.defaultHandle}
-            </span>
+            <span className="type-mono-14 text-foreground">{model.id}</span>
             <CopyButton
-              ariaLabel={`Copy ${model.defaultHandle}`}
+              ariaLabel={`Copy ${model.id}`}
               label="model handle"
               size="inline-xs"
-              value={model.defaultHandle}
+              value={model.id}
             />
           </div>
         </div>
@@ -883,10 +696,11 @@ function ModelDetailPage({
           <p
             className={cn(
               // text-pretty would only take effect once line-clamp is off
-              // (line-clamp uses -webkit-box, which short-circuits text-wrap).
-              // Apply it conditionally so the rule is only present where it
-              // can actually do work.
-              "m-0 font-sans text-base text-foreground",
+              // (line-clamp uses -webkit-box, which short-circuits
+              // text-wrap). Apply it conditionally so the rule is only
+              // present where it can actually do work. `whitespace-pre-line`
+              // preserves the paragraph breaks prod's descriptions carry.
+              "m-0 whitespace-pre-line font-sans text-base text-foreground",
               showFullDesc ? "text-pretty" : "line-clamp-3"
             )}
             id="model-description"
@@ -912,8 +726,8 @@ function ModelDetailPage({
         </div>
       </div>
 
-      {/* KPI strip — locked recipe from prior modal. */}
-      <ModelKpiRail head={head} model={model} />
+      {/* KPI strip — locked 4-tile recipe. */}
+      <ModelKpiRail model={model} />
 
       {/* Providers */}
       <section className="flex flex-col gap-4">
@@ -925,6 +739,12 @@ function ModelDetailPage({
           </p>
         </div>
         <ProvidersTable model={model} />
+        {hasTelemetry(model) ? null : (
+          <p className="type-copy-12 m-0 text-muted-foreground">
+            No telemetry yet. Call this model to populate latency and
+            throughput.
+          </p>
+        )}
       </section>
 
       {/* Quick start + Example request — two-column grid (24px gap),
@@ -952,7 +772,7 @@ function ModelDetailPage({
           </div>
           {/* Per-tool terminal/CLI config. Shared with the PAYG Manual setup
             page via <PaygToolConfigCard>. */}
-          <PaygToolConfigCard handle={model.defaultHandle} />
+          <PaygToolConfigCard handle={model.id} />
         </section>
 
         <section className="flex flex-col gap-4">
@@ -967,8 +787,7 @@ function ModelDetailPage({
             </p>
           </div>
           {/* Mirrors the Quick start card on the left: flush Card chrome, line
-            tabs, a 208px scroll area, and a floating Copy button bottom-right
-            (no grey header strip, no caption row). */}
+            tabs, a scroll area, and a floating Copy button bottom-right. */}
           <Card className="relative" density="flush">
             <Tabs
               className="flex flex-col gap-0"
@@ -1029,34 +848,24 @@ function ModelDetailPage({
   );
 }
 
-function ModelKpiRail({
-  model,
-  head,
-}: {
-  model: Model;
-  head: ProviderOffering;
-}) {
+function ModelKpiRail({ model }: { model: Model }) {
   return (
     <KpiRailShell className="@4xl:grid-cols-4 md:grid-cols-2" columns={4}>
       <ModelKpiTile
         label="Context"
-        value={formatContext(head.contextK, model.modality)}
+        value={formatTokenCount(model.contextWindow)}
       />
       <ModelKpiTile
         label="Max output"
-        value={head.maxOutputK === 0 ? "—" : `${head.maxOutputK}K`}
+        value={formatTokenCount(model.maxOutputTokens)}
       />
       <ModelKpiTile
         label="Input"
-        value={formatPrice(head.inputPricePerM, model.modality)}
+        value={formatPricePerM(listPrice(model, "inputPer1M"))}
       />
       <ModelKpiTile
         label="Output"
-        value={
-          head.outputPricePerM === 0
-            ? "—"
-            : formatPrice(head.outputPricePerM, model.modality)
-        }
+        value={formatPricePerM(listPrice(model, "outputPer1M"))}
       />
     </KpiRailShell>
   );
@@ -1066,13 +875,13 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
   // HeroNumeric default = 24px sans tabular — the locked recipe for KPI
   // values ≥24px. Sub-20px numerics elsewhere stay mono. Padding `p-4`
   // matches the 16px card-padding rule (CompactKpi primitive).
-  const isMissing = value === "—";
+  const isMissing = value === EM_DASH;
   return (
     <div className="flex flex-col gap-1 p-4">
       <Eyebrow>{label}</Eyebrow>
       {isMissing ? (
         <HeroNumeric className="text-muted-foreground">
-          <span aria-hidden="true">—</span>
+          <span aria-hidden="true">{EM_DASH}</span>
           <span className="sr-only">Not available</span>
         </HeroNumeric>
       ) : (
@@ -1082,29 +891,31 @@ function ModelKpiTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-// Numeric columns sort on the raw offering value; undefined/0 (rendered as
-// "—") sorts last via the null contract.
-function offeringSortValue(
-  o: ProviderOffering,
+// Column sort runs on the raw value, and prices are the MARKED-UP ones so the
+// order matches the numbers rendered in the cells. Null (rendered "—") sorts
+// last via the null contract.
+function providerSortValue(
+  model: Model,
+  p: ModelProvider,
   key: string
 ): string | number | null {
   switch (key) {
     case "provider":
-      return PROVIDER_LABELS[o.provider];
+      return PROVIDER_META[p.id].detailLabel;
     case "context":
-      return o.contextK || null;
+      return model.contextWindow;
     case "latency":
-      return o.latencyP50Ms || null;
+      return p.latencyP50Ms;
     case "throughput":
-      return o.throughputTps || null;
+      return p.throughputTps;
     case "input":
-      return o.inputPricePerM || null;
+      return providerPrice(model, p, "inputPer1M");
     case "output":
-      return o.outputPricePerM || null;
+      return providerPrice(model, p, "outputPer1M");
     case "cacheRead":
-      return o.cacheReadPerM ?? null;
+      return providerPrice(model, p, "cachedInputReadPer1M");
     case "cacheWrite":
-      return o.cacheWritePerM ?? null;
+      return providerPrice(model, p, "cachedInputWritePer1M");
     default:
       return null;
   }
@@ -1112,9 +923,12 @@ function offeringSortValue(
 
 function ProvidersTable({ model }: { model: Model }) {
   const { sort, toggle: toggleSort } = useTableSort();
-  const sortedOfferings = useMemo(
-    () => sortRows(model.offerings, sort, offeringSortValue),
-    [model.offerings, sort]
+  const sortedProviders = useMemo(
+    () =>
+      sortRows(model.providers, sort, (p, key) =>
+        providerSortValue(model, p, key)
+      ),
+    [model, sort]
   );
   return (
     <Card density="flush">
@@ -1195,123 +1009,90 @@ function ProvidersTable({ model }: { model: Model }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedOfferings.map((o) => (
-            <TableRow className="hover:bg-transparent" key={o.handle}>
-              <TableCell>
-                <div className="flex min-w-0 items-center gap-2">
-                  <ProviderMark provider={o.provider} />
-                  <span
-                    className="type-copy-14 truncate text-foreground"
-                    title={PROVIDER_LABELS[o.provider]}
-                  >
-                    {PROVIDER_LABELS[o.provider]}
-                  </span>
-                  <CopyButton
-                    ariaLabel={`Copy ${o.handle}`}
-                    label="provider handle"
-                    size="inline-xs"
-                    value={o.handle}
-                  />
-                </div>
-              </TableCell>
-              <ProviderNumeric
-                value={formatContext(o.contextK, model.modality)}
-              />
-              <ProviderNumeric value={formatNumeric(o.latencyP50Ms, "ms")} />
-              <ProviderNumeric
-                value={
-                  o.throughputTps === undefined || o.throughputTps === 0
-                    ? "—"
-                    : `${formatNumber(o.throughputTps)} t/s`
-                }
-              />
-              <ProviderNumeric
-                value={formatPrice(o.inputPricePerM, model.modality)}
-              />
-              <ProviderNumeric
-                value={
-                  o.outputPricePerM === 0
-                    ? "—"
-                    : formatPrice(o.outputPricePerM, model.modality)
-                }
-              />
-              <ProviderNumeric
-                value={formatPriceCell(o.cacheReadPerM, model.modality)}
-              />
-              <ProviderNumeric
-                value={formatPriceCell(o.cacheWritePerM, model.modality)}
-              />
-            </TableRow>
-          ))}
+          {sortedProviders.map((p) => {
+            const handle = providerHandle(model, p.id);
+            return (
+              <TableRow className="hover:bg-transparent" key={p.id}>
+                <TableCell>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <ProviderAvatar decorative provider={p.id} />
+                    <span
+                      className="type-copy-14 truncate text-foreground"
+                      title={PROVIDER_META[p.id].detailLabel}
+                    >
+                      {PROVIDER_META[p.id].detailLabel}
+                    </span>
+                    <MarkupBadge markup={p.paygMarkup} />
+                    <CopyButton
+                      ariaLabel={`Copy ${handle}`}
+                      label="provider handle"
+                      size="inline-xs"
+                      value={handle}
+                    />
+                  </div>
+                </TableCell>
+                <NumericCell value={formatTokenCount(model.contextWindow)} />
+                <NumericCell
+                  value={
+                    p.latencyP50Ms === null
+                      ? EM_DASH
+                      : `${formatNumber(p.latencyP50Ms)}ms`
+                  }
+                />
+                <NumericCell
+                  value={
+                    p.throughputTps === null
+                      ? EM_DASH
+                      : `${formatNumber(p.throughputTps, { maximumFractionDigits: 1 })} t/s`
+                  }
+                />
+                <NumericCell
+                  value={formatPricePerM(providerPrice(model, p, "inputPer1M"))}
+                />
+                <NumericCell
+                  value={formatPricePerM(
+                    providerPrice(model, p, "outputPer1M")
+                  )}
+                />
+                <NumericCell
+                  value={formatPricePerM(
+                    providerPrice(model, p, "cachedInputReadPer1M")
+                  )}
+                />
+                <NumericCell
+                  value={formatPricePerM(
+                    providerPrice(model, p, "cachedInputWritePer1M")
+                  )}
+                />
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </Card>
   );
 }
 
-function ProviderMark({ provider }: { provider: ProviderId }) {
-  if (provider in VENDOR_META) {
-    return <VendorAvatar decorative vendor={provider as Vendor} />;
+/** The gateway's per-provider markup, rendered next to the provider name.
+ *  Derived from the same `paygMarkup` the prices are computed with, so the
+ *  badge and the numbers physically cannot disagree. Only OpenRouter (1.1)
+ *  shows one today; 1.0 renders nothing. */
+function MarkupBadge({ markup }: { markup: number }) {
+  if (markup <= 1) {
+    return null;
   }
-  if (provider in MARKETPLACE_META) {
-    return (
-      <MarketplaceAvatar
-        decorative
-        provider={provider as MarketplaceProvider}
-      />
-    );
-  }
-  // Fallback for providers that aren't yet mapped in either meta table.
-  // Renders an neutral-400 placeholder dot so the row keeps its leading-glyph
-  // slot (cross-row scanning lands on the same x position) and the
-  // PROVIDER_LABELS text still anchors identification.
+  const percent = Math.round((markup - 1) * 100);
   return (
-    <span
-      aria-hidden
-      className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
-      title={PROVIDER_LABELS[provider]}
+    <Badge
+      title="Gateway markup over this provider's list price"
+      variant="neutral"
     >
-      <span className="size-2 rounded-full bg-muted-foreground" />
-    </span>
-  );
-}
-
-function ProviderNumeric({ value }: { value: string }) {
-  const isMissing = value === "—";
-  return (
-    <TableCell
-      className={
-        isMissing
-          ? "whitespace-nowrap text-right font-mono text-muted-foreground text-sm tabular-nums"
-          : "whitespace-nowrap text-right font-mono text-foreground text-sm tabular-nums"
-      }
-    >
-      {isMissing ? (
-        <>
-          <span aria-hidden="true">—</span>
-          <span className="sr-only">Not available</span>
-        </>
-      ) : (
-        value
-      )}
-    </TableCell>
+      +{percent}%
+    </Badge>
   );
 }
 
 /* ─── Code samples ───────────────────────────────────────────────────────── */
-
-function endpointFor(modality: Modality): string {
-  switch (modality) {
-    case "embeddings":
-      return "/v1/embeddings";
-    case "audio":
-      return "/v1/audio/transcriptions";
-    case "rerank":
-      return "/v1/rerank";
-    case "text":
-      return "/v1/chat/completions";
-  }
-}
 
 type Lang = "ts" | "py" | "bash";
 
@@ -1421,7 +1202,7 @@ function tokenize(src: string, lang: Lang): CodeLine[] {
 }
 
 /* ── Quick start: per-tool agent configuration (PAYG) ───────────────────────
- * Shared snippets live in DashboardDefault.paygConfigSnippet — keep in sync. */
+ * Shared snippets live in payg-config.paygConfigSnippet — keep in sync. */
 
 export function PaygToolConfigCard({ handle }: { handle: string }) {
   const [tool, setTool] = useState<PaygToolId>("claude-code");
@@ -1480,57 +1261,10 @@ export function PaygToolConfigCard({ handle }: { handle: string }) {
   );
 }
 
-function tsSnippet(handle: string, modality: Modality): CodeLine[] {
-  if (modality === "embeddings") {
-    return tokenize(
-      `import OpenAI from 'openai';
-
-const client = new OpenAI({
-  baseURL: 'https://gateway.constellationgate.ai/v1',
-  apiKey: process.env.CONSTELLATION_API_KEY,
-});
-
-const result = await client.embeddings.create({
-  model: '${handle}',
-  input: 'The quick brown fox jumps over the lazy dog.',
-});`,
-      "ts"
-    );
-  }
-  if (modality === "audio") {
-    return tokenize(
-      `import OpenAI from 'openai';
-import fs from 'fs';
-
-const client = new OpenAI({
-  baseURL: 'https://gateway.constellationgate.ai/v1',
-  apiKey: process.env.CONSTELLATION_API_KEY,
-});
-
-const transcript = await client.audio.transcriptions.create({
-  model: '${handle}',
-  file: fs.createReadStream('audio.mp3'),
-});`,
-      "ts"
-    );
-  }
-  if (modality === "rerank") {
-    return tokenize(
-      `const res = await fetch('https://gateway.constellationgate.ai/v1/rerank', {
-  method: 'POST',
-  headers: {
-    'Authorization': \`Bearer \${process.env.CONSTELLATION_API_KEY}\`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    model: '${handle}',
-    query: 'What is the capital of France?',
-    documents: ['Paris is the capital.', 'Berlin is in Germany.'],
-  }),
-});`,
-      "ts"
-    );
-  }
+// Every model in the catalog is text, so the snippets no longer branch on
+// modality — the embeddings / audio / rerank variants went with the invented
+// catalog they were written for.
+function tsSnippet(handle: string): CodeLine[] {
   return tokenize(
     `const res = await fetch('https://gateway-staging.constellationgate.ai/v1/messages', {
   method: 'POST',
@@ -1548,56 +1282,7 @@ const transcript = await client.audio.transcriptions.create({
   );
 }
 
-function pySnippet(handle: string, modality: Modality): CodeLine[] {
-  if (modality === "embeddings") {
-    return tokenize(
-      `from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://gateway.constellationgate.ai/v1",
-    api_key=os.environ["CONSTELLATION_API_KEY"],
-)
-
-result = client.embeddings.create(
-    model="${handle}",
-    input="The quick brown fox jumps over the lazy dog.",
-)`,
-      "py"
-    );
-  }
-  if (modality === "audio") {
-    return tokenize(
-      `from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://gateway.constellationgate.ai/v1",
-    api_key=os.environ["CONSTELLATION_API_KEY"],
-)
-
-with open("audio.mp3", "rb") as f:
-    transcript = client.audio.transcriptions.create(
-        model="${handle}",
-        file=f,
-    )`,
-      "py"
-    );
-  }
-  if (modality === "rerank") {
-    return tokenize(
-      `import os, requests
-
-res = requests.post(
-    "https://gateway.constellationgate.ai/v1/rerank",
-    headers={"Authorization": f"Bearer {os.environ['CONSTELLATION_API_KEY']}"},
-    json={
-        "model": "${handle}",
-        "query": "What is the capital of France?",
-        "documents": ["Paris is the capital.", "Berlin is in Germany."],
-    },
-)`,
-      "py"
-    );
-  }
+function pySnippet(handle: string): CodeLine[] {
   return tokenize(
     `import os, requests
 
@@ -1617,42 +1302,7 @@ res = requests.post(
   );
 }
 
-function curlSnippet(handle: string, modality: Modality): CodeLine[] {
-  const endpoint = endpointFor(modality);
-  if (modality === "embeddings") {
-    return tokenize(
-      `curl https://gateway.constellationgate.ai${endpoint} \\
-  -H "Authorization: Bearer $CONSTELLATION_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "${handle}",
-    "input": "The quick brown fox jumps over the lazy dog."
-  }'`,
-      "bash"
-    );
-  }
-  if (modality === "audio") {
-    return tokenize(
-      `curl https://gateway.constellationgate.ai${endpoint} \\
-  -H "Authorization: Bearer $CONSTELLATION_API_KEY" \\
-  -F model="${handle}" \\
-  -F file="@audio.mp3"`,
-      "bash"
-    );
-  }
-  if (modality === "rerank") {
-    return tokenize(
-      `curl https://gateway.constellationgate.ai${endpoint} \\
-  -H "Authorization: Bearer $CONSTELLATION_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "${handle}",
-    "query": "What is the capital of France?",
-    "documents": ["Paris is the capital.", "Berlin is in Germany."]
-  }'`,
-      "bash"
-    );
-  }
+function curlSnippet(handle: string): CodeLine[] {
   return tokenize(
     `curl https://gateway-staging.constellationgate.ai/v1/messages \\
   -H "x-gate-api-key: $GATEWAY_KEY" \\

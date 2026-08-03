@@ -6,7 +6,25 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 const PAYG_GATEWAY_URL = "https://gateway.constellationgate.ai";
-const PAYG_DEMO_MODEL = "sakana/fugu-ultra";
+/** Fallback handle for the surfaces that render a snippet with NO model
+ *  selected — the Overview PAYG hero and Manual setup. The Models detail card
+ *  always passes the row's own handle, so this is never what that page shows.
+ *
+ *  It read `sakana/fugu-ultra` until 2026-08-03, a model that exists nowhere
+ *  in the catalog or the traffic data. A copyable config snippet naming a
+ *  model the gateway cannot route is a snippet that fails the moment anyone
+ *  pastes it. This is the most-used model on the site by a wide margin —
+ *  106 of 183 rows in `data/requests.ts` — and a real entry in `MODELS`. */
+const PAYG_DEMO_MODEL = "anthropic/claude-opus-4-8";
+
+/** Claude Code routes its cheap background calls (title generation, file
+ *  summaries) through `ANTHROPIC_DEFAULT_HAIKU_MODEL`, so it must name a
+ *  FAST, cheap model. It read `anthropic/claude-opus-4-8` until 2026-08-03 —
+ *  a valid id, but the most expensive model in the catalog sitting in the one
+ *  env var whose whole purpose is to avoid that. Unlike `ANTHROPIC_MODEL`
+ *  this is deliberately NOT the selected model: pinning the Haiku slot to
+ *  whichever row you happen to be viewing is what produced the bug. */
+const PAYG_FAST_MODEL = "anthropic/claude-haiku-4-5";
 
 export type PaygToolId = "claude-code" | "codex" | "hermes" | "openclaw";
 
@@ -31,7 +49,7 @@ export function paygConfigSnippet(
     "ANTHROPIC_BASE_URL": "${PAYG_GATEWAY_URL}",
     "ANTHROPIC_API_KEY": "sk-gw-...",
     "ANTHROPIC_MODEL": "${handle}",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "anthropic/claude-opus-4-8",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "${PAYG_FAST_MODEL}",
     "ANTHROPIC_CUSTOM_HEADERS": "X-Gate-Api-Key: sk-gw-..."
   }
 }`;

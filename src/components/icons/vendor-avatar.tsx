@@ -1,6 +1,6 @@
 import {
-  MARKETPLACE_META,
-  type MarketplaceProvider,
+  PROVIDER_META,
+  type ProviderId,
   VENDOR_META,
   type Vendor,
 } from "./vendor-meta";
@@ -42,14 +42,14 @@ export function VendorAvatar({
   );
 }
 
-export function MarketplaceAvatar({
+export function ProviderAvatar({
   provider,
   decorative = false,
 }: {
-  provider: MarketplaceProvider;
+  provider: ProviderId;
   decorative?: boolean;
 }) {
-  const meta = MARKETPLACE_META[provider];
+  const meta = PROVIDER_META[provider];
   const Icon = meta.icon;
   return (
     <span className="inline-flex shrink-0 items-center">
