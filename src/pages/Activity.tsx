@@ -505,24 +505,19 @@ function TopByAxisRow({
 
   const userRows: TopRow[] = useMemo(() => {
     const isSpend = userMetric === "spend";
-    // Spend leaderboard counts workspace ("Gate") spend only. A member who
-    // owns ANY BYOK key isn't a workspace spender — their token usage runs
-    // on their own provider keys, so excluding them from Spend is the
-    // honest read. Token volume aggregates across every key the member
-    // owns (Gate + BYOK), so all four members appear under Tokens.
-    const memberHasByok = new Set<string>();
-    if (isSpend) {
-      for (const k of API_KEY_ROWS) {
-        if (k.path === "BYOK") {
-          memberHasByok.add(k.owner);
-        }
-      }
-    }
+    // Every member ranks, on every metric. A BYOK key contributes 0 to Spend
+    // because it has no Gateway spend, so a BYOK-only member sinks to the
+    // bottom on its own arithmetic — no exclusion needed.
+    //
+    // This EXCLUDED any member owning ANY BYOK key from Spend until
+    // 2026-08-03. That is not a stricter version of "BYOK never outranks a
+    // real spender", it is a different rule: a member with $500 of Gateway
+    // spend on one key plus one BYOK key vanished from the leaderboard
+    // entirely. Production ranks on numeric Gateway spend and lets ~0 sort
+    // last (`Activity.tsx` `keySortValue`, case "spend"), which is what the
+    // API Keys table below already does. The two now agree.
     const agg = new Map<string, { owner: string; axis: number }>();
     for (const k of API_KEY_ROWS) {
-      if (isSpend && memberHasByok.has(k.owner)) {
-        continue;
-      }
       const existing = agg.get(k.owner) ?? { owner: k.owner, axis: 0 };
       existing.axis += (isSpend ? k.spend : k.tokensIn + k.tokensOut) * scale;
       agg.set(k.owner, existing);
