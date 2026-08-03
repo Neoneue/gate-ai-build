@@ -88,7 +88,69 @@ Worse, the trend charts never read `SPEND_BASE` at all. `TrendCard` and `Dashboa
 - **28 measurements across both pages, four ranges, three lenses: 0.0000px.** Six regression tests pin it, including one asserting the daily curve is identical regardless of series count. The old data fails that test at day 0.
 - **"By api key" → "By API key."** The label was Title Case run through `.toLowerCase()`, in two places (the Select option and the card description). `DIMENSION_OPTIONS` now carries an authored `noun`, removing the mechanism rather than patching the output.
 
+### Messages, Conversations, Activity and Setup now name the same fleet as Models `2be812a`
+
+**`data/models.ts`** · **`data/requests.ts`** · **`data/conversations.ts`** · **`data/conversationDetail.ts`** · **`data/models-catalog.test.ts`** · **`requests/types.ts`** · **`requests/data.ts`** · **`RequestsTable.tsx`** · **`RequestDetailBody.tsx`** · **`conversations/types.ts`** · **`conversations/data.ts`** · **`Conversations.tsx`** · **`Activity.tsx`** · **`activity-data.ts`** · **`Dashboard.tsx`** · **`DashboardDefault.tsx`** · **`SetupModels.tsx`** · **`icons/vendor-meta.tsx`** · **`data-model.md`**
+
+Rebuilding the catalog from production earlier the same day (`6bdc828`) left every other surface describing a different fleet. **35 of 153 request rows named models that had stopped existing.** Activity charted four more that never existed anywhere. The Setup pricing page quoted per-1M rates for GPT-5.2, o4, Grok 4 and Llama 4 Maverick. Each page carried its own spelling — `claude-opus-4.7` in Messages, `Claude Opus 4.7` in Activity, `claude-opus-4-7` in the catalog — and nothing checked any of them against anything.
+
+- **The canonical id is the only way a model is referenced.** `RequestRow.model` was a bare name (`gemini-3-pro`) that the detail modal re-namespaced with `${row.vendor}/${row.model}`. It now stores the catalog id verbatim (`google/gemini-3-1-pro-preview`) — the same string the gateway takes as a handle. `data/models.ts` gains `modelById` / `modelName` / `MODEL_IDS`, and every surface reads the label back rather than re-typing it.
+- **118 of the 153 rows only needed the format.** `claude-opus-4-8` → `anthropic/claude-opus-4-8`, `claude-opus-4.7` → `anthropic/claude-opus-4-7`, `claude-haiku-4.5` → `anthropic/claude-haiku-4-5`. The remaining 35 were remapped onto real catalog models holding the same role: Sonnet 4.8 → **Sonnet 5** (10), Gemini 3 Pro → **Gemini 3.1 Pro Preview** (9), GPT-5.1 → **DeepSeek V4 Pro** (6), Llama 4.2 405B → **Qwen3 Next 80B A3B Instruct** (4), Grok 4.1 Fast → **DeepSeek V4 Flash** (3), Mistral Large 3 → **Kimi K2 Thinking** (3). Five vendors before, five after — the multi-vendor story survives with the real ones.
+- **No transcript was touched.** `REQUEST_BODIES` is keyed by request id, not by model, so relabelling a row cannot detach its captured body. 440 KB of session data is byte-identical.
+- **The Messages Model cell shows the name over the id** — `type-label-14` over `type-mono-12`, the same two-line shape the Conversation cell one column right already uses, and the same split production draws across its Model and Model ID columns. The request detail's Model row matches. Overview's compact preview shows the name only. Sorting moved to the label, since that is the line the eye reads.
+- **The sample assistant response stopped claiming to be GPT-4.** `sampleResponseText()` opened with a fixed *"I'm an AI developed by OpenAI called GPT-4"* on every unscripted row — wrong on a Claude row before the remap, and naming a vendor the catalog does not carry after it. It now introduces itself as the model that served the request.
+- **`src/data/models-catalog.test.ts` is the guard**, 8 assertions covering every request row (id *and* vendor), every conversation seed and derivation, every trace step, both filter dropdowns, Activity's series and Top Models rows, and the Setup price list. A model that exists on one page and nowhere else now fails the build with the offending id and the surface that carries it.
+
+### Conversations advertised models their own requests never ran `2be812a`
+
+**`data/conversationDetail.ts`** · **`data/conversations.ts`** · **`conversations/types.ts`**
+
+`getConversationView()` already re-derived `reqs`, `inTokens`, `outTokens`, `cost` and `status` from the conversation's own request rows. `vendors` and `models` were the exception — hand-authored on the seed — and they had drifted on **7 of 8 rows**. `cnv_lyra_92` advertised a single OpenAI model while its requests ran four models across three vendors, and the trace immediately below the list said so. The hero session `cnv_7a3f9e2b` listed a second `gpt-5.3-codex` entry; not one of its 102 captured requests ran an OpenAI model.
+
+- **Both fields are derived now**, in first-seen chronological order, alongside the five that already were. A conversation with no rows keeps its seed values.
+- **The seeds were rewritten to match the derivation** — they are still what raw consumers read (Overview's preview table, `ConversationsTrace`'s lookup) — and the catalog test asserts seed and derived stay equal, so the two cannot part again.
+- **The `ModelId` union is deleted.** A hand-maintained list of 12 literals was the mechanism of the drift: it type-checked a claim nobody had verified. `models` is `string[]` of canonical ids, pinned by the test rather than by a stale union.
+
+### Activity charted four models that never existed `2be812a`
+
+**`activity-data.ts`** · **`Activity.tsx`**
+
+The model dimension read Claude Sonnet 4.5 / GPT-5.1 / Gemini 3 Pro / Claude Opus 4.7 / Llama 4.2 405B / Others, and the Top Models card added Mistral Large 3. Only Opus 4.7 was real.
+
+- **Labels and keys moved together**, 1:1 onto the same remap Messages used, so no future reader chases a `gpt` key that charts DeepSeek. `gpt` → `deepseek`, `llama` → `qwen`, and `haiku` → `others` (that key had been labelled "Others" for a while — the name was the last thing still saying Haiku).
+- **Not one number changed.** The per-day values are what the cross-dimension reconciliation invariant from `6bdc828` is built on; the six regression tests that pin it still pass. The comment now says out loud that these are authored workspace aggregates and were never price-derived, so nobody tries to reconcile spend ÷ tokens against the catalog's per-1M rates.
+- **Claude Opus 4.8 is deliberately absent** from both surfaces even though it is 102 of the 153 request rows. Every one of those rows belongs to the BYOK session `cnv_7a3f9e2b`, and these charts are Gate-metered spend only.
+- **`MODEL_ROWS` moved from `Activity.tsx` to `activity-data.ts`**, beside `API_KEY_ROWS`. It is pure data, it belongs with the pure-data module, and it means the catalog test can read it without importing a page. Its rows are keyed by catalog id and drop their authored `label` — `modelName()` supplies it.
+
 ## Components
+
+### Setup pricing quoted a fictional price list `2be812a`
+
+**`SetupModels.tsx`** · **`data/models.ts`**
+
+`/setup-models-default` hand-typed all four columns for seven models, four of which the gateway does not serve (GPT-5.2, o4, Grok 4, Llama 4 Maverick). The three real ones quoted rates that were nobody's source of truth — Opus 4.8 at $15/$75 against the catalog's $5/$25.
+
+- **Nothing on the page is authored now.** The row set is `PAYG_PRICING_MODEL_IDS` in `data/models.ts`; the name, the provider and both rates come from `modelById` + `listPrice`, which is the same derivation the Models page's own table runs. The two pages cannot quote different figures for the same model.
+- **Still seven rows across five vendors**, and the four replacements follow the Messages remap: DeepSeek V4 Pro, Kimi K2 Thinking, DeepSeek V4 Flash, Qwen3 Next 80B A3B Instruct.
+- **Sub-cent rates widen to 4 decimals**, matching the fix `6bdc828` made on the Models page — DeepSeek V4 Flash's real $0.1540 input would otherwise round toward reading as free.
+
+### Both model filters offered models that could never match `2be812a`
+
+**`requests/data.ts`** · **`conversations/data.ts`** · **`Conversations.tsx`**
+
+Messages' Filters modal offered six models, four invented. Conversations' toolbar offered ten, six invented. Neither was checked against the rows it filtered.
+
+- **Both derive from `MODEL_OPTIONS`**, narrowed to the models that actually carry rows — so an option can never return an empty table, and can never name a model the gateway does not serve. Messages lists 9, Conversations 7.
+- **Labels are the catalog's**, not a second spelling of them. Messages' filter used to show raw ids (`gpt-5.1`); it now shows `Claude Opus 4.8` like Conversations always did.
+- **`conversations/data.ts` is a new leaf module**, mirroring `requests/data.ts`. `Conversations.tsx` goes back to exporting only components (react-refresh), and the catalog test can read the options without importing a page.
+
+### PAYG card promised GPT; the pooled catalog has none `2be812a`
+
+**`DashboardDefault.tsx`**
+
+- **"Claude, GPT, Gemini" → "Claude, Gemini, DeepSeek"** on the pay-as-you-go choice card. That card is the pooled-catalog path, and there is no OpenAI model in it. The BYOK card one column left still says Claude and Codex, which is correct — a ChatGPT subscription is exactly what it routes.
+- **The OpenClaw BYOK snippet names `moonshotai/kimi-k2-thinking`** instead of `kimi-k2.5`. Same model, and now a handle that resolves.
+- **The "Works with" footer is untouched** — OpenAI, xAI, Anthropic, Google, Meta are BYOK provider brands, not catalog entries, and Gate does route your own key to all five.
 
 ### Models table — provider marks sit on 8px, not on top of each other `6bdc828`
 
