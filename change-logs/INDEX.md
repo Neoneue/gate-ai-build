@@ -14,6 +14,12 @@ tokens; this index exists so nothing has to glob the directory.
 - `type-copy-14-tight` is deleted — it was a no-op alias
 - The copy scale is finished — `type-copy-20` and `-24` deleted
 - Settings — section titles move above their cards
+- Models — catalog and providers rebuilt from production
+- Activity — the provider dimension was three names out of date
+- The three Activity dimensions disagreed on every single day
+- Models table — provider marks sit on 8px, not on top of each other
+- Sub-cent prices stop reading as free
+- PAYG snippet named the wrong models
 - Ask AI reply actions — thumb ratings hidden behind a flag
 
 ## July 2026
