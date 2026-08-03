@@ -13,6 +13,9 @@ tokens; this index exists so nothing has to glob the directory.
 
 - `type-copy-14-tight` is deleted — it was a no-op alias
 - The copy scale is finished — `type-copy-20` and `-24` deleted
+- Money is never authored — every dollar derives from the catalog
+- Activity's spend engine inverted — tokens are authored, dollars are derived
+- BYOK means one thing on every surface
 - Settings — section titles move above their cards
 - Models — catalog and providers rebuilt from production
 - Activity — the provider dimension was three names out of date
@@ -26,6 +29,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Setup pricing quoted a fictional price list
 - Both model filters offered models that could never match
 - PAYG card promised GPT; the pooled catalog has none
+- Messages Model cell drops the canonical-id subtext
 - Ask AI reply actions — thumb ratings hidden behind a flag
 
 ## July 2026
