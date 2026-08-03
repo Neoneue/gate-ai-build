@@ -1,5 +1,6 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
-import { costOf, modelById, type ProviderId } from "@/data/models";
+import { PROVIDER_META } from "@/components/icons/vendor-meta";
+import { costOf, modelById, modelName, type ProviderId } from "@/data/models";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
@@ -107,69 +108,6 @@ export function savingsCurve(
   });
 }
 
-/** ≤6 series per dimension. Model + provider stay fully enumerated (bounded
- * cardinality in MVP). API keys fall back to "top 5 + Other" since key
- * cardinality is unbounded — a 100-key workspace can't be stacked.
- *
- * `color` overrides the palette slot — Other recedes to neutral-300 so the
- * named series carry the visual weight. */
-export const SPEND_SERIES: Record<
-  Dimension,
-  readonly { key: string; label: string; slot: number; color?: string }[]
-> = {
-  // Model names come from the catalog (`@/data/models`) and are the models
-  // that actually carry request rows in `data/requests.ts` — reconciled
-  // 2026-08-03, when this list still read Claude Sonnet 4.5 / GPT-5.1 /
-  // Gemini 3 Pro / Llama 4.2 405B, three of which existed nowhere else in the
-  // app. Keys were renamed with the labels so a future reader isn't chasing a
-  // `gpt` key that charts DeepSeek.
-  //
-  // The keys here and in MODEL_SERIES_7D are the same set — `pricing.test.ts`
-  // asserts it — because that block is where these series' tokens and dollars
-  // come from. `others` is the long-tail bucket: Haiku 4.5 plus Kimi K2.
-  //
-  // Claude Opus 4.8 is absent on purpose. It is 102 of the 153 request rows,
-  // but every one of them belongs to the BYOK session cnv_7a3f9e2b, and this
-  // chart is Gate-metered spend only.
-  model: [
-    { key: "sonnet", label: "Claude Sonnet 5", slot: 2 },
-    { key: "deepseek", label: "DeepSeek V4 Pro", slot: 1 },
-    { key: "gemini", label: "Gemini 3.1 Pro Preview", slot: 4 },
-    { key: "opus", label: "Claude Opus 4.7", slot: 7 },
-    { key: "qwen", label: "Qwen3 Next 80B A3B Instruct", slot: 6 },
-    { key: "others", label: "Others", slot: 3 },
-  ],
-  // Gateway PROVIDERS — the upstream routes Gate dispatches to. NOT model
-  // vendors: Anthropic/OpenAI/Google-the-vendor are reachable *through* these
-  // routes, so listing them here double-counted the model dimension. Confirmed
-  // against the production API 2026-08-03: exactly three routes, no Bedrock.
-  //
-  // Only three bands stack here, so the slots are picked for maximum hue AND
-  // chroma separation rather than by index order: blue(255°) / orange(50°) /
-  // green(145°) is the most evenly spread triad in the 8-slot palette, and
-  // green is the highest-chroma of the three, which is what Alibaba's band
-  // needs: the catalog only lets it serve DeepSeek and Qwen, the two cheapest
-  // models in the fleet, so on the SPEND lens it is under 2% and reads as a
-  // hairline. That is the finding, not a rendering bug — toggle to the TOKENS
-  // lens and the same route is 11%. Do not "fix" it by inventing spend for it.
-  provider: [
-    { key: "openrouter", label: "OpenRouter", slot: 1 },
-    { key: "vertex", label: "Google Vertex", slot: 2 },
-    { key: "alibaba", label: "Alibaba", slot: 3 },
-  ],
-  // Gate keys only. `design-agent` was charted here with $21.00 of spend until
-  // 2026-08-03, while all 102 of its request rows carry no cost at all because
-  // the key is BYOK — the Activity page and the Messages page disagreed about
-  // whether Gate bills it. It is BYOK, so it bills nothing and does not chart.
-  apiKey: [
-    { key: "prod-agent", label: "prod-agent", slot: 1 },
-    { key: "prod-web", label: "prod-web", slot: 2 },
-    { key: "atlas-eval", label: "atlas-eval", slot: 4 },
-    { key: "development", label: "development", slot: 5 },
-    { key: "ci-runner", label: "ci-runner", slot: 6 },
-  ],
-};
-
 /** Base (7d) chart data. Other ranges derive from this by scaling values and
  * relabeling the x-axis. Mock-realistic, not aggregated.
  *
@@ -223,10 +161,19 @@ type ModelUsage = {
   tokensOut: number;
 };
 
-/** Chart series → the models it aggregates. Five named models plus the
- *  `others` long-tail bucket, which is where Haiku 4.5 and Kimi K2 Thinking
- *  live. Series keys and labels are SPEND_SERIES.model's; the parity is
- *  asserted, not assumed. */
+/** The 7d workload, authored in groups.
+ *
+ *  These top-level keys are AUTHORING buckets, not chart series. Until
+ *  2026-08-03 they were both, and that was the bug: `others` bundled Haiku 4.5
+ *  (12.52M tokens, the workspace's 3rd-heaviest model) with Kimi K2, and the
+ *  trend chart rendered the bundle as a named band while the Top Models card
+ *  three inches below it listed Haiku 3rd on its own. Two surfaces on one page
+ *  disagreed about the same workload.
+ *
+ *  The chart's series are now DERIVED — one per catalog model, ranked by
+ *  whichever metric the reader is looking at (see `rankSeries`). Nothing
+ *  selects a series by name any more, so this block can group its authoring
+ *  however reads clearest without deciding what the legend says. */
 export const MODEL_SERIES_7D: Record<string, ModelUsage[]> = {
   // 27.2% of tokens, 29.6% of spend — the workhorse, and the only series
   // whose two shares are close to each other.
@@ -274,8 +221,9 @@ export const MODEL_SERIES_7D: Record<string, ModelUsage[]> = {
       tokensOut: 3_245_000,
     },
   ],
-  // The long tail: high-volume short classification on Haiku, plus a thin
-  // slice of Kimi reasoning.
+  // The long tail as AUTHORED: high-volume short classification on Haiku,
+  // plus a thin slice of Kimi reasoning. Both are ranked as their own series —
+  // Haiku is 3rd by tokens and 4th by spend, and is named in both lenses.
   others: [
     {
       id: "anthropic/claude-haiku-4-5",
@@ -391,7 +339,6 @@ function routeMarkup(modelId: string, provider: ProviderId): number {
  *  what it cost. This is the one table; every total on this page is a
  *  `groupBy` over it, which is why the dimensions cannot disagree. */
 export type UsageCell = {
-  series: string;
   model: string;
   provider: ProviderId;
   apiKey: string;
@@ -401,8 +348,8 @@ export type UsageCell = {
   spend: number;
 };
 
-export const USAGE_7D: UsageCell[] = Object.entries(MODEL_SERIES_7D).flatMap(
-  ([series, models]) =>
+export const USAGE_7D: UsageCell[] = Object.values(MODEL_SERIES_7D).flatMap(
+  (models) =>
     models.flatMap((m) => {
       const listCost = costOf(m.id, m.tokensIn, m.tokensOut);
       const tokens = m.tokensIn + m.tokensOut;
@@ -411,7 +358,6 @@ export const USAGE_7D: UsageCell[] = Object.entries(MODEL_SERIES_7D).flatMap(
           Object.entries(KEY_MIX_7D[m.id] ?? {}).map(([apiKey, keyShare]) => {
             const share = (providerShare ?? 0) * keyShare;
             return {
-              series,
               model: m.id,
               provider: provider as ProviderId,
               apiKey,
@@ -442,8 +388,12 @@ function groupUsage(
 
 const cellTokens = (c: UsageCell) => c.tokens;
 const cellSpend = (c: UsageCell) => c.spend;
+/** What one series IS, per dimension. `model` groups by catalog id — one
+ *  series per model, no pre-bundled long tail. The chart's `Others` bucket is
+ *  synthesised at render time from whatever ranks below the cap, so it can
+ *  never contain a model that outranks a named one. */
 const DIMENSION_KEY: Record<Dimension, (cell: UsageCell) => string> = {
-  model: (c) => c.series,
+  model: (c) => c.model,
   provider: (c) => c.provider,
   apiKey: (c) => c.apiKey,
 };
@@ -1058,23 +1008,205 @@ export const MODEL_ROWS: ModelRow[] = (() => {
   }));
 })();
 
+/* ─── Chart series selection ──────────────────────────────────────────────
+ *
+ * Which series a stacked chart NAMES is derived, not authored. It is a
+ * function of the workload and of the metric the reader is currently looking
+ * at, and it changes when they toggle the lens.
+ *
+ * Until 2026-08-03 the model dimension shipped a fixed five plus a fixed
+ * `others`, and the fixed set was wrong: it named DeepSeek (8.72M tokens) and
+ * Opus (4.08M) while burying Haiku (12.52M) in the bucket. `Others` came out
+ * ~92% one model and ranked 3rd in the legend, directly above a Top Models
+ * card that correctly listed Haiku 3rd. The set was also metric-blind — Opus
+ * is 5.6% of tokens and 24.7% of spend, so no single ordering can be right for
+ * both lenses.
+ *
+ * The rule below is production's, verbatim (dashboard-web Activity.tsx):
+ * rank DESC by the active metric, drop anything at or below zero, cap at 6
+ * series total, and when that overflows keep the top 5 and roll the remainder
+ * into one synthetic `Others`. Palette slots are POSITIONAL — a series' color
+ * is its rank, not its identity — and `Others` sits outside the palette in a
+ * neutral so it stays subordinate to the named bands.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** A series as RENDERED: label resolved, palette slot assigned by rank. */
+export type ChartSeries = {
+  key: string;
+  label: string;
+  /** 1-based CHART_PALETTE slot = rank. 0 on `Others`, which uses `color`. */
+  slot: number;
+  /** Set only on `Others`; overrides the palette. */
+  color?: string;
+};
+
+/** Max bands a stacked chart renders, `Others` included. Above six the stack
+ *  stops reading as distinguishable bands and the legend stops fitting the
+ *  panel beside it. */
+export const SERIES_CAP = 6;
+
+/** Synthetic key for the rollup. The double-underscore prefix keeps it from
+ *  ever colliding with a catalog id, a route id, or a workspace key. */
+export const OTHERS_KEY = "__other";
+export const OTHERS_LABEL = "Others";
+
+/** Neutral-300 — legible against the card but deliberately outside the
+ *  saturated CHART_PALETTE, so the rollup never competes with a named series
+ *  for attention the way a palette slot would. */
+export const OTHERS_COLOR = "var(--color-neutral-300)";
+
+/** Display label for one series key. Every dimension reads its label from the
+ *  entity that owns it, so a chart can't re-spell a model the Models page
+ *  names differently or a route the filter dropdown names differently. */
+function seriesLabel(dimension: Dimension, key: string): string {
+  if (dimension === "model") {
+    return modelName(key);
+  }
+  if (dimension === "provider") {
+    return PROVIDER_META[key as ProviderId]?.label ?? key;
+  }
+  return API_KEY_ROWS.find((k) => k.key === key)?.label ?? key;
+}
+
+/** Every series a dimension COULD name, in workload order.
+ *
+ *  Read straight off the grouped workload rather than listed by hand: the
+ *  candidate pool is by construction exactly the set of entities that carry
+ *  metered traffic. A model, route or key cannot be charted without appearing
+ *  here, and cannot appear here without being in USAGE_7D. That is what makes
+ *  the "which series exist" question unanswerable by an authored list — the
+ *  bug this replaced.
+ *
+ *  Two consequences worth knowing rather than rediscovering:
+ *  • Claude Opus 4.8 is not here. It is 102 of the 153 request rows, but every
+ *    one belongs to the BYOK session cnv_7a3f9e2b, and Gate meters no dollars
+ *    for BYOK. Same reason `design-agent` is not a candidate key.
+ *  • Alibaba is a hairline on the SPEND lens (under 2%) because the catalog
+ *    only lets it serve DeepSeek and Qwen, the two cheapest models in the
+ *    fleet. Toggle to TOKENS and the same route is 11%. That contrast is the
+ *    finding; do not "fix" it by inventing spend for it. */
+export const SERIES_POOL: Record<Dimension, readonly string[]> = {
+  model: Object.keys(TOKENS_TOTALS_7D.model),
+  provider: Object.keys(TOKENS_TOTALS_7D.provider),
+  apiKey: Object.keys(TOKENS_TOTALS_7D.apiKey),
+};
+
+/** Rank a dimension's series DESC by the active metric and cap the result.
+ *
+ *  `totals` is whatever the chart is actually plotting for the active range
+ *  and lens — pass the aggregate it renders, not a 7d constant, so the legend
+ *  can never describe a different selection than the bars.
+ *
+ *  Ties keep pool order (Array#sort is stable). Two series can tie after
+ *  `settle` rounds them to the cent — DeepSeek and Qwen both land on $5.95 on
+ *  the spend lens, from $5.9483 and $5.9457 — and pool order preserves the
+ *  unrounded order in that case. */
+export function rankSeries(
+  dimension: Dimension,
+  totals: Record<string, number>
+): { series: ChartSeries[]; overflow: string[] } {
+  const ranked = SERIES_POOL[dimension]
+    .filter((key) => {
+      const v = totals[key];
+      return typeof v === "number" && Number.isFinite(v) && v > 0;
+    })
+    .sort((a, b) => (totals[b] ?? 0) - (totals[a] ?? 0));
+
+  // Under the cap, everything passes through and there is no Others bucket at
+  // all. Provider (3 routes) and apiKey (5 Gate keys) both land here.
+  const named =
+    ranked.length > SERIES_CAP ? ranked.slice(0, SERIES_CAP - 1) : ranked;
+  const series: ChartSeries[] = named.map((key, i) => ({
+    key,
+    label: seriesLabel(dimension, key),
+    slot: i + 1,
+  }));
+  const overflow = ranked.slice(named.length);
+  if (overflow.length > 0) {
+    series.push({
+      key: OTHERS_KEY,
+      label: OTHERS_LABEL,
+      slot: 0,
+      color: OTHERS_COLOR,
+    });
+  }
+  return { series, overflow };
+}
+
+/** Rank, cap, and fold the overflow into `Others` — series, legend totals and
+ *  chart rows in one pass, so the three can't describe different selections.
+ *
+ *  The fold is deliberately UNROUNDED. Every other value in this pipeline is
+ *  (see splitAcrossBuckets' last-bucket note): rounding the rollup to 2dp
+ *  costs up to 0.005 per bucket in whichever dimension happens to overflow,
+ *  which is exactly the count-dependent cross-dimension drift the rest of the
+ *  file exists to eliminate. */
+export function rankChartSeries(
+  dimension: Dimension,
+  seriesTotals: Record<string, number>,
+  rows: Array<Record<string, number | string>>
+): {
+  series: ChartSeries[];
+  totals: Record<string, number>;
+  rows: Array<Record<string, number | string>>;
+} {
+  const { series, overflow } = rankSeries(dimension, seriesTotals);
+  if (overflow.length === 0) {
+    const totals: Record<string, number> = {};
+    for (const s of series) {
+      totals[s.key] = seriesTotals[s.key] ?? 0;
+    }
+    return { series, totals, rows };
+  }
+
+  const totals: Record<string, number> = {};
+  for (const s of series) {
+    if (s.key !== OTHERS_KEY) {
+      totals[s.key] = seriesTotals[s.key] ?? 0;
+    }
+  }
+  totals[OTHERS_KEY] = overflow.reduce(
+    (sum, key) => sum + (seriesTotals[key] ?? 0),
+    0
+  );
+
+  return {
+    series,
+    totals,
+    rows: rows.map((row) => ({
+      ...row,
+      [OTHERS_KEY]: overflow.reduce(
+        (sum, key) => sum + (Number(row[key]) || 0),
+        0
+      ),
+    })),
+  };
+}
+
 /** Per-series 7d Total-saved rates for the trend chart's Savings lens —
  *  each series' OWN rate (what % of its tokens caching + compression save),
  *  NOT its share of anything. apiKey derives from API_KEY_ROWS.savings so
  *  the chart panel shows the same numbers as the table's Saved column;
  *  model / provider are authored data like the per-key rates (the cache-heavy
- *  short-prompt tail in Others saves the most, long-context Opus the least).
+ *  short-prompt models save the most, long-context Opus the least).
  *  The chart normalizes per-series contributions (token share × rate) so the
  *  stack total stays anchored to savingsRateFor(range) regardless of these
  *  spreads. */
 export const SAVINGS_RATES_7D: Record<Dimension, Record<string, number>> = {
+  // Keyed by catalog id since 2026-08-03, when the model dimension stopped
+  // pre-bundling its long tail. Haiku 4.5 and Kimi K2 Thinking inherit the
+  // 0.29 that bucket carried, split by character — Haiku's short, highly
+  // repetitive classification prompts are the best cache hit in the fleet,
+  // Kimi's reasoning traces are not — at a token-weighted mean of 0.2898,
+  // i.e. the aggregate the bucket asserted, preserved to 4dp.
   model: {
-    sonnet: 0.25,
-    deepseek: 0.235,
-    gemini: 0.215,
-    opus: 0.19,
-    qwen: 0.205,
-    others: 0.29,
+    "anthropic/claude-sonnet-5": 0.25,
+    "deepseek/deepseek-v4-pro": 0.235,
+    "google/gemini-3-1-pro-preview": 0.215,
+    "anthropic/claude-opus-4-7": 0.19,
+    "qwen/qwen3-next-80b-a3b-instruct": 0.205,
+    "anthropic/claude-haiku-4-5": 0.295,
+    "moonshotai/kimi-k2-thinking": 0.23,
   },
   // Per-route saved rate, in the same 0.20–0.26 band the model rates sit in.
   // The biggest route is deliberately not the best saver: OpenRouter's all-25
@@ -1088,9 +1220,9 @@ export const SAVINGS_RATES_7D: Record<Dimension, Record<string, number>> = {
     alibaba: 0.26,
   },
   apiKey: Object.fromEntries(
-    SPEND_SERIES.apiKey.map((s) => [
-      s.key,
-      API_KEY_ROWS.find((k) => k.label === s.key)?.savings ?? 0,
+    SERIES_POOL.apiKey.map((key) => [
+      key,
+      API_KEY_ROWS.find((k) => k.key === key)?.savings ?? 0,
     ])
   ),
 };

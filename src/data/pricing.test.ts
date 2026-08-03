@@ -9,8 +9,8 @@ import {
   MODEL_ROWS,
   MODEL_SERIES_7D,
   PROVIDER_MIX_7D,
+  SERIES_POOL,
   SPEND_BASE,
-  SPEND_SERIES,
   SPEND_TOTALS_7D,
   TOKENS_TOTALS_7D,
   TOTAL_7D_BASE_DOLLARS,
@@ -237,14 +237,38 @@ describe("the Activity workload prices itself from the catalog", () => {
   });
 
   it("charts exactly the series the workload defines", () => {
-    expect(Object.keys(MODEL_SERIES_7D).sort()).toEqual(
-      SPEND_SERIES.model.map((s) => s.key).sort()
-    );
+    // The model dimension charts one series per CATALOG MODEL, not per
+    // authoring group in MODEL_SERIES_7D. Those used to be the same thing, and
+    // that was the bug: the `others` group bundled Haiku 4.5 — 12.52M tokens,
+    // the workspace's 3rd-heaviest model — with Kimi K2, and the legend
+    // rendered the bundle as a named band ranked 3rd while the Top Models card
+    // below it correctly listed Haiku 3rd on its own.
+    const workloadModels = [
+      ...new Set(
+        Object.values(MODEL_SERIES_7D)
+          .flat()
+          .map((m) => m.id)
+      ),
+    ];
+    expect([...SERIES_POOL.model].sort()).toEqual(workloadModels.sort());
+
+    // Both metrics group the same cells, so they must offer the same series in
+    // every dimension — otherwise toggling the lens could add or drop a band.
     for (const dimension of ["model", "provider", "apiKey"] as const) {
       expect(Object.keys(SPEND_TOTALS_7D[dimension]).sort()).toEqual(
-        SPEND_SERIES[dimension].map((s) => s.key).sort()
+        [...SERIES_POOL[dimension]].sort()
+      );
+      expect(Object.keys(TOKENS_TOTALS_7D[dimension]).sort()).toEqual(
+        Object.keys(SPEND_TOTALS_7D[dimension]).sort()
       );
     }
+
+    // And the pool is entities the workspace actually has: every charted key
+    // is a Gate key on the Keys page, never a BYOK one.
+    const gateKeys = new Set(
+      API_KEY_ROWS.filter((k) => k.path === "Gate").map((k) => k.key)
+    );
+    expect(SERIES_POOL.apiKey.filter((k) => !gateKeys.has(k))).toEqual([]);
   });
 
   it("keeps every series' blended rate inside the catalog's own range", () => {
@@ -314,7 +338,7 @@ describe("the Activity tables show the price of the tokens beside them", () => {
   });
 
   it("bills BYOK keys nothing, and charts none of them", () => {
-    const charted = new Set(SPEND_SERIES.apiKey.map((s) => s.key));
+    const charted = new Set(SERIES_POOL.apiKey);
     for (const row of API_KEY_ROWS.filter((k) => k.path === "BYOK")) {
       expect(row.spend, `${row.key} spend`).toBe(0);
       expect(charted.has(row.key), `${row.key} charted`).toBe(false);
