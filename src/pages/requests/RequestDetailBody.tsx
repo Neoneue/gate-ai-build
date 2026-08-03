@@ -441,15 +441,15 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       value={
                         <div className="flex items-center gap-2">
                           <VendorAvatar vendor={row.vendor} />
-                          {/* Name over handle — the row stores the canonical
-                              catalog id, and the catalog owns the label. */}
-                          <span className="flex min-w-0 flex-col">
-                            <span className="type-label-14 truncate text-foreground">
-                              {modelName(row.model)}
-                            </span>
-                            <span className="type-mono-12 truncate text-muted-foreground">
-                              {row.model}
-                            </span>
+                          {/* Name only. The canonical `vendor/model` id is
+                              deliberately NOT shown here — it was added as a
+                              second line on 2026-08-03 and removed the same
+                              day. The id already appears in the Quick start
+                              snippet below, where it is the thing you copy;
+                              repeating it under the label is duplication, and
+                              this list shows every value exactly once. */}
+                          <span className="type-label-14 truncate text-foreground">
+                            {modelName(row.model)}
                           </span>
                         </div>
                       }
