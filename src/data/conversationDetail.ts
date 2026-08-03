@@ -12,6 +12,7 @@
 // never reads CONVERSATION_ROWS or REQUEST_ROWS_* at module scope; callers pass
 // the request rows in, and derivation runs at render time.
 
+import type { Vendor } from "@/components/icons/vendor-meta";
 import { getRequestBody } from "@/data/request-bodies";
 import { requestRowId } from "@/data/requests";
 import type {
@@ -123,6 +124,18 @@ export function getConversationView(
   const outTokens = fmtInt(
     rows.reduce((sum, r) => sum + toInt(r.outTokens), 0)
   );
+  // Which models / vendors this conversation actually ran, in first-seen
+  // (chronological) order. Derived for the same reason reqs and tokens are:
+  // the conversation owns its rows, so anything the list column claims about
+  // it has to come from them. The authored seed values were a parallel claim
+  // and had drifted from the rows on 7 of 8 conversations by 2026-08-03 —
+  // cnv_lyra_92 advertised one OpenAI model while its requests ran four
+  // models across three vendors, and the trace right below the list said so.
+  // A conversation that owns no rows keeps its seed values.
+  const models =
+    reqs > 0 ? [...new Set(rows.map((r) => r.model))] : seed.models;
+  const vendors: Vendor[] =
+    reqs > 0 ? [...new Set(rows.map((r) => r.vendor))] : seed.vendors;
   // BYOK sessions can't be metered (cost '—' on every row); show '—' rather
   // than a misleading $0.0000 aggregate.
   const allByok = reqs > 0 && rows.every((r) => r.cost.trim() === "—");
@@ -137,6 +150,8 @@ export function getConversationView(
     ...seed,
     reqs,
     turns: turnCount(seed, reqs),
+    models,
+    vendors,
     inTokens,
     outTokens,
     cost,

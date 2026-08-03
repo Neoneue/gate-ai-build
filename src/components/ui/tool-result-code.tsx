@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  *
  * Recipe (locked):
  *   <code> element (semantic — these blobs ARE machine output)
- *   type-copy-14-tight text-foreground
+ *   type-copy-14 text-foreground
  *   break-words          (2026-07-30, was `break-all`. `break-all` splits
  *                         at ANY character — the trace showed "sta/rted"
  *                         and "$0.025/8" broken mid-token. `break-words`
@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
  * the page-title display tier is tight on this site.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const TOOL_RESULT_CODE_BASE = "type-copy-14-tight text-foreground break-words";
+const TOOL_RESULT_CODE_BASE = "type-copy-14 text-foreground break-words";
 
 export type ToolResultCodeProps = React.HTMLAttributes<HTMLElement>;
 

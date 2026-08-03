@@ -3,6 +3,7 @@
  *  No JSX, no React — shared by the page, table, and detail modal. */
 import type { Vendor } from "@/components/icons/vendor-meta";
 import { CONVERSATION_ROWS } from "@/data/conversations";
+import { MODEL_OPTIONS, modelName } from "@/data/models";
 import {
   REQUEST_ROWS_7D,
   REQUEST_ROWS_24H,
@@ -53,7 +54,10 @@ export function requestSortValue(
     case "guardrail":
       return row.guardrail;
     case "model":
-      return row.model;
+      // Sort on the label the eye reads, not the stored id — same rule the
+      // `conversation` case follows one line down. Sorting the raw id would
+      // group by vendor prefix, which is not what the column shows first.
+      return modelName(row.model);
     case "conversation":
       return conversationTitle(row.conversation) || row.conversation;
     case "keyId":
@@ -121,24 +125,26 @@ export const GUARDRAIL_BADGE: Record<
   block: { variant: "destructive" },
 };
 
-// Model options for the Filters modal Select. Each carries its vendor so the
-// item renders the brand icon (VendorAvatar) on the left, matching Conversations.
+// Model options for the Filters modal Select. Derived from the catalog rather
+// than authored, so the dropdown can never offer a model the gateway does not
+// serve — the failure this list had until 2026-08-03, when it listed four
+// models (gpt-5.1, llama-4.2-405b, grok-4.1-fast, mistral-large-3) that
+// existed nowhere else in the app. Restricted to the models that actually
+// carry traffic in REQUEST_ROWS_ALL: a filter option that can only ever return
+// zero rows is worse than no option. Each carries its vendor so the item
+// renders the brand icon (VendorAvatar) on the left, matching Conversations.
 export const MODEL_FILTER_OPTIONS: {
   value: string;
   label: string;
   vendor: Vendor;
-}[] = [
-  {
-    value: "claude-sonnet-4.8",
-    label: "claude-sonnet-4.8",
-    vendor: "anthropic",
-  },
-  { value: "gpt-5.1", label: "gpt-5.1", vendor: "openai" },
-  { value: "gemini-3-pro", label: "gemini-3-pro", vendor: "google" },
-  { value: "llama-4.2-405b", label: "llama-4.2-405b", vendor: "meta" },
-  { value: "grok-4.1-fast", label: "grok-4.1-fast", vendor: "xai" },
-  { value: "mistral-large-3", label: "mistral-large-3", vendor: "mistral" },
-];
+}[] = (() => {
+  const used = new Set(REQUEST_ROWS_ALL.map((r) => r.model));
+  return MODEL_OPTIONS.filter((m) => used.has(m.handle)).map((m) => ({
+    value: m.handle,
+    label: m.label,
+    vendor: m.vendor,
+  }));
+})();
 
 /** Status cell label. Returns the raw HTTP outcome (success / error) —
  *  slow rows show Success here per CTO direction (2026-05-20). Slow is
@@ -150,9 +156,17 @@ export function responseLabel(row: RequestRow): string {
 }
 
 /** Provider wire-format endpoint for a given model vendor. Surfaces in the
- *  modal Details tab so a `gpt-5.1` row doesn't read as if it went through
- *  Anthropic's `/v1/messages`. Anchor strings sit here; the principle of
- *  "derive from row" is anchored in CLAUDE.md's no-synthetic-data rule. */
+ *  modal Details tab so a `deepseek/deepseek-v4-pro` row doesn't read as if it
+ *  went through Anthropic's `/v1/messages`. Anchor strings sit here; the
+ *  principle of "derive from row" is anchored in CLAUDE.md's no-synthetic-data
+ *  rule.
+ *
+ *  Deliberately still complete after the 2026-08-03 catalog reconciliation.
+ *  Only five vendors (anthropic / google / deepseek / qwen / moonshotai) now
+ *  carry request rows, but `Vendor` stays a complete union — `openai` is still
+ *  live on the BYOK "Works with" surfaces — and a `Record<Vendor, string>`
+ *  must therefore stay exhaustive. Pruning the map is one edit with the union,
+ *  never before it. */
 export const VENDOR_ENDPOINT: Record<Vendor, string> = {
   anthropic: "/v1/messages",
   openai: "/v1/chat/completions",
@@ -162,6 +176,11 @@ export const VENDOR_ENDPOINT: Record<Vendor, string> = {
   mistral: "/v1/chat/completions",
   deepseek: "/v1/chat/completions",
   cohere: "/v2/chat",
+  // Added 2026-08-03 with the Models rebuild, which widened `Vendor` by two.
+  // Both serve an OpenAI-compatible surface (Alibaba Model Studio, Moonshot
+  // open platform), so neither needs a bespoke wire format.
+  moonshotai: "/v1/chat/completions",
+  qwen: "/v1/chat/completions",
 };
 
 export function responseVariant(row: RequestRow): "success" | "destructive" {

@@ -49,7 +49,7 @@ import { cn } from "@/lib/utils";
  * here.
  *
  * Element → voice map (see the handoff for the full list + open questions):
- *   p, li, td      type-copy-14-tight   ← inherited from the wrapper
+ *   p, li, td      type-copy-14   ← inherited from the wrapper
  *   h3             type-heading-16      ← the ONLY heading Figma exercises
  *                                         (its source markdown used `###`),
  *                                         plus the 1px rule under it
@@ -57,7 +57,7 @@ import { cn } from "@/lib/utils";
  *                                         existing ladder, not from Figma
  *   strong         font-medium (weight ceiling)
  *   a              underline only — Figma changes no colour or size
- *   code, pre      type-copy-14-tight on --muted — SANS, not the mono Data
+ *   code, pre      type-copy-14 on --muted — SANS, not the mono Data
  *                  voice. See design.md "Exception: Ask AI reply prose"
  *                  (2026-07-27). Do not revert to mono.
  *   hr             --border hairline
@@ -66,7 +66,7 @@ import { cn } from "@/lib/utils";
  * ────────────────────────────────────────────────────────────────────────── */
 
 const REPLY_PROSE = cn(
-  // Base voice for everything: type-copy-14-tight (font-sans text-sm/5 font-normal).
+  // Base voice for everything: type-copy-14 (font-sans text-sm font-normal).
   // `break-words` is Figma's `word-break: break-word` — without it a bare URL
   // (the reply is full of them) runs past the bubble's padding edge. Ink is
   // deliberately NOT set here — the scope inherits it, so <AgentMessage> owns
@@ -86,7 +86,7 @@ const REPLY_PROSE = cn(
      (0,1,1), so the margin form silently did nothing. A flex gap takes no part
      in specificity, and it applies only BETWEEN children — no leading or
      trailing space inside the bubble, whatever sequence a renderer emits. */
-  "type-copy-14-tight flex flex-col gap-5 break-words",
+  "type-copy-14 flex flex-col gap-5 break-words",
   // Reset UA margins on direct children only; the gap owns the base rhythm.
   "[&>*]:m-0",
   // Nested resets (the `>*` reset does not reach these).
@@ -127,9 +127,9 @@ const REPLY_PROSE = cn(
      step. Figma exercises the inline chip (e.g. `1125:4391`) but contains no
      fenced block, so `pre` follows the same ruling by extension. */
   "[&_:not(pre)>code]:rounded-xs [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1",
-  "[&_:not(pre)>code]:font-normal [&_:not(pre)>code]:font-sans [&_:not(pre)>code]:text-sm/5",
+  "[&_:not(pre)>code]:font-normal [&_:not(pre)>code]:font-sans [&_:not(pre)>code]:text-sm",
   "[&_pre]:overflow-x-auto [&_pre]:rounded-xs [&_pre]:bg-muted [&_pre]:p-3",
-  "[&_pre]:font-normal [&_pre]:font-sans [&_pre]:text-sm/5",
+  "[&_pre]:font-normal [&_pre]:font-sans [&_pre]:text-sm",
   "[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:font-sans",
   // Rule.
   "[&_hr]:h-px [&_hr]:border-0 [&_hr]:bg-border"
@@ -151,7 +151,7 @@ export function ReplyProse({
 export function UserMessage({ children }: { children: ReactNode }) {
   return (
     <div className="flex justify-end">
-      <div className="type-copy-14-tight max-w-[85%] text-pretty rounded-md border border-border bg-chat-bubble-user px-4 py-3 text-chat-bubble-user-foreground shadow-xs">
+      <div className="type-copy-14 max-w-[85%] text-pretty rounded-md border border-border bg-chat-bubble-user px-4 py-3 text-chat-bubble-user-foreground shadow-xs">
         {" "}
         {children}
       </div>
@@ -191,7 +191,20 @@ export function UserMessage({ children }: { children: ReactNode }) {
  * Timing: the confirmation holds 3s. The RATING persists past it (the thumb
  * stays filled) — only the copy glyph and the helper text are on the clock,
  * which is exactly what Figma's states 5/6 show.
+ *
+ * TEMPORARILY HIDDEN: the two rating affordances are gated off behind
+ * `SHOW_REPLY_RATING` below. The row ships as copy + regenerate only until the
+ * rating signal has somewhere to go. Everything else here still describes the
+ * full Figma node, which is what flipping the flag restores.
  * ────────────────────────────────────────────────────────────────────────── */
+
+/* Temporary product decision (2026-08-03): the thumb-up / thumb-down rating is
+   hidden until there is a destination for the signal. This is a HIDE, not a
+   removal — the state, the handler, and the Figma-accurate JSX below are all
+   intact, so flipping this one boolean brings the pair back exactly as
+   specified. The `boolean` annotation is deliberate: it keeps TypeScript from
+   narrowing the flag to the literal `false` and marking the gated branch dead. */
+const SHOW_REPLY_RATING: boolean = false;
 
 /** How long the inline confirmation holds. Figma/product spec: 3 seconds. */
 const FEEDBACK_HOLD_MS = 3000;
@@ -285,45 +298,52 @@ export function AgentMessage({
           showActions ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >
-        <Button
-          aria-label="Good response"
-          aria-pressed={rating === "up"}
-          className={
-            rating === "up" ? "text-foreground" : "text-muted-foreground"
-          }
-          onClick={() => rate("up")}
-          size="icon-action"
-          tabIndex={showActions ? 0 : -1}
-          type="button"
-          variant="ghost"
-        >
-          <ThumbsUp
-            aria-hidden
-            /* Figma renders the SELECTED thumb as a solid glyph, not a
-               recoloured outline. `currentColor` keeps the fill on the same
-               semantic token as the stroke. */
-            fill={rating === "up" ? "currentColor" : "none"}
-            strokeWidth={1.75}
-          />
-        </Button>
-        <Button
-          aria-label="Bad response"
-          aria-pressed={rating === "down"}
-          className={
-            rating === "down" ? "text-foreground" : "text-muted-foreground"
-          }
-          onClick={() => rate("down")}
-          size="icon-action"
-          tabIndex={showActions ? 0 : -1}
-          type="button"
-          variant="ghost"
-        >
-          <ThumbsDown
-            aria-hidden
-            fill={rating === "down" ? "currentColor" : "none"}
-            strokeWidth={1.75}
-          />
-        </Button>
+        {/* Gated by SHOW_REPLY_RATING — see the flag's note above. Hidden, not
+            deleted: this is the Figma-accurate pair, kept verbatim so restoring
+            it is a one-boolean change with no reconstruction. */}
+        {SHOW_REPLY_RATING ? (
+          <>
+            <Button
+              aria-label="Good response"
+              aria-pressed={rating === "up"}
+              className={
+                rating === "up" ? "text-foreground" : "text-muted-foreground"
+              }
+              onClick={() => rate("up")}
+              size="icon-action"
+              tabIndex={showActions ? 0 : -1}
+              type="button"
+              variant="ghost"
+            >
+              <ThumbsUp
+                aria-hidden
+                /* Figma renders the SELECTED thumb as a solid glyph, not a
+                   recoloured outline. `currentColor` keeps the fill on the same
+                   semantic token as the stroke. */
+                fill={rating === "up" ? "currentColor" : "none"}
+                strokeWidth={1.75}
+              />
+            </Button>
+            <Button
+              aria-label="Bad response"
+              aria-pressed={rating === "down"}
+              className={
+                rating === "down" ? "text-foreground" : "text-muted-foreground"
+              }
+              onClick={() => rate("down")}
+              size="icon-action"
+              tabIndex={showActions ? 0 : -1}
+              type="button"
+              variant="ghost"
+            >
+              <ThumbsDown
+                aria-hidden
+                fill={rating === "down" ? "currentColor" : "none"}
+                strokeWidth={1.75}
+              />
+            </Button>
+          </>
+        ) : null}
         <Button
           aria-label="Copy reply"
           className={copied ? "text-foreground" : "text-muted-foreground"}

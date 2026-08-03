@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CONVERSATION_ROWS } from "@/data/conversations";
+import { modelName } from "@/data/models";
 import { REQUEST_ROWS_RECENT } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
@@ -49,6 +50,7 @@ import {
   SPEND_BASE,
   SPEND_SERIES,
   seriesColor,
+  splitAcrossBuckets,
   TOKEN_SAVINGS_RATE_7D,
   TOKENS_TOTALS_7D,
   TOTAL_7D_BASE_DOLLARS,
@@ -226,21 +228,18 @@ function makeStackedSpendRows(
   }));
 }
 
+/** Token rows for the Overview stacked chart. Unlike the spend rows, which
+ *  read SPEND_BASE's authored daily values directly, tokens only have 7d
+ *  per-series totals — so the 7 buckets are synthesised. That synthesis goes
+ *  through splitAcrossBuckets, NOT one distributeSeries call per series:
+ *  per-series seeding made the series COUNT change the summed daily shape, so
+ *  switching the dimension selector rewrote every bar height while the KPI
+ *  total held still. Fixed 2026-08-03, same as Activity's TrendCard. */
 function makeStackedTokenRows(
   dim: Dimension
 ): Array<Record<string, number | string>> {
   const dimSeries = SPEND_SERIES[dim];
-  const totals = TOKENS_TOTALS_7D[dim];
-  const buckets: Record<string, number[]> = {};
-  let seed = 0;
-  for (const s of dimSeries) {
-    seed++;
-    buckets[s.key] = distributeSeries(
-      totals[s.key] ?? 0,
-      7,
-      77 * 31 + seed + 200
-    );
-  }
+  const buckets = splitAcrossBuckets(TOKENS_TOTALS_7D[dim], 7, 77 * 31 + 200);
   return Array.from({ length: 7 }, (_, i) => {
     const row: Record<string, number | string> = {
       date: KPI_7D_LABELS[i] ?? "",
@@ -731,7 +730,9 @@ function LatestRequestsTable() {
               <TableCell className="type-mono-14 whitespace-nowrap">
                 {row.day} {row.time}
               </TableCell>
-              <TableCell className="whitespace-nowrap">{row.model}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                {modelName(row.model)}
+              </TableCell>
               <TableCell className="whitespace-nowrap">
                 <Badge
                   variant={

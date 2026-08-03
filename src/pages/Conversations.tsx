@@ -5,7 +5,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
-import { VENDOR_META, type Vendor } from "@/components/icons/vendor-meta";
+import { VENDOR_META } from "@/components/icons/vendor-meta";
 import { Card } from "@/components/ui/card";
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -47,7 +47,8 @@ import {
   type Range,
 } from "@/lib/range";
 import { ConversationDetailDialog } from "./conversations/ConversationDetail";
-import type { ConversationRow, ModelId } from "./conversations/types";
+import { MODEL_FILTER_OPTIONS } from "./conversations/data";
+import type { ConversationRow } from "./conversations/types";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-014 — Conversations (Observability)
@@ -59,34 +60,6 @@ import type { ConversationRow, ModelId } from "./conversations/types";
  * CMP-013. This file owns the page-internal pieces only: PageHeader,
  * KpiRail, ConversationsTableSection.
  * ───────────────────────────────────────────────────────────────────────── */
-
-// Model filter options for the toolbar Select. Each carries its vendor so the
-// item renders the brand icon (VendorAvatar) on the left.
-const MODEL_FILTER_OPTIONS: { value: string; label: string; vendor: Vendor }[] =
-  [
-    { value: "claude-opus-4-7", label: "Claude Opus 4.7", vendor: "anthropic" },
-    {
-      value: "claude-sonnet-4-5",
-      label: "Claude Sonnet 4.5",
-      vendor: "anthropic",
-    },
-    {
-      value: "claude-haiku-4-5",
-      label: "Claude Haiku 4.5",
-      vendor: "anthropic",
-    },
-    { value: "gpt-5", label: "GPT-5", vendor: "openai" },
-    { value: "gpt-4o", label: "GPT-4o", vendor: "openai" },
-    { value: "gpt-4o-mini", label: "GPT-4o-mini", vendor: "openai" },
-    { value: "gemini-3-pro", label: "Gemini 3 Pro", vendor: "google" },
-    { value: "gemini-3-flash", label: "Gemini 3 Flash", vendor: "google" },
-    {
-      value: "gemini-3-flash-lite",
-      label: "Gemini 3 Flash Lite",
-      vendor: "google",
-    },
-    { value: "llama-3-3-70b", label: "Llama 3.3 70B", vendor: "meta" },
-  ];
 
 const SPARK: Record<
   Range,
@@ -431,7 +404,7 @@ function ConversationsTableSection({
         if (keyId !== "all" && row.initiator !== keyId) {
           return false;
         }
-        if (model !== "all" && !row.models.includes(model as ModelId)) {
+        if (model !== "all" && !row.models.includes(model)) {
           return false;
         }
         return true;

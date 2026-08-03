@@ -6,7 +6,6 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
-import type { Vendor } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,6 +30,7 @@ import {
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { UploadIcon } from "@/components/ui/upload";
+import { modelName } from "@/data/models";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
@@ -47,6 +47,7 @@ import {
   distributeSeries,
   METRIC_OPTIONS,
   type Metric,
+  MODEL_ROWS,
   savingsRateFor,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
@@ -332,98 +333,6 @@ function KpiRail({
   );
 }
 
-type ModelRow = {
-  key: string;
-  label: string;
-  vendor: Vendor;
-  requests: number;
-  tokensIn: number;
-  tokensOut: number;
-  spend: number;
-};
-
-/** Numbers are tuned so the three Top-by-axis cards diverge realistically.
- *  Price-per-token differs by ~60× between Haiku and Opus, and tokens-per-
- *  request differs by ~5× between short-classification (Haiku) and long-
- *  context (Llama). Sums reconcile with the 7d KPI rail (~$1,248 spend,
- *  ~48,293 requests, ~18.4M tokens).
- *
- *  Resulting top-5 leaders:
- *    Spend     → Opus, Sonnet, GPT, Gemini, Llama
- *    Requests  → Haiku, Sonnet, Gemini, GPT, Llama
- *    Tokens    → Sonnet, Llama, Haiku, Gemini, GPT */
-// MODEL_ROWS is the source of truth for the Top Models card. tokensIn /
-// tokensOut are the per-model workspace aggregates; the card computes total
-// tokens at the call site (tokensIn + tokensOut). The trend breakdown panel
-// no longer reads in/out — cumulative only; see TrendBreakdownPanel. The
-// table at the bottom (UsageByKey) is where in/out lives. Production reads
-// these from real traffic; replace the rows.
-const MODEL_ROWS: ModelRow[] = [
-  {
-    key: "opus",
-    label: "Claude Opus 4.7",
-    vendor: "anthropic",
-    requests: 34_400,
-    tokensIn: 7_370_000,
-    tokensOut: 6_030_000,
-    spend: 120.6,
-  },
-  {
-    key: "sonnet",
-    label: "Claude Sonnet 4.5",
-    vendor: "anthropic",
-    requests: 14_900,
-    tokensIn: 5_371_000,
-    tokensOut: 1_179_000,
-    spend: 35.4,
-  },
-  {
-    key: "haiku",
-    label: "Claude Haiku",
-    vendor: "anthropic",
-    requests: 25_030,
-    tokensIn: 2_676_000,
-    tokensOut: 1_784_000,
-    spend: 8.5,
-  },
-  {
-    key: "gpt",
-    label: "GPT-5.1",
-    vendor: "openai",
-    requests: 6670,
-    tokensIn: 1_859_000,
-    tokensOut: 1_001_000,
-    spend: 14.0,
-  },
-  {
-    key: "gemini",
-    label: "Gemini 3 Pro",
-    vendor: "google",
-    requests: 8720,
-    tokensIn: 2_835_000,
-    tokensOut: 1_215_000,
-    spend: 9.5,
-  },
-  {
-    key: "llama",
-    label: "Llama 4.2 405B",
-    vendor: "meta",
-    requests: 5280,
-    tokensIn: 936_000,
-    tokensOut: 264_000,
-    spend: 6.0,
-  },
-  {
-    key: "mistral",
-    label: "Mistral Large 3",
-    vendor: "mistral",
-    requests: 690,
-    tokensIn: 247_000,
-    tokensOut: 133_000,
-    spend: 2.3,
-  },
-];
-
 /* Three cards, one per entity — CTO 2026-05-13: "no reason to have 3 stat
  * sections about [models]. Make one about models, one about api keys, one
  * about users." Axes chosen so each card carries a distinct lens (and
@@ -558,7 +467,7 @@ function TopByAxisRow({
     const isSpend = modelMetric === "spend";
     return MODEL_ROWS.map((m) => ({
       key: m.key,
-      label: m.label,
+      label: modelName(m.key),
       vendor: m.vendor,
       axis: isSpend ? m.spend * scale : (m.tokensIn + m.tokensOut) * scale,
     }))

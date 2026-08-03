@@ -42,6 +42,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
+import { modelName } from "@/data/models";
 import { isByokKey, REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import {
@@ -609,15 +610,29 @@ export function RequestsTableSection({
                       </TableCell>
                       <TableCell className="w-60 whitespace-nowrap">
                         <RowActionButton
-                          aria-label={`Inspect ${row.code} message to ${row.model} at ${row.time}`}
+                          aria-label={`Inspect ${row.code} message to ${modelName(row.model)} at ${row.time}`}
                           href={`/messages-findings/${requestRowId(row)}`}
                         >
                           <VendorAvatar vendor={row.vendor} />
-                          <span
-                            className="type-mono-14 truncate text-foreground"
-                            title={row.model}
-                          >
-                            {row.model}
+                          {/* Name over id, the same two-line shape the
+                              Conversation cell uses — and the same split
+                              production draws across its Model / Model ID
+                              columns. The id is the gateway handle, so it has
+                              to stay visible and copyable; the name is what
+                              the eye scans. */}
+                          <span className="flex min-w-0 flex-col">
+                            <span
+                              className="type-label-14 block truncate text-foreground"
+                              title={modelName(row.model)}
+                            >
+                              {modelName(row.model)}
+                            </span>
+                            <span
+                              className="type-mono-12 block truncate text-muted-foreground"
+                              title={row.model}
+                            >
+                              {row.model}
+                            </span>
                           </span>
                         </RowActionButton>
                       </TableCell>

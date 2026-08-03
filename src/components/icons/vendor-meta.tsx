@@ -1,12 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import {
-  AzureIcon,
-  BedrockIcon,
-  FireworksIcon,
-  GroqIcon,
-  TogetherIcon,
-  VertexIcon,
-} from "./marketplace-providers";
+import { AlibabaIcon, OpenRouterIcon, VertexIcon } from "./gateway-providers";
 import {
   AnthropicIcon,
   CohereIcon,
@@ -15,7 +8,9 @@ import {
   GrokIcon,
   MetaIcon,
   MistralIcon,
+  MoonshotAIIcon,
   OpenAIIcon,
+  QwenIcon,
 } from "./model-providers";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -44,7 +39,9 @@ export type Vendor =
   | "meta"
   | "mistral"
   | "deepseek"
-  | "cohere";
+  | "cohere"
+  | "moonshotai"
+  | "qwen";
 
 export interface VendorMeta {
   color: string;
@@ -52,6 +49,17 @@ export interface VendorMeta {
   label: string;
 }
 
+// `openai`, `meta`, `mistral`, `xai`, and `cohere` are not in the Models
+// catalog (2026-08-03 prod rebuild). After the Messages/Conversations catalog
+// reconciliation later the same day, only `openai` still keys anything: the
+// BYOK surfaces on DashboardDefault, where a Codex/ChatGPT subscription is a
+// real thing to route. The other four are unreferenced and CAN now be deleted
+// — this comment is the record that the mock rows which used to block it are
+// gone. Deleting them is one edit here plus VENDOR_ENDPOINT in
+// `pages/requests/data.ts` (a `Record<Vendor, string>`, so the two move
+// together) and would strand GrokIcon/MetaIcon, which DashboardDefault's
+// "Works with" footer still imports directly. Left in deliberately: an
+// unreferenced union member costs nothing and the BYOK story may want them.
 export const VENDOR_META: Record<Vendor, VendorMeta> = {
   anthropic: { color: "#D97757", icon: AnthropicIcon, label: "Anthropic" },
   xai: { color: "var(--foreground)", icon: GrokIcon, label: "xAI" },
@@ -61,6 +69,14 @@ export const VENDOR_META: Record<Vendor, VendorMeta> = {
   mistral: { color: "#FA520F", icon: MistralIcon, label: "Mistral" },
   deepseek: { color: "#4D6BFE", icon: DeepSeekIcon, label: "DeepSeek" },
   cohere: { color: "#FF7759", icon: CohereIcon, label: "Cohere" },
+  moonshotai: {
+    color: "var(--foreground)",
+    icon: MoonshotAIIcon,
+    label: "MoonshotAI",
+  },
+  // Gradient-filled mark, so `color` never paints it; the value is kept for
+  // parity with the other entries and for any future non-icon use.
+  qwen: { color: "#6336E7", icon: QwenIcon, label: "Qwen" },
 };
 
 /**
@@ -89,49 +105,73 @@ export const VENDOR_META: Record<Vendor, VendorMeta> = {
  *  cells. `md` (size-5 = 20px) pairs with `text-xl` titles. `lg` (size-6
  *  = 24px) pairs with `text-2xl` titles. Stay on the icon ladder. */
 /* ─────────────────────────────────────────────────────────────────────────
- * Marketplace providers — AI-infrastructure hosts that serve other
- * vendors' models (AWS Bedrock, Azure OpenAI, Google Vertex, Together,
- * Fireworks, Groq). Distinct from `Vendor` (the model creator); a model
- * may be created by Anthropic and routed via Bedrock or Vertex. Both
- * meta maps share the same shape so consumers can dispatch on context
- * (creator vs. host) without restructuring rendering code.
+ * Gateway providers — the three upstreams Constellation Gate routes
+ * through. Distinct from `Vendor` (the model creator); a model may be
+ * created by Anthropic and served by Google Vertex or OpenRouter. Both meta
+ * maps share the same shape so consumers can dispatch on context (creator
+ * vs. host) without restructuring rendering code.
+ *
+ * Replaced `MarketplaceProvider` / `MARKETPLACE_META` on 2026-08-03. The
+ * old First-party / Marketplace split does not exist in prod — there is one
+ * flat provider list — so a name carrying that split was describing
+ * something real code no longer does.
+ *
+ * THREE label fields, because prod uses three different strings for the
+ * same provider and all three are real:
+ *   `label`       row cells + the providers-stack tooltip  ("Google Vertex")
+ *   `filterLabel` the "All providers" dropdown             ("Alibaba Direct")
+ *   `detailLabel` the model detail page's providers table  ("Google Vertex AI")
  *
  * Brand hex literals carry the same exception VENDOR_META does: external
- * brand colors are not design-system tokens. Color picks below match each
- * brand's primary mark hue — the dominant fill in the `*-color.svg` mark
- * sourced from lobe-icons (mid-stop for gradients, primary fill otherwise).
- * Mono marks (Groq) take the brand's accent orange.
+ * brand colors are not design-system tokens. OpenRouter is deliberately
+ * `var(--foreground)` and not its lime brand hex — prod renders the mark
+ * monochrome, so it flips with the theme.
  * ───────────────────────────────────────────────────────────────────────── */
 
-export type MarketplaceProvider =
-  | "bedrock"
-  | "azure"
-  | "vertex"
-  | "together"
-  | "fireworks"
-  | "groq";
+export type ProviderId = "alibaba" | "vertex" | "openrouter";
 
-export interface MarketplaceMeta {
+export interface ProviderMeta {
   color: string;
+  detailLabel: string;
+  filterLabel: string;
   icon: IconType;
   label: string;
 }
 
-export const MARKETPLACE_META: Record<MarketplaceProvider, MarketplaceMeta> = {
-  bedrock: { color: "#3D8FFF", icon: BedrockIcon, label: "AWS Bedrock" },
-  azure: { color: "#0078D4", icon: AzureIcon, label: "Azure OpenAI" },
-  vertex: { color: "#4285F4", icon: VertexIcon, label: "Google Vertex" },
-  together: { color: "#EF2CC1", icon: TogetherIcon, label: "Together AI" },
-  fireworks: { color: "#5019C5", icon: FireworksIcon, label: "Fireworks AI" },
-  groq: { color: "#F55036", icon: GroqIcon, label: "Groq" },
+export const PROVIDER_META: Record<ProviderId, ProviderMeta> = {
+  alibaba: {
+    color: "#FF6003",
+    icon: AlibabaIcon,
+    label: "Alibaba",
+    filterLabel: "Alibaba Direct",
+    detailLabel: "Alibaba",
+  },
+  vertex: {
+    color: "#4285F4",
+    icon: VertexIcon,
+    label: "Google Vertex",
+    filterLabel: "Google Vertex",
+    detailLabel: "Google Vertex AI",
+  },
+  openrouter: {
+    color: "var(--foreground)",
+    icon: OpenRouterIcon,
+    label: "OpenRouter",
+    filterLabel: "OpenRouter",
+    detailLabel: "OpenRouter",
+  },
 };
 
+/** Canonical provider order for the filter dropdown. Alphabetical, which is
+ *  the order prod renders. Per-model provider order is NOT this — it comes
+ *  from each model's own `providers[]` and varies row to row. */
+export const PROVIDER_ORDER: ProviderId[] = ["alibaba", "vertex", "openrouter"];
+
 /**
- * Marketplace-provider glyph rendered in its native brand color — same
- * locked treatment as VendorAvatar: bare icon at size-4, no chip wrapper,
- * no tone prop, sr-only label unless `decorative`. Multi-color SVGs
- * (Bedrock gradient, Azure four-layer, Vertex Google-blue tonal stack,
- * Together three-disk, Fireworks per-path) ignore wrapper `style.color`
- * because their fills are pinned. Mono SVGs (Groq) are painted by the
- * wrapper.
+ * Gateway-provider glyph rendered in its native brand color — same locked
+ * treatment as VendorAvatar: bare icon at size-4, no chip wrapper, no tone
+ * prop, sr-only label unless `decorative`. Multi-color SVGs (Vertex's
+ * Google-blue tonal stack, Alibaba's pinned orange) ignore wrapper
+ * `style.color` because their fills are pinned. Mono SVGs (OpenRouter) are
+ * painted by the wrapper.
  */

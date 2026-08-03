@@ -478,7 +478,7 @@ function FreeToggleCard({
               {badge ? <Badge variant="neutral">{badge}</Badge> : null}
             </div>
             {description ? (
-              <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
+              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -659,7 +659,7 @@ function DetailCard({
         {title ? (
           <span className="type-label-14 text-foreground">{title}</span>
         ) : null}
-        <p className="type-copy-14-tight m-0 text-pretty text-muted-foreground">
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           {description}
         </p>
       </div>

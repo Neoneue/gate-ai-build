@@ -708,7 +708,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                         {check.label}
                       </span>
                       {firing && (
-                        <span className="type-copy-14-tight text-pretty font-normal text-muted-foreground">
+                        <span className="type-copy-14 text-pretty font-normal text-muted-foreground">
                           {reconciled?.message ?? detail.reason}
                         </span>
                       )}

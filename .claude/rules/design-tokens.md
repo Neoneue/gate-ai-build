@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+  - "src/**/*.css"
+  - "public/design-system.html"
+---
+
 # Rule: design values are a closed set
 
 `design.md` is authoritative for ALL visual decisions. Colors, type sizes,

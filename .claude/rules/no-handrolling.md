@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+---
+
 # Rule: never hand-roll a component. Compose the primitives.
 
 Companion to [`design-tokens.md`](./design-tokens.md) and

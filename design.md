@@ -355,7 +355,7 @@ components:
   text-link:         { textColor: "{colors.neutral-800}", rounded: "{rounded.xs}" }  # renders <button> by default; ink + permanent faint underline
   icon-action-button:{ textColor: "{colors.neutral-500}", rounded: "{rounded.xs}" }  # size-6 (24px) icon-only; after:-inset-2 expands hit target to 40×40
   tabs-count:        { backgroundColor: "{colors.neutral-100}", textColor: "{colors.neutral-500}", rounded: "{rounded.xs}", height: 20 }  # mono count chip inside TabsTrigger
-  tool-result-code:  { textColor: "{colors.neutral-900}" }  # type-copy-14-tight break-words — <code> element; SANS since 2026-07-30 (was font-mono break-all)
+  tool-result-code:  { textColor: "{colors.neutral-900}" }  # type-copy-14 break-words — <code> element; SANS since 2026-07-30 (was font-mono break-all)
   tool-call-card:  # nested "CALL <Tool>" card inside an assistant bubble (Conversations trace)
     backgroundColor: "{colors.card}"      # inverts vs. its muted parent bubble: white in light, neutral-900 in dark
     textColor: "{colors.neutral-900}"     # tool name; args at {colors.muted-foreground}
@@ -695,12 +695,9 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Label 16 | `type-label-16` | `font-sans text-base font-medium tracking-tight` |
 | Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
 | Label 12 | `type-label-12` | `font-sans text-xs font-medium` |
-| Copy 24 | `type-copy-24` | `font-sans text-2xl/9 font-normal tracking-snug` |
-| Copy 20 | `type-copy-20` | `font-sans text-xl/9 font-normal tracking-snug` |
-| Copy 18 | `type-copy-18` | `font-sans text-lg/7 font-normal tracking-snug` |
+| Copy 18 | `type-copy-18` | `font-sans text-lg font-normal tracking-snug` |
 | Copy 16 | `type-copy-16` | `font-sans text-base font-normal tracking-snug` |
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
-| Copy 14 tight | `type-copy-14-tight` | `font-sans text-sm/5 font-normal` |
 | Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |
 | Mono 16 | `type-mono-16` | `font-mono text-base font-normal tabular-nums` |
 | Mono 14 | `type-mono-14` | `font-mono text-sm font-normal tabular-nums` |
@@ -810,7 +807,7 @@ it rather than restating it:
 ### Exception: Ask AI reply prose *(2026-07-27)*
 
 **What.** Inside an **Ask AI agent reply**, inline `code` and fenced `pre`
-render in the **sans body voice** (`type-copy-14-tight`) on a `bg-muted` chip /
+render in the **sans body voice** (`type-copy-14`) on a `bg-muted` chip /
 block — **not** the mono `type-mono-*` Data voice that the rule above would
 otherwise require for code.
 
@@ -831,7 +828,7 @@ the chat panel.
 is now sans for the same reason: the Conversations trace renders `Tool · Read`
 bodies through `ToolResultCode`, and those blobs are dense multi-line walls
 that were hard to read in mono. They take the same voice as the Ask AI code
-spans (`type-copy-14-tight`) at the same 14px. This is the *only* transcript
+spans (`type-copy-14`) at the same 14px. This is the *only* transcript
 surface excepted — every other one named above stays mono, and the rest of the
 Conversations trace (IDs, timestamps, numerics, `InlineCode`) is untouched.
 
@@ -1178,7 +1175,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **MessageBlock** (`message-block.tsx`) — Conversations chat-thread bubble. **Bubble border-only, no fill** (earlier tone-tinted fills `bg-neutral-100`/`bg-blue-50` read as chat-app aesthetic). Migrated 2026-05-15 to `border-border` + `rounded-md` bubbles + `ring-1` selection. `warn` state: `bg-warning-50` + `border-warning-200` — **narrowed to data carriers**, does NOT wash the surrounding row or header. **Naming-collision note:** Requests has a local `MessageBlock` component (labeled prose card for its detail-modal Messages tab) — same name, different shape; see Open Drift below.
   - **Default-tone fill is `bg-card-muted` (resolved 2026-07-30, was `bg-background`).** Two reasons, one token. **(1) The nested-card inversion needs headroom below the bubble.** The bubble now nests a `<ToolCallCard>` on `bg-card`, and an inner card must read lighter than its parent in light and **darker** in dark. `--background` is **neutral-950** in dark — the floor of the ramp — so no semantic token could sit below it and the dark direction inverted backwards. `--card-muted` is neutral-800 there, leaving exactly the step the pattern needs (card = neutral-900). **(2) `bg-background` was already off-contract:** §2 reserves it for the dashboard content canvas and bars it from darkening a component. **No-op in light** — `--background` and `--card-muted` both resolve to neutral-50, so the light surface is pixel-identical. Only the `default` tone moved; the `warn` / `danger` tinted fills and the `selectedTone` ladder are unchanged. **Blast radius is one consumer** — `ConversationDetail`; the `MessageBlock` in `RequestDetailBody` is the unrelated local component named below, not this primitive.
   - **Dark-mode side effect, by design.** Plain bubbles move neutral-950 → neutral-800, so a `warn` / `danger` bubble (a translucent tint compositing over the neutral-900 panel) now reads slightly **darker** than its plain neighbours instead of slightly lighter. The status semantic is carried by hue and the tinted border, not by luminance, and this brings dark into agreement with light — where the tint already sat a hair below the plain bubble. Deliberate; do not "fix" it by re-tinting the tone strings.
-- **ToolResultCode** (`tool-result-code.tsx`, codified 2026-05-10; **sans 2026-07-30**) — inline `<code>` recipe for tool-result JSON blobs. `type-copy-14-tight text-foreground break-words`. Used by Conversations on tool-result message bodies. Semantic `<code>` element (these blobs ARE machine output). **Was `font-mono text-sm … break-all` until 2026-07-30**: the trace's tool-result bodies are dense multi-line walls and mono was hard to read across that length, so they moved to sans at the same 14px — the same reasoning (and the same voice) as "Exception: Ask AI reply prose". Wrapping moved with it: `break-all` broke at any character (the trace showed `sta/rted`, `$0.025/8` split mid-token), while `break-words` breaks at word boundaries and only splits inside a word wider than the line — same overflow protection in a narrow bubble, no gratuitous mid-word splits. Size and ink are unchanged, and tracking stays `normal` (the earlier `-tracking-[0.14px]` in this doc was never in the source).
+- **ToolResultCode** (`tool-result-code.tsx`, codified 2026-05-10; **sans 2026-07-30**) — inline `<code>` recipe for tool-result JSON blobs. `type-copy-14 text-foreground break-words`. Used by Conversations on tool-result message bodies. Semantic `<code>` element (these blobs ARE machine output). **Was `font-mono text-sm … break-all` until 2026-07-30**: the trace's tool-result bodies are dense multi-line walls and mono was hard to read across that length, so they moved to sans at the same 14px — the same reasoning (and the same voice) as "Exception: Ask AI reply prose". Wrapping moved with it: `break-all` broke at any character (the trace showed `sta/rted`, `$0.025/8` split mid-token), while `break-words` breaks at word boundaries and only splits inside a word wider than the line — same overflow protection in a narrow bubble, no gratuitous mid-word splits. Size and ink are unchanged, and tracking stays `normal` (the earlier `-tracking-[0.14px]` in this doc was never in the source).
 - **ToolCallCard** (`tool-call-card.tsx`, added 2026-07-30) — the nested **`CALL <Tool>`** card that sits INSIDE an assistant bubble on the Conversations trace, one per tool the model invoked on that turn. Matches the real Gate build's assistant-reply pattern: optional prose first, then a stacked card per call (8px gap). It is the **input** side of a tool step; the **result** is the separate `Tool · <Name>` MessageBlock that follows, rendered through `<ToolResultCode>` and unchanged by this.
   - **Recipe:** `flex flex-col gap-2 rounded-xs border border-border bg-card p-3`. Header line = `<Eyebrow>Call</Eyebrow>` + tool name; body = `<code>` with the captured args.
   - **Surface — the inner card inverts relative to its parent bubble.** Light: the bubble is the grey muted wash and this card is **lighter** (white). Dark: the bubble is the raised surface and this card is **darker**. That is precisely `--card` (white → neutral-900) against a `--card-muted` / `--muted` parent (neutral-50 → neutral-800), so the pair needs **no new token and no raw ramp step** — unlike the Ask AI bubbles, which had to mint `--chat-bubble-agent` because no pair inverted for them. **The parent must be a muted surface for the inversion to hold**: against `--background` (neutral-50 → neutral-**950**) the dark direction flips, because nothing in the ramp is darker than neutral-950. `MessageBlock`'s bubble was moved onto `bg-card-muted` on 2026-07-30 for exactly this reason — see the MessageBlock bullet above. Do not put this card inside a `bg-background` container.

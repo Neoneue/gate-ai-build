@@ -25,7 +25,7 @@ export function AskAiThinkingRow() {
       <span aria-hidden className="shrink-0">
         <Dotm3x3_11 cellPadding={2} dotSize={4} />
       </span>
-      <span className="type-copy-14-tight">
+      <span className="type-copy-14">
         Thinking
         <span aria-hidden className="animate-ellipsis" />
       </span>

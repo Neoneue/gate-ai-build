@@ -1,6 +1,14 @@
 // Conversations list mock rows + the sample trace, extracted from
 // pages/Conversations.tsx so the page module only exports components.
 // Types stay with the page (type-only import, no runtime cycle).
+//
+// `vendors` / `models` on every row below are the SEED values. The list and
+// the detail sheet both render `getConversationView()`, which re-derives them
+// from the conversation's own request rows — so what ships here is only what a
+// raw consumer (Overview's preview table, ConversationsTrace's lookup) reads.
+// They are written to match the derivation exactly. Reconciled 2026-08-03 with
+// the production model catalog: before that, 7 of these 8 rows advertised
+// models their own requests never ran.
 import type { ConversationRow, TraceEvent } from "@/pages/conversations/types";
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
@@ -10,8 +18,11 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "design-agent",
     turns: 10,
     reqs: 101,
-    vendors: ["anthropic", "openai"],
-    models: ["claude-opus-4-8", "gpt-5.3-codex"],
+    // The real captured 102-request session, Opus 4.8 end to end. It carried
+    // a second, invented `gpt-5.3-codex` entry until 2026-08-03; not one of
+    // its requests ever ran an OpenAI model.
+    vendors: ["anthropic"],
+    models: ["anthropic/claude-opus-4-8"],
     inTokens: "19,358,990",
     outTokens: "62,494",
     cost: "—",
@@ -26,7 +37,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     turns: 3,
     reqs: 7,
     vendors: ["anthropic"],
-    models: ["claude-sonnet-4-5"],
+    models: ["anthropic/claude-sonnet-5"],
     inTokens: "3,438",
     outTokens: "613",
     cost: "$0.1042",
@@ -40,8 +51,12 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "prod-agent",
     turns: 6,
     reqs: 11,
-    vendors: ["anthropic", "openai"],
-    models: ["claude-opus-4-7", "gpt-4o"],
+    vendors: ["moonshotai", "deepseek", "google"],
+    models: [
+      "moonshotai/kimi-k2-thinking",
+      "deepseek/deepseek-v4-pro",
+      "google/gemini-3-1-pro-preview",
+    ],
     inTokens: "6,897",
     outTokens: "1,217",
     cost: "$0.4218",
@@ -55,8 +70,8 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "prod-agent",
     turns: 3,
     reqs: 4,
-    vendors: ["google"],
-    models: ["gemini-3-flash"],
+    vendors: ["anthropic"],
+    models: ["anthropic/claude-opus-4-7"],
     inTokens: "1,788",
     outTokens: "316",
     cost: "$0.3104",
@@ -70,8 +85,13 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "prod-web",
     turns: 18,
     reqs: 38,
-    vendors: ["anthropic", "openai", "mistral"],
-    models: ["claude-opus-4-7", "gpt-5", "llama-3-3-70b"],
+    vendors: ["deepseek", "google", "anthropic", "qwen"],
+    models: [
+      "deepseek/deepseek-v4-pro",
+      "google/gemini-3-1-pro-preview",
+      "anthropic/claude-opus-4-7",
+      "qwen/qwen3-next-80b-a3b-instruct",
+    ],
     inTokens: "44,889",
     outTokens: "7,921",
     cost: "$0.5841",
@@ -85,8 +105,13 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "prod-agent",
     turns: 4,
     reqs: 7,
-    vendors: ["anthropic"],
-    models: ["claude-haiku-4-5"],
+    vendors: ["google", "anthropic", "deepseek"],
+    models: [
+      "google/gemini-3-1-pro-preview",
+      "anthropic/claude-sonnet-5",
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-flash",
+    ],
     inTokens: "2,892",
     outTokens: "510",
     cost: "$0.1102",
@@ -100,8 +125,13 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "prod-web",
     turns: 14,
     reqs: 32,
-    vendors: ["openai"],
-    models: ["gpt-4o-mini"],
+    vendors: ["google", "deepseek", "anthropic"],
+    models: [
+      "google/gemini-3-1-pro-preview",
+      "deepseek/deepseek-v4-flash",
+      "deepseek/deepseek-v4-pro",
+      "anthropic/claude-haiku-4-5",
+    ],
     inTokens: "10,717",
     outTokens: "1,891",
     cost: "$0.0812",
@@ -115,8 +145,12 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     initiator: "test-key",
     turns: 12,
     reqs: 26,
-    vendors: ["anthropic"],
-    models: ["claude-sonnet-4-5"],
+    vendors: ["qwen", "deepseek", "anthropic"],
+    models: [
+      "qwen/qwen3-next-80b-a3b-instruct",
+      "deepseek/deepseek-v4-pro",
+      "anthropic/claude-sonnet-5",
+    ],
     inTokens: "86,735",
     outTokens: "15,306",
     cost: "$0.1402",
@@ -130,7 +164,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   {
     id: "t1",
     vendor: "anthropic",
-    model: "claude-sonnet-4.8",
+    model: "anthropic/claude-sonnet-5",
     label: "plan",
     kind: "reason",
     status: "success",
@@ -143,8 +177,8 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   },
   {
     id: "t2",
-    vendor: "openai",
-    model: "gpt-5.1",
+    vendor: "deepseek",
+    model: "deepseek/deepseek-v4-pro",
     label: "tool: lookup_transfer",
     kind: "tool",
     status: "success",
@@ -158,7 +192,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   {
     id: "t3",
     vendor: "anthropic",
-    model: "claude-sonnet-4.8",
+    model: "anthropic/claude-sonnet-5",
     label: "reason",
     kind: "reason",
     status: "success",
@@ -171,8 +205,8 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   },
   {
     id: "t4",
-    vendor: "openai",
-    model: "gpt-5.1",
+    vendor: "deepseek",
+    model: "deepseek/deepseek-v4-pro",
     label: "tool: pep_screen",
     kind: "tool",
     status: "warn",
@@ -186,8 +220,8 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   },
   {
     id: "t5",
-    vendor: "openai",
-    model: "gpt-5.1",
+    vendor: "deepseek",
+    model: "deepseek/deepseek-v4-pro",
     label: "reason",
     kind: "reason",
     status: "success",
@@ -201,7 +235,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   {
     id: "t6",
     vendor: "anthropic",
-    model: "claude-sonnet-4.8",
+    model: "anthropic/claude-sonnet-5",
     label: "tool: route_dispute",
     kind: "tool",
     status: "success",
@@ -214,8 +248,8 @@ export const SAMPLE_TRACE: TraceEvent[] = [
   },
   {
     id: "t7",
-    vendor: "openai",
-    model: "gpt-5.1",
+    vendor: "deepseek",
+    model: "deepseek/deepseek-v4-pro",
     label: "tool: audit_write",
     kind: "tool",
     status: "success",

@@ -7,6 +7,27 @@ diff against and replicate across surfaces.
 **Find the change, then open only that file.** Thirty files is roughly 90k
 tokens; this index exists so nothing has to glob the directory.
 
+## August 2026
+
+### [2026-08-03](./2026-08/changelog-8-3.md)
+
+- `type-copy-14-tight` is deleted — it was a no-op alias
+- The copy scale is finished — `type-copy-20` and `-24` deleted
+- Settings — section titles move above their cards
+- Models — catalog and providers rebuilt from production
+- Activity — the provider dimension was three names out of date
+- The three Activity dimensions disagreed on every single day
+- Models table — provider marks sit on 8px, not on top of each other
+- Sub-cent prices stop reading as free
+- PAYG snippet named the wrong models
+- Messages, Conversations, Activity and Setup now name the same fleet as Models
+- Conversations advertised models their own requests never ran
+- Activity charted four models that never existed
+- Setup pricing quoted a fictional price list
+- Both model filters offered models that could never match
+- PAYG card promised GPT; the pooled catalog has none
+- Ask AI reply actions — thumb ratings hidden behind a flag
+
 ## July 2026
 
 ### [2026-07-30](./2026-07/changelog-7-30.md)

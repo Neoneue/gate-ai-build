@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+  - "src/**/*.css"
+  - "public/design-system.html"
+---
+
 # Rule: never hardcode a color, ever. Tokenize by semantic intent.
 
 Companion to [`design-tokens.md`](./design-tokens.md). That rule says "no
