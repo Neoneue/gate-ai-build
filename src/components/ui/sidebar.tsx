@@ -2,6 +2,7 @@ import { Lock, MoreHorizontal } from "lucide-react";
 import type * as React from "react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Separator } from "@/components/ui/separator";
+import { SidebarUpgradeCard } from "@/components/ui/sidebar-upgrade-card";
 import { UserMenu } from "@/components/ui/user-menu";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +70,11 @@ export interface SidebarProps {
    *  Ask AI panel both open in the narrow band). Never reaches the collapsed
    *  icon rail — only the expanded variant renders it. */
   topSlot?: React.ReactNode;
+  /** Route the "Upgrade to Pro plan" promo card navigates to. Passing it is
+   *  what renders the card — omit it (PRO surfaces) and no promo appears.
+   *  Expanded rail + mobile Sheet only: the design has no collapsed variant,
+   *  and the 64px icon rail has nowhere to put one. */
+  upgradePath?: string;
   /** Bottom user area slot (expanded variant only). Defaults to "CP avatar
    *  + Chad + MoreHorizontal user-menu button". The collapsed rail always
    *  renders just a CP monogram. */
@@ -85,13 +91,14 @@ export function Sidebar({
   userArea,
   showLocks = false,
   topSlot,
+  upgradePath,
 }: SidebarProps) {
   return (
     <aside
       aria-label="Primary navigation"
       className={cn(
         "relative shrink-0 overflow-hidden border-border border-r bg-card transition-[width] duration-300 motion-reduce:transition-none",
-        expanded ? "w-66" : "w-16"
+        expanded ? "w-59" : "w-16"
       )}
       style={{ transitionTimingFunction: "var(--ease-drawer)" }}
     >
@@ -128,6 +135,7 @@ export function Sidebar({
           sections={sections}
           showLocks={showLocks}
           topSlot={topSlot}
+          upgradePath={upgradePath}
           userArea={userArea}
         />
       </div>
@@ -229,13 +237,20 @@ export interface SidebarPanelProps {
    *  Used by the mobile drawer to host the workspace switcher above Overview
    *  at the compact `xs` breakpoint. */
   topSlot?: React.ReactNode;
+  /** See `SidebarProps.upgradePath`. */
+  upgradePath?: string;
   userArea?: React.ReactNode;
 }
 
-/* Desktop expanded rail: the shared panel pinned at the 240px sidebar width. */
+/* Desktop expanded rail: the shared panel pinned at the 236px sidebar width —
+ * exactly 2 columns + 1 gutter of the 1536 / 12-col / 24-gutter Figma grid
+ * (column = 106px). The rail is FIXED, not fluid: the grid is STRETCH, so
+ * 2 fluid columns would compute to ~193px at a 1280 viewport and truncate the
+ * longer nav labels. Pin it at the 1536 value and let main-column absorb the
+ * flex. */
 function SidebarExpanded(props: SidebarPanelProps) {
   return (
-    <div className="h-full w-66 shrink-0">
+    <div className="h-full w-59 shrink-0">
       <SidebarPanel {...props} />
     </div>
   );
@@ -244,7 +259,7 @@ function SidebarExpanded(props: SidebarPanelProps) {
 /* SidebarPanel — brand + nav + user area. Shared verbatim by the desktop
  * expanded rail and the mobile nav Sheet (DashboardChrome) so the two never
  * drift. Fills its container width (w-full); the consumer owns the width
- * (w-66 for the desktop rail, the Sheet width on mobile). */
+ * (w-59 for the desktop rail, the Sheet width on mobile). */
 export function SidebarPanel({
   sections,
   activeId,
@@ -254,6 +269,7 @@ export function SidebarPanel({
   userArea,
   showLocks,
   topSlot,
+  upgradePath,
 }: SidebarPanelProps) {
   const onLogoClick = overviewPath
     ? () => onNavigate?.(overviewPath)
@@ -271,12 +287,9 @@ export function SidebarPanel({
       {/* Nav sections */}
       <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pt-3 pb-6">
         {sections.map((section, i) => (
-          <div
-            className="flex flex-col gap-1"
-            key={section.label ?? `top-${i}`}
-          >
+          <div className="flex flex-col" key={section.label ?? `top-${i}`}>
             {section.label ? (
-              <Eyebrow as="div" className="px-2 pt-1 pb-1">
+              <Eyebrow as="div" className="px-2 pt-1 pb-2">
                 {section.label}
               </Eyebrow>
             ) : null}
@@ -289,10 +302,10 @@ export function SidebarPanel({
                   aria-current={isActive ? "page" : undefined}
                   className={
                     isActive
-                      ? "flex items-center gap-3 rounded-sm border border-border bg-accent px-2 py-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                      ? "flex h-9 items-center gap-3 rounded-sm border border-border bg-accent px-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                       : isDisabled
-                        ? "flex cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 py-2 font-medium text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                        : "flex items-center gap-3 rounded-sm border border-transparent px-2 py-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        ? "flex h-9 cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        : "flex h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                   }
                   disabled={isDisabled}
                   key={item.id}
@@ -325,6 +338,19 @@ export function SidebarPanel({
           </div>
         ))}
       </nav>
+
+      {/* Upgrade promo. In Figma this is the last child of `nav-list`, which
+          is SPACE_BETWEEN — nav at the top, card pinned to the bottom. Here
+          the <nav> above is already `flex-1`, so it takes the slack and the
+          card lands in the same place, one level out: it is a promo, not a
+          destination, and does not belong inside the nav landmark. Aligns to
+          the nav items on `px-3`; `pb-4` is the 16px `nav-list` bottom
+          padding, measured off the frame. */}
+      {upgradePath ? (
+        <div className="shrink-0 px-3 pb-4">
+          <SidebarUpgradeCard onClick={() => onNavigate?.(upgradePath)} />
+        </div>
+      ) : null}
 
       {/* Bottom user area */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-4">

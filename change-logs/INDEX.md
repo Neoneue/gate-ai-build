@@ -9,6 +9,15 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-04](./2026-08/changelog-8-4.md)
+
+- Blue becomes a surface language for exactly one card — the `--promo-*` family
+- The 12px type floor opens one step down, and it is fenced
+- There are now exactly two sanctioned half-steps, and the second is written down
+- `SidebarUpgradeCard` — the upgrade CTA, 1:1 from the Figma twins
+- The dot field is CSS, not a 2× PNG pair
+- The rail grows a footer, and it obeys the tier signal that was already there
+
 ### [2026-08-03](./2026-08/changelog-8-3.md)
 
 - `type-copy-14-tight` is deleted — it was a no-op alias

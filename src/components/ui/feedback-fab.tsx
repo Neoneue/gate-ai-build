@@ -68,14 +68,18 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
     <Dialog onOpenChange={handleOpenChange} open={open}>
       {/* FAB trigger — fixed viewport anchor. Round messenger-style
           launcher (mirrors staging's Intercom bubble): filled chat icon on
-          the brand-blue CTA recipe (same classes as the Policies /
-          TokenSavings / plan CTAs). */}
-      <button
+          the shared promo CTA recipe — `variant="promo"`, the same key the
+          Policies / TokenSavings / plan CTAs render. It was a raw <button>
+          carrying a pasted copy of that recipe until 2026-08-04; only the
+          48px box, the fixed anchor and the two motions below are local. */}
+      <Button
         aria-label="Send feedback"
         className={cn(
           "fixed right-6 bottom-6 z-40",
-          "inline-flex size-12 items-center justify-center rounded-full",
-          "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700",
+          // 48px launcher — one step above `size="icon"` (36px), which is a
+          // toolbar glyph, not a viewport-anchored bubble. The only geometry
+          // the primitive does not carry.
+          "size-12",
           // colors/transform keep their 150ms feel; `right` glides at 300ms
           // on the panel's exact curve so the FAB pushes left in lockstep with
           // the docked Ask AI panel. The panel animates `width` with the
@@ -85,11 +89,13 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
           // `ease-out` keyword (cubic-bezier(0,0,0.58,1)), which lagged.
           // `motion-reduce:transition-none` drops all animation (shift lands
           // instantly). Composed as one arbitrary `transition` because the two
-          // durations can't share a single Tailwind utility.
+          // durations can't share a single Tailwind utility — and because it
+          // has to REPLACE the primitive's own transition, which knows nothing
+          // about `right`.
           "[transition:background-color_150ms_ease-out,transform_150ms_ease-out,right_300ms_var(--ease-out)] motion-reduce:transition-none",
-          "cursor-pointer will-change-transform hover-fine:-translate-y-px active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:hover:translate-y-0",
-          "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-          "select-none",
+          // Hover lift. Press, focus ring and reduced-motion press come from
+          // the primitive.
+          "hover-fine:-translate-y-px motion-reduce:hover:translate-y-0",
           // lg+ only: when the docked panel is open, shift left by its width
           // (24px + 368px) so the FAB stays over the main content, clear of the
           // panel. Below lg the panel is a z-50 Sheet overlay that covers the
@@ -97,14 +103,17 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
           askAiOpen && "lg:right-[392px]"
         )}
         onClick={() => setOpen(true)}
+        shape="circle"
+        size="icon"
         type="button"
+        variant="promo"
       >
         <MessageCircle
           aria-hidden
           className="size-5 shrink-0 fill-current"
           strokeWidth={1.75}
         />
-      </button>
+      </Button>
 
       {/* Dialog — sm:max-w-lg, p-6 */}
       <DialogContent className="p-6 sm:max-w-lg">

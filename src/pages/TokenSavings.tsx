@@ -696,10 +696,11 @@ function CompressionCard({ plan }: { plan: Plan }) {
               />
             ) : (
               <Button
-                className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+                className="shrink-0"
                 onClick={() => setCompareOpen(true)}
                 size="sm"
                 type="button"
+                variant="promo"
               >
                 <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
                 <span>Upgrade to Pro</span>

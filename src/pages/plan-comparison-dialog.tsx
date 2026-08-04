@@ -170,17 +170,13 @@ function PlanCard({
       <div className="mt-auto flex flex-col gap-4 pt-2">
         <Button
           aria-label={plan.cta.ariaLabel}
-          className={cn(
-            "w-full",
-            plan.featured &&
-              "bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
-          )}
+          className="w-full"
           disabled={plan.cta.disabled}
           onClick={
             plan.cta.disabled ? undefined : (plan.cta.onClick ?? onUpgrade)
           }
           size="default"
-          variant={plan.cta.variant}
+          variant={plan.featured ? "promo" : plan.cta.variant}
         >
           {plan.featured ? (
             <SparklesIcon aria-hidden data-icon="inline-start" size={16} />

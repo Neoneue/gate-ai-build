@@ -142,7 +142,8 @@ and (pointer: fine)) and (&:hover));
   /* Typescale overrides — align Tailwind's named sizes to Vercel Geist's
      heading scale (even-numbered, larger increments at the top). Sizes not
      listed (xs/sm/base/lg/xl/2xl/5xl/7xl) already match Geist values.
-     Floor is text-xs (12px) — sub-12px sizes are out of scale by policy.
+     Floor for BODY copy is text-xs (12px); one fenced micro step sits below
+     it (--text-2xs, further down) and is not a body voice.
        text-3xl: 30 → 32   (Geist heading-32)
        text-4xl: 36 → 40   (Geist heading-40)
        text-6xl: 60 → 56   (auth-hero tuned 2026-05-21, line-height 1)
@@ -155,6 +156,18 @@ and (pointer: fine)) and (&:hover));
   --text-6xl--line-height: 1;
   --text-8xl: 4rem;
   --text-8xl--line-height: 1;
+
+  /* Micro tier — 10/14. The one step below the 12px body floor, added
+     2026-08-04 for the sidenav upgrade card's supporting line, which the
+     Figma twins `sidebar-footer-light` (1255:6256) / `sidebar-footer-dark`
+     (1256:6340) set at Geist Regular 10/14. It is NAMED rather than
+     arbitrary so the closed set holds and every use stays greppable — an
+     arbitrary bracketed pixel size remains banned, and this is why.
+     Consume it only through the `type-copy-10` voice, never as a raw
+     `text-2xs`, and never for running prose (see design.md §3,
+     "Micro tier"). */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
 
   /* Tracking token — sub-pixel tightening for two specific tiers:
        1. Small sans titles — CardTitle / in-card h3 at
@@ -347,6 +360,71 @@ and (pointer: fine)) and (&:hover));
   --sidebar-accent-foreground: var(--color-neutral-900);
   --sidebar-border: var(--color-neutral-200);
   --sidebar-ring: var(--color-neutral-400);
+
+  /* ─── Sidenav upgrade card ──────────────────────────────────────────────
+     The single branded surface in an otherwise neutral rail: a blue-inked
+     promo panel pinned beneath the nav. Transcribed from the Figma twins
+     `sidebar-footer-light` (1255:6256) and `sidebar-footer-dark`
+     (1256:6340), whose blue ramp is identical to ours at every step, so
+     each value below is a ramp atom rather than a re-measured colour.
+
+     It earns its own family because nothing in the semantic layer carries
+     "brand-blue chrome": --border, --foreground and --muted-foreground are
+     deliberately neutral (§2 — "Ink … Not blue"), and reaching for a raw
+     `blue-200` / `blue-900` at the call site would be a ramp step standing
+     in for a semantic role — theme-independent, and wrong the moment the
+     card paints on dark. Five roles, both themes, one place to tune.
+
+     The card SURFACE is not here: Figma's dark fill #171717 IS neutral-900,
+     and its light fill is white, so `bg-card` already lands both. */
+  --promo-border: var(--color-blue-200);
+  --promo-foreground: var(--color-blue-900);
+  --promo-accent: var(--color-blue-500);
+  /* Ink for the dot field. Light paints the dot at full strength and lets
+     the wash above knock it back (Figma stacks pattern-at-opacity-1 under a
+     75% gradient); dark bakes the pattern's own 0.25 opacity into the
+     colour instead, because its wash is nearly clear and cannot do that. */
+  --promo-dot: var(--color-blue-700);
+  /* The whole wash gradient, not just its stops — the themes run it in
+     opposite directions. Light falls blue-25 → blue-100 top-to-bottom;
+     dark rises blue-500/8% → /12% bottom-to-top and holds from the
+     midpoint up. One token keeps both readable in one place. */
+  --promo-wash: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--color-blue-25) 75%, transparent),
+    color-mix(in oklch, var(--color-blue-100) 75%, transparent)
+  );
+  /* Shadow INK only — the geometry stays Tailwind's `shadow-sm`, verbatim
+     (§5.0). Figma tints that exact two-layer step blue-600 instead of black,
+     at 0.12 light / 0.4 dark. Recolouring a stock step is a first-class
+     Tailwind utility (`shadow-(color:…)`), not a bespoke shadow family, and
+     the per-theme alpha lives on the component ink — never on the scale. */
+  --promo-shadow: color-mix(in oklch, var(--color-blue-600) 12%, transparent);
+  /* The promo CTA — the solid-blue "Upgrade to Pro" key (Button
+     `variant="promo"`). Six call sites had each pasted the same
+     `bg-blue-700 … dark:bg-blue-600` string into a className; the recipe is
+     now one variant reading these four roles. The BORDER is the load-bearing
+     one: Button's base is `border-transparent bg-clip-padding`, so an
+     unbordered promo button lets 1px of whatever sits behind it show through
+     as a ring (a white outline on the tinted Policies banner in light). The
+     rule is one ramp step LIGHTER than the fill — blue-600 over blue-700 in
+     light, blue-500 over blue-600 in dark — so the hole is closed by a
+     deliberate edge rather than by removing `bg-clip-padding`, which is
+     load-bearing for every bordered variant on the site. */
+  --promo-cta: var(--color-blue-700);
+  --promo-cta-hover: var(--color-blue-800);
+  --promo-cta-border: var(--color-blue-600);
+  /* Label ink on the fill. Holds in BOTH themes — blue-700 and blue-600 both
+     carry white well past 4.5:1 — so it is declared once, here, and the
+     `.dark` block does not restate it. */
+  --promo-cta-foreground: var(--color-white);
+  /* Shadow INK only, geometry stays `shadow-sm` (§5.0), same contract as
+     --promo-shadow above. It is a SEPARATE token, not a reuse: --promo-shadow
+     is blue-600 at 12% and tints a pale card, this one is blue-700 at 30%
+     under a solid blue key. Pointing the button at --promo-shadow would have
+     silently dropped its lift to a third of its strength in light. Unchanged
+     across themes, as it has always been. */
+  --promo-cta-shadow: color-mix(in oklch, var(--color-blue-700) 30%, transparent);
 }
 
 /* App shell: left nav + scrollable main area. */
@@ -379,6 +457,25 @@ body {
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  /* Sidenav upgrade card. Only the three roles a Tailwind COLOR utility
+     consumes are aliased here (`border-promo-border`, `text-promo-foreground`,
+     `text-promo-accent`). --promo-dot and --promo-wash are read by the
+     `.sidebar-upgrade-texture` utility, and --promo-shadow by
+     `shadow-(color:--promo-shadow)`, so none of them needs a --color-* alias
+     — and giving them one would offer `bg-promo-dot` as a plausible-looking
+     class that means nothing. */
+  --color-promo-border: var(--promo-border);
+  --color-promo-foreground: var(--promo-foreground);
+  --color-promo-accent: var(--promo-accent);
+  /* Promo CTA. Same rule — only the roles a COLOR utility consumes are
+     aliased (`bg-promo-cta`, `hover:bg-promo-cta-hover`,
+     `border-promo-cta-border`, `text-promo-cta-foreground`).
+     --promo-cta-shadow is read as `shadow-(color:--promo-cta-shadow)` and
+     needs no alias. */
+  --color-promo-cta: var(--promo-cta);
+  --color-promo-cta-hover: var(--promo-cta-hover);
+  --color-promo-cta-border: var(--promo-cta-border);
+  --color-promo-cta-foreground: var(--promo-cta-foreground);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);
@@ -530,10 +627,15 @@ body {
   --chat-bubble-user-foreground: var(--color-neutral-100);
   --chat-bubble-agent: var(--color-neutral-950);
   --chat-bubble-agent-foreground: var(--color-neutral-200);
-  /* Dark twin of the chat canvas — light dots on the dark panel. */
+  /* Dark twin of the chat canvas — light dots on the dark panel.
+     Strength and floor both raised 25% on 2026-08-04: at 0.3 / 0.05 the field
+     read too dim in place, effectively invisible below the fade's midpoint.
+     Both stops scale together so the fade's SHAPE is unchanged and only its
+     overall level moves — raising the top stop alone would have steepened the
+     gradient and left the lower panel exactly as faint as it was. */
   --ask-ai-canvas-dot: var(--color-neutral-200);
-  --ask-ai-canvas-strength: 0.3;
-  --ask-ai-canvas-fade-floor: 0.05;
+  --ask-ai-canvas-strength: 0.375;
+  --ask-ai-canvas-fade-floor: 0.0625;
 
   --sidebar: var(--color-neutral-950);
   --sidebar-foreground: var(--color-neutral-50);
@@ -543,6 +645,30 @@ body {
   --sidebar-accent-foreground: var(--color-neutral-50);
   --sidebar-border: color-mix(in oklch, var(--color-white) 10%, transparent);
   --sidebar-ring: var(--color-neutral-500);
+
+  /* Dark twin of the sidenav upgrade card. Only the blue chrome flips —
+     the surface rides `bg-card`, which is already neutral-900 here, exactly
+     the fill the Figma dark twin carries. The border loses its solid step
+     and becomes blue-400 at half strength; the dot ink absorbs the
+     pattern's 0.25 layer opacity; and the wash inverts to a faint upward
+     blue-500 lift instead of a pale downward one. */
+  --promo-border: color-mix(in oklch, var(--color-blue-400) 50%, transparent);
+  --promo-foreground: var(--color-blue-100);
+  --promo-accent: var(--color-blue-400);
+  --promo-dot: color-mix(in oklch, var(--color-blue-200) 25%, transparent);
+  --promo-wash: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--color-blue-500) 8%, transparent) 0%,
+    color-mix(in oklch, var(--color-blue-500) 12%, transparent) 50%
+  );
+  --promo-shadow: color-mix(in oklch, var(--color-blue-600) 40%, transparent);
+  /* CTA fill drops one ramp step on dark (blue-700 is too heavy against a
+     neutral-900 card), and the border follows it — still exactly one step
+     lighter than its own fill. --promo-cta-foreground and --promo-cta-shadow
+     hold their :root values in both themes. */
+  --promo-cta: var(--color-blue-600);
+  --promo-cta-hover: var(--color-blue-700);
+  --promo-cta-border: var(--color-blue-500);
 
   /* Syntax palette re-points to the ramp light-end on dark: the :root values
      (blue-700/success-700 + burnt-orange/amber hex) are tuned for code on
@@ -680,6 +806,14 @@ body {
     @apply font-sans text-xs font-normal;
   }
 
+  /* Micro copy — 10/14, the one voice below the 12px body floor. FENCED to
+     the sidenav upgrade card's supporting line (design.md §3, "Micro tier").
+     It is not a body voice and not a fallback for tight space: if a new
+     surface wants 10px, that is a design decision, not a reach. */
+  .type-copy-10 {
+    @apply font-sans text-2xs font-normal;
+  }
+
   /* Mono data voice — Geist Mono + tabular figures for every DATA value in a
      table/row (numbers, counts, tokens, currency, %, dates, IDs, hashes).
      Mirrors the copy sizes so a sans copy cell becomes its mono twin by
@@ -791,6 +925,115 @@ body {
       to bottom,
       rgb(0 0 0 / var(--ask-ai-canvas-strength)),
       rgb(0 0 0 / var(--ask-ai-canvas-fade-floor))
+    );
+  }
+
+  /* Sidenav upgrade card texture — the dot field plus its wash, sitting
+     behind the promo copy. Drawn in CSS rather than shipped as an image, for
+     the same reason as .ask-ai-canvas above: the Figma fill is a pattern
+     tile (an 8px frame holding a 1px dot) tiled HORIZONTAL_HEXAGONAL at
+     scalingFactor 0.75 with 0.75 spacing, which resolves to a staggered grid
+     on a 10.5px pitch carrying a 0.75px dot. Perfectly regular, so two
+     radial-gradients reproduce it exactly — at any card width, at any DPR,
+     for no bytes, and it keeps its pitch as the rail resizes, which is what
+     a texture should do.
+
+     The tile is 10.5 x 21: one pitch across, two rows down, with the dots at
+     25%/25% and 75%/75% of it. That IS the stagger — the second dot sits
+     half a pitch (5.25px) right and a full pitch (10.5px) down. Keeping both
+     dots off the tile edges is load-bearing, not tidiness: a tile paints
+     only its own copy of each gradient, so a dot centred on the seam would
+     render as a permanent half-dot with nothing completing it.
+
+     Layer order is inverted from Figma's fills array, which reads
+     bottom-up while CSS paints the FIRST background layer on top. Same
+     stack, written the other way round: wash leads, dots sit under it. */
+  .sidebar-upgrade-texture {
+    /* Dot-ink strength multiplier. 1 = --promo-dot at full ink, which is what
+       the narrow rail card uses. Wide surfaces set it lower (see the -quiet
+       modifier below): the tile pitch is fixed, so a short wide box shows many
+       more tiles per eyeful than the rail does and the same ink reads heavier
+       there. Multiplying the ink is the only lever that touches the dots
+       alone — `opacity` on the element would take the wash down with them. */
+    --promo-dot-strength: 1;
+    /* Horizontal dot pitch. The tile is one pitch across by two down, and the
+       two dots sit at 25%/25% and 75%/75% — proportional, so they re-stagger
+       correctly at any pitch and nothing else needs touching to change it.
+       10.5px is the rail card's Figma-derived value; wide surfaces open it up
+       (see the -quiet modifier). */
+    --promo-dot-pitch: 10.5px;
+    background-image:
+      var(--promo-wash),
+      radial-gradient(
+        circle at 25% 25%,
+        color-mix(
+            in oklch,
+            var(--promo-dot) calc(var(--promo-dot-strength) * 100%),
+            transparent
+          )
+          0.375px,
+        transparent 0.5px
+      ),
+      radial-gradient(
+        circle at 75% 75%,
+        color-mix(
+            in oklch,
+            var(--promo-dot) calc(var(--promo-dot-strength) * 100%),
+            transparent
+          )
+          0.375px,
+        transparent 0.5px
+      );
+    background-size:
+      100% 100%,
+      var(--promo-dot-pitch) calc(var(--promo-dot-pitch) * 2),
+      var(--promo-dot-pitch) calc(var(--promo-dot-pitch) * 2);
+    background-position:
+      center top,
+      center top,
+      center top;
+    background-repeat: no-repeat, repeat, repeat;
+  }
+
+  /* Quiet twin — the same field turned down for a wide surface, on both levers
+     it has. Used by the Policies free-plan banner.
+
+     Ink at 78.75% — opened from 75% by a further 5% once the wider pitch was
+     in, since fewer dots can carry slightly more ink without crowding. In dark
+     this compounds with --promo-dot's own 25% alpha, landing at 19.7%;
+     intended, since it is the same proportional step off whatever the theme's
+     full-strength value is.
+
+     Pitch opened 10.5px -> 14px. The rail card is 220px wide and shows a
+     handful of tiles; the banner is ~1024 x 66 and shows dozens, where the
+     tight pitch stops reading as texture and starts reading as a pattern you
+     look AT rather than through. Dimming alone did not fix that — density is
+     the distracting part, so the spacing had to move too. Dot radius stays
+     0.375px: only the distance changes, which is what was asked for. */
+  .sidebar-upgrade-texture-quiet {
+    --promo-dot-strength: 0.7875;
+    --promo-dot-pitch: 14px;
+  }
+
+  /* Bottom stop darkened 10% in dark only: the blue overlay at the gradient's
+     floor drops 8% -> 7.2%, letting more of the neutral-900 surface through
+     so the banner sits down rather than glowing off the near-black page. The
+     peak holds at 12%, so this steepens the wash rather than shifting it.
+
+     Declared ON the using element, which is why it works: `--promo-wash` is
+     substituted where it is READ, so a local redeclaration wins over the
+     :root token. Overriding a stop *inside* the :root definition would not
+     have — custom properties resolve their own var()s at the declaring
+     element, so a descendant cannot reach into an already-resolved token.
+
+     Dark only, deliberately. The light wash runs the other way (blue-25 ->
+     blue-100, `to bottom`), so "darker at the bottom" there means MORE blue,
+     not less — the opposite edit. Light is untouched pending a look at it. */
+  .dark .sidebar-upgrade-texture-quiet {
+    --promo-wash: linear-gradient(
+      to top,
+      color-mix(in oklch, var(--color-blue-500) 7.2%, transparent) 0%,
+      color-mix(in oklch, var(--color-blue-500) 12%, transparent) 50%
     );
   }
 

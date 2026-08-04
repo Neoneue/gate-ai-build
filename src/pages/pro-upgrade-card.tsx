@@ -22,9 +22,9 @@ export function ProUpgradeCard({
       action={
         <div className="pt-4">
           <Button
-            className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
             onClick={() => navigate("/billing")}
             size="default"
+            variant="promo"
           >
             <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
             Upgrade to Pro
