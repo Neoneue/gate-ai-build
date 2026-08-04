@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
  *   resting  → click → success (Copy ↔ CircleCheck swap, 2s hold) → resting
  *
  * Two visual modes:
- *   - 'icon'  : ghost icon button used inline next to chips, IDs, URLs.
+ *   - 'icon'  : ghost icon button used inline next to chips, IDs, URLs, plus
+ *               a 24×24 outline size for a copy control that overlays content.
  *   - 'label' : outline button with leading icon + text — the chrome used
  *               by CodeCardCopyButton at the top-right of code cards.
  *
@@ -22,9 +23,9 @@ import { cn } from "@/lib/utils";
  * point. Don't keep parallel `setCopiedKey` / `setTimeout` boilerplate in
  * artboards; consume this primitive instead.
  *
- * Motion: icon modes (icon-sm, inline-xs) use a CSS opacity cross-fade —
- * both Copy and CircleCheck are rendered in a stacked grid slot; the
- * inactive icon sits at opacity-0. `transition-opacity duration-150
+ * Motion: icon modes (icon-sm, icon-xs, inline-xs) use a CSS opacity
+ * cross-fade — both Copy and CircleCheck are rendered in a stacked grid slot;
+ * the inactive icon sits at opacity-0. `transition-opacity duration-150
  * ease-out motion-reduce:transition-none` drives the swap. Label mode
  * retains a color-only transition because the text label also changes
  * ("Copy" → "Copied!") and the width shift makes a clean cross-fade
@@ -39,6 +40,10 @@ export type CopyButtonMode = "icon" | "label";
 /** Icon-mode size variants — match the existing footprints these replace. */
 export type CopyIconSize =
   | "icon-sm" // 32×32 ghost — default; mirrors `<Button size="icon-sm">`.
+  | "icon-action" // Responsive ghost — 24×24 from `lg`, 32×32 below it;
+  //                       mirrors `<Button size="icon-action">`. The message-
+  //                       tools affordance: the Ask AI reply action row and
+  //                       the MessageBlock footer line. See the branch below.
   | "inline-xs"; // 20×20 neutral-500 ghost — used inline inside running text
 //                       next to <code> chips (CMP-016 base URL).
 
@@ -164,6 +169,44 @@ export function CopyButton(props: CopyButtonProps) {
       >
         <CopyIconSwap className="size-3" copied={copied} strokeWidth={1.75} />
       </button>
+    );
+  }
+
+  // 'icon-action' — the MESSAGE-TOOLS affordance, extracted 2026-08-04 from
+  // the Ask AI reply action row (`ask-ai-message.tsx`, Figma `1125:6235`),
+  // which had wired this exact chrome by hand through `useCopyFeedback`.
+  // Reproduced here so a second message surface — the MessageBlock footer
+  // line in the Conversations trace — reads as the same control rather than a
+  // third copy treatment.
+  //
+  // Everything geometric comes from `<Button size="icon-action">`: 32×32 below
+  // `lg` and 24×24 from `lg`, glyph 16 → 14px with it. That responsive step
+  // exists for precisely this case (see button.tsx) — a dense action row wants
+  // a small box on a pointer device and a real tap target on touch, and 24×24
+  // is WCAG 2.2 SC 2.5.8's (AA) minimum, which the desktop size meets exactly.
+  //
+  // Ink follows the precedent rather than the other icon sizes here: resting
+  // `text-muted-foreground`, success `text-foreground` — NOT `text-success-600`.
+  // A message tool row is quiet chrome; the green tick reads as a status
+  // report in a surface that is already full of status color (warn/danger
+  // bubbles), where the neutral ink does not compete. Hover comes from
+  // `variant="ghost"` itself.
+  if (size === "icon-action") {
+    return (
+      <Button
+        aria-label={ariaLabel}
+        className={cn(
+          copied ? "text-foreground" : "text-muted-foreground",
+          "transition-colors duration-150 ease-out motion-reduce:transition-none",
+          className
+        )}
+        onClick={trigger}
+        size="icon-action"
+        type="button"
+        variant="ghost"
+      >
+        <CopyIconSwap copied={copied} strokeWidth={1.75} />
+      </Button>
     );
   }
 

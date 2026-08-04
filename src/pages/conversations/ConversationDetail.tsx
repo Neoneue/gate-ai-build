@@ -245,7 +245,7 @@ export function ConversationDetailBody({
           mode={variant === "page" ? "static" : "dialog"}
           titleAriaLabel={`Conversation ${row.title}`}
         >
-          Messages + request trace
+          Conversation
         </DialogTitleBlock>
 
         {/* Identity row — cnv_id + initiator. Copy ID lives in the
@@ -376,7 +376,7 @@ export function ConversationDetailBody({
               <RequestTracePanel
                 activeRequestId={activeRequestId}
                 footer={
-                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-6 py-3">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -450,7 +450,7 @@ export function ConversationDetailBody({
                 activeRequestId={activeRequestId}
                 countLabel={`${findingCount} findings`}
                 footer={
-                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                  <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-6 py-3">
                     <span className="type-mono-12 text-muted-foreground">
                       Key{" "}
                       <span className="text-foreground">{row.initiator}</span> ·
@@ -526,7 +526,7 @@ export function ConversationDetailBody({
                   activeRequestId={activeRequestId}
                   countLabel={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
                   footer={
-                    <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-4 py-3">
+                    <div className="flex flex-none @4xl:flex-row flex-col @4xl:items-center @4xl:justify-between gap-4 border-border border-t bg-card px-6 py-3">
                       <span className="type-mono-12 text-muted-foreground">
                         Key{" "}
                         <span className="text-foreground">{row.initiator}</span>{" "}
@@ -683,6 +683,32 @@ function messageBody(m: ConversationMessage): ReactNode {
   return m.body;
 }
 
+/**
+ * Plain-text transcript of one turn, for the bubble's copy control.
+ *
+ * `body` is typed `ReactNode`, but every value the data layer actually
+ * produces is a string or null — `conversationDetail.ts` builds them from the
+ * captured request bodies. The `typeof` guard is what keeps that honest: a
+ * future JSX body contributes nothing rather than landing on the clipboard as
+ * "[object Object]".
+ *
+ * Tool calls are appended because the bubble RENDERS them (as nested
+ * ToolCallCards, see `messageBody` above). Copying only the prose would hand
+ * back less than the user can see, which is the one thing a copy affordance
+ * must never do. Blank turns — an assistant turn that made a call and said
+ * nothing — return "" so the call site can omit the control entirely.
+ */
+function messageCopyText(m: ConversationMessage): string {
+  const parts: string[] = [];
+  if (typeof m.body === "string" && m.body.trim()) {
+    parts.push(m.body);
+  }
+  for (const call of m.toolCalls ?? []) {
+    parts.push(`${call.name}\n${call.args}`);
+  }
+  return parts.join("\n\n");
+}
+
 function ConversationMessagesPanel({
   messages,
   trace,
@@ -749,7 +775,7 @@ function ConversationMessagesPanel({
       </div>
       <div
         aria-labelledby="conv-messages-eyebrow"
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-4"
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-6 py-4"
         ref={scrollRef}
         role="region"
       >
@@ -770,6 +796,10 @@ function ConversationMessagesPanel({
           return (
             <MessageBlock
               body={messageBody(m)}
+              // Empty string → no copy control on that turn. `undefined`
+              // rather than "" so the prop reads as absent, not as a copy of
+              // nothing.
+              copyValue={messageCopyText(m) || undefined}
               key={i}
               // Only assistant + tool turns participate in cross-link
               // selection — user input has no gateway request to pair with.

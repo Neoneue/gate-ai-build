@@ -17,6 +17,7 @@ tokens; this index exists so nothing has to glob the directory.
 - `SidebarUpgradeCard` — the upgrade CTA, 1:1 from the Figma twins
 - The dot field is CSS, not a 2× PNG pair
 - The rail grows a footer, and it obeys the tier signal that was already there
+- Every message in the Conversations trace gets copy + expand, on the `↳ req_` line
 
 ### [2026-08-03](./2026-08/changelog-8-3.md)
 
