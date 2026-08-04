@@ -79,6 +79,18 @@ export function DashboardChrome({
     : isFree
       ? "/overview-free"
       : "/overview";
+  // Upgrade promo in the rail follows the same tier signal as the nav lock
+  // icons and the workspace badge (see lib/plan.ts): shown on the two non-PRO
+  // surfaces, absent on PRO. It lands on that tier's own Billing page rather
+  // than the PRO one, so the CTA never jumps the user across workspaces.
+  // `?manage=1` opens the plan-comparison dialog on arrival (BillingFree's
+  // PlanCard reads and strips it) so one click reaches the plan picker
+  // instead of dropping the user on the page to hunt for the button.
+  const upgradePath = isDefault
+    ? "/billing-default?manage=1"
+    : isFree
+      ? "/billing-free?manage=1"
+      : undefined;
   // Ask AI panel state is hoisted to App.tsx's Layout (localStorage-backed)
   // and read via the outlet context, so it survives navigation (each page
   // remounts its own DashboardChrome) and refresh. Default closed.
@@ -141,6 +153,7 @@ export function DashboardChrome({
                 </div>
               ) : undefined
             }
+            upgradePath={upgradePath}
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
@@ -156,6 +169,7 @@ export function DashboardChrome({
             showLocks={showLocks}
             sidebarExpanded={sidebarExpanded}
             switcherInRail={switcherInRail}
+            upgradePath={upgradePath}
           />
           {/* Content pane. Below lg the document flows and scrolls naturally
               (no forced fill, no internal scroll). At lg+ the pane becomes a
@@ -232,6 +246,7 @@ function DashTopBar({
   askAiOpen,
   onToggleAskAi,
   switcherInRail,
+  upgradePath,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -244,6 +259,7 @@ function DashTopBar({
   askAiOpen: boolean;
   onToggleAskAi: () => void;
   switcherInRail: boolean;
+  upgradePath?: string;
 }) {
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -326,6 +342,7 @@ function DashTopBar({
           overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
+          upgradePath={upgradePath}
         />
       </div>
     </div>
@@ -343,12 +360,14 @@ function MobileNav({
   onNavigate,
   overviewPath,
   showLocks,
+  upgradePath,
 }: {
   sections: SidebarSection[];
   activeId: string;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   showLocks?: boolean;
+  upgradePath?: string;
 }) {
   const [open, setOpen] = useState(false);
   // Close the drawer when the viewport grows to md+, where the persistent rail
@@ -395,6 +414,7 @@ function MobileNav({
               <WorkspaceSwitcher className="w-full" />
             </div>
           }
+          upgradePath={upgradePath}
         />
       </SheetContent>
     </Sheet>

@@ -117,8 +117,21 @@ function FreePlanNoticeBanner() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-blue-25 shadow-none dark:border-blue-400/30 dark:bg-blue-500/10">
-        <CardContent>
+      {/* Same promo surface as <SidebarUpgradeCard>: `bg-card` + the
+          --promo-* chrome family (border + shadow ink) with the
+          `.sidebar-upgrade-texture` wash + dot field full-bleed underneath.
+          The utility's tile is 10.5x21 and repeats, so it fills this wide,
+          short box at the same pitch it uses in the narrow rail. Card
+          already supplies `overflow-hidden`, which rounds the texture's
+          corners; `relative` is what gives it a positioning context.
+          The COPY is not blue — lead-in on --foreground, body on
+          --muted-foreground (2026-08-04), matching the sidenav card. */}
+      <Card className="shadow-(color:--promo-shadow) relative rounded-sm border-promo-border shadow-sm">
+        <div
+          aria-hidden
+          className="sidebar-upgrade-texture sidebar-upgrade-texture-quiet pointer-events-none absolute inset-0"
+        />
+        <CardContent className="relative">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -130,10 +143,11 @@ function FreePlanNoticeBanner() {
               </p>
             </div>
             <Button
-              className="shrink-0 bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="shrink-0"
               onClick={() => setCompareOpen(true)}
               size="sm"
               type="button"
+              variant="promo"
             >
               <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
               <span>Upgrade to Pro</span>
@@ -426,10 +440,10 @@ function ProBenefitsCard() {
             </ul>
             <div className="pt-2">
               <Button
-                className="bg-blue-700 text-white shadow-blue-700/30 shadow-sm hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700"
                 onClick={() => setCompareOpen(true)}
                 size="default"
                 type="button"
+                variant="promo"
               >
                 <SparklesIcon aria-hidden data-icon="inline-start" size={16} />
                 <span>Upgrade to Pro</span>

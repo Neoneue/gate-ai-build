@@ -43,6 +43,26 @@ const buttonVariants = cva(
         // had each pasted this exact recipe rather than ask for a variant.
         raised:
           "border-border bg-control-raised text-accent-foreground shadow-sm hover:bg-muted hover:text-foreground",
+        // The "Upgrade to Pro" key — the one solid-blue action in the app,
+        // and the only variant that is a BRAND surface rather than a semantic
+        // one (see the --promo-* family in design.md §2). Added 2026-08-04
+        // after six call sites had each pasted the same
+        // `bg-blue-700 … dark:bg-blue-600` string into a className: Policies
+        // (banner + benefits), ProUpgradeCard, FeedbackFab,
+        // PlanComparisonDialog, TokenSavings.
+        //
+        // The explicit border is not decoration, it is a fix. Base sets
+        // `border border-transparent bg-clip-padding`: the transparent border
+        // still reserves its 1px, and `bg-clip-padding` stops the fill at the
+        // padding box, so on an unbordered filled variant that 1px ring paints
+        // whatever is BEHIND the button — a visible white outline once the
+        // Policies banner picked up its tint. --promo-cta-border is one ramp
+        // step lighter than this variant's own fill in each theme
+        // (blue-600 on blue-700 light, blue-500 on blue-600 dark), so the hole
+        // closes as a deliberate edge. Fixing it here rather than by dropping
+        // `bg-clip-padding` from base keeps every bordered variant intact.
+        promo:
+          "shadow-(color:--promo-cta-shadow) border-promo-cta-border bg-promo-cta text-promo-cta-foreground shadow-sm hover:bg-promo-cta-hover",
       },
       size: {
         // shadcn-aligned scale (realigned 2026-07-28) — xs 24 / sm 32 /

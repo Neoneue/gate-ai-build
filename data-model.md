@@ -118,6 +118,15 @@ The two variant sidebars are **derived**, not hand-maintained:
   stays "Messages" across all tiers; only the Default page body keeps the
   "Requests" copy.
 
+**Upgrade promo (2026-08-04).** `SidebarPanel` renders a `<SidebarUpgradeCard>`
+between the `<nav>` and the user area when — and only when — it receives an
+`upgradePath`. `DashboardChrome` derives that path from the same tier signal as
+the nav locks (`lib/plan.ts`): `/billing-default` on `-default` surfaces,
+`/billing-free` on `-free`, and `undefined` on PRO, where the card does not
+render at all. The prop threads to both `SidebarPanel` mounts — the desktop
+rail via `<Sidebar>`, and the mobile Sheet via `DashTopBar → MobileNav` — so
+the two never drift. The collapsed 64px rail has no variant of it.
+
 ### Tier & onboarding variants
 
 Several sidebar pages have standalone route variants (same chrome, different
@@ -1303,7 +1312,7 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 
 ## 9. UI Component Library
 
-54 components in `src/components/ui/`. Key primitives:
+94 components in `src/components/ui/`. Key primitives:
 
 | Component | Base primitive | Notes |
 | --- | --- | --- |

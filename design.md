@@ -493,6 +493,28 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 
 Defined once, in both themes, as `color-mix(in oklab, var(--accent) 50%, transparent)` — derived, not resolved, for two reasons. It tracks `--accent` automatically if that ever moves; and being translucent it lands half-way toward the accent from *whatever surface it sits on*, which is what keeps it at the same relative strength on `--card` (Menu popup), `--popover` (Select popup), and `--sidebar` (nav rail) — three values that diverge in dark. An opaque token cannot do this: the midpoint between dark's `--accent` (neutral-700) and `--card` (neutral-900) is neutral-800, which *is* the `--popover` surface, so it would vanish inside every Select. Consumers: `MenuItem`, `SelectItem`, `MultiSelect` rows, sidebar nav items (both the collapsed icon rail and the expanded list). In light the highlight resolves to ≈ neutral-50 — deliberately quiet, one existing surface step off white, and always weaker than the selected row, which is the point. Never write `bg-accent/50` at a call site.
 
+**Promo chrome — the `--promo-*` family (2026-08-04).** The one place blue is a *surface language* rather than an accent: the sidenav upgrade card (§7), the Free-plan banner on Policies / Token Savings, and the solid-blue "Upgrade to Pro" key those surfaces carry. Nothing in the semantic layer could carry it — `--border`, `--foreground` and `--muted-foreground` are deliberately neutral (see "Ink … Not blue" above), and reaching for a raw `blue-200` / `blue-700` at the call site is a ramp step standing in for a semantic role, which is theme-independent and therefore wrong the moment the card paints on dark. Eleven roles in two groups — the card chrome, and the CTA — defined once in both themes:
+
+| Token | Light | Dark | Consumed as |
+| --- | --- | --- | --- |
+| `--promo-border` | blue-200 | blue-400 @ 50% | `border-promo-border` |
+| `--promo-foreground` | blue-900 | blue-100 | *(no consumer — see below)* |
+| `--promo-accent` | blue-500 | blue-400 | `text-promo-accent` (the sparkle) |
+| `--promo-dot` | blue-700 | blue-200 @ 25% | `.sidebar-upgrade-texture` |
+| `--promo-wash` | `blue-25 → blue-100` @ 75%, downward | `blue-500 @ 8% → 12%`, upward, held from 50% | `.sidebar-upgrade-texture` |
+| `--promo-shadow` | blue-600 @ 12% | blue-600 @ 40% | `shadow-sm shadow-(color:--promo-shadow)` |
+| `--promo-cta` | blue-700 | blue-600 | `bg-promo-cta` — Button `variant="promo"` |
+| `--promo-cta-hover` | blue-800 | blue-700 | `hover:bg-promo-cta-hover` |
+| `--promo-cta-border` | blue-600 | blue-500 | `border-promo-cta-border` |
+| `--promo-cta-foreground` | white | white | `text-promo-cta-foreground` |
+| `--promo-cta-shadow` | blue-700 @ 30% | blue-700 @ 30% | `shadow-sm shadow-(color:--promo-cta-shadow)` |
+
+Notes worth keeping. **The surface is not in the family** — Figma's dark fill `#171717` *is* neutral-900 and its light fill is white, so `bg-card` already lands both and adding a `--promo-surface` would have been a duplicate. **`--promo-wash` holds the whole gradient, not its stops**, because the themes run it in opposite directions (light falls, dark rises); two direction-specific stop pairs plus a shared direction would have been three tokens saying one thing. **`--promo-shadow` is ink only** — the geometry stays Tailwind's `shadow-sm`, verbatim, per §5.0. Recolouring a stock step is a first-class Tailwind utility, not a bespoke shadow family, and this is the boundary: per-theme alpha is allowed on a *component's* shadow ink, never on the scale.
+
+Three more, on the CTA group (added 2026-08-04 with Button `variant="promo"`). **The border is one ramp step lighter than its own fill, in each theme** — blue-600 over a blue-700 fill in light, blue-500 over blue-600 in dark. It is a fix before it is a detail: `Button`'s base is `border border-transparent bg-clip-padding`, so the transparent border still reserves 1px while the fill stops at the padding box, and on a filled variant with no border colour that ring paints *whatever is behind the button* — which read as a white outline once the Policies banner picked up its tint. Setting the colour closes the hole where it belongs, at the variant; dropping `bg-clip-padding` from the base would have changed every bordered button on the site. **`--promo-cta-shadow` is a separate token from `--promo-shadow`, not a reuse** — the card ink is blue-600 at 12% under a pale panel, the CTA ink is blue-700 at 30% under a solid blue key, and pointing the button at the card token would have quietly cut its lift to a third in light. **`--promo-cta-foreground` and `--promo-cta-shadow` hold across themes**, so they are declared once in `:root` and `.dark` does not restate them.
+
+**`--promo-foreground` has no consumer as of 2026-08-04.** The promo copy moved to the neutral text tokens — titles on `--foreground`, sub-copy on `--muted-foreground` — on both the sidenav card and the Policies banner, which was the token's only reader. It is left defined, and documented here, rather than deleted in the same pass; remove it from `index.css` (both themes, plus the `--color-promo-foreground` alias) and from this table when someone confirms no promo surface wants blue copy back.
+
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
 **Chart runtime colors** — `style={{ backgroundColor }}` / `style={{ color }}` from the chart palette helper are runtime values, not Tailwind classes. No token violation.
@@ -699,6 +721,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Copy 16 | `type-copy-16` | `font-sans text-base font-normal tracking-snug` |
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
 | Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |
+| Copy 10 | `type-copy-10` | `font-sans text-2xs font-normal` — **fenced, see "Micro tier"** |
 | Mono 16 | `type-mono-16` | `font-mono text-base font-normal tabular-nums` |
 | Mono 14 | `type-mono-14` | `font-mono text-sm font-normal tabular-nums` |
 | Mono 12 | `type-mono-12` | `font-mono text-xs font-normal tabular-nums` |
@@ -733,6 +756,28 @@ code blocks, eyebrows, and terminal chrome keep their own voices. **One scoped e
 **Usage rule:** when one of the semantic roles above fits, use it in page code.
 Only compose raw text utilities when a role truly does not exist yet; then
 promote that recipe into a named role.
+
+**Micro tier — 10/14 *(opened 2026-08-04)*.** One step exists below the 12px
+body floor: `--text-2xs` (10px / 14px), reachable only through the
+`type-copy-10` voice. It was opened for a single surface — the sidenav upgrade
+card's supporting line, which the Figma twins `sidebar-footer-light`
+(1255:6256) and `sidebar-footer-dark` (1256:6340) set at Geist Regular 10/14 —
+and it is **fenced to that role**.
+
+The rule it bends is real, so read the fence carefully. 12px stayed the floor
+for years because sub-12px text is where hierarchy stops being legible and
+starts being decorative; the app already had two hand-rolled 10px labels
+(`monogram.tsx`, the Gate Connect pill) sitting on the linter's allowlist,
+which is exactly the drift a floor is supposed to prevent. Naming the step is
+what stops a third: an arbitrary bracketed pixel size remains banned, so every
+10px in the codebase is now one greppable class, and adding a fourth consumer
+means editing this paragraph.
+
+**Not a fallback for tight space.** If copy does not fit at 12px, the answer is
+less copy or more room. Reach for `type-copy-10` only when a design explicitly
+specifies 10px, and never for running prose — it is supporting chrome inside a
+single promo surface, not a body voice. Raw `text-2xs` is not a call-site
+class; the voice is.
 
 **Global input-helper rule:** all helper text under inputs uses
 `type-input-helper` (locked recipe: `font-sans text-xs font-normal` = 12px,
@@ -994,7 +1039,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 ### Buttons — `{components.button-default}` and variants
 
-`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with **3 text sizes (xs/sm/default) + 3 icon sizes (icon-xs/icon-sm/icon)**, 7 style variants (default/outline/secondary/ghost/destructive/link/raised), and a `shape` variant (default/pill/circle).
+`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with **3 text sizes (xs/sm/default) + 3 icon sizes (icon-xs/icon-sm/icon)**, 8 style variants (default/outline/secondary/ghost/destructive/link/raised/promo), and a `shape` variant (default/pill/circle).
 
 > **`default` is the largest size. There is no `lg`, no `xl`, no `icon-lg`.**
 > Removed 2026-07-28 — see the Sizes bullet below.
@@ -1009,7 +1054,11 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
   - **Why the breakpoint is inside the recipe.** `size` is a prop and cannot carry a breakpoint; overriding a primitive's size via a call-site `className` is hand-rolling. Putting the responsive step in the variant is the only form that stays composable and reusable — reach for this size rather than re-deriving it. It is deliberately the ONLY responsive entry in the scale; a second one needs the same justification, in writing, here.
 - **Outline:** `border-border bg-card` + **`shadow-xs`** (added 2026-06-04, primitive-level so it cascades to every `variant="outline"`) — the subtle lift matches the Card recipe and reads against any backdrop. `box-shadow` is in the button's transition list, so it does not snap on hover.
 - **`shape` — radius belongs to the primitive.** `default` inherits the base `rounded-sm`; `pill` = `rounded-full` for full-width list-style rows; `circle` = `rounded-full` for round icon keys. Never reach for `rounded-full` in a `<Button>` className. `circle` was added 2026-07-28 after the audit found **four** files that had each hand-rolled the same round-button recipe (Ask AI composer ×2, scroll-to-latest FAB, feedback FAB) instead of asking the primitive for it. Canonical uses: `ask-ai-empty-state.tsx` (`variant="outline" shape="pill" size="default"`), `ask-ai-composer.tsx` (`shape="circle" size="icon-xs|icon-sm"`).
+  - **The feedback FAB was the last of those four**, converted 2026-08-04 with the `promo` variant (`variant="promo" shape="circle" size="icon"`). It is the one round key that keeps a call-site geometry override, `size-12`: a **48px viewport-anchored launcher**, one step above the 36px `icon` square, which is a toolbar glyph. Its two local motions also stay at the call site — the arbitrary `[transition:…]` that glides `right` at 300ms in lockstep with the Ask AI panel (the primitive's own transition list knows nothing about `right`), and the `hover-fine:-translate-y-px` lift. Everything else — fill, border, shadow, press, focus ring — now comes from the primitive. If a second 48px key ever appears, it becomes a size, not a second override.
 - **`raised` variant** (added 2026-07-28). `border-border bg-control-raised text-accent-foreground shadow-(--shadow-card-soft)`. A control that sits ON a panel and must read lifted off it — `--control-raised` is white in light and **neutral-700 in dark, i.e. lighter than a card**, which `outline` (on `--card`) cannot express. Consumers: the composer's add-context key, the scroll-to-latest FAB. Reach for `outline` first; `raised` only when the control must lift off a panel surface.
+- **`promo` variant** (added 2026-08-04). `border-promo-cta-border bg-promo-cta text-promo-cta-foreground shadow-sm shadow-(color:--promo-cta-shadow) hover:bg-promo-cta-hover` — the solid-blue "Upgrade to Pro" key, and the only variant that is a **brand** surface rather than a semantic one (`--promo-*`, §2). It exists because **six** call sites had each pasted the same `bg-blue-700 text-white shadow-blue-700/30 … dark:bg-blue-600` string into a `className`: Policies (banner + benefits block), `ProUpgradeCard`, `FeedbackFab`, `PlanComparisonDialog`, TokenSavings. Reach for it only on an upgrade / plan CTA; every other primary action stays `default`.
+  - **It carries an explicit border, and that is a fix.** Base is `border border-transparent bg-clip-padding`: the transparent border still reserves its 1px and the fill stops at the padding box, so a filled variant with no border colour paints **whatever is behind the button** in that ring — a visible white outline around the CTA once the Policies banner picked up its tint. `--promo-cta-border` is one ramp step lighter than the variant's own fill in each theme (blue-600 on blue-700 light, blue-500 on blue-600 dark), which closes the hole as a deliberate edge. Never fix this class of bug by dropping `bg-clip-padding` from the base — it is load-bearing for every bordered variant.
+  - **Dark-theme contrast leans on that border.** Measured on the rendered Policies banner: fill-vs-surface is **11.7:1 light / 2.15:1 dark**, border-vs-surface **6.8:1 light / 3.5:1 dark**. The dark fill alone is under the 3:1 non-text minimum (WCAG 2.2 SC 1.4.11) against the tinted `bg-card` banner; the border is what carries the boundary there, so it is not optional decoration on this variant.
 - **Icon padding is symmetric — 10px both sides** (revised 2026-07-28). A button that holds an icon draws its L/R padding in from 12px to **10px on BOTH sides**: `has-data-[icon=inline-start]:px-2.5` / `has-data-[icon=inline-end]:px-2.5`, on xs/sm/default/lg. This is shadcn's own rule (`sm: "h-8 px-3 has-[>svg]:px-2.5"`) expressed through this repo's `data-icon` markers instead of `>svg`. **10px is a deliberate carve-out from the 4px grid** — it is upstream's value and the one place `*.5` is sanctioned; see [`.claude/rules/design-tokens.md`](./.claude/rules/design-tokens.md).
   - **Superseded:** `pl-2`/`pr-2` (8px icon side vs 12px text side), which shipped 2026-07-16 and was retired 2026-07-28. It was a local invention — shadcn has no asymmetric button padding at any size — and the lopsided edge was visible on every icon+label button in the app (the top bar's Ask AI / Docs pair being the clearest case). `xl` is excluded: it is a full-width `justify-between` row, so drawing its edges in would fight the layout.
   - `SelectTrigger`'s `pl-3 pr-2` (see below) is a **separate** rule and still asymmetric — its chevron is trailing chrome the component owns, not a caller-supplied icon.
@@ -1038,6 +1087,17 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
   **Card padding is locked at 16px. Do NOT pass padding/gap classes (`px-N`, `py-N`, `p-N`, `gap-N`) on `<Card>`, `<CardHeader>`, `<CardContent>`, or `<CardFooter>` from composed pages.** If you find yourself reaching for `px-5`, `py-5`, `gap-5`, `-mx-5` etc. — stop. The primitive's defaults are the contract; reach back to the design system if a surface needs different rhythm. Legitimate overrides are layout-only: `min-w-0`, `col-span-N`, `w-[Npx]`, `flex-1`, `items-center`. Any primitive-padding override must be justified with a comment citing the variant it represents, and ideally promoted to a primitive variant (`size="sm"` / `size="lg"`) rather than inlined.
 - **CodeCard** (`code-card.tsx`) — code-preview card with header strip + syntax-highlighted body. Uses `<CodeBlock>` driving `--color-syntax-*` tokens. Top-right copy affordance via `<CopyButton>`.
+- **SidebarUpgradeCard** (`sidebar-upgrade-card.tsx`, built 2026-08-04 from Figma `sidebar-footer-light` 1255:6256 / `sidebar-footer-dark` 1256:6340) — the "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet. **The one branded surface in an otherwise neutral rail**, and the only consumer of the `--promo-*` family (§2). Recipe: `rounded-md border border-promo-border bg-card p-3 shadow-sm shadow-(color:--promo-shadow) overflow-hidden`, with a full-bleed `.sidebar-upgrade-texture` layer behind the copy, a `type-label-12` title on `text-foreground` over a `gap-1` and a `type-copy-10` line on `text-muted-foreground`, and a 24px `<SparklesIcon>` at `opacity-50` inset 8px from the top right on `text-promo-accent`.
+
+  **The copy is neutral, not blue** (2026-08-04). Title `text-foreground`, sub-copy `text-muted-foreground` — the same two ink roles every other card in the app uses. The blue belongs to the *chrome* (border, texture, sparkle, shadow); the words read as the app's own voice on top of it. This replaced `--promo-foreground` plus an `opacity-70` knock-back on the 10px line — the muted token carries that de-emphasis on its own, at a real contrast ratio in both themes, so the opacity is gone. The Policies Free-plan banner follows the same rule (lead-in `text-foreground`, body `text-muted-foreground`), which left `--promo-foreground` with **no consumer** — see §2.
+
+  **Width-flexible, height-driven by content** — the two Figma twins draw it at 220 and 248 wide inside 236 / 264 rails, which is the spec saying "fill the container", not "be 220px". Nothing is pinned to a pixel height.
+
+  **Rendering is gated by `upgradePath`.** `Sidebar` / `SidebarPanel` take the route the CTA navigates to; passing it renders the card, omitting it renders nothing. `DashboardChrome` supplies `/billing-free` or `/billing-default` on the two non-PRO surfaces and `undefined` on PRO — the same tier signal that drives the nav lock icons and the workspace badge (`lib/plan.ts`), so the promo and the locks can never disagree. It lands on that tier's own Billing page, never the PRO one, so the CTA does not jump the user across workspaces. **No collapsed variant exists** — the design has none and the 64px icon rail has nowhere to put one.
+
+  **Rest state is the Figma frame exactly; interaction comes from house conventions, not invention.** It is a real `<button>`, so the shared `<SparklesIcon>` picks up its closest-button hover retrofit for free; press is the global `active:scale-[0.98]`; focus is the standard `ring-3 ring-ring/50`. The texture layer is `aria-hidden` + `pointer-events-none`, and the card sits **outside** the `<nav>` landmark — it is a promo, not a destination.
+
+  **The dot texture is CSS, not an asset** (`.sidebar-upgrade-texture` in `index.css`). Figma tiles an 8px frame holding a 1px dot, HORIZONTAL_HEXAGONAL at `scalingFactor` 0.75 with 0.75 spacing, which resolves to a staggered grid on a **10.5px pitch carrying a 0.75px dot**. Two radial-gradients on a 10.5 × 21 tile reproduce it exactly at any width and any DPR for no bytes, and keep their pitch as the rail resizes — same reasoning as `.ask-ai-canvas`.
 
 **Rule:** Cards never touch — `gap-4` between cards in a grid; the canvas (neutral-100) reads through. `<Card>` carries its own `border border-border shadow-xs` — don't add extra `border` classes on top of the primitive. The previous "shadow ring IS the border" rule was retired on 2026-05-15 with the border-token migration.
 

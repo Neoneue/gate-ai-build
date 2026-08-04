@@ -1,7 +1,11 @@
 import { History, Plus } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import {
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -91,7 +95,24 @@ function PlanCreditsRow() {
 }
 
 function PlanCard() {
-  const [compareOpen, setCompareOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [compareOpen, setCompareOpen] = useState(
+    () => searchParams.get("manage") === "1"
+  );
+
+  // Deep-link support: `?manage=1` opens the plan-comparison dialog on mount.
+  // Used by the sidebar upgrade CTA so a single click lands the user in the
+  // plan picker. Param is stripped when the dialog closes so the URL reflects
+  // state and re-mounts don't re-open it — same contract as Limits' `?create=1`.
+  const handleCompareOpenChange = (next: boolean) => {
+    setCompareOpen(next);
+    if (!next && searchParams.has("manage")) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("manage");
+      setSearchParams(params, { replace: true });
+    }
+  };
+
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -120,8 +141,8 @@ function PlanCard() {
         </Button>
       </CardFooter>
       <PlanComparisonDialog
-        onOpenChange={setCompareOpen}
-        onUpgrade={() => setCompareOpen(false)}
+        onOpenChange={handleCompareOpenChange}
+        onUpgrade={() => handleCompareOpenChange(false)}
         open={compareOpen}
       />
     </Card>
