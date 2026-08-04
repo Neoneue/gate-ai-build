@@ -121,7 +121,7 @@ export function RequestTracePanel({
       </div>
 
       {/* Timeline track — vertical hairline running down the column at
-          x=28px (16px panel padding + 12px = node centerline). The track
+          x=36px (24px panel padding + 12px = node centerline). The track
           sits BEHIND the nodes; each node's white interior visually masks
           the line where it crosses, giving the "beads on a string" effect.
           `inset-y-6` shortens the line so it terminates inside the first
@@ -130,7 +130,7 @@ export function RequestTracePanel({
           forcing the modal itself to scroll. */}
       <div
         aria-labelledby="conv-trace-eyebrow"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4"
         ref={scrollRef}
         role="region"
       >

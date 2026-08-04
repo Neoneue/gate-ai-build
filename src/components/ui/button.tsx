@@ -89,8 +89,14 @@ const buttonVariants = cva(
         // Icon-only — one square per text-size step, same heights: xs 24 /
         // sm 32 / icon 36. `icon-lg` is deleted along with `lg`; there is no
         // "lg" anywhere in this API. `icon` tracks `default` at 36px.
+        // Glyphs: `icon-xs` keeps 14px (a 24px square cannot carry more);
+        // `icon-sm` moved 14 -> 16 on 2026-08-04 because a 14px glyph in a
+        // 32px square read undersized against its neighbours — this is also
+        // shadcn's own default for the size. One step up the design.md
+        // ladder (12 / 14 / 16 / 20), applied at the primitive so all 17
+        // call sites move together.
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-4",
         icon: "size-9",
         /* The ONE responsive size (added 2026-07-29). A dense action row —
            reply feedback, message tools — wants a 24px box on a pointer
