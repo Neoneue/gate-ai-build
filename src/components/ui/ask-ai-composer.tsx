@@ -19,8 +19,10 @@ import { cn } from "@/lib/utils";
  * (4 lines) — after which the text scrolls and the shell stops growing. The
  * textarea carries no padding or border of its own so those heights stay exact.
  *
- * Both buttons are intentionally unwired; they carry the press affordance and
- * labels so wiring them later is a no-op on the visuals. ─────────────────── */
+ * The `Plus` key is intentionally unwired; it carries the press affordance and
+ * label so wiring it later is a no-op on the visuals. The send key IS wired —
+ * `onSend` submits and `onStop` interrupts, and the glyph swaps to `Square`
+ * while the agent works. ──────────────────────────────────────────────────── */
 
 /* Placeholder swaps with the agent's phase (Figma frames `1107:2962` /
    `1096:5471` show the replying copy in the field). The field stays editable
