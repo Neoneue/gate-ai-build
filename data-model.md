@@ -154,13 +154,15 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 - `*Free.tsx` on `/<base>-free` — the page as a FREE-tier workspace sees it:
   feature gated, upgrade CTA.
 
-**Twin inventory.** Both suffix sets cover the same 14 nav bases —
+**Twin inventory.** Both suffix sets cover the same 15 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
-`/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`, `/team`,
-`/billing`, `/api-keys`, `/settings` — with two spelling quirks: the Security
-`-default` twin answers on **both** `/events-default` and `/security-default`
-(same `SecurityDefault.tsx`), and `/messages-*` twins render `Requests*.tsx`
-because the route was renamed but the components were not.
+`/limits`, `/alerts`, `/security`, `/policies`, `/audit-trail`, `/activity`,
+`/team`, `/billing`, `/api-keys`, `/settings` — with two spelling quirks: the
+Security `-default` twin answers on **both** `/events-default` and
+`/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
+render `Requests*.tsx` because the route was renamed but the components were
+not. `/alerts` (added 2026-08-05) sits in the Manage section between Limits and
+Token Savings, `locked: true`, with `Alerts*.tsx` twins.
 
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
@@ -1058,6 +1060,18 @@ Python / cURL tabs)
 
 ---
 
+### Alerts page (`/alerts` → `Alerts.tsx`, added 2026-08-05)
+
+**Purpose:** Create/manage alert rules and triage their firings. Manage nav, between Limits and Token Savings, `locked: true`, with `-default`/`-free` twins.
+
+**Module (`src/pages/alerts/`):** `types.ts` (`AlertRule`, `AlertEvent`, structured `AlertWindow = {count, unit}`, severities `info`/`warning`/`critical`, conditions `cost_threshold`/`error_rate`/`tokens_per_hour`/`security_events`/`latency_p95`, channels email/slack/webhook), `data.ts` (`observedValue` + `formatObservedValue` + `formatWindow` + seeds/templates + `validateChannelTarget`), `view.ts` (badge/icon maps, sort accessors, `FiringRow` join), `glyphs.tsx` (`ChannelGlyph`/`ConditionIcon`/`SeverityIcon`), `AlertRuleWizard.tsx`, `AlertEventDialog.tsx`.
+
+**No synthetic data.** Every observed value derives from the real 7-day workload / security constants; `observedValue` returns `null` past a 7-day-equivalent window and the wizard preview shows a "not enough history yet" line rather than a fabricated number.
+
+**Tabs:** Rules (default) + Events (open-firings count chip). **Rules table:** Name · Condition · Threshold · Time window · Severity · Channels · Last fired · Enabled · Actions; "Last fired" cross-links to Events pre-filtered to that rule. **Create/edit wizard** (centered Dialog, `Stepper`): Choose condition → Configure rule (live observed preview, count+unit window, severity tiles with Policies-style selected tones) → Notification channels (validated rows). **Events tab:** firing table + `AlertEventDialog` with per-channel delivery dots and acknowledge/resolve lifecycle reflected in the row + count chip.
+
+---
+
 ### Policies page (`/policies` → `Policies.tsx`)
 
 **Purpose:** Configure 3 inline security scans: prompt injection, PII/PHI, credential & secrets.
@@ -1185,11 +1199,13 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 ### Settings page (`/settings` → `Settings.tsx`)
 
-**Purpose:** Workspace profile, passkey security.
+**Purpose:** Workspace profile, passkey security, account management.
 
 **State:** `displayName`, `email`, `organization` with dirty-tracking for Save/Reset.
 
 **Mock identity:** Chad Ponticas / <chad@constellationnetwork.io>
+
+**Sections:** Profile · Security (Passkey) · Account management (added 2026-08-05). Account management holds two danger-tone cards (Profile-style button footers): **Delete account and data** (warning callout + "Delete my account" type-to-confirm gating the destructive button) and **Cancel plan** (opens the shared `CancelPlanDialog`). Tier fork via a `showCancelPlan` prop: the PRO route passes `false` (card hidden for now, code retained); the Free/Default twins already omit it.
 
 ---
 
@@ -1211,7 +1227,7 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 ### Billing page (`/billing` → `Billing.tsx`)
 
-Billing-specific layout (does not use `DashboardChrome`). Details TBD.
+Billing-specific layout (does not use `DashboardChrome`). Details TBD. The plan card's "Manage subscription" opens `plan-comparison-dialog-pro.tsx`, whose Free-plan CTA ("Cancel Pro plan") closes it and opens the shared `CancelPlanDialog` (`pages/cancel-plan-dialog.tsx`) — the same controlled dialog the Settings Cancel plan card uses, so the cancellation copy has one source. Shared `BILLING_PERIOD_END` constant lives in that dialog file and feeds Billing's renewal line.
 
 ---
 
@@ -1339,6 +1355,8 @@ graph TB
 
 **The promo family (2026-08-04)** is the one blue-derived semantic group: `--promo-border/-foreground/-accent/-dot/-wash/-shadow` for the upsell SURFACE, plus a separate `--promo-cta/-cta-hover/-cta-border/-cta-foreground/-cta-shadow` group behind Button `variant="promo"`. It exists because six call sites had each pasted the same blue recipe. Two things are deliberate: the surface fill is NOT in the family (Figma's twins are white and `#171717`, i.e. `bg-card` already), and `--promo-cta-shadow` is a separate token from `--promo-shadow` rather than a reuse — a tint that reads under a pale card is wrong under a solid blue key. Full value table lives in `design.md`.
 
+**The destructive alpha ladder (2026-08-05)** tokenizes the three sanctioned opacities of `--destructive` so a danger surface reaches for a named rung, not an ad-hoc `/NN` modifier: `--destructive-subtle` (30% — softened structural edges like the danger Card border), `--destructive-muted` (50% — mid accents), and `--destructive` itself as the 100% base. Both derived rungs are `color-mix(in oklab, var(--destructive) N%, transparent)`, so they flip with theme through the base (dark derives from danger-400, light from danger-600) with no per-theme literal; named after the file's own `--accent-muted` precedent. Aliased into `@theme inline` as `--color-destructive-subtle`/`-muted`, and `design.md` records them as the only sanctioned destructive alphas.
+
 ### 8.2 Radius system (three-tier material ladder)
 
 | Tier | Token | px | Usage |
@@ -1424,12 +1442,14 @@ Voice conventions layered on top:
 
 ## 9. UI Component Library
 
-94 components in `src/components/ui/`. Key primitives:
+95 components in `src/components/ui/`. Key primitives:
 
 | Component | Base primitive | Notes |
 | --- | --- | --- |
 | `Button` | `@base-ui/react/button` | Three independent axes. **Variants:** default/outline/secondary/ghost/destructive/link/raised/promo. **Sizes** (shadcn-realigned 2026-07-28, `lg` and `xl` GONE — `lg`'s recipe became `default`'s): xs 24 / sm 32 / default 36, icon-only `icon-xs` 24 / `icon-sm` 32 / `icon` 36, plus the one responsive size `icon-action` (32 below `lg`, 24 from `lg`, glyph 16 → 14 with it). **Shape:** default/pill/circle. Icon padding is symmetric (10px, the one carve-out from the 4px grid). Glyph ladder 12/14/16/20 — `icon-sm` moved 14 → 16 on 2026-08-04 at the primitive, so all 17 call sites moved together. Press: `active:not-aria-[haspopup]:scale-[0.98]` + `will-change-transform`, exempting popup triggers |
-| `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline) |
+| `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline). Standing rule: 24px gap above the footer button row (a bordered scroll-footer bar satisfies it). Dialog-over-dialog handoffs use `onOpenChangeComplete` to close-then-open with no co-mounted backdrop. |
+| `Card` | custom div | `size` (default/sm) + `density` (default/flush) + **`tone`** (default/`danger`, added 2026-08-05: `data-[tone=danger]:border-destructive-subtle`, edge only). `CardHeader`/`CardContent`/`CardFooter` slots; footer drops the card's own bottom padding. |
+| `Stepper` | custom `<ol>` (added 2026-08-05) | Numbered vertical steps for in-dialog wizards. `StepperItem {index, state}` → `StepperIndicator` + `StepperBody` → `StepperTitle {onClick?}` + `StepperPanel`. `state` (`upcoming`/`active`/`complete`) is consumer-supplied; complete collapses to a check and is revisitable; panels unmount when inactive so the consumer's state survives Back. `size-6` circle, `type-mono-12` numeral, 1px `bg-border` rail hidden on the last item. |
 | `Select` | `@base-ui/react/select` | `rounded-sm` trigger, `rounded-sm` popup, `rounded-xs` items. Positioning standard (2026-06-04): `side=bottom` / `align=end` / `sideOffset=8`, `alignItemWithTrigger=false` → real dropdown that flips up near the viewport bottom. Same below/end/8 default on Popover, Menu, DateRangePicker. |
 | `Tabs` | `@base-ui/react/tabs` | Variants: default (pill-on-well) / line (underline). `<TabsCount>` chip inside triggers |
 | `Segmented` / `SegmentedPill` | SegmentedPill: `@base-ui/react/toggle-group`; Segmented: custom (buttons + sliding indicator) | Time-range toggles in page toolbars |
