@@ -311,6 +311,20 @@ and (pointer: fine)) and (&:hover));
      --popover surface, so it would vanish inside every Select. */
   --accent-muted: color-mix(in oklab, var(--accent) 50%, transparent);
   --destructive: var(--color-danger-600);
+  /* Destructive alpha ladder — the CLOSED SET of destructive strengths, so a
+     call site never has to invent a `/N` modifier. Three rungs:
+       30%  --destructive-subtle  softened STRUCTURAL edges — the danger Card
+                                  border (tone="danger"). Present, but never
+                                  louder than the destructive control it frames.
+       50%  --destructive-muted   mid-strength accents.
+       100% --destructive         full-strength destructive actions, ink, icons.
+     100% is --destructive ITSELF, not a fourth token: the ladder is the base
+     plus two derived rungs. Both rungs derive from var(--destructive) rather
+     than restating a per-theme literal, so they track the token through the
+     danger-600 -> danger-400 theme flip for free. Same derivation idiom as
+     --accent-muted. Re-declared in .dark for the reason given there. */
+  --destructive-subtle: color-mix(in oklab, var(--destructive) 30%, transparent);
+  --destructive-muted: color-mix(in oklab, var(--destructive) 50%, transparent);
   --border: var(--color-neutral-200);
   /* Active-control edge — 1px hairline around a raised active thumb (the
      segmented pill's indicator). A whisper-light crispening in light
@@ -491,6 +505,8 @@ body {
   --color-border-active: var(--border-active);
   --color-border-hover: var(--border-hover);
   --color-destructive: var(--destructive);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-muted: var(--destructive-muted);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-accent-muted: var(--accent-muted);
@@ -587,6 +603,13 @@ body {
      an obvious home. */
   --accent-muted: color-mix(in oklab, var(--accent) 50%, transparent);
   --destructive: var(--color-danger-400);
+  /* Destructive alpha ladder, dark. Same derivation as light — see the note
+     there. Re-declared rather than inherited for the same two reasons as
+     --accent-muted: the pair reads together, and a scoped `.dark` container
+     (one that is not the root element) resolves the rungs against THIS
+     block's --destructive rather than the light one. */
+  --destructive-subtle: color-mix(in oklab, var(--destructive) 30%, transparent);
+  --destructive-muted: color-mix(in oklab, var(--destructive) 50%, transparent);
   /* Translucent white hairlines — read correctly on any dark surface
      (Vercel/shadcn gray-alpha technique), unlike a fixed neutral step. */
   --border: color-mix(in oklch, var(--color-white) 10%, transparent);

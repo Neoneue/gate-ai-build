@@ -1,5 +1,6 @@
 import {
   Activity,
+  BellRing,
   Box,
   Coins,
   CreditCard,
@@ -68,6 +69,13 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         icon: ShieldCheck,
         label: "Limits",
         pageId: "/limits",
+        locked: true,
+      },
+      {
+        id: "alerts",
+        icon: BellRing,
+        label: "Alerts",
+        pageId: "/alerts",
         locked: true,
       },
       {

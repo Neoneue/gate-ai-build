@@ -43,6 +43,10 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import {
+  BILLING_PERIOD_END,
+  CancelPlanDialog,
+} from "@/pages/cancel-plan-dialog";
 import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -105,6 +109,7 @@ function PlanCreditsRow() {
 
 function PlanCard() {
   const [compareOpen, setCompareOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   return (
     <Card className="min-w-0 pb-0!">
       <CardHeader>
@@ -118,7 +123,7 @@ function PlanCard() {
           Gate audit trail.
         </p>
         <p className="type-copy-14 m-0 text-muted-foreground">
-          Renews on Jun 12, 2026 · $20 / month
+          Renews on {BILLING_PERIOD_END} · $20 / month
         </p>
 
         {/* Seats inset — stacked: title, seat-count line, full-width copy */}
@@ -144,10 +149,12 @@ function PlanCard() {
         </Button>
       </CardFooter>
       <PlanComparisonDialogPro
+        onDowngrade={() => setCancelOpen(true)}
         onOpenChange={setCompareOpen}
         onUpgrade={() => setCompareOpen(false)}
         open={compareOpen}
       />
+      <CancelPlanDialog onOpenChange={setCancelOpen} open={cancelOpen} />
     </Card>
   );
 }
