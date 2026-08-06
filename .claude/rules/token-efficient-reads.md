@@ -21,9 +21,9 @@ grepped naively. The split exists precisely so you never have to load them.
   stats) → run code over the file (`ctx_execute_file` / a node one-liner
   printing only the answer), never a Read.
 - **Scoped reads over monolith reads.** The Messages page is modular
-  (`src/pages/requests/`: `types` 118 · `data` 187 · `range-store` 49 ·
-  `hero-data` 361 · `HeroMetric` 219 · `RequestsTable` ~800 ·
-  `RequestDetailModal` ~2200 lines). Read the module the task names, not
+  (`src/pages/requests/`: `range-store` 49 · `types` 117 · `data` 206 ·
+  `HeroMetric` 234 · `hero-data` 357 · `RequestsTable` 754 ·
+  `RequestDetailBody` ~1860 lines). Read the module the task names, not
   the set. Same idea everywhere: prefer Grep → offset/limit Read of the
   matched region over whole-file reads for anything >500 lines.
 - **Authoring rule.** New heavy message bodies go in `request-bodies.ts`

@@ -15,6 +15,15 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );
+const Alerts = lazy(() =>
+  import("@/pages/Alerts").then((m) => ({ default: m.Alerts }))
+);
+const AlertsDefault = lazy(() =>
+  import("@/pages/AlertsDefault").then((m) => ({ default: m.AlertsDefault }))
+);
+const AlertsFree = lazy(() =>
+  import("@/pages/AlertsFree").then((m) => ({ default: m.AlertsFree }))
+);
 const ApiKeys = lazy(() =>
   import("@/pages/ApiKeys").then((m) => ({ default: m.ApiKeys }))
 );
@@ -287,6 +296,7 @@ export default function App() {
             <Route element={<Limits />} path="/limits" />
             <Route element={<LimitsDefault />} path="/limits-default" />
             <Route element={<LimitsFree />} path="/limits-free" />
+            <Route element={<Alerts />} path="/alerts" />
             <Route element={<Upgrade />} path="/upgrade" />
             <Route element={<Security />} path="/security" />
             <Route element={<SecurityDefault />} path="/events-default" />
@@ -296,7 +306,10 @@ export default function App() {
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/team" />
-            <Route element={<Settings />} path="/settings" />
+            <Route
+              element={<Settings showCancelPlan={false} />}
+              path="/settings"
+            />
             <Route element={<ApiKeys />} path="/api-keys" />
             <Route element={<ApiKeysDefault />} path="/api-keys-default" />
             <Route element={<Billing />} path="/billing" />
@@ -308,6 +321,7 @@ export default function App() {
               path="/conversations-default"
             />
             <Route element={<ModelsDefault />} path="/models-default" />
+            <Route element={<AlertsDefault />} path="/alerts-default" />
             <Route
               element={<TokenSavingsDefault />}
               path="/token-savings-default"
@@ -326,6 +340,7 @@ export default function App() {
             <Route element={<RequestsFree />} path="/messages-free" />
             <Route element={<ConversationsFree />} path="/conversations-free" />
             <Route element={<ModelsFree />} path="/models-free" />
+            <Route element={<AlertsFree />} path="/alerts-free" />
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
             <Route element={<ActivityFree />} path="/activity-free" />

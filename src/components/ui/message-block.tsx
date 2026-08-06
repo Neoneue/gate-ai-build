@@ -54,7 +54,7 @@ import { cn } from "@/lib/utils";
  *   `copyValue`  — plain-text transcript of the turn; puts the message-tools
  *                  cluster (expand + copy) at the right end of the
  *                  `↳ requestId` footer line, matching the Ask AI reply
- *                  action row. Expand opens a 600-wide viewer (300–600 tall,
+ *                  action row. Expand opens a 600-wide viewer (240–600 tall,
  *                  content-driven) holding the same body node without the
  *                  bubble's 200px height clamp (added 2026-08-04)
  * ───────────────────────────────────────────────────────────────────────── */

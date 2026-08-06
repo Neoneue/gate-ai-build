@@ -54,29 +54,41 @@ graph LR
     LAYOUT --> BILL["/billing → Billing.tsx"]
 ```
 
-- Default route: `/` and `*` both redirect to `/overview`.
+- The graph shows the **PRO** surfaces only. `App.tsx` declares 54 paths in
+  total: nearly every nav base also has a `-default` and a `-free` twin, and
+  five `/setup-*-default` pages carry the onboarding flow. Both sets are
+  inventoried under "Tier & onboarding variants" below.
+- Default route: the layout's `index` route and `*` both redirect to `/overview`.
 - Auth routes (`/sign-in`, `/sign-up`) render under `AuthLayout`, outside `DashboardChrome`.
 - All routes share `DashboardChrome` as their layout wrapper.
+- Every page component is `lazy()`-imported in `App.tsx` behind a `Suspense`
+  boundary, so adding a page adds a chunk, not weight to the entry bundle.
 - Sidebar expand/collapse state lives in `App.tsx` with `localStorage` persistence; passed to pages via `useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>()`.
 
 ### Chrome shell layout
 
 `DashboardChrome` composes a flex row of three columns: the persistent nav
-rail (`lg+`, hidden below), the main column (top bar + scrollable `<main>`
-content), and — added 2026-07-27 — the **Ask AI docked panel** on the right.
+rail (`lg+`, hidden below — `w-59`/236px expanded, `w-16`/64px collapsed), the
+main column (top bar + scrollable `<main>` content), and — added 2026-07-27 —
+the **Ask AI docked panel** on the right.
 
 - **Ask AI panel.** Toggled by the "Ask AI" top-bar button (left of Docs) and
   by the panel's own collapse control; both flip a chrome-internal `askAiOpen`
   state (`useState`, not part of the public `DashboardChromeProps`).
   `AskAiPanel` (`src/components/ui/ask-ai-panel.tsx`) owns the panel layout:
-  header ("New session" trigger + `PanelRightClose` collapse) over a
-  `px-4 pb-4` body that stacks an empty scrolling message region (`pt-4`,
-  bubbles deferred) above `AskAiComposer`
+  header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse)
+  over a `px-4 pb-4` body that stacks the scrolling message region (`pt-4`) —
+  `AskAiEmptyState` until the first send, then `MessageThread` +
+  `AskAiThinkingRow`, with `ScrollToLatestFab` pinned over it — above
+  `AskAiComposer`
   (`src/components/ui/ask-ai-composer.tsx`) — the chat box, built to Figma
   node `1125:5376`: `bg-card-muted` shell, 16px padding, 8px radius,
   `focus-within:border-primary`, a `field-sizing-content` textarea that grows
-  1 → 4 lines of the 20px `type-copy-14-tight` leading then scrolls, and an
-  unwired 24px `Plus` / 32px `Send` action row. At `lg+` it is a third flex
+  1 → 4 lines of the 14/20 `type-copy-14` leading then scrolls, and a
+  32px action row: a 24px `Plus` "Add context" (still unwired) left, and one
+  32px circle right that carries two roles — `Send` at rest, `Square` "Stop
+  replying" while the agent works, wired through `onSend` / `onStop` to
+  `useAskAiThread`. At `lg+` it is a third flex
   sibling that animates its
   width `0 → 368px` (`transition-[width]`, `var(--ease-out)`, 300ms) so the top
   bar and content condense in step; below `lg` the same shell opens in a
@@ -121,32 +133,86 @@ The two variant sidebars are **derived**, not hand-maintained:
 **Upgrade promo (2026-08-04).** `SidebarPanel` renders a `<SidebarUpgradeCard>`
 between the `<nav>` and the user area when — and only when — it receives an
 `upgradePath`. `DashboardChrome` derives that path from the same tier signal as
-the nav locks (`lib/plan.ts`): `/billing-default` on `-default` surfaces,
-`/billing-free` on `-free`, and `undefined` on PRO, where the card does not
-render at all. The prop threads to both `SidebarPanel` mounts — the desktop
+the nav locks (`lib/plan.ts`): `/billing-default?manage=1` on `-default`
+surfaces, `/billing-free?manage=1` on `-free`, and `undefined` on PRO, where the
+card does not render at all. It lands on that tier's OWN Billing page, never the
+PRO one, so the CTA cannot jump the user across workspaces, and `?manage=1`
+opens the plan-comparison dialog on arrival (§7) so one click reaches the plan
+picker instead of dropping the user on the page to hunt for the button. The prop
+threads to both `SidebarPanel` mounts — the desktop
 rail via `<Sidebar>`, and the mobile Sheet via `DashTopBar → MobileNav` — so
 the two never drift. The collapsed 64px rail has no variant of it.
 
 ### Tier & onboarding variants
 
-Several sidebar pages have standalone route variants (same chrome, different
-content state). Naming contract:
+Nearly every sidebar page has two standalone route twins beside its PRO route
+(same chrome, different content state). Naming contract:
 
-- `*Default.tsx` (`/overview-default`, `/api-keys-default`, `/limits-default`,
-  `/events-default`) — the page as a NEW workspace sees it: empty-state hero,
-  zeroed KPI cards, and `TableEmptyState` in place of each table.
-- `*Free.tsx` (`/security-free`, `/limits-free`, `/token-savings-free`) — the
-  page as a FREE-tier workspace sees it: feature gated, upgrade CTA.
+- `*Default.tsx` on `/<base>-default` — the page as a NEW workspace sees it:
+  empty-state hero, zeroed KPI cards, and `TableEmptyState` in place of each
+  table.
+- `*Free.tsx` on `/<base>-free` — the page as a FREE-tier workspace sees it:
+  feature gated, upgrade CTA.
+
+**Twin inventory.** Both suffix sets cover the same 15 nav bases —
+`/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
+`/limits`, `/alerts`, `/security`, `/policies`, `/audit-trail`, `/activity`,
+`/team`, `/billing`, `/api-keys`, `/settings` — with two spelling quirks: the
+Security `-default` twin answers on **both** `/events-default` and
+`/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
+render `Requests*.tsx` because the route was renamed but the components were
+not. `/alerts` (added 2026-08-05) sits in the Manage section between Limits and
+Token Savings, `locked: true`, with `Alerts*.tsx` twins.
+
+**`src/lib/plan.ts` is the single source of truth for tier.** A surface is
+non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
+means tier is derived from the URL, never stored:
+
+| Export | Use |
+| --- | --- |
+| `isDefaultSurface` / `isFreeSurface` / `isNonProSurface` | Predicates read by the sidebar lock icons and the workspace badge, so the badge and the locks can never disagree |
+| `FREE_TWINS` / `DEFAULT_TWINS` | The nav bases that actually have a twin |
+| `toProPath` / `toFreePath` / `toDefaultPath` | Path translation between tiers. Idempotent within a tier; each falls back to that tier's `/overview` twin when the current base has none |
+
+**There IS a runtime tier switch (2026-06-16).** `WorkspaceSwitcher` in the top
+bar renders Pro / Default / Free menu items that `navigate()` the _current_
+pathname through those translators, so switching tier keeps you on the page you
+were reading. The plan `Badge` next to the workspace name reads from the same
+predicates. Direct-route entry still works, and remains how a single state gets
+designed or reviewed in isolation.
+
 - `locked: true` in `nav-sections.ts` renders the sidebar lock icon on the
   PRODUCTION shell for the three Pro surfaces (Security Events, Limits, Token
   Savings). Note that `LOCKED_IN_FREE` is currently an **empty set**, so the
   Free sidebar locks nothing — every item routes to its `-free` twin instead.
-- Variants are reached by direct route only — there is no runtime tier switch;
-  the variants exist so each state can be designed/reviewed at its own URL.
 - `/upgrade` is the plan-comparison page the upsell CTAs link to.
-- Gating is asymmetric by design-in-progress: Conversations, Billing, Team
-  have no Free variants yet (open product question, see improve-audit
-  direction findings).
+
+**Onboarding flow (`/setup-*-default`, added 2026-06-25).** Five pages reached
+from the `/overview-default` get-started card, forking on billing model:
+
+```mermaid
+graph LR
+    OVD["/overview-default"] -->|BYOK| SC["/setup-connect-default"]
+    OVD -->|Pay as you go| SMP["/setup-manual-default?bill=payg"]
+    SC -->|Gate Connect app| SGC["/setup-gate-connect-default"]
+    SC -->|Manual / SDK| SMB["/setup-manual-default?bill=byok"]
+    SMP --> CR["/setup-credits-default"]
+    MO["/setup-models-default"] -.->|back link only| SMP
+```
+
+- `SetupConnect` — "Pick how to connect": the two ways to route plans you
+  already pay for.
+- `SetupGateConnect` — download the app, create a key, send the first request.
+  Back → `/setup-connect-default`.
+- `SetupManual` — one page, two billing modes off `?bill=byok|payg` (see §7).
+  The mode drives title, subtitle, context strip, and the back target
+  (Connect options for BYOK, Overview for PAYG).
+- `SetupCredits` — credit-balance top-up for pay-as-you-go. Back →
+  `/setup-manual-default?bill=payg`.
+- `SetupModels` — pooled pay-as-you-go pricing per 1M tokens, catalog-derived
+  (§3.6a). Its back link points at `/setup-manual-default?bill=payg`, but
+  **nothing in `src/` navigates TO it** — like the two params in §7 it is an
+  orphaned entry point: re-link it or retire it deliberately.
 
 ---
 
@@ -884,6 +950,18 @@ message renders optional prose followed by one `<ToolCallCard>` per entry in
 `ConversationsTrace` page and the legacy `ConversationDetailDialog` render the
 same `ConversationDetailBody`.
 
+**Bubble controls (2026-08-04):** each turn also passes `copyValue` from
+`messageCopyText(m)`, which flattens the turn to plain text — prose plus every
+`name\nargs` tool call, because the bubble renders those too — and returns `""`
+(coerced to `undefined`) for a turn with nothing to copy, so the control is
+omitted rather than rendered inert. `MessageBlock` puts copy + expand on the
+`↳ requestId` footer row from there (see §9).
+
+**Scroll-body padding:** both panels' scroll bodies are `px-6 py-4` while their
+headers stay at 16px; `RequestTracePanel`'s timeline track shifts to x=36px
+(24px padding + 12px) to keep the node centerline. The detail title is
+"Conversation".
+
 **Cross-panel linking:** `activeRequestId` state shared between Messages and Trace panels for synchronized highlights.
 
 **Outbound:** `/messages-findings/${requestId}` ("View Request" on each trace step)
@@ -979,6 +1057,18 @@ Python / cURL tabs)
 **State:** `createOpen: boolean`, `limits: Limit[]`
 
 **Dialog fields:** Name, Type (`LIMIT_TYPES`), Threshold, Period (`LIMIT_PERIODS`), Scope (org-wide, key-level)
+
+---
+
+### Alerts page (`/alerts` → `Alerts.tsx`, added 2026-08-05)
+
+**Purpose:** Create/manage alert rules and triage their firings. Manage nav, between Limits and Token Savings, `locked: true`, with `-default`/`-free` twins.
+
+**Module (`src/pages/alerts/`):** `types.ts` (`AlertRule`, `AlertEvent`, structured `AlertWindow = {count, unit}`, severities `info`/`warning`/`critical`, conditions `cost_threshold`/`error_rate`/`tokens_per_hour`/`security_events`/`latency_p95`, channels email/slack/webhook), `data.ts` (`observedValue` + `formatObservedValue` + `formatWindow` + seeds/templates + `validateChannelTarget`), `view.ts` (badge/icon maps, sort accessors, `FiringRow` join), `glyphs.tsx` (`ChannelGlyph`/`ConditionIcon`/`SeverityIcon`), `AlertRuleWizard.tsx`, `AlertEventDialog.tsx`.
+
+**No synthetic data.** Every observed value derives from the real 7-day workload / security constants; `observedValue` returns `null` past a 7-day-equivalent window and the wizard preview shows a "not enough history yet" line rather than a fabricated number.
+
+**Tabs:** Rules (default) + Events (open-firings count chip). **Rules table:** Name · Condition · Threshold · Time window · Severity · Channels · Last fired · Enabled · Actions; "Last fired" cross-links to Events pre-filtered to that rule. **Create/edit wizard** (centered Dialog, `Stepper`): Choose condition → Configure rule (live observed preview, count+unit window, severity tiles with Policies-style selected tones) → Notification channels (validated rows). **Events tab:** firing table + `AlertEventDialog` with per-channel delivery dots and acknowledge/resolve lifecycle reflected in the row + count chip.
 
 ---
 
@@ -1109,11 +1199,13 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 ### Settings page (`/settings` → `Settings.tsx`)
 
-**Purpose:** Workspace profile, passkey security.
+**Purpose:** Workspace profile, passkey security, account management.
 
 **State:** `displayName`, `email`, `organization` with dirty-tracking for Save/Reset.
 
 **Mock identity:** Chad Ponticas / <chad@constellationnetwork.io>
+
+**Sections:** Profile · Security (Passkey) · Account management (added 2026-08-05). Account management holds two danger-tone cards (Profile-style button footers): **Delete account and data** (warning callout + "Delete my account" type-to-confirm gating the destructive button) and **Cancel plan** (opens the shared `CancelPlanDialog`). Tier fork via a `showCancelPlan` prop: the PRO route passes `false` (card hidden for now, code retained); the Free/Default twins already omit it.
 
 ---
 
@@ -1135,7 +1227,7 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 ### Billing page (`/billing` → `Billing.tsx`)
 
-Billing-specific layout (does not use `DashboardChrome`). Details TBD.
+Billing-specific layout (does not use `DashboardChrome`). Details TBD. The plan card's "Manage subscription" opens `plan-comparison-dialog-pro.tsx`, whose Free-plan CTA ("Cancel Pro plan") closes it and opens the shared `CancelPlanDialog` (`pages/cancel-plan-dialog.tsx`) — the same controlled dialog the Settings Cancel plan card uses, so the cancellation copy has one source. Shared `BILLING_PERIOD_END` constant lives in that dialog file and feeds Billing's renewal line.
 
 ---
 
@@ -1201,6 +1293,8 @@ only where a modal is still the target:
 - `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
 - `Activity.tsx?range=24h|7d|30d|all` — read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
 - `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+- `BillingFree.tsx?manage=1` — opens the plan-comparison dialog on mount, stripped on close via `setSearchParams(..., { replace: true })`, same contract as `?create=1`. Fed by the sidebar upgrade CTA (§2). `BillingDefault.tsx` renders `BillingFree`, so the param works on both `-default` and `-free`.
+- `SetupManual.tsx?bill=byok|payg` — the only param that selects page CONTENT rather than opening a surface. Read on every render (not just mount), defaults to `byok` for any other value, and drives title/subtitle/context strip/back target. Both values are live entry points: `/overview-default` links to `payg`, `/setup-connect-default` to `byok`.
 
 **Both of the last two are currently orphaned entry points.** They were fed by
 the Overview KPI tiles (`/activity?range=…`) and the "Set a spend limit" Quick
@@ -1228,19 +1322,21 @@ graph TB
         CANVAS["--color-canvas: #ECECE7 (warm paper)"]
         SYNTAX["--color-syntax-keyword/variable/property/terminal-blue"]
         RADIUS["--radius, --radius-xs/sm/md/lg/xl/2xl/3xl/4xl"]
+        SHADOW["--shadow-2xs/xs/sm/md/lg (Tailwind's own scale, redeclared)"]
     end
 
     subgraph Root[":root {} — Semantic layer (shadcn vocab)"]
-        BG["--background → neutral-100 (page canvas)"]
-        CARD["--card → white (elevated surface)"]
+        BG["--background → neutral-50 (page canvas)"]
+        CARD["--card → white (elevated surface) / --card-muted → neutral-50 (well inside a card)"]
         POPOVER["--popover → white"]
         FG["--foreground → neutral-900"]
         PRIMARY["--primary → neutral-900 (NOT blue)"]
-        MUTED["--muted → neutral-100 / --muted-foreground → neutral-500"]
+        MUTED["--muted → neutral-100 / --muted-foreground → neutral-600"]
         BORDER["--border → neutral-200"]
         RING["--ring → neutral-400"]
         SIDEBAR["--sidebar-* tokens"]
-        SHADOW["--shadow-border / --shadow-popup / --shadow-modal"]
+        RAISED["--control-raised → white (neutral-700 dark)"]
+        PROMO["--promo-* (upsell surface family: border/foreground/accent/dot/wash/shadow + cta group)"]
     end
 
     NEUTRAL --> PRIMARY
@@ -1248,13 +1344,18 @@ graph TB
     NEUTRAL --> MUTED
     NEUTRAL --> BORDER
     NEUTRAL --> BG
+    BLUE --> PROMO
 ```
 
 **Neutral ramp = Tailwind v4 defaults.** As of 2026-05-17, the custom `ink-*` ramp was renamed to `neutral-*` and the `@theme` block no longer redeclares `--color-neutral-*` — Tailwind's built-in values resolve through the semantic aliases. Do not reintroduce the declarations.
 
-**Page canvas vs surface.** `--background` resolves to `var(--color-neutral-100)` so the page reads as a faintly-gray canvas with white cards lifting via shadow. Components that should remain white (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome) bind to `bg-card`, NOT `bg-background`. `bg-background` is the canvas color and renders as neutral-100.
+**Page canvas vs surface.** `--background` resolves to `var(--color-neutral-50)` (neutral-950 in dark) so the page reads as a faintly-gray canvas with white cards lifting via shadow. Components that should remain white (Button outline, Switch thumb, Tabs indicator, Field separator backdrop, DateRangePicker trigger chrome) bind to `bg-card`, NOT `bg-background`. `bg-background` is the canvas color. `--card-muted` (also neutral-50 light, neutral-800 dark) is the _inside-a-card_ well — conversation bubbles, the Ask AI composer shell, the expand viewer's body — and exists so a nested `bg-card` element can still invert against its parent in dark.
 
 **Hard rule:** No raw hex/rgba/oklch outside `@theme`. Every component binds to a semantic token. `bg-neutral-50` is the only permitted exception for input surfaces (no `--input-bg` token yet).
+
+**The promo family (2026-08-04)** is the one blue-derived semantic group: `--promo-border/-foreground/-accent/-dot/-wash/-shadow` for the upsell SURFACE, plus a separate `--promo-cta/-cta-hover/-cta-border/-cta-foreground/-cta-shadow` group behind Button `variant="promo"`. It exists because six call sites had each pasted the same blue recipe. Two things are deliberate: the surface fill is NOT in the family (Figma's twins are white and `#171717`, i.e. `bg-card` already), and `--promo-cta-shadow` is a separate token from `--promo-shadow` rather than a reuse — a tint that reads under a pale card is wrong under a solid blue key. Full value table lives in `design.md`.
+
+**The destructive alpha ladder (2026-08-05)** tokenizes the three sanctioned opacities of `--destructive` so a danger surface reaches for a named rung, not an ad-hoc `/NN` modifier: `--destructive-subtle` (30% — softened structural edges like the danger Card border), `--destructive-muted` (50% — mid accents), and `--destructive` itself as the 100% base. Both derived rungs are `color-mix(in oklab, var(--destructive) N%, transparent)`, so they flip with theme through the base (dark derives from danger-400, light from danger-600) with no per-theme literal; named after the file's own `--accent-muted` precedent. Aliased into `@theme inline` as `--color-destructive-subtle`/`-muted`, and `design.md` records them as the only sanctioned destructive alphas.
 
 ### 8.2 Radius system (three-tier material ladder)
 
@@ -1273,15 +1374,44 @@ primitives (DetailList, CodeCard) at the usage site, not in the primitive.
 
 ### 8.3 Shadow system
 
-| Token | Usage |
-| --- | --- |
-| `--shadow-border` | Cards and surface-tier containers (1px ring + lift + ambient) |
-| `--shadow-popup` | Menus and popovers (4px lift + 1px ring) |
-| `--shadow-modal` | Dialogs (16px lift + 1px ring) |
+**Tailwind's scale only (2026-07-29).** The five bespoke families
+(`--shadow-border`, `--shadow-popup`, `--shadow-modal`, `--shadow-card-soft`
+and friends) were **deleted**. `src/index.css` redeclares only
+`--shadow-2xs/xs/sm/md/lg`, and every surface reaches for the plain utility:
 
-All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
+| Utility | Usage |
+| --- | --- |
+| `shadow-xs` | Cards and surface-tier containers — the default (31 call sites) |
+| `shadow-sm` | Small lift: the sidebar promo card, the promo CTA key |
+| `shadow-md` | Menus, popovers, tooltips |
+| `shadow-lg` | Dialogs and sheets |
+| `shadow-none` | Flat inset panels that must NOT read as lifted |
+
+**Migration gotcha:** the deleted tokens bundled a 1px ring INTO the shadow, so
+a converted surface needs an explicit `border border-border` beside its
+`shadow-*` or it loses its edge. `--shadow-*` strings still appearing in `src`
+are all inside comments — no live class consumes one. Colour-tinted shadows go
+through the `shadow-(color:…)` arbitrary-value form (`--promo-shadow`,
+`--promo-cta-shadow`), never a redefined family.
 
 ### 8.4 Typography voices
+
+**The type utilities are the closed set.** `src/index.css` defines four
+families; `npm run lint:design` fails the build on `text-[Npx]`, so a size that
+isn't on one of these ladders does not exist:
+
+| Family | Steps | Recipe | Usage |
+| --- | --- | --- | --- |
+| `type-heading-*` | 72 / 64 / 56 / 48 / 40 / 32 / 24 / 20 / 18 / 16 / 14 | sans, medium, tightening tracking | Page + section titles, marketing display |
+| `type-label-*` | 20 / 18 / 16 / 14 / 12 | `font-sans font-medium` | Card titles, button labels, form labels, table heads |
+| `type-copy-*` | 18 / 16 / 14 / 12 / 10 | `font-sans font-normal` (18/16 add `tracking-snug`) | Running prose. `type-copy-14` is the workhorse — the `<table>` inherits from it. `type-copy-10` is **fenced** to the sidenav upgrade card's supporting line: it is the one voice below the 12px body floor, not a fallback for tight space |
+| `type-mono-*` | 16 / 14 / 12 | Geist Mono + tabular figures | Every DATA value in a table/row — numbers, counts, tokens, currency, %, dates, IDs, hashes. Mirrors the copy sizes, so a sans cell becomes its mono twin by swapping one class |
+
+Deleted, do not reintroduce: `type-copy-20`, `type-copy-24` and
+`type-copy-14-tight` (all 2026-08-03 — the 14/20 leading the last one carried
+is what `type-copy-14` already gives).
+
+Voice conventions layered on top:
 
 | Voice | Classes | Usage |
 | --- | --- | --- |
@@ -1312,37 +1442,42 @@ All shadows are `color-mix` from `neutral-800` — no raw `rgba`.
 
 ## 9. UI Component Library
 
-94 components in `src/components/ui/`. Key primitives:
+95 components in `src/components/ui/`. Key primitives:
 
 | Component | Base primitive | Notes |
 | --- | --- | --- |
-| `Button` | `@base-ui/react/button` | Variants: default/outline/secondary/ghost/destructive/link. Sizes: xs/sm/default/lg/icon*. Press: `active:scale-[0.99]` + `will-change-transform` (2026-06-04, was `translate-y-px`) |
-| `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline) |
+| `Button` | `@base-ui/react/button` | Three independent axes. **Variants:** default/outline/secondary/ghost/destructive/link/raised/promo. **Sizes** (shadcn-realigned 2026-07-28, `lg` and `xl` GONE — `lg`'s recipe became `default`'s): xs 24 / sm 32 / default 36, icon-only `icon-xs` 24 / `icon-sm` 32 / `icon` 36, plus the one responsive size `icon-action` (32 below `lg`, 24 from `lg`, glyph 16 → 14 with it). **Shape:** default/pill/circle. Icon padding is symmetric (10px, the one carve-out from the 4px grid). Glyph ladder 12/14/16/20 — `icon-sm` moved 14 → 16 on 2026-08-04 at the primitive, so all 17 call sites moved together. Press: `active:not-aria-[haspopup]:scale-[0.98]` + `will-change-transform`, exempting popup triggers |
+| `Dialog` / `AlertDialog` | `@base-ui/react/dialog` | `rounded-xl` LOCKED. Shells: `DialogContent` (form), `DialogScrollContent` (detail modal), `DialogStaticContent` (spec-sheet inline). Standing rule: 24px gap above the footer button row (a bordered scroll-footer bar satisfies it). Dialog-over-dialog handoffs use `onOpenChangeComplete` to close-then-open with no co-mounted backdrop. |
+| `Card` | custom div | `size` (default/sm) + `density` (default/flush) + **`tone`** (default/`danger`, added 2026-08-05: `data-[tone=danger]:border-destructive-subtle`, edge only). `CardHeader`/`CardContent`/`CardFooter` slots; footer drops the card's own bottom padding. |
+| `Stepper` | custom `<ol>` (added 2026-08-05) | Numbered vertical steps for in-dialog wizards. `StepperItem {index, state}` → `StepperIndicator` + `StepperBody` → `StepperTitle {onClick?}` + `StepperPanel`. `state` (`upcoming`/`active`/`complete`) is consumer-supplied; complete collapses to a check and is revisitable; panels unmount when inactive so the consumer's state survives Back. `size-6` circle, `type-mono-12` numeral, 1px `bg-border` rail hidden on the last item. |
 | `Select` | `@base-ui/react/select` | `rounded-sm` trigger, `rounded-sm` popup, `rounded-xs` items. Positioning standard (2026-06-04): `side=bottom` / `align=end` / `sideOffset=8`, `alignItemWithTrigger=false` → real dropdown that flips up near the viewport bottom. Same below/end/8 default on Popover, Menu, DateRangePicker. |
 | `Tabs` | `@base-ui/react/tabs` | Variants: default (pill-on-well) / line (underline). `<TabsCount>` chip inside triggers |
 | `Segmented` / `SegmentedPill` | SegmentedPill: `@base-ui/react/toggle-group`; Segmented: custom (buttons + sliding indicator) | Time-range toggles in page toolbars |
 | `Menu` | `@base-ui/react/menu` | 100ms ease-out item highlight (keyboard no-snap). `origin-[var(--transform-origin)]` required |
-| `KpiRail` | custom div | Divided grid of `CompactKpi` tiles. `rounded-md shadow-(--shadow-border)` |
+| `KpiRail` | custom div | Divided grid of `CompactKpi` tiles. `rounded-md border border-border bg-card shadow-xs` |
 | `HeroNumeric` | custom div | Single source for sans tabular numerics ≥24px. Sizes: default (24px) / lg (32px) |
 | `CompactKpi` | `HeroNumeric` + `DeltaTag` | Standalone or `flat` (no card chrome). `onClick` + `ariaLabel` props render as interactive `<button>` with ChevronRight in title row, hover + focus ring (used on Overview rail for deep-link tiles). `deltaSize` prop (`sm`/`md`) controls delta type-step. |
 | `KpiTile` | `Eyebrow` + `HeroNumeric` | Shared hero-numeric KPI tile (AuditTrail, TokenSavings). Props: title / value / valueSuffix (sized to HeroNumeric, muted) / liveDot / delta / deltaRow (opt-in: delta tag on a dedicated third row) / deltaNote (trailing comparison copy, e.g. "vs last 7d") / caption / spark. Extracted 2026-05-17 from 3 duplicates; deltaRow + deltaNote added 2026-06-01. |
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
-| `WorkspaceSwitcher` | `Menu` | Workspace dropdown (Free badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. Promoted 2026-05-17. |
-| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking an empty scrolling message region (`pt-4`, bubbles deferred) above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
-| `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14-tight` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` (`bg-control-raised`) left, 32px `Send` (`bg-primary` + `text-primary-foreground-soft`, `opacity-50` until the field has text) right. Both buttons carry `shadow-xs` and are unwired. Added 2026-07-27. |
+| `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
+| `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
+| `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
+| `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |
 | `AskAiMessage` (`ask-ai-message.tsx`) | custom divs | Ask AI chat bubbles (Figma `1125:4374`, light twins `1096:5471`/`1114:7141`, dark `1108:4193`). `UserMessage` right-aligned `bg-secondary` chip, `rounded-md`, `px-4 py-3`, `max-w-[85%]`. `AgentMessage` left, `bg-card` + `border-border` + `p-4`, 16px `BotMessageSquare`, with a 4-button completion row (ThumbsUp/ThumbsDown/Copy/RotateCcw, 24px targets, 14px glyphs) as a sibling 8px BELOW the bubble. `ReplyProse` is a scoped typographic treatment keyed off element type (`[&_h3]:…`) so rendered markdown from the live agent needs no restyling. `MessageThread` = `gap-4` turn list. Added 2026-07-27. |
-| `AskAiThinkingRow` (`ask-ai-thinking-row.tsx`) | custom div | "Thinking …" placeholder between send and first token. Animated `Dotm3x3_11` dot-matrix mark + `type-copy-14-tight` in `text-muted-foreground`, left-aligned, no bubble; ellipsis via the repo's pure-CSS `animate-ellipsis`. No Figma node exists for this state — built to the agreed fallback. Added 2026-07-28. |
+| `AskAiEmptyState` (`ask-ai-empty-state.tsx`) | custom div + `Button` | The panel's zero-message surface (Figma `1114:6477`): 32px `BotMessageSquare` mark, 18px title, four suggestion pills at 8px pitch. Pills are `<Button shape="pill" size="default" variant="outline">` — the outline recipe already IS the mock's resting chrome, so `className` carries layout only. Pills are 36px, not the mock's 44px, because `xl` was deleted in the 2026-07-28 size realign (open Figma reconciliation). Each label is sent VERBATIM as the first user message, so which scripted reply it gets is decided by its own wording — one matches `matchesGateConnectSetup()`, the other three fall through to the unmatched reply on purpose. |
+| `AskAiThinkingRow` (`ask-ai-thinking-row.tsx`) | custom div | "Thinking …" placeholder between send and first token. Animated `Dotm3x3_11` dot-matrix mark + `type-copy-14` in `text-muted-foreground`, left-aligned, no bubble; ellipsis via the repo's pure-CSS `animate-ellipsis`. No Figma node exists for this state — built to the agreed fallback. Added 2026-07-28. |
 | `useAskAiThread` (`src/hooks/use-ask-ai-thread.ts`) + `AskAiThreadProvider` (`ask-ai-thread-provider.tsx`) | React context | Ask AI conversation state: `{id, role, content, status}[]` plus an `idle → sending → thinking → replying → complete` phase machine that the composer and thinking row both read. Provider mounts in `App.tsx` ABOVE the outlet so the thread survives navigation (like `askAiOpen`). All timers and the canned responder live behind `streamReply()` in `src/data/ask-ai-script.ts` — components hold no `setTimeout`. Added 2026-07-28. |
 | `src/data/ask-ai-script.ts` | data + async generator | SCRIPTED demo responder, no backend. Doc-sourced Gate Connect reply as a markdown string, an honest fallback for unmatched input, loose keyword intent matching, and `streamReply()` — an async generator yielding word-boundary chunks. **Swap point:** replacing that one function body with a real `/api/ask` fetch changes nothing else. Added 2026-07-28. |
-| `ScrollToLatestFab` + `ScrollBottomSentinel` (`ask-ai-scroll-to-latest.tsx`) | custom button + marker div | Jump-to-bottom control (Figma `1149:10955` light / `1125:4280` dark). 32px circle, 16px `ArrowDown`, `bg-control-raised` + `border-border` + `shadow-(--shadow-card-soft)`; absolutely positioned against the message region's wrapper so the panel's `px-4` / `gap-4` supply Figma's 16px offsets with no hard-coded position and no layout shift. Presentational — visibility and the click handler come from `useStickToBottom`. Added 2026-07-27. |
+| `ScrollToLatestFab` + `ScrollBottomSentinel` (`ask-ai-scroll-to-latest.tsx`) | `Button` + marker div | Jump-to-bottom control (Figma `1149:10955` light / `1125:4280` dark). `<Button variant="raised" shape="circle" size="icon-sm">` with a 16px `ArrowDown` — all chrome (circle, raised surface, press, focus ring, reduced-motion) comes from the primitive; the `className` carries visibility STATE only (`scale-95 opacity-0` ↔ `scale-100 opacity-100`, plus `pointer-events-none` and `tabIndex={-1}` when hidden). Absolutely positioned against the message region's wrapper so the panel's `px-4` / `gap-4` supply Figma's 16px offsets with no hard-coded position and no layout shift. The sentinel is a zero-height LAST child of the scroll region: the IntersectionObserver target, and the one element carrying `overflow-anchor: auto`. Visibility and the click handler come from `useStickToBottom`. Added 2026-07-27. |
 | `useStickToBottom` (`src/hooks/use-stick-to-bottom.ts`) | hook | Auto-follow for the streaming thread. `following` is a user-intent flag, NOT a geometry read (the sentinel briefly leaves the threshold on every chunk, which would false-disarm). Content growth (ResizeObserver) + following → instant snap to the end; user wheel/touch/key recomputes intent from real position on the next frame, so scrolling up disarms and scrolling back re-arms; FAB press and a new send re-arm explicitly. Verified: CSS `overflow-anchor` does NOT do this — it drifted 0 → 819px over ~10s of streaming. Added 2026-07-28. |
 | `Table` | native `<table>` | Every `TableHead`/`TableCell` gets `whitespace-nowrap`. Numerics: `text-right tabular-nums`. Three-tier body ink: 500/800/900. Header row `h-10` (40px, was 36). |
 | `SortableTableHead` | native `<th>` + `<button>` | Click-to-sort header (2026-06-04). `⇅` fades in on hover, persists as `↑`/`↓` when active. Three-state cycle (asc→desc→unsorted). Content-width hit area (`max-w-1/2`), `aria-sort`. `numeric` columns (right-aligned) put the glyph left of the label (`flex-row-reverse`) so the label aligns with the data. Pairs with the `useTableSort` hook + `sortRows`/`parseNumeric` in `src/hooks/use-table-sort.ts` (local state, no TanStack); table supplies a `getValue(row,key)` accessor. |
 | `TablePaginationFooter` | custom | Canonical table pagination chrome — count, rows-per-page, page links |
 | `Badge` | custom div | `font-mono text-xs uppercase`. No icons inside. Symmetric padding locked. `success`/`destructive` text meet WCAG 4.5:1 (success-800; destructive solid `danger-100/800`). Uppercase + contrast fixes 2026-06-04. |
 | `Eyebrow` | custom span | `font-mono uppercase tracking-[0.1em]`. Default `as="span"`, pass `as="div"` when block |
-| `MessageBlock` | custom div | Conversation bubble. Default tone `bg-card-muted` (2026-07-30, was `bg-background` — the nested `ToolCallCard` needs a surface it can sit darker than in dark); `warn` / `danger` tones keep translucent tinted fills |
+| `MessageBlock` | custom div | Conversation bubble. Default tone `bg-card-muted` (2026-07-30, was `bg-background` — the nested `ToolCallCard` needs a surface it can sit darker than in dark); `warn` / `danger` tones keep translucent tinted fills. Body clamps to `max-h-[200px]`. **Footer controls (2026-08-04):** passing `copyValue` puts a copy-then-expand cluster at the right end of the `↳ requestId` footer row, at the Ask AI reply row's pitch (`icon-action` + `gap-0 lg:gap-1`). That row is a SIBLING of the bubble, not a descendant — the bubble renders as a real `<button>` when messages cross-link to the trace, so a control inside it would be nested interactive content whose click would toggle the selection. Expand is an uncontrolled `DialogTrigger` → `DialogScrollContent` at `sm:max-w-[600px]`, height content-driven `min-h-[240px]` → `max-h-[min(600px,90vh)]` (written as `min()` because a bare `max-h-[600px]` would REPLACE the shell's `max-h-[90vh]` in the same tailwind-merge group). Title comes from `ROLE_LABEL` so it can't drift from the bubble header; dismiss is a `Minimize2` "Collapse", the inverse of the `Maximize2` that opened it. The viewer renders the same `body` NODE with no reformatting, inside a `bg-card-muted` well — load-bearing, since `ToolCallCard` is `bg-card` and would disappear against the modal's own `bg-card` |
+| `CopyButton` | `Button` | The only clipboard affordance — never re-roll `setCopiedKey`/`setTimeout` locally. `mode="icon" \| "label"`, both firing the same `Copied ${label} to clipboard` toast on a non-configurable 2s hold. Icon sizes: `icon-sm` (32, default), `icon-action` (responsive 24/32, the message-tools footprint — Ask AI reply row + `MessageBlock` footer, added 2026-08-04), `inline-xs` (20, inline beside `<code>` chips). Icon modes cross-fade Copy ↔ CircleCheck through a stacked grid slot at `opacity-0`; label mode keeps a color-only transition because its text changes width. Modern clipboard API only, no `execCommand` fallback |
 | `ToolCallCard` | custom flex `span` | Nested `CALL <Tool>` card inside an assistant bubble — the tool INPUT (args). `rounded-xs` on `bg-card`, one radius tier below the bubble. `span`, not `div`, because the bubble is a `button` when selectable |
 | `CodeCard` | custom | Syntax-highlighted code with `CodeLine[]` / `CodeToken[]`. Tabs per language |
 | `DetailList` / `DetailRow` | custom ul/li | Modal detail section. 4-col grid, label col-1 / value col-3 |

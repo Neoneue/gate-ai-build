@@ -6,6 +6,7 @@ function Card({
   className,
   size = "default",
   density = "default",
+  tone = "default",
   ...props
 }: React.ComponentProps<"div"> & {
   size?: "default" | "sm";
@@ -17,6 +18,22 @@ function Card({
    * is a direct child of `<Card>`.
    */
   density?: "default" | "flush";
+  /**
+   * Semantic edge tone. `default` = `border-border`. `danger` repoints the
+   * edge to `border-destructive-subtle` — the 30% rung of the destructive
+   * alpha ladder (`index.css`), which derives from `--destructive` and so
+   * flips danger-600 -> danger-400 with the theme on its own. For surfaces
+   * whose only action is irreversible: the Settings "Account management"
+   * cancel/delete pair.
+   * Deliberately quiet: the edge only has to say "this card is dangerous",
+   * and at 100% (and at 50%) it out-shouted the destructive `<Button>` it
+   * frames. Use the named rung, never a bare `border-destructive/30` — the
+   * alpha steps are a closed set like every other visual value.
+   * EDGE ONLY: the fill stays `bg-card` and the ink stays neutral, so the
+   * destructive `<Button>` inside remains the loudest thing on the card.
+   * Never paint a danger border onto a call site's `className`.
+   */
+  tone?: "default" | "danger";
 }) {
   return (
     <div
@@ -25,12 +42,13 @@ function Card({
         // (1px neutral-800/6%) plus subtle ambient lift in one token, replacing
         // the old hard `border + shadow-xs` combo. Adapts to any background
         // without re-tinting the edge.
-        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         className
       )}
       data-density={density}
       data-size={size}
       data-slot="card"
+      data-tone={tone}
       {...props}
     />
   );

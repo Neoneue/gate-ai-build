@@ -9,6 +9,23 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-06](./2026-08/changelog-8-6.md)
+
+- The Ask AI scroll FAB rides the composer instead of a constant
+- Light-mode dot grid eased to 0.7
+- Alerts is hidden from the nav
+- Account-management copy aligned to the AG-508 PRD
+
+### [2026-08-05](./2026-08/changelog-8-5.md)
+
+- Destructive alpha ladder — 30 / 50 / 100 named, not modifier-typed
+- Observed values never fabricate past the 7 days of real data
+- `Stepper` — new primitive for numbered in-dialog steps
+- `Card` gains a `tone="danger"` edge
+- `CancelPlanDialog` — shared controlled confirm, two entry points
+- Alerts — a new Manage surface for rules and firings
+- Settings — Account management section
+
 ### [2026-08-04](./2026-08/changelog-8-4.md)
 
 - Blue becomes a surface language for exactly one card — the `--promo-*` family

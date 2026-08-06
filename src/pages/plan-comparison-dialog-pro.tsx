@@ -70,9 +70,9 @@ const FREE_PLAN: PlanCardData = {
     },
   ],
   cta: {
-    label: "Downgrade plan",
+    label: "Cancel Pro plan",
     variant: "outline",
-    ariaLabel: "Downgrade to Free plan",
+    ariaLabel: "Cancel Pro plan and downgrade to Free",
   },
   ctaCaption: "Free to use, forever",
 };
@@ -196,12 +196,31 @@ export function PlanComparisonDialogPro({
   open,
   onOpenChange,
   onUpgrade,
+  onDowngrade,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   onUpgrade: () => void;
+  /**
+   * Fired when the user picks the Free plan's "Downgrade plan" CTA. Wired by
+   * Billing to open the shared Cancel plan dialog. Optional — without it the
+   * CTA just closes this dialog (its pre-share behaviour).
+   */
+  onDowngrade?: () => void;
 }) {
   const cardsRef = useRef<HTMLDivElement>(null);
+  // Sequential dialog handoff, timer-free: "Downgrade plan" closes THIS
+  // dialog, and only once its exit animation has fully finished (Base UI's
+  // onOpenChangeComplete) do we fire onDowngrade to open the Cancel plan
+  // dialog — so the two modals are never mounted at the same time, which is
+  // what the dismiss-flicker rule wants. A plain ref, not state, because it
+  // never needs to trigger a render.
+  const pendingDowngrade = useRef(false);
+
+  function handleDowngrade() {
+    pendingDowngrade.current = true;
+    onOpenChange(false);
+  }
 
   // Stagger the plan cards in just after the Dialog primitive's own
   // enter animation, scoped to this content so cleanup is automatic.
@@ -231,7 +250,16 @@ export function PlanComparisonDialogPro({
   );
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => {
+        if (!isOpen && pendingDowngrade.current) {
+          pendingDowngrade.current = false;
+          onDowngrade?.();
+        }
+      }}
+      open={open}
+    >
       <DialogContent className="flex max-h-[90vh] w-full flex-col gap-4 overflow-hidden p-4 sm:p-6 md:max-w-[720px]">
         <DialogHeader>
           <DialogTitle className="type-heading-18 text-foreground">
@@ -242,7 +270,16 @@ export function PlanComparisonDialogPro({
           className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2"
           ref={cardsRef}
         >
-          <PlanCard onUpgrade={onUpgrade} plan={FREE_PLAN} />
+          {/* Free card's CTA opens the shared Cancel plan dialog via the
+              existing `plan.cta.onClick ?? onUpgrade` path — inject the
+              handler here so FREE_PLAN stays pure data. */}
+          <PlanCard
+            onUpgrade={onUpgrade}
+            plan={{
+              ...FREE_PLAN,
+              cta: { ...FREE_PLAN.cta, onClick: handleDowngrade },
+            }}
+          />
           <PlanCard
             onUpgrade={() => {
               onOpenChange(false);

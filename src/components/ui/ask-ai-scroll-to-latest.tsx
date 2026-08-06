@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
  *   fill    white / neutral-700       → --control-raised (exact in both)
  *   border  neutral-200 / neutral-600 → --border (exact in light)
  *   shadow  Figma `shadow/md`         → --shadow-card-soft
- *   offset  16px from the panel's right edge, 16px above the composer
+ *   offset  16px from the panel's right edge, 24px above the composer
  *
- * Both offsets fall out of the panel's existing box for free: the FAB is
- * absolutely positioned against the message region's wrapper, whose right edge
- * is the body's `px-4` (16px) and whose bottom edge is the body's `gap-4`
- * (16px) above the composer. Nothing is hard-coded, and nothing shifts when
+ * Neither offset is decided here — both are passed in as layout classes by
+ * `ask-ai-panel.tsx`, which owns the box this is positioned against. The right
+ * offset is that box's own edge (the body's `px-4`). The vertical one TRACKS the
+ * composer, whose height changes as the field grows, via the panel's
+ * `--ask-ai-composer-h`; see the comment at the call site. Nothing shifts when
  * the FAB toggles — it is out of flow, so the composer grows independently.
  *
  * DETECTION — a zero-height sentinel as the last child of the scroll region,
