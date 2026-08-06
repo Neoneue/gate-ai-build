@@ -4,7 +4,7 @@ import {
   PanelRightClose,
   SquarePen,
 } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AskAiComposer } from "@/components/ui/ask-ai-composer";
@@ -80,6 +80,48 @@ export function AskAiPanel({
 
   // The composer field, so the panel can put the caret in it.
   const composerRef = useRef<HTMLTextAreaElement>(null);
+
+  // The composer SHELL and the body it floats over — the two nodes the FAB's
+  // offset is measured between.
+  const composerBoxRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  /* Publish the composer's rendered height as `--ask-ai-composer-h` on the
+     body, so the scroll-to-latest FAB can hold a constant 24px of air above the
+     field at whatever height the field currently stands (see the FAB below).
+     One variable out, CSS does the arithmetic, and no JS ever writes a position.
+
+     Measured, not predicted: the shell's own box already carries its 1px
+     borders, 16px padding, 12px gap, and 32px actions row, so nothing here has
+     to know those numbers. `borderBoxSize` for sub-pixel exactness under zoom;
+     `offsetHeight` only as a fallback.
+
+     `useLayoutEffect`, not `useEffect`: a ResizeObserver delivers its first
+     callback before paint, but it is REGISTERED here, and a passive effect runs
+     after the opening frame is already on screen. That frame would resolve
+     `calc(var(--ask-ai-composer-h) + 40px)` against nothing, the whole
+     declaration would be invalid, and the FAB would drop to its static
+     position. The synchronous first write below closes that gap.
+
+     Cannot loop: the variable feeds the FAB's `bottom` only, which cannot
+     change the composer's size. And the composer is out of flow, so a new value
+     moves the circle and nothing else — the thread never reflows. */
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    const composer = composerBoxRef.current;
+    if (!(canvas && composer)) {
+      return;
+    }
+    const publish = (height: number) => {
+      canvas.style.setProperty("--ask-ai-composer-h", `${height}px`);
+    };
+    publish(composer.offsetHeight);
+    const observer = new ResizeObserver((entries) => {
+      publish(entries[0]?.borderBoxSize[0]?.blockSize ?? composer.offsetHeight);
+    });
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, []);
 
   /* Opening arms the field — the user types straight away without a click.
      Deferred a frame so the Sheet's own initial-focus pass (below lg) has
@@ -221,23 +263,31 @@ export function AskAiPanel({
           mask on the scroll region below), which is what keeps the overlap
           reading as depth rather than a collision.
 
-          Three constants fall out of the composer's measured geometry, and
-          every offset below is one of them:
+          Three measured facts fall out of the composer's geometry, and every
+          offset below is built from them:
 
             118px  composer AT REST — 2px border + 32px `p-4` + 40px field (the
                    placeholder wraps to two 20px lines and `field-sizing-content`
                    sizes to it) + 12px `gap-3` + 32px actions row
-            158px  composer at FULL height (`max-h-20`, 4 lines)
+            158px  composer at FULL height (`max-h-20`, 4 lines). It also passes
+                   through 98px (1 line, which is what the `replying`
+                   placeholder wraps to) and 138px (3 lines).
              16px  its inset from the panel's bottom edge (`bottom-4`)
 
           158 + 16 = 174px is the band the composer can ever occupy: the
-          thread's bottom reserve and the start of the fade. 118 + 16 + 24 =
-          158px is the same band at rest plus air, which is where the empty
-          state stops so it keeps centring above the field. The FAB keeps a
-          198px offset (174 + 24) so it stays clear of the field at every
-          size. All are off the 4px grid — the composer's 1px borders put them
-          there, and they have to be its real rendered heights or the empty
-          state slides off its measured 321px baseline.
+          thread's bottom reserve and the start of the fade. Both are CONSTANT
+          by design — a reserve that tracked the field would shove the thread
+          every time it grew. 118 + 16 + 24 = 158px is the same band at rest
+          plus air, which is where the empty state stops so it keeps centring
+          above the field, and it is constant for the same reason.
+
+          The FAB is the one offset that TRACKS. It reads directly against the
+          field, so a constant is wrong at every height but one; it takes
+          `--ask-ai-composer-h` (published above) + 40px instead. The heights
+          are off the 4px grid — the composer's 1px borders put them there, and
+          they have to be its real rendered heights or the empty state slides
+          off its measured 321px baseline. Every offset ADDED to them is on the
+          grid: 16 + 24.
 
           The reserve was 198px until 2026-07-29, when the user measured the
           resting gap above the field at 64px and asked for 24px off it. That
@@ -250,6 +300,9 @@ export function AskAiPanel({
 
           Measured 2026-07-29 at 1512×900: scroll region 836px, empty-state
           title y=321, and every thread y constant at all four field sizes.
+          Re-measured 2026-08-06 when the FAB's offset became tracking: the gap
+          above the field reads 24px at 98 / 118 / 138 / 158px in both themes,
+          and a turn's y is unchanged across all of them.
 
           `ask-ai-canvas` is the dot-matrix field from the design — a 16px
           gradient texture on a ::before layer, drawn in CSS rather than
@@ -264,7 +317,10 @@ export function AskAiPanel({
           intercept a bubble, the empty state, the FAB, or the composer. It
           starts directly under the 64px header, which keeps its own
           surface. */}
-      <div className="ask-ai-canvas relative flex min-h-0 flex-1 flex-col px-4">
+      <div
+        className="ask-ai-canvas relative flex min-h-0 flex-1 flex-col px-4"
+        ref={canvasRef}
+      >
         {/* Non-scrolling wrapper: owns the flex sizing so the scroll-to-latest
             control can anchor to the region's box without riding the scroll.
             Its right edge is the body's `px-4`, so the FAB sits 16px in from
@@ -372,15 +428,32 @@ export function AskAiPanel({
               onSelect={handleSend}
             />
           )}
-          {/* 198px — the composer's 174px envelope plus 24px of air. It keeps
-              the 24 the thread's reserve gave up: a turn coming to rest at the
-              field's edge is deliberate, a floating circle touching it is a
-              collision. So the FAB rides clear of the field at every size,
-              including full height. It sits on the WRAPPER, outside the masked
-              scroll region, so the fade never touches it. Its 16px right
-              offset is still the body's `px-4`. */}
+          {/* 24px of air above the composer's TOP EDGE, at every field height.
+              The offset tracks: `--ask-ai-composer-h` is the shell's measured
+              height (98 / 118 / 138 / 158px) and 40px is its 16px inset plus
+              that 24px of air. Both halves of the sum are real — nothing here
+              is a constant standing in for a height.
+
+              A single number cannot do this job. The FAB reads against the
+              field the user can see, so the 24 has to be measured off the
+              CURRENT top edge: at 158px (rest + air) a field grown to
+              `max-h-20` rose 16px PAST the circle and hid it behind an opaque
+              surface, and at 198px (the 174px full-height envelope + air) it
+              cleared every size but floated 64px up at rest and read as
+              unanchored. Tracking is the only value that is right in both
+              places, and in `replying` (98px) as well.
+
+              It does NOT animate. `bottom` is a layout property, and the
+              primitive's transition list is deliberately narrow
+              (`colors,opacity,box-shadow,scale`), so the circle steps with the
+              field — which itself jumps in whole 20px lines. Nothing to gate on
+              reduced motion.
+
+              It sits on the WRAPPER, outside the masked scroll region, so the
+              fade never touches it. Its 16px right offset is still the body's
+              `px-4`. */}
           <ScrollToLatestFab
-            className="absolute right-0 bottom-[198px]"
+            className="absolute right-0 bottom-[calc(var(--ask-ai-composer-h)+40px)]"
             onClick={stick.jumpToLatest}
             visible={stick.showFab}
           />
@@ -393,12 +466,14 @@ export function AskAiPanel({
             top edge, upward, over the thread. Its surface is opaque
             (`bg-card-muted` + border, from the component), so turns passing
             behind it are covered rather than showing through, and the mask
-            handles everything below. */}
+            handles everything below. `rootRef` hands its shell up so the FAB's
+            offset can be measured off this box rather than assumed. */}
         <AskAiComposer
           className="absolute inset-x-4 bottom-4"
           onSend={handleSend}
           onStop={stop}
           phase={phase}
+          rootRef={composerBoxRef}
           textareaRef={composerRef}
         />
       </div>

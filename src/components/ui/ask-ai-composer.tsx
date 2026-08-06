@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils";
  * exact multiples of the 20px line-height — min-h-5 (1 line) → max-h-20
  * (4 lines) — after which the text scrolls and the shell stops growing. The
  * textarea carries no padding or border of its own so those heights stay exact.
+ * The shell therefore stands at 98 / 118 / 138 / 158px, and `rootRef` exists so
+ * the panel can MEASURE that instead of predicting it — the scroll-to-latest
+ * control rides a fixed distance above this box (see `ask-ai-panel.tsx`).
  *
  * The `Plus` key is intentionally unwired; it carries the press affordance and
  * label so wiring it later is a no-op on the visuals. The send key IS wired —
@@ -47,6 +50,13 @@ export interface AskAiComposerProps {
   onStop?: () => void;
   /** Drives the placeholder and the send/stop swap. */
   phase?: AskAiPhase;
+  /** The SHELL, not the field. Handed up so the panel can measure this box —
+      the field grows in 20px steps and the panel's scroll-to-latest control
+      sits a fixed distance above whatever height that lands on. It is the
+      shell rather than the textarea deliberately: the panel then needs to know
+      nothing about the 16px padding, 1px borders, 12px gap, or 32px actions row
+      that sit around the field. */
+  rootRef?: RefObject<HTMLDivElement | null>;
   /** Handed up so the panel can put the caret here (open, post-send). */
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
 }
@@ -56,6 +66,7 @@ export function AskAiComposer({
   phase = "idle",
   onSend,
   onStop,
+  rootRef,
   textareaRef,
 }: AskAiComposerProps) {
   const [value, setValue] = useState("");
@@ -94,6 +105,7 @@ export function AskAiComposer({
         "flex flex-col gap-3 rounded-md border border-border bg-card-muted p-4 transition-colors focus-within:border-primary",
         className
       )}
+      ref={rootRef}
     >
       <textarea
         aria-label="Ask Gatekeeper"

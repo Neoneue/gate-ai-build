@@ -268,9 +268,10 @@ and (pointer: fine)) and (&:hover));
      neutral-900 card, but the light texture still needed more weight to read
      at all. Tuned in place 2026-07-29: both started at 0.5, dark went to 0.6,
      light to 0.7 and then 0.8. Dark came back down to 0.3 on 2026-07-30 — the
-     light dots were reading too hot on the dark panel. Consumed by
-     .ask-ai-canvas. */
-  --ask-ai-canvas-strength: 0.8;
+     light dots were reading too hot on the dark panel. Light came back to 0.7
+     on 2026-08-06: the neutral-900 ink was carrying more weight than the
+     texture needed on white. Consumed by .ask-ai-canvas. */
+  --ask-ai-canvas-strength: 0.7;
   /* Where the top-to-bottom fade LANDS, not where it starts. At 0 the texture
      dissolves completely and the bottom of the panel goes bare, which read as
      too aggressive in place; 0.15 keeps a legible trace of grid all the way
