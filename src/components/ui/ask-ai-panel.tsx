@@ -363,7 +363,16 @@ export function AskAiPanel({
               `mask-image` only, so the `-webkit-` twin is added alongside
               them. It reuses Tailwind's own `--tw-mask-linear`, so there is
               exactly one gradient here and the prefixed copy cannot drift
-              from it. */}
+              from it.
+
+              RULED 2026-08-06 — leave this at 174px. Reviewed once
+              `--ask-ai-composer-h` existed, since the fade start COULD track
+              the field's real height the way the FAB now does. It should not:
+              174 is the reserve, so the start of the fade and the resting place
+              of the last turn are one number, and a tracking value would
+              decouple them, move the dim boundary on every keystroke, and lose
+              the lead-in the fade needs to stay ahead of the field as it
+              grows. Not a constant waiting to be improved. */}
           <div
             className="mask-b-from-[calc(100%-174px)] mask-b-to-[calc(100%+24px)] h-full overflow-y-auto pt-4 [-webkit-mask-image:var(--tw-mask-linear)]"
             ref={scrollRef}
