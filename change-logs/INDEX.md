@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-06](./2026-08/changelog-8-6.md)
+
+- Account-management copy aligned to the AG-508 PRD
+
 ### [2026-08-05](./2026-08/changelog-8-5.md)
 
 - Destructive alpha ladder — 30 / 50 / 100 named, not modifier-typed
