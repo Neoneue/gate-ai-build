@@ -11,6 +11,9 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-08-06](./2026-08/changelog-8-6.md)
 
+- The Ask AI scroll FAB rides the composer instead of a constant
+- Light-mode dot grid eased to 0.7
+- Alerts is hidden from the nav
 - Account-management copy aligned to the AG-508 PRD
 
 ### [2026-08-05](./2026-08/changelog-8-5.md)
