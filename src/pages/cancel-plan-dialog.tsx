@@ -88,7 +88,7 @@ export function ConsequenceCallout({ items }: { items: string[] }) {
 }
 
 const CANCEL_CONSEQUENCES = [
-  "Data retention reverts to the Free-tier window, and anything older than that window is pruned under the retention policy.",
+  "Data retention reverts to the Free-tier window; anything older is pruned under the retention policy and is not restored if you upgrade again.",
   "Unused subscription days are not refunded.",
   "Your prepaid pay-as-you-go balance stays usable.",
 ];
@@ -129,8 +129,12 @@ export function CancelPlanDialog({
           <AlertDialogTitle>Cancel your plan?</AlertDialogTitle>
           <AlertDialogDescription>
             Renewal stops, and access continues until the end of your current
-            billing period on {BILLING_PERIOD_END}. This workspace then moves to
-            the Free tier.
+            billing period on{" "}
+            <span className="type-label-14 text-foreground">
+              {BILLING_PERIOD_END}
+            </span>
+            . This workspace then moves to the Free tier. You can reactivate
+            renewal any time before then.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <ConsequenceCallout items={CANCEL_CONSEQUENCES} />

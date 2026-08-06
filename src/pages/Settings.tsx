@@ -322,10 +322,10 @@ function SecurityCard() {
 const DELETE_CONFIRM_PHRASE = "Delete my account";
 
 const DELETE_CONSEQUENCES = [
-  "After the grace period, identifiable content is purged and the subscription is fully canceled.",
-  "Your prepaid pay-as-you-go balance is refunded to the card on file. Unused subscription days are not refunded.",
-  "Fingerprinted Digital Evidence proofs and billing records are retained for legal and tax reasons.",
-  "If you are the sole owner of a shared organization, that organization is torn down with your account and its members are notified.",
+  "After grace, identifiable content (prompts, conversations, keys, provider accounts) is purged and the subscription canceled.",
+  "Any remaining pay-as-you-go balance is forfeited on purge; unused subscription days are not refunded.",
+  "Fingerprinted Digital Evidence proofs and billing records are retained for legal reasons.",
+  "If you solely own a shared organization, it is torn down too and its members are notified.",
 ];
 
 function CancelPlanCard() {
@@ -384,8 +384,8 @@ function DeleteAccountCard() {
           <CardTitle>Delete account and data</CardTitle>
           <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
             Access ends immediately, followed by a 30-day reversible grace
-            period. After that, identifiable content is purged and your prepaid
-            balance is refunded.
+            period. After that, identifiable content is purged and any remaining
+            balance is forfeited.
           </p>
         </CardContent>
         <CardFooter className="justify-end gap-2 border-border border-t py-2">
@@ -400,8 +400,10 @@ function DeleteAccountCard() {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete account and data?</AlertDialogTitle>
           <AlertDialogDescription>
-            You lose access immediately. The account then enters a 30-day grace
-            period, reversible from here or from the confirmation email.
+            Access is suspended immediately: your keys stop working and no
+            traffic passes. A 30-day grace period follows; reverse it from here
+            or the confirmation email to restore your account, data, and full
+            balance.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <ConsequenceCallout items={DELETE_CONSEQUENCES} />
