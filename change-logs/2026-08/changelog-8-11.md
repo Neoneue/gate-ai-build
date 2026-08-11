@@ -46,9 +46,11 @@ The guard now fails on any numeric `fontSize` outside **10 / 12 / 14 / 16 / 18 /
 
 ## Components
 
-### `chart-geometry.tsx` — one source for every axis-bearing chart `519c0a2`
+### `chart-geometry.ts` — one source for every axis-bearing chart `519c0a2`
 
-**`ui/chart-geometry.tsx`** (new) · **`Dashboard.tsx`** · **`activity/TrendCard.tsx`** · **`activity/chart-helpers.ts`** · **`Security.tsx`** · **`requests/HeroMetric.tsx`**
+**`ui/chart-geometry.ts`** (new) · **`ui/chart-axis-ticks.tsx`** (new) · **`Dashboard.tsx`** · **`activity/TrendCard.tsx`** · **`activity/chart-helpers.ts`** · **`Security.tsx`** · **`requests/HeroMetric.tsx`**
+
+Split in two on purpose: `chart-geometry.ts` owns every number (margin, Y reserve, tick size, char width, stride math), `chart-axis-ticks.tsx` holds the React tick renderers that read them, so a component file only exports components (react-refresh).
 
 Overview's "Tokens used" and Activity's "Tokens over time" had independently solved the same problem — keep the first X label off the Y-axis number column — in two incompatible ways. Overview anchored the first/last label inward; Activity pushed the whole plot right with `margin.left`. Each worked alone and they disagreed on screen, because `margin.left` moves the Y label column and inward anchoring does not. They also disagreed on tick size (10 vs 11) and Y-axis width (44 fixed vs auto).
 
