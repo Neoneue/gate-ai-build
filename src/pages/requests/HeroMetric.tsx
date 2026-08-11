@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card } from "@/components/ui/card";
 import {
@@ -7,6 +7,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { SparkXAxisTick } from "@/components/ui/chart-axis-ticks";
+import {
+  CHART_X_AXIS_HEIGHT,
+  CHART_X_TICK_MARGIN,
+  SPARK_CHART_MARGIN,
+} from "@/components/ui/chart-geometry";
 import { DeltaTag } from "@/components/ui/compact-kpi";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -14,35 +20,6 @@ import { formatCompactCount } from "@/lib/formatters";
 import { buildCustomHeroView, HERO_VIEWS } from "./hero-data";
 import { useCustomRange, useRange } from "./range-store";
 import type { HeroView } from "./types";
-
-function ChartXAxisTick(props: {
-  x: string | number;
-  y: string | number;
-  payload: { value: string };
-  firstTick: string;
-  lastTick: string;
-}) {
-  const { x, y, payload, firstTick, lastTick } = props;
-  const value = payload.value;
-  const spaceIdx = value.indexOf(" ");
-  const display =
-    spaceIdx === -1 ? value : value.slice(0, value.lastIndexOf(" "));
-  const anchor =
-    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
-  return (
-    <text
-      dy="0.71em"
-      fill="var(--color-neutral-500)"
-      fontFamily="var(--font-mono)"
-      fontSize={11}
-      textAnchor={anchor}
-      x={x}
-      y={y}
-    >
-      {display}
-    </text>
-  );
-}
 
 export function HeroMetricCard() {
   const range = useRange();
@@ -61,22 +38,6 @@ export function HeroMetricCard() {
       color: "var(--color-chart-1)",
     },
   } satisfies ChartConfig;
-  const firstTick = view.ticks[0];
-  const lastTick = view.ticks[view.ticks.length - 1];
-  const renderTick = useCallback(
-    (tickProps: {
-      x: string | number;
-      y: string | number;
-      payload: { value: string };
-    }) => (
-      <ChartXAxisTick
-        {...tickProps}
-        firstTick={firstTick}
-        lastTick={lastTick}
-      />
-    ),
-    [firstTick, lastTick]
-  );
 
   return (
     <Card className="px-4">
@@ -117,7 +78,7 @@ export function HeroMetricCard() {
           <AreaChart
             accessibilityLayer
             data={view.data}
-            margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
+            margin={SPARK_CHART_MARGIN}
           >
             <defs>
               <linearGradient
@@ -159,16 +120,17 @@ export function HeroMetricCard() {
             {/* Ticks are real data points (see deriveTicks in hero-data);
               interval="preserveStartEnd" + minTickGap lets recharts width-thin
               the labels natively (always keeping first + last), so narrow
-              cards drop labels instead of overlapping — no custom JS hook. */}
+              cards drop labels instead of overlapping — no custom JS hook.
+              Tick renderer + type come from the shared chart geometry. */}
             <XAxis
               axisLine={false}
               dataKey="time"
-              height={24}
+              height={CHART_X_AXIS_HEIGHT}
               interval="preserveStartEnd"
               minTickGap={16}
-              tick={renderTick}
+              tick={SparkXAxisTick}
               tickLine={false}
-              tickMargin={8}
+              tickMargin={CHART_X_TICK_MARGIN}
               ticks={view.ticks}
             />
             <ChartTooltip

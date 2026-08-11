@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -7,13 +7,31 @@ import {
 } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+  ChartXAxisTick,
+  ChartYAxisTick,
+} from "@/components/ui/chart-axis-ticks";
+import {
+  CHART_MARGIN,
+  CHART_X_AXIS_HEIGHT,
+  CHART_X_TICK_MARGIN,
+  CHART_Y_AXIS_WIDTH,
+  getAxisTicks,
+  useChartColumnWidth,
+} from "@/components/ui/chart-geometry";
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
@@ -143,7 +161,7 @@ export function Dashboard() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+    <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Overview</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
@@ -202,44 +220,10 @@ function makeStackedTokenRows(
   });
 }
 
-/** Stacked-by-model bar chart used in the Spend and Tokens tiles. */
-const STACKED_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
-const STACKED_CHART_TICK = {
-  fontSize: 10,
-  fontFamily: "var(--font-mono)",
-  fill: "var(--muted-foreground)",
-} as const;
-
-/** X-axis tick renderer: left-anchor the first label and right-anchor the
- *  last so the first date doesn't slide under the Y-axis number column and the
- *  last doesn't overflow the card. Mirrors the hero charts' ChartXAxisTick;
- *  keeps the full label (no space-truncation). */
-function StackedXAxisTick(props: {
-  x?: string | number;
-  y?: string | number;
-  payload?: { value: string };
-  firstTick: string;
-  lastTick: string;
-}) {
-  const { x, y, payload, firstTick, lastTick } = props;
-  const value = payload?.value ?? "";
-  const anchor =
-    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
-  return (
-    <text
-      dy="0.71em"
-      fill="var(--muted-foreground)"
-      fontFamily="var(--font-mono)"
-      fontSize={10}
-      textAnchor={anchor}
-      x={x}
-      y={y}
-    >
-      {value}
-    </text>
-  );
-}
-
+/** Stacked-by-model bar chart used in the Spend and Tokens tiles. Margin,
+ *  Y-axis reserve, tick type and both tick renderers come from
+ *  `@/components/ui/chart-geometry` — the single source Activity's TrendCard
+ *  reads too, so the two cards line up when they sit side by side. */
 type StackedSeries = readonly ChartSeries[];
 
 function StackedKpiChart({
@@ -257,95 +241,94 @@ function StackedKpiChart({
     series.map((s) => [s.key, { label: s.label, color: seriesColor(s) }])
   ) as ChartConfig;
 
-  // First/last axis labels drive the tick anchoring (see StackedXAxisTick).
-  const firstTick = String(data[0]?.date ?? "");
-  const lastTick = String(data.at(-1)?.date ?? "");
-  const renderXAxisTick = useCallback(
-    (tickProps: {
-      x?: string | number;
-      y?: string | number;
-      payload?: { value: string };
-    }) => (
-      <StackedXAxisTick
-        {...tickProps}
-        firstTick={firstTick}
-        lastTick={lastTick}
-      />
-    ),
-    [firstTick, lastTick]
+  /** Same content-column measurement TrendCard runs, for the same reason: the
+   *  X-label stride is a function of the plotted width, and the Ask AI panel
+   *  and the collapsing nav rail both change it without touching the viewport.
+   *  recharts' own `preserveStartEnd` thinning cannot be used here — it drops
+   *  interior ticks opportunistically, so the two cards would label their bars
+   *  at different, uneven strides at the same width. */
+  const [chartPaneRef, columnWidth] = useChartColumnWidth();
+  const axisTicks = useMemo(
+    () => getAxisTicks(data, columnWidth),
+    [data, columnWidth]
   );
 
   return (
-    <ChartContainer className={className ?? "h-[180px] w-full"} config={config}>
-      <BarChart
-        accessibilityLayer
-        barCategoryGap="20%"
-        data={data}
-        margin={STACKED_CHART_MARGIN}
+    <div ref={chartPaneRef}>
+      <ChartContainer
+        className={className ?? "h-[180px] w-full"}
+        config={config}
       >
-        <CartesianGrid
-          horizontal
-          stroke="var(--color-chart-grid)"
-          strokeDasharray="8 5"
-          vertical={false}
-        />
-        <XAxis
-          axisLine={false}
-          dataKey="date"
-          height={24}
-          interval="preserveStartEnd"
-          minTickGap={16}
-          tick={renderXAxisTick}
-          tickLine={false}
-        />
-        <YAxis
-          axisLine={false}
-          tick={STACKED_CHART_TICK}
-          tickFormatter={yFormatter}
-          tickLine={false}
-          tickMargin={4}
-          width={44}
-        />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent
-              formatter={(value, name) => {
-                const cfg = config[name as string];
-                return (
-                  <div className="flex w-full items-center justify-between gap-6">
-                    <span className="flex items-center gap-1">
-                      <span
-                        aria-hidden
-                        className="size-2 shrink-0 rounded-xs"
-                        style={{ backgroundColor: cfg?.color }}
-                      />
-                      <span className="text-muted-foreground">
-                        {cfg?.label ?? name}
-                      </span>
-                    </span>
-                    <span className="type-mono-14 text-foreground">
-                      {yFormatter(Number(value))}
-                    </span>
-                  </div>
-                );
-              }}
-              indicator="dot"
-            />
-          }
-          cursor={false}
-        />
-        {series.map((s, i) => (
-          <Bar
-            dataKey={s.key}
-            fill={seriesColor(s)}
-            isAnimationActive={false}
-            key={s.key}
-            radius={i === series.length - 1 ? [1, 1, 0, 0] : undefined}
-            stackId="s"
+        <BarChart
+          accessibilityLayer
+          barCategoryGap="20%"
+          data={data}
+          margin={CHART_MARGIN}
+        >
+          <CartesianGrid
+            horizontal
+            stroke="var(--color-chart-grid)"
+            strokeDasharray="8 5"
+            vertical={false}
           />
-        ))}
-      </BarChart>
-    </ChartContainer>
+          <XAxis
+            axisLine={false}
+            dataKey="date"
+            height={CHART_X_AXIS_HEIGHT}
+            interval={0}
+            tick={ChartXAxisTick}
+            tickLine={false}
+            tickMargin={CHART_X_TICK_MARGIN}
+            ticks={axisTicks}
+          />
+          <YAxis
+            axisLine={false}
+            tick={ChartYAxisTick}
+            tickFormatter={yFormatter}
+            tickLine={false}
+            width={CHART_Y_AXIS_WIDTH}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) => {
+                  const cfg = config[name as string];
+                  return (
+                    <div className="flex w-full items-center justify-between gap-6">
+                      <span className="flex items-center gap-1">
+                        <span
+                          aria-hidden
+                          className="size-2 shrink-0 rounded-xs"
+                          style={{ backgroundColor: cfg?.color }}
+                        />
+                        <span className="text-muted-foreground">
+                          {cfg?.label ?? name}
+                        </span>
+                      </span>
+                      <span className="type-mono-14 text-foreground">
+                        {yFormatter(Number(value))}
+                      </span>
+                    </div>
+                  );
+                }}
+                indicator="dot"
+              />
+            }
+            cursor={false}
+          />
+          {series.map((s, i) => (
+            <Bar
+              dataKey={s.key}
+              fill={seriesColor(s)}
+              isAnimationActive={false}
+              key={s.key}
+              radius={i === series.length - 1 ? [1, 1, 0, 0] : undefined}
+              stackId="s"
+            />
+          ))}
+        </BarChart>
+      </ChartContainer>
+    </div>
   );
 }
 
@@ -478,20 +461,41 @@ function OverviewUsageChart() {
 
   return (
     <Card>
-      <CardHeader className="flex xs:flex-row flex-col items-start xs:items-center xs:justify-between gap-2">
-        <CardTitle className="type-heading-18 lg:type-heading-16">
+      {/* Same header treatment as Activity's TrendCard, at the same
+          threshold: below a 672px CONTENT COLUMN (`@2xl`, resolved against
+          <main> — CardHeader's own `@container/card-header` only serves its
+          descendants) the title takes a row of its own and the controls drop
+          beneath it; at/above it they sit inline right. It previously used
+          `xs:`, a 450px VIEWPORT breakpoint, which is true on every desktop —
+          so the header was permanently inline and crammed at the exact narrow
+          columns TrendCard stacks at. */}
+      <CardHeader className="flex @2xl:grid flex-col gap-2 @2xl:gap-x-2 @2xl:gap-y-0">
+        {/* NOTE: `type-heading-16` is a hand-written class in
+            `@layer utilities`, not a registered `@utility`, so Tailwind has
+            never generated a variant for it — this is inert, and kept (rather
+            than deleted) so the intent survives if the type scale is ever
+            registered properly. The threshold is written as 638px because
+            these query `card-header`, whose inline size is the content column
+            minus 34px of card chrome (1px border each side + CardHeader's
+            px-4): 672 − 34 = 638. Same number, same intent, as TrendCard's
+            CardAction below. */}
+        <CardTitle className="type-heading-18 @min-[638px]/card-header:type-heading-16">
           {title}
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <DimSelector dim={dim} onDimChange={handleDimChange} />
-          <SegmentedPill
-            aria-label="Chart metric"
-            onValueChange={(v) => handleMetricChange(v as Metric)}
-            options={OVERVIEW_METRIC_OPTIONS}
-            size="sm"
-            value={metric}
-          />
-        </div>
+        {/* +4px above and below the button row while it is stacked, inert once
+            the header goes inline — matching TrendCard exactly. */}
+        <CardAction className="@min-[638px]/card-header:my-0 my-1">
+          <div className="flex items-center gap-2">
+            <DimSelector dim={dim} onDimChange={handleDimChange} />
+            <SegmentedPill
+              aria-label="Chart metric"
+              onValueChange={(v) => handleMetricChange(v as Metric)}
+              options={OVERVIEW_METRIC_OPTIONS}
+              size="sm"
+              value={metric}
+            />
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent className="grid @4xl:grid-cols-12 grid-cols-1 gap-4">
         {/* chart — col-span-8 */}
@@ -548,7 +552,7 @@ function OverviewUsageChart() {
 
 function TokenSavingsStrip() {
   return (
-    <KpiRail className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
+    <KpiRail columns={3}>
       <CompactKpi
         delta="+8.2%"
         deltaNote="vs last week"

@@ -214,10 +214,16 @@ export function EventsTableSection({
           Card interior below. */}
         <div className="flex flex-col gap-4">
           <SectionTitle>Recent events</SectionTitle>
+          {/* Container queries, not viewport ones — same conversion as
+              RequestsTable. `<main>` declares `@container`, so `@2xl:`
+              (672px inline-size) reads the column the toolbar lives in
+              rather than the window, which the Ask AI panel narrows
+              without touching. Below it: search full-width on row 1, the
+              two buttons splitting row 2 evenly via `flex-1`. */}
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search events"
-              className="w-full min-w-0 md:w-auto md:flex-1"
+              className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
               onChange={setQuery}
               placeholder="Search events…"
               surface="elevated"
@@ -238,7 +244,7 @@ export function EventsTableSection({
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="flex-1 border-border bg-card text-foreground md:flex-none"
+              className="@2xl:flex-none flex-1 border-border bg-card text-foreground"
               onClick={openFilters}
               size="default"
               type="button"
@@ -261,7 +267,7 @@ export function EventsTableSection({
             </Button>
 
             <Button
-              className="flex-1 md:flex-none"
+              className="@2xl:flex-none flex-1"
               size="default"
               type="button"
               variant="outline"
@@ -806,12 +812,12 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
         </Label>
         <div className="flex items-center gap-3">
           {/* Note action — 32px (`sm`) so it matches the verdict trigger's own
-              height. The trigger is `size="default"`, which in
-              `select-variants.ts` is `h-8`, NOT the 36px `Button size="default"`;
-              this repo's Select scale sits one step below the Button scale, so
-              `sm` is the button size that pairs off against it. `text-xs` comes
-              with that step — height parity across a 12px-gap pair reads louder
-              than the 2px type delta, and the recipe is the recipe. */}
+              height. Both are `size="sm"`: since the 2026-08-10 Select realign
+              (`lg` renamed to `default`, old 32px `default` deleted) the Select
+              scale is sm 32 / default 36, matching Button exactly. `sm` is the
+              only step that holds this pair at 32px. The trigger's type moved
+              14px -> 12px with that step — height parity across a 12px-gap pair
+              reads louder than the type delta, and the recipe is the recipe. */}
           <Button
             onClick={() => handleNoteOpenChange(true)}
             size="sm"
@@ -837,7 +843,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
               aria-label="Mark event"
               className="w-40"
               id="event-verdict"
-              size="default"
+              size="sm"
             >
               <SelectValue />
             </SelectTrigger>

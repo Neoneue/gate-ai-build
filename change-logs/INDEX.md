@@ -9,6 +9,16 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-11](./2026-08/changelog-8-11.md)
+
+- Page content responds to its column, not the browser (76 viewport variants → container queries, 36 files)
+- `lg` removed from Input and Select; `Input` is now single-size
+- Off-scale numeric type sizes fail the build
+- `chart-geometry.tsx` — one geometry source for every axis-bearing chart
+- TrendCard bar density folds by column width on a monotonic ladder
+- X axis is an even stride that lands centred on its bars
+- Table toolbars stack on column width (7 pages + `FilterToolbar`)
+
 ### [2026-08-06](./2026-08/changelog-8-6.md)
 
 - The Ask AI scroll FAB rides the composer instead of a constant

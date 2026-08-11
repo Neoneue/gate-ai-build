@@ -9,16 +9,27 @@ const selectTriggerVariants = cva(
   {
     variants: {
       size: {
-        // shadcn-aligned scale — default 32px / lg 36px. Asymmetric padding
-        // (pl-3 pr-2 = 12px text side / 8px chevron side) per design.md.
-        xs: "h-7 gap-2 pr-2 pl-3 text-xs",
+        // TWO SIZES (2026-08-10) — sm 32 / default 36. `default` IS shadcn's
+        // `h-9` and is what every filter/form trigger uses; `sm` (h-8, text-xs)
+        // is for compact chrome that has to sit inside an already-dense row —
+        // the date-range picker's four month/year triggers, the table
+        // pagination footer's rows-per-page, and a handful of card-header
+        // range selectors. `xs` (h-7) was deleted unused, and `lg` was renamed
+        // to `default` (pixel-identical — `lg` was already
+        // `defaultVariants.size`, so every trigger was already 36px).
+        //
+        // Select keeps `sm` where <Input> does not: a trigger is something you
+        // read and click, so it can go compact, while a field you type into
+        // stays at 36px. See design.md §Selectors.
+        //
+        // Asymmetric padding (pl-3 pr-2 = 12px text side / 8px chevron side)
+        // per design.md.
         sm: "h-8 gap-2 pr-2 pl-3 text-xs",
-        default: "h-8 gap-2 pr-2 pl-3 text-sm",
-        lg: "h-9 gap-2 pr-2 pl-3 text-sm",
+        default: "h-9 gap-2 pr-2 pl-3 text-sm",
       },
     },
     defaultVariants: {
-      size: "lg",
+      size: "default",
     },
   }
 );

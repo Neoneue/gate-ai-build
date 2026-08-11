@@ -44,6 +44,24 @@ const COLOR_RE =
   /\b(?:bg|text|border|ring|ring-offset|fill|stroke|from|to|via|shadow|outline|decoration|divide|accent|caret|placeholder)-\[\s*(?:#|rgb|rgba|hsl|hsla|oklch|oklab|lab|lch|color)\b/;
 const FONT_RE = /\btext-\[\s*[\d.]+(?:px|rem|em)\s*\]/;
 
+// --- 2b. off-scale numeric type size in JS ------------------------------
+// `FONT_RE` only sees Tailwind classes. A type size passed as a JS value —
+// `fontSize: 11` in a recharts tick object, `fontSize={11}` on an SVG <text> —
+// is invisible to it, which is exactly how an 11px chart tick shipped and
+// survived review: a 1px deviation is not detectable by eye, so a human is
+// not a viable backstop. The scale is closed; enforce it wherever it is
+// expressed.
+//
+// Sanctioned sizes mirror design.md §Type scale (the `type-*` voice table).
+const TYPE_SCALE = new Set([
+  10, 12, 14, 16, 18, 20, 24, 32, 40, 48, 56, 64, 72,
+]);
+// `fontSize: 11`, `fontSize={11}`, `fontSize: "11px"`, `font-size: 11px`.
+// Unitless, px, and quoted forms; rem/em are left alone (they are relative and
+// resolve against a root the scale already governs).
+const JS_FONT_SIZE_RE =
+  /\bfont-?[Ss]ize\s*[:=]\s*\{?\s*["']?\s*(\d+(?:\.\d+)?)\s*(?:px)?\s*["']?\s*\}?/;
+
 // --- 3. copy voice on a label -------------------------------------------
 const VOICE_RE = /\btype-copy-(\d+)\b/;
 // Elements whose text IS a label. `a` is intentionally absent: an inline
@@ -178,6 +196,16 @@ for (const file of files) {
       !FONT_ALLOW.some(([f, s]) => file.endsWith(f) && line.includes(s))
     ) {
       violations.push({ file, line: i + 1, kind: "font-size", text: fontM[0] });
+    }
+
+    const jsFontM = line.match(JS_FONT_SIZE_RE);
+    if (jsFontM && !TYPE_SCALE.has(Number(jsFontM[1]))) {
+      violations.push({
+        file,
+        line: i + 1,
+        kind: "font-size",
+        text: `${jsFontM[0].trim()} — ${jsFontM[1]} is off-scale; use ${[...TYPE_SCALE].join(" / ")}`,
+      });
     }
   });
 }

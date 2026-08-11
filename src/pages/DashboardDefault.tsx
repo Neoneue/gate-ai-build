@@ -956,7 +956,7 @@ export function DashboardDefault() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <PageTitle>Choose how to use Gate</PageTitle>
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground">

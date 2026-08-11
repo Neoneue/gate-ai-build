@@ -123,7 +123,7 @@ const DIGITAL_EVIDENCE_DOCS_URL =
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Audit trail</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           A tamper-evident record of every request, response, and policy
@@ -385,10 +385,16 @@ function EventLog({ rows }: { rows: EventRow[] }) {
             crushes on narrow screens. */}
         <div className="flex flex-col gap-4">
           <SectionTitle>Recent events</SectionTitle>
+          {/* Container queries, not viewport ones — same conversion as
+              RequestsTable. `<main>` declares `@container`, so `@2xl:`
+              (672px inline-size) reads the column the toolbar lives in
+              rather than the window, which the Ask AI panel narrows
+              without touching. Below it: search full-width on row 1, the
+              two buttons splitting row 2 evenly via `flex-1`. */}
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search audit events"
-              className="w-full min-w-0 md:w-auto md:flex-1"
+              className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
               onChange={setQuery}
               placeholder="Search events, users, hashes…"
               surface="elevated"
@@ -405,7 +411,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                   ? `Filters (${activeFilterCount} active)`
                   : "Filters"
               }
-              className="flex-1 border-border bg-card text-foreground md:flex-none"
+              className="@2xl:flex-none flex-1 border-border bg-card text-foreground"
               onClick={openFilters}
               size="default"
               type="button"
@@ -427,7 +433,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               ) : null}
             </Button>
             <Button
-              className="flex-1 border-border bg-card text-foreground md:flex-none"
+              className="@2xl:flex-none flex-1 border-border bg-card text-foreground"
               disabled={isEmpty}
               size="default"
               type="button"

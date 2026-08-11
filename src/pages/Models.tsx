@@ -286,7 +286,7 @@ function PageHeader({
   providerCount: number;
 }) {
   return (
-    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+    <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Models</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Route to{" "}
@@ -318,10 +318,16 @@ function Toolbar({
   onSortChange: (v: ModelSort) => void;
 }) {
   return (
+    /* Container queries, not viewport ones — same conversion as
+       RequestsTable. `<main>` declares `@container`, so `@2xl:` (672px
+       inline-size) reads the column the toolbar lives in rather than the
+       window, which the Ask AI panel narrows without touching. Below it:
+       search full-width on row 1, the two Selects splitting row 2 evenly
+       via `min-w-0 flex-1`. */
     <div className="flex flex-wrap items-center gap-2">
       <SearchInput
         ariaLabel="Search models"
-        className="w-full min-w-0 md:w-auto md:flex-1"
+        className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
         name="model-search"
         onChange={onSearchChange}
         placeholder="Search by name or handle…"
@@ -335,8 +341,7 @@ function Toolbar({
       <Select onValueChange={onProviderChange} value={provider}>
         <SelectTrigger
           aria-label="Filter by provider"
-          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
-          size="lg"
+          className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
         >
           <SelectValue />
         </SelectTrigger>
@@ -353,7 +358,7 @@ function Toolbar({
       <Select onValueChange={(v) => onSortChange(v as ModelSort)} value={sort}>
         <SelectTrigger
           aria-label="Sort"
-          className="min-w-0 flex-1 border-border bg-card text-foreground md:flex-none"
+          className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
           size="sm"
         >
           <SelectValue />
@@ -850,7 +855,7 @@ function ModelDetailPage({
 
 function ModelKpiRail({ model }: { model: Model }) {
   return (
-    <KpiRailShell className="@4xl:grid-cols-4 md:grid-cols-2" columns={4}>
+    <KpiRailShell columns={4}>
       <ModelKpiTile
         label="Context"
         value={formatTokenCount(model.contextWindow)}

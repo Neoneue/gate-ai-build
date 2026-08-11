@@ -32,21 +32,29 @@ import { cn } from "@/lib/utils";
 const DIVIDER_CLS =
   "relative before:absolute before:left-0 before:inset-y-4 before:w-px before:bg-border";
 
-/* Responsive column ladder. At narrow viewports (≤sm = 640px) KPI tiles
- * need at least ~180px each to read; below that the eyebrow + hero +
- * delta + spark crowd. The ladder stays single-row above md (768px) so
- * the canonical horizontal rail shape is preserved on every laptop +
- * desktop viewport. The divider hairline geometry is row-correct only;
- * at narrow widths where the grid wraps to multiple rows the leftmost
- * hairline on row 2+ children draws a faint edge line that's visible
- * but not load-bearing. Acceptable trade for keeping the primitive
- * single-axis. */
+/* Responsive column ladder — CONTAINER queries, not viewport ones. Every
+ * rail is a block child of the chrome's `<main>`, which declares
+ * `@container`, so the rail's own width IS the queried inline-size. That
+ * matters because the Ask AI panel narrows that column without touching the
+ * viewport: on `sm:`/`md:`/`lg:` the 6-up rail stayed 6-up in a 372px
+ * column (62px per tile).
+ *
+ * KPI tiles need at least ~180px each to read — below that the eyebrow +
+ * hero + delta + spark crowd. So each step fires at exactly
+ * `columns × 180px` of inline-size, which is the constraint stated as a
+ * number rather than approximated by the nearest named step. The
+ * unprefixed fallback below each threshold is unchanged.
+ *
+ * The divider hairline geometry is row-correct only; at narrow widths where
+ * the grid wraps to multiple rows the leftmost hairline on row 2+ children
+ * draws a faint edge line that's visible but not load-bearing. Acceptable
+ * trade for keeping the primitive single-axis. */
 const COLUMN_CLS: Record<number, string> = {
-  2: "grid-cols-1 sm:grid-cols-2",
-  3: "grid-cols-1 sm:grid-cols-3",
-  4: "grid-cols-2 md:grid-cols-4",
-  5: "grid-cols-3 lg:grid-cols-5",
-  6: "grid-cols-3 lg:grid-cols-6",
+  2: "grid-cols-1 @min-[360px]:grid-cols-2",
+  3: "grid-cols-1 @min-[540px]:grid-cols-3",
+  4: "grid-cols-2 @min-[720px]:grid-cols-4",
+  5: "grid-cols-3 @min-[900px]:grid-cols-5",
+  6: "grid-cols-3 @min-[1080px]:grid-cols-6",
 };
 
 export interface KpiRailProps extends React.HTMLAttributes<HTMLDivElement> {

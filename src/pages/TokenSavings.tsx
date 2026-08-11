@@ -63,9 +63,12 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Content stays fluid up to xl, then caps tighter so the cards don't
-          stretch across ultrawide displays. */}
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      {/* Content stays fluid, then caps so the cards don't stretch across
+          ultrawide displays. CONTAINER query, not viewport: the Ask AI
+          panel narrows this column without narrowing the window. `@5xl`
+          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
+          the class is a no-op until the column is wide enough to bind. */}
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader />
         <OverviewSection
           customRange={customRange}
@@ -96,7 +99,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token Savings</PageTitle>
-      <p className="type-copy-16 m-0 max-w-full text-pretty text-muted-foreground tracking-snug xl:max-w-1/2">
+      <p className="type-copy-16 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -326,7 +329,7 @@ function OverviewSection({
           />
         </div>
       </div>
-      <KpiRail className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
+      <KpiRail columns={3}>
         {kpis.map((k) => (
           <KpiTile
             delta={sparkDelta(k.spark)}

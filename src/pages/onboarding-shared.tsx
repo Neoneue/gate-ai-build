@@ -142,7 +142,7 @@ export function SetupScaffold({
   backLabel,
   title,
   subtitle,
-  maxWidthClassName = "xl:max-w-5xl",
+  maxWidthClassName = "@5xl:max-w-5xl",
   children,
 }: {
   backTo: string;

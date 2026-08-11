@@ -84,9 +84,12 @@ export function Team() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Content stays fluid up to xl, then caps tighter so the cards don't
-          stretch across ultrawide displays. */}
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      {/* Content stays fluid, then caps so the cards don't stretch across
+          ultrawide displays. CONTAINER query, not viewport: the Ask AI
+          panel narrows this column without narrowing the window. `@5xl`
+          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
+          the class is a no-op until the column is wide enough to bind. */}
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <TeamSurface />
       </div>
     </DashboardChrome>
@@ -138,7 +141,7 @@ function TeamSurface() {
 function PageHeader({ onInvite }: { onInvite: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Team</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Manage roles, invite teammates, and remove access from Chad
@@ -280,12 +283,17 @@ function MembersPane() {
         {/* Toolbar — search + role filter. Sits as direct child of Card
           (density="flush"); paddings cascade from the toolbar's own
           px-4/py-3 plus Card's edge-flush contract. Filter pills follow
-          the codified no-leading-icon rule for dense table toolbars. */}
+          the codified no-leading-icon rule for dense table toolbars.
+          Widths are CONTAINER-relative (`@2xl:`, 672px inline-size), not
+          viewport-relative: the Ask AI panel narrows this column without
+          moving the window, so `md:` used to keep both controls crammed
+          on one line. Below @2xl the search takes row 1 full-width and
+          the role Select fills row 2. */}
         {isEmpty ? null : (
           <FilterToolbar>
             <SearchInput
               ariaLabel="Search members"
-              className="w-full md:w-96"
+              className="@2xl:w-96 w-full"
               onChange={setQuery}
               placeholder="Search by name or email…"
               value={query}
@@ -298,8 +306,7 @@ function MembersPane() {
             >
               <SelectTrigger
                 aria-label="Filter by role"
-                className="flex-1 border-border bg-card text-foreground md:flex-none"
-                size="lg"
+                className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
               >
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -757,7 +764,6 @@ function InviteMemberDialog({
               <SelectTrigger
                 className="w-full border-border bg-card text-foreground"
                 id="invite-role"
-                size="default"
               >
                 {/* Function-child so the trigger renders only the short
                     label — the rich two-line item body is for the popup,
