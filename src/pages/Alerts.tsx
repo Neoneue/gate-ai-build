@@ -224,9 +224,13 @@ export function Alerts() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Content stays fluid up to xl, then caps tighter so the cards don't
-          stretch across ultrawide displays. Matches the Limits shell. */}
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      {/* Content stays fluid, then caps so the cards don't stretch across
+          ultrawide displays. Matches the Limits shell. CONTAINER query, not
+          viewport: the Ask AI panel narrows this column without narrowing
+          the window. `@5xl`
+          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
+          the class is a no-op until the column is wide enough to bind. */}
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         {/* Header sits OUTSIDE the tabs: the title names the surface and
             "Create alert" is the surface's primary action, neither of which
             belongs to one tab. Same shape as Team. */}
@@ -294,7 +298,7 @@ export function Alerts() {
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Alerts</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Alert rules watch spend, tokens, errors, latency, and security events,
@@ -373,7 +377,7 @@ function AlertRulesSection({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <SearchInput
             ariaLabel="Search alert rules"
-            className="w-full min-w-0 md:w-60"
+            className="@2xl:w-60 w-full min-w-0"
             onChange={setQuery}
             placeholder="Search rules…"
             surface="elevated"
@@ -730,7 +734,7 @@ function AlertEventsSection({
         <div className="flex flex-wrap items-center justify-end gap-2">
           <SearchInput
             ariaLabel="Search firings by alert"
-            className="w-full min-w-0 md:w-60"
+            className="@2xl:w-60 w-full min-w-0"
             onChange={onQueryChange}
             placeholder="Search alerts…"
             surface="elevated"
@@ -999,9 +1003,15 @@ function TemplateEmptyState({
           <p className="type-label-14 m-0 text-muted-foreground">
             Start from a template
           </p>
+          {/* Container query, not viewport: this empty state sits directly in
+              the chrome's `<main>` (`@container`), so `@xl` (576px inline-size,
+              the column width at the old `sm` viewport) reads the column the
+              tiles actually occupy. `sm:` went 2-up whenever the window was
+              ≥640px, which paired the tiles at a 372px column width with the
+              Ask AI panel open. */}
           <div
             aria-label="Alert rule templates"
-            className="grid gap-4 sm:grid-cols-2"
+            className="grid @xl:grid-cols-2 gap-4"
             role="radiogroup"
           >
             {ALERT_TEMPLATES.map((item) => (

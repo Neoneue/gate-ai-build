@@ -220,10 +220,17 @@ export function RequestsTableSection({
           Card interior below. */}
       <div className="flex flex-col gap-4">
         <SectionTitle>Recent messages</SectionTitle>
+        {/* Container queries, not viewport ones. The Ask AI panel narrows this
+            column without touching the viewport, so `md:` kept all three
+            controls on one line and crushed the search field (148px at a
+            1024 viewport with the panel open). `<main>` declares `@container`,
+            so `@2xl:` (672px inline-size) reads the column the toolbar
+            actually lives in: below it the search takes row 1 and the two
+            buttons split row 2 via `flex-1`. */}
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search messages"
-            className="w-full min-w-0 md:w-auto md:flex-1"
+            className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
             placeholder="Search message…"
             surface="elevated"
           />
@@ -240,7 +247,7 @@ export function RequestsTableSection({
                 ? `Filters (${activeFilterCount} active)`
                 : "Filters"
             }
-            className="flex-1 border-border bg-card text-foreground md:flex-none"
+            className="@2xl:flex-none flex-1 border-border bg-card text-foreground"
             onClick={openFilters}
             size="default"
             type="button"
@@ -391,7 +398,7 @@ export function RequestsTableSection({
           </Dialog>
 
           <Button
-            className="flex-1 md:ml-auto md:flex-none"
+            className="@2xl:ml-auto @2xl:flex-none flex-1"
             size="default"
             type="button"
             variant="outline"

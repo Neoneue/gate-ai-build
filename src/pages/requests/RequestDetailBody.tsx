@@ -227,11 +227,20 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
         {/* Body region — natural height, no internal scroll. */}
         {/* px-6 pb-6, plus pt-6 for 24px below the KPI rail. */}
         <div className="px-6 pt-6 pb-6">
-          <div className="grid gap-4 md:grid-cols-3" ref={gridRef}>
+          {/* Container queries, not viewport ones. This body renders only in
+              the `/messages-findings/:requestId` page mount, inside the
+              chrome's `<main>`, which declares `@container` — the query
+              container is verified to be that column. `md:` split the body
+              into three columns whenever the WINDOW was ≥768px, so with the
+              Ask AI panel open at a 1024 viewport the findings rail was
+              113px wide. `@2xl` (672px inline-size) is the column width at
+              the old `md` viewport, so wide layouts are unchanged and a
+              narrow column now stacks. */}
+          <div className="grid @2xl:grid-cols-3 gap-4" ref={gridRef}>
             {/* Left column (2/3): an OUTER card wrapping the per-finding
                   detail sections, or a calm "No findings" default when
                   nothing fired. */}
-            <div className="min-w-0 md:col-span-2">
+            <div className="@2xl:col-span-2 min-w-0">
               <div className={selectedFinding ? PANEL_OUTER : "contents"}>
                 {selectedFinding ? (
                   selectedFinding.category === "injection" ? (
@@ -306,7 +315,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
 
             {/* Right column (1/3): a stack of separate cards — Findings +
                   Passed in one, request Details metadata in another below it. */}
-            <div className="flex min-w-0 flex-col gap-4 md:col-span-1">
+            <div className="@2xl:col-span-1 flex min-w-0 flex-col gap-4">
               <div className={PANEL_OUTER}>
                 {findings.length > 0 && (
                   <section className="flex flex-col gap-2">

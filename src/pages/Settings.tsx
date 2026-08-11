@@ -84,7 +84,7 @@ export function Settings({ showCancelPlan = true }: SettingsProps = {}) {
 
 function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
   return (
-    <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+    <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
       <PageHeader />
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -125,7 +125,7 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Settings</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Profile, security, logging, and integrations
@@ -270,14 +270,20 @@ function SecurityCard() {
   return (
     <Card>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:gap-4">
+        {/* Stacks in a narrow column, goes side-by-side once there's room.
+            CONTAINER query, not viewport: `<main>` declares `@container`, and
+            the Ask AI panel narrows this column without narrowing the window,
+            so `lg:` kept the label and the button on one line at a 372px
+            column width. `@2xl` (672px inline-size) is the column width at
+            the old `lg` viewport, so every desktop width is unchanged. */}
+        <div className="flex @2xl:flex-row flex-col items-start @2xl:items-center @2xl:gap-4 gap-3">
           <div className="flex flex-col gap-1">
             <CardTitle>Passkey</CardTitle>
             <p className="type-copy-14 m-0 text-muted-foreground">
               Sign in with Touch ID, Windows Hello, or a hardware key.
             </p>
           </div>
-          <Button className="lg:ml-auto" size="sm" variant="default">
+          <Button className="@2xl:ml-auto" size="sm" variant="default">
             <KeyRound aria-hidden data-icon="inline-start" />
             Add a passkey
           </Button>

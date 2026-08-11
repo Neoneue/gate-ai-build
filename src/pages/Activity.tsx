@@ -162,7 +162,7 @@ export function Activity() {
 
 function PageHeader() {
   return (
-    <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+    <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Activity</PageTitle>
       <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Cost, request volume, and token usage by model, API key, and team
@@ -280,7 +280,7 @@ function KpiRail({
   );
   const note = RANGE_DELTA_NOTE[range];
   return (
-    <KpiRailShell className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
+    <KpiRailShell columns={3}>
       <CompactKpi
         delta={k.spend.delta}
         deltaNote={note}
@@ -734,17 +734,35 @@ function UsageByKey({
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-col gap-4">
         <SectionTitle>Recent key usage</SectionTitle>
+        {/* Container queries, not viewport ones — same conversion as
+            RequestsTable. The Ask AI panel narrows this column without
+            touching the viewport, so `md:` kept all three controls on one
+            line and crushed the search field. `<main>` declares
+            `@container`, so `@2xl:` (672px inline-size) reads the column
+            the toolbar actually lives in: below it the search takes row 1
+            full-width and the two trailing controls split row 2 evenly.
+
+            The split is `grow basis-1/3`, not the `flex-1` the other
+            toolbars use, because this row's two controls are NOT the same
+            kind of box. `flex-1` is `flex: 1 1 0%`, and a 0 basis is
+            floored at the item's own padding + border: the Export button
+            carries 20px padding + 2px border, the Hide-revoked group
+            carries none, so equal free-space distribution landed 193/171
+            instead of 182/182. An explicit equal basis clears both floors
+            and the leftover space then splits evenly. It has to stay
+            UNDER half — at `basis-1/2` the pair (50% + gap + 50%) no
+            longer fits one flex line and wraps to two full-width rows. */}
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput
             ariaLabel="Search keys"
-            className="w-full min-w-0 md:w-auto md:flex-1"
+            className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
             onChange={setQuery}
             placeholder="Search key or member…"
             surface="elevated"
             value={query}
           />
           <Button
-            className="flex-1 md:flex-none"
+            className="@2xl:flex-none grow basis-1/3"
             size="default"
             type="button"
             variant="outline"
@@ -752,7 +770,7 @@ function UsageByKey({
             <UploadIcon aria-hidden data-icon="inline-start" size={16} />
             Export CSV
           </Button>
-          <span className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+          <span className="flex @2xl:flex-none grow basis-1/3 items-center justify-end gap-2">
             <span
               className="type-label-14 whitespace-nowrap text-muted-foreground"
               id="hide-revoked-label"

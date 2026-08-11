@@ -109,9 +109,12 @@ export function Limits() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Content stays fluid up to xl, then caps tighter so the cards don't
-          stretch across ultrawide displays. */}
-      <div className="flex w-full flex-col gap-6 xl:max-w-5xl">
+      {/* Content stays fluid, then caps so the cards don't stretch across
+          ultrawide displays. CONTAINER query, not viewport: the Ask AI
+          panel narrows this column without narrowing the window. `@5xl`
+          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
+          the class is a no-op until the column is wide enough to bind. */}
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader onCreate={openCreate} />
         <LimitsSection limits={limits} onRemove={removeLimit} />
       </div>
@@ -129,7 +132,7 @@ export function Limits() {
 function PageHeader({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Enforce spend, token, and request rate caps at the org, project, or

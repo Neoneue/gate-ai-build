@@ -10,16 +10,17 @@ import { cn } from "@/lib/utils";
  * the same recipe across Requests / Conversations / Activity / Security /
  * AuditTrail / Models / Team toolbars. Locked recipe:
  *   wrapper:  `relative w-96 min-w-0 shrink-0`
- *   icon:     Lucide `Search`, `size-3.5 text-neutral-500 strokeWidth={1.75}`,
+ *   icon:     Lucide `Search`, `size-3.5 text-muted-foreground strokeWidth={1.75}`,
  *             absolutely positioned at `left-3 top-1/2 -translate-y-1/2`.
- *   input:    `size="sm" type="search" autoComplete="off" spellCheck={false}
+ *   input:    `type="search" autoComplete="off" spellCheck={false}
  *             className="pl-8"` plus `name`, `placeholder`, `aria-label`.
+ *             No `size` — <Input> has exactly one size (36px) as of 2026-08-10.
  *
  * Controlled (`value` + `onChange`) and uncontrolled (no props) are both
  * supported. The wrapper width is locked at `w-96` (384px) — override via
  * `className` only when a specific toolbar needs a different shape.
  *
- * `surface` forwards to the inner <Input>: `'card'` (default, bg-neutral-50)
+ * `surface` forwards to the inner <Input>: `'card'` (default, bg-muted)
  * for toolbars inside white/card surfaces; `'elevated'` (bg-card + shadow-xs)
  * for search fields that sit OUTSIDE table cards on the page background.
  * ───────────────────────────────────────────────────────────────────── */
@@ -64,7 +65,6 @@ export function SearchInput({
         name={name}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         placeholder={placeholder}
-        size="lg"
         spellCheck={false}
         surface={surface}
         type="search"

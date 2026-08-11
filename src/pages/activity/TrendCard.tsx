@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -14,6 +14,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+  ChartXAxisTick,
+  ChartYAxisTick,
+} from "@/components/ui/chart-axis-ticks";
+import {
+  CHART_MARGIN,
+  CHART_X_AXIS_HEIGHT,
+  CHART_X_TICK_MARGIN,
+  CHART_Y_AXIS_WIDTH,
+  getAxisTicks,
+  useChartColumnWidth,
+} from "@/components/ui/chart-geometry";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
@@ -22,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
@@ -42,9 +53,11 @@ import {
   TOKENS_TOTALS_7D,
 } from "@/pages/activity-data";
 import {
+  aggregateBuckets,
   fmtTokens,
   fmtUsd,
   getBucketCount,
+  getBucketGroupSize,
   getBucketLabel,
   getRangeLabels,
 } from "./chart-helpers";
@@ -78,47 +91,12 @@ const DIMENSION_OPTIONS: { value: Dimension; noun: string }[] = [
  *  getRangeLabels below (same anchor + stepping); getRangeLabels renders the
  *  short axis labels, the KPI rail renders these via formatSparkLabel. */
 
-/** Hoisted BarChart prop literals. Recharts treats inline objects as new
- *  props each render and re-runs layout/style work it could otherwise skip.
- *  Module-level constants keep referential identity stable across renders. */
-const TREND_CHART_MARGIN = { top: 8, right: 8, left: 0, bottom: 0 } as const;
-const TREND_CHART_TICK = {
-  fontSize: 11,
-  fontFamily: "var(--font-mono)",
-  fill: "var(--muted-foreground)",
-} as const;
-
-/** X-axis tick renderer that left-anchors the first label and right-anchors
- *  the last so neither the first date slides under the Y-axis number column
- *  nor the last spills past the card's right edge — the rest stay centered.
- *  Mirrors the hero charts' ChartXAxisTick (HeroMetric / Security) but keeps
- *  the full label (TrendCard's "Feb 27" must not be truncated at the space). */
-function TrendXAxisTick(props: {
-  x?: string | number;
-  y?: string | number;
-  payload?: { value: string };
-  firstTick: string;
-  lastTick: string;
-}) {
-  const { x, y, payload, firstTick, lastTick } = props;
-  const value = payload?.value ?? "";
-  const anchor =
-    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
-  return (
-    <text
-      dy="0.71em"
-      fill="var(--muted-foreground)"
-      fontFamily="var(--font-mono)"
-      fontSize={11}
-      textAnchor={anchor}
-      x={x}
-      y={y}
-    >
-      {value}
-    </text>
-  );
-}
-
+/** Margin, Y-axis reserve, tick type and both tick renderers come from
+ *  `@/components/ui/chart-geometry` (+ its `chart-axis-ticks` sibling) — the
+ *  single source Overview's chart reads too, so the two cards cannot drift
+ *  apart again. What stays local is what only this chart has: the savings
+ *  lens's fixed domain. Hoisted because recharts treats an inline object as a
+ *  new prop each render and re-runs layout work it could otherwise skip. */
 /** Hoisted YAxis domain for the savings lens — % saved tops out at 30. */
 const SAVINGS_DOMAIN = [0, 30] as const;
 
@@ -211,18 +189,6 @@ function TrendBreakdownPanel({
   );
 }
 
-/** Below `lg` (max-width 1023px — tablet + mobile) the bars are too thin and
- *  packed to read, so the trend chart drops to ~75% of its bucket count
- *  (25% fewer bars). Desktop keeps the full count. The series totals still
- *  reconcile to the range total — distributeSeries spreads the same scaled
- *  total across however many buckets it's given, so fewer buckets just means
- *  taller bars, not a different sum. */
-const COMPACT_BAR_QUERY = "(max-width: 1023px)";
-const COMPACT_BAR_FACTOR = 0.75;
-/** Fewest bars we'll ever render — guards the label resample (needs count ≥ 2
- *  for its `count - 1` divisor) and keeps a short custom range legible. */
-const COMPACT_BAR_FLOOR = 2;
-
 export function TrendCard({
   range,
   customRange,
@@ -235,31 +201,25 @@ export function TrendCard({
   const [metric, setMetric] = useState<TrendMetric>("tokens");
   const isSpend = metric === "spend";
   const isSavings = metric === "savings";
-  // Tablet + mobile render ~25% fewer bars (see COMPACT_BAR_* above).
-  const isCompactBars = useMediaQuery(COMPACT_BAR_QUERY);
 
-  const data = useMemo(() => {
-    const fullCount = getBucketCount(range, customRange);
-    // Tablet/mobile: drop to ~75% of the buckets. Desktop keeps every bar.
-    const count = isCompactBars
-      ? Math.max(COMPACT_BAR_FLOOR, Math.round(fullCount * COMPACT_BAR_FACTOR))
-      : fullCount;
-    const fullLabels = getRangeLabels(range, customRange);
-    // getRangeLabels always emits one label per FULL bucket. When we've
-    // reduced the count, resample to `count` labels spread evenly across the
-    // window so the first and last stay anchored to the true range endpoints
-    // (round(i·(N-1)/(count-1)) hits index 0 and N-1 exactly). This keeps
-    // labels.length === count, which the row builder below relies on.
-    const labels =
-      count === fullCount
-        ? fullLabels
-        : Array.from(
-            { length: count },
-            (_, i) =>
-              fullLabels[
-                Math.round((i * (fullLabels.length - 1)) / (count - 1))
-              ] ?? ""
-          );
+  /** Bar density keys off the CONTENT COLUMN's width, not the viewport: the
+   *  Ask AI panel and the nav rail both narrow this column while the viewport
+   *  stays wide, which is exactly the state a media query cannot see. The
+   *  column is `<main>`'s content box — the same inline size the `@` container
+   *  variants read — so the density tiers line up with the `@2xl` / `@4xl`
+   *  thresholds in the markup below. The ref goes on the chart pane; the hook
+   *  walks up to `<main>` from there. */
+  const [chartPaneRef, columnWidth] = useChartColumnWidth();
+
+  const fullCount = getBucketCount(range, customRange);
+  const groupSize = getBucketGroupSize(columnWidth, fullCount);
+
+  /** Every bucket in the range, at full resolution. Aggregation into what the
+   *  column can actually draw happens in `data` below, so the generator's
+   *  per-range shape never depends on how wide the card happens to be. */
+  const fullRows = useMemo(() => {
+    const count = fullCount;
+    const labels = getRangeLabels(range, customRange);
     const scale = effectiveScale(range, customRange);
     const totals = (isSpend ? SPEND_TOTALS_7D : TOKENS_TOTALS_7D)[dimension];
 
@@ -330,7 +290,15 @@ export function TrendCard({
       }
       return row;
     });
-  }, [dimension, range, customRange, isSpend, isSavings, isCompactBars]);
+  }, [dimension, range, customRange, isSpend, isSavings, fullCount]);
+
+  /** What the chart actually draws: `fullRows` folded down to the bar count
+   *  this column width can render legibly. `groupSize === 1` returns fullRows
+   *  untouched, so every state with room for the whole range is unchanged. */
+  const data = useMemo(
+    () => aggregateBuckets(fullRows, groupSize, isSavings),
+    [fullRows, groupSize, isSavings]
+  );
 
   /** Aggregate every plotted series across all buckets in the active range.
    *  Read off `data`'s own keys rather than an authored series list, so the
@@ -360,24 +328,17 @@ export function TrendCard({
     [dimension, rawSeriesTotals, data]
   );
 
-  const bucketLabel = getBucketLabel(range, customRange);
+  const bucketLabel = getBucketLabel(range, customRange, groupSize);
 
-  // First/last axis labels drive the tick anchoring (see TrendXAxisTick).
-  const firstTick = String(data[0]?.date ?? "");
-  const lastTick = String(data.at(-1)?.date ?? "");
-  const renderXAxisTick = useCallback(
-    (tickProps: {
-      x?: string | number;
-      y?: string | number;
-      payload?: { value: string };
-    }) => (
-      <TrendXAxisTick
-        {...tickProps}
-        firstTick={firstTick}
-        lastTick={lastTick}
-      />
-    ),
-    [firstTick, lastTick]
+  /** The exact subset of dates the X axis labels. Handed to recharts as an
+   *  explicit `ticks` array alongside `interval={0}` so it renders precisely
+   *  these and hides nothing of its own accord — a numeric `interval` would
+   *  give the same uniform stride but always starts its own count at index 0
+   *  and can never be told to land on the final bar. Same call, same geometry,
+   *  on Overview's chart. */
+  const axisTicks = useMemo(
+    () => getAxisTicks(data, columnWidth),
+    [data, columnWidth]
   );
 
   const chartConfig: ChartConfig = useMemo(
@@ -436,10 +397,16 @@ export function TrendCard({
 
   return (
     <Card>
-      {/* Mobile: flex-col so the Select + metric pill stack below the title
-          block (left-aligned) instead of crushing the title. md+: restore the
-          grid header so the controls sit inline on the right. */}
-      <CardHeader className="flex flex-col gap-2 md:grid md:gap-x-2 md:gap-y-0">
+      {/* Threshold is the CONTENT COLUMN's width, not the viewport: the Ask AI
+          panel and the nav rail narrow this card while the viewport stays
+          wide, so a `md:` breakpoint kept the grid header alive at 370–630px
+          and broke the title onto three lines. Below @2xl (672px of column)
+          the header is the mobile treatment — title and subtitle full-width,
+          the Select + metric pill left-aligned on their own row beneath them.
+          672px stacks the whole panel-open band with ~100px still to spare,
+          so the controls are never squeezed on the way there. At @2xl+ the
+          grid header returns and the controls sit inline on the right. */}
+      <CardHeader className="flex @2xl:grid flex-col gap-2 @2xl:gap-x-2 @2xl:gap-y-0">
         <CardTitle>{TREND_TITLE[metric]}</CardTitle>
         <CardDescription>
           Stacked by{" "}
@@ -447,7 +414,14 @@ export function TrendCard({
           {" · "}
           {bucketLabel}
         </CardDescription>
-        <CardAction className="my-1 md:my-0">
+        {/* +4px above and below the button row while it is stacked (ruled in
+            7af5fb8), inert once the header goes inline. This one keys off the
+            header's OWN container rather than the content column, because an
+            unnamed `@` variant here would resolve to CardHeader (the nearest
+            container) and not to <main>. 638px is the same flip point as the
+            @2xl above expressed in header-content width: 672 − 34, where 34 is
+            the Card's 1px border either side plus CardHeader's px-4. */}
+        <CardAction className="@min-[638px]/card-header:my-0 my-1">
           <div className="flex items-center gap-2">
             <Select
               onValueChange={(v: string) => setDimension(v as Dimension)}
@@ -482,12 +456,13 @@ export function TrendCard({
       {/* Two-pane layout: chart left (8/12 cols), breakdown panel right (4/12 cols).
           Collapses to single column below md breakpoint (panel below chart). */}
       <CardContent className="grid @4xl:grid-cols-12 grid-cols-1 gap-4">
-        {/* Left pane — chart */}
-        <div className="@4xl:col-span-8">
+        {/* Left pane — chart. The bar-density ResizeObserver above walks up
+            from this ref to <main> to read the content column's width. */}
+        <div className="@4xl:col-span-8" ref={chartPaneRef}>
           {/* 184px gives the stacked layers enough vertical room to read as
               distinct bands without the chart taking over the page. YAxis
-              ticks are left-aligned (custom tick renderer below) so they
-              share their left edge with the title. */}
+              ticks are left-anchored at the card's content edge (shared
+              ChartYAxisTick) so they share their left edge with the title. */}
           <ChartContainer
             className="aspect-auto h-[184px] w-full"
             config={chartConfig}
@@ -496,7 +471,7 @@ export function TrendCard({
               accessibilityLayer
               barCategoryGap="20%"
               data={dataWithOthers}
-              margin={TREND_CHART_MARGIN}
+              margin={CHART_MARGIN}
             >
               <CartesianGrid
                 horizontal
@@ -507,17 +482,20 @@ export function TrendCard({
               <XAxis
                 axisLine={false}
                 dataKey="date"
-                height={24}
-                // preserveStartEnd + minTickGap lets recharts width-thin the
-                // labels natively while always keeping the first + last tick,
-                // so the end-anchored last label is guaranteed to render (a
-                // numeric interval could drop it and leave the right edge
-                // ragged). Anchoring lives in renderXAxisTick.
-                interval="preserveStartEnd"
-                minTickGap={16}
-                tick={renderXAxisTick}
+                height={CHART_X_AXIS_HEIGHT}
+                // interval={0} + an explicit `ticks` array: recharts renders
+                // exactly the subset we computed and applies no hiding or
+                // end-clamping of its own. `preserveStartEnd` used to force
+                // the first and last tick in and then INSET them to fit the
+                // plot box, which slid "Feb 27" right into "Mar 5"; its
+                // companion minTickGap dropped interior ticks opportunistically
+                // and left a dead gap mid-axis. Both are gone — see
+                // getAxisTickStride for how the stride is derived.
+                interval={0}
+                tick={ChartXAxisTick}
                 tickLine={false}
-                tickMargin={8}
+                tickMargin={CHART_X_TICK_MARGIN}
+                ticks={axisTicks}
               />
               <YAxis
                 axisLine={false}
@@ -525,7 +503,7 @@ export function TrendCard({
                 // get a `$` prefix; token ticks use fmtTokens (compact
                 // "M"/"k") so the axis matches the tooltip rows.
                 domain={isSavings ? SAVINGS_DOMAIN : undefined}
-                tick={TREND_CHART_TICK}
+                tick={ChartYAxisTick}
                 tickFormatter={(value: number) => {
                   if (isSavings) {
                     return `${value}%`;
@@ -533,11 +511,12 @@ export function TrendCard({
                   return isSpend ? `$${value}` : fmtTokens(value);
                 }}
                 tickLine={false}
-                tickMargin={4}
-                // Auto-sizes to the rendered tick labels (recharts 3), so
-                // wide token ticks ("127.50M") never spill past the card
-                // padding and narrow ones ("30%", "$100") don't leave a gap.
-                width="auto"
+                // Fixed, NOT `width="auto"`: an auto width moves the plot with
+                // the tick strings, so the same chart under a different metric
+                // — and the other chart card entirely — landed its number
+                // column at a different x. The shared reserve fits the widest
+                // label any chart can produce.
+                width={CHART_Y_AXIS_WIDTH}
               />
               <ChartTooltip
                 content={

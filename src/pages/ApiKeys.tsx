@@ -274,7 +274,7 @@ export function CreateKeyButton({
 export function PageHeader({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>API Keys</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Create new keys and manage the ones already in use. Keys authenticate
@@ -374,11 +374,25 @@ export function UsageInfo() {
           <Eyebrow as="div">Automatic</Eyebrow>
           <Card className="flex flex-1 flex-col" density="flush">
             <div className="flex flex-1 flex-col">
+              {/* The app-preview image and the blurb's width cap both key off
+                  the `@container/connect` section above, NOT the viewport.
+                  `lg:` showed the 323px-wide image inside a 372px card when
+                  the Ask AI panel was open. 672px is the section's width at
+                  the old `lg` viewport, so panel-closed desktop is unchanged
+                  while the narrowed column now hides it. Written as
+                  `@min-[672px]` rather than `@2xl` on purpose: Tailwind orders
+                  arbitrary container mins ahead of the named steps, so a named
+                  `@2xl` here LOST to the 993px rule below it and capped the
+                  blurb at 350px where it should read 400px. Same scale = right
+                  cascade. The `lg:` that used to be stacked on the 993px rule
+                  is gone: the section can only reach 993px when the viewport is
+                  already well past `lg`, so it never contributed. Named
+                  container throughout — this surface already spoke `/connect`. */}
               <ConnectTabs
                 fillHeight
                 gateConnectOnly
-                imageClassName="hidden lg:block pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
-                textMaxWidth="max-w-full lg:max-w-[350px] @min-[993px]/connect:lg:max-w-[400px]"
+                imageClassName="hidden @min-[672px]/connect:block pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
+                textMaxWidth="max-w-full @min-[672px]/connect:max-w-[350px] @min-[993px]/connect:max-w-[400px]"
                 titleClassName="text-xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
               />
             </div>

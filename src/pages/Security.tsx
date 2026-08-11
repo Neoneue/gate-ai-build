@@ -13,6 +13,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { SparkXAxisTick } from "@/components/ui/chart-axis-ticks";
+import {
+  CHART_X_AXIS_HEIGHT,
+  CHART_X_TICK_MARGIN,
+  SPARK_CHART_MARGIN,
+} from "@/components/ui/chart-geometry";
 import { DeltaTag } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -53,35 +59,6 @@ const WHITESPACE_GLOBAL_RE = /\s+/g;
  * danger / --destructive. No raw hex.
  * ───────────────────────────────────────────────────────────────────────── */
 
-function ChartXAxisTick(props: {
-  x: string | number;
-  y: string | number;
-  payload: { value: string };
-  firstTick: string;
-  lastTick: string;
-}) {
-  const { x, y, payload, firstTick, lastTick } = props;
-  const value = payload.value;
-  const spaceIdx = value.indexOf(" ");
-  const display =
-    spaceIdx === -1 ? value : value.slice(0, value.lastIndexOf(" "));
-  const anchor =
-    value === firstTick ? "start" : value === lastTick ? "end" : "middle";
-  return (
-    <text
-      dy="0.71em"
-      fill="var(--muted-foreground)"
-      fontFamily="var(--font-mono)"
-      fontSize={11}
-      textAnchor={anchor}
-      x={x}
-      y={y}
-    >
-      {display}
-    </text>
-  );
-}
-
 function HeroMetricCard({
   range,
   customRange,
@@ -100,23 +77,12 @@ function HeroMetricCard({
   const note = RANGE_DELTA_NOTE[range];
 
   // Chart: total-events trace + date/time axis, driven by the page range.
-  // Same buildSpark() math as the KpiRail "Total events" tile.
-  // chart + renderTick share one memo boundary keyed on [range, customRange] so
-  // the compiler can trace the full derivation chain (the firstTick/lastTick
-  // reads happen inside the memo, not as a leak between useMemo and useCallback).
-  const { chart, renderTick } = useMemo(() => {
-    const view = buildEventsChartView(range, customRange);
-    const ft = view.ticks[0];
-    const lt = view.ticks[view.ticks.length - 1];
-    return {
-      chart: view,
-      renderTick: (tickProps: {
-        x: string | number;
-        y: string | number;
-        payload: { value: string };
-      }) => <ChartXAxisTick {...tickProps} firstTick={ft} lastTick={lt} />,
-    };
-  }, [range, customRange]);
+  // Same buildSpark() math as the KpiRail "Total events" tile. Left unmemoized
+  // on purpose — React Compiler caches it on [range, customRange] on its own,
+  // and the hand-written useMemo it replaced could not be preserved (the memo
+  // used to also carry a tick renderer, which now comes from the shared chart
+  // geometry).
+  const chart = buildEventsChartView(range, customRange);
 
   return (
     <Card className="px-4">
@@ -163,7 +129,7 @@ function HeroMetricCard({
           <AreaChart
             accessibilityLayer
             data={chart.data}
-            margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
+            margin={SPARK_CHART_MARGIN}
           >
             <defs>
               <linearGradient
@@ -208,16 +174,17 @@ function HeroMetricCard({
             {/* Ticks are real data points (see buildEventsChartView);
               interval="preserveStartEnd" + minTickGap lets recharts width-thin
               the labels natively (always keeping first + last), so narrow
-              cards drop labels instead of overlapping — no custom JS hook. */}
+              cards drop labels instead of overlapping — no custom JS hook.
+              Tick renderer + type come from the shared chart geometry. */}
             <XAxis
               axisLine={false}
               dataKey="time"
-              height={24}
+              height={CHART_X_AXIS_HEIGHT}
               interval="preserveStartEnd"
               minTickGap={16}
-              tick={renderTick}
+              tick={SparkXAxisTick}
               tickLine={false}
-              tickMargin={8}
+              tickMargin={CHART_X_TICK_MARGIN}
               ticks={chart.ticks}
             />
             <ChartTooltip
@@ -367,7 +334,7 @@ export function Security() {
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. ArtboardHeader emits the outer
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}

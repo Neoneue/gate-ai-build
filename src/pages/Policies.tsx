@@ -86,9 +86,14 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Content stays fluid up to xl, then caps tighter so the cards don't
-          stretch across ultrawide displays. */}
-      <div className="flex w-full flex-col gap-8 md:gap-6 xl:max-w-5xl">
+      {/* Content stays fluid, then caps so the cards don't stretch across
+          ultrawide displays. CONTAINER query, not viewport: the Ask AI
+          panel narrows this column without narrowing the window. `@5xl`
+          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
+          the class is a no-op until the column is wide enough to bind. The
+          section gap tightens on the same axis — `@2xl` (672px) is the column
+          width at the old `md` viewport. */}
+      <div className="flex w-full @5xl:max-w-5xl flex-col @2xl:gap-6 gap-8">
         <PageHeader />
         {variant === "free" ? <FreePlanNoticeBanner /> : null}
         {/* KPI rail hidden for now — restore <KpiSection /> when wired. */}

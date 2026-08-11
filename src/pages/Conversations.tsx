@@ -263,7 +263,7 @@ function OverviewBar({
 function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex max-w-full flex-col gap-2 xl:max-w-1/2">
+      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
@@ -296,7 +296,7 @@ function KpiRail({
     spark.conversations
   );
   return (
-    <KpiRailShell className="@2xl:grid-cols-3 sm:grid-cols-1" columns={3}>
+    <KpiRailShell columns={3}>
       <CompactKpi
         delta="+6.4%"
         flat
@@ -482,18 +482,27 @@ function ConversationsTableSection({
           governs only the Card interior below. */}
         <div className="flex flex-col gap-4">
           <SectionTitle>Recent conversations</SectionTitle>
+          {/* Container queries, not viewport ones — same conversion as
+              RequestsTable. The Ask AI panel narrows this column without
+              touching the viewport, so `md:` kept all three controls on one
+              line and truncated the search to "Search by id, pr…".
+              `<main>` declares `@container`, so `@2xl:` (672px inline-size)
+              reads the column the toolbar actually lives in: below it the
+              search takes row 1 full-width and the two Selects split row 2
+              evenly via `min-w-0 flex-1` (the `min-w-0` is load-bearing —
+              a SelectTrigger's intrinsic label width would otherwise stop
+              the two cells landing on an even 50/50). */}
           <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               ariaLabel="Search conversations"
-              className="w-full min-w-0 md:w-auto md:flex-1"
+              className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
               placeholder="Search by id, prompt, user, key…"
               surface="elevated"
             />
             <Select onValueChange={setKeyId} value={keyId}>
               <SelectTrigger
                 aria-label="Key"
-                className="flex-1 border-border bg-card text-foreground md:flex-none"
-                size="lg"
+                className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
               >
                 <SelectValue placeholder="Key" />
               </SelectTrigger>
@@ -507,8 +516,7 @@ function ConversationsTableSection({
             <Select onValueChange={setModel} value={model}>
               <SelectTrigger
                 aria-label="Model"
-                className="flex-1 border-border bg-card text-foreground md:flex-none"
-                size="lg"
+                className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
               >
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
