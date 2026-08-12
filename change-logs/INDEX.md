@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-12](./2026-08/changelog-8-12.md)
+
+- Account management reads as an organization surface
+
 ### [2026-08-11](./2026-08/changelog-8-11.md)
 
 - Page content responds to its column, not the browser (76 viewport variants → container queries, 36 files)
