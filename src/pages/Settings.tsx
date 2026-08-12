@@ -1,4 +1,4 @@
-import { KeyRound } from "lucide-react";
+import { KeyRound, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { toast } from "sonner";
@@ -109,8 +109,8 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
           <SectionTitle as="h2">Account management</SectionTitle>
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             {showCancelPlan
-              ? "Downgrade your plan, or permanently delete your account and its data."
-              : "Permanently delete your account and its data."}
+              ? "Manage your plan, organization, and other account-level actions."
+              : "Manage your organization and other account-level actions."}
           </p>
         </div>
         {showCancelPlan && <CancelPlanCard />}
@@ -387,18 +387,19 @@ function DeleteAccountCard() {
     <AlertDialog onOpenChange={handleOpenChange} open={open}>
       <Card tone="danger">
         <CardContent className="flex max-w-2xl flex-col gap-1">
-          <CardTitle>Delete account and data</CardTitle>
+          <CardTitle>Delete this organization</CardTitle>
           <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-            Access ends immediately, followed by a 30-day reversible grace
-            period. After that, identifiable content is purged and any remaining
-            balance is forfeited.
+            Deleting this organization removes every member&apos;s access and
+            permanently erases its data. You&apos;ll have 30 days to reverse it.
+            Your pay-as-you-go balance is kept until the deletion completes.
           </p>
         </CardContent>
         <CardFooter className="justify-end gap-2 border-border border-t py-2">
           <AlertDialogTrigger
             render={<Button size="sm" variant="destructive" />}
           >
-            Delete account and data
+            <TriangleAlert aria-hidden data-icon="inline-start" />
+            Delete organization
           </AlertDialogTrigger>
         </CardFooter>
       </Card>
