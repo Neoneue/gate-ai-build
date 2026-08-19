@@ -60,6 +60,11 @@ export function requestSortValue(
       return modelName(row.model);
     case "conversation":
       return conversationTitle(row.conversation) || row.conversation;
+    // NOTE: no `message` case. The Message column's value comes from the
+    // request BODY (see ./message-preview), and pulling that module in here
+    // would drag ~440 KB of transcripts onto every route that imports this
+    // file — including Alerts, via `alerts/view.ts`. RequestsTable wraps this
+    // accessor to add `message` locally, so the weight stays on /messages.
     case "keyId":
       return row.keyId;
     case "inTokens":

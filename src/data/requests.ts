@@ -25,12 +25,100 @@ export const SHARED_TRANSCRIPT_06 =
 /** Stable, URL-safe id for a request row. Prefers the canonical `requestId`;
  *  falls back to a deterministic id derived from the conversation + code so
  *  every row is addressable. The /messages-findings page and the table row
- *  links both use this, so a row always resolves back to its source row. */
+ *  links both use this, so a row always resolves back to its source row.
+ *
+ *  Both branches are UUID v4-SHAPED because that is what the real column
+ *  holds: `gateway_requests.request_id` is `text`, filled by `randomUUID()`
+ *  in gate-main's `proxy.service.ts` `createContext()`. The `req_*` form that
+ *  used to be stored here is not an identifier at all — it is a DISPLAY
+ *  shortening (`req_` + 6 hex) that gate-main's Conversations trace applies
+ *  via `shortRequestId()`. Storing the abbreviation as the value was
+ *  backwards; see `shortRequestId` below for the display side. */
 export function requestRowId(row: RequestRow): string {
   return (
     row.requestId ??
-    `req_${row.conversation.replace("cnv_", "").slice(0, 8)}${row.code}`
+    // Seed on everything that varies per row, NOT just conversation + code.
+    // The previous `req_${conv8}${code}` fallback collided on every row of a
+    // session that shared a status code: 153 rows produced 133 distinct ids,
+    // so 20 rows were unreachable at /messages-findings/:id and resolved to
+    // whichever row `find()` hit first. Pinned by a uniqueness test.
+    fallbackRequestUuid(
+      [
+        row.conversation,
+        row.code,
+        row.day,
+        row.time,
+        row.model,
+        row.keyId,
+        row.inTokens,
+        row.outTokens,
+        row.latency,
+      ].join("|")
+    )
   );
+}
+
+/** Deterministic UUID-shaped id for rows with no authored `requestId`.
+ *  FNV-1a over four salted passes — no crypto import (this runs in the
+ *  browser) and no randomness, so a row keeps the same id across reloads and
+ *  its deep link stays stable. Dummy data with the real shape, nothing more. */
+function fallbackRequestUuid(seed: string): string {
+  let hex = "";
+  for (let pass = 0; pass < 4; pass++) {
+    let h = 0x81_1c_9d_c5 ^ pass;
+    for (let i = 0; i < seed.length; i++) {
+      h ^= seed.charCodeAt(i);
+      h = Math.imul(h, 0x01_00_01_93) >>> 0;
+    }
+    hex += h.toString(16).padStart(8, "0");
+  }
+  const variant = "89ab"[Number.parseInt(hex[16], 16) % 4];
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    `4${hex.slice(13, 16)}`,
+    `${variant}${hex.slice(17, 20)}`,
+    hex.slice(20, 32),
+  ].join("-");
+}
+
+/** Key column display form. Key names are free text, and a Gate Connect
+ *  (OAuth) caller has no key name at all — gate-main substitutes
+ *  `gate-connect (<first 12 chars of email>...)`, which runs 30 characters
+ *  against the ~13 the column fits. Cut at 20 with an ellipsis so one long
+ *  label cannot dictate the column width, and pair it with a `truncate` at
+ *  the call site: 20 mono characters still exceed the column, so the cap and
+ *  the column edge both have to hold. Full value stays on hover. */
+const KEY_LABEL_MAX = 20;
+export function keyLabel(keyId: string): string {
+  return keyId.length > KEY_LABEL_MAX
+    ? `${keyId.slice(0, KEY_LABEL_MAX)}…`
+    : keyId;
+}
+
+/** Compact display form of a request id, mirroring gate-main's
+ *  `shortRequestId()` in `dashboard-web/src/pages/Conversations.tsx`:
+ *  dashes stripped, first 6 hex, `req_` prefix. The full UUID is what the
+ *  Messages detail modal shows; this is for space-constrained surfaces. */
+export function shortRequestId(id: string | null | undefined): string {
+  if (!id) {
+    return "—";
+  }
+  return `req_${id.replace(/-/g, "").slice(0, 6)}`;
+}
+
+/** Row-level display form: the first two UUID segments (`xxxxxxxx-xxxx`).
+ *  A full 36-char UUID needed 261px of the Message column's 261px content
+ *  box — it fit, but with nothing to spare and no room to narrow. Two
+ *  segments carry 12 hex digits, which is still far past the point of
+ *  ambiguity across 153 rows, and reads as an id rather than as a wall.
+ *  The full value stays on the detail view the row opens, which is where
+ *  gate-main shows it too. */
+export function requestIdLabel(id: string | null | undefined): string {
+  if (!id) {
+    return "—";
+  }
+  return id.split("-").slice(0, 2).join("-");
 }
 
 /* ─── Findings model (v2 request detail) ───────────────────────────────────
@@ -582,7 +670,7 @@ export const REQUEST_ROWS_RECENT: RequestRow[] = [
     latency: "2.30s",
     cost: "—",
     compression: "22.4%",
-    requestId: "req_cd0e57",
+    requestId: "5ef89e48-0545-40cb-8b7f-9f6045eace37",
     findings: [
       {
         category: "injection",
@@ -632,7 +720,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "injection",
-    requestId: "req_ded91e",
+    requestId: "34fef969-7dfc-4fb4-8be5-819f4de3bdd1",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -678,7 +766,7 @@ Please provide your summary based on the conversation so far, following this str
     cost: "—",
     compression: "12.3%",
     guardrailReason: "pii",
-    requestId: "req_8389e4",
+    requestId: "ced441f0-1efb-4650-b503-1cf713b3c47c",
     summary: "Sanity-check prod export config",
     traceKind: "reason",
     findings: [
@@ -770,7 +858,7 @@ Please provide your summary based on the conversation so far, following this str
     cost: "—",
     compression: "5.8%",
     guardrailReason: "pii",
-    requestId: "req_8384d2",
+    requestId: "fe3d725f-3e2d-41ba-8313-bd30fd83eb78",
     summary: "Sanity-check prod export config",
     traceKind: "reason",
     findings: [
@@ -979,7 +1067,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "21.13s",
     slow: true,
     cost: "—",
-    requestId: "req_a7f59d",
+    requestId: "7ce7d944-660f-4e4c-96d2-b687ccdaebf1",
     summary: "tool: Read · handoff.md",
     traceKind: "tool",
     toolName: "Read",
@@ -1001,7 +1089,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     compression: "5.3%",
-    requestId: "req_60c663",
+    requestId: "19584a2b-92cf-498a-9f78-22b9caf1d44c",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1022,7 +1110,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "18.16s",
     slow: true,
     cost: "—",
-    requestId: "req_0edfa1",
+    requestId: "e0d9c178-e5e4-465d-86ee-37988b7ae4b5",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1043,7 +1131,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "32.95s",
     slow: true,
     cost: "—",
-    requestId: "req_c427d8",
+    requestId: "ed8a5065-166c-441a-8b68-c136bdec0a90",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1064,7 +1152,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "6.20s",
     slow: true,
     cost: "—",
-    requestId: "req_e8ca64",
+    requestId: "8c46dc6d-1399-4dc4-8c53-f9895684725d",
     summary: "tool: mcp__chrome-devtools__navigate_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__navigate_page",
@@ -1085,7 +1173,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "9.07s",
     slow: true,
     cost: "—",
-    requestId: "req_0968a9",
+    requestId: "3c1cf99f-ab26-4b28-b5d4-e3f7fe433161",
     summary: "tool: Edit",
     traceKind: "tool",
     toolName: "Edit",
@@ -1106,7 +1194,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "12.48s",
     slow: true,
     cost: "—",
-    requestId: "req_114265",
+    requestId: "40d2e161-a7f7-44ab-94d2-5d5a884c9a04",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1127,7 +1215,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "28.17s",
     slow: true,
     cost: "—",
-    requestId: "req_d6dba2",
+    requestId: "9b601838-c4a7-4c7c-9610-0c1a619af003",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1148,7 +1236,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "10.35s",
     slow: true,
     cost: "—",
-    requestId: "req_78cfe1",
+    requestId: "da32301b-1171-4728-9b4c-41d08113e774",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1170,7 +1258,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "injection",
-    requestId: "req_e9c29e",
+    requestId: "ffd2f189-0463-487c-8b54-d7c6f85f95a9",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1215,7 +1303,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_7de227",
+    requestId: "ebd1d88f-bb51-4616-9010-9929df3e31a0",
     summary: "User: Check our handoff.md for context so we can conti",
     findings: [
       {
@@ -1254,7 +1342,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "injection",
-    requestId: "req_18039f",
+    requestId: "449eef55-eeb9-43e0-a476-acfa2e9a7b42",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1299,7 +1387,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_08fb0b",
+    requestId: "ef320ce4-b1b8-4c78-bc39-3967afb0b674",
     summary: "User: Check our handoff.md for context so we can conti",
     findings: [
       {
@@ -1337,7 +1425,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "31.04s",
     slow: true,
     cost: "—",
-    requestId: "req_81a089",
+    requestId: "cb242840-2b36-49c6-9d5c-3900bf93f8c5",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1358,7 +1446,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.02s",
     slow: true,
     cost: "—",
-    requestId: "req_83fa2b",
+    requestId: "7785224f-b153-46ba-b23f-4e1c677c3013",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1379,7 +1467,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "34.32s",
     slow: true,
     cost: "—",
-    requestId: "req_fdfb35",
+    requestId: "808d2775-718e-4418-9c17-5119ed194624",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1400,7 +1488,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.86s",
     slow: true,
     cost: "—",
-    requestId: "req_b6e0cb",
+    requestId: "9bc49b54-2364-4afe-9012-601ec493fe21",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1421,7 +1509,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.38s",
     slow: true,
     cost: "—",
-    requestId: "req_65ad55",
+    requestId: "26f5de94-c371-4871-9f58-415438a23177",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1442,7 +1530,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.20s",
     slow: true,
     cost: "—",
-    requestId: "req_dc0dcc",
+    requestId: "9f0aa774-1f70-42b9-b022-84323a4898e1",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1463,7 +1551,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "12.09s",
     slow: true,
     cost: "—",
-    requestId: "req_b31f2a",
+    requestId: "23943b21-ee95-4daa-b2d0-a50cbfc82385",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1484,7 +1572,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "38.76s",
     slow: true,
     cost: "—",
-    requestId: "req_a33fd7",
+    requestId: "6555c97e-6eb0-4772-a5ce-4b8d669b9011",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1505,7 +1593,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "20.89s",
     slow: true,
     cost: "—",
-    requestId: "req_59d7d9",
+    requestId: "33197484-7eb8-4ba2-9217-b2e1f97f268a",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1526,7 +1614,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "20.82s",
     slow: true,
     cost: "—",
-    requestId: "req_5df5b8",
+    requestId: "f01faab6-3b7d-47ec-8620-7fbf2c30e219",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1547,7 +1635,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "17.64s",
     slow: true,
     cost: "—",
-    requestId: "req_81a7e0",
+    requestId: "6c03ea78-d33d-4a58-927d-b1b2d9f1e350",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1568,7 +1656,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "17.64s",
     slow: true,
     cost: "—",
-    requestId: "req_99fb66",
+    requestId: "ceef564e-dd1a-4ccc-9660-3e82837dfc39",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1589,7 +1677,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "18.28s",
     slow: true,
     cost: "—",
-    requestId: "req_0aff76",
+    requestId: "98e06ca6-909b-45e1-b476-01b186e6e081",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1610,7 +1698,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "27.40s",
     slow: true,
     cost: "—",
-    requestId: "req_971d8d",
+    requestId: "f897a8b9-1e6d-4054-bae4-f280f84515a5",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1631,7 +1719,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "34.61s",
     slow: true,
     cost: "—",
-    requestId: "req_7cf962",
+    requestId: "277d244a-37a8-4e6f-abd2-1db352a956c0",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -1652,7 +1740,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "15.10s",
     slow: true,
     cost: "—",
-    requestId: "req_37704b",
+    requestId: "4a3c3c6b-09bf-423a-b795-bd6a01820220",
     summary: "'/var/folders/v0/hh_d5x2x1c9ddvx7j6l_29nr0000gn/T/TemporaryI",
   },
   {
@@ -1671,7 +1759,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "33.23s",
     slow: true,
     cost: "—",
-    requestId: "req_1cde14",
+    requestId: "db9b93c2-fff6-4c01-9ecd-0769976447cb",
     summary: "we can keep the legacy rows for now",
   },
   {
@@ -1690,7 +1778,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "31.72s",
     slow: true,
     cost: "—",
-    requestId: "req_5eaace",
+    requestId: "1e6e5dfa-7f5c-4879-bb34-376d2eb80275",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1711,7 +1799,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "7.43s",
     slow: true,
     cost: "—",
-    requestId: "req_d1a232",
+    requestId: "25a3bf0a-a444-4cad-b4ac-9897a1ef3fd7",
     summary: "tool: mcp__chrome-devtools__navigate_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__navigate_page",
@@ -1732,7 +1820,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.44s",
     slow: true,
     cost: "—",
-    requestId: "req_d92e15",
+    requestId: "bcfc9123-abd5-492b-9b74-92f6302dabd6",
     summary: "tool: mcp__chrome-devtools__list_pages",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__list_pages",
@@ -1753,7 +1841,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "14.73s",
     slow: true,
     cost: "—",
-    requestId: "req_20eb7a",
+    requestId: "c21cc98c-b418-46e0-9de5-c9d465597fda",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1774,7 +1862,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "30.16s",
     slow: true,
     cost: "—",
-    requestId: "req_7af19a",
+    requestId: "192da02a-d74d-480b-91c6-5898ed72021d",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1795,7 +1883,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.69s",
     slow: true,
     cost: "—",
-    requestId: "req_497ba6",
+    requestId: "b344b37c-e9ab-4156-bccd-b537036b4c87",
     summary: "tool: mcp__chrome-devtools__new_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__new_page",
@@ -1816,7 +1904,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.76s",
     slow: true,
     cost: "—",
-    requestId: "req_545167",
+    requestId: "90e8981c-e044-4d45-84fd-3a7c347c52a0",
     summary: "tool: mcp__chrome-devtools__select_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__select_page",
@@ -1837,7 +1925,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "27.34s",
     slow: true,
     cost: "—",
-    requestId: "req_2650d3",
+    requestId: "e9186a4e-a737-41e4-8ee1-59b762291a83",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1858,7 +1946,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "27.26s",
     slow: true,
     cost: "—",
-    requestId: "req_768df6",
+    requestId: "b1b129cd-2754-4d4b-a087-d6d89aa3fe21",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -1879,7 +1967,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "38.81s",
     slow: true,
     cost: "—",
-    requestId: "req_aaae28",
+    requestId: "8dd3a31b-6e25-43f9-97b7-48943ee79bd5",
     summary: "2",
   },
   {
@@ -1898,7 +1986,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "20.67s",
     slow: true,
     cost: "—",
-    requestId: "req_81c908",
+    requestId: "02b1f8c8-ba0e-4b1f-a38f-0fc6bcd5a010",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -1919,7 +2007,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.91s",
     slow: true,
     cost: "—",
-    requestId: "req_87b045",
+    requestId: "132e0690-932b-4281-8a1c-54da88689ee5",
     summary: "tool: mcp__chrome-devtools__new_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__new_page",
@@ -1940,7 +2028,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.37s",
     slow: true,
     cost: "—",
-    requestId: "req_8d4c96",
+    requestId: "121481bd-a7ba-452f-b383-5cadd9ac354f",
     summary: "tool: mcp__chrome-devtools__list_pages",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__list_pages",
@@ -1961,7 +2049,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.13s",
     slow: true,
     cost: "—",
-    requestId: "req_4504e4",
+    requestId: "d6b8f72d-b1d4-4606-b190-cb1178b03298",
     summary: "tool: mcp__chrome-devtools__navigate_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__navigate_page",
@@ -1982,7 +2070,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "11.20s",
     slow: true,
     cost: "—",
-    requestId: "req_d5db75",
+    requestId: "e1364eb9-3b6e-4111-91cd-bfd838eff5a5",
     summary: "tool: mcp__chrome-devtools__evaluate_script",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__evaluate_script",
@@ -2003,7 +2091,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "8.70s",
     slow: true,
     cost: "—",
-    requestId: "req_5c6d0a",
+    requestId: "2bfda074-8dbb-4141-a0e8-be126b697899",
     summary: "tool: mcp__chrome-devtools__navigate_page",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__navigate_page",
@@ -2024,7 +2112,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "6.57s",
     slow: true,
     cost: "—",
-    requestId: "req_54ea19",
+    requestId: "919f8871-cabe-456f-a02e-f8848efef4a0",
     summary: "tool: mcp__chrome-devtools__list_pages",
     traceKind: "tool",
     toolName: "mcp__chrome-devtools__list_pages",
@@ -2045,7 +2133,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "7.49s",
     slow: true,
     cost: "—",
-    requestId: "req_aa3d11",
+    requestId: "cafd6d4e-9af6-4456-9361-39642f08053d",
     summary: "tool: Edit",
     traceKind: "tool",
     toolName: "Edit",
@@ -2066,7 +2154,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.29s",
     slow: true,
     cost: "—",
-    requestId: "req_d902f0",
+    requestId: "12d02d37-9e51-45eb-a730-7f44e22e33f7",
     summary: "tool: Edit",
     traceKind: "tool",
     toolName: "Edit",
@@ -2087,7 +2175,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "8.47s",
     slow: true,
     cost: "—",
-    requestId: "req_c322ee",
+    requestId: "c6410bbf-7d5e-48ea-8865-264a3e3c9a87",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2109,7 +2197,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_de1f4a",
+    requestId: "51d5d3ba-2eb9-4d1b-9cce-c3ffe2c31555",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2148,7 +2236,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "7.24s",
     slow: true,
     cost: "—",
-    requestId: "req_a89a64",
+    requestId: "86463800-2bd0-4188-9088-4da8222983fa",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2169,7 +2257,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.80s",
     slow: true,
     cost: "—",
-    requestId: "req_137d2e",
+    requestId: "22dd5881-4e24-4518-9fcc-e75cb2c10833",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2190,7 +2278,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "7.36s",
     slow: true,
     cost: "—",
-    requestId: "req_e2c69e",
+    requestId: "b4ddf22d-b02d-4be2-9ee8-15c224dc8cbb",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2211,7 +2299,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.85s",
     slow: true,
     cost: "—",
-    requestId: "req_3bea7b",
+    requestId: "8c3d21a1-b632-4e51-95ae-4f1ccc2cd8d6",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2232,7 +2320,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "28.79s",
     slow: true,
     cost: "—",
-    requestId: "req_333dee",
+    requestId: "dbd891d8-5c18-41bc-877d-3b17308bf017",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2254,7 +2342,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_78f14b",
+    requestId: "8d5e0aff-6cda-4c33-b899-096751d3ecc4",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2293,7 +2381,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "13.40s",
     slow: true,
     cost: "—",
-    requestId: "req_42a244",
+    requestId: "42e56f9e-a07f-497c-a912-ab723a2a4fc5",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2314,7 +2402,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.83s",
     slow: true,
     cost: "—",
-    requestId: "req_a8e135",
+    requestId: "bd6602aa-c095-4d2b-8202-c61dabc36723",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2335,7 +2423,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "9.32s",
     slow: true,
     cost: "—",
-    requestId: "req_935a81",
+    requestId: "ed647b5c-581f-4968-8e43-2845b3213873",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2356,7 +2444,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "26.10s",
     slow: true,
     cost: "—",
-    requestId: "req_24a520",
+    requestId: "c62a17e9-b8b1-40b8-a322-8d90ec0cf444",
     summary: "1",
   },
   {
@@ -2376,7 +2464,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_dc4d30",
+    requestId: "ab763c0d-07d4-4263-a30c-7dda050d9251",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2415,7 +2503,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.87s",
     slow: true,
     cost: "—",
-    requestId: "req_43493a",
+    requestId: "75a87d86-4672-49a2-91f6-d552ed436dae",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2436,7 +2524,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "13.58s",
     slow: true,
     cost: "—",
-    requestId: "req_f780ee",
+    requestId: "a3c76927-1c8a-402d-8092-c1b37e1707f7",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2457,7 +2545,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.33s",
     slow: true,
     cost: "—",
-    requestId: "req_0f26a1",
+    requestId: "13a4cbd9-bb84-4e38-9024-4ab1cd27995d",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2478,7 +2566,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "65.10s",
     slow: true,
     cost: "—",
-    requestId: "req_2a8264",
+    requestId: "0b82e326-e64f-4dad-b29d-3702cc195ec6",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2499,7 +2587,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "11.45s",
     slow: true,
     cost: "—",
-    requestId: "req_705a2e",
+    requestId: "64e50a93-5ce0-4415-9ce1-6fcfadcbe6da",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2520,7 +2608,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.79s",
     slow: true,
     cost: "—",
-    requestId: "req_6bc84a",
+    requestId: "b8a05a3d-7d34-4d97-9a3d-72eda1463319",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2541,7 +2629,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.77s",
     slow: true,
     cost: "—",
-    requestId: "req_2959f8",
+    requestId: "61ff84aa-5c44-486f-b5ed-bf60f47182cd",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2562,7 +2650,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.78s",
     slow: true,
     cost: "—",
-    requestId: "req_19b3cb",
+    requestId: "326efddf-aa42-4408-a0e7-e0ce2898eed4",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2583,7 +2671,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.10s",
     slow: true,
     cost: "—",
-    requestId: "req_4117d5",
+    requestId: "eef595a2-6d55-4107-a38d-53d4a923aebf",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2604,7 +2692,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.29s",
     slow: true,
     cost: "—",
-    requestId: "req_6416e8",
+    requestId: "3038d576-65bc-4567-9685-f274b27917d6",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2625,7 +2713,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "6.28s",
     slow: true,
     cost: "—",
-    requestId: "req_8191e4",
+    requestId: "ae4e8ce6-162a-4bae-ae81-1cb2b5d31913",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2647,7 +2735,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "credential",
-    requestId: "req_bbeb7d",
+    requestId: "7c7c41db-7343-44a6-ae84-89d9b89531ab",
     summary: "Send test request with provided key",
     traceKind: "reason",
     findings: [
@@ -2687,7 +2775,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.85s",
     slow: true,
     cost: "—",
-    requestId: "req_098288",
+    requestId: "fc582f86-70e0-4aa5-b309-91b2355f00b2",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2708,7 +2796,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.81s",
     slow: true,
     cost: "—",
-    requestId: "req_6b1bca",
+    requestId: "d772cc9e-059a-43b4-911d-f623720c1fdc",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2729,7 +2817,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.34s",
     slow: true,
     cost: "—",
-    requestId: "req_49e742",
+    requestId: "98a55e78-418a-41ca-af51-46ae62906101",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -2750,7 +2838,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "2.93s",
     slow: true,
     cost: "—",
-    requestId: "req_00c9bb",
+    requestId: "ee606a3d-e023-4640-bd86-67d2a1165327",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2771,7 +2859,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "6.61s",
     slow: true,
     cost: "—",
-    requestId: "req_ef4c3e",
+    requestId: "3e2c7dc8-59b8-492e-bf65-68a6977cb7ef",
     summary: "think through the open items. use our docs for reference",
   },
   {
@@ -2790,7 +2878,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "15.39s",
     slow: true,
     cost: "—",
-    requestId: "req_c98b9d",
+    requestId: "88902cf8-8fe0-4062-acaf-664ea1d1e94b",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2811,7 +2899,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.23s",
     slow: true,
     cost: "—",
-    requestId: "req_528001",
+    requestId: "f31b2926-4a3b-411d-930e-c2742517afe2",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2832,7 +2920,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.00s",
     slow: true,
     cost: "—",
-    requestId: "req_a1638e",
+    requestId: "0989474b-fe0f-4979-992d-859c21d411b2",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2853,7 +2941,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.79s",
     slow: true,
     cost: "—",
-    requestId: "req_cbfd6a",
+    requestId: "831c92cb-ae28-45ef-b582-498d29ab41ea",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2874,7 +2962,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.13s",
     slow: true,
     cost: "—",
-    requestId: "req_1f378e",
+    requestId: "61f575cc-2bb1-4da4-8643-634a5c39daa5",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2895,7 +2983,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.67s",
     slow: true,
     cost: "—",
-    requestId: "req_fbba1b",
+    requestId: "8eb4b3ca-5f50-4137-b5fc-5c1ea19ea761",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2916,7 +3004,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.40s",
     slow: true,
     cost: "—",
-    requestId: "req_9e384f",
+    requestId: "8b19ed1a-6303-4695-b146-ac73745dc38c",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2937,7 +3025,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.77s",
     slow: true,
     cost: "—",
-    requestId: "req_1ad413",
+    requestId: "136d27f0-5483-412e-adcc-0a9edbf40d6c",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2958,7 +3046,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.59s",
     slow: true,
     cost: "—",
-    requestId: "req_e9a2a6",
+    requestId: "38502e28-2f00-4237-9aac-f1ead1ca01b9",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -2979,7 +3067,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.84s",
     slow: true,
     cost: "—",
-    requestId: "req_9a097c",
+    requestId: "774cf272-80ed-4565-95c7-cec6a7b136c8",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3000,7 +3088,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "8.11s",
     slow: true,
     cost: "—",
-    requestId: "req_aaf2c3",
+    requestId: "702d0c2c-76bc-455d-a70c-6118b174af41",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3022,7 +3110,7 @@ Please provide your summary based on the conversation so far, following this str
     slow: true,
     cost: "—",
     guardrailReason: "injection",
-    requestId: "req_31b316",
+    requestId: "1746a82d-f67c-452f-8922-f1ba334fa075",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3066,7 +3154,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.24s",
     slow: true,
     cost: "—",
-    requestId: "req_6fc651",
+    requestId: "0de479fd-76de-46ca-bf8f-db2d43daa7d8",
     summary: "User: Check our handoff.md for context so we can conti",
   },
   {
@@ -3085,7 +3173,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.64s",
     slow: true,
     cost: "—",
-    requestId: "req_7671cb",
+    requestId: "a2ae9598-3cb1-4831-b8f9-f891c6e222e5",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3106,7 +3194,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.17s",
     slow: true,
     cost: "—",
-    requestId: "req_e7367c",
+    requestId: "02b05743-0578-42f1-9fdc-4c4a31f0af9c",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3127,7 +3215,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "4.37s",
     slow: true,
     cost: "—",
-    requestId: "req_6e6d99",
+    requestId: "bf0cbc66-eca8-4e0a-9382-22f7f799d3b3",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3148,7 +3236,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "3.62s",
     slow: true,
     cost: "—",
-    requestId: "req_aba624",
+    requestId: "6b2a6e7a-b4ff-4b35-8bd9-a14303f2827f",
     summary: "tool: Bash",
     traceKind: "tool",
     toolName: "Bash",
@@ -3169,7 +3257,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "6.03s",
     slow: true,
     cost: "—",
-    requestId: "req_a9e832",
+    requestId: "0c32fcfe-9550-42bd-80d0-6b10665c7201",
     summary: "tool: Read",
     traceKind: "tool",
     toolName: "Read",
@@ -3190,7 +3278,7 @@ Please provide your summary based on the conversation so far, following this str
     latency: "5.83s",
     slow: true,
     cost: "—",
-    requestId: "req_71a585",
+    requestId: "fc0cba65-b89e-4eb3-8e82-962b1bc66d89",
     summary: "Caveat: The messages below were generated by the user while",
   },
 ];
@@ -3217,7 +3305,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "11.40s",
     slow: true,
     cost: "—",
-    requestId: "req_b3e9c27",
+    requestId: "6dbb8091-4243-4d1f-8436-711c073798db",
   },
   {
     day: "May 12",
@@ -3235,7 +3323,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "14.80s",
     slow: true,
     cost: "$0.0615",
-    requestId: "req_5c1a8f4",
+    requestId: "24b594fd-5533-4946-bf75-11eee69525cf",
   },
   {
     day: "May 12",
@@ -3253,7 +3341,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "13.60s",
     slow: true,
     cost: "$0.0261",
-    requestId: "req_e72d4a9",
+    requestId: "97c83e57-6553-45d7-9db6-2fb4a24eb9a7",
   },
   {
     day: "May 12",
@@ -3270,7 +3358,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "1,120",
     latency: "1.40s",
     cost: "$0.0680",
-    requestId: "req_a2f6c8",
+    requestId: "506131c2-06ea-4a01-afd0-7713391ce7dc",
   },
   {
     day: "May 12",
@@ -3288,7 +3376,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "6.40s",
     cost: "$0.0077",
     guardrailReason: "credential",
-    requestId: "req_1d6b9e2",
+    requestId: "82fa734a-2fe2-4661-83d1-d60c952b8ec5",
   },
   {
     day: "May 12",
@@ -3322,7 +3410,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "340",
     latency: "2.10s",
     cost: "$0.0448",
-    requestId: "req_3c7e58",
+    requestId: "ea5677dd-d0fb-43ee-b9b7-363e8fc1475a",
   },
   {
     day: "May 12",
@@ -3340,7 +3428,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "4.50s",
     cost: "$0.0143",
     guardrailReason: "pii",
-    requestId: "req_8f3a1c4",
+    requestId: "1ba6a849-ad90-4a6a-aa0c-5945d57b6b7d",
     findings: SHOWCASE_FINDINGS,
   },
   {
@@ -3358,7 +3446,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "910",
     latency: "0.80s",
     cost: "$0.0561",
-    requestId: "req_5b9d41",
+    requestId: "973605b4-9c79-44f4-b408-4c2865d1ed78",
   },
   {
     day: "May 11",
@@ -3431,7 +3519,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "2.10s",
     cost: "$0.0012",
     guardrailReason: "injection",
-    requestId: "req_aurora_4200",
+    requestId: "d33a9b66-828c-49e0-9d3d-778a0c0b812c",
   },
   {
     day: "May 12",
@@ -3449,7 +3537,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "2.10s",
     cost: "$0.0070",
     guardrailReason: "credential",
-    requestId: "req_orion_4203",
+    requestId: "78fe6ea4-2f55-4cab-bce6-e61583d13f09",
   },
   {
     day: "May 12",
@@ -3467,7 +3555,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "3.20s",
     cost: "$0.0014",
     guardrailReason: "injection",
-    requestId: "req_lyra_4207",
+    requestId: "3566d99a-f35a-43a2-891e-568a4bcd05ad",
   },
   {
     day: "May 12",
@@ -3484,7 +3572,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     outTokens: "480",
     latency: "2.10s",
     cost: "$0.0417",
-    requestId: "req_1e5a7d",
+    requestId: "77c14cef-20aa-467a-8c55-0bbdd1b8b5db",
   },
   {
     day: "May 12",
@@ -3502,7 +3590,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "3.80s",
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_skylark_4209",
+    requestId: "1c1f6659-32d6-40b8-8a05-f28a9c72ef1b",
   },
   {
     day: "May 12",
@@ -3520,7 +3608,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "2.10s",
     cost: "—",
     guardrailReason: "injection",
-    requestId: "req_vela_4209",
+    requestId: "d382e628-1e61-4e18-a2d1-6f0f2271dee1",
   },
   {
     day: "May 12",
@@ -3538,7 +3626,7 @@ export const REQUEST_ROWS_24H: RequestRow[] = [
     latency: "5.20s",
     cost: "—",
     guardrailReason: "pii",
-    requestId: "req_polaris_4210",
+    requestId: "51f374d7-b28a-4a7e-834c-45c59935caba",
   },
 ];
 
@@ -3613,7 +3701,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "610",
     latency: "4.10s",
     cost: "$0.0413",
-    requestId: "req_c6b2f9",
+    requestId: "182e64db-a358-4b8e-abb4-2b61b4d4a671",
   },
   {
     day: "May 9",
@@ -3698,7 +3786,7 @@ export const REQUEST_ROWS_7D: RequestRow[] = [
     outTokens: "705",
     latency: "0.60s",
     cost: "$0.0416",
-    requestId: "req_4d8e13",
+    requestId: "64a0dbfc-e513-4f83-a991-6bbfa1d0789d",
   },
   {
     day: "May 7",
@@ -3842,7 +3930,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     latency: "3.90s",
     cost: "$0.0339",
     guardrailReason: "pii",
-    requestId: "req_9a6c24",
+    requestId: "de9d83dd-05cf-442c-9c3f-5c2d6e633c11",
   },
   {
     day: "Apr 30",
@@ -3944,7 +4032,7 @@ export const REQUEST_ROWS_30D: RequestRow[] = [
     outTokens: "540",
     latency: "0.90s",
     cost: "$0.0306",
-    requestId: "req_e3f1b6",
+    requestId: "61d99684-9787-4e66-a813-27819b09a907",
   },
   {
     day: "Apr 17",
@@ -4036,7 +4124,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     outTokens: "680",
     latency: "2.10s",
     cost: "$0.0301",
-    requestId: "req_7c2a85",
+    requestId: "618af2d1-a965-40b1-8a51-3597a15a676c",
   },
   {
     day: "Apr 2",
@@ -4104,7 +4192,7 @@ export const REQUEST_ROWS_ALL: RequestRow[] = [
     outTokens: "412",
     latency: "3.40s",
     cost: "$0.0195",
-    requestId: "req_b1d4e9",
+    requestId: "25029d1a-57a1-4118-845e-e22411e9256f",
   },
 ];
 

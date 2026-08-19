@@ -280,7 +280,9 @@ interface RequestRow {
   slow?:           boolean
   cost:            number
   guardrailReason?: GuardrailReason
-  requestId?:      string         // links Security events → this request
+  requestId?:      string         // UUID v4; links Security events → this request
+  summary?:        string         // authored trace-step label
+  toolName?:       string         // tool-call rows; args live in request-bodies
 }
 ```
 
@@ -288,6 +290,39 @@ interface RequestRow {
 the same string the gateway takes as a handle. It is **not** a display name:
 surfaces render `modelName(row.model)` and keep the id visible as the mono
 sub-line. See §3.6a.
+
+**`requestId` is a UUID v4, not a `req_*` string (changed 2026-08-19).**
+Grounded in gate-main: `gateway_requests.request_id` is a `text` column
+(`packages/database/src/entities/gateway-request.entity.ts`) filled by
+`randomUUID()` in `apps/gateway-proxy/src/proxy/proxy.service.ts`
+`createContext()`. There is no prefix and no `x-request-id` header override.
+`req_*` is a **display shortening**, applied by gate-main's
+`shortRequestId()` (`dashboard-web/src/pages/Conversations.tsx`) as `req_` +
+6 hex; the Messages detail modal shows the full raw UUID. Storing the
+abbreviation as the value was backwards, so 123 authored ids and the 102
+matching `REQUEST_BODIES` keys were migrated in lockstep to deterministic
+UUID-shaped dummy values. Body keys are now **quoted** — a UUID is not a bare
+identifier. The 8 `req_*` occurrences inside `SHARED_TRANSCRIPT_*` blobs are
+illustrative code samples and were left alone.
+
+Three helpers in `src/data/requests.ts`, all tested:
+
+| Helper | Returns | Used by |
+| --- | --- | --- |
+| `requestRowId(row)` | full UUID (authored, else derived) | routing, `/messages-findings/:id`, body lookup |
+| `requestIdLabel(id)` | first two segments, `xxxxxxxx-xxxx` | the Messages table row |
+| `shortRequestId(id)` | `req_` + 6 hex — mirrors gate-main | space-constrained surfaces |
+
+The derived branch seeds on conversation + code + day + time + model + key +
+tokens + latency, **not** conversation + code alone. The old
+`req_${conv8}${code}` fallback collided on every row of a session sharing a
+status code: 153 rows produced 133 distinct ids, leaving 20 rows unreachable
+at `/messages-findings/:id` (they resolved to whichever row `find()` hit
+first). A uniqueness test pins this, and a second test pins that truncating
+to two segments does not reintroduce the collision.
+
+`cnv_*` needs no such change — it already matches gate-main's
+`conversationLabel()`: `cnv_` + 8 hex off the session UUID.
 
 ### 3.4 Security Events
 
@@ -818,6 +853,15 @@ its `VOLUME_DATA` / `RECENT_REQUESTS` seeds; it reads `REQUEST_ROWS_RECENT`,
 upsell ticker that was replaced by the empty state. Kept as a ready-made
 48-event array; delete it or wire it up rather than letting it rot silently.
 
+**`src/data/redact.ts`** is the single implementation of the PII/credential
+masking rule (added 2026-08-19). Any surface that reconstructs captured
+message text runs its string through `redactFindings(findings, text, opts)`
+before rendering, so a value the gateway caught on ingress is never
+re-exposed. Two callers today: `conversationDetail.ts`'s `redactUserBody`
+(role-scoped to `user`) and the Messages table's `messagePreview`
+(all roles — see §Messages page). Add callers here rather than reimplementing
+the loop; two copies that can disagree is exactly the failure this replaced.
+
 ---
 
 ## 6. Page Inventory
@@ -896,6 +940,90 @@ page-only.
 
 **Table:** sortable columns via `<SortableTableHead>` + `requestSortValue(row,key)`
 accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
+
+**Message column (added 2026-08-19).** Sits between Model and Conversation and
+answers the PRD complaint that a session's hundreds of rows all read the same:
+Conversation carries per-_conversation_ identity (title + `cnv_*`, identical on
+every row of a session), so Message carries per-_request_ identity — what this
+request said, over `requestIdLabel(requestRowId(row))`. Same two-line shape as
+Conversation: `type-copy-14` truncating line, `type-mono-12` muted line below.
+
+Text resolution lives in `src/pages/requests/message-preview.ts`, **not** in
+`./data`. That module is the only thing on the page needing
+`@/data/request-bodies` (~440 KB of transcripts), and `./data` is imported by
+`alerts/view.ts`, so putting it there would drag the blob onto the Alerts
+route. RequestsTable wraps `requestSortValue` locally to add the `message` key
+for the same reason — `./data` deliberately has no `message` case.
+
+Resolution order, most specific to least (coverage measured over 153 rows):
+
+| Source | Rows | Why |
+| --- | --- | --- |
+| `body.userMessage` first line, leading `User:` stripped | 13 | the real user turn |
+| `body.toolArgs` first line | 89 | the actual call — already prefixed `Bash:` / `Read:` by the data |
+| `row.summary` | ~51 | last resort: for a Bash row it reads `tool: Bash`, which names the tool and says nothing |
+| none → em dash + `sr-only` note | 51 | the legacy `cnv_*` sessions carry no body; never fabricate a preview |
+
+**Masking is mandatory on this column.** Whatever text wins is run through
+`redactFindings` (`src/data/redact.ts`) before it leaves `messagePreview`.
+Four rows leaked real email addresses before this existed — truncation hid
+them at the column width, but the DOM and the tooltip carried them in full.
+`redact.ts` is the single implementation of the rule, shared with
+`conversationDetail.ts`'s `redactUserBody`, so the table, the transcript, and
+the request-detail redaction diff cannot disagree. The preview masks findings
+of **every** role while the transcript scopes to `user`: the transcript knows
+which bubble it is rendering, but this one line can be a user turn OR a tool
+call, so role-scoping would leave a hole. `message-preview.test.ts` fails if
+any finding's `match` ever reaches a preview again.
+
+Full text stays reachable from the row via the `Tooltip` primitive (the same
+one the Time cell uses) rather than a native `title`, which is slow and has no
+touch or keyboard path. The trigger is the text span itself, so it adds no tab
+stop — the row's only keyboard target remains the drill-in link in the Model
+cell.
+
+**Column geometry.** `table-fixed` + `min-w-[1780px]`, percentages summing to
+100. Widths are measured against the widest real value per column plus
+breathing room; badge columns get the least, since a badge has a fixed
+intrinsic width and gains nothing from slack.
+
+| Column | % | px @ 1780 |
+| --- | ---: | ---: |
+| Time | 10% | 178 |
+| Status | 5% | 89 |
+| Security | 5% | 89 |
+| Model | 12% | 214 |
+| Message | 17% | 303 |
+| Conversation | 17% | 303 |
+| Key | 9% | 160 |
+| Tokens In | 6% | 107 |
+| Tokens Out | 7% | 125 |
+| Latency | 7% | 125 |
+| Cost | 5% | 89 |
+
+Message and Conversation are the only columns allowed to truncate — they are
+the only ones whose content is unbounded. Every value column (Time, Tokens,
+Latency, Cost) renders whole at any width. Row height is a uniform 61px and
+stays uniform at 1512 / 768 / 613px; the page itself never scrolls sideways,
+only the table's own `overflow-x-auto` container.
+
+Two known tensions, both open:
+
+- **Badge columns are 6-11px under their content at 5%.** `SUCCESS` renders
+  68px and `REDACTED` 76px into a 65px content box. Neither clips or overlaps
+  the next column (the cell box is 89px), but `REDACTED` runs to within ~1px
+  of the column edge, so the gutter between Security and Model effectively
+  disappears. 6% each restores it.
+- **`min-w-[1780px]` side-scrolls** inside its container at every supported
+  width. Accepted deliberately, but it contradicts the Message-column PRD's
+  "table still fits without horizontal scrolling" criterion. Fitting 11
+  columns in the 1226px content column is not a tuning problem: the nine
+  non-elastic columns need 1021px measured, leaving ~205px to split between
+  Message and Conversation, about 13 characters each.
+
+The stale body-cell widths (`w-48` on Time, `w-28` on the badges, `w-60` on
+Model, `max-w-[320px]` on Conversation) were removed — under `table-fixed`
+they were inert and only misled.
 
 **Hero views (`HERO_VIEWS`):** Per `RangeKey` spec with total, success/error/slow counts, sparkline data, tick labels.
 
@@ -1186,6 +1314,14 @@ sort, query, page, rowsPerPage              // UsageByKey table
 **Responsive (2026-08-11, supersedes the 2026-07-17 viewport pass):** everything on this page sizes off the **content column**, not the viewport — `<main>` declares `@container`, and both the Ask AI panel and the collapsing nav rail narrow that column while the viewport stays wide. The four bottom breakdown cards stack to one column below `@3xl`. TrendCard's header stacks its dropdown + metric toggle under the title below a 672px column (`@min-[638px]/card-header:` — 638 = 672 column − 34px card chrome), with a divider between chart and key.
 
 **Chart geometry is shared, not per-page.** `src/components/ui/chart-geometry.tsx` is the single source for margin, Y-axis reserve, tick typography (`fontSize: 10` — the type-scale floor; 11 was off-scale and is gone) and the tick renderers, imported by TrendCard, Overview's "Tokens used" (`Dashboard.tsx`), `Security.tsx`, and `requests/HeroMetric.tsx`. The left reserve lives in the YAxis `width`, never `margin.left`, so the Y tick column stays pinned to the card's content edge; X labels are centre-anchored on their bars, ends included, via an explicit `ticks` array + `interval={0}` (recharts' `preserveStartEnd` clamps the ends off their bars and thins interior ticks unevenly). Bar count folds by column width on a monotonic ladder (30/15/10/6 — `getBucketGroupSize` in `activity/chart-helpers.ts`), summing adjacent buckets so totals still reconcile, with `bucketLabel` tracking the aggregated size. The old `useMediaQuery` bar reduction and first/last tick anchoring are deleted. Per-key rows in the UsageByKey table derive from the canonical `API_KEY_ROWS` in `activity-data.ts` (the shared per-key source).
+
+**Device name column (2026-08-19):** `ApiKeyRow.device` is a left-aligned, sortable column between Users and Messages. It is never authored inline on the row — the `API_KEY_ROWS` builder resolves it as `seed.device ?? deviceFor(seed.owner)`. `DEVICE_BY_OWNER` in `activity-data.ts` holds each person's DEFAULT device (Chad Ponticas → Macbook Pro, Kira Tan → Coding PC, Mateus Silva → Mac mini m4, Jordan Lee → OpenClaw PC); a seed may override it when a key is used from a second machine. Chad's `prod-agent` does exactly that with `device: "Macbook Air"`, so one person appears on two devices while his `prod-web`, `design-agent`, and `test-key` stay on the Macbook Pro.
+
+**Owner and device are independent axes — do not derive one from the other.** The backend keys devices by device ID per request, so a person with two machines legitimately produces two device names under one owner name. The map stands in for that lookup; owners mirror `Team.tsx` `MEMBER_ROWS`, and an unmapped owner renders an em dash.
+
+**UsageByKey column geometry (2026-08-19):** `table-fixed` + `min-w-[1168px]`. The three text columns (Key / Users / Device name) each carry an explicit `w-[14%]` — 163px at the min-width against the 124px an even ninth gives — and the six numeric columns stay unspecified so `table-fixed` splits the remaining 58% equally between them (9.667% each). Do not hand-author those six percentages; six fractional values that must re-sum to 100 is exactly the maintenance trap the omission avoids. Measured in-browser at a 1226px table: text columns 171.6px, numeric columns 118.5px, and the widest numeric header ("Tokens out", 61.1px of `type-label-12`) clears its 95px content box with room to spare. `SortableTableHead`'s `max-w-1/2` clamps the button hit-area, not the text, so a label wider than half the cell still renders in full rather than clipping.
+
+Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title` with the full value (the `<span className="block truncate" title>` pattern from `Alerts.tsx`). `1ch` of Geist Variable at 14px measures 9.29px, so the 20ch cap is a 185.8px box, while a typical mixed-case name averages 7.14px per character. The upshot: the column edge is the binding constraint below a ~1500px table and the 20ch cap above it, and because 14% lands the content box near 140-148px, both land at roughly 20 characters across the whole range — which is the intent. The Key cell's label span needs `min-w-0` to shrink inside its `inline-flex`, and the Revoked badge needs `shrink-0` so it never absorbs the squeeze.
 
 ---
 
