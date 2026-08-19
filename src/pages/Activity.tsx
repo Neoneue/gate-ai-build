@@ -633,6 +633,8 @@ function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
       return row.label;
     case "owner":
       return row.owner;
+    case "device":
+      return row.device;
     case "requests":
       return parseNumeric(row.requests);
     case "alerts":
@@ -793,11 +795,18 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table className="min-w-[1000px] table-fixed">
+            <Table className="min-w-[1168px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  {/* The three text columns carry an explicit 14% so they run
+                      ~40px wider than an even ninth (14% of the 1168px
+                      min-width = 163px vs. 124px). The six numeric columns
+                      stay unspecified on purpose: `table-fixed` splits the
+                      remaining 58% equally between them, which keeps them
+                      identical to each other without hand-maintaining six
+                      fractional percentages that have to re-sum to 100. */}
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[14%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="label"
@@ -805,12 +814,20 @@ function UsageByKey({
                     Key
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[14%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="owner"
                   >
                     Users
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="w-[14%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="device"
+                  >
+                    Device name
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
@@ -872,16 +889,38 @@ function UsageByKey({
                 {pageRows.map((row) => (
                   <TableRow className="hover:bg-transparent" key={row.key}>
                     <TableCell className="type-mono-14 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="text-foreground">{row.label}</span>
+                      <span className="inline-flex max-w-full items-center gap-2">
+                        {/* 20ch is the hard character cap; `min-w-0` lets the
+                            span shrink below its text so the ellipsis appears
+                            at the column edge too, whichever binds first. The
+                            badge must not absorb the squeeze. */}
+                        <span
+                          className="min-w-0 max-w-[20ch] truncate text-foreground"
+                          title={row.label}
+                        >
+                          {row.label}
+                        </span>
                         {row.revoked ? (
-                          <Badge variant="neutral">Revoked</Badge>
+                          <Badge className="shrink-0" variant="neutral">
+                            Revoked
+                          </Badge>
                         ) : null}
                       </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <span className="type-copy-14 text-foreground">
+                      <span
+                        className="type-copy-14 block max-w-[20ch] truncate text-foreground"
+                        title={row.owner}
+                      >
                         {row.owner}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span
+                        className="type-copy-14 block max-w-[20ch] truncate text-foreground"
+                        title={row.device}
+                      >
+                        {row.device}
                       </span>
                     </TableCell>
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
