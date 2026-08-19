@@ -9,6 +9,16 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-19](./2026-08/changelog-8-19.md)
+
+- Message column identifies a request on its row
+- Request ids are UUIDs, shown as two segments
+- Tokens In and Out merge into one stacked column
+- Time renders the date in sans, the clock in mono
+- Key column truncates
+- Device name column on the key usage table
+- Messages table column widths, re-measured
+
 ### [2026-08-12](./2026-08/changelog-8-12.md)
 
 - Account management reads as an organization surface
