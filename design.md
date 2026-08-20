@@ -860,7 +860,7 @@ it rather than restating it:
 | Card titles | `CardTitle` |
 | Form / input labels | The `<Label>` primitive and any raw `<label>` |
 | `<dt>` terms | The term in a `<dl>`; the `<dd>` value stays Copy |
-| Key / project / entity display names | Model, vendor, workspace, API-key and team-member names — including when they are the clickable identifier of a table row |
+| Key / project / entity display names | Model, vendor, workspace, API-key and team-member names — **except** when the name IS a table row's identifier cell, which is Copy; see the carve-out below |
 
 **Explicitly NOT Label** — these keep their own voice:
 
@@ -872,6 +872,35 @@ it rather than restating it:
 | `<dd>` values | Copy | The term is the label; this is its value |
 | Segmented control labels | **Eyebrow** | Chrome strip — see the Eyebrow row above |
 | Table cell content | Copy, or Data when numeric/machine | Content, not a control |
+| **Table row-identifier cells** *(2026-08-20)* | Copy | Reversal of the 2026-07-28 ruling below |
+
+**Carve-out: a table row's identifier cell is Copy, even when clickable
+*(2026-08-20)*.** The name a row is identified by — the Model cell in the
+Messages table, and any cell like it — takes `type-copy-*`, not `type-label-*`,
+**including** when that cell is the row's drill-in target.
+
+**Why.** It reads as one of a set of peer cells, not as a control's own label.
+In the Messages table, Message / Conversation / Key all render at 400, so a
+font-medium Model made a single column shout across every row. The 2026-07-28
+enumeration handed that cell to Label on the grounds that it names something
+and you can click it; both are true and neither wins against the fact that the
+row is a row. The user ruled on 2026-08-20 after the same complaint landed on
+the message detail modal, where the Model value sat at 500 next to Provider /
+API Key / Endpoint at 400.
+
+**Scope — the identifier cell of a table row, and DetailList values.** Not
+buttons, not nav, not tabs, not column headers, not standalone `TextLink`
+controls, not entity names anywhere outside a row. A row-identifier cell that
+also happens to be a link is still a row-identifier cell.
+
+**How it's enforced.** `scripts/check-design-tokens.mjs` flags a `type-copy-*`
+inside a label-role tag, and `RowActionButton` is one. A site taking this
+carve-out declares it with a `design-allow-copy-voice` mention in a comment
+within the 5 lines above the `className`, and states its reason there. The
+waiver is per-site by construction — there is no file-level or repo-level
+switch. Current uses: `src/pages/requests/RequestsTable.tsx` (Model cell).
+`RequestDetailBody.tsx`'s Model value needs no waiver — a `DetailList` value is
+not inside a label-role tag.
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
 

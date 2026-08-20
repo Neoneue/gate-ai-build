@@ -447,17 +447,23 @@ export function RequestsTableSection({
                 against an independent per-text-node probe. Both methods agree
                 on every non-elastic column.
 
+                `need` is the measurement and does not move. `%` and `px` are
+                the current declaration, re-derived on 2026-08-20 after the
+                four narrowing steps below; `px` is `% / 94 * 1484`, since the
+                declared percentages sum to 94 (see the note under the
+                history).
+
                   col            %      px    need   slack
                   Time          9.5    150    138     +12
-                  Status        6.5    103     92     +11
-                  Security      7.0    111    100     +11
-                  Model        13.0    205    156     +49
-                  Message      16.5    261   4501  elastic
-                  Conversation 16.5    261    401  elastic
+                  Status        6.0     95     92      +3
+                  Security      6.5    103    100      +3
+                  Model        12.0    189    156     +33
+                  Message      15.5    245   4501  elastic
+                  Conversation 15.5    245    401  elastic
                   Key           8.5    134    125      +9
-                  Tokens        9.5    150    121     +29
+                  Tokens        8.5    134    121     +13
                   Latency       6.5    103     92     +11
-                  Cost          6.5    103     74     +29
+                  Cost          5.5     87     74     +13
 
                 DO NOT re-derive these by eye. Four separate measurement
                 artifacts produced four wrong answers before the clone method:
@@ -484,14 +490,48 @@ export function RequestsTableSection({
                 In and Out merged into one stacked column) -> 1656 (~16px of
                 slack off Key) -> 1580, halving the genuinely dead space the
                 measurement exposed: Model carried 93px and Tokens 61px, and
-                half of each came off the table width. The eight non-elastic
-                columns need 998px in total, so at the 1226px content column
-                only 228px would remain for Message + Conversation — that,
-                not tuning, is why this table side-scrolls.
+                half of each came off the table width. -> 1564 (2026-08-20):
+                another point off Tokens (9.5% -> 8.5%) and the same ~16px off
+                the floor, so the other nine columns keep their pixel widths
+                rather than absorbing the slack. Tokens lands at ~133px, still
+                clear of the ~97px its header needs. -> 1532 (same day): a
+                point off each of Message and Conversation (16.5% -> 15.5%)
+                and ~32px off the floor, to cut side-scrolling further. Those
+                two are the designated truncating columns, so the cost lands
+                where it was always meant to: each drops ~16px, to ~245px.
+                Conversation is now further from the 401px that would stop it
+                truncating. -> 1516 (same day): half a point off Status
+                (6.5% -> 6.0%) and Security (7.0% -> 6.5%). A FULL point was
+                asked for and is not available — a point is ~15px at this
+                floor against 11px of measured slack, so 1% off each would
+                clip both by ~5px. Half a point takes 16px and leaves +3px on
+                each, which is the tightest margin in the table. These two are
+                now spent; the remaining dead space is Model (+49) and Cost
+                (+29). -> 1484 (same day): a point off each of those two
+                (Model 13% -> 12%, Cost 6.5% -> 5.5%) and the whole ~32px off
+                the floor. 1484 is not a rounded guess: it is the floor at
+                which a column that was NOT narrowed keeps its exact pixel
+                width (Time is 9.5/94 * 1484 = 149.96px), and it lands on the
+                4px grid. Model goes to 189px (+33) and Cost to 87px (+13),
+                both still comfortable, and every other column is unmoved.
+
+                The eight non-elastic columns need 898px in total, so at the
+                1226px content column 328px remains for Message +
+                Conversation — that, not tuning, is why this table
+                side-scrolls. (This read 998px / 228px until 2026-08-20; the
+                need column above sums to 898 and always did, so the old
+                figure was an arithmetic slip, not a changed measurement.)
+
+                The head percentages therefore sum to 94, not 100. That is
+                deliberate and load-bearing: `table-fixed` hands the spare
+                six points back proportionally, which is what keeps a column
+                that was NOT narrowed at roughly its old pixel width as the
+                floor comes down. Across all four steps Time held 150px and
+                Tokens 134px, against a floor that fell 1580 -> 1484.
 
                 No new breakpoints: the `overflow-x-auto` on the table
                 container already side-scrolls below the floor. */}
-            <Table className="min-w-[1580px] table-fixed">
+            <Table className="min-w-[1484px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
@@ -503,7 +543,7 @@ export function RequestsTableSection({
                     Time
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[6.5%] whitespace-nowrap"
+                    className="w-[6%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="status"
@@ -511,7 +551,7 @@ export function RequestsTableSection({
                     Status
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[7%] whitespace-nowrap"
+                    className="w-[6.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="guardrail"
@@ -519,7 +559,7 @@ export function RequestsTableSection({
                     Security
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[13%] whitespace-nowrap"
+                    className="w-[12%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="model"
@@ -527,7 +567,7 @@ export function RequestsTableSection({
                     Model
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[16.5%] whitespace-nowrap"
+                    className="w-[15.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="message"
@@ -535,7 +575,7 @@ export function RequestsTableSection({
                     Message
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[16.5%] whitespace-nowrap"
+                    className="w-[15.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="conversation"
@@ -551,7 +591,7 @@ export function RequestsTableSection({
                     Key
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[9.5%] whitespace-nowrap"
+                    className="w-[8.5%] whitespace-nowrap"
                     numeric
                     onSort={toggleSort}
                     sort={sort}
@@ -568,7 +608,7 @@ export function RequestsTableSection({
                   >
                     Latency
                   </SortableTableHead>
-                  <TableHead className="w-[6.5%] whitespace-nowrap text-right">
+                  <TableHead className="w-[5.5%] whitespace-nowrap text-right">
                     <span className="inline-flex items-center justify-end gap-1">
                       Cost
                       <Tooltip>
@@ -706,8 +746,15 @@ export function RequestsTableSection({
                               here on 2026-08-03 and removed the same day —
                               the catalog reconciliation was a DATA change and
                               had no business restructuring this cell. */}
+                          {/* Copy voice, not Label, even though this span is
+                              the row's drill-in target: it is the row
+                              IDENTIFIER, read alongside Message /
+                              Conversation / Key, which all sit at 400. A
+                              font-medium here made Model the one column that
+                              shouted (2026-08-20). design-allow-copy-voice —
+                              see design.md §3. */}
                           <span
-                            className="type-label-14 block truncate text-foreground"
+                            className="type-copy-14 block truncate text-foreground"
                             title={modelName(row.model)}
                           >
                             {modelName(row.model)}
