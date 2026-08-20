@@ -9,6 +9,15 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-20](./2026-08/changelog-8-20.md)
+
+- Table row-identifier cells take the copy voice
+- Security event verdict reaches the table
+- Message blocks in the security event modal tighten to 8px
+- Model name drops to the copy voice
+- Provider shows the upstream host
+- Messages table narrows 1580 to 1484
+
 ### [2026-08-19](./2026-08/changelog-8-19.md)
 
 - Message column identifies a request on its row
