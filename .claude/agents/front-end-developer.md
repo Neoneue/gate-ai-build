@@ -3,7 +3,6 @@ name: front-end-developer
 description: Web frontend design agent. React + Vercel stack. Use for all web UI, layout, component, animation, and visual design work.
 tools: Read, Edit, Write, Glob, Grep, Bash, Skill, WebFetch, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_figma_figma__get_code_connect_map, mcp__plugin_figma_figma__search_design_system, mcp__plugin_figma_figma__download_assets, mcp__plugin_figma_figma__use_figma
 model: opus
-memory: project
 ---
 
 ## Rule Zero — build what Chad asked for (overrides everything below)
