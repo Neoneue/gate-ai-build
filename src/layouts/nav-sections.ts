@@ -1,6 +1,5 @@
 import {
   Activity,
-  // BellRing — restore with the hidden Alerts nav item below.
   Box,
   Coins,
   CreditCard,
@@ -71,16 +70,6 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         pageId: "/limits",
         locked: true,
       },
-      // Alerts is built and routable at /alerts (+ its -default/-free twins),
-      // but hidden from the nav 2026-08-06 until the surface is ready to show.
-      // Restore by uncommenting this item and the BellRing import above.
-      // {
-      //   id: "alerts",
-      //   icon: BellRing,
-      //   label: "Alerts",
-      //   pageId: "/alerts",
-      //   locked: true,
-      // },
       {
         id: "token-savings",
         icon: Coins,

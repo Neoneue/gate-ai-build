@@ -154,15 +154,15 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 - `*Free.tsx` on `/<base>-free` — the page as a FREE-tier workspace sees it:
   feature gated, upgrade CTA.
 
-**Twin inventory.** Both suffix sets cover the same 15 nav bases —
+**Twin inventory.** Both suffix sets cover the same 14 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
-`/limits`, `/alerts`, `/security`, `/policies`, `/audit-trail`, `/activity`,
+`/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`,
 `/team`, `/billing`, `/api-keys`, `/settings` — with two spelling quirks: the
 Security `-default` twin answers on **both** `/events-default` and
 `/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
 render `Requests*.tsx` because the route was renamed but the components were
-not. `/alerts` (added 2026-08-05) sits in the Manage section between Limits and
-Token Savings, `locked: true`, with `Alerts*.tsx` twins.
+not. (An Alerts page lived at `/alerts` from 2026-08-05 until its removal on
+2026-08-24, superseded by the My Notifications + Limits-alerts plan.)
 
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
@@ -950,10 +950,10 @@ Conversation: `type-copy-14` truncating line, `type-mono-12` muted line below.
 
 Text resolution lives in `src/pages/requests/message-preview.ts`, **not** in
 `./data`. That module is the only thing on the page needing
-`@/data/request-bodies` (~440 KB of transcripts), and `./data` is imported by
-`alerts/view.ts`, so putting it there would drag the blob onto the Alerts
-route. RequestsTable wraps `requestSortValue` locally to add the `message` key
-for the same reason — `./data` deliberately has no `message` case.
+`@/data/request-bodies` (~440 KB of transcripts), so keeping it separate stops
+the blob from riding along with the row data. RequestsTable wraps
+`requestSortValue` locally to add the `message` key for the same reason —
+`./data` deliberately has no `message` case.
 
 Resolution order, most specific to least (coverage measured over 153 rows):
 
@@ -1195,18 +1195,6 @@ Python / cURL tabs)
 
 ---
 
-### Alerts page (`/alerts` → `Alerts.tsx`, added 2026-08-05)
-
-**Purpose:** Create/manage alert rules and triage their firings. Manage nav, between Limits and Token Savings, `locked: true`, with `-default`/`-free` twins.
-
-**Module (`src/pages/alerts/`):** `types.ts` (`AlertRule`, `AlertEvent`, structured `AlertWindow = {count, unit}`, severities `info`/`warning`/`critical`, conditions `cost_threshold`/`error_rate`/`tokens_per_hour`/`security_events`/`latency_p95`, channels email/slack/webhook), `data.ts` (`observedValue` + `formatObservedValue` + `formatWindow` + seeds/templates + `validateChannelTarget`), `view.ts` (badge/icon maps, sort accessors, `FiringRow` join), `glyphs.tsx` (`ChannelGlyph`/`ConditionIcon`/`SeverityIcon`), `AlertRuleWizard.tsx`, `AlertEventDialog.tsx`.
-
-**No synthetic data.** Every observed value derives from the real 7-day workload / security constants; `observedValue` returns `null` past a 7-day-equivalent window and the wizard preview shows a "not enough history yet" line rather than a fabricated number.
-
-**Tabs:** Rules (default) + Events (open-firings count chip). **Rules table:** Name · Condition · Threshold · Time window · Severity · Channels · Last fired · Enabled · Actions; "Last fired" cross-links to Events pre-filtered to that rule. **Create/edit wizard** (centered Dialog, `Stepper`): Choose condition → Configure rule (live observed preview, count+unit window, severity tiles with Policies-style selected tones) → Notification channels (validated rows). **Events tab:** firing table + `AlertEventDialog` with per-channel delivery dots and acknowledge/resolve lifecycle reflected in the row + count chip.
-
----
-
 ### Policies page (`/policies` → `Policies.tsx`)
 
 **Purpose:** Configure 3 inline security scans: prompt injection, PII/PHI, credential & secrets.
@@ -1328,7 +1316,7 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 **UsageByKey column geometry (2026-08-19):** `table-fixed` + `min-w-[1168px]`. The three text columns (Key / Users / Device name) each carry an explicit `w-[14%]` — 163px at the min-width against the 124px an even ninth gives — and the six numeric columns stay unspecified so `table-fixed` splits the remaining 58% equally between them (9.667% each). Do not hand-author those six percentages; six fractional values that must re-sum to 100 is exactly the maintenance trap the omission avoids. Measured in-browser at a 1226px table: text columns 171.6px, numeric columns 118.5px, and the widest numeric header ("Tokens out", 61.1px of `type-label-12`) clears its 95px content box with room to spare. `SortableTableHead`'s `max-w-1/2` clamps the button hit-area, not the text, so a label wider than half the cell still renders in full rather than clipping.
 
-Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title` with the full value (the `<span className="block truncate" title>` pattern from `Alerts.tsx`). `1ch` of Geist Variable at 14px measures 9.29px, so the 20ch cap is a 185.8px box, while a typical mixed-case name averages 7.14px per character. The upshot: the column edge is the binding constraint below a ~1500px table and the 20ch cap above it, and because 14% lands the content box near 140-148px, both land at roughly 20 characters across the whole range — which is the intent. The Key cell's label span needs `min-w-0` to shrink inside its `inline-flex`, and the Revoked badge needs `shrink-0` so it never absorbs the squeeze.
+Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title` with the full value (the `<span className="block truncate" title>` pattern). `1ch` of Geist Variable at 14px measures 9.29px, so the 20ch cap is a 185.8px box, while a typical mixed-case name averages 7.14px per character. The upshot: the column edge is the binding constraint below a ~1500px table and the 20ch cap above it, and because 14% lands the content box near 140-148px, both land at roughly 20 characters across the whole range — which is the intent. The Key cell's label span needs `min-w-0` to shrink inside its `inline-flex`, and the Revoked badge needs `shrink-0` so it never absorbs the squeeze.
 
 ---
 

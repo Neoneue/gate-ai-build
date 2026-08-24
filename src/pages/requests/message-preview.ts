@@ -2,9 +2,9 @@
  *
  *  Split into its own module because it is the ONLY thing on this page that
  *  needs `@/data/request-bodies` (~440 KB of verbatim transcripts). Keeping it
- *  out of `./data` matters: that file is imported by `alerts/view.ts` and
- *  `Requests.tsx`, so putting this there would drag the transcripts onto the
- *  Alerts route as well. Only RequestsTable imports this, so the weight stays
+ *  out of `./data` matters: that file is imported by `Requests.tsx`, so
+ *  putting this there would drag the transcripts onto every route that pulls
+ *  the row data in. Only RequestsTable imports this, so the weight stays
  *  on /messages.
  *
  *  Coverage across the 153 rows, measured rather than assumed:
