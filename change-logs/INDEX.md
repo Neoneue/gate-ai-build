@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-24](./2026-08/changelog-8-24.md)
+
+- Alerts page removed
+
 ### [2026-08-20](./2026-08/changelog-8-20.md)
 
 - Table row-identifier cells take the copy voice
