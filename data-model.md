@@ -982,44 +982,44 @@ touch or keyboard path. The trigger is the text span itself, so it adds no tab
 stop — the row's only keyboard target remains the drill-in link in the Model
 cell.
 
-**Column geometry.** `table-fixed` + `min-w-[1780px]`, percentages summing to
-100. Widths are measured against the widest real value per column plus
-breathing room; badge columns get the least, since a badge has a fixed
-intrinsic width and gains nothing from slack.
+**Column geometry.** `table-fixed` + `min-w-[1484px]` (narrowed from 1780 in
+six measured steps, 2026-08-20; the full history and the measurement method
+live in the long comment above the `<Table>` in `RequestsTable.tsx` — trust
+that comment, do not re-derive widths by eye). Tokens In/Out merged into one
+stacked Tokens column, so the table is 10 columns. The declared percentages
+sum to **94, not 100 — deliberate and load-bearing**: `table-fixed` hands the
+spare six points back proportionally, and 1484 is exactly the floor at which
+an unnarrowed column keeps its pixel width (Time = 9.5/94 × 1484 ≈ 150px).
 
-| Column | % | px @ 1780 |
-| --- | ---: | ---: |
-| Time | 10% | 178 |
-| Status | 5% | 89 |
-| Security | 5% | 89 |
-| Model | 12% | 214 |
-| Message | 17% | 303 |
-| Conversation | 17% | 303 |
-| Key | 9% | 160 |
-| Tokens In | 6% | 107 |
-| Tokens Out | 7% | 125 |
-| Latency | 7% | 125 |
-| Cost | 5% | 89 |
+| Column | % | px @ 1484 | measured need |
+| --- | ---: | ---: | ---: |
+| Time | 9.5% | 150 | 138 |
+| Status | 6.0% | 95 | 92 |
+| Security | 6.5% | 103 | 100 |
+| Model | 12.0% | 189 | 156 |
+| Message | 15.5% | 245 | elastic |
+| Conversation | 15.5% | 245 | elastic (401 to stop truncating) |
+| Key | 8.5% | 134 | 125 |
+| Tokens | 8.5% | 134 | 121 (header-bound) |
+| Latency | 6.5% | 103 | 92 |
+| Cost | 5.5% | 87 | 74 |
 
 Message and Conversation are the only columns allowed to truncate — they are
-the only ones whose content is unbounded. Every value column (Time, Tokens,
-Latency, Cost) renders whole at any width. Row height is a uniform 61px and
-stays uniform at 1512 / 768 / 613px; the page itself never scrolls sideways,
-only the table's own `overflow-x-auto` container.
+the only ones whose content is unbounded. Every value column renders whole at
+any width. Row height is a uniform 61px and stays uniform at 1512 / 768 /
+613px; the page itself never scrolls sideways, only the table's own
+`overflow-x-auto` container.
 
-Two known tensions, both open:
+One known tension, open (the old badge-column tension was resolved by the
+2026-08-20 half-point trims; Status and Security now carry +3px, the tightest
+margin in the table and spent — do not narrow them further):
 
-- **Badge columns are 6-11px under their content at 5%.** `SUCCESS` renders
-  68px and `REDACTED` 76px into a 65px content box. Neither clips or overlaps
-  the next column (the cell box is 89px), but `REDACTED` runs to within ~1px
-  of the column edge, so the gutter between Security and Model effectively
-  disappears. 6% each restores it.
-- **`min-w-[1780px]` side-scrolls** inside its container at every supported
-  width. Accepted deliberately, but it contradicts the Message-column PRD's
-  "table still fits without horizontal scrolling" criterion. Fitting 11
-  columns in the 1226px content column is not a tuning problem: the nine
-  non-elastic columns need 1021px measured, leaving ~205px to split between
-  Message and Conversation, about 13 characters each.
+- **`min-w-[1484px]` still side-scrolls** inside its container at every
+  supported width. Accepted deliberately, but it contradicts the
+  Message-column PRD's "table still fits without horizontal scrolling"
+  criterion. Fitting the table into the 1226px content column is not a tuning
+  problem: the eight non-elastic columns need 898px measured, leaving ~328px
+  to split between Message and Conversation.
 
 The stale body-cell widths (`w-48` on Time, `w-28` on the badges, `w-60` on
 Model, `max-w-[320px]` on Conversation) were removed — under `table-fixed`
@@ -1101,6 +1101,13 @@ headers stay at 16px; `RequestTracePanel`'s timeline track shifts to x=36px
 **Purpose:** Real-time threat detection log — injection, PII, credential events.
 
 **State:** Same `range/customRange/query/type/keyFilter/action/page/rowsPerPage` + `selectedRow: EventRow | null`.
+
+**Analyst verdict (`e7a08f5`, 2026-08-20):** the events table (section title
+"Recent security events") carries a trailing **Status** column whose badge
+reflects the verdict set in the event modal. Verdict state lives in
+`EventsTableSection`, NOT the dialog body — closing the modal unmounts the
+dialog along with the selection, so state set there would be lost. Keyed on
+`requestId + type`, because one request can raise two events.
 
 **No incoming deep-link** (Security does not accept `?open=`).
 
