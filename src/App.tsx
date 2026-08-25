@@ -53,6 +53,19 @@ const LimitsFree = lazy(() =>
 const Upgrade = lazy(() =>
   import("@/pages/Upgrade").then((m) => ({ default: m.Upgrade }))
 );
+const Notifications = lazy(() =>
+  import("@/pages/Notifications").then((m) => ({ default: m.Notifications }))
+);
+const NotificationsDefault = lazy(() =>
+  import("@/pages/NotificationsDefault").then((m) => ({
+    default: m.NotificationsDefault,
+  }))
+);
+const NotificationsFree = lazy(() =>
+  import("@/pages/NotificationsFree").then((m) => ({
+    default: m.NotificationsFree,
+  }))
+);
 const Models = lazy(() =>
   import("@/pages/Models").then((m) => ({ default: m.Models }))
 );
@@ -296,6 +309,7 @@ export default function App() {
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/team" />
+            <Route element={<Notifications />} path="/notifications" />
             <Route
               element={<Settings showCancelPlan={false} />}
               path="/settings"
@@ -323,6 +337,10 @@ export default function App() {
             <Route element={<ActivityDefault />} path="/activity-default" />
             <Route element={<TeamDefault />} path="/team-default" />
             <Route element={<BillingDefault />} path="/billing-default" />
+            <Route
+              element={<NotificationsDefault />}
+              path="/notifications-default"
+            />
             <Route element={<SettingsDefault />} path="/settings-default" />
             {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
@@ -334,6 +352,7 @@ export default function App() {
             <Route element={<ActivityFree />} path="/activity-free" />
             <Route element={<TeamFree />} path="/team-free" />
             <Route element={<ApiKeysFree />} path="/api-keys-free" />
+            <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />

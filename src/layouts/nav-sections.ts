@@ -1,5 +1,6 @@
 import {
   Activity,
+  BellRing,
   Box,
   Coins,
   CreditCard,
@@ -99,6 +100,12 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         icon: KeyRound,
         label: "API Keys",
         pageId: "/api-keys",
+      },
+      {
+        id: "notifications",
+        icon: BellRing,
+        label: "Notifications",
+        pageId: "/notifications",
       },
       {
         id: "settings",

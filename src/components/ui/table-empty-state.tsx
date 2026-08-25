@@ -48,6 +48,8 @@ export interface TableEmptyStateProps {
   /** Optional recovery action (e.g. "Clear filters" button). */
   action?: React.ReactNode;
   body: string;
+  /** Optional quieter second line under `body` — see EmptyState. */
+  footnote?: React.ReactNode;
   /** Optional icon override. Defaults to FileText (document). */
   icon?: React.ReactNode;
   title: string;
@@ -65,6 +67,7 @@ const DEFAULT_ICON = (
 export function TableEmptyState({
   title,
   body,
+  footnote,
   icon = DEFAULT_ICON,
   action,
 }: TableEmptyStateProps) {
@@ -74,6 +77,7 @@ export function TableEmptyState({
         action={action}
         body={body}
         className="rounded-none border-none bg-transparent shadow-none"
+        footnote={footnote}
         icon={icon}
         title={title}
       />

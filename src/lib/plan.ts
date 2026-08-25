@@ -31,6 +31,7 @@ const FREE_TWINS = new Set([
   "/team",
   "/billing",
   "/api-keys",
+  "/notifications",
   "/settings",
 ]);
 
@@ -49,6 +50,7 @@ export const DEFAULT_TWINS = new Set([
   "/team",
   "/billing",
   "/api-keys",
+  "/notifications",
   "/settings",
 ]);
 

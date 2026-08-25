@@ -30,6 +30,12 @@ export interface EmptyStateProps {
   action?: React.ReactNode;
   body: string;
   className?: string;
+  /** Optional second line under `body`, one tier quieter (`type-copy-12`).
+   *  For "where did it go / where does it land" pointers that would bloat
+   *  the body sentence — e.g. the notifications Archive tab explaining that
+   *  the bell's "Archive all" files rows there. Added 2026-08-25; every
+   *  existing caller omits it and renders byte-identically. */
+  footnote?: React.ReactNode;
   /** Optional decorative element rendered above the heading (typically an
    *  icon chip wrapped in `aria-hidden`). */
   icon?: React.ReactNode;
@@ -40,6 +46,7 @@ export function EmptyState({
   icon,
   title,
   body,
+  footnote,
   action,
   className,
 }: EmptyStateProps) {
@@ -53,9 +60,20 @@ export function EmptyState({
       {icon}
       <div className="flex flex-col gap-3">
         <h3 className="type-heading-18 m-0 text-foreground">{title}</h3>
-        <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
-          {body}
-        </p>
+        {/* body + footnote share one 4px stack so the pointer hugs the
+            sentence it qualifies, while the 12px gap-3 still separates the
+            pair from the heading. A single child makes the wrapper a no-op,
+            so callers without a footnote are unchanged. */}
+        <div className="flex flex-col gap-1">
+          <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
+            {body}
+          </p>
+          {footnote ? (
+            <p className="type-copy-12 m-0 max-w-md text-pretty text-muted-foreground">
+              {footnote}
+            </p>
+          ) : null}
+        </div>
       </div>
       {action ? <div>{action}</div> : null}
     </div>

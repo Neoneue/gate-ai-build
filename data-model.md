@@ -117,7 +117,7 @@ affordance.
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
 | Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
 | Gateway | models → `/models` |
-| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
+| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
 
@@ -154,10 +154,10 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 - `*Free.tsx` on `/<base>-free` — the page as a FREE-tier workspace sees it:
   feature gated, upgrade CTA.
 
-**Twin inventory.** Both suffix sets cover the same 14 nav bases —
+**Twin inventory.** Both suffix sets cover the same 15 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
 `/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`,
-`/team`, `/billing`, `/api-keys`, `/settings` — with two spelling quirks: the
+`/team`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
 Security `-default` twin answers on **both** `/events-default` and
 `/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
 render `Requests*.tsx` because the route was renamed but the components were
@@ -644,14 +644,32 @@ type NotificationItem = {
 };
 ```
 
-**Everything derives** (no synthetic data): 3 newest security events
-(`security-data.ts EVENT_ROWS`, per-category icon/color from `TYPE_META`,
-href `/security?open=<requestId>`), 2 newest guardrail-touched messages
-(`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>` — the
-UUID, never the `req_*` display id), the newest key mint
-(`API_KEY_SEED_ROWS` → `/api-keys`), the newest top-up (`HISTORY_ROWS` →
-`/billing`), and the audit-trail membership row (→ `/team`). Sorted
-newest-first, capped at `NOTIFICATIONS_CAP = 8`.
+**Everything derives** (no synthetic data). `NOTIFICATION_HISTORY` (38
+items, uncapped, newest-first) is one item per real entity row: every
+security event (`security-data.ts EVENT_ROWS`, per-category icon/color from
+`TYPE_META`, href `/security?open=<requestId>`), the guardrail-touched recent
+messages (`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>`
+— the UUID, never the `req_*` display id), every key mint
+(`API_KEY_SEED_ROWS` → `/api-keys`; revokes carry no date so they stay out),
+every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
+(`src/data/team-members.ts MEMBER_ROWS` → `/team`). Unread defaults: the
+2026-06-06 band ships unread (~15 items); older history ships read.
+`NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
+the bell's peek — one array, shared ids, shared read state by construction.
+
+**Read state is in-memory, demo-lifecycle** (`src/data/notifications-store.ts`,
+range-store pattern + `useSyncExternalStore`): `{readIds, archivedIds}` Sets,
+mutators `markRead` / `markAllRead` / `archiveOne` / `archiveAll` (archiving
+implies read — both archive mutators union `readIds`). NO localStorage:
+state survives SPA navigation (module scope) and resets on refresh so the
+unread flow can be re-demoed. Read/unread renders Gmail-style: whole-row
+`text-foreground` (unread) vs `text-muted-foreground` (read), no row dots;
+only the bell button keeps a corner dot (`bg-destructive`).
+
+**The preference model is separate** (`src/data/notification-catalog.ts`):
+the PRD §4 catalog (13 types, 5 groups, default-on flags), channel prefs,
+email frequency, security scope, and the org catalog. Prefs DO persist —
+localStorage `notifications.prefs.v1` — unlike read state.
 
 `NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
 the latest instant in the mock data) is the feed's clock; relative labels
@@ -659,8 +677,9 @@ render via `fmtRelative(at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`
 (anchor param added for this). Catalog types without backing rows
 (spend-limit-reached, payment-failed, PAYG-low — auto-recharge threshold is
 0) stay out until the My Notifications page phase.
-`notifications.test.ts` pins id uniqueness, the cap, newest-first order,
-`at <= NOTIFICATIONS_NOW`, kind/`KIND_META` completeness, and that every href
+`notifications.test.ts` pins id uniqueness (whole history), the bell cap and
+its slice relation to the history, newest-first order, `at <=
+NOTIFICATIONS_NOW`, kind/`KIND_META` completeness, and that every href
 resolves (security `?open=` ids exist; message params survive the
 RequestsFindings lookup).
 
@@ -884,12 +903,14 @@ function buildSpark(total: number, seed: number): number[]
 | `MODELS` | `src/data/models.ts` | `Model[]` | 25 |
 | `MODEL_ROWS` | `src/pages/activity-data.ts` | usage rows, keyed by catalog id | 7 |
 | `API_KEY_ROWS` | Activity | key usage rows | 10 |
-| `MEMBER_ROWS` | Team | `MemberRow[]` | 4 |
+| `MEMBER_ROWS` | `src/data/team-members.ts` (lifted from Team.tsx 2026-08-25) | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
 | `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
-| `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 5 |
-| `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 8 |
+| `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
+| `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
+| `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
+| `NOTIFICATION_CATALOG` | `src/data/notification-catalog.ts` | `NotificationType[]` | 13 |
 
 Conversation message threads are no longer a static array — `getConversationDetail()`
 (`src/data/conversationDetail.ts`) derives `{ trace, messages }` per conversation
@@ -1378,6 +1399,16 @@ Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title
 
 ---
 
+### My Notifications page (`/notifications` → `Notifications.tsx`, added 2026-08-25)
+
+**Purpose:** Notifications PRD phase 2 — the pre-configured catalog with per-type channel selection, email frequency, security-event scope, org-level section, and the in-app feed as a two-tab inbox. Vercel's My Notifications is the visual reference; composition matches Settings (SectionTitle above data-only cards).
+
+**Variant props** (single source; twins are thin): `seed` ("configured" | "default"), `persist` (hydrate + write `notifications.prefs.v1`), `showOrgSection`, `hasFeed`. Pro = all defaults; Free = no org section; Default = PRD defaults, nothing persisted, empty feed.
+
+**Sections:** Delivery channels card (In-app + Email masters with `Switch`es; Email reveals the frequency multi-select and the address — `text-foreground` mono + a `Pencil` icon-button to /settings; masters gate the checkbox columns below as disabled-but-preserved; toast on Email off). Five catalog sections (`NOTIFICATION_GROUPS`) with right-aligned Email/In-app column headers and per-type `Checkbox` pairs; the Security event row grows a scope tray (divider seam, no fill; all-vs-narrowed with policy/action/rate filters in a `bg-card-muted` bordered panel). Organization section (Pro, in-memory). Recent notifications: Inbox/Archive line tabs with `TabsCount` chips (Inbox chip = unread, Archive chip = total) over a real `Table` (Notification / Detail / Time / Actions), per-row `IconActionButton` archive, `NavTableRow` clickable rows (mark read + deep link), Gmail-style whole-row read ink, per-tab `TablePaginationFooter` (default 10) over `NOTIFICATION_HISTORY` (38). Read state = the in-memory store (§3.10): survives SPA nav, resets on refresh by design.
+
+---
+
 ### Settings page (`/settings` → `Settings.tsx`)
 
 **Purpose:** Workspace profile, passkey security, account management.
@@ -1480,6 +1511,7 @@ on item click.
 - `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
 - `Activity.tsx?range=24h|7d|30d|all` — read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
 - `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+- `Notifications.tsx?tab=archive` — selects the feed's Archive tab. Uses the `?open=`-style render-phase compare (NOT the mount-only `?range=` shape) because the producer — the bell's archived-empty explainer link — fires on the already-mounted route; a manual tab click strips the param via `setSearchParams(..., { replace: true })`, re-arming it for the next click.
 - `BillingFree.tsx?manage=1` — opens the plan-comparison dialog on mount, stripped on close via `setSearchParams(..., { replace: true })`, same contract as `?create=1`. Fed by the sidebar upgrade CTA (§2). `BillingDefault.tsx` renders `BillingFree`, so the param works on both `-default` and `-free`.
 - `SetupManual.tsx?bill=byok|payg` — the only param that selects page CONTENT rather than opening a surface. Read on every render (not just mount), defaults to `byok` for any other value, and drives title/subtitle/context strip/back target. Both values are live entry points: `/overview-default` links to `payg`, `/setup-connect-default` to `byok`.
 
@@ -1648,7 +1680,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
-| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (rewired 2026-08-24, notifications PRD phase 1). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400 itself; hoisted `UNREAD_DOT` const shared with row dots) and a dynamic `aria-label` count. Renders `NOTIFICATION_ITEMS` (§3.10) as full-bleed button rows — `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time — in a `max-h-96 overflow-y-auto` band; item click = mark read → close → `navigate(href)`. Unread/All Segmented tabs; "Mark all as read" / "Clear all" persist `{readIds, clearedIds}` to localStorage `notifications.state.v1`. Mounted by `DashboardChrome` before `ThemeToggle`. |
+| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. Renders `NOTIFICATION_ITEMS` (§3.10, the newest-8 peek of the history) as full-bleed button rows — `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots) — in a `max-h-96 overflow-y-auto` band; item click = mark read → close → `navigate(href)`. Unread/All Segmented tabs; "Mark all as read" sweeps the whole history via the in-memory store (§3.10); "Archive all" files the menu's items onto the page's Archive tab, and the archived-empty state links to `/notifications?tab=archive`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |

@@ -56,7 +56,7 @@ import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
  * Three sections stacked: plan + credits row (50/50), and the History
  * table. Mock data assumes a fresh workspace with one $25 top-up, two
  * gateway-request debits, and two micro-adjustments — reconciles with the
- * Credits hero ($24.99238 = the running balance after the last history row).
+ * Credits hero ($49.99238 = the running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function Billing() {
@@ -220,20 +220,20 @@ function CreditsCard() {
         <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$24.99238</HeroNumeric>
+        <HeroNumeric size="lg">$49.99238</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
-          <CreditStatRow label="Used this month" mono value="$0.02 / $24.99" />
+          <CreditStatRow label="Used this month" mono value="$0.00 / $49.99" />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value="May 12, 2026 · $25" />
+          <CreditStatRow label="Last top-up" value="Jun 6, 2026 · $25" />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">

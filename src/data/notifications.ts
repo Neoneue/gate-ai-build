@@ -12,9 +12,9 @@
 import { CreditCard, KeyRound, Mail, Users } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { API_KEY_SEED_ROWS } from "@/data/api-keys";
-import { EVENT_ROWS as AUDIT_EVENT_ROWS } from "@/data/audit-trail";
 import { HISTORY_ROWS } from "@/data/billing-history";
 import { REQUEST_ROWS_RECENT, requestRowId } from "@/data/requests";
+import { MEMBER_ROWS } from "@/data/team-members";
 import { formatCurrency } from "@/lib/formatters";
 import type { GuardrailAction, GuardrailReason } from "@/pages/requests/types";
 import {
@@ -73,6 +73,11 @@ export const NOTIFICATIONS_NOW = new Date(2026, 5, 6, 18, 30, 12);
 /** How many items the bell menu shows — the site-wide preview cap. */
 export const NOTIFICATIONS_CAP = 8;
 
+/** Unread default: the current-day band (2026-06-06) ships unread; older
+ *  history ships read. Runtime read state layers on top in the store. */
+const RECENT_CUTOFF = new Date(2026, 5, 6);
+const isRecent = (at: Date) => at.getTime() >= RECENT_CUTOFF.getTime();
+
 /** "design-agent (sk-gw-ef7)" → "design-agent". The masked id suffix stays
  *  on the Security page; prose copy carries only the key name. */
 const keyName = (key: string) => key.replace(/\s*\(.*\)$/, "");
@@ -112,15 +117,18 @@ const REASON_LABEL: Record<GuardrailReason, string> = {
   credential: "Credential",
 };
 
-/** Three newest security events. Two rows can share a requestId (one
- *  request, two findings), so the id also carries the category. */
-function securityItems(): NotificationItem[] {
+/** Security events, newest first. Two rows can share a requestId (one
+ *  request, two findings), so the id also carries the category. The bell's
+ *  build takes the newest 3; the history takes every row. */
+function securityItems(
+  count: number = SECURITY_EVENT_ROWS.length
+): NotificationItem[] {
   return [...SECURITY_EVENT_ROWS]
     .sort(
       (a, b) =>
         parseEventTime(b.time).getTime() - parseEventTime(a.time).getTime()
     )
-    .slice(0, 3)
+    .slice(0, count)
     .map((row) => ({
       id: `n-security-${row.requestId}-${row.type}`,
       kind: "security" as const,
@@ -128,7 +136,7 @@ function securityItems(): NotificationItem[] {
       copy: `${TYPE_META[row.type].label} ${row.action} on ${keyName(row.key)}`,
       at: parseEventTime(row.time),
       href: `/security?open=${row.requestId}`,
-      unread: true,
+      unread: isRecent(parseEventTime(row.time)),
       Icon: TYPE_META[row.type].Icon,
       iconColor: TYPE_META[row.type].color,
     }));
@@ -150,78 +158,81 @@ function messageItems(): NotificationItem[] {
         : `Guardrail finding on ${row.keyId}`,
       at: parseRequestTime(row.day, row.time),
       href: `/messages-findings/${requestRowId(row)}`,
-      unread: true,
+      unread: isRecent(parseRequestTime(row.day, row.time)),
       Icon: Mail,
     }));
 }
 
-/** The newest key mint. */
-function apiKeyItem(): NotificationItem | null {
-  const newest = [...API_KEY_SEED_ROWS].sort(
-    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-  )[0];
-  if (!newest) {
-    return null;
-  }
-  return {
-    id: `n-api-key-${newest.id}`,
-    kind: "api-key",
-    title: "API key created",
-    copy: `Key "${newest.name}" is live in this workspace`,
-    at: newest.createdAt,
-    href: "/api-keys",
-    unread: true,
-    Icon: KeyRound,
-  };
+/** Key mints, newest first — one "API key created" firing per key. (The
+ *  revoked flag carries no revocation date, so revoke events cannot be
+ *  honestly timestamped and stay out of the feed.) */
+function apiKeyItems(
+  count: number = API_KEY_SEED_ROWS.length
+): NotificationItem[] {
+  return [...API_KEY_SEED_ROWS]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, count)
+    .map((row) => ({
+      id: `n-api-key-${row.id}`,
+      kind: "api-key" as const,
+      title: "API key created",
+      copy: `Key "${row.name}" is live in this workspace`,
+      at: row.createdAt,
+      href: "/api-keys",
+      unread: isRecent(row.createdAt),
+      Icon: KeyRound,
+    }));
 }
 
-/** The newest credits top-up from billing history. */
-function billingItem(): NotificationItem | null {
-  const topUp = HISTORY_ROWS.filter((row) => row.type === "Credits added").sort(
-    (a, b) => b.date.getTime() - a.date.getTime()
-  )[0];
-  if (!topUp) {
-    return null;
-  }
-  return {
-    id: `n-billing-${topUp.id}`,
-    kind: "billing",
-    title: "Credits added",
-    copy: `${formatCurrency(topUp.amount)} added to your balance`,
-    at: topUp.date,
-    href: "/billing",
-    unread: false,
-    Icon: CreditCard,
-  };
+/** Credits top-ups, newest first. */
+function billingItems(count: number = HISTORY_ROWS.length): NotificationItem[] {
+  return HISTORY_ROWS.filter((row) => row.type === "Credits added")
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, count)
+    .map((row) => ({
+      id: `n-billing-${row.id}`,
+      kind: "billing" as const,
+      title: "Credits added",
+      copy: `${formatCurrency(row.amount)} added to your balance`,
+      at: row.date,
+      href: "/billing",
+      unread: isRecent(row.date),
+      Icon: CreditCard,
+    }));
 }
 
-/** Workspace membership changes from the audit trail. */
-function teamItems(): NotificationItem[] {
-  return AUDIT_EVENT_ROWS.filter(
-    (row) =>
-      row.kind === "EVENT" && row.description.includes("added to the workspace")
-  )
-    .slice(0, 1)
+/** Workspace joins from the Team roster, newest first. The owner created
+ *  the workspace rather than being added to it, so no item. */
+function teamItems(count: number = MEMBER_ROWS.length): NotificationItem[] {
+  return [...MEMBER_ROWS]
+    .filter((row) => row.role !== "owner")
+    .sort((a, b) => b.joined.getTime() - a.joined.getTime())
+    .slice(0, count)
     .map((row) => ({
       id: `n-team-${row.id}`,
       kind: "team" as const,
       title: "Member added",
-      copy: row.description,
-      at: row.at,
+      copy: `${row.name} added to the workspace as a ${row.role}`,
+      at: row.joined,
       href: "/team",
-      unread: false,
+      unread: isRecent(row.joined),
       Icon: Users,
     }));
 }
 
-/** The bell feed: newest first, capped at NOTIFICATIONS_CAP. */
-export const NOTIFICATION_ITEMS: NotificationItem[] = [
+/** The full history, newest first and uncapped: every security event, every
+ *  guardrail-touched recent message, every key mint, every top-up, every
+ *  member join — one item per real entity row. The My Notifications table
+ *  paginates over this. */
+export const NOTIFICATION_HISTORY: NotificationItem[] = [
   ...securityItems(),
   ...messageItems(),
-  apiKeyItem(),
-  billingItem(),
+  ...apiKeyItems(),
+  ...billingItems(),
   ...teamItems(),
-]
-  .filter((item): item is NotificationItem => item !== null)
-  .sort((a, b) => b.at.getTime() - a.at.getTime())
-  .slice(0, NOTIFICATIONS_CAP);
+].sort((a, b) => b.at.getTime() - a.at.getTime());
+
+/** The bell feed: the newest NOTIFICATIONS_CAP rows of the history, so the
+ *  two surfaces share ids (and therefore read state) by construction. */
+export const NOTIFICATION_ITEMS: NotificationItem[] =
+  NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP);

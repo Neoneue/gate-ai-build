@@ -10,9 +10,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Segmented } from "@/components/ui/segmented";
+import { TextLink } from "@/components/ui/text-link";
 import { fmtRelative } from "@/data/audit-trail";
 import type { NotificationItem } from "@/data/notifications";
-import { NOTIFICATION_ITEMS, NOTIFICATIONS_NOW } from "@/data/notifications";
+import {
+  NOTIFICATION_HISTORY,
+  NOTIFICATION_ITEMS,
+  NOTIFICATIONS_NOW,
+} from "@/data/notifications";
+import {
+  archiveAll,
+  markAllRead,
+  markRead,
+  useNotificationsReadState,
+} from "@/data/notifications-store";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -21,14 +32,29 @@ import { cn } from "@/lib/utils";
  * animated BellIcon), so the top bar just mounts <NotificationsMenu />.
  *
  * Feed data comes from `@/data/notifications` — real rows only, newest
- * first, capped at 8. Relative timestamps read against NOTIFICATIONS_NOW,
- * the feed's mock clock.
+ * first. The bell is a PEEK: it renders NOTIFICATION_ITEMS, the newest
+ * NOTIFICATIONS_CAP rows of the NOTIFICATION_HISTORY array that
+ * /notifications paginates in full. One array means one set of ids, so read
+ * state is shared for free. Relative timestamps read against
+ * NOTIFICATIONS_NOW, the feed's mock clock.
  *
- * Read/cleared state is runtime-only and layered on top of each item's
- * static `unread` default: an item is unread when it ships `unread: true`
- * and the user has neither opened nor cleared it. State persists to
- * localStorage under `notifications.state.v1` (same defensive read-once /
- * write-on-change pattern as billing's auto-recharge config).
+ * Read/archived state is layered on top of each item's static `unread`
+ * default: an item is unread when it ships `unread: true` and the user has
+ * neither opened nor archived it. That state lives in the module-scoped
+ * `@/data/notifications-store`, which the /notifications table subscribes
+ * to as well — a click here mutes the same row there, live, with no reload.
+ * NOTHING is persisted: the store dies on refresh so the unread flow can be
+ * demoed over and over. See the store for why localStorage was removed.
+ *
+ * The All tab's sweep is "Archive all", not "Clear all". Archiving is
+ * recoverable by construction: the row leaves the bell and stays in the
+ * /notifications table, which is the permanent history BY DESIGN — that
+ * page never hides an archived row — it keeps an Archive tab, and the empty
+ * band here links straight to it (`?tab=archive`), because an action whose
+ * result you cannot find reads as destruction even when nothing was
+ * destroyed. This is the archive/done
+ * pattern Vercel, GitHub, and Linear converge on; none of them ship a
+ * destructive clear in a notification menu.
  *
  * Built on our Popover, so it inherits the standard dropdown enter/exit
  * animation + the `data-closed:fill-mode-forwards` flicker fix
@@ -46,83 +72,47 @@ const TAB_OPTIONS = [
   { value: "all", label: "All" },
 ];
 
-/** The unread indicator — one string for both the bell-corner dot and the
- *  per-row dot on the All tab, so they can never drift apart.
+/** The list the bell renders AND the list "Archive all" sweeps — one const
+ *  so the archive action can never disagree with what you are looking at.
+ *  Capped upstream at NOTIFICATIONS_CAP; the rest of the history lives on
+ *  /notifications. "Mark all as read" deliberately does NOT use this list —
+ *  see handleAction. */
+const MENU_ITEMS = NOTIFICATION_ITEMS;
+
+/** The bell-button corner badge — the MENU-level unread indicator, and the
+ *  only dot left in this file. Rows carry unread as ink instead (see
+ *  NotificationRow), so this has no per-row twin to stay in sync with; it
+ *  answers "is there anything for me" from the closed top bar, which no
+ *  amount of row ink can do.
  *
  *  Red needs no dark twin: `--destructive` is a semantic token that already
  *  flips itself (danger-600 light, danger-400 dark, `src/index.css`), and it
- *  clears the 3:1 non-text bar on every surface this dot paints on —
- *  4.76:1 / 4.37:1 on light bg-card and the bg-muted row hover, 6.19:1 /
- *  5.23:1 on dark. This is the same token StatusDot resolves for its
+ *  clears the 3:1 non-text bar on the surfaces it paints on — 4.76:1 /
+ *  4.37:1 light, 6.19:1 / 5.23:1 dark. This is the same token StatusDot
+ *  resolves for its
  *  `danger` tone, so the site's red indicator chrome stays one colour;
  *  StatusDot itself is fenced by design.md to BreakdownRow + KpiTile's live
  *  rail, hence the local recipe rather than the primitive. */
 const UNREAD_DOT = "size-2 rounded-full bg-destructive";
 
-/* ─── Persisted read state ───────────────────────────────────────────── */
-
-const STORAGE_KEY = "notifications.state.v1";
-
-type NotificationsState = {
-  readIds: string[];
-  clearedIds: string[];
-};
-
-const EMPTY_STATE: NotificationsState = { readIds: [], clearedIds: [] };
-
-/** Stored ids are user data round-tripped through JSON — keep only strings
- *  so a corrupted entry cannot poison the Set lookups below. */
-function idList(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.filter((id): id is string => typeof id === "string");
-}
-
-function readState(): NotificationsState {
-  if (typeof window === "undefined") {
-    return EMPTY_STATE;
-  }
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return EMPTY_STATE;
-    }
-    const parsed = JSON.parse(raw) as Partial<NotificationsState>;
-    return {
-      readIds: idList(parsed.readIds),
-      clearedIds: idList(parsed.clearedIds),
-    };
-  } catch {
-    return EMPTY_STATE;
-  }
-}
-
-function writeState(next: NotificationsState) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    /* storage unavailable — drop silently */
-  }
-}
-
-const union = (current: string[], added: string[]): string[] => [
-  ...new Set([...current, ...added]),
-];
-
 /* ─── Row ────────────────────────────────────────────────────────────── */
 
 function NotificationRow({
+  isRead,
   item,
   onOpen,
-  showUnreadDot,
 }: {
+  /** Unread is WHOLE-ROW INK, Gmail-style and identical to the
+   *  /notifications table: title, copy and time all sit at full strength
+   *  while unread and all drop to `text-muted-foreground` once read. The
+   *  contrast IS the indicator, so the row needs no dot and no reserved
+   *  gutter. Weight never moves — the label voice is already font-medium and
+   *  Gmail's bold is approximated with ink (design.md §3: colour does the
+   *  quiet work, weight does the structural work). User direction
+   *  2026-08-25. */
+  isRead: boolean;
   item: NotificationItem;
   onOpen: (item: NotificationItem) => void;
-  /** Paints the dot on the All tab only — the Unread tab is uniformly
-   *  unread, so a dot on every row would carry no information. The slot is
-   *  reserved either way; see the render. */
-  showUnreadDot: boolean;
 }) {
   return (
     <button
@@ -145,25 +135,32 @@ function NotificationRow({
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-baseline gap-2">
-          <span className="type-label-14 min-w-0 flex-1 truncate text-foreground">
+          <span
+            className={cn(
+              "type-label-14 min-w-0 flex-1 truncate",
+              isRead ? "text-muted-foreground" : "text-foreground"
+            )}
+          >
             {item.title}
           </span>
-          <span className="type-mono-12 shrink-0 text-muted-foreground">
+          {/* Both tabs render this identical structure, so the timestamp's
+              right edge lands on one x and switching tabs cannot make a row
+              jitter — the old reserved dot slot is gone with the dot. */}
+          <span
+            className={cn(
+              "type-mono-12 shrink-0",
+              isRead ? "text-muted-foreground" : "text-foreground"
+            )}
+          >
             {fmtRelative(item.at, NOTIFICATIONS_NOW)}
           </span>
-          {/* Always occupies its slot — `invisible` keeps the 8px box so the
-              timestamp column lands on the same x in both tabs and the row
-              does not jitter when you switch. */}
-          <span
-            aria-hidden
-            className={cn(
-              UNREAD_DOT,
-              "shrink-0",
-              !showUnreadDot && "invisible"
-            )}
-          />
         </span>
-        <span className="type-copy-12 truncate text-muted-foreground">
+        <span
+          className={cn(
+            "type-copy-12 truncate",
+            isRead ? "text-muted-foreground" : "text-foreground"
+          )}
+        >
           {item.copy}
         </span>
       </span>
@@ -181,49 +178,37 @@ function NotificationsMenu({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"unread" | "all">("unread");
-  const [state, setState] = useState<NotificationsState>(readState);
+  const { readIds, archivedIds } = useNotificationsReadState();
 
-  const readIds = new Set(state.readIds);
-  const clearedIds = new Set(state.clearedIds);
+  /** The single unread predicate for this surface — the dot, the count, the
+   *  Unread tab, and the muted title all read it, so they cannot drift. */
+  const isUnread = (item: NotificationItem) =>
+    item.unread && !readIds.has(item.id);
 
-  const visible = NOTIFICATION_ITEMS.filter((item) => !clearedIds.has(item.id));
-  const unreadItems = visible.filter(
-    (item) => item.unread && !readIds.has(item.id)
-  );
+  const visible = MENU_ITEMS.filter((item) => !archivedIds.has(item.id));
+  const unreadItems = visible.filter(isUnread);
   const unreadCount = unreadItems.length;
 
   const onUnreadTab = tab === "unread";
   const items = onUnreadTab ? unreadItems : visible;
-  const actionLabel = onUnreadTab ? "Mark all as read" : "Clear all";
+  const actionLabel = onUnreadTab ? "Mark all as read" : "Archive all";
   const emptyLabel = onUnreadTab ? "No unread notifications" : "All caught up!";
-
-  const commit = (next: NotificationsState) => {
-    setState(next);
-    writeState(next);
-  };
 
   const handleAction = () => {
     if (onUnreadTab) {
-      commit({
-        ...state,
-        readIds: union(
-          state.readIds,
-          unreadItems.map((item) => item.id)
-        ),
-      });
+      /* Sweeps the WHOLE history, not just the rows on screen. "Mark all as
+         read" is a claim about the account, so leaving unread rows behind on
+         /notifications would make the bell contradict the table. Archive is
+         the opposite case below: it acts on MENU_ITEMS only, because it is
+         about what sits in the bell. */
+      markAllRead(NOTIFICATION_HISTORY.filter(isUnread).map((item) => item.id));
       return;
     }
-    commit({
-      ...state,
-      clearedIds: union(
-        state.clearedIds,
-        NOTIFICATION_ITEMS.map((item) => item.id)
-      ),
-    });
+    archiveAll(MENU_ITEMS.map((item) => item.id));
   };
 
   const handleOpenItem = (item: NotificationItem) => {
-    commit({ ...state, readIds: union(state.readIds, [item.id]) });
+    markRead(item.id);
     setOpen(false);
     navigate(item.href);
   };
@@ -266,7 +251,7 @@ function NotificationsMenu({
             aria-label="Notification settings"
             onClick={() => {
               setOpen(false);
-              navigate("/settings");
+              navigate("/notifications");
             }}
             size="icon-sm"
             variant="ghost"
@@ -312,9 +297,33 @@ function NotificationsMenu({
                 strokeWidth={1.75}
               />
             </div>
-            <p className="type-copy-14 m-0 text-muted-foreground">
-              {emptyLabel}
-            </p>
+            <div className="flex flex-col items-center gap-1">
+              <p className="type-copy-14 m-0 text-muted-foreground">
+                {emptyLabel}
+              </p>
+              {/* Only the All tab can empty itself by an action, so only it
+                  owes an explanation. The Unread tab's "No unread
+                  notifications" is a state of the world, not a consequence
+                  — a pointer there would answer a question nobody asked. */}
+              {onUnreadTab ? null : (
+                <p className="type-copy-12 m-0 text-balance text-center text-muted-foreground">
+                  Archived notifications stay in{" "}
+                  <TextLink
+                    className="text-muted-foreground"
+                    /* ?tab=archive lands them on the tab holding what they
+                       just filed, not the Inbox they just emptied. Read once
+                       on mount by the page, one-way, per the house deep-link
+                       contract. */
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/notifications?tab=archive");
+                    }}
+                  >
+                    My Notifications
+                  </TextLink>
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           /* The Popover surface has no overflow-hidden, so the scroll
@@ -322,12 +331,10 @@ function NotificationsMenu({
           <div className="max-h-96 divide-y divide-border overflow-y-auto rounded-b-sm">
             {items.map((item) => (
               <NotificationRow
+                isRead={!isUnread(item)}
                 item={item}
                 key={item.id}
                 onOpen={handleOpenItem}
-                showUnreadDot={
-                  !onUnreadTab && item.unread && !readIds.has(item.id)
-                }
               />
             ))}
           </div>

@@ -14,6 +14,13 @@ export type HistoryRow = {
 // the inflow; debits use the default foreground tone.
 export const HISTORY_ROWS: HistoryRow[] = [
   {
+    id: "h-6",
+    date: new Date(2026, 5, 6, 9, 14, 38),
+    type: "Credits added",
+    amount: 25.0,
+    balanceAfter: 49.992_38,
+  },
+  {
     id: "h-5",
     date: new Date(2026, 4, 29, 14, 30, 0),
     type: "Adjustment",
