@@ -9,6 +9,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-25](./2026-08/changelog-8-25.md)
+
+- Checkbox gets a visible disabled state
+- EmptyState gains an optional footnote
+- Bell menu becomes an inbox peek
+- My Notifications page
+- Notification history deepens to 38 real items
+
 ### [2026-08-24](./2026-08/changelog-8-24.md)
 
 - Notification bell returns with a real feed
