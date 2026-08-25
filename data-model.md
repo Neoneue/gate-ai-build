@@ -246,18 +246,24 @@ type EventCategory   = 'injection' | 'pii' | 'phi' | 'credential'
 ### 3.2 API Keys
 
 ```typescript
-// Defined in: src/pages/ApiKeys.tsx
+// Defined in: src/data/api-keys.ts (lifted out of ApiKeys.tsx 2026-08-24 so
+// the notifications feed can read the seed without importing the page chunk)
 interface ApiKeyRow {
-  id:          string          // "prod-web", "prod-agent", "test-key"
-  name:        string
-  masked:      string          // "sk-gw-438" — display-only
+  id:          string          // "sk-gw-c4aeb3a8" — full id, matching/dedup
+  name:        string          // "prod-web", "prod-agent", …
+  masked:      string          // "sk-gw-…c4ae" — display-only
   requests7d:  number[]        // 7-element sparkline
-  lastUsed:    Date
+  createdAt:   Date
+  lastUsed:    Date | null     // null = never used
   revoked?:    boolean
 }
 ```
 
-Canonical seed: 3 keys (prod-web, prod-agent active; test-key revoked). Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
+Canonical seed: `API_KEY_SEED_ROWS`, 4 keys (prod-web, prod-agent,
+design-agent active; test-key revoked). The page seeds
+`useState(API_KEY_SEED_ROWS)` and still owns mutation. Named to avoid
+`activity-data.ts`, which exports a DIFFERENT `ApiKeyRow`/`API_KEY_ROWS` pair
+for the Activity usage tables. Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
 
 ### 3.3 Requests (Messages page)
 
@@ -619,6 +625,45 @@ interface ProviderMeta {
 // named does not exist in prod.
 ```
 
+### 3.10 Notifications (bell feed)
+
+```typescript
+// Defined in: src/data/notifications.ts (2026-08-24, notifications PRD phase 1)
+type NotificationKind = 'security' | 'message' | 'billing' | 'api-key' | 'team';
+
+type NotificationItem = {
+  id:        string;   // "n-<kind>-<source row id>" — traces to a real row
+  kind:      NotificationKind;
+  title:     string;   // PRD catalog naming ("Security event", "API key created", …)
+  copy:      string;
+  at:        Date;
+  href:      string;   // deep link to the fired thing
+  unread:    boolean;  // static default; the menu layers runtime read state on top
+  Icon:      IconType;
+  iconColor?: string;  // var(--color-*), inline-styled — security items only
+};
+```
+
+**Everything derives** (no synthetic data): 3 newest security events
+(`security-data.ts EVENT_ROWS`, per-category icon/color from `TYPE_META`,
+href `/security?open=<requestId>`), 2 newest guardrail-touched messages
+(`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>` — the
+UUID, never the `req_*` display id), the newest key mint
+(`API_KEY_SEED_ROWS` → `/api-keys`), the newest top-up (`HISTORY_ROWS` →
+`/billing`), and the audit-trail membership row (→ `/team`). Sorted
+newest-first, capped at `NOTIFICATIONS_CAP = 8`.
+
+`NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
+the latest instant in the mock data) is the feed's clock; relative labels
+render via `fmtRelative(at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`
+(anchor param added for this). Catalog types without backing rows
+(spend-limit-reached, payment-failed, PAYG-low — auto-recharge threshold is
+0) stay out until the My Notifications page phase.
+`notifications.test.ts` pins id uniqueness, the cap, newest-first order,
+`at <= NOTIFICATIONS_NOW`, kind/`KIND_META` completeness, and that every href
+resolves (security `?open=` ids exist; message params survive the
+RequestsFindings lookup).
+
 ---
 
 ## 4. Entity Relationships
@@ -842,6 +887,9 @@ function buildSpark(total: number, seed: number): number[]
 | `MEMBER_ROWS` | Team | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
+| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
+| `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 5 |
+| `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 8 |
 
 Conversation message threads are no longer a static array — `getConversationDetail()`
 (`src/data/conversationDetail.ts`) derives `{ trace, messages }` per conversation
@@ -1421,6 +1469,12 @@ only where a modal is still the target:
   `conversationId` / row id → `setSelectedRow(matched)` → URL cleaned via
   `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker.
 
+**The notifications bell is a producer of both mechanisms** (2026-08-24):
+every `NotificationItem.href` in `src/data/notifications.ts` targets one of
+the routes above — `/security?open=`, `/messages-findings/:requestId`, or a
+plain page route (`/billing`, `/api-keys`, `/team`) — and the menu navigates
+on item click.
+
 **Other deep-link params:**
 
 - `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
@@ -1594,6 +1648,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
+| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (rewired 2026-08-24, notifications PRD phase 1). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400 itself; hoisted `UNREAD_DOT` const shared with row dots) and a dynamic `aria-label` count. Renders `NOTIFICATION_ITEMS` (§3.10) as full-bleed button rows — `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time — in a `max-h-96 overflow-y-auto` band; item click = mark read → close → `navigate(href)`. Unread/All Segmented tabs; "Mark all as read" / "Clear all" persist `{readIds, clearedIds}` to localStorage `notifications.state.v1`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |

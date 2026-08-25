@@ -11,6 +11,7 @@ import type { LayoutContext } from "@/App";
 import { AskAiPanel } from "@/components/ui/ask-ai-panel";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
+import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import {
   Sheet,
   SheetContent,
@@ -35,7 +36,9 @@ import {
 /* ─────────────────────────────────────────────────────────────────────────
  * DashboardChrome — production-shell wrapper shared by CMP-012 / CMP-013 /
  * CMP-014 surfaces. Renders the primary <Sidebar> and the DashTopBar
- * (toggle + Docs/Notifications). Page content is passed in via `children`.
+ * (sidebar toggle + workspace switcher on the left; notifications bell,
+ * theme toggle, Ask AI, Docs and the mobile nav on the right). Page content
+ * is passed in via `children`.
  *
  * Single source of truth for the nav data lives in `./nav-sections`
  * (no longer duplicated 3×). Active state is derived from `activeNavId`,
@@ -320,6 +323,7 @@ function DashTopBar({
         )}
       </div>
       <div className="flex items-center gap-2">
+        <NotificationsMenu />
         <ThemeToggle />
         <Button
           aria-expanded={askAiOpen}

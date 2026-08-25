@@ -4,10 +4,10 @@
 
 export const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
 
-export function fmtRelative(at: Date): string {
+export function fmtRelative(at: Date, anchor: Date = NOW): string {
   const seconds = Math.max(
     0,
-    Math.floor((NOW.getTime() - at.getTime()) / 1000)
+    Math.floor((anchor.getTime() - at.getTime()) / 1000)
   );
   if (seconds < 60) {
     return `${seconds}s ago`;
