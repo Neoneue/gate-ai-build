@@ -11,6 +11,8 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-08-24](./2026-08/changelog-8-24.md)
 
+- Notification bell returns with a real feed
+- NotificationsMenu: rows, read state, unread dot
 - Alerts page removed
 
 ### [2026-08-20](./2026-08/changelog-8-20.md)
