@@ -16,6 +16,13 @@ tokens; this index exists so nothing has to glob the directory.
 - Bell menu becomes an inbox peek
 - My Notifications page
 - Notification history deepens to 38 real items
+- Checkbox paints indeterminate
+- Segmented options carry count chips
+- Bell windows the whole history; archive and read split
+- Feed bulk select
+- Security-event default flips off per the PRD
+- Limits: spend and usage alerts
+- Feed rows pinned to one height
 
 ### [2026-08-24](./2026-08/changelog-8-24.md)
 
