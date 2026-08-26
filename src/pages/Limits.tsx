@@ -428,9 +428,10 @@ const LIMIT_ENFORCEMENTS = [
   { value: "notify", label: "Notify only" },
 ] as const;
 
-// A small fixed set, not a free-text percent field. The PRD's example is
-// 80% and 100%; 50% is the halfway heads-up. Three coarse marks read as
-// choices, where a typed number would read as a value someone tuned.
+// A small fixed set, not a free-text percent field — exactly the PRD's
+// example marks. Coarse marks read as choices, where a typed number would
+// read as a value someone tuned. (An extra 50% mark shipped briefly and was
+// trimmed to the PRD set on user direction, 2026-08-25.)
 const ALERT_PERCENTS = [80, 100] as const;
 const DEFAULT_ALERT_PERCENTS: number[] = [80, 100];
 
@@ -603,7 +604,14 @@ function CreateLimitDialog({
   const [pickedAlerts, setPickedAlerts] = useState<number[]>(
     DEFAULT_ALERT_PERCENTS
   );
-  const notifyOnly = enforcement === "notify";
+  /* The PRD's alert triggers are spend, tokens, and security only — a
+     notify-only Messages limit would be a request-rate alert, a trigger the
+     PRD does not offer. So a Messages limit always blocks and carries no
+     percent marks: the Enforcement and Alerts blocks unmount below and the
+     submit path forces the same, while the picks stay in state so switching
+     Type back restores them. */
+  const isRequests = type === "requests";
+  const notifyOnly = !isRequests && enforcement === "notify";
 
   // Derived, not stored. Switching to notify-only forces the 100% mark on
   // without discarding what was picked for a blocking limit, so switching
@@ -611,12 +619,15 @@ function CreateLimitDialog({
   // ALERT_PERCENTS (rather than sorting the picks) also keeps the stored
   // list ascending for free, which is what the Alerts column renders.
   const alertPercents = useMemo(() => {
+    if (isRequests) {
+      return [];
+    }
     const chosen = new Set(pickedAlerts);
     if (notifyOnly) {
       chosen.add(100);
     }
     return ALERT_PERCENTS.filter((pct) => chosen.has(pct));
-  }, [pickedAlerts, notifyOnly]);
+  }, [pickedAlerts, notifyOnly, isRequests]);
 
   const toggleAlert = (pct: number, on: boolean) =>
     setPickedAlerts((prev) =>
@@ -655,7 +666,7 @@ function CreateLimitDialog({
       period,
       scope,
       used: "0",
-      enforcement,
+      enforcement: isRequests ? "block" : enforcement,
       alerts: [...alertPercents],
     });
     resetForm();
@@ -806,98 +817,102 @@ function CreateLimitDialog({
             field rhythm, per direction — the subtext and options sat too
             close). Block-to-block spacing stays the DialogContent's own
             gap-4. */}
-        <div className="flex flex-col gap-3">
-          {/* Title, subtext, then the options. The consequence of the
+        {isRequests ? null : (
+          <div className="flex flex-col gap-3">
+            {/* Title, subtext, then the options. The consequence of the
               choice is stated before the choice is offered, and it sits
               in this block rather than in the dialog subtitle four fields
               away — this IS the alerts-notify / limits-block distinction,
               so it is read where it is made. */}
-          <div className="flex flex-col gap-1">
-            <span
-              className="type-label-14 text-muted-foreground"
-              id="create-limit-enforcement-label"
+            <div className="flex flex-col gap-1">
+              <span
+                className="type-label-14 text-muted-foreground"
+                id="create-limit-enforcement-label"
+              >
+                Enforcement
+              </span>
+              <p
+                className="type-copy-12 m-0 text-pretty text-muted-foreground"
+                id="create-limit-enforcement-hint"
+              >
+                {notifyOnly
+                  ? "Nothing is blocked. Crossing the threshold only raises a notification."
+                  : "Messages that exceed the threshold are blocked (returns 429)."}
+              </p>
+            </div>
+            <RadioGroup
+              aria-describedby="create-limit-enforcement-hint"
+              aria-labelledby="create-limit-enforcement-label"
+              className="grid-cols-2"
+              onValueChange={(next: string) => setEnforcement(next)}
+              value={enforcement}
             >
-              Enforcement
-            </span>
-            <p
-              className="type-copy-12 m-0 text-pretty text-muted-foreground"
-              id="create-limit-enforcement-hint"
-            >
-              {notifyOnly
-                ? "Nothing is blocked. Crossing the threshold only raises a notification."
-                : "Messages that exceed the threshold are blocked (returns 429)."}
-            </p>
+              {LIMIT_ENFORCEMENTS.map((option) => (
+                <div className="flex items-center gap-3" key={option.value}>
+                  <RadioGroupItem
+                    id={`create-limit-enforcement-${option.value}`}
+                    value={option.value}
+                  />
+                  <Label
+                    className="type-label-14 text-foreground"
+                    htmlFor={`create-limit-enforcement-${option.value}`}
+                  >
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
-          <RadioGroup
-            aria-describedby="create-limit-enforcement-hint"
-            aria-labelledby="create-limit-enforcement-label"
-            className="grid-cols-2"
-            onValueChange={(next: string) => setEnforcement(next)}
-            value={enforcement}
-          >
-            {LIMIT_ENFORCEMENTS.map((option) => (
-              <div className="flex items-center gap-3" key={option.value}>
-                <RadioGroupItem
-                  id={`create-limit-enforcement-${option.value}`}
-                  value={option.value}
-                />
-                <Label
-                  className="type-label-14 text-foreground"
-                  htmlFor={`create-limit-enforcement-${option.value}`}
-                >
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </div>
+        )}
 
         {/* Same rhythm as the Enforcement block above; no extra margin, so
             DialogFooter keeps its standing 24px stand-off. */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <span
-              className="type-label-14 text-muted-foreground"
-              id="create-limit-alerts-label"
+        {isRequests ? null : (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <span
+                className="type-label-14 text-muted-foreground"
+                id="create-limit-alerts-label"
+              >
+                Alerts
+              </span>
+              <p
+                className="type-copy-12 m-0 text-pretty text-muted-foreground"
+                id="create-limit-alerts-hint"
+              >
+                {notifyOnly
+                  ? "Notify at these percentages of the threshold. A notify-only rule always alerts at 100%."
+                  : "Notify at these percentages of the threshold, ahead of the block."}
+              </p>
+            </div>
+            <div
+              aria-describedby="create-limit-alerts-hint"
+              aria-labelledby="create-limit-alerts-label"
+              className="flex flex-wrap items-center gap-4"
+              role="group"
             >
-              Alerts
-            </span>
-            <p
-              className="type-copy-12 m-0 text-pretty text-muted-foreground"
-              id="create-limit-alerts-hint"
-            >
-              {notifyOnly
-                ? "Notify at these percentages of the threshold. A notify-only rule always alerts at 100%."
-                : "Notify at these percentages of the threshold, ahead of the block."}
-            </p>
-          </div>
-          <div
-            aria-describedby="create-limit-alerts-hint"
-            aria-labelledby="create-limit-alerts-label"
-            className="flex flex-wrap items-center gap-4"
-            role="group"
-          >
-            {ALERT_PERCENTS.map((pct) => (
-              <div className="flex items-center gap-2" key={pct}>
-                <Checkbox
-                  checked={alertPercents.includes(pct)}
-                  /* A notify-only rule that alerts at nothing is not a
+              {ALERT_PERCENTS.map((pct) => (
+                <div className="flex items-center gap-2" key={pct}>
+                  <Checkbox
+                    checked={alertPercents.includes(pct)}
+                    /* A notify-only rule that alerts at nothing is not a
                      rule — the 100% crossing IS the rule, so it is held
                      on rather than left as a way to create a no-op. */
-                  disabled={notifyOnly && pct === 100}
-                  id={`create-limit-alert-${pct}`}
-                  onCheckedChange={(next) => toggleAlert(pct, next === true)}
-                />
-                <Label
-                  className="type-label-14 text-foreground"
-                  htmlFor={`create-limit-alert-${pct}`}
-                >
-                  {pct}%
-                </Label>
-              </div>
-            ))}
+                    disabled={notifyOnly && pct === 100}
+                    id={`create-limit-alert-${pct}`}
+                    onCheckedChange={(next) => toggleAlert(pct, next === true)}
+                  />
+                  <Label
+                    className="type-label-14 text-foreground"
+                    htmlFor={`create-limit-alert-${pct}`}
+                  >
+                    {pct}%
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <DialogFooter>
           <DialogClose

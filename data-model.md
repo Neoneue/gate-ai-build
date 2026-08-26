@@ -1281,7 +1281,9 @@ checkboxes, default 80+100 via `DEFAULT_ALERT_PERCENTS`)
 
 **Alerts phase (PRD §10.2, 2026-08-25):** one table, one create flow — a
 standalone threshold alert IS a notify-only limit, so there is no second
-section and no Alerts page. Notify-only holds the 100% mark checked+disabled
+section and no Alerts page. The Messages type never alerts (PRD triggers are
+spend/tokens/security only): selecting it unmounts the Enforcement and Alerts
+blocks and the row commits as block with no marks. Notify-only holds the 100% mark checked+disabled
 (derived, not stored). Table gained Enforcement (filled `secondary` chip for
 BLOCK vs hollow `outline` for NOTIFY) and Alerts (`80% · 100%` or `—`) columns;
 ten explicit widths on a `min-w-[1400px]` `table-fixed` table (Name 17% widest,
