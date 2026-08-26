@@ -168,3 +168,13 @@ Archive-tab rows have no 24px archive icon-button, so they collapsed 4px
 shorter than Inbox rows and the table visibly shrank on tab switch. `h-12` on
 the shared `FeedRow` (height acts as min-height on a `<tr>`) pins both tabs
 to the Inbox's natural height.
+
+### Messages limits never alert `d1f2423`
+
+The PRD's alert triggers are spend, tokens, and security only, so a
+notify-only Messages limit would have been a request-rate alert — a trigger
+the PRD does not offer. Selecting the Messages type in the create dialog now
+unmounts the Enforcement and Alerts blocks and the row commits as block with
+no percent marks; the picks survive in state, so switching Type back restores
+them. Surfaced by the post-ship audit against AG-524/AG-507, which also
+refreshed the stale ALERT_PERCENTS comment left from trimming the 50% mark.

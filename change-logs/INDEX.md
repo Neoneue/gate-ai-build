@@ -23,6 +23,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Security-event default flips off per the PRD
 - Limits: spend and usage alerts
 - Feed rows pinned to one height
+- Messages limits never alert
 
 ### [2026-08-24](./2026-08/changelog-8-24.md)
 
