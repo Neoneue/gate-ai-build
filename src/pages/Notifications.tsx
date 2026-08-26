@@ -1067,6 +1067,11 @@ function FeedRow({
   return (
     <NavTableRow
       aria-label={`Open ${item.title}: ${item.copy}`}
+      /* h-12 pins every feed row to the Inbox's natural height (py-3 + the
+         24px archive IconActionButton). The Archive tab has no action cell,
+         so its text-only rows otherwise collapse 4px shorter and the table
+         visibly shrinks on tab switch. On a <tr>, height acts as min-height. */
+      className="h-12"
       data-state={selected ? "selected" : undefined}
       onActivate={() => onOpen(item)}
     >
