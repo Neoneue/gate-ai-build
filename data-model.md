@@ -566,13 +566,15 @@ interface PolicyState {
 
 // Defined in: src/pages/Limits.tsx
 interface Limit {
-  id:        string
-  name:      string
-  type:      string           // 'spend' | 'tokens' | 'requests'
-  threshold: number
-  period:    string           // '1h' | '1d' | '1w' | '1mo'
-  scope:     string           // org-wide, project-level, key-level
-  used:      number
+  id:          string
+  name:        string
+  type:        string         // 'spend' | 'tokens' | 'requests'
+  threshold:   string         // numeric string; $/commas parsed for sort
+  period:      string         // '1h' | '1d' | '1w' | '1mo'
+  scope:       string         // org-wide, key-level
+  used:        string         // numeric string
+  enforcement: string         // 'block' (429) | 'notify' (alert only) — 2026-08-25
+  alerts:      number[]       // relative alert percents, subset of 50|80|100
 }
 ```
 
@@ -655,12 +657,18 @@ every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
 (`src/data/team-members.ts MEMBER_ROWS` → `/team`). Unread defaults: the
 2026-06-06 band ships unread (~15 items); older history ships read.
 `NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
-the bell's peek — one array, shared ids, shared read state by construction.
+still exported, but **the bell no longer uses it as its list bound**
+(2026-08-25): the menu reads the whole non-archived history and windows the
+render 8 rows at a time, so its counts are global and agree with the page.
+One array, shared ids, shared read state by construction.
 
 **Read state is in-memory, demo-lifecycle** (`src/data/notifications-store.ts`,
 range-store pattern + `useSyncExternalStore`): `{readIds, archivedIds}` Sets,
-mutators `markRead` / `markAllRead` / `archiveOne` / `archiveAll` (archiving
-implies read — both archive mutators union `readIds`). NO localStorage:
+mutators `markRead` / `markAllRead` / `archiveOne` / `archiveAll`. The two sets
+are **independent axes** (2026-08-25, superseding "archiving implies read"):
+read = "seen it", archived = "where it lives", so an archived row can still be
+unread and renders at full ink on the Archive tab. `archiveOne` / `archiveAll`
+touch `archivedIds` only. NO localStorage:
 state survives SPA navigation (module scope) and resets on refresh so the
 unread flow can be re-demoed. Read/unread renders Gmail-style: whole-row
 `text-foreground` (unread) vs `text-muted-foreground` (read), no row dots;
@@ -668,7 +676,9 @@ only the bell button keeps a corner dot (`bg-destructive`).
 
 **The preference model is separate** (`src/data/notification-catalog.ts`):
 the PRD §4 catalog (13 types, 5 groups, default-on flags), channel prefs,
-email frequency, security scope, and the org catalog. Prefs DO persist —
+email frequency, security scope, and the org catalog. Default-on = spend limit
+reached, payment failed, PAYG balance low; security-event is OFF by default
+per the PRD, and the Pro configured seed leaves it off too (2026-08-25). Prefs DO persist —
 localStorage `notifications.prefs.v1` — unlike read state.
 
 `NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
@@ -1256,11 +1266,27 @@ Python / cURL tabs)
 
 ### Limits page (`/limits` → `Limits.tsx`)
 
-**Purpose:** Spend / token / request rate caps. (Renamed from "Guardrails" 2026-06-01; the Requests `GuardrailAction` axis in §3.1 is a separate concept and was not touched.)
+**Purpose:** Spend / token / request rate caps, plus the notifications PRD's
+§10.2 spend/usage alerts (2026-08-25). (Renamed from "Guardrails" 2026-06-01;
+the Requests `GuardrailAction` axis in §3.1 is a separate concept and was not
+touched.)
 
-**State:** `createOpen: boolean`, `limits: Limit[]`
+**State:** `createOpen: boolean`, `limits: Limit[]` (in-session, starts empty —
+nothing seeded)
 
-**Dialog fields:** Name, Type (`LIMIT_TYPES`), Threshold, Period (`LIMIT_PERIODS`), Scope (org-wide, key-level)
+**Dialog fields:** Name, Type (`LIMIT_TYPES`), Threshold, Period
+(`LIMIT_PERIODS`), Scope (org-wide, key-level), Enforcement
+(`LIMIT_ENFORCEMENTS`: Block / Notify only), Alerts (`ALERT_PERCENTS` 80/100 (the PRD's example set)
+checkboxes, default 80+100 via `DEFAULT_ALERT_PERCENTS`)
+
+**Alerts phase (PRD §10.2, 2026-08-25):** one table, one create flow — a
+standalone threshold alert IS a notify-only limit, so there is no second
+section and no Alerts page. Notify-only holds the 100% mark checked+disabled
+(derived, not stored). Table gained Enforcement (filled `secondary` chip for
+BLOCK vs hollow `outline` for NOTIFY) and Alerts (`80% · 100%` or `—`) columns;
+ten explicit widths on a `min-w-[1400px]` `table-fixed` table (Name 17% widest,
+Scope 13% second). No channel picker and no delivery copy on this page —
+channels stay single-sourced on `/notifications`.
 
 ---
 
@@ -1405,7 +1431,7 @@ Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title
 
 **Variant props** (single source; twins are thin): `seed` ("configured" | "default"), `persist` (hydrate + write `notifications.prefs.v1`), `showOrgSection`, `hasFeed`. Pro = all defaults; Free = no org section; Default = PRD defaults, nothing persisted, empty feed.
 
-**Sections:** Delivery channels card (In-app + Email masters with `Switch`es; Email reveals the frequency multi-select and the address — `text-foreground` mono + a `Pencil` icon-button to /settings; masters gate the checkbox columns below as disabled-but-preserved; toast on Email off). Five catalog sections (`NOTIFICATION_GROUPS`) with right-aligned Email/In-app column headers and per-type `Checkbox` pairs; the Security event row grows a scope tray (divider seam, no fill; all-vs-narrowed with policy/action/rate filters in a `bg-card-muted` bordered panel). Organization section (Pro, in-memory). Recent notifications: Inbox/Archive line tabs with `TabsCount` chips (Inbox chip = unread, Archive chip = total) over a real `Table` (Notification / Detail / Time / Actions), per-row `IconActionButton` archive, `NavTableRow` clickable rows (mark read + deep link), Gmail-style whole-row read ink, per-tab `TablePaginationFooter` (default 10) over `NOTIFICATION_HISTORY` (38). Read state = the in-memory store (§3.10): survives SPA nav, resets on refresh by design.
+**Sections:** Delivery channels card (In-app + Email masters with `Switch`es; Email reveals the frequency multi-select and the address — `text-foreground` mono + a `Pencil` icon-button to /settings; masters gate the checkbox columns below as disabled-but-preserved; toast on Email off). Five catalog sections (`NOTIFICATION_GROUPS`) with right-aligned Email/In-app column headers and per-type `Checkbox` pairs; the Security event row grows a scope tray (divider seam, no fill; all-vs-narrowed with policy/action/rate filters in a `bg-card-muted` bordered panel). Organization section (Pro, in-memory). Recent notifications: Inbox/Archive line tabs with `TabsCount` chips (Inbox chip = unread among non-archived, Archive chip = total archived) over a real `Table` (Notification / Detail / Time / Actions), per-row `IconActionButton` archive, `NavTableRow` clickable rows (mark read + deep link), Gmail-style whole-row read ink **on BOTH tabs** — an archived-but-unread row is bright, since read and archived are independent axes (§3.10, 2026-08-25) — per-tab `TablePaginationFooter` (default 10) over `NOTIFICATION_HISTORY` (38). Empty bands are title + body only (the Inbox-emptied band's `footnote` pointer was dropped 2026-08-25; the `EmptyState` slot itself stays). Read state = the in-memory store (§3.10): survives SPA nav, resets on refresh by design.
 
 ---
 
@@ -1511,7 +1537,8 @@ on item click.
 - `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
 - `Activity.tsx?range=24h|7d|30d|all` — read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
 - `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
-- `Notifications.tsx?tab=archive` — selects the feed's Archive tab. Uses the `?open=`-style render-phase compare (NOT the mount-only `?range=` shape) because the producer — the bell's archived-empty explainer link — fires on the already-mounted route; a manual tab click strips the param via `setSearchParams(..., { replace: true })`, re-arming it for the next click.
+- `Notifications.tsx?tab=archive` — selects the feed's Archive tab. Uses the `?open=`-style render-phase compare (NOT the mount-only `?range=` shape) because a producer can fire on the already-mounted route (the bell lives in this page's own top bar); a manual tab click strips the param via `setSearchParams(..., { replace: true })`, re-arming it for the next click. **No in-app producer since 2026-08-25** (the bell's archived-empty explainer was removed) — the param stays supported because the URL remains valid and shareable.
+- `Notifications.tsx?view=feed` — scrolls the Recent-notifications section into view. Produced by the bell's "View all notifications" footer row, since the page opens at the top and the feed is its last section. Same render-phase-compare + strip contract as `?tab=archive`, and for the same reason: the common case is a param change on the already-mounted route. `scrollIntoView({ block: "start" })` on the section wrapper, `behavior` gated by the house `REDUCE_MOTION` snapshot (`src/lib/reduce-motion.ts`). The header gear deliberately navigates to bare `/notifications` — it is the settings link, so it lands on the catalog.
 - `BillingFree.tsx?manage=1` — opens the plan-comparison dialog on mount, stripped on close via `setSearchParams(..., { replace: true })`, same contract as `?create=1`. Fed by the sidebar upgrade CTA (§2). `BillingDefault.tsx` renders `BillingFree`, so the param works on both `-default` and `-free`.
 - `SetupManual.tsx?bill=byok|payg` — the only param that selects page CONTENT rather than opening a surface. Read on every render (not just mount), defaults to `byok` for any other value, and drives title/subtitle/context strip/back target. Both values are live entry points: `/overview-default` links to `payg`, `/setup-connect-default` to `byok`.
 
@@ -1680,7 +1707,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
-| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. Renders `NOTIFICATION_ITEMS` (§3.10, the newest-8 peek of the history) as full-bleed button rows — `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots) — in a `max-h-96 overflow-y-auto` band; item click = mark read → close → `navigate(href)`. Unread/All Segmented tabs; "Mark all as read" sweeps the whole history via the in-memory store (§3.10); "Archive all" files the menu's items onto the page's Archive tab, and the archived-empty state links to `/notifications?tab=archive`. Mounted by `DashboardChrome` before `ThemeToggle`. |
+| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. `w-100` (400px) surface. Renders the whole non-archived `NOTIFICATION_HISTORY` — **not** the newest-8 peek (changed 2026-08-25) — as full-bleed button rows in a `max-h-96 overflow-y-auto` band: `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots); item click = mark read → close → `navigate(href)`. **Windowed render:** 8 rows, +8 per bottom-reach, via a zero-height IntersectionObserver sentinel as the scroll region's last child (`rootMargin: 96px`, root = the band — the `ScrollBottomSentinel` pattern from `ask-ai-scroll-to-latest.tsx`); window resets to 8 on open and on tab switch (which also resets `scrollTop`). **Counts are global:** badge presence, `aria-label` count and the Unread tab's `TabsCount` chip all read one `unreadCount` = unread among ALL non-archived history, the same number as the page's Inbox chip. Unread/All `Segmented` tabs — the Unread option carries its count through `Segmented`'s `options[].count`, which composes the shared `<TabsCount>` (memoize the options array: it is a dep of the pill variant's measuring layout effect). All tab is uncounted. Actions are tab-scoped and both act on the full list, never the window: "Mark all as read" sweeps the whole history, "Archive all" files every non-archived row. Persistent footer row: quiet full-width ghost `View all notifications` → `/notifications?view=feed`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |

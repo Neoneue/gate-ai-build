@@ -5,10 +5,11 @@
 // not — that lives in the in-memory notifications-store and resets on
 // refresh by design (demo lifecycle).
 //
-// "Default on" = delivered by email to a new user with no setup (ticket
-// scope: security events, spend limit reached, payment failed, PAYG balance
-// low). Catalog types may have no firings in the mock feed — preferences
-// exist for every type either way; only feed ITEMS must trace to real rows.
+// "Default on" = delivered by email to a new user with no setup (PRD scope:
+// spend limit reached, payment failed, PAYG balance low; security events are
+// off by default). Catalog types may have no firings in the mock feed —
+// preferences exist for every type either way; only feed ITEMS must trace to
+// real rows.
 
 export type NotificationGroupId =
   | "security"
@@ -58,7 +59,7 @@ export const NOTIFICATION_CATALOG: NotificationType[] = [
     group: "security",
     name: "Security event",
     description: "A request was flagged, redacted, or blocked by a policy",
-    defaultOn: true,
+    defaultOn: false,
   },
   {
     id: "spend-limit-reached",
@@ -188,9 +189,9 @@ export type NotificationPrefs = {
 
 export const PREFS_STORAGE_KEY = "notifications.prefs.v1";
 
-/** A NEW user's prefs, exactly the ticket defaults: the four default-on
- *  types deliver by email with no setup; nothing else is selected. This is
- *  what the -default twin renders. */
+/** A NEW user's prefs, exactly the PRD defaults: the three default-on types
+ *  deliver by email with no setup; nothing else is selected (security events
+ *  are off until the user opts in). This is what the -default twin renders. */
 export function buildDefaultPrefs(): NotificationPrefs {
   const types = {} as Record<NotificationTypeId, ChannelSelection>;
   for (const type of NOTIFICATION_CATALOG) {
@@ -210,13 +211,13 @@ export function buildDefaultPrefs(): NotificationPrefs {
 }
 
 /** The PRO workspace's configured state — the demo user has turned on
- *  in-app delivery for the kinds that appear in the bell feed (security
- *  events, key mints, top-up receipts, membership changes), which is what
- *  makes the feed's items coherent with these settings. */
+ *  in-app delivery for some of the kinds that appear in the bell feed (key
+ *  mints, top-up receipts, membership changes). Security events stay at the
+ *  PRD default (both channels off): the feed is history, so past security
+ *  firings coexist with delivery being off now. */
 export function buildConfiguredPrefs(): NotificationPrefs {
   const prefs = buildDefaultPrefs();
   const inAppOn: NotificationTypeId[] = [
-    "security-event",
     "api-key-created",
     "receipt-invoice",
     "org-membership",

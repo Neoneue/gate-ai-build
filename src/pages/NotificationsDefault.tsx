@@ -4,10 +4,11 @@ import { Notifications } from "@/pages/Notifications";
  * Default-tier twin of My Notifications — the page as a BRAND-NEW workspace
  * sees it. Three forks, all props:
  *
- *   seed="default"        the ticket defaults from `buildDefaultPrefs()`:
- *                         the four default-on types deliver by email, nothing
- *                         else is selected, frequency is real-time, and the
- *                         security scope is still "every event".
+ *   seed="default"        the PRD defaults from `buildDefaultPrefs()`:
+ *                         the three default-on types deliver by email,
+ *                         security events are off, nothing else is selected,
+ *                         frequency is real-time, and the security scope is
+ *                         still "every event".
  *   persist={false}       nothing has been saved, so there is nothing to
  *                         hydrate — and this surface is a snapshot of the
  *                         untouched state, so it must not pick up a real

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { TabsCount } from "@/components/ui/tabs-count";
 import { cn } from "@/lib/utils";
 
 export interface SegmentedProps {
@@ -7,7 +8,16 @@ export interface SegmentedProps {
   "aria-label"?: string;
   className?: string;
   onChange?: (value: string) => void;
-  options: { value: string; label: string }[];
+  /** `count` renders the shared <TabsCount> chip after the label — the same
+   *  mono counter Tabs uses (design.md: don't hand-roll that recipe), so a
+   *  counted segment and a counted tab read identically. Optional and
+   *  per-option: only the segments that own a number carry a chip.
+   *
+   *  Pass a MEMOIZED array when any count is live. This prop is a dependency
+   *  of the pill variant's measuring layout effect, so a fresh array literal
+   *  every render would re-measure every render — and since measuring commits
+   *  a new state object, that loops. */
+  options: { value: string; label: string; count?: number }[];
   /** Mirrors button conventions — `sm` for inline header chrome, `default` for standalone use. */
   size?: "sm" | "default";
   value: string;
@@ -45,7 +55,7 @@ export function Segmented({
               aria-pressed={selected}
               className={cn(
                 // Skill: emil-design-eng — color/border-only transition (never `transition-all`).
-                "inline-flex items-center justify-center px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+                "inline-flex items-center justify-center gap-2 px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
                 size === "sm" ? "h-7" : "h-8",
                 selected
                   ? "border border-surface-strong bg-surface-strong text-surface-strong-foreground"
@@ -57,6 +67,9 @@ export function Segmented({
               type="button"
             >
               {opt.label}
+              {typeof opt.count === "number" ? (
+                <TabsCount>{opt.count}</TabsCount>
+              ) : null}
             </button>
           );
         })}
@@ -92,7 +105,8 @@ function SegmentedPillVariant({
   className,
   ariaLabel,
 }: {
-  options: { value: string; label: string }[];
+  /** Same shape as SegmentedProps["options"] — see the chip + memo note there. */
+  options: SegmentedProps["options"];
   value: string;
   onChange?: (value: string) => void;
   size: "sm" | "default";
@@ -171,7 +185,7 @@ function SegmentedPillVariant({
             className={cn(
               // z-10 keeps text above the indicator. Color-only transition
               // (skill: performance.md — never `transition-all`).
-              "relative z-10 inline-flex items-center justify-center rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+              "relative z-10 inline-flex items-center justify-center gap-2 rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
               size === "sm" ? "px-3 py-1" : "px-4 py-2",
               selected
                 ? "text-foreground"
@@ -185,6 +199,9 @@ function SegmentedPillVariant({
             type="button"
           >
             {opt.label}
+            {typeof opt.count === "number" ? (
+              <TabsCount>{opt.count}</TabsCount>
+            ) : null}
           </button>
         );
       })}

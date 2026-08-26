@@ -1,5 +1,5 @@
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, MinusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -16,6 +16,20 @@ import { cn } from "@/lib/utils";
  * the same recipe Switch, Menu, and Select already use for exactly this
  * reason — one dimmed-control treatment across every Base UI control.
  *
+ * INDETERMINATE is a THIRD painted state (added 2026-08-25 for the
+ * /notifications Inbox bulk-select header). Pass Base UI's `indeterminate`
+ * prop; the Root emits `data-indeterminate` and suppresses `data-checked` /
+ * `data-unchecked` while it holds, plus `aria-checked="mixed"`. That means the
+ * fill CANNOT ride on `data-checked:` — a some-but-not-all header box would
+ * have painted as empty while announcing "mixed", which is the one state a
+ * select-all control exists to show. So the filled recipe is duplicated onto
+ * `data-indeterminate:` (same `--primary` fill, so mixed and checked read as
+ * one family) and the glyph swaps Check → Minus off the same attribute via
+ * `group/checkbox`. Base UI already renders the Indicator for
+ * `checked || indeterminate`, so both glyphs live inside it and one is
+ * `hidden` at a time — `grid place-content-center` sees a single child either
+ * way, so the box centres identically in all three states.
+ *
  * `RadioGroupItem` still carries the pseudo-class form and has the same
  * latent no-op; it is left alone here because nothing disables a radio yet.
  * ───────────────────────────────────────────────────────────────────────── */
@@ -24,7 +38,7 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        "peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input outline-none transition-colors after:absolute after:-inset-x-3 after:-inset-y-2 hover:border-ring/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 group-has-disabled/field:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary data-disabled:cursor-not-allowed data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground data-disabled:opacity-50 dark:bg-input/30 dark:data-checked:bg-primary dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        "group/checkbox peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input outline-none transition-colors after:absolute after:-inset-x-3 after:-inset-y-2 hover:border-ring/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 group-has-disabled/field:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary data-disabled:cursor-not-allowed data-checked:border-primary data-indeterminate:border-primary data-checked:bg-primary data-indeterminate:bg-primary data-checked:text-primary-foreground data-indeterminate:text-primary-foreground data-disabled:opacity-50 dark:bg-input/30 dark:data-checked:bg-primary dark:data-indeterminate:bg-primary dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
         className
       )}
       data-slot="checkbox"
@@ -34,7 +48,8 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
         data-slot="checkbox-indicator"
       >
-        <CheckIcon />
+        <CheckIcon className="group-data-indeterminate/checkbox:hidden" />
+        <MinusIcon className="hidden group-data-indeterminate/checkbox:block" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
