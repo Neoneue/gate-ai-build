@@ -11,7 +11,9 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-08-27](./2026-08/changelog-8-27.md)
 
+- Back navigation restores the content scroll
 - Org security events gain the scope tray
+- Channel row icon centers on the first two lines
 
 ### [2026-08-25](./2026-08/changelog-8-25.md)
 
