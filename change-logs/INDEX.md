@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-27](./2026-08/changelog-8-27.md)
+
+- Org security events gain the scope tray
+
 ### [2026-08-25](./2026-08/changelog-8-25.md)
 
 - Checkbox gets a visible disabled state
