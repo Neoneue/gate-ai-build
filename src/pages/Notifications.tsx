@@ -498,8 +498,12 @@ function PageHeader() {
 /* ─── Delivery channels card ───────────────────────────────────────────────
  * Three master rows, full-bleed dividers (`density="flush"` + `divide-y`, so
  * the rules run the card's whole width the way the reference does). The
- * round icon chip is the row's identity glyph; the control sits far right,
- * vertically centred on the row's text block. */
+ * round icon chip is the row's identity glyph, pinned to the top of the row
+ * (`self-start` + `mt-1`): 4px offset centres the 32px chip on the first two
+ * lines (20px name + 4px gap + 16px subtext = 40px), so the Email row's third
+ * value line cannot drag it down. Two-line rows render identically to the old
+ * `items-center`. The control sits far right, vertically centred on the row's
+ * text block. */
 
 function ChannelRow({
   children,
@@ -530,7 +534,7 @@ function ChannelRow({
       <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted"
+          className="mt-1 flex size-8 shrink-0 items-center justify-center self-start rounded-full bg-muted"
         >
           <Icon className="size-4 text-muted-foreground" strokeWidth={1.75} />
         </span>
