@@ -91,6 +91,9 @@ import { POLICIES } from "@/pages/policies/config";
  *                          channel checked. Modes COMBINE per the PRD: an
  *                          event must match every filter that is set.
  *   4. Organization        Org-admin-only, org-wide types. Pro twin only.
+ *                          The org security row reveals the SAME scope tray
+ *                          as item 3, reused verbatim under its own id
+ *                          prefix: no second panel, no new copy.
  *   5. Recent              The FULL in-app history (NOTIFICATION_HISTORY),
  *      notifications       paginated 10 to a page — the bell only peeks at
  *                          the newest NOTIFICATIONS_CAP of the same list.
@@ -310,6 +313,18 @@ function NotificationsSurface({
     }
   );
 
+  // The org scope tray is the same story: NotificationPrefs has no org scope
+  // field either, so this stays in memory, seeded exactly as
+  // buildDefaultPrefs() seeds the personal one.
+  const [orgSecurityScope, setOrgSecurityScope] = useState<SecurityScope>(
+    () => ({
+      mode: "all",
+      policyIds: [],
+      actions: [],
+      rate: { enabled: false, count: 10, windowHours: 1 },
+    })
+  );
+
   const commit = (next: NotificationPrefs) => {
     setPrefs(next);
     if (persist) {
@@ -355,6 +370,9 @@ function NotificationsSurface({
   const setScope = (patch: Partial<SecurityScope>) =>
     commit({ ...prefs, securityScope: { ...prefs.securityScope, ...patch } });
 
+  const setOrgScope = (patch: Partial<SecurityScope>) =>
+    setOrgSecurityScope((prev) => ({ ...prev, ...patch }));
+
   const toggleOrg = (id: string, key: keyof ChannelSelection) =>
     setOrgPrefs((prev) => ({
       ...prev,
@@ -363,6 +381,8 @@ function NotificationsSurface({
 
   const security = prefs.types["security-event"];
   const scopeOpen = security.email || security.inApp;
+  const orgSecurity = orgPrefs["org-security-events"];
+  const orgScopeOpen = orgSecurity.email || orgSecurity.inApp;
 
   return (
     /* Content stays fluid, then caps so the cards don't stretch across
@@ -394,6 +414,7 @@ function NotificationsSurface({
               ? {
                   "security-event": (
                     <SecurityScopePanel
+                      idPrefix="notif-scope"
                       onSetScope={setScope}
                       scope={prefs.securityScope}
                     />
@@ -431,15 +452,23 @@ function NotificationsSurface({
           <Card density="flush">
             <div className="divide-y divide-border">
               {ORG_NOTIFICATION_CATALOG.map((type) => (
-                <TypeRow
-                  description={type.description}
-                  key={type.id}
-                  masters={prefs.channels}
-                  name={type.name}
-                  onToggle={(key) => toggleOrg(type.id, key)}
-                  rowId={`org-${type.id}`}
-                  selection={orgPrefs[type.id]}
-                />
+                <div className="divide-y divide-border" key={type.id}>
+                  <TypeRow
+                    description={type.description}
+                    masters={prefs.channels}
+                    name={type.name}
+                    onToggle={(key) => toggleOrg(type.id, key)}
+                    rowId={`org-${type.id}`}
+                    selection={orgPrefs[type.id]}
+                  />
+                  {type.id === "org-security-events" && orgScopeOpen ? (
+                    <SecurityScopePanel
+                      idPrefix="notif-org-scope"
+                      onSetScope={setOrgScope}
+                      scope={orgSecurityScope}
+                    />
+                  ) : null}
+                </div>
               ))}
             </div>
           </Card>
@@ -809,9 +838,13 @@ function toggleId(list: string[], id: string, on: boolean): string[] {
 }
 
 function SecurityScopePanel({
+  idPrefix,
   onSetScope,
   scope,
 }: {
+  /** Namespaces every DOM id in the tray. Two instances render on the Pro
+   *  page (personal + org), and duplicate ids would cross-wire the labels. */
+  idPrefix: string;
   onSetScope: (patch: Partial<SecurityScope>) => void;
   scope: SecurityScope;
 }) {
@@ -834,19 +867,19 @@ function SecurityScopePanel({
         value={scope.mode}
       >
         <div className="flex items-center gap-3">
-          <RadioGroupItem id="notif-scope-all" value="all" />
+          <RadioGroupItem id={`${idPrefix}-all`} value="all" />
           <Label
             className="type-label-14 text-foreground"
-            htmlFor="notif-scope-all"
+            htmlFor={`${idPrefix}-all`}
           >
             Every security event
           </Label>
         </div>
         <div className="flex items-center gap-3">
-          <RadioGroupItem id="notif-scope-narrowed" value="narrowed" />
+          <RadioGroupItem id={`${idPrefix}-narrowed`} value="narrowed" />
           <Label
             className="type-label-14 text-foreground"
-            htmlFor="notif-scope-narrowed"
+            htmlFor={`${idPrefix}-narrowed`}
           >
             Only events that match my filters
           </Label>
@@ -860,7 +893,7 @@ function SecurityScopePanel({
             {POLICIES.map((policy) => (
               <ScopeCheckbox
                 checked={scope.policyIds.includes(policy.id)}
-                id={`notif-scope-policy-${policy.id}`}
+                id={`${idPrefix}-policy-${policy.id}`}
                 key={policy.id}
                 label={policy.name}
                 onChange={(next) =>
@@ -877,7 +910,7 @@ function SecurityScopePanel({
             {SCOPE_ACTIONS.map((action) => (
               <ScopeCheckbox
                 checked={scope.actions.includes(action.id)}
-                id={`notif-scope-action-${action.id}`}
+                id={`${idPrefix}-action-${action.id}`}
                 key={action.id}
                 label={action.label}
                 onChange={(next) =>
@@ -893,7 +926,7 @@ function SecurityScopePanel({
             <SectionHeading as="h5">By rate</SectionHeading>
             <ScopeCheckbox
               checked={scope.rate.enabled}
-              id="notif-scope-rate"
+              id={`${idPrefix}-rate`}
               label="Only notify above a rate"
               onChange={(next) =>
                 onSetScope({ rate: { ...scope.rate, enabled: next } })
@@ -903,14 +936,14 @@ function SecurityScopePanel({
               <div>
                 <Label
                   className="type-label-14 mb-1 text-muted-foreground"
-                  htmlFor="notif-scope-rate-count"
+                  htmlFor={`${idPrefix}-rate-count`}
                 >
                   Events
                 </Label>
                 <Input
                   className="type-mono-14 w-24 disabled:opacity-50"
                   disabled={!scope.rate.enabled}
-                  id="notif-scope-rate-count"
+                  id={`${idPrefix}-rate-count`}
                   inputMode="numeric"
                   min="1"
                   onChange={(e) =>
@@ -929,14 +962,14 @@ function SecurityScopePanel({
               <div>
                 <Label
                   className="type-label-14 mb-1 text-muted-foreground"
-                  htmlFor="notif-scope-rate-window"
+                  htmlFor={`${idPrefix}-rate-window`}
                 >
                   Within (hours)
                 </Label>
                 <Input
                   className="type-mono-14 w-24 disabled:opacity-50"
                   disabled={!scope.rate.enabled}
-                  id="notif-scope-rate-window"
+                  id={`${idPrefix}-rate-window`}
                   inputMode="numeric"
                   min="1"
                   onChange={(e) =>
