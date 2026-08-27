@@ -5,8 +5,10 @@ import {
   useOutletContext,
   useSearchParams,
 } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -21,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -40,6 +43,7 @@ import {
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatDateTime, formatNumber } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 
 /** Comparable value per sortable column for the Limits table.
  *  Numeric columns (threshold/used) parse out $/commas; period maps to a
@@ -52,6 +56,8 @@ function limitSortValue(row: Limit, key: string): string | number | null {
       return scopeName(row.scope);
     case "type":
       return typeLabel(row.type);
+    case "enforcement":
+      return enforcementLabel(row.enforcement);
     case "threshold":
       return parseNumeric(row.threshold);
     case "used":
@@ -183,7 +189,7 @@ function LimitsSection({
   if (limits.length === 0) {
     return (
       <EmptyState
-        body="Create one to cap spend, throttle traffic, or shape usage per project or key."
+        body="Create one to cap spend and block overages, or set it to notify only and get warned as usage approaches the threshold."
         icon={
           <div
             aria-hidden
@@ -192,22 +198,33 @@ function LimitsSection({
             <Shield className="size-5 text-muted-foreground" />
           </div>
         }
-        title="No limits configured"
+        title="No limits or alerts yet"
       />
     );
   }
 
   return (
     <Card density="flush">
-      <Table className="min-w-[1000px] table-fixed">
+      <Table className="min-w-[1400px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            {/* `table-fixed` + explicit widths keeps the column gaps
-                uniform regardless of cell content — same load-bearing
-                pattern as the Team and Activity tables. Five equal data
-                columns + a narrow actions column. */}
+            {/* `table-fixed` + an explicit width on EVERY column — same
+                  load-bearing pattern as the Team and Activity tables.
+                  Widths sum to 100% and are RANKED, not eyeballed: Name is
+                  the widest (it is the row's identifier), Scope second, and
+                  the rest get their measured content need (widest rendered
+                  cell + the 24px of cell padding) rounded up to the next
+                  whole percent. Against the 1400px floor that is Name
+                  238px / Scope 182px, so a full limit name fits without
+                  truncating and "Org-wide (all keys)" — the longest scope
+                  value, 128px — clears with room to spare instead of
+                  breaking mid-word. The floor rose 1000 → 1400px when
+                  Enforcement and Alerts landed, so the table now always
+                  scrolls horizontally inside the max-w-5xl column; ten
+                  columns cannot avoid that, and squeezing the row
+                  identifier to dodge it was the worse trade. */}
             <SortableTableHead
-              className="w-[16%] whitespace-nowrap"
+              className="w-[17%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="name"
@@ -215,7 +232,7 @@ function LimitsSection({
               Name
             </SortableTableHead>
             <SortableTableHead
-              className="w-[16%] whitespace-nowrap"
+              className="w-[13%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="scope"
@@ -223,15 +240,27 @@ function LimitsSection({
               Scope
             </SortableTableHead>
             <SortableTableHead
-              className="w-[12%] whitespace-nowrap"
+              className="w-[7%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="type"
             >
               Type
             </SortableTableHead>
+            {/* The consequential axis: does crossing the threshold reject
+                  traffic, or only send a notification. Sortable because
+                  "show me every rule that actually blocks" is the question
+                  an operator asks first. */}
             <SortableTableHead
-              className="whitespace-nowrap"
+              className="w-[9%] whitespace-nowrap"
+              onSort={toggleSort}
+              sort={sort}
+              sortKey="enforcement"
+            >
+              Enforcement
+            </SortableTableHead>
+            <SortableTableHead
+              className="w-[8%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -240,7 +269,7 @@ function LimitsSection({
               Threshold
             </SortableTableHead>
             <SortableTableHead
-              className="w-[16%] whitespace-nowrap"
+              className="w-[11%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -248,15 +277,18 @@ function LimitsSection({
             >
               Used
             </SortableTableHead>
+            {/* Not sortable: a SET of percent marks has no honest
+                  ordering, the same reason "Resets on" stays plain. */}
+            <TableHead className="w-[12%] whitespace-nowrap">Alerts</TableHead>
             <SortableTableHead
-              className="w-[10%] whitespace-nowrap"
+              className="w-[6%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="period"
             >
               Period
             </SortableTableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">
+            <TableHead className="w-[12%] whitespace-nowrap">
               Resets on
             </TableHead>
             <TableHead className="w-[5%] pr-4 pl-0 text-right">
@@ -293,11 +325,34 @@ function LimitsSection({
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {typeLabel(limit.type)}
                 </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {/* Filled chip vs. hollow chip. Enforcement is not a
+                        health axis, so it spends no status colour —
+                        blocking simply reads heavier than observing at
+                        scan distance. */}
+                  <Badge
+                    variant={
+                      limit.enforcement === "block" ? "secondary" : "outline"
+                    }
+                  >
+                    {enforcementLabel(limit.enforcement)}
+                  </Badge>
+                </TableCell>
                 <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                   {thresholdLabel(limit.type, limit.threshold)}
                 </TableCell>
                 <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                   {usedLabel(limit.type, limit.used, limit.threshold)}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    "type-mono-14 whitespace-nowrap",
+                    limit.alerts.length > 0
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {alertsLabel(limit.alerts)}
                 </TableCell>
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {periodLabel(limit.period)}
@@ -358,6 +413,28 @@ const LIMIT_TYPES = [
   { value: "requests", label: "Messages" },
 ] as const;
 
+/* Alerts NOTIFY, limits BLOCK — the one distinction this page has to keep
+ * legible. A rule carries both axes: `enforcement` decides whether crossing
+ * the threshold rejects traffic (429) or only raises a notification, and
+ * `alerts` lists the percent-of-threshold marks that notify on the way up.
+ *
+ * There is no second "standalone alerts" section, because a notify-only
+ * rule IS the PRD's standalone threshold ("cost over $X per hour" = spend /
+ * X / 1 hour / notify only). One create flow, one table, one mental model —
+ * a second section would have duplicated the whole form and the whole table
+ * for a row that differs by a single field. */
+const LIMIT_ENFORCEMENTS = [
+  { value: "block", label: "Block" },
+  { value: "notify", label: "Notify only" },
+] as const;
+
+// A small fixed set, not a free-text percent field — exactly the PRD's
+// example marks. Coarse marks read as choices, where a typed number would
+// read as a value someone tuned. (An extra 50% mark shipped briefly and was
+// trimmed to the PRD set on user direction, 2026-08-25.)
+const ALERT_PERCENTS = [80, 100] as const;
+const DEFAULT_ALERT_PERCENTS: number[] = [80, 100];
+
 const LIMIT_PERIODS = [
   { value: "1h", label: "1 hour" },
   { value: "1d", label: "1 day" },
@@ -384,6 +461,10 @@ type Limit = {
   period: string;
   scope: string;
   used: string;
+  /** "block" | "notify" — see LIMIT_ENFORCEMENTS. */
+  enforcement: string;
+  /** Percent-of-threshold marks that raise a notification, ascending. */
+  alerts: number[];
 };
 
 const LIMIT_TYPE_BY_VALUE = new Map<string, (typeof LIMIT_TYPES)[number]>(
@@ -395,10 +476,18 @@ const LIMIT_PERIOD_BY_VALUE = new Map<string, (typeof LIMIT_PERIODS)[number]>(
 const LIMIT_SCOPE_BY_VALUE = new Map<string, (typeof LIMIT_SCOPES)[number]>(
   LIMIT_SCOPES.map((s) => [s.value, s])
 );
+const LIMIT_ENFORCEMENT_BY_VALUE = new Map<
+  string,
+  (typeof LIMIT_ENFORCEMENTS)[number]
+>(LIMIT_ENFORCEMENTS.map((e) => [e.value, e]));
 
 const typeLabel = (v: string) => LIMIT_TYPE_BY_VALUE.get(v)?.label ?? v;
 const periodLabel = (v: string) => LIMIT_PERIOD_BY_VALUE.get(v)?.label ?? v;
 const findScope = (v: string) => LIMIT_SCOPE_BY_VALUE.get(v);
+const enforcementLabel = (v: string) =>
+  LIMIT_ENFORCEMENT_BY_VALUE.get(v)?.label ?? v;
+const alertsLabel = (alerts: readonly number[]) =>
+  alerts.length > 0 ? alerts.map((pct) => `${pct}%`).join(" · ") : "—";
 const scopeName = (v: string) => findScope(v)?.name ?? v;
 const thresholdLabel = (type: string, threshold: string) => {
   const n = Number(threshold);
@@ -511,6 +600,39 @@ function CreateLimitDialog({
   const [threshold, setThreshold] = useState("");
   const [period, setPeriod] = useState("1d");
   const [scope, setScope] = useState("org");
+  const [enforcement, setEnforcement] = useState("block");
+  const [pickedAlerts, setPickedAlerts] = useState<number[]>(
+    DEFAULT_ALERT_PERCENTS
+  );
+  /* The PRD's alert triggers are spend, tokens, and security only — a
+     notify-only Messages limit would be a request-rate alert, a trigger the
+     PRD does not offer. So a Messages limit always blocks and carries no
+     percent marks: the Enforcement and Alerts blocks unmount below and the
+     submit path forces the same, while the picks stay in state so switching
+     Type back restores them. */
+  const isRequests = type === "requests";
+  const notifyOnly = !isRequests && enforcement === "notify";
+
+  // Derived, not stored. Switching to notify-only forces the 100% mark on
+  // without discarding what was picked for a blocking limit, so switching
+  // back restores that choice instead of silently rewriting it. Filtering
+  // ALERT_PERCENTS (rather than sorting the picks) also keeps the stored
+  // list ascending for free, which is what the Alerts column renders.
+  const alertPercents = useMemo(() => {
+    if (isRequests) {
+      return [];
+    }
+    const chosen = new Set(pickedAlerts);
+    if (notifyOnly) {
+      chosen.add(100);
+    }
+    return ALERT_PERCENTS.filter((pct) => chosen.has(pct));
+  }, [pickedAlerts, notifyOnly, isRequests]);
+
+  const toggleAlert = (pct: number, on: boolean) =>
+    setPickedAlerts((prev) =>
+      on ? [...prev, pct] : prev.filter((entry) => entry !== pct)
+    );
 
   const thresholdNum = Number(threshold);
   const canSubmit =
@@ -518,6 +640,22 @@ function CreateLimitDialog({
     threshold.length > 0 &&
     Number.isFinite(thresholdNum) &&
     thresholdNum > 0;
+
+  /* Extracted so BOTH close paths clear the form. Base UI only fires the
+     Dialog's own `onOpenChange` for user-driven dismissals (Escape, overlay,
+     Cancel) — submitting closes by flipping the controlled `open` prop, which
+     never reaches that handler, so the fields used to survive into the next
+     open. Latent since the dialog was written; visible now that a stale
+     "Notify only" would reopen with its 100% mark held on. */
+  const resetForm = () => {
+    setName("");
+    setType("spend");
+    setThreshold("");
+    setPeriod("1d");
+    setScope("org");
+    setEnforcement("block");
+    setPickedAlerts(DEFAULT_ALERT_PERCENTS);
+  };
 
   const handleSubmit = () => {
     onCreate({
@@ -528,7 +666,10 @@ function CreateLimitDialog({
       period,
       scope,
       used: "0",
+      enforcement: isRequests ? "block" : enforcement,
+      alerts: [...alertPercents],
     });
+    resetForm();
     onOpenChange(false);
   };
 
@@ -537,11 +678,7 @@ function CreateLimitDialog({
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setName("");
-          setType("spend");
-          setThreshold("");
-          setPeriod("1d");
-          setScope("org");
+          resetForm();
         }
       }}
       open={open}
@@ -552,7 +689,8 @@ function CreateLimitDialog({
             Create limit
           </DialogTitle>
           <DialogDescription>
-            Block messages that exceed the threshold (returns 429).
+            Set a threshold for a scope and period, then choose whether it
+            blocks traffic or only notifies you.
           </DialogDescription>
         </DialogHeader>
 
@@ -674,6 +812,107 @@ function CreateLimitDialog({
             </Select>
           </div>
         </div>
+
+        {/* `gap-3` puts 12px under the subtext (4px more than the 8px
+            field rhythm, per direction — the subtext and options sat too
+            close). Block-to-block spacing stays the DialogContent's own
+            gap-4. */}
+        {isRequests ? null : (
+          <div className="flex flex-col gap-3">
+            {/* Title, subtext, then the options. The consequence of the
+              choice is stated before the choice is offered, and it sits
+              in this block rather than in the dialog subtitle four fields
+              away — this IS the alerts-notify / limits-block distinction,
+              so it is read where it is made. */}
+            <div className="flex flex-col gap-1">
+              <span
+                className="type-label-14 text-muted-foreground"
+                id="create-limit-enforcement-label"
+              >
+                Enforcement
+              </span>
+              <p
+                className="type-copy-12 m-0 text-pretty text-muted-foreground"
+                id="create-limit-enforcement-hint"
+              >
+                {notifyOnly
+                  ? "Nothing is blocked. Crossing the threshold only raises a notification."
+                  : "Messages that exceed the threshold are blocked (returns 429)."}
+              </p>
+            </div>
+            <RadioGroup
+              aria-describedby="create-limit-enforcement-hint"
+              aria-labelledby="create-limit-enforcement-label"
+              className="grid-cols-2"
+              onValueChange={(next: string) => setEnforcement(next)}
+              value={enforcement}
+            >
+              {LIMIT_ENFORCEMENTS.map((option) => (
+                <div className="flex items-center gap-3" key={option.value}>
+                  <RadioGroupItem
+                    id={`create-limit-enforcement-${option.value}`}
+                    value={option.value}
+                  />
+                  <Label
+                    className="type-label-14 text-foreground"
+                    htmlFor={`create-limit-enforcement-${option.value}`}
+                  >
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        )}
+
+        {/* Same rhythm as the Enforcement block above; no extra margin, so
+            DialogFooter keeps its standing 24px stand-off. */}
+        {isRequests ? null : (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <span
+                className="type-label-14 text-muted-foreground"
+                id="create-limit-alerts-label"
+              >
+                Alerts
+              </span>
+              <p
+                className="type-copy-12 m-0 text-pretty text-muted-foreground"
+                id="create-limit-alerts-hint"
+              >
+                {notifyOnly
+                  ? "Notify at these percentages of the threshold. A notify-only rule always alerts at 100%."
+                  : "Notify at these percentages of the threshold, ahead of the block."}
+              </p>
+            </div>
+            <div
+              aria-describedby="create-limit-alerts-hint"
+              aria-labelledby="create-limit-alerts-label"
+              className="flex flex-wrap items-center gap-4"
+              role="group"
+            >
+              {ALERT_PERCENTS.map((pct) => (
+                <div className="flex items-center gap-2" key={pct}>
+                  <Checkbox
+                    checked={alertPercents.includes(pct)}
+                    /* A notify-only rule that alerts at nothing is not a
+                     rule — the 100% crossing IS the rule, so it is held
+                     on rather than left as a way to create a no-op. */
+                    disabled={notifyOnly && pct === 100}
+                    id={`create-limit-alert-${pct}`}
+                    onCheckedChange={(next) => toggleAlert(pct, next === true)}
+                  />
+                  <Label
+                    className="type-label-14 text-foreground"
+                    htmlFor={`create-limit-alert-${pct}`}
+                  >
+                    {pct}%
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <DialogClose

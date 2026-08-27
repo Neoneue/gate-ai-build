@@ -180,6 +180,23 @@ for (const file of files) {
         }
       }
 
+      /* Explicit per-site waiver: `design-allow-copy-voice`. design.md §3
+         carves out ONE label role that legitimately takes the Copy voice — a
+         table cell's row-identifier text that doubles as the row's drill-in
+         target. It reads as table data alongside its sibling cells, so a
+         font-medium there makes one column shout. The waiver must appear in a
+         comment within the 5 lines above the className, so it is visible
+         exactly where it applies and can never go repo-wide. Every use states
+         its reason inline. */
+      if (flagged) {
+        for (let j = i - 1; j >= 0 && j > i - 6; j--) {
+          if (/design-allow-copy-voice/.test(lines[j])) {
+            flagged = false;
+            break;
+          }
+        }
+      }
+
       if (flagged) {
         violations.push({
           file,

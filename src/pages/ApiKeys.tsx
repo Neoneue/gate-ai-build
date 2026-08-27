@@ -38,6 +38,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
+import { API_KEY_SEED_ROWS, type ApiKeyRow } from "@/data/api-keys";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { randomHex } from "@/lib/utils";
@@ -46,9 +47,8 @@ import { ConnectTabs } from "@/pages/DashboardDefault";
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
  *
- * Manages the workspace's API keys. Seeded with 3 mock rows for the demo
- * (see TEMP PREVIEW SEED in <ApiKeys>); replace with `[]` to exercise the
- * empty state. Create flow lives in <CreateKeyDialog>; revoke is a row-
+ * Manages the workspace's API keys. Seeded with the mock rows in
+ * src/data/api-keys.ts; replace with `[]` to exercise the empty state. Create flow lives in <CreateKeyDialog>; revoke is a row-
  * menu action that flips `revoked: true` rather than deleting the row.
  *
  * Intentionally narrower than the prior reference: no ENV column, no
@@ -62,16 +62,6 @@ import { ConnectTabs } from "@/pages/DashboardDefault";
 const API_KEYS_DOCS_URL = "https://docs.constellationgate.ai/api-keys";
 const openDocs = () =>
   window.open(API_KEYS_DOCS_URL, "_blank", "noopener,noreferrer");
-
-type ApiKeyRow = {
-  id: string; // full id used for matching / dedup
-  name: string; // user-supplied label
-  masked: string; // `sk-gw-…3a8f` display form
-  requests7d: number[]; // sparkline series; 7 daily buckets
-  createdAt: Date; // when the key was minted
-  lastUsed: Date | null; // null = never used (freshly-minted or revoked-untouched)
-  revoked?: boolean; // greys out the row + disables actions when true
-};
 
 /** Comparable value per sortable column for the keys table. Numeric columns
  *  return a number; Date columns return the epoch ms; never-used (`lastUsed`
@@ -104,47 +94,9 @@ export function ApiKeys() {
   // Status tab — split the table into Active / Revoked scopes (Models-style
   // line tabs with count chips). Defaults to Active.
   const [keyStatus, setKeyStatus] = useState<"active" | "revoked">("active");
-  // TEMP PREVIEW SEED — Chad's two active keys (prod-web, prod-agent) plus
-  // a revoked test-key. Delete the array literal (replace with `[]`)
-  // before testing the real add-key flow.
-  const [keys, setKeys] = useState<ApiKeyRow[]>([
-    {
-      id: "sk-gw-c4aeb3a8",
-      name: "prod-web",
-      masked: "sk-gw-…c4ae",
-      // Steady climb — prod-web traffic grows day-over-day.
-      requests7d: [3, 5, 7, 6, 10, 9, 14],
-      createdAt: new Date(2026, 3, 28, 10, 14, 22), // 2026-04-28 10:14:22
-      lastUsed: new Date(2026, 4, 17, 9, 41, 6), // 2026-05-17 09:41:06
-    },
-    {
-      id: "sk-gw-9f3064ce",
-      name: "prod-agent",
-      masked: "sk-gw-…9f30",
-      // Spiky — agent runs burst irregularly across the week.
-      requests7d: [1, 8, 2, 11, 3, 9, 4],
-      createdAt: new Date(2026, 4, 8, 16, 2, 51), // 2026-05-08 16:02:51
-      lastUsed: new Date(2026, 4, 18, 10, 12, 33), // 2026-05-18 10:12:33
-    },
-    {
-      id: "sk-gw-255e1d3a",
-      name: "test-key",
-      masked: "sk-gw-…255e",
-      requests7d: [0, 0, 0, 0, 0, 0, 0],
-      createdAt: new Date(2026, 3, 18, 9, 0, 0), // 2026-04-18 09:00:00
-      lastUsed: null,
-      revoked: true,
-    },
-    {
-      id: "sk-gw-ef72d1a9",
-      name: "design-agent",
-      masked: "sk-gw-…ef72",
-      // Active — the design-dashboard session runs on this key.
-      requests7d: [2, 4, 3, 7, 6, 9, 13],
-      createdAt: new Date(2026, 5, 6, 18, 24, 22), // 2026-06-06 18:24:22
-      lastUsed: new Date(2026, 5, 6, 18, 30, 12), // today
-    },
-  ]);
+  // TEMP PREVIEW SEED — lives in src/data/api-keys.ts (shared with the
+  // notifications feed). Replace with `[]` to exercise the empty state.
+  const [keys, setKeys] = useState<ApiKeyRow[]>(API_KEY_SEED_ROWS);
   const handleCreate = (input: { name: string }) => {
     const suffix = randomHex(4);
     const idCore = randomHex(8);

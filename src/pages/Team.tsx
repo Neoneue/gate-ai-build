@@ -19,7 +19,6 @@ import { IconActionButton } from "@/components/ui/icon-action-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Monogram } from "@/components/ui/monogram";
-import type { AvatarTone } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
 import {
@@ -43,6 +42,11 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
+import {
+  MEMBER_ROWS,
+  type MemberRole,
+  type MemberRow,
+} from "@/data/team-members";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
@@ -179,57 +183,11 @@ function TeamTabsTrigger({
 
 /* ─── Members pane ────────────────────────────────────────────────────── */
 
-type MemberRole = "owner" | "admin" | "member";
-
 const ROLE_LABEL: Record<MemberRole, string> = {
   owner: "Owner",
   admin: "Admin",
   member: "Member",
 };
-
-type MemberRow = {
-  id: string;
-  name: string;
-  email: string;
-  avatarTone: AvatarTone;
-  role: MemberRole;
-  joined: Date;
-};
-
-const MEMBER_ROWS: MemberRow[] = [
-  {
-    id: "usr_chad",
-    name: "Chad Ponticas",
-    email: "chad@constellationnetwork.io",
-    avatarTone: "blue",
-    role: "owner",
-    joined: new Date(2026, 3, 20),
-  },
-  {
-    id: "usr_kira",
-    name: "Kira Tan",
-    email: "kira.tan@acme.io",
-    avatarTone: "rose",
-    role: "admin",
-    joined: new Date(2026, 3, 22),
-  },
-  {
-    id: "usr_mate",
-    name: "Mateus Silva",
-    email: "mateus.silva@ebux.com",
-    avatarTone: "emerald",
-    role: "member",
-    joined: new Date(2026, 4, 1),
-  },
-  {
-    id: "usr_jordan",
-    name: "Jordan Lee",
-    email: "jordan.lee@acme.io",
-    avatarTone: "amber",
-    role: "member",
-    joined: new Date(2026, 4, 8),
-  },
-];
 
 /** Comparable value per sortable column for the Members table. Joined is a
  *  Date → epoch millis (numeric). Role sorts by its display label. */

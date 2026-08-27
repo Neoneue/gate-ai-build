@@ -1,8 +1,7 @@
 # CLAUDE.md — Constellation Gate AI Dashboard
 
-This file intentionally stays minimal to avoid duplicate prompt context.
-It is the shared, committed project-instruction file; the per-area detail
-lives in the reference docs linked below.
+Shared project instructions, kept minimal; per-area detail lives in
+`.claude/rules/` and the reference docs linked below.
 
 ## Local reminders
 
@@ -24,20 +23,11 @@ lives in the reference docs linked below.
   self-loads its design knowledge and binds to `design.md` + `src/index.css` +
   `.claude/rules/`. Only trivial mechanical relocations (verbatim class
   moves, no design judgment) may be direct-edited.
+
 Detailed rules live in `.claude/rules/` and are auto-discovered. The design
 ones (`design-tokens`, `no-hardcoding`, `no-handrolling`) are path-scoped to
 `src/**` and load only when you touch code. `no-thrash` and
 `token-efficient-reads` load always.
-
-- **Visual values are a closed set.** Never invent a color, type size, or
-  tracking. Tokens are defined in `src/index.css`; `npm run lint:design` fails
-  the build on arbitrary colors and `text-[Npx]`.
-- **Never hardcode a color. Tokenize by intent.** A raw ramp step used for a
-  semantic role is still hardcoding, and the linter does NOT catch it.
-- **Never hand-roll a component.** `src/components/ui/` is a closed set. A
-  `className` on a primitive is for LAYOUT ONLY.
-- **Never load capture data whole.** `src/data/request-bodies.ts` is ~450 KB of
-  runtime lookup data, not a file to Read. Exclude it from greps.
 
 ## Reference docs (repo root)
 

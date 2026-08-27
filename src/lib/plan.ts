@@ -24,7 +24,6 @@ const FREE_TWINS = new Set([
   "/models",
   "/token-savings",
   "/limits",
-  "/alerts",
   "/security",
   "/policies",
   "/audit-trail",
@@ -32,6 +31,7 @@ const FREE_TWINS = new Set([
   "/team",
   "/billing",
   "/api-keys",
+  "/notifications",
   "/settings",
 ]);
 
@@ -43,7 +43,6 @@ export const DEFAULT_TWINS = new Set([
   "/models",
   "/token-savings",
   "/limits",
-  "/alerts",
   "/security",
   "/policies",
   "/audit-trail",
@@ -51,6 +50,7 @@ export const DEFAULT_TWINS = new Set([
   "/team",
   "/billing",
   "/api-keys",
+  "/notifications",
   "/settings",
 ]);
 

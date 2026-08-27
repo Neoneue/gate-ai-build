@@ -9,6 +9,53 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-27](./2026-08/changelog-8-27.md)
+
+- Back navigation restores the content scroll
+- Org security events gain the scope tray
+- Channel row icon centers on the first two lines
+
+### [2026-08-25](./2026-08/changelog-8-25.md)
+
+- Checkbox gets a visible disabled state
+- EmptyState gains an optional footnote
+- Bell menu becomes an inbox peek
+- My Notifications page
+- Notification history deepens to 38 real items
+- Checkbox paints indeterminate
+- Segmented options carry count chips
+- Bell windows the whole history; archive and read split
+- Feed bulk select
+- Security-event default flips off per the PRD
+- Limits: spend and usage alerts
+- Feed rows pinned to one height
+- Messages limits never alert
+
+### [2026-08-24](./2026-08/changelog-8-24.md)
+
+- Notification bell returns with a real feed
+- NotificationsMenu: rows, read state, unread dot
+- Alerts page removed
+
+### [2026-08-20](./2026-08/changelog-8-20.md)
+
+- Table row-identifier cells take the copy voice
+- Security event verdict reaches the table
+- Message blocks in the security event modal tighten to 8px
+- Model name drops to the copy voice
+- Provider shows the upstream host
+- Messages table narrows 1580 to 1484
+
+### [2026-08-19](./2026-08/changelog-8-19.md)
+
+- Message column identifies a request on its row
+- Request ids are UUIDs, shown as two segments
+- Tokens In and Out merge into one stacked column
+- Time renders the date in sans, the clock in mono
+- Key column truncates
+- Device name column on the key usage table
+- Messages table column widths, re-measured
+
 ### [2026-08-12](./2026-08/changelog-8-12.md)
 
 - Account management reads as an organization surface

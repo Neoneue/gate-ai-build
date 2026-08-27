@@ -4,8 +4,16 @@ import {
   getRequestFindings,
   REQUEST_ROWS_ALL,
   REQUEST_ROWS_RECENT,
+  requestIdLabel,
   requestRowId,
+  shortRequestId,
 } from "@/data/requests";
+
+/** The shape `gateway_requests.request_id` actually holds: gate-main fills it
+ *  with `randomUUID()`, so both the authored ids and the fallback are UUID
+ *  v4-shaped. `req_*` is a DISPLAY shortening, never a stored value. */
+const UUID_V4 =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe("requestRowId", () => {
   it("prefers the canonical requestId when present", () => {
@@ -24,7 +32,40 @@ describe("requestRowId", () => {
     };
     const id = requestRowId(row);
     expect(id).toBe(requestRowId({ ...row }));
-    expect(id.startsWith("req_")).toBe(true);
+    expect(id).toMatch(UUID_V4);
+  });
+
+  it("gives every row a UUID-shaped id, authored or derived", () => {
+    for (const row of REQUEST_ROWS_ALL) {
+      expect(requestRowId(row)).toMatch(UUID_V4);
+    }
+  });
+
+  it("shortens to the req_ display form gate-main uses", () => {
+    expect(shortRequestId("5ef89e48-0545-40cb-8b7f-9f6045eace37")).toBe(
+      "req_5ef89e"
+    );
+    expect(shortRequestId(null)).toBe("—");
+  });
+
+  it("labels a row with the first two UUID segments", () => {
+    expect(requestIdLabel("5ef89e48-0545-40cb-8b7f-9f6045eace37")).toBe(
+      "5ef89e48-0545"
+    );
+    expect(requestIdLabel(null)).toBe("—");
+  });
+
+  it("keeps row labels unique across every row", () => {
+    // The label is what a person reads on the row, so it has to stay
+    // distinguishing on its own — truncating to two segments must not
+    // reintroduce the collisions the full id was fixed to avoid.
+    const labels = REQUEST_ROWS_ALL.map((r) => requestIdLabel(requestRowId(r)));
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it("keeps row ids unique so deep links cannot collide", () => {
+    const ids = REQUEST_ROWS_ALL.map((r) => requestRowId(r));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

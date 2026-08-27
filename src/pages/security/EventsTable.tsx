@@ -47,6 +47,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -74,6 +75,39 @@ import {
   parseEventTime,
   TYPE_META,
 } from "@/pages/security-data";
+
+/* Analyst verdict on a security event — one mutually exclusive state, not
+ * three toggles. `unreviewed` is where every event starts. Declared here
+ * rather than beside the dialog because the table's Status column reads the
+ * same set. */
+type EventVerdict = "unreviewed" | "confirmed" | "invalid";
+
+const VERDICT_LABEL: Record<EventVerdict, string> = {
+  unreviewed: "Unreviewed",
+  confirmed: "Confirmed",
+  invalid: "Invalid",
+};
+
+// Confirmation copy per verdict. `unreviewed` is a revert, so it's worded as
+// one rather than as a fresh decision.
+const VERDICT_TOAST: Record<EventVerdict, string> = {
+  unreviewed: "Event returned to unreviewed",
+  confirmed: "Event confirmed as a real threat",
+  invalid: "Event marked as invalid",
+};
+
+// Badge variant per verdict — text comes from VERDICT_LABEL so the modal
+// Select and the table column can never disagree on wording.
+const VERDICT_BADGE: Record<EventVerdict, "neutral" | "success" | "warning"> = {
+  unreviewed: "neutral",
+  confirmed: "success",
+  invalid: "warning",
+};
+
+/* Row identity for the verdict map. `requestId` alone is NOT unique — one
+ * request can raise two events (req_8389e4 raises both a PII and a credential
+ * event), so the type is part of the key. */
+const verdictKey = (row: EventRow) => `${row.requestId}-${row.type}`;
 
 export function EventsTableSection({
   range,
@@ -134,6 +168,12 @@ export function EventsTableSection({
   // Closing sets it back to null. Index carried alongside so the modal
   // can derive stable per-row variants (provider/model/tokens/latency).
   const [selectedRow, setSelectedRow] = useState<EventRow | null>(null);
+  // Analyst verdicts, keyed by verdictKey(row). Owned HERE, not in the dialog
+  // body, because the table's Status badge has to survive the dialog
+  // unmounting — closing the modal sets selection → null, which would take
+  // the verdict with it if the state lived inside. Mock UI: in-memory for this
+  // component's session, no backend.
+  const [verdicts, setVerdicts] = useState<Record<string, EventVerdict>>({});
   const { sort, toggle: toggleSort } = useTableSort();
 
   // Deep-link support: ?open=req_* opens the matching event's modal.
@@ -207,13 +247,13 @@ export function EventsTableSection({
   return (
     <>
       <div className="mt-2 flex flex-col gap-4">
-        {/* Recent events — section header on the page background, mirroring
+        {/* Recent security events — section header on the page background, mirroring
           Requests / AuditTrail. Search + filters + Export live here as
           page-level section controls, so they always render (a query that
           returns zero results never hides them). isEmpty governs only the
           Card interior below. */}
         <div className="flex flex-col gap-4">
-          <SectionTitle>Recent events</SectionTitle>
+          <SectionTitle>Recent security events</SectionTitle>
           {/* Container queries, not viewport ones — same conversion as
               RequestsTable. `<main>` declares `@container`, so `@2xl:`
               (672px inline-size) reads the column the toolbar lives in
@@ -432,6 +472,10 @@ export function EventsTableSection({
                     >
                       Action
                     </SortableTableHead>
+                    {/* Status carries the analyst verdict, which is session
+                        state rather than row data — there is no sort value for
+                        it in eventSortValue, so it stays a plain head. */}
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -439,6 +483,7 @@ export function EventsTableSection({
                     const typeMeta = TYPE_META[row.type];
                     const actionMeta = ACTION_BADGE[row.action];
                     const TypeIcon = typeMeta.Icon;
+                    const verdict = verdicts[verdictKey(row)] ?? "unreviewed";
                     return (
                       <TableRow
                         className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent motion-reduce:transition-none"
@@ -490,6 +535,11 @@ export function EventsTableSection({
                             {actionMeta.label}
                           </Badge>
                         </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Badge variant={VERDICT_BADGE[verdict]}>
+                            {VERDICT_LABEL[verdict]}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -518,7 +568,20 @@ export function EventsTableSection({
             }
           }
         }}
+        onVerdictChange={(value) => {
+          if (selectedRow) {
+            setVerdicts((prev) => ({
+              ...prev,
+              [verdictKey(selectedRow)]: value,
+            }));
+          }
+        }}
         selection={selectedRow}
+        verdict={
+          selectedRow
+            ? (verdicts[verdictKey(selectedRow)] ?? "unreviewed")
+            : "unreviewed"
+        }
       />
     </>
   );
@@ -538,9 +601,13 @@ export function EventsTableSection({
 function ThreatEventDetailDialog({
   selection,
   onOpenChange,
+  verdict,
+  onVerdictChange,
 }: {
   selection: EventRow | null;
   onOpenChange: (open: boolean) => void;
+  verdict: EventVerdict;
+  onVerdictChange: (value: EventVerdict) => void;
 }) {
   // Base UI focuses the first tabbable descendant on open. In this modal that
   // is a TextLink near the BOTTOM of the scroll body, so the default would
@@ -556,31 +623,27 @@ function ThreatEventDetailDialog({
         initialFocus={popupRef}
         ref={popupRef}
       >
-        {selection ? <ThreatEventDetailBody row={selection} /> : null}
+        {selection ? (
+          <ThreatEventDetailBody
+            onVerdictChange={onVerdictChange}
+            row={selection}
+            verdict={verdict}
+          />
+        ) : null}
       </DialogScrollContent>
     </Dialog>
   );
 }
 
-/* Analyst verdict on a security event — one mutually exclusive state, not
- * three toggles. `unreviewed` is where every event starts. */
-type EventVerdict = "unreviewed" | "confirmed" | "invalid";
-
-const VERDICT_LABEL: Record<EventVerdict, string> = {
-  unreviewed: "Unreviewed",
-  confirmed: "Confirmed",
-  invalid: "Invalid",
-};
-
-// Confirmation copy per verdict. `unreviewed` is a revert, so it's worded as
-// one rather than as a fresh decision.
-const VERDICT_TOAST: Record<EventVerdict, string> = {
-  unreviewed: "Event returned to unreviewed",
-  confirmed: "Event confirmed as a real threat",
-  invalid: "Event marked as invalid",
-};
-
-function ThreatEventDetailBody({ row }: { row: EventRow }) {
+function ThreatEventDetailBody({
+  row,
+  verdict,
+  onVerdictChange,
+}: {
+  row: EventRow;
+  verdict: EventVerdict;
+  onVerdictChange: (value: EventVerdict) => void;
+}) {
   const navigate = useNavigate();
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row);
@@ -599,17 +662,16 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
 
   // Analyst verdict — one mutually exclusive state, owned by the footer
   // Select (replaces the former title-row flag button + "Invalid" badge,
-  // 2026-07-29). `unreviewed` is the default; State resets naturally on
-  // unmount when the dialog closes (selection → null unmounts this
-  // component).
-  const [verdict, setVerdict] = useState<EventVerdict>("unreviewed");
+  // 2026-07-29). Lifted to EventsTableSection so the table's Status badge
+  // outlives this component: `unreviewed` is still the default, but the value
+  // now arrives as a prop and persists across close/reopen.
 
   // Analyst note — a free-text annotation on the event, authored in a nested
   // dialog that opens OVER this one (the event detail stays behind it).
   // `note` is the committed value; `noteDraft` is what the textarea binds to,
   // so Close can discard an edit without touching what was saved. Mock UI:
-  // there is no backend, and the state unmounts with the dialog exactly like
-  // `verdict` above.
+  // there is no backend, and this state (unlike `verdict`) still unmounts with
+  // the dialog.
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
   const [noteDraft, setNoteDraft] = useState("");
@@ -655,7 +717,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
                 Message
               </span>
             </h3>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {reconciled ? (
                 <div className="type-copy-14 max-h-[200px] overflow-y-auto overscroll-contain text-pretty rounded-md border border-border px-4 py-3 text-foreground">
                   {reconciled.evidence}
@@ -834,7 +896,7 @@ function ThreatEventDetailBody({ row }: { row: EventRow }) {
           <Select
             onValueChange={(next) => {
               const value = next as EventVerdict;
-              setVerdict(value);
+              onVerdictChange(value);
               toast.success(VERDICT_TOAST[value]);
             }}
             value={verdict}

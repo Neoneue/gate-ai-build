@@ -117,7 +117,7 @@ affordance.
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
 | Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
 | Gateway | models → `/models` |
-| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, settings → `/settings` |
+| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
 
@@ -156,13 +156,13 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 
 **Twin inventory.** Both suffix sets cover the same 15 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
-`/limits`, `/alerts`, `/security`, `/policies`, `/audit-trail`, `/activity`,
-`/team`, `/billing`, `/api-keys`, `/settings` — with two spelling quirks: the
+`/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`,
+`/team`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
 Security `-default` twin answers on **both** `/events-default` and
 `/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
 render `Requests*.tsx` because the route was renamed but the components were
-not. `/alerts` (added 2026-08-05) sits in the Manage section between Limits and
-Token Savings, `locked: true`, with `Alerts*.tsx` twins.
+not. (An Alerts page lived at `/alerts` from 2026-08-05 until its removal on
+2026-08-24, superseded by the My Notifications + Limits-alerts plan.)
 
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
@@ -246,18 +246,24 @@ type EventCategory   = 'injection' | 'pii' | 'phi' | 'credential'
 ### 3.2 API Keys
 
 ```typescript
-// Defined in: src/pages/ApiKeys.tsx
+// Defined in: src/data/api-keys.ts (lifted out of ApiKeys.tsx 2026-08-24 so
+// the notifications feed can read the seed without importing the page chunk)
 interface ApiKeyRow {
-  id:          string          // "prod-web", "prod-agent", "test-key"
-  name:        string
-  masked:      string          // "sk-gw-438" — display-only
+  id:          string          // "sk-gw-c4aeb3a8" — full id, matching/dedup
+  name:        string          // "prod-web", "prod-agent", …
+  masked:      string          // "sk-gw-…c4ae" — display-only
   requests7d:  number[]        // 7-element sparkline
-  lastUsed:    Date
+  createdAt:   Date
+  lastUsed:    Date | null     // null = never used
   revoked?:    boolean
 }
 ```
 
-Canonical seed: 3 keys (prod-web, prod-agent active; test-key revoked). Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
+Canonical seed: `API_KEY_SEED_ROWS`, 4 keys (prod-web, prod-agent,
+design-agent active; test-key revoked). The page seeds
+`useState(API_KEY_SEED_ROWS)` and still owns mutation. Named to avoid
+`activity-data.ts`, which exports a DIFFERENT `ApiKeyRow`/`API_KEY_ROWS` pair
+for the Activity usage tables. Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
 
 ### 3.3 Requests (Messages page)
 
@@ -280,7 +286,9 @@ interface RequestRow {
   slow?:           boolean
   cost:            number
   guardrailReason?: GuardrailReason
-  requestId?:      string         // links Security events → this request
+  requestId?:      string         // UUID v4; links Security events → this request
+  summary?:        string         // authored trace-step label
+  toolName?:       string         // tool-call rows; args live in request-bodies
 }
 ```
 
@@ -288,6 +296,39 @@ interface RequestRow {
 the same string the gateway takes as a handle. It is **not** a display name:
 surfaces render `modelName(row.model)` and keep the id visible as the mono
 sub-line. See §3.6a.
+
+**`requestId` is a UUID v4, not a `req_*` string (changed 2026-08-19).**
+Grounded in gate-main: `gateway_requests.request_id` is a `text` column
+(`packages/database/src/entities/gateway-request.entity.ts`) filled by
+`randomUUID()` in `apps/gateway-proxy/src/proxy/proxy.service.ts`
+`createContext()`. There is no prefix and no `x-request-id` header override.
+`req_*` is a **display shortening**, applied by gate-main's
+`shortRequestId()` (`dashboard-web/src/pages/Conversations.tsx`) as `req_` +
+6 hex; the Messages detail modal shows the full raw UUID. Storing the
+abbreviation as the value was backwards, so 123 authored ids and the 102
+matching `REQUEST_BODIES` keys were migrated in lockstep to deterministic
+UUID-shaped dummy values. Body keys are now **quoted** — a UUID is not a bare
+identifier. The 8 `req_*` occurrences inside `SHARED_TRANSCRIPT_*` blobs are
+illustrative code samples and were left alone.
+
+Three helpers in `src/data/requests.ts`, all tested:
+
+| Helper | Returns | Used by |
+| --- | --- | --- |
+| `requestRowId(row)` | full UUID (authored, else derived) | routing, `/messages-findings/:id`, body lookup |
+| `requestIdLabel(id)` | first two segments, `xxxxxxxx-xxxx` | the Messages table row |
+| `shortRequestId(id)` | `req_` + 6 hex — mirrors gate-main | space-constrained surfaces |
+
+The derived branch seeds on conversation + code + day + time + model + key +
+tokens + latency, **not** conversation + code alone. The old
+`req_${conv8}${code}` fallback collided on every row of a session sharing a
+status code: 153 rows produced 133 distinct ids, leaving 20 rows unreachable
+at `/messages-findings/:id` (they resolved to whichever row `find()` hit
+first). A uniqueness test pins this, and a second test pins that truncating
+to two segments does not reintroduce the collision.
+
+`cnv_*` needs no such change — it already matches gate-main's
+`conversationLabel()`: `cnv_` + 8 hex off the session UUID.
 
 ### 3.4 Security Events
 
@@ -525,13 +566,15 @@ interface PolicyState {
 
 // Defined in: src/pages/Limits.tsx
 interface Limit {
-  id:        string
-  name:      string
-  type:      string           // 'spend' | 'tokens' | 'requests'
-  threshold: number
-  period:    string           // '1h' | '1d' | '1w' | '1mo'
-  scope:     string           // org-wide, project-level, key-level
-  used:      number
+  id:          string
+  name:        string
+  type:        string         // 'spend' | 'tokens' | 'requests'
+  threshold:   string         // numeric string; $/commas parsed for sort
+  period:      string         // '1h' | '1d' | '1w' | '1mo'
+  scope:       string         // org-wide, key-level
+  used:        string         // numeric string
+  enforcement: string         // 'block' (429) | 'notify' (alert only) — 2026-08-25
+  alerts:      number[]       // relative alert percents, subset of 50|80|100
 }
 ```
 
@@ -583,6 +626,72 @@ interface ProviderMeta {
 // MARKETPLACE_META on 2026-08-03 — the First-party / Marketplace split it
 // named does not exist in prod.
 ```
+
+### 3.10 Notifications (bell feed)
+
+```typescript
+// Defined in: src/data/notifications.ts (2026-08-24, notifications PRD phase 1)
+type NotificationKind = 'security' | 'message' | 'billing' | 'api-key' | 'team';
+
+type NotificationItem = {
+  id:        string;   // "n-<kind>-<source row id>" — traces to a real row
+  kind:      NotificationKind;
+  title:     string;   // PRD catalog naming ("Security event", "API key created", …)
+  copy:      string;
+  at:        Date;
+  href:      string;   // deep link to the fired thing
+  unread:    boolean;  // static default; the menu layers runtime read state on top
+  Icon:      IconType;
+  iconColor?: string;  // var(--color-*), inline-styled — security items only
+};
+```
+
+**Everything derives** (no synthetic data). `NOTIFICATION_HISTORY` (38
+items, uncapped, newest-first) is one item per real entity row: every
+security event (`security-data.ts EVENT_ROWS`, per-category icon/color from
+`TYPE_META`, href `/security?open=<requestId>`), the guardrail-touched recent
+messages (`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>`
+— the UUID, never the `req_*` display id), every key mint
+(`API_KEY_SEED_ROWS` → `/api-keys`; revokes carry no date so they stay out),
+every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
+(`src/data/team-members.ts MEMBER_ROWS` → `/team`). Unread defaults: the
+2026-06-06 band ships unread (~15 items); older history ships read.
+`NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
+still exported, but **the bell no longer uses it as its list bound**
+(2026-08-25): the menu reads the whole non-archived history and windows the
+render 8 rows at a time, so its counts are global and agree with the page.
+One array, shared ids, shared read state by construction.
+
+**Read state is in-memory, demo-lifecycle** (`src/data/notifications-store.ts`,
+range-store pattern + `useSyncExternalStore`): `{readIds, archivedIds}` Sets,
+mutators `markRead` / `markAllRead` / `archiveOne` / `archiveAll`. The two sets
+are **independent axes** (2026-08-25, superseding "archiving implies read"):
+read = "seen it", archived = "where it lives", so an archived row can still be
+unread and renders at full ink on the Archive tab. `archiveOne` / `archiveAll`
+touch `archivedIds` only. NO localStorage:
+state survives SPA navigation (module scope) and resets on refresh so the
+unread flow can be re-demoed. Read/unread renders Gmail-style: whole-row
+`text-foreground` (unread) vs `text-muted-foreground` (read), no row dots;
+only the bell button keeps a corner dot (`bg-destructive`).
+
+**The preference model is separate** (`src/data/notification-catalog.ts`):
+the PRD §4 catalog (13 types, 5 groups, default-on flags), channel prefs,
+email frequency, security scope, and the org catalog. Default-on = spend limit
+reached, payment failed, PAYG balance low; security-event is OFF by default
+per the PRD, and the Pro configured seed leaves it off too (2026-08-25). Prefs DO persist —
+localStorage `notifications.prefs.v1` — unlike read state.
+
+`NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
+the latest instant in the mock data) is the feed's clock; relative labels
+render via `fmtRelative(at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`
+(anchor param added for this). Catalog types without backing rows
+(spend-limit-reached, payment-failed, PAYG-low — auto-recharge threshold is
+0) stay out until the My Notifications page phase.
+`notifications.test.ts` pins id uniqueness (whole history), the bell cap and
+its slice relation to the history, newest-first order, `at <=
+NOTIFICATIONS_NOW`, kind/`KIND_META` completeness, and that every href
+resolves (security `?open=` ids exist; message params survive the
+RequestsFindings lookup).
 
 ---
 
@@ -804,9 +913,14 @@ function buildSpark(total: number, seed: number): number[]
 | `MODELS` | `src/data/models.ts` | `Model[]` | 25 |
 | `MODEL_ROWS` | `src/pages/activity-data.ts` | usage rows, keyed by catalog id | 7 |
 | `API_KEY_ROWS` | Activity | key usage rows | 10 |
-| `MEMBER_ROWS` | Team | `MemberRow[]` | 4 |
+| `MEMBER_ROWS` | `src/data/team-members.ts` (lifted from Team.tsx 2026-08-25) | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
+| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
+| `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
+| `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
+| `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
+| `NOTIFICATION_CATALOG` | `src/data/notification-catalog.ts` | `NotificationType[]` | 13 |
 
 Conversation message threads are no longer a static array — `getConversationDetail()`
 (`src/data/conversationDetail.ts`) derives `{ trace, messages }` per conversation
@@ -817,6 +931,15 @@ its `VOLUME_DATA` / `RECENT_REQUESTS` seeds; it reads `REQUEST_ROWS_RECENT`,
 `SECURITY_FEED` currently has **no importers** — it fed the SecurityDefault
 upsell ticker that was replaced by the empty state. Kept as a ready-made
 48-event array; delete it or wire it up rather than letting it rot silently.
+
+**`src/data/redact.ts`** is the single implementation of the PII/credential
+masking rule (added 2026-08-19). Any surface that reconstructs captured
+message text runs its string through `redactFindings(findings, text, opts)`
+before rendering, so a value the gateway caught on ingress is never
+re-exposed. Two callers today: `conversationDetail.ts`'s `redactUserBody`
+(role-scoped to `user`) and the Messages table's `messagePreview`
+(all roles — see §Messages page). Add callers here rather than reimplementing
+the loop; two copies that can disagree is exactly the failure this replaced.
 
 ---
 
@@ -897,6 +1020,90 @@ page-only.
 **Table:** sortable columns via `<SortableTableHead>` + `requestSortValue(row,key)`
 accessor; sorted after filtering. Cost column stays plain (interactive tooltip).
 
+**Message column (added 2026-08-19).** Sits between Model and Conversation and
+answers the PRD complaint that a session's hundreds of rows all read the same:
+Conversation carries per-_conversation_ identity (title + `cnv_*`, identical on
+every row of a session), so Message carries per-_request_ identity — what this
+request said, over `requestIdLabel(requestRowId(row))`. Same two-line shape as
+Conversation: `type-copy-14` truncating line, `type-mono-12` muted line below.
+
+Text resolution lives in `src/pages/requests/message-preview.ts`, **not** in
+`./data`. That module is the only thing on the page needing
+`@/data/request-bodies` (~440 KB of transcripts), so keeping it separate stops
+the blob from riding along with the row data. RequestsTable wraps
+`requestSortValue` locally to add the `message` key for the same reason —
+`./data` deliberately has no `message` case.
+
+Resolution order, most specific to least (coverage measured over 153 rows):
+
+| Source | Rows | Why |
+| --- | --- | --- |
+| `body.userMessage` first line, leading `User:` stripped | 13 | the real user turn |
+| `body.toolArgs` first line | 89 | the actual call — already prefixed `Bash:` / `Read:` by the data |
+| `row.summary` | ~51 | last resort: for a Bash row it reads `tool: Bash`, which names the tool and says nothing |
+| none → em dash + `sr-only` note | 51 | the legacy `cnv_*` sessions carry no body; never fabricate a preview |
+
+**Masking is mandatory on this column.** Whatever text wins is run through
+`redactFindings` (`src/data/redact.ts`) before it leaves `messagePreview`.
+Four rows leaked real email addresses before this existed — truncation hid
+them at the column width, but the DOM and the tooltip carried them in full.
+`redact.ts` is the single implementation of the rule, shared with
+`conversationDetail.ts`'s `redactUserBody`, so the table, the transcript, and
+the request-detail redaction diff cannot disagree. The preview masks findings
+of **every** role while the transcript scopes to `user`: the transcript knows
+which bubble it is rendering, but this one line can be a user turn OR a tool
+call, so role-scoping would leave a hole. `message-preview.test.ts` fails if
+any finding's `match` ever reaches a preview again.
+
+Full text stays reachable from the row via the `Tooltip` primitive (the same
+one the Time cell uses) rather than a native `title`, which is slow and has no
+touch or keyboard path. The trigger is the text span itself, so it adds no tab
+stop — the row's only keyboard target remains the drill-in link in the Model
+cell.
+
+**Column geometry.** `table-fixed` + `min-w-[1484px]` (narrowed from 1780 in
+six measured steps, 2026-08-20; the full history and the measurement method
+live in the long comment above the `<Table>` in `RequestsTable.tsx` — trust
+that comment, do not re-derive widths by eye). Tokens In/Out merged into one
+stacked Tokens column, so the table is 10 columns. The declared percentages
+sum to **94, not 100 — deliberate and load-bearing**: `table-fixed` hands the
+spare six points back proportionally, and 1484 is exactly the floor at which
+an unnarrowed column keeps its pixel width (Time = 9.5/94 × 1484 ≈ 150px).
+
+| Column | % | px @ 1484 | measured need |
+| --- | ---: | ---: | ---: |
+| Time | 9.5% | 150 | 138 |
+| Status | 6.0% | 95 | 92 |
+| Security | 6.5% | 103 | 100 |
+| Model | 12.0% | 189 | 156 |
+| Message | 15.5% | 245 | elastic |
+| Conversation | 15.5% | 245 | elastic (401 to stop truncating) |
+| Key | 8.5% | 134 | 125 |
+| Tokens | 8.5% | 134 | 121 (header-bound) |
+| Latency | 6.5% | 103 | 92 |
+| Cost | 5.5% | 87 | 74 |
+
+Message and Conversation are the only columns allowed to truncate — they are
+the only ones whose content is unbounded. Every value column renders whole at
+any width. Row height is a uniform 61px and stays uniform at 1512 / 768 /
+613px; the page itself never scrolls sideways, only the table's own
+`overflow-x-auto` container.
+
+One known tension, open (the old badge-column tension was resolved by the
+2026-08-20 half-point trims; Status and Security now carry +3px, the tightest
+margin in the table and spent — do not narrow them further):
+
+- **`min-w-[1484px]` still side-scrolls** inside its container at every
+  supported width. Accepted deliberately, but it contradicts the
+  Message-column PRD's "table still fits without horizontal scrolling"
+  criterion. Fitting the table into the 1226px content column is not a tuning
+  problem: the eight non-elastic columns need 898px measured, leaving ~328px
+  to split between Message and Conversation.
+
+The stale body-cell widths (`w-48` on Time, `w-28` on the badges, `w-60` on
+Model, `max-w-[320px]` on Conversation) were removed — under `table-fixed`
+they were inert and only misled.
+
 **Hero views (`HERO_VIEWS`):** Per `RangeKey` spec with total, success/error/slow counts, sparkline data, tick labels.
 
 ---
@@ -973,6 +1180,13 @@ headers stay at 16px; `RequestTracePanel`'s timeline track shifts to x=36px
 **Purpose:** Real-time threat detection log — injection, PII, credential events.
 
 **State:** Same `range/customRange/query/type/keyFilter/action/page/rowsPerPage` + `selectedRow: EventRow | null`.
+
+**Analyst verdict (`e7a08f5`, 2026-08-20):** the events table (section title
+"Recent security events") carries a trailing **Status** column whose badge
+reflects the verdict set in the event modal. Verdict state lives in
+`EventsTableSection`, NOT the dialog body — closing the modal unmounts the
+dialog along with the selection, so state set there would be lost. Keyed on
+`requestId + type`, because one request can raise two events.
 
 **No incoming deep-link** (Security does not accept `?open=`).
 
@@ -1052,23 +1266,29 @@ Python / cURL tabs)
 
 ### Limits page (`/limits` → `Limits.tsx`)
 
-**Purpose:** Spend / token / request rate caps. (Renamed from "Guardrails" 2026-06-01; the Requests `GuardrailAction` axis in §3.1 is a separate concept and was not touched.)
+**Purpose:** Spend / token / request rate caps, plus the notifications PRD's
+§10.2 spend/usage alerts (2026-08-25). (Renamed from "Guardrails" 2026-06-01;
+the Requests `GuardrailAction` axis in §3.1 is a separate concept and was not
+touched.)
 
-**State:** `createOpen: boolean`, `limits: Limit[]`
+**State:** `createOpen: boolean`, `limits: Limit[]` (in-session, starts empty —
+nothing seeded)
 
-**Dialog fields:** Name, Type (`LIMIT_TYPES`), Threshold, Period (`LIMIT_PERIODS`), Scope (org-wide, key-level)
+**Dialog fields:** Name, Type (`LIMIT_TYPES`), Threshold, Period
+(`LIMIT_PERIODS`), Scope (org-wide, key-level), Enforcement
+(`LIMIT_ENFORCEMENTS`: Block / Notify only), Alerts (`ALERT_PERCENTS` 80/100 (the PRD's example set)
+checkboxes, default 80+100 via `DEFAULT_ALERT_PERCENTS`)
 
----
-
-### Alerts page (`/alerts` → `Alerts.tsx`, added 2026-08-05)
-
-**Purpose:** Create/manage alert rules and triage their firings. Manage nav, between Limits and Token Savings, `locked: true`, with `-default`/`-free` twins.
-
-**Module (`src/pages/alerts/`):** `types.ts` (`AlertRule`, `AlertEvent`, structured `AlertWindow = {count, unit}`, severities `info`/`warning`/`critical`, conditions `cost_threshold`/`error_rate`/`tokens_per_hour`/`security_events`/`latency_p95`, channels email/slack/webhook), `data.ts` (`observedValue` + `formatObservedValue` + `formatWindow` + seeds/templates + `validateChannelTarget`), `view.ts` (badge/icon maps, sort accessors, `FiringRow` join), `glyphs.tsx` (`ChannelGlyph`/`ConditionIcon`/`SeverityIcon`), `AlertRuleWizard.tsx`, `AlertEventDialog.tsx`.
-
-**No synthetic data.** Every observed value derives from the real 7-day workload / security constants; `observedValue` returns `null` past a 7-day-equivalent window and the wizard preview shows a "not enough history yet" line rather than a fabricated number.
-
-**Tabs:** Rules (default) + Events (open-firings count chip). **Rules table:** Name · Condition · Threshold · Time window · Severity · Channels · Last fired · Enabled · Actions; "Last fired" cross-links to Events pre-filtered to that rule. **Create/edit wizard** (centered Dialog, `Stepper`): Choose condition → Configure rule (live observed preview, count+unit window, severity tiles with Policies-style selected tones) → Notification channels (validated rows). **Events tab:** firing table + `AlertEventDialog` with per-channel delivery dots and acknowledge/resolve lifecycle reflected in the row + count chip.
+**Alerts phase (PRD §10.2, 2026-08-25):** one table, one create flow — a
+standalone threshold alert IS a notify-only limit, so there is no second
+section and no Alerts page. The Messages type never alerts (PRD triggers are
+spend/tokens/security only): selecting it unmounts the Enforcement and Alerts
+blocks and the row commits as block with no marks. Notify-only holds the 100% mark checked+disabled
+(derived, not stored). Table gained Enforcement (filled `secondary` chip for
+BLOCK vs hollow `outline` for NOTIFY) and Alerts (`80% · 100%` or `—`) columns;
+ten explicit widths on a `min-w-[1400px]` `table-fixed` table (Name 17% widest,
+Scope 13% second). No channel picker and no delivery copy on this page —
+channels stay single-sourced on `/notifications`.
 
 ---
 
@@ -1187,6 +1407,14 @@ sort, query, page, rowsPerPage              // UsageByKey table
 
 **Chart geometry is shared, not per-page.** `src/components/ui/chart-geometry.tsx` is the single source for margin, Y-axis reserve, tick typography (`fontSize: 10` — the type-scale floor; 11 was off-scale and is gone) and the tick renderers, imported by TrendCard, Overview's "Tokens used" (`Dashboard.tsx`), `Security.tsx`, and `requests/HeroMetric.tsx`. The left reserve lives in the YAxis `width`, never `margin.left`, so the Y tick column stays pinned to the card's content edge; X labels are centre-anchored on their bars, ends included, via an explicit `ticks` array + `interval={0}` (recharts' `preserveStartEnd` clamps the ends off their bars and thins interior ticks unevenly). Bar count folds by column width on a monotonic ladder (30/15/10/6 — `getBucketGroupSize` in `activity/chart-helpers.ts`), summing adjacent buckets so totals still reconcile, with `bucketLabel` tracking the aggregated size. The old `useMediaQuery` bar reduction and first/last tick anchoring are deleted. Per-key rows in the UsageByKey table derive from the canonical `API_KEY_ROWS` in `activity-data.ts` (the shared per-key source).
 
+**Device name column (2026-08-19):** `ApiKeyRow.device` is a left-aligned, sortable column between Users and Messages. It is never authored inline on the row — the `API_KEY_ROWS` builder resolves it as `seed.device ?? deviceFor(seed.owner)`. `DEVICE_BY_OWNER` in `activity-data.ts` holds each person's DEFAULT device (Chad Ponticas → Macbook Pro, Kira Tan → Coding PC, Mateus Silva → Mac mini m4, Jordan Lee → OpenClaw PC); a seed may override it when a key is used from a second machine. Chad's `prod-agent` does exactly that with `device: "Macbook Air"`, so one person appears on two devices while his `prod-web`, `design-agent`, and `test-key` stay on the Macbook Pro.
+
+**Owner and device are independent axes — do not derive one from the other.** The backend keys devices by device ID per request, so a person with two machines legitimately produces two device names under one owner name. The map stands in for that lookup; owners mirror `Team.tsx` `MEMBER_ROWS`, and an unmapped owner renders an em dash.
+
+**UsageByKey column geometry (2026-08-19):** `table-fixed` + `min-w-[1168px]`. The three text columns (Key / Users / Device name) each carry an explicit `w-[14%]` — 163px at the min-width against the 124px an even ninth gives — and the six numeric columns stay unspecified so `table-fixed` splits the remaining 58% equally between them (9.667% each). Do not hand-author those six percentages; six fractional values that must re-sum to 100 is exactly the maintenance trap the omission avoids. Measured in-browser at a 1226px table: text columns 171.6px, numeric columns 118.5px, and the widest numeric header ("Tokens out", 61.1px of `type-label-12`) clears its 95px content box with room to spare. `SortableTableHead`'s `max-w-1/2` clamps the button hit-area, not the text, so a label wider than half the cell still renders in full rather than clipping.
+
+Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title` with the full value (the `<span className="block truncate" title>` pattern). `1ch` of Geist Variable at 14px measures 9.29px, so the 20ch cap is a 185.8px box, while a typical mixed-case name averages 7.14px per character. The upshot: the column edge is the binding constraint below a ~1500px table and the 20ch cap above it, and because 14% lands the content box near 140-148px, both land at roughly 20 characters across the whole range — which is the intent. The Key cell's label span needs `min-w-0` to shrink inside its `inline-flex`, and the Revoked badge needs `shrink-0` so it never absorbs the squeeze.
+
 ---
 
 ### Team page (`/team` → `Team.tsx`)
@@ -1196,6 +1424,16 @@ sort, query, page, rowsPerPage              // UsageByKey table
 **State:** `inviteOpen: boolean`, `tab: 'members'|'invitations'`, filters, pagination.
 
 **Roles:** `AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink'`
+
+---
+
+### My Notifications page (`/notifications` → `Notifications.tsx`, added 2026-08-25)
+
+**Purpose:** Notifications PRD phase 2 — the pre-configured catalog with per-type channel selection, email frequency, security-event scope, org-level section, and the in-app feed as a two-tab inbox. Vercel's My Notifications is the visual reference; composition matches Settings (SectionTitle above data-only cards).
+
+**Variant props** (single source; twins are thin): `seed` ("configured" | "default"), `persist` (hydrate + write `notifications.prefs.v1`), `showOrgSection`, `hasFeed`. Pro = all defaults; Free = no org section; Default = PRD defaults, nothing persisted, empty feed.
+
+**Sections:** Delivery channels card (In-app + Email masters with `Switch`es; Email reveals the frequency multi-select and the address — `text-foreground` mono + a `Pencil` icon-button to /settings; masters gate the checkbox columns below as disabled-but-preserved; toast on Email off). Five catalog sections (`NOTIFICATION_GROUPS`) with right-aligned Email/In-app column headers and per-type `Checkbox` pairs; the Security event row grows a scope tray (divider seam, no fill; all-vs-narrowed with policy/action/rate filters in a `bg-card-muted` bordered panel). Organization section (Pro, in-memory). Recent notifications: Inbox/Archive line tabs with `TabsCount` chips (Inbox chip = unread among non-archived, Archive chip = total archived) over a real `Table` (Notification / Detail / Time / Actions), per-row `IconActionButton` archive, `NavTableRow` clickable rows (mark read + deep link), Gmail-style whole-row read ink **on BOTH tabs** — an archived-but-unread row is bright, since read and archived are independent axes (§3.10, 2026-08-25) — per-tab `TablePaginationFooter` (default 10) over `NOTIFICATION_HISTORY` (38). Empty bands are title + body only (the Inbox-emptied band's `footnote` pointer was dropped 2026-08-25; the `EmptyState` slot itself stays). Read state = the in-memory store (§3.10): survives SPA nav, resets on refresh by design.
 
 ---
 
@@ -1290,11 +1528,19 @@ only where a modal is still the target:
   `conversationId` / row id → `setSelectedRow(matched)` → URL cleaned via
   `onOpenChangeComplete` (NOT `onOpenChange`) to avoid dismiss-flicker.
 
+**The notifications bell is a producer of both mechanisms** (2026-08-24):
+every `NotificationItem.href` in `src/data/notifications.ts` targets one of
+the routes above — `/security?open=`, `/messages-findings/:requestId`, or a
+plain page route (`/billing`, `/api-keys`, `/team`) — and the menu navigates
+on item click.
+
 **Other deep-link params:**
 
 - `Dashboard.tsx?metric=tokens|spend` and `?dim=model|provider|apiKey` — the Overview usage chart seeds its state from the URL on mount and writes each change back with `setSearchParams(..., { replace: true })`. Two-way, unlike the params below.
 - `Activity.tsx?range=24h|7d|30d|all` — read once on mount via `useSearchParams`, set state, then ignore. Manual range changes don't sync back to the URL (one-way).
 - `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
+- `Notifications.tsx?tab=archive` — selects the feed's Archive tab. Uses the `?open=`-style render-phase compare (NOT the mount-only `?range=` shape) because a producer can fire on the already-mounted route (the bell lives in this page's own top bar); a manual tab click strips the param via `setSearchParams(..., { replace: true })`, re-arming it for the next click. **No in-app producer since 2026-08-25** (the bell's archived-empty explainer was removed) — the param stays supported because the URL remains valid and shareable.
+- `Notifications.tsx?view=feed` — scrolls the Recent-notifications section into view. Produced by the bell's "View all notifications" footer row, since the page opens at the top and the feed is its last section. Same render-phase-compare + strip contract as `?tab=archive`, and for the same reason: the common case is a param change on the already-mounted route. `scrollIntoView({ block: "start" })` on the section wrapper, `behavior` gated by the house `REDUCE_MOTION` snapshot (`src/lib/reduce-motion.ts`). The header gear deliberately navigates to bare `/notifications` — it is the settings link, so it lands on the catalog.
 - `BillingFree.tsx?manage=1` — opens the plan-comparison dialog on mount, stripped on close via `setSearchParams(..., { replace: true })`, same contract as `?create=1`. Fed by the sidebar upgrade CTA (§2). `BillingDefault.tsx` renders `BillingFree`, so the param works on both `-default` and `-free`.
 - `SetupManual.tsx?bill=byok|payg` — the only param that selects page CONTENT rather than opening a surface. Read on every render (not just mount), defaults to `byok` for any other value, and drives title/subtitle/context strip/back target. Both values are live entry points: `/overview-default` links to `payg`, `/setup-connect-default` to `byok`.
 
@@ -1463,6 +1709,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
+| `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. `w-100` (400px) surface. Renders the whole non-archived `NOTIFICATION_HISTORY` — **not** the newest-8 peek (changed 2026-08-25) — as full-bleed button rows in a `max-h-96 overflow-y-auto` band: `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots); item click = mark read → close → `navigate(href)`. **Windowed render:** 8 rows, +8 per bottom-reach, via a zero-height IntersectionObserver sentinel as the scroll region's last child (`rootMargin: 96px`, root = the band — the `ScrollBottomSentinel` pattern from `ask-ai-scroll-to-latest.tsx`); window resets to 8 on open and on tab switch (which also resets `scrollTop`). **Counts are global:** badge presence, `aria-label` count and the Unread tab's `TabsCount` chip all read one `unreadCount` = unread among ALL non-archived history, the same number as the page's Inbox chip. Unread/All `Segmented` tabs — the Unread option carries its count through `Segmented`'s `options[].count`, which composes the shared `<TabsCount>` (memoize the options array: it is a dep of the pill variant's measuring layout effect). All tab is uncounted. Actions are tab-scoped and both act on the full list, never the window: "Mark all as read" sweeps the whole history, "Archive all" files every non-archived row. Persistent footer row: quiet full-width ghost `View all notifications` → `/notifications?view=feed`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |

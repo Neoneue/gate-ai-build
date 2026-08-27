@@ -15,15 +15,6 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );
-const Alerts = lazy(() =>
-  import("@/pages/Alerts").then((m) => ({ default: m.Alerts }))
-);
-const AlertsDefault = lazy(() =>
-  import("@/pages/AlertsDefault").then((m) => ({ default: m.AlertsDefault }))
-);
-const AlertsFree = lazy(() =>
-  import("@/pages/AlertsFree").then((m) => ({ default: m.AlertsFree }))
-);
 const ApiKeys = lazy(() =>
   import("@/pages/ApiKeys").then((m) => ({ default: m.ApiKeys }))
 );
@@ -61,6 +52,19 @@ const LimitsFree = lazy(() =>
 );
 const Upgrade = lazy(() =>
   import("@/pages/Upgrade").then((m) => ({ default: m.Upgrade }))
+);
+const Notifications = lazy(() =>
+  import("@/pages/Notifications").then((m) => ({ default: m.Notifications }))
+);
+const NotificationsDefault = lazy(() =>
+  import("@/pages/NotificationsDefault").then((m) => ({
+    default: m.NotificationsDefault,
+  }))
+);
+const NotificationsFree = lazy(() =>
+  import("@/pages/NotificationsFree").then((m) => ({
+    default: m.NotificationsFree,
+  }))
 );
 const Models = lazy(() =>
   import("@/pages/Models").then((m) => ({ default: m.Models }))
@@ -296,7 +300,6 @@ export default function App() {
             <Route element={<Limits />} path="/limits" />
             <Route element={<LimitsDefault />} path="/limits-default" />
             <Route element={<LimitsFree />} path="/limits-free" />
-            <Route element={<Alerts />} path="/alerts" />
             <Route element={<Upgrade />} path="/upgrade" />
             <Route element={<Security />} path="/security" />
             <Route element={<SecurityDefault />} path="/events-default" />
@@ -306,6 +309,7 @@ export default function App() {
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/team" />
+            <Route element={<Notifications />} path="/notifications" />
             <Route
               element={<Settings showCancelPlan={false} />}
               path="/settings"
@@ -321,7 +325,6 @@ export default function App() {
               path="/conversations-default"
             />
             <Route element={<ModelsDefault />} path="/models-default" />
-            <Route element={<AlertsDefault />} path="/alerts-default" />
             <Route
               element={<TokenSavingsDefault />}
               path="/token-savings-default"
@@ -334,18 +337,22 @@ export default function App() {
             <Route element={<ActivityDefault />} path="/activity-default" />
             <Route element={<TeamDefault />} path="/team-default" />
             <Route element={<BillingDefault />} path="/billing-default" />
+            <Route
+              element={<NotificationsDefault />}
+              path="/notifications-default"
+            />
             <Route element={<SettingsDefault />} path="/settings-default" />
             {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
             <Route element={<RequestsFree />} path="/messages-free" />
             <Route element={<ConversationsFree />} path="/conversations-free" />
             <Route element={<ModelsFree />} path="/models-free" />
-            <Route element={<AlertsFree />} path="/alerts-free" />
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
             <Route element={<ActivityFree />} path="/activity-free" />
             <Route element={<TeamFree />} path="/team-free" />
             <Route element={<ApiKeysFree />} path="/api-keys-free" />
+            <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />

@@ -36,7 +36,10 @@ front-end-developer/
 # the committed UI change logs live in change-logs/ (tracked) instead.
 docs/
 gateway-fixes.md
-handoff.md
+# Anchored: the private resume scratchpad is the ROOT handoff.md only. Without
+# the leading slash this pattern matched at any depth and silently ignored
+# .claude/commands/handoff.md (the /handoff command), which must stay tracked.
+/handoff.md
 .rams-capture/
 .playwright-mcp/
 

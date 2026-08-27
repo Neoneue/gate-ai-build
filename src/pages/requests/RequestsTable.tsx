@@ -43,7 +43,13 @@ import {
 } from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import { modelName } from "@/data/models";
-import { isByokKey, REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
+import {
+  isByokKey,
+  keyLabel,
+  REQUEST_ROWS_ALL,
+  requestIdLabel,
+  requestRowId,
+} from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import {
   conversationTitle,
@@ -54,6 +60,7 @@ import {
   responseLabel,
   responseVariant,
 } from "./data";
+import { messagePreview } from "./message-preview";
 import type { CustomRange, RangeKey, RequestRow } from "./types";
 
 /* ─── Table section (toolbar + table in one card · pagination below) ─────
@@ -195,9 +202,18 @@ export function RequestsTableSection({
   // Click-to-sort on column headers. No sort by default → rows stay in their
   // authored (chronological) order; picking a column sorts client-side.
   const { sort, toggle: toggleSort } = useTableSort();
+  // `message` is resolved here rather than inside requestSortValue so the
+  // request-body module stays out of ./data — see message-preview.ts. Every
+  // other key falls through to the shared accessor.
+  const sortValue = useCallback((row: RequestRow, key: string) => {
+    if (key === "message") {
+      return messagePreview(row) ?? null;
+    }
+    return requestSortValue(row, key);
+  }, []);
   const sortedRows = useMemo(
-    () => sortRows(filteredRows, sort, requestSortValue),
-    [filteredRows, sort]
+    () => sortRows(filteredRows, sort, sortValue),
+    [filteredRows, sort, sortValue]
   );
 
   // Page the visible rows by the footer's rows-per-page selector. Without this
@@ -418,11 +434,108 @@ export function RequestsTableSection({
         ) : (
           <>
             {/* Table */}
-            <Table>
+            {/* Column widths are declared, not negotiated. This table once ran
+                `table-auto` with no widths, so the browser sized every column
+                from content and silently squeezed whichever ones had
+                shrinkable text.
+
+                MEASURED BASIS (2026-08-19, 25 rows). "Need" is the width at
+                which nothing clips, padding included. Obtained by cloning the
+                table, setting `table-layout:auto; width:max-content`, and
+                stripping every clamp (max-width / overflow / text-overflow /
+                fixed widths) plus the `sr-only` nodes — then cross-checked
+                against an independent per-text-node probe. Both methods agree
+                on every non-elastic column.
+
+                `need` is the measurement and does not move. `%` and `px` are
+                the current declaration, re-derived on 2026-08-20 after the
+                four narrowing steps below; `px` is `% / 94 * 1484`, since the
+                declared percentages sum to 94 (see the note under the
+                history).
+
+                  col            %      px    need   slack
+                  Time          9.5    150    138     +12
+                  Status        6.0     95     92      +3
+                  Security      6.5    103    100      +3
+                  Model        12.0    189    156     +33
+                  Message      15.5    245   4501  elastic
+                  Conversation 15.5    245    401  elastic
+                  Key           8.5    134    125      +9
+                  Tokens        8.5    134    121     +13
+                  Latency       6.5    103     92     +11
+                  Cost          5.5     87     74     +13
+
+                DO NOT re-derive these by eye. Four separate measurement
+                artifacts produced four wrong answers before the clone method:
+                `th.scrollWidth` can never exceed its own box (reported Cost as
+                0 slack), `block` children stretch to fill their container
+                (reported Model and Tokens as 0), `sr-only` spans are 1px by
+                design (reported Model and Latency as clipping), and
+                `SortableTableHead`'s `max-w-1/2` clamps the live sort button
+                (under-reports header need). Re-measure with the clone, or
+                trust the table above.
+
+                Message and Conversation are the only columns allowed to
+                truncate — the only two whose content is unbounded. Message
+                needs 4501px, which no layout satisfies. Conversation needs
+                401px, so it is the one elastic column that COULD stop
+                truncating if it were ever given the room.
+
+                Tokens In/Out is HEADER-bound: its label needs ~97px against a
+                widest value of ~68px, so the words size it, not the data.
+                Shortening the header to "Tokens" would free ~44px, at the cost
+                of not stating which stacked line is which.
+
+                `min-w` history: 1440 -> 1780 (Message added) -> 1672 (Tokens
+                In and Out merged into one stacked column) -> 1656 (~16px of
+                slack off Key) -> 1580, halving the genuinely dead space the
+                measurement exposed: Model carried 93px and Tokens 61px, and
+                half of each came off the table width. -> 1564 (2026-08-20):
+                another point off Tokens (9.5% -> 8.5%) and the same ~16px off
+                the floor, so the other nine columns keep their pixel widths
+                rather than absorbing the slack. Tokens lands at ~133px, still
+                clear of the ~97px its header needs. -> 1532 (same day): a
+                point off each of Message and Conversation (16.5% -> 15.5%)
+                and ~32px off the floor, to cut side-scrolling further. Those
+                two are the designated truncating columns, so the cost lands
+                where it was always meant to: each drops ~16px, to ~245px.
+                Conversation is now further from the 401px that would stop it
+                truncating. -> 1516 (same day): half a point off Status
+                (6.5% -> 6.0%) and Security (7.0% -> 6.5%). A FULL point was
+                asked for and is not available — a point is ~15px at this
+                floor against 11px of measured slack, so 1% off each would
+                clip both by ~5px. Half a point takes 16px and leaves +3px on
+                each, which is the tightest margin in the table. These two are
+                now spent; the remaining dead space is Model (+49) and Cost
+                (+29). -> 1484 (same day): a point off each of those two
+                (Model 13% -> 12%, Cost 6.5% -> 5.5%) and the whole ~32px off
+                the floor. 1484 is not a rounded guess: it is the floor at
+                which a column that was NOT narrowed keeps its exact pixel
+                width (Time is 9.5/94 * 1484 = 149.96px), and it lands on the
+                4px grid. Model goes to 189px (+33) and Cost to 87px (+13),
+                both still comfortable, and every other column is unmoved.
+
+                The eight non-elastic columns need 898px in total, so at the
+                1226px content column 328px remains for Message +
+                Conversation — that, not tuning, is why this table
+                side-scrolls. (This read 998px / 228px until 2026-08-20; the
+                need column above sums to 898 and always did, so the old
+                figure was an arithmetic slip, not a changed measurement.)
+
+                The head percentages therefore sum to 94, not 100. That is
+                deliberate and load-bearing: `table-fixed` hands the spare
+                six points back proportionally, which is what keeps a column
+                that was NOT narrowed at roughly its old pixel width as the
+                floor comes down. Across all four steps Time held 150px and
+                Tokens 134px, against a floor that fell 1580 -> 1484.
+
+                No new breakpoints: the `overflow-x-auto` on the table
+                container already side-scrolls below the floor. */}
+            <Table className="min-w-[1484px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[9.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="time"
@@ -430,7 +543,7 @@ export function RequestsTableSection({
                     Time
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[6%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="status"
@@ -438,7 +551,7 @@ export function RequestsTableSection({
                     Status
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[6.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="guardrail"
@@ -446,7 +559,7 @@ export function RequestsTableSection({
                     Security
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[12%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="model"
@@ -454,7 +567,15 @@ export function RequestsTableSection({
                     Model
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[15.5%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="message"
+                  >
+                    Message
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="w-[15.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="conversation"
@@ -462,7 +583,7 @@ export function RequestsTableSection({
                     Conversation
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[8.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="keyId"
@@ -470,25 +591,16 @@ export function RequestsTableSection({
                     Key
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[8.5%] whitespace-nowrap"
                     numeric
                     onSort={toggleSort}
                     sort={sort}
                     sortKey="inTokens"
                   >
-                    Tokens In
+                    Tokens In/Out
                   </SortableTableHead>
                   <SortableTableHead
-                    className="whitespace-nowrap"
-                    numeric
-                    onSort={toggleSort}
-                    sort={sort}
-                    sortKey="outTokens"
-                  >
-                    Tokens Out
-                  </SortableTableHead>
-                  <SortableTableHead
-                    className="whitespace-nowrap"
+                    className="w-[6.5%] whitespace-nowrap"
                     numeric
                     onSort={toggleSort}
                     sort={sort}
@@ -496,7 +608,7 @@ export function RequestsTableSection({
                   >
                     Latency
                   </SortableTableHead>
-                  <TableHead className="whitespace-nowrap text-right">
+                  <TableHead className="w-[5.5%] whitespace-nowrap text-right">
                     <span className="inline-flex items-center justify-end gap-1">
                       Cost
                       <Tooltip>
@@ -573,6 +685,7 @@ export function RequestsTableSection({
                         ? "text-foreground"
                         : "text-foreground";
                   const conversationName = conversationTitle(row.conversation);
+                  const messageText = messagePreview(row);
                   return (
                     <TableRow
                       className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
@@ -582,40 +695,48 @@ export function RequestsTableSection({
                       // A <tr> can't legally carry role="button"/tabIndex.
                       onClick={() => openRow(row)}
                     >
-                      <TableCell className="w-48 whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         {/* Absolute timestamp is the primary scan target — relative
                         ("just now", "3h ago") doesn't scale once the table
                         holds hundreds of rows. The relative phrasing lives in
                         a hover tooltip for the moments it's actually useful
-                        (recent activity glance). `w-px` is the table-shrink-fit
-                        idiom — the cell collapses to the content's intrinsic
-                        width and the surrounding columns absorb the freed
-                        space; without it the browser pads the column. */}
+                        (recent activity glance). Column width comes from the
+                        header's 10% under `table-fixed`; the old `w-48` here
+                        was inert and is gone.
+
+                        The DATE is sans, the CLOCK stays mono. A date is read
+                        as a word ("Jun 6"), not scanned digit-by-digit, and
+                        mono makes its month abbreviation unnecessarily wide.
+                        The clock is scanned as a column of digits, which is
+                        mono's job. `tabular-nums` on the date restores the
+                        fixed-advance figures that mono was providing for
+                        free, so the day numbers still stack in a straight
+                        edge down the column. */}
                         <Tooltip>
                           <TooltipTrigger
                             render={(props) => (
-                              <span
-                                {...props}
-                                className="type-mono-14 text-foreground"
-                              >
-                                {row.day}, {row.time}
+                              <span {...props} className="text-foreground">
+                                <span className="type-copy-14 tabular-nums">
+                                  {row.day},
+                                </span>{" "}
+                                <span className="type-mono-14">{row.time}</span>
                               </span>
                             )}
                           />
                           <TooltipContent>{row.relative}</TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="w-28 whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant={responseVariant(row)}>
                           {responseLabel(row)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-28 whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
                           {row.guardrail}
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-60 whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         <RowActionButton
                           aria-label={`Inspect ${row.code} message to ${modelName(row.model)} at ${row.time}`}
                           href={`/messages-findings/${requestRowId(row)}`}
@@ -625,15 +746,88 @@ export function RequestsTableSection({
                               here on 2026-08-03 and removed the same day —
                               the catalog reconciliation was a DATA change and
                               had no business restructuring this cell. */}
+                          {/* Copy voice, not Label, even though this span is
+                              the row's drill-in target: it is the row
+                              IDENTIFIER, read alongside Message /
+                              Conversation / Key, which all sit at 400. A
+                              font-medium here made Model the one column that
+                              shouted (2026-08-20). design-allow-copy-voice —
+                              see design.md §3. */}
                           <span
-                            className="type-label-14 block truncate text-foreground"
+                            className="type-copy-14 block truncate text-foreground"
                             title={modelName(row.model)}
                           >
                             {modelName(row.model)}
                           </span>
                         </RowActionButton>
                       </TableCell>
-                      <TableCell className="max-w-[320px] whitespace-nowrap">
+                      {/* Message — same two-line shape as Conversation, but
+                          per-REQUEST rather than per-conversation: what this
+                          request actually said on top, this row's own `req_*`
+                          reference below. Conversation next to it repeats the
+                          same title and `cnv_*` on every row of a session;
+                          this is the column that tells two rows apart.
+
+                          The text is the user's message, or for a tool row
+                          the actual call ("Bash: grep -n …"), never the bare
+                          tool name. See message-preview.ts for why `summary`
+                          is the last resort. 51 of 153 rows have no body at
+                          all and render the em dash + sr-only note rather
+                          than a fabricated preview, matching Cost/BYOK. */}
+                      <TableCell className="whitespace-nowrap">
+                        {messageText ? (
+                          <>
+                            {/* Full text is reached by hover/focus, not by
+                                opening the row — the PRD requires it stay
+                                reachable FROM the row. Same Tooltip primitive
+                                the Time cell uses; a native `title` was the
+                                first pass and is worse (slow, no touch, no
+                                keyboard). The trigger is the text span itself,
+                                so it is not an extra tab stop: the row's only
+                                keyboard target stays the drill-in link in the
+                                Model cell. */}
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={(props) => (
+                                  <span
+                                    {...props}
+                                    className="type-copy-14 block truncate text-foreground"
+                                  >
+                                    {messageText}
+                                  </span>
+                                )}
+                              />
+                              <TooltipContent className="max-w-sm text-left">
+                                {messageText}
+                              </TooltipContent>
+                            </Tooltip>
+                            <span className="type-mono-12 block text-muted-foreground">
+                              {requestIdLabel(requestRowId(row))}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              aria-hidden
+                              className="type-copy-14 block text-muted-foreground"
+                            >
+                              —
+                            </span>
+                            <span className="sr-only">
+                              No message preview recorded
+                            </span>
+                            <span className="type-mono-12 block text-muted-foreground">
+                              {requestIdLabel(requestRowId(row))}
+                            </span>
+                          </>
+                        )}
+                      </TableCell>
+                      {/* No `max-w` here — the column's 16% under
+                          `table-fixed` is the cap now, and a second bound on
+                          the cell would just be a stale number to maintain.
+                          Message and Conversation are the two columns allowed
+                          to truncate. */}
+                      <TableCell className="whitespace-nowrap">
                         {conversationName ? (
                           <>
                             <span
@@ -656,13 +850,38 @@ export function RequestsTableSection({
                         )}
                       </TableCell>
                       <TableCell className="type-mono-14 whitespace-nowrap">
-                        <span className="text-foreground">{row.keyId}</span>
+                        {/* Two bounds, both needed: `keyLabel` caps the string
+                            at 20 characters, and `truncate` holds the column
+                            edge — 20 mono characters are wider than the
+                            column, so the cap alone would still spill into
+                            Tokens. Full value on hover. */}
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="block truncate text-foreground"
+                              >
+                                {keyLabel(row.keyId)}
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>{row.keyId}</TooltipContent>
+                        </Tooltip>
                       </TableCell>
+                      {/* Tokens in and out share one column. Both were
+                          HEADER-bound, not value-bound: "Tokens Out" needed
+                          105px for its label while its widest value ("2,300")
+                          needed 68px, so two columns were paying twice for
+                          words rather than data. Stacked in-over-out in the
+                          two-line shape Message and Conversation already use,
+                          the pair costs ~124px instead of 232px. Row height is
+                          unchanged — those cells were already two lines. */}
                       <TableCell className={numericCls}>
                         {row.inTokens}
-                      </TableCell>
-                      <TableCell className={numericCls}>
-                        {row.outTokens}
+                        <span className="type-mono-12 block text-muted-foreground">
+                          {row.outTokens}
+                        </span>
                       </TableCell>
                       <TableCell className="type-mono-14 whitespace-nowrap text-right">
                         <span className="inline-flex items-center justify-end gap-1">

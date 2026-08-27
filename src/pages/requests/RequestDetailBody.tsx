@@ -18,7 +18,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
-import { VENDOR_META } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +53,7 @@ import {
   responseLabel,
   responseVariant,
   VENDOR_ENDPOINT,
+  VENDOR_HOST,
 } from "./data";
 import type { RequestRow } from "./types";
 
@@ -74,7 +74,10 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
   const requestId =
     row.requestId ??
     `req_${row.conversation.replace("cnv_", "").slice(0, 8)}${row.code}`;
-  const provider = VENDOR_META[row.vendor].label;
+  // The upstream host, not the brand name (2026-08-20). It sits directly above
+  // Endpoint, so host + path read as the one destination the gateway forwards
+  // to. `VENDOR_META[...].label` is still the brand name everywhere else.
+  const provider = VENDOR_HOST[row.vendor];
 
   // Memoized on `row` so tab switches / finding selection / evidence-reveal
   // re-renders don't re-run the detector derivation.
@@ -457,7 +460,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                               snippet below, where it is the thing you copy;
                               repeating it under the label is duplication, and
                               this list shows every value exactly once. */}
-                          <span className="type-label-14 truncate text-foreground">
+                          <span className="type-copy-14 truncate text-foreground">
                             {modelName(row.model)}
                           </span>
                         </div>
@@ -466,7 +469,9 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                     <DetailRow
                       label="Provider"
                       value={
-                        <span className="text-foreground">{provider}</span>
+                        <span className="type-mono-14 text-foreground">
+                          {provider}
+                        </span>
                       }
                     />
                     <DetailRow

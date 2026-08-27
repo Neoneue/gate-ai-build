@@ -60,6 +60,11 @@ export function requestSortValue(
       return modelName(row.model);
     case "conversation":
       return conversationTitle(row.conversation) || row.conversation;
+    // NOTE: no `message` case. The Message column's value comes from the
+    // request BODY (see ./message-preview), and pulling that module in here
+    // would drag ~440 KB of transcripts onto every route that imports this
+    // file. RequestsTable wraps this accessor to add `message` locally, so
+    // the weight stays on /messages.
     case "keyId":
       return row.keyId;
     case "inTokens":
@@ -181,6 +186,27 @@ export const VENDOR_ENDPOINT: Record<Vendor, string> = {
   // open platform), so neither needs a bespoke wire format.
   moonshotai: "/v1/chat/completions",
   qwen: "/v1/chat/completions",
+};
+
+/** Upstream API host per vendor — the thing the gateway actually forwards to.
+ *  The Provider row on the message detail surface shows this rather than the
+ *  brand name from `VENDOR_META` (changed 2026-08-20): the row sits directly
+ *  above Endpoint, and host + path together read as the one real destination.
+ *  These are each vendor's documented public API host. Exhaustive over
+ *  `Vendor` for the same reason VENDOR_ENDPOINT is — the two move together. */
+export const VENDOR_HOST: Record<Vendor, string> = {
+  anthropic: "api.anthropic.com",
+  openai: "api.openai.com",
+  google: "generativelanguage.googleapis.com",
+  xai: "api.x.ai",
+  meta: "api.llama.com",
+  mistral: "api.mistral.ai",
+  deepseek: "api.deepseek.com",
+  cohere: "api.cohere.com",
+  moonshotai: "api.moonshot.ai",
+  // Alibaba Model Studio's international endpoint, matching the OpenAI-
+  // compatible surface the endpoint map above assumes.
+  qwen: "dashscope-intl.aliyuncs.com",
 };
 
 export function responseVariant(row: RequestRow): "success" | "destructive" {

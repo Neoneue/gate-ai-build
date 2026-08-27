@@ -701,10 +701,35 @@ export function seriesColor(s: { slot: number; color?: string }): string {
   return s.color ?? paletteColor(s.slot);
 }
 
+/** A user's DEFAULT device, as they themselves named it. The backend stores a
+ *  device ID per request and resolves the user-authored name from it, so a
+ *  person with two machines produces two device names under one owner. This
+ *  map is the fallback for keys that do not name their own device; a key used
+ *  from a second machine overrides it with `device` on its seed (see
+ *  API_KEY_SEEDS). Owners mirror Team.tsx MEMBER_ROWS. */
+const DEVICE_BY_OWNER: Record<string, string> = {
+  "Chad Ponticas": "Macbook Pro",
+  "Kira Tan": "Coding PC",
+  "Mateus Silva": "Mac mini m4",
+  "Jordan Lee": "OpenClaw PC",
+};
+
+/** Resolves an owner to their default device name. Unknown owners render an em
+ *  dash rather than a plausible-looking guess. */
+export function deviceFor(owner: string): string {
+  return DEVICE_BY_OWNER[owner] ?? "—";
+}
+
 export type ApiKeyRow = {
   key: string;
   label: string;
   owner: string;
+  /** The device this key is used from. Defaults to the owner's device via
+   *  DEVICE_BY_OWNER; a seed may override it, which is how one person shows up
+   *  on two machines (Chad's `prod-agent` runs from the Macbook Air while his
+   *  other keys run from the Macbook Pro). Owner and device are therefore
+   *  independent columns — do not derive one from the other at a call site. */
+  device: string;
   /** Gateway PRD R4/R5: BYOK vs Gate is per-key. Material on this admin
    *  surface because the workspace owner reconciles prepaid balance vs.
    *  external provider charges across every user's keys. */
@@ -748,8 +773,15 @@ export type ApiKeyRow = {
  *  Spend    → prod-agent, prod-web, development, atlas-eval
  *  Requests → prod-web, nova-chat, design-agent, development
  *  Tokens   → prod-web, prod-agent, design-agent, openclaw */
-type ApiKeySeed = Omit<ApiKeyRow, "tokensIn" | "tokensOut" | "spend"> &
-  Partial<TokenSplit>;
+type ApiKeySeed = Omit<
+  ApiKeyRow,
+  "tokensIn" | "tokensOut" | "spend" | "device"
+> &
+  Partial<TokenSplit> & {
+    /** Overrides the owner's default device. Set only when a key is used from
+     *  a different machine than that person's other keys. */
+    device?: string;
+  };
 
 const API_KEY_SEEDS: ApiKeySeed[] = [
   {
@@ -764,6 +796,9 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     key: "prod-agent",
     label: "prod-agent",
     owner: "Chad Ponticas",
+    // Second machine: same person, same workspace, different device. The
+    // Device column exists to make exactly this visible.
+    device: "Macbook Air",
     path: "Gate",
     requests: 12_000,
     savings: 0.27,
@@ -872,6 +907,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = (() => {
     if (seed.path === "BYOK") {
       return {
         ...seed,
+        device: seed.device ?? deviceFor(seed.owner),
         tokensIn: seed.tokensIn ?? 0,
         tokensOut: seed.tokensOut ?? 0,
         spend: 0,
@@ -880,6 +916,7 @@ export const API_KEY_ROWS: ApiKeyRow[] = (() => {
     const tokens = KEY_TOKENS_7D[seed.key];
     return {
       ...seed,
+      device: seed.device ?? deviceFor(seed.owner),
       requests: requests[seed.key] ?? 0,
       tokensIn: tokens?.tokensIn ?? 0,
       tokensOut: tokens?.tokensOut ?? 0,

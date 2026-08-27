@@ -13,6 +13,7 @@
 // the request rows in, and derivation runs at render time.
 
 import type { Vendor } from "@/components/icons/vendor-meta";
+import { redactFindings } from "@/data/redact";
 import { getRequestBody } from "@/data/request-bodies";
 import { requestRowId } from "@/data/requests";
 import type {
@@ -65,19 +66,10 @@ function stripToolPrefix(name: string, raw: string | undefined): string {
 // with the placeholder sent upstream, so a caught value is never re-exposed in
 // the transcript and the bubble agrees with the request-detail redaction diff.
 // Assistant bubbles carry no raw values (they narrate the redaction), so only
-// the user body is masked. split/join does a literal global replace without
-// regex-escaping the match (which holds '.', '@', '/').
+// the user body is masked. The replace itself lives in @/data/redact — the
+// Messages table's Message column masks through the same helper.
 function redactUserBody(row: RequestRow, body: string): string {
-  if (!row.findings) {
-    return body;
-  }
-  let out = body;
-  for (const f of row.findings) {
-    if (f.role === "user") {
-      out = out.split(f.match).join(f.redactedAs);
-    }
-  }
-  return out;
+  return redactFindings(row.findings, body, { userOnly: true });
 }
 
 // Request latency is stored in seconds ("3.80s"); the trace row reads ms via
