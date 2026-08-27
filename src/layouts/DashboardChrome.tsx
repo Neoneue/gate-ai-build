@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import {
@@ -69,6 +70,9 @@ export function DashboardChrome({
   // Sidebar PRO-feature locks show on non-PRO surfaces. Section set is chosen
   // per workspace tier so nav links stay within their variant.
   const { pathname } = useLocation();
+  // Restores <main>'s scroll position on back/forward; see the hook for why
+  // the store lives outside this (per-page remounted) component.
+  const mainRef = useScrollRestoration<HTMLElement>();
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const showLocks = isDefault || isFree;
@@ -184,7 +188,10 @@ export function DashboardChrome({
           {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0">
+          <main
+            className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+            ref={mainRef}
+          >
             {children}
           </main>
         </div>
