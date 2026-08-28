@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { UploadIcon } from "@/components/ui/upload";
 import { modelName } from "@/data/models";
@@ -724,7 +725,7 @@ function UsageByKey({
     [searchedRows, sort]
   );
 
-  const perPage = Number.parseInt(rowsPerPage, 10);
+  const perPage = resolveRowsPerPage(rowsPerPage, filteredRows.length);
   const pageRows = useMemo(
     () => filteredRows.slice((page - 1) * perPage, page * perPage),
     [filteredRows, page, perPage]

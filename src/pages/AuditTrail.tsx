@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
@@ -356,7 +357,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
     [filteredRows, sort]
   );
 
-  const perPage = Number.parseInt(rowsPerPage, 10);
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
   const pageRows = sortedRows.slice((page - 1) * perPage, page * perPage);
 
   const isEmpty = filteredRows.length === 0;

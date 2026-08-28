@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import {
   Tooltip,
@@ -217,8 +218,8 @@ export function RequestsTableSection({
   );
 
   // Page the visible rows by the footer's rows-per-page selector. Without this
-  // the table rendered every row and the 10/25/50/100 control did nothing.
-  const perPage = Number(rowsPerPage) || sortedRows.length || 1;
+  // the table rendered every row and the 10/25/50/All control did nothing.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
   const pagedRows = useMemo(
     () =>
       sortedRows.slice((page - 1) * perPage, (page - 1) * perPage + perPage),

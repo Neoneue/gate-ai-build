@@ -52,6 +52,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Textarea } from "@/components/ui/textarea";
@@ -236,7 +237,7 @@ export function EventsTableSection({
   const scaledTotal = Math.round(
     rangeTotal * (filtered.length / EVENT_ROWS.length)
   );
-  const perPage = Number(rowsPerPage);
+  const perPage = resolveRowsPerPage(rowsPerPage, scaledTotal);
   // Cap the rendered rows to `scaledTotal` — at low-volume ranges (e.g. 24H
   // ≈ 12 events) the 16-row sample is larger than the actual total, so an
   // uncapped slice would render more rows than the footer's "of N" claims.

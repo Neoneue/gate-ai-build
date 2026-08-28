@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ROWS_ALL, resolveRowsPerPage } from "@/components/ui/table-pagination";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TablePaginationFooter — bottom strip of any paginated table.
@@ -29,9 +30,14 @@ import {
  *
  * The page-window helper is exported separately for callers that need to
  * read the truncation pattern (rare, but supported).
+ *
+ * Rows-per-page offers 10 / 25 / 50 / All (user direction 2026-08-27: the
+ * 100 step became All). "All" resolves to the whole list via
+ * `resolveRowsPerPage`, which every consumer that slices its own rows must
+ * use for its page math, so the option list and the slicing cannot drift.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const ROWS_PER_PAGE_OPTIONS = ["10", "25", "50", "100"];
+const ROWS_PER_PAGE_OPTIONS = ["10", "25", "50", ROWS_ALL];
 
 /**
  * Constant-width truncated-pagination window (`1 … 3 4 5 … 7` shape, GitHub
@@ -79,7 +85,7 @@ export function TablePaginationFooter({
   onPageChange,
   onRowsPerPageChange,
 }: TablePaginationFooterProps) {
-  const perPage = Number.parseInt(rowsPerPage, 10);
+  const perPage = resolveRowsPerPage(rowsPerPage, total);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = (safePage - 1) * perPage + 1;
