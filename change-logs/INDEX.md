@@ -12,8 +12,12 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-08-27](./2026-08/changelog-8-27.md)
 
 - Back navigation restores the content scroll
+- Rows-per-page 100 becomes All
+- Table scroll edge fades
 - Org security events gain the scope tray
 - Channel row icon centers on the first two lines
+- Notifications feed: bulk mark-as-read, Gmail select, 48px rows
+- Limits table: width scheme, resets format, actions alignment
 
 ### [2026-08-25](./2026-08/changelog-8-25.md)
 
