@@ -9,6 +9,13 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-28](./2026-08/changelog-8-28.md)
+
+- Nav items can hide per workspace variant
+- MultiSelect options carry an optional description line
+- SettingsRow title widens to ReactNode
+- Teams workspace pages cloned from staging
+
 ### [2026-08-27](./2026-08/changelog-8-27.md)
 
 - Back navigation restores the content scroll
