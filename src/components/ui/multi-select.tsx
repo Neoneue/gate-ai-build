@@ -27,6 +27,12 @@ import { cn } from "@/lib/utils";
 type MultiSelectOption = {
   value: string;
   label: string;
+  /** Optional second line under the label — context the user needs BEFORE
+   *  they commit, not after. Added 2026-08-28 for the Teams "Add members"
+   *  picker, where a candidate already on another team shows that team so
+   *  the move is visible while choosing. Omit it and the row renders as a
+   *  single line exactly as before. */
+  description?: string;
 };
 
 type MultiSelectProps = {
@@ -70,7 +76,13 @@ function MultiSelect({
       return options;
     }
     const needle = query.trim().toLowerCase();
-    return options.filter((o) => o.label.toLowerCase().includes(needle));
+    // Search covers the second line too — on the Teams picker that is the
+    // candidate's current team, which is a thing you would type to find them.
+    return options.filter(
+      (o) =>
+        o.label.toLowerCase().includes(needle) ||
+        (o.description?.toLowerCase().includes(needle) ?? false)
+    );
   }, [options, searchable, query]);
 
   const selectedSet = React.useMemo(() => new Set(value), [value]);
@@ -158,7 +170,16 @@ function MultiSelect({
                   checked={selectedSet.has(option.value)}
                   onCheckedChange={() => toggleOption(option.value)}
                 />
-                <span className="line-clamp-1">{option.label}</span>
+                {option.description ? (
+                  <span className="flex min-w-0 flex-col">
+                    <span className="line-clamp-1">{option.label}</span>
+                    <span className="type-copy-12 line-clamp-1 text-muted-foreground">
+                      {option.description}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="line-clamp-1">{option.label}</span>
+                )}
               </label>
             ))
           )}

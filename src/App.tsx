@@ -102,6 +102,20 @@ const Settings = lazy(() =>
 const Team = lazy(() =>
   import("@/pages/Team").then((m) => ({ default: m.Team }))
 );
+const Teams = lazy(() =>
+  import("@/pages/Teams").then((m) => ({ default: m.Teams }))
+);
+const TeamDetail = lazy(() =>
+  import("@/pages/TeamDetail").then((m) => ({ default: m.TeamDetail }))
+);
+const TeamsDefault = lazy(() =>
+  import("@/pages/TeamsDefault").then((m) => ({ default: m.TeamsDefault }))
+);
+const TeamDetailDefault = lazy(() =>
+  import("@/pages/TeamDetailDefault").then((m) => ({
+    default: m.TeamDetailDefault,
+  }))
+);
 const SignIn = lazy(() =>
   import("@/pages/SignIn").then((m) => ({ default: m.SignIn }))
 );
@@ -309,6 +323,8 @@ export default function App() {
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/team" />
+            <Route element={<Teams />} path="/teams" />
+            <Route element={<TeamDetail />} path="/teams/:teamId" />
             <Route element={<Notifications />} path="/notifications" />
             <Route
               element={<Settings showCancelPlan={false} />}
@@ -336,6 +352,11 @@ export default function App() {
             />
             <Route element={<ActivityDefault />} path="/activity-default" />
             <Route element={<TeamDefault />} path="/team-default" />
+            <Route element={<TeamsDefault />} path="/teams-default" />
+            <Route
+              element={<TeamDetailDefault />}
+              path="/teams-default/:teamId"
+            />
             <Route element={<BillingDefault />} path="/billing-default" />
             <Route
               element={<NotificationsDefault />}

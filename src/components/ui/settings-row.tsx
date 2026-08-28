@@ -53,8 +53,15 @@ export interface SettingsRowProps {
   /** Title renders as a non-label span (no `htmlFor`). Used when the
    *  right-side affordance is read-only (Badge, etc.). */
   static?: boolean;
-  subtitle: string;
-  title: string;
+  /** Supporting line under the title. Omit it for stat rows whose label
+   *  needs no explanation (a member's name, a category id). Widened from
+   *  required 2026-08-28 for the team Security tab. */
+  subtitle?: string;
+  /** Usually a string. Accepts a node so a row can be identified by a
+   *  `<Badge>` instead of text — the team Security tab's "By outcome" list
+   *  names each row by its verdict badge. Widened 2026-08-28; a string
+   *  behaves exactly as before. */
+  title: React.ReactNode;
   /** Override the title rendering element. Defaults: 'label' when
    *  `static` is false, 'span' when `static` is true. Pass 'h4' to render
    *  as a heading (e.g. when the row sits inside a Card with a CardTitle
@@ -100,9 +107,11 @@ export function SettingsRow({
         ) : (
           <span className={titleClass}>{title}</span>
         )}
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          {subtitle}
-        </p>
+        {subtitle ? (
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            {subtitle}
+          </p>
+        ) : null}
       </div>
       <div className="shrink-0">{control}</div>
     </div>

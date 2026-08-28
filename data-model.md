@@ -49,12 +49,14 @@ graph LR
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/team → Team.tsx"]
+    LAYOUT --> TEAMS["/teams → Teams.tsx"]
+    LAYOUT --> TEAMD["/teams/:teamId → TeamDetail.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
     LAYOUT --> KEYS["/api-keys → ApiKeys.tsx"]
     LAYOUT --> BILL["/billing → Billing.tsx"]
 ```
 
-- The graph shows the **PRO** surfaces only. `App.tsx` declares 54 paths in
+- The graph shows the **PRO** surfaces only. `App.tsx` declares 61 paths in
   total: nearly every nav base also has a `-default` and a `-free` twin, and
   five `/setup-*-default` pages carry the onboarding flow. Both sets are
   inventoried under "Tier & onboarding variants" below.
@@ -163,6 +165,18 @@ Security `-default` twin answers on **both** `/events-default` and
 render `Requests*.tsx` because the route was renamed but the components were
 not. (An Alerts page lived at `/alerts` from 2026-08-05 until its removal on
 2026-08-24, superseded by the My Notifications + Limits-alerts plan.)
+
+**Teams is the first base with a `-default` twin and no `-free` one
+(2026-08-28).** The PRD scopes Teams to Pro + Enterprise, so the Free sidebar
+does not show the row at all. `nav-sections.ts` grew a `HIDDEN_IN_FREE` set
+beside `LOCKED_IN_FREE` for it, and `buildVariantSections` filters those ids
+out (dropping any group left empty). The distinction is deliberate: a LOCKED
+item is an upsell — the row stays, wearing a padlock, because we want the
+feature seen — while a HIDDEN item is not part of the Free product and has no
+`-free` twin to route to, so a padlock would advertise a page that cannot
+exist. Teams also twins its **detail** route, which no other base does:
+`/teams-default/:teamId` exists so a Default-workspace drill-in keeps its
+variant (the Security tab's empty state) and its back link.
 
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
@@ -917,6 +931,8 @@ function buildSpark(total: number, seed: number): number[]
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
 | `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
+| `TEAM_SEED_ROWS` | `src/data/teams.ts` | `TeamRow[]` — Default / Platform / Design | 3 |
+| `ASSIGNABLE_KEYS` | `src/data/teams.ts` (derived: `API_KEY_SEED_ROWS` minus revoked) | `ApiKeyRow[]` | 3 |
 | `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
 | `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
 | `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
@@ -1424,6 +1440,93 @@ Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title
 **State:** `inviteOpen: boolean`, `tab: 'members'|'invitations'`, filters, pagination.
 
 **Roles:** `AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink'`
+
+---
+
+### Teams pages (`/teams` → `Teams.tsx`, `/teams/:teamId` → `TeamDetail.tsx`, added 2026-08-28)
+
+**Purpose:** Group members and API keys into teams, and roll their spend up
+against a team budget and an org budget. Pro + Enterprise only — see the
+`HIDDEN_IN_FREE` note under "Tier & onboarding variants". The Default
+workspace twins both routes (`/teams-default`, `/teams-default/:teamId`).
+
+**List page.** PageHeader + a scaffold-only `7D / 30D / 90D` SegmentedPill and
+`DateRangePicker` + "Create team". Then the full-width **Org budget** card
+(name · window line, meter, "Edit budget" / "Set budget") and the teams table:
+Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
+| Spend | Budget | ⋯. Rows are `NavTableRow`s drilling into the detail page.
+The ⋯ menu is Rename / Delete, both disabled on Default. Deleting folds the
+team's members and keys into Default.
+
+**Detail page.** BackLink → the list twin, H1 = team name, then five tabs:
+Usage (spend + requests KPI pair, "Spend by member", "Spend by model"),
+Members, Keys, Budget, Security. The Usage breakdown says "member", matching
+the Security tab's "By member" — both group by the OWNER of the team's keys.
+
+**State:** both pages own `useState(TEAM_SEED_ROWS)`; the list also owns
+`useState(ORG_BUDGET_SEED)`. Mutations are local to the visit — the seed is
+the shared starting point, not a store.
+
+**Types** (`src/data/teams.ts`): `TeamRow`, `TeamBudget`, `BudgetWindow`
+(`'5h' | 'weekly' | 'monthly'`), `BudgetEnforcement` (`'soft' | 'hard'`),
+`TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`.
+
+**Membership is one-team-per-user, and the role is derived (2026-08-28,
+PRD audit P1).** Two invariants the data layer owns rather than the pages:
+
+- **One manager per team.** There is no per-row role field — `TeamRole` is
+  computed by `teamRole(team, memberId)` off the team's single `managerId`.
+  Promotion via `withManager()` therefore demotes the previous manager by
+  construction; demoting the current one clears the field. A stored role
+  column could disagree with `managerId`; a derived one cannot.
+- **One team per user.** `moveMembersToTeam(teams, targetId, memberIds)`
+  operates on the WHOLE array: it adds to the target and removes from
+  whichever team each member was on, clearing that team's `managerId` if the
+  mover managed it. Adding a member IS moving them (PRD 3 / 8.1), which is
+  why both Teams pages hold every team in state, not just the one they
+  render. `teamOfMember()` answers "where are they now" for the picker,
+  which labels each candidate with the team they would leave.
+
+**Budget thresholds.** `warnThreshold` always applies; `blockThreshold` is
+optional and read through `budgetBlockThreshold(budget)`, which returns null
+for soft budgets (they never block) and falls back to
+`DEFAULT_BLOCK_THRESHOLD` (100) for a hard budget authored without one. The
+dialog renders the block field only for Hard, defaults it to 100, and
+enforces `warn <= block` — a warning that fires after the wall is dead copy.
+Seeds are unchanged: Platform and the org budget both stay soft, so no
+seeded surface exercises the field; the dialogs do.
+
+**Derivation — nothing on these pages is authored.** A team is a _grouping_ of
+rows that already exist:
+
+- members → `MEMBER_ROWS`, keys → `API_KEY_SEED_ROWS` (revoked keys are
+  filtered into `ASSIGNABLE_KEYS` once, so no picker or seed can reach one)
+- spend / requests → `usageForTeam()` groups `API_KEY_ROWS` (activity-data) by
+  the team's keys; "Spend by model" groups `USAGE_7D` cells and settles onto
+  the team's spend total so the breakdown can never be a cent off the KPI
+- per-model requests reuse `MODEL_ROWS`' own requests-per-token ratio, then
+  settle onto the team's **metered** request subtotal (a BYOK key serves
+  requests the gateway attributes to no catalog model)
+
+**Security tab** (`src/pages/teams/SecurityPane.tsx` +
+`security-data.ts`). Default variant, and any team with zero checks, render
+the "No guardrail activity" empty state. Otherwise five stacked count cards:
+summary, By outcome, By category, By pipeline stage, By member. Volume comes
+from `API_KEY_ROWS` (the same counts the Usage tab reads); verdicts come from
+`REQUEST_ROWS_ALL`'s recorded guardrail rows, counted as they stand. The
+arithmetic, which every card obeys:
+
+```text
+requestStage  = requests
+outputStage   = requests − blocked      (a blocked request has no reply)
+checks        = requestStage + outputStage
+findings      = blocked + redacted + flagged
+allowed       = checks − findings
+uncategorised = checks − (injection + credential + pii) = checks − findings
+```
+
+Counts and labels only — the pane never renders prompt or response text, which
+is what its second paragraph promises the reader.
 
 ---
 
