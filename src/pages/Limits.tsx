@@ -210,21 +210,27 @@ function LimitsSection({
           <TableRow className="hover:bg-transparent">
             {/* `table-fixed` + an explicit width on EVERY column — same
                   load-bearing pattern as the Team and Activity tables.
-                  Widths sum to 100% and are RANKED, not eyeballed: Name is
-                  the widest (it is the row's identifier), Scope second, and
-                  the rest get their measured content need (widest rendered
-                  cell + the 24px of cell padding) rounded up to the next
-                  whole percent. Against the 1400px floor that is Name
-                  238px / Scope 182px, so a full limit name fits without
-                  truncating and "Org-wide (all keys)" — the longest scope
-                  value, 128px — clears with room to spare instead of
-                  breaking mid-word. The floor rose 1000 → 1400px when
-                  Enforcement and Alerts landed, so the table now always
-                  scrolls horizontally inside the max-w-5xl column; ten
-                  columns cannot avoid that, and squeezing the row
-                  identifier to dodge it was the worse trade. */}
+                  Widths sum to 100%: Name largest at 15% (the row's identifier),
+                  Actions smallest at 5% (a lone icon button), and
+                  the data columns tuned per user direction
+                  2026-08-27: Scope 12.5 / Enforcement 7.5 (a
+                  quarter of Enforcement moved to Scope), Resets on
+                  12.5 / Period 7.5 (same move), Used 12 / Type 8 (a
+                  $1,000,000 threshold renders "$0 / $1,000,000",
+                  ~158px, which overflowed a 140px column and bled
+                  into Threshold - table-fixed + nowrap paints
+                  oversized content outside its cell), Threshold and
+                  Alerts at 10. Against the 1400px floor that is
+                  Name 210 / Scope 175 / Type 112 / Enforcement 105
+                  / Threshold 140 / Used 168 / Alerts 140 / Period
+                  105 / Resets 175 / Actions 70 px. The floor rose
+                  1000 -> 1400px when Enforcement and Alerts landed,
+                  so the table always scrolls horizontally inside
+                  the max-w-5xl column; ten columns cannot avoid
+                  that, and squeezing the row identifier to dodge it
+                  was the worse trade. */}
             <SortableTableHead
-              className="w-[17%] whitespace-nowrap"
+              className="w-[15%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="name"
@@ -232,7 +238,7 @@ function LimitsSection({
               Name
             </SortableTableHead>
             <SortableTableHead
-              className="w-[13%] whitespace-nowrap"
+              className="w-[12.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="scope"
@@ -240,7 +246,7 @@ function LimitsSection({
               Scope
             </SortableTableHead>
             <SortableTableHead
-              className="w-[7%] whitespace-nowrap"
+              className="w-[8%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="type"
@@ -252,7 +258,7 @@ function LimitsSection({
                   "show me every rule that actually blocks" is the question
                   an operator asks first. */}
             <SortableTableHead
-              className="w-[9%] whitespace-nowrap"
+              className="w-[7.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="enforcement"
@@ -260,7 +266,7 @@ function LimitsSection({
               Enforcement
             </SortableTableHead>
             <SortableTableHead
-              className="w-[8%] whitespace-nowrap"
+              className="w-[10%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -269,7 +275,7 @@ function LimitsSection({
               Threshold
             </SortableTableHead>
             <SortableTableHead
-              className="w-[11%] whitespace-nowrap"
+              className="w-[12%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -279,16 +285,16 @@ function LimitsSection({
             </SortableTableHead>
             {/* Not sortable: a SET of percent marks has no honest
                   ordering, the same reason "Resets on" stays plain. */}
-            <TableHead className="w-[12%] whitespace-nowrap">Alerts</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap">Alerts</TableHead>
             <SortableTableHead
-              className="w-[6%] whitespace-nowrap"
+              className="w-[7.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="period"
             >
               Period
             </SortableTableHead>
-            <TableHead className="w-[12%] whitespace-nowrap">
+            <TableHead className="w-[12.5%] whitespace-nowrap">
               Resets on
             </TableHead>
             <TableHead className="w-[5%] pr-4 pl-0 text-right">
@@ -388,7 +394,7 @@ function LimitActionsMenu({
         render={
           <Button
             aria-label={`Actions for ${limitName}`}
-            className="text-muted-foreground hover:text-foreground"
+            className="-mr-2 text-muted-foreground hover:text-foreground"
             size="icon-sm"
             variant="ghost"
           />
@@ -502,15 +508,20 @@ const usedLabel = (type: string, used: string, threshold: string) => {
   const prefix = type === "spend" ? "$" : "";
   return `${prefix}${u} / ${prefix}${t}`;
 };
+// Boundaries are computed in UTC (below), but the cell shows no "UTC"
+// label and carries seconds, matching the house timestamp voice
+// ("Jun 6, 00:10:49") used by every other datetime cell (user direction
+// 2026-08-27).
 const fmtResetDate = (d: Date) =>
-  `${formatDateTime(d, {
+  formatDateTime(d, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
     timeZone: "UTC",
-  })} UTC`;
+  });
 /** Computes the next reset boundary for a limit period. Takes `now` as a
  *  parameter so callers can share a single timestamp across rows — calling
  *  `new Date()` at render time per row caused the column to flicker on
