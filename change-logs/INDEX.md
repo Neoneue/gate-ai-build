@@ -9,6 +9,16 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## August 2026
 
+### [2026-08-31](./2026-08/changelog-8-31.md)
+
+- Manager role is per-membership; co-managers allowed
+- Budgets drop the block threshold, gain quick-pick presets
+- BudgetMeter gains a warn state; fill logic shared via budget-band
+- Teams seed splits members and keys into real teams
+- Teams list: budget utilization column + deleted-teams card
+- Team detail: header actions, sortable spend tables, richer Keys tab
+- Team Security tab counts findings and renders zero-findings states
+
 ### [2026-08-28](./2026-08/changelog-8-28.md)
 
 - Nav items can hide per workspace variant
