@@ -37,15 +37,11 @@ export type TeamBudget = {
   /** Cap in USD for one window. */
   amount: number;
   enforcement: BudgetEnforcement;
-  /** Percent of `amount` at which the warning fires. */
+  /** Percent of `amount` at which the warning fires. A hard budget blocks at
+   *  the amount itself — there is no separate block threshold. The PRD
+   *  sketched warn+block percentages; migration 170 shipped
+   *  `warn_threshold_pct` only, and this mirrors the shipped schema. */
   warnThreshold: number;
-  /** Percent of `amount` at which requests start being refused. Only
-   *  meaningful on a HARD budget — a soft budget never blocks, so the field
-   *  is absent on one rather than carrying a number that does nothing.
-   *  PRD 8.2 pairs warn (80) with block (100); before this existed, `hard`
-   *  implied block-at-100 silently. Read it through `budgetBlockThreshold()`
-   *  so a hard budget authored without one still resolves to the default. */
-  blockThreshold?: number;
 };
 
 export type TeamRow = {
@@ -58,8 +54,12 @@ export type TeamRow = {
   memberIds: string[];
   /** API_KEY_SEED_ROWS ids. Never a revoked key. */
   keyIds: string[];
-  /** MEMBER_ROWS id, or null when nobody owns the team. */
-  managerId: string | null;
+  /** MEMBER_ROWS ids holding the manager role on THIS team. Mirrors
+   *  migration 170's `memberships.team_role`: the role is a per-membership
+   *  fact, so a team can have zero, one, or several managers (co-managers are
+   *  allowed — assigning one never demotes another), and moving someone off
+   *  the team resets their role. */
+  managerIds: string[];
   budget: TeamBudget | null;
 };
 
@@ -71,13 +71,40 @@ export const BUDGET_WINDOW_LABEL: Record<BudgetWindow, string> = {
   monthly: "Monthly",
 };
 
-/** Helper line under the window segmented control. Says what the window
- *  actually resets on, because "weekly" alone doesn't distinguish a rolling
- *  7 days from a calendar week. */
+/** Helper line under the window segmented control. Copy tracks the shipped
+ *  budget presets (`@gate/shared/budget-presets`): per-5-hour and weekly are
+ *  ROLLING windows, only monthly is a calendar reset. */
 export const BUDGET_WINDOW_HELP: Record<BudgetWindow, string> = {
-  "5h": "Rolling 5-hour window — spend ages out continuously as the window slides.",
-  weekly: "Calendar week — runs from Monday and resets on Monday.",
-  monthly: "Calendar month — runs from the 1st and resets on the 1st.",
+  "5h": "Rolling 5-hour window, like a Claude or Codex session cap.",
+  weekly: "Rolling 7-day window; spend ages out as it passes seven days old.",
+  monthly: "Calendar month; runs from the 1st and resets on the 1st.",
+};
+
+/** Preset seed amount per window, USD. Picking a window in the budget dialog
+ *  fills the amount with this figure, always editable before saving — the
+ *  quick-pick contract from the shipped `BUDGET_PRESETS`. */
+export const BUDGET_WINDOW_DEFAULT_AMOUNT: Record<BudgetWindow, number> = {
+  "5h": 25,
+  weekly: 200,
+  monthly: 500,
+};
+
+/** Dialog description for the preset picker. */
+export const BUDGET_PRESETS_HELPER_COPY =
+  "Match the limits you know from Claude and Codex.";
+
+/** What the window covers, for spend-breakdown copy ("Spend below covers …"). */
+export const BUDGET_WINDOW_SCOPE_COPY: Record<BudgetWindow, string> = {
+  "5h": "the last 5 hours",
+  weekly: "the last 7 days",
+  monthly: "this calendar month",
+};
+
+/** When (or whether) the window resets, for the Budget tab's Window fact. */
+export const BUDGET_WINDOW_RESET_COPY: Record<BudgetWindow, string> = {
+  "5h": "Rolling window: spend drops out of it once it is older than 5 hours.",
+  weekly: "Rolling window: spend drops out of it once it is older than 7 days.",
+  monthly: "Resets on the 1st of each month.",
 };
 
 export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
@@ -132,19 +159,26 @@ export const ORG_BUDGET_SEED: TeamBudget = {
   warnThreshold: 80,
 };
 
-/** Three teams over the four workspace members and the three active keys.
- *  Default holds the owner and no keys (so its spend is a real $0, not a
- *  rounded-down one); Platform carries the two metered production keys;
- *  Design carries the BYOK design-agent key, whose gateway spend is $0 by
- *  definition — Gate sees the traffic and never the invoice. */
+/** Three teams over the four workspace members and the nine active keys,
+ *  matching the org model: Chad (owner) sits on Default with his own keys,
+ *  the three members split across two working teams with THEIR keys, so each
+ *  team's spend-by-user shows its actual people (attribution is key-first).
+ *
+ *  Derived 7d figures (from activity-data, not authored):
+ *    · Default  — Chad; prod-web $106.04 + prod-agent $110.70 +
+ *      design-agent (BYOK, $0) = $216.74.
+ *    · Platform — Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
+ *      are BYOK ($0), atlas-eval is metered = $12.39.
+ *    · Design   — Jordan (manager); development $13.29 + ci-runner $5.17 =
+ *      $18.46 against a $20 weekly hard budget → 92.3%, past the 80% warn. */
 export const TEAM_SEED_ROWS: TeamRow[] = [
   {
     id: "team_default",
     name: "Default",
     isDefault: true,
     memberIds: ["usr_chad"],
-    keyIds: [],
-    managerId: null,
+    keyIds: keyIds("prod-web", "prod-agent", "design-agent"),
+    managerIds: [],
     budget: null,
   },
   {
@@ -152,8 +186,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Platform",
     isDefault: false,
     memberIds: ["usr_kira", "usr_mate"],
-    keyIds: keyIds("prod-web", "prod-agent"),
-    managerId: "usr_kira",
+    keyIds: keyIds("openclaw", "nova-chat", "hermes-agent", "atlas-eval"),
+    managerIds: ["usr_kira"],
     budget: {
       name: "Team budget",
       window: "monthly",
@@ -167,9 +201,15 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Design",
     isDefault: false,
     memberIds: ["usr_jordan"],
-    keyIds: keyIds("design-agent"),
-    managerId: "usr_jordan",
-    budget: null,
+    keyIds: keyIds("development", "ci-runner"),
+    managerIds: ["usr_jordan"],
+    budget: {
+      name: "Team budget",
+      window: "weekly",
+      amount: 20,
+      enforcement: "hard",
+      warnThreshold: 80,
+    },
   },
 ];
 
@@ -385,28 +425,22 @@ export function budgetWindowLine(budget: TeamBudget): string {
   return `${budget.name} · ${BUDGET_WINDOW_LABEL[budget.window]}`;
 }
 
-/** PRD 8.2's block default. A hard budget refuses requests once spend passes
- *  this share of the cap; warn fires earlier, at `warnThreshold`. */
-export const DEFAULT_BLOCK_THRESHOLD = 100;
-
-/** The block threshold to render or enforce for a budget. Null for soft
- *  budgets — they never block, so there is nothing to show. */
-export function budgetBlockThreshold(budget: TeamBudget): number | null {
-  if (budget.enforcement !== "hard") {
-    return null;
-  }
-  return budget.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD;
-}
-
 /* ─── Membership (PRD 3 / 8.1: a user belongs to exactly ONE team) ──────── */
 
 export type TeamRole = "manager" | "member";
 
-/** A member's role on the team they are on. Derived from `managerId`, never
- *  stored per-row: one field means one manager, and the two can never
- *  disagree about who it is. */
+/** A member's role on the team they are on. Read from `managerIds`, the
+ *  mock's stand-in for `memberships.team_role`. */
 export function teamRole(team: TeamRow, memberId: string): TeamRole {
-  return team.managerId === memberId ? "manager" : "member";
+  return team.managerIds.includes(memberId) ? "manager" : "member";
+}
+
+/** First manager's display name for the list's Manager column, or an em dash
+ *  when the team has none. Co-managers are possible; the column shows one,
+ *  matching the roll-up's best-effort lookup in the real build. */
+export function teamManagerName(team: TeamRow): string {
+  const first = team.managerIds[0];
+  return first === undefined ? "—" : memberName(first);
 }
 
 /** The team a member currently belongs to, or null when they are on none.
@@ -419,21 +453,25 @@ export function teamOfMember(
   return teams.find((t) => t.memberIds.includes(memberId)) ?? null;
 }
 
-/** Set (or clear) a team's manager.
+/** Set (or clear) a member's manager role on this team.
  *
- *  Promotion needs no matching demotion: `managerId` is a single id, so
- *  writing a new one demotes the previous manager by construction. Demoting
- *  the current manager clears the field; demoting anyone else is a no-op,
- *  because they were already a member. */
+ *  Assigning the role never demotes anyone else — co-managers are allowed,
+ *  exactly as `memberships.team_role` permits in migration 170 (the role is a
+ *  per-membership fact, not a per-team slot). Demoting removes only the
+ *  addressed member; demoting a plain member is a no-op. */
 export function withManager(
   team: TeamRow,
   memberId: string,
   role: TeamRole
 ): TeamRow {
   if (role === "manager") {
-    return { ...team, managerId: memberId };
+    return team.managerIds.includes(memberId)
+      ? team
+      : { ...team, managerIds: [...team.managerIds, memberId] };
   }
-  return team.managerId === memberId ? { ...team, managerId: null } : team;
+  return team.managerIds.includes(memberId)
+    ? { ...team, managerIds: team.managerIds.filter((id) => id !== memberId) }
+    : team;
 }
 
 /** Move members onto `targetId`, removing them from whichever team they were
@@ -461,8 +499,31 @@ export function moveMembersToTeam(
     return {
       ...team,
       memberIds: kept,
-      managerId:
-        team.managerId && moving.has(team.managerId) ? null : team.managerId,
+      managerIds: team.managerIds.filter((id) => !moving.has(id)),
     };
+  });
+}
+
+/** Move keys onto `targetId`, removing them from whichever team held them.
+ *  Same one-operation contract as `moveMembersToTeam`: a key belongs to at
+ *  most one team (`gateway_api_keys.team_id`), so assigning it IS moving it.
+ *  The real build's remove-key path is this too — removal reassigns the key
+ *  to the Default team, never detaches it, so its spend keeps rolling up
+ *  somewhere. */
+export function moveKeysToTeam(
+  teams: TeamRow[],
+  targetId: string,
+  keyIdsToMove: string[]
+): TeamRow[] {
+  const moving = new Set(keyIdsToMove);
+  return teams.map((team) => {
+    if (team.id === targetId) {
+      const added = keyIdsToMove.filter((id) => !team.keyIds.includes(id));
+      return { ...team, keyIds: [...team.keyIds, ...added] };
+    }
+    const kept = team.keyIds.filter((id) => !moving.has(id));
+    return kept.length === team.keyIds.length
+      ? team
+      : { ...team, keyIds: kept };
   });
 }

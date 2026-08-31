@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
@@ -29,11 +30,16 @@ import {
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
+import { Timestamp } from "@/components/ui/timestamp";
+import type { ApiKeyRow } from "@/data/api-keys";
 import { MEMBER_ROWS } from "@/data/team-members";
 import {
   ASSIGNABLE_KEYS,
+  BUDGET_WINDOW_SCOPE_COPY,
+  DEFAULT_TEAM_ID,
   keyById,
   memberById,
+  moveKeysToTeam,
   moveMembersToTeam,
   TEAM_SEED_ROWS,
   type TeamBudget,
@@ -46,6 +52,7 @@ import {
   usageForTeam,
   withManager,
 } from "@/data/teams";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
   formatCompactCount,
@@ -57,6 +64,9 @@ import {
   AddKeysDialog,
   AddMembersDialog,
   BudgetDialog,
+  DeleteTeamDialog,
+  RemoveTeamKeyDialog,
+  RenameTeamDialog,
 } from "@/pages/teams/dialogs";
 import {
   TeamSecurityPane,
@@ -114,8 +124,8 @@ export function TeamDetail({
 
   // Adding a member is a MOVE (PRD 3 / 8.1), so it writes across the whole
   // array, not just this team — which is why the page holds every team rather
-  // than the one it is showing. Same state that lets "Add keys" know which
-  // keys another team already holds.
+  // than the one it is showing. Same state that lets "Add keys" name the team
+  // a candidate key is currently on.
   const moveMembers = (ids: string[]) => {
     if (!teamId) {
       return;
@@ -123,10 +133,49 @@ export function TeamDetail({
     setTeams((prev) => moveMembersToTeam(prev, teamId, ids));
   };
 
+  // Assigning a key is the same one-operation move: `gateway_api_keys.team_id`
+  // holds one team, so adding it here takes it off whichever team had it.
+  const moveKeys = (ids: string[]) => {
+    if (!teamId) {
+      return;
+    }
+    setTeams((prev) => moveKeysToTeam(prev, teamId, ids));
+  };
+
+  // Removing a key REASSIGNS it to Default rather than detaching it — the
+  // real build never leaves a key without a team, so its spend keeps rolling
+  // up somewhere.
+  const removeKey = (keyId: string) => {
+    setTeams((prev) => moveKeysToTeam(prev, DEFAULT_TEAM_ID, [keyId]));
+  };
+
   const setRole = (memberId: string, role: TeamRole) => {
     setTeams((prev) =>
       prev.map((t) => (t.id === teamId ? withManager(t, memberId, role) : t))
     );
+  };
+
+  // Same fold-in contract as the list page's delete: members and keys land on
+  // Default, then the page has nothing left to show, so it returns to the list.
+  const deleteTeam = () => {
+    setTeams((prev) => {
+      const doomed = prev.find((t) => t.id === teamId);
+      if (!doomed || doomed.isDefault) {
+        return prev;
+      }
+      return prev
+        .filter((t) => t.id !== teamId)
+        .map((t) =>
+          t.id === DEFAULT_TEAM_ID
+            ? {
+                ...t,
+                memberIds: [...new Set([...t.memberIds, ...doomed.memberIds])],
+                keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
+              }
+            : t
+        );
+    });
+    navigate(listPath);
   };
 
   return (
@@ -141,10 +190,12 @@ export function TeamDetail({
 
         {team ? (
           <TeamDetailBody
-            assignedKeyIds={new Set(teams.flatMap((t) => t.keyIds))}
+            onDeleteTeam={deleteTeam}
+            onMoveKeys={moveKeys}
             onMoveMembers={moveMembers}
             onOpenSecurity={() => navigate(securityPath)}
             onPatch={patch}
+            onRemoveKey={removeKey}
             onSetRole={setRole}
             team={team}
             teams={teams}
@@ -175,36 +226,65 @@ type TabId = "usage" | "members" | "keys" | "budget" | "security";
 function TeamDetailBody({
   team,
   teams,
-  assignedKeyIds,
   onPatch,
   onMoveMembers,
+  onMoveKeys,
+  onRemoveKey,
   onSetRole,
+  onDeleteTeam,
   variant,
   onOpenSecurity,
 }: {
   team: TeamRow;
-  /** Every team — the Members picker names the team a candidate would leave. */
+  /** Every team — the pickers name the team a candidate would leave. */
   teams: TeamRow[];
-  /** Keys held by ANY team — the "Add keys" picker only offers what is left. */
-  assignedKeyIds: Set<string>;
   onPatch: (next: Partial<TeamRow>) => void;
   onMoveMembers: (ids: string[]) => void;
+  onMoveKeys: (ids: string[]) => void;
+  onRemoveKey: (keyId: string) => void;
   onSetRole: (memberId: string, role: TeamRole) => void;
+  onDeleteTeam: () => void;
   variant: TeamsVariant;
   onOpenSecurity: () => void;
 }) {
   const [tab, setTab] = useState<TabId>("usage");
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const usage = useMemo(() => usageForTeam(team), [team]);
 
   return (
     <>
-      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-        <PageTitle>{team.name}</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          {team.isDefault
-            ? "The default team. Can’t be renamed or deleted."
-            : "Members, keys, and budget for this team."}
-        </p>
+      {/* Title left, the two team-level actions right — the same header shape
+          the list page uses, so Rename / Delete sit where the eye already
+          expects page actions. Default gets neither: it is the fold-in target
+          for every other team. */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
+          <PageTitle>{team.name}</PageTitle>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+            {team.isDefault
+              ? "The default team. Can’t be renamed or deleted."
+              : "Members, keys, and budget for this team."}
+          </p>
+        </div>
+        {team.isDefault ? null : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => setRenameOpen(true)}
+              size="sm"
+              variant="outline"
+            >
+              Rename
+            </Button>
+            <Button
+              onClick={() => setDeleteOpen(true)}
+              size="sm"
+              variant="destructive"
+            >
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
 
       <Tabs
@@ -240,13 +320,14 @@ function TeamDetailBody({
         </TabsContent>
         <TabsContent value="keys">
           <KeysPane
-            assignedKeyIds={assignedKeyIds}
-            onPatch={onPatch}
+            onMoveKeys={onMoveKeys}
+            onRemoveKey={onRemoveKey}
             team={team}
+            teams={teams}
           />
         </TabsContent>
         <TabsContent value="budget">
-          <BudgetPane onPatch={onPatch} spend={usage.spend} team={team} />
+          <BudgetPane onPatch={onPatch} team={team} usage={usage} />
         </TabsContent>
         <TabsContent value="security">
           <TeamSecurityPane
@@ -256,6 +337,22 @@ function TeamDetailBody({
           />
         </TabsContent>
       </Tabs>
+
+      <RenameTeamDialog
+        currentName={team.name}
+        onOpenChange={setRenameOpen}
+        onRename={(name) => {
+          onPatch({ name });
+          setRenameOpen(false);
+        }}
+        open={renameOpen}
+      />
+      <DeleteTeamDialog
+        onDelete={onDeleteTeam}
+        onOpenChange={setDeleteOpen}
+        open={deleteOpen}
+        teamName={team.name}
+      />
     </>
   );
 }
@@ -279,11 +376,11 @@ function UsagePane({ usage }: { usage: TeamUsage }) {
       </KpiRail>
 
       <UsageBreakdown
-        emptyBody="Once this team’s keys start serving traffic, spend per member appears here."
-        emptyTitle="No per-member data yet."
-        firstColumn="Member"
+        emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
+        emptyTitle="No per-user data yet."
+        firstColumn="User"
         rows={usage.byUser}
-        title="Spend by member"
+        title="Spend by user"
       />
       <UsageBreakdown
         emptyBody="Once this team’s keys route through the gateway, spend per model appears here."
@@ -294,6 +391,22 @@ function UsagePane({ usage }: { usage: TeamUsage }) {
       />
     </div>
   );
+}
+
+/** Comparable value per sortable column. `label` sorts on the string shown,
+ *  which is a person's name in the by-user table and a model name in the
+ *  by-model one, so one accessor serves both instances. */
+function usageSortValue(row: UsageSlice, key: string): string | number | null {
+  switch (key) {
+    case "label":
+      return row.label;
+    case "requests":
+      return row.requests;
+    case "spend":
+      return row.spend;
+    default:
+      return null;
+  }
 }
 
 function UsageBreakdown({
@@ -309,6 +422,14 @@ function UsageBreakdown({
   emptyTitle: string;
   emptyBody: string;
 }) {
+  // One hook per instance: the by-user table and the by-model table sort
+  // independently, and both start in the incoming (spend-ranked) order.
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(rows, sort, usageSortValue),
+    [rows, sort]
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <SectionTitle>{title}</SectionTitle>
@@ -319,19 +440,36 @@ function UsageBreakdown({
           <Table className="min-w-[560px] table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[52%] whitespace-nowrap">
+                <SortableTableHead
+                  className="w-[52%] whitespace-nowrap"
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="label"
+                >
                   {firstColumn}
-                </TableHead>
-                <TableHead className="w-[24%] whitespace-nowrap text-right">
+                </SortableTableHead>
+                <SortableTableHead
+                  className="w-[24%] whitespace-nowrap"
+                  numeric
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="requests"
+                >
                   Requests
-                </TableHead>
-                <TableHead className="w-[24%] whitespace-nowrap text-right">
+                </SortableTableHead>
+                <SortableTableHead
+                  className="w-[24%] whitespace-nowrap"
+                  numeric
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="spend"
+                >
                   Spend
-                </TableHead>
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
+              {sortedRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                     <span className="block truncate" title={row.label}>
@@ -446,11 +584,11 @@ function MembersPane({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {/* Derived from `managerId`, never a stored per-row role:
-                        one field means one manager, so promoting here demotes
-                        whoever held it without a second write. Enabled because
-                        the sandbox user is the owner (PRD 3 / 8.4 — owner and
-                        admins assign it). */}
+                    {/* Derived from `managerIds`, never a stored per-row role.
+                        The role is a per-MEMBERSHIP fact, so co-managers are
+                        allowed: promoting here never demotes whoever else
+                        holds it. Enabled because the sandbox user is the owner
+                        (PRD 3 / 8.4 — owner and admins assign it). */}
                     <Select
                       onValueChange={(v) => onSetRole(member.id, v as TeamRole)}
                       value={teamRole(team, member.id)}
@@ -479,10 +617,12 @@ function MembersPane({
                           memberIds: team.memberIds.filter(
                             (id) => id !== member.id
                           ),
-                          managerId:
-                            team.managerId === member.id
-                              ? null
-                              : team.managerId,
+                          // Leaving the team drops the role with it — it was a
+                          // fact about this membership, and the membership is
+                          // gone. Any co-manager keeps theirs.
+                          managerIds: team.managerIds.filter(
+                            (id) => id !== member.id
+                          ),
                         })
                       }
                     >
@@ -517,28 +657,39 @@ function MembersPane({
 
 function KeysPane({
   team,
-  assignedKeyIds,
-  onPatch,
+  teams,
+  onMoveKeys,
+  onRemoveKey,
 }: {
   team: TeamRow;
-  assignedKeyIds: Set<string>;
-  onPatch: (next: Partial<TeamRow>) => void;
+  /** Every team — the picker names the team a candidate key sits on today. */
+  teams: TeamRow[];
+  onMoveKeys: (ids: string[]) => void;
+  onRemoveKey: (keyId: string) => void;
 }) {
   const [addOpen, setAddOpen] = useState(false);
+  const [removing, setRemoving] = useState<ApiKeyRow | null>(null);
 
   const rows = team.keyIds
     .map((id) => keyById(id))
     .filter((k): k is NonNullable<typeof k> => k !== undefined);
 
-  // ASSIGNABLE_KEYS already excludes the revoked test-key, so a revoked key
-  // can never reach this picker.
+  // Every assignable key that is not already HERE, the way the Members picker
+  // offers every member not already here: a key on another team is not hidden,
+  // it is moved, and the row says which team it is leaving before the user
+  // commits. ASSIGNABLE_KEYS already excludes the revoked test-key, so a
+  // revoked key can never reach this picker.
   const options = useMemo(
     () =>
-      ASSIGNABLE_KEYS.filter((k) => !assignedKeyIds.has(k.id)).map((k) => ({
-        value: k.id,
-        label: `${k.name} (${k.masked})`,
-      })),
-    [assignedKeyIds]
+      ASSIGNABLE_KEYS.filter((k) => !team.keyIds.includes(k.id)).map((k) => {
+        const current = teams.find((t) => t.keyIds.includes(k.id));
+        return {
+          value: k.id,
+          label: `${k.name} (${k.masked})`,
+          description: current ? `Currently on ${current.name}` : undefined,
+        };
+      }),
+    [team.keyIds, teams]
   );
 
   return (
@@ -557,12 +708,21 @@ function KeysPane({
             title="No keys"
           />
         ) : (
-          <Table className="min-w-[560px] table-fixed">
+          // Four columns now carry content (name, prefix, status, last used),
+          // so the min-width steps up from 560 to 640 — at 560 the prefix and
+          // the date clipped against each other.
+          <Table className="min-w-[640px] table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[64%] whitespace-nowrap">Key</TableHead>
-                <TableHead className="w-[24%] whitespace-nowrap">
+                <TableHead className="w-[28%] whitespace-nowrap">Key</TableHead>
+                <TableHead className="w-[27%] whitespace-nowrap">
+                  Prefix
+                </TableHead>
+                <TableHead className="w-[14%] whitespace-nowrap">
                   Status
+                </TableHead>
+                <TableHead className="w-[31%] whitespace-nowrap">
+                  Last used
                 </TableHead>
                 <TableHead aria-label="Actions" className="w-12" />
               </TableRow>
@@ -570,31 +730,43 @@ function KeysPane({
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="type-mono-14 whitespace-nowrap">
-                    <span className="text-foreground">{row.name}</span>
-                    <span className="text-muted-foreground">
-                      {" "}
-                      ({row.masked})
+                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                    <span className="block truncate" title={row.name}>
+                      {row.name}
                     </span>
+                  </TableCell>
+                  <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
+                    {row.masked}
                   </TableCell>
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                     active
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
-                    <IconActionButton
-                      aria-label={`Remove ${row.name} from ${team.name}`}
-                      onClick={() =>
-                        onPatch({
-                          keyIds: team.keyIds.filter((id) => id !== row.id),
-                        })
+                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                    <Timestamp
+                      className={
+                        row.lastUsed === null
+                          ? "text-muted-foreground"
+                          : undefined
                       }
-                    >
-                      <Trash2
-                        aria-hidden
-                        className="size-4"
-                        strokeWidth={1.75}
-                      />
-                    </IconActionButton>
+                      date={row.lastUsed}
+                      format="dateNumeric"
+                    />
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right">
+                    {/* The Default team is where removed keys LAND, so there is
+                        nowhere to remove them to from here. */}
+                    {team.isDefault ? null : (
+                      <IconActionButton
+                        aria-label={`Remove ${row.name} from ${team.name}`}
+                        onClick={() => setRemoving(row)}
+                      >
+                        <Trash2
+                          aria-hidden
+                          className="size-4"
+                          strokeWidth={1.75}
+                        />
+                      </IconActionButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -605,12 +777,29 @@ function KeysPane({
 
       <AddKeysDialog
         onAdd={(ids) => {
-          onPatch({ keyIds: [...team.keyIds, ...ids] });
+          onMoveKeys(ids);
           setAddOpen(false);
         }}
         onOpenChange={setAddOpen}
         open={addOpen}
         options={options}
+      />
+      <RemoveTeamKeyDialog
+        keyLabel={
+          removing === null ? "" : `${removing.name} (${removing.masked})`
+        }
+        onConfirm={() => {
+          if (removing) {
+            onRemoveKey(removing.id);
+          }
+          setRemoving(null);
+        }}
+        onOpenChange={(next) => {
+          if (!next) {
+            setRemoving(null);
+          }
+        }}
+        open={removing !== null}
       />
     </div>
   );
@@ -620,11 +809,14 @@ function KeysPane({
 
 function BudgetPane({
   team,
-  spend,
+  usage,
   onPatch,
 }: {
   team: TeamRow;
-  spend: number;
+  /** Same roll-up the Usage tab renders — the meter's spend plus the two
+   *  breakdowns, restated here scoped to the budget window, so "who is
+   *  spending this" is answered where the cap lives. */
+  usage: TeamUsage;
   onPatch: (next: Partial<TeamRow>) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -632,6 +824,9 @@ function BudgetPane({
     onPatch({ budget });
     setOpen(false);
   };
+  const scope = team.budget
+    ? BUDGET_WINDOW_SCOPE_COPY[team.budget.window]
+    : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -647,10 +842,36 @@ function BudgetPane({
               <BudgetSummary
                 budget={team.budget}
                 meterLabel={`${team.name} budget used`}
-                spend={spend}
+                spend={usage.spend}
               />
             </CardContent>
           </Card>
+          <div className="flex flex-col gap-2">
+            {/* The window is the budget's, not the page's. Saying so up front
+                stops the reader reconciling these numbers against the Usage
+                tab's range and concluding one of them is wrong. */}
+            <p className="type-copy-12 m-0 text-pretty text-muted-foreground">
+              Spend below covers {scope}, the same window this budget is
+              enforced over, so it can differ from the Usage tab&rsquo;s date
+              range.
+            </p>
+            <div className="flex flex-col gap-6">
+              <UsageBreakdown
+                emptyBody={`No spend by any user over ${scope}.`}
+                emptyTitle="No per-user data yet."
+                firstColumn="User"
+                rows={usage.byUser}
+                title="Spend by user"
+              />
+              <UsageBreakdown
+                emptyBody={`No spend on any model over ${scope}.`}
+                emptyTitle="No per-model data yet."
+                firstColumn="Model"
+                rows={usage.byModel}
+                title="Spend by model"
+              />
+            </div>
+          </div>
         </>
       ) : (
         <EmptyState

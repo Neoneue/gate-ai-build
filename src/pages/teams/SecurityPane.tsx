@@ -56,7 +56,16 @@ export function TeamSecurityPane({
     <div className="flex flex-col gap-6">
       <SummaryCard onOpenSecurity={onOpenSecurity} security={security} />
       <OutcomeCard security={security} />
+      {/* By-category and by-member count FINDINGS, so a clean team empties
+          them while the stage card still counts every scan. The empty copy
+          says which of the two it is: nothing fired, versus nothing recorded
+          for a team that does have findings. */}
       <StatListCard
+        emptyBody={
+          security.findings === 0
+            ? "Nothing to attribute. No detector fired on this team’s traffic, so there is no category to report."
+            : "No categories recorded."
+        }
         rows={security.byCategory}
         subtitle="What the detectors identified."
         title="By category"
@@ -67,6 +76,11 @@ export function TeamSecurityPane({
         title="By pipeline stage"
       />
       <StatListCard
+        emptyBody={
+          security.findings === 0
+            ? "Nothing to attribute. No detector fired on this team’s traffic. Per-member request volume lives on the Usage tab."
+            : "No per-member data recorded."
+        }
         rows={security.byMember}
         subtitle="Who made the checked requests."
         title="By member"
@@ -93,19 +107,26 @@ function SummaryCard({
   security: TeamSecurity;
   onOpenSecurity: () => void;
 }) {
+  // A team can run thousands of checks and record nothing. That is the good
+  // outcome, so the headline states it as a result rather than as "0".
+  const clean = security.findings === 0;
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {formatNumber(security.findings)} security findings
+          {clean
+            ? "No security findings"
+            : `${formatNumber(security.findings)} security findings`}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          Out of {formatNumber(security.checks)} guardrail checks on this
-          team&rsquo;s traffic. Every request is scanned on the way to the model
-          and again on the reply, so a clean request still records checks.
-          Counts cover everything on record for this team, not a date range.
+          {clean
+            ? `Nothing was detected in ${formatNumber(security.checks)} guardrail checks on this team’s traffic.`
+            : `Out of ${formatNumber(security.checks)} guardrail checks on this team’s traffic.`}{" "}
+          Every request is scanned on the way to the model and again on the
+          reply, so a clean request still records checks. Counts cover
+          everything on record for this team, not a date range.
         </p>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           Counts and labels only: this tab never shows prompt or response
@@ -162,10 +183,14 @@ function StatListCard({
   title,
   subtitle,
   rows,
+  emptyBody,
 }: {
   title: string;
   subtitle: string;
   rows: TeamSecuritySlice[];
+  /** Shown in place of the rows when the list is empty. Omitted on cards that
+   *  can never empty (the stage card counts every scan). */
+  emptyBody?: string;
 }) {
   return (
     <Card>
@@ -174,17 +199,23 @@ function StatListCard({
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
-        {rows.map((row, i) => (
-          <SettingsRow
-            alignTop
-            control={<StatCount value={row.count} />}
-            first={i === 0}
-            key={row.id}
-            static
-            subtitle={row.description}
-            title={row.label}
-          />
-        ))}
+        {rows.length === 0 && emptyBody ? (
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            {emptyBody}
+          </p>
+        ) : (
+          rows.map((row, i) => (
+            <SettingsRow
+              alignTop
+              control={<StatCount value={row.count} />}
+              first={i === 0}
+              key={row.id}
+              static
+              subtitle={row.description}
+              title={row.label}
+            />
+          ))
+        )}
       </CardContent>
     </Card>
   );

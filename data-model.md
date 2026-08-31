@@ -266,6 +266,7 @@ interface ApiKeyRow {
   id:          string          // "sk-gw-c4aeb3a8" — full id, matching/dedup
   name:        string          // "prod-web", "prod-agent", …
   masked:      string          // "sk-gw-…c4ae" — display-only
+  ownerId:     string          // MEMBER_ROWS id; mirrors activity-data's owner
   requests7d:  number[]        // 7-element sparkline
   createdAt:   Date
   lastUsed:    Date | null     // null = never used
@@ -273,8 +274,12 @@ interface ApiKeyRow {
 }
 ```
 
-Canonical seed: `API_KEY_SEED_ROWS`, 4 keys (prod-web, prod-agent,
-design-agent active; test-key revoked). The page seeds
+Canonical seed: `API_KEY_SEED_ROWS`, 10 keys aligned 1:1 by name with
+activity-data's `API_KEY_ROWS` (2026-08-31): Chad's prod-web, prod-agent,
+design-agent (active) + test-key (revoked), Kira's openclaw + nova-chat,
+Mateus's hermes-agent + atlas-eval, Jordan's development + ci-runner.
+activity-data owns each key's traffic (requests, spend, Gate/BYOK path);
+this file owns its identity (id, masked, dates, ownerId). The page seeds
 `useState(API_KEY_SEED_ROWS)` and still owns mutation. Named to avoid
 `activity-data.ts`, which exports a DIFFERENT `ApiKeyRow`/`API_KEY_ROWS` pair
 for the Activity usage tables. Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
@@ -930,9 +935,9 @@ function buildSpark(total: number, seed: number): number[]
 | `MEMBER_ROWS` | `src/data/team-members.ts` (lifted from Team.tsx 2026-08-25) | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
-| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
+| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 10 |
 | `TEAM_SEED_ROWS` | `src/data/teams.ts` | `TeamRow[]` — Default / Platform / Design | 3 |
-| `ASSIGNABLE_KEYS` | `src/data/teams.ts` (derived: `API_KEY_SEED_ROWS` minus revoked) | `ApiKeyRow[]` | 3 |
+| `ASSIGNABLE_KEYS` | `src/data/teams.ts` (derived: `API_KEY_SEED_ROWS` minus revoked) | `ApiKeyRow[]` | 9 |
 | `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
 | `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
 | `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
@@ -1454,14 +1459,20 @@ workspace twins both routes (`/teams-default`, `/teams-default/:teamId`).
 `DateRangePicker` + "Create team". Then the full-width **Org budget** card
 (name · window line, meter, "Edit budget" / "Set budget") and the teams table:
 Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
-| Spend | Budget | ⋯. Rows are `NavTableRow`s drilling into the detail page.
-The ⋯ menu is Rename / Delete, both disabled on Default. Deleting folds the
-team's members and keys into Default.
+| Spend | Budget (compact utilization meter + one-decimal % label; "No budget"
+when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
+menu is Rename / Delete, both disabled on Default. Deleting folds the team's
+members and keys into Default AND appends a `{ id, name, spend }` snapshot to
+page-local `deletedTeams`, rendered below the table as a "Deleted teams
+(historical usage)" card — the mock's stand-in for soft-deleted teams keeping
+their historical attribution.
 
-**Detail page.** BackLink → the list twin, H1 = team name, then five tabs:
-Usage (spend + requests KPI pair, "Spend by member", "Spend by model"),
-Members, Keys, Budget, Security. The Usage breakdown says "member", matching
-the Security tab's "By member" — both group by the OWNER of the team's keys.
+**Detail page.** BackLink → the list twin, H1 = team name, header-right
+Rename (outline) + Delete (destructive) buttons on non-default teams, then
+five tabs: Usage (spend + requests KPI pair, sortable "Spend by user" and
+"Spend by model" tables — "user" not "member", because a spend row can
+outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
+Budget, Security.
 
 **State:** both pages own `useState(TEAM_SEED_ROWS)`; the list also owns
 `useState(ORG_BUDGET_SEED)`. Mutations are local to the visit — the seed is
@@ -1471,30 +1482,54 @@ the shared starting point, not a store.
 (`'5h' | 'weekly' | 'monthly'`), `BudgetEnforcement` (`'soft' | 'hard'`),
 `TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`.
 
-**Membership is one-team-per-user, and the role is derived (2026-08-28,
-PRD audit P1).** Two invariants the data layer owns rather than the pages:
+**Membership is one-team-per-user; roles are per-membership (2026-08-31,
+aligned to migration 170's `memberships.team_role`).** Invariants the data
+layer owns:
 
-- **One manager per team.** There is no per-row role field — `TeamRole` is
-  computed by `teamRole(team, memberId)` off the team's single `managerId`.
-  Promotion via `withManager()` therefore demotes the previous manager by
-  construction; demoting the current one clears the field. A stored role
-  column could disagree with `managerId`; a derived one cannot.
+- **Co-managers are allowed.** `TeamRow.managerIds: string[]` mirrors the
+  per-membership role column: assigning a manager via `withManager()` never
+  demotes another, demoting removes only the addressed member, and
+  `teamManagerName(team)` gives the list column its best-effort single name
+  (first manager, or —). This replaced the earlier single-`managerId`
+  promote-demotes-predecessor model once the real schema shipped without a
+  one-manager constraint.
 - **One team per user.** `moveMembersToTeam(teams, targetId, memberIds)`
   operates on the WHOLE array: it adds to the target and removes from
-  whichever team each member was on, clearing that team's `managerId` if the
-  mover managed it. Adding a member IS moving them (PRD 3 / 8.1), which is
-  why both Teams pages hold every team in state, not just the one they
-  render. `teamOfMember()` answers "where are they now" for the picker,
-  which labels each candidate with the team they would leave.
+  whichever team each member was on, stripping the mover from that team's
+  `managerIds` (the role is a fact about the membership they just left).
+  Adding a member IS moving them (PRD 3 / 8.1), which is why both Teams pages
+  hold every team in state. `teamOfMember()` answers "where are they now" for
+  the picker, which labels each candidate with the team they would leave.
+- **One team per key, same move contract.** `moveKeysToTeam(teams, targetId,
+  keyIds)` mirrors the member move: the Add-keys picker offers every
+  assignable key (a key on another team says "Currently on `<Team>`"), and
+  per-row removal is a confirm dialog that MOVES the key to Default — never a
+  detach, so its spend keeps rolling up somewhere. The Default team's own
+  Keys tab hides the remove action.
 
-**Budget thresholds.** `warnThreshold` always applies; `blockThreshold` is
-optional and read through `budgetBlockThreshold(budget)`, which returns null
-for soft budgets (they never block) and falls back to
-`DEFAULT_BLOCK_THRESHOLD` (100) for a hard budget authored without one. The
-dialog renders the block field only for Hard, defaults it to 100, and
-enforces `warn <= block` — a warning that fires after the wall is dead copy.
-Seeds are unchanged: Platform and the org budget both stay soft, so no
-seeded surface exercises the field; the dialogs do.
+**Budget thresholds (2026-08-31).** `warnThreshold` only — the shipped schema
+(`warn_threshold_pct`, migration 170) carries no block threshold; a hard
+budget blocks at the amount itself. The mock dropped its earlier
+PRD-sketched `blockThreshold` field to match. The dialog's window pill is a
+quick-pick preset: choosing a window fills the amount from
+`BUDGET_WINDOW_DEFAULT_AMOUNT` (5h $25 / weekly $200 / monthly $500, always
+editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
+`BUDGET_PRESETS_HELPER_COPY`. 5h and weekly are ROLLING windows; only
+monthly resets (on the 1st). The Budget tab renders the meter (three fill
+states: primary under, warning family once spend passes the warn %, destructive
+over), a four-fact grid (Remaining / Over budget by, Enforcement, Warn at
+with its dollar equivalent, Window with reset copy), then the same
+Spend-by-user / Spend-by-model tables the Usage tab uses, prefixed by a note
+naming the budget's own window (`BUDGET_WINDOW_SCOPE_COPY`).
+
+**Seed (2026-08-31 split — every figure derives from activity-data):**
+Default = Chad (org owner, catch-all seat) + prod-web/prod-agent/design-agent,
+$216.74, no budget. Platform = Kira (manager) + Mateus +
+openclaw/nova-chat/hermes-agent (BYOK, $0) + atlas-eval, $12.39 against a
+$500 monthly soft budget. Design = Jordan (manager) +
+development/ci-runner, $18.46 against a $20 weekly HARD budget (92.3%, past
+the 80% warn — the seeded warn-state exercise). Org budget $1,500 monthly
+soft.
 
 **Derivation — nothing on these pages is authored.** A team is a _grouping_ of
 rows that already exist:
@@ -1522,11 +1557,14 @@ outputStage   = requests − blocked      (a blocked request has no reply)
 checks        = requestStage + outputStage
 findings      = blocked + redacted + flagged
 allowed       = checks − findings
-uncategorised = checks − (injection + credential + pii) = checks − findings
 ```
 
-Counts and labels only — the pane never renders prompt or response text, which
-is what its second paragraph promises the reader.
+By-category and By-member count FINDINGS only (what fired, on whose traffic),
+so a zero-findings team with nonzero checks (seeded: Design) renders the
+"No security findings" headline and "Nothing to attribute" bodies instead of
+rows — the same shape the real summary endpoint serves. Counts and labels
+only — the pane never renders prompt or response text, which is what its
+second paragraph promises the reader.
 
 ---
 

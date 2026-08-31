@@ -26,11 +26,11 @@ import type { GuardrailAction, GuardrailReason } from "@/pages/requests/types";
  *   checks       = requestStage + outputStage
  *   findings     = blocked + redacted + flagged
  *   allowed      = checks − findings
- *   uncategorised = checks − (injection + credential + pii) = checks − findings
  *
- * The last identity holds because a clean check never carries a category and
- * every finding does — which is exactly what the "No category recorded" copy
- * claims.
+ * By-category and by-member count FINDINGS, not checks — they answer "what
+ * fired and on whose traffic", mirroring the real summary endpoint, whose
+ * zero-findings shape the pane renders as "Nothing to attribute". Scan
+ * volume (the stage counts) is the only card that spans clean checks.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export type TeamSecuritySlice = {
@@ -60,19 +60,19 @@ const OUTCOME_COPY: Record<
   { label: string; description: string }
 > = {
   block: {
-    label: "blocked",
+    label: "Blocked",
     description: "The request never reached the model.",
   },
   redacted: {
-    label: "redacted",
+    label: "Redacted",
     description: "It went through with the sensitive text removed.",
   },
   flagged: {
-    label: "flagged",
+    label: "Flagged",
     description: "Allowed through, but recorded for review.",
   },
   allow: {
-    label: "allowed",
+    label: "Allowed",
     description: "Nothing was detected, so the request went through untouched.",
   },
 };
@@ -86,9 +86,6 @@ const OUTCOME_ORDER: GuardrailAction[] = [
 ];
 
 const CATEGORY_ORDER: GuardrailReason[] = ["injection", "credential", "pii"];
-
-const UNCATEGORISED_DESCRIPTION =
-  "Checks with no category on the request. Clean checks never have one, and neither do requests older than the category column.";
 
 /** The activity-data key ids (`prod-web`) a team holds. `keyById` resolves
  *  the `sk-gw-…` seed id to the name both other modules index on. */
@@ -131,19 +128,16 @@ export function securityForTeam(team: TeamRow): TeamSecurity {
     count: action === "allow" ? checks - findings : countBy(action),
   }));
 
-  const byCategory: TeamSecuritySlice[] = [
-    {
-      id: "none",
-      label: "No category recorded",
-      description: UNCATEGORISED_DESCRIPTION,
-      count: checks - findings,
-    },
-    ...CATEGORY_ORDER.map((reason) => ({
-      id: reason,
-      label: reason,
-      count: events.filter((r) => r.guardrailReason === reason).length,
-    })),
-  ];
+  // Findings by detector category, biggest first. Only findings carry a
+  // category, so a zero-findings team gets an empty list — the pane's
+  // "Nothing to attribute" state — rather than a clean-checks filler row.
+  const byCategory: TeamSecuritySlice[] = CATEGORY_ORDER.map((reason) => ({
+    id: reason,
+    label: reason,
+    count: events.filter((r) => r.guardrailReason === reason).length,
+  }))
+    .filter((slice) => slice.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   const byStage: TeamSecuritySlice[] = [
     {
@@ -160,33 +154,24 @@ export function securityForTeam(team: TeamRow): TeamSecurity {
     },
   ];
 
-  // Per member: their own requests inbound, plus the replies that came back.
-  // Blocked requests are subtracted from the member who made them, so the
-  // per-member column sums to `checks` without a rounding pass.
-  const perOwner = new Map<string, { requests: number; blocked: number }>();
-  for (const row of volume) {
-    const prev = perOwner.get(row.owner) ?? { requests: 0, blocked: 0 };
-    perOwner.set(row.owner, {
-      requests: prev.requests + row.requests,
-      blocked: prev.blocked,
-    });
-  }
+  // Findings per member: every recorded event, attributed to the owner of
+  // the key that carried it. Mirrors the real summary's byUser — "who made
+  // the checked requests" once something fired — so a zero-findings team
+  // gets an empty list, and per-member request VOLUME stays on the Usage
+  // tab rather than being restated here.
+  const perOwner = new Map<string, number>();
   for (const event of events) {
-    if (event.guardrail !== "block") {
-      continue;
-    }
     const owner = API_KEY_ROWS.find((r) => r.key === event.keyId)?.owner;
     if (!owner) {
       continue;
     }
-    const prev = perOwner.get(owner) ?? { requests: 0, blocked: 0 };
-    perOwner.set(owner, { ...prev, blocked: prev.blocked + 1 });
+    perOwner.set(owner, (perOwner.get(owner) ?? 0) + 1);
   }
   const byMember: TeamSecuritySlice[] = [...perOwner.entries()]
-    .map(([owner, v]) => ({
+    .map(([owner, count]) => ({
       id: memberIdFor(owner),
       label: owner,
-      count: v.requests + Math.max(0, v.requests - v.blocked),
+      count,
     }))
     .sort((a, b) => b.count - a.count);
 

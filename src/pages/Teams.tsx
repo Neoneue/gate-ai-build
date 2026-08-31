@@ -30,20 +30,24 @@ import {
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import {
+  budgetPercentLabel,
+  budgetProgress,
   budgetWindowLine,
   DEFAULT_TEAM_ID,
-  memberName,
   ORG_BUDGET_SEED,
   orgSpend,
   TEAM_SEED_ROWS,
   type TeamBudget,
   type TeamRow,
+  teamManagerName,
   usageForTeam,
 } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import { BudgetMeter } from "@/pages/teams/budget";
+import { budgetFillClass } from "@/pages/teams/budget-band";
 import {
   BudgetDialog,
   CreateTeamDialog,
@@ -75,6 +79,12 @@ const TEAMS_RANGE_OPTIONS: SegmentedPillOption[] = [
 ];
 
 type CustomRange = { from: Date; to: Date };
+
+/** A team that was deleted this session. Its members and keys folded into
+ *  Default, but the spend its keys had already run stays on record — the
+ *  roll-up lists it so org totals still reconcile against a team that no
+ *  longer has a row in the table. */
+type DeletedTeam = { id: string; name: string; spend: number };
 
 let nextTeamSeq = 1;
 
@@ -126,6 +136,7 @@ export function Teams({ variant = "pro" }: { variant?: TeamsVariant } = {}) {
   const [orgBudgetOpen, setOrgBudgetOpen] = useState(false);
   const [renaming, setRenaming] = useState<TeamRow | null>(null);
   const [deleting, setDeleting] = useState<TeamRow | null>(null);
+  const [deletedTeams, setDeletedTeams] = useState<DeletedTeam[]>([]);
 
   const spendByTeam = useMemo(
     () => new Map(teams.map((t) => [t.id, usageForTeam(t).spend])),
@@ -141,7 +152,7 @@ export function Teams({ variant = "pro" }: { variant?: TeamsVariant } = {}) {
         isDefault: false,
         memberIds: [],
         keyIds: [],
-        managerId: null,
+        managerIds: [],
         budget: null,
       },
     ]);
@@ -155,14 +166,23 @@ export function Teams({ variant = "pro" }: { variant?: TeamsVariant } = {}) {
 
   // Deleting folds the team's members and keys into Default — the same
   // contract the confirm copy states, so the roster and the key assignments
-  // stay complete rather than losing rows with the team.
+  // stay complete rather than losing rows with the team. The team's spend is
+  // recorded first: the keys keep serving under Default, but what they ran
+  // under this team is historical usage the org still has to account for.
   const handleDelete = (id: string) => {
-    setTeams((prev) => {
-      const doomed = prev.find((t) => t.id === id);
-      if (!doomed || doomed.isDefault) {
-        return prev;
-      }
-      return prev
+    const doomed = teams.find((t) => t.id === id);
+    if (!doomed || doomed.isDefault) {
+      setDeleting(null);
+      return;
+    }
+    // Captured OUTSIDE the state updater: an updater runs twice under Strict
+    // Mode, which would file the same deleted team twice.
+    setDeletedTeams((prev) => [
+      ...prev,
+      { id: doomed.id, name: doomed.name, spend: usageForTeam(doomed).spend },
+    ]);
+    setTeams((prev) =>
+      prev
         .filter((t) => t.id !== id)
         .map((t) =>
           t.id === DEFAULT_TEAM_ID
@@ -172,8 +192,8 @@ export function Teams({ variant = "pro" }: { variant?: TeamsVariant } = {}) {
                 keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
               }
             : t
-        );
-    });
+        )
+    );
     setDeleting(null);
   };
 
@@ -240,6 +260,10 @@ export function Teams({ variant = "pro" }: { variant?: TeamsVariant } = {}) {
           spendByTeam={spendByTeam}
           teams={teams}
         />
+
+        {deletedTeams.length === 0 ? null : (
+          <DeletedTeamsCard rows={deletedTeams} />
+        )}
       </div>
 
       <CreateTeamDialog
@@ -361,12 +385,14 @@ function TeamsTable({
     <Card density="flush">
       {/* `table-fixed` + percentage header widths: with auto layout the
           browser hands its slack to whichever cell can grow most (Manager,
-          the widest content), leaving the numeric columns cramped. */}
-      <Table className="min-w-[860px] table-fixed">
+          the widest content), leaving the numeric columns cramped. Budget
+          carries a meter + percent since 2026-08-31, so the min-width steps
+          up to 960px and that column takes the extra share. */}
+      <Table className="min-w-[960px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead
-              className="w-[26%] whitespace-nowrap"
+              className="w-[24%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="team"
@@ -374,7 +400,7 @@ function TeamsTable({
               Team
             </SortableTableHead>
             <SortableTableHead
-              className="w-[12%] whitespace-nowrap"
+              className="w-[11%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -383,7 +409,7 @@ function TeamsTable({
               Members
             </SortableTableHead>
             <SortableTableHead
-              className="w-[10%] whitespace-nowrap"
+              className="w-[9%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -391,9 +417,9 @@ function TeamsTable({
             >
               Keys
             </SortableTableHead>
-            <TableHead className="w-[20%] whitespace-nowrap">Manager</TableHead>
+            <TableHead className="w-[17%] whitespace-nowrap">Manager</TableHead>
             <SortableTableHead
-              className="w-[15%] whitespace-nowrap"
+              className="w-[14%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -401,7 +427,7 @@ function TeamsTable({
             >
               Spend
             </SortableTableHead>
-            <TableHead className="w-[17%] whitespace-nowrap">Budget</TableHead>
+            <TableHead className="w-[25%] whitespace-nowrap">Budget</TableHead>
             <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
@@ -465,26 +491,54 @@ function TeamTableRow({
         {formatNumber(row.keyIds.length)}
       </TableCell>
       <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-        <span className="block truncate" title={memberName(row.managerId)}>
-          {memberName(row.managerId)}
+        <span className="block truncate" title={teamManagerName(row)}>
+          {teamManagerName(row)}
         </span>
       </TableCell>
       <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
         {formatCurrency(spend)}
       </TableCell>
       <TableCell className="whitespace-nowrap">
-        {row.budget ? (
-          <span className="type-mono-14 text-foreground">
-            {formatCurrency(row.budget.amount)}
-          </span>
-        ) : (
-          <span className="type-copy-14 text-muted-foreground">No budget</span>
-        )}
+        <RowBudgetMeter row={row} spend={spend} />
       </TableCell>
       <TableCell className="whitespace-nowrap text-right">
         <TeamRowActions onDelete={onDelete} onRename={onRename} row={row} />
       </TableCell>
     </NavTableRow>
+  );
+}
+
+/** The Budget column: how much of the cap this team has burned, not what the
+ *  cap is. Same three-band colour ladder as the detail page's full meter
+ *  (`budgetFillClass`), so a row that reads amber opens onto an amber bar. */
+function RowBudgetMeter({ row, spend }: { row: TeamRow; spend: number }) {
+  const budget = row.budget;
+  if (!budget) {
+    return (
+      <span className="type-copy-14 text-muted-foreground">No budget</span>
+    );
+  }
+  const fraction = budgetProgress(spend, budget) ?? 0;
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        aria-label={`${row.name} budget used`}
+        aria-valuemax={budget.amount}
+        aria-valuemin={0}
+        aria-valuenow={spend}
+        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(budget.amount)}`}
+        className="h-2 w-24 overflow-hidden rounded-full bg-muted"
+        role="meter"
+      >
+        <div
+          className={cn("h-full rounded-full", budgetFillClass(spend, budget))}
+          style={{ width: `${fraction * 100}%` }}
+        />
+      </div>
+      <span className="type-copy-12 text-muted-foreground tabular-nums">
+        {budgetPercentLabel(spend, budget)}
+      </span>
+    </div>
   );
 }
 
@@ -533,5 +587,46 @@ function TeamRowActions({
         </MenuItem>
       </MenuContent>
     </Menu>
+  );
+}
+
+/* ─── Deleted teams ────────────────────────────────────────────────────── */
+
+/** Historical usage for teams deleted this session. Their keys moved to
+ *  Default and keep serving there, so this list is not a second place to
+ *  manage them — it is the record that keeps org spend adding up after a team
+ *  stops having a row. No sort, no actions: nothing here is actionable. */
+function DeletedTeamsCard({ rows }: { rows: DeletedTeam[] }) {
+  return (
+    <Card density="flush">
+      <div className="px-4 pt-4">
+        <h2 className="type-label-14 m-0 text-muted-foreground">
+          Deleted teams (historical usage)
+        </h2>
+      </div>
+      <Table className="min-w-[360px] table-fixed">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[70%] whitespace-nowrap">Team</TableHead>
+            <TableHead className="w-[30%] whitespace-nowrap text-right">
+              Spend
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell className="type-copy-14 whitespace-nowrap text-muted-foreground">
+                {row.name}
+                <span className="type-copy-12"> (deleted)</span>
+              </TableCell>
+              <TableCell className="type-mono-14 whitespace-nowrap text-right text-muted-foreground">
+                {formatCurrency(row.spend)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
   );
 }

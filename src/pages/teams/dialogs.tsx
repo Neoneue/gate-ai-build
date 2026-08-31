@@ -25,16 +25,17 @@ import {
 } from "@/components/ui/select";
 import {
   BUDGET_ENFORCEMENT_LABEL,
+  BUDGET_PRESETS_HELPER_COPY,
+  BUDGET_WINDOW_DEFAULT_AMOUNT,
   BUDGET_WINDOW_HELP,
   BUDGET_WINDOW_OPTIONS,
   type BudgetEnforcement,
   type BudgetWindow,
-  DEFAULT_BLOCK_THRESHOLD,
   type TeamBudget,
 } from "@/data/teams";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Teams dialogs — the six modal surfaces the Teams list and detail pages
+ * Teams dialogs — the seven modal surfaces the Teams list and detail pages
  * share. Base UI `Dialog` throughout; every one is a controlled
  * open/onOpenChange pair whose submit hands a plain value back to the page,
  * which owns the state. No dialog mutates data itself.
@@ -129,7 +130,6 @@ function CreateTeamBody({ onCreate }: { onCreate: (name: string) => void }) {
 
 /* ─── 2. Set budget (org + team share one form) ─────────────────────────── */
 
-const DEFAULT_BUDGET_AMOUNT = 500;
 const DEFAULT_WARN_THRESHOLD = 80;
 
 export function BudgetDialog({
@@ -184,11 +184,10 @@ function BudgetBody({
   budget: TeamBudget | null;
 }) {
   const [name, setName] = useState(budget?.name ?? defaultName);
-  const [window, setWindow] = useState<BudgetWindow>(
-    budget?.window ?? "monthly"
-  );
+  const initialWindow: BudgetWindow = budget?.window ?? "monthly";
+  const [window, setWindow] = useState<BudgetWindow>(initialWindow);
   const [amount, setAmount] = useState(
-    String(budget?.amount ?? DEFAULT_BUDGET_AMOUNT)
+    String(budget?.amount ?? BUDGET_WINDOW_DEFAULT_AMOUNT[initialWindow])
   );
   const [enforcement, setEnforcement] = useState<BudgetEnforcement>(
     budget?.enforcement ?? "soft"
@@ -196,35 +195,18 @@ function BudgetBody({
   const [warn, setWarn] = useState(
     String(budget?.warnThreshold ?? DEFAULT_WARN_THRESHOLD)
   );
-  const [block, setBlock] = useState(
-    String(budget?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD)
-  );
 
-  // A soft budget never blocks, so the block field is not just hidden but
-  // irrelevant: it is left out of the saved budget and out of validation.
-  const isHard = enforcement === "hard";
+  // A hard budget blocks at the amount itself — there is no second threshold
+  // to validate, so what is left is a name, a positive cap, and a warn
+  // percentage inside 1–100.
   const amountValue = Number(amount);
   const warnValue = Number(warn);
-  const blockValue = Number(block);
   const inPercentRange = (n: number) => Number.isFinite(n) && n > 0 && n <= 100;
-  const blockValid = !isHard || inPercentRange(blockValue);
-  // Warn has to fire before the block, otherwise the warning is dead copy:
-  // spend would hit the wall first and the alert would arrive after the fact.
-  const thresholdsOrdered = !isHard || warnValue <= blockValue;
   const isValid =
     name.trim().length > 0 &&
     Number.isFinite(amountValue) &&
     amountValue > 0 &&
-    inPercentRange(warnValue) &&
-    blockValid &&
-    thresholdsOrdered;
-  // Only complain once both numbers are real — typing "1" on the way to "100"
-  // should not flash an error at the user mid-keystroke.
-  const showOrderError =
-    isHard &&
-    inPercentRange(warnValue) &&
-    inPercentRange(blockValue) &&
-    !thresholdsOrdered;
+    inPercentRange(warnValue);
 
   return (
     <form
@@ -240,7 +222,6 @@ function BudgetBody({
           amount: amountValue,
           enforcement,
           warnThreshold: warnValue,
-          ...(isHard ? { blockThreshold: blockValue } : {}),
         });
       }}
     >
@@ -248,9 +229,7 @@ function BudgetBody({
         <DialogTitle className="type-heading-18 text-foreground">
           {title}
         </DialogTitle>
-        <DialogDescription>
-          Match the limits you know from Claude and Codex.
-        </DialogDescription>
+        <DialogDescription>{BUDGET_PRESETS_HELPER_COPY}</DialogDescription>
       </DialogHeader>
 
       <div className="flex flex-col gap-2">
@@ -280,7 +259,18 @@ function BudgetBody({
         <div>
           <Segmented
             aria-label="Budget window"
-            onChange={(v) => setWindow(v as BudgetWindow)}
+            onChange={(v) => {
+              const next = v as BudgetWindow;
+              if (next === window) {
+                return;
+              }
+              // Picking a window is picking a PRESET: the amount refills from
+              // that window's default (5h $25 / weekly $200 / monthly $500),
+              // still editable before saving. Guarded on an actual change so
+              // re-selecting the current window never clobbers an edited cap.
+              setWindow(next);
+              setAmount(String(BUDGET_WINDOW_DEFAULT_AMOUNT[next]));
+            }}
             options={BUDGET_WINDOW_OPTIONS}
             size="sm"
             value={window}
@@ -342,10 +332,6 @@ function BudgetBody({
           Warn threshold (% of budget)
         </Label>
         <Input
-          aria-describedby={
-            showOrderError ? `${scope}-budget-order-error` : undefined
-          }
-          aria-invalid={showOrderError || undefined}
           autoComplete="off"
           className="type-mono-14"
           id={`${scope}-budget-warn`}
@@ -357,43 +343,6 @@ function BudgetBody({
           value={warn}
         />
       </div>
-
-      {/* Block threshold is a HARD-enforcement concept. Rendering it greyed
-          out for soft budgets would imply the number still means something;
-          it does not, so the field is absent entirely. */}
-      {isHard ? (
-        <div className="flex flex-col gap-2">
-          <Label
-            className="type-label-14 text-muted-foreground"
-            htmlFor={`${scope}-budget-block`}
-          >
-            Block threshold (% of budget)
-          </Label>
-          <Input
-            aria-describedby={
-              showOrderError ? `${scope}-budget-order-error` : undefined
-            }
-            aria-invalid={showOrderError || undefined}
-            autoComplete="off"
-            className="type-mono-14"
-            id={`${scope}-budget-block`}
-            max={100}
-            min={1}
-            onChange={(e) => setBlock(e.target.value)}
-            step={1}
-            type="number"
-            value={block}
-          />
-          {showOrderError ? (
-            <p
-              className="type-copy-12 text-destructive"
-              id={`${scope}-budget-order-error`}
-            >
-              The warn threshold has to be at or below the block threshold.
-            </p>
-          ) : null}
-        </div>
-      ) : null}
 
       <DialogFooter>
         <DialogClose
@@ -682,6 +631,53 @@ export function DeleteTeamDialog({
             variant="destructive"
           >
             Delete team
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── 7. Remove key from team ───────────────────────────────────────────── */
+
+/** Removing a key never detaches it — it moves to the default team, so its
+ *  spend keeps rolling up somewhere. The confirm exists because the row's
+ *  trash glyph reads as "revoke" at a glance, and this is not that. */
+export function RemoveTeamKeyDialog({
+  open,
+  onOpenChange,
+  keyLabel,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+  /** `name (sk-gw-…NNNN)` — the same two-part form the table cell shows. */
+  keyLabel: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="p-4 sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Remove {keyLabel} from this team?</DialogTitle>
+          <DialogDescription>
+            This key moves to the default team. It keeps working, and only its
+            team attribution changes.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose
+            render={<Button size="default" type="button" variant="outline" />}
+          >
+            Cancel
+          </DialogClose>
+          <Button
+            onClick={onConfirm}
+            size="default"
+            type="button"
+            variant="destructive"
+          >
+            Remove key
           </Button>
         </DialogFooter>
       </DialogContent>
