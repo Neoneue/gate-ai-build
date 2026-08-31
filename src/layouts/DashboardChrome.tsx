@@ -26,10 +26,15 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
+import {
+  isDefaultSurface,
+  isEnterpriseSurface,
+  isFreeSurface,
+} from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
+  ENTERPRISE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
 } from "./nav-sections";
@@ -75,17 +80,22 @@ export function DashboardChrome({
   const mainRef = useScrollRestoration<HTMLElement>();
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
+  const isEnterprise = isEnterpriseSurface(pathname);
   const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isFree
       ? FREE_SIDEBAR_SECTIONS
-      : SIDEBAR_SECTIONS;
+      : isEnterprise
+        ? ENTERPRISE_SIDEBAR_SECTIONS
+        : SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
     : isFree
       ? "/overview-free"
-      : "/overview";
+      : isEnterprise
+        ? "/overview-enterprise"
+        : "/overview";
   // Upgrade promo in the rail follows the same tier signal as the nav lock
   // icons and the workspace badge (see lib/plan.ts): shown on the two non-PRO
   // surfaces, absent on PRO. It lands on that tier's own Billing page rather
@@ -156,7 +166,7 @@ export function DashboardChrome({
             topSlot={
               switcherInRail ? (
                 <div className="border-border border-b px-3 pt-3 pb-3">
-                  <WorkspaceSwitcher className="w-full" />
+                  <WorkspaceSwitcher className="w-full" compactBadge />
                 </div>
               ) : undefined
             }

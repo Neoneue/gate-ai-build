@@ -111,6 +111,16 @@ const TeamDetail = lazy(() =>
 const TeamsDefault = lazy(() =>
   import("@/pages/TeamsDefault").then((m) => ({ default: m.TeamsDefault }))
 );
+const TeamsEnterprise = lazy(() =>
+  import("@/pages/TeamsEnterprise").then((m) => ({
+    default: m.TeamsEnterprise,
+  }))
+);
+const TeamDetailEnterprise = lazy(() =>
+  import("@/pages/TeamDetailEnterprise").then((m) => ({
+    default: m.TeamDetailEnterprise,
+  }))
+);
 const TeamDetailDefault = lazy(() =>
   import("@/pages/TeamDetailDefault").then((m) => ({
     default: m.TeamDetailDefault,
@@ -375,6 +385,43 @@ export default function App() {
             <Route element={<ApiKeysFree />} path="/api-keys-free" />
             <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
+            {/* Enterprise-workspace twins — reached via the workspace
+             * switcher. Teams is the only page with a divergent Enterprise
+             * build (A/B against Pro); every other route reuses the Pro page
+             * component under the Enterprise chrome, so in-page cross-links
+             * may land back on Pro paths. */}
+            <Route element={<Dashboard />} path="/overview-enterprise" />
+            <Route element={<Requests />} path="/messages-enterprise" />
+            <Route
+              element={<Conversations />}
+              path="/conversations-enterprise"
+            />
+            <Route element={<Models />} path="/models-enterprise" />
+            <Route
+              element={<TokenSavings />}
+              path="/token-savings-enterprise"
+            />
+            <Route element={<Limits />} path="/limits-enterprise" />
+            <Route element={<Security />} path="/security-enterprise" />
+            <Route element={<Policies />} path="/policies-enterprise" />
+            <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
+            <Route element={<Activity />} path="/activity-enterprise" />
+            <Route element={<Team />} path="/team-enterprise" />
+            <Route element={<TeamsEnterprise />} path="/teams-enterprise" />
+            <Route
+              element={<TeamDetailEnterprise />}
+              path="/teams-enterprise/:teamId"
+            />
+            <Route element={<Billing />} path="/billing-enterprise" />
+            <Route element={<ApiKeys />} path="/api-keys-enterprise" />
+            <Route
+              element={<Notifications />}
+              path="/notifications-enterprise"
+            />
+            <Route
+              element={<Settings showCancelPlan={false} />}
+              path="/settings-enterprise"
+            />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />
           </Route>

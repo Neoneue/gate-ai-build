@@ -1256,6 +1256,22 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **Tooltip** (`tooltip.tsx`) — Base UI `Tooltip.*` thin wrapper. Surface: `rounded-sm bg-popover shadow-md` with `text-xs` body. Mandatory on every `<Timestamp>` (relative ↔ absolute pairing), on Cost-column dashes for BYOK rows (Requests), and on truncated identifiers. Trigger needs `tabIndex={0}` whenever the tooltip carries content keyboard users must reach (BYOK Info icon, Cost cell dash).
 - **Separator** (`separator.tsx`) — Base UI `Separator` wrapper. Renders a 1px `bg-border` rule. Use for in-card section breaks where `border-t` on the next child would couple to the child instead of belonging to the parent layout. Rare — most rhythm in this codebase comes from `border-t` + spacing rather than dedicated rules.
 
+### Callout *(added 2026-08-31)*
+
+- **Callout** (`callout.tsx`) — quiet, persistent info banner for scope-setting
+  context that must sit near the surface it qualifies (first consumer: the
+  team Budget tab's "spend below covers the budget window" note). Surface:
+  `rounded-md border border-border bg-card px-4 py-3` — the same card surface
+  as its neighbors (started as `bg-card-muted`, dropped same-day: the muted
+  band sat BRIGHTER than the cards in dark mode), deliberately NOT alert
+  chrome. Ink:
+  `type-copy-14 text-muted-foreground` with a 16px `Info` glyph in an `h-5`
+  wrapper so the icon centers on the first text line and stays put when the
+  copy wraps. `role="note"`, no dismiss affordance, no status-color variants:
+  it states a fact about the page, it does not report an event. If a surface
+  ever needs a warning/error banner, that is a different component with
+  status semantics — do not add tone props here.
+
 ### Modal / Drawer
 
 - **Dialog** (`dialog.tsx`) — centered modal. **Modal tier:** `rounded-xl` (**16px LOCKED**) + `shadow-lg`. Overlay: `bg-neutral-900/40 backdrop-blur-xs`. The primitive ships **three content shells** and a set of section slots so every modal in the project composes from the same source — *do not* hand-roll modal chrome on a consumer.

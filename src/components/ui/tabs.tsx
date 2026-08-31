@@ -28,7 +28,7 @@ const tabsListVariants = cva(
       variant: {
         default:
           "w-fit justify-center rounded-sm bg-muted p-1 group-data-horizontal/tabs:h-8",
-        line: "w-full min-w-0 flex-nowrap justify-start gap-0 overflow-x-auto border-border border-b bg-transparent px-4",
+        line: "w-full min-w-0 flex-nowrap justify-start gap-0 overflow-x-auto overflow-y-hidden border-border border-b bg-transparent px-4",
       },
     },
     defaultVariants: {
@@ -66,7 +66,10 @@ function TabsList({
       ) : null}
       {variant === "line" ? (
         <TabsPrimitive.Indicator
-          className="absolute bottom-[-1px] left-(--active-tab-left) z-0 h-0.5 w-(--active-tab-width) bg-primary transition-[left,width] duration-200 ease-out motion-reduce:transition-none"
+          // bottom-0, not -1px: the list is a scroll container (overflow-x-auto),
+          // and an absolutely positioned child hanging below the padding box
+          // makes the rail vertically scrollable by that pixel.
+          className="absolute bottom-0 left-(--active-tab-left) z-0 h-0.5 w-(--active-tab-width) bg-primary transition-[left,width] duration-200 ease-out motion-reduce:transition-none"
           data-slot="tabs-indicator"
         />
       ) : null}

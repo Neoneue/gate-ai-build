@@ -131,6 +131,8 @@ The two variant sidebars are **derived**, not hand-maintained:
 - `DEFAULT_SIDEBAR_SECTIONS` — suffix `-default`, empty lock set. The nav label
   stays "Messages" across all tiers; only the Default page body keeps the
   "Requests" copy.
+- `ENTERPRISE_SIDEBAR_SECTIONS` — suffix `-enterprise`, empty lock set, nothing
+  hidden: Enterprise is the top tier, so every surface Pro has, it has.
 
 **Upgrade promo (2026-08-04).** `SidebarPanel` renders a `<SidebarUpgradeCard>`
 between the `<nav>` and the user area when — and only when — it receives an
@@ -178,6 +180,19 @@ exist. Teams also twins its **detail** route, which no other base does:
 `/teams-default/:teamId` exists so a Default-workspace drill-in keeps its
 variant (the Security tab's empty state) and its back link.
 
+**Enterprise workspace (2026-08-31).** A fourth tier on the `-enterprise`
+suffix, added so the Teams UI can be A/B compared between Pro and Enterprise
+(the two builds will diverge). Only Teams has real Enterprise pages:
+`TeamsEnterprise.tsx` on `/teams-enterprise` and `TeamDetailEnterprise.tsx` on
+`/teams-enterprise/:teamId`, standalone clones of the Pro files (per the
+twins-are-separate-files convention) whose only starting deltas are the
+component names and drill/back/security paths. Every other `-enterprise` route
+reuses the PRO page component under the Enterprise chrome (sidebar +
+switcher badge), so in-page cross-links on those reused pages can land back on
+Pro paths; that leak is accepted, the A/B target is Teams. Enterprise is NOT a
+`FREE_SURFACE`: it shows no locks, no upgrade promo, and wears the same `info`
+badge treatment as Pro.
+
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
 means tier is derived from the URL, never stored:
@@ -185,12 +200,14 @@ means tier is derived from the URL, never stored:
 | Export | Use |
 | --- | --- |
 | `isDefaultSurface` / `isFreeSurface` / `isNonProSurface` | Predicates read by the sidebar lock icons and the workspace badge, so the badge and the locks can never disagree |
-| `FREE_TWINS` / `DEFAULT_TWINS` | The nav bases that actually have a twin |
-| `toProPath` / `toFreePath` / `toDefaultPath` | Path translation between tiers. Idempotent within a tier; each falls back to that tier's `/overview` twin when the current base has none |
+| `isEnterpriseSurface` | Enterprise predicate, deliberately NOT part of `isNonProSurface`: Enterprise sits above Pro and never shows locks or the upgrade promo |
+| `FREE_TWINS` / `DEFAULT_TWINS` / `ENTERPRISE_TWINS` | The nav bases that actually have a twin |
+| `toProPath` / `toFreePath` / `toDefaultPath` / `toEnterprisePath` | Path translation between tiers. Idempotent within a tier; each falls back to that tier's `/overview` twin when the current base has none |
 
 **There IS a runtime tier switch (2026-06-16).** `WorkspaceSwitcher` in the top
-bar renders Pro / Default / Free menu items that `navigate()` the _current_
-pathname through those translators, so switching tier keeps you on the page you
+bar renders Enterprise / Pro / Default / Free menu items that `navigate()` the
+_current_ pathname through those translators, so switching tier keeps you on
+the page you
 were reading. The plan `Badge` next to the workspace name reads from the same
 predicates. Direct-route entry still works, and remains how a single state gets
 designed or reviewed in isolation.
@@ -1492,7 +1509,11 @@ layer owns:
   `teamManagerName(team)` gives the list column its best-effort single name
   (first manager, or —). This replaced the earlier single-`managerId`
   promote-demotes-predecessor model once the real schema shipped without a
-  one-manager constraint.
+  one-manager constraint. **No UI assigns the role anymore (2026-08-31
+  ruling):** the detail page's Members tab dropped its member/manager select
+  in favor of the Team page's org-role control (Owner static, Admin/Member
+  select, capitalized, local state), so `managerIds` is seed-only and feeds
+  just the list's Manager column.
 - **One team per user.** `moveMembersToTeam(teams, targetId, memberIds)`
   operates on the WHOLE array: it adds to the target and removes from
   whichever team each member was on, stripping the mover from that team's

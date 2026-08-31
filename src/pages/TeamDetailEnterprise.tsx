@@ -1,16 +1,26 @@
 import { Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CompactKpi } from "@/components/ui/compact-kpi";
+import { Callout } from "@/components/ui/callout";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { Monogram } from "@/components/ui/monogram";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
+import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
   SelectContent,
@@ -59,7 +69,23 @@ import {
   formatCompactCount,
   formatCurrency,
   formatNumber,
+  formatSparkLabel,
 } from "@/lib/formatters";
+import {
+  type CustomRange,
+  effectiveScale,
+  type PresetRange,
+  RANGE_OPTIONS,
+  type Range,
+} from "@/lib/range";
+import {
+  fmtInt,
+  fmtTokens,
+  fmtUsd,
+  getBucketCount,
+  getRangeDates,
+} from "@/pages/activity/chart-helpers";
+import { distributeSeries, MODEL_ROWS } from "@/pages/activity-data";
 import { BudgetSummary } from "@/pages/teams/budget";
 import {
   AddKeysDialog,
@@ -75,7 +101,10 @@ import {
 } from "@/pages/teams/SecurityPane";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Team detail (route: /teams/:teamId)
+ * Team detail, Enterprise twin (route: /teams-enterprise/:teamId)
+ *
+ * Cloned from TeamDetail.tsx as a separate file so the Enterprise Teams UI
+ * can diverge from Pro for side-by-side comparison.
  *
  * A PAGE, not a modal — the team is URL-addressable and shareable, same as
  * the Messages findings and Conversations trace surfaces.
@@ -95,7 +124,7 @@ function initialsOf(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
 }
 
-export function TeamDetail({
+export function TeamDetailEnterprise({
   variant = "pro",
 }: {
   variant?: TeamsVariant;
@@ -110,9 +139,10 @@ export function TeamDetail({
   // Back goes to the list twin the user came from, so a Default-workspace
   // drill-in never lands them in the Pro list. Teams are Pro + Enterprise
   // only — there is no Free twin to route to.
-  const listPath = variant === "default" ? "/teams-default" : "/teams";
+  const listPath =
+    variant === "default" ? "/teams-default" : "/teams-enterprise";
   const securityPath =
-    variant === "default" ? "/security-default" : "/security";
+    variant === "default" ? "/security-default" : "/security-enterprise";
 
   const [teams, setTeams] = useState<TeamRow[]>(TEAM_SEED_ROWS);
   const team = teams.find((t) => t.id === teamId);
@@ -259,28 +289,12 @@ function TeamDetailBody({
               : "Members, keys, and budget for this team."}
           </p>
         </div>
-        {team.isDefault ? null : (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              onClick={() => setRenameOpen(true)}
-              size="sm"
-              variant="outline"
-            >
-              Rename
-            </Button>
-            <Button
-              onClick={() => setDeleteOpen(true)}
-              size="sm"
-              variant="destructive"
-            >
-              Delete
-            </Button>
-          </div>
-        )}
+        {/* Rename / Delete are parked until a Settings tab exists; their
+            dialogs below stay wired so that tab can reuse them. */}
       </div>
 
       <Tabs
-        className="gap-4"
+        className="gap-6"
         onValueChange={(v) => setTab(v as TabId)}
         value={tab}
       >
@@ -299,7 +313,7 @@ function TeamDetailBody({
         </TabsList>
 
         <TabsContent value="usage">
-          <UsagePane usage={usage} />
+          <UsagePane teamId={team.id} usage={usage} />
         </TabsContent>
         <TabsContent value="members">
           <MembersPane
@@ -350,34 +364,167 @@ function TeamDetailBody({
 
 /* ─── Usage tab ────────────────────────────────────────────────────────── */
 
-function UsagePane({ usage }: { usage: TeamUsage }) {
+/** Activity catalog model key → vendor, for the by-model rows' brand icons —
+ *  the same VendorAvatar treatment the Models page locks in. */
+const MODEL_VENDOR = new Map(MODEL_ROWS.map((m) => [m.key, m.vendor]));
+
+/** Single first initial + the member's own tone — the same treatment
+ *  Activity's Top users card uses for its rows. */
+function userAvatar(row: UsageSlice): ReactNode {
+  return (
+    <Monogram
+      initials={(
+        row.label.trim().split(WHITESPACE_RE)[0]?.[0] ?? "?"
+      ).toUpperCase()}
+      size="sm"
+      tone={memberById(row.id)?.avatarTone ?? "ink"}
+    />
+  );
+}
+
+function modelAvatar(row: UsageSlice): ReactNode {
+  const vendor = MODEL_VENDOR.get(row.id);
+  return vendor ? <VendorAvatar decorative vendor={vendor} /> : null;
+}
+
+function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
+  // Range chrome matches Activity's Overview row: preset pill + custom
+  // picker, landing on All. Every number on the tab is the team's REAL 7d
+  // workload projected onto the selected window via effectiveScale — the
+  // same derivation Activity's KPI rail and Top cards use, so the KPIs and
+  // the breakdown tables below always describe the same selection.
+  const [range, setRange] = useState<Range>("all");
+  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+  const scale = effectiveScale(range, customRange);
+
+  const spend = +(usage.spend * scale).toFixed(2);
+  const requests = Math.round(usage.requests * scale);
+  const tokens = Math.round(usage.tokens * scale);
+
+  // Sparklines distribute each scaled total across the range's buckets —
+  // same generator as the org rail, seeded per team, metric, and range so
+  // shapes differ while sum(bars) stays the number on the card. No delta
+  // chips: there is no prior-period team roll-up to compare against.
+  const teamSeed = [...teamId].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rangeSeed =
+    range === "all"
+      ? 11
+      : range === "24h"
+        ? 47
+        : range === "7d"
+          ? 77
+          : range === "30d"
+            ? 303
+            : 99;
+  const seed = teamSeed * rangeSeed;
+  const count = getBucketCount(range, customRange);
+  const spendSpark = distributeSeries(spend, count, seed * 31 + 1);
+  const requestsSpark = distributeSeries(requests, count, seed * 31 + 2);
+  const tokensSpark = distributeSeries(tokens, count, seed * 31 + 3);
+  const sparkLabels = getRangeDates(range, customRange).map((d) =>
+    formatSparkLabel(d, range === "24h")
+  );
+
+  const scaleSlices = (slices: UsageSlice[]) =>
+    slices.map((s) => ({
+      ...s,
+      requests: Math.round(s.requests * scale),
+      spend: +(s.spend * scale).toFixed(2),
+    }));
+
   return (
     <div className="flex flex-col gap-6">
-      <KpiRail columns={2}>
-        <CompactKpi
-          flat
-          title="Total spend"
-          value={formatCurrency(usage.spend)}
-        />
-        <CompactKpi
-          flat
-          title="Requests"
-          value={formatCompactCount(usage.requests)}
-        />
-      </KpiRail>
+      {/* Header row + rail share a gap-4 group, same as Activity's Overview
+          block, so the title sits 16px above the cards. */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <SectionTitle>Overview</SectionTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedPill
+              aria-label="Time range"
+              onValueChange={(v) => {
+                setRange(v as PresetRange);
+                setCustomRange(null);
+              }}
+              options={RANGE_OPTIONS}
+              size="sm"
+              value={range === "custom" ? "" : range}
+            />
+            <DateRangePicker
+              onChange={(r) => {
+                if (r) {
+                  setCustomRange(r);
+                  setRange("custom");
+                } else {
+                  setCustomRange(null);
+                  setRange("all");
+                }
+              }}
+              size="sm"
+              value={customRange}
+            />
+          </div>
+        </div>
+        <KpiRail columns={3}>
+          <CompactKpi
+            flat
+            spark={
+              <CompactSpark
+                colorVar="var(--color-chart-1)"
+                data={spendSpark}
+                labels={sparkLabels}
+                tooltip
+                valueFormatter={(v) => fmtUsd(v)}
+              />
+            }
+            title="Total Spend"
+            value={formatCurrency(spend)}
+          />
+          <CompactKpi
+            flat
+            spark={
+              <CompactSpark
+                colorVar="var(--color-neutral-500)"
+                data={requestsSpark}
+                labels={sparkLabels}
+                tooltip
+                valueFormatter={(v) => fmtInt(Math.round(v))}
+              />
+            }
+            title="Total Messages"
+            value={formatCompactCount(requests)}
+          />
+          <CompactKpi
+            flat
+            spark={
+              <CompactSpark
+                colorVar="var(--color-chart-3)"
+                data={tokensSpark}
+                labels={sparkLabels}
+                tooltip
+                valueFormatter={(v) => fmtTokens(Math.round(v))}
+              />
+            }
+            title="Tokens Used"
+            value={formatCompactCount(tokens)}
+          />
+        </KpiRail>
+      </div>
 
       <UsageBreakdown
+        avatarFor={userAvatar}
         emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
         emptyTitle="No per-user data yet."
         firstColumn="User"
-        rows={usage.byUser}
+        rows={scaleSlices(usage.byUser)}
         title="Spend by user"
       />
       <UsageBreakdown
+        avatarFor={modelAvatar}
         emptyBody="Once this team’s keys route through the gateway, spend per model appears here."
         emptyTitle="No per-model data yet."
         firstColumn="Model"
-        rows={usage.byModel}
+        rows={scaleSlices(usage.byModel)}
         title="Spend by model"
       />
     </div>
@@ -406,12 +553,16 @@ function UsageBreakdown({
   rows,
   emptyTitle,
   emptyBody,
+  avatarFor,
 }: {
   title: string;
   firstColumn: string;
   rows: UsageSlice[];
   emptyTitle: string;
   emptyBody: string;
+  /** Row icon — a member Monogram in the by-user table, the vendor mark in
+   *  the by-model one. */
+  avatarFor: (row: UsageSlice) => ReactNode;
 }) {
   // One hook per instance: the by-user table and the by-model table sort
   // independently, and both start in the incoming (spend-ranked) order.
@@ -463,9 +614,15 @@ function UsageBreakdown({
               {sortedRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                    <span className="block truncate" title={row.label}>
-                      {row.label}
-                    </span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      {avatarFor(row)}
+                      <span
+                        className="min-w-0 flex-1 truncate"
+                        title={row.label}
+                      >
+                        {row.label}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                     {formatNumber(row.requests)}
@@ -521,13 +678,6 @@ function MembersPane({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button onClick={() => setAddOpen(true)} size="sm" variant="outline">
-          <Plus aria-hidden data-icon="inline-start" />
-          Add members
-        </Button>
-      </div>
-
       <Card density="flush">
         {rows.length === 0 ? (
           <TableEmptyState
@@ -557,7 +707,12 @@ function MembersPane({
             <TableBody>
               {rows.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className="whitespace-nowrap">
+                  {/* py-0 on the two control-bearing cells (Monogram row,
+                      role Select): the 28-32px controls would otherwise add
+                      their height on top of py-3 and run this table's rows
+                      8px taller than the Keys tab's. The actions cell's icon
+                      button now governs both tables at the same height. */}
+                  <TableCell className="whitespace-nowrap py-0">
                     <div className="flex min-w-0 items-center gap-3">
                       <Monogram
                         initials={initialsOf(member.name)}
@@ -572,7 +727,7 @@ function MembersPane({
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                  <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
                     {/* Org role, mirrored from the Team page's row control:
                         Owner renders static; the owner using the site can make
                         everyone else Admin or Member. */}
@@ -585,7 +740,7 @@ function MembersPane({
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                     Active
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
+                  <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                     <IconActionButton
                       aria-label={`Remove ${member.name} from ${team.name}`}
                       onClick={() =>
@@ -615,6 +770,13 @@ function MembersPane({
           </Table>
         )}
       </Card>
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button onClick={() => setAddOpen(true)} variant="outline">
+          <Plus aria-hidden data-icon="inline-start" />
+          Add members
+        </Button>
+      </div>
 
       <AddMembersDialog
         onAdd={(ids) => {
@@ -692,13 +854,6 @@ function KeysPane({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button onClick={() => setAddOpen(true)} size="sm" variant="outline">
-          <Plus aria-hidden data-icon="inline-start" />
-          Add keys
-        </Button>
-      </div>
-
       <Card density="flush">
         {rows.length === 0 ? (
           <TableEmptyState
@@ -750,7 +905,7 @@ function KeysPane({
                       format="dateNumeric"
                     />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
+                  <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                     {/* The Default team is where removed keys LAND, so there is
                         nowhere to remove them to from here. */}
                     {team.isDefault ? null : (
@@ -772,6 +927,13 @@ function KeysPane({
           </Table>
         )}
       </Card>
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button onClick={() => setAddOpen(true)} variant="outline">
+          <Plus aria-hidden data-icon="inline-start" />
+          Add keys
+        </Button>
+      </div>
 
       <AddKeysDialog
         onAdd={(ids) => {
@@ -830,12 +992,21 @@ function BudgetPane({
     <div className="flex flex-col gap-4">
       {team.budget ? (
         <>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button onClick={() => setOpen(true)} size="sm" variant="outline">
-              Edit budget
-            </Button>
-          </div>
+          {/* One card, same shape as the list page's Org budget card: title +
+              nested action in the header, meter + the four facts below. */}
           <Card>
+            <CardHeader>
+              <CardTitle>Team budget</CardTitle>
+              <CardAction>
+                <Button
+                  onClick={() => setOpen(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  Edit budget
+                </Button>
+              </CardAction>
+            </CardHeader>
             <CardContent>
               <BudgetSummary
                 budget={team.budget}
@@ -844,31 +1015,33 @@ function BudgetPane({
               />
             </CardContent>
           </Card>
-          <div className="flex flex-col gap-2">
-            {/* The window is the budget's, not the page's. Saying so up front
-                stops the reader reconciling these numbers against the Usage
-                tab's range and concluding one of them is wrong. */}
-            <p className="type-copy-12 m-0 text-pretty text-muted-foreground">
-              Spend below covers {scope}, the same window this budget is
-              enforced over, so it can differ from the Usage tab&rsquo;s date
-              range.
-            </p>
-            <div className="flex flex-col gap-6">
-              <UsageBreakdown
-                emptyBody={`No spend by any user over ${scope}.`}
-                emptyTitle="No per-user data yet."
-                firstColumn="User"
-                rows={usage.byUser}
-                title="Spend by user"
-              />
-              <UsageBreakdown
-                emptyBody={`No spend on any model over ${scope}.`}
-                emptyTitle="No per-model data yet."
-                firstColumn="Model"
-                rows={usage.byModel}
-                title="Spend by model"
-              />
-            </div>
+          {/* The window is the budget's, not the page's. Saying so up front
+              stops the reader reconciling these numbers against the Usage
+              tab's range and concluding one of them is wrong. */}
+          <Callout>
+            Spend below covers {scope}, the same window this budget is enforced
+            over, so it can differ from the Usage tab&rsquo;s date range.
+          </Callout>
+          {/* mt-2 tops up the column's gap-4 to 24px: the banner closes the
+              budget block, so the next section title needs the full section
+              break above it. */}
+          <div className="mt-2 flex flex-col gap-6">
+            <UsageBreakdown
+              avatarFor={userAvatar}
+              emptyBody={`No spend by any user over ${scope}.`}
+              emptyTitle="No per-user data yet."
+              firstColumn="User"
+              rows={usage.byUser}
+              title="Spend by user"
+            />
+            <UsageBreakdown
+              avatarFor={modelAvatar}
+              emptyBody={`No spend on any model over ${scope}.`}
+              emptyTitle="No per-model data yet."
+              firstColumn="Model"
+              rows={usage.byModel}
+              title="Spend by model"
+            />
           </div>
         </>
       ) : (

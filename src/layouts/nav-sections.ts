@@ -174,3 +174,9 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
   "-default",
   new Set<string>()
 );
+
+/** Sidebar for the Enterprise workspace — unlocked items point at their
+ *  `-enterprise` twin. Nothing is locked or hidden: Enterprise is the top
+ *  tier, so every surface Pro has, it has. */
+export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
+  buildVariantSections("-enterprise", new Set<string>());

@@ -5,25 +5,45 @@ import { Button } from "@/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import {
   isDefaultSurface,
+  isEnterpriseSurface,
   isFreeSurface,
   toDefaultPath,
+  toEnterprisePath,
   toFreePath,
   toProPath,
 } from "@/lib/plan";
 
 /* Workspace switcher — top-bar scope chrome. The trigger shows the workspace
- * name + current-tier badge. The dropdown lists all three tiers, each with
+ * name + current-tier badge. The dropdown lists all four tiers, each with
  * its own badge, so switching is a single click. */
 
-export function WorkspaceSwitcher({ className }: { className?: string }) {
+export function WorkspaceSwitcher({
+  className,
+  compactBadge = false,
+}: {
+  className?: string;
+  /** The tight-band rail topSlot is narrower than the top bar — abbreviate
+   *  the long Enterprise badge there so the workspace name keeps its room.
+   *  Mobile/tablet Sheet and top-bar mounts show the full badge; menu items
+   *  always carry the full tier name. */
+  compactBadge?: boolean;
+}) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
-  const isPro = !(isDefault || isFree);
+  const isEnterprise = isEnterpriseSurface(pathname);
+  const isPro = !(isDefault || isFree || isEnterprise);
 
-  const plan = isPro ? "Pro" : isDefault ? "Default" : "Free";
-  const badgeVariant = isPro ? "info" : "success";
+  const plan = isEnterprise
+    ? "Enterprise"
+    : isPro
+      ? "Pro"
+      : isDefault
+        ? "Default"
+        : "Free";
+  const badgeLabel = compactBadge && isEnterprise ? "ENT." : plan;
+  const badgeVariant = isEnterprise || isPro ? "info" : "success";
 
   return (
     <Menu>
@@ -33,7 +53,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
         }
       >
         <span className="type-label-14 text-foreground">Chad's workspace</span>
-        <Badge variant={badgeVariant}>{plan}</Badge>
+        <Badge variant={badgeVariant}>{badgeLabel}</Badge>
         <ChevronsUpDown
           aria-hidden
           className="ml-auto size-4 text-muted-foreground"
@@ -47,6 +67,18 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
         side="bottom"
         sideOffset={8}
       >
+        <MenuItem
+          active={isEnterprise}
+          onClick={() => navigate(toEnterprisePath(pathname))}
+        >
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate">Chad's workspace</span>
+            <Badge variant="info">Enterprise</Badge>
+          </span>
+          {isEnterprise ? (
+            <Check aria-hidden className="text-primary" strokeWidth={1.75} />
+          ) : null}
+        </MenuItem>
         <MenuItem active={isPro} onClick={() => navigate(toProPath(pathname))}>
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>

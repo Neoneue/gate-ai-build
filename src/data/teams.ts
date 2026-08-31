@@ -230,6 +230,9 @@ export type TeamUsage = {
   requests: number;
   /** What the gateway billed for them. BYOK keys contribute $0. */
   spend: number;
+  /** Tokens in + out across the same key rows, BYOK included — a third
+   *  reading of the fact `requests` and `spend` come from. */
+  tokens: number;
   byUser: UsageSlice[];
   byModel: UsageSlice[];
 };
@@ -372,6 +375,7 @@ export function usageForTeam(team: TeamRow): TeamUsage {
   return {
     requests: rows.reduce((a, r) => a + r.requests, 0),
     spend,
+    tokens: rows.reduce((a, r) => a + r.tokensIn + r.tokensOut, 0),
     byUser: usageByUser(rows, spend),
     byModel: usageByModel(team, spend),
   };
