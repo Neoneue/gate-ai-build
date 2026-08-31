@@ -13,11 +13,19 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Manager role is per-membership; co-managers allowed
 - Budgets drop the block threshold, gain quick-pick presets
+- Enterprise workspace tier joins Pro / Default / Free
+- Team member roles are org roles; the manager select is gone
 - BudgetMeter gains a warn state; fill logic shared via budget-band
+- New Callout primitive: quiet persistent info banner
+- Line tab rails are no longer vertically scrollable
 - Teams seed splits members and keys into real teams
 - Teams list: budget utilization column + deleted-teams card
 - Team detail: header actions, sortable spend tables, richer Keys tab
 - Team Security tab counts findings and renders zero-findings states
+- Enterprise Teams list: CTA-only header, deduped org budget card
+- Enterprise team detail: Usage tab gets Activity's chart treatment
+- Enterprise team detail: Budget tab combined into one card + Callout
+- Enterprise team detail: Members / Keys table parity
 
 ### [2026-08-28](./2026-08/changelog-8-28.md)
 
