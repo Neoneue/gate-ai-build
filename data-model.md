@@ -185,8 +185,10 @@ suffix, added so the Teams UI can be A/B compared between Pro and Enterprise
 (the two builds will diverge). Only Teams has real Enterprise pages:
 `TeamsEnterprise.tsx` on `/teams-enterprise` and `TeamDetailEnterprise.tsx` on
 `/teams-enterprise/:teamId`, standalone clones of the Pro files (per the
-twins-are-separate-files convention) whose only starting deltas are the
-component names and drill/back/security paths. Every other `-enterprise` route
+twins-are-separate-files convention) whose starting deltas were only the
+component names and drill/back/security paths — they have since diverged on
+purpose (that is the sandbox's job); the "Enterprise deltas" list under the
+Teams pages section is the current inventory. Every other `-enterprise` route
 reuses the PRO page component under the Enterprise chrome (sidebar +
 switcher badge), so in-page cross-links on those reused pages can land back on
 Pro paths; that leak is accepted, the A/B target is Teams. Enterprise is NOT a
@@ -1491,6 +1493,38 @@ five tabs: Usage (spend + requests KPI pair, sortable "Spend by user" and
 outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
 Budget, Security.
 
+**Enterprise deltas (2026-08-31).** `TeamsEnterprise.tsx` /
+`TeamDetailEnterprise.tsx` are the A/B sandbox — ALL Teams UI work lands
+there while the Pro files stay frozen for comparison. Divergences so far:
+
+- List: the scaffold range pill + `DateRangePicker` are REMOVED (header =
+  title + "Create team" at default size); the Org budget card's description
+  is just the window label; a "Your teams" `SectionTitle` sits above the
+  teams table in a gap-4 group.
+- Detail header: Rename/Delete buttons HIDDEN (dialogs + state stay wired
+  for a future Settings tab); tab panels sit gap-6 under the tab rail.
+- Usage tab: "Overview" `SectionTitle` + Activity's `RANGE_OPTIONS` pill +
+  `DateRangePicker` (defaults All). KPI rail = Activity's exact cards
+  (Total Spend / Total Messages / Tokens Used with `CompactSpark`s, no
+  delta chips — no prior-period team data exists). ONE
+  `scaleUsage(usage, effectiveScale(range, customRange))` projection feeds
+  the KPIs, the sparklines (`distributeSeries`, seeded per team + metric +
+  range), and both breakdown tables.
+- `UsageBreakdown` takes a required `avatarFor`: user rows render a `sm`
+  single-initial `Monogram` toned via `memberById`, model rows a decorative
+  `VendorAvatar` via the `MODEL_VENDOR` map built from activity-data
+  `MODEL_ROWS`. Wired on the Usage AND Budget tab tables.
+- Budget tab: one card in the org-budget-card shape (CardHeader "Team
+  budget" + "Edit budget" CardAction; `BudgetSummary` = meter + four facts),
+  then the breakdown tables with window-aware titles via
+  `BUDGET_WINDOW_TITLE_COPY` — "Monthly spend per user" / "7-day spend per
+  model" / "5-hour spend per user" by the budget's window. A `Callout`
+  restating the window sat between card and tables for part of 2026-08-31;
+  the titles made it redundant and it was removed the same day
+  (`BUDGET_WINDOW_SCOPE_COPY` still feeds the tables' empty-state copy).
+- Members/Keys tables: 48px row parity (`py-0` on the Monogram + role
+  cells), actions cells `pr-4 pl-0`.
+
 **State:** both pages own `useState(TEAM_SEED_ROWS)`; the list also owns
 `useState(ORG_BUDGET_SEED)`. Mutations are local to the visit — the seed is
 the shared starting point, not a store.
@@ -1537,8 +1571,12 @@ quick-pick preset: choosing a window fills the amount from
 editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
 `BUDGET_PRESETS_HELPER_COPY`. 5h and weekly are ROLLING windows; only
 monthly resets (on the 1st). The Budget tab renders the meter (three fill
-states: primary under, warning family once spend passes the warn %, destructive
-over), a four-fact grid (Remaining / Over budget by, Enforcement, Warn at
+states from `teams/budget-band.ts`, shared with the list column's compact
+meter: under = a success 500→400 left-to-right gradient, warned = the same
+gradient shape in the warning family once spend passes the warn %, over =
+solid destructive; under was `bg-primary` until 2026-08-31, which resolved
+near-white on dark and read as an unfilled track — see design.md §7 Budget
+meter), a four-fact grid (Remaining / Over budget by, Enforcement, Warn at
 with its dollar equivalent, Window with reset copy), then the same
 Spend-by-user / Spend-by-model tables the Usage tab uses, prefixed by a note
 naming the budget's own window (`BUDGET_WINDOW_SCOPE_COPY`).
@@ -1560,9 +1598,24 @@ rows that already exist:
 - spend / requests → `usageForTeam()` groups `API_KEY_ROWS` (activity-data) by
   the team's keys; "Spend by model" groups `USAGE_7D` cells and settles onto
   the team's spend total so the breakdown can never be a cent off the KPI
-- per-model requests reuse `MODEL_ROWS`' own requests-per-token ratio, then
-  settle onto the team's **metered** request subtotal (a BYOK key serves
-  requests the gateway attributes to no catalog model)
+- per-model requests reuse `MODEL_ROWS`' own requests-per-token ratio, are
+  normalized proportionally onto the team's request total, then settled
+  (2026-08-31 — `settleValues` alone dumped the whole estimation error on the
+  biggest model, which went negative on a live team). They settle onto the
+  **team** total, BYOK included: the gateway proxies BYOK traffic too, so
+  every request has a model even when no dollars are metered (before
+  2026-08-31 they settled onto the metered subtotal, leaving the by-model
+  table 200k+ requests short of the by-user table on a BYOK-heavy team).
+  Spend still settles onto the metered dollars — BYOK contributes requests,
+  never dollars.
+- `scaleUsage(usage, scale)` projects a `TeamUsage` onto a range scale with
+  both breakdown lists re-settled onto the scaled totals; the Enterprise
+  Usage tab derives ONE projection for KPIs, sparklines, and both tables,
+  because scaling rows independently drifts on non-terminating scales
+- `src/data/teams.test.ts` (permanent) audits the whole reconciliation:
+  per-team KPIs vs both tables across 8 scales, sparkline sums, budget
+  facts, security-tab groupings, org roll-up. It PINS the org figures
+  ($247.59 / "16.5%") — move those assertions whenever spend seeds move
 
 **Security tab** (`src/pages/teams/SecurityPane.tsx` +
 `security-data.ts`). Default variant, and any team with zero checks, render

@@ -4,7 +4,6 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@/components/ui/callout";
 import {
   Card,
   CardAction,
@@ -50,11 +49,13 @@ import {
 import {
   ASSIGNABLE_KEYS,
   BUDGET_WINDOW_SCOPE_COPY,
+  BUDGET_WINDOW_TITLE_COPY,
   DEFAULT_TEAM_ID,
   keyById,
   memberById,
   moveKeysToTeam,
   moveMembersToTeam,
+  scaleUsage,
   TEAM_SEED_ROWS,
   type TeamBudget,
   type TeamRow,
@@ -397,9 +398,10 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   const scale = effectiveScale(range, customRange);
 
-  const spend = +(usage.spend * scale).toFixed(2);
-  const requests = Math.round(usage.requests * scale);
-  const tokens = Math.round(usage.tokens * scale);
+  // One projection feeds everything on the tab: KPIs, sparklines, and both
+  // tables read the SAME settled scaling (scaleUsage), so the numbers cannot
+  // drift apart on any range.
+  const scaled = useMemo(() => scaleUsage(usage, scale), [usage, scale]);
 
   // Sparklines distribute each scaled total across the range's buckets —
   // same generator as the org rail, seeded per team, metric, and range so
@@ -418,19 +420,12 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
             : 99;
   const seed = teamSeed * rangeSeed;
   const count = getBucketCount(range, customRange);
-  const spendSpark = distributeSeries(spend, count, seed * 31 + 1);
-  const requestsSpark = distributeSeries(requests, count, seed * 31 + 2);
-  const tokensSpark = distributeSeries(tokens, count, seed * 31 + 3);
+  const spendSpark = distributeSeries(scaled.spend, count, seed * 31 + 1);
+  const requestsSpark = distributeSeries(scaled.requests, count, seed * 31 + 2);
+  const tokensSpark = distributeSeries(scaled.tokens, count, seed * 31 + 3);
   const sparkLabels = getRangeDates(range, customRange).map((d) =>
     formatSparkLabel(d, range === "24h")
   );
-
-  const scaleSlices = (slices: UsageSlice[]) =>
-    slices.map((s) => ({
-      ...s,
-      requests: Math.round(s.requests * scale),
-      spend: +(s.spend * scale).toFixed(2),
-    }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -478,7 +473,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
               />
             }
             title="Total Spend"
-            value={formatCurrency(spend)}
+            value={formatCurrency(scaled.spend)}
           />
           <CompactKpi
             flat
@@ -492,7 +487,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
               />
             }
             title="Total Messages"
-            value={formatCompactCount(requests)}
+            value={formatCompactCount(scaled.requests)}
           />
           <CompactKpi
             flat
@@ -506,7 +501,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
               />
             }
             title="Tokens Used"
-            value={formatCompactCount(tokens)}
+            value={formatCompactCount(scaled.tokens)}
           />
         </KpiRail>
       </div>
@@ -516,7 +511,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
         emptyTitle="No per-user data yet."
         firstColumn="User"
-        rows={scaleSlices(usage.byUser)}
+        rows={scaled.byUser}
         title="Spend by user"
       />
       <UsageBreakdown
@@ -524,7 +519,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         emptyBody="Once this team’s keys route through the gateway, spend per model appears here."
         emptyTitle="No per-model data yet."
         firstColumn="Model"
-        rows={scaleSlices(usage.byModel)}
+        rows={scaled.byModel}
         title="Spend by model"
       />
     </div>
@@ -987,6 +982,11 @@ function BudgetPane({
   const scope = team.budget
     ? BUDGET_WINDOW_SCOPE_COPY[team.budget.window]
     : null;
+  // Window-aware table titles: "Monthly spend per user" on a monthly
+  // budget, "7-day spend per user" on a weekly one.
+  const titleStem = team.budget
+    ? BUDGET_WINDOW_TITLE_COPY[team.budget.window]
+    : "Spend";
 
   return (
     <div className="flex flex-col gap-4">
@@ -1015,16 +1015,13 @@ function BudgetPane({
               />
             </CardContent>
           </Card>
-          {/* The window is the budget's, not the page's. Saying so up front
-              stops the reader reconciling these numbers against the Usage
-              tab's range and concluding one of them is wrong. */}
-          <Callout>
-            Spend below covers {scope}, the same window this budget is enforced
-            over, so it can differ from the Usage tab&rsquo;s date range.
-          </Callout>
-          {/* mt-2 tops up the column's gap-4 to 24px: the banner closes the
-              budget block, so the next section title needs the full section
-              break above it. */}
+          {/* The window is the budget's, not the page's — the table titles
+              carry it ("Monthly spend per user"), so the reader doesn't
+              reconcile these numbers against the Usage tab's range. A Callout
+              said this explicitly until 2026-08-31; the titles made it
+              redundant. mt-2 tops up the column's gap-4 to 24px: the card
+              closes the budget block, so the tables need the full section
+              break above them. */}
           <div className="mt-2 flex flex-col gap-6">
             <UsageBreakdown
               avatarFor={userAvatar}
@@ -1032,7 +1029,7 @@ function BudgetPane({
               emptyTitle="No per-user data yet."
               firstColumn="User"
               rows={usage.byUser}
-              title="Spend by user"
+              title={`${titleStem} per user`}
             />
             <UsageBreakdown
               avatarFor={modelAvatar}
@@ -1040,7 +1037,7 @@ function BudgetPane({
               emptyTitle="No per-model data yet."
               firstColumn="Model"
               rows={usage.byModel}
-              title="Spend by model"
+              title={`${titleStem} per model`}
             />
           </div>
         </>

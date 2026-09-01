@@ -70,12 +70,14 @@ colors:
   success-50: "oklch(0.982 0.018 155.826)"
   success-100: "oklch(0.962 0.044 156.743)"
   success-200: "oklch(0.925 0.084 155.995)"
+  success-400: "oklch(0.792 0.209 151.711)"  # budget-meter under-fill gradient edge (§7 Budget meter)
   success-500: "oklch(0.723 0.219 149.579)"
   success-600: "oklch(0.627 0.194 149.214)"
   success-700: "oklch(0.527 0.154 150.069)"
   warning-50: "oklch(0.987 0.022 95.277)"
   warning-100: "oklch(0.962 0.059 95.617)"
   warning-200: "oklch(0.924 0.120 95.746)"
+  warning-400: "oklch(0.828 0.189 84.429)"  # budget-meter warned-fill gradient edge (§7 Budget meter)
   warning-500: "oklch(0.769 0.188 70.080)"
   warning-600: "oklch(0.666 0.179 58.318)"
   warning-700: "oklch(0.555 0.163 48.998)"
@@ -1259,8 +1261,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 ### Callout *(added 2026-08-31)*
 
 - **Callout** (`callout.tsx`) — quiet, persistent info banner for scope-setting
-  context that must sit near the surface it qualifies (first consumer: the
-  team Budget tab's "spend below covers the budget window" note). Surface:
+  context that must sit near the surface it qualifies. Surface:
   `rounded-md border border-border bg-card px-4 py-3` — the same card surface
   as its neighbors (started as `bg-card-muted`, dropped same-day: the muted
   band sat BRIGHTER than the cards in dark mode), deliberately NOT alert
@@ -1270,7 +1271,34 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
   copy wraps. `role="note"`, no dismiss affordance, no status-color variants:
   it states a fact about the page, it does not report an event. If a surface
   ever needs a warning/error banner, that is a different component with
-  status semantics — do not add tone props here.
+  status semantics — do not add tone props here. **Currently has no
+  consumer:** the first one (the team Budget tab's "spend below covers the
+  budget window" note) was removed the same day it shipped — the tab's
+  window-aware table titles made it redundant. The primitive stays for the
+  next surface that needs a scope note.
+
+### Budget meter *(fills updated 2026-08-31)*
+
+- **BudgetMeter / budget bands** (`src/pages/teams/budget.tsx`; band logic
+  split into `src/pages/teams/budget-band.ts` so `budget.tsx` keeps exporting
+  components only). One `BAND_FILL` ladder colours every budget bar — the
+  Teams list column's compact meter, the org budget card, and the detail
+  Budget tab, Pro and Enterprise alike — so a row that reads amber opens onto
+  an amber bar (charts-must-reconcile: one constant, two readings). Track:
+  `h-1.5 w-full rounded-full bg-muted`; the fill transitions width only.
+  Bands from `budgetBand()`: `under` = `bg-gradient-to-r from-success-500
+  to-success-400`, `warned` (spend at/past the warn %) = the same gradient
+  shape in the warning family, `over` = solid `bg-destructive`. Under was
+  `bg-primary` until 2026-08-31 — primary resolves near-white in dark and
+  read as an UNFILLED track; the green/amber/red ladder also matches the
+  AG-514 build's budget-bar states. The gradient runs darker 500 at the
+  origin to lighter 400 at the leading edge (user direction, 2026-08-31).
+  These are **data fills on a meter, not surface chrome** — the §2 migration
+  row that drops gradients for `bg-accent` governs surface washes and does
+  not bar them. First consumers of `success-400` / `warning-400` (ramp block
+  above updated); raw ramp steps are correct here because a meter fill is a
+  status *reading*, not a themed semantic role — same reasoning as the badge
+  tone recipes.
 
 ### Modal / Drawer
 

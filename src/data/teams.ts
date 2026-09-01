@@ -100,6 +100,14 @@ export const BUDGET_WINDOW_SCOPE_COPY: Record<BudgetWindow, string> = {
   monthly: "this calendar month",
 };
 
+/** Title stem for the Budget tab's breakdown tables: appended with
+ *  "per user" / "per model" ("Monthly spend per user"). */
+export const BUDGET_WINDOW_TITLE_COPY: Record<BudgetWindow, string> = {
+  "5h": "5-hour spend",
+  weekly: "7-day spend",
+  monthly: "Monthly spend",
+};
+
 /** When (or whether) the window resets, for the Budget tab's Window fact. */
 export const BUDGET_WINDOW_RESET_COPY: Record<BudgetWindow, string> = {
   "5h": "Rolling window: spend drops out of it once it is older than 5 hours.",
@@ -344,13 +352,30 @@ function usageByModel(team: TeamRow, totalSpend: number): UsageSlice[] {
   const rawRequests = entries.map(
     ([model, v]) => v.tokens * (MODEL_REQUESTS_PER_TOKEN[model] ?? 0)
   );
-  // Requests settle onto the METERED key subtotal, not the team total: a BYOK
-  // key serves requests the gateway never attributes to a catalog model, so
-  // folding them in here would credit models with traffic they never saw.
-  const meteredRequests = API_KEY_ROWS.filter(
-    (r) => names.has(r.key) && r.path === "Gate"
-  ).reduce((a, r) => a + r.requests, 0);
-  const requests = settleValues(rawRequests, meteredRequests, 0);
+  // Requests settle onto the TEAM total, BYOK included: the gateway proxies
+  // BYOK traffic too, so every request has a model even when no dollars are
+  // metered (before 2026-08-31 this settled onto the metered subtotal only,
+  // and the by-model table ran 200k+ requests short of the by-user table on
+  // a BYOK-heavy team). Distributing by the metered token mix is an
+  // estimate, but it keeps this table, the by-user table, and the Total
+  // Messages KPI three readings of one number. Spend still settles onto the
+  // metered team total; BYOK contributes requests, never dollars.
+  const teamRequests = API_KEY_ROWS.filter((r) => names.has(r.key)).reduce(
+    (a, r) => a + r.requests,
+    0
+  );
+  // Normalize the token-derived estimates onto the target BEFORE settling.
+  // The org-wide requests-per-token rates can overshoot a team's real
+  // request count, and settleValues alone would then hand the biggest model
+  // a NEGATIVE remainder (seen live: Haiku at -6,638). Proportional scaling
+  // keeps every entry non-negative and the settle only absorbs rounding,
+  // not the estimation error.
+  const rawSum = rawRequests.reduce((a, b) => a + b, 0);
+  const normalized =
+    rawSum > 0
+      ? rawRequests.map((r) => (r * teamRequests) / rawSum)
+      : rawRequests;
+  const requests = settleValues(normalized, teamRequests, 0);
   // Spend settles onto the team KPI, which is the sum of the per-key totals
   // the Activity table shows. Re-rounding the raw cells here instead would
   // leave the model breakdown a cent short of the number above it.
@@ -378,6 +403,43 @@ export function usageForTeam(team: TeamRow): TeamUsage {
     tokens: rows.reduce((a, r) => a + r.tokensIn + r.tokensOut, 0),
     byUser: usageByUser(rows, spend),
     byModel: usageByModel(team, spend),
+  };
+}
+
+/** Project a team's 7d usage onto a range scale, with both breakdown lists
+ *  SETTLED onto the scaled totals, so the KPI, the by-user table, and the
+ *  by-model table stay three readings of one number at ANY scale. Scaling
+ *  rows independently and rounding each (what the Usage tab did first)
+ *  drifts on non-terminating scales such as a custom 10-day window's 10/7. */
+export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
+  if (scale === 1) {
+    return usage;
+  }
+  const requests = Math.round(usage.requests * scale);
+  const spend = round2(usage.spend * scale);
+  const scaleSlices = (slices: UsageSlice[]): UsageSlice[] => {
+    const reqs = settleValues(
+      slices.map((s) => s.requests * scale),
+      requests,
+      0
+    );
+    const spends = settleValues(
+      slices.map((s) => s.spend * scale),
+      spend,
+      2
+    );
+    return slices.map((s, i) => ({
+      ...s,
+      requests: reqs[i] ?? 0,
+      spend: spends[i] ?? 0,
+    }));
+  };
+  return {
+    requests,
+    spend,
+    tokens: Math.round(usage.tokens * scale),
+    byUser: scaleSlices(usage.byUser),
+    byModel: scaleSlices(usage.byModel),
   };
 }
 

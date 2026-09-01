@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
+import { SectionTitle } from "@/components/ui/section-title";
 import {
   NavTableRow,
   SortableTableHead,
@@ -222,13 +223,16 @@ export function TeamsEnterprise({
           spend={orgSpend(teams)}
         />
 
-        <TeamsTable
-          onDelete={setDeleting}
-          onOpen={(id) => navigate(`${basePath}/${id}`)}
-          onRename={setRenaming}
-          spendByTeam={spendByTeam}
-          teams={teams}
-        />
+        <div className="flex flex-col gap-4">
+          <SectionTitle>Your teams</SectionTitle>
+          <TeamsTable
+            onDelete={setDeleting}
+            onOpen={(id) => navigate(`${basePath}/${id}`)}
+            onRename={setRenaming}
+            spendByTeam={spendByTeam}
+            teams={teams}
+          />
+        </div>
 
         {deletedTeams.length === 0 ? null : (
           <DeletedTeamsCard rows={deletedTeams} />

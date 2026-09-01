@@ -33,12 +33,17 @@ export function budgetBand(spend: number, budget: TeamBudget): BudgetBand {
 }
 
 /** Fill tone per band. `warning-600` is the documented SOLID status fill
- *  (design.md §status: "warning-600 for solid mid", the same value StatusDot
- *  paints), so the warn band carries status intent and reads in both themes
- *  without a per-theme override. */
+ *  (design.md §status, the same value StatusDot paints). Under was
+ *  `bg-primary` until 2026-08-31: the primary fill rendered near-white on
+ *  the dark theme and read as an unfilled track; green also matches the
+ *  AG-514 build's budget-bar states (under=green / warn=amber /
+ *  over=destructive). */
 const BAND_FILL: Record<BudgetBand, string> = {
-  under: "bg-primary",
-  warned: "bg-warning-600",
+  // Under and warned read as left-to-right gradients (500 darker at the
+  // origin, 400 lighter at the leading edge) per user direction 2026-08-31;
+  // over stays the solid destructive fill.
+  under: "bg-gradient-to-r from-success-500 to-success-400",
+  warned: "bg-gradient-to-r from-warning-500 to-warning-400",
   over: "bg-destructive",
 };
 

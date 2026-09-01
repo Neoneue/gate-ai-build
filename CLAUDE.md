@@ -5,6 +5,8 @@ Shared project instructions, kept minimal; per-area detail lives in
 
 ## Local reminders
 
+- **On every new session, read [`handoff.md`](./handoff.md) first** —
+  it holds the current-state resume notes from the previous session.
 - Work on `dev` (permanent preview branch); never commit directly to `main`
   (prod). Promote by opening a PR `dev` -> `main`, merged with a **merge commit**
   (never squash/rebase — `dev` is long-lived and would diverge), then sync
@@ -45,6 +47,7 @@ Read the relevant doc before working in its area. Do not re-inject on every prom
 | [`README.md`](./README.md) | Repo overview, stack, routes. |
 
 The whole `docs/` folder is **local-only** (gitignored): the findings docs above,
-`handoff.md` resume notes, the `message-script.md` / `request-trace.md` session
+the `message-script.md` / `request-trace.md` session
 sources, staging captures, audit `.docx`. They resolve only on a machine that
-already has them. The committed, tracked UI change logs live in `change-logs/`.
+already has them. `handoff.md` (repo root, also gitignored) holds the resume
+notes. The committed, tracked UI change logs live in `change-logs/`.
