@@ -36,6 +36,29 @@ totals; the tab derives ONE projection feeding KPIs, sparklines, and both
 tables. Where: `src/data/teams.ts`, `src/pages/TeamDetailEnterprise.tsx`
 (UsagePane).
 
+### Multi-window team budgets: one cap per window, shared enforcement `9b56fab`
+
+Before: a `TeamBudget` held one `window` and one `amount`. After: `caps:
+Partial<Record<BudgetWindow, number>>`, one USD cap per configured window
+(5h / weekly / monthly in any combination), with name, enforcement and
+warn percent shared across them (meeting decision 2026-09-01: "support
+multiple simultaneous budget types"). Per-window spend is the 7d roll-up
+scaled by `BUDGET_WINDOW_SCALE` (5h = 5/168, weekly = 1, monthly =
+`RANGE_SCALE["30d"]`) so the Budget tab's monthly figure reconciles with
+the Usage tab's 30D; `budgetReadings` / `tightestReading` are the API.
+Seed: Design carries a $5 per-5-hour cap beside its $20 weekly (11.0% vs
+92.3%). `teams.test.ts` asserts per-window table reconciliation, weekly ==
+7d, strictly increasing window scale, tightest == max utilization. Where:
+`src/data/teams.ts`, `src/pages/teams/budget-band.ts`.
+
+### Chart bars take `--chart-N-soft` gradient ends `9b56fab`
+
+Before: chart bars were solid `--chart-N`. After: every track + fill meter
+site-wide is `from-{family}-500 to-{family}-400`, and chart slots use
+new derived tokens `--chart-{1,2,3,4}-soft = color-mix(in oklch,
+var(--chart-N), white 20%)` as the lighter end. Where: `src/index.css`
+(`:root`, `.dark`, `@theme`), design.md "Data bars & meters".
+
 ## Components
 
 ### Budget bars fill with success / warning gradients `f78bb14`
@@ -50,6 +73,28 @@ One `BAND_FILL` ladder colours every budget bar (list column, org budget
 card, detail Budget tab, Pro and Enterprise alike). design.md gains a §7
 Budget meter entry and the success-400 / warning-400 ramp rungs. Where:
 `src/pages/teams/budget-band.ts`.
+
+### MultiSelect: opt-in `minSelected` and `showSelectedLabels` `9b56fab`
+
+Two more opt-in props on the shared picker, both default off so the Audit
+Trail / Notifications filters and the Add members / Add keys pickers are
+unchanged. `minSelected` disables a `commitMode` popup's Apply below N
+staged options; `showSelectedLabels` makes the trigger read the chosen
+labels in option order ("Weekly, Monthly") instead of "N selected". Both
+wired on the Budget windows picker only. Where:
+`src/components/ui/multi-select.tsx`, design.md §Selects & pickers.
+
+### BudgetSummary: label + value facts with Info tooltips `9b56fab`
+
+Before: four facts each carried a hint line that repeated the meter's
+percent, the dialog's enforcement copy, or the full window reset sentence
+(which wrapped to two lines). After: label + value only, hints folded into
+the values ("80% ($16.00)", "Weekly, rolling" via new
+`BUDGET_WINDOW_RESET_SHORT`), and each eyebrow carries an Info glyph
+tooltip in the TokenSavings benefit-row recipe holding the teaching copy
+(soft vs hard from `BUDGET_ENFORCEMENT_LABEL`, the long reset sentence).
+`BudgetMeter` / `BudgetSummary` now take a number cap and a
+`WindowReading`. Where: `src/pages/teams/budget.tsx`.
 
 ## Sections
 
@@ -89,3 +134,79 @@ nothing can contradict it. The reconciliation suite now asserts per-range
 spark sums and that the 7D spark equals the backbone's last 7 days.
 Where: `src/pages/teams/spark-series.ts` (new),
 `src/pages/TeamDetailEnterprise.tsx` (UsagePane), `src/data/teams.test.ts`.
+
+### Enterprise Budget dialog: window multi-select, per-window amounts, scrollable `9b56fab`
+
+Before: a Segmented pill picked ONE window and refilled one amount. After:
+the window field is the Add-members `MultiSelect` recipe (`commitMode`, 4
+visible rows, no Select All, `minSelected={1}`, `showSelectedLabels`),
+followed by one "… amount (USD)" input per selected window in canonical
+order, prefilled from `BUDGET_WINDOW_DEFAULT_AMOUNT` or the saved cap;
+Save is gated on at least one window with a positive cap. The dialog moved
+onto `DialogScrollContent` (fixed title + footer, scrolling body,
+`max-h-[90vh]`). Where: `src/pages/teams/dialogs.tsx` BudgetDialog.
+
+### Enterprise Budget tab: header pill scopes card and tables to a window `9b56fab`
+
+Before: one card with the budget name as CardTitle + Edit action, meter +
+facts, then tables. After: a header row in the Usage / Security tab
+pattern (budget name as SectionTitle left; window `SegmentedPill` + Edit
+budget right, the pill hidden when only one window is configured), a
+headerless card holding `BudgetSummary` for the selected window, then the
+two breakdown tables retitled to that window ("5-hour spend per user").
+Where: `src/pages/TeamDetailEnterprise.tsx` BudgetPane.
+
+### Enterprise Teams list: org budget card removed, tightest-window meter, widths `9b56fab`
+
+The full-width Org budget card between the header and the table is gone
+(meeting decision: confusion / duplication, not in the PRD); its dialog,
+state and imports went with it, `teamsStore.orgBudget` stays unrendered.
+The row meter now reads `tightestReading` (the window closest to its cap)
+and suffixes the window word: "92.3% weekly". Column widths rebalanced
+24/11/9/17/14/25 -> 22/11/9/15/12/31 so the table fits the capped column
+without a horizontal scroll. Where: `src/pages/TeamsEnterprise.tsx`.
+
+### Enterprise team detail: tab order, Keys Member column, small monograms `9b56fab`
+
+Tabs reordered Members, Keys, Budget, Usage, Security with Members as the
+default (user: a fresh team is populated before it is read). Keys table
+gains a Member column resolved from each key's `ownerId`, order Key |
+Prefix | Member | Status | Last used, widths 22/22/24/12/20. Members and
+Keys monograms drop from 28px two-letter to the 16px first-initial size
+the Usage and Security tables use, gap-3 -> gap-2. Team-role select is
+Manager / Member only; budget card titles render the saved budget name;
+empty states get KeyRound / Wallet / ShieldCheck icons and the Keys /
+Budget CTAs wait for a roster. Where: `src/pages/TeamDetailEnterprise.tsx`.
+
+### Enterprise Security tab: overview pane, threat types per member, two sections removed `9b56fab`
+
+New `SecurityOverviewPane.tsx`: Overview header (range pill +
+DateRangePicker, defaults All), Total events hero with inline "+22.4%"
+DeltaTag and area chart settled onto findings, Action types + Attack
+types cards in the org recipes, then a By member table. The table now has
+one column per threat type (PII / PHI, Prompt injection, Credential leak)
+plus a Findings total; each column is allocated by member request weight
+so it sums exactly to the Attack types card, with a repair pass keeping
+every row within its total (test-guarded). Removed against PRD 8.4: the
+"What this covers" summary card (explanatory UI) and the "By pipeline
+stage" tiles (the dev build's scan-phase GROUP BY). Data:
+`teams/security-data.ts` rewritten to allocate the org Security canon per
+team (`securityForTeamAtRange`). Org `Security.tsx` hero legend removed,
+DeltaTag inline on the baseline. Where: `src/pages/teams/SecurityOverviewPane.tsx`,
+`src/pages/teams/security-data.ts`, `src/pages/Security.tsx`.
+
+### Teams store shared by list and detail `9b56fab`
+
+New `teams/teams-store.ts` (useSyncExternalStore, range-store idiom) holds
+teams, org budget and deleted-team snapshots for BOTH Enterprise pages, so
+a team created on the list exists on its detail route and renames / moves
+/ budgets / deletes survive navigation. Full reload re-seeds by design.
+Pro pages stay per-page for the A/B. Where: `src/pages/teams/teams-store.ts`.
+
+### Members rename: nav label and routes `9b56fab`
+
+Before: nav "Team", routes `/team*`. After: nav "Members", routes
+`/members` + `-default` / `-free` / `-enterprise`, H1s updated. Code names
+(`Team*.tsx`, nav id "team", `team-members.ts`) deliberately kept. Where:
+`src/App.tsx`, `src/lib/plan.ts`, `src/layouts/nav-sections.ts`,
+`src/data/notifications.ts`, `src/pages/Team.tsx`, `src/pages/TeamDefault.tsx`.

@@ -17,6 +17,17 @@ tokens; this index exists so nothing has to glob the directory.
 - Enterprise Budget tab: window-aware table titles, scope Callout removed
 - Enterprise Teams list: "Your teams" section title
 - Team sparklines: one daily backbone, windowed per range
+- Multi-window team budgets: one cap per window, shared enforcement
+- Chart bars take `--chart-N-soft` gradient ends
+- MultiSelect: opt-in `minSelected` and `showSelectedLabels`
+- BudgetSummary: label + value facts with Info tooltips
+- Enterprise Budget dialog: window multi-select, per-window amounts, scrollable
+- Enterprise Budget tab: header pill scopes card and tables to a window
+- Enterprise Teams list: org budget card removed, tightest-window meter, widths
+- Enterprise team detail: tab order, Keys Member column, small monograms
+- Enterprise Security tab: overview pane, threat types per member, two sections removed
+- Teams store shared by list and detail
+- Members rename: nav label and routes
 
 ## August 2026
 
