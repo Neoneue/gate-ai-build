@@ -7,6 +7,16 @@ diff against and replicate across surfaces.
 **Find the change, then open only that file.** Thirty files is roughly 90k
 tokens; this index exists so nothing has to glob the directory.
 
+## September 2026
+
+### [2026-09-01](./2026-09/changelog-9-1.md)
+
+- Team usage math: by-model requests reconcile with the team total
+- One scaled projection per range: scaleUsage()
+- Budget bars fill with success / warning gradients
+- Enterprise Budget tab: window-aware table titles, scope Callout removed
+- Enterprise Teams list: "Your teams" section title
+
 ## August 2026
 
 ### [2026-08-31](./2026-08/changelog-8-31.md)
