@@ -73,3 +73,19 @@ Before: the teams table sat directly in the page column with no heading.
 After: a `SectionTitle` reading "Your teams" sits above the table in a
 gap-4 group, matching the section-heading rhythm on Activity and the
 detail page's Usage tab. Where: `src/pages/TeamsEnterprise.tsx`.
+
+### Team sparklines: one daily backbone, windowed per range `30bab26`
+
+Before: each range's sparkline was an independently seeded random series
+(seed carried the range), so the All chart's tail showed spend plunging
+while the 7D chart climbed over the same days — two fabrications of one
+period contradicting each other. After: one 60-day daily curve is
+generated per team + metric (`teams/spark-series.ts`, seed = team +
+metric, never the range); All folds it into 30 two-day buckets, 7D / 30D
+/ custom take trailing slices, and each window is re-settled onto its own
+KPI so sum(bars) still equals the number on the card. 24H keeps its own
+intraday distribution — no other range renders that granularity, so
+nothing can contradict it. The reconciliation suite now asserts per-range
+spark sums and that the 7D spark equals the backbone's last 7 days.
+Where: `src/pages/teams/spark-series.ts` (new),
+`src/pages/TeamDetailEnterprise.tsx` (UsagePane), `src/data/teams.test.ts`.

@@ -16,6 +16,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Budget bars fill with success / warning gradients
 - Enterprise Budget tab: window-aware table titles, scope Callout removed
 - Enterprise Teams list: "Your teams" section title
+- Team sparklines: one daily backbone, windowed per range
 
 ## August 2026
 
