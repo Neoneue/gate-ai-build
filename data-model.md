@@ -1508,8 +1508,14 @@ there while the Pro files stay frozen for comparison. Divergences so far:
   (Total Spend / Total Messages / Tokens Used with `CompactSpark`s, no
   delta chips — no prior-period team data exists). ONE
   `scaleUsage(usage, effectiveScale(range, customRange))` projection feeds
-  the KPIs, the sparklines (`distributeSeries`, seeded per team + metric +
-  range), and both breakdown tables.
+  the KPIs, the sparklines, and both breakdown tables. Sparklines render
+  windows of ONE 60-day daily backbone per team + metric
+  (`src/pages/teams/spark-series.ts`, seed carries team + metric, NEVER the
+  range): All folds it into 30 two-day buckets, 7D/30D/custom take trailing
+  slices, each re-settled onto its own KPI — so the All tail and the 7D
+  chart describe the same days and cannot contradict (2026-09-01; per-range
+  seeds had All plunging while 7D climbed). 24H keeps an independent
+  intraday distribution, the one granularity no other range renders.
 - `UsageBreakdown` takes a required `avatarFor`: user rows render a `sm`
   single-initial `Monogram` toned via `memberById`, model rows a decorative
   `VendorAvatar` via the `MODEL_VENDOR` map built from activity-data

@@ -86,7 +86,7 @@ import {
   getBucketCount,
   getRangeDates,
 } from "@/pages/activity/chart-helpers";
-import { distributeSeries, MODEL_ROWS } from "@/pages/activity-data";
+import { MODEL_ROWS } from "@/pages/activity-data";
 import { BudgetSummary } from "@/pages/teams/budget";
 import {
   AddKeysDialog,
@@ -100,6 +100,7 @@ import {
   TeamSecurityPane,
   type TeamsVariant,
 } from "@/pages/teams/SecurityPane";
+import { teamSparkSeries } from "@/pages/teams/spark-series";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Team detail, Enterprise twin (route: /teams-enterprise/:teamId)
@@ -403,26 +404,37 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
   // drift apart on any range.
   const scaled = useMemo(() => scaleUsage(usage, scale), [usage, scale]);
 
-  // Sparklines distribute each scaled total across the range's buckets —
-  // same generator as the org rail, seeded per team, metric, and range so
-  // shapes differ while sum(bars) stays the number on the card. No delta
-  // chips: there is no prior-period team roll-up to compare against.
+  // Sparklines render windows of ONE daily backbone per team + metric
+  // (teams/spark-series.ts), so the All chart's tail and the 7D chart
+  // describe the same days — each window is re-settled onto its own KPI, so
+  // sum(bars) stays the number on the card. No delta chips: there is no
+  // prior-period team roll-up to compare against.
   const teamSeed = [...teamId].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const rangeSeed =
-    range === "all"
-      ? 11
-      : range === "24h"
-        ? 47
-        : range === "7d"
-          ? 77
-          : range === "30d"
-            ? 303
-            : 99;
-  const seed = teamSeed * rangeSeed;
   const count = getBucketCount(range, customRange);
-  const spendSpark = distributeSeries(scaled.spend, count, seed * 31 + 1);
-  const requestsSpark = distributeSeries(scaled.requests, count, seed * 31 + 2);
-  const tokensSpark = distributeSeries(scaled.tokens, count, seed * 31 + 3);
+  const spendSpark = teamSparkSeries(
+    usage.spend,
+    scaled.spend,
+    range,
+    customRange,
+    count,
+    teamSeed * 31 + 1
+  );
+  const requestsSpark = teamSparkSeries(
+    usage.requests,
+    scaled.requests,
+    range,
+    customRange,
+    count,
+    teamSeed * 31 + 2
+  );
+  const tokensSpark = teamSparkSeries(
+    usage.tokens,
+    scaled.tokens,
+    range,
+    customRange,
+    count,
+    teamSeed * 31 + 3
+  );
   const sparkLabels = getRangeDates(range, customRange).map((d) =>
     formatSparkLabel(d, range === "24h")
   );

@@ -8,8 +8,9 @@ import {
   TEAM_SEED_ROWS,
   usageForTeam,
 } from "@/data/teams";
-import { distributeSeries } from "@/pages/activity-data";
+import type { Range } from "@/lib/range";
 import { securityForTeam } from "@/pages/teams/security-data";
+import { teamDailySeries, teamSparkSeries } from "@/pages/teams/spark-series";
 
 const SCALES = [0.16, 1, 4.2, 8.5, 3 / 7, 10 / 7, 45 / 7, 61 / 7];
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -54,20 +55,59 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
       if (s.tokens < 0 || s.requests < 0 || s.spend < 0) {
         bad.push(`${team.name} x${scale} negative KPI`);
       }
-      // sparkline sums (page seeds: teamSeed * rangeSeed * 31 + k)
-      const teamSeed = [...team.id].reduce((a, c) => a + c.charCodeAt(0), 0);
-      for (const metric of [s.spend, s.requests, s.tokens]) {
-        for (const count of [7, 12, 30]) {
-          const spark = distributeSeries(metric, count, teamSeed * 11 * 31 + 1);
-          const sum = round2(spark.reduce((a, b) => a + b, 0));
-          if (Math.abs(sum - round2(metric)) > 0.01) {
-            bad.push(`${team.name} spark sum ${sum} != ${metric}`);
-          }
-          if (spark.some((v) => v < 0)) {
-            bad.push(
-              `${team.name} spark negative bucket (total ${metric}, count ${count})`
-            );
-          }
+    }
+    // sparklines: every range renders a window of ONE daily backbone
+    // (teams/spark-series.ts), re-settled onto that range's KPI — so sums
+    // reconcile AND the All tail cannot contradict the 7D shape.
+    const teamSeed = [...team.id].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const RANGES: [Range, number, number][] = [
+      ["all", 8.5, 30],
+      ["30d", 4.2, 30],
+      ["7d", 1, 7],
+      ["24h", 0.16, 12],
+    ];
+    for (const [range, scale, count] of RANGES) {
+      const s = scaleUsage(u, scale);
+      const metrics: [number, number][] = [
+        [u.spend, s.spend],
+        [u.requests, s.requests],
+        [u.tokens, s.tokens],
+      ];
+      for (const [k, [total7d, scaledTotal]] of metrics.entries()) {
+        const spark = teamSparkSeries(
+          total7d,
+          scaledTotal,
+          range,
+          null,
+          count,
+          teamSeed * 31 + k + 1
+        );
+        const sum = round2(spark.reduce((a, b) => a + b, 0));
+        if (Math.abs(sum - round2(scaledTotal)) > 0.01) {
+          bad.push(`${team.name} ${range} spark sum ${sum} != ${scaledTotal}`);
+        }
+        if (spark.some((v) => v < 0)) {
+          bad.push(`${team.name} ${range} spark negative bucket`);
+        }
+      }
+    }
+    // coherence: the 7D spark is the backbone's last 7 days, rescaled — the
+    // exact defect guard (All plunged while 7D climbed, 2026-09-01)
+    if (u.spend > 0) {
+      const tail = teamDailySeries(u.spend, teamSeed * 31 + 1).slice(-7);
+      const tailSum = tail.reduce((a, b) => a + b, 0);
+      const spark = teamSparkSeries(
+        u.spend,
+        u.spend,
+        "7d",
+        null,
+        7,
+        teamSeed * 31 + 1
+      );
+      for (let i = 0; i < 7; i++) {
+        const want = ((tail[i] ?? 0) / tailSum) * u.spend;
+        if (Math.abs((spark[i] ?? 0) - want) > 0.02) {
+          bad.push(`${team.name} 7d spark diverges from backbone at ${i}`);
         }
       }
     }
