@@ -1,15 +1,24 @@
 import { expect, test } from "vitest";
 import {
+  BUDGET_WINDOW_ORDER,
+  BUDGET_WINDOW_SCALE,
   budgetPercentLabel,
   budgetProgress,
+  budgetReadings,
   ORG_BUDGET_SEED,
   orgSpend,
   scaleUsage,
   TEAM_SEED_ROWS,
+  tightestReading,
   usageForTeam,
 } from "@/data/teams";
 import type { Range } from "@/lib/range";
-import { securityForTeam } from "@/pages/teams/security-data";
+import {
+  ATTACK_MIX,
+  EVENT_MIX_TOTAL,
+  EVENTS_RANGE_TOTAL,
+} from "@/pages/security/events-data";
+import { securityForTeam, teamEventShares } from "@/pages/teams/security-data";
 import { teamDailySeries, teamSparkSeries } from "@/pages/teams/spark-series";
 
 const SCALES = [0.16, 1, 4.2, 8.5, 3 / 7, 10 / 7, 45 / 7, 61 / 7];
@@ -111,37 +120,89 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
         }
       }
     }
-    // budget facts
+    // budget facts, one reading per configured window. Weekly IS the 7d
+    // roll-up; windows scale monotonically (5h < weekly < monthly) so three
+    // tabs can never show the same money; the tightest window is the one the
+    // list row's single meter shows.
     if (team.budget) {
-      const frac = budgetProgress(u.spend, team.budget);
-      if (frac === null || frac < 0 || frac > 1) {
-        bad.push(`${team.name} progress ${frac}`);
+      const readings = budgetReadings(u, team.budget);
+      if (readings.length === 0) {
+        bad.push(`${team.name} budget has no windows`);
       }
-      const pct = budgetPercentLabel(u.spend, team.budget);
-      const expected = `${((u.spend / team.budget.amount) * 100).toFixed(1)}%`;
-      if (pct !== expected) {
-        bad.push(`${team.name} pct ${pct} != ${expected}`);
+      const weekly = readings.find((r) => r.window === "weekly");
+      if (weekly && weekly.spend !== u.spend) {
+        bad.push(`${team.name} weekly ${weekly.spend} != 7d ${u.spend}`);
       }
-      const remaining = round2(Math.abs(team.budget.amount - u.spend));
-      if (
-        round2(remaining + Math.min(u.spend, team.budget.amount)) !==
-          team.budget.amount &&
-        u.spend <= team.budget.amount
-      ) {
-        bad.push(`${team.name} remaining ${remaining} + spend != amount`);
+      for (const r of readings) {
+        if (r.usage.spend !== r.spend) {
+          bad.push(`${team.name} ${r.window} usage.spend != spend`);
+        }
+        const users = round2(r.usage.byUser.reduce((a, x) => a + x.spend, 0));
+        const models = round2(r.usage.byModel.reduce((a, x) => a + x.spend, 0));
+        if (users !== r.spend || models !== r.spend) {
+          bad.push(
+            `${team.name} ${r.window} tables ${users}/${models} != ${r.spend}`
+          );
+        }
+        const frac = budgetProgress(r.spend, r.cap);
+        if (frac === null || frac < 0 || frac > 1) {
+          bad.push(`${team.name} ${r.window} progress ${frac}`);
+        }
+        const pct = budgetPercentLabel(r.spend, r.cap);
+        const expected = `${((r.spend / r.cap) * 100).toFixed(1)}%`;
+        if (pct !== expected) {
+          bad.push(`${team.name} ${r.window} pct ${pct} != ${expected}`);
+        }
+        const remaining = round2(Math.abs(r.cap - r.spend));
+        if (
+          round2(remaining + Math.min(r.spend, r.cap)) !== r.cap &&
+          r.spend <= r.cap
+        ) {
+          bad.push(`${team.name} ${r.window} remaining + spend != cap`);
+        }
+      }
+      const tight = tightestReading(u, team.budget);
+      const maxUtil = Math.max(...readings.map((r) => r.spend / r.cap));
+      if (tight.spend / tight.cap !== maxUtil) {
+        bad.push(
+          `${team.name} tightest ${tight.window} is not max utilization`
+        );
       }
     }
-    // security reconciliation
+    // security reconciliation: findings are the team's allocated share of
+    // the org Security page's events; categories mirror the org card's
+    // ATTACK_MIX fraction (16 of 47 units), so they sum BELOW findings.
     const sec = securityForTeam(team);
     const catSum = sec.byCategory.reduce((a, x) => a + x.count, 0);
+    const catWant = ATTACK_MIX.reduce(
+      (a, c) => a + Math.round((c.units * sec.findings) / EVENT_MIX_TOTAL),
+      0
+    );
     const memSum = sec.byMember.reduce((a, x) => a + x.count, 0);
+    // per-member threat types: every column sums to the Attack types card,
+    // every row's categories stay within its findings total
+    for (const c of ATTACK_MIX) {
+      const col = sec.byMember.reduce((a, m) => a + m.byCategory[c.key], 0);
+      const want = sec.byCategory.find((x) => x.id === c.key)?.count ?? 0;
+      if (col !== want) {
+        bad.push(`${team.name} sec member column ${c.key} ${col} != ${want}`);
+      }
+    }
+    for (const m of sec.byMember) {
+      const cats = ATTACK_MIX.reduce((a, c) => a + m.byCategory[c.key], 0);
+      if (cats > m.count || Object.values(m.byCategory).some((n) => n < 0)) {
+        bad.push(
+          `${team.name} sec member ${m.label} categories ${cats} > ${m.count}`
+        );
+      }
+    }
     const outcomeFindings = sec.byOutcome
       .filter((o) => o.action !== "allow")
       .reduce((a, x) => a + x.count, 0);
     const outcomeAll = sec.byOutcome.reduce((a, x) => a + x.count, 0);
-    if (catSum !== sec.findings) {
+    if (catSum !== catWant || catSum > sec.findings) {
       bad.push(
-        `${team.name} sec byCategory ${catSum} != findings ${sec.findings}`
+        `${team.name} sec byCategory ${catSum} != ${catWant} (findings ${sec.findings})`
       );
     }
     if (memSum !== sec.findings) {
@@ -159,6 +220,29 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
         `${team.name} sec outcomeAll ${outcomeAll} != checks ${sec.checks}`
       );
     }
+    // stage ratio: output rows exist only when the reply scan recorded a
+    // result — the dev build's write rule, anchored at 1,612/20,737 (~7.8%).
+    // Guards against regressing to the old one-check-per-stage ~1:1 split.
+    const reqStage = sec.byStage.find((s) => s.id === "request")?.count ?? 0;
+    const outStage = sec.byStage.find((s) => s.id === "output")?.count ?? 0;
+    const stageRate = reqStage > 0 ? outStage / reqStage : 0;
+    if (reqStage + outStage !== sec.checks) {
+      bad.push(`${team.name} stages ${reqStage}+${outStage} != ${sec.checks}`);
+    }
+    if (stageRate < 0.075 || stageRate > 0.08) {
+      bad.push(`${team.name} stage rate ${stageRate.toFixed(4)} off anchor`);
+    }
+  }
+  // security shares: seed teams sum EXACTLY to the org Security page's
+  // event total at every preset range — one story at two zoom levels
+  for (const range of ["24h", "7d", "30d", "all"] as const) {
+    const shares = teamEventShares(range, null);
+    const sum = [...shares.values()].reduce((a, b) => a + b, 0);
+    if (sum !== EVENTS_RANGE_TOTAL[range]) {
+      bad.push(
+        `event shares ${sum} != org ${EVENTS_RANGE_TOTAL[range]} at ${range}`
+      );
+    }
   }
   // org roll-up: single-assignment keys means org spend == sum of team spends
   const teamSum = round2(
@@ -171,8 +255,33 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
   if (org !== 247.59) {
     bad.push(`org ${org} != 247.59 (rendered bar)`);
   }
-  if (ORG_BUDGET_SEED && budgetPercentLabel(org, ORG_BUDGET_SEED) !== "16.5%") {
-    bad.push(`org pct ${budgetPercentLabel(org, ORG_BUDGET_SEED)} != 16.5%`);
+  const orgCap = ORG_BUDGET_SEED.caps.monthly ?? 0;
+  if (budgetPercentLabel(org, orgCap) !== "16.5%") {
+    bad.push(`org pct ${budgetPercentLabel(org, orgCap)} != 16.5%`);
+  }
+  // window scale is strictly increasing in canonical order
+  for (let i = 1; i < BUDGET_WINDOW_ORDER.length; i++) {
+    const a = BUDGET_WINDOW_ORDER[i - 1] as keyof typeof BUDGET_WINDOW_SCALE;
+    const b = BUDGET_WINDOW_ORDER[i] as keyof typeof BUDGET_WINDOW_SCALE;
+    if (BUDGET_WINDOW_SCALE[a] >= BUDGET_WINDOW_SCALE[b]) {
+      bad.push(`window scale ${a} >= ${b}`);
+    }
+  }
+  // Design seed: the documented multi-window example
+  const design = TEAM_SEED_ROWS.find((t) => t.id === "team_design");
+  if (design?.budget) {
+    const r = budgetReadings(usageForTeam(design), design.budget);
+    const fiveH = r.find((x) => x.window === "5h");
+    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "11.0%") {
+      bad.push(
+        `design 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 11.0%`
+      );
+    }
+    if (
+      tightestReading(usageForTeam(design), design.budget).window !== "weekly"
+    ) {
+      bad.push("design tightest window != weekly");
+    }
   }
   expect(bad.join("\n")).toBe("");
 });

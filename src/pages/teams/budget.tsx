@@ -1,9 +1,18 @@
+import { Info } from "lucide-react";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  BUDGET_ENFORCEMENT_LABEL,
   BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_RESET_COPY,
+  BUDGET_WINDOW_RESET_SHORT,
   budgetPercentLabel,
   budgetProgress,
   type TeamBudget,
+  type WindowReading,
 } from "@/data/teams";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -15,27 +24,36 @@ import { budgetFillClass } from "@/pages/teams/budget-band";
  * one band ladder (`budget-band.ts`), one summary — so a row's bar and the
  * tab it opens can never drift into two different readings of the same
  * spend.
+ *
+ * Everything here reads ONE window: a budget can run several at once, so the
+ * caller picks which reading to render (the list row shows the tightest, the
+ * Budget tab shows the selected tab) and hands down that window's spend and
+ * cap. Nothing in this file chooses a window for itself.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function BudgetMeter({
   spend,
-  budget,
+  cap,
+  warnThreshold,
   label,
 }: {
   spend: number;
-  budget: TeamBudget;
+  /** The selected window's cap, in USD. */
+  cap: number;
+  /** Percent of the cap at which the budget warns — shared across windows. */
+  warnThreshold: number;
   /** Accessible name for the meter — "Org budget used", "Platform budget used". */
   label: string;
 }) {
-  const fraction = budgetProgress(spend, budget) ?? 0;
+  const fraction = budgetProgress(spend, cap) ?? 0;
   return (
     <div className="flex flex-col gap-2">
       <div
         aria-label={label}
-        aria-valuemax={budget.amount}
+        aria-valuemax={cap}
         aria-valuemin={0}
         aria-valuenow={spend}
-        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(budget.amount)}`}
+        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(cap)}`}
         className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
         role="meter"
       >
@@ -46,7 +64,7 @@ export function BudgetMeter({
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none",
-            budgetFillClass(spend, budget)
+            budgetFillClass(spend, cap, warnThreshold)
           )}
           style={{ width: `${fraction * 100}%` }}
         />
@@ -56,35 +74,55 @@ export function BudgetMeter({
           {formatCurrency(spend)}
           <span className="text-muted-foreground">
             {" "}
-            of {formatCurrency(budget.amount)}
+            of {formatCurrency(cap)}
           </span>
         </span>
         <span className="type-mono-14 text-muted-foreground">
-          {budgetPercentLabel(spend, budget)} used
+          {budgetPercentLabel(spend, cap)} used
         </span>
       </div>
     </div>
   );
 }
 
-/** One fact: what it is, what it says, and what that means. The hint is the
- *  line that keeps the value from needing a second reading — "Warn at 80%"
- *  states the percent, the hint states the dollar figure it fires at. */
+/** One fact: label over value. No hint line (2026-09-01): the hints
+ *  repeated the meter's percent and the dialog's enforcement copy, and the
+ *  Window reset sentence wrapped to two lines. What a hint carried that was
+ *  new now lives inside the value ("80% ($16.00)", "Weekly, rolling"); the
+ *  teaching copy (soft vs hard, what a rolling window is) moved into an
+ *  Info tooltip on the eyebrow, the TokenSavings benefit-row recipe. */
 function BudgetFact({
   label,
   value,
-  hint,
+  tip,
   mono = false,
 }: {
   label: string;
   value: string;
-  hint: string;
+  /** Tooltip body behind the eyebrow's Info glyph. */
+  tip: string;
   /** Numeric values take the mono tabular voice; worded ones stay sans. */
   mono?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="type-label-12 text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1">
+        <span className="type-label-12 text-muted-foreground">{label}</span>
+        <Tooltip>
+          <TooltipTrigger
+            render={(props) => (
+              <span
+                {...props}
+                aria-label={`About ${label}`}
+                className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <Info aria-hidden className="size-3.5" strokeWidth={1.75} />
+              </span>
+            )}
+          />
+          <TooltipContent>{tip}</TooltipContent>
+        </Tooltip>
+      </span>
       <span
         className={cn(
           mono ? "type-mono-14" : "type-copy-14",
@@ -93,57 +131,62 @@ function BudgetFact({
       >
         {value}
       </span>
-      <p className="type-copy-12 m-0 text-pretty text-muted-foreground">
-        {hint}
-      </p>
     </div>
   );
 }
 
 export function BudgetSummary({
-  spend,
+  reading,
   budget,
   meterLabel,
 }: {
-  spend: number;
+  /** The window being read: its cap, its spend, its scaled usage. */
+  reading: WindowReading;
+  /** Enforcement and warn percent are shared across a budget's windows. */
   budget: TeamBudget;
   meterLabel: string;
 }) {
-  const over = spend > budget.amount;
+  const { window, cap, spend } = reading;
+  const over = spend > cap;
   const hard = budget.enforcement === "hard";
   return (
     <div className="flex flex-col gap-4">
-      <BudgetMeter budget={budget} label={meterLabel} spend={spend} />
-      {/* Four facts, not a label/value list: the meter above already states
-          spend, cap, and percent, so what is left is the reading the operator
-          has to do arithmetic for — what remains, what happens at the cap,
-          where the alert fires, when the window turns over. */}
+      <BudgetMeter
+        cap={cap}
+        label={meterLabel}
+        spend={spend}
+        warnThreshold={budget.warnThreshold}
+      />
+      {/* Four facts: the meter above already states spend, cap, and percent,
+          so what is left is what the operator would otherwise compute: what
+          remains, what happens at the cap, where the alert fires (with its
+          dollar figure), and the window with its reset behaviour. */}
       <div className="grid @3xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
         <BudgetFact
-          hint={`${budgetPercentLabel(spend, budget)} of the budget used`}
           label={over ? "Over budget by" : "Remaining"}
           mono
-          value={formatCurrency(Math.abs(budget.amount - spend))}
+          tip={
+            over
+              ? "How far spend in this window has passed its cap."
+              : "What is left of this window's cap before it is used up."
+          }
+          value={formatCurrency(Math.abs(cap - spend))}
         />
         <BudgetFact
-          hint={
-            hard
-              ? "Blocks requests once the budget is used up."
-              : "Alerts only. Never blocks a request."
-          }
           label="Enforcement"
+          tip={`${BUDGET_ENFORCEMENT_LABEL.soft}. ${BUDGET_ENFORCEMENT_LABEL.hard}.`}
           value={hard ? "Hard" : "Soft"}
         />
         <BudgetFact
-          hint={`Alert at ${formatCurrency((budget.amount * budget.warnThreshold) / 100)}.`}
           label="Warn at"
           mono
-          value={`${budget.warnThreshold}%`}
+          tip="Percent of the cap at which the warning alert fires, with the dollar figure that works out to."
+          value={`${budget.warnThreshold}% (${formatCurrency((cap * budget.warnThreshold) / 100)})`}
         />
         <BudgetFact
-          hint={BUDGET_WINDOW_RESET_COPY[budget.window]}
           label="Window"
-          value={BUDGET_WINDOW_LABEL[budget.window]}
+          tip={BUDGET_WINDOW_RESET_COPY[window]}
+          value={`${BUDGET_WINDOW_LABEL[window]}, ${BUDGET_WINDOW_RESET_SHORT[window]}`}
         />
       </div>
     </div>

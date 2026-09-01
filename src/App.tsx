@@ -332,7 +332,7 @@ export default function App() {
             <Route element={<Policies />} path="/policies" />
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
-            <Route element={<Team />} path="/team" />
+            <Route element={<Team />} path="/members" />
             <Route element={<Teams />} path="/teams" />
             <Route element={<TeamDetail />} path="/teams/:teamId" />
             <Route element={<Notifications />} path="/notifications" />
@@ -361,7 +361,7 @@ export default function App() {
               path="/audit-trail-default"
             />
             <Route element={<ActivityDefault />} path="/activity-default" />
-            <Route element={<TeamDefault />} path="/team-default" />
+            <Route element={<TeamDefault />} path="/members-default" />
             <Route element={<TeamsDefault />} path="/teams-default" />
             <Route
               element={<TeamDetailDefault />}
@@ -381,7 +381,7 @@ export default function App() {
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
             <Route element={<ActivityFree />} path="/activity-free" />
-            <Route element={<TeamFree />} path="/team-free" />
+            <Route element={<TeamFree />} path="/members-free" />
             <Route element={<ApiKeysFree />} path="/api-keys-free" />
             <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
@@ -406,7 +406,7 @@ export default function App() {
             <Route element={<Policies />} path="/policies-enterprise" />
             <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
             <Route element={<Activity />} path="/activity-enterprise" />
-            <Route element={<Team />} path="/team-enterprise" />
+            <Route element={<Team />} path="/members-enterprise" />
             <Route element={<TeamsEnterprise />} path="/teams-enterprise" />
             <Route
               element={<TeamDetailEnterprise />}

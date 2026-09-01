@@ -1,37 +1,66 @@
-import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { MEMBER_ROWS } from "@/data/team-members";
-import { keyById, type TeamRow } from "@/data/teams";
+import { keyById, TEAM_SEED_ROWS, type TeamRow } from "@/data/teams";
+import type { CustomRange, Range } from "@/lib/range";
+import { RANGE_SCALE } from "@/lib/range";
 import { API_KEY_ROWS } from "@/pages/activity-data";
-import type { GuardrailAction, GuardrailReason } from "@/pages/requests/types";
+import type { GuardrailAction } from "@/pages/requests/types";
+import {
+  ATTACK_MIX,
+  EVENT_MIX_TOTAL,
+  eventsTotal,
+  splitEventMix,
+} from "@/pages/security/events-data";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Team guardrail roll-up — what the detail page's Security tab counts.
  *
- * Two sources, each doing the job it is the truth for, and nothing authored
- * in between:
+ * Re-derived 2026-09-01: the org Security page is the events canon, and a
+ * team's numbers are its SHARE of that canon — the same story at two zoom
+ * levels. (The first cut counted the ~10 recorded REQUEST_ROWS verdicts,
+ * which put a 0.005% finding rate against 65k checks while the org page
+ * claimed 1,215 events — two surfaces contradicting each other, and a
+ * live-build reference showed ~5% is realistic.)
  *
- *   VOLUME  → `API_KEY_ROWS` (activity-data). The same per-key request counts
- *             the Usage tab's Requests KPI reads, so "out of N checks" and
- *             "N requests" describe one workload.
- *   VERDICTS → `REQUEST_ROWS_ALL` (data/requests). The recorded guardrail
- *             events — every block / redaction / flag the gateway filed, with
- *             the check that fired. These are counted as they stand; nothing
- *             is extrapolated from them, because a recorded event either
- *             happened or it did not.
+ * Sources, each the truth for its axis, nothing authored in between:
  *
- * The check arithmetic, stated once so every card sums:
+ *   VOLUME → `API_KEY_ROWS` (activity-data): per-key 7d request counts, the
+ *            same rows the Usage tab totals. Scaled by the Usage tab's
+ *            range canon (RANGE_SCALE — All = 8.5) so "out of N checks"
+ *            agrees with the Usage tab's Total Messages for the same range.
+ *            (The first cut presented raw 7d volume as "everything on
+ *            record".)
+ *   EVENTS → `security/events-data` (org Security page): `eventsTotal()`
+ *            per range, split 31:14:2 by `splitEventMix`, categorized by
+ *            `ATTACK_MIX`. Teams receive largest-remainder shares in
+ *            proportion to their request volume, so the seed teams sum
+ *            EXACTLY to the org page's number at every preset range.
  *
- *   requestStage = requests                (every request is scanned inbound)
- *   outputStage  = requests − blocked      (a blocked request has no reply)
+ * Known, accepted drift: the org events canon scales ranges by the
+ * Requests-page ratios (25% coupling) while checks scale by RANGE_SCALE;
+ * the two disagree by up to ~20% at "all", so the implied finding RATE
+ * wobbles across ranges. Nothing on screen divides the two; reconciling
+ * the canons is a data-model decision recorded in data-model.md, not one
+ * this module takes on its own.
+ *
+ * The check arithmetic, stated once so every card sums. It models the dev
+ * build's WRITE path (gateway-proxy `request.repository.ts`): at most one
+ * decision row per request per phase, each written only when that phase's
+ * scan produced at least one result.
+ *
+ *   requestStage = requests                (the inbound scan always records)
+ *   outputStage  = requests × 0.0777       (see OUTPUT_RESULT_RATE)
  *   checks       = requestStage + outputStage
- *   findings     = blocked + redacted + flagged
+ *   findings     = blocked + redacted + flagged   (the team's event share)
  *   allowed      = checks − findings
- *
- * By-category and by-member count FINDINGS, not checks — they answer "what
- * fired and on whose traffic", mirroring the real summary endpoint, whose
- * zero-findings shape the pane renders as "Nothing to attribute". Scan
- * volume (the stage counts) is the only card that spans clean checks.
  * ───────────────────────────────────────────────────────────────────────── */
+
+/** Share of requests whose REPLY scan records a decision row. The dev
+ *  build's response-security-evaluation stage skips the write for
+ *  streaming/empty/non-inference/non-2xx bodies AND for clean scans with
+ *  zero results, so output rows exist only when the reply scan found
+ *  something to note: 1,612 output rows over 20,737 requests on the
+ *  2026-09-01 live capture. Sanctioned anchor to that recording. */
+const OUTPUT_RESULT_RATE = 1612 / 20_737;
 
 export type TeamSecuritySlice = {
   id: string;
@@ -44,6 +73,14 @@ export type TeamOutcomeSlice = TeamSecuritySlice & {
   action: GuardrailAction;
 };
 
+/** One member's row: total findings plus the split by threat type, keyed by
+ *  ATTACK_MIX key. Each key column sums EXACTLY to the matching byCategory
+ *  count (the Attack types card), and a row's categories never exceed its
+ *  `count` (the balance is the org page's uncategorized remainder). */
+export type TeamMemberSlice = TeamSecuritySlice & {
+  byCategory: Record<(typeof ATTACK_MIX)[number]["key"], number>;
+};
+
 export type TeamSecurity = {
   /** Every guardrail check on record for the team, both stages. */
   checks: number;
@@ -52,7 +89,7 @@ export type TeamSecurity = {
   byOutcome: TeamOutcomeSlice[];
   byCategory: TeamSecuritySlice[];
   byStage: TeamSecuritySlice[];
-  byMember: TeamSecuritySlice[];
+  byMember: TeamMemberSlice[];
 };
 
 const OUTCOME_COPY: Record<
@@ -85,8 +122,6 @@ const OUTCOME_ORDER: GuardrailAction[] = [
   "allow",
 ];
 
-const CATEGORY_ORDER: GuardrailReason[] = ["injection", "credential", "pii"];
-
 /** The activity-data key ids (`prod-web`) a team holds. `keyById` resolves
  *  the `sk-gw-…` seed id to the name both other modules index on. */
 function teamKeyNames(team: TeamRow): Set<string> {
@@ -97,44 +132,107 @@ function teamKeyNames(team: TeamRow): Set<string> {
   );
 }
 
+/** 7d request volume on the team's keys — the share weight. */
+function teamRequests7d(team: TeamRow): number {
+  const names = teamKeyNames(team);
+  return API_KEY_ROWS.filter((r) => names.has(r.key)).reduce(
+    (a, r) => a + r.requests,
+    0
+  );
+}
+
+/** Largest-remainder allocation of `total` onto `weights` — integer shares
+ *  that sum EXACTLY to `total` and track the weights as closely as integer
+ *  rounding allows. Same discipline as events-data's `splitEventMix`. */
+function allocate(total: number, weights: number[]): number[] {
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  if (weightSum <= 0 || total <= 0) {
+    return weights.map(() => 0);
+  }
+  const ideal = weights.map((w) => (total * w) / weightSum);
+  const floors = ideal.map((v) => Math.floor(v));
+  let remainder = total - floors.reduce((a, b) => a + b, 0);
+  const order = ideal
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (let k = 0; remainder > 0; k++, remainder--) {
+    const slot = order[k % order.length];
+    if (slot) {
+      out[slot.i] = (out[slot.i] ?? 0) + 1;
+    }
+  }
+  return out;
+}
+
+/** The org Security page's event total for a range, allocated across
+ *  `teams` by request volume. The allocation needs every team at once so
+ *  the shares settle exactly onto the org number — callers with live page
+ *  state pass it; the seed is the default. */
+export function teamEventShares(
+  range: Range,
+  customRange: CustomRange | null,
+  teams: TeamRow[] = TEAM_SEED_ROWS
+): Map<string, number> {
+  const weights = teams.map((t) => teamRequests7d(t));
+  const shares = allocate(eventsTotal(range, customRange), weights);
+  return new Map(teams.map((t, i) => [t.id, shares[i] ?? 0]));
+}
+
 const memberIdFor = (owner: string): string =>
   MEMBER_ROWS.find((m) => m.name === owner)?.id ?? owner;
 
-export function securityForTeam(team: TeamRow): TeamSecurity {
+/** A team's Security-tab numbers for a range. `teams` is the full set the
+ *  page is rendering (live state where available) so event shares settle
+ *  onto the org total exactly; `team` must be a member of it. */
+export function securityForTeamAtRange(
+  team: TeamRow,
+  range: Range,
+  customRange: CustomRange | null,
+  teams: TeamRow[] = TEAM_SEED_ROWS
+): TeamSecurity {
   const names = teamKeyNames(team);
 
-  // Volume, per key, from the same rows the Usage tab totals.
-  const volume = API_KEY_ROWS.filter((r) => names.has(r.key));
-  const requests = volume.reduce((a, r) => a + r.requests, 0);
+  // Volume: the Usage tab's rows and the Usage tab's range canon.
+  const scale = RANGE_SCALE[range === "custom" ? "7d" : range];
+  const requests = Math.round(teamRequests7d(team) * scale);
 
-  // Verdicts, per key, from the recorded guardrail events.
-  const events = REQUEST_ROWS_ALL.filter(
-    (r) => names.has(r.keyId) && r.guardrail !== "allow"
-  );
-  const countBy = (action: GuardrailAction) =>
-    events.filter((r) => r.guardrail === action).length;
-  const blocked = countBy("block");
-  const findings = events.length;
+  // Events: this team's share of the org Security page's canon.
+  const findings = teamEventShares(range, customRange, teams).get(team.id) ?? 0;
+  const { blocked, flagged, redacted } = splitEventMix(findings);
 
   const requestStage = requests;
-  const outputStage = Math.max(0, requests - blocked);
+  const outputStage = Math.round(requests * OUTPUT_RESULT_RATE);
   const checks = requestStage + outputStage;
 
+  const outcomeCount: Record<GuardrailAction, number> = {
+    block: blocked,
+    flagged,
+    redacted,
+    allow: checks - findings,
+  };
   const byOutcome: TeamOutcomeSlice[] = OUTCOME_ORDER.map((action) => ({
     id: action,
     action,
     label: OUTCOME_COPY[action].label,
     description: OUTCOME_COPY[action].description,
-    count: action === "allow" ? checks - findings : countBy(action),
+    count: outcomeCount[action],
   }));
 
-  // Findings by detector category, biggest first. Only findings carry a
-  // category, so a zero-findings team gets an empty list — the pane's
-  // "Nothing to attribute" state — rather than a clean-checks filler row.
-  const byCategory: TeamSecuritySlice[] = CATEGORY_ORDER.map((reason) => ({
-    id: reason,
-    label: reason,
-    count: events.filter((r) => r.guardrailReason === reason).length,
+  // Categories mirror the org Attack-types card: ATTACK_MIX units per
+  // EVENT_MIX_TOTAL events, so a team's category counts are the same
+  // fraction of its findings that the org card shows of the org's (the
+  // remainder is the org page's uncategorized balance).
+  const categoryCount = Object.fromEntries(
+    ATTACK_MIX.map((c) => [
+      c.key,
+      Math.round((c.units * findings) / EVENT_MIX_TOTAL),
+    ])
+  ) as Record<(typeof ATTACK_MIX)[number]["key"], number>;
+  const byCategory: TeamSecuritySlice[] = ATTACK_MIX.map((c) => ({
+    id: c.key,
+    label: c.label,
+    count: categoryCount[c.key],
   }))
     .filter((slice) => slice.count > 0)
     .sort((a, b) => b.count - a.count);
@@ -154,26 +252,74 @@ export function securityForTeam(team: TeamRow): TeamSecurity {
     },
   ];
 
-  // Findings per member: every recorded event, attributed to the owner of
-  // the key that carried it. Mirrors the real summary's byUser — "who made
-  // the checked requests" once something fired — so a zero-findings team
-  // gets an empty list, and per-member request VOLUME stays on the Usage
-  // tab rather than being restated here.
-  const perOwner = new Map<string, number>();
-  for (const event of events) {
-    const owner = API_KEY_ROWS.find((r) => r.key === event.keyId)?.owner;
-    if (!owner) {
-      continue;
+  // Findings per member: the team's events allocated by each member's
+  // request volume on the keys they own here — same largest-remainder
+  // settle, so the rows sum exactly to the findings headline.
+  const owners = new Map<string, number>();
+  for (const row of API_KEY_ROWS) {
+    if (names.has(row.key)) {
+      owners.set(row.owner, (owners.get(row.owner) ?? 0) + row.requests);
     }
-    perOwner.set(owner, (perOwner.get(owner) ?? 0) + 1);
   }
-  const byMember: TeamSecuritySlice[] = [...perOwner.entries()]
-    .map(([owner, count]) => ({
+  const ownerEntries = [...owners.entries()];
+  const memberShares = allocate(
+    findings,
+    ownerEntries.map(([, reqs]) => reqs)
+  );
+  // Threat types per member (2026-09-01): each category total is allocated
+  // across members by the same request weights, so a COLUMN sums exactly to
+  // the Attack types card. Rounding can hand a low-volume member one more
+  // categorized event than their findings total; the repair loop moves that
+  // unit to a member with slack in the same category, so every ROW's
+  // categories stay within its total. Slack always exists: categories sum to
+  // 16/20 of findings, so the team as a whole has (findings - categorized)
+  // uncategorized units to absorb it.
+  const weights = ownerEntries.map(([, reqs]) => reqs);
+  const perCategory = ATTACK_MIX.map((c) =>
+    allocate(categoryCount[c.key], weights)
+  );
+  const rowCategorized = (i: number) =>
+    perCategory.reduce((a, col) => a + (col[i] ?? 0), 0);
+  for (let i = 0; i < ownerEntries.length; i++) {
+    let over = rowCategorized(i) - (memberShares[i] ?? 0);
+    while (over > 0) {
+      let c = 0;
+      for (let k = 1; k < perCategory.length; k++) {
+        if ((perCategory[k]?.[i] ?? 0) > (perCategory[c]?.[i] ?? 0)) {
+          c = k;
+        }
+      }
+      const j = ownerEntries.findIndex(
+        (_, idx) => idx !== i && rowCategorized(idx) < (memberShares[idx] ?? 0)
+      );
+      if (j === -1) {
+        break;
+      }
+      const col = perCategory[c] as number[];
+      col[i] = (col[i] ?? 0) - 1;
+      col[j] = (col[j] ?? 0) + 1;
+      over--;
+    }
+  }
+  const byMember: TeamMemberSlice[] = ownerEntries
+    .map(([owner], i) => ({
       id: memberIdFor(owner),
       label: owner,
-      count,
+      count: memberShares[i] ?? 0,
+      byCategory: Object.fromEntries(
+        ATTACK_MIX.map((c, k) => [c.key, perCategory[k]?.[i] ?? 0])
+      ) as TeamMemberSlice["byCategory"],
     }))
+    .filter((slice) => slice.count > 0)
     .sort((a, b) => b.count - a.count);
 
   return { checks, findings, byOutcome, byCategory, byStage, byMember };
+}
+
+/** All-time roll-up — what the pane renders before the range chrome lands. */
+export function securityForTeam(
+  team: TeamRow,
+  teams: TeamRow[] = TEAM_SEED_ROWS
+): TeamSecurity {
+  return securityForTeamAtRange(team, "all", null, teams);
 }

@@ -48,7 +48,7 @@ graph LR
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
-    LAYOUT --> TEAM["/team → Team.tsx"]
+    LAYOUT --> TEAM["/members → Team.tsx"]
     LAYOUT --> TEAMS["/teams → Teams.tsx"]
     LAYOUT --> TEAMD["/teams/:teamId → TeamDetail.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
@@ -119,7 +119,7 @@ affordance.
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
 | Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
 | Gateway | models → `/models` |
-| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
+| Workspace | activity → `/activity`, team → `/members`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
 
@@ -161,7 +161,7 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 **Twin inventory.** Both suffix sets cover the same 15 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
 `/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`,
-`/team`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
+`/members`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
 Security `-default` twin answers on **both** `/events-default` and
 `/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
 render `Requests*.tsx` because the route was renamed but the components were
@@ -692,7 +692,7 @@ messages (`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>`
 — the UUID, never the `req_*` display id), every key mint
 (`API_KEY_SEED_ROWS` → `/api-keys`; revokes carry no date so they stay out),
 every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
-(`src/data/team-members.ts MEMBER_ROWS` → `/team`). Unread defaults: the
+(`src/data/team-members.ts MEMBER_ROWS` → `/members`). Unread defaults: the
 2026-06-06 band ships unread (~15 items); older history ships read.
 `NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
 still exported, but **the bell no longer uses it as its list bound**
@@ -1457,9 +1457,18 @@ Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title
 
 ---
 
-### Team page (`/team` → `Team.tsx`)
+### Members page (`/members` → `Team.tsx`)
 
 **Purpose:** Workspace member and invitation management.
+
+**Renamed "Team" → "Members" in ALL user-facing surfaces (2026-09-01):** the
+sidebar label, the routes (`/members` + `-default`/`-free`/`-enterprise`
+twins), and the page H1 — resolving the old "Team vs Teams" nav-adjacency
+question (the pair now reads Members / Teams). Code identifiers deliberately
+KEEP the Team names (`Team.tsx`, `TeamDefault.tsx`, `TeamFree.tsx`, nav
+`id: "team"`, `team-members.ts`) — same convention as `anchor` vs
+"Fingerprint"; rename the files only as a deliberate refactor, never a blind
+find-replace.
 
 **State:** `inviteOpen: boolean`, `tab: 'members'|'invitations'`, filters, pagination.
 
@@ -1475,8 +1484,9 @@ against a team budget and an org budget. Pro + Enterprise only — see the
 workspace twins both routes (`/teams-default`, `/teams-default/:teamId`).
 
 **List page.** PageHeader + a scaffold-only `7D / 30D / 90D` SegmentedPill and
-`DateRangePicker` + "Create team". Then the full-width **Org budget** card
-(name · window line, meter, "Edit budget" / "Set budget") and the teams table:
+`DateRangePicker` + "Create team". Then the teams table (the full-width
+**Org budget** card that sat here was removed 2026-09-01 on the Enterprise
+twin; Pro `Teams.tsx` still renders it, frozen):
 Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
 | Spend | Budget (compact utilization meter + one-decimal % label; "No budget"
 when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
@@ -1488,7 +1498,9 @@ their historical attribution.
 
 **Detail page.** BackLink → the list twin, H1 = team name, header-right
 Rename (outline) + Delete (destructive) buttons on non-default teams, then
-five tabs: Usage (spend + requests KPI pair, sortable "Spend by user" and
+five tabs (Enterprise order since 2026-09-01: Members, Keys, Budget, Usage,
+Security, Members default, management before data; Pro keeps Usage first):
+Usage (spend + requests KPI pair, sortable "Spend by user" and
 "Spend by model" tables — "user" not "member", because a spend row can
 outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
 Budget, Security.
@@ -1549,11 +1561,16 @@ layer owns:
   `teamManagerName(team)` gives the list column its best-effort single name
   (first manager, or —). This replaced the earlier single-`managerId`
   promote-demotes-predecessor model once the real schema shipped without a
-  one-manager constraint. **No UI assigns the role anymore (2026-08-31
-  ruling):** the detail page's Members tab dropped its member/manager select
-  in favor of the Team page's org-role control (Owner static, Admin/Member
-  select, capitalized, local state), so `managerIds` is seed-only and feeds
-  just the list's Manager column.
+  one-manager constraint. **The Manager role is back in the Enterprise UI
+  (2026-09-01, reversing the 8-31 org-roles-only ruling):** the Enterprise
+  detail's Members tab select offers Manager / Member — the TEAM role only,
+  Admin removed 2026-09-01 so the select stops blending the org-role axis
+  into the team-role one (Owner static,
+  capitalized, local state), and a row's initial value derives from the
+  team's seeded `managerIds` — the same source the list's Manager column
+  reads, so the two surfaces can never disagree (seeded: Kira Tan on
+  Platform, Jordan on Design). Pro's select stays Admin/Member (frozen for
+  the A/B).
 - **One team per user.** `moveMembersToTeam(teams, targetId, memberIds)`
   operates on the WHOLE array: it adds to the target and removes from
   whichever team each member was on, stripping the mover from that team's
@@ -1568,11 +1585,43 @@ layer owns:
   detach, so its spend keeps rolling up somewhere. The Default team's own
   Keys tab hides the remove action.
 
+**Multi-window budgets (2026-09-01 meeting: "support multiple simultaneous
+budget types, such as 5-hour, weekly, and monthly limits").** `TeamBudget`
+is `{ name, caps: Partial<Record<BudgetWindow, number>>, enforcement,
+warnThreshold }`: one USD cap per configured window (at least one), with
+name, enforcement, and warn percent shared across them. This is the
+Claude/Codex shape (session + weekly caps, one enforcement) and maps to one
+`usage_limits` budget row per window on the backend (migration 170 has no
+uniqueness on `team_id`; the dev's UI currently `find`s one, flagged).
+Per-window spend is the team's 7d roll-up projected through
+`BUDGET_WINDOW_SCALE` (5h = 5/168, weekly = 1, monthly = `RANGE_SCALE["30d"]`
+so the Budget tab's monthly figure reconciles with the Usage tab's 30D) via
+`usageForWindow` / `budgetReadings`, so meter, facts, and both breakdown
+tables for a window are one settled number. `tightestReading` (highest
+utilization, ties keep canonical order `BUDGET_WINDOW_ORDER`) is what the
+list row's single meter shows, suffixed with the window word ("92.3%
+weekly"). Dialog: the window field is the Add-members `MultiSelect` recipe
+(`commitMode`, 4 visible rows, no Select All, new opt-in `minSelected={1}`),
+followed by one amount input per selected window prefilled from
+`BUDGET_WINDOW_DEFAULT_AMOUNT`. Budget tab: the same header-row pattern the
+Usage and Security tabs use (budget name as SectionTitle left; window
+`Segmented` pill + "Edit budget" right), then a headerless card holding the
+meter + four facts for the selected window, then both breakdown tables
+following it. With one configured window the pill does not render.
+Pro twins (`Teams.tsx`, `TeamDetail.tsx`) read the first configured window
+only (mechanical adapter, frozen design). Seed: Platform `{ monthly: 500 }`;
+Design `{ "5h": 5, weekly: 20 }` ($0.55 = 11.0% of the 5h cap; weekly 92.3%
+is the tightest). `teams.test.ts` asserts per-window table reconciliation,
+weekly == 7d, strictly increasing window scale, and tightest == max
+utilization. The Org budget card was removed from the Teams list the same
+day (meeting decision: confusion/duplication); `teamsStore.orgBudget` still
+exists, unrendered.
+
 **Budget thresholds (2026-08-31).** `warnThreshold` only — the shipped schema
 (`warn_threshold_pct`, migration 170) carries no block threshold; a hard
-budget blocks at the amount itself. The mock dropped its earlier
-PRD-sketched `blockThreshold` field to match. The dialog's window pill is a
-quick-pick preset: choosing a window fills the amount from
+budget blocks at the cap itself. The mock dropped its earlier
+PRD-sketched `blockThreshold` field to match. The dialog's window picker is a
+quick-pick preset: selecting a window fills its amount from
 `BUDGET_WINDOW_DEFAULT_AMOUNT` (5h $25 / weekly $200 / monthly $500, always
 editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
 `BUDGET_PRESETS_HELPER_COPY`. 5h and weekly are ROLLING windows; only
@@ -1582,8 +1631,13 @@ meter: under = a success 500→400 left-to-right gradient, warned = the same
 gradient shape in the warning family once spend passes the warn %, over =
 solid destructive; under was `bg-primary` until 2026-08-31, which resolved
 near-white on dark and read as an unfilled track — see design.md §7 Budget
-meter), a four-fact grid (Remaining / Over budget by, Enforcement, Warn at
-with its dollar equivalent, Window with reset copy), then the same
+meter), a four-fact grid of label + value only, no hint lines since
+2026-09-01 (Remaining / Over budget by; Enforcement; Warn at as "80%
+($16.00)"; Window as "Weekly, rolling" / "Monthly, resets on the 1st" via
+`BUDGET_WINDOW_RESET_SHORT`; each eyebrow carries an Info tooltip in the
+TokenSavings benefit-row recipe, where the long `BUDGET_WINDOW_RESET_COPY`
+sentence and the soft-vs-hard `BUDGET_ENFORCEMENT_LABEL` copy now live),
+then the same
 Spend-by-user / Spend-by-model tables the Usage tab uses, prefixed by a note
 naming the budget's own window (`BUDGET_WINDOW_SCOPE_COPY`).
 
@@ -1623,28 +1677,60 @@ rows that already exist:
   facts, security-tab groupings, org roll-up. It PINS the org figures
   ($247.59 / "16.5%") — move those assertions whenever spend seeds move
 
-**Security tab** (`src/pages/teams/SecurityPane.tsx` +
-`security-data.ts`). Default variant, and any team with zero checks, render
-the "No guardrail activity" empty state. Otherwise five stacked count cards:
-summary, By outcome, By category, By pipeline stage, By member. Volume comes
-from `API_KEY_ROWS` (the same counts the Usage tab reads); verdicts come from
-`REQUEST_ROWS_ALL`'s recorded guardrail rows, counted as they stand. The
-arithmetic, which every card obeys:
+**Security tab** (`src/pages/teams/security-data.ts`; Pro renders
+`SecurityPane.tsx`, Enterprise renders `SecurityOverviewPane.tsx`).
+**Re-derived 2026-09-01: the org Security page is the events canon.** A
+team's findings are its largest-remainder share of `eventsTotal(range)`
+(`security/events-data.ts`), weighted by the team's request volume, so the
+seed teams sum EXACTLY to the org page's number at every preset range
+(asserted in `teams.test.ts`; all-time: Default ~686 / Platform ~368 /
+Design ~161 of 1,215). Outcomes split by the org's 31:14:2
+`splitEventMix`; categories mirror the org Attack-types card's
+`ATTACK_MIX` fraction (so they sum BELOW findings, like the org page);
+members get the team's findings allocated by their request share.
+`REQUEST_ROWS_ALL` is no longer imported — the ~10 recorded findings stay
+as org-page drill-in exemplars only. Checks scale by the USAGE canon
+(`RANGE_SCALE`, All = 8.5×) so "out of N checks" agrees with the Usage
+tab; the org events canon scales by the Requests-page ratios instead, so
+the implied finding RATE wobbles ~20% across ranges — accepted drift,
+nothing on screen divides the two. API: `securityForTeamAtRange(team,
+range, customRange, teams)` (pass live page state so shares settle),
+`securityForTeam` = the all-time wrapper Pro uses, `teamEventShares`.
+The arithmetic, which every card obeys:
 
 ```text
-requestStage  = requests
-outputStage   = requests − blocked      (a blocked request has no reply)
+requestStage  = requests                (the inbound scan always records)
+outputStage   = requests × 0.0777       (reply rows exist only when the
+                                         output scan recorded a result —
+                                         the dev build's write rule,
+                                         anchored at 1,612/20,737)
 checks        = requestStage + outputStage
-findings      = blocked + redacted + flagged
+findings      = blocked + redacted + flagged   (the team's event share)
 allowed       = checks − findings
 ```
 
-By-category and By-member count FINDINGS only (what fired, on whose traffic),
-so a zero-findings team with nonzero checks (seeded: Design) renders the
-"No security findings" headline and "Nothing to attribute" bodies instead of
-rows — the same shape the real summary endpoint serves. Counts and labels
-only — the pane never renders prompt or response text, which is what its
-second paragraph promises the reader.
+**Pro pane** (frozen): five stacked count cards — summary, By outcome, By
+category, By pipeline stage, By member; zero-findings teams render the
+"Nothing to attribute" bodies (no team seeds that state anymore, but the
+shape survives for traffic-less teams). **Enterprise pane (2026-09-01,
+PRD 8.4's oversight-metadata set — types, verdicts, timestamps, counts):**
+"Overview" SectionTitle + range pill + DateRangePicker (defaults All,
+UsagePane's exact header group); a Total-events hero cloned from the org
+Security page (HeroNumeric + Blocked/Flagged/Redacted BreakdownRow legend
+plus an area chart, NO delta chip) whose series is `teamSparkSeries` settled
+onto the findings headline, so sum(chart) = the hero number and range
+shapes share one backbone; Action types and Attack types as org-style
+horizontal-bar cards; By member as a table with one column per threat type
+(ATTACK_MIX order) plus a Findings total: `TeamMemberSlice.byCategory`, each
+column allocated by member request weight so it sums EXACTLY to the Attack
+types card, with a repair pass that keeps every row's categories within its
+total (the balance is the org canon's uncategorized share; test-guarded).
+REMOVED 2026-09-01 against PRD
+8.4 (counts by type and verdict only): the "What this covers" summary card
+(explanatory UI) and the "By pipeline stage" tiles (the dev build's
+request/output scan-phase GROUP BY, no PRD sentence). The data layer still
+computes `byStage` / `checks`; nothing renders them on Enterprise. Counts
+and labels only — neither pane renders prompt or response text.
 
 ---
 
@@ -1752,7 +1838,7 @@ only where a modal is still the target:
 **The notifications bell is a producer of both mechanisms** (2026-08-24):
 every `NotificationItem.href` in `src/data/notifications.ts` targets one of
 the routes above — `/security?open=`, `/messages-findings/:requestId`, or a
-plain page route (`/billing`, `/api-keys`, `/team`) — and the menu navigates
+plain page route (`/billing`, `/api-keys`, `/members`) — and the menu navigates
 on item click.
 
 **Other deep-link params:**

@@ -89,10 +89,13 @@ export function TeamSecurityPane({
   );
 }
 
-export function GuardrailEmptyState() {
+/** Optional icon slot so the Enterprise pane can match its sibling tabs'
+ *  icon-chip empty states; Pro passes nothing and renders as before. */
+export function GuardrailEmptyState({ icon }: { icon?: React.ReactNode }) {
   return (
     <EmptyState
       body="No guardrail check has been recorded for this team yet. This covers everything on record for the team, not a date range. Once requests start flowing, their verdicts appear here."
+      icon={icon}
       title="No guardrail activity"
     />
   );

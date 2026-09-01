@@ -84,6 +84,8 @@ colors:
   danger-50: "oklch(0.971 0.013 17.380)"
   danger-100: "oklch(0.936 0.032 17.717)"
   danger-200: "oklch(0.885 0.062 18.334)"
+  danger-400: "oklch(0.704 0.191 22.216)"  # blocked-bar gradient edge (§7 Data bars & meters); also dark --destructive
+  danger-500: "oklch(0.637 0.237 25.331)"  # blocked-bar gradient origin; events-chart stroke + Blocked dot
   danger-600: "oklch(0.577 0.245 27.325)"  # semantic --destructive
   danger-700: "oklch(0.505 0.213 27.518)"
 
@@ -101,6 +103,24 @@ colors:
   # Dark mode re-tunes chart-1..8 in place (`.dark`, src/index.css): same
   # hue/chroma, lightness lowered 0.05 (5 points darker) against --canvas-bg.
   # Light-mode values above are unchanged.
+  #
+  # chart-N-soft — GRADIENT LEADING EDGE for a chart-token data bar (added
+  # 2026-09-01, see §7 Data bars & meters). The categorical palette has no
+  # rungs, so a bar painted from a chart slot had no lighter 400 step to run
+  # to. Each twin is DERIVED, never a literal:
+  #     --chart-N-soft: color-mix(in oklch, var(--chart-N), white 20%)
+  # 20% toward white lifts L by +0.056…0.076 and eases chroma off 20%, which
+  # brackets the ramp's own 500 -> 400 step (success +0.069, danger +0.067,
+  # warning +0.059). Because it derives over the palette var, the dark twins
+  # come free; both themes are re-declared in `.dark` only so a scoped dark
+  # container resolves against its own block. Resolved values:
+  chart-1-soft: "oklch(0.696 0.144 255)"  # light · dark oklch(0.656 0.144 255)
+  chart-2-soft: "oklch(0.776 0.136 50)"  # light · dark oklch(0.736 0.136 50)
+  chart-3-soft: "oklch(0.776 0.160 145)"  # light · dark oklch(0.736 0.160 145)
+  chart-4-soft: "oklch(0.760 0.144 290)"  # light · dark oklch(0.720 0.144 290)
+  # Only the four slots a bar consumes today exist. A fifth slot taking a bar
+  # fill gets its twin added here and in src/index.css FIRST — never a
+  # one-off lighter value at the call site.
 
   syntax-keyword: "#B6491A"  # curl flags / orange-red
   syntax-variable: "#D69E2E"  # $KEY interpolations
@@ -1194,6 +1214,20 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **Select** (`select.tsx`) — Base UI. Trigger: `bg-muted border-border rounded-sm h-9 text-sm`. **Two sizes:** `sm` `h-8 text-xs` (32px) · **`default` `h-9 text-sm`** (36px, the primitive default, identical to `<Input>` so the two sit flush in a filter row). `sm` is for compact chrome inside an already-dense row — the `DateRangePicker`'s four month/year triggers, `TablePaginationFooter`'s rows-per-page, and a few card-header range selectors. `xs` was deleted unused **2026-08-10**; `lg` was renamed to `default` the same day. Content: `rounded-sm border border-border bg-card shadow-md text-popover-foreground` with **`p-1`** (2026-06-04, was `py-1`) so each `rounded-xs` item insets 4px from the popup edge and the highlighted/selected row never bleeds edge-to-edge — same inset recipe as `Menu`. Item: `h-8 rounded-xs py-0 pr-8 pl-3 text-sm` (the 32px row height carries the vertical rhythm, so there is no `py-*`; `pr-8` reserves the checkmark gutter). **Asymmetric padding** `pl-3 pr-2` across all sizes (12px text side / 8px chevron side; default dropped from `pl-4 pr-3` on 2026-07-16) — optical balance: text side wants more air, chevron has built-in bounding-box whitespace. Long lists use `<SelectGroup>` + `<SelectLabel>` + `<SelectSeparator>` to group (e.g. First-party vs Marketplace). **Chevron rotates 180° while open** (2026-06-04): trigger carries `group/select`, the `ChevronDownIcon` is `group-aria-expanded/select:rotate-180 transition-transform duration-150 ease-out motion-reduce:transition-none` — transform-only, 150ms, the `--ease-out` curve; transitions back to 0 on close. **SelectValue shows the item label, not the raw value** — a context map collects `value → children` from `SelectItem`s (Base UI's `Select.Value` would otherwise render the raw value, e.g. `all` instead of `All models`). **The field `<Label>` must NOT use `htmlFor` pointing at the trigger** — a `<label for>` forwards clicks to its control, so clicking the field title would open the dropdown; give the trigger an `aria-label` for the accessible name instead.
 - **Dropdown positioning standard (codified 2026-06-04):** every overlay primitive — `Select`, `Popover`, `Menu`, `DateRangePicker` — defaults to open BELOW the trigger (`side="bottom"`), right-aligned to it (`align="end"`), with an 8px gap (`sideOffset={8}`). `Select` sets `alignItemWithTrigger={false}` so it renders as a real dropdown that **flips up** when near the viewport bottom (Base UI collision avoidance), NOT the macOS-style overlay that centered the selected item over the trigger. Left-anchored triggers (sidebar workspace switcher, side-opening user menu) keep their intentional `align="start"` / non-bottom side.
 - **MultiSelect** (`multi-select.tsx`) — checkbox list on a Popover, reusing `selectTriggerVariants()` so it sits flush beside a `SelectTrigger`. Pinned search input + a `(Select All)` row above the options. **Options may carry a `description` (added 2026-08-28)** — an optional second line under the label, in `type-copy-12 text-muted-foreground`, for context the user needs BEFORE committing rather than after. Its one consumer today is the Teams "Add members" picker, where a candidate already on another team reads `Currently on Platform`, so the move is visible while choosing. Search matches label + description. Omit it and the row renders single-line exactly as before; no existing call site moved.
+
+  **Five opt-in props (added 2026-09-01: three for the Teams Add members / Add keys pickers, two more for the Budget windows picker).** All default to today's behaviour, so the Notifications and Audit Trail filter pickers are byte-for-byte unchanged. They are wired in `teams/dialogs.tsx` on the ONE shared `AddEntitiesBody`, which is why the members picker and the keys picker cannot drift apart.
+
+  | Prop | Default | What it does |
+  | --- | --- | --- |
+  | `maxVisibleOptions?: number` | unset (`max-h-56` scrollport) | Caps the option scrollport to N rows. Search input and footer stay pinned OUTSIDE the scrollport, so they never scroll away. |
+  | `selectAll?: boolean` | `true` | `false` drops the `(Select All)` row. Selecting an entire candidate list is not a real intent on the Teams pickers (user direction: "I doubt that will get used much"), and with a commit footer the row is one more thing between you and Apply. |
+  | `commitMode?: boolean` | `false` | STAGES selection. Toggles write to internal state, not through `onValueChange`; the popup grows an Apply / Cancel footer. Apply commits and closes. Cancel, Escape and click-away all discard, so the trigger label only ever reads committed state. |
+  | `minSelected?: number` | unset | Floor for a `commitMode` picker: Apply stays disabled while the staged selection is below it. Budget windows pass `1` (a budget needs at least one window). |
+  | `showSelectedLabels?: boolean` | `false` | Trigger reads the chosen labels comma-joined in OPTION order ("Weekly, Monthly") instead of "N selected". For short fixed lists where the names fit; rosters keep the count. Budget windows only. |
+
+  **Row geometry is the source of the cap, not a guessed pixel value.** A row is `px-2 py-1.5` around `type-label-14` (20px line box), and the `size-4` Checkbox never drives the height, so a single-line row is exactly **32px**; a described row adds the `type-copy-12` second line at 16px, so **48px**. Scrollport padding is `p-1` = **8px**. The cap sums the first N rows' real heights plus that padding, so a described list and a plain list both show exactly N: at 4 rows that is **136px** single-line, **200px** described. Every number is a 4px multiple. The cap is applied ONLY when the filtered list actually exceeds N — a max-height derived from a short list would clip the "No options found" line, and a short list scrolls no differently uncapped.
+
+  **Footer recipe:** `flex items-center justify-end gap-2 border-border border-t p-2`, primary last, both buttons `size="sm"` (`Cancel` outline, `Apply` default). Same border-t-plus-tighter-padding convention as `DialogScrollFooter` / `CardFooter` — the band reads as chrome, not content — at the popover's own `p-2` internal rhythm rather than a dialog's `px-6 py-4`. Both carry `type="button"`: these pickers live inside the Add-members `<form>`, and a default submit button would file the whole dialog instead of applying the selection.
 - **Toggle** (`toggle.tsx`) — `rounded-sm h-8 px-3 text-sm font-medium`, `data-[state=on]:bg-muted`. Wrap with `<ToggleGroup>` for multi-select.
 
 **Rule (filter-pill toolbar):** `<SelectTrigger size="sm">` filter pills in dense table toolbars render **chevron only, no leading category icon**. Generic filter glyphs are noise next to the chevron-down. Exception: dropdowns where a leading icon carries category-specific info AND is used consistently across 4+ filters in the same surface.
@@ -1277,6 +1311,46 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
   window-aware table titles made it redundant. The primitive stays for the
   next surface that needs a scope note.
 
+### Data bars & meters *(site-wide rule, 2026-09-01)*
+
+**Every progress / meter / data bar on the site is a gradient fill: darker at
+the origin, lighter at the leading edge.** User direction 2026-09-01, extending
+the budget-meter ruling of 2026-08-31 to every bar. One recipe, no per-surface
+variation:
+
+| Part | Value |
+| --- | --- |
+| Track | `h-1.5 w-full overflow-hidden rounded-full bg-muted` (list-column meters run `h-2 w-24`) |
+| Fill | `h-full rounded-full` + `bg-gradient-to-r from-{family}-500 to-{family}-400` |
+| Width | inline `style={{ width: '{pct}%' }}` — the ONLY inline style a bar carries |
+
+- **Semantic families** run 500 → 400: `success`, `warning`, `danger`. The 400
+  step is the leading edge, the 500 the origin.
+- **Chart-palette bars** run `from-chart-N to-chart-N-soft`. The categorical
+  palette has no rungs, so the `-soft` twins (§2 ramp block) exist precisely to
+  give a chart bar a leading edge; they are derived from the palette var, so
+  both themes come free.
+- **Never paint a bar with an inline `backgroundColor`.** The fill is a class
+  string, so it is greppable, theme-correct, and can't drift into a one-off
+  colour. Bar metadata carries a `fill` class string, not a CSS var.
+- **The one solid fill left on the site** is budget `over` =
+  `bg-destructive` (standing user direction, 2026-08-31). It is a limit
+  breached, not a quantity, and it does not read as a gradient.
+- Geometry, radius, track colour and the transition are **unchanged** by this
+  rule — it governs the fill paint only.
+
+Consumers (all converted 2026-09-01): budget meters ×3 surfaces
+(`teams/budget-band.ts`, already correct), the org Security page's **Action
+types** + **Attack types** cards (`Security.tsx`), and the Enterprise team
+Security tab's twin pair (`teams/SecurityOverviewPane.tsx`).
+
+**Not bars, deliberately excluded:** the Policies sensitivity spectrum
+(`Policies.tsx`) — a slider control with a thumb, whose filled rail is a
+`bg-muted-foreground` control affordance rather than a quantity; Recharts
+strokes / areas / bar segments (a chart series is not a meter); sparklines;
+the tab indicator; and every decorative `rounded-full` (dots, avatars, pills,
+switches).
+
 ### Budget meter *(fills updated 2026-08-31)*
 
 - **BudgetMeter / budget bands** (`src/pages/teams/budget.tsx`; band logic
@@ -1298,7 +1372,9 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
   not bar them. First consumers of `success-400` / `warning-400` (ramp block
   above updated); raw ramp steps are correct here because a meter fill is a
   status *reading*, not a themed semantic role — same reasoning as the badge
-  tone recipes.
+  tone recipes. **Generalised 2026-09-01** — this ladder is now one instance
+  of the site-wide bar rule above (Data bars & meters); `over` is the single
+  sanctioned solid fill.
 
 ### Modal / Drawer
 

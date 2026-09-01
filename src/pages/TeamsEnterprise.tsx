@@ -3,14 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -30,27 +23,27 @@ import {
   budgetPercentLabel,
   budgetProgress,
   DEFAULT_TEAM_ID,
-  ORG_BUDGET_SEED,
-  orgSpend,
-  TEAM_SEED_ROWS,
-  type TeamBudget,
   type TeamRow,
   teamManagerName,
+  tightestReading,
   usageForTeam,
 } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { BudgetMeter } from "@/pages/teams/budget";
 import { budgetFillClass } from "@/pages/teams/budget-band";
 import {
-  BudgetDialog,
   CreateTeamDialog,
   DeleteTeamDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
 import type { TeamsVariant } from "@/pages/teams/SecurityPane";
+import {
+  teamsStore,
+  useDeletedTeams,
+  useTeams,
+} from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TeamsEnterprise (route: /teams-enterprise, sidebar: "Teams")
@@ -59,7 +52,7 @@ import type { TeamsVariant } from "@/pages/teams/SecurityPane";
  * Enterprise Teams UI can diverge from Pro for side-by-side comparison.
  *
  * Groups members and keys into teams and rolls their spend up against a team
- * budget and an org budget. Seeded from src/data/teams.ts; the page owns
+ * budget. Seeded from src/data/teams.ts; the page owns
  * mutation via useState, same contract the API Keys page uses.
  *
  * Every figure in the table is derived — `usageForTeam` groups the team's
@@ -96,6 +89,15 @@ function teamSortValue(
       return row.keyIds.length;
     case "spend":
       return usage.get(row.id) ?? 0;
+    case "budget": {
+      // Ranked by the TIGHTEST window's utilisation — the same reading the
+      // row's meter paints, so sorting can never reorder against the bars.
+      if (!row.budget) {
+        return null;
+      }
+      const { cap, spend } = tightestReading(usageForTeam(row), row.budget);
+      return cap > 0 ? spend / cap : 0;
+    }
     default:
       return null;
   }
@@ -118,15 +120,17 @@ export function TeamsEnterprise({
   const basePath =
     variant === "default" ? "/teams-default" : "/teams-enterprise";
 
-  const [teams, setTeams] = useState<TeamRow[]>(TEAM_SEED_ROWS);
-  const [orgBudget, setOrgBudget] = useState<TeamBudget | null>(
-    ORG_BUDGET_SEED
-  );
+  // Teams and deleted-team snapshots live in the module store
+  // (teams/teams-store.ts), shared with the detail page, so a team created
+  // here still exists when its row navigates there (a fresh page-local
+  // useState answered "Team not found" for every new team, 2026-09-01).
+  const teams = useTeams();
+  const setTeams = (next: TeamRow[] | ((prev: TeamRow[]) => TeamRow[])) =>
+    teamsStore.setTeams(next);
+  const deletedTeams = useDeletedTeams();
   const [createOpen, setCreateOpen] = useState(false);
-  const [orgBudgetOpen, setOrgBudgetOpen] = useState(false);
   const [renaming, setRenaming] = useState<TeamRow | null>(null);
   const [deleting, setDeleting] = useState<TeamRow | null>(null);
-  const [deletedTeams, setDeletedTeams] = useState<DeletedTeam[]>([]);
 
   const spendByTeam = useMemo(
     () => new Map(teams.map((t) => [t.id, usageForTeam(t).spend])),
@@ -167,10 +171,11 @@ export function TeamsEnterprise({
     }
     // Captured OUTSIDE the state updater: an updater runs twice under Strict
     // Mode, which would file the same deleted team twice.
-    setDeletedTeams((prev) => [
-      ...prev,
-      { id: doomed.id, name: doomed.name, spend: usageForTeam(doomed).spend },
-    ]);
+    teamsStore.appendDeleted({
+      id: doomed.id,
+      name: doomed.name,
+      spend: usageForTeam(doomed).spend,
+    });
     setTeams((prev) =>
       prev
         .filter((t) => t.id !== id)
@@ -217,12 +222,6 @@ export function TeamsEnterprise({
           </div>
         </div>
 
-        <OrgBudgetCard
-          budget={orgBudget}
-          onEdit={() => setOrgBudgetOpen(true)}
-          spend={orgSpend(teams)}
-        />
-
         <div className="flex flex-col gap-4">
           <SectionTitle>Your teams</SectionTitle>
           <TeamsTable
@@ -243,18 +242,6 @@ export function TeamsEnterprise({
         onCreate={handleCreate}
         onOpenChange={setCreateOpen}
         open={createOpen}
-      />
-      <BudgetDialog
-        budget={orgBudget}
-        defaultName="Org budget"
-        onOpenChange={setOrgBudgetOpen}
-        onSave={(b) => {
-          setOrgBudget(b);
-          setOrgBudgetOpen(false);
-        }}
-        open={orgBudgetOpen}
-        scope="org"
-        title={orgBudget ? "Edit org budget" : "Set org budget"}
       />
       <RenameTeamDialog
         currentName={renaming?.name ?? ""}
@@ -285,41 +272,6 @@ export function TeamsEnterprise({
         teamName={deleting?.name ?? ""}
       />
     </DashboardChrome>
-  );
-}
-
-/* ─── Org budget card ──────────────────────────────────────────────────── */
-
-function OrgBudgetCard({
-  budget,
-  spend,
-  onEdit,
-}: {
-  budget: TeamBudget | null;
-  spend: number;
-  onEdit: () => void;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Org budget</CardTitle>
-        <CardDescription>
-          {/* Window only — the budget's name is the card title, so the
-              "Org budget · Monthly" line read as the title twice. */}
-          {budget ? BUDGET_WINDOW_LABEL[budget.window] : "No budget"}
-        </CardDescription>
-        <CardAction>
-          <Button onClick={onEdit} size="sm" variant="outline">
-            {budget ? "Edit budget" : "Set budget"}
-          </Button>
-        </CardAction>
-      </CardHeader>
-      {budget ? (
-        <CardContent>
-          <BudgetMeter budget={budget} label="Org budget used" spend={spend} />
-        </CardContent>
-      ) : null}
-    </Card>
   );
 }
 
@@ -360,14 +312,17 @@ function TeamsTable({
     <Card density="flush">
       {/* `table-fixed` + percentage header widths: with auto layout the
           browser hands its slack to whichever cell can grow most (Manager,
-          the widest content), leaving the numeric columns cramped. Budget
-          carries a meter + percent since 2026-08-31, so the min-width steps
-          up to 960px and that column takes the extra share. */}
+          the widest content), leaving the numeric columns cramped. Widths
+          22/11/9/15/12/31 (2026-09-01): Members and Keys sit at the floor
+          their right-aligned header + sort glyph + px-3 needs at 960px,
+          Manager is trimmed so the table fits the column without a
+          horizontal scroll, and Budget (meter + "92.3% weekly") takes the
+          balance. */}
       <Table className="min-w-[960px] table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead
-              className="w-[24%] whitespace-nowrap"
+              className="w-[22%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="team"
@@ -392,9 +347,9 @@ function TeamsTable({
             >
               Keys
             </SortableTableHead>
-            <TableHead className="w-[17%] whitespace-nowrap">Manager</TableHead>
+            <TableHead className="w-[15%] whitespace-nowrap">Manager</TableHead>
             <SortableTableHead
-              className="w-[14%] whitespace-nowrap"
+              className="w-[12%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -402,7 +357,7 @@ function TeamsTable({
             >
               Spend
             </SortableTableHead>
-            <TableHead className="w-[25%] whitespace-nowrap">Budget</TableHead>
+            <TableHead className="w-[31%] whitespace-nowrap">Budget</TableHead>
             <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
@@ -474,7 +429,7 @@ function TeamTableRow({
         {formatCurrency(spend)}
       </TableCell>
       <TableCell className="whitespace-nowrap">
-        <RowBudgetMeter row={row} spend={spend} />
+        <RowBudgetMeter row={row} />
       </TableCell>
       <TableCell className="whitespace-nowrap text-right">
         <TeamRowActions onDelete={onDelete} onRename={onRename} row={row} />
@@ -484,34 +439,42 @@ function TeamTableRow({
 }
 
 /** The Budget column: how much of the cap this team has burned, not what the
- *  cap is. Same three-band colour ladder as the detail page's full meter
- *  (`budgetFillClass`), so a row that reads amber opens onto an amber bar. */
-function RowBudgetMeter({ row, spend }: { row: TeamRow; spend: number }) {
+ *  cap is. A budget can run several windows at once, so the row shows the
+ *  TIGHTEST one — the window that blocks first — and names it, since "92.3%"
+ *  means nothing without knowing which cap it is 92.3% of. Same three-band
+ *  colour ladder as the detail page's full meter (`budgetFillClass`), so a
+ *  row that reads amber opens onto an amber bar. */
+function RowBudgetMeter({ row }: { row: TeamRow }) {
   const budget = row.budget;
   if (!budget) {
     return (
       <span className="type-copy-14 text-muted-foreground">No budget</span>
     );
   }
-  const fraction = budgetProgress(spend, budget) ?? 0;
+  const { window, cap, spend } = tightestReading(usageForTeam(row), budget);
+  const fraction = budgetProgress(spend, cap) ?? 0;
+  const windowWord = BUDGET_WINDOW_LABEL[window].toLowerCase();
   return (
     <div className="flex items-center gap-2">
       <div
-        aria-label={`${row.name} budget used`}
-        aria-valuemax={budget.amount}
+        aria-label={`${row.name} ${windowWord} budget used`}
+        aria-valuemax={cap}
         aria-valuemin={0}
         aria-valuenow={spend}
-        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(budget.amount)}`}
+        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(cap)}`}
         className="h-2 w-24 overflow-hidden rounded-full bg-muted"
         role="meter"
       >
         <div
-          className={cn("h-full rounded-full", budgetFillClass(spend, budget))}
+          className={cn(
+            "h-full rounded-full",
+            budgetFillClass(spend, cap, budget.warnThreshold)
+          )}
           style={{ width: `${fraction * 100}%` }}
         />
       </div>
       <span className="type-copy-12 text-muted-foreground tabular-nums">
-        {budgetPercentLabel(spend, budget)}
+        {budgetPercentLabel(spend, cap)} {windowWord}
       </span>
     </div>
   );

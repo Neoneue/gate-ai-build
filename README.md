@@ -21,7 +21,7 @@ The live web application for Constellation Gate AI. Forked from the `mvp` design
 | `/policies` | Policies |
 | `/audit-trail` | Audit Trail |
 | `/activity` | Activity |
-| `/team` | Team |
+| `/members` | Team |
 | `/billing` | Billing |
 | `/api-keys` | API Keys |
 | `/settings` | Settings |

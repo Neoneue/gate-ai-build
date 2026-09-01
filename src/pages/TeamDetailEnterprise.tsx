@@ -1,16 +1,10 @@
-import { Plus, Trash2 } from "lucide-react";
+import { KeyRound, Plus, Trash2, Wallet } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,22 +35,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
 import type { ApiKeyRow } from "@/data/api-keys";
-import {
-  MEMBER_ROWS,
-  type MemberRole,
-  type MemberRow,
-} from "@/data/team-members";
+import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
 import {
   ASSIGNABLE_KEYS,
+  BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_SCOPE_COPY,
   BUDGET_WINDOW_TITLE_COPY,
+  type BudgetWindow,
+  budgetReadings,
   DEFAULT_TEAM_ID,
   keyById,
   memberById,
   moveKeysToTeam,
   moveMembersToTeam,
   scaleUsage,
-  TEAM_SEED_ROWS,
   type TeamBudget,
   type TeamRow,
   type TeamUsage,
@@ -96,11 +88,10 @@ import {
   RemoveTeamKeyDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
-import {
-  TeamSecurityPane,
-  type TeamsVariant,
-} from "@/pages/teams/SecurityPane";
+import { TeamSecurityOverviewPane } from "@/pages/teams/SecurityOverviewPane";
+import type { TeamsVariant } from "@/pages/teams/SecurityPane";
 import { teamSparkSeries } from "@/pages/teams/spark-series";
+import { teamsStore, useTeams } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Team detail, Enterprise twin (route: /teams-enterprise/:teamId)
@@ -111,19 +102,17 @@ import { teamSparkSeries } from "@/pages/teams/spark-series";
  * A PAGE, not a modal — the team is URL-addressable and shareable, same as
  * the Messages findings and Conversations trace surfaces.
  *
- * Owns its own `useState(TEAM_SEED_ROWS)` so the "which keys are still
- * unassigned" question can be answered across every team, not just this one.
- * Mutations are local to the visit; the seed is the shared starting point.
+ * Teams state lives in the shared module store (`teams/teams-store.ts`),
+ * same array the LIST page renders, so created teams resolve here and the
+ * "which keys are still unassigned" question spans every team. Mutations
+ * survive navigation within the session; the seed returns on full reload.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const WHITESPACE_RE = /\s+/;
 
-function initialsOf(name: string): string {
-  const parts = name.trim().split(WHITESPACE_RE);
-  if (parts.length === 1) {
-    return parts[0]?.slice(0, 2).toUpperCase() ?? "";
-  }
-  return ((parts[0]?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
+/** First initial only: the 16px table Monogram fits one glyph. */
+function firstInitial(name: string): string {
+  return (name.trim().split(WHITESPACE_RE)[0]?.[0] ?? "?").toUpperCase();
 }
 
 export function TeamDetailEnterprise({
@@ -143,10 +132,14 @@ export function TeamDetailEnterprise({
   // only — there is no Free twin to route to.
   const listPath =
     variant === "default" ? "/teams-default" : "/teams-enterprise";
-  const securityPath =
-    variant === "default" ? "/security-default" : "/security-enterprise";
 
-  const [teams, setTeams] = useState<TeamRow[]>(TEAM_SEED_ROWS);
+  // Teams live in the module store shared with the LIST page, so a team
+  // created there exists here (page-local useState re-seeded on mount and
+  // answered "Team not found" for every new team, 2026-09-01), and moves
+  // made here show on the list without a reload.
+  const teams = useTeams();
+  const setTeams = (next: TeamRow[] | ((prev: TeamRow[]) => TeamRow[])) =>
+    teamsStore.setTeams(next);
   const team = teams.find((t) => t.id === teamId);
 
   const patch = (next: Partial<TeamRow>) => {
@@ -185,12 +178,20 @@ export function TeamDetailEnterprise({
   // Same fold-in contract as the list page's delete: members and keys land on
   // Default, then the page has nothing left to show, so it returns to the list.
   const deleteTeam = () => {
-    setTeams((prev) => {
-      const doomed = prev.find((t) => t.id === teamId);
-      if (!doomed || doomed.isDefault) {
-        return prev;
-      }
-      return prev
+    const doomed = teams.find((t) => t.id === teamId);
+    if (!doomed || doomed.isDefault) {
+      return;
+    }
+    // Snapshot OUTSIDE the updater (Strict Mode runs updaters twice), so the
+    // list's "Deleted teams" card records the delete no matter which page
+    // performed it.
+    teamsStore.appendDeleted({
+      id: doomed.id,
+      name: doomed.name,
+      spend: usageForTeam(doomed).spend,
+    });
+    setTeams((prev) =>
+      prev
         .filter((t) => t.id !== teamId)
         .map((t) =>
           t.id === DEFAULT_TEAM_ID
@@ -200,8 +201,8 @@ export function TeamDetailEnterprise({
                 keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
               }
             : t
-        );
-    });
+        )
+    );
     navigate(listPath);
   };
 
@@ -220,7 +221,6 @@ export function TeamDetailEnterprise({
             onDeleteTeam={deleteTeam}
             onMoveKeys={moveKeys}
             onMoveMembers={moveMembers}
-            onOpenSecurity={() => navigate(securityPath)}
             onPatch={patch}
             onRemoveKey={removeKey}
             team={team}
@@ -247,7 +247,7 @@ export function TeamDetailEnterprise({
 
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
-type TabId = "usage" | "members" | "keys" | "budget" | "security";
+type TabId = "members" | "keys" | "budget" | "usage" | "security";
 
 function TeamDetailBody({
   team,
@@ -258,7 +258,6 @@ function TeamDetailBody({
   onRemoveKey,
   onDeleteTeam,
   variant,
-  onOpenSecurity,
 }: {
   team: TeamRow;
   /** Every team — the pickers name the team a candidate would leave. */
@@ -269,9 +268,11 @@ function TeamDetailBody({
   onRemoveKey: (keyId: string) => void;
   onDeleteTeam: () => void;
   variant: TeamsVariant;
-  onOpenSecurity: () => void;
 }) {
-  const [tab, setTab] = useState<TabId>("usage");
+  // Management tabs lead (user 2026-09-01): a fresh team is populated before
+  // it is read, and a manager lands on their roster the way the Teams list
+  // lands on teams. Data tabs (Usage, Budget, Security) follow.
+  const [tab, setTab] = useState<TabId>("members");
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const usage = useMemo(() => usageForTeam(team), [team]);
@@ -301,7 +302,6 @@ function TeamDetailBody({
         value={tab}
       >
         <TabsList className="-mt-2 px-0" variant="line">
-          <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="members">
             <span>Members</span>
             <TabsCount>{team.memberIds.length}</TabsCount>
@@ -311,12 +311,10 @@ function TeamDetailBody({
             <TabsCount>{team.keyIds.length}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="usage">
-          <UsagePane teamId={team.id} usage={usage} />
-        </TabsContent>
         <TabsContent value="members">
           <MembersPane
             onMoveMembers={onMoveMembers}
@@ -336,10 +334,13 @@ function TeamDetailBody({
         <TabsContent value="budget">
           <BudgetPane onPatch={onPatch} team={team} usage={usage} />
         </TabsContent>
+        <TabsContent value="usage">
+          <UsagePane teamId={team.id} usage={usage} />
+        </TabsContent>
         <TabsContent value="security">
-          <TeamSecurityPane
-            onOpenSecurity={onOpenSecurity}
+          <TeamSecurityOverviewPane
             team={team}
+            teams={teams}
             variant={variant}
           />
         </TabsContent>
@@ -688,6 +689,11 @@ function MembersPane({
       <Card density="flush">
         {rows.length === 0 ? (
           <TableEmptyState
+            action={
+              <Button onClick={() => setAddOpen(true)} size="default">
+                Add members
+              </Button>
+            }
             body="This team has no members yet."
             title="No members"
           />
@@ -720,10 +726,10 @@ function MembersPane({
                       8px taller than the Keys tab's. The actions cell's icon
                       button now governs both tables at the same height. */}
                   <TableCell className="whitespace-nowrap py-0">
-                    <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
                       <Monogram
-                        initials={initialsOf(member.name)}
-                        size="md"
+                        initials={firstInitial(member.name)}
+                        size="sm"
                         tone={member.avatarTone}
                       />
                       <span
@@ -735,13 +741,19 @@ function MembersPane({
                     </div>
                   </TableCell>
                   <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
-                    {/* Org role, mirrored from the Team page's row control:
-                        Owner renders static; the owner using the site can make
-                        everyone else Admin or Member. */}
+                    {/* Owner renders static; everyone else gets the role
+                        select. Manager returned to the options 2026-09-01
+                        (reversing the 8-31 org-roles-only ruling): the
+                        initial value derives from the team's seeded
+                        managerIds, the same source the list's Manager
+                        column reads, so the two can never disagree. */}
                     {member.role === "owner" ? (
                       "Owner"
                     ) : (
-                      <MemberRoleSelect member={member} />
+                      <MemberRoleSelect
+                        isManager={team.managerIds.includes(member.id)}
+                        member={member}
+                      />
                     )}
                   </TableCell>
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
@@ -778,12 +790,17 @@ function MembersPane({
         )}
       </Card>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button onClick={() => setAddOpen(true)} variant="outline">
-          <Plus aria-hidden data-icon="inline-start" />
-          Add members
-        </Button>
-      </div>
+      {/* The empty card carries the CTA (building the team starts there), so
+          the footer button only appears once rows exist — two "Add members"
+          affordances on one empty tab would be duplication. */}
+      {rows.length === 0 ? null : (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button onClick={() => setAddOpen(true)} variant="outline">
+            <Plus aria-hidden data-icon="inline-start" />
+            Add members
+          </Button>
+        </div>
+      )}
 
       <AddMembersDialog
         onAdd={(ids) => {
@@ -801,10 +818,25 @@ function MembersPane({
 /** Org role control, mirrored from the Team page's row control: Admin or
  *  Member, capitalized. Local state only, same as the Team page — the mock
  *  has no org-mutation layer for roles. */
-function MemberRoleSelect({ member }: { member: MemberRow }) {
-  const [role, setRole] = useState<MemberRole>(member.role);
+/** The row control is the TEAM role only (AG-514's member|manager enum).
+ *  Org roles (Owner/Admin/Member) live on the Members page — blending the
+ *  two axes in one select hid Kira's org-Admin behind her Manager reading
+ *  (removed 2026-09-01). Owner never appears: that row renders static text. */
+type RoleOption = "manager" | "member";
+
+function MemberRoleSelect({
+  member,
+  isManager,
+}: {
+  member: MemberRow;
+  /** Seeded via the team's `managerIds` — the list column's source. */
+  isManager: boolean;
+}) {
+  const [role, setRole] = useState<RoleOption>(
+    isManager ? "manager" : "member"
+  );
   return (
-    <Select onValueChange={(v) => setRole(v as MemberRole)} value={role}>
+    <Select onValueChange={(v) => setRole(v as RoleOption)} value={role}>
       <SelectTrigger
         aria-label={`Role for ${member.name}`}
         className="w-28 border-border bg-card text-foreground"
@@ -813,7 +845,7 @@ function MemberRoleSelect({ member }: { member: MemberRow }) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="admin">Admin</SelectItem>
+        <SelectItem value="manager">Manager</SelectItem>
         <SelectItem value="member">Member</SelectItem>
       </SelectContent>
     </Select>
@@ -864,83 +896,142 @@ function KeysPane({
       <Card density="flush">
         {rows.length === 0 ? (
           <TableEmptyState
+            action={
+              // Sequential build gate (user direction 2026-09-01): the team
+              // is built Members-first, so this CTA appears only once the
+              // roster has someone. Same gate on the Budget tab's CTA.
+              team.memberIds.length > 0 ? (
+                <Button onClick={() => setAddOpen(true)} size="default">
+                  Add keys
+                </Button>
+              ) : undefined
+            }
             body="This team has no API keys assigned yet."
+            icon={
+              <div
+                aria-hidden
+                className="flex size-12 items-center justify-center rounded-md bg-muted"
+              >
+                <KeyRound
+                  className="size-5 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
+              </div>
+            }
             title="No keys"
           />
         ) : (
-          // Four columns now carry content (name, prefix, status, last used),
-          // so the min-width steps up from 560 to 640 — at 560 the prefix and
-          // the date clipped against each other.
-          <Table className="min-w-[640px] table-fixed">
+          // Five columns now carry content (name, member, prefix, status,
+          // last used), so the min-width steps up from 640 to 760 — the
+          // Member cell carries a Monogram plus a full name and cannot take
+          // its share out of the prefix or the date without clipping them.
+          <Table className="min-w-[760px] table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[28%] whitespace-nowrap">Key</TableHead>
-                <TableHead className="w-[27%] whitespace-nowrap">
+                <TableHead className="w-[22%] whitespace-nowrap">Key</TableHead>
+                <TableHead className="w-[22%] whitespace-nowrap">
                   Prefix
                 </TableHead>
-                <TableHead className="w-[14%] whitespace-nowrap">
+                <TableHead className="w-[24%] whitespace-nowrap">
+                  Member
+                </TableHead>
+                <TableHead className="w-[12%] whitespace-nowrap">
                   Status
                 </TableHead>
-                <TableHead className="w-[31%] whitespace-nowrap">
+                <TableHead className="w-[20%] whitespace-nowrap">
                   Last used
                 </TableHead>
                 <TableHead aria-label="Actions" className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                    <span className="block truncate" title={row.name}>
-                      {row.name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
-                    {row.masked}
-                  </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                    Active
-                  </TableCell>
-                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                    <Timestamp
-                      className={
-                        row.lastUsed === null
-                          ? "text-muted-foreground"
-                          : undefined
-                      }
-                      date={row.lastUsed}
-                      format="dateNumeric"
-                    />
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                    {/* The Default team is where removed keys LAND, so there is
+              {rows.map((row) => {
+                // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
+                // same source the Members tab reads, so the two tabs can
+                // never name the same person differently.
+                const owner = memberById(row.ownerId);
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                      <span className="block truncate" title={row.name}>
+                        {row.name}
+                      </span>
+                    </TableCell>
+                    {/* py-0 for the same reason the Members tab uses it: the
+                      Monogram's 32px height would otherwise stack on py-3 and
+                      run these rows taller than every other table here. */}
+                    <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
+                      {row.masked}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap py-0">
+                      {owner ? (
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Monogram
+                            initials={firstInitial(owner.name)}
+                            size="sm"
+                            tone={owner.avatarTone}
+                          />
+                          <span
+                            className="type-copy-14 truncate text-foreground"
+                            title={owner.name}
+                          >
+                            {owner.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="type-copy-14 text-muted-foreground">
+                          —
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                      Active
+                    </TableCell>
+                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                      <Timestamp
+                        className={
+                          row.lastUsed === null
+                            ? "text-muted-foreground"
+                            : undefined
+                        }
+                        date={row.lastUsed}
+                        format="dateNumeric"
+                      />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+                      {/* The Default team is where removed keys LAND, so there is
                         nowhere to remove them to from here. */}
-                    {team.isDefault ? null : (
-                      <IconActionButton
-                        aria-label={`Remove ${row.name} from ${team.name}`}
-                        onClick={() => setRemoving(row)}
-                      >
-                        <Trash2
-                          aria-hidden
-                          className="size-4"
-                          strokeWidth={1.75}
-                        />
-                      </IconActionButton>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                      {team.isDefault ? null : (
+                        <IconActionButton
+                          aria-label={`Remove ${row.name} from ${team.name}`}
+                          onClick={() => setRemoving(row)}
+                        >
+                          <Trash2
+                            aria-hidden
+                            className="size-4"
+                            strokeWidth={1.75}
+                          />
+                        </IconActionButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
       </Card>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button onClick={() => setAddOpen(true)} variant="outline">
-          <Plus aria-hidden data-icon="inline-start" />
-          Add keys
-        </Button>
-      </div>
+      {/* Footer button only once rows exist — the empty card owns the CTA
+          (and withholds it until the team has members). */}
+      {rows.length === 0 ? null : (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button onClick={() => setAddOpen(true)} variant="outline">
+            <Plus aria-hidden data-icon="inline-start" />
+            Add keys
+          </Button>
+        </div>
+      )}
 
       <AddKeysDialog
         onAdd={(ids) => {
@@ -991,39 +1082,63 @@ function BudgetPane({
     onPatch({ budget });
     setOpen(false);
   };
-  const scope = team.budget
-    ? BUDGET_WINDOW_SCOPE_COPY[team.budget.window]
-    : null;
-  // Window-aware table titles: "Monthly spend per user" on a monthly
-  // budget, "7-day spend per user" on a weekly one.
-  const titleStem = team.budget
-    ? BUDGET_WINDOW_TITLE_COPY[team.budget.window]
+  // A budget can run several windows at once (5-hour + weekly + monthly), each
+  // with its own cap. One reading per configured window, canonical order.
+  const readings = useMemo(
+    () => (team.budget ? budgetReadings(usage, team.budget) : []),
+    [team.budget, usage]
+  );
+  // `null` means "not chosen yet", which resolves to the first window rather
+  // than being seeded in an effect — so a budget edited down to fewer windows
+  // falls back instead of pointing at a window that no longer exists.
+  const [picked, setPicked] = useState<BudgetWindow | null>(null);
+  const budget = team.budget;
+  const reading = readings.find((r) => r.window === picked) ?? readings[0];
+  const scope = reading ? BUDGET_WINDOW_SCOPE_COPY[reading.window] : null;
+  // Window-aware table titles: "Monthly spend per user" on the monthly tab,
+  // "7-day spend per user" on the weekly one.
+  const titleStem = reading
+    ? BUDGET_WINDOW_TITLE_COPY[reading.window]
     : "Spend";
 
   return (
     <div className="flex flex-col gap-4">
-      {team.budget ? (
+      {budget && reading ? (
         <>
-          {/* One card, same shape as the list page's Org budget card: title +
-              nested action in the header, meter + the four facts below. */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Team budget</CardTitle>
-              <CardAction>
-                <Button
-                  onClick={() => setOpen(true)}
+          {/* Same header row the Usage tab and the Security overview open
+              with: section title left, range control + action right. The
+              window pill IS this block's range control — it decides which cap
+              the card and both tables below are read against. */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* The saved budget's NAME titles the block (the dialog's Name
+                field edits it); "Team budget" is only the seed default. */}
+            <SectionTitle>{budget.name || "Team budget"}</SectionTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              {readings.length > 1 ? (
+                <SegmentedPill
+                  aria-label="Budget window"
+                  onValueChange={(v) => setPicked(v as BudgetWindow)}
+                  options={readings.map((r) => ({
+                    label: BUDGET_WINDOW_LABEL[r.window],
+                    value: r.window,
+                  }))}
                   size="sm"
-                  variant="outline"
-                >
-                  Edit budget
-                </Button>
-              </CardAction>
-            </CardHeader>
+                  value={reading.window}
+                />
+              ) : null}
+              <Button onClick={() => setOpen(true)} size="sm" variant="outline">
+                Edit budget
+              </Button>
+            </div>
+          </div>
+          {/* No card header: the row above already names the budget and holds
+              its controls, so the card carries the reading and nothing else. */}
+          <Card>
             <CardContent>
               <BudgetSummary
-                budget={team.budget}
-                meterLabel={`${team.name} budget used`}
-                spend={usage.spend}
+                budget={budget}
+                meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
+                reading={reading}
               />
             </CardContent>
           </Card>
@@ -1040,7 +1155,7 @@ function BudgetPane({
               emptyBody={`No spend by any user over ${scope}.`}
               emptyTitle="No per-user data yet."
               firstColumn="User"
-              rows={usage.byUser}
+              rows={reading.usage.byUser}
               title={`${titleStem} per user`}
             />
             <UsageBreakdown
@@ -1048,7 +1163,7 @@ function BudgetPane({
               emptyBody={`No spend on any model over ${scope}.`}
               emptyTitle="No per-model data yet."
               firstColumn="Model"
-              rows={usage.byModel}
+              rows={reading.usage.byModel}
               title={`${titleStem} per model`}
             />
           </div>
@@ -1056,11 +1171,26 @@ function BudgetPane({
       ) : (
         <EmptyState
           action={
-            <Button onClick={() => setOpen(true)} size="default">
-              Set budget
-            </Button>
+            // Members-first gate, same as the Keys tab: a budget caps a
+            // roster's spend, so the CTA waits for the roster.
+            team.memberIds.length > 0 ? (
+              <Button onClick={() => setOpen(true)} size="default">
+                Set budget
+              </Button>
+            ) : undefined
           }
           body="Set a budget to cap this team’s spend over a rolling 5-hour, weekly, or calendar-month window. A soft budget alerts you; a hard budget blocks requests once it is used up."
+          icon={
+            <div
+              aria-hidden
+              className="flex size-12 items-center justify-center rounded-md bg-muted"
+            >
+              <Wallet
+                className="size-5 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+            </div>
+          }
           title="No budget set"
         />
       )}
@@ -1078,5 +1208,6 @@ function BudgetPane({
   );
 }
 
-/* Security tab lives in `teams/SecurityPane.tsx` — it owns the variant split
-   (Default keeps the empty state, Pro gets the five count cards). */
+/* Security tab lives in `teams/SecurityOverviewPane.tsx` — the Enterprise-only
+   chart pane (range chrome + Total-events hero + bar breakdowns). Pro's
+   five-count-card `TeamSecurityPane` is untouched in `teams/SecurityPane.tsx`. */

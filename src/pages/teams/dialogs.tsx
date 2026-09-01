@@ -7,6 +7,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogScrollBody,
+  DialogScrollContent,
+  DialogScrollFooter,
+  DialogScrollHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,7 +19,6 @@ import {
   MultiSelect,
   type MultiSelectOption,
 } from "@/components/ui/multi-select";
-import { Segmented } from "@/components/ui/segmented";
 import {
   Select,
   SelectContent,
@@ -28,9 +31,12 @@ import {
   BUDGET_PRESETS_HELPER_COPY,
   BUDGET_WINDOW_DEFAULT_AMOUNT,
   BUDGET_WINDOW_HELP,
+  BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_OPTIONS,
+  BUDGET_WINDOW_ORDER,
   type BudgetEnforcement,
   type BudgetWindow,
+  budgetWindows,
   type TeamBudget,
 } from "@/data/teams";
 
@@ -157,7 +163,11 @@ export function BudgetDialog({
 }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="gap-4 sm:max-w-lg">
+      {/* Scroll shell, not the plain content box: a budget can configure three
+          windows at once, and three cap fields on top of name / enforcement /
+          warn runs the form past the viewport. Header and the Cancel / Save
+          band stay fixed; only the fields scroll. */}
+      <DialogScrollContent className="sm:max-w-lg">
         <BudgetBody
           budget={budget}
           defaultName={defaultName}
@@ -165,7 +175,7 @@ export function BudgetDialog({
           scope={scope}
           title={title}
         />
-      </DialogContent>
+      </DialogScrollContent>
     </Dialog>
   );
 }
@@ -184,10 +194,23 @@ function BudgetBody({
   budget: TeamBudget | null;
 }) {
   const [name, setName] = useState(budget?.name ?? defaultName);
-  const initialWindow: BudgetWindow = budget?.window ?? "monthly";
-  const [window, setWindow] = useState<BudgetWindow>(initialWindow);
-  const [amount, setAmount] = useState(
-    String(budget?.amount ?? BUDGET_WINDOW_DEFAULT_AMOUNT[initialWindow])
+  // One budget, several windows: the picker owns WHICH windows are on, and a
+  // parallel map owns each one's cap. Amounts are kept as strings so a
+  // half-typed field is never coerced to NaN mid-edit.
+  const initialWindows: BudgetWindow[] = budget
+    ? budgetWindows(budget)
+    : ["monthly"];
+  const [windows, setWindows] = useState<BudgetWindow[]>(initialWindows);
+  const seedAmount = (w: BudgetWindow) =>
+    String(budget?.caps[w] ?? BUDGET_WINDOW_DEFAULT_AMOUNT[w]);
+  const [amounts, setAmounts] = useState<Partial<Record<BudgetWindow, string>>>(
+    () => {
+      const seed: Partial<Record<BudgetWindow, string>> = {};
+      for (const w of initialWindows) {
+        seed[w] = seedAmount(w);
+      }
+      return seed;
+    }
   );
   const [enforcement, setEnforcement] = useState<BudgetEnforcement>(
     budget?.enforcement ?? "soft"
@@ -196,155 +219,197 @@ function BudgetBody({
     String(budget?.warnThreshold ?? DEFAULT_WARN_THRESHOLD)
   );
 
-  // A hard budget blocks at the amount itself — there is no second threshold
-  // to validate, so what is left is a name, a positive cap, and a warn
-  // percentage inside 1–100.
-  const amountValue = Number(amount);
+  // Picking a window is picking a PRESET: a newly selected window arrives
+  // pre-filled with its default cap (5h $25 / weekly $200 / monthly $500), or
+  // with the saved cap when one exists. Dropping a window drops its row and
+  // its edit, so re-adding it starts from the preset again.
+  const handleWindows = (next: string[]) => {
+    const picked = BUDGET_WINDOW_ORDER.filter((w) => next.includes(w));
+    setWindows(picked);
+    setAmounts((prev) => {
+      const kept: Partial<Record<BudgetWindow, string>> = {};
+      for (const w of picked) {
+        kept[w] = prev[w] ?? seedAmount(w);
+      }
+      return kept;
+    });
+  };
+
+  // A hard budget blocks at each window's cap itself — there is no second
+  // threshold to validate, so what is left is a name, at least one window,
+  // a positive cap on every selected window, and a warn percentage inside
+  // 1–100.
   const warnValue = Number(warn);
   const inPercentRange = (n: number) => Number.isFinite(n) && n > 0 && n <= 100;
+  const capsValid = windows.every((w) => {
+    const n = Number(amounts[w]);
+    return Number.isFinite(n) && n > 0;
+  });
   const isValid =
     name.trim().length > 0 &&
-    Number.isFinite(amountValue) &&
-    amountValue > 0 &&
+    windows.length > 0 &&
+    capsValid &&
     inPercentRange(warnValue);
 
   return (
     <form
-      className="flex flex-col gap-4"
+      className="flex min-h-0 flex-1 flex-col"
       onSubmit={(e) => {
         e.preventDefault();
         if (!isValid) {
           return;
         }
+        const caps: Partial<Record<BudgetWindow, number>> = {};
+        for (const w of windows) {
+          caps[w] = Number(amounts[w]);
+        }
         onSave({
           name: name.trim(),
-          window,
-          amount: amountValue,
+          caps,
           enforcement,
           warnThreshold: warnValue,
         });
       }}
     >
-      <DialogHeader>
+      <DialogScrollHeader>
         <DialogTitle className="type-heading-18 text-foreground">
           {title}
         </DialogTitle>
         <DialogDescription>{BUDGET_PRESETS_HELPER_COPY}</DialogDescription>
-      </DialogHeader>
+      </DialogScrollHeader>
 
-      <div className="flex flex-col gap-2">
-        <Label
-          className="type-label-14 text-muted-foreground"
-          htmlFor={`${scope}-budget-name`}
-        >
-          Name
-        </Label>
-        <Input
-          autoComplete="off"
-          className="type-copy-14"
-          id={`${scope}-budget-name`}
-          onChange={(e) => setName(e.target.value)}
-          spellCheck={false}
-          type="text"
-          value={name}
-        />
-      </div>
+      {/* The fields keep their own gap-4 column; the body owns the padding
+          and the scrolling. */}
+      <DialogScrollBody>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label
+              className="type-label-14 text-muted-foreground"
+              htmlFor={`${scope}-budget-name`}
+            >
+              Name
+            </Label>
+            <Input
+              autoComplete="off"
+              className="type-copy-14"
+              id={`${scope}-budget-name`}
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+              type="text"
+              value={name}
+            />
+          </div>
 
-      <div className="flex flex-col gap-2">
-        <Label className="type-label-14 text-muted-foreground">
-          Budget window
-        </Label>
-        {/* Plain wrapper, not another gap-2 sibling: `type-input-helper`
+          <div className="flex flex-col gap-2">
+            {/* No `htmlFor`: MultiSelect's trigger is a button that names itself
+            through `aria-label`, matching the Add members / Add keys pickers
+            this control is shaped after. */}
+            <Label className="type-label-14 text-muted-foreground">
+              Budget windows
+            </Label>
+            {/* Plain wrapper, not another gap-2 sibling: `type-input-helper`
             already owns its 8px offset from the control above it. */}
-        <div>
-          <Segmented
-            aria-label="Budget window"
-            onChange={(v) => {
-              const next = v as BudgetWindow;
-              if (next === window) {
-                return;
+            <div>
+              <MultiSelect
+                aria-label="Budget windows"
+                commitMode
+                maxVisibleOptions={4}
+                minSelected={1}
+                onValueChange={handleWindows}
+                options={BUDGET_WINDOW_OPTIONS}
+                placeholder="Select windows"
+                selectAll={false}
+                showSelectedLabels
+                value={windows}
+              />
+              <p className="type-input-helper">
+                Pick at least one window. Each window gets its own cap.
+              </p>
+            </div>
+          </div>
+
+          {/* One cap per selected window, in canonical order — a team can run a
+          5-hour, a weekly, and a monthly limit at once, and each is its own
+          number. Name, enforcement and warn percent stay shared below. */}
+          {windows.map((w) => (
+            <div className="flex flex-col gap-2" key={w}>
+              <Label
+                className="type-label-14 text-muted-foreground"
+                htmlFor={`${scope}-budget-amount-${w}`}
+              >
+                {BUDGET_WINDOW_LABEL[w]} amount (USD)
+              </Label>
+              <div>
+                <Input
+                  autoComplete="off"
+                  className="type-mono-14"
+                  id={`${scope}-budget-amount-${w}`}
+                  min={1}
+                  onChange={(e) =>
+                    setAmounts((prev) => ({ ...prev, [w]: e.target.value }))
+                  }
+                  step={1}
+                  type="number"
+                  value={amounts[w] ?? ""}
+                />
+                <p className="type-input-helper">{BUDGET_WINDOW_HELP[w]}</p>
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-col gap-2">
+            <Label
+              className="type-label-14 text-muted-foreground"
+              htmlFor={`${scope}-budget-enforcement`}
+            >
+              Enforcement
+            </Label>
+            <Select
+              onValueChange={(v: string) =>
+                setEnforcement(v as BudgetEnforcement)
               }
-              // Picking a window is picking a PRESET: the amount refills from
-              // that window's default (5h $25 / weekly $200 / monthly $500),
-              // still editable before saving. Guarded on an actual change so
-              // re-selecting the current window never clobbers an edited cap.
-              setWindow(next);
-              setAmount(String(BUDGET_WINDOW_DEFAULT_AMOUNT[next]));
-            }}
-            options={BUDGET_WINDOW_OPTIONS}
-            size="sm"
-            value={window}
-            variant="pill"
-          />
-          <p className="type-input-helper">{BUDGET_WINDOW_HELP[window]}</p>
+              value={enforcement}
+            >
+              <SelectTrigger
+                className="w-full"
+                id={`${scope}-budget-enforcement`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="min-w-[var(--anchor-width)]">
+                <SelectItem value="soft">
+                  {BUDGET_ENFORCEMENT_LABEL.soft}
+                </SelectItem>
+                <SelectItem value="hard">
+                  {BUDGET_ENFORCEMENT_LABEL.hard}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label
+              className="type-label-14 text-muted-foreground"
+              htmlFor={`${scope}-budget-warn`}
+            >
+              Warn threshold (% of budget)
+            </Label>
+            <Input
+              autoComplete="off"
+              className="type-mono-14"
+              id={`${scope}-budget-warn`}
+              max={100}
+              min={1}
+              onChange={(e) => setWarn(e.target.value)}
+              step={1}
+              type="number"
+              value={warn}
+            />
+          </div>
         </div>
-      </div>
+      </DialogScrollBody>
 
-      <div className="flex flex-col gap-2">
-        <Label
-          className="type-label-14 text-muted-foreground"
-          htmlFor={`${scope}-budget-amount`}
-        >
-          Budget amount (USD)
-        </Label>
-        <Input
-          autoComplete="off"
-          className="type-mono-14"
-          id={`${scope}-budget-amount`}
-          min={1}
-          onChange={(e) => setAmount(e.target.value)}
-          step={1}
-          type="number"
-          value={amount}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label
-          className="type-label-14 text-muted-foreground"
-          htmlFor={`${scope}-budget-enforcement`}
-        >
-          Enforcement
-        </Label>
-        <Select
-          onValueChange={(v: string) => setEnforcement(v as BudgetEnforcement)}
-          value={enforcement}
-        >
-          <SelectTrigger className="w-full" id={`${scope}-budget-enforcement`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="min-w-[var(--anchor-width)]">
-            <SelectItem value="soft">
-              {BUDGET_ENFORCEMENT_LABEL.soft}
-            </SelectItem>
-            <SelectItem value="hard">
-              {BUDGET_ENFORCEMENT_LABEL.hard}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label
-          className="type-label-14 text-muted-foreground"
-          htmlFor={`${scope}-budget-warn`}
-        >
-          Warn threshold (% of budget)
-        </Label>
-        <Input
-          autoComplete="off"
-          className="type-mono-14"
-          id={`${scope}-budget-warn`}
-          max={100}
-          min={1}
-          onChange={(e) => setWarn(e.target.value)}
-          step={1}
-          type="number"
-          value={warn}
-        />
-      </div>
-
-      <DialogFooter>
+      <DialogScrollFooter>
         <DialogClose
           render={<Button size="default" type="button" variant="outline" />}
         >
@@ -353,7 +418,7 @@ function BudgetBody({
         <Button disabled={!isValid} size="default" type="submit">
           Save budget
         </Button>
-      </DialogFooter>
+      </DialogScrollFooter>
     </form>
   );
 }
@@ -433,13 +498,21 @@ function AddEntitiesBody({
         {hasOptions ? (
           // Plain wrapper, not another gap-2 sibling: `type-input-helper`
           // owns its 8px offset from the control above it.
+          // Picker shape (2026-09-01, both Add dialogs — this body serves
+          // members AND keys, so they cannot drift): 4 rows before the list
+          // scrolls, no (Select All) row, and selection STAGED behind the
+          // popup's Apply / Cancel footer. Cancel, Escape and click-away all
+          // discard, so the trigger count only ever reads applied state.
           <div>
             <MultiSelect
               aria-label={copy.fieldLabel}
+              commitMode
+              maxVisibleOptions={4}
               onValueChange={setSelected}
               options={options}
               placeholder={copy.placeholder}
               searchable
+              selectAll={false}
               value={selected}
             />
             {copy.helper ? (

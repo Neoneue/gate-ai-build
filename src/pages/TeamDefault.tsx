@@ -49,7 +49,7 @@ export function TeamDefault() {
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-            <PageTitle>Team</PageTitle>
+            <PageTitle>Members</PageTitle>
             <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
               Manage roles, invite teammates, and remove access from Chad
               Ponticas&rsquo;s workspace.

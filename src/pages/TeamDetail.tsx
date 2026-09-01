@@ -40,6 +40,7 @@ import {
 import {
   ASSIGNABLE_KEYS,
   BUDGET_WINDOW_SCOPE_COPY,
+  budgetReadings,
   DEFAULT_TEAM_ID,
   keyById,
   memberById,
@@ -822,13 +823,15 @@ function BudgetPane({
     onPatch({ budget });
     setOpen(false);
   };
-  const scope = team.budget
-    ? BUDGET_WINDOW_SCOPE_COPY[team.budget.window]
-    : null;
+  // Pro stays SINGLE-window: it reads the budget's first configured window and
+  // nothing else. Multi-window budgets are an Enterprise surface
+  // (TeamDetailEnterprise renders a tab per window).
+  const reading = team.budget ? budgetReadings(usage, team.budget)[0] : null;
+  const scope = reading ? BUDGET_WINDOW_SCOPE_COPY[reading.window] : null;
 
   return (
     <div className="flex flex-col gap-4">
-      {team.budget ? (
+      {team.budget && reading ? (
         <>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button onClick={() => setOpen(true)} size="sm" variant="outline">
@@ -840,7 +843,7 @@ function BudgetPane({
               <BudgetSummary
                 budget={team.budget}
                 meterLabel={`${team.name} budget used`}
-                spend={usage.spend}
+                reading={reading}
               />
             </CardContent>
           </Card>

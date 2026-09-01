@@ -1,5 +1,3 @@
-import type { TeamBudget } from "@/data/teams";
-
 /* ─────────────────────────────────────────────────────────────────────────
  * Budget band ladder — the single place a budget bar's colour is decided.
  *
@@ -19,14 +17,15 @@ import type { TeamBudget } from "@/data/teams";
  *  over   → past the cap itself (a hard budget is blocking by now) */
 export type BudgetBand = "under" | "warned" | "over";
 
-export function budgetBand(spend: number, budget: TeamBudget): BudgetBand {
-  if (spend > budget.amount) {
+export function budgetBand(
+  spend: number,
+  cap: number,
+  warnThreshold: number
+): BudgetBand {
+  if (spend > cap) {
     return "over";
   }
-  if (
-    budget.amount > 0 &&
-    spend >= (budget.amount * budget.warnThreshold) / 100
-  ) {
+  if (cap > 0 && spend >= (cap * warnThreshold) / 100) {
     return "warned";
   }
   return "under";
@@ -47,6 +46,12 @@ const BAND_FILL: Record<BudgetBand, string> = {
   over: "bg-destructive",
 };
 
-export function budgetFillClass(spend: number, budget: TeamBudget): string {
-  return BAND_FILL[budgetBand(spend, budget)];
+/** Fill for one window's meter: the window's spend against ITS cap, with
+ *  the budget's shared warn percent. */
+export function budgetFillClass(
+  spend: number,
+  cap: number,
+  warnThreshold: number
+): string {
+  return BAND_FILL[budgetBand(spend, cap, warnThreshold)];
 }

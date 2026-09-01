@@ -21,6 +21,7 @@
 import { API_KEY_SEED_ROWS, type ApiKeyRow } from "@/data/api-keys";
 import { modelName } from "@/data/models";
 import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
+import { RANGE_SCALE } from "@/lib/range";
 import { API_KEY_ROWS, MODEL_ROWS, USAGE_7D } from "@/pages/activity-data";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
@@ -31,15 +32,19 @@ export type BudgetWindow = "5h" | "weekly" | "monthly";
 /** Soft budgets warn; hard budgets block once the cap is used up. */
 export type BudgetEnforcement = "soft" | "hard";
 
+/** One budget, several windows (2026-09-01 meeting: a team runs 5-hour,
+ *  weekly, and monthly limits SIMULTANEOUSLY, the Claude/Codex shape). Each
+ *  configured window carries its own USD cap; name, enforcement, and warn
+ *  percent are shared across them. Backend mapping: one `usage_limits`
+ *  budget row per window (migration 170 has no uniqueness on team_id). */
 export type TeamBudget = {
   name: string;
-  window: BudgetWindow;
-  /** Cap in USD for one window. */
-  amount: number;
+  /** USD cap per configured window. At least one key, never empty. */
+  caps: Partial<Record<BudgetWindow, number>>;
   enforcement: BudgetEnforcement;
-  /** Percent of `amount` at which the warning fires. A hard budget blocks at
-   *  the amount itself — there is no separate block threshold. The PRD
-   *  sketched warn+block percentages; migration 170 shipped
+  /** Percent of a window's cap at which the warning fires. A hard budget
+   *  blocks at the cap itself — there is no separate block threshold. The
+   *  PRD sketched warn+block percentages; migration 170 shipped
    *  `warn_threshold_pct` only, and this mirrors the shipped schema. */
   warnThreshold: number;
 };
@@ -115,16 +120,37 @@ export const BUDGET_WINDOW_RESET_COPY: Record<BudgetWindow, string> = {
   monthly: "Resets on the 1st of each month.",
 };
 
+/** Two-word reset qualifier for the Budget tab's Window fact, appended to
+ *  the window label ("Weekly, rolling" / "Monthly, resets on the 1st"). The
+ *  long `BUDGET_WINDOW_RESET_COPY` sentence wrapped to two lines there. */
+export const BUDGET_WINDOW_RESET_SHORT: Record<BudgetWindow, string> = {
+  "5h": "rolling",
+  weekly: "rolling",
+  monthly: "resets on the 1st",
+};
+
 export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
   soft: "Soft: warn only, never blocks",
   hard: "Hard: blocks requests once exceeded",
 };
 
-export const BUDGET_WINDOW_OPTIONS: { label: string; value: BudgetWindow }[] = [
-  { label: BUDGET_WINDOW_LABEL["5h"], value: "5h" },
-  { label: BUDGET_WINDOW_LABEL.weekly, value: "weekly" },
-  { label: BUDGET_WINDOW_LABEL.monthly, value: "monthly" },
-];
+/** Canonical window order: shortest first. Every list of windows (picker
+ *  options, card tabs, `budgetWindows`) follows it. */
+export const BUDGET_WINDOW_ORDER: BudgetWindow[] = ["5h", "weekly", "monthly"];
+
+export const BUDGET_WINDOW_OPTIONS: { label: string; value: BudgetWindow }[] =
+  BUDGET_WINDOW_ORDER.map((w) => ({ label: BUDGET_WINDOW_LABEL[w], value: w }));
+
+/** Fraction of the 7d workload each window covers, so a window's spend is
+ *  `scaleUsage(usage, BUDGET_WINDOW_SCALE[window])`. Weekly IS the 7d
+ *  roll-up; 5h is 5 of 168 hours at the same rate; monthly reuses the Usage
+ *  tab's 30d scale so the Budget tab's monthly figure reconciles with the
+ *  Usage tab's 30D reading (charts-must-reconcile). */
+export const BUDGET_WINDOW_SCALE: Record<BudgetWindow, number> = {
+  "5h": 5 / 168,
+  weekly: 1,
+  monthly: RANGE_SCALE["30d"],
+};
 
 /* ─── Assignable entities ───────────────────────────────────────────────── */
 
@@ -161,8 +187,7 @@ export function memberName(id: string | null): string {
 
 export const ORG_BUDGET_SEED: TeamBudget = {
   name: "Org budget",
-  window: "monthly",
-  amount: 1500,
+  caps: { monthly: 1500 },
   enforcement: "soft",
   warnThreshold: 80,
 };
@@ -178,7 +203,9 @@ export const ORG_BUDGET_SEED: TeamBudget = {
  *    · Platform — Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
  *      are BYOK ($0), atlas-eval is metered = $12.39.
  *    · Design   — Jordan (manager); development $13.29 + ci-runner $5.17 =
- *      $18.46 against a $20 weekly hard budget → 92.3%, past the 80% warn. */
+ *      $18.46 against a $20 weekly hard budget → 92.3%, past the 80% warn.
+ *      Its second window, a $5 per-5-hour cap, holds $0.55 (18.46 × 5/168)
+ *      → 11.0%, so Design is the seed that exercises multi-window budgets. */
 export const TEAM_SEED_ROWS: TeamRow[] = [
   {
     id: "team_default",
@@ -198,8 +225,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_kira"],
     budget: {
       name: "Team budget",
-      window: "monthly",
-      amount: 500,
+      caps: { monthly: 500 },
       enforcement: "soft",
       warnThreshold: 80,
     },
@@ -213,8 +239,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_jordan"],
     budget: {
       name: "Team budget",
-      window: "weekly",
-      amount: 20,
+      caps: { "5h": 5, weekly: 20 },
       enforcement: "hard",
       warnThreshold: 80,
     },
@@ -464,31 +489,93 @@ export function orgSpend(teams: TeamRow[]): number {
   );
 }
 
-/** Fraction of a budget consumed, clamped to [0, 1] for the bar's width.
- *  Returns null when there is no budget to measure against. */
+/* ─── Budget readings ───────────────────────────────────────────────────── */
+
+/** The windows a budget configures, in canonical order. Never empty for a
+ *  valid budget. */
+export function budgetWindows(budget: TeamBudget): BudgetWindow[] {
+  return BUDGET_WINDOW_ORDER.filter((w) => budget.caps[w] !== undefined);
+}
+
+/** The team's usage projected onto one budget window — meter, facts, and
+ *  both breakdown tables for that window read THIS, never the raw 7d. */
+export function usageForWindow(
+  usage: TeamUsage,
+  window: BudgetWindow
+): TeamUsage {
+  return scaleUsage(usage, BUDGET_WINDOW_SCALE[window]);
+}
+
+/** One window's reading: its cap and the spend inside it. */
+export type WindowReading = {
+  window: BudgetWindow;
+  cap: number;
+  spend: number;
+  usage: TeamUsage;
+};
+
+export function budgetReadings(
+  usage: TeamUsage,
+  budget: TeamBudget
+): WindowReading[] {
+  return budgetWindows(budget).map((window) => {
+    const scoped = usageForWindow(usage, window);
+    return {
+      window,
+      cap: budget.caps[window] ?? 0,
+      spend: scoped.spend,
+      usage: scoped,
+    };
+  });
+}
+
+/** The window closest to (or furthest past) its cap — the one that blocks
+ *  first, so the list row's single meter shows it. Ties keep canonical
+ *  order. */
+export function tightestReading(
+  usage: TeamUsage,
+  budget: TeamBudget
+): WindowReading {
+  const readings = budgetReadings(usage, budget);
+  let best = readings[0] as WindowReading;
+  for (const r of readings) {
+    if (
+      r.cap > 0 &&
+      r.spend / r.cap > (best.cap > 0 ? best.spend / best.cap : 0)
+    ) {
+      best = r;
+    }
+  }
+  return best;
+}
+
+/** Fraction of a cap consumed, clamped to [0, 1] for the bar's width.
+ *  Returns null when there is no cap to measure against. */
 export function budgetProgress(
   spend: number,
-  budget: TeamBudget | null
+  cap: number | null | undefined
 ): number | null {
-  if (!budget || budget.amount <= 0) {
+  if (!cap || cap <= 0) {
     return null;
   }
-  return Math.min(1, Math.max(0, spend / budget.amount));
+  return Math.min(1, Math.max(0, spend / cap));
 }
 
 /** Percent used, always one decimal — a bar that has barely moved still
  *  reads as a number instead of rounding to a flat 0%. Not clamped: an
  *  overspent budget should say so. */
-export function budgetPercentLabel(spend: number, budget: TeamBudget): string {
-  if (budget.amount <= 0) {
+export function budgetPercentLabel(spend: number, cap: number): string {
+  if (cap <= 0) {
     return "0.0%";
   }
-  return `${((spend / budget.amount) * 100).toFixed(1)}%`;
+  return `${((spend / cap) * 100).toFixed(1)}%`;
 }
 
-/** The line under a budget's label — "Org budget · Monthly". */
+/** The line under a budget's label — "Team budget · Weekly, Monthly". */
 export function budgetWindowLine(budget: TeamBudget): string {
-  return `${budget.name} · ${BUDGET_WINDOW_LABEL[budget.window]}`;
+  return `${budget.name} · ${budgetWindows(budget)
+    .map((w) => BUDGET_WINDOW_LABEL[w])
+    .join(", ")}`;
 }
 
 /* ─── Membership (PRD 3 / 8.1: a user belongs to exactly ONE team) ──────── */

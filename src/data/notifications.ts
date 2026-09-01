@@ -214,7 +214,7 @@ function teamItems(count: number = MEMBER_ROWS.length): NotificationItem[] {
       title: "Member added",
       copy: `${row.name} added to the workspace as a ${row.role}`,
       at: row.joined,
-      href: "/team",
+      href: "/members",
       unread: isRecent(row.joined),
       Icon: Users,
     }));

@@ -33,6 +33,7 @@ import {
   budgetPercentLabel,
   budgetProgress,
   budgetWindowLine,
+  budgetWindows,
   DEFAULT_TEAM_ID,
   ORG_BUDGET_SEED,
   orgSpend,
@@ -341,7 +342,12 @@ function OrgBudgetCard({
       </CardHeader>
       {budget ? (
         <CardContent>
-          <BudgetMeter budget={budget} label="Org budget used" spend={spend} />
+          <BudgetMeter
+            cap={budget.caps[budgetWindows(budget)[0]] ?? 0}
+            label="Org budget used"
+            spend={spend}
+            warnThreshold={budget.warnThreshold}
+          />
         </CardContent>
       ) : null}
     </Card>
@@ -518,25 +524,30 @@ function RowBudgetMeter({ row, spend }: { row: TeamRow; spend: number }) {
       <span className="type-copy-14 text-muted-foreground">No budget</span>
     );
   }
-  const fraction = budgetProgress(spend, budget) ?? 0;
+  // Pro stays SINGLE-window: the row reads the budget's first configured cap.
+  const cap = budget.caps[budgetWindows(budget)[0]] ?? 0;
+  const fraction = budgetProgress(spend, cap) ?? 0;
   return (
     <div className="flex items-center gap-2">
       <div
         aria-label={`${row.name} budget used`}
-        aria-valuemax={budget.amount}
+        aria-valuemax={cap}
         aria-valuemin={0}
         aria-valuenow={spend}
-        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(budget.amount)}`}
+        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(cap)}`}
         className="h-2 w-24 overflow-hidden rounded-full bg-muted"
         role="meter"
       >
         <div
-          className={cn("h-full rounded-full", budgetFillClass(spend, budget))}
+          className={cn(
+            "h-full rounded-full",
+            budgetFillClass(spend, cap, budget.warnThreshold)
+          )}
           style={{ width: `${fraction * 100}%` }}
         />
       </div>
       <span className="type-copy-12 text-muted-foreground tabular-nums">
-        {budgetPercentLabel(spend, budget)}
+        {budgetPercentLabel(spend, cap)}
       </span>
     </div>
   );

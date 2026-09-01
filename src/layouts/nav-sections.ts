@@ -94,7 +94,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "Activity",
         pageId: "/activity",
       },
-      { id: "team", icon: Users, label: "Team", pageId: "/team" },
+      { id: "team", icon: Users, label: "Members", pageId: "/members" },
       { id: "teams", icon: Building2, label: "Teams", pageId: "/teams" },
       { id: "billing", icon: CreditCard, label: "Billing", pageId: "/billing" },
       {
