@@ -121,3 +121,13 @@ Manager 16% / Spend 12% / Budget 31% (was 22 / 11 / 9 / 15 / 12 / 31), so
 "100.0% weekly BLOCKING" fits with its meter on one line. Where:
 `src/data/teams.ts` (seed), `src/pages/TeamsEnterprise.tsx` (TableHead
 widths).
+
+### Team budgets: seeds carry no hard cap, three windows each `5016875`
+
+Before: Design seeded a hard budget (5h $5, weekly $20) with spend at 92%
+of the weekly cap, so a first-time visitor read a seeded number as a real
+limit about to block. After: Platform and Design both seed 5h $25 / weekly
+$100 / monthly $250, soft, so every meter sits low and the Blocking state
+appears only when a demo edits a cap. PM decision 2026-09-02: demo seeds
+must not suggest hard caps exist. Where: `src/data/teams.ts` (seed),
+`src/data/teams.test.ts` (Design pins repinned).
