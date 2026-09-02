@@ -101,3 +101,10 @@ wrapped and no width moved. Where: `src/data/teams.ts` (`budgetBreachTitle`,
 (`BudgetStatusBadge`, `BudgetWarnTick`, `BudgetBreachBanner`, `BudgetMeter`,
 `BudgetSummary`), `src/pages/TeamsEnterprise.tsx` (`RowBudgetMeter`),
 `src/pages/TeamDetailEnterprise.tsx` (header + `BudgetPane`).
+
+### Breach banner: 8px more air above the tabs `ebd1590`
+
+Before: the banner sat in the page column's regular gap above the Tabs and
+read tight against the tab row. After: the banner carries `mb-2`, so the
+distance to the tabs is the column gap plus 8px (user direction 2026-09-02).
+Where: `src/pages/teams/budget.tsx` (`BudgetBreachBanner` root).

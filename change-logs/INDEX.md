@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
 - Team budgets: status word, warn tick, blocked banner
+- Breach banner: 8px more air above the tabs
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 
