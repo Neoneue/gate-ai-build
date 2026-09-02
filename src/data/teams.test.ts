@@ -5,6 +5,7 @@ import {
   budgetPercentLabel,
   budgetProgress,
   budgetReadings,
+  budgetSpendShown,
   keyById,
   moveMembersToTeam,
   ORG_BUDGET_SEED,
@@ -306,4 +307,12 @@ test("moving a member moves the keys they own, and only those", () => {
   for (const id of others) {
     expect(nextPlatform?.keyIds).toContain(id);
   }
+});
+
+test("hard budgets never show spend past the cap; soft budgets do", () => {
+  expect(budgetSpendShown(615, 500, "hard")).toBe(500);
+  expect(budgetSpendShown(615, 500, "soft")).toBe(615);
+  expect(budgetPercentLabel(615, 500, "hard")).toBe("100.0%");
+  expect(budgetPercentLabel(615, 500, "soft")).toBe("123.0%");
+  expect(budgetPercentLabel(500, 500, "hard")).toBe("100.0%");
 });

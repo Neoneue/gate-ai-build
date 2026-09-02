@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -92,7 +93,12 @@ import {
   getRangeDates,
 } from "@/pages/activity/chart-helpers";
 import { MODEL_ROWS } from "@/pages/activity-data";
-import { BudgetSummary } from "@/pages/teams/budget";
+import {
+  BudgetBreachBanner,
+  BudgetStatusBadge,
+  BudgetSummary,
+} from "@/pages/teams/budget";
+import { budgetStatus } from "@/pages/teams/budget-band";
 import {
   AddKeysDialog,
   AddMembersDialog,
@@ -324,6 +330,18 @@ function TeamDetailBody({
         {/* Rename / Delete are parked until a Settings tab exists; their
             dialogs below stay wired so that tab can reuse them. */}
       </div>
+
+      {/* Blocked / exceeded caps sit ABOVE the tabs, full width of the content
+          column: an admin who opened this team to read the roster still needs
+          to know the gateway is refusing its traffic. Renders nothing while
+          every window is inside its cap. */}
+      {team.budget ? (
+        <BudgetBreachBanner
+          budget={team.budget}
+          teamName={team.name}
+          usage={usage}
+        />
+      ) : null}
 
       <Tabs
         className="gap-6"
@@ -1312,24 +1330,50 @@ function BudgetPane({
               from the grid. The per-user / per-model tables live on the
               Usage tab only (PRD 8.3 describes one roll-up view; the tables
               were duplicated across both tabs until today). */}
-          {readings.map((reading) => (
-            <Card key={reading.window}>
-              <CardHeader>
-                <CardTitle>{BUDGET_WINDOW_LABEL[reading.window]}</CardTitle>
-                <CardDescription>
-                  {BUDGET_WINDOW_RESET_COPY[reading.window]}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BudgetSummary
-                  budget={budget}
-                  meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
-                  omitWindowFact
-                  reading={reading}
-                />
-              </CardContent>
-            </Card>
-          ))}
+          {readings.map((reading) => {
+            // One call to the single source of truth, reused for both the
+            // wrapper and the badge: an `ok` window must render NO
+            // `CardAction` at all, because the slot's presence flips
+            // CardHeader into a two-column grid and would shave 8px off
+            // every healthy card's title.
+            const status = budgetStatus(
+              reading.spend,
+              reading.cap,
+              budget.warnThreshold,
+              budget.enforcement
+            );
+            return (
+              <Card key={reading.window}>
+                <CardHeader>
+                  <CardTitle>{BUDGET_WINDOW_LABEL[reading.window]}</CardTitle>
+                  <CardDescription>
+                    {BUDGET_WINDOW_RESET_COPY[reading.window]}
+                  </CardDescription>
+                  {/* The status word, right-aligned to the window title in
+                      the header's action slot: the one place the eye already
+                      goes for a card's state. */}
+                  {status === "ok" ? null : (
+                    <CardAction>
+                      <BudgetStatusBadge
+                        cap={reading.cap}
+                        enforcement={budget.enforcement}
+                        spend={reading.spend}
+                        warnThreshold={budget.warnThreshold}
+                      />
+                    </CardAction>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <BudgetSummary
+                    budget={budget}
+                    meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
+                    omitWindowFact
+                    reading={reading}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
         </>
       ) : (
         <EmptyState

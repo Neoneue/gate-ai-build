@@ -501,7 +501,21 @@ The destructive family is the one place a *strength* of the same token is wanted
 
 **Both rungs are derived, not resolved:** `color-mix(in oklab, var(--destructive) N%, transparent)`. They therefore track the token through the `danger-600` (light) → `danger-400` (dark) flip on their own, with no per-theme literal to keep in sync — the same idiom as `--accent-muted`. They are re-declared in `.dark` for the same two reasons that token is: the pair reads together, and a scoped `.dark` container that is not the root element resolves the rungs against the dark `--destructive` rather than the light one.
 
-**These three are the ONLY sanctioned destructive strengths.** A bare `border-destructive/30` or `bg-destructive/70` at a call site is off-token in exactly the way an invented hex is — use the named rung, or add a rung here first. The `destructive/N` modifiers already baked into `Button`’s own variant recipe (`bg-destructive/10`, `ring-destructive/20`) are that primitive’s internal contract and stay as they are; new work uses the ladder.
+**These three are the ONLY sanctioned destructive strengths for edges, accents and actions.** A bare `border-destructive/70` or `bg-destructive/50` at a call site is off-token in exactly the way an invented hex is — use the named rung, or add a rung here first. Dark-mode status WASHES (the tinted background of a banner, note or badge) are a separate closed ladder, below. The `destructive/N` modifiers already baked into `Button`’s own variant recipe (`bg-destructive/10`, `ring-destructive/20`) are that primitive’s internal contract and stay as they are.
+
+### Status wash ladder — tinted surfaces, dark mode *(added 2026-09-02)*
+
+A status surface (a banner that reports an event, an inline note that states a consequence, a badge) needs a wash of its family behind the ink. In light mode the wash is a ramp step (`-50` for surfaces, `-100` for badges). In dark mode a ramp step reads as a flat block, so the wash is an ALPHA of the family colour over the page, and those alphas are **a closed set of three rungs**, one per surface weight. Both status families use the same rungs. ← code-direct: `src/pages/teams/budget.tsx` (`BudgetBreachBanner`), `src/pages/teams/dialogs.tsx` (hard-enforcement note), `src/pages/ApiKeys.tsx` (one-time key note), `src/components/ui/badge.tsx`
+
+| Rung | Surface | Destructive utilities (dark) | Warning utilities (dark) | Light twin |
+| --- | --- | --- | --- | --- |
+| **10%** | **Alert banner**: full-width, `role="alert"`, reports that something IS happening (a hard budget blocking, a cap exceeded). The lightest wash because the surface is large and sits in the page flow. | `dark:bg-destructive/10 dark:border-destructive/30` | `dark:bg-warning-500/10 dark:border-warning-500/30` | `bg-danger-50 border-danger-200` / `bg-warning-50 border-warning-200` |
+| **15%** | **Inline note**: `role="note"`, inside a dialog or card, states a consequence before the user confirms (hard enforcement, one-time key reveal, cancel-plan consequences). | `dark:bg-destructive/15 dark:border-destructive/30` | `dark:bg-warning-500/15 dark:border-warning-500/30` | same as above |
+| **20%** | **Badge**: the smallest surface, so the deepest wash. This is the `Badge` primitive's own `destructive` / `warning` recipe. | `dark:bg-destructive/20` | `dark:bg-warning-500/15` (the primitive's current value; stays) | `bg-danger-100` / `bg-warning-100` |
+
+Ink is the same at every rung: `text-danger-800 dark:text-danger-300` and `text-warning-700 dark:text-warning-300` (§2 dark-mode mapping table). Border is always the 30% rung of the family; only the background steps.
+
+Rules: (1) the destructive family writes `destructive/N` (it tracks the `danger-600` → `danger-400` flip through the semantic token); the warning family has no semantic token (see "Do not use") and writes `warning-500/N`. (2) A surface takes the rung for its weight; do not pick a rung for taste. The one sanctioned deviation: a badge that sits ON an alert banner's surface, or reports the same state beside it, may drop to the banner's 10% so the two read as one system (the budget status `Blocking` / `Exceeded` badges, 2026-09-02). (3) `/[N%]` arbitrary alphas are off-token; the three rungs are the set. Add a rung here first if a fourth weight is ever needed.
 
 ### Chart palette (categorical, 8-slot)
 
@@ -1375,6 +1389,29 @@ switches).
   tone recipes. **Generalised 2026-09-01** — this ladder is now one instance
   of the site-wide bar rule above (Data bars & meters); `over` is the single
   sanctioned solid fill.
+- **Band boundary (2026-09-02):** `over` starts AT the cap (`spend >= cap`),
+  not past it. A hard budget cannot pass its cap, so 100% is its terminal,
+  blocking state and reads red; a soft budget keeps counting past 100% and
+  reads red as exceeded. Hard budgets never display spend or percent above
+  the cap (`budgetSpendShown`, `budgetPercentLabel(…, enforcement)`).
+- **Status word (2026-09-02):** every off-nominal meter carries a `Badge`
+  beside it — `Warning` (warning variant) from the warn line, `Exceeded`
+  (destructive, soft past cap) or `Blocking` (destructive, hard at cap).
+  Colour alone is not a state. `ok` renders nothing. One helper,
+  `budgetStatus()` in `budget-band.ts`, decides it for the list row and the
+  Budget tab card.
+- **Warn tick (2026-09-02):** a 1px full-height hairline on the track at the
+  warn threshold, `absolute inset-y-0 w-px bg-foreground/40`, `aria-hidden`,
+  skipped once the fill reaches the cap. `foreground/40` is used because no
+  border token reads against both the saturated fill and the `bg-muted`
+  track; it is the ONE sanctioned alpha of `foreground` and exists for
+  meter ticks only.
+- **Breach banner (2026-09-02):** when any window is `blocking` or
+  `exceeded`, the team page shows one full-width alert above the tabs at
+  the 10% wash rung (§2 Status wash ladder), `OctagonAlert size-4` in an
+  `h-5` wrapper, title `type-label-14` + body `type-copy-14`, one list item
+  per breached window. Copy is single-sourced in `src/data/teams.ts`
+  (`budgetBreachTitle`, `budgetBreachBody`, `budgetResetLabel`).
 
 ### Modal / Drawer
 

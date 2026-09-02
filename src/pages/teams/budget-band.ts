@@ -14,7 +14,13 @@
  *
  *  under  → below the warn threshold
  *  warned → at or past `amount × warnThreshold%`, but still inside the cap
- *  over   → past the cap itself (a hard budget is blocking by now) */
+ *  over   → AT or past the cap. A hard budget cannot pass its cap (the
+ *           gateway refuses the request that would), so 100% IS its
+ *           terminal, blocking state and reads red; a soft budget keeps
+ *           counting past 100% and reads red as "exceeded". Until
+ *           2026-09-02 this was a strict `>`, so a team sitting exactly on
+ *           its cap read amber like a team at 80% (AG-695: "how a team at
+ *           80 percent reads differently from one at 100 percent"). */
 export type BudgetBand = "under" | "warned" | "over";
 
 export function budgetBand(
@@ -22,7 +28,7 @@ export function budgetBand(
   cap: number,
   warnThreshold: number
 ): BudgetBand {
-  if (spend > cap) {
+  if (cap > 0 && spend >= cap) {
     return "over";
   }
   if (cap > 0 && spend >= (cap * warnThreshold) / 100) {
@@ -55,3 +61,43 @@ export function budgetFillClass(
 ): string {
   return BAND_FILL[budgetBand(spend, cap, warnThreshold)];
 }
+
+/** The status WORD next to a meter: colour alone is not a state (colour-
+ *  blind readers, skimming). Competitor pattern (AWS / GCP / Azure budgets
+ *  show OK / Warning / Exceeded as text). `ok` renders nothing: a healthy
+ *  budget needs no label. `blocking` is a hard budget at its cap, the state
+ *  in which the gateway is refusing requests; `exceeded` is a soft budget
+ *  past its cap, still serving. */
+export type BudgetStatus = "ok" | "warning" | "exceeded" | "blocking";
+
+export function budgetStatus(
+  spend: number,
+  cap: number,
+  warnThreshold: number,
+  enforcement: "soft" | "hard"
+): BudgetStatus {
+  const band = budgetBand(spend, cap, warnThreshold);
+  if (band === "over") {
+    return enforcement === "hard" ? "blocking" : "exceeded";
+  }
+  return band === "warned" ? "warning" : "ok";
+}
+
+export const BUDGET_STATUS_LABEL: Record<
+  Exclude<BudgetStatus, "ok">,
+  string
+> = {
+  warning: "Warning",
+  exceeded: "Exceeded",
+  blocking: "Blocking",
+};
+
+/** Badge tone per status, in the Badge primitive's variant vocabulary. */
+export const BUDGET_STATUS_VARIANT: Record<
+  Exclude<BudgetStatus, "ok">,
+  "warning" | "destructive"
+> = {
+  warning: "warning",
+  exceeded: "destructive",
+  blocking: "destructive",
+};

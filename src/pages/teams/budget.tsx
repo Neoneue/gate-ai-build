@@ -1,4 +1,5 @@
-import { Info } from "lucide-react";
+import { Info, OctagonAlert } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -9,14 +10,25 @@ import {
   BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_RESET_COPY,
   BUDGET_WINDOW_RESET_SHORT,
+  type BudgetEnforcement,
+  budgetBreachBody,
+  budgetBreachTitle,
   budgetPercentLabel,
   budgetProgress,
+  budgetReadings,
+  budgetSpendShown,
   type TeamBudget,
+  type TeamUsage,
   type WindowReading,
 } from "@/data/teams";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { budgetFillClass } from "@/pages/teams/budget-band";
+import {
+  BUDGET_STATUS_LABEL,
+  BUDGET_STATUS_VARIANT,
+  budgetFillClass,
+  budgetStatus,
+} from "@/pages/teams/budget-band";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Budget chrome shared by the Teams list (org budget card + the list's
@@ -31,10 +43,76 @@ import { budgetFillClass } from "@/pages/teams/budget-band";
  * cap. Nothing in this file chooses a window for itself.
  * ───────────────────────────────────────────────────────────────────────── */
 
+/** The status WORD beside a meter: "Warning" / "Exceeded" / "Blocking".
+ *  Colour alone is not a state (colour-blind readers, and a skimming admin
+ *  reads words before hues), so every off-nominal meter carries the label.
+ *  Renders NOTHING when the budget is fine: a healthy row stays quiet, which
+ *  is what makes the loud ones legible (AG-695: "how a team at 80 percent
+ *  reads differently from one at 100 percent"). Status comes from
+ *  `budgetStatus`, never re-derived at a call site. */
+export function BudgetStatusBadge({
+  spend,
+  cap,
+  warnThreshold,
+  enforcement,
+}: {
+  spend: number;
+  cap: number;
+  warnThreshold: number;
+  enforcement: BudgetEnforcement;
+}) {
+  const status = budgetStatus(spend, cap, warnThreshold, enforcement);
+  if (status === "ok") {
+    return null;
+  }
+  return (
+    <Badge
+      className={cn(
+        // Budget status only (user 2026-09-02): the red rungs sit at a 10%
+        // dark tint, matching the breach banner beside them. The primitive's
+        // 20% stays for every other destructive badge on the site.
+        BUDGET_STATUS_VARIANT[status] === "destructive" &&
+          "dark:bg-destructive/10"
+      )}
+      variant={BUDGET_STATUS_VARIANT[status]}
+    >
+      {BUDGET_STATUS_LABEL[status]}
+    </Badge>
+  );
+}
+
+/** The warn threshold, marked on the track as a 1px hairline. Without it the
+ *  amber fill announces the warn band only AFTER it is crossed: the mark is
+ *  what lets an admin see how much headroom a green bar still has before the
+ *  alert fires. Absolutely positioned so it paints over the fill, and skipped
+ *  once the fill has reached the cap: a full bar has no headroom left to
+ *  measure, and the mark would only add noise to the red state. Lives here so
+ *  the list's compact meter and the detail meter cannot drift apart. */
+export function BudgetWarnTick({
+  warnThreshold,
+  fraction,
+}: {
+  warnThreshold: number;
+  /** Fill fraction, already clamped to [0, 1] by `budgetProgress`. */
+  fraction: number;
+}) {
+  if (fraction >= 1) {
+    return null;
+  }
+  return (
+    <span
+      aria-hidden
+      className="absolute inset-y-0 w-px bg-foreground/40"
+      style={{ left: `${warnThreshold}%` }}
+    />
+  );
+}
+
 export function BudgetMeter({
   spend,
   cap,
   warnThreshold,
+  enforcement,
   label,
 }: {
   spend: number;
@@ -42,19 +120,26 @@ export function BudgetMeter({
   cap: number;
   /** Percent of the cap at which the budget warns — shared across windows. */
   warnThreshold: number;
+  /** A hard budget cannot pass its cap, so its numbers stop at 100%. */
+  enforcement: BudgetEnforcement;
   /** Accessible name for the meter — "Org budget used", "Platform budget used". */
   label: string;
 }) {
   const fraction = budgetProgress(spend, cap) ?? 0;
+  // A hard budget's spend can never exceed its cap: the gateway refuses the
+  // request that would take it there. Showing $21.40 of $20.00 on a bar that
+  // physically blocks at $20.00 would be reporting a state the system cannot
+  // enter. Soft budgets keep counting (showback), so they show spend as-is.
+  const shown = budgetSpendShown(spend, cap, enforcement);
   return (
     <div className="flex flex-col gap-2">
       <div
         aria-label={label}
         aria-valuemax={cap}
         aria-valuemin={0}
-        aria-valuenow={spend}
-        aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(cap)}`}
-        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        aria-valuenow={shown}
+        aria-valuetext={`${formatCurrency(shown)} of ${formatCurrency(cap)}`}
+        className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted"
         role="meter"
       >
         {/* Fill is primary ink under the warn threshold, the warning tone
@@ -68,17 +153,18 @@ export function BudgetMeter({
           )}
           style={{ width: `${fraction * 100}%` }}
         />
+        <BudgetWarnTick fraction={fraction} warnThreshold={warnThreshold} />
       </div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="type-mono-14 text-foreground">
-          {formatCurrency(spend)}
+          {formatCurrency(shown)}
           <span className="text-muted-foreground">
             {" "}
             of {formatCurrency(cap)}
           </span>
         </span>
         <span className="type-mono-14 text-muted-foreground">
-          {budgetPercentLabel(spend, cap)} used
+          {budgetPercentLabel(spend, cap, enforcement)} used
         </span>
       </div>
     </div>
@@ -151,12 +237,21 @@ export function BudgetSummary({
   omitWindowFact?: boolean;
 }) {
   const { window, cap, spend } = reading;
-  const over = spend > cap;
+  // `>=` not `>`: a HARD budget at exactly its cap is over, not almost over.
+  // The gateway is already refusing requests there, so "Remaining $0.00" is
+  // the honest first fact and "Over budget by" would be a lie (spend cannot
+  // pass the cap). A SOFT budget landing exactly on the cap is likewise past
+  // the line, not inside it.
+  const over = spend >= cap;
   const hard = budget.enforcement === "hard";
+  // On a hard budget the remainder is what is left before the block, floored
+  // at zero. On a soft one it is the overrun.
+  const shown = budgetSpendShown(spend, cap, budget.enforcement);
   return (
     <div className="flex flex-col gap-4">
       <BudgetMeter
         cap={cap}
+        enforcement={budget.enforcement}
         label={meterLabel}
         spend={spend}
         warnThreshold={budget.warnThreshold}
@@ -174,14 +269,14 @@ export function BudgetSummary({
         )}
       >
         <BudgetFact
-          label={over ? "Over budget by" : "Remaining"}
+          label={over && !hard ? "Over budget by" : "Remaining"}
           mono
           tip={
-            over
+            over && !hard
               ? "How far spend in this window has passed its cap."
               : "What is left of this window's cap before it is used up."
           }
-          value={formatCurrency(Math.abs(cap - spend))}
+          value={formatCurrency(Math.abs(cap - shown))}
         />
         <BudgetFact
           label="Enforcement"
@@ -202,6 +297,71 @@ export function BudgetSummary({
           />
         )}
       </div>
+    </div>
+  );
+}
+
+/** Page-level alert for a team whose budget has reached or passed a cap.
+ *
+ *  It sits above the tabs, not inside the Budget tab, because the admin who
+ *  needs it did not come looking for it: they opened the team to read the
+ *  roster or chase a spike, and traffic is being refused right now. Burying
+ *  the blocked state one tab deep means the only person who sees it is the
+ *  person who already suspected it (AG-695).
+ *
+ *  ONE banner, one icon, one title per breached window: a team running a
+ *  5-hour AND a weekly cap can breach both, and two stacked alert cards would
+ *  read as two separate incidents rather than one team in trouble. The window
+ *  is named in every title because that is the answer to "which cap did it".
+ *  Returns null when nothing is breached, so the header collapses back to its
+ *  normal rhythm with no reserved space. */
+export function BudgetBreachBanner({
+  teamName,
+  budget,
+  usage,
+}: {
+  teamName: string;
+  budget: TeamBudget;
+  /** The team roll-up; each window reads its own scaled projection of it. */
+  usage: TeamUsage;
+}) {
+  const breached = budgetReadings(usage, budget).filter((r) => {
+    const status = budgetStatus(
+      r.spend,
+      r.cap,
+      budget.warnThreshold,
+      budget.enforcement
+    );
+    return status === "blocking" || status === "exceeded";
+  });
+  if (breached.length === 0) {
+    return null;
+  }
+  return (
+    <div
+      className="flex items-start gap-2 rounded-md border border-danger-200 bg-danger-50 p-3 dark:border-destructive/30 dark:bg-destructive/10"
+      role="alert"
+    >
+      {/* h-5 wrapper centers the 16px glyph on the first 20px title line, so
+          the icon stays aligned when the copy wraps: the Callout pattern. */}
+      <span aria-hidden className="flex h-5 shrink-0 items-center">
+        <OctagonAlert
+          className="size-4 text-danger-800 dark:text-danger-300"
+          strokeWidth={1.75}
+        />
+      </span>
+      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+        {breached.map((r) => (
+          <li className="flex flex-col gap-1" key={r.window}>
+            <p className="type-label-14 m-0 text-danger-800 dark:text-danger-300">
+              {budgetBreachTitle(teamName, r.window, budget.enforcement)}
+            </p>
+            <p className="type-copy-14 m-0 text-pretty text-danger-800 dark:text-danger-300">
+              {budgetBreachBody(r.window, r.spend, r.cap, budget.enforcement)}
+            </p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

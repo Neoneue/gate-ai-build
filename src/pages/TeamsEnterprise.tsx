@@ -33,6 +33,7 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { teamsListPath } from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { BudgetStatusBadge, BudgetWarnTick } from "@/pages/teams/budget";
 import { budgetFillClass } from "@/pages/teams/budget-band";
 import {
   CreateTeamDialog,
@@ -464,7 +465,7 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
         aria-valuemin={0}
         aria-valuenow={spend}
         aria-valuetext={`${formatCurrency(spend)} of ${formatCurrency(cap)}`}
-        className="h-2 w-24 overflow-hidden rounded-full bg-muted"
+        className="relative h-2 w-24 shrink-0 overflow-hidden rounded-full bg-muted"
         role="meter"
       >
         <div
@@ -474,10 +475,24 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
           )}
           style={{ width: `${fraction * 100}%` }}
         />
+        <BudgetWarnTick
+          fraction={fraction}
+          warnThreshold={budget.warnThreshold}
+        />
       </div>
       <span className="type-copy-12 text-muted-foreground tabular-nums">
-        {budgetPercentLabel(spend, cap)} {windowWord}
+        {budgetPercentLabel(spend, cap, budget.enforcement)} {windowWord}
       </span>
+      {/* The status word: a red bar at 100% and an amber one at 85% are two
+          different situations, and the column is 24px tall: the label is
+          what makes the difference readable at a glance. Absent when the
+          budget is fine. */}
+      <BudgetStatusBadge
+        cap={cap}
+        enforcement={budget.enforcement}
+        spend={spend}
+        warnThreshold={budget.warnThreshold}
+      />
     </div>
   );
 }

@@ -21,7 +21,8 @@
 import { API_KEY_SEED_ROWS, type ApiKeyRow } from "@/data/api-keys";
 import { modelName } from "@/data/models";
 import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
-import { authoredDate } from "@/lib/demo-clock";
+import { authoredDate, DEMO_TODAY } from "@/lib/demo-clock";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 import { RANGE_SCALE } from "@/lib/range";
 import { API_KEY_ROWS, MODEL_ROWS, USAGE_7D } from "@/pages/activity-data";
 
@@ -146,6 +147,42 @@ export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
  *  (AG-695 design task: a hard budget must not read as a minor toggle). */
 export const BUDGET_HARD_ENFORCEMENT_HELP =
   "Team members will be unable to send requests once a cap is reached, until that window resets.";
+
+/** Banner title for a window that has reached or passed its cap. Names WHICH
+ *  cap did it (the team and the window) because "budget exceeded" on its own
+ *  leaves the admin hunting for which of a team's three caps fired (AG-695:
+ *  "the blocked state: what an admin sees when a cap has blocked traffic, and
+ *  which cap did it"). Hard reads "Blocking" because the gateway is refusing
+ *  traffic right now; soft reads "Exceeded" because it is a number that went
+ *  past a line, not an outage. */
+export function budgetBreachTitle(
+  teamName: string,
+  window: BudgetWindow,
+  enforcement: BudgetEnforcement
+): string {
+  const windowWord = BUDGET_WINDOW_LABEL[window].toLowerCase();
+  return enforcement === "hard"
+    ? `Blocking: ${teamName} ${windowWord} budget reached`
+    : `Exceeded: ${teamName} ${windowWord} budget`;
+}
+
+/** Banner body for the same window: what is happening to requests, and when
+ *  it stops happening. The reset sentence is the actionable half: a team
+ *  blocked with a reset tomorrow reads very differently from one with 25 days
+ *  to wait. There is no org-level budget on this site, so the copy never
+ *  implicates a cap the admin cannot see. */
+export function budgetBreachBody(
+  window: BudgetWindow,
+  spend: number,
+  cap: number,
+  enforcement: BudgetEnforcement
+): string {
+  const reset = budgetResetLabel(window);
+  if (enforcement === "hard") {
+    return `Requests from this team are blocked. ${reset}.`;
+  }
+  return `Spend is ${formatCurrency(spend - cap)} past the cap and requests still go through. ${reset}.`;
+}
 
 /** Canonical window order: shortest first. Every list of windows (picker
  *  options, card tabs, `budgetWindows`) follows it. */
@@ -581,14 +618,52 @@ export function budgetProgress(
   return Math.min(1, Math.max(0, spend / cap));
 }
 
+/** Spend as a HARD budget can show it: never past the cap, because the
+ *  gateway refuses the request that would take it there. Soft budgets show
+ *  spend as-is (showback keeps counting). */
+export function budgetSpendShown(
+  spend: number,
+  cap: number,
+  enforcement: BudgetEnforcement
+): number {
+  return enforcement === "hard" && cap > 0 ? Math.min(spend, cap) : spend;
+}
+
 /** Percent used, always one decimal — a bar that has barely moved still
- *  reads as a number instead of rounding to a flat 0%. Not clamped: an
- *  overspent budget should say so. */
-export function budgetPercentLabel(spend: number, cap: number): string {
+ *  reads as a number instead of rounding to a flat 0%. Soft budgets are
+ *  not clamped (an overspent showback budget should say 123.1%); hard
+ *  budgets stop at 100.0%, the most they can ever reach. */
+export function budgetPercentLabel(
+  spend: number,
+  cap: number,
+  enforcement: BudgetEnforcement = "soft"
+): string {
   if (cap <= 0) {
     return "0.0%";
   }
-  return `${((spend / cap) * 100).toFixed(1)}%`;
+  const shown = budgetSpendShown(spend, cap, enforcement);
+  return `${((shown / cap) * 100).toFixed(1)}%`;
+}
+
+/** When this window's spend clears: a dated reset for the calendar month
+ *  (the first of the month after the demo clock's today), or the ageing rule
+ *  for the two rolling windows. Competitor pattern (OpenAI / Anthropic
+ *  consoles show "resets on ..." beside a limit); a blocked team with a reset
+ *  tomorrow reads very differently from one with 25 days left. Plain forms:
+ *  "rolling window" and "spend ages out" were jargon the sentence did not
+ *  need, and the phrase has to survive being appended to a banner body. */
+export function budgetResetLabel(window: BudgetWindow): string {
+  if (window === "monthly") {
+    const next = new Date(
+      DEMO_TODAY.getFullYear(),
+      DEMO_TODAY.getMonth() + 1,
+      1
+    );
+    return `Resets ${formatDate(next, { month: "short", day: "numeric" })}`;
+  }
+  return window === "5h"
+    ? "Spend older than 5 hours drops off"
+    : "Spend older than 7 days drops off";
 }
 
 /** The line under a budget's label — "Team budget · Weekly, Monthly". */
