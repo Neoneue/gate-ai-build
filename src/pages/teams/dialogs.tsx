@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import {
   BUDGET_ENFORCEMENT_LABEL,
+  BUDGET_HARD_ENFORCEMENT_HELP,
   BUDGET_PRESETS_HELPER_COPY,
   BUDGET_WINDOW_DEFAULT_AMOUNT,
   BUDGET_WINDOW_HELP,
@@ -364,27 +365,43 @@ function BudgetBody({
             >
               Enforcement
             </Label>
-            <Select
-              onValueChange={(v: string) =>
-                setEnforcement(v as BudgetEnforcement)
-              }
-              value={enforcement}
-            >
-              <SelectTrigger
-                className="w-full"
-                id={`${scope}-budget-enforcement`}
+            <div>
+              <Select
+                onValueChange={(v: string) =>
+                  setEnforcement(v as BudgetEnforcement)
+                }
+                value={enforcement}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="min-w-[var(--anchor-width)]">
-                <SelectItem value="soft">
-                  {BUDGET_ENFORCEMENT_LABEL.soft}
-                </SelectItem>
-                <SelectItem value="hard">
-                  {BUDGET_ENFORCEMENT_LABEL.hard}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  className="w-full"
+                  id={`${scope}-budget-enforcement`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="min-w-[var(--anchor-width)]">
+                  <SelectItem value="soft">
+                    {BUDGET_ENFORCEMENT_LABEL.soft}
+                  </SelectItem>
+                  <SelectItem value="hard">
+                    {BUDGET_ENFORCEMENT_LABEL.hard}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {/* Hard is a production-blocking choice, not a minor toggle
+              (AG-695). Warning note card, the same shape the API-key reveal
+              and cancel-plan dialogs use for pre-confirm consequences; red is
+              reserved for the over-budget / blocked state itself. */}
+              {enforcement === "hard" ? (
+                <div
+                  className="mt-2 rounded-md border border-warning-200 bg-warning-50 p-3 dark:border-warning-500/30 dark:bg-warning-500/15"
+                  role="note"
+                >
+                  <p className="type-copy-14 m-0 text-warning-700 dark:text-warning-300">
+                    {BUDGET_HARD_ENFORCEMENT_HELP}
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">

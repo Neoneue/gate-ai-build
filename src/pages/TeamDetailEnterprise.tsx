@@ -1,6 +1,11 @@
 import { KeyRound, Plus, Trash2, Wallet } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +76,7 @@ import {
   formatNumber,
   formatSparkLabel,
 } from "@/lib/formatters";
+import { teamsListPath } from "@/lib/plan";
 import {
   type CustomRange,
   effectiveScale,
@@ -137,8 +143,7 @@ export function TeamDetailEnterprise({
   // Back goes to the list twin the user came from, so a Default-workspace
   // drill-in never lands them in the Pro list. Teams are Pro + Enterprise
   // only — there is no Free twin to route to.
-  const listPath =
-    variant === "default" ? "/teams-default" : "/teams-enterprise";
+  const listPath = teamsListPath(useLocation().pathname);
 
   // Teams live in the module store shared with the LIST page, so a team
   // created there exists here (page-local useState re-seeded on mount and

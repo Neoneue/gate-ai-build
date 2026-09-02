@@ -1,6 +1,6 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
+import { teamsListPath } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { budgetFillClass } from "@/pages/teams/budget-band";
 import {
@@ -38,7 +39,6 @@ import {
   DeleteTeamDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
-import type { TeamsVariant } from "@/pages/teams/SecurityPane";
 import {
   teamsStore,
   useDeletedTeams,
@@ -103,22 +103,18 @@ function teamSortValue(
   }
 }
 
-export function TeamsEnterprise({
-  variant = "pro",
-}: {
-  variant?: TeamsVariant;
-} = {}) {
+export function TeamsEnterprise() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
 
-  // The twin the user is in owns the whole subtree: a row opened from
-  // /teams-default drills into /teams-default/:teamId so the detail page
-  // keeps its variant across the navigation. Teams do not exist on Free.
-  const basePath =
-    variant === "default" ? "/teams-default" : "/teams-enterprise";
+  // The tier the user is in owns the whole subtree: a row opened from
+  // /teams-enterprise drills into /teams-enterprise/:teamId, /teams-default
+  // into /teams-default/:teamId, and Pro /teams into /teams/:teamId. One
+  // build serves all three; the pathname decides. Teams do not exist on Free.
+  const basePath = teamsListPath(useLocation().pathname);
 
   // Teams and deleted-team snapshots live in the module store
   // (teams/teams-store.ts), shared with the detail page, so a team created

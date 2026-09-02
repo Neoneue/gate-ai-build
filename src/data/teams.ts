@@ -141,6 +141,12 @@ export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
   hard: "Hard: blocks requests once exceeded",
 };
 
+/** Warning note under the Enforcement select, shown only while Hard is
+ *  selected. Makes the production impact explicit at the point of choosing
+ *  (AG-695 design task: a hard budget must not read as a minor toggle). */
+export const BUDGET_HARD_ENFORCEMENT_HELP =
+  "Team members will be unable to send requests once a cap is reached, until that window resets.";
+
 /** Canonical window order: shortest first. Every list of windows (picker
  *  options, card tabs, `budgetWindows`) follows it. */
 export const BUDGET_WINDOW_ORDER: BudgetWindow[] = ["5h", "weekly", "monthly"];

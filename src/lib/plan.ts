@@ -27,6 +27,21 @@ export const isFreeSurface = (pathname: string): boolean =>
 export const isEnterpriseSurface = (pathname: string): boolean =>
   ENTERPRISE_SEGMENT.test(pathname);
 
+/** Teams list path for the tier the user is currently in. One Teams build
+ *  serves Pro and Enterprise (and the Default twin); the pathname, not a
+ *  prop, decides which subtree drill-ins and back-links stay inside. */
+export const teamsListPath = (
+  pathname: string
+): "/teams" | "/teams-default" | "/teams-enterprise" => {
+  if (isDefaultSurface(pathname)) {
+    return "/teams-default";
+  }
+  if (isEnterpriseSurface(pathname)) {
+    return "/teams-enterprise";
+  }
+  return "/teams";
+};
+
 /** Any tier suffix, on any segment — strip to recover the PRO base path. */
 const TIER_SUFFIX = /-(default|free|enterprise)(?=\/|$)/;
 

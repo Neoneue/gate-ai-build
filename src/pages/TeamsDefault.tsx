@@ -1,7 +1,7 @@
-import { Teams } from "@/pages/Teams";
+import { TeamsEnterprise } from "@/pages/TeamsEnterprise";
 
-/** Default-workspace twin of Teams. Rows drill into `/teams-default/:teamId`
- *  so the detail page keeps the Default variant. */
+/** Default-workspace twin of Teams. Same build as Pro and Enterprise; the
+ *  list derives its drill path from the `-default` pathname. */
 export function TeamsDefault() {
-  return <Teams variant="default" />;
+  return <TeamsEnterprise />;
 }

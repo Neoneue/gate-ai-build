@@ -49,8 +49,8 @@ graph LR
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
     LAYOUT --> TEAM["/members → Team.tsx"]
-    LAYOUT --> TEAMS["/teams → Teams.tsx"]
-    LAYOUT --> TEAMD["/teams/:teamId → TeamDetail.tsx"]
+    LAYOUT --> TEAMS["/teams → TeamsEnterprise.tsx"]
+    LAYOUT --> TEAMD["/teams/:teamId → TeamDetailEnterprise.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
     LAYOUT --> KEYS["/api-keys → ApiKeys.tsx"]
     LAYOUT --> BILL["/billing → Billing.tsx"]
@@ -181,14 +181,13 @@ exist. Teams also twins its **detail** route, which no other base does:
 variant (the Security tab's empty state) and its back link.
 
 **Enterprise workspace (2026-08-31).** A fourth tier on the `-enterprise`
-suffix, added so the Teams UI can be A/B compared between Pro and Enterprise
-(the two builds will diverge). Only Teams has real Enterprise pages:
-`TeamsEnterprise.tsx` on `/teams-enterprise` and `TeamDetailEnterprise.tsx` on
-`/teams-enterprise/:teamId`, standalone clones of the Pro files (per the
-twins-are-separate-files convention) whose starting deltas were only the
-component names and drill/back/security paths — they have since diverged on
-purpose (that is the sandbox's job); the "Enterprise deltas" list under the
-Teams pages section is the current inventory. Every other `-enterprise` route
+suffix, added so the Teams UI could be A/B compared between Pro and
+Enterprise. The A/B closed 2026-09-01: the Enterprise build is the north
+star and now serves every tier. `TeamsEnterprise.tsx` renders on `/teams`,
+`/teams-default` and `/teams-enterprise`; `TeamDetailEnterprise.tsx` on the
+matching `/:teamId` routes. The stale Pro files `Teams.tsx` / `TeamDetail.tsx`
+were deleted. Drill, back and security paths derive from the pathname via
+`teamsListPath()` in `src/lib/plan.ts`, not from a prop. Every other `-enterprise` route
 reuses the PRO page component under the Enterprise chrome (sidebar +
 switcher badge), so in-page cross-links on those reused pages can land back on
 Pro paths; that leak is accepted, the A/B target is Teams. Enterprise is NOT a
@@ -1505,7 +1504,7 @@ find-replace.
 
 ---
 
-### Teams pages (`/teams` → `Teams.tsx`, `/teams/:teamId` → `TeamDetail.tsx`, added 2026-08-28)
+### Teams pages (`/teams` → `TeamsEnterprise.tsx`, `/teams/:teamId` → `TeamDetailEnterprise.tsx`, added 2026-08-28; one build for Pro + Default + Enterprise since 2026-09-01)
 
 **Purpose:** Group members and API keys into teams, and roll their spend up
 against a team budget and an org budget. Pro + Enterprise only — see the
@@ -1514,8 +1513,8 @@ workspace twins both routes (`/teams-default`, `/teams-default/:teamId`).
 
 **List page.** PageHeader + a scaffold-only `7D / 30D / 90D` SegmentedPill and
 `DateRangePicker` + "Create team". Then the teams table (the full-width
-**Org budget** card that sat here was removed 2026-09-01 on the Enterprise
-twin; Pro `Teams.tsx` still renders it, frozen):
+**Org budget** card that sat here was removed 2026-09-01; it went with the
+deleted Pro `Teams.tsx`, so no surface renders an org budget today):
 Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
 | Spend | Budget (compact utilization meter + one-decimal % label; "No budget"
 when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
@@ -1652,8 +1651,7 @@ Warn at). No window pill, no tables: PRD 8.3 describes one roll-up view, so
 the per-user / per-model tables live on the Usage tab only. The earlier
 same-day pill-plus-tables layout is in git history (`9b56fab`) if this is
 reverted.
-Pro twins (`Teams.tsx`, `TeamDetail.tsx`) read the first configured window
-only (mechanical adapter, frozen design). Seed: Platform `{ monthly: 500 }`;
+Seed: Platform `{ monthly: 500 }`;
 Design `{ "5h": 5, weekly: 20 }` ($0.55 = 11.0% of the 5h cap; weekly 92.3%
 is the tightest). `teams.test.ts` asserts per-window table reconciliation,
 weekly == 7d, strictly increasing window scale, and tightest == max
@@ -1721,8 +1719,9 @@ rows that already exist:
   facts, security-tab groupings, org roll-up. It PINS the org figures
   ($247.59 / "16.5%") — move those assertions whenever spend seeds move
 
-**Security tab** (`src/pages/teams/security-data.ts`; Pro renders
-`SecurityPane.tsx`, Enterprise renders `SecurityOverviewPane.tsx`).
+**Security tab** (`src/pages/teams/security-data.ts`; rendered by
+`SecurityOverviewPane.tsx`. `SecurityPane.tsx` is the retired Pro pane, kept
+only for its `TeamsVariant` type).
 **Re-derived 2026-09-01: the org Security page is the events canon.** A
 team's findings are its largest-remainder share of `eventsTotal(range)`
 (`security/events-data.ts`), weighted by the team's request volume, so the

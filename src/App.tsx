@@ -102,12 +102,6 @@ const Settings = lazy(() =>
 const Team = lazy(() =>
   import("@/pages/Team").then((m) => ({ default: m.Team }))
 );
-const Teams = lazy(() =>
-  import("@/pages/Teams").then((m) => ({ default: m.Teams }))
-);
-const TeamDetail = lazy(() =>
-  import("@/pages/TeamDetail").then((m) => ({ default: m.TeamDetail }))
-);
 const TeamsDefault = lazy(() =>
   import("@/pages/TeamsDefault").then((m) => ({ default: m.TeamsDefault }))
 );
@@ -333,8 +327,8 @@ export default function App() {
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
             <Route element={<Team />} path="/members" />
-            <Route element={<Teams />} path="/teams" />
-            <Route element={<TeamDetail />} path="/teams/:teamId" />
+            <Route element={<TeamsEnterprise />} path="/teams" />
+            <Route element={<TeamDetailEnterprise />} path="/teams/:teamId" />
             <Route element={<Notifications />} path="/notifications" />
             <Route
               element={<Settings showCancelPlan={false} />}
@@ -386,10 +380,11 @@ export default function App() {
             <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
             {/* Enterprise-workspace twins — reached via the workspace
-             * switcher. Teams is the only page with a divergent Enterprise
-             * build (A/B against Pro); every other route reuses the Pro page
-             * component under the Enterprise chrome, so in-page cross-links
-             * may land back on Pro paths. */}
+             * switcher. Every route reuses the Pro page component under the
+             * Enterprise chrome, so in-page cross-links may land back on Pro
+             * paths. Teams is one build for Pro + Enterprise (the Enterprise
+             * design is the north star); it derives its subtree from the
+             * pathname, so its links stay in-tier. */}
             <Route element={<Dashboard />} path="/overview-enterprise" />
             <Route element={<Requests />} path="/messages-enterprise" />
             <Route
