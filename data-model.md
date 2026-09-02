@@ -1726,7 +1726,7 @@ only for its `TeamsVariant` type).
 team's findings are its largest-remainder share of `eventsTotal(range)`
 (`security/events-data.ts`), weighted by the team's request volume, so the
 seed teams sum EXACTLY to the org page's number at every preset range
-(asserted in `teams.test.ts`; all-time: Default ~686 / Platform ~368 /
+(asserted in `teams.test.ts`; all-time: General (the default team) ~686 / Platform ~368 /
 Design ~161 of 1,215). Outcomes split by the org's 31:14:2
 `splitEventMix`; categories allocate the findings 8:5:3 by `ATTACK_MIX`
 (largest remainder, so they sum EXACTLY to findings, as the org Attack-types
