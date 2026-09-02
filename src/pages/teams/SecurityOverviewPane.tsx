@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -27,15 +27,16 @@ import { Monogram } from "@/components/ui/monogram";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
+  SortableTableHead,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { memberById, type TeamRow } from "@/data/teams";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import {
   formatCompactCount,
   formatNumber,
@@ -60,6 +61,7 @@ import {
 } from "@/pages/teams/SecurityPane";
 import {
   securityForTeamAtRange,
+  type TeamMemberSlice,
   type TeamSecurity,
   teamEventShares,
 } from "@/pages/teams/security-data";
@@ -541,7 +543,27 @@ function CategoryBreakdownCard({
 
 /* ─── 4. By member ─────────────────────────────────────────────────────── */
 
+function memberSortValue(
+  row: TeamMemberSlice,
+  key: string
+): string | number | null {
+  if (key === "label") {
+    return row.label;
+  }
+  if (key === "count") {
+    return row.count;
+  }
+  return row.byCategory[key as keyof typeof row.byCategory] ?? null;
+}
+
 function MemberFindingsSection({ security }: { security: TeamSecurity }) {
+  // Same sort recipe as the Usage tab breakdown tables: one hook per table,
+  // starting in the incoming (events-ranked) order until a header is toggled.
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = useMemo(
+    () => sortRows(security.byMember, sort, memberSortValue),
+    [security.byMember, sort]
+  );
   // A table, not bars: a large team turns a bar-per-person into a wall, and
   // the rows sum exactly to the findings headline either way. Same title +
   // flush-card treatment as the Usage tab's breakdown tables.
@@ -552,9 +574,9 @@ function MemberFindingsSection({ security }: { security: TeamSecurity }) {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <SectionTitle>By member</SectionTitle>
+        <SectionTitle>Events by member</SectionTitle>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          Which members the findings came from, by threat type.
+          Which members the security events came from, by threat type.
         </p>
       </div>
       <Card density="flush">
@@ -571,27 +593,42 @@ function MemberFindingsSection({ security }: { security: TeamSecurity }) {
           <Table className="min-w-[640px] table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[36%] whitespace-nowrap">
+                <SortableTableHead
+                  className="w-[36%] whitespace-nowrap"
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="label"
+                >
                   Member
-                </TableHead>
+                </SortableTableHead>
                 {/* One column per threat type, ATTACK_MIX order: each column
                     sums to the Attack types card above; Findings is the
                     row total, the balance being uncategorized. */}
                 {ATTACK_MIX.map((c) => (
-                  <TableHead
-                    className="w-[16%] whitespace-nowrap text-right"
+                  <SortableTableHead
+                    className="w-[16%] whitespace-nowrap"
                     key={c.key}
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey={c.key}
                   >
                     {c.label}
-                  </TableHead>
+                  </SortableTableHead>
                 ))}
-                <TableHead className="w-[16%] whitespace-nowrap text-right">
-                  Findings
-                </TableHead>
+                <SortableTableHead
+                  className="w-[16%] whitespace-nowrap"
+                  numeric
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="count"
+                >
+                  Events
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {security.byMember.map((row) => (
+              {sortedRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                     <div className="flex min-w-0 items-center gap-2">

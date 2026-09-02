@@ -3,6 +3,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,7 @@ import { IconActionButton } from "@/components/ui/icon-action-button";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { Monogram } from "@/components/ui/monogram";
 import { PageTitle } from "@/components/ui/page-title";
+import { SearchInput } from "@/components/ui/search-input";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
@@ -536,7 +538,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         emptyTitle="No per-user data yet."
         firstColumn="User"
         rows={scaled.byUser}
-        title="Spend by user"
+        title="Spend by member"
       />
       <UsageBreakdown
         avatarFor={modelAvatar}
@@ -673,10 +675,34 @@ function MembersPane({
   onMoveMembers: (ids: string[]) => void;
 }) {
   const [addOpen, setAddOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | RoleOption>("all");
 
   const rows = team.memberIds
     .map((id) => memberById(id))
     .filter((m): m is NonNullable<typeof m> => m !== undefined);
+
+  // Role reads `team.managerIds`, the same source the Role column and the row
+  // select read, so promoting someone to Manager immediately makes them
+  // findable under the Managers filter. Search matches name or email.
+  const visible = rows.filter((m) => {
+    if (
+      roleFilter !== "all" &&
+      team.managerIds.includes(m.id) !== (roleFilter === "manager")
+    ) {
+      return false;
+    }
+    if (!query) {
+      return true;
+    }
+    const q = query.toLowerCase();
+    return (
+      m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+    );
+  });
+
+  const isEmpty = rows.length === 0;
+  const noMatches = !isEmpty && visible.length === 0;
 
   // Candidates stay "every org member not already here" — the PRD does not
   // hide someone because they are placed, it moves them. What changes is that
@@ -697,18 +723,82 @@ function MembersPane({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Toolbar: search + role filter. Sits on the page background above
+          the table Card, the same wrapper the Members page uses, so the two
+          member surfaces read as one pattern. Always rendered: a query that
+          returns zero rows never hides the controls that clear it. Widths are
+          CONTAINER-relative (`@2xl:`, 672px inline-size), not viewport-
+          relative: the Ask AI panel narrows this column without moving the
+          window. Below @2xl the search takes row 1 full-width, the role
+          Select row 2, and Add members row 3. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchInput
+          ariaLabel="Search members"
+          className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
+          onChange={setQuery}
+          placeholder="Search by name or email…"
+          value={query}
+        />
+        <Select
+          onValueChange={(v: string) => setRoleFilter(v as "all" | RoleOption)}
+          value={roleFilter}
+        >
+          <SelectTrigger
+            aria-label="Filter by role"
+            className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+          >
+            <SelectValue placeholder="Role" />
+          </SelectTrigger>
+          <SelectContent>
+            {/* Team role, not org role: no Owner or Admin here. */}
+            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="manager">Managers</SelectItem>
+            <SelectItem value="member">Members</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Add members closes the row on the right. `variant="default"` is
+            the primary button, matching the Members page's "Invite member",
+            since adding people is this tab's one forward action.
+            `size="default"` is the h-9 Button, the same 36px as the h-9
+            default SelectTrigger beside it, so the two boxes share a
+            baseline. The wrapper is `contents` at @2xl, which makes the
+            Button a direct flex child there and lets its own `ml-auto` push
+            it to the right edge. Below @2xl the wrapper is a full-width
+            right-aligned row of its own, so a wrap drops the button under
+            the Select instead of squeezing it. */}
+        <div className="flex @2xl:contents w-full justify-end">
+          <Button
+            className="ml-auto"
+            onClick={() => setAddOpen(true)}
+            size="default"
+            variant="default"
+          >
+            <Plus aria-hidden data-icon="inline-start" />
+            Add member
+          </Button>
+        </div>
+      </div>
+
       <Card density="flush">
-        {rows.length === 0 ? (
+        {isEmpty && (
           <TableEmptyState
             action={
               <Button onClick={() => setAddOpen(true)} size="default">
-                Add members
+                Add member
               </Button>
             }
             body="This team has no members yet."
             title="No members"
           />
-        ) : (
+        )}
+        {noMatches && (
+          <TableEmptyState
+            body="No members match your search or filter. Try a different name or email."
+            title="No members match"
+          />
+        )}
+        {visible.length > 0 && (
           // Wider than the other two tables, and re-proportioned when the role
           // cell became a control: the cell has to clear the 112px trigger
           // plus its 24px of padding, which 26% of 620px does and 22% of
@@ -729,7 +819,7 @@ function MembersPane({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((member) => (
+              {visible.map((member) => (
                 <TableRow key={member.id}>
                   {/* py-0 on the two control-bearing cells (Monogram row,
                       role Select): the 28-32px controls would otherwise add
@@ -754,16 +844,27 @@ function MembersPane({
                   <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
                     {/* Owner renders static; everyone else gets the role
                         select. Manager returned to the options 2026-09-01
-                        (reversing the 8-31 org-roles-only ruling): the
-                        initial value derives from the team's seeded
-                        managerIds, the same source the list's Manager
-                        column reads, so the two can never disagree. */}
+                        (reversing the 8-31 org-roles-only ruling): the value
+                        both reads and writes the team's managerIds, the same
+                        source the list's Manager column and this tab's role
+                        filter read, so the three can never disagree. */}
                     {member.role === "owner" ? (
                       "Owner"
                     ) : (
                       <MemberRoleSelect
                         isManager={team.managerIds.includes(member.id)}
                         member={member}
+                        onChange={(role) => {
+                          const without = team.managerIds.filter(
+                            (id) => id !== member.id
+                          );
+                          onPatch({
+                            managerIds:
+                              role === "manager"
+                                ? [...without, member.id]
+                                : without,
+                          });
+                        }}
                       />
                     )}
                   </TableCell>
@@ -806,18 +907,6 @@ function MembersPane({
         )}
       </Card>
 
-      {/* The empty card carries the CTA (building the team starts there), so
-          the footer button only appears once rows exist — two "Add members"
-          affordances on one empty tab would be duplication. */}
-      {rows.length === 0 ? null : (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button onClick={() => setAddOpen(true)} variant="outline">
-            <Plus aria-hidden data-icon="inline-start" />
-            Add members
-          </Button>
-        </div>
-      )}
-
       <AddMembersDialog
         onAdd={(ids) => {
           onMoveMembers(ids);
@@ -831,9 +920,10 @@ function MembersPane({
   );
 }
 
-/** Org role control, mirrored from the Team page's row control: Admin or
- *  Member, capitalized. Local state only, same as the Team page — the mock
- *  has no org-mutation layer for roles. */
+/** Org role control, mirrored from the Team page's row control. Unlike that
+ *  one it holds no state: the value is derived from the team's `managerIds`
+ *  and a change writes straight back through `onPatch`, so the Role column,
+ *  this control and the toolbar's role filter all read one source. */
 /** The row control is the TEAM role only (AG-514's member|manager enum).
  *  Org roles (Owner/Admin/Member) live on the Members page — blending the
  *  two axes in one select hid Kira's org-Admin behind her Manager reading
@@ -843,16 +933,18 @@ type RoleOption = "manager" | "member";
 function MemberRoleSelect({
   member,
   isManager,
+  onChange,
 }: {
   member: MemberRow;
-  /** Seeded via the team's `managerIds` — the list column's source. */
+  /** Read from the team's `managerIds`, the list column's source. */
   isManager: boolean;
+  onChange: (role: RoleOption) => void;
 }) {
-  const [role, setRole] = useState<RoleOption>(
-    isManager ? "manager" : "member"
-  );
   return (
-    <Select onValueChange={(v) => setRole(v as RoleOption)} value={role}>
+    <Select
+      onValueChange={(v) => onChange(v as RoleOption)}
+      value={isManager ? "manager" : "member"}
+    >
       <SelectTrigger
         aria-label={`Role for ${member.name}`}
         className="w-28 border-border bg-card text-foreground"
@@ -884,10 +976,30 @@ function KeysPane({
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<ApiKeyRow | null>(null);
+  const [query, setQuery] = useState("");
 
   const rows = team.keyIds
     .map((id) => keyById(id))
     .filter((k): k is NonNullable<typeof k> => k !== undefined);
+
+  // Search only. Status is the one other axis on this table and the seed
+  // carries no revoked team keys, so a role-style Select would have nothing
+  // to filter. Matches the key name or the owning member's name, the two
+  // things a reader scans this table for.
+  const visible = rows.filter((k) => {
+    if (!query) {
+      return true;
+    }
+    const q = query.toLowerCase();
+    const owner = memberById(k.ownerId);
+    return (
+      k.name.toLowerCase().includes(q) ||
+      (owner?.name.toLowerCase().includes(q) ?? false)
+    );
+  });
+
+  const isEmpty = rows.length === 0;
+  const noMatches = !isEmpty && visible.length === 0;
 
   // Every assignable key that is not already HERE, the way the Members picker
   // offers every member not already here: a key on another team is not hidden,
@@ -909,8 +1021,42 @@ function KeysPane({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Same toolbar the Members tab uses, minus the Select: search on the
+          left, the tab's one forward action on the right. Always rendered, so
+          a query that returns zero rows never hides the control that clears
+          it. Widths are CONTAINER-relative (`@2xl:`, 672px inline-size), not
+          viewport-relative, so the Ask AI panel narrows this column without
+          moving the window. Below @2xl the search takes row 1 full-width and
+          Add keys row 2. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchInput
+          ariaLabel="Search keys"
+          className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
+          onChange={setQuery}
+          placeholder="Search by key or member…"
+          value={query}
+        />
+        {/* Sequential build gate (user direction 2026-09-01) still applies:
+            the team is built Members-first, so the CTA stays withheld until
+            the roster has someone. It is the same gate the empty card's
+            action carries, just read here too. */}
+        {team.memberIds.length > 0 ? (
+          <div className="flex @2xl:contents w-full justify-end">
+            <Button
+              className="ml-auto"
+              onClick={() => setAddOpen(true)}
+              size="default"
+              variant="default"
+            >
+              <Plus aria-hidden data-icon="inline-start" />
+              Add key
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
       <Card density="flush">
-        {rows.length === 0 ? (
+        {isEmpty && (
           <TableEmptyState
             action={
               // Sequential build gate (user direction 2026-09-01): the team
@@ -918,7 +1064,7 @@ function KeysPane({
               // roster has someone. Same gate on the Budget tab's CTA.
               team.memberIds.length > 0 ? (
                 <Button onClick={() => setAddOpen(true)} size="default">
-                  Add keys
+                  Add key
                 </Button>
               ) : undefined
             }
@@ -936,7 +1082,14 @@ function KeysPane({
             }
             title="No keys"
           />
-        ) : (
+        )}
+        {noMatches && (
+          <TableEmptyState
+            body="No keys match your search. Try a different key or member name."
+            title="No keys match"
+          />
+        )}
+        {visible.length > 0 && (
           // Five columns now carry content (name, member, prefix, status,
           // last used), so the min-width steps up from 640 to 760 — the
           // Member cell carries a Monogram plus a full name and cannot take
@@ -948,10 +1101,10 @@ function KeysPane({
                 <TableHead className="w-[22%] whitespace-nowrap">
                   Prefix
                 </TableHead>
-                <TableHead className="w-[24%] whitespace-nowrap">
+                <TableHead className="w-[22%] whitespace-nowrap">
                   Member
                 </TableHead>
-                <TableHead className="w-[12%] whitespace-nowrap">
+                <TableHead className="w-[14%] whitespace-nowrap">
                   Status
                 </TableHead>
                 <TableHead className="w-[20%] whitespace-nowrap">
@@ -961,7 +1114,7 @@ function KeysPane({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => {
+              {visible.map((row) => {
                 // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
                 // same source the Members tab reads, so the two tabs can
                 // never name the same person differently.
@@ -1000,8 +1153,16 @@ function KeysPane({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                      Active
+                    {/* Same Badge + variant pair the org API Keys table
+                      uses for key status, so the two surfaces read
+                      identically. The 20px badge sits inside the default
+                      py-3 rhythm, so no py-0 is needed here. */}
+                    <TableCell className="whitespace-nowrap">
+                      {row.revoked ? (
+                        <Badge variant="neutral">Revoked</Badge>
+                      ) : (
+                        <Badge variant="success">Active</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                       <Timestamp
@@ -1037,17 +1198,6 @@ function KeysPane({
           </Table>
         )}
       </Card>
-
-      {/* Footer button only once rows exist — the empty card owns the CTA
-          (and withholds it until the team has members). */}
-      {rows.length === 0 ? null : (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button onClick={() => setAddOpen(true)} variant="outline">
-            <Plus aria-hidden data-icon="inline-start" />
-            Add keys
-          </Button>
-        </div>
-      )}
 
       <AddKeysDialog
         onAdd={(ids) => {

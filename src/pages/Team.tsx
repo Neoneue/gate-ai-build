@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FilterToolbar } from "@/components/ui/filter-toolbar";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,9 +48,18 @@ import {
 } from "@/data/team-members";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { authoredDate } from "@/lib/demo-clock";
 import { cn } from "@/lib/utils";
 
-const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00 local
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Invitations expire 7 days after they were sent. */
+function inviteExpiry(sent: Date): Date {
+  return new Date(sent.getTime() + INVITE_TTL_MS);
+}
+
+const INV_01_SENT = authoredDate(2026, 5, 5);
+const INV_02_SENT = authoredDate(2026, 5, 4);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WHITESPACE_RE = /\s+/;
@@ -237,58 +245,58 @@ function MembersPane() {
 
   return (
     <>
-      <Card density="flush">
-        {/* Toolbar — search + role filter. Sits as direct child of Card
-          (density="flush"); paddings cascade from the toolbar's own
-          px-4/py-3 plus Card's edge-flush contract. Filter pills follow
+      <div className="flex flex-col gap-4">
+        {/* Toolbar: search + role filter. Sits on the page background above
+          the table Card, the same wrapper AuditTrail / Conversations /
+          ApiKeys use, so Members is no longer the one table with a toolbar
+          fused to its header. Always rendered: a query that returns zero
+          rows never hides the controls that clear it. Filter pills follow
           the codified no-leading-icon rule for dense table toolbars.
           Widths are CONTAINER-relative (`@2xl:`, 672px inline-size), not
           viewport-relative: the Ask AI panel narrows this column without
-          moving the window, so `md:` used to keep both controls crammed
-          on one line. Below @2xl the search takes row 1 full-width and
-          the role Select fills row 2. */}
-        {isEmpty ? null : (
-          <FilterToolbar>
-            <SearchInput
-              ariaLabel="Search members"
-              className="@2xl:w-96 w-full"
-              onChange={setQuery}
-              placeholder="Search by name or email…"
-              value={query}
-            />
-            <Select
-              onValueChange={(v: string) =>
-                setRoleFilter(v as "all" | MemberRole)
-              }
-              value={roleFilter}
-            >
-              <SelectTrigger
-                aria-label="Filter by role"
-                className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
-              >
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="owner">Owners</SelectItem>
-                <SelectItem value="admin">Admins</SelectItem>
-                <SelectItem value="member">Members</SelectItem>
-              </SelectContent>
-            </Select>
-          </FilterToolbar>
-        )}
-
-        {isEmpty ? (
-          <TableEmptyState
-            body="No members match your search or filter. Try a different name or email."
-            title="No members match"
+          moving the window. Below @2xl the search takes row 1 full-width
+          and the role Select fills row 2. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchInput
+            ariaLabel="Search members"
+            className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
+            onChange={setQuery}
+            placeholder="Search by name or email…"
+            value={query}
           />
-        ) : (
-          <>
-            <Table className="min-w-[680px] table-fixed">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  {/* `table-fixed` + percentage widths on the header row is the
+          <Select
+            onValueChange={(v: string) =>
+              setRoleFilter(v as "all" | MemberRole)
+            }
+            value={roleFilter}
+          >
+            <SelectTrigger
+              aria-label="Filter by role"
+              className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+            >
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              <SelectItem value="owner">Owners</SelectItem>
+              <SelectItem value="admin">Admins</SelectItem>
+              <SelectItem value="member">Members</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Card density="flush">
+          {isEmpty ? (
+            <TableEmptyState
+              body="No members match your search or filter. Try a different name or email."
+              title="No members match"
+            />
+          ) : (
+            <>
+              <Table className="min-w-[680px] table-fixed">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    {/* `table-fixed` + percentage widths on the header row is the
                 load-bearing pattern: with auto layout the browser hands
                 slack to whichever cell can grow most (Member, since the
                 stacked email is the widest content), producing one
@@ -296,56 +304,57 @@ function MembersPane() {
                 layout reads widths off the header alone and gives every
                 column a deliberate share. Member gets the largest share
                 to fit avatar + name + email. */}
-                  <SortableTableHead
-                    className="w-[40%] whitespace-nowrap"
-                    onSort={toggleSort}
-                    sort={sort}
-                    sortKey="member"
-                  >
-                    Member
-                  </SortableTableHead>
-                  <SortableTableHead
-                    className="w-[22%] whitespace-nowrap"
-                    onSort={toggleSort}
-                    sort={sort}
-                    sortKey="joined"
-                  >
-                    Joined
-                  </SortableTableHead>
-                  <SortableTableHead
-                    className="w-[28%] whitespace-nowrap"
-                    onSort={toggleSort}
-                    sort={sort}
-                    sortKey="role"
-                  >
-                    Role
-                  </SortableTableHead>
-                  <TableHead className="w-[10%] whitespace-nowrap pr-4 pl-0 text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedRows.map((row) => (
-                  <MemberRowView
-                    key={row.id}
-                    onRemove={setPendingRemove}
-                    row={row}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+                    <SortableTableHead
+                      className="w-[40%] whitespace-nowrap"
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="member"
+                    >
+                      Member
+                    </SortableTableHead>
+                    <SortableTableHead
+                      className="w-[22%] whitespace-nowrap"
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="joined"
+                    >
+                      Joined
+                    </SortableTableHead>
+                    <SortableTableHead
+                      className="w-[28%] whitespace-nowrap"
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="role"
+                    >
+                      Role
+                    </SortableTableHead>
+                    <TableHead className="w-[10%] whitespace-nowrap pr-4 pl-0 text-right">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedRows.map((row) => (
+                    <MemberRowView
+                      key={row.id}
+                      onRemove={setPendingRemove}
+                      row={row}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
 
-            <TablePaginationFooter
-              onPageChange={setPage}
-              onRowsPerPageChange={setRowsPerPage}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              total={MEMBER_ROWS.length}
-            />
-          </>
-        )}
-      </Card>
+              <TablePaginationFooter
+                onPageChange={setPage}
+                onRowsPerPageChange={setRowsPerPage}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={MEMBER_ROWS.length}
+              />
+            </>
+          )}
+        </Card>
+      </div>
 
       <Dialog
         onOpenChange={(open) => {
@@ -473,17 +482,17 @@ const INVITATION_ROWS: InvitationRow[] = [
     id: "inv_01",
     email: "marcus.cho@acme.io",
     invitedBy: "Chad Ponticas",
-    sent: new Date(2026, 4, 7),
+    sent: INV_01_SENT,
     role: "member",
-    expires: new Date(NOW.getTime() + 6 * 24 * 60 * 60 * 1000),
+    expires: inviteExpiry(INV_01_SENT),
   },
   {
     id: "inv_02",
     email: "priya.iyer@ebux.com",
     invitedBy: "Kira Tan",
-    sent: new Date(2026, 4, 6),
+    sent: INV_02_SENT,
     role: "admin",
-    expires: new Date(NOW.getTime() + 5 * 24 * 60 * 60 * 1000),
+    expires: inviteExpiry(INV_02_SENT),
   },
 ];
 
@@ -607,7 +616,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
                 {ROLE_LABEL[row.role]}
               </TableCell>
               <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                <Timestamp anchor={NOW} date={row.expires} format="relative" />
+                <Timestamp date={row.expires} format="relative" />
               </TableCell>
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                 <RowActionsMenu
