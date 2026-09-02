@@ -59,6 +59,30 @@ new derived tokens `--chart-{1,2,3,4}-soft = color-mix(in oklch,
 var(--chart-N), white 20%)` as the lighter end. Where: `src/index.css`
 (`:root`, `.dark`, `@theme`), design.md "Data bars & meters".
 
+### Demo clock: every authored date shifts onto the real calendar `d3cf779` `4fe91ce`
+
+Before: eight independent "now" anchors (Apr 27 chart axes, May 12 hero
+anchors, May 16 audit and invite `NOW`, Jun 6 notifications, Jun 15
+sparkline today) and three date storage shapes, all pinned to spring 2026,
+so the site read as months stale. After: one module, `src/lib/demo-clock.ts`,
+maps the authored latest activity day (Jun 6) onto real YESTERDAY at load
+and applies a whole-day offset at construction. Seed rows use
+`authoredDate(...)`, the 75 security ISO strings shift inside
+`parseEventTime`, the 153 Messages `day` / `time` strings shift at read via
+`requestDate` / `requestDayLabel` / `requestTimeLabel` (row literals and
+`requestRowId` seeds untouched, so findings URLs do not move), and every
+chart axis re-anchors to `DEMO_NOW` / `DEMO_TODAY`. Runtime `new Date()`
+sites stay real; `models.ts` `releasedAt` and transcript text do not shift.
+Authored distances are preserved, so May 12 content lands about 25 days
+before yesterday. Invites re-dated to 2 and 3 days before yesterday with a
+7-day expiry (`Team.tsx`, in `35c37d8`). `BILLING_PERIOD_END` moves to
+`src/data/billing-history.ts`. Where: `src/lib/demo-clock.ts` (+ test),
+`src/data/*`, `src/pages/security-data.ts`, `src/pages/security/events-data.ts`,
+`src/pages/requests/*`, `src/pages/activity/chart-helpers.ts`,
+`src/pages/Dashboard.tsx`, `src/pages/Conversations.tsx`,
+`src/pages/TokenSavings.tsx`, `src/pages/Billing.tsx`,
+`src/pages/cancel-plan-dialog.tsx`, `data-model.md` 5.2a.
+
 ## Components
 
 ### Budget bars fill with success / warning gradients `f78bb14`
@@ -241,3 +265,46 @@ Before: widths 27/25/15/15/15/3, the 3% Actions column (about 26px at the
 fade inside the 1024px cap. After: 28/18/15/13/16/10, Invited by paying
 for a 10% Actions column to match the Members tab. Where:
 `src/pages/Team.tsx`.
+
+### Members page: full-width search, toolbar leaves the card `35c37d8`
+
+Before: `SearchInput` capped at `@2xl:w-96` inside a `FilterToolbar` fused
+to the table Card header, hidden when a query returned nothing; the only
+table on the site with a toolbar attached to its card. After: the search
+takes the shared `@2xl:w-auto w-full min-w-0 @2xl:flex-1` recipe, and the
+search + role Select sit on the page background above `Card density="flush"`
+in the same `flex flex-col gap-4` wrapper AuditTrail / Conversations use,
+always rendered. Where: `src/pages/Team.tsx`.
+
+### Enterprise team detail: Members and Keys toolbars, primary Add buttons `35c37d8`
+
+Before: bare tables with an outline "Add members" / "Add keys" button below
+the card. After: the Members page toolbar pattern above each Card. Members
+tab: search by name or email plus a team-role Select (All roles / Managers /
+Members); the row `MemberRoleSelect` now derives from and writes through to
+`team.managerIds` via `onPatch`, so the Role column, the row select and the
+filter read one source. Keys tab: search by key or member name, no Select
+(Status is the only axis and the seed has no revoked team keys). Both: the
+button moves into the toolbar row at the far right with `ml-auto`, primary
+`variant="default"`, `size="default"` (h-9, matching the SelectTrigger), and
+reads "Add member" / "Add key" (singular, also on the empty-state CTAs). New
+"No members match" / "No keys match" `TableEmptyState`s for filtered-to-zero.
+Where: `src/pages/TeamDetailEnterprise.tsx`.
+
+### Enterprise Keys tab: Status renders the ApiKeys badge `35c37d8`
+
+Before: plain "Active" text at widths 22/22/24/12/20. After: the same
+`Badge` the API Keys page uses (`success` ACTIVE / `neutral` REVOKED,
+reading `row.revoked`), widths 22/22/22/14/20 so the badge has room, min-w
+760 unchanged. Where: `src/pages/TeamDetailEnterprise.tsx`.
+
+### Enterprise Usage and Security tabs: member wording, sortable events table `35c37d8`
+
+Before: Usage "Spend by user"; Security block titled "By member" with a
+"Findings" total and a findings subtitle, plain headers. After: "Spend by
+member"; "Events by member", subtitle "Which members the security events
+came from, by threat type.", total column "Events" (the tile says events and
+the column sums to it), and `SortableTableHead` on every header (Member by
+name, the three threat types and Events by amount) via the `useTableSort` +
+`sortRows` recipe the Usage tables already use. Where:
+`src/pages/TeamDetailEnterprise.tsx`, `src/pages/teams/SecurityOverviewPane.tsx`.

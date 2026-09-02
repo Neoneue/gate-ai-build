@@ -31,6 +31,11 @@ tokens; this index exists so nothing has to glob the directory.
 - Enterprise Budget tab: stacked per-window cards, tables leave
 - Enterprise team Members tab: Status becomes Joined
 - Members page Invitations table: Actions column no longer overflows
+- Demo clock: every authored date shifts onto the real calendar
+- Members page: full-width search, toolbar leaves the card
+- Enterprise team detail: Members and Keys toolbars, primary Add buttons
+- Enterprise Keys tab: Status renders the ApiKeys badge
+- Enterprise Usage and Security tabs: member wording, sortable events table
 
 ## August 2026
 
