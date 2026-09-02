@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { SkeletonText } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -35,17 +36,32 @@ const heroNumericVariants = cva(
 );
 
 export type HeroNumericProps = React.HTMLAttributes<HTMLDivElement> &
-  VariantProps<typeof heroNumericVariants>;
+  VariantProps<typeof heroNumericVariants> & {
+    /** Swap the number for a skeleton bar of the same line box while the
+     *  value is in flight. Optional and off by default, so no existing
+     *  consumer changes. The wrapper keeps its typography classes, so the
+     *  height and the baseline any `items-baseline` sibling aligns to are
+     *  identical loading and loaded. */
+    loading?: boolean;
+  };
 
 export function HeroNumeric({
   size,
+  loading = false,
   className,
   children,
   ...props
 }: HeroNumericProps) {
   return (
     <div className={cn(heroNumericVariants({ size, className }))} {...props}>
-      {children}
+      {loading ? (
+        <SkeletonText
+          className={size === "lg" ? "w-32" : "w-24"}
+          size={size === "lg" ? "heroLg" : "hero"}
+        />
+      ) : (
+        children
+      )}
     </div>
   );
 }

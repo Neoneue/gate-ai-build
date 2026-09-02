@@ -1520,18 +1520,24 @@ Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
 when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
 menu is Rename / Delete, both disabled on Default. Deleting folds the team's
 members and keys into Default AND appends a `{ id, name, spend }` snapshot to
-page-local `deletedTeams`, rendered below the table as a "Deleted teams
-(historical usage)" card — the mock's stand-in for soft-deleted teams keeping
-their historical attribution.
+page-local `deletedTeams`, rendered below the table under an "Archived teams"
+section title (title above a flush card; columns Team /
+Deleted on / Total spend at 46 / 30 / 24, plain team name, `Timestamp` default
+format on a wall-clock `deletedAt`) — the mock's stand-in for soft-deleted
+teams keeping their historical attribution.
 
 **Detail page.** BackLink → the list twin, H1 = team name, header-right
 Rename (outline) + Delete (destructive) buttons on non-default teams, then
-five tabs (Enterprise order since 2026-09-01: Members, Keys, Budget, Usage,
-Security, Members default, management before data; Pro keeps Usage first):
+the tab strip (Enterprise order since 2026-09-01: Members, Keys, Budget,
+Usage, Security, Policies, Token savings, Settings — Members default,
+management before data; Pro keeps Usage first and has only its first five):
 Usage (spend + requests KPI pair, sortable "Spend by user" and
 "Usage by model" tables — "user" not "member", because a spend row can
 outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
-Budget, Security.
+Budget, Security, Policies + Token savings (Enterprise only, added
+2026-09-02 — see the two blocks below), Settings. `TabId` is the whitelist;
+there is no `?tab=` deep-link on this page, so adding a tab is a one-line
+union change plus the trigger and content.
 
 **Enterprise deltas (2026-08-31).** `TeamsEnterprise.tsx` /
 `TeamDetailEnterprise.tsx` are the A/B sandbox — ALL Teams UI work lands
@@ -1577,7 +1583,26 @@ the shared starting point, not a store.
 
 **Types** (`src/data/teams.ts`): `TeamRow`, `TeamBudget`, `BudgetWindow`
 (`'5h' | 'weekly' | 'monthly'`), `BudgetEnforcement` (`'soft' | 'hard'`),
-`TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`.
+`TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`,
+`TeamSavings`.
+
+**Team-scoped policies + savings (2026-09-02, AG-624 / PRD 8.5).** Two
+fields on `TeamRow`, both non-optional and both seeded from the ORG
+defaults so no team diverges until someone edits it:
+
+- `policies: PolicyState[]` — the same array the org Policies page edits
+  (`PolicyState` from `src/pages/policies/config.ts`: `id`, `enabled`,
+  `sensitivity?`, `scanDirection?`, `action`). Seed = `TEAM_POLICIES_SEED`,
+  which IS `INITIAL_POLICIES`.
+- `savings: TeamSavings` — `{ compression: boolean; caching: boolean;
+  cacheTtl: string }`, `cacheTtl` one of the Token savings page's
+  `TTL_OPTIONS` values. Seed = `TEAM_SAVINGS_SEED` (compression + caching
+  on, `1h`).
+
+Pages own mutation, exactly like `budget`: the panes are controlled
+surfaces and every edit hands the whole value back up to
+`TeamDetailEnterprise`'s `patch()`, which writes it into the shared
+`teams-store` row. Pro twins ignore both fields.
 
 **Team join date (2026-09-01).** `TeamRow.memberJoined?: Record<memberId,
 Date>` is when a member joined THIS team, distinct from `MemberRow.joined`
@@ -1636,11 +1661,24 @@ layer owns:
   target gains nothing until new traffic exists (none does, in mock data).
   By-user rows carry `former: true` when the spender is no longer on the
   team and split into "Usage by current members" / "Usage by past members"
-  (the latter only when non-empty). By-user rows also carry `tokensIn` /
+  (the latter only when non-empty); `TeamMemberSlice.former` does the same
+  for the Enterprise Security tab's "Events by current members" /
+  "Events by past members" pair. By-user rows also carry `tokensIn` /
   `tokensOut` (summed from the member's key rows; `scaleUsage` settles in
   onto the scaled in-total and out onto the remainder, so in + out equals
-  the Tokens Used tile); the member tables show Member / Messages / Tokens
-  in / Tokens out / Spend. `deleteTeam(teams, id)` folds
+  the Tokens Used tile) and `saved` (the member's 7d savings RATE — the
+  token-weighted mean of `ApiKeyRow.savings` across their keys on this team,
+  the same weighting that defines `ACTIVITY_SAVINGS_RATE_7D`; a rate, so
+  `scaleUsage` carries it through untouched and `teamSavedPercent(saved,
+  range, customRange)` moves it onto the selected window exactly as
+  Activity's Saved column does). The member tables show Member / Messages /
+  Tokens in / Tokens out / **Saved** / Spend at `table-fixed` widths
+  20/16/16/16/16/16 (added 2026-09-02); the model table is unchanged at
+  Model / Messages / Spend, 52/24/24. Saved is sortable (`sortKey="saved"`,
+  sort value = the percent or **-1** so rate-less rows sort last), always
+  ONE decimal, and a member with no rate renders an **empty** cell — no dash
+  and no "0.0%", since a measured zero and no measurement are different
+  facts. `deleteTeam(teams, id)` folds
   members and keys into Default through the same helpers, then drops the
   team, so Default never inherits the deleted team's spend and the org total
   falls by it (PM decision 2026-09-02: delete removes the team's history).
@@ -1686,10 +1724,12 @@ utilization. The Org budget card was removed from the Teams list the same
 day (meeting decision: confusion/duplication); `teamsStore.orgBudget` still
 exists, unrendered.
 
-**Budget thresholds (2026-08-31).** `warnThreshold` only — the shipped schema
-(`warn_threshold_pct`, migration 170) carries no block threshold; a hard
-budget blocks at the cap itself. The mock dropped its earlier
-PRD-sketched `blockThreshold` field to match. The dialog's window picker is a
+**Budget thresholds (2026-08-31, form 2026-09-02).** The form edits
+`warnThreshold` only — the shipped schema (`warn_threshold_pct`, migration
+170) carries no block threshold; a hard budget blocks at the cap itself.
+`TeamBudget.blockThreshold` stays in the type (default 100, feeds
+`budgetBlockPoint`) but the dialog's "Block threshold" input was removed on
+user direction, so every saved budget carries 100. The dialog's window picker is a
 quick-pick preset: selecting a window fills its amount from
 `BUDGET_WINDOW_DEFAULT_AMOUNT` (5h $25 / weekly $200 / monthly $500, always
 editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
@@ -1796,13 +1836,118 @@ horizontal-bar cards; By member as a table with one column per threat type
 (ATTACK_MIX order) plus an Events total: `TeamMemberSlice.byCategory`, each
 column allocated by member request weight so it sums EXACTLY to the Attack
 types card; the row total IS the sum of its three columns, so rows, columns
-and the headline all reconcile (test-guarded in `teams.test.ts`).
+and the headline all reconcile (test-guarded in `teams.test.ts`). The
+by-member block is TWO of that table (2026-09-02), mirroring the Usage tab:
+"Events by current members" (`!former`) then, only when a former member has
+events, "Events by past members" — PRD 3's immutable history, so a member
+who moved out keeps the events they generated here. Each table owns its own
+`useTableSort()`, so the two sort independently.
 REMOVED 2026-09-01 against PRD
 8.4 (counts by type and verdict only): the "What this covers" summary card
 (explanatory UI) and the "By pipeline stage" tiles (the dev build's
 request/output scan-phase GROUP BY, no PRD sentence). The data layer still
 computes `byStage` / `checks`; nothing renders them on Enterprise. Counts
 and labels only — neither pane renders prompt or response text.
+
+**Policies tab** (Enterprise only, added 2026-09-02;
+`src/pages/teams/PoliciesPane.tsx` → `TeamPoliciesPane`). AG-624 / PRD 8.5
+"team-level policies". The org Policies page's **Pro body**, cloned into a
+pane the way `SecurityOverviewPane.tsx` cloned the org Security page: the
+`PolicyCard` stack (three collapsed cards — Prompt injection, PII / PHI,
+Credentials — each opening to an enable card, an "Action on detection"
+radio panel and a Sensitivity slider or Scan-direction segmented, plus the
+`DetailCard` explainer) with `PolicyCard` / `SettingsHalf` / `DetailCard` /
+`ActionHalf` and every config table (`POLICIES`, `ICON_COLOR`,
+`ACTION_*`, `SCAN_DIRECTION_*`, `DEFAULT_ACTION`, `FREE_TOGGLE_CARD`'s
+copy) shared with the org page via `src/pages/policies/config.ts` — one
+source, so a policy added there appears on both. DROPPED in the clone:
+`DashboardChrome`, `PageTitle` + intro copy, `FreePlanNoticeBanner`,
+`ProBenefitsCard`, the `variant` prop and every `variant === "free"`
+branch; the org page's Free-named `FreeToggleCard` survives as
+`PolicyEnableCard` (identical markup, minus the Free-only `badge` slot)
+because it carries the enable toggle. Props are `{ team, onChange }`;
+state reads `team.policies` and every toggle / sensitivity / scanDirection
+/ action edit calls `onChange` with a new array. No KPI rail (the org
+page's is commented out too).
+
+**Token savings tab** (Enterprise only, added 2026-09-02;
+`src/pages/teams/TokenSavingsPane.tsx` → `TeamTokenSavingsPane`). AG-624 /
+PRD 8.5 "compression settings". The org Token savings page's Pro body:
+"Overview" `SectionTitle` + `RANGE_OPTIONS` pill + `DateRangePicker`
+(defaults All, no `?range=` read — the tab is not a deep-link target), a
+3-column `KpiRail` (Total saved / Caching / Compression), then "Savings
+options" = the Compression card (Advanced card in its already-entitled
+shape: neutral chrome, enable Switch instead of an Upgrade CTA, blue Pro
+badge + blue benefit checks retained) and the Caching card (enable Switch +
+TTL `Select`). DROPPED: chrome, `PageTitle`, the `plan` prop, the Free
+`basicCard` + `FREE_COMPRESSION_BENEFITS`, `SavingsHeadline` (a Free-only
+upsell hook), `PlanComparisonDialog`, `useNavigate`, `useSearchParams`.
+Props are `{ team, teams, onChange }`; the compression / caching switches
+and the TTL select read `team.savings` and call `onChange`, keeping the org
+page's `toast` on every change.
+
+Tiles come from `teamSavingsKpis(team, teams, effectiveRange)`
+(`src/pages/teams/savings-data.ts`, tested in `savings-data.test.ts`), NOT
+the org `KPI_BY_RANGE`. Savings is a RATE, so it does not scale with
+traffic share the way spend does; the one fiction, single-sourced there, is
+that a team's rates follow its prompt size — compression scales with the
+team's average tokens per message relative to the org, caching scales
+inversely, both clamped to 0.6–1.4 so no team drifts far from the org
+canon. A component the team has switched OFF is zeroed, and Total saved is
+the per-point SUM of the caching and compression sparks, so the three tiles
+reconcile by construction and flipping a switch visibly moves the rail
+(charts-must-reconcile). `token-savings-data.ts` was extracted from
+`TokenSavings.tsx` the same day so both surfaces share `KPI_BY_RANGE`,
+`RANGE_OPTIONS`, `RANGE_DELTA_NOTE`, `SPARK_STOPS`, `resampleSpark`,
+`sparkDates`, `sparkDelta` and the `PresetRange` / `Range` / `CustomRange`
+/ `SavingsKpi` types.
+
+**Not in this phase** (do not infer from the AG-624 ticket text): org-level
+forced settings, the org → team lock cascade, the locked read-only
+rendering with "who set this", and the not-entitled state. Both panes are
+live, editable, Enterprise-only — no Free or Pro twin, no plan-comparison
+dialog, no upsell card.
+
+**Loading states (2026-09-02, AG-695 item 10).** `src/pages/teams/use-theatre-loading.ts`
+holds the whole mechanism:
+
+- `TEAMS_LOADING_THEATRE_MS = 2000` and `useTheatreLoading(): boolean` —
+  `true` on mount, `false` after the delay (`useState` + `useEffect` with a
+  cleared timeout). This is **demo theatre**: the Teams data is a synchronous
+  seed, so without a delay no skeleton would ever be seen. In the real app
+  the hook's return is replaced by the query's `isLoading` and **nothing else
+  changes** — every consumer already takes `loading` as a plain boolean.
+- **One call per PAGE mount, never per pane.** `TeamsEnterprise` calls it once
+  and passes `loading` to `TeamsTable`. `TeamDetailEnterprise` calls it once in
+  the page body and passes `loading` down to `TeamDetailBody` and on to every
+  pane as a prop, so **switching tabs does not restart the skeletons** — a
+  per-pane hook would re-run the wait on every tab click.
+- `skeletonRowIds(realRowCount)` — stable keys for skeleton table rows, one
+  per real row, floored at one. Matching the real count is what keeps the
+  swap free of layout shift on every table (measured 0px, 2026-09-02); a
+  real implementation renders its page size here instead.
+- The hook lives in its own `.ts` module because
+  `react-refresh/only-export-components` forbids a non-component export from a
+  component file.
+
+Which surfaces skeleton, and which deliberately do not:
+
+| Surface | Skeletoned | Not skeletoned |
+| --- | --- | --- |
+| `TeamsEnterprise` — Your teams table | every cell: name, Members, Keys, Manager, Spend, the budget meter track + caption, the row-action square | column heads, page title, Create team. **Archived teams** card (session-only, cannot be mid-fetch) |
+| `TeamDetailEnterprise` — Members tab | name + 16px avatar disc, the 32px role-`Select` box, Joined, the 24px remove square (absent on Default, as in the real row) | search, role filter, Add member, tab counts |
+| Keys tab | key, prefix, member + disc, a badge-shaped Status box, Last used, remove square | search, Add key |
+| Budget tab | `BudgetSummary` — meter fill, its two readings, and the **Remaining** fact | the cap / Enforcement / Warn at / Block at / Window facts (budget _configuration_, already known), card titles, reset copy, the header status badge, `BudgetBreachBanner` |
+| Usage tab | three `CompactKpi` values + sparklines; every `UsageBreakdown` cell, Saved included | range pill + custom picker, section titles, column heads |
+| Security tab (`SecurityOverviewPane`) | `HeroNumeric` + `DeltaTag`, the area-chart plot area (same `h-24` box), Action- and Attack-types bars + counts + labels, both member tables | range chrome, card titles / descriptions, the bar **tracks**, the tier `GuardrailEmptyState` (an entitlement answer, not a fetch) |
+| Token savings tab (`TokenSavingsPane`) | the three `KpiTile` values, deltas and sparklines | the `%` unit; the Compression and Caching cards — controls reading `team.savings`, not readings of traffic |
+| Policies tab (`PoliciesPane`) | — | nothing: every row is a control |
+| Settings tab, all dialogs | — | nothing |
+
+Accessibility: the region root carries `aria-busy` while loading, skeletons are
+`aria-hidden` at the primitive, and each page renders exactly one
+`sr-only role="status"` "Loading…". No visible spinner and no visible loading
+text. The primitive contract lives in `design.md` §7 "Skeleton".
 
 ---
 
@@ -2111,6 +2256,7 @@ Voice conventions layered on top:
 | `DetailList` / `DetailRow` | custom ul/li | Modal detail section. 4-col grid, label col-1 / value col-3 |
 | `UserMenu` | custom | Shared avatar dropdown — workspace identity, plan pill, sign-out |
 | `DateRangePicker` | Base UI Popover + react-day-picker v10 | Paired with `SegmentedPill` for time scopes |
+| `Skeleton` / `SkeletonText` (`skeleton.tsx`, added 2026-09-02) | custom div / span | Loading placeholders. `Skeleton` is the shadcn primitive verbatim: `data-slot="skeleton"`, `aria-hidden`, `animate-pulse rounded-sm bg-muted motion-reduce:animate-none`, `className` through `cn`. **`animate-pulse` is the only sanctioned loading motion — no spinners, no shimmer.** `SkeletonText` is the shift-proof value bar: an invisible `&nbsp;` carries the parent voice's line box AND baseline (so an `items-baseline` sibling like a `DeltaTag` cannot move) while the bar itself is absolutely positioned and centred, making its height decorative. `size` = `sm` (h-3, 12px voices) / `default` (h-4, 14px voices) / `hero` (h-6) / `heroLg` (h-7); width from a `w-*` class. Rule: **skeleton the value, keep the chrome** — column heads, titles, toolbars, tabs and units render as themselves, and an empty state never shows while loading. `HeroNumeric` / `CompactKpi` / `KpiTile` / `DeltaTag` / `BudgetSummary` each take an optional `loading?: boolean` (default false) so a call site never forks a tile to fake the state. First consumers: the two Enterprise Teams pages (§6 → Teams pages → Loading states). Contract: `design.md` §7 "Skeleton". |
 
 **Never use `@radix-ui/*`.** All popover/menu/tooltip/dialog primitives use `@base-ui/react/*`.
 

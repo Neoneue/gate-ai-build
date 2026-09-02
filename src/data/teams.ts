@@ -23,8 +23,15 @@ import { modelName } from "@/data/models";
 import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
 import { authoredDate, DEMO_TODAY } from "@/lib/demo-clock";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { RANGE_SCALE } from "@/lib/range";
-import { API_KEY_ROWS, MODEL_ROWS, USAGE_7D } from "@/pages/activity-data";
+import { type CustomRange, RANGE_SCALE, type Range } from "@/lib/range";
+import {
+  ACTIVITY_SAVINGS_RATE_7D,
+  API_KEY_ROWS,
+  MODEL_ROWS,
+  savingsRateFor,
+  USAGE_7D,
+} from "@/pages/activity-data";
+import { INITIAL_POLICIES, type PolicyState } from "@/pages/policies/config";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -99,6 +106,29 @@ export type TeamRow = {
    *  the team resets their role. */
   managerIds: string[];
   budget: TeamBudget | null;
+  /** Team-scoped security policies (PRD 8.5 team-level policies; AG-624).
+   *  Same shape the org Policies page edits. Pages own mutation, like
+   *  `budget`. */
+  policies: PolicyState[];
+  /** Team-scoped savings controls (PRD 8.5 compression settings; AG-624). */
+  savings: TeamSavings;
+};
+
+export type TeamSavings = {
+  compression: boolean;
+  caching: boolean;
+  /** Cache TTL, one of the Token savings page's `TTL_OPTIONS` values. */
+  cacheTtl: string;
+};
+
+/** Every team starts on the org defaults: the same seed the Policies page
+ *  opens with, compression + caching on, 1h TTL. No team diverges in seed
+ *  (nothing on the site says one does); the tabs are where a team diverges. */
+export const TEAM_POLICIES_SEED: PolicyState[] = INITIAL_POLICIES;
+export const TEAM_SAVINGS_SEED: TeamSavings = {
+  compression: true,
+  caching: true,
+  cacheTtl: "1h",
 };
 
 /* ─── Copy tables (single source for both the form and the summary) ─────── */
@@ -170,6 +200,16 @@ export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
 /** Warning note under the Enforcement select, shown only while Hard is
  *  selected. Makes the production impact explicit at the point of choosing
  *  (AG-695 design task: a hard budget must not read as a minor toggle). */
+/** Who a budget alert reaches (PRD 3 "Budget alert recipients", 8.2: "the
+ *  team's manager plus org admins/owner"). One sentence, reused on the form,
+ *  the Budget tab fact tooltip and the empty state, so the list cannot
+ *  drift. The Default team has no manager, so it names admins and owner only. */
+export function budgetAlertRecipients(hasManager: boolean): string {
+  return hasManager
+    ? "Alerts go to the team's manager and org admins and owner."
+    : "Alerts go to org admins and owner.";
+}
+
 export const BUDGET_HARD_ENFORCEMENT_HELP =
   "Team members will be unable to send messages once a cap is reached, until that window resets.";
 
@@ -298,6 +338,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     keyIds: keyIds("prod-web", "prod-agent", "design-agent"),
     managerIds: [],
     budget: null,
+    policies: TEAM_POLICIES_SEED,
+    savings: TEAM_SAVINGS_SEED,
   },
   {
     id: "team_platform",
@@ -317,6 +359,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       warnThreshold: 80,
       blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
+    policies: TEAM_POLICIES_SEED,
+    savings: TEAM_SAVINGS_SEED,
   },
   {
     id: "team_design",
@@ -329,11 +373,15 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_jordan"],
     budget: {
       name: "Team budget",
-      caps: { "5h": 25, weekly: 100, monthly: 250 },
+      // Monthly only: the other two windows are for the user to switch on
+      // from the form (user direction 2026-09-02).
+      caps: { monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
       blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
+    policies: TEAM_POLICIES_SEED,
+    savings: TEAM_SAVINGS_SEED,
   },
 ];
 
@@ -354,7 +402,31 @@ export type UsageSlice = {
    *  key rows (the Usage tab's "Tokens in" / "Tokens out" columns). */
   tokensIn?: number;
   tokensOut?: number;
+  /** By-user rows only: the member's 7d savings RATE (fraction), the
+   *  token-weighted mean of `ApiKeyRow.savings` across their keys here, the
+   *  same weighting that defines `ACTIVITY_SAVINGS_RATE_7D`. A rate, so
+   *  `scaleUsage` carries it through untouched; `teamSavedPercent` moves it
+   *  onto the selected range exactly as Activity's Saved column does. */
+  saved?: number;
 };
+
+/** The Usage tab's Saved column for one member and range: Activity's own
+ *  recipe (`savings × savingsRateFor(range) / ACTIVITY_SAVINGS_RATE_7D`),
+ *  as a percent for display. Null when the member has no traffic. */
+export function teamSavedPercent(
+  saved: number | undefined,
+  range: Range,
+  customRange: CustomRange | null
+): number | null {
+  if (saved === undefined) {
+    return null;
+  }
+  return (
+    saved *
+    (savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D) *
+    100
+  );
+}
 
 export type TeamUsage = {
   /** Every request the team's keys served, metered or not. */
@@ -450,7 +522,14 @@ function usageByUser(
 ): UsageSlice[] {
   const acc = new Map<
     string,
-    { requests: number; spend: number; tokensIn: number; tokensOut: number }
+    {
+      requests: number;
+      spend: number;
+      tokensIn: number;
+      tokensOut: number;
+      /** Σ savings × tokens, so the mean below is token-weighted. */
+      savedWeighted: number;
+    }
   >();
   for (const row of rows) {
     const prev = acc.get(row.owner) ?? {
@@ -458,12 +537,15 @@ function usageByUser(
       spend: 0,
       tokensIn: 0,
       tokensOut: 0,
+      savedWeighted: 0,
     };
     acc.set(row.owner, {
       requests: prev.requests + row.requests,
       spend: prev.spend + row.spend,
       tokensIn: prev.tokensIn + row.tokensIn,
       tokensOut: prev.tokensOut + row.tokensOut,
+      savedWeighted:
+        prev.savedWeighted + row.savings * (row.tokensIn + row.tokensOut),
     });
   }
   const entries = [...acc.entries()].sort((a, b) => b[1].spend - a[1].spend);
@@ -484,6 +566,10 @@ function usageByUser(
       former: !team.memberIds.includes(id),
       tokensIn: v.tokensIn,
       tokensOut: v.tokensOut,
+      saved:
+        v.tokensIn + v.tokensOut > 0
+          ? v.savedWeighted / (v.tokensIn + v.tokensOut)
+          : undefined,
     };
   });
 }

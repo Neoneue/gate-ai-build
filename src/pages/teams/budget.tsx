@@ -1,5 +1,6 @@
 import { Info, OctagonAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -11,6 +12,7 @@ import {
   BUDGET_WINDOW_RESET_COPY,
   BUDGET_WINDOW_RESET_SHORT,
   type BudgetEnforcement,
+  budgetAlertRecipients,
   budgetBlockPoint,
   budgetBreachBody,
   budgetBreachTitle,
@@ -125,6 +127,7 @@ export function BudgetMeter({
   enforcement,
   blockThreshold = DEFAULT_BLOCK_THRESHOLD,
   label,
+  loading = false,
 }: {
   spend: number;
   /** The selected window's cap, in USD. */
@@ -137,6 +140,10 @@ export function BudgetMeter({
   blockThreshold?: number;
   /** Accessible name for the meter — "Org budget used", "Platform budget used". */
   label: string;
+  /** Swap the fill and the two readings for skeletons while the roll-up is
+   *  in flight. The TRACK keeps its exact 6px box, so nothing moves when
+   *  the real fill lands. */
+  loading?: boolean;
 }) {
   const fraction = budgetProgress(spend, cap) ?? 0;
   // A hard budget's spend can never exceed its cap: the gateway refuses the
@@ -144,6 +151,24 @@ export function BudgetMeter({
   // physically blocks at $20.00 would be reporting a state the system cannot
   // enter. Soft budgets keep counting (showback), so they show spend as-is.
   const shown = budgetSpendShown(spend, cap, enforcement, blockThreshold);
+  if (loading) {
+    // No `role="meter"` while loading: a meter with no value announces a
+    // reading the page does not have yet. `aria-busy` on the pane root plus
+    // the page's one `role="status"` carry the wait instead.
+    return (
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="type-mono-14 text-foreground">
+            <SkeletonText className="w-32" />
+          </span>
+          <span className="type-mono-14 text-muted-foreground">
+            <SkeletonText className="w-20" />
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-2">
       <div
@@ -201,6 +226,7 @@ function BudgetFact({
   value,
   tip,
   mono = false,
+  loading = false,
 }: {
   label: string;
   value: string;
@@ -208,6 +234,9 @@ function BudgetFact({
   tip: string;
   /** Numeric values take the mono tabular voice; worded ones stay sans. */
   mono?: boolean;
+  /** Swap the VALUE for a skeleton. The label and its Info tooltip stay:
+   *  both are budget configuration the page already knows. */
+  loading?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -234,7 +263,7 @@ function BudgetFact({
           "text-foreground"
         )}
       >
-        {value}
+        {loading ? <SkeletonText className="w-20" /> : value}
       </span>
     </div>
   );
@@ -244,16 +273,24 @@ export function BudgetSummary({
   reading,
   budget,
   meterLabel,
+  hasManager,
   omitWindowFact = false,
+  loading = false,
 }: {
   /** The window being read: its cap, its spend, its scaled usage. */
   reading: WindowReading;
   /** Enforcement and warn percent are shared across a budget's windows. */
   budget: TeamBudget;
   meterLabel: string;
+  /** Whether the team has a manager: decides the alert-recipient sentence. */
+  hasManager: boolean;
   /** Drop the Window fact when the surrounding card already names the
    *  window (the stacked per-window cards on the Enterprise Budget tab). */
   omitWindowFact?: boolean;
+  /** Skeleton every reading — the meter fill, its two lines, and each
+   *  fact's value. Which FACTS appear is budget configuration, so the grid
+   *  keeps its exact shape and only the values wait. */
+  loading?: boolean;
 }) {
   const { window, cap, spend } = reading;
   // `>=` not `>`: a HARD budget at exactly its cap is over, not almost over.
@@ -285,6 +322,7 @@ export function BudgetSummary({
         cap={cap}
         enforcement={budget.enforcement}
         label={meterLabel}
+        loading={loading}
         spend={spend}
         warnThreshold={budget.warnThreshold}
       />
@@ -302,6 +340,7 @@ export function BudgetSummary({
       >
         <BudgetFact
           label={over && !hard ? "Over budget by" : "Remaining"}
+          loading={loading}
           mono
           tip={
             over && !hard
@@ -318,7 +357,7 @@ export function BudgetSummary({
         <BudgetFact
           label="Warn at"
           mono
-          tip="Percent of the cap at which the warning alert fires, with the dollar figure that works out to."
+          tip={`Percent of the cap at which the warning alert fires, with the dollar figure that works out to. ${budgetAlertRecipients(hasManager)}`}
           value={`${budget.warnThreshold}% (${formatCurrency((cap * budget.warnThreshold) / 100)})`}
         />
         {hard ? (

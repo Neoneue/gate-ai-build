@@ -26,6 +26,7 @@ import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Monogram } from "@/components/ui/monogram";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   SortableTableHead,
   Table,
@@ -66,6 +67,7 @@ import {
   teamEventShares,
 } from "@/pages/teams/security-data";
 import { teamSparkSeries } from "@/pages/teams/spark-series";
+import { skeletonRowIds } from "@/pages/teams/use-theatre-loading";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Team detail → Security tab, ENTERPRISE ONLY (route:
@@ -166,12 +168,17 @@ export function TeamSecurityOverviewPane({
   team,
   teams,
   variant,
+  loading,
 }: {
   team: TeamRow;
   /** Every team the page is rendering — the event allocation needs the full
    *  set so this team's share settles exactly onto the org total. */
   teams: TeamRow[];
   variant: TeamsVariant;
+  /** From the page-level hook. The ENTITLEMENT gate below is checked first
+   *  and unaffected: a tier that has no guardrail tab has nothing to load,
+   *  so it says so immediately rather than pulsing for two seconds. */
+  loading: boolean;
 }) {
   const [range, setRange] = useState<Range>("all");
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
@@ -258,6 +265,7 @@ export function TeamSecurityOverviewPane({
 
       <HeroEventsCard
         customRange={customRange}
+        loading={loading}
         range={range}
         security={security}
         team={team}
@@ -268,6 +276,7 @@ export function TeamSecurityOverviewPane({
         <CategoryBreakdownCard
           description="Breakdown by action type"
           idPrefix="team-security-action"
+          loading={loading}
           rows={actionRows}
           title="Action types"
         />
@@ -283,12 +292,13 @@ export function TeamSecurityOverviewPane({
               : "No categories recorded."
           }
           idPrefix="team-security-attack"
+          loading={loading}
           rows={attackRows}
           title="Attack types"
         />
       </div>
 
-      <MemberFindingsSection security={security} />
+      <MemberFindingsSection loading={loading} security={security} />
     </div>
   );
 }
@@ -301,12 +311,14 @@ function HeroEventsCard({
   security,
   range,
   customRange,
+  loading,
 }: {
   team: TeamRow;
   teams: TeamRow[];
   security: TeamSecurity;
   range: Range;
   customRange: CustomRange | null;
+  loading: boolean;
 }) {
   // Series: a WINDOW of one daily backbone per team, re-settled onto the
   // findings headline for the active range (teams/spark-series.ts). The
@@ -356,7 +368,7 @@ function HeroEventsCard({
             chip reads as part of the number's line, not floating mid-height
             next to it. User direction 2026-09-01. */}
         <div className="flex items-baseline gap-4">
-          <HeroNumeric size="lg">
+          <HeroNumeric loading={loading} size="lg">
             {formatCompactCount(security.findings)}
           </HeroNumeric>
           {/* The org page's delta constant, not a team number: a team's events
@@ -364,96 +376,112 @@ function HeroEventsCard({
               split of the same canon), so the org's period-over-period rate is
               the team's rate. Deriving a separate one would either restate
               this or invent prior-period team data that does not exist. */}
-          <DeltaTag delta="+22.4%" note={RANGE_DELTA_NOTE[range]} size="md" />
+          <DeltaTag
+            delta="+22.4%"
+            loading={loading}
+            note={RANGE_DELTA_NOTE[range]}
+            size="md"
+          />
         </div>
       </div>
 
       <div className="w-full">
-        <ChartContainer
-          className="aspect-auto h-24 w-full"
-          config={HERO_CHART_CONFIG}
-        >
-          <AreaChart accessibilityLayer data={data} margin={SPARK_CHART_MARGIN}>
-            <defs>
-              <linearGradient
-                id="team-security-events-spark"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="var(--color-danger-500)"
-                  stopOpacity={0.25}
-                />
-                <stop
-                  offset="100%"
-                  stopColor="var(--color-danger-500)"
-                  stopOpacity={0}
-                />
-              </linearGradient>
-            </defs>
-            {/* Dashed baseline + ceiling only — `ticks` pinned to the domain
+        {/* The plot area is replaced by a box of its OWN height (h-24), not
+            an empty chart: an axis with no series reads as a flat line at
+            zero, which is a reading. */}
+        {loading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : (
+          <ChartContainer
+            className="aspect-auto h-24 w-full"
+            config={HERO_CHART_CONFIG}
+          >
+            <AreaChart
+              accessibilityLayer
+              data={data}
+              margin={SPARK_CHART_MARGIN}
+            >
+              <defs>
+                <linearGradient
+                  id="team-security-events-spark"
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="var(--color-danger-500)"
+                    stopOpacity={0.25}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--color-danger-500)"
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              {/* Dashed baseline + ceiling only — `ticks` pinned to the domain
                 ends so the grid draws exactly two horizontal lines. */}
-            <CartesianGrid
-              horizontal
-              stroke="var(--color-chart-grid)"
-              strokeDasharray="8 5"
-              vertical={false}
-            />
-            <YAxis
-              axisLine={false}
-              domain={[0, domainTop]}
-              tick={false}
-              tickLine={false}
-              ticks={[0, domainTop]}
-              width={0}
-            />
-            <XAxis
-              axisLine={false}
-              dataKey="time"
-              height={CHART_X_AXIS_HEIGHT}
-              interval="preserveStartEnd"
-              minTickGap={16}
-              tick={SparkXAxisTick}
-              tickFormatter={hourly ? formatHourTick : formatDayTick}
-              tickLine={false}
-              tickMargin={CHART_X_TICK_MARGIN}
-              ticks={ticks}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  className="gap-1"
-                  formatter={(value) => (
-                    <span className="type-label-14 text-foreground">
-                      {formatNumber(Math.round(Number(value)))}
-                    </span>
-                  )}
-                  hideIndicator
-                  labelClassName="font-normal text-muted-foreground"
-                  labelFormatter={(_label, items) =>
-                    (items?.[0]?.payload as { label?: string } | undefined)
-                      ?.label ?? ""
-                  }
-                />
-              }
-              cursor={{
-                stroke: "var(--color-neutral-500)",
-                strokeDasharray: "3 3",
-              }}
-            />
-            <Area
-              dataKey="requests"
-              fill="url(#team-security-events-spark)"
-              isAnimationActive={false}
-              stroke="var(--color-danger-500)"
-              strokeWidth={1.5}
-              type="linear"
-            />
-          </AreaChart>
-        </ChartContainer>
+              <CartesianGrid
+                horizontal
+                stroke="var(--color-chart-grid)"
+                strokeDasharray="8 5"
+                vertical={false}
+              />
+              <YAxis
+                axisLine={false}
+                domain={[0, domainTop]}
+                tick={false}
+                tickLine={false}
+                ticks={[0, domainTop]}
+                width={0}
+              />
+              <XAxis
+                axisLine={false}
+                dataKey="time"
+                height={CHART_X_AXIS_HEIGHT}
+                interval="preserveStartEnd"
+                minTickGap={16}
+                tick={SparkXAxisTick}
+                tickFormatter={hourly ? formatHourTick : formatDayTick}
+                tickLine={false}
+                tickMargin={CHART_X_TICK_MARGIN}
+                ticks={ticks}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    className="gap-1"
+                    formatter={(value) => (
+                      <span className="type-label-14 text-foreground">
+                        {formatNumber(Math.round(Number(value)))}
+                      </span>
+                    )}
+                    hideIndicator
+                    labelClassName="font-normal text-muted-foreground"
+                    labelFormatter={(_label, items) =>
+                      (items?.[0]?.payload as { label?: string } | undefined)
+                        ?.label ?? ""
+                    }
+                  />
+                }
+                cursor={{
+                  stroke: "var(--color-neutral-500)",
+                  strokeDasharray: "3 3",
+                }}
+              />
+              <Area
+                dataKey="requests"
+                fill="url(#team-security-events-spark)"
+                isAnimationActive={false}
+                stroke="var(--color-danger-500)"
+                strokeWidth={1.5}
+                type="linear"
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </div>
     </Card>
   );
@@ -474,6 +502,7 @@ function CategoryBreakdownCard({
   rows,
   emptyBody,
   idPrefix,
+  loading,
 }: {
   title: string;
   description: string;
@@ -483,8 +512,32 @@ function CategoryBreakdownCard({
   emptyBody?: string;
   /** Namespaces the row label ids the meters point at. */
   idPrefix: string;
+  loading: boolean;
 }) {
   const max = Math.max(...rows.map((r) => r.count), 1);
+
+  if (loading) {
+    // The TRACK is chrome and keeps its exact 6px geometry; the label, the
+    // fill and the count are the three readings, so all three pulse. No
+    // `role="meter"`: there is no value to announce yet.
+    return (
+      <Card className="min-w-0">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3">
+          {skeletonRowIds(rows.length).map((id) => (
+            <div className="contents" key={id}>
+              <SkeletonText className="w-48" />
+              <Skeleton className="h-1.5 w-full rounded-full" />
+              <SkeletonText className="w-8 justify-self-end" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="min-w-0">
@@ -556,39 +609,38 @@ function memberSortValue(
   return row.byCategory[key as keyof typeof row.byCategory] ?? null;
 }
 
-function MemberFindingsSection({ security }: { security: TeamSecurity }) {
-  // Same sort recipe as the Usage tab breakdown tables: one hook per table,
-  // starting in the incoming (events-ranked) order until a header is toggled.
+/** One "Events by …" table. A table, not bars: a large team turns a
+ *  bar-per-person into a wall, and the rows sum exactly to the findings
+ *  headline either way. Same title + flush-card treatment as the Usage tab's
+ *  breakdown tables. */
+function MemberFindingsTable({
+  title,
+  rows,
+  emptyTitle,
+  emptyBody,
+  loading,
+}: {
+  title: string;
+  rows: TeamMemberSlice[];
+  emptyTitle: string;
+  emptyBody: string;
+  loading: boolean;
+}) {
+  // One hook per instance, same as the Usage tab breakdown tables: the current
+  // and past tables sort independently, and both start in the incoming
+  // (events-ranked) order until a header is toggled.
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = useMemo(
-    () => sortRows(security.byMember, sort, memberSortValue),
-    [security.byMember, sort]
+    () => sortRows(rows, sort, memberSortValue),
+    [rows, sort]
   );
-  // A table, not bars: a large team turns a bar-per-person into a wall, and
-  // the rows sum exactly to the findings headline either way. Same title +
-  // flush-card treatment as the Usage tab's breakdown tables.
-  // mt-2 tops the column's gap-4 up to 24px: the bento treatment (16px) is
-  // the chart + the two breakdown cards + the text card (user-scoped
-  // 2026-09-01); this titled block sits below that cluster and takes the full
-  // section break, same as the stage set under it.
+
   return (
-    <div className="mt-2 flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <SectionTitle>Events by member</SectionTitle>
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          Which members the security events came from, by threat type.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <SectionTitle>{title}</SectionTitle>
       <Card density="flush">
-        {security.byMember.length === 0 ? (
-          <TableEmptyState
-            body={
-              security.findings === 0
-                ? "Nothing to attribute. No detector fired on this team’s traffic. Per-member request volume lives on the Usage tab."
-                : "No per-member data recorded."
-            }
-            title="No per-member findings"
-          />
+        {rows.length === 0 && !loading ? (
+          <TableEmptyState body={emptyBody} title={emptyTitle} />
         ) : (
           <Table className="min-w-[640px] table-fixed">
             <TableHeader>
@@ -628,46 +680,122 @@ function MemberFindingsSection({ security }: { security: TeamSecurity }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {/* Single first initial + the member's own tone — the
+              {loading
+                ? skeletonRowIds(rows.length).map((id) => (
+                    <MemberFindingsSkeletonRow key={id} />
+                  ))
+                : sortedRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {/* Single first initial + the member's own tone — the
                           Activity Top-users treatment the Usage tab also
                           uses, so the same person looks the same on both
                           tabs. */}
-                      <Monogram
-                        initials={(
-                          row.label.trim().split(WHITESPACE_RE)[0]?.[0] ?? "?"
-                        ).toUpperCase()}
-                        size="sm"
-                        tone={memberById(row.id)?.avatarTone ?? "ink"}
-                      />
-                      <span
-                        className="min-w-0 flex-1 truncate"
-                        title={row.label}
-                      >
-                        {row.label}
-                      </span>
-                    </div>
-                  </TableCell>
-                  {ATTACK_MIX.map((c) => (
-                    <TableCell
-                      className="type-mono-14 whitespace-nowrap text-right text-foreground"
-                      key={c.key}
-                    >
-                      {formatNumber(row.byCategory[c.key])}
-                    </TableCell>
+                          <Monogram
+                            initials={(
+                              row.label.trim().split(WHITESPACE_RE)[0]?.[0] ??
+                              "?"
+                            ).toUpperCase()}
+                            size="sm"
+                            tone={memberById(row.id)?.avatarTone ?? "ink"}
+                          />
+                          <span
+                            className="min-w-0 flex-1 truncate"
+                            title={row.label}
+                          >
+                            {row.label}
+                          </span>
+                        </div>
+                      </TableCell>
+                      {ATTACK_MIX.map((c) => (
+                        <TableCell
+                          className="type-mono-14 whitespace-nowrap text-right text-foreground"
+                          key={c.key}
+                        >
+                          {formatNumber(row.byCategory[c.key])}
+                        </TableCell>
+                      ))}
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                        {formatNumber(row.count)}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                  <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                    {formatNumber(row.count)}
-                  </TableCell>
-                </TableRow>
-              ))}
             </TableBody>
           </Table>
         )}
       </Card>
     </div>
+  );
+}
+
+function MemberFindingsSection({
+  security,
+  loading,
+}: {
+  security: TeamSecurity;
+  loading: boolean;
+}) {
+  // PRD §3: "past requests keep their original team; only new traffic
+  // attributes to the new team (history is immutable)". A member who moved out
+  // still owns the events they generated here, so they get their own table
+  // rather than being dropped or folded into the current roster — the same
+  // current / past split the Usage tab uses.
+  const hasFormer = security.byMember.some((r) => r.former);
+  // mt-2 tops the pane column's gap-4 up to 24px: the bento treatment (16px)
+  // is the chart + the two breakdown cards + the text card (user-scoped
+  // 2026-09-01); these titled tables sit below that cluster and take the full
+  // section break. gap-6 between the two tables matches the Usage tab.
+  return (
+    <div className="mt-2 flex flex-col gap-6">
+      <MemberFindingsTable
+        emptyBody={
+          security.findings === 0
+            ? "Nothing to attribute. No detector fired on this team’s traffic. Per-member request volume lives on the Usage tab."
+            : "No per-member data recorded."
+        }
+        emptyTitle="No per-member findings"
+        loading={loading}
+        rows={security.byMember.filter((r) => !r.former)}
+        title="Events by current members"
+      />
+      {hasFormer ? (
+        <MemberFindingsTable
+          emptyBody=""
+          emptyTitle="No past members."
+          loading={loading}
+          rows={security.byMember.filter((r) => r.former)}
+          title="Events by past members"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/** Loading twin of a By-member row: the 16px Monogram disc, the name, one
+ *  column per threat type in `ATTACK_MIX` order, then the Events total. The
+ *  column count comes from the same constant the header maps, so the two can
+ *  never disagree. */
+function MemberFindingsSkeletonRow() {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <SkeletonText className="w-32" />
+        </div>
+      </TableCell>
+      {ATTACK_MIX.map((c) => (
+        <TableCell
+          className="type-mono-14 whitespace-nowrap text-right"
+          key={c.key}
+        >
+          <SkeletonText className="w-8" />
+        </TableCell>
+      ))}
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-8" />
+      </TableCell>
+    </TableRow>
   );
 }

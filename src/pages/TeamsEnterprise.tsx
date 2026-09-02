@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   NavTableRow,
   SortableTableHead,
@@ -17,11 +18,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { Timestamp } from "@/components/ui/timestamp";
 import {
   BUDGET_WINDOW_LABEL,
   budgetPercentLabel,
   budgetProgress,
   deleteTeam,
+  TEAM_POLICIES_SEED,
+  TEAM_SAVINGS_SEED,
   type TeamRow,
   teamManagerName,
   tightestReading,
@@ -44,6 +48,10 @@ import {
   useDeletedTeams,
   useTeams,
 } from "@/pages/teams/teams-store";
+import {
+  skeletonRowIds,
+  useTheatreLoading,
+} from "@/pages/teams/use-theatre-loading";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TeamsEnterprise (route: /teams-enterprise, sidebar: "Teams")
@@ -64,7 +72,12 @@ import {
  *  Default, but the spend its keys had already run stays on record — the
  *  roll-up lists it so org totals still reconcile against a team that no
  *  longer has a row in the table. */
-type DeletedTeam = { id: string; name: string; spend: number };
+type DeletedTeam = {
+  id: string;
+  name: string;
+  spend: number;
+  deletedAt: Date;
+};
 
 let nextTeamSeq = 1;
 
@@ -128,6 +141,11 @@ export function TeamsEnterprise() {
   const [renaming, setRenaming] = useState<TeamRow | null>(null);
   const [deleting, setDeleting] = useState<TeamRow | null>(null);
 
+  // ONE call, at the page mount: every skeleton on the page runs off this
+  // single boolean, so nothing below can start its own wait. Demo theatre
+  // today; in the real app this is the teams query's `isLoading`.
+  const loading = useTheatreLoading();
+
   const spendByTeam = useMemo(
     () => new Map(teams.map((t) => [t.id, usageForTeam(t).spend])),
     [teams]
@@ -144,6 +162,8 @@ export function TeamsEnterprise() {
         keyIds: [],
         managerIds: [],
         budget: null,
+        policies: TEAM_POLICIES_SEED,
+        savings: TEAM_SAVINGS_SEED,
       },
     ]);
     setCreateOpen(false);
@@ -171,6 +191,7 @@ export function TeamsEnterprise() {
       id: doomed.id,
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
+      deletedAt: new Date(),
     });
     setTeams((prev) => deleteTeam(prev, id));
     setDeleting(null);
@@ -185,7 +206,19 @@ export function TeamsEnterprise() {
     >
       {/* Caps on a CONTAINER query, matching Team / API Keys: the Ask AI panel
           narrows this column without narrowing the window. */}
-      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
+      <div
+        aria-busy={loading}
+        className="flex w-full @5xl:max-w-5xl flex-col gap-6"
+      >
+        {/* The page's ONE announcement of the wait: the skeletons are all
+            `aria-hidden`, so without this a screen reader hears an empty
+            page. No visible spinner and no visible text — the bars are the
+            sighted affordance. */}
+        {loading ? (
+          <span className="sr-only" role="status">
+            Loading…
+          </span>
+        ) : null}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
             <PageTitle>Teams</PageTitle>
@@ -209,6 +242,7 @@ export function TeamsEnterprise() {
         <div className="flex flex-col gap-4">
           <SectionTitle>Your teams</SectionTitle>
           <TeamsTable
+            loading={loading}
             onDelete={setDeleting}
             onOpen={(id) => navigate(`${basePath}/${id}`)}
             onRename={setRenaming}
@@ -267,12 +301,14 @@ function TeamsTable({
   onOpen,
   onRename,
   onDelete,
+  loading,
 }: {
   teams: TeamRow[];
   spendByTeam: Map<string, number>;
   onOpen: (id: string) => void;
   onRename: (team: TeamRow) => void;
   onDelete: (team: TeamRow) => void;
+  loading: boolean;
 }) {
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = useMemo(
@@ -281,7 +317,10 @@ function TeamsTable({
     [teams, sort, spendByTeam]
   );
 
-  if (teams.length === 0) {
+  // The empty state is a CONCLUSION — "there are no teams" — and the page
+  // has not reached it yet. While loading, the table renders its skeleton
+  // rows instead, so the surface never claims a fact it is still fetching.
+  if (teams.length === 0 && !loading) {
     return (
       <Card density="flush">
         <TableEmptyState
@@ -346,22 +385,62 @@ function TeamsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedRows.map((row) => {
-            const spend = spendByTeam.get(row.id) ?? 0;
-            return (
-              <TeamTableRow
-                key={row.id}
-                onDelete={onDelete}
-                onOpen={onOpen}
-                onRename={onRename}
-                row={row}
-                spend={spend}
-              />
-            );
-          })}
+          {loading
+            ? skeletonRowIds(teams.length).map((id) => (
+                <TeamSkeletonRow key={id} />
+              ))
+            : sortedRows.map((row) => {
+                const spend = spendByTeam.get(row.id) ?? 0;
+                return (
+                  <TeamTableRow
+                    key={row.id}
+                    onDelete={onDelete}
+                    onOpen={onOpen}
+                    onRename={onRename}
+                    row={row}
+                    spend={spend}
+                  />
+                );
+              })}
         </TableBody>
       </Table>
     </Card>
+  );
+}
+
+/** The loading twin of `TeamTableRow`, cell for cell. A plain `TableRow`,
+ *  never `NavTableRow`: there is no team behind it to open. Every box below
+ *  is the geometry of the value it stands in for — the 32px action square is
+ *  the ghost `Button size="icon-sm"`, the 8×96 pill is the budget meter's own
+ *  track — so the row is exactly as tall loading as loaded. */
+function TeamSkeletonRow() {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="whitespace-nowrap">
+        <SkeletonText className="w-32" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-8" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-8" />
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
+        <SkeletonText className="w-24" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-16" />
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-2 w-24 shrink-0 rounded-full" />
+          <SkeletonText className="w-32" size="sm" />
+        </div>
+      </TableCell>
+      <TableCell className="whitespace-nowrap text-right">
+        <Skeleton className="ml-auto size-8" />
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -551,35 +630,38 @@ function TeamRowActions({
  *  stops having a row. No sort, no actions: nothing here is actionable. */
 function DeletedTeamsCard({ rows }: { rows: DeletedTeam[] }) {
   return (
-    <Card density="flush">
-      <div className="px-4 pt-4">
-        <h2 className="type-label-14 m-0 text-muted-foreground">
-          Deleted teams (historical usage)
-        </h2>
-      </div>
-      <Table className="min-w-[360px] table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[70%] whitespace-nowrap">Team</TableHead>
-            <TableHead className="w-[30%] whitespace-nowrap text-right">
-              Spend
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="type-copy-14 whitespace-nowrap text-muted-foreground">
-                {row.name}
-                <span className="type-copy-12"> (deleted)</span>
-              </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap text-right text-muted-foreground">
-                {formatCurrency(row.spend)}
-              </TableCell>
+    <div className="flex flex-col gap-4">
+      <SectionTitle>Archived teams</SectionTitle>
+      <Card density="flush">
+        <Table className="min-w-[360px] table-fixed">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[46%] whitespace-nowrap">Team</TableHead>
+              <TableHead className="w-[30%] whitespace-nowrap">
+                Deleted on
+              </TableHead>
+              <TableHead className="w-[24%] whitespace-nowrap text-right">
+                Total spend
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                  {row.name}
+                </TableCell>
+                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                  <Timestamp date={row.deletedAt} />
+                </TableCell>
+                <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                  {formatCurrency(row.spend)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
   );
 }

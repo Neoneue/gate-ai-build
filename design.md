@@ -399,6 +399,7 @@ components:
   toast:             { backgroundColor: "{colors.background}", textColor: "{colors.neutral-900}", rounded: 8, elevation: "shadow-popup" }
   status-dot:   { rounded: "{rounded.full}" }  # tones: success-600, warning-600, destructive, blue-600, neutral-500
   tag:          { backgroundColor: "{colors.neutral-100}", textColor: "{colors.neutral-900}", rounded: "{rounded.full}", height: 24, typography: "{typography.body-xs}" }
+  skeleton:     { backgroundColor: "{colors.muted}", rounded: "{rounded.sm}" }  # loading placeholder — animate-pulse is the ONLY sanctioned loading motion; radius overridden per stand-in (rounded-full for avatar/meter, rounded-xs for badge/icon-button)
 
   switch:   { backgroundColor: "{colors.primary}" }  # checked = primary, unchecked = input (neutral-200); thumb rounded-full
   checkbox: { backgroundColor: "{colors.primary}", textColor: "{colors.primary-foreground}", rounded: "{rounded.xs}" }  # checked state
@@ -1391,8 +1392,9 @@ switches).
   sanctioned solid fill.
 - **Band boundary (2026-09-02):** `over` starts AT the block point
   (`spend >= blockPoint`), not past it. For a soft budget the block point is
-  the cap; for a hard budget it is `cap × blockThreshold%` (default 100, set
-  in the budget form's "Block threshold" field, hard only). A hard budget
+  the cap; for a hard budget it is `cap × blockThreshold%` (data-model field,
+  default 100; the form's "Block threshold" input was removed 2026-09-02, so
+  every saved budget blocks at its cap). A hard budget
   cannot pass its block point, so that percent is its terminal, blocked
   state and reads red; a soft budget keeps counting past 100% and reads red
   as exceeded. Hard budgets never display spend above the block point
@@ -1462,6 +1464,23 @@ switches).
   - **No textual qualifier** ("Lower is better") accompanies inverted color — tried 2026-05-06 and rejected.
 
 **Rule:** Pick `inverted` by asking "is rising in this metric *unambiguously* bad?" If no, don't invert.
+
+### Skeleton — loading placeholders *(added 2026-09-02)*
+
+`skeleton.tsx`. Two exports; there was no skeleton anywhere on the site before this, so this is the whole vocabulary.
+
+- **`<Skeleton>`** — the shadcn primitive, unchanged: a `<div>` with `data-slot="skeleton"`, `aria-hidden`, and `animate-pulse rounded-sm bg-muted motion-reduce:animate-none`. `className` passes through `cn` for size (`h-*`, `w-*`, `size-*`) and for a radius override when it stands in for something that is not card-tier (`rounded-full` for an avatar disc or a meter track, `rounded-xs` for a badge or an icon button).
+- **`animate-pulse` is the ONLY sanctioned loading motion.** No spinners, no shimmer sweep, no progress bars, no skeleton that fades in. `motion-reduce:animate-none` lives on the primitive, so the reduced-motion gate cannot be forgotten at a call site.
+- **`bg-muted` is the fill.** Not `bg-neutral-100`, not an opacity on `bg-foreground` — a skeleton has to read in both themes and `--muted` is the semantic subtle-fill token.
+- **`<SkeletonText className="w-32">`** — a value skeleton that cannot shift the layout. An invisible `&nbsp;` carries the parent voice's own line box **and its baseline**, so the row keeps its height and any `items-baseline` sibling (a `DeltaTag` beside a `HeroNumeric`) stays put; the bar itself is absolutely positioned and vertically centred, so its height is decorative and can never add to the line box. `size` picks the bar against the voice: `sm` (h-3, for the 12px voices) · `default` (h-4, for the 14px voices) · `hero` (h-6, `HeroNumeric` default) · `heroLg` (h-7, `HeroNumeric` lg). Width comes from a `w-*` class, the way every shadcn skeleton sizes itself.
+
+**SKELETON THE VALUE, KEEP THE CHROME.** Column heads, section and card titles, eyebrows, toolbars, search fields, range pills, tabs, switches, units (`%`, `/min`) and empty-state *copy* are all known before the fetch resolves — they render as themselves. Only what the request answers gets a skeleton: numbers, names, timestamps, bar fills, sparklines, status badges attached to a reading. Corollaries:
+
+- **An empty state is a conclusion, not a loading state.** Gate every `rows.length === 0` branch on `!loading` — a surface must never claim "no members" while it is still asking.
+- **A meter or a chart keeps its box and loses its value.** Replace the plot area with a `<Skeleton>` of the *same* height (`h-24` for a hero chart, `h-9` for a `CompactSpark`) and drop `role="meter"` while loading — an axis with no series reads as a flat line at zero, and a meter with no value announces a reading the page does not have.
+- **The value slot belongs to the primitive.** `HeroNumeric`, `CompactKpi`, `KpiTile`, `DeltaTag` and `BudgetSummary` each take an optional `loading?: boolean` (default `false`) that swaps their own value / delta / spark for skeletons of the identical box. Don't fork a tile at the call site to fake a loading state — that is hand-rolling, and it is how the two states drift apart.
+- **Announce once per page, not per skeleton.** Skeletons are `aria-hidden`; the region root carries `aria-busy` and the page renders exactly one `sr-only role="status"` "Loading…". Never a visible spinner or visible "Loading" text.
+- **Row count matches what is coming.** A placeholder block one row too tall collapses when the data lands, which is the jump skeletons exist to prevent. Teams renders exactly one skeleton row per real row, floored at one (`skeletonRowIds`, `pages/teams/use-theatre-loading.ts`).
 
 ### Hero Numerics & KPIs
 

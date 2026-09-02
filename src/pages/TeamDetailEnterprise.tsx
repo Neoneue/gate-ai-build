@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   SortableTableHead,
   Table,
@@ -55,6 +56,7 @@ import {
   ASSIGNABLE_KEYS,
   BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_RESET_COPY,
+  budgetAlertRecipients,
   budgetReadings,
   DEFAULT_TEAM_ID,
   deleteTeam,
@@ -68,6 +70,7 @@ import {
   type TeamRow,
   type TeamUsage,
   teamOfMember,
+  teamSavedPercent,
   type UsageSlice,
   usageForTeam,
 } from "@/data/teams";
@@ -111,10 +114,16 @@ import {
   RemoveTeamMemberDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
+import { TeamPoliciesPane } from "@/pages/teams/PoliciesPane";
 import { TeamSecurityOverviewPane } from "@/pages/teams/SecurityOverviewPane";
 import type { TeamsVariant } from "@/pages/teams/SecurityPane";
 import { teamSparkSeries } from "@/pages/teams/spark-series";
+import { TeamTokenSavingsPane } from "@/pages/teams/TokenSavingsPane";
 import { teamsStore, useTeams } from "@/pages/teams/teams-store";
+import {
+  skeletonRowIds,
+  useTheatreLoading,
+} from "@/pages/teams/use-theatre-loading";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Team detail, Enterprise twin (route: /teams-enterprise/:teamId)
@@ -163,6 +172,12 @@ export function TeamDetailEnterprise({
   const setTeams = (next: TeamRow[] | ((prev: TeamRow[]) => TeamRow[])) =>
     teamsStore.setTeams(next);
   const team = teams.find((t) => t.id === teamId);
+
+  // ONE call, in the PAGE body — not in a pane. Every tab reads this same
+  // boolean, so switching tabs cannot restart the skeletons; a per-pane hook
+  // would re-run the wait on every tab click. Demo theatre today; in the real
+  // app this is the team query's `isLoading`.
+  const loading = useTheatreLoading();
 
   const patch = (next: Partial<TeamRow>) => {
     setTeams((prev) =>
@@ -218,6 +233,7 @@ export function TeamDetailEnterprise({
       id: doomed.id,
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
+      deletedAt: new Date(),
     });
     setTeams((prev) => deleteTeam(prev, doomed.id));
     navigate(listPath);
@@ -230,11 +246,23 @@ export function TeamDetailEnterprise({
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
+      <div
+        aria-busy={loading}
+        className="flex w-full @5xl:max-w-5xl flex-col gap-6"
+      >
         <BackLink label="Teams" onClick={() => navigate(listPath)} />
+
+        {/* The page's ONE announcement of the wait — the skeletons in every
+            pane are `aria-hidden`. No visible spinner, no visible text. */}
+        {loading ? (
+          <span className="sr-only" role="status">
+            Loading…
+          </span>
+        ) : null}
 
         {team ? (
           <TeamDetailBody
+            loading={loading}
             onDeleteTeam={handleDeleteTeam}
             onMoveKeys={moveKeys}
             onMoveMembers={moveMembers}
@@ -265,7 +293,15 @@ export function TeamDetailEnterprise({
 
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
-type TabId = "members" | "keys" | "budget" | "usage" | "security" | "settings";
+type TabId =
+  | "members"
+  | "keys"
+  | "budget"
+  | "usage"
+  | "security"
+  | "policies"
+  | "savings"
+  | "settings";
 
 function TeamDetailBody({
   team,
@@ -277,6 +313,7 @@ function TeamDetailBody({
   onRemoveMember,
   onDeleteTeam,
   variant,
+  loading,
 }: {
   team: TeamRow;
   /** Every team — the pickers name the team a candidate would leave. */
@@ -288,6 +325,9 @@ function TeamDetailBody({
   onRemoveMember: (memberId: string) => void;
   onDeleteTeam: () => void;
   variant: TeamsVariant;
+  /** Threaded down to every pane from the ONE page-level hook call, so the
+   *  skeletons do not restart when a tab changes. */
+  loading: boolean;
 }) {
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
@@ -343,11 +383,14 @@ function TeamDetailBody({
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="policies">Policies</TabsTrigger>
+          <TabsTrigger value="savings">Token savings</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
           <MembersPane
+            loading={loading}
             onMoveMembers={onMoveMembers}
             onPatch={onPatch}
             onRemoveMember={onRemoveMember}
@@ -357,6 +400,7 @@ function TeamDetailBody({
         </TabsContent>
         <TabsContent value="keys">
           <KeysPane
+            loading={loading}
             onMoveKeys={onMoveKeys}
             onRemoveKey={onRemoveKey}
             team={team}
@@ -364,16 +408,40 @@ function TeamDetailBody({
           />
         </TabsContent>
         <TabsContent value="budget">
-          <BudgetPane onPatch={onPatch} team={team} usage={usage} />
+          <BudgetPane
+            loading={loading}
+            onPatch={onPatch}
+            team={team}
+            usage={usage}
+          />
         </TabsContent>
         <TabsContent value="usage">
-          <UsagePane teamId={team.id} usage={usage} />
+          <UsagePane loading={loading} teamId={team.id} usage={usage} />
         </TabsContent>
         <TabsContent value="security">
           <TeamSecurityOverviewPane
+            loading={loading}
             team={team}
             teams={teams}
             variant={variant}
+          />
+        </TabsContent>
+        <TabsContent value="policies">
+          {/* Same write path as the Budget tab's `save`: the pane is a
+              controlled surface and hands the whole array back, which
+              `onPatch` merges into the team row in the shared store.
+              No skeleton: every row on it is a control, not a reading. */}
+          <TeamPoliciesPane
+            onChange={(policies) => onPatch({ policies })}
+            team={team}
+          />
+        </TabsContent>
+        <TabsContent value="savings">
+          <TeamTokenSavingsPane
+            loading={loading}
+            onChange={(savings) => onPatch({ savings })}
+            team={team}
+            teams={teams}
           />
         </TabsContent>
         <TabsContent value="settings">
@@ -487,7 +555,15 @@ function modelAvatar(row: UsageSlice): ReactNode {
   return vendor ? <VendorAvatar decorative vendor={vendor} /> : null;
 }
 
-function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
+function UsagePane({
+  teamId,
+  usage,
+  loading,
+}: {
+  teamId: string;
+  usage: TeamUsage;
+  loading: boolean;
+}) {
   // Range chrome matches Activity's Overview row: preset pill + custom
   // picker, landing on All. Every number on the tab is the team's REAL 7d
   // workload projected onto the selected window via effectiveScale — the
@@ -573,6 +649,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         <KpiRail columns={3}>
           <CompactKpi
             flat
+            loading={loading}
             spark={
               <CompactSpark
                 colorVar="var(--color-chart-1)"
@@ -587,6 +664,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
           />
           <CompactKpi
             flat
+            loading={loading}
             spark={
               <CompactSpark
                 colorVar="var(--color-neutral-500)"
@@ -601,6 +679,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
           />
           <CompactKpi
             flat
+            loading={loading}
             spark={
               <CompactSpark
                 colorVar="var(--color-chart-3)"
@@ -618,9 +697,12 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
 
       <UsageBreakdown
         avatarFor={userAvatar}
+        customRange={customRange}
         emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
         emptyTitle="No per-user data yet."
         firstColumn="Member"
+        loading={loading}
+        range={range}
         rows={scaled.byUser.filter((r) => !r.former)}
         title="Usage by current members"
         tokens
@@ -629,9 +711,12 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
       {scaled.byUser.some((r) => r.former) ? (
         <UsageBreakdown
           avatarFor={userAvatar}
+          customRange={customRange}
           emptyBody=""
           emptyTitle="No past members."
           firstColumn="Member"
+          loading={loading}
+          range={range}
           rows={scaled.byUser.filter((r) => r.former)}
           title="Usage by past members"
           tokens
@@ -639,9 +724,12 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
       ) : null}
       <UsageBreakdown
         avatarFor={modelAvatar}
+        customRange={customRange}
         emptyBody="Once this team’s keys route through the gateway, spend per model appears here."
         emptyTitle="No per-model data yet."
         firstColumn="Model"
+        loading={loading}
+        range={range}
         rows={scaled.byModel}
         title="Usage by model"
       />
@@ -652,7 +740,12 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
 /** Comparable value per sortable column. `label` sorts on the string shown,
  *  which is a person's name in the by-user table and a model name in the
  *  by-model one, so one accessor serves both instances. */
-function usageSortValue(row: UsageSlice, key: string): string | number | null {
+function usageSortValue(
+  row: UsageSlice,
+  key: string,
+  range: Range,
+  customRange: CustomRange | null
+): string | number | null {
   switch (key) {
     case "label":
       return row.label;
@@ -662,11 +755,37 @@ function usageSortValue(row: UsageSlice, key: string): string | number | null {
       return row.tokensIn ?? 0;
     case "tokensOut":
       return row.tokensOut ?? 0;
+    // A row with no savings rate renders an EMPTY cell, so it sorts below
+    // every row that has one — -1 rather than null, which `sortRows` would
+    // read as "no comparable value".
+    case "saved":
+      return teamSavedPercent(row.saved, range, customRange) ?? -1;
     case "spend":
       return row.spend;
     default:
       return null;
   }
+}
+
+/** The Saved column's cell. Percent to ONE decimal, always (standing rule),
+ *  in the Spend cell's own mono voice. A member with no savings rate renders
+ *  an EMPTY cell — no dash, no zero: "0.0%" would claim a measured rate of
+ *  nothing saved, which is a different fact from having no rate at all. */
+function SavedCell({
+  saved,
+  range,
+  customRange,
+}: {
+  saved: number | undefined;
+  range: Range;
+  customRange: CustomRange | null;
+}) {
+  const pct = teamSavedPercent(saved, range, customRange);
+  return (
+    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+      {pct === null ? null : `${pct.toFixed(1)}%`}
+    </TableCell>
+  );
 }
 
 function UsageBreakdown({
@@ -677,6 +796,9 @@ function UsageBreakdown({
   emptyBody,
   avatarFor,
   tokens = false,
+  loading,
+  range,
+  customRange,
 }: {
   title: string;
   firstColumn: string;
@@ -689,20 +811,28 @@ function UsageBreakdown({
   /** Row icon — a member Monogram in the by-user table, the vendor mark in
    *  the by-model one. */
   avatarFor: (row: UsageSlice) => ReactNode;
+  loading: boolean;
+  /** The tab's selected window — the Saved column is a RATE, so it is moved
+   *  onto the range the same way Activity's Saved column is. */
+  range: Range;
+  customRange: CustomRange | null;
 }) {
   // One hook per instance: the by-user table and the by-model table sort
   // independently, and both start in the incoming (spend-ranked) order.
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = useMemo(
-    () => sortRows(rows, sort, usageSortValue),
-    [rows, sort]
+    () =>
+      sortRows(rows, sort, (row, key) =>
+        usageSortValue(row, key, range, customRange)
+      ),
+    [rows, sort, range, customRange]
   );
 
   return (
     <div className="flex flex-col gap-4">
       <SectionTitle>{title}</SectionTitle>
       <Card density="flush">
-        {rows.length === 0 ? (
+        {rows.length === 0 && !loading ? (
           <TableEmptyState body={emptyBody} title={emptyTitle} />
         ) : (
           <Table className="min-w-[560px] table-fixed">
@@ -711,7 +841,7 @@ function UsageBreakdown({
                 <SortableTableHead
                   className={cn(
                     "whitespace-nowrap",
-                    tokens ? "w-[24%]" : "w-[52%]"
+                    tokens ? "w-[20%]" : "w-[52%]"
                   )}
                   onSort={toggleSort}
                   sort={sort}
@@ -722,7 +852,7 @@ function UsageBreakdown({
                 <SortableTableHead
                   className={cn(
                     "whitespace-nowrap",
-                    tokens ? "w-[19%]" : "w-[24%]"
+                    tokens ? "w-[16%]" : "w-[24%]"
                   )}
                   numeric
                   onSort={toggleSort}
@@ -734,7 +864,7 @@ function UsageBreakdown({
                 {tokens ? (
                   <>
                     <SortableTableHead
-                      className="w-[19%] whitespace-nowrap"
+                      className="w-[16%] whitespace-nowrap"
                       numeric
                       onSort={toggleSort}
                       sort={sort}
@@ -743,7 +873,7 @@ function UsageBreakdown({
                       Tokens in
                     </SortableTableHead>
                     <SortableTableHead
-                      className="w-[19%] whitespace-nowrap"
+                      className="w-[16%] whitespace-nowrap"
                       numeric
                       onSort={toggleSort}
                       sort={sort}
@@ -751,12 +881,23 @@ function UsageBreakdown({
                     >
                       Tokens out
                     </SortableTableHead>
+                    {/* Mirrors Activity's Saved column — the member's own
+                        savings RATE for the selected window, one decimal. */}
+                    <SortableTableHead
+                      className="w-[16%] whitespace-nowrap"
+                      numeric
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="saved"
+                    >
+                      Saved
+                    </SortableTableHead>
                   </>
                 ) : null}
                 <SortableTableHead
                   className={cn(
                     "whitespace-nowrap",
-                    tokens ? "w-[19%]" : "w-[24%]"
+                    tokens ? "w-[16%]" : "w-[24%]"
                   )}
                   numeric
                   onSort={toggleSort}
@@ -768,42 +909,86 @@ function UsageBreakdown({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {avatarFor(row)}
-                      <span
-                        className="min-w-0 flex-1 truncate"
-                        title={row.label}
-                      >
-                        {row.label}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                    {formatNumber(row.requests)}
-                  </TableCell>
-                  {tokens ? (
-                    <>
-                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                        {formatNumber(row.tokensIn ?? 0)}
+              {loading
+                ? skeletonRowIds(rows.length).map((id) => (
+                    <UsageSkeletonRow key={id} tokens={tokens} />
+                  ))
+                : sortedRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {avatarFor(row)}
+                          <span
+                            className="min-w-0 flex-1 truncate"
+                            title={row.label}
+                          >
+                            {row.label}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                        {formatNumber(row.tokensOut ?? 0)}
+                        {formatNumber(row.requests)}
                       </TableCell>
-                    </>
-                  ) : null}
-                  <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                    {formatCurrency(row.spend)}
-                  </TableCell>
-                </TableRow>
-              ))}
+                      {tokens ? (
+                        <>
+                          <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                            {formatNumber(row.tokensIn ?? 0)}
+                          </TableCell>
+                          <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                            {formatNumber(row.tokensOut ?? 0)}
+                          </TableCell>
+                          <SavedCell
+                            customRange={customRange}
+                            range={range}
+                            saved={row.saved}
+                          />
+                        </>
+                      ) : null}
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                        {formatCurrency(row.spend)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         )}
       </Card>
     </div>
+  );
+}
+
+/** Loading twin of a `UsageBreakdown` row. The avatar slot is a 16px disc —
+ *  a Monogram in the by-user table, a vendor mark in the by-model one, both
+ *  shorter than the 20px name line that actually sets the row height. */
+function UsageSkeletonRow({ tokens }: { tokens: boolean }) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <SkeletonText className="w-32" />
+        </div>
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-12" />
+      </TableCell>
+      {tokens ? (
+        <>
+          <TableCell className="type-mono-14 whitespace-nowrap text-right">
+            <SkeletonText className="w-16" />
+          </TableCell>
+          <TableCell className="type-mono-14 whitespace-nowrap text-right">
+            <SkeletonText className="w-16" />
+          </TableCell>
+          <TableCell className="type-mono-14 whitespace-nowrap text-right">
+            <SkeletonText className="w-12" />
+          </TableCell>
+        </>
+      ) : null}
+      <TableCell className="type-mono-14 whitespace-nowrap text-right">
+        <SkeletonText className="w-16" />
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -815,12 +1000,14 @@ function MembersPane({
   onPatch,
   onMoveMembers,
   onRemoveMember,
+  loading,
 }: {
   team: TeamRow;
   teams: TeamRow[];
   onPatch: (next: Partial<TeamRow>) => void;
   onMoveMembers: (ids: string[]) => void;
   onRemoveMember: (memberId: string) => void;
+  loading: boolean;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
@@ -932,7 +1119,7 @@ function MembersPane({
       </div>
 
       <Card density="flush">
-        {isEmpty && (
+        {isEmpty && !loading && (
           <TableEmptyState
             action={
               <Button onClick={() => setAddOpen(true)} size="default">
@@ -943,13 +1130,13 @@ function MembersPane({
             title="No members"
           />
         )}
-        {noMatches && (
+        {noMatches && !loading && (
           <TableEmptyState
             body="No members match your search or filter. Try a different name or email."
             title="No members match"
           />
         )}
-        {visible.length > 0 && (
+        {(visible.length > 0 || loading) && (
           // Wider than the other two tables, and re-proportioned when the role
           // cell became a control: the cell has to clear the 112px trigger
           // plus its 24px of padding, which 26% of 620px does and 22% of
@@ -970,83 +1157,87 @@ function MembersPane({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((member) => (
-                <TableRow key={member.id}>
-                  {/* py-0 on the two control-bearing cells (Monogram row,
+              {loading
+                ? skeletonRowIds(visible.length).map((id) => (
+                    <MemberSkeletonRow key={id} showActions={!team.isDefault} />
+                  ))
+                : visible.map((member) => (
+                    <TableRow key={member.id}>
+                      {/* py-0 on the two control-bearing cells (Monogram row,
                       role Select): the 28-32px controls would otherwise add
                       their height on top of py-3 and run this table's rows
                       8px taller than the Keys tab's. The actions cell's icon
                       button now governs both tables at the same height. */}
-                  <TableCell className="whitespace-nowrap py-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Monogram
-                        initials={firstInitial(member.name)}
-                        size="sm"
-                        tone={member.avatarTone}
-                      />
-                      <span
-                        className="type-copy-14 truncate text-foreground"
-                        title={member.name}
-                      >
-                        {member.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
-                    {/* Owner renders static; everyone else gets the role
+                      <TableCell className="whitespace-nowrap py-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Monogram
+                            initials={firstInitial(member.name)}
+                            size="sm"
+                            tone={member.avatarTone}
+                          />
+                          <span
+                            className="type-copy-14 truncate text-foreground"
+                            title={member.name}
+                          >
+                            {member.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
+                        {/* Owner renders static; everyone else gets the role
                         select. Manager returned to the options 2026-09-01
                         (reversing the 8-31 org-roles-only ruling): the value
                         both reads and writes the team's managerIds, the same
                         source the list's Manager column and this tab's role
                         filter read, so the three can never disagree. */}
-                    {member.role === "owner" ? (
-                      "Owner"
-                    ) : (
-                      <MemberRoleSelect
-                        isManager={team.managerIds.includes(member.id)}
-                        member={member}
-                        onChange={(role) => {
-                          const without = team.managerIds.filter(
-                            (id) => id !== member.id
-                          );
-                          onPatch({
-                            managerIds:
-                              role === "manager"
-                                ? [...without, member.id]
-                                : without,
-                          });
-                        }}
-                      />
-                    )}
-                  </TableCell>
-                  {/* When they joined THIS team (not the org): the Members
+                        {member.role === "owner" ? (
+                          "Owner"
+                        ) : (
+                          <MemberRoleSelect
+                            isManager={team.managerIds.includes(member.id)}
+                            member={member}
+                            onChange={(role) => {
+                              const without = team.managerIds.filter(
+                                (id) => id !== member.id
+                              );
+                              onPatch({
+                                managerIds:
+                                  role === "manager"
+                                    ? [...without, member.id]
+                                    : without,
+                              });
+                            }}
+                          />
+                        )}
+                      </TableCell>
+                      {/* When they joined THIS team (not the org): the Members
                       page's Joined cell recipe, same Timestamp format. */}
-                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                    <Timestamp
-                      date={memberJoinedAt(team, member.id)}
-                      format="dateNumeric"
-                    />
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                    {/* The Default team is where removed members LAND, so there
-                        is nowhere to remove them to from here. */}
-                    {team.isDefault ? null : (
-                      <IconActionButton
-                        aria-label={`Remove ${member.name} from ${team.name}`}
-                        onClick={() =>
-                          setRemoving({ id: member.id, name: member.name })
-                        }
-                      >
-                        <UserMinus
-                          aria-hidden
-                          className="size-5"
-                          strokeWidth={1.75}
+                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                        <Timestamp
+                          date={memberJoinedAt(team, member.id)}
+                          format="dateNumeric"
                         />
-                      </IconActionButton>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+                        {/* The Default team is where removed members LAND, so there
+                        is nowhere to remove them to from here. */}
+                        {team.isDefault ? null : (
+                          <IconActionButton
+                            aria-label={`Remove ${member.name} from ${team.name}`}
+                            onClick={() =>
+                              setRemoving({ id: member.id, name: member.name })
+                            }
+                          >
+                            <UserMinus
+                              aria-hidden
+                              className="size-5"
+                              strokeWidth={1.75}
+                            />
+                          </IconActionButton>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
         )}
@@ -1083,6 +1274,36 @@ function MembersPane({
         open={removing !== null}
       />
     </div>
+  );
+}
+
+/** Loading twin of a Members row. Cell for cell: a 16px avatar disc, the
+ *  32px box of the role `Select` (the tallest thing in the row, so it is
+ *  what holds the height), the Joined stamp, and — on every team but Default,
+ *  which has no remove affordance — the 24px `IconActionButton` square. */
+function MemberSkeletonRow({ showActions }: { showActions: boolean }) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="whitespace-nowrap py-0">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <SkeletonText className="w-32" />
+        </div>
+      </TableCell>
+      <TableCell className="whitespace-nowrap py-0">
+        <Skeleton className="h-8 w-28" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap">
+        <SkeletonText className="w-20" />
+      </TableCell>
+      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+        {showActions ? (
+          <span className="inline-flex size-6 items-center justify-center">
+            <Skeleton className="size-5 rounded-xs" />
+          </span>
+        ) : null}
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -1133,12 +1354,14 @@ function KeysPane({
   teams,
   onMoveKeys,
   onRemoveKey,
+  loading,
 }: {
   team: TeamRow;
   /** Every team — the picker names the team a candidate key sits on today. */
   teams: TeamRow[];
   onMoveKeys: (ids: string[]) => void;
   onRemoveKey: (keyId: string) => void;
+  loading: boolean;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<ApiKeyRow | null>(null);
@@ -1222,7 +1445,7 @@ function KeysPane({
       </div>
 
       <Card density="flush">
-        {isEmpty && (
+        {isEmpty && !loading && (
           <TableEmptyState
             action={
               // Sequential build gate (user direction 2026-09-01): the team
@@ -1249,13 +1472,13 @@ function KeysPane({
             title="No keys"
           />
         )}
-        {noMatches && (
+        {noMatches && !loading && (
           <TableEmptyState
             body="No keys match your search. Try a different key or member name."
             title="No keys match"
           />
         )}
-        {visible.length > 0 && (
+        {(visible.length > 0 || loading) && (
           // Five columns now carry content (name, member, prefix, status,
           // last used), so the min-width steps up from 640 to 760 — the
           // Member cell carries a Monogram plus a full name and cannot take
@@ -1280,86 +1503,90 @@ function KeysPane({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((row) => {
-                // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
-                // same source the Members tab reads, so the two tabs can
-                // never name the same person differently.
-                const owner = memberById(row.ownerId);
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                      <span className="block truncate" title={row.name}>
-                        {row.name}
-                      </span>
-                    </TableCell>
-                    {/* py-0 for the same reason the Members tab uses it: the
+              {loading
+                ? skeletonRowIds(visible.length).map((id) => (
+                    <KeySkeletonRow key={id} showActions={!team.isDefault} />
+                  ))
+                : visible.map((row) => {
+                    // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
+                    // same source the Members tab reads, so the two tabs can
+                    // never name the same person differently.
+                    const owner = memberById(row.ownerId);
+                    return (
+                      <TableRow key={row.id}>
+                        <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                          <span className="block truncate" title={row.name}>
+                            {row.name}
+                          </span>
+                        </TableCell>
+                        {/* py-0 for the same reason the Members tab uses it: the
                       Monogram's 32px height would otherwise stack on py-3 and
                       run these rows taller than every other table here. */}
-                    <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
-                      {row.masked}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap py-0">
-                      {owner ? (
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Monogram
-                            initials={firstInitial(owner.name)}
-                            size="sm"
-                            tone={owner.avatarTone}
-                          />
-                          <span
-                            className="type-copy-14 truncate text-foreground"
-                            title={owner.name}
-                          >
-                            {owner.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="type-copy-14 text-muted-foreground">
-                          —
-                        </span>
-                      )}
-                    </TableCell>
-                    {/* Same Badge + variant pair the org API Keys table
+                        <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
+                          {row.masked}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap py-0">
+                          {owner ? (
+                            <div className="flex min-w-0 items-center gap-2">
+                              <Monogram
+                                initials={firstInitial(owner.name)}
+                                size="sm"
+                                tone={owner.avatarTone}
+                              />
+                              <span
+                                className="type-copy-14 truncate text-foreground"
+                                title={owner.name}
+                              >
+                                {owner.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="type-copy-14 text-muted-foreground">
+                              —
+                            </span>
+                          )}
+                        </TableCell>
+                        {/* Same Badge + variant pair the org API Keys table
                       uses for key status, so the two surfaces read
                       identically. The 20px badge sits inside the default
                       py-3 rhythm, so no py-0 is needed here. */}
-                    <TableCell className="whitespace-nowrap">
-                      {row.revoked ? (
-                        <Badge variant="neutral">Revoked</Badge>
-                      ) : (
-                        <Badge variant="success">Active</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                      <Timestamp
-                        className={
-                          row.lastUsed === null
-                            ? "text-muted-foreground"
-                            : undefined
-                        }
-                        date={row.lastUsed}
-                        format="dateNumeric"
-                      />
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                      {/* The Default team is where removed keys LAND, so there is
-                        nowhere to remove them to from here. */}
-                      {team.isDefault ? null : (
-                        <IconActionButton
-                          aria-label={`Remove ${row.name} from ${team.name}`}
-                          onClick={() => setRemoving(row)}
-                        >
-                          <X
-                            aria-hidden
-                            className="size-5"
-                            strokeWidth={1.75}
+                        <TableCell className="whitespace-nowrap">
+                          {row.revoked ? (
+                            <Badge variant="neutral">Revoked</Badge>
+                          ) : (
+                            <Badge variant="success">Active</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                          <Timestamp
+                            className={
+                              row.lastUsed === null
+                                ? "text-muted-foreground"
+                                : undefined
+                            }
+                            date={row.lastUsed}
+                            format="dateNumeric"
                           />
-                        </IconActionButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+                          {/* The Default team is where removed keys LAND, so there is
+                        nowhere to remove them to from here. */}
+                          {team.isDefault ? null : (
+                            <IconActionButton
+                              aria-label={`Remove ${row.name} from ${team.name}`}
+                              onClick={() => setRemoving(row)}
+                            >
+                              <X
+                                aria-hidden
+                                className="size-5"
+                                strokeWidth={1.75}
+                              />
+                            </IconActionButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
             </TableBody>
           </Table>
         )}
@@ -1395,18 +1622,55 @@ function KeysPane({
   );
 }
 
+/** Loading twin of a Keys row. The Status cell carries a badge-shaped box
+ *  (20px, `rounded-xs`) rather than a text bar, because a `<Badge>` is what
+ *  lands there — and the actions square is again what sets the row height. */
+function KeySkeletonRow({ showActions }: { showActions: boolean }) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="type-mono-14 whitespace-nowrap">
+        <SkeletonText className="w-32" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap">
+        <SkeletonText className="w-24" />
+      </TableCell>
+      <TableCell className="whitespace-nowrap py-0">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <SkeletonText className="w-32" />
+        </div>
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
+        <Skeleton className="h-5 w-16 rounded-xs" />
+      </TableCell>
+      <TableCell className="type-mono-14 whitespace-nowrap">
+        <SkeletonText className="w-20" />
+      </TableCell>
+      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+        {showActions ? (
+          <span className="inline-flex size-6 items-center justify-center">
+            <Skeleton className="size-5 rounded-xs" />
+          </span>
+        ) : null}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 /* ─── Budget tab ───────────────────────────────────────────────────────── */
 
 function BudgetPane({
   team,
   usage,
   onPatch,
+  loading,
 }: {
   team: TeamRow;
   /** Same roll-up the Usage tab renders; each configured window reads its
    *  own scaled projection of it (budgetReadings). */
   usage: TeamUsage;
   onPatch: (next: Partial<TeamRow>) => void;
+  loading: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const save = (budget: TeamBudget) => {
@@ -1479,6 +1743,8 @@ function BudgetPane({
                 <CardContent>
                   <BudgetSummary
                     budget={budget}
+                    hasManager={team.managerIds.length > 0}
+                    loading={loading}
                     meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
                     omitWindowFact
                     reading={reading}
@@ -1499,7 +1765,7 @@ function BudgetPane({
               </Button>
             ) : undefined
           }
-          body="Set a budget to cap this team’s spend over a rolling 5-hour, weekly, or calendar-month window. A soft budget alerts you; a hard budget blocks requests once it is used up."
+          body={`Set a budget to cap this team’s spend over a rolling 5-hour, weekly, or calendar-month window. A soft budget alerts; a hard budget blocks messages once it is used up. ${budgetAlertRecipients(team.managerIds.length > 0)}`}
           icon={
             <div
               aria-hidden
@@ -1518,6 +1784,7 @@ function BudgetPane({
       <BudgetDialog
         budget={team.budget}
         defaultName="Team budget"
+        hasManager={team.managerIds.length > 0}
         onOpenChange={setOpen}
         onSave={save}
         open={open}

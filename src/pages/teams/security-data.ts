@@ -79,6 +79,11 @@ export type TeamOutcomeSlice = TeamSecuritySlice & {
  *  `count` (the balance is the org page's uncategorized remainder). */
 export type TeamMemberSlice = TeamSecuritySlice & {
   byCategory: Record<(typeof ATTACK_MIX)[number]["key"], number>;
+  /** The member's keys ran here but they are no longer on the roster (PRD 3
+   *  Reassignment: history stays with the team). Same flag, same derivation
+   *  as `UsageSlice.former`, so the Security tab splits current / past
+   *  members exactly the way the Usage tab does. */
+  former: boolean;
 };
 
 export type TeamSecurity = {
@@ -247,6 +252,7 @@ export function securityForTeamAtRange(
     .map(([owner], i) => ({
       id: memberIdFor(owner),
       label: owner,
+      former: !team.memberIds.includes(memberIdFor(owner)),
       count: rowCategorized(i),
       byCategory: Object.fromEntries(
         ATTACK_MIX.map((c, k) => [c.key, perCategory[k]?.[i] ?? 0])

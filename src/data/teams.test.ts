@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  attributedKeyNames,
   BUDGET_WINDOW_ORDER,
   BUDGET_WINDOW_SCALE,
   budgetBlockPoint,
@@ -16,11 +17,17 @@ import {
   orgSpend,
   scaleUsage,
   TEAM_SEED_ROWS,
+  teamSavedPercent,
   tightestReading,
   usageForTeam,
 } from "@/data/teams";
 import type { Range } from "@/lib/range";
 
+import {
+  ACTIVITY_SAVINGS_RATE_7D,
+  API_KEY_ROWS,
+  savingsRateFor,
+} from "@/pages/activity-data";
 import { ATTACK_MIX, EVENTS_RANGE_TOTAL } from "@/pages/security/events-data";
 import { budgetStatus } from "@/pages/teams/budget-band";
 import { securityForTeam, teamEventShares } from "@/pages/teams/security-data";
@@ -269,20 +276,31 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
       bad.push(`window scale ${a} >= ${b}`);
     }
   }
-  // Design seed: the documented multi-window example
-  const design = TEAM_SEED_ROWS.find((t) => t.id === "team_design");
-  if (design?.budget) {
-    const r = budgetReadings(usageForTeam(design), design.budget);
+  // Platform seed: the documented multi-window example (Design is monthly
+  // only since 2026-09-02, so the user can switch the other windows on).
+  const platform = TEAM_SEED_ROWS.find((t) => t.id === "team_platform");
+  if (platform?.budget) {
+    const r = budgetReadings(usageForTeam(platform), platform.budget);
     const fiveH = r.find((x) => x.window === "5h");
-    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "2.2%") {
+    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "1.5%") {
       bad.push(
-        `design 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 2.2%`
+        `platform 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 1.5%`
       );
     }
     if (
-      tightestReading(usageForTeam(design), design.budget).window !== "monthly"
+      tightestReading(usageForTeam(platform), platform.budget).window !==
+      "monthly"
     ) {
-      bad.push("design tightest window != monthly");
+      bad.push("platform tightest window != monthly");
+    }
+  }
+  const design = TEAM_SEED_ROWS.find((t) => t.id === "team_design");
+  if (design?.budget) {
+    const windows = budgetReadings(usageForTeam(design), design.budget).map(
+      (x) => x.window
+    );
+    if (windows.join(",") !== "monthly") {
+      bad.push(`design windows ${windows.join(",")} != monthly`);
     }
   }
   expect(bad.join("\n")).toBe("");
@@ -339,6 +357,7 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
     org: orgSpend(TEAM_SEED_ROWS),
     platformSec: securityForTeam(platform).findings,
     designSec: securityForTeam(design).findings,
+    designSecRows: securityForTeam(design).byMember,
   };
 
   // Key move: one Platform key onto Design.
@@ -397,6 +416,25 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
   // Design gains a member and their keys, and no spend.
   expect(usageForTeam(d2)).toEqual(before.design);
   expect(orgSpend(afterMember)).toBe(before.org);
+  // Security follows the same split: Kira's events stay on Platform as a
+  // past member, current + past rows sum to the findings headline, and
+  // Design's security is untouched.
+  const p2Sec = securityForTeam(p2);
+  const kiraSec = p2Sec.byMember.find((r) => r.id === kira);
+  expect(kiraSec?.former).toBe(true);
+  expect(kiraSec?.count).toBe(
+    securityForTeam(platform).byMember.find((r) => r.id === kira)?.count
+  );
+  const secCurrent = p2Sec.byMember.filter((r) => !r.former);
+  const secPast = p2Sec.byMember.filter((r) => r.former);
+  expect(secCurrent.every((r) => p2.memberIds.includes(r.id))).toBe(true);
+  expect(secPast.every((r) => !p2.memberIds.includes(r.id))).toBe(true);
+  expect([...secCurrent, ...secPast].reduce((a, r) => a + r.count, 0)).toBe(
+    p2Sec.findings
+  );
+  expect(securityForTeam(d2).byMember.map((r) => r.former)).toEqual(
+    before.designSecRows.map(() => false)
+  );
 
   // Remove to Default team: same rule.
   const afterRemove = moveMembersToTeam(TEAM_SEED_ROWS, DEFAULT_TEAM_ID, [
@@ -478,4 +516,35 @@ test("by-user tokens in + out reconcile with the team token total", () => {
       expect(sum).toBe(scaled.tokens);
     }
   }
+});
+
+// Usage tab Saved column: per member, the token-weighted mean of their keys'
+// Activity savings rates, moved onto the range with Activity's own recipe,
+// so a member with one key reads exactly what Activity's Saved column shows
+// for that key.
+test("Usage Saved column reconciles with Activity per key", () => {
+  for (const team of TEAM_SEED_ROWS) {
+    const names = attributedKeyNames(team);
+    const keys = API_KEY_ROWS.filter((r) => names.has(r.key));
+    for (const row of usageForTeam(team).byUser) {
+      const own = keys.filter((k) => k.owner === row.label);
+      const rates = own.map((k) => k.savings);
+      if (rates.length === 0) {
+        continue;
+      }
+      expect(row.saved).toBeGreaterThanOrEqual(Math.min(...rates) - 1e-9);
+      expect(row.saved).toBeLessThanOrEqual(Math.max(...rates) + 1e-9);
+      if (own.length === 1) {
+        expect(row.saved).toBeCloseTo(own[0].savings, 9);
+        // Activity's 7d Saved cell for that key: savings × 100.
+        expect(teamSavedPercent(row.saved, "7d", null)).toBeCloseTo(
+          own[0].savings *
+            (savingsRateFor("7d", null) / ACTIVITY_SAVINGS_RATE_7D) *
+            100,
+          9
+        );
+      }
+    }
+  }
+  expect(teamSavedPercent(undefined, "7d", null)).toBeNull();
 });

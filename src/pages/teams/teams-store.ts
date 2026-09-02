@@ -22,7 +22,14 @@ import {
  * per-page state for the A/B comparison.
  * ───────────────────────────────────────────────────────────────────────── */
 
-export type DeletedTeamSnapshot = { id: string; name: string; spend: number };
+export type DeletedTeamSnapshot = {
+  id: string;
+  name: string;
+  spend: number;
+  /** Wall-clock moment of the delete, same as a key's `createdAt` on the
+   *  API Keys page: an in-session action stamps real time, not the demo clock. */
+  deletedAt: Date;
+};
 
 const listeners = new Set<() => void>();
 
