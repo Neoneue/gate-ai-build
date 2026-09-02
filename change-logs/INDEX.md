@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-02](./2026-09/changelog-9-2.md)
+
+- Team budgets: status word, warn tick, blocked banner
+
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 
 - Team usage math: by-model requests reconcile with the team total
