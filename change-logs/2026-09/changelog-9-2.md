@@ -175,3 +175,22 @@ who spent on the team has left, and is absent otherwise. Same
 `UsageBreakdown` component, same columns and sorting, no new classes. The
 two tables sum to Total Spend. PM direction 2026-09-02: past spenders do
 not belong in a current team's list. Where: `src/pages/TeamDetailEnterprise.tsx`.
+
+### Teams list: caption names the cap mode; team page gains a Settings tab `970c3fd`
+
+Before: a healthy hard budget and a healthy soft one looked identical on
+the Teams list (the caption read "18.5% weekly"), and Rename / Delete were
+reachable only from the list row's menu. After: the caption reads
+"18.5% weekly · Hard cap" or "18.5% weekly · Soft", same
+`type-copy-12 text-muted-foreground tabular-nums` span, middle-dot
+separator as on Billing; the meter's aria-label ends with the mode. Column
+widths rebalanced to Team 18% / Members 11% / Keys 8% / Manager 13% /
+Spend 12% / Budget 38% (was 20/12/9/16/12/31) after a Playwright measure at
+the 960px floor showed "100.0% weekly · Hard cap" + a Blocking badge
+overflowing the old Budget column by ~29px. The team page gets a sixth tab,
+Settings, after Security: a "Team name" card (name + Rename, outline sm)
+and a "Delete team" card (confirm copy + Delete team, destructive sm), both
+in the Budget tab's `Card > CardHeader > CardAction` shape and wired to the
+existing dialogs. The Default team shows one Callout: "The default team
+can't be renamed or deleted. Members and keys removed from other teams land
+here." Where: `src/pages/TeamsEnterprise.tsx`, `src/pages/TeamDetailEnterprise.tsx`.
