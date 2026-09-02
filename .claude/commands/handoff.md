@@ -66,6 +66,15 @@ If `handoff.md` does not exist, create it with the structure in "Shape" below.
   learned something durable (a real gotcha, an enforced protocol, a measurement
   method that cost time to discover), and FIX them when they go stale rather
   than leaving a contradiction.
+- **Write UNDER budget first, then fill; never write over and cut.** Cutting
+  a 19KB file back to 18KB has cost 6 to 8 edit rounds per run. Before
+  writing, measure the parts you are keeping: `wc -c` on the file, then
+  subtract the bytes of the section you are replacing to get the budget for
+  the new text. Draft the new LATEST + OPEN to at most 80% of that budget
+  (terse bullets: hash, file, value; point at changelog / git log for
+  narrative). Write once, check `wc -c`. If there is room left, add the
+  next most useful fact; if over, you already know what to drop because you
+  wrote in priority order (OPEN > LATEST shipped > measurements > decisions).
 - **18KB (`wc -c` under 18000) and 500 lines are the hard caps.** Check both
   with `wc -c handoff.md; wc -l handoff.md` before finishing. The byte cap
   is what keeps the SessionStart hook from truncating the file to a 2KB
