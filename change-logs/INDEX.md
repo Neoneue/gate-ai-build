@@ -21,6 +21,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Teams list: caption names the cap mode; team page gains a Settings tab
 - Status word "Blocked"; Teams list columns 20/10/8/14/12/36
 - Block threshold field; "Messages" wording; Usage by tables gain token columns
+- Budget and team-name forms: validation messages under invalid fields
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 

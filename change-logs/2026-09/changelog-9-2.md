@@ -233,3 +233,18 @@ every range (pinned). Where: `src/data/teams.ts`, `src/pages/teams/budget-band.t
 `src/pages/teams/budget.tsx`, `src/pages/teams/dialogs.tsx`,
 `src/pages/TeamsEnterprise.tsx`, `src/pages/TeamDetailEnterprise.tsx`,
 `design.md` band boundary, `data-model.md`.
+
+### Validation messages under invalid budget and team-name fields `8efbba8`
+
+Before: an invalid Name, window amount, Warn or Block threshold only
+disabled Save, with no message saying why. After: once a field is blurred,
+an invalid one turns its border and ring red (`aria-invalid`) and prints one
+sentence under it in `FieldError` (`type-copy-14 text-destructive`,
+`role="alert"`, 8px below the control, above the window helper line where
+one exists), wired through `aria-describedby`. Copy: "Enter a name." /
+"Enter an amount above $0." / "Enter a whole number from 1 to 100." /
+"Block threshold must be above the warn threshold." Percent fields now
+reject decimals. The dialog never opens red, and Save stays disabled while
+anything is invalid. Budget windows has no message: the picker already
+enforces at least one. Where: `src/pages/teams/dialogs.tsx` (Set budget and
+Create team forms).
