@@ -355,3 +355,18 @@ members can be added, and their keys move with them. This doesn't send
 invites." Where: `src/pages/TeamDetailEnterprise.tsx`,
 `src/pages/teams/dialogs.tsx` (`RemoveTeamMemberDialog`),
 `src/data/teams.ts` (`moveMembersToTeam`).
+
+### Attack types sum to the event total on Security, Activity and team Security `f3e3229`
+
+Before: the three attack-type bars (PII / PHI, Prompt injection, Credential
+leak) were 8:5:3 units scaled by 16/47 of the range total, so at All they
+read 27 / 17 / 10 against a 161-event headline; the org card hid the gap
+(no total shown) and the team "Events by member" table exposed it (a row of
+27 / 17 / 10 next to an Events total of 161). After: the full total is
+allocated 8:5:3 by largest remainder, so the bars read 81 / 50 / 30 = 161,
+the same integers on the org Security Attack types card, Activity's "Top
+attack types" card and the team Security tab. In the team table every
+column still sums to its card and every row's Events total is the sum of
+its three columns. Where: `src/pages/security/events-data.ts`
+(`attackTypeCounts`, shared `allocate`), `src/pages/Security.tsx`,
+`src/pages/teams/security-data.ts`.

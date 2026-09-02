@@ -39,6 +39,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Teams: one build for Pro, Default and Enterprise
 - Budget dialog: Hard enforcement shows a warning note
 - Team Members tab: removal moves the member and their keys to Default
+- Attack types sum to the event total on Security, Activity and team Security
 
 ## August 2026
 
