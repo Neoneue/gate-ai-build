@@ -5,8 +5,12 @@ Shared project instructions, kept minimal; per-area detail lives in
 
 ## Local reminders
 
-- **On every new session, read [`handoff.md`](./handoff.md) first** —
-  it holds the current-state resume notes from the previous session.
+- **On every new session, read [`handoff.md`](./handoff.md) first, IN
+  FULL.** A SessionStart hook injects it, but output over ~20KB arrives as a
+  2KB preview plus a "Full output saved to: `<path>`" line. Read that path (or
+  the file) whole before replying. The first reply of the session opens with
+  one line: `Handoff loaded: <title date>. Top OPEN: <first OPEN item>.` The
+  user must never have to ask whether the handoff was read.
 - Work on `dev` (permanent preview branch); never commit directly to `main`
   (prod). Promote by opening a PR `dev` -> `main`, merged with a **merge commit**
   (never squash/rebase — `dev` is long-lived and would diverge), then sync
