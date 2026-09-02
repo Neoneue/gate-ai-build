@@ -221,7 +221,7 @@ requires it above the warn value (Save disabled otherwise). Hard budgets
 now block, clamp their shown spend, read "Blocked" and fill red at that
 percent of the cap; soft budgets ignore it. The Budget tab card adds a
 "Block at" fact (percent + dollars) for hard budgets, and the breach banner
-title reads "Blocked: <team> <window> budget at its N% block threshold"
+title reads "Blocked: Design weekly budget at its N% block threshold"
 when N is under 100. All team-page copy says "messages": the Usage column
 header, "Hard: blocks messages once exceeded", the hard note under the
 select, and both banner bodies ("Messages from this team are blocked").
