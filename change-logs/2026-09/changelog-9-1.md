@@ -338,3 +338,20 @@ shape as the API-key reveal and cancel-plan consequence notes; red stays
 reserved for the over-budget state. Copy is single-sourced as
 `BUDGET_HARD_ENFORCEMENT_HELP`. Where: `src/pages/teams/dialogs.tsx`,
 `src/data/teams.ts`.
+
+### Team Members tab: removal moves the member and their keys to Default `bdf2ee9`
+
+Before: the trash button on a member row dropped them from the team's list in
+place, leaving them on no team, with no confirmation, and it rendered on the
+Default team too. After: the button opens a confirm dialog ("Remove {name}
+from this team?" / "They move to the default team along with their N keys,
+where you can reassign them. Their org access is unchanged, and only their
+team attribution changes." / Cancel, destructive "Remove member"), the same
+shape as the Keys tab's remove dialog. Confirming moves them to Default with
+a fresh Joined stamp and drops their manager role. The button is hidden on
+the Default team. A member's own keys now move with them on every team move,
+including Add members; the Add members description reads "Only existing org
+members can be added, and their keys move with them. This doesn't send
+invites." Where: `src/pages/TeamDetailEnterprise.tsx`,
+`src/pages/teams/dialogs.tsx` (`RemoveTeamMemberDialog`),
+`src/data/teams.ts` (`moveMembersToTeam`).

@@ -38,6 +38,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Enterprise Usage and Security tabs: member wording, sortable events table
 - Teams: one build for Pro, Default and Enterprise
 - Budget dialog: Hard enforcement shows a warning note
+- Team Members tab: removal moves the member and their keys to Default
 
 ## August 2026
 
