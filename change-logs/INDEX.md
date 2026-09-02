@@ -13,6 +13,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Team budgets: status word, warn tick, blocked banner
 - Breach banner: 8px more air above the tabs
+- Teams list: default team named General; column widths rebalanced
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 

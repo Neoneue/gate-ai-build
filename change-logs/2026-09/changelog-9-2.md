@@ -108,3 +108,16 @@ Before: the banner sat in the page column's regular gap above the Tabs and
 read tight against the tab row. After: the banner carries `mb-2`, so the
 distance to the tabs is the column gap plus 8px (user direction 2026-09-02).
 Where: `src/pages/teams/budget.tsx` (`BudgetBreachBanner` root).
+
+### Teams list: default team named General; column widths rebalanced `7c6daa4`
+
+Before: the catch-all team row read "Default" next to a DEFAULT badge, so
+the badge repeated the name; and the Budget cell's new status badge crowded
+the row actions at the 960px table floor. After: the seed team is named
+"General" (Microsoft Teams and Slack use the same word for their undeletable
+starter channel) and the DEFAULT badge alone carries the role; nothing in
+the code keys on the name. Column widths: Team 20% / Members 12% / Keys 9% /
+Manager 16% / Spend 12% / Budget 31% (was 22 / 11 / 9 / 15 / 12 / 31), so
+"100.0% weekly BLOCKING" fits with its meter on one line. Where:
+`src/data/teams.ts` (seed), `src/pages/TeamsEnterprise.tsx` (TableHead
+widths).
