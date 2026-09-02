@@ -87,6 +87,7 @@ import {
   RANGE_OPTIONS,
   type Range,
 } from "@/lib/range";
+import { cn } from "@/lib/utils";
 import {
   fmtInt,
   fmtTokens,
@@ -619,9 +620,10 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         avatarFor={userAvatar}
         emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
         emptyTitle="No per-user data yet."
-        firstColumn="User"
+        firstColumn="Member"
         rows={scaled.byUser.filter((r) => !r.former)}
-        title="Spend by current members"
+        title="Usage by current members"
+        tokens
       />
       {/* PRD §3: "past requests keep their original team". */}
       {scaled.byUser.some((r) => r.former) ? (
@@ -629,9 +631,10 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
           avatarFor={userAvatar}
           emptyBody=""
           emptyTitle="No past members."
-          firstColumn="User"
+          firstColumn="Member"
           rows={scaled.byUser.filter((r) => r.former)}
-          title="Spend by past members"
+          title="Usage by past members"
+          tokens
         />
       ) : null}
       <UsageBreakdown
@@ -640,7 +643,7 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         emptyTitle="No per-model data yet."
         firstColumn="Model"
         rows={scaled.byModel}
-        title="Spend by model"
+        title="Usage by model"
       />
     </div>
   );
@@ -655,6 +658,10 @@ function usageSortValue(row: UsageSlice, key: string): string | number | null {
       return row.label;
     case "requests":
       return row.requests;
+    case "tokensIn":
+      return row.tokensIn ?? 0;
+    case "tokensOut":
+      return row.tokensOut ?? 0;
     case "spend":
       return row.spend;
     default:
@@ -669,11 +676,15 @@ function UsageBreakdown({
   emptyTitle,
   emptyBody,
   avatarFor,
+  tokens = false,
 }: {
   title: string;
   firstColumn: string;
   rows: UsageSlice[];
   emptyTitle: string;
+  /** Member tables carry Tokens in / Tokens out between Messages and Spend
+   *  (user direction 2026-09-02); the model table does not. */
+  tokens?: boolean;
   emptyBody: string;
   /** Row icon — a member Monogram in the by-user table, the vendor mark in
    *  the by-model one. */
@@ -698,7 +709,10 @@ function UsageBreakdown({
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <SortableTableHead
-                  className="w-[52%] whitespace-nowrap"
+                  className={cn(
+                    "whitespace-nowrap",
+                    tokens ? "w-[24%]" : "w-[52%]"
+                  )}
                   onSort={toggleSort}
                   sort={sort}
                   sortKey="label"
@@ -706,16 +720,44 @@ function UsageBreakdown({
                   {firstColumn}
                 </SortableTableHead>
                 <SortableTableHead
-                  className="w-[24%] whitespace-nowrap"
+                  className={cn(
+                    "whitespace-nowrap",
+                    tokens ? "w-[19%]" : "w-[24%]"
+                  )}
                   numeric
                   onSort={toggleSort}
                   sort={sort}
                   sortKey="requests"
                 >
-                  Requests
+                  Messages
                 </SortableTableHead>
+                {tokens ? (
+                  <>
+                    <SortableTableHead
+                      className="w-[19%] whitespace-nowrap"
+                      numeric
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="tokensIn"
+                    >
+                      Tokens in
+                    </SortableTableHead>
+                    <SortableTableHead
+                      className="w-[19%] whitespace-nowrap"
+                      numeric
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey="tokensOut"
+                    >
+                      Tokens out
+                    </SortableTableHead>
+                  </>
+                ) : null}
                 <SortableTableHead
-                  className="w-[24%] whitespace-nowrap"
+                  className={cn(
+                    "whitespace-nowrap",
+                    tokens ? "w-[19%]" : "w-[24%]"
+                  )}
                   numeric
                   onSort={toggleSort}
                   sort={sort}
@@ -742,6 +784,16 @@ function UsageBreakdown({
                   <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                     {formatNumber(row.requests)}
                   </TableCell>
+                  {tokens ? (
+                    <>
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                        {formatNumber(row.tokensIn ?? 0)}
+                      </TableCell>
+                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                        {formatNumber(row.tokensOut ?? 0)}
+                      </TableCell>
+                    </>
+                  ) : null}
                   <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                     {formatCurrency(row.spend)}
                   </TableCell>
@@ -1399,7 +1451,8 @@ function BudgetPane({
               reading.spend,
               reading.cap,
               budget.warnThreshold,
-              budget.enforcement
+              budget.enforcement,
+              budget.blockThreshold
             );
             return (
               <Card key={reading.window}>
@@ -1414,6 +1467,7 @@ function BudgetPane({
                   {status === "ok" ? null : (
                     <CardAction>
                       <BudgetStatusBadge
+                        blockThreshold={budget.blockThreshold}
                         cap={reading.cap}
                         enforcement={budget.enforcement}
                         spend={reading.spend}

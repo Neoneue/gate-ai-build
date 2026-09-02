@@ -26,9 +26,15 @@ export type BudgetBand = "under" | "warned" | "over";
 export function budgetBand(
   spend: number,
   cap: number,
-  warnThreshold: number
+  warnThreshold: number,
+  enforcement: "soft" | "hard" = "soft",
+  blockThreshold = 100
 ): BudgetBand {
-  if (cap > 0 && spend >= cap) {
+  // `over` begins at the block point: the cap for a soft budget, the block
+  // percent of the cap for a hard one (PRD 8.2 "block at 100%" is the
+  // default, not a constant).
+  const overAt = enforcement === "hard" ? (cap * blockThreshold) / 100 : cap;
+  if (cap > 0 && spend >= overAt) {
     return "over";
   }
   if (cap > 0 && spend >= (cap * warnThreshold) / 100) {
@@ -57,9 +63,13 @@ const BAND_FILL: Record<BudgetBand, string> = {
 export function budgetFillClass(
   spend: number,
   cap: number,
-  warnThreshold: number
+  warnThreshold: number,
+  enforcement: "soft" | "hard" = "soft",
+  blockThreshold = 100
 ): string {
-  return BAND_FILL[budgetBand(spend, cap, warnThreshold)];
+  return BAND_FILL[
+    budgetBand(spend, cap, warnThreshold, enforcement, blockThreshold)
+  ];
 }
 
 /** The status WORD next to a meter: colour alone is not a state (colour-
@@ -74,9 +84,16 @@ export function budgetStatus(
   spend: number,
   cap: number,
   warnThreshold: number,
-  enforcement: "soft" | "hard"
+  enforcement: "soft" | "hard",
+  blockThreshold = 100
 ): BudgetStatus {
-  const band = budgetBand(spend, cap, warnThreshold);
+  const band = budgetBand(
+    spend,
+    cap,
+    warnThreshold,
+    enforcement,
+    blockThreshold
+  );
   if (band === "over") {
     return enforcement === "hard" ? "blocking" : "exceeded";
   }

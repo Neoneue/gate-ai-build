@@ -456,7 +456,13 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
         <div
           className={cn(
             "h-full rounded-full",
-            budgetFillClass(spend, cap, budget.warnThreshold)
+            budgetFillClass(
+              spend,
+              cap,
+              budget.warnThreshold,
+              budget.enforcement,
+              budget.blockThreshold
+            )
           )}
           style={{ width: `${fraction * 100}%` }}
         />
@@ -466,14 +472,20 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
         />
       </div>
       <span className="type-copy-12 text-muted-foreground tabular-nums">
-        {budgetPercentLabel(spend, cap, budget.enforcement)} {windowWord} ·{" "}
-        {enforcementWord}
+        {budgetPercentLabel(
+          spend,
+          cap,
+          budget.enforcement,
+          budget.blockThreshold
+        )}{" "}
+        {windowWord} · {enforcementWord}
       </span>
       {/* The status word: a red bar at 100% and an amber one at 85% are two
           different situations, and the column is 24px tall: the label is
           what makes the difference readable at a glance. Absent when the
           budget is fine. */}
       <BudgetStatusBadge
+        blockThreshold={budget.blockThreshold}
         cap={cap}
         enforcement={budget.enforcement}
         spend={spend}

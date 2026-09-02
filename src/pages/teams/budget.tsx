@@ -11,12 +11,14 @@ import {
   BUDGET_WINDOW_RESET_COPY,
   BUDGET_WINDOW_RESET_SHORT,
   type BudgetEnforcement,
+  budgetBlockPoint,
   budgetBreachBody,
   budgetBreachTitle,
   budgetPercentLabel,
   budgetProgress,
   budgetReadings,
   budgetSpendShown,
+  DEFAULT_BLOCK_THRESHOLD,
   type TeamBudget,
   type TeamUsage,
   type WindowReading,
@@ -55,13 +57,21 @@ export function BudgetStatusBadge({
   cap,
   warnThreshold,
   enforcement,
+  blockThreshold = DEFAULT_BLOCK_THRESHOLD,
 }: {
   spend: number;
   cap: number;
   warnThreshold: number;
   enforcement: BudgetEnforcement;
+  blockThreshold?: number;
 }) {
-  const status = budgetStatus(spend, cap, warnThreshold, enforcement);
+  const status = budgetStatus(
+    spend,
+    cap,
+    warnThreshold,
+    enforcement,
+    blockThreshold
+  );
   if (status === "ok") {
     return null;
   }
@@ -113,6 +123,7 @@ export function BudgetMeter({
   cap,
   warnThreshold,
   enforcement,
+  blockThreshold = DEFAULT_BLOCK_THRESHOLD,
   label,
 }: {
   spend: number;
@@ -120,8 +131,10 @@ export function BudgetMeter({
   cap: number;
   /** Percent of the cap at which the budget warns — shared across windows. */
   warnThreshold: number;
-  /** A hard budget cannot pass its cap, so its numbers stop at 100%. */
+  /** A hard budget cannot pass its block point, so its numbers stop there. */
   enforcement: BudgetEnforcement;
+  /** Percent of the cap at which a hard budget blocks. */
+  blockThreshold?: number;
   /** Accessible name for the meter — "Org budget used", "Platform budget used". */
   label: string;
 }) {
@@ -130,7 +143,7 @@ export function BudgetMeter({
   // request that would take it there. Showing $21.40 of $20.00 on a bar that
   // physically blocks at $20.00 would be reporting a state the system cannot
   // enter. Soft budgets keep counting (showback), so they show spend as-is.
-  const shown = budgetSpendShown(spend, cap, enforcement);
+  const shown = budgetSpendShown(spend, cap, enforcement, blockThreshold);
   return (
     <div className="flex flex-col gap-2">
       <div
@@ -149,7 +162,13 @@ export function BudgetMeter({
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none",
-            budgetFillClass(spend, cap, warnThreshold)
+            budgetFillClass(
+              spend,
+              cap,
+              warnThreshold,
+              enforcement,
+              blockThreshold
+            )
           )}
           style={{ width: `${fraction * 100}%` }}
         />
@@ -164,7 +183,7 @@ export function BudgetMeter({
           </span>
         </span>
         <span className="type-mono-14 text-muted-foreground">
-          {budgetPercentLabel(spend, cap, enforcement)} used
+          {budgetPercentLabel(spend, cap, enforcement, blockThreshold)} used
         </span>
       </div>
     </div>
@@ -242,14 +261,27 @@ export function BudgetSummary({
   // the honest first fact and "Over budget by" would be a lie (spend cannot
   // pass the cap). A SOFT budget landing exactly on the cap is likewise past
   // the line, not inside it.
-  const over = spend >= cap;
   const hard = budget.enforcement === "hard";
+  // A hard budget is "over" at its block point (the block percent of the
+  // cap), a soft one at the cap.
+  const blockPoint = budgetBlockPoint(
+    cap,
+    budget.enforcement,
+    budget.blockThreshold
+  );
+  const over = spend >= blockPoint;
   // On a hard budget the remainder is what is left before the block, floored
   // at zero. On a soft one it is the overrun.
-  const shown = budgetSpendShown(spend, cap, budget.enforcement);
+  const shown = budgetSpendShown(
+    spend,
+    cap,
+    budget.enforcement,
+    budget.blockThreshold
+  );
   return (
     <div className="flex flex-col gap-4">
       <BudgetMeter
+        blockThreshold={budget.blockThreshold}
         cap={cap}
         enforcement={budget.enforcement}
         label={meterLabel}
@@ -276,7 +308,7 @@ export function BudgetSummary({
               ? "How far spend in this window has passed its cap."
               : "What is left of this window's cap before it is used up."
           }
-          value={formatCurrency(Math.abs(cap - shown))}
+          value={formatCurrency(Math.abs(blockPoint - shown))}
         />
         <BudgetFact
           label="Enforcement"
@@ -289,6 +321,14 @@ export function BudgetSummary({
           tip="Percent of the cap at which the warning alert fires, with the dollar figure that works out to."
           value={`${budget.warnThreshold}% (${formatCurrency((cap * budget.warnThreshold) / 100)})`}
         />
+        {hard ? (
+          <BudgetFact
+            label="Block at"
+            mono
+            tip="Percent of the cap at which the gateway stops accepting this team's messages, with the dollar figure that works out to."
+            value={`${budget.blockThreshold}% (${formatCurrency(blockPoint)})`}
+          />
+        ) : null}
         {omitWindowFact ? null : (
           <BudgetFact
             label="Window"
@@ -330,7 +370,8 @@ export function BudgetBreachBanner({
       r.spend,
       r.cap,
       budget.warnThreshold,
-      budget.enforcement
+      budget.enforcement,
+      budget.blockThreshold
     );
     return status === "blocking" || status === "exceeded";
   });
@@ -354,7 +395,12 @@ export function BudgetBreachBanner({
         {breached.map((r) => (
           <li className="flex flex-col gap-1" key={r.window}>
             <p className="type-label-14 m-0 text-danger-800 dark:text-danger-300">
-              {budgetBreachTitle(teamName, r.window, budget.enforcement)}
+              {budgetBreachTitle(
+                teamName,
+                r.window,
+                budget.enforcement,
+                budget.blockThreshold
+              )}
             </p>
             <p className="type-copy-14 m-0 text-pretty text-danger-800 dark:text-danger-300">
               {budgetBreachBody(r.window, r.spend, r.cap, budget.enforcement)}

@@ -38,6 +38,7 @@ import {
   type BudgetEnforcement,
   type BudgetWindow,
   budgetWindows,
+  DEFAULT_BLOCK_THRESHOLD,
   type TeamBudget,
 } from "@/data/teams";
 
@@ -219,6 +220,9 @@ function BudgetBody({
   const [warn, setWarn] = useState(
     String(budget?.warnThreshold ?? DEFAULT_WARN_THRESHOLD)
   );
+  const [block, setBlock] = useState(
+    String(budget?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD)
+  );
 
   // Picking a window is picking a PRESET: a newly selected window arrives
   // pre-filled with its default cap (5h $25 / weekly $200 / monthly $500), or
@@ -236,12 +240,18 @@ function BudgetBody({
     });
   };
 
-  // A hard budget blocks at each window's cap itself — there is no second
-  // threshold to validate, so what is left is a name, at least one window,
-  // a positive cap on every selected window, and a warn percentage inside
-  // 1–100.
+  // Name, at least one window, a positive cap on every selected window, a
+  // warn percentage inside 1–100, and, on a hard budget, a block percentage
+  // inside 1–100 that sits above the warn line (PRD 3 / 8.2: "warn at 80%,
+  // block at 100%"). A soft budget never blocks, so its block value is not
+  // validated and saves as the default.
   const warnValue = Number(warn);
+  const blockValue =
+    enforcement === "hard" ? Number(block) : DEFAULT_BLOCK_THRESHOLD;
   const inPercentRange = (n: number) => Number.isFinite(n) && n > 0 && n <= 100;
+  const blockValid =
+    enforcement !== "hard" ||
+    (inPercentRange(blockValue) && blockValue > warnValue);
   const capsValid = windows.every((w) => {
     const n = Number(amounts[w]);
     return Number.isFinite(n) && n > 0;
@@ -250,7 +260,8 @@ function BudgetBody({
     name.trim().length > 0 &&
     windows.length > 0 &&
     capsValid &&
-    inPercentRange(warnValue);
+    inPercentRange(warnValue) &&
+    blockValid;
 
   return (
     <form
@@ -269,6 +280,7 @@ function BudgetBody({
           caps,
           enforcement,
           warnThreshold: warnValue,
+          blockThreshold: blockValue,
         });
       }}
     >
@@ -423,6 +435,31 @@ function BudgetBody({
               value={warn}
             />
           </div>
+
+          {/* Block threshold, hard budgets only (AG-695 design task "warn and
+              block threshold entry"). Soft budgets never block, so the field
+              is absent rather than disabled. */}
+          {enforcement === "hard" ? (
+            <div className="flex flex-col gap-2">
+              <Label
+                className="type-label-14 text-muted-foreground"
+                htmlFor={`${scope}-budget-block`}
+              >
+                Block threshold (% of budget)
+              </Label>
+              <Input
+                autoComplete="off"
+                className="type-mono-14"
+                id={`${scope}-budget-block`}
+                max={100}
+                min={1}
+                onChange={(e) => setBlock(e.target.value)}
+                step={1}
+                type="number"
+                value={block}
+              />
+            </div>
+          ) : null}
         </div>
       </DialogScrollBody>
 

@@ -1529,7 +1529,7 @@ Rename (outline) + Delete (destructive) buttons on non-default teams, then
 five tabs (Enterprise order since 2026-09-01: Members, Keys, Budget, Usage,
 Security, Members default, management before data; Pro keeps Usage first):
 Usage (spend + requests KPI pair, sortable "Spend by user" and
-"Spend by model" tables — "user" not "member", because a spend row can
+"Usage by model" tables — "user" not "member", because a spend row can
 outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
 Budget, Security.
 
@@ -1634,8 +1634,13 @@ layer owns:
   `security-data.ts` event shares. So a moved key or member changes the
   Members / Keys tabs only; the source team's numbers do not move and the
   target gains nothing until new traffic exists (none does, in mock data).
-  By-user rows carry `former: true` when the spender is no longer on the team;
-  the Usage tab labels them "Former member". `deleteTeam(teams, id)` folds
+  By-user rows carry `former: true` when the spender is no longer on the
+  team and split into "Usage by current members" / "Usage by past members"
+  (the latter only when non-empty). By-user rows also carry `tokensIn` /
+  `tokensOut` (summed from the member's key rows; `scaleUsage` settles in
+  onto the scaled in-total and out onto the remainder, so in + out equals
+  the Tokens Used tile); the member tables show Member / Messages / Tokens
+  in / Tokens out / Spend. `deleteTeam(teams, id)` folds
   members and keys into Default through the same helpers, then drops the
   team, so Default never inherits the deleted team's spend and the org total
   falls by it (PM decision 2026-09-02: delete removes the team's history).
@@ -1644,8 +1649,13 @@ layer owns:
 **Multi-window budgets (2026-09-01 meeting: "support multiple simultaneous
 budget types, such as 5-hour, weekly, and monthly limits").** `TeamBudget`
 is `{ name, caps: Partial<Record<BudgetWindow, number>>, enforcement,
-warnThreshold }`: one USD cap per configured window (at least one), with
-name, enforcement, and warn percent shared across them. This is the
+warnThreshold, blockThreshold }`: one USD cap per configured window (at
+least one), with name, enforcement, warn percent and block percent shared
+across them. `blockThreshold` (default 100, PRD 8.2 "block at 100%") is
+where a HARD budget blocks: `budgetBlockPoint(cap, enforcement, block)` =
+`cap × block%` for hard, the cap for soft. `budgetBand` / `budgetStatus` /
+`budgetSpendShown` / `budgetPercentLabel` all take it; the form shows the
+field only while Hard is selected and requires block > warn. This is the
 Claude/Codex shape (session + weekly caps, one enforcement) and maps to one
 `usage_limits` budget row per window on the backend (migration 170 has no
 uniqueness on `team_id`; the dev's UI currently `find`s one, flagged).
@@ -1715,7 +1725,7 @@ rows that already exist:
 - members → `MEMBER_ROWS`, keys → `API_KEY_SEED_ROWS` (revoked keys are
   filtered into `ASSIGNABLE_KEYS` once, so no picker or seed can reach one)
 - spend / requests → `usageForTeam()` groups `API_KEY_ROWS` (activity-data) by
-  the team's keys; "Spend by model" groups `USAGE_7D` cells and settles onto
+  the team's keys; "Usage by model" groups `USAGE_7D` cells and settles onto
   the team's spend total so the breakdown can never be a cent off the KPI
 - per-model requests reuse `MODEL_ROWS`' own requests-per-token ratio, are
   normalized proportionally onto the team's request total, then settled

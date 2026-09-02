@@ -1389,11 +1389,15 @@ switches).
   tone recipes. **Generalised 2026-09-01** — this ladder is now one instance
   of the site-wide bar rule above (Data bars & meters); `over` is the single
   sanctioned solid fill.
-- **Band boundary (2026-09-02):** `over` starts AT the cap (`spend >= cap`),
-  not past it. A hard budget cannot pass its cap, so 100% is its terminal,
-  blocking state and reads red; a soft budget keeps counting past 100% and
-  reads red as exceeded. Hard budgets never display spend or percent above
-  the cap (`budgetSpendShown`, `budgetPercentLabel(…, enforcement)`).
+- **Band boundary (2026-09-02):** `over` starts AT the block point
+  (`spend >= blockPoint`), not past it. For a soft budget the block point is
+  the cap; for a hard budget it is `cap × blockThreshold%` (default 100, set
+  in the budget form's "Block threshold" field, hard only). A hard budget
+  cannot pass its block point, so that percent is its terminal, blocked
+  state and reads red; a soft budget keeps counting past 100% and reads red
+  as exceeded. Hard budgets never display spend above the block point
+  (`budgetSpendShown` / `budgetPercentLabel(…, enforcement, blockThreshold)`).
+  The Budget tab adds a "Block at" fact for hard budgets.
 - **Status word (2026-09-02):** every off-nominal meter carries a `Badge`
   beside it — `Warning` (warning variant) from the warn line, `Exceeded`
   (destructive, soft past cap) or `Blocked` (destructive, hard at cap).

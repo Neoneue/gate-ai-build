@@ -44,12 +44,29 @@ export type TeamBudget = {
   /** USD cap per configured window. At least one key, never empty. */
   caps: Partial<Record<BudgetWindow, number>>;
   enforcement: BudgetEnforcement;
-  /** Percent of a window's cap at which the warning fires. A hard budget
-   *  blocks at the cap itself — there is no separate block threshold. The
-   *  PRD sketched warn+block percentages; migration 170 shipped
-   *  `warn_threshold_pct` only, and this mirrors the shipped schema. */
+  /** Percent of a window's cap at which the warning fires. */
   warnThreshold: number;
+  /** Percent of a window's cap at which a HARD budget blocks (PRD 3 / 8.2:
+   *  "warn at 80%, block at 100%"; AG-695 design task "warn and block
+   *  threshold entry"). 100 = block at the cap itself. Soft budgets never
+   *  block, so the value is carried but not read for them. Always greater
+   *  than `warnThreshold`. Added 2026-09-02 (user: "add that just in case
+   *  and not decide that 100 is absolute"). */
+  blockThreshold: number;
 };
+
+export const DEFAULT_BLOCK_THRESHOLD = 100;
+
+/** The dollar figure at which a hard budget stops accepting messages: the
+ *  cap scaled by the block percent. A soft budget's block point is its cap
+ *  (where "exceeded" begins), because it has no block. */
+export function budgetBlockPoint(
+  cap: number,
+  enforcement: BudgetEnforcement,
+  blockThreshold: number = DEFAULT_BLOCK_THRESHOLD
+): number {
+  return enforcement === "hard" ? (cap * blockThreshold) / 100 : cap;
+}
 
 export type TeamRow = {
   id: string;
@@ -147,14 +164,14 @@ export const BUDGET_WINDOW_RESET_SHORT: Record<BudgetWindow, string> = {
 
 export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
   soft: "Soft: warn only, never blocks",
-  hard: "Hard: blocks requests once exceeded",
+  hard: "Hard: blocks messages once exceeded",
 };
 
 /** Warning note under the Enforcement select, shown only while Hard is
  *  selected. Makes the production impact explicit at the point of choosing
  *  (AG-695 design task: a hard budget must not read as a minor toggle). */
 export const BUDGET_HARD_ENFORCEMENT_HELP =
-  "Team members will be unable to send requests once a cap is reached, until that window resets.";
+  "Team members will be unable to send messages once a cap is reached, until that window resets.";
 
 /** Banner title for a window that has reached or passed its cap. Names WHICH
  *  cap did it (the team and the window) because "budget exceeded" on its own
@@ -166,9 +183,13 @@ export const BUDGET_HARD_ENFORCEMENT_HELP =
 export function budgetBreachTitle(
   teamName: string,
   window: BudgetWindow,
-  enforcement: BudgetEnforcement
+  enforcement: BudgetEnforcement,
+  blockThreshold: number = DEFAULT_BLOCK_THRESHOLD
 ): string {
   const windowWord = BUDGET_WINDOW_LABEL[window].toLowerCase();
+  if (enforcement === "hard" && blockThreshold < 100) {
+    return `Blocked: ${teamName} ${windowWord} budget at its ${blockThreshold}% block threshold`;
+  }
   return enforcement === "hard"
     ? `Blocked: ${teamName} ${windowWord} budget reached`
     : `Exceeded: ${teamName} ${windowWord} budget`;
@@ -187,9 +208,9 @@ export function budgetBreachBody(
 ): string {
   const reset = budgetResetLabel(window);
   if (enforcement === "hard") {
-    return `Requests from this team are blocked. ${reset}.`;
+    return `Messages from this team are blocked. ${reset}.`;
   }
-  return `Spend is ${formatCurrency(spend - cap)} past the cap and requests still go through. ${reset}.`;
+  return `Spend is ${formatCurrency(spend - cap)} past the cap and messages still go through. ${reset}.`;
 }
 
 /** Canonical window order: shortest first. Every list of windows (picker
@@ -248,6 +269,7 @@ export const ORG_BUDGET_SEED: TeamBudget = {
   caps: { monthly: 1500 },
   enforcement: "soft",
   warnThreshold: 80,
+  blockThreshold: DEFAULT_BLOCK_THRESHOLD,
 };
 
 /** Three teams over the four workspace members and the nine active keys,
@@ -293,6 +315,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       caps: { "5h": 25, weekly: 100, monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
+      blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
   },
   {
@@ -309,6 +332,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       caps: { "5h": 25, weekly: 100, monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
+      blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
   },
 ];
@@ -326,6 +350,10 @@ export type UsageSlice = {
   /** By-user rows only: the spend is this team's history but the person is
    *  no longer on the team (PRD 3 Reassignment). */
   former?: boolean;
+  /** By-user rows only: prompt and completion tokens across the member's
+   *  key rows (the Usage tab's "Tokens in" / "Tokens out" columns). */
+  tokensIn?: number;
+  tokensOut?: number;
 };
 
 export type TeamUsage = {
@@ -420,12 +448,22 @@ function usageByUser(
   rows: ReturnType<typeof activityRowsFor>,
   totalSpend: number
 ): UsageSlice[] {
-  const acc = new Map<string, { requests: number; spend: number }>();
+  const acc = new Map<
+    string,
+    { requests: number; spend: number; tokensIn: number; tokensOut: number }
+  >();
   for (const row of rows) {
-    const prev = acc.get(row.owner) ?? { requests: 0, spend: 0 };
+    const prev = acc.get(row.owner) ?? {
+      requests: 0,
+      spend: 0,
+      tokensIn: 0,
+      tokensOut: 0,
+    };
     acc.set(row.owner, {
       requests: prev.requests + row.requests,
       spend: prev.spend + row.spend,
+      tokensIn: prev.tokensIn + row.tokensIn,
+      tokensOut: prev.tokensOut + row.tokensOut,
     });
   }
   const entries = [...acc.entries()].sort((a, b) => b[1].spend - a[1].spend);
@@ -444,6 +482,8 @@ function usageByUser(
       requests: v.requests,
       spend: spends[i] ?? 0,
       former: !team.memberIds.includes(id),
+      tokensIn: v.tokensIn,
+      tokensOut: v.tokensOut,
     };
   });
 }
@@ -533,6 +573,7 @@ export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
   }
   const requests = Math.round(usage.requests * scale);
   const spend = round2(usage.spend * scale);
+  const tokens = Math.round(usage.tokens * scale);
   const scaleSlices = (slices: UsageSlice[]): UsageSlice[] => {
     const reqs = settleValues(
       slices.map((s) => s.requests * scale),
@@ -544,16 +585,37 @@ export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
       spend,
       2
     );
+    // Token columns exist on by-user rows only. Tokens in settle onto the
+    // scaled in-total; tokens out take the remainder of the scaled team
+    // total, so in + out across the table equals the Tokens Used tile.
+    const hasTokens = slices.some((s) => s.tokensIn !== undefined);
+    const inTotal = slices.reduce((a, s) => a + (s.tokensIn ?? 0), 0);
+    const scaledIn = Math.round(inTotal * scale);
+    const ins = hasTokens
+      ? settleValues(
+          slices.map((s) => (s.tokensIn ?? 0) * scale),
+          scaledIn,
+          0
+        )
+      : [];
+    const outs = hasTokens
+      ? settleValues(
+          slices.map((s) => (s.tokensOut ?? 0) * scale),
+          tokens - scaledIn,
+          0
+        )
+      : [];
     return slices.map((s, i) => ({
       ...s,
       requests: reqs[i] ?? 0,
       spend: spends[i] ?? 0,
+      ...(hasTokens ? { tokensIn: ins[i] ?? 0, tokensOut: outs[i] ?? 0 } : {}),
     }));
   };
   return {
     requests,
     spend,
-    tokens: Math.round(usage.tokens * scale),
+    tokens,
     byUser: scaleSlices(usage.byUser),
     byModel: scaleSlices(usage.byModel),
   };
@@ -655,9 +717,12 @@ export function budgetProgress(
 export function budgetSpendShown(
   spend: number,
   cap: number,
-  enforcement: BudgetEnforcement
+  enforcement: BudgetEnforcement,
+  blockThreshold: number = DEFAULT_BLOCK_THRESHOLD
 ): number {
-  return enforcement === "hard" && cap > 0 ? Math.min(spend, cap) : spend;
+  return enforcement === "hard" && cap > 0
+    ? Math.min(spend, budgetBlockPoint(cap, enforcement, blockThreshold))
+    : spend;
 }
 
 /** Percent used, always one decimal — a bar that has barely moved still
@@ -667,12 +732,13 @@ export function budgetSpendShown(
 export function budgetPercentLabel(
   spend: number,
   cap: number,
-  enforcement: BudgetEnforcement = "soft"
+  enforcement: BudgetEnforcement = "soft",
+  blockThreshold: number = DEFAULT_BLOCK_THRESHOLD
 ): string {
   if (cap <= 0) {
     return "0.0%";
   }
-  const shown = budgetSpendShown(spend, cap, enforcement);
+  const shown = budgetSpendShown(spend, cap, enforcement, blockThreshold);
   return `${((shown / cap) * 100).toFixed(1)}%`;
 }
 

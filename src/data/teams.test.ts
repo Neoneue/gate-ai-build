@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import {
   BUDGET_WINDOW_ORDER,
   BUDGET_WINDOW_SCALE,
+  budgetBlockPoint,
   budgetPercentLabel,
   budgetProgress,
   budgetReadings,
@@ -21,6 +22,7 @@ import {
 import type { Range } from "@/lib/range";
 
 import { ATTACK_MIX, EVENTS_RANGE_TOTAL } from "@/pages/security/events-data";
+import { budgetStatus } from "@/pages/teams/budget-band";
 import { securityForTeam, teamEventShares } from "@/pages/teams/security-data";
 import { teamDailySeries, teamSparkSeries } from "@/pages/teams/spark-series";
 
@@ -435,4 +437,45 @@ test("deleteTeam folds members and keys into Default and drops the team's histor
   // Default team and unknown ids are no-ops.
   expect(deleteTeam(TEAM_SEED_ROWS, DEFAULT_TEAM_ID)).toBe(TEAM_SEED_ROWS);
   expect(deleteTeam(TEAM_SEED_ROWS, "nope")).toBe(TEAM_SEED_ROWS);
+});
+
+// PRD 3 / 8.2: "warn at 80%, block at 100%" are DEFAULTS, not constants. A
+// hard budget blocks at its block percent of the cap; soft ignores it.
+test("block threshold: hard budgets block at blockThreshold% of the cap", () => {
+  // Hard, block at 80: spend at 80% of the cap is over, shown clamps there.
+  expect(budgetStatus(80, 100, 60, "hard", 80)).toBe("blocking");
+  expect(budgetStatus(79, 100, 60, "hard", 80)).toBe("warning");
+  expect(budgetSpendShown(95, 100, "hard", 80)).toBe(80);
+  expect(budgetPercentLabel(95, 100, "hard", 80)).toBe("80.0%");
+  expect(budgetBlockPoint(250, "hard", 80)).toBe(200);
+  // Default 100 keeps today's behaviour.
+  expect(budgetStatus(99, 100, 80, "hard")).toBe("warning");
+  expect(budgetStatus(100, 100, 80, "hard")).toBe("blocking");
+  // Soft never blocks: block percent is ignored, exceeded starts at the cap.
+  expect(budgetStatus(85, 100, 80, "soft", 80)).toBe("warning");
+  expect(budgetStatus(100, 100, 80, "soft", 80)).toBe("exceeded");
+  expect(budgetBlockPoint(250, "soft", 80)).toBe(250);
+  expect(budgetSpendShown(300, 250, "soft", 80)).toBe(300);
+  // Seeds carry the default.
+  for (const t of TEAM_SEED_ROWS) {
+    if (t.budget) {
+      expect(t.budget.blockThreshold).toBe(100);
+    }
+  }
+});
+
+// Usage tab token columns: per-member tokens in + out sum to the team's
+// Tokens Used tile at every scale.
+test("by-user tokens in + out reconcile with the team token total", () => {
+  for (const team of TEAM_SEED_ROWS) {
+    const usage = usageForTeam(team);
+    for (const scale of [1, 30 / 7, 10 / 7]) {
+      const scaled = scaleUsage(usage, scale);
+      const sum = scaled.byUser.reduce(
+        (a, r) => a + (r.tokensIn ?? 0) + (r.tokensOut ?? 0),
+        0
+      );
+      expect(sum).toBe(scaled.tokens);
+    }
+  }
 });
