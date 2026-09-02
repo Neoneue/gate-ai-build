@@ -379,6 +379,16 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
   expect(p2Usage.requests).toBe(before.platform.requests);
   const kiraRow = p2Usage.byUser.find((r) => r.id === kira);
   expect(kiraRow?.former).toBe(true);
+  // The Usage tab splits by-user into "Spend by member" (current) and "Past
+  // members" (former); the two tables must still sum to Total Spend.
+  const current = p2Usage.byUser.filter((r) => !r.former);
+  const past = p2Usage.byUser.filter((r) => r.former);
+  expect(past.length).toBeGreaterThan(0);
+  expect(current.every((r) => p2.memberIds.includes(r.id))).toBe(true);
+  expect(past.every((r) => !p2.memberIds.includes(r.id))).toBe(true);
+  expect(round2([...current, ...past].reduce((a, r) => a + r.spend, 0))).toBe(
+    p2Usage.spend
+  );
   expect(kiraRow?.spend).toBe(
     before.platform.byUser.find((r) => r.id === kira)?.spend
   );

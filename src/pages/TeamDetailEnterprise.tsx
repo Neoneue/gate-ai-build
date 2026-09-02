@@ -555,9 +555,20 @@ function UsagePane({ teamId, usage }: { teamId: string; usage: TeamUsage }) {
         emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
         emptyTitle="No per-user data yet."
         firstColumn="User"
-        rows={scaled.byUser}
-        title="Spend by member"
+        rows={scaled.byUser.filter((r) => !r.former)}
+        title="Spend by current members"
       />
+      {/* PRD §3: "past requests keep their original team". */}
+      {scaled.byUser.some((r) => r.former) ? (
+        <UsageBreakdown
+          avatarFor={userAvatar}
+          emptyBody=""
+          emptyTitle="No past members."
+          firstColumn="User"
+          rows={scaled.byUser.filter((r) => r.former)}
+          title="Spend by past members"
+        />
+      ) : null}
       <UsageBreakdown
         avatarFor={modelAvatar}
         emptyBody="Once this team’s keys route through the gateway, spend per model appears here."
@@ -661,11 +672,6 @@ function UsageBreakdown({
                       >
                         {row.label}
                       </span>
-                      {row.former ? (
-                        <span className="type-copy-12 whitespace-nowrap text-muted-foreground">
-                          Former member
-                        </span>
-                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
