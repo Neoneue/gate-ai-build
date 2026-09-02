@@ -339,7 +339,7 @@ export function BudgetBreachBanner({
   }
   return (
     <div
-      className="flex items-start gap-2 rounded-md border border-danger-200 bg-danger-50 p-3 dark:border-destructive/30 dark:bg-destructive/10"
+      className="mb-2 flex items-start gap-2 rounded-md border border-danger-200 bg-danger-50 p-3 dark:border-destructive/30 dark:bg-destructive/10"
       role="alert"
     >
       {/* h-5 wrapper centers the 16px glyph on the first 20px title line, so
