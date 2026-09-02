@@ -10,6 +10,7 @@ import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import {
   Card,
   CardAction,
@@ -263,7 +264,7 @@ export function TeamDetailEnterprise({
 
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
-type TabId = "members" | "keys" | "budget" | "usage" | "security";
+type TabId = "members" | "keys" | "budget" | "usage" | "security" | "settings";
 
 function TeamDetailBody({
   team,
@@ -310,8 +311,6 @@ function TeamDetailBody({
               : "Members, keys, and budget for this team."}
           </p>
         </div>
-        {/* Rename / Delete are parked until a Settings tab exists; their
-            dialogs below stay wired so that tab can reuse them. */}
       </div>
 
       {/* Blocked / exceeded caps sit ABOVE the tabs, full width of the content
@@ -343,6 +342,7 @@ function TeamDetailBody({
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="members">
@@ -375,6 +375,13 @@ function TeamDetailBody({
             variant={variant}
           />
         </TabsContent>
+        <TabsContent value="settings">
+          <SettingsTab
+            onDelete={() => setDeleteOpen(true)}
+            onRename={() => setRenameOpen(true)}
+            team={team}
+          />
+        </TabsContent>
       </Tabs>
 
       <RenameTeamDialog
@@ -393,6 +400,64 @@ function TeamDetailBody({
         teamName={team.name}
       />
     </>
+  );
+}
+
+/* ─── Settings tab ─────────────────────────────────────────────────────── */
+
+/** The team-level actions (AG-695 scope: "create, rename and delete a
+ *  team"). One card per action so the destructive one stands apart from the
+ *  rename, in the Budget tab's card shape. The Default team gets neither
+ *  (PRD 3 / 8.1: it is the fold-in target for every other team), so it
+ *  states that instead of showing disabled controls. */
+function SettingsTab({
+  team,
+  onRename,
+  onDelete,
+}: {
+  team: TeamRow;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  if (team.isDefault) {
+    return (
+      <Callout>
+        The default team can’t be renamed or deleted. Members and keys removed
+        from other teams land here.
+      </Callout>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Team name</CardTitle>
+          <CardDescription>
+            {team.name}. Shown on the Teams list, in budget alerts, and in every
+            dialog that names this team.
+          </CardDescription>
+          <CardAction>
+            <Button onClick={onRename} size="sm" variant="outline">
+              Rename
+            </Button>
+          </CardAction>
+        </CardHeader>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Delete team</CardTitle>
+          <CardDescription>
+            Members and keys on this team move to the default team. The team and
+            its history are removed. This can’t be undone.
+          </CardDescription>
+          <CardAction>
+            <Button onClick={onDelete} size="sm" variant="destructive">
+              Delete team
+            </Button>
+          </CardAction>
+        </CardHeader>
+      </Card>
+    </div>
   );
 }
 

@@ -306,7 +306,7 @@ function TeamsTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead
-              className="w-[20%] whitespace-nowrap"
+              className="w-[18%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="team"
@@ -314,7 +314,7 @@ function TeamsTable({
               Team
             </SortableTableHead>
             <SortableTableHead
-              className="w-[12%] whitespace-nowrap"
+              className="w-[11%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -323,7 +323,7 @@ function TeamsTable({
               Members
             </SortableTableHead>
             <SortableTableHead
-              className="w-[9%] whitespace-nowrap"
+              className="w-[8%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -331,7 +331,7 @@ function TeamsTable({
             >
               Keys
             </SortableTableHead>
-            <TableHead className="w-[16%] whitespace-nowrap">Manager</TableHead>
+            <TableHead className="w-[13%] whitespace-nowrap">Manager</TableHead>
             <SortableTableHead
               className="w-[12%] whitespace-nowrap"
               numeric
@@ -341,7 +341,7 @@ function TeamsTable({
             >
               Spend
             </SortableTableHead>
-            <TableHead className="w-[31%] whitespace-nowrap">Budget</TableHead>
+            <TableHead className="w-[38%] whitespace-nowrap">Budget</TableHead>
             <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
@@ -437,10 +437,15 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
   const { window, cap, spend } = tightestReading(usageForTeam(row), budget);
   const fraction = budgetProgress(spend, cap) ?? 0;
   const windowWord = BUDGET_WINDOW_LABEL[window].toLowerCase();
+  // AC 2: enforcement has to be readable on a HEALTHY row too — a hard cap and
+  // a soft one look identical until one of them blocks. The word rides in the
+  // existing caption rather than a badge, so nothing new competes with the
+  // status word that appears at warn/block.
+  const enforcementWord = budget.enforcement === "hard" ? "Hard cap" : "Soft";
   return (
     <div className="flex items-center gap-2">
       <div
-        aria-label={`${row.name} ${windowWord} budget used`}
+        aria-label={`${row.name} ${windowWord} budget used, ${enforcementWord.toLowerCase()}`}
         aria-valuemax={cap}
         aria-valuemin={0}
         aria-valuenow={spend}
@@ -461,7 +466,8 @@ function RowBudgetMeter({ row }: { row: TeamRow }) {
         />
       </div>
       <span className="type-copy-12 text-muted-foreground tabular-nums">
-        {budgetPercentLabel(spend, cap, budget.enforcement)} {windowWord}
+        {budgetPercentLabel(spend, cap, budget.enforcement)} {windowWord} ·{" "}
+        {enforcementWord}
       </span>
       {/* The status word: a red bar at 100% and an amber one at 85% are two
           different situations, and the column is 24px tall: the label is
