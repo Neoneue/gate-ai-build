@@ -647,13 +647,32 @@ export function withManager(
     : team;
 }
 
+/** Keys owned by any of `memberIds` that currently sit on a team. */
+function keysOwnedBy(teams: TeamRow[], memberIds: Set<string>): string[] {
+  const owned = new Set<string>();
+  for (const team of teams) {
+    for (const id of team.keyIds) {
+      const ownerId = keyById(id)?.ownerId;
+      if (ownerId && memberIds.has(ownerId)) {
+        owned.add(id);
+      }
+    }
+  }
+  return [...owned];
+}
+
 /** Move members onto `targetId`, removing them from whichever team they were
  *  on. PRD 3 / 8.1: adding someone to a team IS moving them, so this is one
  *  operation over the whole array rather than an add on one team and a
  *  silent duplicate everywhere else.
  *
  *  A member who managed their previous team stops managing it — the role is
- *  a property of the team they are on, and they are no longer on it. */
+ *  a property of the team they are on, and they are no longer on it.
+ *
+ *  Their own keys move with them (user decision 2026-09-01; the PRD assigns
+ *  keys and users separately and is silent on this, so a key left behind
+ *  would keep billing a team its owner has left). Keys owned by someone else
+ *  stay put. */
 export function moveMembersToTeam(
   teams: TeamRow[],
   targetId: string,
@@ -661,7 +680,8 @@ export function moveMembersToTeam(
 ): TeamRow[] {
   const moving = new Set(memberIds);
   const now = new Date();
-  return teams.map((team) => {
+  const withKeys = moveKeysToTeam(teams, targetId, keysOwnedBy(teams, moving));
+  return withKeys.map((team) => {
     if (team.id === targetId) {
       const added = memberIds.filter((id) => !team.memberIds.includes(id));
       const memberJoined = { ...team.memberJoined };

@@ -5,6 +5,8 @@ import {
   budgetPercentLabel,
   budgetProgress,
   budgetReadings,
+  keyById,
+  moveMembersToTeam,
   ORG_BUDGET_SEED,
   orgSpend,
   scaleUsage,
@@ -284,4 +286,31 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
     }
   }
   expect(bad.join("\n")).toBe("");
+});
+
+test("moving a member moves the keys they own, and only those", () => {
+  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Platform");
+  const design = TEAM_SEED_ROWS.find((t) => t.name === "Design");
+  if (!(platform && design)) {
+    throw new Error("seed teams missing");
+  }
+  const kira = "usr_kira";
+  const kirasKeys = platform.keyIds.filter(
+    (id) => keyById(id)?.ownerId === kira
+  );
+  expect(kirasKeys.length).toBeGreaterThan(0);
+  const next = moveMembersToTeam(TEAM_SEED_ROWS, design.id, [kira]);
+  const nextPlatform = next.find((t) => t.id === platform.id);
+  const nextDesign = next.find((t) => t.id === design.id);
+  expect(nextPlatform?.memberIds).not.toContain(kira);
+  expect(nextDesign?.memberIds).toContain(kira);
+  for (const id of kirasKeys) {
+    expect(nextPlatform?.keyIds).not.toContain(id);
+    expect(nextDesign?.keyIds).toContain(id);
+  }
+  // Someone else's keys on Platform stay on Platform.
+  const others = platform.keyIds.filter((id) => !kirasKeys.includes(id));
+  for (const id of others) {
+    expect(nextPlatform?.keyIds).toContain(id);
+  }
 });

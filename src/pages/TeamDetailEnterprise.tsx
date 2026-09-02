@@ -99,6 +99,7 @@ import {
   BudgetDialog,
   DeleteTeamDialog,
   RemoveTeamKeyDialog,
+  RemoveTeamMemberDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
 import { TeamSecurityOverviewPane } from "@/pages/teams/SecurityOverviewPane";
@@ -187,6 +188,13 @@ export function TeamDetailEnterprise({
     setTeams((prev) => moveKeysToTeam(prev, DEFAULT_TEAM_ID, [keyId]));
   };
 
+  // Members follow the same rule (PRD 3 / 8.1: every user is on exactly one
+  // team). Removing one moves them to Default; `moveMembersToTeam` drops
+  // their manager role and joined stamp on the way out.
+  const removeMember = (memberId: string) => {
+    setTeams((prev) => moveMembersToTeam(prev, DEFAULT_TEAM_ID, [memberId]));
+  };
+
   // Same fold-in contract as the list page's delete: members and keys land on
   // Default, then the page has nothing left to show, so it returns to the list.
   const deleteTeam = () => {
@@ -241,6 +249,7 @@ export function TeamDetailEnterprise({
             onMoveMembers={moveMembers}
             onPatch={patch}
             onRemoveKey={removeKey}
+            onRemoveMember={removeMember}
             team={team}
             teams={teams}
             variant={variant}
@@ -274,6 +283,7 @@ function TeamDetailBody({
   onMoveMembers,
   onMoveKeys,
   onRemoveKey,
+  onRemoveMember,
   onDeleteTeam,
   variant,
 }: {
@@ -284,6 +294,7 @@ function TeamDetailBody({
   onMoveMembers: (ids: string[]) => void;
   onMoveKeys: (ids: string[]) => void;
   onRemoveKey: (keyId: string) => void;
+  onRemoveMember: (memberId: string) => void;
   onDeleteTeam: () => void;
   variant: TeamsVariant;
 }) {
@@ -337,6 +348,7 @@ function TeamDetailBody({
           <MembersPane
             onMoveMembers={onMoveMembers}
             onPatch={onPatch}
+            onRemoveMember={onRemoveMember}
             team={team}
             teams={teams}
           />
@@ -673,13 +685,18 @@ function MembersPane({
   teams,
   onPatch,
   onMoveMembers,
+  onRemoveMember,
 }: {
   team: TeamRow;
   teams: TeamRow[];
   onPatch: (next: Partial<TeamRow>) => void;
   onMoveMembers: (ids: string[]) => void;
+  onRemoveMember: (memberId: string) => void;
 }) {
   const [addOpen, setAddOpen] = useState(false);
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
+    null
+  );
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | RoleOption>("all");
 
@@ -882,28 +899,22 @@ function MembersPane({
                     />
                   </TableCell>
                   <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                    <IconActionButton
-                      aria-label={`Remove ${member.name} from ${team.name}`}
-                      onClick={() =>
-                        onPatch({
-                          memberIds: team.memberIds.filter(
-                            (id) => id !== member.id
-                          ),
-                          // Leaving the team drops the role with it — it was a
-                          // fact about this membership, and the membership is
-                          // gone. Any co-manager keeps theirs.
-                          managerIds: team.managerIds.filter(
-                            (id) => id !== member.id
-                          ),
-                        })
-                      }
-                    >
-                      <Trash2
-                        aria-hidden
-                        className="size-4"
-                        strokeWidth={1.75}
-                      />
-                    </IconActionButton>
+                    {/* The Default team is where removed members LAND, so there
+                        is nowhere to remove them to from here. */}
+                    {team.isDefault ? null : (
+                      <IconActionButton
+                        aria-label={`Remove ${member.name} from ${team.name}`}
+                        onClick={() =>
+                          setRemoving({ id: member.id, name: member.name })
+                        }
+                      >
+                        <Trash2
+                          aria-hidden
+                          className="size-4"
+                          strokeWidth={1.75}
+                        />
+                      </IconActionButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -920,6 +931,27 @@ function MembersPane({
         onOpenChange={setAddOpen}
         open={addOpen}
         options={options}
+      />
+      <RemoveTeamMemberDialog
+        keyCount={
+          removing === null
+            ? 0
+            : team.keyIds.filter((id) => keyById(id)?.ownerId === removing.id)
+                .length
+        }
+        memberName={removing?.name ?? ""}
+        onConfirm={() => {
+          if (removing) {
+            onRemoveMember(removing.id);
+          }
+          setRemoving(null);
+        }}
+        onOpenChange={(next) => {
+          if (!next) {
+            setRemoving(null);
+          }
+        }}
+        open={removing !== null}
       />
     </div>
   );

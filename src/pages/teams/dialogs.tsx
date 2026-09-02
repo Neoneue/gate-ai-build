@@ -560,7 +560,7 @@ function AddEntitiesBody({
 const ADD_MEMBERS_COPY: AddEntitiesCopy = {
   title: "Add members",
   description:
-    "Only existing org members can be added. This doesn’t send invites.",
+    "Only existing org members can be added, and their keys move with them. This doesn’t send invites.",
   fieldLabel: "Members",
   placeholder: "Select members",
   submitLabel: "Add members",
@@ -768,6 +768,61 @@ export function RemoveTeamKeyDialog({
             variant="destructive"
           >
             Remove key
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── 8. Remove member from team ────────────────────────────────────────── */
+
+/** Same contract as the key dialog: a member is never left without a team
+ *  (PRD 3 / 8.1, one team per user), so removing them here moves them to the
+ *  default team. Confirmed because the trash glyph reads as "remove from the
+ *  org" at a glance, and this is not that. */
+export function RemoveTeamMemberDialog({
+  open,
+  onOpenChange,
+  memberName,
+  keyCount,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+  memberName: string;
+  /** Keys this member owns on the team; they move with them. */
+  keyCount: number;
+  onConfirm: () => void;
+}) {
+  const withKeys =
+    keyCount === 0
+      ? ""
+      : ` along with their ${keyCount} ${keyCount === 1 ? "key" : "keys"}`;
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="p-4 sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Remove {memberName} from this team?</DialogTitle>
+          <DialogDescription>
+            They move to the default team{withKeys}, where you can reassign
+            them. Their org access is unchanged, and only their team attribution
+            changes.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose
+            render={<Button size="default" type="button" variant="outline" />}
+          >
+            Cancel
+          </DialogClose>
+          <Button
+            onClick={onConfirm}
+            size="default"
+            type="button"
+            variant="destructive"
+          >
+            Remove member
           </Button>
         </DialogFooter>
       </DialogContent>
