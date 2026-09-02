@@ -13,6 +13,7 @@ import {
   DialogScrollHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -62,6 +63,15 @@ import {
 
 /* ─── 1. Create team ────────────────────────────────────────────────────── */
 
+/* Validation copy. Shared where the rule is shared: the name rule is the same
+ * sentence in both forms, and the two percent fields state the same integer
+ * range. Errors surface only after the field has been blurred (`touched`);
+ * Save stays disabled while anything is invalid. */
+const ERROR_NAME = "Enter a name.";
+const ERROR_AMOUNT = "Enter an amount above $0.";
+const ERROR_PERCENT = "Enter a whole number from 1 to 100.";
+const ERROR_BLOCK_ORDER = "Block threshold must be above the warn threshold.";
+
 export function CreateTeamDialog({
   open,
   onOpenChange,
@@ -82,16 +92,22 @@ export function CreateTeamDialog({
 
 function CreateTeamBody({ onCreate }: { onCreate: (name: string) => void }) {
   const [name, setName] = useState("");
+  // Blur gating: a dialog that opens with a red empty field is scolding the
+  // user for not having typed yet. `touched` flips on the field's own blur.
+  const [touched, setTouched] = useState(false);
   const isValid = name.trim().length > 0;
+  const nameError = isValid ? null : ERROR_NAME;
+  const showNameError = nameError !== null && touched;
 
   return (
     <form
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (isValid) {
-          onCreate(name.trim());
+        if (!isValid) {
+          return;
         }
+        onCreate(name.trim());
       }}
     >
       <DialogHeader>
@@ -110,16 +126,30 @@ function CreateTeamBody({ onCreate }: { onCreate: (name: string) => void }) {
         >
           Name
         </Label>
-        <Input
-          autoComplete="off"
-          className="type-copy-14"
-          id="team-create-name"
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Platform"
-          spellCheck={false}
-          type="text"
-          value={name}
-        />
+        {/* Plain wrapper, not another gap-2 sibling: `FieldError` carries its
+            own 8px offset from the control, matching `type-input-helper`. */}
+        <div>
+          <Input
+            aria-describedby={
+              showNameError ? "team-create-name-error" : undefined
+            }
+            aria-invalid={showNameError}
+            autoComplete="off"
+            className="type-copy-14"
+            id="team-create-name"
+            onBlur={() => setTouched(true)}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Platform"
+            spellCheck={false}
+            type="text"
+            value={name}
+          />
+          {showNameError ? (
+            <FieldError className="mt-2" id="team-create-name-error">
+              {nameError}
+            </FieldError>
+          ) : null}
+        </div>
       </div>
 
       <DialogFooter>
@@ -223,6 +253,13 @@ function BudgetBody({
   const [block, setBlock] = useState(
     String(budget?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD)
   );
+  // Error gating, same contract as Create team: a field's message appears once
+  // that field has been blurred. The map is keyed by field, so the three cap
+  // rows gate independently. Save stays disabled while anything is invalid.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const touch = (key: string) =>
+    setTouched((prev) => ({ ...prev, [key]: true }));
+  const shows = (key: string) => touched[key] === true;
 
   // Picking a window is picking a PRESET: a newly selected window arrives
   // pre-filled with its default cap (5h $25 / weekly $200 / monthly $500), or
@@ -248,14 +285,19 @@ function BudgetBody({
   const warnValue = Number(warn);
   const blockValue =
     enforcement === "hard" ? Number(block) : DEFAULT_BLOCK_THRESHOLD;
-  const inPercentRange = (n: number) => Number.isFinite(n) && n > 0 && n <= 100;
+  // A percentage is a WHOLE number 1–100. `Number.isInteger` also rejects
+  // NaN / Infinity, so it subsumes the old `Number.isFinite` guard — 80.5
+  // used to validate and save, which no threshold UI in the app can display.
+  const inPercentRange = (n: number) =>
+    Number.isInteger(n) && n > 0 && n <= 100;
   const blockValid =
     enforcement !== "hard" ||
     (inPercentRange(blockValue) && blockValue > warnValue);
-  const capsValid = windows.every((w) => {
+  const amountValid = (w: BudgetWindow) => {
     const n = Number(amounts[w]);
     return Number.isFinite(n) && n > 0;
-  });
+  };
+  const capsValid = windows.every(amountValid);
   const isValid =
     name.trim().length > 0 &&
     windows.length > 0 &&
@@ -263,6 +305,29 @@ function BudgetBody({
     inPercentRange(warnValue) &&
     blockValid;
 
+  // One message per field, independent of whether it is being shown yet.
+  // Block carries two distinct failures: out of range, and in range but at or
+  // below the warn line — the second needs its own sentence or the user reads
+  // a range error against a value that is inside the range.
+  const nameError = name.trim().length > 0 ? null : ERROR_NAME;
+  const amountError = (w: BudgetWindow) =>
+    amountValid(w) ? null : ERROR_AMOUNT;
+  const warnError = inPercentRange(warnValue) ? null : ERROR_PERCENT;
+  let blockError: string | null = null;
+  if (enforcement === "hard") {
+    if (!inPercentRange(blockValue)) {
+      blockError = ERROR_PERCENT;
+    } else if (blockValue <= warnValue) {
+      blockError = ERROR_BLOCK_ORDER;
+    }
+  }
+
+  // Budget windows has no error UI by design: MultiSelect's `minSelected={1}`
+  // makes an empty selection unreachable.
+  const nameId = `${scope}-budget-name`;
+  const warnId = `${scope}-budget-warn`;
+  const blockId = `${scope}-budget-block`;
+  const amountId = (w: BudgetWindow) => `${scope}-budget-amount-${w}`;
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
@@ -298,19 +363,33 @@ function BudgetBody({
           <div className="flex flex-col gap-2">
             <Label
               className="type-label-14 text-muted-foreground"
-              htmlFor={`${scope}-budget-name`}
+              htmlFor={nameId}
             >
               Name
             </Label>
-            <Input
-              autoComplete="off"
-              className="type-copy-14"
-              id={`${scope}-budget-name`}
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              type="text"
-              value={name}
-            />
+            {/* Plain wrapper: `FieldError` owns its own 8px offset from the
+                control, exactly as `type-input-helper` does. */}
+            <div>
+              <Input
+                aria-describedby={
+                  nameError && shows("name") ? `${nameId}-error` : undefined
+                }
+                aria-invalid={nameError !== null && shows("name")}
+                autoComplete="off"
+                className="type-copy-14"
+                id={nameId}
+                onBlur={() => touch("name")}
+                onChange={(e) => setName(e.target.value)}
+                spellCheck={false}
+                type="text"
+                value={name}
+              />
+              {nameError && shows("name") ? (
+                <FieldError className="mt-2" id={`${nameId}-error`}>
+                  {nameError}
+                </FieldError>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -344,31 +423,52 @@ function BudgetBody({
           {/* One cap per selected window, in canonical order — a team can run a
           5-hour, a weekly, and a monthly limit at once, and each is its own
           number. Name, enforcement and warn percent stay shared below. */}
-          {windows.map((w) => (
-            <div className="flex flex-col gap-2" key={w}>
-              <Label
-                className="type-label-14 text-muted-foreground"
-                htmlFor={`${scope}-budget-amount-${w}`}
-              >
-                {BUDGET_WINDOW_LABEL[w]} amount (USD)
-              </Label>
-              <div>
-                <Input
-                  autoComplete="off"
-                  className="type-mono-14"
-                  id={`${scope}-budget-amount-${w}`}
-                  min={1}
-                  onChange={(e) =>
-                    setAmounts((prev) => ({ ...prev, [w]: e.target.value }))
-                  }
-                  step={1}
-                  type="number"
-                  value={amounts[w] ?? ""}
-                />
-                <p className="type-input-helper">{BUDGET_WINDOW_HELP[w]}</p>
+          {windows.map((w) => {
+            const id = amountId(w);
+            const error = amountError(w);
+            const showError = error !== null && shows(`amount-${w}`);
+            return (
+              <div className="flex flex-col gap-2" key={w}>
+                <Label
+                  className="type-label-14 text-muted-foreground"
+                  htmlFor={id}
+                >
+                  {BUDGET_WINDOW_LABEL[w]} amount (USD)
+                </Label>
+                <div>
+                  <Input
+                    aria-describedby={
+                      showError ? `${id}-error ${id}-helper` : `${id}-helper`
+                    }
+                    aria-invalid={showError}
+                    autoComplete="off"
+                    className="type-mono-14"
+                    id={id}
+                    min={1}
+                    onBlur={() => touch(`amount-${w}`)}
+                    onChange={(e) =>
+                      setAmounts((prev) => ({ ...prev, [w]: e.target.value }))
+                    }
+                    step={1}
+                    type="number"
+                    value={amounts[w] ?? ""}
+                  />
+                  {/* Error sits directly under the control, above the window
+                      helper: the blocking sentence reads first, and the
+                      helper stays as standing context rather than being
+                      swapped out. */}
+                  {showError ? (
+                    <FieldError className="mt-2" id={`${id}-error`}>
+                      {error}
+                    </FieldError>
+                  ) : null}
+                  <p className="type-input-helper" id={`${id}-helper`}>
+                    {BUDGET_WINDOW_HELP[w]}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <div className="flex flex-col gap-2">
             <Label
@@ -419,21 +519,33 @@ function BudgetBody({
           <div className="flex flex-col gap-2">
             <Label
               className="type-label-14 text-muted-foreground"
-              htmlFor={`${scope}-budget-warn`}
+              htmlFor={warnId}
             >
               Warn threshold (% of budget)
             </Label>
-            <Input
-              autoComplete="off"
-              className="type-mono-14"
-              id={`${scope}-budget-warn`}
-              max={100}
-              min={1}
-              onChange={(e) => setWarn(e.target.value)}
-              step={1}
-              type="number"
-              value={warn}
-            />
+            <div>
+              <Input
+                aria-describedby={
+                  warnError && shows("warn") ? `${warnId}-error` : undefined
+                }
+                aria-invalid={warnError !== null && shows("warn")}
+                autoComplete="off"
+                className="type-mono-14"
+                id={warnId}
+                max={100}
+                min={1}
+                onBlur={() => touch("warn")}
+                onChange={(e) => setWarn(e.target.value)}
+                step={1}
+                type="number"
+                value={warn}
+              />
+              {warnError && shows("warn") ? (
+                <FieldError className="mt-2" id={`${warnId}-error`}>
+                  {warnError}
+                </FieldError>
+              ) : null}
+            </div>
           </div>
 
           {/* Block threshold, hard budgets only (AG-695 design task "warn and
@@ -443,21 +555,35 @@ function BudgetBody({
             <div className="flex flex-col gap-2">
               <Label
                 className="type-label-14 text-muted-foreground"
-                htmlFor={`${scope}-budget-block`}
+                htmlFor={blockId}
               >
                 Block threshold (% of budget)
               </Label>
-              <Input
-                autoComplete="off"
-                className="type-mono-14"
-                id={`${scope}-budget-block`}
-                max={100}
-                min={1}
-                onChange={(e) => setBlock(e.target.value)}
-                step={1}
-                type="number"
-                value={block}
-              />
+              <div>
+                <Input
+                  aria-describedby={
+                    blockError && shows("block")
+                      ? `${blockId}-error`
+                      : undefined
+                  }
+                  aria-invalid={blockError !== null && shows("block")}
+                  autoComplete="off"
+                  className="type-mono-14"
+                  id={blockId}
+                  max={100}
+                  min={1}
+                  onBlur={() => touch("block")}
+                  onChange={(e) => setBlock(e.target.value)}
+                  step={1}
+                  type="number"
+                  value={block}
+                />
+                {blockError && shows("block") ? (
+                  <FieldError className="mt-2" id={`${blockId}-error`}>
+                    {blockError}
+                  </FieldError>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>
