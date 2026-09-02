@@ -131,3 +131,17 @@ $100 / monthly $250, soft, so every meter sits low and the Blocking state
 appears only when a demo edits a cap. PM decision 2026-09-02: demo seeds
 must not suggest hard caps exist. Where: `src/data/teams.ts` (seed),
 `src/data/teams.test.ts` (Design pins repinned).
+
+### Default team named plainly, badge dropped; dialogs say where history stays `56b9db7`
+
+Before: the catch-all team was "General" with a Default badge beside it,
+and the five reassignment dialogs said only that members or keys "move to
+the default team". After: the seed team is named "Default team" and the
+badge is gone (the name carries the role). The detail subtitle drops "The
+default team." so it does not repeat the title. Add members, Add keys,
+Remove key and Remove member now say past requests stay with the previous
+team and only new traffic counts toward the new one (PRD 3 Reassignment).
+Delete team says "The team and its history are removed. This can't be
+undone." (PM decision 2026-09-02; archiving is a later call). Where:
+`src/data/teams.ts`, `src/pages/TeamsEnterprise.tsx`,
+`src/pages/TeamDetailEnterprise.tsx`, `src/pages/teams/dialogs.tsx`.
