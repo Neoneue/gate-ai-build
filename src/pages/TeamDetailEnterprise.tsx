@@ -1,4 +1,4 @@
-import { KeyRound, Plus, Trash2, Wallet } from "lucide-react";
+import { KeyRound, Plus, UserMinus, Wallet, X } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
   useLocation,
@@ -926,9 +926,9 @@ function MembersPane({
                           setRemoving({ id: member.id, name: member.name })
                         }
                       >
-                        <Trash2
+                        <UserMinus
                           aria-hidden
-                          className="size-4"
+                          className="size-5"
                           strokeWidth={1.75}
                         />
                       </IconActionButton>
@@ -1238,9 +1238,9 @@ function KeysPane({
                           aria-label={`Remove ${row.name} from ${team.name}`}
                           onClick={() => setRemoving(row)}
                         >
-                          <Trash2
+                          <X
                             aria-hidden
-                            className="size-4"
+                            className="size-5"
                             strokeWidth={1.75}
                           />
                         </IconActionButton>

@@ -700,7 +700,7 @@ export function DeleteTeamDialog({
 }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-4 sm:max-w-sm">
+      <DialogContent className="p-4 sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>Delete {teamName}?</DialogTitle>
           <DialogDescription>
@@ -747,7 +747,7 @@ export function RemoveTeamKeyDialog({
 }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-4 sm:max-w-sm">
+      <DialogContent className="p-4 sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>Remove {keyLabel} from this team?</DialogTitle>
           <DialogDescription>
@@ -802,7 +802,7 @@ export function RemoveTeamMemberDialog({
       : ` along with their ${keyCount} ${keyCount === 1 ? "key" : "keys"}`;
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-4 sm:max-w-sm">
+      <DialogContent className="p-4 sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>Remove {memberName} from this team?</DialogTitle>
           <DialogDescription>
