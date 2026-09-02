@@ -259,11 +259,9 @@ export const ORG_BUDGET_SEED: TeamBudget = {
 export const TEAM_SEED_ROWS: TeamRow[] = [
   {
     id: "team_default",
-    // "General", not "Default": the catch-all team every org gets (PRD 3 /
-    // 8.1) needs a real name so the DEFAULT badge beside it carries the
-    // role instead of repeating the label. Microsoft Teams and Slack use the
-    // same word for their undeletable starter channel. Renamed 2026-09-02.
-    name: "General",
+    // The catch-all team every org gets (PRD 3 / 8.1). Named plainly; the
+    // name alone carries the role, no badge. PM direction 2026-09-02.
+    name: "Default team",
     isDefault: true,
     memberIds: ["usr_chad"],
     memberJoined: { usr_chad: authoredDate(2026, 5, 1) },

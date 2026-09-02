@@ -568,13 +568,13 @@ const ADD_MEMBERS_COPY: AddEntitiesCopy = {
   // PRD 3 / 8.1: a user belongs to exactly one team, so this is a move, not
   // a second assignment. The picker names the team each candidate is leaving.
   helper:
-    "Someone already on another team moves here — they can only be on one.",
+    "Someone already on another team moves here. Their past requests stay with that team; only new traffic counts here.",
 };
 
 const ADD_KEYS_COPY: AddEntitiesCopy = {
   title: "Add keys",
   description:
-    "Only active keys can be assigned. A key belongs to one team at a time.",
+    "Only active keys can be assigned. A key belongs to one team at a time. A key already on another team moves here; its past requests stay with that team.",
   fieldLabel: "API keys",
   placeholder: "Select keys",
   submitLabel: "Add keys",
@@ -704,8 +704,8 @@ export function DeleteTeamDialog({
         <DialogHeader>
           <DialogTitle>Delete {teamName}?</DialogTitle>
           <DialogDescription>
-            Members and keys on this team move to the default team. This
-            can&rsquo;t be undone.
+            Members and keys on this team move to the default team. The team and
+            its history are removed. This can&rsquo;t be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -751,8 +751,9 @@ export function RemoveTeamKeyDialog({
         <DialogHeader>
           <DialogTitle>Remove {keyLabel} from this team?</DialogTitle>
           <DialogDescription>
-            This key moves to the default team. It keeps working, and only its
-            team attribution changes.
+            This key moves to the default team and keeps working. Its past
+            requests stay with this team; only new traffic counts toward the
+            default team.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -806,8 +807,8 @@ export function RemoveTeamMemberDialog({
           <DialogTitle>Remove {memberName} from this team?</DialogTitle>
           <DialogDescription>
             They move to the default team{withKeys}, where you can reassign
-            them. Their org access is unchanged, and only their team attribution
-            changes.
+            them. Their org access is unchanged. Past requests stay with this
+            team; only new traffic counts toward the default team.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

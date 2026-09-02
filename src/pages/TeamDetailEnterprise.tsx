@@ -323,7 +323,7 @@ function TeamDetailBody({
           <PageTitle>{team.name}</PageTitle>
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             {team.isDefault
-              ? "The default team. Can’t be renamed or deleted."
+              ? "Can’t be renamed or deleted."
               : "Members, keys, and budget for this team."}
           </p>
         </div>

@@ -1,7 +1,6 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
@@ -414,7 +413,6 @@ function TeamTableRow({
           >
             {row.name}
           </span>
-          {row.isDefault ? <Badge variant="neutral">Default</Badge> : null}
         </div>
       </TableCell>
       <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
