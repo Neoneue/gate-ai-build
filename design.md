@@ -1396,7 +1396,7 @@ switches).
   the cap (`budgetSpendShown`, `budgetPercentLabel(…, enforcement)`).
 - **Status word (2026-09-02):** every off-nominal meter carries a `Badge`
   beside it — `Warning` (warning variant) from the warn line, `Exceeded`
-  (destructive, soft past cap) or `Blocking` (destructive, hard at cap).
+  (destructive, soft past cap) or `Blocked` (destructive, hard at cap).
   Colour alone is not a state. `ok` renders nothing. One helper,
   `budgetStatus()` in `budget-band.ts`, decides it for the list row and the
   Budget tab card.

@@ -89,7 +89,7 @@ export const BUDGET_STATUS_LABEL: Record<
 > = {
   warning: "Warning",
   exceeded: "Exceeded",
-  blocking: "Blocking",
+  blocking: "Blocked",
 };
 
 /** Badge tone per status, in the Badge primitive's variant vocabulary. */

@@ -160,7 +160,7 @@ export const BUDGET_HARD_ENFORCEMENT_HELP =
  *  cap did it (the team and the window) because "budget exceeded" on its own
  *  leaves the admin hunting for which of a team's three caps fired (AG-695:
  *  "the blocked state: what an admin sees when a cap has blocked traffic, and
- *  which cap did it"). Hard reads "Blocking" because the gateway is refusing
+ *  which cap did it"). Hard reads "Blocked" because the gateway is refusing
  *  traffic right now; soft reads "Exceeded" because it is a number that went
  *  past a line, not an outage. */
 export function budgetBreachTitle(
@@ -170,7 +170,7 @@ export function budgetBreachTitle(
 ): string {
   const windowWord = BUDGET_WINDOW_LABEL[window].toLowerCase();
   return enforcement === "hard"
-    ? `Blocking: ${teamName} ${windowWord} budget reached`
+    ? `Blocked: ${teamName} ${windowWord} budget reached`
     : `Exceeded: ${teamName} ${windowWord} budget`;
 }
 

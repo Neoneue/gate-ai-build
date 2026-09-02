@@ -43,7 +43,7 @@ import {
  * cap. Nothing in this file chooses a window for itself.
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** The status WORD beside a meter: "Warning" / "Exceeded" / "Blocking".
+/** The status WORD beside a meter: "Warning" / "Exceeded" / "Blocked".
  *  Colour alone is not a state (colour-blind readers, and a skimming admin
  *  reads words before hues), so every off-nominal meter carries the label.
  *  Renders NOTHING when the budget is fine: a healthy row stays quiet, which

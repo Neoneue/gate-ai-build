@@ -306,7 +306,7 @@ function TeamsTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead
-              className="w-[18%] whitespace-nowrap"
+              className="w-[20%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="team"
@@ -314,7 +314,7 @@ function TeamsTable({
               Team
             </SortableTableHead>
             <SortableTableHead
-              className="w-[11%] whitespace-nowrap"
+              className="w-[10%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -331,7 +331,7 @@ function TeamsTable({
             >
               Keys
             </SortableTableHead>
-            <TableHead className="w-[13%] whitespace-nowrap">Manager</TableHead>
+            <TableHead className="w-[14%] whitespace-nowrap">Manager</TableHead>
             <SortableTableHead
               className="w-[12%] whitespace-nowrap"
               numeric
@@ -341,7 +341,7 @@ function TeamsTable({
             >
               Spend
             </SortableTableHead>
-            <TableHead className="w-[38%] whitespace-nowrap">Budget</TableHead>
+            <TableHead className="w-[36%] whitespace-nowrap">Budget</TableHead>
             <TableHead aria-label="Actions" className="w-12" />
           </TableRow>
         </TableHeader>
