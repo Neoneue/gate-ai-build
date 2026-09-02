@@ -58,6 +58,24 @@ longer reports a value past its own `aria-valuemax`. `over` is now
 `src/pages/teams/budget.tsx` (`BudgetMeter`, `BudgetSummary`),
 `src/pages/TeamsEnterprise.tsx`.
 
+### Skeleton primitive and 2 s theatre loading on the Teams pages `9eafff4`
+
+Before: both Teams pages painted their data instantly and the route Suspense
+fallback was null, so nothing on the site showed a loading state. After:
+`Skeleton` / `SkeletonText` (`animate-pulse rounded-sm bg-muted`, reduced
+motion honoured) is the one sanctioned loading treatment. `useTheatreLoading`
+holds `loading` for 2000 ms once per page mount (tab switches do not restart
+it) and every data point skeletons while chrome renders real: the Teams list
+table cells, the detail KPI tiles (value, delta, spark), Members / Keys /
+Usage cells, the budget meter and Remaining fact, the Security hero, chart
+plot, bars and member tables, the Token savings tiles. Skeleton rows match
+the real row count so the swap measures 0px shift on every surface. The
+loading region carries `aria-busy`, one sr-only "Loading…" per page. Where:
+`src/components/ui/skeleton.tsx`, `src/pages/teams/use-theatre-loading.ts`,
+`hero-numeric.tsx` / `compact-kpi.tsx` / `kpi-tile.tsx` / `teams/budget.tsx`
+(`loading` prop), both Teams pages, `SecurityOverviewPane.tsx`,
+`TokenSavingsPane.tsx`.
+
 ## Sections
 
 ### Team budgets: status word, warn tick, blocked banner `7f832db`
@@ -248,3 +266,58 @@ reject decimals. The dialog never opens red, and Save stays disabled while
 anything is invalid. Budget windows has no message: the picker already
 enforces at least one. Where: `src/pages/teams/dialogs.tsx` (Set budget and
 Create team forms).
+
+### Team detail: Policies and Token savings tabs `9eafff4`
+
+Before: a team had Members / Keys / Budget / Usage / Security / Settings.
+After: Policies and Token savings sit between Security and Settings,
+Enterprise only. Policies is the org Policies page's card stack bound to
+`team.policies`; Token savings is the org page's Overview tiles plus the
+Compression and Caching cards bound to `team.savings`, tiles scaled to the
+team by average prompt size (Default 16.9% / Platform 11.8% / Design 8.4%
+total saved on All; the team's own switches zero a component). Where:
+`src/pages/teams/PoliciesPane.tsx`, `src/pages/teams/TokenSavingsPane.tsx`,
+`src/pages/teams/savings-data.ts`, `src/pages/token-savings-data.ts`,
+`src/pages/TeamDetailEnterprise.tsx`.
+
+### Security tab: Events by current members / past members `9eafff4`
+
+Before: one "Events by member" table listed everyone whose keys ever ran on
+the team, so a moved member still read as current. After: two tables with
+the Usage tab's titles pattern, "Events by current members" and, only when a
+former member has events, "Events by past members"; each sorts on its own.
+Where: `src/pages/teams/SecurityOverviewPane.tsx`,
+`src/pages/teams/security-data.ts`.
+
+### Usage tab: Saved column on the member tables `9eafff4`
+
+Before: Member / Messages / Tokens in / Tokens out / Spend. After: Saved sits
+before Spend at 20 / 16 / 16 / 16 / 16 / 16, sortable, one decimal, empty
+when a member has no traffic. The value is the token-weighted mean of the
+member's keys' Activity savings rates, moved onto the range with Activity's
+own recipe, so a one-key member reads what Activity shows for that key.
+Where: `src/pages/TeamDetailEnterprise.tsx` (`UsageBreakdown`),
+`src/data/teams.ts`.
+
+### Budget dialog: Block threshold input removed; alert recipients named `9eafff4`
+
+Before: a hard budget showed a "Block threshold (% of budget)" field and no
+copy said who receives a budget alert. After: the field is gone and every
+saved budget blocks at its cap (`blockThreshold` stays 100 in the type). A
+helper line under Warn threshold, the Budget tab "Warn at" tooltip and the
+Budget empty state all say "Alerts go to the team's manager and org admins
+and owner." (Default team: "Alerts go to org admins and owner."). The empty
+state says "blocks messages". Where: `src/pages/teams/dialogs.tsx`,
+`src/pages/teams/budget.tsx`, `src/pages/TeamDetailEnterprise.tsx`,
+`src/data/teams.ts`.
+
+### Teams list: Archived teams section `9eafff4`
+
+Before: a card with an in-card "Deleted teams (historical usage)" label,
+"Design (deleted)" in muted text, columns Team / Spend. After: a
+`SectionTitle` "Archived teams" above a flush card, plain team name in
+foreground text, columns Team / Deleted on / Total spend at 46 / 30 / 24,
+Deleted on in the site's default `Timestamp` format stamped at delete time.
+Design's seed budget is monthly only ($250) so the other windows can be
+switched on from the form. Where: `src/pages/TeamsEnterprise.tsx`,
+`src/pages/teams/teams-store.ts`, `src/data/teams.ts`.

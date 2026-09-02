@@ -22,6 +22,12 @@ tokens; this index exists so nothing has to glob the directory.
 - Status word "Blocked"; Teams list columns 20/10/8/14/12/36
 - Block threshold field; "Messages" wording; Usage by tables gain token columns
 - Budget and team-name forms: validation messages under invalid fields
+- Skeleton primitive and 2 s theatre loading on the Teams pages
+- Team detail: Policies and Token savings tabs
+- Security tab: Events by current members / past members
+- Usage tab: Saved column on the member tables
+- Budget dialog: Block threshold input removed; alert recipients named
+- Teams list: Archived teams section
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 
