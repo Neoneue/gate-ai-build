@@ -4,7 +4,13 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -39,13 +45,12 @@ import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
 import {
   ASSIGNABLE_KEYS,
   BUDGET_WINDOW_LABEL,
-  BUDGET_WINDOW_SCOPE_COPY,
-  BUDGET_WINDOW_TITLE_COPY,
-  type BudgetWindow,
+  BUDGET_WINDOW_RESET_COPY,
   budgetReadings,
   DEFAULT_TEAM_ID,
   keyById,
   memberById,
+  memberJoinedAt,
   moveKeysToTeam,
   moveMembersToTeam,
   scaleUsage,
@@ -198,6 +203,12 @@ export function TeamDetailEnterprise({
             ? {
                 ...t,
                 memberIds: [...new Set([...t.memberIds, ...doomed.memberIds])],
+                memberJoined: {
+                  ...t.memberJoined,
+                  ...Object.fromEntries(
+                    doomed.memberIds.map((id) => [id, new Date()])
+                  ),
+                },
                 keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
               }
             : t
@@ -712,7 +723,7 @@ function MembersPane({
                   Role
                 </TableHead>
                 <TableHead className="w-[16%] whitespace-nowrap">
-                  Status
+                  Joined
                 </TableHead>
                 <TableHead aria-label="Actions" className="w-12" />
               </TableRow>
@@ -756,8 +767,13 @@ function MembersPane({
                       />
                     )}
                   </TableCell>
-                  <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                    Active
+                  {/* When they joined THIS team (not the org): the Members
+                      page's Joined cell recipe, same Timestamp format. */}
+                  <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                    <Timestamp
+                      date={memberJoinedAt(team, member.id)}
+                      format="dateNumeric"
+                    />
                   </TableCell>
                   <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                     <IconActionButton
@@ -1071,9 +1087,8 @@ function BudgetPane({
   onPatch,
 }: {
   team: TeamRow;
-  /** Same roll-up the Usage tab renders — the meter's spend plus the two
-   *  breakdowns, restated here scoped to the budget window, so "who is
-   *  spending this" is answered where the cap lives. */
+  /** Same roll-up the Usage tab renders; each configured window reads its
+   *  own scaled projection of it (budgetReadings). */
   usage: TeamUsage;
   onPatch: (next: Partial<TeamRow>) => void;
 }) {
@@ -1088,85 +1103,46 @@ function BudgetPane({
     () => (team.budget ? budgetReadings(usage, team.budget) : []),
     [team.budget, usage]
   );
-  // `null` means "not chosen yet", which resolves to the first window rather
-  // than being seeded in an effect — so a budget edited down to fewer windows
-  // falls back instead of pointing at a window that no longer exists.
-  const [picked, setPicked] = useState<BudgetWindow | null>(null);
   const budget = team.budget;
-  const reading = readings.find((r) => r.window === picked) ?? readings[0];
-  const scope = reading ? BUDGET_WINDOW_SCOPE_COPY[reading.window] : null;
-  // Window-aware table titles: "Monthly spend per user" on the monthly tab,
-  // "7-day spend per user" on the weekly one.
-  const titleStem = reading
-    ? BUDGET_WINDOW_TITLE_COPY[reading.window]
-    : "Spend";
 
   return (
     <div className="flex flex-col gap-4">
-      {budget && reading ? (
+      {budget && readings.length > 0 ? (
         <>
-          {/* Same header row the Usage tab and the Security overview open
-              with: section title left, range control + action right. The
-              window pill IS this block's range control — it decides which cap
-              the card and both tables below are read against. */}
+          {/* Header row in the Usage / Security tab pattern: the saved
+              budget's NAME titles the block (the dialog's Name field edits
+              it; "Team budget" is only the seed default), Edit on the right. */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* The saved budget's NAME titles the block (the dialog's Name
-                field edits it); "Team budget" is only the seed default. */}
             <SectionTitle>{budget.name || "Team budget"}</SectionTitle>
-            <div className="flex flex-wrap items-center gap-2">
-              {readings.length > 1 ? (
-                <SegmentedPill
-                  aria-label="Budget window"
-                  onValueChange={(v) => setPicked(v as BudgetWindow)}
-                  options={readings.map((r) => ({
-                    label: BUDGET_WINDOW_LABEL[r.window],
-                    value: r.window,
-                  }))}
-                  size="sm"
-                  value={reading.window}
+            <Button onClick={() => setOpen(true)} size="sm" variant="outline">
+              Edit budget
+            </Button>
+          </div>
+          {/* One card per window, STACKED, the Claude / Codex limits shape
+              (2026-09-01, option B): every cap is visible at once, so no pill
+              to switch between them. The card title names the window and the
+              description says how it resets, so the Window fact is omitted
+              from the grid. The per-user / per-model tables live on the
+              Usage tab only (PRD 8.3 describes one roll-up view; the tables
+              were duplicated across both tabs until today). */}
+          {readings.map((reading) => (
+            <Card key={reading.window}>
+              <CardHeader>
+                <CardTitle>{BUDGET_WINDOW_LABEL[reading.window]}</CardTitle>
+                <CardDescription>
+                  {BUDGET_WINDOW_RESET_COPY[reading.window]}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BudgetSummary
+                  budget={budget}
+                  meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
+                  omitWindowFact
+                  reading={reading}
                 />
-              ) : null}
-              <Button onClick={() => setOpen(true)} size="sm" variant="outline">
-                Edit budget
-              </Button>
-            </div>
-          </div>
-          {/* No card header: the row above already names the budget and holds
-              its controls, so the card carries the reading and nothing else. */}
-          <Card>
-            <CardContent>
-              <BudgetSummary
-                budget={budget}
-                meterLabel={`${team.name} ${BUDGET_WINDOW_LABEL[reading.window].toLowerCase()} budget used`}
-                reading={reading}
-              />
-            </CardContent>
-          </Card>
-          {/* The window is the budget's, not the page's — the table titles
-              carry it ("Monthly spend per user"), so the reader doesn't
-              reconcile these numbers against the Usage tab's range. A Callout
-              said this explicitly until 2026-08-31; the titles made it
-              redundant. mt-2 tops up the column's gap-4 to 24px: the card
-              closes the budget block, so the tables need the full section
-              break above them. */}
-          <div className="mt-2 flex flex-col gap-6">
-            <UsageBreakdown
-              avatarFor={userAvatar}
-              emptyBody={`No spend by any user over ${scope}.`}
-              emptyTitle="No per-user data yet."
-              firstColumn="User"
-              rows={reading.usage.byUser}
-              title={`${titleStem} per user`}
-            />
-            <UsageBreakdown
-              avatarFor={modelAvatar}
-              emptyBody={`No spend on any model over ${scope}.`}
-              emptyTitle="No per-model data yet."
-              firstColumn="Model"
-              rows={reading.usage.byModel}
-              title={`${titleStem} per model`}
-            />
-          </div>
+              </CardContent>
+            </Card>
+          ))}
         </>
       ) : (
         <EmptyState

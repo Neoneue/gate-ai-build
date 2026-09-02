@@ -1551,6 +1551,17 @@ the shared starting point, not a store.
 (`'5h' | 'weekly' | 'monthly'`), `BudgetEnforcement` (`'soft' | 'hard'`),
 `TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`.
 
+**Team join date (2026-09-01).** `TeamRow.memberJoined?: Record<memberId,
+Date>` is when a member joined THIS team, distinct from `MemberRow.joined`
+(org join, April/May). Seeded early June after the org's May build-out:
+Chad on Default 06-01, Kira 06-02 and Mateus 06-03 on Platform, Jordan on
+Design 06-08 (two days after his 06-06 org join). `moveMembersToTeam` stamps
+the move time on the target and drops the entry on the source; the delete
+fold-in on both Enterprise pages stamps Default. `memberJoinedAt(team, id)`
+falls back to today. The Enterprise detail Members tab renders it as the
+Joined column (replacing the constant "Active" Status cell) with the Members
+page's `Timestamp format="dateNumeric"` recipe. Pro twins ignore the field.
+
 **Membership is one-team-per-user; roles are per-membership (2026-08-31,
 aligned to migration 170's `memberships.team_role`).** Invariants the data
 layer owns:
@@ -1603,11 +1614,15 @@ list row's single meter shows, suffixed with the window word ("92.3%
 weekly"). Dialog: the window field is the Add-members `MultiSelect` recipe
 (`commitMode`, 4 visible rows, no Select All, new opt-in `minSelected={1}`),
 followed by one amount input per selected window prefilled from
-`BUDGET_WINDOW_DEFAULT_AMOUNT`. Budget tab: the same header-row pattern the
-Usage and Security tabs use (budget name as SectionTitle left; window
-`Segmented` pill + "Edit budget" right), then a headerless card holding the
-meter + four facts for the selected window, then both breakdown tables
-following it. With one configured window the pill does not render.
+`BUDGET_WINDOW_DEFAULT_AMOUNT`. Budget tab (option B, 2026-09-01 late):
+header row (budget name as SectionTitle left, "Edit budget" right), then
+ONE CARD PER WINDOW, stacked, the Claude / Codex limits shape: CardTitle =
+window label, CardDescription = `BUDGET_WINDOW_RESET_COPY`, body =
+`BudgetSummary` with `omitWindowFact` (meter + Remaining / Enforcement /
+Warn at). No window pill, no tables: PRD 8.3 describes one roll-up view, so
+the per-user / per-model tables live on the Usage tab only. The earlier
+same-day pill-plus-tables layout is in git history (`9b56fab`) if this is
+reverted.
 Pro twins (`Teams.tsx`, `TeamDetail.tsx`) read the first configured window
 only (mechanical adapter, frozen design). Seed: Platform `{ monthly: 500 }`;
 Design `{ "5h": 5, weekly: 20 }` ($0.55 = 11.0% of the 5h cap; weekly 92.3%

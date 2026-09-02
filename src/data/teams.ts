@@ -57,6 +57,12 @@ export type TeamRow = {
   isDefault: boolean;
   /** MEMBER_ROWS ids. */
   memberIds: string[];
+  /** When each member joined THIS team (`memberships` row date), keyed by
+   *  member id. Distinct from `MemberRow.joined`, the org join date. Seeded
+   *  early June 2026, after the org's May build-out; runtime moves stamp
+   *  the moment of the move. Optional so the Pro twins and create / fold-in
+   *  sites need no change; `memberJoinedAt` supplies the fallback. */
+  memberJoined?: Record<string, Date>;
   /** API_KEY_SEED_ROWS ids. Never a revoked key. */
   keyIds: string[];
   /** MEMBER_ROWS ids holding the manager role on THIS team. Mirrors
@@ -212,6 +218,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Default",
     isDefault: true,
     memberIds: ["usr_chad"],
+    memberJoined: { usr_chad: new Date(2026, 5, 1) },
     keyIds: keyIds("prod-web", "prod-agent", "design-agent"),
     managerIds: [],
     budget: null,
@@ -221,6 +228,10 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Platform",
     isDefault: false,
     memberIds: ["usr_kira", "usr_mate"],
+    memberJoined: {
+      usr_kira: new Date(2026, 5, 2),
+      usr_mate: new Date(2026, 5, 3),
+    },
     keyIds: keyIds("openclaw", "nova-chat", "hermes-agent", "atlas-eval"),
     managerIds: ["usr_kira"],
     budget: {
@@ -235,6 +246,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Design",
     isDefault: false,
     memberIds: ["usr_jordan"],
+    // Jordan joined the org 2026-06-06 (team-members.ts); the team two days on.
+    memberJoined: { usr_jordan: new Date(2026, 5, 8) },
     keyIds: keyIds("development", "ci-runner"),
     managerIds: ["usr_jordan"],
     budget: {
@@ -640,21 +653,42 @@ export function moveMembersToTeam(
   memberIds: string[]
 ): TeamRow[] {
   const moving = new Set(memberIds);
+  const now = new Date();
   return teams.map((team) => {
     if (team.id === targetId) {
       const added = memberIds.filter((id) => !team.memberIds.includes(id));
-      return { ...team, memberIds: [...team.memberIds, ...added] };
+      const memberJoined = { ...team.memberJoined };
+      for (const id of added) {
+        memberJoined[id] = now;
+      }
+      return {
+        ...team,
+        memberIds: [...team.memberIds, ...added],
+        memberJoined,
+      };
     }
     const kept = team.memberIds.filter((id) => !moving.has(id));
     if (kept.length === team.memberIds.length) {
       return team;
     }
+    const memberJoined = { ...team.memberJoined };
+    for (const id of moving) {
+      delete memberJoined[id];
+    }
     return {
       ...team,
       memberIds: kept,
+      memberJoined,
       managerIds: team.managerIds.filter((id) => !moving.has(id)),
     };
   });
+}
+
+/** When `memberId` joined `team`. Falls back to today for a membership that
+ *  was never stamped (a runtime fold-in on a page that predates the field),
+ *  which is also the honest answer for a row that just appeared. */
+export function memberJoinedAt(team: TeamRow, memberId: string): Date {
+  return team.memberJoined?.[memberId] ?? new Date();
 }
 
 /** Move keys onto `targetId`, removing them from whichever team held them.

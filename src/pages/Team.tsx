@@ -543,7 +543,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableTableHead
-              className="w-[27%] whitespace-nowrap"
+              className="w-[28%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="email"
@@ -551,7 +551,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               Email
             </SortableTableHead>
             <SortableTableHead
-              className="w-[25%] whitespace-nowrap"
+              className="w-[18%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="invitedBy"
@@ -567,7 +567,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               Sent
             </SortableTableHead>
             <SortableTableHead
-              className="w-[15%] whitespace-nowrap"
+              className="w-[13%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="role"
@@ -575,14 +575,14 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               Role
             </SortableTableHead>
             <SortableTableHead
-              className="w-[15%] whitespace-nowrap"
+              className="w-[16%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="expires"
             >
               Expires
             </SortableTableHead>
-            <TableHead className="w-[3%] whitespace-nowrap pr-4 pl-0 text-right">
+            <TableHead className="w-[10%] whitespace-nowrap pr-4 pl-0 text-right">
               Actions
             </TableHead>
           </TableRow>

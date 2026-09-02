@@ -139,12 +139,16 @@ export function BudgetSummary({
   reading,
   budget,
   meterLabel,
+  omitWindowFact = false,
 }: {
   /** The window being read: its cap, its spend, its scaled usage. */
   reading: WindowReading;
   /** Enforcement and warn percent are shared across a budget's windows. */
   budget: TeamBudget;
   meterLabel: string;
+  /** Drop the Window fact when the surrounding card already names the
+   *  window (the stacked per-window cards on the Enterprise Budget tab). */
+  omitWindowFact?: boolean;
 }) {
   const { window, cap, spend } = reading;
   const over = spend > cap;
@@ -161,7 +165,14 @@ export function BudgetSummary({
           so what is left is what the operator would otherwise compute: what
           remains, what happens at the cap, where the alert fires (with its
           dollar figure), and the window with its reset behaviour. */}
-      <div className="grid @3xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          omitWindowFact
+            ? "@xl:grid-cols-3"
+            : "@3xl:grid-cols-4 @xl:grid-cols-2"
+        )}
+      >
         <BudgetFact
           label={over ? "Over budget by" : "Remaining"}
           mono
@@ -183,11 +194,13 @@ export function BudgetSummary({
           tip="Percent of the cap at which the warning alert fires, with the dollar figure that works out to."
           value={`${budget.warnThreshold}% (${formatCurrency((cap * budget.warnThreshold) / 100)})`}
         />
-        <BudgetFact
-          label="Window"
-          tip={BUDGET_WINDOW_RESET_COPY[window]}
-          value={`${BUDGET_WINDOW_LABEL[window]}, ${BUDGET_WINDOW_RESET_SHORT[window]}`}
-        />
+        {omitWindowFact ? null : (
+          <BudgetFact
+            label="Window"
+            tip={BUDGET_WINDOW_RESET_COPY[window]}
+            value={`${BUDGET_WINDOW_LABEL[window]}, ${BUDGET_WINDOW_RESET_SHORT[window]}`}
+          />
+        )}
       </div>
     </div>
   );

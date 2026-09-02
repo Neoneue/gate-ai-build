@@ -184,6 +184,12 @@ export function TeamsEnterprise({
             ? {
                 ...t,
                 memberIds: [...new Set([...t.memberIds, ...doomed.memberIds])],
+                memberJoined: {
+                  ...t.memberJoined,
+                  ...Object.fromEntries(
+                    doomed.memberIds.map((id) => [id, new Date()])
+                  ),
+                },
                 keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
               }
             : t
