@@ -194,3 +194,18 @@ in the Budget tab's `Card > CardHeader > CardAction` shape and wired to the
 existing dialogs. The Default team shows one Callout: "The default team
 can't be renamed or deleted. Members and keys removed from other teams land
 here." Where: `src/pages/TeamsEnterprise.tsx`, `src/pages/TeamDetailEnterprise.tsx`.
+
+### Status word "Blocked"; Teams list columns 20/10/8/14/12/36 `cd15145`
+
+Before: the at-cap hard-budget badge and the breach banner title read
+"Blocking". After: "Blocked", so the three status words share one
+grammatical form (Warning / Exceeded / Blocked) and read as the team's
+state rather than an activity; one character shorter. Single source
+`BUDGET_STATUS_LABEL` in `budget-band.ts`; banner title in
+`budgetBreachTitle`. Teams list column widths rebalanced from a live
+Playwright measurement at the 960px floor: Team 20% / Members 10% / Keys 8%
+/ Manager 14% / Spend 12% / Budget 36% (was 18/11/8/13/12/38 earlier
+today). Team had the most unused room; Budget still clears the worst case
+("100.0% weekly · Hard cap" + Blocked badge) at the floor. Where:
+`src/pages/TeamsEnterprise.tsx`, `src/pages/teams/budget-band.ts`,
+`src/data/teams.ts`, `design.md` status-word line.

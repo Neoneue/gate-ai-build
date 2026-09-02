@@ -19,6 +19,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Team spend stays with the team that ran it; "Former member" rows
 - Usage tab: Spend by current members / Spend by past members
 - Teams list: caption names the cap mode; team page gains a Settings tab
+- Status word "Blocked"; Teams list columns 20/10/8/14/12/36
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 
