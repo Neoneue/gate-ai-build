@@ -210,3 +210,34 @@ Before: nav "Team", routes `/team*`. After: nav "Members", routes
 (`Team*.tsx`, nav id "team", `team-members.ts`) deliberately kept. Where:
 `src/App.tsx`, `src/lib/plan.ts`, `src/layouts/nav-sections.ts`,
 `src/data/notifications.ts`, `src/pages/Team.tsx`, `src/pages/TeamDefault.tsx`.
+
+### Enterprise Budget tab: stacked per-window cards, tables leave `b8dbcd1`
+
+Before: header row with a window pill, one headerless card for the picked
+window, then the per-user / per-model tables retitled to that window.
+After: header row (budget name + Edit budget), then ONE CARD PER WINDOW
+stacked, the Claude / Codex limits shape: CardTitle = window label,
+CardDescription = `BUDGET_WINDOW_RESET_COPY`, body = `BudgetSummary` with
+new `omitWindowFact` (meter + Remaining / Enforcement / Warn at on a
+three-column grid). No pill, no tables: PRD 8.3 describes one roll-up view,
+and the tables were duplicated on Usage and Budget until today; they live
+on Usage only now. Where: `src/pages/TeamDetailEnterprise.tsx` BudgetPane,
+`src/pages/teams/budget.tsx`.
+
+### Enterprise team Members tab: Status becomes Joined `b8dbcd1`
+
+Before: a constant "Active" Status cell. After: Joined, the date the member
+joined THIS team, in the Members page's `Timestamp format="dateNumeric"`
+recipe. New optional `TeamRow.memberJoined` seeded early June 2026 (Chad
+06-01, Kira 06-02, Mateus 06-03, Jordan 06-08, two days after his org
+join); `moveMembersToTeam` and both delete fold-ins stamp runtime moves,
+`memberJoinedAt()` falls back to today. Where: `src/data/teams.ts`,
+`src/pages/TeamDetailEnterprise.tsx`, `src/pages/TeamsEnterprise.tsx`.
+
+### Members page Invitations table: Actions column no longer overflows `b8dbcd1`
+
+Before: widths 27/25/15/15/15/3, the 3% Actions column (about 26px at the
+860px floor) pushed its visible label past the card edge and lit the edge
+fade inside the 1024px cap. After: 28/18/15/13/16/10, Invited by paying
+for a 10% Actions column to match the Members tab. Where:
+`src/pages/Team.tsx`.

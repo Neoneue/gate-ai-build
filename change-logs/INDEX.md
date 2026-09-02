@@ -28,6 +28,9 @@ tokens; this index exists so nothing has to glob the directory.
 - Enterprise Security tab: overview pane, threat types per member, two sections removed
 - Teams store shared by list and detail
 - Members rename: nav label and routes
+- Enterprise Budget tab: stacked per-window cards, tables leave
+- Enterprise team Members tab: Status becomes Joined
+- Members page Invitations table: Actions column no longer overflows
 
 ## August 2026
 
