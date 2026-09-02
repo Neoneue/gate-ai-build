@@ -36,6 +36,8 @@ tokens; this index exists so nothing has to glob the directory.
 - Enterprise team detail: Members and Keys toolbars, primary Add buttons
 - Enterprise Keys tab: Status renders the ApiKeys badge
 - Enterprise Usage and Security tabs: member wording, sortable events table
+- Teams: one build for Pro, Default and Enterprise
+- Budget dialog: Hard enforcement shows a warning note
 
 ## August 2026
 

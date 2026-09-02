@@ -308,3 +308,33 @@ the column sums to it), and `SortableTableHead` on every header (Member by
 name, the three threat types and Events by amount) via the `useTableSort` +
 `sortRows` recipe the Usage tables already use. Where:
 `src/pages/TeamDetailEnterprise.tsx`, `src/pages/teams/SecurityOverviewPane.tsx`.
+
+### Teams: one build for Pro, Default and Enterprise `6d74a69`
+
+Before: `/teams` and `/teams/:teamId` rendered the Pro `Teams.tsx` /
+`TeamDetail.tsx`, frozen since 2026-08-31 while the Enterprise twin was the
+sandbox; `/teams-default` wrapped the same Pro files. After: all three tiers
+render `TeamsEnterprise.tsx` and `TeamDetailEnterprise.tsx` (the Enterprise
+design is the north star), and the stale Pro files are deleted. Drill, back
+and security paths come from `teamsListPath(pathname)` in `src/lib/plan.ts`
+instead of a `variant` prop, so a row opened on `/teams` lands on
+`/teams/:teamId`, on `/teams-enterprise` on `/teams-enterprise/:teamId`, and
+so on. Side effect: the org budget card lived only in the deleted Pro list,
+so no surface renders an org budget now. Where: `src/App.tsx`,
+`src/lib/plan.ts`, `src/pages/TeamsEnterprise.tsx`,
+`src/pages/TeamDetailEnterprise.tsx`, `src/pages/TeamsDefault.tsx`,
+`src/pages/TeamDetailDefault.tsx`.
+
+### Budget dialog: Hard enforcement shows a warning note `6d74a69`
+
+Before: the Enforcement select offered "Soft: warn only, never blocks" and
+"Hard: blocks requests once exceeded" with nothing beneath either. After:
+while Hard is selected, a warning note card sits under the select (`mt-2
+rounded-md border border-warning-200 bg-warning-50 p-3`, dark twin
+`border-warning-500/30 bg-warning-500/15`, ink `type-copy-14 text-warning-700
+dark:text-warning-300`, `role="note"`) reading "Team members will be unable
+to send requests once a cap is reached, until that window resets." Same
+shape as the API-key reveal and cancel-plan consequence notes; red stays
+reserved for the over-budget state. Copy is single-sourced as
+`BUDGET_HARD_ENFORCEMENT_HELP`. Where: `src/pages/teams/dialogs.tsx`,
+`src/data/teams.ts`.
