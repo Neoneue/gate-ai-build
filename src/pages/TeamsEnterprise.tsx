@@ -21,7 +21,7 @@ import {
   BUDGET_WINDOW_LABEL,
   budgetPercentLabel,
   budgetProgress,
-  DEFAULT_TEAM_ID,
+  deleteTeam,
   type TeamRow,
   teamManagerName,
   tightestReading,
@@ -172,25 +172,7 @@ export function TeamsEnterprise() {
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
     });
-    setTeams((prev) =>
-      prev
-        .filter((t) => t.id !== id)
-        .map((t) =>
-          t.id === DEFAULT_TEAM_ID
-            ? {
-                ...t,
-                memberIds: [...new Set([...t.memberIds, ...doomed.memberIds])],
-                memberJoined: {
-                  ...t.memberJoined,
-                  ...Object.fromEntries(
-                    doomed.memberIds.map((id) => [id, new Date()])
-                  ),
-                },
-                keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
-              }
-            : t
-        )
-    );
+    setTeams((prev) => deleteTeam(prev, id));
     setDeleting(null);
   };
 

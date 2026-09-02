@@ -67,6 +67,14 @@ export type TeamRow = {
   memberJoined?: Record<string, Date>;
   /** API_KEY_SEED_ROWS ids. Never a revoked key. */
   keyIds: string[];
+  /** The keys whose PAST traffic is attributed to this team. PRD 3
+   *  Reassignment / 8.1: "when a key or user moves teams, past requests keep
+   *  their original team; only new traffic attributes to the new team
+   *  (history is immutable)". Unset until the first move, when every team
+   *  freezes its attribution (`attributedKeyIds`). From then on `keyIds` is
+   *  membership and this is history; a moved key sits on the new team's
+   *  Keys tab with no spend, and the old team's totals do not move. */
+  historyKeyIds?: string[];
   /** MEMBER_ROWS ids holding the manager role on THIS team. Mirrors
    *  migration 170's `memberships.team_role`: the role is a per-membership
    *  fact, so a team can have zero, one, or several managers (co-managers are
@@ -315,6 +323,9 @@ export type UsageSlice = {
   label: string;
   requests: number;
   spend: number;
+  /** By-user rows only: the spend is this team's history but the person is
+   *  no longer on the team (PRD 3 Reassignment). */
+  former?: boolean;
 };
 
 export type TeamUsage = {
@@ -373,18 +384,39 @@ const MODEL_REQUESTS_PER_TOKEN: Record<string, number> = Object.fromEntries(
   })
 );
 
-/** The Activity rows for a team's keys. Matched on the key's NAME, which is
- *  the id activity-data uses (`prod-web`), not the `sk-gw-…` string. */
-function activityRowsFor(team: TeamRow) {
-  const names = new Set(
-    team.keyIds
+/** The keys whose past traffic counts for `team`: the frozen history once a
+ *  move has happened, the live membership before that (they are the same
+ *  set until then). Every roll-up reads THIS, never `keyIds`. */
+export function attributedKeyIds(team: TeamRow): string[] {
+  return team.historyKeyIds ?? team.keyIds;
+}
+
+/** Activity-data key NAMES (`prod-web`) for a team's attributed keys. */
+export function attributedKeyNames(team: TeamRow): Set<string> {
+  return new Set(
+    attributedKeyIds(team)
       .map((id) => keyById(id)?.name)
       .filter((n): n is string => n !== undefined)
   );
+}
+
+/** Freeze every team's attribution before a move, so the move changes
+ *  membership only. Idempotent: a team already frozen keeps its set. */
+export function freezeHistory(teams: TeamRow[]): TeamRow[] {
+  return teams.map((t) =>
+    t.historyKeyIds ? t : { ...t, historyKeyIds: [...t.keyIds] }
+  );
+}
+
+/** The Activity rows attributed to a team. Matched on the key's NAME, which
+ *  is the id activity-data uses (`prod-web`), not the `sk-gw-…` string. */
+function activityRowsFor(team: TeamRow) {
+  const names = attributedKeyNames(team);
   return API_KEY_ROWS.filter((r) => names.has(r.key));
 }
 
 function usageByUser(
+  team: TeamRow,
   rows: ReturnType<typeof activityRowsFor>,
   totalSpend: number
 ): UsageSlice[] {
@@ -402,22 +434,22 @@ function usageByUser(
     totalSpend,
     2
   );
-  return entries.map(([owner, v], i) => ({
+  return entries.map(([owner, v], i) => {
     // Owner names come from activity-data, which mirrors MEMBER_ROWS; fall
     // back to the name itself so an unmapped owner still renders.
-    id: MEMBER_ROWS.find((m) => m.name === owner)?.id ?? owner,
-    label: owner,
-    requests: v.requests,
-    spend: spends[i] ?? 0,
-  }));
+    const id = MEMBER_ROWS.find((m) => m.name === owner)?.id ?? owner;
+    return {
+      id,
+      label: owner,
+      requests: v.requests,
+      spend: spends[i] ?? 0,
+      former: !team.memberIds.includes(id),
+    };
+  });
 }
 
 function usageByModel(team: TeamRow, totalSpend: number): UsageSlice[] {
-  const names = new Set(
-    team.keyIds
-      .map((id) => keyById(id)?.name)
-      .filter((n): n is string => n !== undefined)
-  );
+  const names = attributedKeyNames(team);
   const acc = new Map<string, { spend: number; tokens: number }>();
   for (const cell of USAGE_7D) {
     if (!names.has(cell.apiKey)) {
@@ -485,7 +517,7 @@ export function usageForTeam(team: TeamRow): TeamUsage {
     requests: rows.reduce((a, r) => a + r.requests, 0),
     spend,
     tokens: rows.reduce((a, r) => a + r.tokensIn + r.tokensOut, 0),
-    byUser: usageByUser(rows, spend),
+    byUser: usageByUser(team, rows, spend),
     byModel: usageByModel(team, spend),
   };
 }
@@ -533,11 +565,8 @@ export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
 export function orgSpend(teams: TeamRow[]): number {
   const names = new Set<string>();
   for (const team of teams) {
-    for (const id of team.keyIds) {
-      const name = keyById(id)?.name;
-      if (name) {
-        names.add(name);
-      }
+    for (const name of attributedKeyNames(team)) {
+      names.add(name);
     }
   }
   return round2(
@@ -806,8 +835,14 @@ export function moveKeysToTeam(
   targetId: string,
   keyIdsToMove: string[]
 ): TeamRow[] {
+  if (keyIdsToMove.length === 0) {
+    return teams;
+  }
   const moving = new Set(keyIdsToMove);
-  return teams.map((team) => {
+  // PRD 3 Reassignment: history is immutable. Freeze every team's
+  // attribution before touching membership, so the source keeps the spend
+  // and the target gains a key with nothing behind it yet.
+  return freezeHistory(teams).map((team) => {
     if (team.id === targetId) {
       const added = keyIdsToMove.filter((id) => !team.keyIds.includes(id));
       return { ...team, keyIds: [...team.keyIds, ...added] };
@@ -817,4 +852,25 @@ export function moveKeysToTeam(
       ? team
       : { ...team, keyIds: kept };
   });
+}
+
+/** Delete `doomedId`: its members and keys fold into the Default team, the
+ *  team itself is removed. Membership moves through the same helpers as a
+ *  manual reassignment, so attribution freezes first and the Default team
+ *  does not inherit the deleted team's spend (PRD 3 Reassignment). The
+ *  deleted team's own rows leave with it (PM decision 2026-09-02: the team
+ *  and its history are removed). No-op on the Default team or an unknown id. */
+export function deleteTeam(teams: TeamRow[], doomedId: string): TeamRow[] {
+  const doomed = teams.find((t) => t.id === doomedId);
+  if (!doomed || doomed.isDefault) {
+    return teams;
+  }
+  const withMembers = moveMembersToTeam(
+    teams,
+    DEFAULT_TEAM_ID,
+    doomed.memberIds
+  );
+  const stillHeld = withMembers.find((t) => t.id === doomedId)?.keyIds ?? [];
+  const withKeys = moveKeysToTeam(withMembers, DEFAULT_TEAM_ID, stillHeld);
+  return withKeys.filter((t) => t.id !== doomedId);
 }

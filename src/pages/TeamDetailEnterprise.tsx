@@ -56,6 +56,7 @@ import {
   BUDGET_WINDOW_RESET_COPY,
   budgetReadings,
   DEFAULT_TEAM_ID,
+  deleteTeam,
   keyById,
   memberById,
   memberJoinedAt,
@@ -203,7 +204,7 @@ export function TeamDetailEnterprise({
 
   // Same fold-in contract as the list page's delete: members and keys land on
   // Default, then the page has nothing left to show, so it returns to the list.
-  const deleteTeam = () => {
+  const handleDeleteTeam = () => {
     const doomed = teams.find((t) => t.id === teamId);
     if (!doomed || doomed.isDefault) {
       return;
@@ -216,25 +217,7 @@ export function TeamDetailEnterprise({
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
     });
-    setTeams((prev) =>
-      prev
-        .filter((t) => t.id !== teamId)
-        .map((t) =>
-          t.id === DEFAULT_TEAM_ID
-            ? {
-                ...t,
-                memberIds: [...new Set([...t.memberIds, ...doomed.memberIds])],
-                memberJoined: {
-                  ...t.memberJoined,
-                  ...Object.fromEntries(
-                    doomed.memberIds.map((id) => [id, new Date()])
-                  ),
-                },
-                keyIds: [...new Set([...t.keyIds, ...doomed.keyIds])],
-              }
-            : t
-        )
-    );
+    setTeams((prev) => deleteTeam(prev, doomed.id));
     navigate(listPath);
   };
 
@@ -250,7 +233,7 @@ export function TeamDetailEnterprise({
 
         {team ? (
           <TeamDetailBody
-            onDeleteTeam={deleteTeam}
+            onDeleteTeam={handleDeleteTeam}
             onMoveKeys={moveKeys}
             onMoveMembers={moveMembers}
             onPatch={patch}
@@ -678,6 +661,11 @@ function UsageBreakdown({
                       >
                         {row.label}
                       </span>
+                      {row.former ? (
+                        <span className="type-copy-12 whitespace-nowrap text-muted-foreground">
+                          Former member
+                        </span>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">

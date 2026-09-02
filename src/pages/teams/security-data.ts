@@ -1,5 +1,5 @@
 import { MEMBER_ROWS } from "@/data/team-members";
-import { keyById, TEAM_SEED_ROWS, type TeamRow } from "@/data/teams";
+import { attributedKeyNames, TEAM_SEED_ROWS, type TeamRow } from "@/data/teams";
 import type { CustomRange, Range } from "@/lib/range";
 import { RANGE_SCALE } from "@/lib/range";
 import { API_KEY_ROWS } from "@/pages/activity-data";
@@ -122,14 +122,11 @@ const OUTCOME_ORDER: GuardrailAction[] = [
   "allow",
 ];
 
-/** The activity-data key ids (`prod-web`) a team holds. `keyById` resolves
- *  the `sk-gw-…` seed id to the name both other modules index on. */
+/** The activity-data key names (`prod-web`) ATTRIBUTED to a team, not its
+ *  live membership: security events are history too (PRD 3 Reassignment),
+ *  so a moved key's past events stay with the team that ran them. */
 function teamKeyNames(team: TeamRow): Set<string> {
-  return new Set(
-    team.keyIds
-      .map((id) => keyById(id)?.name)
-      .filter((n): n is string => n !== undefined)
-  );
+  return attributedKeyNames(team);
 }
 
 /** 7d request volume on the team's keys — the share weight. */

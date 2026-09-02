@@ -6,7 +6,10 @@ import {
   budgetProgress,
   budgetReadings,
   budgetSpendShown,
+  DEFAULT_TEAM_ID,
+  deleteTeam,
   keyById,
+  moveKeysToTeam,
   moveMembersToTeam,
   ORG_BUDGET_SEED,
   orgSpend,
@@ -16,6 +19,7 @@ import {
   usageForTeam,
 } from "@/data/teams";
 import type { Range } from "@/lib/range";
+
 import { ATTACK_MIX, EVENTS_RANGE_TOTAL } from "@/pages/security/events-data";
 import { securityForTeam, teamEventShares } from "@/pages/teams/security-data";
 import { teamDailySeries, teamSparkSeries } from "@/pages/teams/spark-series";
@@ -315,4 +319,110 @@ test("hard budgets never show spend past the cap; soft budgets do", () => {
   expect(budgetPercentLabel(615, 500, "hard")).toBe("100.0%");
   expect(budgetPercentLabel(615, 500, "soft")).toBe("123.0%");
   expect(budgetPercentLabel(500, 500, "hard")).toBe("100.0%");
+});
+
+// PRD 3 Reassignment / 8.1 / 11: "when a key or user moves teams, past
+// requests keep their original team; only new traffic attributes to the new
+// team (history is immutable)". Every roll-up reads the frozen attribution,
+// so a move changes membership and nothing else.
+test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
+  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Platform");
+  const design = TEAM_SEED_ROWS.find((t) => t.name === "Design");
+  if (!(platform && design)) {
+    throw new Error("seed teams missing");
+  }
+  const before = {
+    platform: usageForTeam(platform),
+    design: usageForTeam(design),
+    org: orgSpend(TEAM_SEED_ROWS),
+    platformSec: securityForTeam(platform).findings,
+    designSec: securityForTeam(design).findings,
+  };
+
+  // Key move: one Platform key onto Design.
+  const keyId = platform.keyIds[0];
+  if (!keyId) {
+    throw new Error("Platform has no keys");
+  }
+  const afterKey = moveKeysToTeam(TEAM_SEED_ROWS, design.id, [keyId]);
+  const p1 = afterKey.find((t) => t.id === platform.id);
+  const d1 = afterKey.find((t) => t.id === design.id);
+  if (!(p1 && d1)) {
+    throw new Error("teams lost");
+  }
+  // Membership moved.
+  expect(p1.keyIds).not.toContain(keyId);
+  expect(d1.keyIds).toContain(keyId);
+  // History did not: spend, requests, tokens, by-user, by-model, security.
+  expect(usageForTeam(p1)).toEqual(before.platform);
+  expect(usageForTeam(d1)).toEqual(before.design);
+  expect(securityForTeam(p1, afterKey).findings).toBe(before.platformSec);
+  expect(securityForTeam(d1, afterKey).findings).toBe(before.designSec);
+  expect(orgSpend(afterKey)).toBe(before.org);
+
+  // Member move: Kira (Platform manager, owns keys) onto Design.
+  const kira = platform.managerIds[0];
+  if (!kira) {
+    throw new Error("Platform has no manager");
+  }
+  const afterMember = moveMembersToTeam(TEAM_SEED_ROWS, design.id, [kira]);
+  const p2 = afterMember.find((t) => t.id === platform.id);
+  const d2 = afterMember.find((t) => t.id === design.id);
+  if (!(p2 && d2)) {
+    throw new Error("teams lost");
+  }
+  expect(p2.memberIds).not.toContain(kira);
+  expect(d2.memberIds).toContain(kira);
+  const p2Usage = usageForTeam(p2);
+  // Platform keeps Kira's spend and now flags the row as a former member.
+  expect(p2Usage.spend).toBe(before.platform.spend);
+  expect(p2Usage.requests).toBe(before.platform.requests);
+  const kiraRow = p2Usage.byUser.find((r) => r.id === kira);
+  expect(kiraRow?.former).toBe(true);
+  expect(kiraRow?.spend).toBe(
+    before.platform.byUser.find((r) => r.id === kira)?.spend
+  );
+  // Design gains a member and their keys, and no spend.
+  expect(usageForTeam(d2)).toEqual(before.design);
+  expect(orgSpend(afterMember)).toBe(before.org);
+
+  // Remove to Default team: same rule.
+  const afterRemove = moveMembersToTeam(TEAM_SEED_ROWS, DEFAULT_TEAM_ID, [
+    kira,
+  ]);
+  const def = afterRemove.find((t) => t.id === DEFAULT_TEAM_ID);
+  const defSeed = TEAM_SEED_ROWS.find((t) => t.id === DEFAULT_TEAM_ID);
+  if (!(def && defSeed)) {
+    throw new Error("default team lost");
+  }
+  expect(usageForTeam(def)).toEqual(usageForTeam(defSeed));
+  expect(def.memberIds).toContain(kira);
+});
+
+test("deleteTeam folds members and keys into Default and drops the team's history", () => {
+  const design = TEAM_SEED_ROWS.find((t) => t.name === "Design");
+  const defSeed = TEAM_SEED_ROWS.find((t) => t.id === DEFAULT_TEAM_ID);
+  if (!(design && defSeed)) {
+    throw new Error("seed teams missing");
+  }
+  const designSpend = usageForTeam(design).spend;
+  const after = deleteTeam(TEAM_SEED_ROWS, design.id);
+  const def = after.find((t) => t.id === DEFAULT_TEAM_ID);
+  if (!def) {
+    throw new Error("default team lost");
+  }
+  expect(after.find((t) => t.id === design.id)).toBeUndefined();
+  for (const id of design.memberIds) {
+    expect(def.memberIds).toContain(id);
+  }
+  for (const id of design.keyIds) {
+    expect(def.keyIds).toContain(id);
+  }
+  // Default's spend is unchanged; the deleted team's spend leaves the org
+  // roll-up with it (PM decision 2026-09-02: delete removes history).
+  expect(usageForTeam(def).spend).toBe(usageForTeam(defSeed).spend);
+  expect(orgSpend(after)).toBe(round2(orgSpend(TEAM_SEED_ROWS) - designSpend));
+  // Default team and unknown ids are no-ops.
+  expect(deleteTeam(TEAM_SEED_ROWS, DEFAULT_TEAM_ID)).toBe(TEAM_SEED_ROWS);
+  expect(deleteTeam(TEAM_SEED_ROWS, "nope")).toBe(TEAM_SEED_ROWS);
 });

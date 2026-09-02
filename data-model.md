@@ -1623,6 +1623,23 @@ layer owns:
   per-row removal is a confirm dialog that MOVES the key to Default — never a
   detach, so its spend keeps rolling up somewhere. The Default team's own
   Keys tab hides the remove action.
+- **History is immutable (PRD 3 Reassignment / 8.1 / 11, built
+  2026-09-02).** `TeamRow.historyKeyIds?` is the set of keys whose PAST
+  traffic is attributed to the team. Unset on the seed (attribution equals
+  membership until something moves); `freezeHistory()` stamps every team on
+  the first `moveKeysToTeam` call, and from then on `keyIds` is membership
+  and `historyKeyIds` is history. Every roll-up reads
+  `attributedKeyIds()` / `attributedKeyNames()`, never `keyIds`: `usageForTeam`
+  (spend, requests, tokens, by-user, by-model), `orgSpend`, and
+  `security-data.ts` event shares. So a moved key or member changes the
+  Members / Keys tabs only; the source team's numbers do not move and the
+  target gains nothing until new traffic exists (none does, in mock data).
+  By-user rows carry `former: true` when the spender is no longer on the team;
+  the Usage tab labels them "Former member". `deleteTeam(teams, id)` folds
+  members and keys into Default through the same helpers, then drops the
+  team, so Default never inherits the deleted team's spend and the org total
+  falls by it (PM decision 2026-09-02: delete removes the team's history).
+  Pinned in `teams.test.ts` ("PRD 3 Reassignment" + "deleteTeam" tests).
 
 **Multi-window budgets (2026-09-01 meeting: "support multiple simultaneous
 budget types, such as 5-hour, weekly, and monthly limits").** `TeamBudget`
