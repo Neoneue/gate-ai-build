@@ -145,3 +145,22 @@ Delete team says "The team and its history are removed. This can't be
 undone." (PM decision 2026-09-02; archiving is a later call). Where:
 `src/data/teams.ts`, `src/pages/TeamsEnterprise.tsx`,
 `src/pages/TeamDetailEnterprise.tsx`, `src/pages/teams/dialogs.tsx`.
+
+### Team spend stays with the team that ran it; "Former member" rows `602e4d4`
+
+Before: a team's spend, requests, tokens, by-user and by-model tables,
+security counts, and the org total were all summed from whichever keys were
+on the team at render time, so moving a key or member dragged its whole
+past onto the new team and the old team's numbers fell. The dialogs said
+the opposite. After: every roll-up sums by a frozen per-team attribution
+that a move never touches (PRD 3 Reassignment: "past requests keep their
+original team; only new traffic attributes to the new team"). Moving
+Mateus from Platform to Design leaves Platform at $12.39 with his row
+labeled "Former member" (`type-copy-12 text-muted-foreground`, after the
+name) and Design at $18.46 with two more keys and no new spend; the org
+total is unchanged. Deleting a team folds members and keys into the Default
+team without moving spend, and the org total drops by the deleted team's
+spend. Where: `src/data/teams.ts` (`historyKeyIds`, `attributedKeyIds`,
+`freezeHistory`, `deleteTeam`, `UsageSlice.former`),
+`src/pages/teams/security-data.ts`, `src/pages/TeamsEnterprise.tsx`,
+`src/pages/TeamDetailEnterprise.tsx`, `src/data/teams.test.ts`.
