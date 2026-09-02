@@ -164,3 +164,14 @@ spend. Where: `src/data/teams.ts` (`historyKeyIds`, `attributedKeyIds`,
 `freezeHistory`, `deleteTeam`, `UsageSlice.former`),
 `src/pages/teams/security-data.ts`, `src/pages/TeamsEnterprise.tsx`,
 `src/pages/TeamDetailEnterprise.tsx`, `src/data/teams.test.ts`.
+
+### Usage tab: Spend by current members / Spend by past members `23342b2`
+
+Before: one "Spend by member" table over everyone who ever spent on the
+team, with a muted "Former member" label after names of people who had
+left (added earlier today). After: "Spend by current members" lists only
+today's roster; "Spend by past members" appears below it only when someone
+who spent on the team has left, and is absent otherwise. Same
+`UsageBreakdown` component, same columns and sorting, no new classes. The
+two tables sum to Total Spend. PM direction 2026-09-02: past spenders do
+not belong in a current team's list. Where: `src/pages/TeamDetailEnterprise.tsx`.

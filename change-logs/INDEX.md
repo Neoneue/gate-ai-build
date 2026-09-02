@@ -17,6 +17,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Team budgets: seeds carry no hard cap, three windows each
 - Default team named plainly, badge dropped; dialogs say where history stays
 - Team spend stays with the team that ran it; "Former member" rows
+- Usage tab: Spend by current members / Spend by past members
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 
