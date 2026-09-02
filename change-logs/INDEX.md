@@ -20,6 +20,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Usage tab: Spend by current members / Spend by past members
 - Teams list: caption names the cap mode; team page gains a Settings tab
 - Status word "Blocked"; Teams list columns 20/10/8/14/12/36
+- Block threshold field; "Messages" wording; Usage by tables gain token columns
 
 ### [2026-09-01](./2026-09/changelog-9-1.md)
 

@@ -209,3 +209,27 @@ today). Team had the most unused room; Budget still clears the worst case
 ("100.0% weekly · Hard cap" + Blocked badge) at the floor. Where:
 `src/pages/TeamsEnterprise.tsx`, `src/pages/teams/budget-band.ts`,
 `src/data/teams.ts`, `design.md` status-word line.
+
+### Block threshold field; "Messages" wording; Usage by tables gain token columns `e0b5acf`
+
+Before: a hard budget blocked at its cap with no way to set a lower line
+(the PRD's "warn at 80%, block at 100%" had only the warn half); team copy
+said "requests"; the Usage tab tables were "Spend by …" with User /
+Messages / Spend. After: the budget form shows "Block threshold (% of
+budget)" directly under the warn field, only while Hard is selected, and
+requires it above the warn value (Save disabled otherwise). Hard budgets
+now block, clamp their shown spend, read "Blocked" and fill red at that
+percent of the cap; soft budgets ignore it. The Budget tab card adds a
+"Block at" fact (percent + dollars) for hard budgets, and the breach banner
+title reads "Blocked: <team> <window> budget at its N% block threshold"
+when N is under 100. All team-page copy says "messages": the Usage column
+header, "Hard: blocks messages once exceeded", the hard note under the
+select, and both banner bodies ("Messages from this team are blocked").
+Usage tab titles are "Usage by current members", "Usage by past members",
+"Usage by model"; the two member tables read Member / Messages / Tokens in
+/ Tokens out / Spend at 24 / 19 / 19 / 19 / 19 (the model table keeps 52 /
+24 / 24), and per-member tokens in + out sum to the Tokens Used tile at
+every range (pinned). Where: `src/data/teams.ts`, `src/pages/teams/budget-band.ts`,
+`src/pages/teams/budget.tsx`, `src/pages/teams/dialogs.tsx`,
+`src/pages/TeamsEnterprise.tsx`, `src/pages/TeamDetailEnterprise.tsx`,
+`design.md` band boundary, `data-model.md`.
