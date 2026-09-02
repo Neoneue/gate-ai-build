@@ -1,5 +1,6 @@
 import { HeartPulse, KeyRound, ShieldAlert, UserRound } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { parseAuthoredEventTime } from "@/lib/demo-clock";
 
 type RiskTier = "critical" | "elevated" | "normal";
 type EventAction = "blocked" | "flagged" | "redacted";
@@ -45,11 +46,12 @@ export type EventRow = {
 
 // Parses a stored `YYYY-MM-DD HH:MM:SS` string into a Date so the shared
 // <Timestamp> primitive can render the absolute value and compute its
-// relative-time tooltip from the same instant. Forces local midnight so the
-// day rendered stays the day the event was filed.
+// relative-time tooltip from the same instant. The stored strings are the
+// AUTHORED calendar; the demo clock shifts them forward by whole days at
+// parse time (H:M:S preserved), so every feed reads as if used through real
+// yesterday. `eventSortValue` keeps sorting on the raw string (monotonic).
 export function parseEventTime(stored: string): Date {
-  const [datePart, timePart] = stored.split(" ");
-  return new Date(`${datePart}T${timePart}`);
+  return parseAuthoredEventTime(stored);
 }
 
 export const ACTION_BADGE: Record<

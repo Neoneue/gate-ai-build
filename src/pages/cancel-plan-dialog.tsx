@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
+import { BILLING_PERIOD_END } from "@/data/billing-history";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Cancel plan — shared confirm dialog
@@ -47,16 +48,6 @@ import { ExternalLinkIcon } from "@/components/ui/external-link";
  * flow in Settings — there is intentionally NO type-to-confirm gate here,
  * only the intro + warning callout + a single destructive confirm.
  * ───────────────────────────────────────────────────────────────────────── */
-
-/**
- * Period end shown in the cancel-plan intro. MUST match the "Renews on …"
- * line on the Pro Billing page (`Billing.tsx`, "Your plan" card) — same
- * workspace, same subscription, so the two surfaces cannot be allowed to
- * disagree. Exported so `Billing.tsx` reads this one definition instead of
- * repeating the literal; the durable fix if the date ever goes dynamic is a
- * billing data source both import from.
- */
-export const BILLING_PERIOD_END = "Jun 12, 2026";
 
 /**
  * Tinted warning callout used by both confirm dialogs. The recipe is the

@@ -44,6 +44,7 @@ import {
   type FindingActionKind,
   getRequestFindings,
   type RequestFinding,
+  requestTimeLabel,
   resolveInjectionCopy,
 } from "@/data/requests";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
@@ -431,7 +432,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       label="Timestamp"
                       value={
                         <span className="type-mono-14 text-foreground">
-                          {row.day}, {row.time}
+                          {requestTimeLabel(row)}
                         </span>
                       }
                     />

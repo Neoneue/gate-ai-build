@@ -21,6 +21,7 @@
 import { API_KEY_SEED_ROWS, type ApiKeyRow } from "@/data/api-keys";
 import { modelName } from "@/data/models";
 import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
+import { authoredDate } from "@/lib/demo-clock";
 import { RANGE_SCALE } from "@/lib/range";
 import { API_KEY_ROWS, MODEL_ROWS, USAGE_7D } from "@/pages/activity-data";
 
@@ -218,7 +219,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     name: "Default",
     isDefault: true,
     memberIds: ["usr_chad"],
-    memberJoined: { usr_chad: new Date(2026, 5, 1) },
+    memberJoined: { usr_chad: authoredDate(2026, 5, 1) },
     keyIds: keyIds("prod-web", "prod-agent", "design-agent"),
     managerIds: [],
     budget: null,
@@ -229,8 +230,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     isDefault: false,
     memberIds: ["usr_kira", "usr_mate"],
     memberJoined: {
-      usr_kira: new Date(2026, 5, 2),
-      usr_mate: new Date(2026, 5, 3),
+      usr_kira: authoredDate(2026, 5, 2),
+      usr_mate: authoredDate(2026, 5, 3),
     },
     keyIds: keyIds("openclaw", "nova-chat", "hermes-agent", "atlas-eval"),
     managerIds: ["usr_kira"],
@@ -247,7 +248,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     isDefault: false,
     memberIds: ["usr_jordan"],
     // Jordan joined the org 2026-06-06 (team-members.ts); the team two days on.
-    memberJoined: { usr_jordan: new Date(2026, 5, 8) },
+    memberJoined: { usr_jordan: authoredDate(2026, 5, 8) },
     keyIds: keyIds("development", "ci-runner"),
     managerIds: ["usr_jordan"],
     budget: {

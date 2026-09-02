@@ -15,7 +15,7 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
 import { redactFindings } from "@/data/redact";
 import { getRequestBody } from "@/data/request-bodies";
-import { requestRowId } from "@/data/requests";
+import { requestRowId, requestTimeLabel } from "@/data/requests";
 import type {
   ConversationMessage,
   ConversationRow,
@@ -215,7 +215,7 @@ export function getConversationDetail(
       outTokens: r.outTokens,
       latency: toMsLatency(r.latency),
       cost: r.cost,
-      time: `${r.day}, ${r.time}`,
+      time: requestTimeLabel(r),
       requestId: requestRowId(r),
     };
   });
@@ -242,7 +242,7 @@ export function getConversationDetail(
   const messages: ConversationMessage[] = scripted
     ? rows.flatMap((r): ConversationMessage[] => {
         const id = requestRowId(r);
-        const time = `${r.day}, ${r.time}`;
+        const time = requestTimeLabel(r);
         const body = getRequestBody(r);
         const out: ConversationMessage[] = [];
         if (body.userMessage) {
@@ -291,7 +291,7 @@ export function getConversationDetail(
     : [
         {
           role: "user",
-          time: rows[0] ? `${rows[0].day}, ${rows[0].time}` : "",
+          time: rows[0] ? requestTimeLabel(rows[0]) : "",
           body: seed.title,
         },
         ...rows.map((r, i): ConversationMessage => {
@@ -305,7 +305,7 @@ export function getConversationDetail(
                 : `${r.model} · ${r.outTokens} tokens out`;
           return {
             role: assistantAt.has(i) ? "assistant" : "tool",
-            time: `${r.day}, ${r.time}`,
+            time: requestTimeLabel(r),
             requestId: requestRowId(r),
             body,
           };

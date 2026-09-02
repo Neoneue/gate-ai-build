@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { DEMO_NOW } from "@/lib/demo-clock";
 import { formatSparkLabel } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { TOKEN_SAVINGS_RATE_7D } from "@/pages/activity-data";
@@ -259,7 +260,9 @@ const SPARK_STEP: Record<PresetRange, number> = {
   "7d": 1, // days
   "30d": 2, // days
 };
-const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
+// Sparkline axis anchor = the demo clock's "now". Consumers copy this Date
+// before stepping it back; never mutate it in place.
+const SPARK_TODAY = DEMO_NOW;
 
 // Resample an authored trend onto `count` evenly-spaced stops via linear
 // interpolation. Endpoints are preserved exactly; intermediate stops sit on the

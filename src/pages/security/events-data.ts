@@ -7,6 +7,7 @@
  * here — this is a plain data module.
  * ───────────────────────────────────────────────────────────────────────── */
 import type { ChartConfig } from "@/components/ui/chart";
+import { demoAnchorFields } from "@/lib/demo-clock";
 import {
   formatDateTime,
   formatNumber,
@@ -264,27 +265,25 @@ export const RANGE_DELTA_NOTE: Record<EventsRange, string> = {
  * the mock "now".
  * ────────────────────────────────────────────────────────────────────── */
 
-// Anchor "now" for the mock = May 12 14:30 (today's date in fixtures).
-// Stable constant — never use `new Date()` here, the chart must not drift
-// across renders or test runs.
-export const ANCHOR = {
-  month: 4 /* May, 0-indexed */,
-  day: 12,
-  hour: 14,
-  minute: 30,
-};
-// Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
+// Anchor "now" for the mock = the demo clock (`DEMO_NOW`, real yesterday
+// 18:30:12), broken into calendar fields plus the instant itself.
+// Evaluated once at module load. Never call `new Date()` per render here,
+// the chart must not drift across renders or test runs.
+export const ANCHOR = demoAnchorFields();
+// Compute a date `minutesAgo` before the anchor, returning its calendar fields.
 export function minutesBeforeAnchor(minutesAgo: number): {
+  year: number;
   month: number;
   day: number;
   hour: number;
   minute: number;
 } {
-  // Use Date arithmetic with year 2026 as scaffolding only — we read the
-  // calendar fields back out, never the year. This handles month boundaries
-  // (e.g. Apr ↔ May) correctly without a hand-rolled days-per-month table.
+  // Date arithmetic on a COPY of the anchor instant as scaffolding only. We
+  // read the calendar fields back out. This handles month and year boundaries
+  // correctly without a hand-rolled days-per-month table. Seconds are zeroed
+  // so buckets land on whole minutes.
   const d = new Date(
-    2026,
+    ANCHOR.date.getFullYear(),
     ANCHOR.month,
     ANCHOR.day,
     ANCHOR.hour,
@@ -292,6 +291,7 @@ export function minutesBeforeAnchor(minutesAgo: number): {
   );
   d.setMinutes(d.getMinutes() - minutesAgo);
   return {
+    year: d.getFullYear(),
     month: d.getMonth(),
     day: d.getDate(),
     hour: d.getHours(),
@@ -365,8 +365,8 @@ export function buildEventsChartView(
   // Bucket 0 = oldest, bucket `buckets - 1` = "now" (ANCHOR).
   const data = totalSpark.map((requests, i) => {
     const minutesAgo = Math.round((buckets - 1 - i) * bucketMinutes);
-    const { month, day, hour, minute } = minutesBeforeAnchor(minutesAgo);
-    const d = new Date(2026, month, day, hour, minute);
+    const { year, month, day, hour, minute } = minutesBeforeAnchor(minutesAgo);
+    const d = new Date(year, month, day, hour, minute);
     const time = hourly
       ? formatTime(d, { hour: "2-digit", minute: "2-digit", hour12: false })
       : formatDateTime(d, {

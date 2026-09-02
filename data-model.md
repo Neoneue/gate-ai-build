@@ -693,7 +693,7 @@ messages (`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>`
 (`API_KEY_SEED_ROWS` → `/api-keys`; revokes carry no date so they stay out),
 every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
 (`src/data/team-members.ts MEMBER_ROWS` → `/members`). Unread defaults: the
-2026-06-06 band ships unread (~15 items); older history ships read.
+authored 2026-06-06 band (= `DEMO_TODAY`, real yesterday) ships unread (~15 items); older history ships read.
 `NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
 still exported, but **the bell no longer uses it as its list bound**
 (2026-08-25): the menu reads the whole non-archived history and windows the
@@ -719,8 +719,9 @@ reached, payment failed, PAYG balance low; security-event is OFF by default
 per the PRD, and the Pro configured seed leaves it off too (2026-08-25). Prefs DO persist —
 localStorage `notifications.prefs.v1` — unlike read state.
 
-`NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
-the latest instant in the mock data) is the feed's clock; relative labels
+`NOTIFICATIONS_NOW` (= `DEMO_NOW`, authored 2026-06-06 18:30:12, the
+design-agent key's `lastUsed`, the latest instant in the mock data, shifted
+onto real yesterday by the demo clock, section 5.2a) is the feed's clock; relative labels
 render via `fmtRelative(at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`
 (anchor param added for this). Catalog types without backing rows
 (spend-limit-reached, payment-failed, PAYG-low — auto-recharge threshold is
@@ -919,6 +920,34 @@ const RANGE_SCALE: Record<PresetRange, number> = {
 ```
 
 KPI values for other ranges are derived by multiplying the 7d base by the scale factor. Charts apply the same factor to per-bucket arrays.
+
+### 5.2a Demo clock (added 2026-09-01)
+
+`src/lib/demo-clock.ts` is the single clock for every AUTHORED mock date.
+The mock calendar was written against a fixed year where the latest activity
+day is `AUTHORED_TODAY = 2026-06-06`. At load, the module maps that day onto
+REAL yesterday (`DEMO_TODAY`) and computes one whole-day offset
+(`DEMO_SHIFT_DAYS`, applied with `setDate`, so H:M:S and DST-safe wall clocks
+are preserved). The site therefore always reads as "used through yesterday"
+with no re-authoring.
+
+| Export | Role |
+| --- | --- |
+| `authoredDate(y, m, d, h, mi, s)` | Drop-in for `new Date(2026, ...)` on seed rows (api-keys, audit-trail, billing-history, conversations, team-members, teams, Team.tsx invites, TeamDefault, cancel-plan-dialog) |
+| `parseAuthoredEventTime("YYYY-MM-DD HH:MM:SS")` | Body of `parseEventTime` in `pages/security-data.ts`; shifts all 75 security ISO strings with zero data edits |
+| `parseAuthoredDayTime("Jun 6", "00:50:51")` | Behind `requestDate(row)` / `requestDayLabel(row)` / `requestTimeLabel(row)` in `data/requests.ts`; the 153 row `day`/`time` literals stay authored and are shifted at read |
+| `DEMO_NOW` (yesterday 18:30:12) | `NOTIFICATIONS_NOW`, both `SPARK_TODAY`s, the 24H chart anchor via `demoAnchorFields()` (`security/events-data.ts`, `requests/hero-data.ts`) |
+| `DEMO_TODAY` (yesterday 00:00) | `RECENT_CUTOFF` (unread band), Activity `getRangeDates` / `getRangeLabels`, Dashboard `make7dLabels` |
+| `__setDemoShiftDaysForTests(0)` | Restores the authored calendar (rollback / screenshot comparison) |
+
+Rules: shift at CONSTRUCTION, never in a formatter; runtime `new Date()`
+sites (new key, team move, limit reset, `Timestamp` default anchor) stay
+real. `fallbackRequestUuid` still seeds on the RAW `day`/`time` strings so
+`/messages-findings/:id` URLs never change. NOT shifted: `models.ts`
+`releasedAt` (real API data) and transcript text in `request-bodies.ts`
+(49 dates). Authored distances are preserved, so May 12 content
+(security feeds, audit rows, conversation turns) lands ~25 days before
+DEMO_TODAY. Plan and survey: `plans/demo-clock-shift.md`.
 
 ### 5.3 Key generators
 
@@ -1382,10 +1411,10 @@ type EventRow = {
 **Mock data anchor:**
 
 ```typescript
-const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
+const NOW = authoredDate(2026, 4, 16, 16, 0, 0); // authored 2026-05-16 16:00:00, shifted by the demo clock
 ```
 
-Fixed anchor for relative-time formatting and range cutoffs — keeps the mock from going stale as wall-clock time advances. Same technique to use whenever a mock page renders relative timestamps. When real data lands, replace `NOW` with `new Date()`.
+Authored anchor for relative-time formatting and range cutoffs, shifted onto the real calendar by `src/lib/demo-clock.ts` (section 5.2a) so the rows and the anchor move together. When real data lands, replace `NOW` with `new Date()`.
 
 **Range filter:** `isWithinRange(at, range, customRange)` — `'all'` returns everything; presets compute `cutoff = NOW - HOURS_PER_PRESET[range] * 1h`; `'custom'` returns rows in `[customRange.from, customRange.to]`.
 

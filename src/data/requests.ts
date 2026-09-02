@@ -2,6 +2,7 @@
 // pages/Requests.tsx so the page module only exports components. The
 // RequestRow type stays with the page; importing it here is type-only,
 // so there is no runtime cycle.
+import { authoredDayLabel, parseAuthoredDayTime } from "@/lib/demo-clock";
 import type { RequestRow } from "@/pages/Requests";
 
 /* ── Shared captured-session transcripts ──────────────────────────────────
@@ -80,6 +81,24 @@ function fallbackRequestUuid(seed: string): string {
     `${variant}${hex.slice(17, 20)}`,
     hex.slice(20, 32),
   ].join("-");
+}
+
+/** Authored `day: "Jun 6"` + `time: "00:50:51"` recomposed as an instant
+ *  and shifted through the demo clock. Every consumer that renders or sorts
+ *  on a row's date goes through these; `requestRowId` above stays on the raw
+ *  strings so deep-link ids never move with the calendar. */
+export function requestDate(row: RequestRow): Date {
+  return parseAuthoredDayTime(row.day, row.time);
+}
+
+/** "Aug 31" style label for the row's shifted day. */
+export function requestDayLabel(row: RequestRow): string {
+  return authoredDayLabel(requestDate(row));
+}
+
+/** "Aug 31, 00:50:51" style label: shifted day, authored time of day. */
+export function requestTimeLabel(row: RequestRow): string {
+  return `${requestDayLabel(row)}, ${row.time}`;
 }
 
 /** Key column display form. Key names are free text, and a Gate Connect

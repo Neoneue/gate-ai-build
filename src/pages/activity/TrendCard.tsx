@@ -86,9 +86,9 @@ const DIMENSION_OPTIONS: { value: Dimension; noun: string }[] = [
 /** Generate N evenly-spaced labels for the chart x-axis. Each preset has
  *  its own anchoring (1H → minute marks ending at "Now"; 24H → 2-hour
  *  marks on the calendar; 7D → daily; 30D → daily ending today). */
-/** Bucket start dates per range — anchored at the mock "today" (Apr 27, 2026);
- *  24H's trailing bucket is the 14:30 anchor. Kept in lockstep with
- *  getRangeLabels below (same anchor + stepping); getRangeLabels renders the
+/** Bucket start dates per range: re-anchored on the demo clock (daily ranges
+ *  end on `DEMO_TODAY`; 24H's trailing bucket is `DEMO_NOW`). Kept in lockstep
+ *  with getRangeLabels (same anchor + stepping); getRangeLabels renders the
  *  short axis labels, the KPI rail renders these via formatSparkLabel. */
 
 /** Margin, Y-axis reserve, tick type and both tick renderers come from

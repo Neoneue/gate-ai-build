@@ -41,6 +41,7 @@ import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { DEMO_NOW } from "@/lib/demo-clock";
 import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
 import {
   type CustomRange,
@@ -97,10 +98,11 @@ const SPARK: Record<
 
 // Sparkline tooltip dates. These KPI sparklines are illustrative trends
 // (authored as fixed 9-point arrays) with no real timestamps. We derive
-// evenly-spaced bucket dates ending at the mock "today" so the hover card can
-// show a date beside each value — the values themselves stay illustrative.
+// evenly-spaced bucket dates ending at the demo clock's "now" so the hover
+// card can show a date beside each value. The values themselves stay
+// illustrative. Consumers copy this Date before stepping it; never mutate it.
 const SPARK_POINTS = 9;
-const SPARK_TODAY = new Date(2026, 5, 15, 12, 0, 0);
+const SPARK_TODAY = DEMO_NOW;
 
 /** Avg Cost / Conv — the mean of what these conversations actually cost,
  *  Gate-metered rows only. Every term is a `costOf` sum over one

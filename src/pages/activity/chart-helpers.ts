@@ -14,6 +14,7 @@ import {
   CHART_Y_AXIS_WIDTH,
   getChartPlotWidth,
 } from "@/components/ui/chart-geometry";
+import { DEMO_NOW, DEMO_TODAY } from "@/lib/demo-clock";
 import {
   formatCurrency,
   formatDate,
@@ -218,6 +219,11 @@ export function getBucketLabel(
   return "per bucket";
 }
 
+/** Bucket start dates per range. The series are synthetic (no per-row dates),
+ *  so the axis is RE-ANCHORED to the demo clock rather than shifted: daily
+ *  ranges end on `DEMO_TODAY`, 24H's trailing bucket is `DEMO_NOW`. Both are
+ *  shared module constants, so every branch copies before stepping. Kept in
+ *  lockstep with `getRangeLabels` below (same anchor, same stepping). */
 export function getRangeDates(
   range: Range,
   customRange: CustomRange | null
@@ -231,7 +237,7 @@ export function getRangeDates(
     );
   }
   if (range === "all") {
-    const lastDay = new Date(2026, 3, 27);
+    const lastDay = new Date(DEMO_TODAY);
     return Array.from({ length: 30 }, (_, i) => {
       const d = new Date(lastDay);
       d.setDate(d.getDate() - Math.round(((29 - i) * 59) / 29));
@@ -239,23 +245,23 @@ export function getRangeDates(
     });
   }
   if (range === "24h") {
-    const anchor = new Date(2026, 3, 27, 0, 0);
+    const anchor = new Date(DEMO_TODAY);
     const dates = Array.from(
       { length: 11 },
       (_, i) => new Date(anchor.getTime() + i * 2 * 60 * 60 * 1000)
     );
-    dates.push(new Date(2026, 3, 27, 14, 30));
+    dates.push(new Date(DEMO_NOW));
     return dates;
   }
   if (range === "7d") {
-    const anchor = new Date(2026, 3, 27);
+    const anchor = new Date(DEMO_TODAY);
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(anchor);
       d.setDate(d.getDate() - (6 - i));
       return d;
     });
   }
-  const lastDay = new Date(2026, 3, 27);
+  const lastDay = new Date(DEMO_TODAY);
   return Array.from({ length: 30 }, (_, i) => {
     const d = new Date(lastDay);
     d.setDate(d.getDate() - (29 - i));
@@ -279,10 +285,10 @@ export function getRangeLabels(
   }
   if (range === "all") {
     // Lifetime cumulative window — 30 buckets spanning the ~60 days of mock
-    // history, ending today (Apr 27, per existing fixtures). Each bucket
+    // history, ending on the demo clock's today (DEMO_TODAY). Each bucket
     // covers ~2 days; labels are the explicit date at the bucket start.
     const labels: string[] = [];
-    const lastDay = new Date(2026, 3, 27);
+    const lastDay = new Date(DEMO_TODAY);
     for (let i = 0; i < 30; i++) {
       const d = new Date(lastDay);
       d.setDate(d.getDate() - Math.round(((29 - i) * 59) / 29));
@@ -292,8 +298,8 @@ export function getRangeLabels(
   }
   if (range === "24h") {
     // 12 buckets at 2-hour intervals on the calendar day. Trailing bucket
-    // labeled "Now" since it ends at the anchor 14:30 rather than 14:00.
-    const anchor = new Date(2026, 3, 27, 0, 0);
+    // labeled "Now" since it ends at DEMO_NOW rather than on a 2-hour mark.
+    const anchor = new Date(DEMO_TODAY);
     const labels: string[] = [];
     for (let i = 0; i < 11; i++) {
       const d = new Date(anchor.getTime() + i * 2 * 60 * 60 * 1000);
@@ -305,8 +311,8 @@ export function getRangeLabels(
     return labels;
   }
   if (range === "7d") {
-    // 7 daily buckets ending Apr 27. Going back 6 days from the anchor.
-    const anchor = new Date(2026, 3, 27);
+    // 7 daily buckets ending on DEMO_TODAY. Going back 6 days from the anchor.
+    const anchor = new Date(DEMO_TODAY);
     const labels: string[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(anchor);
@@ -315,11 +321,10 @@ export function getRangeLabels(
     }
     return labels;
   }
-  // 30D — 30 daily labels ending Apr 27 (today, per existing fixtures).
-  // Going back 29 days: Mar 29 → Apr 27 inclusive. Last label is the
-  // explicit date (matching 7D's pattern, not 1H/24H's "Now").
+  // 30D: 30 daily labels ending on DEMO_TODAY. Going back 29 days. Last
+  // label is the explicit date (matching 7D's pattern, not 1H/24H's "Now").
   const labels: string[] = [];
-  const lastDay = new Date(2026, 3, 27);
+  const lastDay = new Date(DEMO_TODAY);
   for (let i = 0; i < 30; i++) {
     const d = new Date(lastDay);
     d.setDate(d.getDate() - (29 - i));

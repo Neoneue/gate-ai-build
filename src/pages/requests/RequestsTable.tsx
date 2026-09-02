@@ -48,6 +48,7 @@ import {
   isByokKey,
   keyLabel,
   REQUEST_ROWS_ALL,
+  requestDayLabel,
   requestIdLabel,
   requestRowId,
 } from "@/data/requests";
@@ -718,7 +719,7 @@ export function RequestsTableSection({
                             render={(props) => (
                               <span {...props} className="text-foreground">
                                 <span className="type-copy-14 tabular-nums">
-                                  {row.day},
+                                  {requestDayLabel(row)},
                                 </span>{" "}
                                 <span className="type-mono-14">{row.time}</span>
                               </span>

@@ -55,8 +55,9 @@ import {
 } from "@/components/ui/table";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { modelName } from "@/data/models";
-import { REQUEST_ROWS_RECENT } from "@/data/requests";
+import { REQUEST_ROWS_RECENT, requestDayLabel } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { DEMO_TODAY } from "@/lib/demo-clock";
 import {
   formatCompactCount,
   formatCurrency,
@@ -173,9 +174,10 @@ function PageHeader() {
 
 /* ─── KPI rail helpers ───────────────────────────────────────────────────── */
 
-/** Generate 7 daily labels ending Apr 27 — matches Activity.tsx's anchor. */
+/** Generate 7 daily labels ending on the demo clock's today (real
+ *  yesterday), the same anchor the Activity charts use. */
 function make7dLabels(): string[] {
-  const anchor = new Date(2026, 3, 27);
+  const anchor = new Date(DEMO_TODAY);
   const labels: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(anchor);
@@ -683,7 +685,7 @@ function LatestRequestsTable() {
               }}
             >
               <TableCell className="type-mono-14 whitespace-nowrap">
-                {row.day} {row.time}
+                {requestDayLabel(row)} {row.time}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {modelName(row.model)}

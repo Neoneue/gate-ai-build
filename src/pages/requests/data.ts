@@ -9,35 +9,14 @@ import {
   REQUEST_ROWS_24H,
   REQUEST_ROWS_30D,
   REQUEST_ROWS_ALL,
+  requestDate,
 } from "@/data/requests";
 import { parseNumeric } from "@/hooks/use-table-sort";
 import type { GuardrailAction, RequestRow, ResponseStatus } from "./types";
 
-export const MONTH_INDEX: Record<string, number> = {
-  Jan: 0,
-  Feb: 1,
-  Mar: 2,
-  Apr: 3,
-  May: 4,
-  Jun: 5,
-  Jul: 6,
-  Aug: 7,
-  Sep: 8,
-  Oct: 9,
-  Nov: 10,
-  Dec: 11,
-};
-/** Chronological sort key from row.day ("May 12") + row.time ("02:04:11").
- *  No real timestamp on the row, so compose a monotonic number. */
+/** Chronological sort key: the row's demo-clock-shifted instant in ms. */
 export function rowTimeValue(row: RequestRow): number {
-  const [mon, day] = row.day.split(" ");
-  const [h = 0, m = 0, s = 0] = row.time.split(":").map(Number);
-  return (
-    ((MONTH_INDEX[mon] ?? 0) * 31 + Number(day ?? 0)) * 86_400 +
-    h * 3600 +
-    m * 60 +
-    s
-  );
+  return requestDate(row).getTime();
 }
 
 /** Comparable value per sortable column for the Recent requests table.

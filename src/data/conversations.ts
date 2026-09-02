@@ -17,6 +17,8 @@
 // claimed 86,735 input tokens against a real 40,658, so the Overview preview
 // table and the Conversations list disagreed about the same conversation.
 // `cost` is now the sum of the rows' own `costOf` figures, never authored.
+import { authoredDate } from "@/lib/demo-clock";
+import { formatTimestamp } from "@/lib/formatters";
 import type { ConversationRow, TraceEvent } from "@/pages/conversations/types";
 
 export const CONVERSATION_ROWS: ConversationRow[] = [
@@ -35,7 +37,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "59,938",
     cost: "—",
     status: "active",
-    updated: new Date(2026, 5, 6, 0, 50, 45),
+    updated: authoredDate(2026, 5, 6, 0, 50, 45),
     duration: "39m 56s",
   },
   {
@@ -50,7 +52,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "4,294",
     cost: "$0.0257",
     status: "active",
-    updated: new Date(2026, 4, 12, 14, 28, 4),
+    updated: authoredDate(2026, 4, 12, 14, 28, 4),
     duration: "3m 53s",
   },
   {
@@ -69,7 +71,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "3,421",
     cost: "$0.0184",
     status: "active",
-    updated: new Date(2026, 4, 12, 14, 22, 11),
+    updated: authoredDate(2026, 4, 12, 14, 22, 11),
     duration: "5m 12s",
   },
   {
@@ -84,7 +86,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "6,317",
     cost: "$0.4076",
     status: "active",
-    updated: new Date(2026, 4, 12, 14, 15, 22),
+    updated: authoredDate(2026, 4, 12, 14, 15, 22),
     duration: "0m 47s",
   },
   {
@@ -104,7 +106,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "21,768",
     cost: "$0.2988",
     status: "completed",
-    updated: new Date(2026, 4, 12, 14, 2, 48),
+    updated: authoredDate(2026, 4, 12, 14, 2, 48),
     duration: "14m 06s",
   },
   {
@@ -124,7 +126,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "8,792",
     cost: "$0.0868",
     status: "active",
-    updated: new Date(2026, 4, 12, 13, 48, 33),
+    updated: authoredDate(2026, 4, 12, 13, 48, 33),
     duration: "2m 18s",
   },
   {
@@ -144,7 +146,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "13,350",
     cost: "$0.0220",
     status: "failed",
-    updated: new Date(2026, 4, 12, 13, 36, 10),
+    updated: authoredDate(2026, 4, 12, 13, 36, 10),
     duration: "8m 41s",
   },
   {
@@ -163,7 +165,7 @@ export const CONVERSATION_ROWS: ConversationRow[] = [
     outTokens: "18,834",
     cost: "$0.0767",
     status: "completed",
-    updated: new Date(2026, 4, 12, 13, 18, 55),
+    updated: authoredDate(2026, 4, 12, 13, 18, 55),
     duration: "11m 27s",
   },
 ];
@@ -180,7 +182,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "184",
     latency: "1240ms",
     cost: "$0.0042",
-    time: "May 12, 14:24:14",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 24, 14)),
     requestId: "req_92cf2a",
   },
   {
@@ -194,7 +196,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "92",
     latency: "620ms",
     cost: "$0.0003",
-    time: "May 12, 14:24:38",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 24, 38)),
     requestId: "req_70a48a",
   },
   {
@@ -208,7 +210,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "312",
     latency: "1480ms",
     cost: "$0.0073",
-    time: "May 12, 14:24:54",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 24, 54)),
     requestId: "req_2e1f9d",
   },
   {
@@ -223,7 +225,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "142",
     latency: "940ms",
     cost: "$0.0004",
-    time: "May 12, 14:25:11",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 25, 11)),
     requestId: "req_3a5fb8",
   },
   {
@@ -237,7 +239,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "276",
     latency: "1160ms",
     cost: "$0.0011",
-    time: "May 12, 14:25:34",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 25, 34)),
     requestId: "req_7f0218",
   },
   {
@@ -251,7 +253,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "380",
     latency: "3120ms",
     cost: "$0.0086",
-    time: "May 12, 14:26:14",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 26, 14)),
     requestId: "req_da46b8",
   },
   {
@@ -265,7 +267,7 @@ export const SAMPLE_TRACE: TraceEvent[] = [
     outTokens: "104",
     latency: "720ms",
     cost: "$0.0004",
-    time: "May 12, 14:27:31",
+    time: formatTimestamp(authoredDate(2026, 4, 12, 14, 27, 31)),
     requestId: "req_4c91a2",
   },
 ];

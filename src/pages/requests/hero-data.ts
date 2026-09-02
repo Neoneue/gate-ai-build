@@ -1,3 +1,4 @@
+import { demoAnchorFields } from "@/lib/demo-clock";
 import { formatSparkLabel } from "@/lib/formatters";
 import type { CustomRange, HeroView, RangeKey } from "./types";
 
@@ -77,10 +78,11 @@ function makeHeroBuckets(
   return rounded;
 }
 
-// Anchor "now" for the mock = May 12 14:30 (today's date in fixtures).
-// Stable constant — never use `new Date()` here, the chart must not drift
-// across renders or test runs.
-const ANCHOR = { month: 4 /* May, 0-indexed */, day: 12, hour: 14, minute: 30 };
+// Anchor "now" for the mock = the demo clock (`DEMO_NOW`, real yesterday
+// 18:30:12), broken into calendar fields plus the instant itself.
+// Evaluated once at module load. Never call `new Date()` per render here,
+// the chart must not drift across renders or test runs.
+const ANCHOR = demoAnchorFields();
 const MONTH_NAMES = [
   "Jan",
   "Feb",
@@ -96,7 +98,8 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
-// Compute a date `minutesAgo` before the anchor, returning month/day/hour/minute.
+// Compute a date `minutesAgo` before the anchor, returning its calendar fields
+// plus the Date itself.
 function minutesBeforeAnchor(minutesAgo: number): {
   month: number;
   day: number;
@@ -104,11 +107,12 @@ function minutesBeforeAnchor(minutesAgo: number): {
   minute: number;
   date: Date;
 } {
-  // Use Date arithmetic with year 2026 as scaffolding only — we read the
-  // calendar fields back out, never the year. This handles month boundaries
-  // (e.g. Apr ↔ May) correctly without a hand-rolled days-per-month table.
+  // Date arithmetic on a COPY of the anchor instant. Never mutate the shared
+  // demo-clock constant. This handles month and year boundaries correctly
+  // without a hand-rolled days-per-month table. Seconds are zeroed so buckets
+  // land on whole minutes.
   const d = new Date(
-    2026,
+    ANCHOR.date.getFullYear(),
     ANCHOR.month,
     ANCHOR.day,
     ANCHOR.hour,
@@ -131,8 +135,9 @@ function pad2(n: number): string {
 // Derive axis ticks from REAL data points at evenly-spaced indices, so every
 // tick value exactly matches a data-point `time` string. recharts only renders
 // a tick from an explicit `ticks` array when the value matches a data point;
-// hardcoding "nice" values (e.g. midnight "May 12 00:00") that never occur in
-// the 6h-bucket data (hours land on 14/08/02/20, never 00) renders zero ticks.
+// hardcoding "nice" values (e.g. a midnight tick) that never occur in the
+// 6h-bucket data (hours land on the anchor hour stepped by 6, never 00)
+// renders zero ticks.
 // Picking real data points guarantees they show. First and last data points are
 // always included; the XAxis then width-thins via interval="preserveStartEnd".
 function deriveTicks(data: { time: string }[], tickCount = 7): string[] {
@@ -179,7 +184,8 @@ const HERO_ALL_TICKS = deriveTicks(HERO_ALL_DATA);
 // ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
 const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, "daily", 0xc5_7e_11_a7);
 const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
-  // Bucket 0 = 14:30 yesterday; bucket 95 = 14:15 today (15-min buckets).
+  // Bucket 0 = 23h45m before the anchor; bucket 95 = the anchor (15-min
+  // buckets), so the axis ends on the DEMO_NOW hour.
   const minutesAgo = (95 - i) * 15;
   const { hour, minute, date } = minutesBeforeAnchor(minutesAgo);
   return {

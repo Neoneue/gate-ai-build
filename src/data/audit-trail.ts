@@ -2,7 +2,9 @@
 // pages and their record dialogs. NOW is the mock
 // clock every relative timestamp and range cutoff derives from.
 
-export const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
+import { authoredDate } from "@/lib/demo-clock";
+
+export const NOW = authoredDate(2026, 4, 16, 16, 0, 0); // authored 2026-05-16 16:00:00
 
 export function fmtRelative(at: Date, anchor: Date = NOW): string {
   const seconds = Math.max(
@@ -59,7 +61,7 @@ export type EventRow = {
 export const EVENT_ROWS: EventRow[] = [
   {
     id: "e-01",
-    at: new Date(2026, 4, 14, 13, 42, 21),
+    at: authoredDate(2026, 4, 14, 13, 42, 21),
     eventId: "e_" + uuid("cc8ae185", "a267", "4b1c", "ae7b", "a618713b5cac"),
     kind: "AUDIT",
     description: 'API key "design-agent" created',
@@ -77,7 +79,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-02",
-    at: new Date(2026, 4, 14, 9, 44, 58),
+    at: authoredDate(2026, 4, 14, 9, 44, 58),
     eventId: "e_" + uuid("ac2525f1", "3b74", "4d92", "bf1e", "9c03d78afe59"),
     kind: "REQUEST",
     description:
@@ -96,7 +98,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-03",
-    at: new Date(2026, 4, 14, 9, 43, 13),
+    at: authoredDate(2026, 4, 14, 9, 43, 13),
     eventId: "e_" + uuid("5ea003d8", "c92f", "4a17", "b836", "e501d4cbfc55"),
     kind: "REQUEST",
     description:
@@ -115,7 +117,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-04",
-    at: new Date(2026, 4, 13, 7, 49, 6),
+    at: authoredDate(2026, 4, 13, 7, 49, 6),
     eventId: "e_" + uuid("5ec325a9", "7b31", "4e08", "9d2f", "c8413852a5f7"),
     kind: "REQUEST",
     description:
@@ -134,7 +136,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-05",
-    at: new Date(2026, 4, 13, 7, 49, 2),
+    at: authoredDate(2026, 4, 13, 7, 49, 2),
     eventId: "e_" + uuid("f390ab62", "1d4e", "4c83", "a075", "b219e53b7abc2"),
     kind: "REQUEST",
     description:
@@ -153,7 +155,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-06",
-    at: new Date(2026, 4, 13, 7, 48, 59),
+    at: authoredDate(2026, 4, 13, 7, 48, 59),
     eventId: "e_" + uuid("38508b47", "9e2a", "4f61", "bc93", "d72058c8a045"),
     kind: "REQUEST",
     description:
@@ -172,7 +174,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-07",
-    at: new Date(2026, 4, 13, 7, 47, 29),
+    at: authoredDate(2026, 4, 13, 7, 47, 29),
     eventId: "e_" + uuid("7e0402c8", "5a93", "4b72", "d81f", "e046f3067e63"),
     kind: "REQUEST",
     description:
@@ -191,7 +193,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-08",
-    at: new Date(2026, 4, 12, 9, 23, 49),
+    at: authoredDate(2026, 4, 12, 9, 23, 49),
     eventId: "e_" + uuid("644008f2", "2c57", "4d1a", "93be", "7f10628581d9"),
     kind: "POLICY",
     description: "Request blocked by security policy",
@@ -209,7 +211,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-09",
-    at: new Date(2026, 4, 12, 9, 21, 7),
+    at: authoredDate(2026, 4, 12, 9, 21, 7),
     eventId: "e_" + uuid("eccc67b1", "8f4d", "4e29", "a153", "c09715baba9"),
     kind: "REQUEST",
     description: "Proxy request completed: POST /v1/messages",
@@ -227,7 +229,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-10",
-    at: new Date(2026, 4, 12, 9, 18, 12),
+    at: authoredDate(2026, 4, 12, 9, 18, 12),
     eventId: "e_" + uuid("e77116a3", "d058", "4b7f", "9c21", "e3a540b318ae"),
     kind: "AUDIT",
     description: "API key <API_KEY> revoked",
@@ -245,7 +247,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-11",
-    at: new Date(2026, 4, 12, 9, 16, 57),
+    at: authoredDate(2026, 4, 12, 9, 16, 57),
     eventId: "e_" + uuid("9e0d73c4", "6b12", "4f85", "a047", "b83294cee5d1"),
     kind: "REQUEST",
     description: "Proxy request completed: POST /v1/messages",
@@ -263,7 +265,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-12",
-    at: new Date(2026, 4, 12, 9, 16, 11),
+    at: authoredDate(2026, 4, 12, 9, 16, 11),
     eventId: "e_" + uuid("a707dd59", "3e8c", "4a06", "b172", "940c51a3837b"),
     kind: "AUDIT",
     description: 'API key "test1" created',
@@ -281,7 +283,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-13",
-    at: new Date(2026, 4, 12, 9, 13, 54),
+    at: authoredDate(2026, 4, 12, 9, 13, 54),
     eventId: "e_" + uuid("6a58e5d7", "4b21", "4f93", "a860", "c73921418752"),
     kind: "AUDIT",
     description: 'API key "test-key" created',
@@ -299,7 +301,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-14",
-    at: new Date(2026, 4, 12, 9, 8, 9),
+    at: authoredDate(2026, 4, 12, 9, 8, 9),
     eventId: "e_" + uuid("9bb46bf0", "7c35", "4d18", "b092", "5e1a3118a027"),
     kind: "AUDIT",
     description: "Admin inspected workspace orgs",
@@ -317,7 +319,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-15",
-    at: new Date(2026, 4, 12, 9, 3, 22),
+    at: authoredDate(2026, 4, 12, 9, 3, 22),
     eventId: "e_" + uuid("6b544c2a", "91f7", "4e53", "bc80", "d4372aec522e"),
     kind: "AUDIT",
     description: "Admin inspected workspace orgs",
@@ -335,7 +337,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-16",
-    at: new Date(2026, 4, 12, 9, 1, 14),
+    at: authoredDate(2026, 4, 12, 9, 1, 14),
     eventId: "e_" + uuid("921bcd37", "2e04", "4c61", "a895", "f18360b4954e"),
     kind: "AUDIT",
     description: "Admin inspected workspace orgs",
@@ -353,7 +355,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-17",
-    at: new Date(2026, 4, 12, 9, 1, 4),
+    at: authoredDate(2026, 4, 12, 9, 1, 4),
     eventId: "e_" + uuid("4e92b8f6", "c031", "4d7a", "b259", "a07185479d54"),
     kind: "AUDIT",
     description: "Admin inspected workspace orgs",
@@ -371,7 +373,7 @@ export const EVENT_ROWS: EventRow[] = [
   },
   {
     id: "e-18",
-    at: new Date(2026, 4, 9, 15, 16, 13),
+    at: authoredDate(2026, 4, 9, 15, 16, 13),
     eventId: "e_" + uuid("a54fac81", "b0d6", "4e39", "9c72", "f83410a2636c"),
     kind: "EVENT",
     description: "Kira Tan added to the workspace as a member",
