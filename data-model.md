@@ -1728,9 +1728,11 @@ team's findings are its largest-remainder share of `eventsTotal(range)`
 seed teams sum EXACTLY to the org page's number at every preset range
 (asserted in `teams.test.ts`; all-time: Default ~686 / Platform ~368 /
 Design ~161 of 1,215). Outcomes split by the org's 31:14:2
-`splitEventMix`; categories mirror the org Attack-types card's
-`ATTACK_MIX` fraction (so they sum BELOW findings, like the org page);
-members get the team's findings allocated by their request share.
+`splitEventMix`; categories allocate the findings 8:5:3 by `ATTACK_MIX`
+(largest remainder, so they sum EXACTLY to findings, as the org Attack-types
+card sums to the org total since 2026-09-01); members get each category
+allocated by their request share, and a member's Events total is the sum of
+their three columns.
 `REQUEST_ROWS_ALL` is no longer imported — the ~10 recorded findings stay
 as org-page drill-in exemplars only. Checks scale by the USAGE canon
 (`RANGE_SCALE`, All = 8.5×) so "out of N checks" agrees with the Usage
@@ -1764,10 +1766,10 @@ plus an area chart, NO delta chip) whose series is `teamSparkSeries` settled
 onto the findings headline, so sum(chart) = the hero number and range
 shapes share one backbone; Action types and Attack types as org-style
 horizontal-bar cards; By member as a table with one column per threat type
-(ATTACK_MIX order) plus a Findings total: `TeamMemberSlice.byCategory`, each
+(ATTACK_MIX order) plus an Events total: `TeamMemberSlice.byCategory`, each
 column allocated by member request weight so it sums EXACTLY to the Attack
-types card, with a repair pass that keeps every row's categories within its
-total (the balance is the org canon's uncategorized share; test-guarded).
+types card; the row total IS the sum of its three columns, so rows, columns
+and the headline all reconcile (test-guarded in `teams.test.ts`).
 REMOVED 2026-09-01 against PRD
 8.4 (counts by type and verdict only): the "What this covers" summary card
 (explanatory UI) and the "By pipeline stage" tiles (the dev build's

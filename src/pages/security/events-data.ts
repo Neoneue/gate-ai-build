@@ -105,28 +105,62 @@ export function splitEventMix(total: number): EventMixSplit {
   return { blocked: out[0], flagged: out[1], redacted: out[2] };
 }
 
-// Attack-detection mix. 1× baseline units for the 3 enforced checks —
-// Prompt injection, PII / PHI (combined, since PHI is medical PII),
-// Credential leak. Each unit is worth (rangeTotal / EVENT_MIX_TOTAL)
-// events. Shared by Security's Attack-types card and Activity's
-// "Top attack types" card so the two surfaces reconcile for every range.
+/** Largest-remainder allocation of an integer `total` onto `weights`:
+ *  integer shares that sum EXACTLY to `total` and track the weights as
+ *  closely as rounding allows. The one allocator every event breakdown
+ *  uses (action mix, attack types, team shares, per-member columns), so
+ *  every card on every surface sums back to the same headline. */
+export function allocate(total: number, weights: readonly number[]): number[] {
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  if (weightSum <= 0 || total <= 0) {
+    return weights.map(() => 0);
+  }
+  const ideal = weights.map((w) => (total * w) / weightSum);
+  const floors = ideal.map((v) => Math.floor(v));
+  let remainder = total - floors.reduce((a, b) => a + b, 0);
+  const order = ideal
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (let k = 0; remainder > 0; k++, remainder--) {
+    const slot = order[k % order.length];
+    if (slot) {
+      out[slot.i] = (out[slot.i] ?? 0) + 1;
+    }
+  }
+  return out;
+}
+
+// Attack-detection mix: relative weights for the 3 enforced checks —
+// PII / PHI (combined, since PHI is medical PII), Prompt injection,
+// Credential leak. Every security event IS a detection of one of these
+// (the action mix above is what was done about it), so the three counts
+// allocate the FULL range total and sum back to it exactly. Shared by
+// Security's Attack-types card, Activity's "Top attack types" card and the
+// team Security tab so every surface reconciles for every range.
+// (Until 2026-09-01 the units were scaled by 16/47 of the total, leaving
+// two thirds of events with no type; the team table exposed the gap.)
 export const ATTACK_MIX = [
   { key: "pii", label: "PII / PHI", units: 8 },
   { key: "injection", label: "Prompt injection", units: 5 },
   { key: "credential", label: "Credential leak", units: 3 },
 ] as const;
 
-/** Attack-type counts for the active range — `units × (rangeTotal /
- *  EVENT_MIX_TOTAL)`, rounded, in ATTACK_MIX (descending) order. */
+/** Attack-type counts for the active range: the range total allocated
+ *  8:5:3 by largest remainder, in ATTACK_MIX (descending) order. Sums
+ *  EXACTLY to `eventsTotal(range, customRange)`. */
 export function attackTypeCounts(
   range: EventsRange,
   customRange: CustomRange | null
 ): { key: string; label: string; count: number }[] {
-  const perUnit = eventsTotal(range, customRange) / EVENT_MIX_TOTAL;
-  return ATTACK_MIX.map((c) => ({
+  const shares = allocate(
+    eventsTotal(range, customRange),
+    ATTACK_MIX.map((c) => c.units)
+  );
+  return ATTACK_MIX.map((c, i) => ({
     key: c.key,
     label: c.label,
-    count: Math.round(c.units * perUnit),
+    count: shares[i] ?? 0,
   }));
 }
 

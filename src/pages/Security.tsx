@@ -32,9 +32,9 @@ import { type CustomRange, type PresetRange, RANGE_OPTIONS } from "@/lib/range";
 import { cn } from "@/lib/utils";
 import { EventsTableSection } from "@/pages/security/EventsTable";
 import {
-  ATTACK_MIX,
+  type ATTACK_MIX,
+  attackTypeCounts,
   buildEventsChartView,
-  EVENT_MIX_TOTAL,
   type EventsRange,
   eventsTotal,
   fmtCount,
@@ -330,11 +330,6 @@ const ATTACK_FILL: Record<(typeof ATTACK_MIX)[number]["key"], string> = {
   injection: "bg-gradient-to-r from-chart-1 to-chart-1-soft",
   credential: "bg-gradient-to-r from-chart-4 to-chart-4-soft",
 };
-const ATTACK_CATEGORIES: AttackCategory[] = ATTACK_MIX.map((c) => ({
-  label: c.label,
-  count: c.units,
-  fill: ATTACK_FILL[c.key],
-}));
 
 // Static label + fill metadata — counts are range-dependent and injected at
 // render time via useMemo.
@@ -380,9 +375,9 @@ function ActionCategoriesCard({
   );
 }
 
-// Right card. Attack-detection mix, scaled proportionally to the range
-// total: each baseline unit is worth (rangeTotal / EVENT_MIX_TOTAL) events,
-// matching the old `count × scale` behaviour now that scale is gone.
+// Right card. Attack-detection mix from the shared `attackTypeCounts`, so
+// the three bars sum exactly to the range's event total (the same integers
+// Activity's "Top attack types" card and the team Security tab show).
 function AttackCategoriesCard({
   range,
   customRange,
@@ -390,14 +385,15 @@ function AttackCategoriesCard({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
-  const total = eventsTotal(range, customRange);
-  const categories = useMemo<AttackCategory[]>(() => {
-    const perUnit = total / EVENT_MIX_TOTAL;
-    return ATTACK_CATEGORIES.map((c) => ({
-      ...c,
-      count: Math.round(c.count * perUnit),
-    }));
-  }, [total]);
+  const categories = useMemo<AttackCategory[]>(
+    () =>
+      attackTypeCounts(range, customRange).map((c) => ({
+        label: c.label,
+        count: c.count,
+        fill: ATTACK_FILL[c.key as (typeof ATTACK_MIX)[number]["key"]],
+      })),
+    [range, customRange]
+  );
   return (
     <CategoryBreakdownCard
       categories={categories}

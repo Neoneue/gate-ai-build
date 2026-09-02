@@ -6,7 +6,7 @@ import { API_KEY_ROWS } from "@/pages/activity-data";
 import type { GuardrailAction } from "@/pages/requests/types";
 import {
   ATTACK_MIX,
-  EVENT_MIX_TOTAL,
+  allocate,
   eventsTotal,
   splitEventMix,
 } from "@/pages/security/events-data";
@@ -30,8 +30,8 @@ import {
  *            (The first cut presented raw 7d volume as "everything on
  *            record".)
  *   EVENTS → `security/events-data` (org Security page): `eventsTotal()`
- *            per range, split 31:14:2 by `splitEventMix`, categorized by
- *            `ATTACK_MIX`. Teams receive largest-remainder shares in
+ *            per range, split 31:14:2 by `splitEventMix`, typed 8:5:3 by
+ *            `ATTACK_MIX` (sums to the total). Teams receive largest-remainder shares in
  *            proportion to their request volume, so the seed teams sum
  *            EXACTLY to the org page's number at every preset range.
  *
@@ -141,30 +141,6 @@ function teamRequests7d(team: TeamRow): number {
   );
 }
 
-/** Largest-remainder allocation of `total` onto `weights` — integer shares
- *  that sum EXACTLY to `total` and track the weights as closely as integer
- *  rounding allows. Same discipline as events-data's `splitEventMix`. */
-function allocate(total: number, weights: number[]): number[] {
-  const weightSum = weights.reduce((a, b) => a + b, 0);
-  if (weightSum <= 0 || total <= 0) {
-    return weights.map(() => 0);
-  }
-  const ideal = weights.map((w) => (total * w) / weightSum);
-  const floors = ideal.map((v) => Math.floor(v));
-  let remainder = total - floors.reduce((a, b) => a + b, 0);
-  const order = ideal
-    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
-    .sort((a, b) => b.frac - a.frac);
-  const out = [...floors];
-  for (let k = 0; remainder > 0; k++, remainder--) {
-    const slot = order[k % order.length];
-    if (slot) {
-      out[slot.i] = (out[slot.i] ?? 0) + 1;
-    }
-  }
-  return out;
-}
-
 /** The org Security page's event total for a range, allocated across
  *  `teams` by request volume. The allocation needs every team at once so
  *  the shares settle exactly onto the org number — callers with live page
@@ -219,15 +195,15 @@ export function securityForTeamAtRange(
     count: outcomeCount[action],
   }));
 
-  // Categories mirror the org Attack-types card: ATTACK_MIX units per
-  // EVENT_MIX_TOTAL events, so a team's category counts are the same
-  // fraction of its findings that the org card shows of the org's (the
-  // remainder is the org page's uncategorized balance).
+  // Categories mirror the org Attack-types card: the team's findings
+  // allocated 8:5:3 by largest remainder, so the three sum EXACTLY to the
+  // findings headline (every event is a detection of one type).
+  const categoryShares = allocate(
+    findings,
+    ATTACK_MIX.map((c) => c.units)
+  );
   const categoryCount = Object.fromEntries(
-    ATTACK_MIX.map((c) => [
-      c.key,
-      Math.round((c.units * findings) / EVENT_MIX_TOTAL),
-    ])
+    ATTACK_MIX.map((c, i) => [c.key, categoryShares[i] ?? 0])
   ) as Record<(typeof ATTACK_MIX)[number]["key"], number>;
   const byCategory: TeamSecuritySlice[] = ATTACK_MIX.map((c) => ({
     id: c.key,
@@ -252,9 +228,11 @@ export function securityForTeamAtRange(
     },
   ];
 
-  // Findings per member: the team's events allocated by each member's
-  // request volume on the keys they own here — same largest-remainder
-  // settle, so the rows sum exactly to the findings headline.
+  // Per member: each threat-type column is the category total allocated by
+  // the request volume on the keys each member owns here, so every COLUMN
+  // sums exactly to the Attack types card. A member's Events total is the
+  // sum of their three columns, so every ROW adds up on its face and the
+  // rows together sum to the findings headline (columns sum to it).
   const owners = new Map<string, number>();
   for (const row of API_KEY_ROWS) {
     if (names.has(row.key)) {
@@ -262,50 +240,17 @@ export function securityForTeamAtRange(
     }
   }
   const ownerEntries = [...owners.entries()];
-  const memberShares = allocate(
-    findings,
-    ownerEntries.map(([, reqs]) => reqs)
-  );
-  // Threat types per member (2026-09-01): each category total is allocated
-  // across members by the same request weights, so a COLUMN sums exactly to
-  // the Attack types card. Rounding can hand a low-volume member one more
-  // categorized event than their findings total; the repair loop moves that
-  // unit to a member with slack in the same category, so every ROW's
-  // categories stay within its total. Slack always exists: categories sum to
-  // 16/20 of findings, so the team as a whole has (findings - categorized)
-  // uncategorized units to absorb it.
   const weights = ownerEntries.map(([, reqs]) => reqs);
   const perCategory = ATTACK_MIX.map((c) =>
     allocate(categoryCount[c.key], weights)
   );
   const rowCategorized = (i: number) =>
     perCategory.reduce((a, col) => a + (col[i] ?? 0), 0);
-  for (let i = 0; i < ownerEntries.length; i++) {
-    let over = rowCategorized(i) - (memberShares[i] ?? 0);
-    while (over > 0) {
-      let c = 0;
-      for (let k = 1; k < perCategory.length; k++) {
-        if ((perCategory[k]?.[i] ?? 0) > (perCategory[c]?.[i] ?? 0)) {
-          c = k;
-        }
-      }
-      const j = ownerEntries.findIndex(
-        (_, idx) => idx !== i && rowCategorized(idx) < (memberShares[idx] ?? 0)
-      );
-      if (j === -1) {
-        break;
-      }
-      const col = perCategory[c] as number[];
-      col[i] = (col[i] ?? 0) - 1;
-      col[j] = (col[j] ?? 0) + 1;
-      over--;
-    }
-  }
   const byMember: TeamMemberSlice[] = ownerEntries
     .map(([owner], i) => ({
       id: memberIdFor(owner),
       label: owner,
-      count: memberShares[i] ?? 0,
+      count: rowCategorized(i),
       byCategory: Object.fromEntries(
         ATTACK_MIX.map((c, k) => [c.key, perCategory[k]?.[i] ?? 0])
       ) as TeamMemberSlice["byCategory"],

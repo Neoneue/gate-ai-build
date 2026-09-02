@@ -15,11 +15,7 @@ import {
   usageForTeam,
 } from "@/data/teams";
 import type { Range } from "@/lib/range";
-import {
-  ATTACK_MIX,
-  EVENT_MIX_TOTAL,
-  EVENTS_RANGE_TOTAL,
-} from "@/pages/security/events-data";
+import { ATTACK_MIX, EVENTS_RANGE_TOTAL } from "@/pages/security/events-data";
 import { securityForTeam, teamEventShares } from "@/pages/teams/security-data";
 import { teamDailySeries, teamSparkSeries } from "@/pages/teams/spark-series";
 
@@ -172,14 +168,11 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
       }
     }
     // security reconciliation: findings are the team's allocated share of
-    // the org Security page's events; categories mirror the org card's
-    // ATTACK_MIX fraction (16 of 47 units), so they sum BELOW findings.
+    // the org Security page's events; the three attack types allocate the
+    // findings 8:5:3, so they sum EXACTLY to findings.
     const sec = securityForTeam(team);
     const catSum = sec.byCategory.reduce((a, x) => a + x.count, 0);
-    const catWant = ATTACK_MIX.reduce(
-      (a, c) => a + Math.round((c.units * sec.findings) / EVENT_MIX_TOTAL),
-      0
-    );
+    const catWant = sec.findings;
     const memSum = sec.byMember.reduce((a, x) => a + x.count, 0);
     // per-member threat types: every column sums to the Attack types card,
     // every row's categories stay within its findings total
@@ -192,9 +185,9 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
     }
     for (const m of sec.byMember) {
       const cats = ATTACK_MIX.reduce((a, c) => a + m.byCategory[c.key], 0);
-      if (cats > m.count || Object.values(m.byCategory).some((n) => n < 0)) {
+      if (cats !== m.count || Object.values(m.byCategory).some((n) => n < 0)) {
         bad.push(
-          `${team.name} sec member ${m.label} categories ${cats} > ${m.count}`
+          `${team.name} sec member ${m.label} categories ${cats} != ${m.count}`
         );
       }
     }
