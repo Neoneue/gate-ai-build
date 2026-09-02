@@ -284,7 +284,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_kira"],
     budget: {
       name: "Team budget",
-      caps: { monthly: 500 },
+      caps: { "5h": 25, weekly: 100, monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
     },
@@ -300,8 +300,8 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_jordan"],
     budget: {
       name: "Team budget",
-      caps: { "5h": 5, weekly: 20 },
-      enforcement: "hard",
+      caps: { "5h": 25, weekly: 100, monthly: 250 },
+      enforcement: "soft",
       warnThreshold: 80,
     },
   },

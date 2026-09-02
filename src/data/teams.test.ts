@@ -268,15 +268,15 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
   if (design?.budget) {
     const r = budgetReadings(usageForTeam(design), design.budget);
     const fiveH = r.find((x) => x.window === "5h");
-    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "11.0%") {
+    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "2.2%") {
       bad.push(
-        `design 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 11.0%`
+        `design 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 2.2%`
       );
     }
     if (
-      tightestReading(usageForTeam(design), design.budget).window !== "weekly"
+      tightestReading(usageForTeam(design), design.budget).window !== "monthly"
     ) {
-      bad.push("design tightest window != weekly");
+      bad.push("design tightest window != monthly");
     }
   }
   expect(bad.join("\n")).toBe("");
