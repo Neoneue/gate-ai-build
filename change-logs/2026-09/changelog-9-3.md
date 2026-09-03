@@ -230,3 +230,27 @@ savings keeps the org KPI rail. Enterprise sidebar labels "My policies" /
 "My token savings"; Manage order Limits, My policies, My token savings.
 Free / Pro / Default twins untouched. Tests in
 `teams/effective-settings.test.ts`.
+
+### Role switch: Admin / Manager / Member, member read-only team page `a739f50`
+
+The "Viewing as" switch gains a third option. Before: Admin / Manager, with
+the manager scaffold in progress. After: Admin (Chad), Manager (Kira Tan,
+Platform), Member (Mateus Silva, Platform); one `viewRole` in
+`teams-store.ts` drives every surface; Enterprise only, in the top bar, the
+tight-band rail slot and the mobile drawer (stacked under the workspace
+switcher, `gap-2`). Manager and Member share one sidebar
+(`ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS`): Limits, Members and Billing
+hidden, Audit trail RESTORED (anyone in the org sees it). Both land on their
+own team, no back link, other team URLs redirect. Member: Overview + Members
+tabs only; Keys, Budget and Settings tabs hidden; the roster is a pure list
+(no Add member, no remove action, no role select, `MembersPane readOnly`).
+Manager unchanged: add / remove kept, role as text, Budget and team Settings
+read-only. Settings page (`Settings.tsx`): the Account management section
+(Cancel plan, Delete organization) is hidden for Manager and Member; Profile
+and Security stay editable. Test `layouts/nav-sections.test.ts`.
+
+### Skeleton theatre: 2 s to 1 s `a739f50`
+
+`TEAMS_LOADING_THEATRE_MS` in `teams/use-theatre-loading.ts` drops from 2000
+to 1000 (user: "this takes too long at 2"). Every Teams skeleton reads the
+one constant.

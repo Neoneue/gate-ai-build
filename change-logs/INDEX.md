@@ -33,6 +33,8 @@ tokens; this index exists so nothing has to glob the directory.
 - Messages: budget-blocked 429 row
 - Default workspace: no forced settings
 - Team-manager view, scaffold (in progress)
+- Role switch: Admin / Manager / Member, member read-only team page
+- Skeleton theatre: 2 s to 1 s
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
