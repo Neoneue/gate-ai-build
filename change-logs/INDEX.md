@@ -9,6 +9,24 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-03](./2026-09/changelog-9-3.md)
+
+- Sentence case everywhere: nav labels and page titles first
+- Callout is the blue info banner
+- `type-heading-28` step
+- Text inputs default `autoComplete="off"`
+- Segmented gains `disabled`
+- Nav icons: Limits is Gauge, Policies is ShieldCheck
+- Team page: Overview tab
+- Team page: member scope dropdown
+- Team page: search inputs on the breakdown tables
+- Team page: Settings tab = General / Policies / Token savings
+- Team page: Add key and remove-key dropped
+- Teams list: Current teams / Archived teams / Settings tabs
+- Archived teams drill in read-only
+- Org-level Settings tab and the lock cascade
+- Enterprise "My policies" and "My token savings" pages
+
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
 - Team budgets: status word, warn tick, blocked banner
