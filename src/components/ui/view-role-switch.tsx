@@ -16,8 +16,8 @@ import {
  * Sits right of the workspace switcher in the top bar (user 2026-09-03).
  * Drives the AG-695 role variants: the team-role sidebar, landing on the
  * user's own team, and every hidden or read-only pane. Admin is the seeded
- * owner; Manager is Kira Tan, Platform's manager; Member is Mateus Silva,
- * a Platform member (own team, read-only, Overview + Members only).
+ * owner; Manager is Kira Tan, Development's manager; Member is Mateus Silva,
+ * a Development member (own team, read-only, Overview + Members only).
  * ───────────────────────────────────────────────────────────────────────── */
 
 const LABEL: Record<ViewRole, string> = {

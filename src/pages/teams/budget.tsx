@@ -138,7 +138,7 @@ export function BudgetMeter({
   enforcement: BudgetEnforcement;
   /** Percent of the cap at which a hard budget blocks. */
   blockThreshold?: number;
-  /** Accessible name for the meter — "Org budget used", "Platform budget used". */
+  /** Accessible name for the meter — "Org budget used", "Development budget used". */
   label: string;
   /** Swap the fill and the two readings for skeletons while the roll-up is
    *  in flight. The TRACK keeps its exact 6px box, so nothing moves when

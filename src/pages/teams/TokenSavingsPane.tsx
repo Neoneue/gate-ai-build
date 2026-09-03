@@ -196,7 +196,11 @@ function OverviewSection({
       <KpiRail columns={3}>
         {kpis.map((k) => (
           <KpiTile
-            delta={sparkDelta(k.spark)}
+            delta={
+              // No traffic, no trend: a fresh team shows the value alone
+              // instead of a "+0.00%" chip.
+              k.spark.some((v) => v !== 0) ? sparkDelta(k.spark) : undefined
+            }
             deltaNote={note}
             deltaRow
             key={k.title}

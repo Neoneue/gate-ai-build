@@ -40,10 +40,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatDateTime, formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { currentUserId, useViewRole } from "@/pages/teams/teams-store";
 
 /** Comparable value per sortable column for the Limits table.
  *  Numeric columns (threshold/used) parse out $/commas; period maps to a
@@ -90,6 +92,20 @@ export function Limits() {
     () => searchParams.get("create") === "1"
   );
   const [limits, setLimits] = useState<Limit[]>([]);
+  // Role scope (AG-695 AC 3, user 2026-09-03): caps run "at the org,
+  // project, or key level". Admin: Org-wide plus the seeded keys. Manager /
+  // Member: only the keys THEY own; org-wide rows read as locked (no
+  // actions), the AG-624 "read-only, with who set it" treatment.
+  const isAdmin = useViewRole() === "admin";
+  const scopes = useMemo<readonly LimitScope[]>(
+    () =>
+      isAdmin
+        ? LIMIT_SCOPES
+        : API_KEY_SEED_ROWS.filter(
+            (k) => k.ownerId === currentUserId() && !k.revoked
+          ).map((k) => ({ value: k.id, name: k.name, masked: k.masked })),
+    [isAdmin]
+  );
   const openCreate = () => setCreateOpen(true);
   const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
   const removeLimit = (id: string) =>
@@ -122,12 +138,17 @@ export function Limits() {
           the class is a no-op until the column is wide enough to bind. */}
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader onCreate={openCreate} />
-        <LimitsSection limits={limits} onRemove={removeLimit} />
+        <LimitsSection
+          canEditOrg={isAdmin}
+          limits={limits}
+          onRemove={removeLimit}
+        />
       </div>
       <CreateLimitDialog
         onCreate={addLimit}
         onOpenChange={handleCreateOpenChange}
         open={createOpen}
+        scopes={scopes}
       />
     </DashboardChrome>
   );
@@ -165,9 +186,12 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
 function LimitsSection({
   limits,
   onRemove,
+  canEditOrg,
 }: {
   limits: Limit[];
   onRemove: (id: string) => void;
+  /** False for Manager / Member: org-wide rows are read-only (no actions). */
+  canEditOrg: boolean;
 }) {
   // Snapshot `now` once per limits change. Without this, calling
   // `resetsAt(new Date(), ...)` per row in the JSX recomputes on every
@@ -367,10 +391,16 @@ function LimitsSection({
                   {resetsAtMap.get(limit.id) ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                  <LimitActionsMenu
-                    limitName={limit.name}
-                    onRemove={() => onRemove(limit.id)}
-                  />
+                  {limit.scope === "org" && !canEditOrg ? (
+                    <span className="type-copy-14 text-muted-foreground">
+                      Set by an org admin
+                    </span>
+                  ) : (
+                    <LimitActionsMenu
+                      limitName={limit.name}
+                      onRemove={() => onRemove(limit.id)}
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             );
@@ -453,11 +483,12 @@ const LIMIT_PERIODS = [
 // source); keep in sync if that seed changes. Revoked keys (e.g.
 // test-key) are intentionally excluded — a limit on a revoked key is
 // meaningless.
-const LIMIT_SCOPES = [
+type LimitScope = { value: string; name: string; masked: string | null };
+const LIMIT_SCOPES: readonly LimitScope[] = [
   { value: "org", name: "Org-wide (all keys)", masked: null },
   { value: "sk-gw-c4aeb3a8", name: "prod-web", masked: "sk-gw-…c4ae" },
   { value: "sk-gw-9f3064ce", name: "prod-agent", masked: "sk-gw-…9f30" },
-] as const;
+];
 
 type Limit = {
   id: string;
@@ -479,9 +510,15 @@ const LIMIT_TYPE_BY_VALUE = new Map<string, (typeof LIMIT_TYPES)[number]>(
 const LIMIT_PERIOD_BY_VALUE = new Map<string, (typeof LIMIT_PERIODS)[number]>(
   LIMIT_PERIODS.map((p) => [p.value, p])
 );
-const LIMIT_SCOPE_BY_VALUE = new Map<string, (typeof LIMIT_SCOPES)[number]>(
-  LIMIT_SCOPES.map((s) => [s.value, s])
-);
+// Lookup covers the admin list AND every seeded key, so a Manager / Member
+// row (scoped to their own key) resolves its name and masked id.
+const LIMIT_SCOPE_BY_VALUE = new Map<string, LimitScope>([
+  ...API_KEY_SEED_ROWS.map((k): [string, LimitScope] => [
+    k.id,
+    { value: k.id, name: k.name, masked: k.masked },
+  ]),
+  ...LIMIT_SCOPES.map((s): [string, LimitScope] => [s.value, s]),
+]);
 const LIMIT_ENFORCEMENT_BY_VALUE = new Map<
   string,
   (typeof LIMIT_ENFORCEMENTS)[number]
@@ -601,16 +638,26 @@ function CreateLimitDialog({
   open,
   onOpenChange,
   onCreate,
+  scopes,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   onCreate: (limit: Limit) => void;
+  /** Scope options for the signed-in role; the first is the default. */
+  scopes: readonly LimitScope[];
 }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("spend");
   const [threshold, setThreshold] = useState("");
   const [period, setPeriod] = useState("1d");
-  const [scope, setScope] = useState("org");
+  const [scope, setScope] = useState(scopes[0]?.value ?? "org");
+  // The dialog stays mounted across a role switch, so a value picked (or
+  // defaulted) under one role can fall outside the next role's options.
+  // Snap to the first valid option instead of showing a scope the role
+  // cannot set.
+  const scopeValue = scopes.some((s) => s.value === scope)
+    ? scope
+    : (scopes[0]?.value ?? "org");
   const [enforcement, setEnforcement] = useState("block");
   const [pickedAlerts, setPickedAlerts] = useState<number[]>(
     DEFAULT_ALERT_PERCENTS
@@ -663,7 +710,7 @@ function CreateLimitDialog({
     setType("spend");
     setThreshold("");
     setPeriod("1d");
-    setScope("org");
+    setScope(scopes[0]?.value ?? "org");
     setEnforcement("block");
     setPickedAlerts(DEFAULT_ALERT_PERCENTS);
   };
@@ -675,7 +722,7 @@ function CreateLimitDialog({
       type,
       threshold,
       period,
-      scope,
+      scope: scopeValue,
       used: "0",
       enforcement: isRequests ? "block" : enforcement,
       alerts: [...alertPercents],
@@ -790,7 +837,7 @@ function CreateLimitDialog({
             >
               Scope
             </Label>
-            <Select onValueChange={setScope} value={scope}>
+            <Select onValueChange={setScope} value={scopeValue}>
               <SelectTrigger className="w-full" id="create-limit-scope">
                 {/* Function-child keeps the trigger single-line — the
                     two-line key body is for the popup only. */}
@@ -799,7 +846,7 @@ function CreateLimitDialog({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {LIMIT_SCOPES.map((s) => (
+                {scopes.map((s) => (
                   <SelectItem
                     className={s.masked ? "h-auto items-start py-2" : undefined}
                     key={s.value}

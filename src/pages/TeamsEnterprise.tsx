@@ -306,7 +306,7 @@ export function TeamsEnterprise({
           <TabsContent value="archived">
             {deletedTeams.length === 0 ? (
               <EmptyState
-                body="Teams you archive will appear here with their spend history, so org records can be tracked after a team is removed."
+                body="Teams you archive will appear here with their usage history, so org records can be tracked after a team is removed."
                 icon={
                   <div
                     aria-hidden
@@ -694,7 +694,7 @@ function TeamRowActions({
           onClick={() => onDelete(row)}
           variant="destructive"
         >
-          Delete
+          Archive
         </MenuItem>
       </MenuContent>
     </Menu>
@@ -722,7 +722,7 @@ function DeletedTeamsCard({
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[46%] whitespace-nowrap">Team</TableHead>
               <TableHead className="w-[30%] whitespace-nowrap">
-                Deleted on
+                Archived on
               </TableHead>
               <TableHead className="w-[24%] whitespace-nowrap text-right">
                 Total spend

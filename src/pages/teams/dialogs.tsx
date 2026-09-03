@@ -815,10 +815,11 @@ export function DeleteTeamDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="p-4 sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Delete {teamName}?</DialogTitle>
+          <DialogTitle>Archive {teamName}?</DialogTitle>
           <DialogDescription>
-            Members and keys on this team move to the default team. The team and
-            its history are removed. This can&rsquo;t be undone.
+            Members and keys on this team move to the default team. The team
+            moves to Archived teams with its usage history. This can&rsquo;t be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -833,7 +834,7 @@ export function DeleteTeamDialog({
             type="button"
             variant="destructive"
           >
-            Delete team
+            Archive team
           </Button>
         </DialogFooter>
       </DialogContent>

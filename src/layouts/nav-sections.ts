@@ -208,11 +208,13 @@ export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
 
 /** Enterprise sidebar for the team-manager AND member views (AG-695 AC 3;
  *  PRD §6, §8.4): both land on their own team under Teams. Org-admin
- *  surfaces are hidden: Limits, Members (org roster, invites are
- *  owner/admin), Billing. Audit trail stays: anyone in the org sees it
- *  (user 2026-09-03). Keys and Security events stay: a user still has to
- *  see their own keys and events. */
-const HIDDEN_FOR_TEAM_ROLES = new Set<string>(["limits", "team", "billing"]);
+ *  surfaces are hidden: Members (org roster, invites are owner/admin),
+ *  Billing. Audit trail stays: anyone in the org sees it (user
+ *  2026-09-03). Limits stays: caps run "at the org, project, or key level",
+ *  so a manager or member sets limits on THEIR OWN keys; the org-wide scope
+ *  is admin-only there (user 2026-09-03). Keys and Security events stay: a
+ *  user still has to see their own keys and events. */
+const HIDDEN_FOR_TEAM_ROLES = new Set<string>(["team", "billing"]);
 
 export const ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS: SidebarSection[] =
   ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({

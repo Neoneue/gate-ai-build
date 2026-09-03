@@ -33,8 +33,9 @@ function avgTokens(tokens: number, requests: number): number {
 }
 
 /** Compression / caching rate multipliers for a team against the org. Both
- *  are 1 when the team's prompt size matches the org average (or when the
- *  team has no traffic, so an empty team reads as the org). */
+ *  are 1 when the team's prompt size matches the org average. A team with NO
+ *  traffic has saved nothing: both are 0, so a fresh team's tiles read 0.00%
+ *  with flat sparks, like its Usage tiles (user 2026-09-03). */
 export function teamSavingsFactors(
   team: TeamRow,
   teams: TeamRow[]
@@ -49,7 +50,10 @@ export function teamSavingsFactors(
   }
   const orgAvg = avgTokens(tokens, requests);
   const teamAvg = avgTokens(own.tokens, own.requests);
-  if (orgAvg === 0 || teamAvg === 0) {
+  if (teamAvg === 0) {
+    return { compression: 0, caching: 0 };
+  }
+  if (orgAvg === 0) {
     return { compression: 1, caching: 1 };
   }
   const ratio = teamAvg / orgAvg;

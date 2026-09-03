@@ -27,8 +27,8 @@ export const ORG_SETTINGS_SEED: OrgSettings = {
 };
 
 /** Who is looking (AG-695 AC 3, role variants of every screen). Admin = the
- *  seeded owner of "Chad's workspace"; Manager = Kira Tan, Platform's
- *  manager; Member = Mateus Silva, a Platform member (user 2026-09-03). */
+ *  seeded owner of "Chad's workspace"; Manager = Kira Tan, Development's
+ *  manager; Member = Mateus Silva, a Development member (user 2026-09-03). */
 export type ViewRole = "admin" | "manager" | "member";
 export const ADMIN_USER_ID = "usr_chad";
 export const MANAGER_USER_ID = "usr_kira";

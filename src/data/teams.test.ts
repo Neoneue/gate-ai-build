@@ -276,7 +276,7 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
       bad.push(`window scale ${a} >= ${b}`);
     }
   }
-  // Platform seed: the documented multi-window example (Design is monthly
+  // Development seed: the documented multi-window example (Design is monthly
   // only since 2026-09-02, so the user can switch the other windows on).
   const platform = TEAM_SEED_ROWS.find((t) => t.id === "team_platform");
   if (platform?.budget) {
@@ -307,7 +307,7 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
 });
 
 test("moving a member moves the keys they own, and only those", () => {
-  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Platform");
+  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Development");
   const design = TEAM_SEED_ROWS.find((t) => t.name === "Design");
   if (!(platform && design)) {
     throw new Error("seed teams missing");
@@ -318,18 +318,18 @@ test("moving a member moves the keys they own, and only those", () => {
   );
   expect(kirasKeys.length).toBeGreaterThan(0);
   const next = moveMembersToTeam(TEAM_SEED_ROWS, design.id, [kira]);
-  const nextPlatform = next.find((t) => t.id === platform.id);
+  const nextDevelopment = next.find((t) => t.id === platform.id);
   const nextDesign = next.find((t) => t.id === design.id);
-  expect(nextPlatform?.memberIds).not.toContain(kira);
+  expect(nextDevelopment?.memberIds).not.toContain(kira);
   expect(nextDesign?.memberIds).toContain(kira);
   for (const id of kirasKeys) {
-    expect(nextPlatform?.keyIds).not.toContain(id);
+    expect(nextDevelopment?.keyIds).not.toContain(id);
     expect(nextDesign?.keyIds).toContain(id);
   }
-  // Someone else's keys on Platform stay on Platform.
+  // Someone else's keys on Development stay on Development.
   const others = platform.keyIds.filter((id) => !kirasKeys.includes(id));
   for (const id of others) {
-    expect(nextPlatform?.keyIds).toContain(id);
+    expect(nextDevelopment?.keyIds).toContain(id);
   }
 });
 
@@ -346,7 +346,7 @@ test("hard budgets never show spend past the cap; soft budgets do", () => {
 // team (history is immutable)". Every roll-up reads the frozen attribution,
 // so a move changes membership and nothing else.
 test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
-  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Platform");
+  const platform = TEAM_SEED_ROWS.find((t) => t.name === "Development");
   const design = TEAM_SEED_ROWS.find((t) => t.name === "Design");
   if (!(platform && design)) {
     throw new Error("seed teams missing");
@@ -360,10 +360,10 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
     designSecRows: securityForTeam(design).byMember,
   };
 
-  // Key move: one Platform key onto Design.
+  // Key move: one Development key onto Design.
   const keyId = platform.keyIds[0];
   if (!keyId) {
-    throw new Error("Platform has no keys");
+    throw new Error("Development has no keys");
   }
   const afterKey = moveKeysToTeam(TEAM_SEED_ROWS, design.id, [keyId]);
   const p1 = afterKey.find((t) => t.id === platform.id);
@@ -381,10 +381,10 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
   expect(securityForTeam(d1, afterKey).findings).toBe(before.designSec);
   expect(orgSpend(afterKey)).toBe(before.org);
 
-  // Member move: Kira (Platform manager, owns keys) onto Design.
+  // Member move: Kira (Development manager, owns keys) onto Design.
   const kira = platform.managerIds[0];
   if (!kira) {
-    throw new Error("Platform has no manager");
+    throw new Error("Development has no manager");
   }
   const afterMember = moveMembersToTeam(TEAM_SEED_ROWS, design.id, [kira]);
   const p2 = afterMember.find((t) => t.id === platform.id);
@@ -395,7 +395,7 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
   expect(p2.memberIds).not.toContain(kira);
   expect(d2.memberIds).toContain(kira);
   const p2Usage = usageForTeam(p2);
-  // Platform keeps Kira's spend and now flags the row as a former member.
+  // Development keeps Kira's spend and now flags the row as a former member.
   expect(p2Usage.spend).toBe(before.platform.spend);
   expect(p2Usage.requests).toBe(before.platform.requests);
   const kiraRow = p2Usage.byUser.find((r) => r.id === kira);
@@ -416,7 +416,7 @@ test("PRD 3 Reassignment: moving a key or member never moves spend", () => {
   // Design gains a member and their keys, and no spend.
   expect(usageForTeam(d2)).toEqual(before.design);
   expect(orgSpend(afterMember)).toBe(before.org);
-  // Security follows the same split: Kira's events stay on Platform as a
+  // Security follows the same split: Kira's events stay on Development as a
   // past member, current + past rows sum to the findings headline, and
   // Design's security is untouched.
   const p2Sec = securityForTeam(p2);

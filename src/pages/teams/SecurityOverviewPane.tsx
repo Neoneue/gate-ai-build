@@ -406,12 +406,14 @@ function HeroEventsCard({
               split of the same canon), so the org's period-over-period rate is
               the team's rate. Deriving a separate one would either restate
               this or invent prior-period team data that does not exist. */}
-          <DeltaTag
-            delta="+22.4%"
-            loading={loading}
-            note={RANGE_DELTA_NOTE[range]}
-            size="md"
-          />
+          {security.findings === 0 && !loading ? null : (
+            <DeltaTag
+              delta="+22.4%"
+              loading={loading}
+              note={RANGE_DELTA_NOTE[range]}
+              size="md"
+            />
+          )}
         </div>
       </div>
 

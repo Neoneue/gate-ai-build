@@ -323,7 +323,7 @@ export const ORG_BUDGET_SEED: TeamBudget = {
  *  Derived 7d figures (from activity-data, not authored):
  *    · Default  — Chad; prod-web $106.04 + prod-agent $110.70 +
  *      design-agent (BYOK, $0) = $216.74.
- *    · Platform — Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
+ *    · Development — Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
  *      are BYOK ($0), atlas-eval is metered = $12.39.
  *    · Design   — Jordan (manager); development $13.29 + ci-runner $5.17 =
  *      $18.46 against a $20 weekly hard budget → 92.3%, past the 80% warn.
@@ -346,7 +346,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
   },
   {
     id: "team_platform",
-    name: "Platform",
+    name: "Development",
     isDefault: false,
     memberIds: ["usr_kira", "usr_mate"],
     memberJoined: {

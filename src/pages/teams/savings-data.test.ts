@@ -59,3 +59,18 @@ test("team savings: a switched-off component reads 0 and drops out of total", ()
   expect(compression.spark.every((v) => v === 0)).toBe(true);
   expect(total.value).toBe(caching.value);
 });
+
+test("team savings: a fresh team with no traffic reads 0 on every tile", () => {
+  const fresh = {
+    ...TEAM_SEED_ROWS[1],
+    id: "team_fresh",
+    memberIds: [],
+    keyIds: [],
+  };
+  const f = teamSavingsFactors(fresh, TEAM_SEED_ROWS);
+  expect(f).toEqual({ compression: 0, caching: 0 });
+  for (const k of teamSavingsKpis(fresh, TEAM_SEED_ROWS, "all")) {
+    expect(k.spark.every((v) => v === 0)).toBe(true);
+    expect(k.value).toBe("0.00");
+  }
+});

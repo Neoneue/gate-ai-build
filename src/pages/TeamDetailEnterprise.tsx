@@ -418,7 +418,9 @@ function TeamDetailBody({
           <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             {team.isDefault
               ? "Can’t be renamed or deleted."
-              : "Members, keys, and budget for this team."}
+              : archived
+                ? "Archived. Members, keys, and usage history for this team."
+                : "Members, keys, and budget for this team."}
           </p>
         </div>
       </div>
@@ -427,7 +429,7 @@ function TeamDetailBody({
           column: an admin who opened this team to read the roster still needs
           to know the gateway is refusing its traffic. Renders nothing while
           every window is inside its cap. */}
-      {team.budget ? (
+      {team.budget && !archived ? (
         <BudgetBreachBanner
           budget={team.budget}
           teamName={team.name}
@@ -452,7 +454,12 @@ function TeamDetailBody({
               <TabsCount>{team.keyIds.length}</TabsCount>
             </TabsTrigger>
           )}
-          {member ? null : <TabsTrigger value="budget">Budget</TabsTrigger>}
+          {/* Archived teams have no budget (user 2026-09-03): nothing
+              attributes to them, so a cap has nothing to enforce. Usage
+              history lives on Overview. */}
+          {archived || member ? null : (
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+          )}
           {archived || member ? null : (
             <TabsTrigger value="settings">Settings</TabsTrigger>
           )}
@@ -769,14 +776,15 @@ function GeneralSettings({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Delete team</CardTitle>
+          <CardTitle>Archive team</CardTitle>
           <CardDescription>
-            Members and keys on this team move to the default team. The team and
-            its history are removed. This can’t be undone.
+            Members and keys on this team move to the default team. The team
+            moves to Archived teams with its usage history. This can’t be
+            undone.
           </CardDescription>
           <CardAction>
             <Button onClick={onDelete} size="sm" variant="destructive">
-              Delete team
+              Archive team
             </Button>
           </CardAction>
         </CardHeader>

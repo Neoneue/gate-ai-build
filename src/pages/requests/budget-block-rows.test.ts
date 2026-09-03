@@ -3,7 +3,9 @@ import { requestRowId } from "@/data/requests";
 import { TEAM_SEED_ROWS, type TeamRow } from "@/data/teams";
 import { budgetBlockRows } from "./budget-block-rows";
 
-const platform = TEAM_SEED_ROWS.find((t) => t.name === "Platform") as TeamRow;
+const platform = TEAM_SEED_ROWS.find(
+  (t) => t.name === "Development"
+) as TeamRow;
 
 describe("budgetBlockRows (PRD §3 hard-budget block on Messages)", () => {
   it("renders nothing while every team is inside its caps (seed)", () => {
@@ -29,7 +31,7 @@ describe("budgetBlockRows (PRD §3 hard-budget block on Messages)", () => {
     expect(row.code).toBe("429");
     expect(row.blockReason).toBe("budget");
     expect(row.guardrailReason).toBeUndefined();
-    expect(row.errorDetail).toContain('"Platform"');
+    expect(row.errorDetail).toContain('"Development"');
     expect(row.errorDetail).toContain("monthly cap");
     expect(row.errorDetail).toContain("Team budget block");
     expect(platform.keyIds.length).toBeGreaterThan(0);
