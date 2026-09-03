@@ -12,17 +12,18 @@ import {
 } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * ViewRoleSwitch — "Viewing as" Admin / Manager, Enterprise routes only.
+ * ViewRoleSwitch — "Viewing as" Admin / Manager / Member, Enterprise only.
  * Sits right of the workspace switcher in the top bar (user 2026-09-03).
- * Drives the AG-695 team-manager variant: the manager sidebar, the manager
- * landing on their own team, and every read-only pane. Admin is the seeded
- * owner; Manager is Kira Tan, Platform's manager. Members have no Teams
- * surface (PRD §6), so there is no Member option.
+ * Drives the AG-695 role variants: the team-role sidebar, landing on the
+ * user's own team, and every hidden or read-only pane. Admin is the seeded
+ * owner; Manager is Kira Tan, Platform's manager; Member is Mateus Silva,
+ * a Platform member (own team, read-only, Overview + Members only).
  * ───────────────────────────────────────────────────────────────────────── */
 
 const LABEL: Record<ViewRole, string> = {
   admin: "Admin view",
   manager: "Manager view",
+  member: "Member view",
 };
 
 export function ViewRoleSwitch({ className }: { className?: string }) {
@@ -38,6 +39,7 @@ export function ViewRoleSwitch({ className }: { className?: string }) {
       <SelectContent>
         <SelectItem value="admin">{LABEL.admin}</SelectItem>
         <SelectItem value="manager">{LABEL.manager}</SelectItem>
+        <SelectItem value="member">{LABEL.member}</SelectItem>
       </SelectContent>
     </Select>
   );

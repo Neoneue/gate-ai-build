@@ -36,8 +36,8 @@ import { cn } from "@/lib/utils";
 import { useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
-  ENTERPRISE_MANAGER_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
+  ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
 } from "./nav-sections";
@@ -91,9 +91,9 @@ export function DashboardChrome({
     : isFree
       ? FREE_SIDEBAR_SECTIONS
       : isEnterprise
-        ? viewRole === "manager"
-          ? ENTERPRISE_MANAGER_SIDEBAR_SECTIONS
-          : ENTERPRISE_SIDEBAR_SECTIONS
+        ? viewRole === "admin"
+          ? ENTERPRISE_SIDEBAR_SECTIONS
+          : ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
         : SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
@@ -171,8 +171,9 @@ export function DashboardChrome({
             showLocks={showLocks}
             topSlot={
               switcherInRail ? (
-                <div className="border-border border-b px-3 pt-3 pb-3">
+                <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
                   <WorkspaceSwitcher className="w-full" compactBadge />
+                  {isEnterprise ? <ViewRoleSwitch className="w-full" /> : null}
                 </div>
               ) : undefined
             }
@@ -374,6 +375,7 @@ function DashTopBar({
           overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
+          showViewRole={showViewRole}
           upgradePath={upgradePath}
         />
       </div>
@@ -392,6 +394,7 @@ function MobileNav({
   onNavigate,
   overviewPath,
   showLocks,
+  showViewRole,
   upgradePath,
 }: {
   sections: SidebarSection[];
@@ -399,6 +402,8 @@ function MobileNav({
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   showLocks?: boolean;
+  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  showViewRole: boolean;
   upgradePath?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -442,8 +447,9 @@ function MobileNav({
           sections={sections}
           showLocks={showLocks}
           topSlot={
-            <div className="border-border border-b px-3 pt-3 pb-3 lg:hidden">
+            <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />
+              {showViewRole ? <ViewRoleSwitch className="w-full" /> : null}
             </div>
           }
           upgradePath={upgradePath}

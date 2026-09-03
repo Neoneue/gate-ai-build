@@ -206,20 +206,16 @@ export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
       : section
   );
 
-/** Enterprise sidebar for the team-manager view (AG-695 AC 3; PRD §6, §8.4):
- *  a manager sees what a member sees, plus Teams (landing on their team).
- *  Org-admin surfaces are hidden: Audit trail, Limits, Members (org roster,
- *  invites are owner/admin), Billing. Keys and Security events stay: a user
- *  still has to see their own keys and events (user 2026-09-03). */
-const HIDDEN_FOR_MANAGER = new Set<string>([
-  "audit-trail",
-  "limits",
-  "team",
-  "billing",
-]);
+/** Enterprise sidebar for the team-manager AND member views (AG-695 AC 3;
+ *  PRD §6, §8.4): both land on their own team under Teams. Org-admin
+ *  surfaces are hidden: Limits, Members (org roster, invites are
+ *  owner/admin), Billing. Audit trail stays: anyone in the org sees it
+ *  (user 2026-09-03). Keys and Security events stay: a user still has to
+ *  see their own keys and events. */
+const HIDDEN_FOR_TEAM_ROLES = new Set<string>(["limits", "team", "billing"]);
 
-export const ENTERPRISE_MANAGER_SIDEBAR_SECTIONS: SidebarSection[] =
+export const ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS: SidebarSection[] =
   ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !HIDDEN_FOR_MANAGER.has(item.id)),
+    items: section.items.filter((item) => !HIDDEN_FOR_TEAM_ROLES.has(item.id)),
   })).filter((section) => section.items.length > 0);

@@ -5,7 +5,8 @@
  * skeletons would never be seen. The hook holds `true` for
  * TEAMS_LOADING_THEATRE_MS after mount so the loading pass is visible and
  * reviewable (user direction 2026-09-02: "unless you set a 2 second delay
- * for theatre, which I'm okay with").
+ * for theatre, which I'm okay with"; cut to 1 s on 2026-09-03: "this takes
+ * too long at 2").
  *
  * IN THE REAL APP: replace this hook's return with the query's `isLoading`
  * and nothing else changes — every consumer already takes `loading` as a
@@ -22,7 +23,7 @@
 
 import { useEffect, useState } from "react";
 
-export const TEAMS_LOADING_THEATRE_MS = 2000;
+export const TEAMS_LOADING_THEATRE_MS = 1000;
 
 /** Stable React keys for skeleton table rows, one per row that is coming.
  *  The demo knows the row count up front (the data is local), so the

@@ -197,6 +197,10 @@ export function TeamDetailEnterprise({
   const viewRole = useViewRole();
   const ownTeam = useCurrentUserTeam();
   const manager = viewRole === "manager";
+  // Member view (user 2026-09-03): own team, read-only, Overview + Members
+  // only; the roster is a pure list (no add, remove or role select).
+  const member = viewRole === "member";
+  const teamRole = manager || member;
 
   // ONE call, in the PAGE body — not in a pane. Every tab reads this same
   // boolean, so switching tabs cannot restart the skeletons; a per-pane hook
@@ -255,7 +259,7 @@ export function TeamDetailEnterprise({
     navigate(listPath);
   };
 
-  if (manager && ownTeam && teamId !== ownTeam.id) {
+  if (teamRole && ownTeam && teamId !== ownTeam.id) {
     return <Navigate replace to={`${listPath}/${ownTeam.id}`} />;
   }
 
@@ -270,7 +274,7 @@ export function TeamDetailEnterprise({
         aria-busy={loading}
         className="flex w-full @5xl:max-w-5xl flex-col gap-6"
       >
-        {manager ? null : (
+        {teamRole ? null : (
           <BackLink label="Teams" onClick={() => navigate(listPath)} />
         )}
 
@@ -287,6 +291,7 @@ export function TeamDetailEnterprise({
             archived={archived}
             loading={loading}
             manager={manager}
+            member={member}
             onDeleteTeam={handleDeleteTeam}
             onMoveMembers={moveMembers}
             onPatch={patch}
@@ -335,6 +340,7 @@ function TeamDetailBody({
   onDeleteTeam,
   archived,
   manager,
+  member,
   variant,
   loading,
 }: {
@@ -349,11 +355,14 @@ function TeamDetailBody({
   archived: boolean;
   /** Team-manager view: budgets and settings read-only, no role select. */
   manager: boolean;
+  /** Member view: Overview + Members only, roster is a pure list. */
+  member: boolean;
   variant: TeamsVariant;
   /** Threaded down to every pane from the ONE page-level hook call, so the
    *  skeletons do not restart when a tab changes. */
   loading: boolean;
 }) {
+  const teamRole = manager || member;
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
   // lands on teams. Data tabs (Usage, Budget, Security) follow.
@@ -437,12 +446,14 @@ function TeamDetailBody({
             <span>Members</span>
             <TabsCount>{team.memberIds.length}</TabsCount>
           </TabsTrigger>
-          <TabsTrigger value="keys">
-            <span>Keys</span>
-            <TabsCount>{team.keyIds.length}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
-          {archived ? null : (
+          {member ? null : (
+            <TabsTrigger value="keys">
+              <span>Keys</span>
+              <TabsCount>{team.keyIds.length}</TabsCount>
+            </TabsTrigger>
+          )}
+          {member ? null : <TabsTrigger value="budget">Budget</TabsTrigger>}
+          {archived || member ? null : (
             <TabsTrigger value="settings">Settings</TabsTrigger>
           )}
         </TabsList>
@@ -551,11 +562,12 @@ function TeamDetailBody({
         <TabsContent value="members">
           <MembersPane
             archived={archived}
-            canAssignRoles={!manager}
+            canAssignRoles={!teamRole}
             loading={loading}
             onMoveMembers={onMoveMembers}
             onPatch={onPatch}
             onRemoveMember={onRemoveMember}
+            readOnly={member}
             team={team}
             teams={teams}
           />
@@ -1319,6 +1331,7 @@ function MembersPane({
   loading,
   archived = false,
   canAssignRoles = true,
+  readOnly = false,
 }: {
   team: TeamRow;
   teams: TeamRow[];
@@ -1332,7 +1345,11 @@ function MembersPane({
   /** Frozen snapshot of a deleted team: no Add member, no role select, no
    *  remove. The roster is a record, not a roster to manage. */
   archived?: boolean;
+  /** Member view (user 2026-09-03): same pure list as `archived`, on a live
+   *  team. Managing the roster is manager / admin (PRD §8.4). */
+  readOnly?: boolean;
 }) {
+  const frozen = archived || readOnly;
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
     null
@@ -1429,7 +1446,7 @@ function MembersPane({
             it to the right edge. Below @2xl the wrapper is a full-width
             right-aligned row of its own, so a wrap drops the button under
             the Select instead of squeezing it. */}
-        {archived ? null : (
+        {frozen ? null : (
           <div className="flex @2xl:contents w-full justify-end">
             <Button
               className="ml-auto"
@@ -1448,7 +1465,7 @@ function MembersPane({
         {isEmpty && !loading && (
           <TableEmptyState
             action={
-              archived ? undefined : (
+              frozen ? undefined : (
                 <Button onClick={() => setAddOpen(true)} size="default">
                   Add member
                 </Button>
@@ -1555,7 +1572,7 @@ function MembersPane({
                       <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                         {/* The Default team is where removed members LAND, so there
                         is nowhere to remove them to from here. */}
-                        {team.isDefault || archived ? null : (
+                        {team.isDefault || frozen ? null : (
                           <IconActionButton
                             aria-label={`Remove ${member.name} from ${team.name}`}
                             onClick={() =>

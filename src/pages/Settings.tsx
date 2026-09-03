@@ -25,6 +25,7 @@ import {
   CancelPlanDialog,
   ConsequenceCallout,
 } from "@/pages/cancel-plan-dialog";
+import { useViewRole } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-018 — Settings (Workspace Admin)
@@ -83,6 +84,10 @@ export function Settings({ showCancelPlan = true }: SettingsProps = {}) {
 /* ─── Page surface — header + titled sections ───────────────────────────── */
 
 function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
+  // Account management (cancel plan, delete org) is owner / admin only; the
+  // team-manager and member views hide the whole section (AG-695 AC 3,
+  // user 2026-09-03). Non-Enterprise routes never leave the admin role.
+  const isAdmin = useViewRole() === "admin";
   return (
     <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
       <PageHeader />
@@ -104,18 +109,20 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
         </div>
         <SecurityCard />
       </div>
-      <div className="mt-2 flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <SectionTitle as="h2">Account management</SectionTitle>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-            {showCancelPlan
-              ? "Manage your plan, organization, and other account-level actions."
-              : "Manage your organization and other account-level actions."}
-          </p>
+      {isAdmin ? (
+        <div className="mt-2 flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <SectionTitle as="h2">Account management</SectionTitle>
+            <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+              {showCancelPlan
+                ? "Manage your plan, organization, and other account-level actions."
+                : "Manage your organization and other account-level actions."}
+            </p>
+          </div>
+          {showCancelPlan && <CancelPlanCard />}
+          <DeleteAccountCard />
         </div>
-        {showCancelPlan && <CancelPlanCard />}
-        <DeleteAccountCard />
-      </div>
+      ) : null}
     </div>
   );
 }

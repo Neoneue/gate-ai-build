@@ -142,8 +142,8 @@ export function TeamsEnterprise({
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
-  // Team-manager view (AG-695 AC 3, "scoped to one team"): the list is
-  // owners and admins only, so a manager lands straight on their team.
+  // Team-manager and member views (AG-695 AC 3, "scoped to one team"): the
+  // list is owners and admins only, so both land straight on their team.
   const viewRole = useViewRole();
   const ownTeam = useCurrentUserTeam();
   const { pathname } = useLocation();
@@ -227,7 +227,7 @@ export function TeamsEnterprise({
     setDeleting(null);
   };
 
-  if (viewRole === "manager" && ownTeam) {
+  if (viewRole !== "admin" && ownTeam) {
     return <Navigate replace to={`${teamsListPath(pathname)}/${ownTeam.id}`} />;
   }
 

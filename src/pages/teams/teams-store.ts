@@ -26,12 +26,18 @@ export const ORG_SETTINGS_SEED: OrgSettings = {
   savings: TEAM_SAVINGS_SEED,
 };
 
-/** Who is looking (AG-695 AC 3, team-manager variant). Admin = the seeded
- *  owner of "Chad's workspace"; Manager = Kira Tan, Platform's manager. No
- *  Member view: the PRD gives members no Teams surface (§6). */
-export type ViewRole = "admin" | "manager";
+/** Who is looking (AG-695 AC 3, role variants of every screen). Admin = the
+ *  seeded owner of "Chad's workspace"; Manager = Kira Tan, Platform's
+ *  manager; Member = Mateus Silva, a Platform member (user 2026-09-03). */
+export type ViewRole = "admin" | "manager" | "member";
 export const ADMIN_USER_ID = "usr_chad";
 export const MANAGER_USER_ID = "usr_kira";
+export const MEMBER_USER_ID = "usr_mate";
+const USER_ID_FOR_ROLE: Record<ViewRole, string> = {
+  admin: ADMIN_USER_ID,
+  manager: MANAGER_USER_ID,
+  member: MEMBER_USER_ID,
+};
 /** @deprecated read `currentUserId()`; kept for the resolver tests. */
 export const CURRENT_USER_ID = ADMIN_USER_ID;
 
@@ -39,7 +45,7 @@ export const CURRENT_USER_ID = ADMIN_USER_ID;
  *  pages resolve their team from the live store, so moving them between
  *  teams changes which lock governs those pages. */
 export function currentUserId(): string {
-  return teamsStore.viewRole === "manager" ? MANAGER_USER_ID : ADMIN_USER_ID;
+  return USER_ID_FOR_ROLE[teamsStore.viewRole];
 }
 
 /** The signed-in user's own policy + savings choices (Free/Pro settings are
@@ -226,7 +232,7 @@ export function useUserSettings(): UserSettings {
 export function useCurrentUserTeam(): TeamRow | undefined {
   const teams = useTeams();
   const role = useViewRole();
-  const id = role === "manager" ? MANAGER_USER_ID : ADMIN_USER_ID;
+  const id = USER_ID_FOR_ROLE[role];
   return teams.find((t) => t.memberIds.includes(id));
 }
 
