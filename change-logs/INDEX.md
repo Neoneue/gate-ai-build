@@ -35,6 +35,11 @@ tokens; this index exists so nothing has to glob the directory.
 - Team-manager view, scaffold (in progress)
 - Role switch: Admin / Manager / Member, member read-only team page
 - Skeleton theatre: 2 s to 1 s
+- Limits stays for Manager and Member, scoped to their own keys
+- Archive, not Delete, on teams
+- Archived teams have no budget
+- Fresh teams read zero savings, no zero-delta chips
+- Development team, 1 s skeleton theatre
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 

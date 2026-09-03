@@ -254,3 +254,40 @@ and Security stay editable. Test `layouts/nav-sections.test.ts`.
 `TEAMS_LOADING_THEATRE_MS` in `teams/use-theatre-loading.ts` drops from 2000
 to 1000 (user: "this takes too long at 2"). Every Teams skeleton reads the
 one constant.
+
+### Limits stays for Manager and Member, scoped to their own keys `4af3d2c`
+
+Before: the team-role sidebar hid Limits. After: Limits stays (caps run "at
+the org, project, or key level"); only Members and Billing hide
+(`HIDDEN_FOR_TEAM_ROLES`). On `Limits.tsx` a non-admin's scope dropdown lists
+only the keys they own from `API_KEY_SEED_ROWS` (revoked excluded), with no
+"Org-wide" option; an org-wide row shows "Set by an org admin" in place of
+the actions menu. The create dialog snaps a stale scope to the first valid
+option after a role switch. Admin unchanged.
+
+### Archive, not Delete, on teams `4af3d2c`
+
+PRD: soft-delete, history immutable. Row menu "Archive"; Settings card
+"Archive team"; dialog "Archive {team}?" / "Archive team"; copy "Members and
+keys on this team move to the default team. The team moves to Archived teams
+with its usage history. This can't be undone." Archived list column
+"Archived on"; empty state says "usage history".
+
+### Archived teams have no budget `4af3d2c`
+
+Budget tab and breach banner hidden on an archived team (nothing attributes
+to it); subtitle "Archived. Members, keys, and usage history for this team."
+
+### Fresh teams read zero savings, no zero-delta chips `4af3d2c`
+
+`teamSavingsFactors` returned 1 for a team with no traffic, so a new team
+inherited the org's 13.8% saved. Now 0 / 0: tiles read 0.00% with flat
+sparks, matching Usage (PRD 3 Reassignment: a moved member brings no
+history). Savings tiles drop the delta chip when every point is 0; the
+Security hero drops the org "+22.4%" chip at 0 events. Test in
+`savings-data.test.ts`.
+
+### Development team, 1 s skeleton theatre `4af3d2c`
+
+Seed team "Platform" renamed "Development" (id unchanged).
+`TEAMS_LOADING_THEATRE_MS` 2000 -> 1000 (user: "this takes too long at 2").
