@@ -83,7 +83,7 @@ import {
   formatNumber,
   formatSparkLabel,
 } from "@/lib/formatters";
-import { teamsListPath } from "@/lib/plan";
+import { overviewPathFor, teamsListPath } from "@/lib/plan";
 import {
   type CustomRange,
   effectiveScale,
@@ -201,12 +201,18 @@ export function TeamDetailEnterprise({
   // only; the roster is a pure list (no add, remove or role select).
   const member = viewRole === "member";
   const teamRole = manager || member;
+  const { pathname } = useLocation();
 
   // ONE call, in the PAGE body — not in a pane. Every tab reads this same
   // boolean, so switching tabs cannot restart the skeletons; a per-pane hook
   // would re-run the wait on every tab click. Demo theatre today; in the real
   // app this is the team query's `isLoading`.
   const loading = useTheatreLoading();
+
+  // Members have no Teams surface (confirmed 2026-09-03): bounce to Overview.
+  if (member) {
+    return <Navigate replace to={overviewPathFor(pathname)} />;
+  }
 
   const patch = (next: Partial<TeamRow>) => {
     if (archived) {

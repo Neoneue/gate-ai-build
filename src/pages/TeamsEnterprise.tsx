@@ -41,7 +41,7 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
-import { teamsListPath } from "@/lib/plan";
+import { overviewPathFor, teamsListPath } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { BudgetStatusBadge, BudgetWarnTick } from "@/pages/teams/budget";
 import { budgetFillClass } from "@/pages/teams/budget-band";
@@ -227,6 +227,10 @@ export function TeamsEnterprise({
     setDeleting(null);
   };
 
+  // Members have no Teams surface (confirmed 2026-09-03): bounce to Overview.
+  if (viewRole === "member") {
+    return <Navigate replace to={overviewPathFor(pathname)} />;
+  }
   if (viewRole !== "admin" && ownTeam) {
     return <Navigate replace to={`${teamsListPath(pathname)}/${ownTeam.id}`} />;
   }

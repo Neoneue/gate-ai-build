@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
+  ENTERPRISE_MEMBER_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
@@ -101,7 +102,9 @@ export function DashboardChrome({
       : isEnterprise
         ? viewRole === "admin"
           ? ENTERPRISE_SIDEBAR_SECTIONS
-          : ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
+          : viewRole === "manager"
+            ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
+            : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
         : SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"

@@ -206,8 +206,8 @@ export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
       : section
   );
 
-/** Enterprise sidebar for the team-manager AND member views (AG-695 AC 3;
- *  PRD §6, §8.4): both land on their own team under Teams. Org-admin
+/** Enterprise sidebar for the team-manager view (AG-695 AC 3; PRD §6,
+ *  §8.4): a manager lands on their own team under Teams. Org-admin
  *  surfaces are hidden: Members (org roster, invites are owner/admin),
  *  Billing. Audit trail stays: anyone in the org sees it (user
  *  2026-09-03). Limits stays: caps run "at the org, project, or key level",
@@ -220,4 +220,15 @@ export const ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS: SidebarSection[] =
   ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => !HIDDEN_FOR_TEAM_ROLES.has(item.id)),
+  })).filter((section) => section.items.length > 0);
+
+/** Enterprise sidebar for the member view: a member has no Teams surface
+ *  at all (confirmed 2026-09-03; PRD §8.4 gives team read access to the
+ *  manager role only). Everything else is the manager's set. */
+const HIDDEN_FOR_MEMBER = new Set<string>([...HIDDEN_FOR_TEAM_ROLES, "teams"]);
+
+export const ENTERPRISE_MEMBER_SIDEBAR_SECTIONS: SidebarSection[] =
+  ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !HIDDEN_FOR_MEMBER.has(item.id)),
   })).filter((section) => section.items.length > 0);

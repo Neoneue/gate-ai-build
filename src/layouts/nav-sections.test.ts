@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  ENTERPRISE_MEMBER_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
 } from "./nav-sections";
@@ -25,5 +26,14 @@ test("team-role sidebar hides only Members and Billing (AG-695 AC 3)", () => {
   }
   expect(teamRole).toEqual(
     admin.filter((id) => !["team", "billing"].includes(id))
+  );
+});
+
+test("member sidebar also hides Teams (confirmed 2026-09-03)", () => {
+  const admin = ids(ENTERPRISE_SIDEBAR_SECTIONS);
+  const member = ids(ENTERPRISE_MEMBER_SIDEBAR_SECTIONS);
+  expect(member).not.toContain("teams");
+  expect(member).toEqual(
+    admin.filter((id) => !["team", "billing", "teams"].includes(id))
   );
 });

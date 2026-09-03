@@ -173,3 +173,16 @@ export const toEnterprisePath = (pathname: string): string => {
 /** Non-PRO path → its PRO twin (strip the tier suffix). */
 export const toProPath = (pathname: string): string =>
   toBasePath(pathname) || "/overview";
+
+/** The Overview route for the workspace the pathname is on: `/teams-enterprise`
+ *  -> `/overview-enterprise`, `/teams-default` -> `/overview-default`, else
+ *  `/overview`. */
+export function overviewPathFor(pathname: string): string {
+  if (pathname.startsWith("/teams-enterprise")) {
+    return "/overview-enterprise";
+  }
+  if (pathname.startsWith("/teams-default")) {
+    return "/overview-default";
+  }
+  return "/overview";
+}
