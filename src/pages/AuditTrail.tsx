@@ -49,9 +49,11 @@ import {
   truncateHex,
 } from "@/data/audit-trail";
 import { useAuditRows } from "@/data/audit-trail-store";
+import { memberById } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCompactCount } from "@/lib/formatters";
+import { useViewScope } from "@/pages/teams/view-scope";
 import { AuditRecordDialog } from "./AuditRecordDialog";
 
 /** Comparable value per sortable column for the audit event log. Time sorts
@@ -94,7 +96,17 @@ export function AuditTrail() {
 
   // No range filter on this surface — KPIs and EventLog read the full event
   // set. EventLog further narrows by kind + query.
-  const rows = useAuditRows();
+  // A Manager or Member is a user and reads THEIR OWN audit log; the org's
+  // log is the Admin's (user 2026-09-03; view-scope.ts).
+  const allRows = useAuditRows();
+  const scope = useViewScope();
+  const rows = useMemo(() => {
+    if (!scope.scoped) {
+      return allRows;
+    }
+    const me = memberById(scope.userId)?.name;
+    return allRows.filter((r) => r.member === me);
+  }, [allRows, scope]);
 
   return (
     <DashboardChrome
@@ -251,6 +263,7 @@ const KIND_OPTIONS: { value: EventKind; label: string }[] = [
 ];
 
 function EventLog({ rows }: { rows: EventRow[] }) {
+  const scope = useViewScope();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
@@ -467,21 +480,24 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-muted-foreground">
-                Member
-              </Label>
-              <MultiSelect
-                aria-label="Filter by member"
-                onValueChange={setDraftMembers}
-                options={MEMBER_OPTIONS.map((name) => ({
-                  value: name,
-                  label: name,
-                }))}
-                placeholder="All members"
-                value={draftMembers}
-              />
-            </div>
+            {/* One member's log has nothing to filter by member. */}
+            {scope.scoped ? null : (
+              <div className="flex flex-col gap-2">
+                <Label className="type-label-14 text-muted-foreground">
+                  Member
+                </Label>
+                <MultiSelect
+                  aria-label="Filter by member"
+                  onValueChange={setDraftMembers}
+                  options={MEMBER_OPTIONS.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  placeholder="All members"
+                  value={draftMembers}
+                />
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <Label className="type-label-14 text-muted-foreground">
