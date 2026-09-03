@@ -62,20 +62,18 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: "Manage",
+    // "My settings" (PM meeting 2026-09-03, Joao Carvalho): these pages are
+    // the signed-in user's own configuration on every tier. Org and team
+    // locks are managed on Teams; a locked setting shows a banner and
+    // disabled inputs here. Limits moved to Workspace the same day: an
+    // admin's org-wide caps are not a personal setting.
+    label: "My settings",
     items: [
       {
         id: "policies",
         icon: ShieldCheck,
         label: "Policies",
         pageId: "/policies",
-      },
-      {
-        id: "limits",
-        icon: Gauge,
-        label: "Limits",
-        pageId: "/limits",
-        locked: true,
       },
       {
         id: "token-savings",
@@ -98,6 +96,13 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
         icon: Activity,
         label: "Activity",
         pageId: "/activity",
+      },
+      {
+        id: "limits",
+        icon: Gauge,
+        label: "Limits",
+        pageId: "/limits",
+        locked: true,
       },
       { id: "team", icon: Users, label: "Members", pageId: "/members" },
       { id: "teams", icon: Building2, label: "Teams", pageId: "/teams" },
@@ -180,31 +185,13 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
   new Set<string>()
 );
 
-const ENTERPRISE_MANAGE_ORDER = ["limits", "policies", "token-savings"];
-
 /** Sidebar for the Enterprise workspace — unlocked items point at their
  *  `-enterprise` twin. Nothing is locked or hidden: Enterprise is the top
- *  tier, so every surface Pro has, it has. Policies and Token savings are
- *  USER-level on Enterprise (org and team settings live on Teams; call
- *  2026-09-03), so the labels say whose they are. */
+ *  tier, so every surface Pro has, it has. Policies and Token savings sit
+ *  under "My settings" like every tier; the org and team lock layer lives
+ *  on Teams (PM meeting 2026-09-03). */
 export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
-  buildVariantSections("-enterprise", new Set<string>(), new Set<string>(), {
-    policies: "My policies",
-    "token-savings": "My token savings",
-  }).map((section) =>
-    // Manage reads org-level first, then the personal pair together:
-    // Limits, My Policies, My Token Savings (user 2026-09-03).
-    section.label === "Manage"
-      ? {
-          ...section,
-          items: [...section.items].sort(
-            (a, b) =>
-              ENTERPRISE_MANAGE_ORDER.indexOf(a.id) -
-              ENTERPRISE_MANAGE_ORDER.indexOf(b.id)
-          ),
-        }
-      : section
-  );
+  buildVariantSections("-enterprise", new Set<string>(), new Set<string>());
 
 /** Enterprise sidebar for the team-manager view (AG-695 AC 3; PRD §6,
  *  §8.4): a manager lands on their own team under Teams. Org-admin
