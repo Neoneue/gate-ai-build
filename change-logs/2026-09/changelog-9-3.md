@@ -381,3 +381,17 @@ KPI tiles, table and pagination follow. The Member filter is hidden for
 them (one member's log has nothing to filter by member). Admin unchanged.
 Models stays the read-only catalog for every role: both are USER surfaces,
 not team oversight, so PRD 11 "nothing outside their team" does not apply.
+
+### Budget: admins can opt out of soft warning alerts `f44f6f6`
+
+CTO direction 2026-09-03: "5 hours goes over, don't bug me. Monthly? Don't
+bug me." Per budget, every window. `TeamBudget.notifyAdmins` (default on).
+Soft budgets only: under the Soft / Hard select a Switch "Notify org admins
+on warnings" with a helper line ("Org admins and owner are alerted when a
+window passes its warn threshold." / "Only the team's manager is alerted.
+The warning badge and bar still show."). Hard budgets get no toggle. The
+recipients sentence under the warn field and the Budget tab "Warn at" tip
+follow (`budgetAlertRecipients(hasManager, notifyAdmins)`); an opted-out
+budget adds an "Admin alerts: Off" fact. Managers are always alerted;
+badges and amber bars unchanged. On top of PRD 8.2, which has no opt-out.
+`src/data/teams.ts`, `src/pages/teams/dialogs.tsx`, `src/pages/teams/budget.tsx`.
