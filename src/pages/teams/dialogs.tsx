@@ -71,6 +71,7 @@ import {
 const ERROR_NAME = "Enter a name.";
 const ERROR_AMOUNT = "Enter an amount above $0.";
 const ERROR_PERCENT = "Enter a whole number from 1 to 100.";
+const ERROR_BLOCK_ABOVE_WARN = "Block must be above the warn threshold.";
 
 export function CreateTeamDialog({
   open,
@@ -256,6 +257,9 @@ function BudgetBody({
   const [warn, setWarn] = useState(
     String(budget?.warnThreshold ?? DEFAULT_WARN_THRESHOLD)
   );
+  const [block, setBlock] = useState(
+    String(budget?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD)
+  );
   // Error gating, same contract as Create team: a field's message appears once
   // that field has been blurred. The map is keyed by field, so the three cap
   // rows gate independently. Save stays disabled while anything is invalid.
@@ -280,11 +284,15 @@ function BudgetBody({
     });
   };
 
-  // Name, at least one window, a positive cap on every selected window, and
-  // a warn percentage inside 1–100 (PRD 3 / 8.2: "warn at 80%, block at
-  // 100%"). Block stays at the data model's default: the field was removed
-  // 2026-09-02 (user direction), so a hard budget blocks at its cap.
+  // Name, at least one window, a positive cap on every selected window, a
+  // warn percentage inside 1–100 and, on a hard budget, a block percentage
+  // above it (PRD 3 / 8.2 / 11: "warn and block thresholds", "warn at 80%,
+  // block at 100%"). Removed 2026-09-02, restored 2026-09-03 on the PRD
+  // gut-check: the PRD makes both thresholds configurable. A soft budget
+  // never blocks, so its block value is the model default and unvalidated.
   const warnValue = Number(warn);
+  const blockValue =
+    enforcement === "hard" ? Number(block) : DEFAULT_BLOCK_THRESHOLD;
   // A percentage is a WHOLE number 1–100. `Number.isInteger` also rejects
   // NaN / Infinity, so it subsumes the old `Number.isFinite` guard — 80.5
   // used to validate and save, which no threshold UI in the app can display.
@@ -295,22 +303,32 @@ function BudgetBody({
     return Number.isFinite(n) && n > 0;
   };
   const capsValid = windows.every(amountValid);
+  const blockValid =
+    enforcement !== "hard" ||
+    (inPercentRange(blockValue) && blockValue > warnValue);
   const isValid =
     name.trim().length > 0 &&
     windows.length > 0 &&
     capsValid &&
-    inPercentRange(warnValue);
+    inPercentRange(warnValue) &&
+    blockValid;
 
   // One message per field, independent of whether it is being shown yet.
   const nameError = name.trim().length > 0 ? null : ERROR_NAME;
   const amountError = (w: BudgetWindow) =>
     amountValid(w) ? null : ERROR_AMOUNT;
   const warnError = inPercentRange(warnValue) ? null : ERROR_PERCENT;
+  const blockError = blockValid
+    ? null
+    : inPercentRange(blockValue)
+      ? ERROR_BLOCK_ABOVE_WARN
+      : ERROR_PERCENT;
 
   // Budget windows has no error UI by design: MultiSelect's `minSelected={1}`
   // makes an empty selection unreachable.
   const nameId = `${scope}-budget-name`;
   const warnId = `${scope}-budget-warn`;
+  const blockId = `${scope}-budget-block`;
   const amountId = (w: BudgetWindow) => `${scope}-budget-amount-${w}`;
   return (
     <form
@@ -329,7 +347,7 @@ function BudgetBody({
           caps,
           enforcement,
           warnThreshold: warnValue,
-          blockThreshold: DEFAULT_BLOCK_THRESHOLD,
+          blockThreshold: blockValue,
         });
       }}
     >
@@ -536,6 +554,46 @@ function BudgetBody({
               </p>
             </div>
           </div>
+
+          {/* Block threshold, hard budgets only (PRD 8.2 "warn and block
+              thresholds"; AG-695 design task "warn and block threshold
+              entry"). Soft budgets never block, so the field is absent rather
+              than disabled. */}
+          {enforcement === "hard" ? (
+            <div className="flex flex-col gap-2">
+              <Label
+                className="type-label-14 text-muted-foreground"
+                htmlFor={blockId}
+              >
+                Block threshold (% of budget)
+              </Label>
+              <div>
+                <Input
+                  aria-describedby={
+                    blockError && shows("block")
+                      ? `${blockId}-error`
+                      : undefined
+                  }
+                  aria-invalid={blockError !== null && shows("block")}
+                  autoComplete="off"
+                  className="type-mono-14"
+                  id={blockId}
+                  max={100}
+                  min={1}
+                  onBlur={() => touch("block")}
+                  onChange={(e) => setBlock(e.target.value)}
+                  step={1}
+                  type="number"
+                  value={block}
+                />
+                {blockError && shows("block") ? (
+                  <FieldError className="mt-2" id={`${blockId}-error`}>
+                    {blockError}
+                  </FieldError>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </DialogScrollBody>
 
