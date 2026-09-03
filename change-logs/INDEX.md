@@ -40,6 +40,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Archived teams have no budget
 - Fresh teams read zero savings, no zero-delta chips
 - Development team, 1 s skeleton theatre
+- Role switch snaps to Admin off Enterprise, member subtitle, placeholder
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 

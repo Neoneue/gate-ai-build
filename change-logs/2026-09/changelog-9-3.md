@@ -291,3 +291,11 @@ Security hero drops the org "+22.4%" chip at 0 events. Test in
 
 Seed team "Platform" renamed "Development" (id unchanged).
 `TEAMS_LOADING_THEATRE_MS` 2000 -> 1000 (user: "this takes too long at 2").
+
+### Role switch snaps to Admin off Enterprise, member subtitle, placeholder `311a200`
+
+`DashboardChrome.tsx` resets `viewRole` to admin when the workspace is not
+Enterprise, so Manager / Member gating never leaks onto Default, Free or Pro.
+Member team page subtitle reads "Members and usage for this team." (no keys
+or budget for that role). Create-team placeholder "e.g. Platform" -> "e.g.
+Data science" after the Development rename.
