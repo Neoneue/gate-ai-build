@@ -317,3 +317,13 @@ on Kira's openclaw / nova-chat, cnv_orion_70 and cnv_lyra_92 on Mateus's
 hermes-agent / atlas-eval; every conversation sits on one owner's keys,
 Security rows follow. BYOK conversations read "—" for cost (26 metered rows,
 `pricing.test.ts`). Org roll-ups unchanged (`view-scope.test.ts`).
+
+### No org delta chips on scoped KPIs `9235958`
+
+User: "how could she be up for the delta when she never spent money?" The
+delta chips on Activity (KPI_DATA per range), Conversations (+6.4% / +1.8 /
+-3.1%), Overview strip (+8.2% / +8.7% / +22.4%), the Security hero (+22.4%)
+and the Messages hero (view.delta) are hardcoded ORG rates. A scoped
+Manager / Member has no canon rate, so the chip (and its note) is dropped
+for them on every one of those tiles; Admin unchanged. Same class as the
+zero-tile chips fixed in `4af3d2c`.

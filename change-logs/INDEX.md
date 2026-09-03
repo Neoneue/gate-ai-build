@@ -42,6 +42,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Development team, 1 s skeleton theatre
 - Role switch snaps to Admin off Enterprise, member subtitle, placeholder
 - Manager / Member read their own keys on every org-wide page
+- No org delta chips on scoped KPIs
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
