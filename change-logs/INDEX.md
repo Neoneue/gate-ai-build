@@ -27,6 +27,12 @@ tokens; this index exists so nothing has to glob the directory.
 - Archived teams drill in read-only
 - Org-level Settings tab and the lock cascade
 - Enterprise "My policies" and "My token savings" pages
+- "Viewing as" role switch (Admin / Manager), Enterprise only
+- Audit trail records settings changes
+- Archived team: controls hidden
+- Messages: budget-blocked 429 row
+- Default workspace: no forced settings
+- Team-manager view, scaffold (in progress)
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 

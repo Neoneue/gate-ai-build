@@ -59,6 +59,15 @@ and product names (Gate Connect, Claude Code, Google Vertex, Ask Gatekeeper,
 Open Explorer, people) unchanged. A regex sweep over JSX text and title /
 label / heading props found no other Title Case UI strings.
 
+### "Viewing as" role switch (Admin / Manager), Enterprise only `d0cb23d`
+
+New `ViewRoleSwitch` (`src/components/ui/view-role-switch.tsx`), a `sm`
+Select right of the workspace switcher in the top bar on `-enterprise`
+routes only. Defaults to Admin view, so nothing on the site changes until
+it is flipped. Backed by `viewRole` in `teams-store.ts`; Admin is the seeded
+owner (Chad Ponticas), Manager is Kira Tan (Platform). No Member option:
+the PRD gives members no Teams surface. AG-695 item 8, IN PROGRESS.
+
 ## Components
 
 ### Segmented gains `disabled` `1cb0150`
@@ -153,6 +162,60 @@ the ORG values disabled, a blue Callout "Locked by your organization. These
 settings are set by an org admin and can't be changed here." above each
 block, and the team lock card disables with "Locked by your organization"
 copy. Team lock is a row field (`TeamRow.locked`).
+
+### Audit trail records settings changes `d0cb23d`
+
+AG-624 AC "Setting changes are recorded in the audit log." New
+`src/data/audit-trail-store.ts` holds the seeded rows plus every entry
+written this session; the Audit trail page reads the union. Org lock /
+unlock, org policy and token savings edits, team lock / policy / savings
+edits each append an AUDIT row ("Org settings locked", 'Team "Platform"
+policy "Prompt injection detection" updated', "Org token savings: Caching
+disabled"), actor = the signed-in user, real timestamp, 64-hex fingerprint.
+My settings writes are not logged (they force nothing).
+
+### Archived team: controls hidden `d0cb23d`
+
+Before: Add member, the role select, the remove X and Set / Edit budget
+rendered on an archived team with no-op handlers. After: hidden via an
+`archived` prop on MembersPane and BudgetPane; the role column reads
+"Manager" / "Member" as text. The frozen snapshot is a record, not a roster.
+
+### Messages: budget-blocked 429 row `d0cb23d`
+
+PRD §3 Hard-budget block: "a distinct budget error identifying it as a team
+or org budget block." When a team's HARD budget is over its cap, the Messages
+list leads with one live row per blocking team
+(`src/pages/requests/budget-block-rows.ts`): status error + guardrail block
+(existing badges), code 429, key = the team's first key, model = that key's
+last model, user message "Update our data-model.md with our changes". The
+detail page shows the message plus an Error detail card: 'Team budget block.
+"Platform" has used $x of its $y monthly cap, so the gateway refused this
+message before it reached the provider. Resets on the 1st of each month.'
+Derived from the teams store, so lowering a hard cap on the Teams page makes
+it appear; the seed shows none. Day / time take the newest seeded row's
+authored shape (a pre-shifted date crashed the table: fixed same day). Hero
+KPIs do not count it. Tests in `budget-block-rows.test.ts`.
+
+### Default workspace: no forced settings `d0cb23d`
+
+Default is the Free plan. `/teams-default` has no org Settings tab;
+`/teams-default/:teamId` Settings shows General only (rename / delete), no
+lock card, no Policies, no Token savings. `TeamsEnterprise` takes
+`variant`; `TeamsDefault` passes `"default"`.
+
+### Team-manager view, scaffold (in progress) `d0cb23d`
+
+With the switch on Manager: sidebar = the member surfaces plus Teams
+(`ENTERPRISE_MANAGER_SIDEBAR_SECTIONS`; hides Audit trail, Limits, Members,
+Billing — Audit trail is to be RESTORED, user 2026-09-03: anyone in the org
+sees it); `/teams-enterprise` redirects to the manager's team; the team page
+has no back link and another team's URL redirects to their own; Budget is
+read-only (no Set / Edit); Settings is read-only (no rename / delete / lock
+card, Policies + Token savings disabled under "Read-only. Team settings are
+managed by an org admin."); Members keeps add / remove, role select reads as
+text. STILL TO DO: restore Audit trail, hide the Settings page's Delete
+organization card for a manager, checklist item 8.
 
 ### Enterprise "My policies" and "My token savings" pages `1cb0150`
 
