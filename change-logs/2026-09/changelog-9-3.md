@@ -327,3 +327,14 @@ and the Messages hero (view.delta) are hardcoded ORG rates. A scoped
 Manager / Member has no canon rate, so the chip (and its note) is dropped
 for them on every one of those tiles; Admin unchanged. Same class as the
 zero-tile chips fixed in `4af3d2c`.
+
+### Members have no Teams surface `259e400`
+
+Confirmed 2026-09-03: a Member does not see Teams at all (PRD 8.4 gives
+team read access to the manager role only). New
+`ENTERPRISE_MEMBER_SIDEBAR_SECTIONS` in `nav-sections.ts` hides Teams on top
+of Members and Billing; `DashboardChrome` picks it for the member role.
+`/teams*` and `/teams*/:teamId` bounce a Member to the workspace's Overview
+(`overviewPathFor` in `lib/plan.ts`). Manager unchanged: own team,
+read-only budget and settings. Supersedes the earlier read-only member team
+page (`a739f50`); that code path is now unreachable and left in place.
