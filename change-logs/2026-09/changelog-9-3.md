@@ -338,3 +338,13 @@ of Members and Billing; `DashboardChrome` picks it for the member role.
 (`overviewPathFor` in `lib/plan.ts`). Manager unchanged: own team,
 read-only budget and settings. Supersedes the earlier read-only member team
 page (`a739f50`); that code path is now unreachable and left in place.
+
+### One model per conversation `174cb68`
+
+User: "most conversations / sessions only use 1 model". Five conversations
+ran 3 or 4 models each; 19 request rows re-modelled to the conversation's
+dominant model (lyra -> Haiku 4.5, vela -> Sonnet 5, skylark -> Kimi K2
+Thinking, polaris -> Gemini 3.1 Pro); cnv_orion_70 is the one exception at
+two (Opus 4.7 + Gemini 3.1 Pro). 8 row costs and 3 seed costs re-derived
+from `costOf`; seed `vendors` / `models` follow the rows. The Models cell
+on Conversations now shows one avatar (two on orion).
