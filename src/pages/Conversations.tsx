@@ -326,7 +326,7 @@ function KpiRail({
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
-        delta="+6.4%"
+        delta={scope.scoped ? undefined : "+6.4%"}
         flat
         spark={
           <CompactSpark
@@ -341,7 +341,7 @@ function KpiRail({
         value={conversationsValue}
       />
       <CompactKpi
-        delta="+1.8"
+        delta={scope.scoped ? undefined : "+1.8"}
         flat
         spark={
           <CompactSpark
@@ -356,7 +356,7 @@ function KpiRail({
         value={avgTurns.toFixed(1)}
       />
       <CompactKpi
-        delta="-3.1%"
+        delta={scope.scoped ? undefined : "-3.1%"}
         deltaInverted
         flat
         spark={

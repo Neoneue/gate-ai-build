@@ -52,7 +52,9 @@ export function HeroMetricCard() {
             <HeroNumeric size="lg">
               {formatCompactCount(view.total)}
             </HeroNumeric>
-            <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />
+            {scope.scoped ? null : (
+              <DeltaTag delta={view.delta} note={view.deltaNote} size="md" />
+            )}
           </div>
         </div>
 

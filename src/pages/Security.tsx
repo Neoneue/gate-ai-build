@@ -103,7 +103,7 @@ function HeroMetricCard({
             tab's hero. */}
         <div className="flex items-baseline gap-4">
           <HeroNumeric size="lg">{formatCompactCount(total)}</HeroNumeric>
-          <DeltaTag delta="+22.4%" note={note} size="md" />
+          {scoped ? null : <DeltaTag delta="+22.4%" note={note} size="md" />}
         </div>
       </div>
 

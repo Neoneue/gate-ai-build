@@ -629,7 +629,7 @@ function TokenSavingsStrip() {
   return (
     <KpiRail columns={3}>
       <CompactKpi
-        delta="+8.2%"
+        delta={own ? undefined : "+8.2%"}
         deltaNote="vs last week"
         flat
         spark={
@@ -647,7 +647,7 @@ function TokenSavingsStrip() {
         value={formatCompactCount(requests)}
       />
       <CompactKpi
-        delta="+8.7%"
+        delta={own ? undefined : "+8.7%"}
         deltaNote="vs last week"
         flat
         spark={
@@ -663,7 +663,7 @@ function TokenSavingsStrip() {
         value={`${(savedRate * 100).toFixed(1)}%`}
       />
       <CompactKpi
-        delta="+22.4%"
+        delta={own ? undefined : "+22.4%"}
         deltaInverted
         deltaNote="vs last week"
         flat

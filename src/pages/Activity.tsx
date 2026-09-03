@@ -296,7 +296,7 @@ function KpiRail({
   return (
     <KpiRailShell columns={3}>
       <CompactKpi
-        delta={k.spend.delta}
+        delta={scope.scoped ? undefined : k.spend.delta}
         deltaNote={note}
         flat
         spark={
@@ -312,7 +312,7 @@ function KpiRail({
         value={k.spend.value}
       />
       <CompactKpi
-        delta={k.requests.delta}
+        delta={scope.scoped ? undefined : k.requests.delta}
         deltaNote={note}
         flat
         spark={
@@ -328,7 +328,7 @@ function KpiRail({
         value={k.requests.value}
       />
       <CompactKpi
-        delta={k.tokens.delta}
+        delta={scope.scoped ? undefined : k.tokens.delta}
         deltaNote={note}
         flat
         spark={
