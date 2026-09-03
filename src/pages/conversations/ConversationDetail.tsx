@@ -406,7 +406,7 @@ export function ConversationDetailBody({
                         size="sm"
                         type="button"
                       >
-                        View Request
+                        View request
                         <ExternalLink aria-hidden data-icon="inline-end" />
                       </Button>
                     </div>
@@ -480,7 +480,7 @@ export function ConversationDetailBody({
                         size="sm"
                         type="button"
                       >
-                        View Request
+                        View request
                         <ExternalLink aria-hidden data-icon="inline-end" />
                       </Button>
                     </div>
@@ -554,7 +554,7 @@ export function ConversationDetailBody({
                           size="sm"
                           type="button"
                         >
-                          View Request
+                          View request
                           <ExternalLink aria-hidden data-icon="inline-end" />
                         </Button>
                       </div>
@@ -596,11 +596,11 @@ function ConversationKpiRail({ row }: { row: ConversationRow }) {
         value={formatCompactCount(view.turns)}
       />
       <ConversationKpiTile
-        label="Tokens In"
+        label="Tokens in"
         value={formatCompactCount(toRawInt(view.inTokens))}
       />
       <ConversationKpiTile
-        label="Tokens Out"
+        label="Tokens out"
         value={formatCompactCount(toRawInt(view.outTokens))}
       />
       <ConversationKpiTile label="Cost" value={view.cost} />

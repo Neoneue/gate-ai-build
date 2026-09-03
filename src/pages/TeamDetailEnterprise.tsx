@@ -874,7 +874,7 @@ function UsagePane({
                 valueFormatter={(v) => fmtUsd(v)}
               />
             }
-            title="Total Spend"
+            title="Total spend"
             value={formatCurrency(scaled.spend)}
           />
           <CompactKpi
@@ -889,7 +889,7 @@ function UsagePane({
                 valueFormatter={(v) => fmtInt(Math.round(v))}
               />
             }
-            title="Total Messages"
+            title="Total messages"
             value={formatCompactCount(scaled.requests)}
           />
           <CompactKpi
@@ -904,7 +904,7 @@ function UsagePane({
                 valueFormatter={(v) => fmtTokens(Math.round(v))}
               />
             }
-            title="Tokens Used"
+            title="Tokens used"
             value={formatCompactCount(scaled.tokens)}
           />
         </KpiRail>

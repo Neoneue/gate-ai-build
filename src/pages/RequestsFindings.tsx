@@ -44,7 +44,7 @@ export function RequestsFindings() {
             size="sm"
             type="button"
           >
-            View Conversation
+            View conversation
             <ExternalLink aria-hidden data-icon="inline-end" />
           </Button>
         )}

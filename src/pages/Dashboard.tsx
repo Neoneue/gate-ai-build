@@ -145,7 +145,7 @@ export function Dashboard() {
     >
       <PageHeader />
       <div className="flex flex-col gap-4">
-        <SectionTitle as="h2">Activity This Week</SectionTitle>
+        <SectionTitle as="h2">Activity this week</SectionTitle>
         <TokenSavingsStrip />
         <OverviewUsageChart />
       </div>

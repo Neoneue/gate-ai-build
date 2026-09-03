@@ -326,7 +326,7 @@ function KpiRail({
             valueFormatter={(v) => v.toFixed(1)}
           />
         }
-        title="Avg Turns"
+        title="Avg turns"
         value="14.2"
       />
       <CompactKpi
@@ -343,7 +343,7 @@ function KpiRail({
             valueFormatter={(v) => `$${v.toFixed(3)}`}
           />
         }
-        title="Avg Cost / Conv"
+        title="Avg cost / conv"
         value={`$${AVG_COST_PER_CONVERSATION.toFixed(3)}`}
       />
     </KpiRailShell>

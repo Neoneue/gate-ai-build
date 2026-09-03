@@ -295,7 +295,7 @@ function KpiRail({
             valueFormatter={(v) => fmtUsd(v)}
           />
         }
-        title="Total Spend"
+        title="Total spend"
         value={k.spend.value}
       />
       <CompactKpi
@@ -311,7 +311,7 @@ function KpiRail({
             valueFormatter={(v) => fmtInt(Math.round(v))}
           />
         }
-        title="Total Messages"
+        title="Total messages"
         value={k.requests.value}
       />
       <CompactKpi
@@ -327,7 +327,7 @@ function KpiRail({
             valueFormatter={(v) => fmtTokens(Math.round(v))}
           />
         }
-        title="Tokens Used"
+        title="Tokens used"
         value={k.tokens.value}
       />
     </KpiRailShell>

@@ -1239,11 +1239,11 @@ function KpiRail({ row }: { row: RequestRow }) {
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile
-        label="Tokens In"
+        label="Tokens in"
         value={formatCompactCount(toRawInt(row.inTokens))}
       />
       <KpiTile
-        label="Tokens Out"
+        label="Tokens out"
         value={formatCompactCount(toRawInt(row.outTokens))}
       />
       <KpiTile label="Compression" value={compressionValue(row)} />
