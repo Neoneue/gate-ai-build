@@ -1011,6 +1011,29 @@ the loop; two copies that can disagree is exactly the failure this replaced.
 
 ---
 
+### 5.5 View scope: Manager / Member read their own keys (added 2026-09-03)
+
+`src/pages/teams/view-scope.ts` is the one place the role rule lives.
+`useViewScope()` returns `{ role, userId, scoped, keyNames, ownTeam,
+managedTeam, requestShare }`. Admin is unscoped (`keyNames === null`). A
+Manager or Member is scoped to the keys they own (`API_KEY_SEED_ROWS.ownerId`,
+revoked included: history stays theirs). `ownTeam` is a virtual one-person
+`TeamRow`, so `usageForTeam`, `securityForTeamAtRange` and friends read a
+person exactly as they read a team. `requestShare` (their share of 7d
+requests on `API_KEY_ROWS`) scales org canon totals that are not row-derived
+(Messages hero, Conversations count). `scopedUsageTotals(names)` in
+`activity-data.ts` gives per-dimension spend / token totals for a key set; a
+BYOK key's model cells are its Messages rows' model mix applied to its
+authored 7d tokens at $0 (no provider series). `teams/scoped-security.ts`:
+Manager reads the managed team's share of the Security canon (PRD 8.4, with
+a by-user filter on the events table), Member their own.
+
+Attribution is by key (PRD 3): every conversation sits on ONE owner's keys
+(`initiator` names it) and Security rows follow their conversation's key.
+Kira: cnv_skylark_18 (openclaw), cnv_polaris_55 (nova-chat). Mateus:
+cnv_orion_70 (hermes-agent), cnv_lyra_92 (atlas-eval). Chad keeps
+cnv_7a3f9e2b, aurora, meridian, vela. Pinned in `view-scope.test.ts`.
+
 ## 6. Page Inventory
 
 ### Overview page (`/overview` → `Dashboard.tsx`)

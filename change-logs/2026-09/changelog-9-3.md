@@ -299,3 +299,21 @@ Enterprise, so Manager / Member gating never leaks onto Default, Free or Pro.
 Member team page subtitle reads "Members and usage for this team." (no keys
 or budget for that role). Create-team placeholder "e.g. Platform" -> "e.g.
 Data science" after the Development rename.
+
+### Manager / Member read their own keys on every org-wide page `468b898`
+
+PRD 3 "Managers use the product too", 8.4, 11. New `teams/view-scope.ts`:
+one `useViewScope()` per page (role, own key names from
+`API_KEY_SEED_ROWS.ownerId`, a virtual one-person team, the user's share of
+7d requests). Admin is unscoped. Overview KPIs, chart and the three preview
+tables; Activity KPI rail, trend chart, Top cards and the keys table;
+Messages rows, key dropdown and hero; Conversations rows, key dropdown and
+KPIs; API keys list (and a new key is owned by the signed-in user) all read
+the viewer's own keys. Security: Manager reads Development's users (team
+share of the canon, `teams/scoped-security.ts`) with a new User select in
+the Filters dialog; Member reads their own keys. Models stays the read-only
+catalog. Data prereq `677e8b7`: cnv_skylark_18 and cnv_polaris_55 now run
+on Kira's openclaw / nova-chat, cnv_orion_70 and cnv_lyra_92 on Mateus's
+hermes-agent / atlas-eval; every conversation sits on one owner's keys,
+Security rows follow. BYOK conversations read "—" for cost (26 metered rows,
+`pricing.test.ts`). Org roll-ups unchanged (`view-scope.test.ts`).
