@@ -360,3 +360,14 @@ policies" / "My token savings" item labels are dropped: the section says
 whose they are now, so Pro and Enterprise read the same. Limits moves to
 Workspace after Activity: an admin's org-wide caps are not a personal
 setting. `nav-sections.ts`, `data-model.md` sidebar table.
+
+### Block threshold field restored on hard budgets `2f906bd`
+
+PRD 3 / 8.2 / 11: budgets carry warn AND block thresholds ("warn at 80%,
+block at 100%"). The field was removed 2026-09-02 (`9eafff4`) and is back on
+the PRD gut-check: "Block threshold (% of budget)" under the warn field,
+hard budgets only, whole number 1 to 100 and above the warn value ("Block
+must be above the warn threshold."), blur-gated error like the other
+fields, Save disabled while invalid. Saved value flows to `blockThreshold`;
+the Budget tab "Block at" fact and the breach banner already read it.
+`src/pages/teams/dialogs.tsx`.

@@ -46,6 +46,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Members have no Teams surface
 - One model per conversation
 - Sidebar: "Manage" is "My settings", Limits moves to Workspace
+- Block threshold field restored on hard budgets
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
