@@ -17,7 +17,8 @@ import { DeltaTag } from "@/components/ui/compact-kpi";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { StatusDot } from "@/components/ui/status-dot";
 import { formatCompactCount } from "@/lib/formatters";
-import { buildCustomHeroView, HERO_VIEWS } from "./hero-data";
+import { useViewScope } from "@/pages/teams/view-scope";
+import { buildCustomHeroView, HERO_VIEWS, scaleHeroView } from "./hero-data";
 import { useCustomRange, useRange } from "./range-store";
 import type { HeroView } from "./types";
 
@@ -31,7 +32,11 @@ export function HeroMetricCard() {
     () => buildCustomHeroView(customRange),
     [customRange]
   );
-  const view = range === "custom" ? customView : HERO_VIEWS[range];
+  const scope = useViewScope();
+  const view = scaleHeroView(
+    range === "custom" ? customView : HERO_VIEWS[range],
+    scope.requestShare
+  );
   const config = {
     requests: {
       label: view.bucketLabel,

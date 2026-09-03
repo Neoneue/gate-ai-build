@@ -45,13 +45,13 @@ import {
   OTHERS_KEY,
   rankChartSeries,
   SAVINGS_RATES_7D,
-  SPEND_TOTALS_7D,
   savingsCurve,
   savingsRateFor,
+  scopedUsageTotals,
   seriesColor,
   splitAcrossBuckets,
-  TOKENS_TOTALS_7D,
 } from "@/pages/activity-data";
+import { useViewScope } from "@/pages/teams/view-scope";
 import {
   aggregateBuckets,
   fmtTokens,
@@ -201,6 +201,12 @@ export function TrendCard({
   const [metric, setMetric] = useState<TrendMetric>("tokens");
   const isSpend = metric === "spend";
   const isSavings = metric === "savings";
+  // Managers and members chart their own keys' workload (view-scope.ts).
+  const scope = useViewScope();
+  const { spend: spendTotals, tokens: tokenTotals7d } = useMemo(
+    () => scopedUsageTotals(scope.keyNames),
+    [scope]
+  );
 
   /** Bar density keys off the CONTENT COLUMN's width, not the viewport: the
    *  Ask AI panel and the nav rail both narrow this column while the viewport
@@ -221,7 +227,7 @@ export function TrendCard({
     const count = fullCount;
     const labels = getRangeLabels(range, customRange);
     const scale = effectiveScale(range, customRange);
-    const totals = (isSpend ? SPEND_TOTALS_7D : TOKENS_TOTALS_7D)[dimension];
+    const totals = (isSpend ? spendTotals : tokenTotals7d)[dimension];
 
     // Range-aware base seed so ranges with matching bucket counts don't
     // produce identical shapes. Deliberately NOT combined with a per-series
@@ -246,7 +252,7 @@ export function TrendCard({
     // to the bucket total — a high-saving series carries more of the stack
     // than its token share alone.
     if (isSavings) {
-      const tokenTotals = TOKENS_TOTALS_7D[dimension];
+      const tokenTotals = tokenTotals7d[dimension];
       const rates = SAVINGS_RATES_7D[dimension];
       const weights: Record<string, number> = {};
       for (const [key, tokens7d] of Object.entries(tokenTotals)) {
@@ -290,7 +296,16 @@ export function TrendCard({
       }
       return row;
     });
-  }, [dimension, range, customRange, isSpend, isSavings, fullCount]);
+  }, [
+    dimension,
+    range,
+    customRange,
+    isSpend,
+    isSavings,
+    fullCount,
+    spendTotals,
+    tokenTotals7d,
+  ]);
 
   /** What the chart actually draws: `fullRows` folded down to the bar count
    *  this column width can render legibly. `groupSize === 1` returns fullRows
@@ -366,7 +381,7 @@ export function TrendCard({
     const factor =
       (savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D) * 100;
     const rates = SAVINGS_RATES_7D[dimension];
-    const tokenTotals = TOKENS_TOTALS_7D[dimension];
+    const tokenTotals = tokenTotals7d[dimension];
     const named = new Set(cappedSeries.map((s) => s.key));
     const out: Record<string, number> = {};
     let overflowTokens = 0;
@@ -383,7 +398,7 @@ export function TrendCard({
       out[OTHERS_KEY] = (overflowWeighted / overflowTokens) * factor;
     }
     return out;
-  }, [isSavings, dimension, range, customRange, cappedSeries]);
+  }, [isSavings, dimension, range, customRange, cappedSeries, tokenTotals7d]);
 
   // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
   // use fmtTokens directly under the tokens metric so the axis reads in

@@ -53,6 +53,13 @@ import {
 import { ConversationDetailDialog } from "./conversations/ConversationDetail";
 import { MODEL_FILTER_OPTIONS } from "./conversations/data";
 import type { ConversationRow } from "./conversations/types";
+import { inScope, useViewScope, type ViewScope } from "./teams/view-scope";
+
+/** The conversations the signed-in user may read: Admin every one, a
+ *  Manager or Member those their own keys initiated (view-scope.ts). */
+function scopedSeeds(scope: ViewScope): ConversationRow[] {
+  return CONVERSATION_ROWS.filter((c) => inScope(scope, c.initiator));
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-014 — Conversations (Observability)
@@ -118,12 +125,12 @@ const AVG_COST_PER_CONVERSATION = avgCostPerConversation(
  *  land on the same terminal point. Rescale so that terminal point IS the
  *  derived KPI: the sparkline's last dot and the number beside it are the same
  *  fact, and a reader hovering the tile cannot be shown two different answers. */
-function avgCostSeries(shape: number[]): number[] {
+function avgCostSeries(shape: number[], avgCost: number): number[] {
   const last = shape.at(-1) ?? 0;
   if (last === 0) {
     return shape;
   }
-  return shape.map((v) => (v / last) * AVG_COST_PER_CONVERSATION);
+  return shape.map((v) => (v / last) * avgCost);
 }
 
 function sparkDates(range: Range, customRange: CustomRange | null): string[] {
@@ -287,10 +294,29 @@ function KpiRail({
   range: Range;
   customRange: CustomRange | null;
 }) {
+  const scope = useViewScope();
   const conversationsTotal = Math.round(
-    100 * effectiveScale(range, customRange)
+    CONVERSATIONS_TOTAL *
+      scope.requestShare *
+      effectiveScale(range, customRange)
   );
   const conversationsValue = formatCompactCount(conversationsTotal);
+  // Admin reads the org canon; a scoped user reads their own conversations'
+  // arithmetic (mean turns, mean metered cost), so the tiles and the table
+  // below describe the same rows.
+  const own = scope.scoped
+    ? scopedSeeds(scope).map((seed) =>
+        getConversationView(seed, REQUEST_ROWS_ALL)
+      )
+    : null;
+  const avgTurns = own
+    ? own.length === 0
+      ? 0
+      : own.reduce((a, v) => a + v.turns, 0) / own.length
+    : 14.2;
+  const avgCost = own
+    ? avgCostPerConversation(scopedSeeds(scope), REQUEST_ROWS_ALL)
+    : AVG_COST_PER_CONVERSATION;
   const spark = SPARK[range];
   const sparkLabels = sparkDates(range, customRange);
   const conversationsSpark = distributeTotal(
@@ -327,7 +353,7 @@ function KpiRail({
           />
         }
         title="Avg turns"
-        value="14.2"
+        value={avgTurns.toFixed(1)}
       />
       <CompactKpi
         delta="-3.1%"
@@ -336,7 +362,7 @@ function KpiRail({
         spark={
           <CompactSpark
             colorVar="var(--color-chart-1)"
-            data={avgCostSeries(spark.avgCost)}
+            data={avgCostSeries(spark.avgCost, avgCost)}
             endDot
             labels={sparkLabels}
             tooltip
@@ -344,7 +370,7 @@ function KpiRail({
           />
         }
         title="Avg cost / conv"
-        value={`$${AVG_COST_PER_CONVERSATION.toFixed(3)}`}
+        value={`$${avgCost.toFixed(3)}`}
       />
     </KpiRailShell>
   );
@@ -412,6 +438,10 @@ function ConversationsTableSection({
 }) {
   const navigate = useNavigate();
   const scale = effectiveScale(range, customRange);
+  const scope = useViewScope();
+  const keyOptions = scope.keyNames
+    ? [...scope.keyNames]
+    : ["prod-web", "prod-agent", "test-key"];
   const [keyId, setKeyId] = useState("all");
   const [model, setModel] = useState("all");
   const [page, setPage] = useState(1);
@@ -420,10 +450,10 @@ function ConversationsTableSection({
   const { sort, toggle: toggleSort } = useTableSort();
   const viewRows = useMemo(
     () =>
-      CONVERSATION_ROWS.map((seed) =>
+      scopedSeeds(scope).map((seed) =>
         getConversationView(seed, REQUEST_ROWS_ALL)
       ),
-    []
+    [scope]
   );
   const filteredRows = useMemo(
     () =>
@@ -445,7 +475,7 @@ function ConversationsTableSection({
   );
   const paginationTotal = isFiltered
     ? visibleRows.length
-    : Math.round(CONVERSATIONS_TOTAL * scale);
+    : Math.round(CONVERSATIONS_TOTAL * scope.requestShare * scale);
   const isEmpty = visibleRows.length === 0;
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
@@ -510,9 +540,11 @@ function ConversationsTableSection({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All keys</SelectItem>
-                <SelectItem value="prod-web">prod-web</SelectItem>
-                <SelectItem value="prod-agent">prod-agent</SelectItem>
-                <SelectItem value="test-key">test-key</SelectItem>
+                {keyOptions.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {k}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select onValueChange={setModel} value={model}>

@@ -53,6 +53,7 @@ import {
   requestRowId,
 } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { inScope, useViewScope } from "@/pages/teams/view-scope";
 import { useBudgetBlockRows } from "./budget-block-rows";
 import {
   conversationTitle,
@@ -97,10 +98,27 @@ export function RequestsTableSection({
   // Budget-blocked messages (PRD §3) lead the list on every range: they
   // are "now", derived live from the teams store, one per blocking team.
   const blockRows = useBudgetBlockRows();
+  // Managers and members read their own keys' messages (view-scope.ts);
+  // Admin reads the org.
+  const scope = useViewScope();
   const rows = useMemo(
-    () => [...blockRows, ...(RANGE_ROWS[range] ?? REQUEST_ROWS_ALL)],
-    [blockRows, range]
+    () =>
+      [...blockRows, ...(RANGE_ROWS[range] ?? REQUEST_ROWS_ALL)].filter((r) =>
+        inScope(scope, r.keyId)
+      ),
+    [blockRows, range, scope]
   );
+  const keyOptions = scope.keyNames
+    ? [...scope.keyNames]
+    : [
+        "prod-web",
+        "prod-agent",
+        "development",
+        "openclaw",
+        "hermes-agent",
+        "nova-chat",
+        "test-key",
+      ];
   const [model, setModel] = useState("all");
   const [keyId, setKeyId] = useState("all");
   // Response + guardrail filters are independent (split out of the single
@@ -338,13 +356,11 @@ export function RequestsTableSection({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All keys</SelectItem>
-                    <SelectItem value="prod-web">prod-web</SelectItem>
-                    <SelectItem value="prod-agent">prod-agent</SelectItem>
-                    <SelectItem value="development">development</SelectItem>
-                    <SelectItem value="openclaw">openclaw</SelectItem>
-                    <SelectItem value="hermes-agent">hermes-agent</SelectItem>
-                    <SelectItem value="nova-chat">nova-chat</SelectItem>
-                    <SelectItem value="test-key">test-key</SelectItem>
+                    {keyOptions.map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {k}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -43,6 +43,7 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { randomHex } from "@/lib/utils";
 import { ConnectTabs } from "@/pages/DashboardDefault";
+import { currentUserId, useViewRole } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * API Keys page (route: /api-keys, sidebar: "API Keys")
@@ -97,6 +98,13 @@ export function ApiKeys() {
   // TEMP PREVIEW SEED — lives in src/data/api-keys.ts (shared with the
   // notifications feed). Replace with `[]` to exercise the empty state.
   const [keys, setKeys] = useState<ApiKeyRow[]>(API_KEY_SEED_ROWS);
+  // Managers and members see and mint their OWN keys (PRD 3: regular users;
+  // attribution is by key owner). Admin sees the org's.
+  const viewRole = useViewRole();
+  const ownKeys =
+    viewRole === "admin"
+      ? keys
+      : keys.filter((k) => k.ownerId === currentUserId());
   const handleCreate = (input: { name: string }) => {
     const suffix = randomHex(4);
     const idCore = randomHex(8);
@@ -108,7 +116,7 @@ export function ApiKeys() {
       name: input.name.trim(),
       masked: `sk-gw-…${suffix}`,
       // The signed-in user mints the key, so they own it.
-      ownerId: "usr_chad",
+      ownerId: currentUserId(),
       // Zero-volume sparkline for a freshly-created key — no traffic yet.
       requests7d: [0, 0, 0, 0, 0, 0, 0],
       createdAt: new Date(),
@@ -125,8 +133,8 @@ export function ApiKeys() {
     );
   };
 
-  const activeKeys = keys.filter((k) => !k.revoked);
-  const revokedKeys = keys.filter((k) => k.revoked);
+  const activeKeys = ownKeys.filter((k) => !k.revoked);
+  const revokedKeys = ownKeys.filter((k) => k.revoked);
   const visibleKeys = keyStatus === "active" ? activeKeys : revokedKeys;
 
   return (
@@ -138,9 +146,11 @@ export function ApiKeys() {
     >
       <div className="flex w-full max-w-5xl flex-col gap-6">
         <PageHeader
-          onCreate={keys.length === 0 ? undefined : () => setCreateOpen(true)}
+          onCreate={
+            ownKeys.length === 0 ? undefined : () => setCreateOpen(true)
+          }
         />
-        {keys.length === 0 ? (
+        {ownKeys.length === 0 ? (
           <KeysEmptyState onCreate={() => setCreateOpen(true)} />
         ) : (
           <Tabs

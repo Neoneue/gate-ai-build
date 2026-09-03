@@ -1,6 +1,30 @@
 import { demoAnchorFields } from "@/lib/demo-clock";
 import { formatSparkLabel } from "@/lib/formatters";
+import { scaleByShare } from "@/pages/teams/view-scope";
 import type { CustomRange, HeroView, RangeKey } from "./types";
+
+/** A Manager's or Member's reading of the hero: the org canon allocated by
+ *  their share of request volume (view-scope.ts). Total = success + errors
+ *  still holds, and the trace keeps its shape at the smaller scale. */
+export function scaleHeroView(view: HeroView, share: number): HeroView {
+  if (share === 1) {
+    return view;
+  }
+  const total = scaleByShare(view.total, share);
+  const success = Math.min(total, scaleByShare(view.success, share));
+  const data = view.data.map((d) => ({
+    ...d,
+    requests: scaleByShare(d.requests, share),
+  }));
+  return {
+    ...view,
+    total,
+    success,
+    errors: total - success,
+    data,
+    domainTop: Math.max(...data.map((d) => d.requests), 1) + 1,
+  };
+}
 
 /* ─── Hero metric (REQUESTS / range + line chart + breakdown) ────────────── */
 

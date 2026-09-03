@@ -42,6 +42,9 @@ import {
   RANGE_DELTA_NOTE,
   splitEventMix,
 } from "@/pages/security/events-data";
+import { scopedSecurity } from "@/pages/teams/scoped-security";
+import { useTeams } from "@/pages/teams/teams-store";
+import { useViewScope } from "@/pages/teams/view-scope";
 
 const WHITESPACE_GLOBAL_RE = /\s+/g;
 
@@ -73,7 +76,12 @@ function HeroMetricCard({
   // largest-remainder split onto the 31:14:2 ratio, so blocked + flagged +
   // redacted sum EXACTLY to `total`. Chart, Action categories card, and
   // table "of N" all derive from the same two functions, so they reconcile.
-  const total = eventsTotal(range, customRange);
+  // Manager: their team's share of the canon; Member: their own keys'
+  // (scoped-security.ts). Admin: the org.
+  const scope = useViewScope();
+  const teams = useTeams();
+  const scoped = scopedSecurity(scope, range, customRange, teams);
+  const total = scoped ? scoped.findings : eventsTotal(range, customRange);
   const note = RANGE_DELTA_NOTE[range];
 
   // Chart: total-events trace + date/time axis, driven by the page range.
@@ -356,8 +364,11 @@ function ActionCategoriesCard({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
+  const scope = useViewScope();
+  const teams = useTeams();
+  const scoped = scopedSecurity(scope, range, customRange, teams);
   const { blocked, flagged, redacted } = splitEventMix(
-    eventsTotal(range, customRange)
+    scoped ? scoped.findings : eventsTotal(range, customRange)
   );
   const categories = useMemo<AttackCategory[]>(() => {
     const counts = [blocked, flagged, redacted];
@@ -385,15 +396,23 @@ function AttackCategoriesCard({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
-  const categories = useMemo<AttackCategory[]>(
-    () =>
-      attackTypeCounts(range, customRange).map((c) => ({
-        label: c.label,
-        count: c.count,
-        fill: ATTACK_FILL[c.key as (typeof ATTACK_MIX)[number]["key"]],
-      })),
-    [range, customRange]
-  );
+  const scope = useViewScope();
+  const teams = useTeams();
+  const categories = useMemo<AttackCategory[]>(() => {
+    const scoped = scopedSecurity(scope, range, customRange, teams);
+    const counts = scoped
+      ? scoped.byCategory.map((c) => ({
+          key: c.id,
+          label: c.label,
+          count: c.count,
+        }))
+      : attackTypeCounts(range, customRange);
+    return counts.map((c) => ({
+      label: c.label,
+      count: c.count,
+      fill: ATTACK_FILL[c.key as (typeof ATTACK_MIX)[number]["key"]],
+    }));
+  }, [range, customRange, scope, teams]);
   return (
     <CategoryBreakdownCard
       categories={categories}

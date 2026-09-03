@@ -1,6 +1,7 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
 import { PROVIDER_META } from "@/components/icons/vendor-meta";
 import { costOf, modelById, modelName, type ProviderId } from "@/data/models";
+import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
@@ -1271,3 +1272,93 @@ export const METRIC_OPTIONS: { value: Metric; label: string }[] = [
   { value: "tokens", label: "Tokens" },
   { value: "spend", label: "Spend" },
 ];
+
+/* ─── Scoped usage (view-scope.ts) ────────────────────────────────────────
+ * A Manager or Member reads the workload their OWN keys produced. Gate keys
+ * already have cells in USAGE_7D. A BYOK key has none (the provider billed
+ * it), but its 7d tokens are authored on API_KEY_ROWS and its model mix is on
+ * record in the Messages rows it sent, so its cells are that mix applied to
+ * those tokens at $0. Nothing is invented: every share comes from a real row.
+ * BYOK traffic has no Gate route, so it contributes no provider series. */
+
+export type UsageTotals = Record<Dimension, Record<string, number>>;
+
+/** Not a Gate route: the customer's own provider account. */
+const BYOK_PROVIDER = "byok" as ProviderId;
+
+function byokCellsFor(key: string): UsageCell[] {
+  const row = API_KEY_ROWS.find((r) => r.key === key);
+  if (row?.path !== "BYOK") {
+    return [];
+  }
+  const count = (v: string) =>
+    Number.parseInt(v.replace(/[^0-9]/g, ""), 10) || 0;
+  const perModel = new Map<string, { tokensIn: number; tokensOut: number }>();
+  for (const r of REQUEST_ROWS_ALL) {
+    if (r.keyId !== key) {
+      continue;
+    }
+    const acc = perModel.get(r.model) ?? { tokensIn: 0, tokensOut: 0 };
+    acc.tokensIn += count(r.inTokens);
+    acc.tokensOut += count(r.outTokens);
+    perModel.set(r.model, acc);
+  }
+  const sumIn = [...perModel.values()].reduce((a, m) => a + m.tokensIn, 0) || 1;
+  const sumOut =
+    [...perModel.values()].reduce((a, m) => a + m.tokensOut, 0) || 1;
+  return [...perModel.entries()].map(([model, m]) => {
+    const tokensIn = Math.round((row.tokensIn * m.tokensIn) / sumIn);
+    const tokensOut = Math.round((row.tokensOut * m.tokensOut) / sumOut);
+    return {
+      model,
+      provider: BYOK_PROVIDER,
+      apiKey: key,
+      tokensIn,
+      tokensOut,
+      tokens: tokensIn + tokensOut,
+      spend: 0,
+    };
+  });
+}
+
+export function usageCellsFor(names: Set<string>): UsageCell[] {
+  const gate = USAGE_7D.filter((c) => names.has(c.apiKey));
+  const byok = [...names].flatMap(byokCellsFor);
+  return [...gate, ...byok];
+}
+
+function totalsOf(
+  cells: UsageCell[],
+  metric: (cell: UsageCell) => number,
+  decimals: number
+): UsageTotals {
+  return Object.fromEntries(
+    Object.entries(DIMENSION_KEY).map(([dim, key]) => {
+      const out: Record<string, number> = {};
+      for (const cell of cells) {
+        // BYOK cells carry no Gate route: they sit out of the provider series.
+        if (dim === "provider" && cell.provider === BYOK_PROVIDER) {
+          continue;
+        }
+        out[key(cell)] = (out[key(cell)] ?? 0) + metric(cell);
+      }
+      return [dim, Object.keys(out).length > 0 ? settle(out, decimals) : out];
+    })
+  ) as UsageTotals;
+}
+
+/** Spend and token totals per dimension for the keys in `names`; the org's
+ *  own SPEND_TOTALS_7D / TOKENS_TOTALS_7D when `names` is null. */
+export function scopedUsageTotals(names: Set<string> | null): {
+  spend: UsageTotals;
+  tokens: UsageTotals;
+} {
+  if (names === null) {
+    return { spend: SPEND_TOTALS_7D, tokens: TOKENS_TOTALS_7D };
+  }
+  const cells = usageCellsFor(names);
+  return {
+    spend: totalsOf(cells, cellSpend, 2),
+    tokens: totalsOf(cells, cellTokens, 0),
+  };
+}

@@ -55,7 +55,12 @@ import {
 } from "@/components/ui/table";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { modelName } from "@/data/models";
-import { REQUEST_ROWS_RECENT, requestDayLabel } from "@/data/requests";
+import {
+  REQUEST_ROWS_ALL,
+  REQUEST_ROWS_RECENT,
+  requestDayLabel,
+} from "@/data/requests";
+import { usageForTeam } from "@/data/teams";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_TODAY } from "@/lib/demo-clock";
 import {
@@ -65,18 +70,21 @@ import {
   formatTimestamp,
 } from "@/lib/formatters";
 import {
+  ACTIVITY_SAVINGS_RATE_7D,
+  API_KEY_ROWS,
   type ChartSeries,
   distributeSeries,
   OTHERS_COLOR,
   OTHERS_KEY,
   rankChartSeries,
   SPEND_BASE,
+  scopedUsageTotals,
   seriesColor,
   splitAcrossBuckets,
   TOKEN_SAVINGS_RATE_7D,
-  TOKENS_TOTALS_7D,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_REQUESTS,
+  type UsageTotals,
 } from "@/pages/activity-data";
 import type { ConversationRow } from "@/pages/conversations/types";
 import type { RequestRow } from "@/pages/Requests";
@@ -87,6 +95,14 @@ import {
   parseEventTime,
   TYPE_META,
 } from "@/pages/security-data";
+import { scopedSecurity } from "@/pages/teams/scoped-security";
+import { useTeams } from "@/pages/teams/teams-store";
+import {
+  eventKeyName,
+  inScope,
+  useViewScope,
+  type ViewScope,
+} from "@/pages/teams/view-scope";
 
 const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagged + 5 redacted
 
@@ -192,8 +208,23 @@ function make7dLabels(): string[] {
 const KPI_7D_LABELS = make7dLabels();
 
 function makeStackedSpendRows(
-  dim: Dimension
+  dim: Dimension,
+  scopedSpend: UsageTotals | null
 ): Array<Record<string, number | string>> {
+  // Scoped users have no authored daily spend shape; their 7 buckets are
+  // synthesised from their own totals the way the token rows already are.
+  if (scopedSpend) {
+    const buckets = splitAcrossBuckets(scopedSpend[dim], 7, 77 * 31 + 100);
+    return Array.from({ length: 7 }, (_, i) => {
+      const row: Record<string, number | string> = {
+        date: KPI_7D_LABELS[i] ?? "",
+      };
+      for (const [key, series] of Object.entries(buckets)) {
+        row[key] = series[i] ?? 0;
+      }
+      return row;
+    });
+  }
   return SPEND_BASE[dim].map((row, i) => ({
     date: KPI_7D_LABELS[i] ?? "",
     ...row,
@@ -208,9 +239,10 @@ function makeStackedSpendRows(
  *  switching the dimension selector rewrote every bar height while the KPI
  *  total held still. Fixed 2026-08-03, same as Activity's TrendCard. */
 function makeStackedTokenRows(
-  dim: Dimension
+  dim: Dimension,
+  tokenTotals: UsageTotals
 ): Array<Record<string, number | string>> {
-  const buckets = splitAcrossBuckets(TOKENS_TOTALS_7D[dim], 7, 77 * 31 + 200);
+  const buckets = splitAcrossBuckets(tokenTotals[dim], 7, 77 * 31 + 200);
   return Array.from({ length: 7 }, (_, i) => {
     const row: Record<string, number | string> = {
       date: KPI_7D_LABELS[i] ?? "",
@@ -433,11 +465,13 @@ function OverviewUsageChart() {
   /** Rank by the ACTIVE metric, cap at 6, roll the remainder into Others —
    *  the same selection rule Activity's TrendCard runs, so the two charts
    *  never name different series for the same workload. */
+  const scope = useViewScope();
   const { series, data, seriesTotals } = useMemo(() => {
+    const totals = scopedUsageTotals(scope.keyNames);
     const rows =
       metric === "spend"
-        ? makeStackedSpendRows(dim)
-        : makeStackedTokenRows(dim);
+        ? makeStackedSpendRows(dim, scope.keyNames ? totals.spend : null)
+        : makeStackedTokenRows(dim, totals.tokens);
     const rowTotals: Record<string, number> = {};
     for (const row of rows) {
       for (const [key, value] of Object.entries(row)) {
@@ -452,7 +486,7 @@ function OverviewUsageChart() {
       data: ranked.rows,
       seriesTotals: ranked.totals,
     };
-  }, [metric, dim]);
+  }, [metric, dim, scope]);
 
   const yFormatter = metric === "spend" ? fmtSpend : fmtTokens;
 
@@ -552,7 +586,46 @@ function OverviewUsageChart() {
 
 /* ─── Token savings strip ────────────────────────────────────────────────── */
 
+/** A scoped user's three Overview numbers, from the same derivations the
+ *  team pages use over their one-person team (view-scope.ts). Saved % is the
+ *  Overview canon rate scaled by how the user's keys save against the org
+ *  Activity rate, the way teamSavingsFactors scales a team. */
+function scopedStrip(scope: ViewScope, teams: ReturnType<typeof useTeams>) {
+  if (!(scope.ownTeam && scope.keyNames)) {
+    return null;
+  }
+  const usage = usageForTeam(scope.ownTeam);
+  const own = API_KEY_ROWS.filter((k) => scope.keyNames?.has(k.key));
+  const tokens = own.reduce((a, k) => a + k.tokensIn + k.tokensOut, 0);
+  const weighted = own.reduce(
+    (a, k) => a + k.savings * (k.tokensIn + k.tokensOut),
+    0
+  );
+  const factor = tokens > 0 ? weighted / tokens / ACTIVITY_SAVINGS_RATE_7D : 0;
+  const threats = scopedSecurity(scope, "7d", null, teams)?.findings ?? 0;
+  return {
+    requests: usage.requests,
+    savedRate: TOKEN_SAVINGS_RATE_7D * factor,
+    savedDollars: Math.round(TOKEN_SAVINGS_RATE_7D * factor * usage.spend),
+    threats,
+  };
+}
+
 function TokenSavingsStrip() {
+  const scope = useViewScope();
+  const teams = useTeams();
+  const own = scopedStrip(scope, teams);
+  const requests = own ? own.requests : TOTAL_7D_BASE_REQUESTS;
+  const savedRate = own ? own.savedRate : TOKEN_SAVINGS_RATE_7D;
+  const savedDollars = own ? own.savedDollars : DOLLARS_SAVED_7D;
+  const threats = own ? own.threats : THREATS_DETECTED_COUNT;
+  const requestsSpark = own
+    ? distributeSeries(requests, 7, 77 * 31 + 2)
+    : _REQUESTS_7D_SERIES;
+  const savingsSpark = own
+    ? distributeSeries(savedDollars, 7, 211)
+    : SAVINGS_SPARK;
+  const threatsSpark = own ? distributeSeries(threats, 7, 144) : THREATS_SPARK;
   return (
     <KpiRail columns={3}>
       <CompactKpi
@@ -562,7 +635,7 @@ function TokenSavingsStrip() {
         spark={
           <CompactSpark
             colorVar="var(--color-blue-500)"
-            data={_REQUESTS_7D_SERIES}
+            data={requestsSpark}
             labels={KPI_7D_LABELS}
             tooltip
             valueFormatter={(v) =>
@@ -571,7 +644,7 @@ function TokenSavingsStrip() {
           />
         }
         title="Messages"
-        value={formatCompactCount(TOTAL_7D_BASE_REQUESTS)}
+        value={formatCompactCount(requests)}
       />
       <CompactKpi
         delta="+8.7%"
@@ -580,14 +653,14 @@ function TokenSavingsStrip() {
         spark={
           <CompactSpark
             colorVar="var(--color-success-500)"
-            data={SAVINGS_SPARK}
+            data={savingsSpark}
             labels={KPI_7D_LABELS}
             tooltip
             valueFormatter={(v) => formatCurrency(v)}
           />
         }
         title="Tokens saved"
-        value={`${(TOKEN_SAVINGS_RATE_7D * 100).toFixed(1)}%`}
+        value={`${(savedRate * 100).toFixed(1)}%`}
       />
       <CompactKpi
         delta="+22.4%"
@@ -597,7 +670,7 @@ function TokenSavingsStrip() {
         spark={
           <CompactSpark
             colorVar="var(--color-destructive)"
-            data={THREATS_SPARK}
+            data={threatsSpark}
             labels={KPI_7D_LABELS}
             tooltip
             valueFormatter={(v) =>
@@ -606,7 +679,7 @@ function TokenSavingsStrip() {
           />
         }
         title="Threats detected"
-        value={formatCompactCount(THREATS_DETECTED_COUNT)}
+        value={formatCompactCount(threats)}
       />
     </KpiRail>
   );
@@ -657,7 +730,14 @@ function PreviewCard({
 
 function LatestRequestsTable() {
   const navigate = useNavigate();
-  const rows: RequestRow[] = REQUEST_ROWS_RECENT.slice(0, 5);
+  const scope = useViewScope();
+  // Admin: the trailing-hour anchor rows. A scoped user: their own latest
+  // messages, which may sit further back than the last hour.
+  const rows: RequestRow[] = (
+    scope.scoped
+      ? REQUEST_ROWS_ALL.filter((r) => inScope(scope, r.keyId))
+      : REQUEST_ROWS_RECENT
+  ).slice(0, 5);
 
   return (
     <PreviewCard title="Latest messages" viewAllTo="/messages">
@@ -718,7 +798,10 @@ function LatestRequestsTable() {
 
 function RecentConversationsTable() {
   const navigate = useNavigate();
-  const rows: ConversationRow[] = CONVERSATION_ROWS.slice(0, 5);
+  const scope = useViewScope();
+  const rows: ConversationRow[] = CONVERSATION_ROWS.filter((c) =>
+    inScope(scope, c.initiator)
+  ).slice(0, 5);
 
   return (
     <PreviewCard title="Latest conversations" viewAllTo="/conversations">
@@ -763,7 +846,10 @@ function RecentConversationsTable() {
 
 function SecurityEventsTable() {
   const navigate = useNavigate();
-  const rows: EventRow[] = EVENT_ROWS.slice(0, 5);
+  const scope = useViewScope();
+  const rows: EventRow[] = EVENT_ROWS.filter((e) =>
+    inScope(scope, eventKeyName(e.key))
+  ).slice(0, 5);
 
   return (
     <PreviewCard title="Latest security events" viewAllTo="/security">
