@@ -20,6 +20,7 @@ describe("budgetBlockRows (PRD §3 hard-budget block on Messages)", () => {
         caps: { monthly: 1 },
         enforcement: "hard",
         warnThreshold: 80,
+        notifyAdmins: true,
         blockThreshold: 100,
       },
     };
@@ -46,6 +47,7 @@ describe("budgetBlockRows (PRD §3 hard-budget block on Messages)", () => {
         caps: { monthly: 1 },
         enforcement: "soft",
         warnThreshold: 80,
+        notifyAdmins: true,
         blockThreshold: 100,
       },
     };

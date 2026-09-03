@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   BUDGET_ENFORCEMENT_LABEL,
   BUDGET_HARD_ENFORCEMENT_HELP,
@@ -260,6 +261,14 @@ function BudgetBody({
   const [block, setBlock] = useState(
     String(budget?.blockThreshold ?? DEFAULT_BLOCK_THRESHOLD)
   );
+  // Per-budget opt-out for the warning alert's admin copies (PRD 8.2 budget
+  // alert recipients; CTO 2026-09-03). Applies to every window of the budget,
+  // and only to a SOFT one: a hard budget blocks traffic, and a block is
+  // never optional. The manager is always alerted, and the warning badge and
+  // amber bar are unaffected — this changes WHO hears, not WHETHER it shows.
+  const [notifyAdmins, setNotifyAdmins] = useState(
+    budget?.notifyAdmins ?? true
+  );
   // Error gating, same contract as Create team: a field's message appears once
   // that field has been blurred. The map is keyed by field, so the three cap
   // rows gate independently. Save stays disabled while anything is invalid.
@@ -330,6 +339,12 @@ function BudgetBody({
   const warnId = `${scope}-budget-warn`;
   const blockId = `${scope}-budget-block`;
   const amountId = (w: BudgetWindow) => `${scope}-budget-amount-${w}`;
+  const notifyId = `${scope}-budget-notify`;
+  // Off states the consequence rather than the setting: who is left on the
+  // alert, and that the in-app warning does not go anywhere either way.
+  const notifyHelp = notifyAdmins
+    ? "Org admins and owner are alerted when a window passes its warn threshold."
+    : `${hasManager ? "Only the team's manager is alerted." : "No one is alerted."} The warning badge and bar still show.`;
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
@@ -348,6 +363,7 @@ function BudgetBody({
           enforcement,
           warnThreshold: warnValue,
           blockThreshold: blockValue,
+          notifyAdmins,
         });
       }}
     >
@@ -515,6 +531,32 @@ function BudgetBody({
                   </p>
                 </div>
               ) : null}
+              {/* Soft only: the warning's admin copies are opt-out per budget
+              (CTO 2026-09-03). Hard gets no counterpart — the block is the
+              enforcement, so it is never optional. Label left / Switch right
+              at gap-3, the Notifications channel-row pairing. */}
+              {enforcement === "soft" ? (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label
+                      className="type-label-14 text-muted-foreground"
+                      htmlFor={notifyId}
+                    >
+                      Notify org admins on warnings
+                    </Label>
+                    <Switch
+                      aria-describedby={`${notifyId}-helper`}
+                      checked={notifyAdmins}
+                      className="shrink-0"
+                      id={notifyId}
+                      onCheckedChange={(next) => setNotifyAdmins(next === true)}
+                    />
+                  </div>
+                  <p className="type-input-helper" id={`${notifyId}-helper`}>
+                    {notifyHelp}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -550,7 +592,10 @@ function BudgetBody({
               {/* PRD 3 "Budget alert recipients": the one place the person
                   choosing the warn line is told who hears about it. */}
               <p className="type-input-helper" id={`${warnId}-recipients`}>
-                {budgetAlertRecipients(hasManager)}
+                {budgetAlertRecipients(
+                  hasManager,
+                  enforcement === "soft" ? notifyAdmins : true
+                )}
               </p>
             </div>
           </div>

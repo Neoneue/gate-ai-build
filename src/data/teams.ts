@@ -60,6 +60,13 @@ export type TeamBudget = {
    *  than `warnThreshold`. Added 2026-09-02 (user: "add that just in case
    *  and not decide that 100 is absolute"). */
   blockThreshold: number;
+  /** Whether org admins and the owner are alerted when a window of this
+   *  budget passes its warn threshold. The team's manager is always alerted;
+   *  the warning badge and amber bar always show. Off is an admin-only opt
+   *  out for a budget they do not want to hear about (CTO, 2026-09-03:
+   *  "5 hours goes over, don't bug me. Monthly? Don't bug me."). Applies to
+   *  every window of the budget. Not in the PRD (8.2 has no opt-out). */
+  notifyAdmins: boolean;
 };
 
 export const DEFAULT_BLOCK_THRESHOLD = 100;
@@ -207,10 +214,18 @@ export const BUDGET_ENFORCEMENT_LABEL: Record<BudgetEnforcement, string> = {
  *  team's manager plus org admins/owner"). One sentence, reused on the form,
  *  the Budget tab fact tooltip and the empty state, so the list cannot
  *  drift. The Default team has no manager, so it names admins and owner only. */
-export function budgetAlertRecipients(hasManager: boolean): string {
+export function budgetAlertRecipients(
+  hasManager: boolean,
+  notifyAdmins = true
+): string {
+  if (notifyAdmins) {
+    return hasManager
+      ? "Alerts go to the team's manager and org admins and owner."
+      : "Alerts go to org admins and owner.";
+  }
   return hasManager
-    ? "Alerts go to the team's manager and org admins and owner."
-    : "Alerts go to org admins and owner.";
+    ? "Alerts go to the team's manager. Org admins and owner have opted out."
+    : "No one is alerted: org admins and owner have opted out and this team has no manager.";
 }
 
 export const BUDGET_HARD_ENFORCEMENT_HELP =
@@ -312,6 +327,7 @@ export const ORG_BUDGET_SEED: TeamBudget = {
   caps: { monthly: 1500 },
   enforcement: "soft",
   warnThreshold: 80,
+  notifyAdmins: true,
   blockThreshold: DEFAULT_BLOCK_THRESHOLD,
 };
 
@@ -360,6 +376,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       caps: { "5h": 25, weekly: 100, monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
+      notifyAdmins: true,
       blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
     policies: TEAM_POLICIES_SEED,
@@ -381,6 +398,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       caps: { monthly: 250 },
       enforcement: "soft",
       warnThreshold: 80,
+      notifyAdmins: true,
       blockThreshold: DEFAULT_BLOCK_THRESHOLD,
     },
     policies: TEAM_POLICIES_SEED,

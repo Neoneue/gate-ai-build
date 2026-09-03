@@ -357,9 +357,19 @@ export function BudgetSummary({
         <BudgetFact
           label="Warn at"
           mono
-          tip={`Percent of the cap at which the warning alert fires, with the dollar figure that works out to. ${budgetAlertRecipients(hasManager)}`}
+          tip={`Percent of the cap at which the warning alert fires, with the dollar figure that works out to. ${budgetAlertRecipients(hasManager, budget.notifyAdmins)}`}
           value={`${budget.warnThreshold}% (${formatCurrency((cap * budget.warnThreshold) / 100)})`}
         />
+        {/* Only when the opt-out is ON: a budget alerting everyone is the
+            default, and a fact reading "Admin alerts: On" would be noise on
+            every other budget. Absent = normal (CTO 2026-09-03). */}
+        {budget.enforcement === "soft" && !budget.notifyAdmins ? (
+          <BudgetFact
+            label="Admin alerts"
+            tip="Org admins and owner opted out of warning alerts for this budget. The team's manager is still alerted."
+            value="Off"
+          />
+        ) : null}
         {hard ? (
           <BudgetFact
             label="Block at"
