@@ -371,3 +371,13 @@ must be above the warn threshold."), blur-gated error like the other
 fields, Save disabled while invalid. Saved value flows to `blockThreshold`;
 the Budget tab "Block at" fact and the breach banner already read it.
 `src/pages/teams/dialogs.tsx`.
+
+### Audit trail: a user sees their own log `6c66c4a`
+
+User: "a user only sees their audit logs, not the whole org. That's what an
+ADMIN sees." Manager and Member read the rows stamped with their own name
+(`EventRow.member`; live appends are stamped with the actor already); the
+KPI tiles, table and pagination follow. The Member filter is hidden for
+them (one member's log has nothing to filter by member). Admin unchanged.
+Models stays the read-only catalog for every role: both are USER surfaces,
+not team oversight, so PRD 11 "nothing outside their team" does not apply.
