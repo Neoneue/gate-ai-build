@@ -1,6 +1,7 @@
 import { KeyRound, Plus, UserMinus, Wallet } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
+  Navigate,
   useLocation,
   useNavigate,
   useOutletContext,
@@ -122,10 +123,13 @@ import {
   TeamTokenSavingsRail,
 } from "@/pages/teams/TokenSavingsPane";
 import {
+  logSettingsChange,
   teamsStore,
+  useCurrentUserTeam,
   useDeletedTeams,
   useOrgSettings,
   useTeams,
+  useViewRole,
 } from "@/pages/teams/teams-store";
 import {
   skeletonRowIds,
@@ -185,6 +189,14 @@ export function TeamDetailEnterprise({
   const archivedTeam = deletedTeams.find((t) => t.id === teamId)?.team;
   const team = liveTeam ?? archivedTeam;
   const archived = !liveTeam && Boolean(archivedTeam);
+  // Team-manager view (AG-695 AC 3): scoped to ONE team. Another team's URL
+  // redirects to their own; the back link to the list is hidden (the list
+  // is owners and admins only); budgets and settings are read-only; the
+  // Members tab keeps add / remove of existing org members (PRD §8.3, §8.4)
+  // but not the role select (assigning managers is owner / admin, §3).
+  const viewRole = useViewRole();
+  const ownTeam = useCurrentUserTeam();
+  const manager = viewRole === "manager";
 
   // ONE call, in the PAGE body — not in a pane. Every tab reads this same
   // boolean, so switching tabs cannot restart the skeletons; a per-pane hook
@@ -243,6 +255,10 @@ export function TeamDetailEnterprise({
     navigate(listPath);
   };
 
+  if (manager && ownTeam && teamId !== ownTeam.id) {
+    return <Navigate replace to={`${listPath}/${ownTeam.id}`} />;
+  }
+
   return (
     <DashboardChrome
       activeNavId="teams"
@@ -254,7 +270,9 @@ export function TeamDetailEnterprise({
         aria-busy={loading}
         className="flex w-full @5xl:max-w-5xl flex-col gap-6"
       >
-        <BackLink label="Teams" onClick={() => navigate(listPath)} />
+        {manager ? null : (
+          <BackLink label="Teams" onClick={() => navigate(listPath)} />
+        )}
 
         {/* The page's ONE announcement of the wait — the skeletons in every
             pane are `aria-hidden`. No visible spinner, no visible text. */}
@@ -268,6 +286,7 @@ export function TeamDetailEnterprise({
           <TeamDetailBody
             archived={archived}
             loading={loading}
+            manager={manager}
             onDeleteTeam={handleDeleteTeam}
             onMoveMembers={moveMembers}
             onPatch={patch}
@@ -315,6 +334,7 @@ function TeamDetailBody({
   onRemoveMember,
   onDeleteTeam,
   archived,
+  manager,
   variant,
   loading,
 }: {
@@ -327,6 +347,8 @@ function TeamDetailBody({
   onDeleteTeam: () => void;
   /** Frozen snapshot of a deleted team: no Settings tab, no mutations. */
   archived: boolean;
+  /** Team-manager view: budgets and settings read-only, no role select. */
+  manager: boolean;
   variant: TeamsVariant;
   /** Threaded down to every pane from the ONE page-level hook call, so the
    *  skeletons do not restart when a tab changes. */
@@ -528,6 +550,8 @@ function TeamDetailBody({
         </TabsContent>
         <TabsContent value="members">
           <MembersPane
+            archived={archived}
+            canAssignRoles={!manager}
             loading={loading}
             onMoveMembers={onMoveMembers}
             onPatch={onPatch}
@@ -541,8 +565,10 @@ function TeamDetailBody({
         </TabsContent>
         <TabsContent value="budget">
           <BudgetPane
+            archived={archived}
             loading={loading}
             onPatch={onPatch}
+            readOnly={manager}
             team={team}
             usage={usage}
           />
@@ -577,12 +603,33 @@ function TeamDetailBody({
           />
         </TabsContent>
         <TabsContent value="settings">
-          <SettingsTab
-            onDelete={() => setDeleteOpen(true)}
-            onPatch={onPatch}
-            onRename={() => setRenameOpen(true)}
-            team={team}
-          />
+          {variant === "default" ? (
+            // Not entitled (AG-624): no forced settings, no lock. Default is
+            // the Free-plan workspace, so Settings is the General block only.
+            <GeneralSettings
+              onDelete={() => setDeleteOpen(true)}
+              onRename={() => setRenameOpen(true)}
+              team={team}
+            />
+          ) : manager ? (
+            // Team-manager view: read-only. No rename / delete, no lock card
+            // (PRD §5: manager write beyond membership is a non-goal).
+            <SettingsStack
+              locked
+              lockedBy="Read-only. Team settings are managed by an org admin."
+              onPoliciesChange={() => undefined}
+              onSavingsChange={() => undefined}
+              policies={team.policies}
+              savings={team.savings}
+            />
+          ) : (
+            <SettingsTab
+              onDelete={() => setDeleteOpen(true)}
+              onPatch={onPatch}
+              onRename={() => setRenameOpen(true)}
+              team={team}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
@@ -645,7 +692,10 @@ function SettingsTab({
           }
           disabled={org.locked}
           id="team-lock-label"
-          onCheckedChange={(next) => onPatch({ locked: next })}
+          onCheckedChange={(next) => {
+            logSettingsChange(`Team "${team.name}"`, team, { locked: next });
+            onPatch({ locked: next });
+          }}
           title="Lock settings for this team"
         />
       }
@@ -655,8 +705,14 @@ function SettingsTab({
           ? "Locked by your organization. These settings are set by an org admin and can't be changed here."
           : undefined
       }
-      onPoliciesChange={(policies) => onPatch({ policies })}
-      onSavingsChange={(savings) => onPatch({ savings })}
+      onPoliciesChange={(policies) => {
+        logSettingsChange(`Team "${team.name}"`, team, { policies });
+        onPatch({ policies });
+      }}
+      onSavingsChange={(savings) => {
+        logSettingsChange(`Team "${team.name}"`, team, { savings });
+        onPatch({ savings });
+      }}
       // Forced settings are the ORG's values applied to the team (PRD 8.5):
       // while the org lock is on, the team page shows the org defaults, not
       // the team's own last-saved values.
@@ -1261,6 +1317,8 @@ function MembersPane({
   onMoveMembers,
   onRemoveMember,
   loading,
+  archived = false,
+  canAssignRoles = true,
 }: {
   team: TeamRow;
   teams: TeamRow[];
@@ -1268,6 +1326,12 @@ function MembersPane({
   onMoveMembers: (ids: string[]) => void;
   onRemoveMember: (memberId: string) => void;
   loading: boolean;
+  /** False for the team-manager view: the role reads as text (assigning
+   *  managers is owner / admin, PRD §3); add / remove stay live. */
+  canAssignRoles?: boolean;
+  /** Frozen snapshot of a deleted team: no Add member, no role select, no
+   *  remove. The roster is a record, not a roster to manage. */
+  archived?: boolean;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
@@ -1365,26 +1429,30 @@ function MembersPane({
             it to the right edge. Below @2xl the wrapper is a full-width
             right-aligned row of its own, so a wrap drops the button under
             the Select instead of squeezing it. */}
-        <div className="flex @2xl:contents w-full justify-end">
-          <Button
-            className="ml-auto"
-            onClick={() => setAddOpen(true)}
-            size="default"
-            variant="default"
-          >
-            <Plus aria-hidden data-icon="inline-start" />
-            Add member
-          </Button>
-        </div>
+        {archived ? null : (
+          <div className="flex @2xl:contents w-full justify-end">
+            <Button
+              className="ml-auto"
+              onClick={() => setAddOpen(true)}
+              size="default"
+              variant="default"
+            >
+              <Plus aria-hidden data-icon="inline-start" />
+              Add member
+            </Button>
+          </div>
+        )}
       </div>
 
       <Card density="flush">
         {isEmpty && !loading && (
           <TableEmptyState
             action={
-              <Button onClick={() => setAddOpen(true)} size="default">
-                Add member
-              </Button>
+              archived ? undefined : (
+                <Button onClick={() => setAddOpen(true)} size="default">
+                  Add member
+                </Button>
+              )
             }
             body="This team has no members yet."
             title="No members"
@@ -1452,6 +1520,12 @@ function MembersPane({
                         filter read, so the three can never disagree. */}
                         {member.role === "owner" ? (
                           "Owner"
+                        ) : archived || !canAssignRoles ? (
+                          team.managerIds.includes(member.id) ? (
+                            "Manager"
+                          ) : (
+                            "Member"
+                          )
                         ) : (
                           <MemberRoleSelect
                             isManager={team.managerIds.includes(member.id)}
@@ -1481,7 +1555,7 @@ function MembersPane({
                       <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                         {/* The Default team is where removed members LAND, so there
                         is nowhere to remove them to from here. */}
-                        {team.isDefault ? null : (
+                        {team.isDefault || archived ? null : (
                           <IconActionButton
                             aria-label={`Remove ${member.name} from ${team.name}`}
                             onClick={() =>
@@ -1813,7 +1887,13 @@ function BudgetPane({
   usage,
   onPatch,
   loading,
+  archived = false,
+  readOnly = false,
 }: {
+  /** Frozen snapshot: the budget reads as history, no Set / Edit. */
+  archived?: boolean;
+  /** Team-manager view: "read-only for budgets" (AG-695), no Set / Edit. */
+  readOnly?: boolean;
   team: TeamRow;
   /** Same roll-up the Usage tab renders; each configured window reads its
    *  own scaled projection of it (budgetReadings). */
@@ -1845,9 +1925,11 @@ function BudgetPane({
             <SectionTitle className="type-heading-24">
               {budget.name || "Team budget"}
             </SectionTitle>
-            <Button onClick={() => setOpen(true)} size="sm" variant="outline">
-              Edit budget
-            </Button>
+            {archived || readOnly ? null : (
+              <Button onClick={() => setOpen(true)} size="sm" variant="outline">
+                Edit budget
+              </Button>
+            )}
           </div>
           {/* One card per window, STACKED, the Claude / Codex limits shape
               (2026-09-01, option B): every cap is visible at once, so no pill
@@ -1910,7 +1992,7 @@ function BudgetPane({
           action={
             // Members-first gate, same as the Keys tab: a budget caps a
             // roster's spend, so the CTA waits for the roster.
-            team.memberIds.length > 0 ? (
+            team.memberIds.length > 0 && !(archived || readOnly) ? (
               <Button onClick={() => setOpen(true)} size="default">
                 Set budget
               </Button>

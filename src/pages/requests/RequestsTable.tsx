@@ -53,6 +53,7 @@ import {
   requestRowId,
 } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { useBudgetBlockRows } from "./budget-block-rows";
 import {
   conversationTitle,
   GUARDRAIL_BADGE,
@@ -93,7 +94,13 @@ export function RequestsTableSection({
   // doesn't have those pages. When the user picks a custom range, the
   // total comes from buildCustomHeroView so the pagination footer stays
   // in lock-step with the hero card's headline number.
-  const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_ALL;
+  // Budget-blocked messages (PRD §3) lead the list on every range: they
+  // are "now", derived live from the teams store, one per blocking team.
+  const blockRows = useBudgetBlockRows();
+  const rows = useMemo(
+    () => [...blockRows, ...(RANGE_ROWS[range] ?? REQUEST_ROWS_ALL)],
+    [blockRows, range]
+  );
   const [model, setModel] = useState("all");
   const [keyId, setKeyId] = useState("all");
   // Response + guardrail filters are independent (split out of the single

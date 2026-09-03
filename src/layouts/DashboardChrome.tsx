@@ -24,6 +24,7 @@ import {
   type SidebarSection,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ViewRoleSwitch } from "@/components/ui/view-role-switch";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import {
@@ -32,8 +33,10 @@ import {
   isFreeSurface,
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
+  ENTERPRISE_MANAGER_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
@@ -81,13 +84,16 @@ export function DashboardChrome({
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
+  const viewRole = useViewRole();
   const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isFree
       ? FREE_SIDEBAR_SECTIONS
       : isEnterprise
-        ? ENTERPRISE_SIDEBAR_SECTIONS
+        ? viewRole === "manager"
+          ? ENTERPRISE_MANAGER_SIDEBAR_SECTIONS
+          : ENTERPRISE_SIDEBAR_SECTIONS
         : SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
@@ -184,6 +190,7 @@ export function DashboardChrome({
             overviewPath={overviewPath}
             sections={sections}
             showLocks={showLocks}
+            showViewRole={isEnterprise}
             sidebarExpanded={sidebarExpanded}
             switcherInRail={switcherInRail}
             upgradePath={upgradePath}
@@ -267,6 +274,7 @@ function DashTopBar({
   onToggleAskAi,
   switcherInRail,
   upgradePath,
+  showViewRole,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -280,6 +288,8 @@ function DashTopBar({
   onToggleAskAi: () => void;
   switcherInRail: boolean;
   upgradePath?: string;
+  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  showViewRole: boolean;
 }) {
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -334,8 +344,9 @@ function DashTopBar({
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
         {switcherInRail ? null : (
-          <div className="hidden lg:block">
+          <div className="hidden items-center gap-2 lg:flex">
             <WorkspaceSwitcher />
+            {showViewRole ? <ViewRoleSwitch /> : null}
           </div>
         )}
       </div>

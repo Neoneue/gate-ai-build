@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
+import { auditStore } from "@/data/audit-trail-store";
 import {
+  memberById,
   ORG_BUDGET_SEED,
   TEAM_POLICIES_SEED,
   TEAM_SAVINGS_SEED,
@@ -8,7 +10,7 @@ import {
   type TeamRow,
   type TeamSavings,
 } from "@/data/teams";
-import type { PolicyState } from "@/pages/policies/config";
+import { POLICIES, type PolicyState } from "@/pages/policies/config";
 
 /** Org-level settings (AG-624 / PRD 8.5): the org's own policy + savings
  *  defaults and the lock that forces them onto every team. */
@@ -24,10 +26,21 @@ export const ORG_SETTINGS_SEED: OrgSettings = {
   savings: TEAM_SAVINGS_SEED,
 };
 
-/** The signed-in user. Seeded owner of "Chad's workspace" (team-members.ts);
- *  the sidebar "My settings" pages resolve their team from the live store,
- *  so moving them between teams changes which lock governs those pages. */
-export const CURRENT_USER_ID = "usr_chad";
+/** Who is looking (AG-695 AC 3, team-manager variant). Admin = the seeded
+ *  owner of "Chad's workspace"; Manager = Kira Tan, Platform's manager. No
+ *  Member view: the PRD gives members no Teams surface (§6). */
+export type ViewRole = "admin" | "manager";
+export const ADMIN_USER_ID = "usr_chad";
+export const MANAGER_USER_ID = "usr_kira";
+/** @deprecated read `currentUserId()`; kept for the resolver tests. */
+export const CURRENT_USER_ID = ADMIN_USER_ID;
+
+/** The signed-in user for the active view role. The sidebar "My settings"
+ *  pages resolve their team from the live store, so moving them between
+ *  teams changes which lock governs those pages. */
+export function currentUserId(): string {
+  return teamsStore.viewRole === "manager" ? MANAGER_USER_ID : ADMIN_USER_ID;
+}
 
 /** The signed-in user's own policy + savings choices (Free/Pro settings are
  *  USER-level, meeting 2026-09-01). Applied only when no org or team lock
@@ -87,12 +100,18 @@ export const teamsStore = {
   deletedTeams: [] as DeletedTeamSnapshot[],
   orgSettings: ORG_SETTINGS_SEED as OrgSettings,
   setOrgSettings(patch: Partial<OrgSettings>) {
+    logSettingsChange("Org", this.orgSettings, patch);
     this.orgSettings = { ...this.orgSettings, ...patch };
     emit();
   },
   userSettings: USER_SETTINGS_SEED as UserSettings,
   setUserSettings(patch: Partial<UserSettings>) {
     this.userSettings = { ...this.userSettings, ...patch };
+    emit();
+  },
+  viewRole: "admin" as ViewRole,
+  setViewRole(next: ViewRole) {
+    this.viewRole = next;
     emit();
   },
   setTeams(next: TeamRow[] | ((prev: TeamRow[]) => TeamRow[])) {
@@ -139,6 +158,61 @@ export function useOrgSettings(): OrgSettings {
   );
 }
 
+/* ─── Audit log for forced-settings writes (AG-624 AC) ─────────────────── */
+
+const actorName = () => memberById(currentUserId())?.name ?? "Unknown";
+
+/** Name the policy whose row differs between two arrays, for the log line. */
+function changedPolicyName(
+  prev: PolicyState[],
+  next: PolicyState[]
+): string | undefined {
+  const before = new Map(prev.map((p) => [p.id, JSON.stringify(p)]));
+  const hit = next.find((p) => before.get(p.id) !== JSON.stringify(p));
+  return hit ? POLICIES.find((c) => c.id === hit.id)?.name : undefined;
+}
+
+function changedSavingsField(
+  prev: TeamSavings,
+  next: TeamSavings
+): string | undefined {
+  if (prev.compression !== next.compression) {
+    return `Advanced compression ${next.compression ? "enabled" : "disabled"}`;
+  }
+  if (prev.caching !== next.caching) {
+    return `Caching ${next.caching ? "enabled" : "disabled"}`;
+  }
+  if (prev.cacheTtl !== next.cacheTtl) {
+    return `Cache TTL set to ${next.cacheTtl}`;
+  }
+  return;
+}
+
+/** One audit row per settings write, scope named first ("Org" or the team). */
+export function logSettingsChange(
+  scope: string,
+  prev: { locked?: boolean; policies: PolicyState[]; savings: TeamSavings },
+  next: Partial<{
+    locked: boolean;
+    policies: PolicyState[];
+    savings: TeamSavings;
+  }>
+) {
+  let description: string | undefined;
+  if (next.locked !== undefined && next.locked !== (prev.locked ?? false)) {
+    description = `${scope} settings ${next.locked ? "locked" : "unlocked"}`;
+  } else if (next.policies) {
+    const name = changedPolicyName(prev.policies, next.policies);
+    description = name ? `${scope} policy "${name}" updated` : undefined;
+  } else if (next.savings) {
+    const field = changedSavingsField(prev.savings, next.savings);
+    description = field ? `${scope} token savings: ${field}` : undefined;
+  }
+  if (description) {
+    auditStore.append({ kind: "AUDIT", description, member: actorName() });
+  }
+}
+
 export function useUserSettings(): UserSettings {
   return useSyncExternalStore(
     (cb) => teamsStore.subscribe(cb),
@@ -151,7 +225,17 @@ export function useUserSettings(): UserSettings {
  *  one team, PRD 3). */
 export function useCurrentUserTeam(): TeamRow | undefined {
   const teams = useTeams();
-  return teams.find((t) => t.memberIds.includes(CURRENT_USER_ID));
+  const role = useViewRole();
+  const id = role === "manager" ? MANAGER_USER_ID : ADMIN_USER_ID;
+  return teams.find((t) => t.memberIds.includes(id));
+}
+
+export function useViewRole(): ViewRole {
+  return useSyncExternalStore(
+    (cb) => teamsStore.subscribe(cb),
+    () => teamsStore.viewRole,
+    () => teamsStore.viewRole
+  );
 }
 
 export function useDeletedTeams(): DeletedTeamSnapshot[] {

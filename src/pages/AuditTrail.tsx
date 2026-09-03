@@ -42,13 +42,13 @@ import {
 } from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import {
-  EVENT_ROWS,
   type EventKind,
   type EventRow,
   fmtRelative,
   KIND_BADGE_VARIANT,
   truncateHex,
 } from "@/data/audit-trail";
+import { useAuditRows } from "@/data/audit-trail-store";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCompactCount } from "@/lib/formatters";
@@ -94,7 +94,7 @@ export function AuditTrail() {
 
   // No range filter on this surface — KPIs and EventLog read the full event
   // set. EventLog further narrows by kind + query.
-  const rows = EVENT_ROWS;
+  const rows = useAuditRows();
 
   return (
     <DashboardChrome

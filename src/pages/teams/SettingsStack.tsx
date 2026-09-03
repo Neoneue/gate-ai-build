@@ -35,7 +35,8 @@ export function SettingsStack({
   locked,
   lockedBy,
 }: {
-  lockCard: React.ReactNode;
+  /** Omitted on read-only views (team manager): no General block at all. */
+  lockCard?: React.ReactNode;
   general?: React.ReactNode;
   policies: PolicyState[];
   onPoliciesChange: (policies: PolicyState[]) => void;
@@ -46,11 +47,13 @@ export function SettingsStack({
 }) {
   return (
     <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8">
-      <div className="flex flex-col gap-4">
-        <SectionTitle className="type-heading-24">General</SectionTitle>
-        {lockCard}
-        {general}
-      </div>
+      {lockCard || general ? (
+        <div className="flex flex-col gap-4">
+          <SectionTitle className="type-heading-24">General</SectionTitle>
+          {lockCard}
+          {general}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4">
         <SectionTitle className="type-heading-24">Policies</SectionTitle>
         {locked && lockedBy ? <Callout>{lockedBy}</Callout> : null}

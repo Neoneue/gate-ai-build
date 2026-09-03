@@ -83,6 +83,11 @@ export type RequestRow = {
    *  rows; absent for plain `allow`. Drives the matching check state on
    *  the modal's Audit tab so the row and the modal stay in lock-step. */
   guardrailReason?: GuardrailReason;
+  /** A `block` that was NOT a security check: the team's hard budget
+   *  refused the message (PRD §3 Hard-budget block, 429). No detector
+   *  fired, so `guardrailReason` and `findings` stay absent; `errorDetail`
+   *  carries the distinct budget error naming the team and window. */
+  blockReason?: "budget";
   /** Canonical `req_*` id. Optional so legacy rows compile without
    *  changes — when absent the modal computes a fallback from the
    *  conversation + code so display still works. Set on rows that need

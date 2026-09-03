@@ -1,6 +1,11 @@
 import { Archive, MoreHorizontal, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -46,10 +51,13 @@ import {
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
 import { OrgSettingsPane } from "@/pages/teams/OrgSettingsPane";
+import type { TeamsVariant } from "@/pages/teams/SecurityPane";
 import {
   teamsStore,
+  useCurrentUserTeam,
   useDeletedTeams,
   useTeams,
+  useViewRole,
 } from "@/pages/teams/teams-store";
 import {
   skeletonRowIds,
@@ -119,12 +127,26 @@ function teamSortValue(
   }
 }
 
-export function TeamsEnterprise() {
+export function TeamsEnterprise({
+  variant = "pro",
+}: {
+  /** Default is the Free-plan workspace: no Enterprise entitlement, so the
+   *  org Settings tab (forced settings, AG-624) is hidden there. Ticket:
+   *  "the not-entitled state (feature hidden or upsell)"; hidden, user
+   *  decision 2026-09-03. */
+  variant?: TeamsVariant;
+} = {}) {
+  const entitled = variant !== "default";
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
+  // Team-manager view (AG-695 AC 3, "scoped to one team"): the list is
+  // owners and admins only, so a manager lands straight on their team.
+  const viewRole = useViewRole();
+  const ownTeam = useCurrentUserTeam();
+  const { pathname } = useLocation();
 
   // The tier the user is in owns the whole subtree: a row opened from
   // /teams-enterprise drills into /teams-enterprise/:teamId, /teams-default
@@ -205,6 +227,10 @@ export function TeamsEnterprise() {
     setDeleting(null);
   };
 
+  if (viewRole === "manager" && ownTeam) {
+    return <Navigate replace to={`${teamsListPath(pathname)}/${ownTeam.id}`} />;
+  }
+
   return (
     <DashboardChrome
       activeNavId="teams"
@@ -263,7 +289,9 @@ export function TeamsEnterprise() {
               Archived teams
               <TabsCount>{deletedTeams.length}</TabsCount>
             </TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            {entitled ? (
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            ) : null}
           </TabsList>
           <TabsContent value="current">
             <TeamsTable
@@ -299,9 +327,11 @@ export function TeamsEnterprise() {
               />
             )}
           </TabsContent>
-          <TabsContent value="settings">
-            <OrgSettingsPane />
-          </TabsContent>
+          {entitled ? (
+            <TabsContent value="settings">
+              <OrgSettingsPane />
+            </TabsContent>
+          ) : null}
         </Tabs>
       </div>
 
