@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-03](./2026-09/changelog-9-3.md)
 
 - Sentence case everywhere: nav labels and page titles first
+- Sentence case: card, KPI, field and button titles
 - Callout is the blue info banner
 - `type-heading-28` step
 - Text inputs default `autoComplete="off"`

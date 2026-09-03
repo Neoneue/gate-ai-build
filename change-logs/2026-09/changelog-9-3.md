@@ -46,6 +46,19 @@ dropdown popped over the form (Create limit's Name). After: the `Input`
 primitive sets `autoComplete="off"`; call sites that want autofill
 (Settings name / email) pass their own. `src/components/ui/input.tsx`.
 
+### Sentence case: card, KPI, field and button titles `ae85022`
+
+Second pass of the site-wide rule. Before → after: `Activity This Week` →
+`Activity this week` (Overview); `Avg Turns` / `Avg Cost / Conv` → `Avg
+turns` / `Avg cost / conv` (Conversations KPI tiles); `Total Spend` / `Total
+Messages` / `Tokens Used` → sentence case (Activity and team Usage KPI
+tiles); `Tokens In` / `Tokens Out` → `Tokens in` / `Tokens out` (message and
+conversation detail fields); `Request Trace` → `Request trace` (trace tab);
+`View Conversation` / `View Request` → sentence case (buttons). Proper nouns
+and product names (Gate Connect, Claude Code, Google Vertex, Ask Gatekeeper,
+Open Explorer, people) unchanged. A regex sweep over JSX text and title /
+label / heading props found no other Title Case UI strings.
+
 ## Components
 
 ### Segmented gains `disabled` `1cb0150`
