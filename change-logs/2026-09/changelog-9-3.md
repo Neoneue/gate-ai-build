@@ -348,3 +348,15 @@ Thinking, polaris -> Gemini 3.1 Pro); cnv_orion_70 is the one exception at
 two (Opus 4.7 + Gemini 3.1 Pro). 8 row costs and 3 seed costs re-derived
 from `costOf`; seed `vendors` / `models` follow the rows. The Models cell
 on Conversations now shows one avatar (two on orion).
+
+### Sidebar: "Manage" is "My settings", Limits moves to Workspace `23d41d9`
+
+PM meeting 2026-09-03 (Joao Carvalho, Alex Brandes): the policies section
+is renamed to make clear these are individual configurations; org-level
+locks are managed on the Teams page; a locked setting shows a banner and
+disabled inputs (already built). Section label "Manage" -> "My settings" on
+every tier, holding Policies and Token savings. The Enterprise-only "My
+policies" / "My token savings" item labels are dropped: the section says
+whose they are now, so Pro and Enterprise read the same. Limits moves to
+Workspace after Activity: an admin's org-wide caps are not a personal
+setting. `nav-sections.ts`, `data-model.md` sidebar table.

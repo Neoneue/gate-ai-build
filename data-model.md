@@ -117,9 +117,9 @@ affordance.
 | --- | --- |
 | _(unnamed)_ | overview → `/overview` |
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
-| Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
+| My settings | policies → `/policies`, token-savings → `/token-savings` _(`locked`)_. The signed-in user's own configuration on every tier; org and team locks are managed on Teams (PM meeting 2026-09-03). |
 | Gateway | models → `/models` |
-| Workspace | activity → `/activity`, team → `/members`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
+| Workspace | activity → `/activity`, limits → `/limits` _(`locked`)_, team → `/members`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
 

@@ -45,6 +45,7 @@ tokens; this index exists so nothing has to glob the directory.
 - No org delta chips on scoped KPIs
 - Members have no Teams surface
 - One model per conversation
+- Sidebar: "Manage" is "My settings", Limits moves to Workspace
 
 ### [2026-09-02](./2026-09/changelog-9-2.md)
 
