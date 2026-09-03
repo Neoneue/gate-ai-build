@@ -139,7 +139,7 @@ function CreateTeamBody({ onCreate }: { onCreate: (name: string) => void }) {
             id="team-create-name"
             onBlur={() => setTouched(true)}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Platform"
+            placeholder="e.g. Data science"
             spellCheck={false}
             type="text"
             value={name}

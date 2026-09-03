@@ -33,7 +33,7 @@ import {
   isFreeSurface,
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
-import { useViewRole } from "@/pages/teams/teams-store";
+import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
@@ -85,6 +85,14 @@ export function DashboardChrome({
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
   const viewRole = useViewRole();
+  // The role switch only exists on Enterprise. Leaving for another workspace
+  // snaps the role back to Admin so a Manager / Member gating never leaks
+  // onto Default, Free or Pro pages (they have one signed-in owner).
+  useEffect(() => {
+    if (!isEnterprise && viewRole !== "admin") {
+      teamsStore.setViewRole("admin");
+    }
+  }, [isEnterprise, viewRole]);
   const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS

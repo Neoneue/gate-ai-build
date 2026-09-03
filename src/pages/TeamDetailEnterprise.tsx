@@ -420,7 +420,9 @@ function TeamDetailBody({
               ? "Can’t be renamed or deleted."
               : archived
                 ? "Archived. Members, keys, and usage history for this team."
-                : "Members, keys, and budget for this team."}
+                : member
+                  ? "Members and usage for this team."
+                  : "Members, keys, and budget for this team."}
           </p>
         </div>
       </div>
