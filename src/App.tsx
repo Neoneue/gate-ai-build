@@ -72,6 +72,11 @@ const Models = lazy(() =>
 const Policies = lazy(() =>
   import("@/pages/Policies").then((m) => ({ default: m.Policies }))
 );
+const PoliciesEnterprise = lazy(() =>
+  import("@/pages/PoliciesEnterprise").then((m) => ({
+    default: m.PoliciesEnterprise,
+  }))
+);
 const Requests = lazy(() =>
   import("@/pages/Requests").then((m) => ({ default: m.Requests }))
 );
@@ -128,6 +133,11 @@ const SignUp = lazy(() =>
 );
 const TokenSavings = lazy(() =>
   import("@/pages/TokenSavings").then((m) => ({ default: m.TokenSavings }))
+);
+const TokenSavingsEnterprise = lazy(() =>
+  import("@/pages/TokenSavingsEnterprise").then((m) => ({
+    default: m.TokenSavingsEnterprise,
+  }))
 );
 const TokenSavingsFree = lazy(() =>
   import("@/pages/TokenSavingsFree").then((m) => ({
@@ -393,12 +403,15 @@ export default function App() {
             />
             <Route element={<Models />} path="/models-enterprise" />
             <Route
-              element={<TokenSavings />}
+              element={<TokenSavingsEnterprise />}
               path="/token-savings-enterprise"
             />
             <Route element={<Limits />} path="/limits-enterprise" />
             <Route element={<Security />} path="/security-enterprise" />
-            <Route element={<Policies />} path="/policies-enterprise" />
+            <Route
+              element={<PoliciesEnterprise />}
+              path="/policies-enterprise"
+            />
             <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
             <Route element={<Activity />} path="/activity-enterprise" />
             <Route element={<Team />} path="/members-enterprise" />

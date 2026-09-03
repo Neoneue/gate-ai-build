@@ -271,3 +271,32 @@ export function securityForTeam(
 ): TeamSecurity {
   return securityForTeamAtRange(team, "all", null, teams);
 }
+
+/** Narrow a team's security read to ONE member (Overview tab member scope).
+ *  Security events are the team's cumulative traffic, so a member's slice is
+ *  their share of it: `count / sum(byMember)` scales checks, findings, the
+ *  outcome and stage splits; the attack-type split is the member's own row
+ *  (exact, already allocated per member), and the member table is just them.
+ *  A member with no events (or not on the team) reads as zero everywhere. */
+export function scopeSecurityToMember(
+  security: TeamSecurity,
+  memberId: string
+): TeamSecurity {
+  const member = security.byMember.find((m) => m.id === memberId);
+  const total = security.byMember.reduce((a, m) => a + m.count, 0);
+  const share = member && total > 0 ? member.count / total : 0;
+  const scale = (n: number) => Math.round(n * share);
+  return {
+    checks: scale(security.checks),
+    findings: member?.count ?? 0,
+    byOutcome: security.byOutcome.map((o) => ({ ...o, count: scale(o.count) })),
+    byStage: security.byStage.map((o) => ({ ...o, count: scale(o.count) })),
+    byCategory: security.byCategory.map((c) => ({
+      ...c,
+      count: member
+        ? (member.byCategory[c.id as keyof typeof member.byCategory] ?? 0)
+        : 0,
+    })),
+    byMember: member ? [member] : [],
+  };
+}

@@ -112,6 +112,9 @@ export type TeamRow = {
   policies: PolicyState[];
   /** Team-scoped savings controls (PRD 8.5 compression settings; AG-624). */
   savings: TeamSavings;
+  /** Org admin locked this team's policies + savings (AG-624 / PRD 8.5):
+   *  members see them read-only. Absent = unlocked. */
+  locked?: boolean;
 };
 
 export type TeamSavings = {

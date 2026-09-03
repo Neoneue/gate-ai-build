@@ -24,6 +24,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Monogram } from "@/components/ui/monogram";
+import { SearchInput } from "@/components/ui/search-input";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
@@ -61,6 +62,7 @@ import {
   type TeamsVariant,
 } from "@/pages/teams/SecurityPane";
 import {
+  scopeSecurityToMember,
   securityForTeamAtRange,
   type TeamMemberSlice,
   type TeamSecurity,
@@ -169,24 +171,46 @@ export function TeamSecurityOverviewPane({
   teams,
   variant,
   loading,
+  title = "Overview",
+  titleClassName,
+  controlledRange,
+  memberId,
 }: {
   team: TeamRow;
+  /** Overview tab member scope: narrows the member tables to one person. */
+  memberId?: string;
   /** Every team the page is rendering — the event allocation needs the full
    *  set so this team's share settles exactly onto the org total. */
   teams: TeamRow[];
   variant: TeamsVariant;
+  /** Section title. The Security tab keeps "Overview"; the Overview tab
+   *  stacks this block under Usage and names it "Security". */
+  title?: string;
+  titleClassName?: string;
+  /** Controlled range (Overview tab). When set, the section's own range
+   *  chrome is hidden and the tab-level picker drives every number. */
+  controlledRange?: { range: Range; customRange: CustomRange | null };
   /** From the page-level hook. The ENTITLEMENT gate below is checked first
    *  and unaffected: a tier that has no guardrail tab has nothing to load,
    *  so it says so immediately rather than pulsing for two seconds. */
   loading: boolean;
 }) {
-  const [range, setRange] = useState<Range>("all");
-  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+  const [ownRange, setRange] = useState<Range>("all");
+  const [ownCustomRange, setCustomRange] = useState<CustomRange | null>(null);
+  const range = controlledRange ? controlledRange.range : ownRange;
+  const customRange = controlledRange
+    ? controlledRange.customRange
+    : ownCustomRange;
 
   // One derivation feeds the hero, both breakdown cards, the summary, the
   // member table and the stage tiles, so no two cards on the tab can describe
   // different windows.
-  const security = securityForTeamAtRange(team, range, customRange, teams);
+  const teamSecurity = securityForTeamAtRange(team, range, customRange, teams);
+  // Overview member scope: events are the team's cumulative traffic, so one
+  // member's read is their share of it (security-data.ts).
+  const security = memberId
+    ? scopeSecurityToMember(teamSecurity, memberId)
+    : teamSecurity;
 
   // The empty gate is deliberately RANGE-INDEPENDENT: a low-volume team
   // rounds to 0 checks at 24H, and a tab that vanishes when you press a range
@@ -235,32 +259,34 @@ export function TeamSecurityOverviewPane({
        as a section rather than more bento. */
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Overview</SectionTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          <SegmentedPill
-            aria-label="Time range"
-            onValueChange={(v) => {
-              setRange(v as PresetRange);
-              setCustomRange(null);
-            }}
-            options={RANGE_OPTIONS}
-            size="sm"
-            value={range === "custom" ? "" : range}
-          />
-          <DateRangePicker
-            onChange={(r) => {
-              if (r) {
-                setCustomRange(r);
-                setRange("custom");
-              } else {
+        <SectionTitle className={titleClassName}>{title}</SectionTitle>
+        {controlledRange ? null : (
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedPill
+              aria-label="Time range"
+              onValueChange={(v) => {
+                setRange(v as PresetRange);
                 setCustomRange(null);
-                setRange("all");
-              }
-            }}
-            size="sm"
-            value={customRange}
-          />
-        </div>
+              }}
+              options={RANGE_OPTIONS}
+              size="sm"
+              value={range === "custom" ? "" : range}
+            />
+            <DateRangePicker
+              onChange={(r) => {
+                if (r) {
+                  setCustomRange(r);
+                  setRange("custom");
+                } else {
+                  setCustomRange(null);
+                  setRange("all");
+                }
+              }}
+              size="sm"
+              value={customRange}
+            />
+          </div>
+        )}
       </div>
 
       <HeroEventsCard
@@ -298,7 +324,11 @@ export function TeamSecurityOverviewPane({
         />
       </div>
 
-      <MemberFindingsSection loading={loading} security={security} />
+      <MemberFindingsSection
+        loading={loading}
+        memberId={memberId}
+        security={security}
+      />
     </div>
   );
 }
@@ -619,28 +649,57 @@ function MemberFindingsTable({
   emptyTitle,
   emptyBody,
   loading,
+  searchLabel,
+  showSearch = true,
 }: {
   title: string;
   rows: TeamMemberSlice[];
+  showSearch?: boolean;
   emptyTitle: string;
   emptyBody: string;
   loading: boolean;
+  /** Search input above the table (by member name), same control the
+   *  Usage tab's breakdown tables carry. */
+  searchLabel: string;
 }) {
   // One hook per instance, same as the Usage tab breakdown tables: the current
   // and past tables sort independently, and both start in the incoming
   // (events-ranked) order until a header is toggled.
   const { sort, toggle: toggleSort } = useTableSort();
-  const sortedRows = useMemo(
-    () => sortRows(rows, sort, memberSortValue),
-    [rows, sort]
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = useMemo(
+    () =>
+      q ? rows.filter((row) => row.label.toLowerCase().includes(q)) : rows,
+    [rows, q]
   );
+  const sortedRows = useMemo(
+    () => sortRows(visible, sort, memberSortValue),
+    [visible, sort]
+  );
+  const isEmpty = rows.length === 0;
+  const noMatches = !isEmpty && visible.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
       <SectionTitle>{title}</SectionTitle>
+      {showSearch ? (
+        <SearchInput
+          ariaLabel={searchLabel}
+          className="w-full min-w-0"
+          onChange={setQuery}
+          placeholder="Search by member…"
+          value={query}
+        />
+      ) : null}
       <Card density="flush">
-        {rows.length === 0 && !loading ? (
+        {isEmpty && !loading ? (
           <TableEmptyState body={emptyBody} title={emptyTitle} />
+        ) : noMatches && !loading ? (
+          <TableEmptyState
+            body="No members match your search. Try a different name."
+            title="No matches"
+          />
         ) : (
           <Table className="min-w-[640px] table-fixed">
             <TableHeader>
@@ -732,39 +791,52 @@ function MemberFindingsTable({
 function MemberFindingsSection({
   security,
   loading,
+  memberId,
 }: {
   security: TeamSecurity;
   loading: boolean;
+  memberId?: string;
 }) {
+  const byMember = memberId
+    ? security.byMember.filter((r) => r.id === memberId)
+    : security.byMember;
+  // One member selected: a search over a one-row table is noise.
+  const showSearch = !memberId;
   // PRD §3: "past requests keep their original team; only new traffic
   // attributes to the new team (history is immutable)". A member who moved out
   // still owns the events they generated here, so they get their own table
   // rather than being dropped or folded into the current roster — the same
   // current / past split the Usage tab uses.
-  const hasFormer = security.byMember.some((r) => r.former);
+  const hasFormer = byMember.some((r) => r.former);
   // mt-2 tops the pane column's gap-4 up to 24px: the bento treatment (16px)
   // is the chart + the two breakdown cards + the text card (user-scoped
   // 2026-09-01); these titled tables sit below that cluster and take the full
   // section break. gap-6 between the two tables matches the Usage tab.
   return (
     <div className="mt-2 flex flex-col gap-6">
-      <MemberFindingsTable
-        emptyBody={
-          security.findings === 0
-            ? "Nothing to attribute. No detector fired on this team’s traffic. Per-member request volume lives on the Usage tab."
-            : "No per-member data recorded."
-        }
-        emptyTitle="No per-member findings"
-        loading={loading}
-        rows={security.byMember.filter((r) => !r.former)}
-        title="Events by current members"
-      />
+      {memberId && !byMember.some((r) => !r.former) ? null : (
+        <MemberFindingsTable
+          emptyBody={
+            security.findings === 0
+              ? "Nothing to attribute. No detector fired on this team’s traffic. Per-member request volume lives on the Usage tab."
+              : "No per-member data recorded."
+          }
+          emptyTitle="No per-member findings"
+          loading={loading}
+          rows={byMember.filter((r) => !r.former)}
+          searchLabel="Search current members"
+          showSearch={showSearch}
+          title="Events by current members"
+        />
+      )}
       {hasFormer ? (
         <MemberFindingsTable
           emptyBody=""
           emptyTitle="No past members."
           loading={loading}
-          rows={security.byMember.filter((r) => r.former)}
+          rows={byMember.filter((r) => r.former)}
+          searchLabel="Search past members"
+          showSearch={showSearch}
           title="Events by past members"
         />
       ) : null}

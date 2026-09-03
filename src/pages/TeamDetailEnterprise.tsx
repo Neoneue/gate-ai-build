@@ -1,4 +1,4 @@
-import { KeyRound, Plus, UserMinus, Wallet, X } from "lucide-react";
+import { KeyRound, Plus, UserMinus, Wallet } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
   useLocation,
@@ -7,6 +7,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
+import { VENDOR_META } from "@/components/icons/vendor-meta";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,9 @@ import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -50,10 +53,8 @@ import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
-import type { ApiKeyRow } from "@/data/api-keys";
 import { MEMBER_ROWS, type MemberRow } from "@/data/team-members";
 import {
-  ASSIGNABLE_KEYS,
   BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_RESET_COPY,
   budgetAlertRecipients,
@@ -63,7 +64,6 @@ import {
   keyById,
   memberById,
   memberJoinedAt,
-  moveKeysToTeam,
   moveMembersToTeam,
   scaleUsage,
   type TeamBudget,
@@ -106,20 +106,27 @@ import {
 } from "@/pages/teams/budget";
 import { budgetStatus } from "@/pages/teams/budget-band";
 import {
-  AddKeysDialog,
   AddMembersDialog,
   BudgetDialog,
   DeleteTeamDialog,
-  RemoveTeamKeyDialog,
   RemoveTeamMemberDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
 import { TeamPoliciesPane } from "@/pages/teams/PoliciesPane";
 import { TeamSecurityOverviewPane } from "@/pages/teams/SecurityOverviewPane";
 import type { TeamsVariant } from "@/pages/teams/SecurityPane";
+import { LockSettingsCard, SettingsStack } from "@/pages/teams/SettingsStack";
 import { teamSparkSeries } from "@/pages/teams/spark-series";
-import { TeamTokenSavingsPane } from "@/pages/teams/TokenSavingsPane";
-import { teamsStore, useTeams } from "@/pages/teams/teams-store";
+import {
+  TeamTokenSavingsPane,
+  TeamTokenSavingsRail,
+} from "@/pages/teams/TokenSavingsPane";
+import {
+  teamsStore,
+  useDeletedTeams,
+  useOrgSettings,
+  useTeams,
+} from "@/pages/teams/teams-store";
 import {
   skeletonRowIds,
   useTheatreLoading,
@@ -171,7 +178,13 @@ export function TeamDetailEnterprise({
   const teams = useTeams();
   const setTeams = (next: TeamRow[] | ((prev: TeamRow[]) => TeamRow[])) =>
     teamsStore.setTeams(next);
-  const team = teams.find((t) => t.id === teamId);
+  // An archived team resolves from its frozen snapshot: the row as it stood
+  // when it was deleted. Every tab renders from it; nothing on it can change.
+  const deletedTeams = useDeletedTeams();
+  const liveTeam = teams.find((t) => t.id === teamId);
+  const archivedTeam = deletedTeams.find((t) => t.id === teamId)?.team;
+  const team = liveTeam ?? archivedTeam;
+  const archived = !liveTeam && Boolean(archivedTeam);
 
   // ONE call, in the PAGE body — not in a pane. Every tab reads this same
   // boolean, so switching tabs cannot restart the skeletons; a per-pane hook
@@ -180,6 +193,9 @@ export function TeamDetailEnterprise({
   const loading = useTheatreLoading();
 
   const patch = (next: Partial<TeamRow>) => {
+    if (archived) {
+      return;
+    }
     setTeams((prev) =>
       prev.map((t) => (t.id === teamId ? { ...t, ...next } : t))
     );
@@ -190,32 +206,19 @@ export function TeamDetailEnterprise({
   // than the one it is showing. Same state that lets "Add keys" name the team
   // a candidate key is currently on.
   const moveMembers = (ids: string[]) => {
-    if (!teamId) {
+    if (!teamId || archived) {
       return;
     }
     setTeams((prev) => moveMembersToTeam(prev, teamId, ids));
-  };
-
-  // Assigning a key is the same one-operation move: `gateway_api_keys.team_id`
-  // holds one team, so adding it here takes it off whichever team had it.
-  const moveKeys = (ids: string[]) => {
-    if (!teamId) {
-      return;
-    }
-    setTeams((prev) => moveKeysToTeam(prev, teamId, ids));
-  };
-
-  // Removing a key REASSIGNS it to Default rather than detaching it — the
-  // real build never leaves a key without a team, so its spend keeps rolling
-  // up somewhere.
-  const removeKey = (keyId: string) => {
-    setTeams((prev) => moveKeysToTeam(prev, DEFAULT_TEAM_ID, [keyId]));
   };
 
   // Members follow the same rule (PRD 3 / 8.1: every user is on exactly one
   // team). Removing one moves them to Default; `moveMembersToTeam` drops
   // their manager role and joined stamp on the way out.
   const removeMember = (memberId: string) => {
+    if (archived) {
+      return;
+    }
     setTeams((prev) => moveMembersToTeam(prev, DEFAULT_TEAM_ID, [memberId]));
   };
 
@@ -234,6 +237,7 @@ export function TeamDetailEnterprise({
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
       deletedAt: new Date(),
+      team: doomed,
     });
     setTeams((prev) => deleteTeam(prev, doomed.id));
     navigate(listPath);
@@ -262,12 +266,11 @@ export function TeamDetailEnterprise({
 
         {team ? (
           <TeamDetailBody
+            archived={archived}
             loading={loading}
             onDeleteTeam={handleDeleteTeam}
-            onMoveKeys={moveKeys}
             onMoveMembers={moveMembers}
             onPatch={patch}
-            onRemoveKey={removeKey}
             onRemoveMember={removeMember}
             team={team}
             teams={teams}
@@ -294,6 +297,7 @@ export function TeamDetailEnterprise({
 /* ─── Body ─────────────────────────────────────────────────────────────── */
 
 type TabId =
+  | "overview"
   | "members"
   | "keys"
   | "budget"
@@ -308,10 +312,9 @@ function TeamDetailBody({
   teams,
   onPatch,
   onMoveMembers,
-  onMoveKeys,
-  onRemoveKey,
   onRemoveMember,
   onDeleteTeam,
+  archived,
   variant,
   loading,
 }: {
@@ -320,10 +323,10 @@ function TeamDetailBody({
   teams: TeamRow[];
   onPatch: (next: Partial<TeamRow>) => void;
   onMoveMembers: (ids: string[]) => void;
-  onMoveKeys: (ids: string[]) => void;
-  onRemoveKey: (keyId: string) => void;
   onRemoveMember: (memberId: string) => void;
   onDeleteTeam: () => void;
+  /** Frozen snapshot of a deleted team: no Settings tab, no mutations. */
+  archived: boolean;
   variant: TeamsVariant;
   /** Threaded down to every pane from the ONE page-level hook call, so the
    *  skeletons do not restart when a tab changes. */
@@ -332,10 +335,45 @@ function TeamDetailBody({
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
   // lands on teams. Data tabs (Usage, Budget, Security) follow.
-  const [tab, setTab] = useState<TabId>("members");
+  const [tab, setTab] = useState<TabId>("overview");
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const usage = useMemo(() => usageForTeam(team), [team]);
+  // Overview tab: ONE range drives the Usage, Security and Token savings
+  // blocks; their own pickers are hidden while controlled.
+  const [overviewRange, setOverviewRange] = useState<Range>("all");
+  const [overviewCustomRange, setOverviewCustomRange] =
+    useState<CustomRange | null>(null);
+  const overviewControlled = {
+    range: overviewRange,
+    customRange: overviewCustomRange,
+  };
+  // Member scope (user 2026-09-03): "All members" reads the team roll-up; one
+  // member narrows every Overview block to their keys. Done by handing the
+  // panes a VIRTUAL team row that holds only that member and their keys, so
+  // usageForTeam / teamSavingsKpis derive exactly as they do for a team. The
+  // Security bento keeps the team share (its canon is allocated per team id);
+  // only its member tables narrow.
+  const [memberScope, setMemberScope] = useState("all");
+  const scopedTeam = useMemo<TeamRow>(() => {
+    if (memberScope === "all") {
+      return team;
+    }
+    const owned = (id: string) => keyById(id)?.ownerId === memberScope;
+    return {
+      ...team,
+      memberIds: team.memberIds.filter((id) => id === memberScope),
+      keyIds: team.keyIds.filter(owned),
+      // History keys too, so a PAST member's keys still attribute here and
+      // their read lands in the "past members" tables (PRD 3: history stays).
+      historyKeyIds: team.historyKeyIds?.filter(owned),
+    };
+  }, [team, memberScope]);
+  const pastMembers = useMemo(
+    () => usage.byUser.filter((r) => r.former),
+    [usage]
+  );
+  const scopedUsage = useMemo(() => usageForTeam(scopedTeam), [scopedTeam]);
 
   return (
     <>
@@ -372,6 +410,7 @@ function TeamDetailBody({
         value={tab}
       >
         <TabsList className="-mt-2 px-0" variant="line">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">
             <span>Members</span>
             <TabsCount>{team.memberIds.length}</TabsCount>
@@ -381,13 +420,112 @@ function TeamDetailBody({
             <TabsCount>{team.keyIds.length}</TabsCount>
           </TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="policies">Policies</TabsTrigger>
-          <TabsTrigger value="savings">Token savings</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          {archived ? null : (
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          )}
         </TabsList>
 
+        <TabsContent value="overview">
+          {/* Catch-all read of the team: the Usage tab body, then the
+              Security tab body, then the Token savings KPI rail, each
+              retitled after its tab. One range picker in the header drives
+              all three. */}
+          <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8 [&_[data-slot=section-title]:not(.type-heading-24)]:text-lg/7">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
+                <PageTitle as="h2" className="type-heading-28">
+                  Team overview
+                </PageTitle>
+                <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+                  Monitor request volume, token usage, spend, and security
+                  signals across your team.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <SegmentedPill
+                  aria-label="Time range"
+                  onValueChange={(v) => {
+                    setOverviewRange(v as PresetRange);
+                    setOverviewCustomRange(null);
+                  }}
+                  options={RANGE_OPTIONS}
+                  size="sm"
+                  value={overviewRange === "custom" ? "" : overviewRange}
+                />
+                <DateRangePicker
+                  onChange={(r) => {
+                    if (r) {
+                      setOverviewCustomRange(r);
+                      setOverviewRange("custom");
+                    } else {
+                      setOverviewCustomRange(null);
+                      setOverviewRange("all");
+                    }
+                  }}
+                  size="sm"
+                  value={overviewCustomRange}
+                />
+                <Select onValueChange={setMemberScope} value={memberScope}>
+                  <SelectTrigger
+                    aria-label="Filter by member"
+                    className="border-border bg-card text-foreground"
+                    size="sm"
+                  >
+                    <SelectValue placeholder="All members" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All members</SelectItem>
+                    {team.memberIds.map((id) => {
+                      const m = memberById(id);
+                      return m ? (
+                        <SelectItem key={id} value={id}>
+                          {m.name}
+                        </SelectItem>
+                      ) : null;
+                    })}
+                    {pastMembers.length > 0 ? (
+                      <SelectGroup>
+                        <SelectLabel>Past members</SelectLabel>
+                        {pastMembers.map((r) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ) : null}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <UsagePane
+              controlledRange={overviewControlled}
+              loading={loading}
+              singleMember={memberScope !== "all"}
+              teamId={team.id}
+              title="Usage"
+              titleClassName="type-heading-24"
+              usage={scopedUsage}
+            />
+            <TeamSecurityOverviewPane
+              controlledRange={overviewControlled}
+              loading={loading}
+              memberId={memberScope === "all" ? undefined : memberScope}
+              team={team}
+              teams={teams}
+              title="Security"
+              titleClassName="type-heading-24"
+              variant={variant}
+            />
+            <TeamTokenSavingsRail
+              controlledRange={overviewControlled}
+              loading={loading}
+              team={scopedTeam}
+              teams={teams}
+              title="Token savings"
+              titleClassName="type-heading-24"
+            />
+          </div>
+        </TabsContent>
         <TabsContent value="members">
           <MembersPane
             loading={loading}
@@ -399,13 +537,7 @@ function TeamDetailBody({
           />
         </TabsContent>
         <TabsContent value="keys">
-          <KeysPane
-            loading={loading}
-            onMoveKeys={onMoveKeys}
-            onRemoveKey={onRemoveKey}
-            team={team}
-            teams={teams}
-          />
+          <KeysPane loading={loading} team={team} />
         </TabsContent>
         <TabsContent value="budget">
           <BudgetPane
@@ -433,7 +565,7 @@ function TeamDetailBody({
               No skeleton: every row on it is a control, not a reading. */}
           <TeamPoliciesPane
             onChange={(policies) => onPatch({ policies })}
-            team={team}
+            policies={team.policies}
           />
         </TabsContent>
         <TabsContent value="savings">
@@ -447,6 +579,7 @@ function TeamDetailBody({
         <TabsContent value="settings">
           <SettingsTab
             onDelete={() => setDeleteOpen(true)}
+            onPatch={onPatch}
             onRename={() => setRenameOpen(true)}
             team={team}
           />
@@ -480,6 +613,60 @@ function TeamDetailBody({
  *  (PRD 3 / 8.1: it is the fold-in target for every other team), so it
  *  states that instead of showing disabled controls. */
 function SettingsTab({
+  team,
+  onRename,
+  onDelete,
+  onPatch,
+}: {
+  team: TeamRow;
+  onRename: () => void;
+  onDelete: () => void;
+  onPatch: (patch: Partial<TeamRow>) => void;
+}) {
+  // Org lock cascades down (AG-624 / PRD 8.5): while it is on, this team's
+  // Policies and Token savings controls render disabled with a "who set it"
+  // banner and the team's own lock card disables. The team lock is a row
+  // field (`TeamRow.locked`), so the sidebar "My settings" pages read it.
+  const org = useOrgSettings();
+  const teamLocked = team.locked ?? false;
+  const locked = org.locked || teamLocked;
+  return (
+    <SettingsStack
+      general={
+        <GeneralSettings onDelete={onDelete} onRename={onRename} team={team} />
+      }
+      lockCard={
+        <LockSettingsCard
+          checked={locked}
+          description={
+            org.locked
+              ? "Locked by your organization. An org admin controls these settings for every team."
+              : "This will lock all settings for this team's policies and token savings controls."
+          }
+          disabled={org.locked}
+          id="team-lock-label"
+          onCheckedChange={(next) => onPatch({ locked: next })}
+          title="Lock settings for this team"
+        />
+      }
+      locked={locked}
+      lockedBy={
+        org.locked
+          ? "Locked by your organization. These settings are set by an org admin and can't be changed here."
+          : undefined
+      }
+      onPoliciesChange={(policies) => onPatch({ policies })}
+      onSavingsChange={(savings) => onPatch({ savings })}
+      // Forced settings are the ORG's values applied to the team (PRD 8.5):
+      // while the org lock is on, the team page shows the org defaults, not
+      // the team's own last-saved values.
+      policies={org.locked ? org.policies : team.policies}
+      savings={org.locked ? org.savings : team.savings}
+    />
+  );
+}
+
+function GeneralSettings({
   team,
   onRename,
   onDelete,
@@ -555,22 +742,48 @@ function modelAvatar(row: UsageSlice): ReactNode {
   return vendor ? <VendorAvatar decorative vendor={vendor} /> : null;
 }
 
+/** Search haystack for a by-model row: the model name plus its provider's
+ *  display name ("Anthropic", "OpenAI"), so either finds the row. */
+function modelSearchText(row: UsageSlice): string {
+  const vendor = MODEL_VENDOR.get(row.id);
+  const provider = vendor ? VENDOR_META[vendor].label : "";
+  return `${row.label} ${provider}`.toLowerCase();
+}
+
 function UsagePane({
   teamId,
   usage,
   loading,
+  title = "Overview",
+  titleClassName,
+  controlledRange,
+  singleMember = false,
 }: {
   teamId: string;
   usage: TeamUsage;
   loading: boolean;
+  /** Overview member scope is on: the member tables hold one row, so their
+   *  search inputs hide. The model table keeps its search. */
+  singleMember?: boolean;
+  /** Section title. The Usage tab keeps "Overview"; the Overview tab names
+   *  this block "Usage". */
+  title?: string;
+  titleClassName?: string;
+  /** Controlled range (Overview tab). When set, the section's own range
+   *  chrome is hidden and the tab-level picker drives every number. */
+  controlledRange?: { range: Range; customRange: CustomRange | null };
 }) {
   // Range chrome matches Activity's Overview row: preset pill + custom
   // picker, landing on All. Every number on the tab is the team's REAL 7d
   // workload projected onto the selected window via effectiveScale — the
   // same derivation Activity's KPI rail and Top cards use, so the KPIs and
   // the breakdown tables below always describe the same selection.
-  const [range, setRange] = useState<Range>("all");
-  const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+  const [ownRange, setRange] = useState<Range>("all");
+  const [ownCustomRange, setCustomRange] = useState<CustomRange | null>(null);
+  const range = controlledRange ? controlledRange.range : ownRange;
+  const customRange = controlledRange
+    ? controlledRange.customRange
+    : ownCustomRange;
   const scale = effectiveScale(range, customRange);
 
   // One projection feeds everything on the tab: KPIs, sparklines, and both
@@ -619,32 +832,34 @@ function UsagePane({
           block, so the title sits 16px above the cards. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <SectionTitle>Overview</SectionTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            <SegmentedPill
-              aria-label="Time range"
-              onValueChange={(v) => {
-                setRange(v as PresetRange);
-                setCustomRange(null);
-              }}
-              options={RANGE_OPTIONS}
-              size="sm"
-              value={range === "custom" ? "" : range}
-            />
-            <DateRangePicker
-              onChange={(r) => {
-                if (r) {
-                  setCustomRange(r);
-                  setRange("custom");
-                } else {
+          <SectionTitle className={titleClassName}>{title}</SectionTitle>
+          {controlledRange ? null : (
+            <div className="flex flex-wrap items-center gap-2">
+              <SegmentedPill
+                aria-label="Time range"
+                onValueChange={(v) => {
+                  setRange(v as PresetRange);
                   setCustomRange(null);
-                  setRange("all");
-                }
-              }}
-              size="sm"
-              value={customRange}
-            />
-          </div>
+                }}
+                options={RANGE_OPTIONS}
+                size="sm"
+                value={range === "custom" ? "" : range}
+              />
+              <DateRangePicker
+                onChange={(r) => {
+                  if (r) {
+                    setCustomRange(r);
+                    setRange("custom");
+                  } else {
+                    setCustomRange(null);
+                    setRange("all");
+                  }
+                }}
+                size="sm"
+                value={customRange}
+              />
+            </div>
+          )}
         </div>
         <KpiRail columns={3}>
           <CompactKpi
@@ -695,18 +910,25 @@ function UsagePane({
         </KpiRail>
       </div>
 
-      <UsageBreakdown
-        avatarFor={userAvatar}
-        customRange={customRange}
-        emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
-        emptyTitle="No per-user data yet."
-        firstColumn="Member"
-        loading={loading}
-        range={range}
-        rows={scaled.byUser.filter((r) => !r.former)}
-        title="Usage by current members"
-        tokens
-      />
+      {/* One member selected: only the table they sit in renders. A past
+          member has no current row, so the current table hides. */}
+      {singleMember && !scaled.byUser.some((r) => !r.former) ? null : (
+        <UsageBreakdown
+          avatarFor={userAvatar}
+          customRange={customRange}
+          emptyBody="Once this team’s keys start serving traffic, spend per user appears here."
+          emptyTitle="No per-user data yet."
+          firstColumn="Member"
+          loading={loading}
+          range={range}
+          rows={scaled.byUser.filter((r) => !r.former)}
+          searchLabel="Search current members"
+          searchPlaceholder="Search by member…"
+          showSearch={!singleMember}
+          title="Usage by current members"
+          tokens
+        />
+      )}
       {/* PRD §3: "past requests keep their original team". */}
       {scaled.byUser.some((r) => r.former) ? (
         <UsageBreakdown
@@ -718,6 +940,9 @@ function UsagePane({
           loading={loading}
           range={range}
           rows={scaled.byUser.filter((r) => r.former)}
+          searchLabel="Search past members"
+          searchPlaceholder="Search by member…"
+          showSearch={!singleMember}
           title="Usage by past members"
           tokens
         />
@@ -731,6 +956,9 @@ function UsagePane({
         loading={loading}
         range={range}
         rows={scaled.byModel}
+        searchLabel="Search models"
+        searchPlaceholder="Search by model or provider…"
+        searchText={modelSearchText}
         title="Usage by model"
       />
     </div>
@@ -799,11 +1027,21 @@ function UsageBreakdown({
   loading,
   range,
   customRange,
+  searchLabel,
+  searchPlaceholder,
+  searchText = (row) => row.label.toLowerCase(),
+  showSearch = true,
 }: {
+  showSearch?: boolean;
   title: string;
   firstColumn: string;
   rows: UsageSlice[];
   emptyTitle: string;
+  /** Search input above the table, same control the Members tab uses. */
+  searchLabel: string;
+  searchPlaceholder: string;
+  /** Lower-cased haystack per row; defaults to the label (member name). */
+  searchText?: (row: UsageSlice) => string;
   /** Member tables carry Tokens in / Tokens out between Messages and Spend
    *  (user direction 2026-09-02); the model table does not. */
   tokens?: boolean;
@@ -820,20 +1058,42 @@ function UsageBreakdown({
   // One hook per instance: the by-user table and the by-model table sort
   // independently, and both start in the incoming (spend-ranked) order.
   const { sort, toggle: toggleSort } = useTableSort();
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = useMemo(
+    () => (q ? rows.filter((row) => searchText(row).includes(q)) : rows),
+    [rows, q, searchText]
+  );
   const sortedRows = useMemo(
     () =>
-      sortRows(rows, sort, (row, key) =>
+      sortRows(visible, sort, (row, key) =>
         usageSortValue(row, key, range, customRange)
       ),
-    [rows, sort, range, customRange]
+    [visible, sort, range, customRange]
   );
+  const isEmpty = rows.length === 0;
+  const noMatches = !isEmpty && visible.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
       <SectionTitle>{title}</SectionTitle>
+      {showSearch ? (
+        <SearchInput
+          ariaLabel={searchLabel}
+          className="w-full min-w-0"
+          onChange={setQuery}
+          placeholder={searchPlaceholder}
+          value={query}
+        />
+      ) : null}
       <Card density="flush">
-        {rows.length === 0 && !loading ? (
+        {isEmpty && !loading ? (
           <TableEmptyState body={emptyBody} title={emptyTitle} />
+        ) : noMatches && !loading ? (
+          <TableEmptyState
+            body="No rows match your search. Try a different name."
+            title="No matches"
+          />
         ) : (
           <Table className="min-w-[560px] table-fixed">
             <TableHeader>
@@ -1349,22 +1609,7 @@ function MemberRoleSelect({
 
 /* ─── Keys tab ─────────────────────────────────────────────────────────── */
 
-function KeysPane({
-  team,
-  teams,
-  onMoveKeys,
-  onRemoveKey,
-  loading,
-}: {
-  team: TeamRow;
-  /** Every team — the picker names the team a candidate key sits on today. */
-  teams: TeamRow[];
-  onMoveKeys: (ids: string[]) => void;
-  onRemoveKey: (keyId: string) => void;
-  loading: boolean;
-}) {
-  const [addOpen, setAddOpen] = useState(false);
-  const [removing, setRemoving] = useState<ApiKeyRow | null>(null);
+function KeysPane({ team, loading }: { team: TeamRow; loading: boolean }) {
   const [query, setQuery] = useState("");
 
   const rows = team.keyIds
@@ -1390,24 +1635,6 @@ function KeysPane({
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;
 
-  // Every assignable key that is not already HERE, the way the Members picker
-  // offers every member not already here: a key on another team is not hidden,
-  // it is moved, and the row says which team it is leaving before the user
-  // commits. ASSIGNABLE_KEYS already excludes the revoked test-key, so a
-  // revoked key can never reach this picker.
-  const options = useMemo(
-    () =>
-      ASSIGNABLE_KEYS.filter((k) => !team.keyIds.includes(k.id)).map((k) => {
-        const current = teams.find((t) => t.keyIds.includes(k.id));
-        return {
-          value: k.id,
-          label: `${k.name} (${k.masked})`,
-          description: current ? `Currently on ${current.name}` : undefined,
-        };
-      }),
-    [team.keyIds, teams]
-  );
-
   return (
     <div className="flex flex-col gap-4">
       {/* Same toolbar the Members tab uses, minus the Select: search on the
@@ -1425,38 +1652,11 @@ function KeysPane({
           placeholder="Search by key or member…"
           value={query}
         />
-        {/* Sequential build gate (user direction 2026-09-01) still applies:
-            the team is built Members-first, so the CTA stays withheld until
-            the roster has someone. It is the same gate the empty card's
-            action carries, just read here too. */}
-        {team.memberIds.length > 0 ? (
-          <div className="flex @2xl:contents w-full justify-end">
-            <Button
-              className="ml-auto"
-              onClick={() => setAddOpen(true)}
-              size="default"
-              variant="default"
-            >
-              <Plus aria-hidden data-icon="inline-start" />
-              Add key
-            </Button>
-          </div>
-        ) : null}
       </div>
 
       <Card density="flush">
         {isEmpty && !loading && (
           <TableEmptyState
-            action={
-              // Sequential build gate (user direction 2026-09-01): the team
-              // is built Members-first, so this CTA appears only once the
-              // roster has someone. Same gate on the Budget tab's CTA.
-              team.memberIds.length > 0 ? (
-                <Button onClick={() => setAddOpen(true)} size="default">
-                  Add key
-                </Button>
-              ) : undefined
-            }
             body="This team has no API keys assigned yet."
             icon={
               <div
@@ -1499,13 +1699,12 @@ function KeysPane({
                 <TableHead className="w-[20%] whitespace-nowrap">
                   Last used
                 </TableHead>
-                <TableHead aria-label="Actions" className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading
                 ? skeletonRowIds(visible.length).map((id) => (
-                    <KeySkeletonRow key={id} showActions={!team.isDefault} />
+                    <KeySkeletonRow key={id} />
                   ))
                 : visible.map((row) => {
                     // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
@@ -1568,22 +1767,6 @@ function KeysPane({
                             format="dateNumeric"
                           />
                         </TableCell>
-                        <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                          {/* The Default team is where removed keys LAND, so there is
-                        nowhere to remove them to from here. */}
-                          {team.isDefault ? null : (
-                            <IconActionButton
-                              aria-label={`Remove ${row.name} from ${team.name}`}
-                              onClick={() => setRemoving(row)}
-                            >
-                              <X
-                                aria-hidden
-                                className="size-5"
-                                strokeWidth={1.75}
-                              />
-                            </IconActionButton>
-                          )}
-                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -1591,33 +1774,6 @@ function KeysPane({
           </Table>
         )}
       </Card>
-
-      <AddKeysDialog
-        onAdd={(ids) => {
-          onMoveKeys(ids);
-          setAddOpen(false);
-        }}
-        onOpenChange={setAddOpen}
-        open={addOpen}
-        options={options}
-      />
-      <RemoveTeamKeyDialog
-        keyLabel={
-          removing === null ? "" : `${removing.name} (${removing.masked})`
-        }
-        onConfirm={() => {
-          if (removing) {
-            onRemoveKey(removing.id);
-          }
-          setRemoving(null);
-        }}
-        onOpenChange={(next) => {
-          if (!next) {
-            setRemoving(null);
-          }
-        }}
-        open={removing !== null}
-      />
     </div>
   );
 }
@@ -1625,7 +1781,7 @@ function KeysPane({
 /** Loading twin of a Keys row. The Status cell carries a badge-shaped box
  *  (20px, `rounded-xs`) rather than a text bar, because a `<Badge>` is what
  *  lands there — and the actions square is again what sets the row height. */
-function KeySkeletonRow({ showActions }: { showActions: boolean }) {
+function KeySkeletonRow() {
   return (
     <TableRow className="hover:bg-transparent">
       <TableCell className="type-mono-14 whitespace-nowrap">
@@ -1645,13 +1801,6 @@ function KeySkeletonRow({ showActions }: { showActions: boolean }) {
       </TableCell>
       <TableCell className="type-mono-14 whitespace-nowrap">
         <SkeletonText className="w-20" />
-      </TableCell>
-      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-        {showActions ? (
-          <span className="inline-flex size-6 items-center justify-center">
-            <Skeleton className="size-5 rounded-xs" />
-          </span>
-        ) : null}
       </TableCell>
     </TableRow>
   );
@@ -1693,7 +1842,9 @@ function BudgetPane({
               budget's NAME titles the block (the dialog's Name field edits
               it; "Team budget" is only the seed default), Edit on the right. */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <SectionTitle>{budget.name || "Team budget"}</SectionTitle>
+            <SectionTitle className="type-heading-24">
+              {budget.name || "Team budget"}
+            </SectionTitle>
             <Button onClick={() => setOpen(true)} size="sm" variant="outline">
               Edit budget
             </Button>

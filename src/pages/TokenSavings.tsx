@@ -108,7 +108,7 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
 function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
-      <PageTitle>Token Savings</PageTitle>
+      <PageTitle>Token savings</PageTitle>
       <p className="type-copy-16 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
         Cache, compress and deduplicate to spend less per request.
       </p>
@@ -118,7 +118,7 @@ function PageHeader() {
 
 /* ─── KPI rail ──────────────────────────────────────────────────────── */
 
-function OverviewSection({
+export function OverviewSection({
   range,
   customRange,
   onRangeChange,

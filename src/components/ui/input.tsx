@@ -45,6 +45,10 @@ function Input({
   VariantProps<typeof inputVariants>) {
   return (
     <input
+      // Default OFF: dialogs autofocus their first field, and the browser's
+      // saved-form-history dropdown popped over the form (user 2026-09-03).
+      // Call sites that want autofill (Settings name / email) pass their own.
+      autoComplete="off"
       className={cn(inputVariants({ surface, className }))}
       data-slot="input"
       type={type}

@@ -8,7 +8,6 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Segmented } from "@/components/ui/segmented";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
-import type { TeamRow } from "@/data/teams";
 import { cn } from "@/lib/utils";
 import {
   ACTION_ACTIVE_BORDER,
@@ -48,14 +47,18 @@ import {
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function TeamPoliciesPane({
-  team,
+  policies,
   onChange,
+  locked = false,
 }: {
-  team: TeamRow;
+  /** The policy rows this surface controls: a team's `team.policies`, or the
+   *  org defaults from the store on the Teams Settings tab. */
+  policies: PolicyState[];
   onChange: (policies: PolicyState[]) => void;
+  /** Every control renders disabled: the org lock (AG-624 / PRD 8.5) or the
+   *  team's own lock is on. The caller renders the "who set it" banner. */
+  locked?: boolean;
 }) {
-  const policies = team.policies;
-
   const toggleEnabled = (id: string) =>
     onChange(
       policies.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p))
@@ -85,6 +88,7 @@ export function TeamPoliciesPane({
         <PolicyCard
           config={cfg}
           key={cfg.id}
+          locked={locked}
           onActionChange={(v) => setAction(cfg.id, v)}
           onScanDirectionChange={(v) => setScanDirection(cfg.id, v)}
           onSensitivityChange={(v) => setSensitivity(cfg.id, v)}
@@ -105,9 +109,11 @@ function PolicyCard({
   onSensitivityChange,
   onScanDirectionChange,
   onActionChange,
+  locked,
 }: {
   config: PolicyConfig;
   state: PolicyState;
+  locked: boolean;
   onToggle: () => void;
   onSensitivityChange: (value: string) => void;
   onScanDirectionChange: (value: string) => void;
@@ -139,6 +145,7 @@ function PolicyCard({
       <CardContent>
         <ActionHalf
           config={config}
+          locked={locked}
           onChange={onActionChange}
           value={state.action}
         />
@@ -155,6 +162,7 @@ function PolicyCard({
       <CardContent>
         <SettingsHalf
           config={config}
+          locked={locked}
           onScanDirectionChange={onScanDirectionChange}
           onSensitivityChange={onSensitivityChange}
           state={state}
@@ -222,6 +230,7 @@ function PolicyCard({
                 : toggleCard.description
             }
             enabled={state.enabled}
+            locked={locked}
             onToggle={onToggle}
             title={
               config.id === "prompt-injection"
@@ -243,11 +252,13 @@ function PolicyCard({
  * page's card; the Free-only `badge` slot is gone with the Free branches. */
 
 function PolicyEnableCard({
+  locked,
   title,
   description,
   enabled,
   onToggle,
 }: {
+  locked: boolean;
   title: string;
   description?: string;
   enabled: boolean;
@@ -273,6 +284,7 @@ function PolicyEnableCard({
             aria-label={`${title} — ${enabled ? "enabled" : "disabled"}`}
             checked={enabled}
             className="shrink-0"
+            disabled={locked}
             onCheckedChange={onToggle}
             size="lg"
           />
@@ -289,9 +301,11 @@ function SettingsHalf({
   state,
   onSensitivityChange,
   onScanDirectionChange,
+  locked,
 }: {
   config: PolicyConfig;
   state: PolicyState;
+  locked: boolean;
   onSensitivityChange: (value: string) => void;
   onScanDirectionChange: (value: string) => void;
 }) {
@@ -325,6 +339,7 @@ function SettingsHalf({
           <RadioGroup
             aria-label="Sensitivity"
             className="relative flex w-full items-center justify-between gap-0 py-1"
+            disabled={locked}
             onValueChange={onSensitivityChange}
             value={value}
           >
@@ -408,6 +423,7 @@ function SettingsHalf({
       <Segmented
         aria-label="Scan direction"
         className="mt-4"
+        disabled={locked}
         onChange={onScanDirectionChange}
         options={scan.options}
         size="default"
@@ -459,9 +475,11 @@ function ActionHalf({
   config,
   value,
   onChange,
+  locked,
 }: {
   config: PolicyConfig;
   value: string;
+  locked: boolean;
   onChange: (value: string) => void;
 }) {
   const headingId = `action-heading-${config.id}`;
@@ -478,6 +496,7 @@ function ActionHalf({
       <RadioGroup
         aria-labelledby={headingId}
         className="mt-4 gap-2"
+        disabled={locked}
         onValueChange={onChange}
         value={value}
       >

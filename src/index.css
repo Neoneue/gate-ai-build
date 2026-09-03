@@ -804,6 +804,13 @@ body {
   .type-heading-32 {
     @apply font-sans text-3xl/10 font-medium tracking-tight;
   }
+  /* 28px step for in-tab section headers (Teams Overview tab): one step
+     under the page title, above the 24px block titles. */
+  .type-heading-28 {
+    @apply font-sans font-medium tracking-tight;
+    font-size: 28px;
+    line-height: 36px;
+  }
 
   /* Sans heading tiers 16–24 carry tracking-snug; the display tier (32+)
      uses the tighter tracking-tight. See design.md §975. */

@@ -770,6 +770,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Heading 48 | `type-heading-48` | `font-sans text-5xl/14 font-medium tracking-tight` |
 | Heading 40 | `type-heading-40` | `font-sans text-4xl/12 font-medium tracking-tight` |
 | Heading 32 | `type-heading-32` | `font-sans text-3xl/10 font-medium tracking-tight` |
+| Heading 28 | `type-heading-28` | `font-sans font-medium tracking-tight` at 28px/36px (Teams Overview tab header only) |
 | Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium tracking-snug` |
 | Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium tracking-snug` |
 | Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium tracking-snug` |
@@ -1309,22 +1310,19 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 ### Callout *(added 2026-08-31)*
 
-- **Callout** (`callout.tsx`) — quiet, persistent info banner for scope-setting
-  context that must sit near the surface it qualifies. Surface:
-  `rounded-md border border-border bg-card px-4 py-3` — the same card surface
-  as its neighbors (started as `bg-card-muted`, dropped same-day: the muted
-  band sat BRIGHTER than the cards in dark mode), deliberately NOT alert
-  chrome. Ink:
-  `type-copy-14 text-muted-foreground` with a 16px `Info` glyph in an `h-5`
+- **Callout** (`callout.tsx`) — persistent INFO banner for scope-setting
+  context that must sit near the surface it qualifies. Blue info tint
+  (2026-09-03) so info, warning and danger banners share one recipe. Surface:
+  `rounded-md border border-blue-300 bg-blue-50 px-4 py-3
+  dark:border-blue-500/30 dark:bg-blue-500/10` — the dark side mirrors the
+  danger banner's 10% wash / 30% border. Ink: `type-copy-14 text-blue-900
+  dark:text-blue-300` with a 16px `Info` glyph in the same ink, in an `h-5`
   wrapper so the icon centers on the first text line and stays put when the
-  copy wraps. `role="note"`, no dismiss affordance, no status-color variants:
-  it states a fact about the page, it does not report an event. If a surface
-  ever needs a warning/error banner, that is a different component with
-  status semantics — do not add tone props here. **Currently has no
-  consumer:** the first one (the team Budget tab's "spend below covers the
-  budget window" note) was removed the same day it shipped — the tab's
-  window-aware table titles made it redundant. The primitive stays for the
-  next surface that needs a scope note.
+  copy wraps. `role="note"`, no dismiss affordance: it states a fact about
+  the page, it does not report an event. Warning/error banners keep their own
+  status semantics (`BudgetBreachBanner`); do not add tone props here.
+  Consumers: the team Settings tab's "Locked by your organization" notes, the
+  Default team's Settings note, the cancel-plan dialog.
 
 ### Data bars & meters *(site-wide rule, 2026-09-01)*
 
@@ -1562,12 +1560,18 @@ The hairline doesn't reach the rounded corners or section edges — reads lighte
 
 When one section is the focal action, accent it with `bg-blue-50` (and the icon chip with `bg-blue-100 text-blue-700`) — matches the `bg-blue-50` quick-action accent used on the Overview dashboard. **Don't invert** (white text on solid blue) — too marketing-loud for the operator-tool register.
 
-#### Section header capitalization
+#### Capitalization (site-wide, 2026-09-03)
 
-- Card titles: **Title Case** (`Recent Requests`, `Top Keys`, `Request Volume`, `Quick Actions`).
-- Field/column labels: **sentence case** for technical terms (`Leaf hash`, `Anchor root`, `Anchored`).
-- Single-word labels: unaffected.
-- Eyebrows: **MONO UPPERCASE TRACKED** (`REQUESTS / 1H`, `TOTAL COST`).
+- **Sentence case everywhere**: nav items, page titles, section and card
+  titles, tabs, buttons, field and column labels (`Security events`, `Audit
+  trail`, `My token savings`, `Recent requests`, `Leaf hash`). Decided on the
+  2026-09-03 call; matches Anthropic Console, OpenAI platform, Vercel, Linear,
+  Stripe, GitHub. The earlier Title Case rule for card titles is retired;
+  card titles still carrying it are legacy, fix on touch.
+- Proper nouns and acronyms keep their casing (`API keys`, `PII / PHI
+  scanner`, `LLM`, `Gate`).
+- Eyebrows and KPI labels: **MONO UPPERCASE TRACKED** (`REQUESTS / 1H`,
+  `TOTAL COST`). Never on a form/input label.
 
 ---
 

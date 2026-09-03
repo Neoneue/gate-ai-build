@@ -6,12 +6,12 @@ import {
   Coins,
   CreditCard,
   Fingerprint,
+  Gauge,
   Home,
   KeyRound,
   Mail,
   MessageSquare,
   Settings2,
-  Shield,
   ShieldCheck,
   TriangleAlert,
   Users,
@@ -49,14 +49,14 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       {
         id: "security-events",
         icon: TriangleAlert,
-        label: "Security Events",
+        label: "Security events",
         pageId: "/security",
         locked: true,
       },
       {
         id: "audit-trail",
         icon: Fingerprint,
-        label: "Audit Trail",
+        label: "Audit trail",
         pageId: "/audit-trail",
       },
     ],
@@ -64,10 +64,15 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: "Manage",
     items: [
-      { id: "policies", icon: Shield, label: "Policies", pageId: "/policies" },
+      {
+        id: "policies",
+        icon: ShieldCheck,
+        label: "Policies",
+        pageId: "/policies",
+      },
       {
         id: "limits",
-        icon: ShieldCheck,
+        icon: Gauge,
         label: "Limits",
         pageId: "/limits",
         locked: true,
@@ -75,7 +80,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       {
         id: "token-savings",
         icon: Coins,
-        label: "Token Savings",
+        label: "Token savings",
         pageId: "/token-savings",
         locked: true,
       },
@@ -100,7 +105,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       {
         id: "api-keys",
         icon: KeyRound,
-        label: "API Keys",
+        label: "API keys",
         pageId: "/api-keys",
       },
       {
@@ -175,8 +180,28 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
   new Set<string>()
 );
 
+const ENTERPRISE_MANAGE_ORDER = ["limits", "policies", "token-savings"];
+
 /** Sidebar for the Enterprise workspace — unlocked items point at their
  *  `-enterprise` twin. Nothing is locked or hidden: Enterprise is the top
- *  tier, so every surface Pro has, it has. */
+ *  tier, so every surface Pro has, it has. Policies and Token savings are
+ *  USER-level on Enterprise (org and team settings live on Teams; call
+ *  2026-09-03), so the labels say whose they are. */
 export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
-  buildVariantSections("-enterprise", new Set<string>());
+  buildVariantSections("-enterprise", new Set<string>(), new Set<string>(), {
+    policies: "My policies",
+    "token-savings": "My token savings",
+  }).map((section) =>
+    // Manage reads org-level first, then the personal pair together:
+    // Limits, My Policies, My Token Savings (user 2026-09-03).
+    section.label === "Manage"
+      ? {
+          ...section,
+          items: [...section.items].sort(
+            (a, b) =>
+              ENTERPRISE_MANAGE_ORDER.indexOf(a.id) -
+              ENTERPRISE_MANAGE_ORDER.indexOf(b.id)
+          ),
+        }
+      : section
+  );

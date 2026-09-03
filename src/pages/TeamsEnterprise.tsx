@@ -1,11 +1,11 @@
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Archive, MoreHorizontal, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
-import { SectionTitle } from "@/components/ui/section-title";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   NavTableRow,
@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
 import {
   BUDGET_WINDOW_LABEL,
@@ -43,6 +45,7 @@ import {
   DeleteTeamDialog,
   RenameTeamDialog,
 } from "@/pages/teams/dialogs";
+import { OrgSettingsPane } from "@/pages/teams/OrgSettingsPane";
 import {
   teamsStore,
   useDeletedTeams,
@@ -138,6 +141,10 @@ export function TeamsEnterprise() {
     teamsStore.setTeams(next);
   const deletedTeams = useDeletedTeams();
   const [createOpen, setCreateOpen] = useState(false);
+  // Current / Archived tabs, same shape as API Keys' Active / Revoked.
+  const [listTab, setListTab] = useState<"current" | "archived" | "settings">(
+    "current"
+  );
   const [renaming, setRenaming] = useState<TeamRow | null>(null);
   const [deleting, setDeleting] = useState<TeamRow | null>(null);
 
@@ -192,6 +199,7 @@ export function TeamsEnterprise() {
       name: doomed.name,
       spend: usageForTeam(doomed).spend,
       deletedAt: new Date(),
+      team: doomed,
     });
     setTeams((prev) => deleteTeam(prev, id));
     setDeleting(null);
@@ -239,21 +247,62 @@ export function TeamsEnterprise() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <SectionTitle>Your teams</SectionTitle>
-          <TeamsTable
-            loading={loading}
-            onDelete={setDeleting}
-            onOpen={(id) => navigate(`${basePath}/${id}`)}
-            onRename={setRenaming}
-            spendByTeam={spendByTeam}
-            teams={teams}
-          />
-        </div>
-
-        {deletedTeams.length === 0 ? null : (
-          <DeletedTeamsCard rows={deletedTeams} />
-        )}
+        <Tabs
+          className="gap-4"
+          onValueChange={(v) =>
+            setListTab(v as "current" | "archived" | "settings")
+          }
+          value={listTab}
+        >
+          <TabsList className="-mt-2 px-0" variant="line">
+            <TabsTrigger value="current">
+              Current teams
+              <TabsCount>{teams.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="archived">
+              Archived teams
+              <TabsCount>{deletedTeams.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+          <TabsContent value="current">
+            <TeamsTable
+              loading={loading}
+              onDelete={setDeleting}
+              onOpen={(id) => navigate(`${basePath}/${id}`)}
+              onRename={setRenaming}
+              spendByTeam={spendByTeam}
+              teams={teams}
+            />
+          </TabsContent>
+          <TabsContent value="archived">
+            {deletedTeams.length === 0 ? (
+              <EmptyState
+                body="Teams you archive will appear here with their spend history, so org records can be tracked after a team is removed."
+                icon={
+                  <div
+                    aria-hidden
+                    className="flex size-12 items-center justify-center rounded-full bg-muted"
+                  >
+                    <Archive
+                      className="size-5 text-muted-foreground"
+                      strokeWidth={1.75}
+                    />
+                  </div>
+                }
+                title="No archived teams"
+              />
+            ) : (
+              <DeletedTeamsCard
+                onOpen={(id) => navigate(`${basePath}/${id}`)}
+                rows={deletedTeams}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="settings">
+            <OrgSettingsPane />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <CreateTeamDialog
@@ -628,10 +677,15 @@ function TeamRowActions({
  *  Default and keep serving there, so this list is not a second place to
  *  manage them — it is the record that keeps org spend adding up after a team
  *  stops having a row. No sort, no actions: nothing here is actionable. */
-function DeletedTeamsCard({ rows }: { rows: DeletedTeam[] }) {
+function DeletedTeamsCard({
+  rows,
+  onOpen,
+}: {
+  rows: DeletedTeam[];
+  onOpen: (id: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
-      <SectionTitle>Archived teams</SectionTitle>
       <Card density="flush">
         <Table className="min-w-[360px] table-fixed">
           <TableHeader>
@@ -647,7 +701,11 @@ function DeletedTeamsCard({ rows }: { rows: DeletedTeam[] }) {
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
-              <TableRow key={row.id}>
+              <NavTableRow
+                aria-label={`Open ${row.name}`}
+                key={row.id}
+                onActivate={() => onOpen(row.id)}
+              >
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
                   {row.name}
                 </TableCell>
@@ -657,7 +715,7 @@ function DeletedTeamsCard({ rows }: { rows: DeletedTeam[] }) {
                 <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                   {formatCurrency(row.spend)}
                 </TableCell>
-              </TableRow>
+              </NavTableRow>
             ))}
           </TableBody>
         </Table>

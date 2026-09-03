@@ -7,6 +7,8 @@ export interface SegmentedProps {
    *  is no adjacent visible label that describes the segmented control's purpose. */
   "aria-label"?: string;
   className?: string;
+  /** Disables every option button (locked settings). */
+  disabled?: boolean;
   onChange?: (value: string) => void;
   /** `count` renders the shared <TabsCount> chip after the label — the same
    *  mono counter Tabs uses (design.md: don't hand-roll that recipe), so a
@@ -37,6 +39,7 @@ export function Segmented({
   size = "default",
   className,
   "aria-label": ariaLabel,
+  disabled,
 }: SegmentedProps) {
   if (variant === "group") {
     return (
@@ -62,6 +65,7 @@ export function Segmented({
                   : "border-border border-t border-r border-b bg-card text-foreground",
                 i === 0 && !selected && "border-l"
               )}
+              disabled={disabled}
               key={opt.value}
               onClick={() => onChange?.(opt.value)}
               type="button"
@@ -81,6 +85,7 @@ export function Segmented({
     <SegmentedPillVariant
       ariaLabel={ariaLabel}
       className={className}
+      disabled={disabled}
       onChange={onChange}
       options={options}
       size={size}
@@ -104,6 +109,7 @@ function SegmentedPillVariant({
   size,
   className,
   ariaLabel,
+  disabled,
 }: {
   /** Same shape as SegmentedProps["options"] — see the chip + memo note there. */
   options: SegmentedProps["options"];
@@ -112,6 +118,7 @@ function SegmentedPillVariant({
   size: "sm" | "default";
   className?: string;
   ariaLabel?: string;
+  disabled?: boolean;
 }) {
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [indicator, setIndicator] = useState<{
@@ -191,6 +198,7 @@ function SegmentedPillVariant({
                 ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            disabled={disabled}
             key={opt.value}
             onClick={() => onChange?.(opt.value)}
             ref={(el) => {

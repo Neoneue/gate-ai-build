@@ -80,34 +80,65 @@ export function TeamTokenSavingsPane({
    *  readings of traffic, so they render as themselves. */
   loading: boolean;
 }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <TeamTokenSavingsRail loading={loading} team={team} teams={teams} />
+      <SavingsOptionsSection onChange={onChange} team={team} />
+    </div>
+  );
+}
+
+/** The KPI rail on its own, with its range chrome. The Token savings tab
+ *  stacks the options cards under it; the Overview tab renders just this,
+ *  retitled, between the Usage and Security blocks. */
+export function TeamTokenSavingsRail({
+  team,
+  teams,
+  loading,
+  title = "Overview",
+  titleClassName,
+  controlledRange,
+}: {
+  team: TeamRow;
+  teams: TeamRow[];
+  loading: boolean;
+  title?: string;
+  /** Controlled range (Overview tab). When set, the section's own range
+   *  chrome is hidden and the tab-level picker drives every number. */
+  controlledRange?: { range: Range; customRange: CustomRange | null };
+
+  /** Voice override for the title; the Overview tab steps its three block
+   *  titles up to `type-heading-24` so the sections read apart. */
+  titleClassName?: string;
+}) {
   // Range selector defaults to All on load, matching the Usage and Security
   // tabs. No `?range=` read: the tab is not a deep-link target.
   const [range, setRange] = useState<Range>("all");
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
   return (
-    <div className="flex flex-col gap-6">
-      <OverviewSection
-        customRange={customRange}
-        loading={loading}
-        onCustomRangeChange={(r) => {
-          if (r) {
-            setCustomRange(r);
-            setRange("custom");
-          } else {
-            setCustomRange(null);
-            setRange("all");
-          }
-        }}
-        onRangeChange={(r) => {
-          setRange(r);
+    <OverviewSection
+      customRange={controlledRange ? controlledRange.customRange : customRange}
+      hideRangeChrome={Boolean(controlledRange)}
+      loading={loading}
+      onCustomRangeChange={(r) => {
+        if (r) {
+          setCustomRange(r);
+          setRange("custom");
+        } else {
           setCustomRange(null);
-        }}
-        range={range}
-        team={team}
-        teams={teams}
-      />
-      <SavingsOptionsSection onChange={onChange} team={team} />
-    </div>
+          setRange("all");
+        }
+      }}
+      onRangeChange={(r) => {
+        setRange(r);
+        setCustomRange(null);
+      }}
+      range={controlledRange ? controlledRange.range : range}
+      team={team}
+      teams={teams}
+      title={title}
+      titleClassName={titleClassName}
+    />
   );
 }
 
@@ -121,6 +152,9 @@ function OverviewSection({
   team,
   teams,
   loading,
+  title,
+  titleClassName,
+  hideRangeChrome,
 }: {
   range: Range;
   customRange: CustomRange | null;
@@ -129,6 +163,9 @@ function OverviewSection({
   team: TeamRow;
   teams: TeamRow[];
   loading: boolean;
+  title: string;
+  titleClassName?: string;
+  hideRangeChrome?: boolean;
 }) {
   const effectiveRange = range === "custom" ? "all" : range;
   const kpis = teamSavingsKpis(team, teams, effectiveRange);
@@ -138,21 +175,23 @@ function OverviewSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Overview</SectionTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          <SegmentedPill
-            aria-label="Time range"
-            onValueChange={(v) => onRangeChange(v as PresetRange)}
-            options={RANGE_OPTIONS}
-            size="sm"
-            value={range === "custom" ? "" : range}
-          />
-          <DateRangePicker
-            onChange={onCustomRangeChange}
-            size="sm"
-            value={customRange}
-          />
-        </div>
+        <SectionTitle className={titleClassName}>{title}</SectionTitle>
+        {hideRangeChrome ? null : (
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedPill
+              aria-label="Time range"
+              onValueChange={(v) => onRangeChange(v as PresetRange)}
+              options={RANGE_OPTIONS}
+              size="sm"
+              value={range === "custom" ? "" : range}
+            />
+            <DateRangePicker
+              onChange={onCustomRangeChange}
+              size="sm"
+              value={customRange}
+            />
+          </div>
+        )}
       </div>
       <KpiRail columns={3}>
         {kpis.map((k) => (
@@ -195,10 +234,28 @@ function SavingsOptionsSection({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <SectionTitle>Savings options</SectionTitle>
       </div>
-      <div className="flex flex-col gap-4">
-        <CompressionCard onChange={onChange} team={team} />
-        <CachingCard onChange={onChange} team={team} />
-      </div>
+      <TeamSavingsOptionCards onChange={onChange} savings={team.savings} />
+    </div>
+  );
+}
+
+/** The Compression + Caching control cards with no section chrome. The
+ *  Settings tab renders these under its own "Token savings" title. */
+export function TeamSavingsOptionCards({
+  savings,
+  onChange,
+  locked = false,
+}: {
+  /** A team's `team.savings`, or the org defaults on the Teams Settings tab. */
+  savings: TeamSavings;
+  onChange: (savings: TeamSavings) => void;
+  /** Every control renders disabled (org or team lock, AG-624 / PRD 8.5). */
+  locked?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <CompressionCard locked={locked} onChange={onChange} savings={savings} />
+      <CachingCard locked={locked} onChange={onChange} savings={savings} />
     </div>
   );
 }
@@ -238,14 +295,16 @@ const TTL_OPTIONS = [
 ] as const;
 
 function CachingCard({
-  team,
+  savings,
+  locked,
   onChange,
 }: {
-  team: TeamRow;
+  savings: TeamSavings;
+  locked: boolean;
   onChange: (savings: TeamSavings) => void;
 }) {
-  const enabled = team.savings.caching;
-  const ttl = team.savings.cacheTtl;
+  const enabled = savings.caching;
+  const ttl = savings.cacheTtl;
 
   return (
     <Card>
@@ -274,8 +333,9 @@ function CachingCard({
                 aria-labelledby="caching-switch-label"
                 checked={enabled}
                 className="mt-1 shrink-0"
+                disabled={locked}
                 onCheckedChange={(next) => {
-                  onChange({ ...team.savings, caching: next });
+                  onChange({ ...savings, caching: next });
                   toast(next ? "Caching enabled" : "Caching disabled");
                 }}
                 size="lg"
@@ -296,8 +356,9 @@ function CachingCard({
                 </p>
               </div>
               <Select
+                disabled={locked}
                 onValueChange={(next) => {
-                  onChange({ ...team.savings, cacheTtl: next });
+                  onChange({ ...savings, cacheTtl: next });
                   toast.success("TTL saved");
                 }}
                 value={ttl}
@@ -405,13 +466,15 @@ function BenefitList({
 }
 
 function CompressionCard({
-  team,
+  savings,
+  locked,
   onChange,
 }: {
-  team: TeamRow;
+  savings: TeamSavings;
+  locked: boolean;
   onChange: (savings: TeamSavings) => void;
 }) {
-  const advancedEnabled = team.savings.compression;
+  const advancedEnabled = savings.compression;
 
   return (
     <Card>
@@ -444,8 +507,9 @@ function CompressionCard({
                     aria-label="Enable advanced compression"
                     checked={advancedEnabled}
                     className="shrink-0"
+                    disabled={locked}
                     onCheckedChange={(next) => {
-                      onChange({ ...team.savings, compression: next });
+                      onChange({ ...savings, compression: next });
                       toast(
                         next
                           ? "Advanced compression enabled"
