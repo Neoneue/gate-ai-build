@@ -478,7 +478,7 @@ function TeamDetailBody({
               Security tab body, then the Token savings KPI rail, each
               retitled after its tab. One range picker in the header drives
               all three. */}
-          <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8 [&_[data-slot=section-title]:not(.type-heading-24)]:text-lg/7">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
                 <PageTitle as="h2" className="type-heading-24">
@@ -545,36 +545,38 @@ function TeamDetailBody({
                 </Select>
               </div>
             </div>
-            <UsagePane
-              controlledRange={overviewControlled}
-              description="How much this team has spent and sent over the range, and which members and models account for it."
-              loading={loading}
-              singleMember={memberScope !== "all"}
-              teamId={team.id}
-              title="Usage"
-              titleClassName="type-heading-24"
-              usage={scopedUsage}
-            />
-            <TeamSecurityOverviewPane
-              controlledRange={overviewControlled}
-              description="Prompt injection, PII, and credential events your policies caught on this team’s traffic, and which members they came from."
-              loading={loading}
-              memberId={memberScope === "all" ? undefined : memberScope}
-              team={team}
-              teams={teams}
-              title="Security"
-              titleClassName="type-heading-24"
-              variant={variant}
-            />
-            <TeamTokenSavingsRail
-              controlledRange={overviewControlled}
-              description="What this team saved by caching, compressing and deduplicating requests, compared with what it would have spent otherwise."
-              loading={loading}
-              team={scopedTeam}
-              teams={teams}
-              title="Token savings"
-              titleClassName="type-heading-24"
-            />
+            <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8">
+              <UsagePane
+                controlledRange={overviewControlled}
+                description="How much this team has spent and sent over the range, and which members and models account for it."
+                loading={loading}
+                singleMember={memberScope !== "all"}
+                teamId={team.id}
+                title="Usage"
+                titleClassName="type-heading-24"
+                usage={scopedUsage}
+              />
+              <TeamSecurityOverviewPane
+                controlledRange={overviewControlled}
+                description="Prompt injection, PII, and credential events your policies caught on this team’s traffic, and which members they came from."
+                loading={loading}
+                memberId={memberScope === "all" ? undefined : memberScope}
+                team={team}
+                teams={teams}
+                title="Security"
+                titleClassName="type-heading-24"
+                variant={variant}
+              />
+              <TeamTokenSavingsRail
+                controlledRange={overviewControlled}
+                description="What this team saved by caching, compressing and deduplicating requests, compared with what it would have spent otherwise."
+                loading={loading}
+                team={scopedTeam}
+                teams={teams}
+                title="Token savings"
+                titleClassName="type-heading-24"
+              />
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="members">
