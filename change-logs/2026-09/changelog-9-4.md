@@ -34,6 +34,20 @@ retired; the class stays for the lint allowlist.
 
 ## Sections
 
+### Team Overview: tab header stands apart from the ruled sections `e31f916`
+
+Before: the Overview tab wrapper ruled and padded every child after the
+first, so "Team overview" (title, subtitle, range and member controls) got the
+same rule-below and 32px rhythm as Usage, Security and Token savings and read
+as a fourth sibling section. After: two groups at `gap-6`. The header group
+carries no rule; the section group keeps `gap-8` with the rule and `pt-8`
+between its three panes only. Tab header to first section is 24px. The same
+wrapper had forced every non-24 `SectionTitle` in the tab to `text-lg/7`
+(18px); that selector is gone, so "Usage by current members" and the other
+table titles render at the 20px default. Rule to hold: tab header, no rule,
+controls right; sections, rule above, no controls.
+`src/pages/TeamDetailEnterprise.tsx`.
+
 ### Team Overview: section subtitles in the site's own words `86da091`
 
 Before: the Security and Token savings subtitles read "What the gateway caught
