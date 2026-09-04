@@ -463,7 +463,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
         <Dialog onOpenChange={setFiltersOpen} open={filtersOpen}>
           <DialogContent className="w-full gap-4 sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle className="type-heading-18 text-foreground">
+              <DialogTitle className="type-heading-20 text-foreground">
                 Filters
               </DialogTitle>
             </DialogHeader>

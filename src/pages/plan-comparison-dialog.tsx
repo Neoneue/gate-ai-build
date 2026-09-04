@@ -131,7 +131,7 @@ function PlanCard({
       data-plan-card
     >
       <div className="flex items-center justify-between gap-4">
-        <p className="type-heading-18 m-0 text-foreground">{plan.title}</p>
+        <p className="type-heading-20 m-0 text-foreground">{plan.title}</p>
       </div>
 
       <h3 className="type-heading-32 m-0 text-foreground tabular-nums tracking-tight">
@@ -234,7 +234,7 @@ export function PlanComparisonDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[90vh] w-full flex-col gap-4 overflow-hidden p-4 sm:p-6 md:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-foreground">
+          <DialogTitle className="type-heading-20 text-foreground">
             Manage subscription
           </DialogTitle>
         </DialogHeader>

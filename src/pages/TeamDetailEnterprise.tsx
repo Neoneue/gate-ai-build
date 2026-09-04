@@ -547,6 +547,7 @@ function TeamDetailBody({
             </div>
             <UsagePane
               controlledRange={overviewControlled}
+              description="How much this team has spent and sent over the range, and which members and models account for it."
               loading={loading}
               singleMember={memberScope !== "all"}
               teamId={team.id}
@@ -556,6 +557,7 @@ function TeamDetailBody({
             />
             <TeamSecurityOverviewPane
               controlledRange={overviewControlled}
+              description="What the gateway caught on this team’s traffic, and where it clustered."
               loading={loading}
               memberId={memberScope === "all" ? undefined : memberScope}
               team={team}
@@ -566,6 +568,7 @@ function TeamDetailBody({
             />
             <TeamTokenSavingsRail
               controlledRange={overviewControlled}
+              description="What compression returned to this team against raw provider cost."
               loading={loading}
               team={scopedTeam}
               teams={teams}
@@ -840,6 +843,7 @@ function UsagePane({
   loading,
   title = "Overview",
   titleClassName,
+  description,
   controlledRange,
   singleMember = false,
 }: {
@@ -853,6 +857,10 @@ function UsagePane({
    *  this block "Usage". */
   title?: string;
   titleClassName?: string;
+  /** One-line gloss under the title. The team Overview tab passes it so
+   *  the 24px block title reads as a main section, not another table
+   *  heading. Omitted everywhere else, and then nothing renders. */
+  description?: string;
   /** Controlled range (Overview tab). When set, the section's own range
    *  chrome is hidden and the tab-level picker drives every number. */
   controlledRange?: { range: Range; customRange: CustomRange | null };
@@ -916,7 +924,14 @@ function UsagePane({
           block, so the title sits 16px above the cards. */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <SectionTitle className={titleClassName}>{title}</SectionTitle>
+          <div className="flex flex-col gap-2">
+            <SectionTitle className={titleClassName}>{title}</SectionTitle>
+            {description ? (
+              <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+                {description}
+              </p>
+            ) : null}
+          </div>
           {controlledRange ? null : (
             <div className="flex flex-wrap items-center gap-2">
               <SegmentedPill

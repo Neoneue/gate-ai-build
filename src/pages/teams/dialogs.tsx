@@ -113,7 +113,7 @@ function CreateTeamBody({ onCreate }: { onCreate: (name: string) => void }) {
       }}
     >
       <DialogHeader>
-        <DialogTitle className="type-heading-18 text-foreground">
+        <DialogTitle className="type-heading-20 text-foreground">
           Create team
         </DialogTitle>
         <DialogDescription>
@@ -368,7 +368,7 @@ function BudgetBody({
       }}
     >
       <DialogScrollHeader>
-        <DialogTitle className="type-heading-18 text-foreground">
+        <DialogTitle className="type-heading-20 text-foreground">
           {title}
         </DialogTitle>
         <DialogDescription>{BUDGET_PRESETS_HELPER_COPY}</DialogDescription>
@@ -716,7 +716,7 @@ function AddEntitiesBody({
       }}
     >
       <DialogHeader>
-        <DialogTitle className="type-heading-18 text-foreground">
+        <DialogTitle className="type-heading-20 text-foreground">
           {copy.title}
         </DialogTitle>
         <DialogDescription>{copy.description}</DialogDescription>
@@ -861,7 +861,7 @@ function RenameTeamBody({
       }}
     >
       <DialogHeader>
-        <DialogTitle className="type-heading-18 text-foreground">
+        <DialogTitle className="type-heading-20 text-foreground">
           Rename team
         </DialogTitle>
         <DialogDescription>

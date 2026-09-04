@@ -679,7 +679,7 @@ function InviteMemberDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="type-heading-18 text-foreground">
+            <DialogTitle className="type-heading-20 text-foreground">
               Invite member
             </DialogTitle>
             <DialogDescription>

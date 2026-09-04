@@ -97,12 +97,17 @@ export function TeamTokenSavingsRail({
   loading,
   title = "Overview",
   titleClassName,
+  description,
   controlledRange,
 }: {
   team: TeamRow;
   teams: TeamRow[];
   loading: boolean;
   title?: string;
+  /** One-line gloss under the title. The team Overview tab passes it so
+   *  the 24px block title reads as a main section, not another table
+   *  heading. Omitted everywhere else, and then nothing renders. */
+  description?: string;
   /** Controlled range (Overview tab). When set, the section's own range
    *  chrome is hidden and the tab-level picker drives every number. */
   controlledRange?: { range: Range; customRange: CustomRange | null };
@@ -118,6 +123,7 @@ export function TeamTokenSavingsRail({
   return (
     <OverviewSection
       customRange={controlledRange ? controlledRange.customRange : customRange}
+      description={description}
       hideRangeChrome={Boolean(controlledRange)}
       loading={loading}
       onCustomRangeChange={(r) => {
@@ -154,6 +160,7 @@ function OverviewSection({
   loading,
   title,
   titleClassName,
+  description,
   hideRangeChrome,
 }: {
   range: Range;
@@ -165,6 +172,10 @@ function OverviewSection({
   loading: boolean;
   title: string;
   titleClassName?: string;
+  /** One-line gloss under the title. The team Overview tab passes it so
+   *  the 24px block title reads as a main section, not another table
+   *  heading. Omitted everywhere else, and then nothing renders. */
+  description?: string;
   hideRangeChrome?: boolean;
 }) {
   const effectiveRange = range === "custom" ? "all" : range;
@@ -175,7 +186,14 @@ function OverviewSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className={titleClassName}>{title}</SectionTitle>
+        <div className="flex flex-col gap-2">
+          <SectionTitle className={titleClassName}>{title}</SectionTitle>
+          {description ? (
+            <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+              {description}
+            </p>
+          ) : null}
+        </div>
         {hideRangeChrome ? null : (
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedPill

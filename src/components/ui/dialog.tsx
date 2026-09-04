@@ -345,7 +345,7 @@ function DialogFooter({
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
-      className={cn("type-heading-18", className)}
+      className={cn("type-heading-20", className)}
       data-slot="dialog-title"
       {...props}
     />
@@ -404,7 +404,7 @@ function DialogTitleBlock({
 }) {
   const titleClassName = cn(
     titleFont === "mono" ? "font-mono" : "font-sans",
-    "m-0 font-medium text-foreground text-lg leading-none"
+    "m-0 font-medium text-foreground text-xl leading-none"
   );
   const titleNode =
     mode === "static" ? (

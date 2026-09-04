@@ -206,7 +206,7 @@ export function Upgrade() {
       <section aria-labelledby="compare-plans-heading">
         <div className="mb-4 flex flex-col gap-2">
           <h2
-            className="type-heading-18 m-0 text-foreground tracking-tight"
+            className="type-heading-20 m-0 text-foreground tracking-tight"
             id="compare-plans-heading"
           >
             Compare plans

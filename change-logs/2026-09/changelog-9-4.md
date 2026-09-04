@@ -6,7 +6,50 @@ Prior day: [`changelog-9-3.md`](./changelog-9-3.md)
 
 ---
 
+## Conventions
+
+### Heading ladder: 18px retired, dialog and block titles at 20 `9434e08`
+
+Before: `type-heading-18` sat between the 20px `SectionTitle` and the 16px
+`CardTitle`, worn by every dialog title (`dialog.tsx` default plus explicit
+overrides in ApiKeys, Billing, BillingFree, Limits, LimitsFree, AuditTrail,
+Team, DashboardDefault, RequestsTable, EventsTable, RequestDetailBody, teams
+`dialogs.tsx`, both plan-comparison dialogs), the empty-state titles, the
+plan-card titles, the Upgrade card title and the Overview feed `CardTitle`;
+`DialogTitleBlock` sized its hero title with a raw `text-lg`. After: all 27
+consumers read `type-heading-20`, `DialogTitleBlock` reads `text-xl`. The
+ladder is 32 page, 24 section, 20 block / table / dialog, 16 card title.
+The class stays defined in `index.css` for the lint allowlist; `design.md`
+h4 row marks it retired. The Ask AI markdown `h2` (`text-lg/7`) is left, so
+markdown h1 and h2 stay distinct.
+
 ## Sections
+
+### Team Settings titles match the Settings page at 20 `9434e08`
+
+Before: `SettingsStack.tsx` stepped General / Policies / Token savings up to
+`type-heading-24`, so the Teams page Settings tab and the team detail
+Settings tab read one size above the Settings page's Profile / Security /
+Account management. After: the override is gone and the three titles fall
+back to the `SectionTitle` default, `type-heading-20`. One shared stack, so
+both Settings surfaces change together.
+
+### Team Overview: section subtitles under Usage, Security, Token savings `9434e08`
+
+Before: the three 24px section titles on the team Overview tab stood alone
+one 1.2x step above the 20px table titles. After: each carries a full-width
+one-line description in the page-header subtitle voice (`type-copy-16 m-0
+text-pretty text-muted-foreground tracking-snug`), stacked at `gap-2` inside
+the existing title row; the range chrome slot is untouched. Copy describes
+what the section tells the reader, never an affordance: Usage "How much this
+team has spent and sent over the range, and which members and models account
+for it."; Security "What the gateway caught on this team's traffic, and where
+it clustered."; Token savings "What compression returned to this team against
+raw provider cost." Threaded as an optional `description` prop on
+`UsagePane`, `TeamSecurityOverviewPane`, `TeamTokenSavingsRail`; the Usage
+tab, Budget block, table titles and Settings pass none. 14px and a
+half-container measure cap were tried and reverted: the page is capped at
+1024 and the site pairs 20/28 titles with 16 copy elsewhere.
 
 ### Messages: budget-blocked row reads a UUID prefix, not "budget-block" `a3843b0`
 

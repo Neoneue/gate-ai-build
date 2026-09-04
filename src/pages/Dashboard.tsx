@@ -515,7 +515,7 @@ function OverviewUsageChart() {
             minus 34px of card chrome (1px border each side + CardHeader's
             px-4): 672 − 34 = 638. Same number, same intent, as TrendCard's
             CardAction below. */}
-        <CardTitle className="type-heading-18 @min-[638px]/card-header:type-heading-16">
+        <CardTitle className="type-heading-20 @min-[638px]/card-header:type-heading-16">
           {title}
         </CardTitle>
         {/* +4px above and below the button row while it is stacked, inert once

@@ -325,7 +325,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                               strokeWidth={1.75}
                             />
                           </div>
-                          <h3 className="type-heading-18 m-0 text-balance text-foreground">
+                          <h3 className="type-heading-20 m-0 text-balance text-foreground">
                             No findings
                           </h3>
                           <p className="type-copy-14 m-0 max-w-md text-pretty text-muted-foreground">
