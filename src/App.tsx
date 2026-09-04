@@ -8,10 +8,12 @@ import {
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
-import { AuthLayout } from "@/layouts/AuthLayout";
 
 /* Route-level code splitting: each page loads as its own chunk on first
  * visit instead of shipping the whole dashboard in the entry bundle. */
+const AuthLayout = lazy(() =>
+  import("@/layouts/AuthLayout").then((m) => ({ default: m.AuthLayout }))
+);
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );

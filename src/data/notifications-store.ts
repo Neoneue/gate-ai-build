@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
-import { NOTIFICATION_HISTORY } from "@/data/notifications";
+import {
+  NOTIFICATION_SEED_ARCHIVED_IDS,
+  NOTIFICATION_SEED_UNREAD_IDS,
+} from "@/data/notifications-seed-ids";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Notification read / cleared state — module-scoped, IN MEMORY, and
@@ -61,9 +64,11 @@ export type NotificationsReadState = {
  *  older tail. */
 const INITIAL_STATE: NotificationsReadState = {
   readIds: new Set(),
-  archivedIds: new Set(
-    NOTIFICATION_HISTORY.filter((item) => !item.unread).map((item) => item.id)
-  ),
+  /* From the pinned id constants, not the seed itself: the store is eager
+     on every page (the bell reads it), and importing `@/data/notifications`
+     here would pull the whole request / key / billing seed into the chrome
+     chunk. `notifications.test.ts` keeps the constants honest. */
+  archivedIds: new Set(NOTIFICATION_SEED_ARCHIVED_IDS),
 };
 
 const notificationsStore = {
@@ -142,4 +147,20 @@ export function useNotificationsReadState(): NotificationsReadState {
     () => notificationsStore.state,
     () => notificationsStore.state
   );
+}
+
+/** The bell badge's number: unread among NON-ARCHIVED rows, over the whole
+ *  history. Identical to `NOTIFICATION_HISTORY.filter(nonArchived && unread
+ *  && !read).length`, computed from the pinned seed ids so the eager trigger
+ *  never loads the seed. The lazy menu body derives the same number from the
+ *  full rows; the test pins the two sources to each other. */
+export function useUnreadNotificationCount(): number {
+  const { readIds, archivedIds } = useNotificationsReadState();
+  let count = 0;
+  for (const id of NOTIFICATION_SEED_UNREAD_IDS) {
+    if (!(readIds.has(id) || archivedIds.has(id))) {
+      count += 1;
+    }
+  }
+  return count;
 }

@@ -1,6 +1,7 @@
 # Bundle split: make the first load lean
 
-Status: PLAN, not started. Baseline measured 2026-09-04 at `9d6b526`.
+Status: DONE 2026-09-04 (steps 1 to 5). Baseline measured at `9d6b526`;
+results below.
 Rule: measure before and after every step with the same command; a step
 ships only if its number moves. No UI change is allowed by any step.
 
@@ -171,3 +172,30 @@ Attribution when a number does not move: `npx vite build --sourcemap
 - Every step: no visual change. Verify by eye once per step on Overview,
   Messages, and the team Overview tab, then trust tsc, lint and the 158
   tests.
+
+## Results (measured after steps 1 to 5, same command)
+
+| Chunk | Before gzip | After gzip |
+| --- | --- | --- |
+| `DashboardChrome` | 219 KB | 80 KB |
+| `index` | 107 KB | 87 KB |
+| `compact-kpi` (Recharts) | 101 KB | 101 KB |
+| `request-bodies` | 115 KB | 115 KB, no longer loaded on /messages or /conversations |
+| new lazy: `ask-ai-panel` | in chrome | 52 KB, on first open |
+| new lazy: `notifications-menu-body` | in chrome | 1.4 KB, on first open |
+| new lazy: `AuthLayout` (gsap) | in index | own chunk, auth routes only |
+
+Overview first load (index + chrome + charts): 427 KB gzip -> 268 KB gzip.
+Messages first load: ~542 KB gzip -> ~281 KB gzip.
+All JS: 777 KB -> 776 KB gzip (weight moved behind interactions, not removed).
+
+Strict checks all pass: no transcript strings or micromark in the chrome
+chunk, no gsap in index, no `request-bodies` import from the Requests chunk,
+no `motion.` left for `LazyMotion strict`. 161 tests. Playwright probe on the
+built app: bell first open renders the list (popup 515 px at open, 531 px
+settled: the fallback shell is 16 px short of the list, cosmetic), Ask AI
+first open renders the empty state, Messages shows 25 rows with previews
+without fetching the blob, zero console errors.
+
+The `index` chunk did not reach the 80 KB target (87 KB): react-dom, sonner
+and the eager providers remain. Step 6 items unchanged.

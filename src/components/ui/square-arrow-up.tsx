@@ -1,7 +1,7 @@
 "use client";
 
 import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
+import { m, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
 import {
   forwardRef,
@@ -125,7 +125,7 @@ const SquareArrowUpIcon = forwardRef<
         width={size}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <motion.rect
+        <m.rect
           animate={controls}
           height="18"
           initial="normal"
@@ -135,13 +135,13 @@ const SquareArrowUpIcon = forwardRef<
           x="3"
           y="3"
         />
-        <motion.path
+        <m.path
           animate={controls}
           d="m16 12-4-4-4 4"
           initial="normal"
           variants={PATH_VARIANTS}
         />
-        <motion.path
+        <m.path
           animate={controls}
           d="M12 16V8"
           initial="normal"

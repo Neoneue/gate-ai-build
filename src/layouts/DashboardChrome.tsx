@@ -5,10 +5,10 @@ import {
   PanelLeftOpen,
   Sparkles,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { domAnimation, LazyMotion } from "motion/react";
+import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
 import { useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
-import { AskAiPanel } from "@/components/ui/ask-ai-panel";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import { NotificationsMenu } from "@/components/ui/notifications-menu";
@@ -67,6 +67,16 @@ export interface DashboardChromeProps {
   onToggleSidebar: () => void;
   sidebarExpanded: boolean;
 }
+
+/* The Ask AI panel carries react-markdown and its remark / micromark tree
+ * (about 290 KB of source) plus the dot-matrix animation. It is closed by
+ * default, so it loads on first open and stays mounted afterwards so the
+ * thread survives close / reopen (plans/bundle-split.md step 2). */
+const AskAiPanel = lazy(() =>
+  import("@/components/ui/ask-ai-panel").then((m) => ({
+    default: m.AskAiPanel,
+  }))
+);
 
 export function DashboardChrome({
   activeNavId,
@@ -129,6 +139,14 @@ export function DashboardChrome({
   // and read via the outlet context, so it survives navigation (each page
   // remounts its own DashboardChrome) and refresh. Default closed.
   const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
+  // Once opened, the panel stays mounted (closed state is width 0 / inert),
+  // so the lazy chunk is fetched exactly once per chrome mount. Render-phase
+  // latch (the Conversations `?open=` pattern), not an effect: it settles in
+  // the same render the panel opens, so there is no closed-then-open frame.
+  const [askAiEverOpened, setAskAiEverOpened] = useState(askAiOpen);
+  if (askAiOpen && !askAiEverOpened) {
+    setAskAiEverOpened(true);
+  }
   // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
   // content in sync). Below lg there's no rail and no horizontal room, so the
   // same shell opens in a right-docked Sheet instead. `isDesktop` gates which
@@ -168,63 +186,66 @@ export function DashboardChrome({
   const switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight;
   const closeAskAi = () => setAskAiOpen(false);
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
-      <div className="flex flex-row lg:min-h-0 lg:flex-1">
-        {/* Persistent rail on desktop (lg+). Below lg it is hidden and
+    <LazyMotion features={domAnimation} strict>
+      <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
+        <div className="flex flex-row lg:min-h-0 lg:flex-1">
+          {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
-        <div className="hidden shrink-0 lg:flex">
-          <Sidebar
-            activeId={activeNavId}
-            expanded={sidebarExpanded}
-            onNavigate={onNavigate}
-            overviewPath={overviewPath}
-            sections={sections}
-            showLocks={showLocks}
-            topSlot={
-              switcherInRail ? (
-                <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
-                  <WorkspaceSwitcher className="w-full" compactBadge />
-                  {isEnterprise ? <ViewRoleSwitch className="w-full" /> : null}
-                </div>
-              ) : undefined
-            }
-            upgradePath={upgradePath}
-          />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
-          <DashTopBar
-            activeNavId={activeNavId}
-            askAiOpen={askAiOpen}
-            hideDocsButton={hideDocsButton}
-            onNavigate={onNavigate}
-            onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
-            onToggleSidebar={onToggleSidebar}
-            overviewPath={overviewPath}
-            sections={sections}
-            showLocks={showLocks}
-            showViewRole={isEnterprise}
-            sidebarExpanded={sidebarExpanded}
-            switcherInRail={switcherInRail}
-            upgradePath={upgradePath}
-          />
-          {/* Content pane. Below lg the document flows and scrolls naturally
+          <div className="hidden shrink-0 lg:flex">
+            <Sidebar
+              activeId={activeNavId}
+              expanded={sidebarExpanded}
+              onNavigate={onNavigate}
+              overviewPath={overviewPath}
+              sections={sections}
+              showLocks={showLocks}
+              topSlot={
+                switcherInRail ? (
+                  <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
+                    <WorkspaceSwitcher className="w-full" compactBadge />
+                    {isEnterprise ? (
+                      <ViewRoleSwitch className="w-full" />
+                    ) : null}
+                  </div>
+                ) : undefined
+              }
+              upgradePath={upgradePath}
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
+            <DashTopBar
+              activeNavId={activeNavId}
+              askAiOpen={askAiOpen}
+              hideDocsButton={hideDocsButton}
+              onNavigate={onNavigate}
+              onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
+              onToggleSidebar={onToggleSidebar}
+              overviewPath={overviewPath}
+              sections={sections}
+              showLocks={showLocks}
+              showViewRole={isEnterprise}
+              sidebarExpanded={sidebarExpanded}
+              switcherInRail={switcherInRail}
+              upgradePath={upgradePath}
+            />
+            {/* Content pane. Below lg the document flows and scrolls naturally
               (no forced fill, no internal scroll). At lg+ the pane becomes a
               bounded flex child that scrolls internally — `flex-1 min-h-0`
               (without `min-h-0` a flex item won't shrink below its content and
               the scroll container never forms). `[&>*]:shrink-0` keeps direct
               children at their natural heights so the pane scrolls instead of
               squashing them. */}
-          {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
+            {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main
-            className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
-            ref={mainRef}
-          >
-            {children}
-          </main>
-        </div>
-        {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
+            <main
+              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              ref={mainRef}
+            >
+              {children}
+            </main>
+          </div>
+          {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
             `hidden … lg:flex` pattern). As a `shrink-0` sibling of the
             `flex-1 min-w-0` main column, animating its width from 0 → 368px
             condenses the top bar AND content together (the push effect). The
@@ -233,41 +254,50 @@ export function DashboardChrome({
             animation is the sanctioned mechanism here (per the build brief);
             `motion-reduce` snaps it instantly. `inert` when closed drops the
             offscreen skeleton out of the tab order. */}
-        <div
-          className={cn(
-            "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
-            askAiOpen ? "lg:w-[368px]" : "lg:w-0"
-          )}
-        >
           <div
-            className="flex h-full w-[368px] flex-col border-border border-l bg-card"
-            inert={!askAiOpen}
+            className={cn(
+              "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
+              askAiOpen ? "lg:w-[368px]" : "lg:w-0"
+            )}
           >
-            <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+            <div
+              className="flex h-full w-[368px] flex-col border-border border-l bg-card"
+              inert={!askAiOpen}
+            >
+              {askAiEverOpened ? (
+                <Suspense fallback={null}>
+                  <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+                </Suspense>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
-      {/* Below lg the docked column is hidden (no rail, no horizontal room), so
+        {/* Below lg the docked column is hidden (no rail, no horizontal room), so
           the same shell opens in a right-docked Sheet. `isDesktop` keeps this
           closed on lg+ so it never portals open beside the docked column; the
           Base-UI flicker fix (`data-closed:fill-mode-forwards`) is inherited
           from SheetContent. */}
-      <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
-        <SheetContent
-          className="w-full gap-0 p-0 sm:max-w-[368px]"
-          showCloseButton={false}
-          side="right"
-        >
-          <SheetTitle className="sr-only">Ask AI</SheetTitle>
-          <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
-        </SheetContent>
-      </Sheet>
-      {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
+        <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
+          <SheetContent
+            className="w-full gap-0 p-0 sm:max-w-[368px]"
+            showCloseButton={false}
+            side="right"
+          >
+            <SheetTitle className="sr-only">Ask AI</SheetTitle>
+            {askAiEverOpened ? (
+              <Suspense fallback={null}>
+                <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+              </Suspense>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+        {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
           not to this scroll container — placing it here as a sibling keeps
           the stacking context clean while the `fixed` rule escapes any
           overflow clipping from the scrollable content pane above. */}
-      <FeedbackFab askAiOpen={askAiOpen} />
-    </div>
+        <FeedbackFab askAiOpen={askAiOpen} />
+      </div>
+    </LazyMotion>
   );
 }
 

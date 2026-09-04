@@ -1,7 +1,7 @@
 "use client";
 
 import type { Transition } from "motion/react";
-import { motion, useAnimation } from "motion/react";
+import { m, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
 import {
   forwardRef,
@@ -111,7 +111,7 @@ const SlidersHorizontalIcon = forwardRef<
         width={size}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <motion.line
+        <m.line
           animate={controls}
           initial={false}
           transition={DEFAULT_TRANSITION}
@@ -128,7 +128,7 @@ const SlidersHorizontalIcon = forwardRef<
           y1="4"
           y2="4"
         />
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -145,7 +145,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="4"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -162,7 +162,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="12"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -179,7 +179,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="12"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -196,7 +196,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="20"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -213,7 +213,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="20"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -232,7 +232,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="6"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{
@@ -251,7 +251,7 @@ const SlidersHorizontalIcon = forwardRef<
           y2="14"
         />
 
-        <motion.line
+        <m.line
           animate={controls}
           transition={DEFAULT_TRANSITION}
           variants={{

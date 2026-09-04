@@ -1,7 +1,7 @@
 "use client";
 
 import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
+import { m, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
 import {
   forwardRef,
@@ -116,10 +116,10 @@ const UploadIcon = forwardRef<UploadIconHandle, UploadIconProps>(
           xmlns="http://www.w3.org/2000/svg"
         >
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <motion.g animate={controls} variants={ARROW_VARIANTS}>
+          <m.g animate={controls} variants={ARROW_VARIANTS}>
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" x2="12" y1="3" y2="15" />
-          </motion.g>
+          </m.g>
         </svg>
       </div>
     );
