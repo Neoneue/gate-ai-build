@@ -481,7 +481,7 @@ function TeamDetailBody({
           <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8 [&_[data-slot=section-title]:not(.type-heading-24)]:text-lg/7">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-                <PageTitle as="h2" className="type-heading-28">
+                <PageTitle as="h2" className="type-heading-24">
                   Team overview
                 </PageTitle>
                 <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
@@ -557,7 +557,7 @@ function TeamDetailBody({
             />
             <TeamSecurityOverviewPane
               controlledRange={overviewControlled}
-              description="What the gateway caught on this team’s traffic, and where it clustered."
+              description="Prompt injection, PII, and credential events your policies caught on this team’s traffic, and which members they came from."
               loading={loading}
               memberId={memberScope === "all" ? undefined : memberScope}
               team={team}
@@ -568,7 +568,7 @@ function TeamDetailBody({
             />
             <TeamTokenSavingsRail
               controlledRange={overviewControlled}
-              description="What compression returned to this team against raw provider cost."
+              description="What this team saved by caching, compressing and deduplicating requests, compared with what it would have spent otherwise."
               loading={loading}
               team={scopedTeam}
               teams={teams}
