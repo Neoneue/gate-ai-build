@@ -63,7 +63,7 @@ export function requestRowId(row: RequestRow): string {
  *  FNV-1a over four salted passes — no crypto import (this runs in the
  *  browser) and no randomness, so a row keeps the same id across reloads and
  *  its deep link stays stable. Dummy data with the real shape, nothing more. */
-function fallbackRequestUuid(seed: string): string {
+export function fallbackRequestUuid(seed: string): string {
   let hex = "";
   for (let pass = 0; pass < 4; pass++) {
     let h = 0x81_1c_9d_c5 ^ pass;

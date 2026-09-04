@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { REQUEST_ROWS_ALL } from "@/data/requests";
+import { fallbackRequestUuid, REQUEST_ROWS_ALL } from "@/data/requests";
 import {
   BUDGET_WINDOW_LABEL,
   BUDGET_WINDOW_RESET_COPY,
@@ -96,7 +96,11 @@ export function budgetBlockRows(teams: TeamRow[]): RequestRow[] {
       latency: "0.01s",
       cost: "—",
       compression: "—",
-      requestId: `budget-block-${team.id}`,
+      // UUID-shaped like every other row: the Message cell's id line takes
+      // the first two dash segments, so a `budget-block-<team>` id read as
+      // the words "budget-block" (user 2026-09-04). Seeded on the team so the
+      // deep link stays stable across reloads.
+      requestId: fallbackRequestUuid(`budget-block-${team.id}`),
       summary: "Blocked by team budget",
       blockReason: "budget",
       errorCode: "team_budget_exceeded",

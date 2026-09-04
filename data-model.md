@@ -213,6 +213,23 @@ were reading. The plan `Badge` next to the workspace name reads from the same
 predicates. Direct-route entry still works, and remains how a single state gets
 designed or reviewed in isolation.
 
+**There is also a runtime ROLE switch (2026-09-03, AG-695 AC 3).**
+`ViewRoleSwitch` ("Viewing as" Admin / Manager / Member,
+`src/components/ui/view-role-switch.tsx`) renders on Enterprise only: top
+bar, the tight-band rail slot, and the mobile drawer. It writes
+`teamsStore.viewRole`; `useViewRole()` / `currentUserId()` resolve the
+persona through `USER_ID_FOR_ROLE` in `teams/teams-store.ts`: Admin = Chad
+(`usr_chad`, owner), Manager = Kira Tan (`usr_kira`, Development's manager),
+Member = Mateus Silva (`usr_mate`, Development member). Leaving Enterprise
+snaps the role back to Admin. Team roles get their own sidebar
+(`ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS`, pinned in `nav-sections.test.ts`).
+A Member has NO Teams surface: the item is hidden and `/teams*` routes bounce
+to the workspace Overview via `overviewPathFor()` in `lib/plan.ts`
+(user 2026-09-03; the Member read-only branch in `TeamDetailEnterprise.tsx`
+is unreachable, not removed). A Manager sees only their own team; Budget +
+Settings tabs are read-only, add / remove members stays. Both roles lose the
+Settings page's Account management card. Data scoping per role is §5.5.
+
 - `locked: true` in `nav-sections.ts` renders the sidebar lock icon on the
   PRODUCTION shell for the three Pro surfaces (Security Events, Limits, Token
   Savings). Note that `LOCKED_IN_FREE` is currently an **empty set**, so the
@@ -1034,6 +1051,16 @@ Kira: cnv_skylark_18 (openclaw), cnv_polaris_55 (nova-chat). Mateus:
 cnv_orion_70 (hermes-agent), cnv_lyra_92 (atlas-eval). Chad keeps
 cnv_7a3f9e2b, aurora, meridian, vela. Pinned in `view-scope.test.ts`.
 
+Consumers (`468b898` + follow-ups): Overview, Activity, API keys,
+Conversations, Messages, Security, Limits (own active keys only) and Audit
+trail (own entries, `6c66c4a`). Scoped KPI tiles carry NO delta chip
+(`9235958`): a delta needs a canon prior-period rate and none exists per
+person. One model per conversation since `174cb68` (orion keeps two), so a
+persona's model mix is the model of each conversation they own. A BYOK-only
+persona (Kira) reads $0 spend and an empty "By provider" trend, because BYOK
+cells have no Gate route. A Member sees their own messages and conversations,
+never an empty page (user, 2026-09-03), and has no Teams surface at all (§2).
+
 ## 6. Page Inventory
 
 ### Overview page (`/overview` → `Dashboard.tsx`)
@@ -1401,6 +1428,11 @@ channels stay single-sourced on `/notifications`.
 
 **Status:** Built (2026-05-16). Title + subtitle + range selector + 4-tile KPI rail + paginated event log with toolbar. Per-row drill-in (cryptographic-proof side panel) lands in a follow-up.
 
+**Role scope (2026-09-03, `6c66c4a`).** Audit trail is a USER surface, not
+team oversight: every role sees it. `useViewScope()` (§5.5) filters
+`useAuditRows()` to `row.member === <viewer name>` for a Manager or Member;
+the org log is the Admin's. Scoped views also drop the member filter control.
+
 **Page-level state:**
 
 ```typescript
@@ -1541,7 +1573,9 @@ deleted Pro `Teams.tsx`, so no surface renders an org budget today):
 Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
 | Spend | Budget (compact utilization meter + one-decimal % label; "No budget"
 when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
-menu is Rename / Delete, both disabled on Default. Deleting folds the team's
+menu is Rename / Archive, both disabled on Default (the UI word is ARCHIVE
+since 2026-09-03, PRD soft-delete + immutable history; the code keeps
+`deleteTeam` / `deletedTeams`, no blind rename). Archiving folds the team's
 members and keys into Default AND appends a `{ id, name, spend }` snapshot to
 page-local `deletedTeams`, rendered below the table under an "Archived teams"
 section title (title above a flush card; columns Team /
@@ -1747,12 +1781,22 @@ utilization. The Org budget card was removed from the Teams list the same
 day (meeting decision: confusion/duplication); `teamsStore.orgBudget` still
 exists, unrendered.
 
-**Budget thresholds (2026-08-31, form 2026-09-02).** The form edits
-`warnThreshold` only — the shipped schema (`warn_threshold_pct`, migration
-170) carries no block threshold; a hard budget blocks at the cap itself.
-`TeamBudget.blockThreshold` stays in the type (default 100, feeds
-`budgetBlockPoint`) but the dialog's "Block threshold" input was removed on
-user direction, so every saved budget carries 100. The dialog's window picker is a
+**Budget thresholds (2026-08-31, form 2026-09-02, block field restored
+2026-09-03).** The form edits `warnThreshold` on every budget and
+`blockThreshold` on HARD budgets only (PRD 8.2 "warn and block thresholds";
+`2f906bd` reversed the 09-02 removal). `DEFAULT_BLOCK_THRESHOLD` = 100 means
+block at the cap itself; the field requires block > warn and soft budgets
+carry the value unread. The shipped schema (`warn_threshold_pct`, migration
+170) has no block column yet, flagged.
+**Admin alert opt-out (CTO 2026-09-03, `f44f6f6`, NOT in PRD 8.2).**
+`TeamBudget.notifyAdmins: boolean` (seeded `true` everywhere) is a per-budget
+switch "Notify org admins on warnings", shown in the dialog only while Soft
+is selected; hard budgets always notify. The team's manager is always
+alerted and the amber bar + warning badge always render. Copy is
+single-sourced in `budgetAlertRecipients(hasManager, notifyAdmins)`
+(`data/teams.ts`), reused by the form helper, the Budget tab "Warn at"
+tooltip and the empty state. The Budget tab adds an "Admin alerts: Off" fact
+only when opted out; absent = normal. The dialog's window picker is a
 quick-pick preset: selecting a window fills its amount from
 `BUDGET_WINDOW_DEFAULT_AMOUNT` (5h $25 / weekly $200 / monthly $500, always
 editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
@@ -2256,6 +2300,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
+| `ViewRoleSwitch` (`view-role-switch.tsx`) | `Select` | "Viewing as" Admin / Manager / Member. Enterprise only; top bar + tight-band rail slot + mobile drawer. Writes `teamsStore.viewRole` (§2 role switch, §5.5 view scope). Added 2026-09-03. |
 | `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. `w-100` (400px) surface. Renders the whole non-archived `NOTIFICATION_HISTORY` — **not** the newest-8 peek (changed 2026-08-25) — as full-bleed button rows in a `max-h-96 overflow-y-auto` band: `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots); item click = mark read → close → `navigate(href)`. **Windowed render:** 8 rows, +8 per bottom-reach, via a zero-height IntersectionObserver sentinel as the scroll region's last child (`rootMargin: 96px`, root = the band — the `ScrollBottomSentinel` pattern from `ask-ai-scroll-to-latest.tsx`); window resets to 8 on open and on tab switch (which also resets `scrollTop`). **Counts are global:** badge presence, `aria-label` count and the Unread tab's `TabsCount` chip all read one `unreadCount` = unread among ALL non-archived history, the same number as the page's Inbox chip. Unread/All `Segmented` tabs — the Unread option carries its count through `Segmented`'s `options[].count`, which composes the shared `<TabsCount>` (memoize the options array: it is a dep of the pill variant's measuring layout effect). All tab is uncounted. Actions are tab-scoped and both act on the full list, never the window: "Mark all as read" sweeps the whole history, "Archive all" files every non-archived row. Persistent footer row: quiet full-width ghost `View all notifications` → `/notifications?view=feed`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |

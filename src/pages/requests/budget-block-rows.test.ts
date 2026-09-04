@@ -36,7 +36,11 @@ describe("budgetBlockRows (PRD §3 hard-budget block on Messages)", () => {
     expect(row.errorDetail).toContain("monthly cap");
     expect(row.errorDetail).toContain("Team budget block");
     expect(platform.keyIds.length).toBeGreaterThan(0);
-    expect(requestRowId(row)).toBe("budget-block-" + platform.id);
+    // UUID-shaped, like every seeded row, so the Message cell's id line
+    // reads "xxxxxxxx-xxxx" and never the words "budget-block".
+    expect(requestRowId(row)).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
   });
 
   it("a soft budget over cap never blocks", () => {
