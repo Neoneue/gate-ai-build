@@ -23,7 +23,27 @@ The class stays defined in `index.css` for the lint allowlist; `design.md`
 h4 row marks it retired. The Ask AI markdown `h2` (`text-lg/7`) is left, so
 markdown h1 and h2 stay distinct.
 
+### Heading ladder: 28px retired, Teams Overview tab header at 24 `86da091`
+
+Before: the Teams Overview tab header "Team overview" was the site's only
+`type-heading-28`, giving the team detail page four title levels (32 page,
+28 tab header, 24 section, 20 block). After: the tab header sits at
+`type-heading-24` over its 16px subtitle, the same pair the sections use, so
+the ladder is 32 / 24 / 20 / 16 everywhere. `design.md` marks the 28 row
+retired; the class stays for the lint allowlist.
+
 ## Sections
+
+### Team Overview: section subtitles in the site's own words `86da091`
+
+Before: the Security and Token savings subtitles read "What the gateway caught
+on this team's traffic, and where it clustered." and "What compression
+returned to this team against raw provider cost." After, borrowing the
+Security events and Token savings page subtitles: "Prompt injection, PII, and
+credential events your policies caught on this team's traffic, and which
+members they came from." and "What this team saved by caching, compressing and
+deduplicating requests, compared with what it would have spent otherwise."
+Usage unchanged. `src/pages/TeamDetailEnterprise.tsx` Overview tab.
 
 ### Team Settings titles match the Settings page at 20 `9434e08`
 
