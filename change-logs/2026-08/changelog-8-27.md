@@ -27,6 +27,30 @@ the control just clicked. Browser-verified: bottom of /notifications
 (2332px), push to /limits lands at top, back restores 2332 exactly.
 `DashboardChrome.tsx` wires the ref onto `<main>`.
 
+### Rows-per-page 100 becomes All `9997955`
+
+Every pagination footer's rows selector now offers 10 / 25 / 50 / All; All
+shows the whole list on one page. New `table-pagination.ts` module exports
+`ROWS_ALL` and `resolveRowsPerPage(value, total)` (split from the footer per
+the react-refresh convention: split, don't disable), and the five tables
+that slice their own rows (Notifications, Activity, Audit Trail, Messages,
+Security events) all derive their page math through the same helper, so the
+option list and the slicing cannot drift. Tables that never sliced (Team,
+Models, Conversations) inherit the option through the shared footer.
+
+### Table scroll edge fades `6e6a56b`
+
+The shared `Table` primitive now hints at horizontal overflow with gradient
+edge fades (the Carbon/Material scroll-shadow pattern): a right fade while
+more columns sit off-screen, a left fade once scrolled, neither when the
+table fits. New `use-scroll-overflow.ts` hook (passive scroll listener +
+ResizeObserver on scrollport and table), so tables grow and lose fades live
+as the Ask AI panel or sidebar resizes the column. Fades are `from-card`
+token gradients (both themes verified), `pointer-events-none` (row clicks
+pass through), absent from the DOM when nothing overflows. Wide tables
+(Messages 1484px, Limits 1400px) get them everywhere; fitting tables render
+exactly as before. design.md §Table documents the two-level wrapper.
+
 ## Sections
 
 ### Org security events gain the scope tray `3714c67`
@@ -57,3 +81,35 @@ with a 4px offset that centers it on exactly the first two lines (20px name +
 4px gap + 16px subtext = 40px). Two-line rows like In-app render identically
 to before, since centering a 32px chip in a 40px block is the same 4px
 offset. `ChannelRow`, `src/pages/Notifications.tsx`.
+
+### Notifications feed: bulk mark-as-read, Gmail select, 48px rows `8a547ba`
+
+Four user directions in one pass on the feed table and bell. (1) The bulk
+banner now reads "N notifications selected" with two equal-weight outline
+buttons flush right, Mark as read then Archive; Cancel removed (the header
+checkbox is the way out) and neither verb is promoted. Mark as read keeps
+the selection alive so archive can follow on the same set, and disables
+when the selection is all-read. (2) Header checkbox takes Gmail semantics:
+any live selection clears on click (the dash answers "get me out", not
+"finish it"); only an empty box selects the page. (3) Rows locked to
+exactly 48px on both tabs: the archive button's inline baseline descender
+(50px) and the action cell's border-box overshoot (49px) both fixed, block
+flex wrapper + py-0, probe-verified 48/48 and 520/520 table heights.
+(4) Inbox title column pulled 8px toward the checkboxes (pl-1, Inbox only)
+to narrow tab-switch drift. Plus the bell's Archive all records the
+sweep-everything ruling in its comment (archive is a location verb; the
+table's Archive tab keeps unread ink, so nothing is buried).
+
+### Limits table: width scheme, resets format, actions alignment `1623aff`
+
+Column widths moved to a declared scheme (user-tuned through the session):
+Name 15 / Scope 12.5 / Type 8 / Enforcement 7.5 / Threshold 10 / Used 12 /
+Alerts 10 / Period 7.5 / Resets on 12.5 / Actions 5, sum 100 on the
+min-w-[1400px] floor. Used widened because a $1,000,000 threshold rendered
+"$0 / $1,000,000" (~158px) into a 140px column and table-fixed + nowrap
+paints the overflow over the neighbor. Resets on dropped the "UTC" label
+and gained seconds ("Aug 29, 00:00:00"), matching the house timestamp
+voice; boundaries are still computed in UTC. The actions ellipsis glyph
+right-aligns with its header title via -mr-2 (the icon button's 8px inset
+was making the column read misaligned). Rationale comment records px per
+column.

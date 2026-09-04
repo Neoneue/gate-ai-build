@@ -13,8 +13,13 @@ import { CreditCard, KeyRound, Mail, Users } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { HISTORY_ROWS } from "@/data/billing-history";
-import { REQUEST_ROWS_RECENT, requestRowId } from "@/data/requests";
+import {
+  REQUEST_ROWS_RECENT,
+  requestDate,
+  requestRowId,
+} from "@/data/requests";
 import { MEMBER_ROWS } from "@/data/team-members";
+import { DEMO_NOW, DEMO_TODAY } from "@/lib/demo-clock";
 import { formatCurrency } from "@/lib/formatters";
 import type { GuardrailAction, GuardrailReason } from "@/pages/requests/types";
 import {
@@ -64,46 +69,24 @@ export const KIND_META: Record<NotificationKind, { Icon: IconType }> = {
   team: { Icon: Users },
 };
 
-/** The feed's mock clock: the design-agent key's lastUsed — the latest
- *  instant across the mock data, so every item is honestly in the past.
- *  2026-06-06 18:30:12. Relative labels render via
+/** The feed's mock clock: the demo clock's newest instant (the design-agent
+ *  key's lastUsed, shifted to real yesterday 18:30:12), so every item is
+ *  honestly in the past. Relative labels render via
  *  `fmtRelative(item.at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`. */
-export const NOTIFICATIONS_NOW = new Date(2026, 5, 6, 18, 30, 12);
+export const NOTIFICATIONS_NOW = DEMO_NOW;
 
 /** How many items the bell menu shows — the site-wide preview cap. */
 export const NOTIFICATIONS_CAP = 8;
 
-/** Unread default: the current-day band (2026-06-06) ships unread; older
- *  history ships read. Runtime read state layers on top in the store. */
-const RECENT_CUTOFF = new Date(2026, 5, 6);
+/** Unread default: the current-day band (the demo clock's today, real
+ *  yesterday) ships unread; older history ships read. Runtime read state
+ *  layers on top in the store. */
+const RECENT_CUTOFF = DEMO_TODAY;
 const isRecent = (at: Date) => at.getTime() >= RECENT_CUTOFF.getTime();
 
 /** "design-agent (sk-gw-ef7)" → "design-agent". The masked id suffix stays
  *  on the Security page; prose copy carries only the key name. */
 const keyName = (key: string) => key.replace(/\s*\(.*\)$/, "");
-
-const MONTHS: Record<string, number> = {
-  Jan: 0,
-  Feb: 1,
-  Mar: 2,
-  Apr: 3,
-  May: 4,
-  Jun: 5,
-  Jul: 6,
-  Aug: 7,
-  Sep: 8,
-  Oct: 9,
-  Nov: 10,
-  Dec: 11,
-};
-
-/** RequestRow stores "Jun 6" + "00:50:51" strings; recompose the instant.
- *  All request mock data lives in 2026. */
-function parseRequestTime(day: string, time: string): Date {
-  const [mon, dom] = day.split(" ");
-  const [h, m, s] = time.split(":").map(Number);
-  return new Date(2026, MONTHS[mon] ?? 0, Number(dom), h, m, s);
-}
 
 const GUARDRAIL_TITLE: Record<Exclude<GuardrailAction, "allow">, string> = {
   block: "Message blocked",
@@ -156,9 +139,9 @@ function messageItems(): NotificationItem[] {
       copy: row.guardrailReason
         ? `${REASON_LABEL[row.guardrailReason]} finding on ${row.keyId}`
         : `Guardrail finding on ${row.keyId}`,
-      at: parseRequestTime(row.day, row.time),
+      at: requestDate(row),
       href: `/messages-findings/${requestRowId(row)}`,
-      unread: isRecent(parseRequestTime(row.day, row.time)),
+      unread: isRecent(requestDate(row)),
       Icon: Mail,
     }));
 }
@@ -214,7 +197,7 @@ function teamItems(count: number = MEMBER_ROWS.length): NotificationItem[] {
       title: "Member added",
       copy: `${row.name} added to the workspace as a ${row.role}`,
       at: row.joined,
-      href: "/team",
+      href: "/members",
       unread: isRecent(row.joined),
       Icon: Users,
     }));

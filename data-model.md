@@ -48,13 +48,15 @@ graph LR
     LAYOUT --> POL["/policies → Policies.tsx"]
     LAYOUT --> AUD["/audit-trail → AuditTrail.tsx"]
     LAYOUT --> ACT["/activity → Activity.tsx"]
-    LAYOUT --> TEAM["/team → Team.tsx"]
+    LAYOUT --> TEAM["/members → Team.tsx"]
+    LAYOUT --> TEAMS["/teams → TeamsEnterprise.tsx"]
+    LAYOUT --> TEAMD["/teams/:teamId → TeamDetailEnterprise.tsx"]
     LAYOUT --> SET["/settings → Settings.tsx"]
     LAYOUT --> KEYS["/api-keys → ApiKeys.tsx"]
     LAYOUT --> BILL["/billing → Billing.tsx"]
 ```
 
-- The graph shows the **PRO** surfaces only. `App.tsx` declares 54 paths in
+- The graph shows the **PRO** surfaces only. `App.tsx` declares 61 paths in
   total: nearly every nav base also has a `-default` and a `-free` twin, and
   five `/setup-*-default` pages carry the onboarding flow. Both sets are
   inventoried under "Tier & onboarding variants" below.
@@ -115,9 +117,9 @@ affordance.
 | --- | --- |
 | _(unnamed)_ | overview → `/overview` |
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
-| Manage | policies → `/policies`, limits → `/limits` _(`locked`)_, token-savings → `/token-savings` _(`locked`)_ |
+| My settings | policies → `/policies`, token-savings → `/token-savings` _(`locked`)_. The signed-in user's own configuration on every tier; org and team locks are managed on Teams (PM meeting 2026-09-03). |
 | Gateway | models → `/models` |
-| Workspace | activity → `/activity`, team → `/team`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
+| Workspace | activity → `/activity`, limits → `/limits` _(`locked`)_, team → `/members`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
 
@@ -129,6 +131,8 @@ The two variant sidebars are **derived**, not hand-maintained:
 - `DEFAULT_SIDEBAR_SECTIONS` — suffix `-default`, empty lock set. The nav label
   stays "Messages" across all tiers; only the Default page body keeps the
   "Requests" copy.
+- `ENTERPRISE_SIDEBAR_SECTIONS` — suffix `-enterprise`, empty lock set, nothing
+  hidden: Enterprise is the top tier, so every surface Pro has, it has.
 
 **Upgrade promo (2026-08-04).** `SidebarPanel` renders a `<SidebarUpgradeCard>`
 between the `<nav>` and the user area when — and only when — it receives an
@@ -157,12 +161,38 @@ Nearly every sidebar page has two standalone route twins beside its PRO route
 **Twin inventory.** Both suffix sets cover the same 15 nav bases —
 `/overview`, `/messages`, `/conversations`, `/models`, `/token-savings`,
 `/limits`, `/security`, `/policies`, `/audit-trail`, `/activity`,
-`/team`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
+`/members`, `/billing`, `/api-keys`, `/notifications`, `/settings` — with two spelling quirks: the
 Security `-default` twin answers on **both** `/events-default` and
 `/security-default` (same `SecurityDefault.tsx`), and `/messages-*` twins
 render `Requests*.tsx` because the route was renamed but the components were
 not. (An Alerts page lived at `/alerts` from 2026-08-05 until its removal on
 2026-08-24, superseded by the My Notifications + Limits-alerts plan.)
+
+**Teams is the first base with a `-default` twin and no `-free` one
+(2026-08-28).** The PRD scopes Teams to Pro + Enterprise, so the Free sidebar
+does not show the row at all. `nav-sections.ts` grew a `HIDDEN_IN_FREE` set
+beside `LOCKED_IN_FREE` for it, and `buildVariantSections` filters those ids
+out (dropping any group left empty). The distinction is deliberate: a LOCKED
+item is an upsell — the row stays, wearing a padlock, because we want the
+feature seen — while a HIDDEN item is not part of the Free product and has no
+`-free` twin to route to, so a padlock would advertise a page that cannot
+exist. Teams also twins its **detail** route, which no other base does:
+`/teams-default/:teamId` exists so a Default-workspace drill-in keeps its
+variant (the Security tab's empty state) and its back link.
+
+**Enterprise workspace (2026-08-31).** A fourth tier on the `-enterprise`
+suffix, added so the Teams UI could be A/B compared between Pro and
+Enterprise. The A/B closed 2026-09-01: the Enterprise build is the north
+star and now serves every tier. `TeamsEnterprise.tsx` renders on `/teams`,
+`/teams-default` and `/teams-enterprise`; `TeamDetailEnterprise.tsx` on the
+matching `/:teamId` routes. The stale Pro files `Teams.tsx` / `TeamDetail.tsx`
+were deleted. Drill, back and security paths derive from the pathname via
+`teamsListPath()` in `src/lib/plan.ts`, not from a prop. Every other `-enterprise` route
+reuses the PRO page component under the Enterprise chrome (sidebar +
+switcher badge), so in-page cross-links on those reused pages can land back on
+Pro paths; that leak is accepted, the A/B target is Teams. Enterprise is NOT a
+`FREE_SURFACE`: it shows no locks, no upgrade promo, and wears the same `info`
+badge treatment as Pro.
 
 **`src/lib/plan.ts` is the single source of truth for tier.** A surface is
 non-PRO when its pathname ends in `-default` or `-free` (`FREE_SURFACE`), which
@@ -171,15 +201,34 @@ means tier is derived from the URL, never stored:
 | Export | Use |
 | --- | --- |
 | `isDefaultSurface` / `isFreeSurface` / `isNonProSurface` | Predicates read by the sidebar lock icons and the workspace badge, so the badge and the locks can never disagree |
-| `FREE_TWINS` / `DEFAULT_TWINS` | The nav bases that actually have a twin |
-| `toProPath` / `toFreePath` / `toDefaultPath` | Path translation between tiers. Idempotent within a tier; each falls back to that tier's `/overview` twin when the current base has none |
+| `isEnterpriseSurface` | Enterprise predicate, deliberately NOT part of `isNonProSurface`: Enterprise sits above Pro and never shows locks or the upgrade promo |
+| `FREE_TWINS` / `DEFAULT_TWINS` / `ENTERPRISE_TWINS` | The nav bases that actually have a twin |
+| `toProPath` / `toFreePath` / `toDefaultPath` / `toEnterprisePath` | Path translation between tiers. Idempotent within a tier; each falls back to that tier's `/overview` twin when the current base has none |
 
 **There IS a runtime tier switch (2026-06-16).** `WorkspaceSwitcher` in the top
-bar renders Pro / Default / Free menu items that `navigate()` the _current_
-pathname through those translators, so switching tier keeps you on the page you
+bar renders Enterprise / Pro / Default / Free menu items that `navigate()` the
+_current_ pathname through those translators, so switching tier keeps you on
+the page you
 were reading. The plan `Badge` next to the workspace name reads from the same
 predicates. Direct-route entry still works, and remains how a single state gets
 designed or reviewed in isolation.
+
+**There is also a runtime ROLE switch (2026-09-03, AG-695 AC 3).**
+`ViewRoleSwitch` ("Viewing as" Admin / Manager / Member,
+`src/components/ui/view-role-switch.tsx`) renders on Enterprise only: top
+bar, the tight-band rail slot, and the mobile drawer. It writes
+`teamsStore.viewRole`; `useViewRole()` / `currentUserId()` resolve the
+persona through `USER_ID_FOR_ROLE` in `teams/teams-store.ts`: Admin = Chad
+(`usr_chad`, owner), Manager = Kira Tan (`usr_kira`, Development's manager),
+Member = Mateus Silva (`usr_mate`, Development member). Leaving Enterprise
+snaps the role back to Admin. Team roles get their own sidebar
+(`ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS`, pinned in `nav-sections.test.ts`).
+A Member has NO Teams surface: the item is hidden and `/teams*` routes bounce
+to the workspace Overview via `overviewPathFor()` in `lib/plan.ts`
+(user 2026-09-03; the Member read-only branch in `TeamDetailEnterprise.tsx`
+is unreachable, not removed). A Manager sees only their own team; Budget +
+Settings tabs are read-only, add / remove members stays. Both roles lose the
+Settings page's Account management card. Data scoping per role is §5.5.
 
 - `locked: true` in `nav-sections.ts` renders the sidebar lock icon on the
   PRODUCTION shell for the three Pro surfaces (Security Events, Limits, Token
@@ -252,6 +301,7 @@ interface ApiKeyRow {
   id:          string          // "sk-gw-c4aeb3a8" — full id, matching/dedup
   name:        string          // "prod-web", "prod-agent", …
   masked:      string          // "sk-gw-…c4ae" — display-only
+  ownerId:     string          // MEMBER_ROWS id; mirrors activity-data's owner
   requests7d:  number[]        // 7-element sparkline
   createdAt:   Date
   lastUsed:    Date | null     // null = never used
@@ -259,8 +309,12 @@ interface ApiKeyRow {
 }
 ```
 
-Canonical seed: `API_KEY_SEED_ROWS`, 4 keys (prod-web, prod-agent,
-design-agent active; test-key revoked). The page seeds
+Canonical seed: `API_KEY_SEED_ROWS`, 10 keys aligned 1:1 by name with
+activity-data's `API_KEY_ROWS` (2026-08-31): Chad's prod-web, prod-agent,
+design-agent (active) + test-key (revoked), Kira's openclaw + nova-chat,
+Mateus's hermes-agent + atlas-eval, Jordan's development + ci-runner.
+activity-data owns each key's traffic (requests, spend, Gate/BYOK path);
+this file owns its identity (id, masked, dates, ownerId). The page seeds
 `useState(API_KEY_SEED_ROWS)` and still owns mutation. Named to avoid
 `activity-data.ts`, which exports a DIFFERENT `ApiKeyRow`/`API_KEY_ROWS` pair
 for the Activity usage tables. Revoked keys are filtered out of every scope dropdown, key picker, and limit target across the app — "all my keys" = active keys only.
@@ -654,8 +708,8 @@ messages (`REQUEST_ROWS_RECENT`, href `/messages-findings/<requestRowId(row)>`
 — the UUID, never the `req_*` display id), every key mint
 (`API_KEY_SEED_ROWS` → `/api-keys`; revokes carry no date so they stay out),
 every top-up (`HISTORY_ROWS` → `/billing`), and every non-owner join
-(`src/data/team-members.ts MEMBER_ROWS` → `/team`). Unread defaults: the
-2026-06-06 band ships unread (~15 items); older history ships read.
+(`src/data/team-members.ts MEMBER_ROWS` → `/members`). Unread defaults: the
+authored 2026-06-06 band (= `DEMO_TODAY`, real yesterday) ships unread (~15 items); older history ships read.
 `NOTIFICATION_ITEMS = NOTIFICATION_HISTORY.slice(0, NOTIFICATIONS_CAP=8)` is
 still exported, but **the bell no longer uses it as its list bound**
 (2026-08-25): the menu reads the whole non-archived history and windows the
@@ -681,8 +735,9 @@ reached, payment failed, PAYG balance low; security-event is OFF by default
 per the PRD, and the Pro configured seed leaves it off too (2026-08-25). Prefs DO persist —
 localStorage `notifications.prefs.v1` — unlike read state.
 
-`NOTIFICATIONS_NOW` (2026-06-06 18:30:12, the design-agent key's `lastUsed` —
-the latest instant in the mock data) is the feed's clock; relative labels
+`NOTIFICATIONS_NOW` (= `DEMO_NOW`, authored 2026-06-06 18:30:12, the
+design-agent key's `lastUsed`, the latest instant in the mock data, shifted
+onto real yesterday by the demo clock, section 5.2a) is the feed's clock; relative labels
 render via `fmtRelative(at, NOTIFICATIONS_NOW)` from `@/data/audit-trail`
 (anchor param added for this). Catalog types without backing rows
 (spend-limit-reached, payment-failed, PAYG-low — auto-recharge threshold is
@@ -882,6 +937,34 @@ const RANGE_SCALE: Record<PresetRange, number> = {
 
 KPI values for other ranges are derived by multiplying the 7d base by the scale factor. Charts apply the same factor to per-bucket arrays.
 
+### 5.2a Demo clock (added 2026-09-01)
+
+`src/lib/demo-clock.ts` is the single clock for every AUTHORED mock date.
+The mock calendar was written against a fixed year where the latest activity
+day is `AUTHORED_TODAY = 2026-06-06`. At load, the module maps that day onto
+REAL yesterday (`DEMO_TODAY`) and computes one whole-day offset
+(`DEMO_SHIFT_DAYS`, applied with `setDate`, so H:M:S and DST-safe wall clocks
+are preserved). The site therefore always reads as "used through yesterday"
+with no re-authoring.
+
+| Export | Role |
+| --- | --- |
+| `authoredDate(y, m, d, h, mi, s)` | Drop-in for `new Date(2026, ...)` on seed rows (api-keys, audit-trail, billing-history, conversations, team-members, teams, Team.tsx invites, TeamDefault, cancel-plan-dialog) |
+| `parseAuthoredEventTime("YYYY-MM-DD HH:MM:SS")` | Body of `parseEventTime` in `pages/security-data.ts`; shifts all 75 security ISO strings with zero data edits |
+| `parseAuthoredDayTime("Jun 6", "00:50:51")` | Behind `requestDate(row)` / `requestDayLabel(row)` / `requestTimeLabel(row)` in `data/requests.ts`; the 153 row `day`/`time` literals stay authored and are shifted at read |
+| `DEMO_NOW` (yesterday 18:30:12) | `NOTIFICATIONS_NOW`, both `SPARK_TODAY`s, the 24H chart anchor via `demoAnchorFields()` (`security/events-data.ts`, `requests/hero-data.ts`) |
+| `DEMO_TODAY` (yesterday 00:00) | `RECENT_CUTOFF` (unread band), Activity `getRangeDates` / `getRangeLabels`, Dashboard `make7dLabels` |
+| `__setDemoShiftDaysForTests(0)` | Restores the authored calendar (rollback / screenshot comparison) |
+
+Rules: shift at CONSTRUCTION, never in a formatter; runtime `new Date()`
+sites (new key, team move, limit reset, `Timestamp` default anchor) stay
+real. `fallbackRequestUuid` still seeds on the RAW `day`/`time` strings so
+`/messages-findings/:id` URLs never change. NOT shifted: `models.ts`
+`releasedAt` (real API data) and transcript text in `request-bodies.ts`
+(49 dates). Authored distances are preserved, so May 12 content
+(security feeds, audit rows, conversation turns) lands ~25 days before
+DEMO_TODAY. Plan and survey: `plans/demo-clock-shift.md`.
+
 ### 5.3 Key generators
 
 ```typescript
@@ -916,7 +999,9 @@ function buildSpark(total: number, seed: number): number[]
 | `MEMBER_ROWS` | `src/data/team-members.ts` (lifted from Team.tsx 2026-08-25) | `MemberRow[]` | 4 |
 | `INVITATION_ROWS` | Team | `InvitationRow[]` | 2 |
 | `POLICIES` | Policies | `PolicyConfig[]` | 3 |
-| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 4 |
+| `API_KEY_SEED_ROWS` | `src/data/api-keys.ts` (lifted from ApiKeys.tsx) | `ApiKeyRow[]` | 10 |
+| `TEAM_SEED_ROWS` | `src/data/teams.ts` | `TeamRow[]` — Default / Platform / Design | 3 |
+| `ASSIGNABLE_KEYS` | `src/data/teams.ts` (derived: `API_KEY_SEED_ROWS` minus revoked) | `ApiKeyRow[]` | 9 |
 | `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
 | `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
 | `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
@@ -942,6 +1027,39 @@ re-exposed. Two callers today: `conversationDetail.ts`'s `redactUserBody`
 the loop; two copies that can disagree is exactly the failure this replaced.
 
 ---
+
+### 5.5 View scope: Manager / Member read their own keys (added 2026-09-03)
+
+`src/pages/teams/view-scope.ts` is the one place the role rule lives.
+`useViewScope()` returns `{ role, userId, scoped, keyNames, ownTeam,
+managedTeam, requestShare }`. Admin is unscoped (`keyNames === null`). A
+Manager or Member is scoped to the keys they own (`API_KEY_SEED_ROWS.ownerId`,
+revoked included: history stays theirs). `ownTeam` is a virtual one-person
+`TeamRow`, so `usageForTeam`, `securityForTeamAtRange` and friends read a
+person exactly as they read a team. `requestShare` (their share of 7d
+requests on `API_KEY_ROWS`) scales org canon totals that are not row-derived
+(Messages hero, Conversations count). `scopedUsageTotals(names)` in
+`activity-data.ts` gives per-dimension spend / token totals for a key set; a
+BYOK key's model cells are its Messages rows' model mix applied to its
+authored 7d tokens at $0 (no provider series). `teams/scoped-security.ts`:
+Manager reads the managed team's share of the Security canon (PRD 8.4, with
+a by-user filter on the events table), Member their own.
+
+Attribution is by key (PRD 3): every conversation sits on ONE owner's keys
+(`initiator` names it) and Security rows follow their conversation's key.
+Kira: cnv_skylark_18 (openclaw), cnv_polaris_55 (nova-chat). Mateus:
+cnv_orion_70 (hermes-agent), cnv_lyra_92 (atlas-eval). Chad keeps
+cnv_7a3f9e2b, aurora, meridian, vela. Pinned in `view-scope.test.ts`.
+
+Consumers (`468b898` + follow-ups): Overview, Activity, API keys,
+Conversations, Messages, Security, Limits (own active keys only) and Audit
+trail (own entries, `6c66c4a`). Scoped KPI tiles carry NO delta chip
+(`9235958`): a delta needs a canon prior-period rate and none exists per
+person. One model per conversation since `174cb68` (orion keeps two), so a
+persona's model mix is the model of each conversation they own. A BYOK-only
+persona (Kira) reads $0 spend and an empty "By provider" trend, because BYOK
+cells have no Gate route. A Member sees their own messages and conversations,
+never an empty page (user, 2026-09-03), and has no Teams surface at all (§2).
 
 ## 6. Page Inventory
 
@@ -1310,6 +1428,11 @@ channels stay single-sourced on `/notifications`.
 
 **Status:** Built (2026-05-16). Title + subtitle + range selector + 4-tile KPI rail + paginated event log with toolbar. Per-row drill-in (cryptographic-proof side panel) lands in a follow-up.
 
+**Role scope (2026-09-03, `6c66c4a`).** Audit trail is a USER surface, not
+team oversight: every role sees it. `useViewScope()` (§5.5) filters
+`useAuditRows()` to `row.member === <viewer name>` for a Manager or Member;
+the org log is the Admin's. Scoped views also drop the member filter control.
+
 **Page-level state:**
 
 ```typescript
@@ -1342,10 +1465,10 @@ type EventRow = {
 **Mock data anchor:**
 
 ```typescript
-const NOW = new Date(2026, 4, 16, 16, 0, 0); // 2026-05-16 16:00:00
+const NOW = authoredDate(2026, 4, 16, 16, 0, 0); // authored 2026-05-16 16:00:00, shifted by the demo clock
 ```
 
-Fixed anchor for relative-time formatting and range cutoffs — keeps the mock from going stale as wall-clock time advances. Same technique to use whenever a mock page renders relative timestamps. When real data lands, replace `NOW` with `new Date()`.
+Authored anchor for relative-time formatting and range cutoffs, shifted onto the real calendar by `src/lib/demo-clock.ts` (section 5.2a) so the rows and the anchor move together. When real data lands, replace `NOW` with `new Date()`.
 
 **Range filter:** `isWithinRange(at, range, customRange)` — `'all'` returns everything; presets compute `cutoff = NOW - HOURS_PER_PRESET[range] * 1h`; `'custom'` returns rows in `[customRange.from, customRange.to]`.
 
@@ -1417,13 +1540,481 @@ Each text cell truncates with an ellipsis at `max-w-[20ch]` and carries a `title
 
 ---
 
-### Team page (`/team` → `Team.tsx`)
+### Members page (`/members` → `Team.tsx`)
 
 **Purpose:** Workspace member and invitation management.
+
+**Renamed "Team" → "Members" in ALL user-facing surfaces (2026-09-01):** the
+sidebar label, the routes (`/members` + `-default`/`-free`/`-enterprise`
+twins), and the page H1 — resolving the old "Team vs Teams" nav-adjacency
+question (the pair now reads Members / Teams). Code identifiers deliberately
+KEEP the Team names (`Team.tsx`, `TeamDefault.tsx`, `TeamFree.tsx`, nav
+`id: "team"`, `team-members.ts`) — same convention as `anchor` vs
+"Fingerprint"; rename the files only as a deliberate refactor, never a blind
+find-replace.
 
 **State:** `inviteOpen: boolean`, `tab: 'members'|'invitations'`, filters, pagination.
 
 **Roles:** `AvatarTone = 'blue' | 'rose' | 'emerald' | 'amber' | 'ink'`
+
+---
+
+### Teams pages (`/teams` → `TeamsEnterprise.tsx`, `/teams/:teamId` → `TeamDetailEnterprise.tsx`, added 2026-08-28; one build for Pro + Default + Enterprise since 2026-09-01)
+
+**Purpose:** Group members and API keys into teams, and roll their spend up
+against a team budget and an org budget. Pro + Enterprise only — see the
+`HIDDEN_IN_FREE` note under "Tier & onboarding variants". The Default
+workspace twins both routes (`/teams-default`, `/teams-default/:teamId`).
+
+**List page.** PageHeader + a scaffold-only `7D / 30D / 90D` SegmentedPill and
+`DateRangePicker` + "Create team". Then the teams table (the full-width
+**Org budget** card that sat here was removed 2026-09-01; it went with the
+deleted Pro `Teams.tsx`, so no surface renders an org budget today):
+Team (sortable, `Default` badge on the default row) | Members | Keys | Manager
+| Spend | Budget (compact utilization meter + one-decimal % label; "No budget"
+when unset) | ⋯. Rows are `NavTableRow`s drilling into the detail page. The ⋯
+menu is Rename / Archive, both disabled on Default (the UI word is ARCHIVE
+since 2026-09-03, PRD soft-delete + immutable history; the code keeps
+`deleteTeam` / `deletedTeams`, no blind rename). Archiving folds the team's
+members and keys into Default AND appends a `{ id, name, spend }` snapshot to
+page-local `deletedTeams`, rendered below the table under an "Archived teams"
+section title (title above a flush card; columns Team /
+Deleted on / Total spend at 46 / 30 / 24, plain team name, `Timestamp` default
+format on a wall-clock `deletedAt`) — the mock's stand-in for soft-deleted
+teams keeping their historical attribution.
+
+**Detail page.** BackLink → the list twin, H1 = team name, header-right
+Rename (outline) + Delete (destructive) buttons on non-default teams, then
+the tab strip (Enterprise order since 2026-09-01: Members, Keys, Budget,
+Usage, Security, Policies, Token savings, Settings — Members default,
+management before data; Pro keeps Usage first and has only its first five):
+Usage (spend + requests KPI pair, sortable "Spend by user" and
+"Usage by model" tables — "user" not "member", because a spend row can
+outlive the membership), Members, Keys (Key | Prefix | Status | Last used),
+Budget, Security, Policies + Token savings (Enterprise only, added
+2026-09-02 — see the two blocks below), Settings. `TabId` is the whitelist;
+there is no `?tab=` deep-link on this page, so adding a tab is a one-line
+union change plus the trigger and content.
+
+**Enterprise deltas (2026-08-31).** `TeamsEnterprise.tsx` /
+`TeamDetailEnterprise.tsx` are the A/B sandbox — ALL Teams UI work lands
+there while the Pro files stay frozen for comparison. Divergences so far:
+
+- List: the scaffold range pill + `DateRangePicker` are REMOVED (header =
+  title + "Create team" at default size); the Org budget card's description
+  is just the window label; a "Your teams" `SectionTitle` sits above the
+  teams table in a gap-4 group.
+- Detail header: Rename/Delete buttons HIDDEN (dialogs + state stay wired
+  for a future Settings tab); tab panels sit gap-6 under the tab rail.
+- Usage tab: "Overview" `SectionTitle` + Activity's `RANGE_OPTIONS` pill +
+  `DateRangePicker` (defaults All). KPI rail = Activity's exact cards
+  (Total Spend / Total Messages / Tokens Used with `CompactSpark`s, no
+  delta chips — no prior-period team data exists). ONE
+  `scaleUsage(usage, effectiveScale(range, customRange))` projection feeds
+  the KPIs, the sparklines, and both breakdown tables. Sparklines render
+  windows of ONE 60-day daily backbone per team + metric
+  (`src/pages/teams/spark-series.ts`, seed carries team + metric, NEVER the
+  range): All folds it into 30 two-day buckets, 7D/30D/custom take trailing
+  slices, each re-settled onto its own KPI — so the All tail and the 7D
+  chart describe the same days and cannot contradict (2026-09-01; per-range
+  seeds had All plunging while 7D climbed). 24H keeps an independent
+  intraday distribution, the one granularity no other range renders.
+- `UsageBreakdown` takes a required `avatarFor`: user rows render a `sm`
+  single-initial `Monogram` toned via `memberById`, model rows a decorative
+  `VendorAvatar` via the `MODEL_VENDOR` map built from activity-data
+  `MODEL_ROWS`. Wired on the Usage AND Budget tab tables.
+- Budget tab: one card in the org-budget-card shape (CardHeader "Team
+  budget" + "Edit budget" CardAction; `BudgetSummary` = meter + four facts),
+  then the breakdown tables with window-aware titles via
+  `BUDGET_WINDOW_TITLE_COPY` — "Monthly spend per user" / "7-day spend per
+  model" / "5-hour spend per user" by the budget's window. A `Callout`
+  restating the window sat between card and tables for part of 2026-08-31;
+  the titles made it redundant and it was removed the same day
+  (`BUDGET_WINDOW_SCOPE_COPY` still feeds the tables' empty-state copy).
+- Members/Keys tables: 48px row parity (`py-0` on the Monogram + role
+  cells), actions cells `pr-4 pl-0`.
+
+**State:** both pages own `useState(TEAM_SEED_ROWS)`; the list also owns
+`useState(ORG_BUDGET_SEED)`. Mutations are local to the visit — the seed is
+the shared starting point, not a store.
+
+**Types** (`src/data/teams.ts`): `TeamRow`, `TeamBudget`, `BudgetWindow`
+(`'5h' | 'weekly' | 'monthly'`), `BudgetEnforcement` (`'soft' | 'hard'`),
+`TeamRole` (`'manager' | 'member'`), `UsageSlice`, `TeamUsage`,
+`TeamSavings`.
+
+**Team-scoped policies + savings (2026-09-02, AG-624 / PRD 8.5).** Two
+fields on `TeamRow`, both non-optional and both seeded from the ORG
+defaults so no team diverges until someone edits it:
+
+- `policies: PolicyState[]` — the same array the org Policies page edits
+  (`PolicyState` from `src/pages/policies/config.ts`: `id`, `enabled`,
+  `sensitivity?`, `scanDirection?`, `action`). Seed = `TEAM_POLICIES_SEED`,
+  which IS `INITIAL_POLICIES`.
+- `savings: TeamSavings` — `{ compression: boolean; caching: boolean;
+  cacheTtl: string }`, `cacheTtl` one of the Token savings page's
+  `TTL_OPTIONS` values. Seed = `TEAM_SAVINGS_SEED` (compression + caching
+  on, `1h`).
+
+Pages own mutation, exactly like `budget`: the panes are controlled
+surfaces and every edit hands the whole value back up to
+`TeamDetailEnterprise`'s `patch()`, which writes it into the shared
+`teams-store` row. Pro twins ignore both fields.
+
+**Team join date (2026-09-01).** `TeamRow.memberJoined?: Record<memberId,
+Date>` is when a member joined THIS team, distinct from `MemberRow.joined`
+(org join, April/May). Seeded early June after the org's May build-out:
+Chad on Default 06-01, Kira 06-02 and Mateus 06-03 on Platform, Jordan on
+Design 06-08 (two days after his 06-06 org join). `moveMembersToTeam` stamps
+the move time on the target and drops the entry on the source; the delete
+fold-in on both Enterprise pages stamps Default. `memberJoinedAt(team, id)`
+falls back to today. The Enterprise detail Members tab renders it as the
+Joined column (replacing the constant "Active" Status cell) with the Members
+page's `Timestamp format="dateNumeric"` recipe. Pro twins ignore the field.
+
+**Membership is one-team-per-user; roles are per-membership (2026-08-31,
+aligned to migration 170's `memberships.team_role`).** Invariants the data
+layer owns:
+
+- **Co-managers are allowed.** `TeamRow.managerIds: string[]` mirrors the
+  per-membership role column: assigning a manager via `withManager()` never
+  demotes another, demoting removes only the addressed member, and
+  `teamManagerName(team)` gives the list column its best-effort single name
+  (first manager, or —). This replaced the earlier single-`managerId`
+  promote-demotes-predecessor model once the real schema shipped without a
+  one-manager constraint. **The Manager role is back in the Enterprise UI
+  (2026-09-01, reversing the 8-31 org-roles-only ruling):** the Enterprise
+  detail's Members tab select offers Manager / Member — the TEAM role only,
+  Admin removed 2026-09-01 so the select stops blending the org-role axis
+  into the team-role one (Owner static,
+  capitalized, local state), and a row's initial value derives from the
+  team's seeded `managerIds` — the same source the list's Manager column
+  reads, so the two surfaces can never disagree (seeded: Kira Tan on
+  Platform, Jordan on Design). Pro's select stays Admin/Member (frozen for
+  the A/B).
+- **One team per user.** `moveMembersToTeam(teams, targetId, memberIds)`
+  operates on the WHOLE array: it adds to the target and removes from
+  whichever team each member was on, stripping the mover from that team's
+  `managerIds` (the role is a fact about the membership they just left).
+  Adding a member IS moving them (PRD 3 / 8.1), which is why both Teams pages
+  hold every team in state. `teamOfMember()` answers "where are they now" for
+  the picker, which labels each candidate with the team they would leave.
+- **One team per key, same move contract.** `moveKeysToTeam(teams, targetId,
+  keyIds)` mirrors the member move: the Add-keys picker offers every
+  assignable key (a key on another team says "Currently on `<Team>`"), and
+  per-row removal is a confirm dialog that MOVES the key to Default — never a
+  detach, so its spend keeps rolling up somewhere. The Default team's own
+  Keys tab hides the remove action.
+- **History is immutable (PRD 3 Reassignment / 8.1 / 11, built
+  2026-09-02).** `TeamRow.historyKeyIds?` is the set of keys whose PAST
+  traffic is attributed to the team. Unset on the seed (attribution equals
+  membership until something moves); `freezeHistory()` stamps every team on
+  the first `moveKeysToTeam` call, and from then on `keyIds` is membership
+  and `historyKeyIds` is history. Every roll-up reads
+  `attributedKeyIds()` / `attributedKeyNames()`, never `keyIds`: `usageForTeam`
+  (spend, requests, tokens, by-user, by-model), `orgSpend`, and
+  `security-data.ts` event shares. So a moved key or member changes the
+  Members / Keys tabs only; the source team's numbers do not move and the
+  target gains nothing until new traffic exists (none does, in mock data).
+  By-user rows carry `former: true` when the spender is no longer on the
+  team and split into "Usage by current members" / "Usage by past members"
+  (the latter only when non-empty); `TeamMemberSlice.former` does the same
+  for the Enterprise Security tab's "Events by current members" /
+  "Events by past members" pair. By-user rows also carry `tokensIn` /
+  `tokensOut` (summed from the member's key rows; `scaleUsage` settles in
+  onto the scaled in-total and out onto the remainder, so in + out equals
+  the Tokens Used tile) and `saved` (the member's 7d savings RATE — the
+  token-weighted mean of `ApiKeyRow.savings` across their keys on this team,
+  the same weighting that defines `ACTIVITY_SAVINGS_RATE_7D`; a rate, so
+  `scaleUsage` carries it through untouched and `teamSavedPercent(saved,
+  range, customRange)` moves it onto the selected window exactly as
+  Activity's Saved column does). The member tables show Member / Messages /
+  Tokens in / Tokens out / **Saved** / Spend at `table-fixed` widths
+  20/16/16/16/16/16 (added 2026-09-02); the model table is unchanged at
+  Model / Messages / Spend, 52/24/24. Saved is sortable (`sortKey="saved"`,
+  sort value = the percent or **-1** so rate-less rows sort last), always
+  ONE decimal, and a member with no rate renders an **empty** cell — no dash
+  and no "0.0%", since a measured zero and no measurement are different
+  facts. `deleteTeam(teams, id)` folds
+  members and keys into Default through the same helpers, then drops the
+  team, so Default never inherits the deleted team's spend and the org total
+  falls by it (PM decision 2026-09-02: delete removes the team's history).
+  Pinned in `teams.test.ts` ("PRD 3 Reassignment" + "deleteTeam" tests).
+
+**Multi-window budgets (2026-09-01 meeting: "support multiple simultaneous
+budget types, such as 5-hour, weekly, and monthly limits").** `TeamBudget`
+is `{ name, caps: Partial<Record<BudgetWindow, number>>, enforcement,
+warnThreshold, blockThreshold }`: one USD cap per configured window (at
+least one), with name, enforcement, warn percent and block percent shared
+across them. `blockThreshold` (default 100, PRD 8.2 "block at 100%") is
+where a HARD budget blocks: `budgetBlockPoint(cap, enforcement, block)` =
+`cap × block%` for hard, the cap for soft. `budgetBand` / `budgetStatus` /
+`budgetSpendShown` / `budgetPercentLabel` all take it; the form shows the
+field only while Hard is selected and requires block > warn. This is the
+Claude/Codex shape (session + weekly caps, one enforcement) and maps to one
+`usage_limits` budget row per window on the backend (migration 170 has no
+uniqueness on `team_id`; the dev's UI currently `find`s one, flagged).
+Per-window spend is the team's 7d roll-up projected through
+`BUDGET_WINDOW_SCALE` (5h = 5/168, weekly = 1, monthly = `RANGE_SCALE["30d"]`
+so the Budget tab's monthly figure reconciles with the Usage tab's 30D) via
+`usageForWindow` / `budgetReadings`, so meter, facts, and both breakdown
+tables for a window are one settled number. `tightestReading` (highest
+utilization, ties keep canonical order `BUDGET_WINDOW_ORDER`) is what the
+list row's single meter shows, suffixed with the window word ("92.3%
+weekly"). Dialog: the window field is the Add-members `MultiSelect` recipe
+(`commitMode`, 4 visible rows, no Select All, new opt-in `minSelected={1}`),
+followed by one amount input per selected window prefilled from
+`BUDGET_WINDOW_DEFAULT_AMOUNT`. Budget tab (option B, 2026-09-01 late):
+header row (budget name as SectionTitle left, "Edit budget" right), then
+ONE CARD PER WINDOW, stacked, the Claude / Codex limits shape: CardTitle =
+window label, CardDescription = `BUDGET_WINDOW_RESET_COPY`, body =
+`BudgetSummary` with `omitWindowFact` (meter + Remaining / Enforcement /
+Warn at). No window pill, no tables: PRD 8.3 describes one roll-up view, so
+the per-user / per-model tables live on the Usage tab only. The earlier
+same-day pill-plus-tables layout is in git history (`9b56fab`) if this is
+reverted.
+Seed: Platform `{ monthly: 500 }`;
+Design `{ "5h": 5, weekly: 20 }` ($0.55 = 11.0% of the 5h cap; weekly 92.3%
+is the tightest). `teams.test.ts` asserts per-window table reconciliation,
+weekly == 7d, strictly increasing window scale, and tightest == max
+utilization. The Org budget card was removed from the Teams list the same
+day (meeting decision: confusion/duplication); `teamsStore.orgBudget` still
+exists, unrendered.
+
+**Budget thresholds (2026-08-31, form 2026-09-02, block field restored
+2026-09-03).** The form edits `warnThreshold` on every budget and
+`blockThreshold` on HARD budgets only (PRD 8.2 "warn and block thresholds";
+`2f906bd` reversed the 09-02 removal). `DEFAULT_BLOCK_THRESHOLD` = 100 means
+block at the cap itself; the field requires block > warn and soft budgets
+carry the value unread. The shipped schema (`warn_threshold_pct`, migration
+170) has no block column yet, flagged.
+**Admin alert opt-out (CTO 2026-09-03, `f44f6f6`, NOT in PRD 8.2).**
+`TeamBudget.notifyAdmins: boolean` (seeded `true` everywhere) is a per-budget
+switch "Notify org admins on warnings", shown in the dialog only while Soft
+is selected; hard budgets always notify. The team's manager is always
+alerted and the amber bar + warning badge always render. Copy is
+single-sourced in `budgetAlertRecipients(hasManager, notifyAdmins)`
+(`data/teams.ts`), reused by the form helper, the Budget tab "Warn at"
+tooltip and the empty state. The Budget tab adds an "Admin alerts: Off" fact
+only when opted out; absent = normal. The dialog's window picker is a
+quick-pick preset: selecting a window fills its amount from
+`BUDGET_WINDOW_DEFAULT_AMOUNT` (5h $25 / weekly $200 / monthly $500, always
+editable), helper copy from `BUDGET_WINDOW_HELP`, dialog description
+`BUDGET_PRESETS_HELPER_COPY`. 5h and weekly are ROLLING windows; only
+monthly resets (on the 1st). The Budget tab renders the meter (three fill
+states from `teams/budget-band.ts`, shared with the list column's compact
+meter: under = a success 500→400 left-to-right gradient, warned = the same
+gradient shape in the warning family once spend passes the warn %, over =
+solid destructive; under was `bg-primary` until 2026-08-31, which resolved
+near-white on dark and read as an unfilled track — see design.md §7 Budget
+meter), a four-fact grid of label + value only, no hint lines since
+2026-09-01 (Remaining / Over budget by; Enforcement; Warn at as "80%
+($16.00)"; Window as "Weekly, rolling" / "Monthly, resets on the 1st" via
+`BUDGET_WINDOW_RESET_SHORT`; each eyebrow carries an Info tooltip in the
+TokenSavings benefit-row recipe, where the long `BUDGET_WINDOW_RESET_COPY`
+sentence and the soft-vs-hard `BUDGET_ENFORCEMENT_LABEL` copy now live),
+then the same
+Spend-by-user / Spend-by-model tables the Usage tab uses, prefixed by a note
+naming the budget's own window (`BUDGET_WINDOW_SCOPE_COPY`).
+
+**Seed (2026-08-31 split — every figure derives from activity-data):**
+Default = Chad (org owner, catch-all seat) + prod-web/prod-agent/design-agent,
+$216.74, no budget. Platform = Kira (manager) + Mateus +
+openclaw/nova-chat/hermes-agent (BYOK, $0) + atlas-eval, $12.39 against a
+$500 monthly soft budget. Design = Jordan (manager) +
+development/ci-runner, $18.46 against a $20 weekly HARD budget (92.3%, past
+the 80% warn — the seeded warn-state exercise). Org budget $1,500 monthly
+soft.
+
+**Derivation — nothing on these pages is authored.** A team is a _grouping_ of
+rows that already exist:
+
+- members → `MEMBER_ROWS`, keys → `API_KEY_SEED_ROWS` (revoked keys are
+  filtered into `ASSIGNABLE_KEYS` once, so no picker or seed can reach one)
+- spend / requests → `usageForTeam()` groups `API_KEY_ROWS` (activity-data) by
+  the team's keys; "Usage by model" groups `USAGE_7D` cells and settles onto
+  the team's spend total so the breakdown can never be a cent off the KPI
+- per-model requests reuse `MODEL_ROWS`' own requests-per-token ratio, are
+  normalized proportionally onto the team's request total, then settled
+  (2026-08-31 — `settleValues` alone dumped the whole estimation error on the
+  biggest model, which went negative on a live team). They settle onto the
+  **team** total, BYOK included: the gateway proxies BYOK traffic too, so
+  every request has a model even when no dollars are metered (before
+  2026-08-31 they settled onto the metered subtotal, leaving the by-model
+  table 200k+ requests short of the by-user table on a BYOK-heavy team).
+  Spend still settles onto the metered dollars — BYOK contributes requests,
+  never dollars.
+- `scaleUsage(usage, scale)` projects a `TeamUsage` onto a range scale with
+  both breakdown lists re-settled onto the scaled totals; the Enterprise
+  Usage tab derives ONE projection for KPIs, sparklines, and both tables,
+  because scaling rows independently drifts on non-terminating scales
+- `src/data/teams.test.ts` (permanent) audits the whole reconciliation:
+  per-team KPIs vs both tables across 8 scales, sparkline sums, budget
+  facts, security-tab groupings, org roll-up. It PINS the org figures
+  ($247.59 / "16.5%") — move those assertions whenever spend seeds move
+
+**Security tab** (`src/pages/teams/security-data.ts`; rendered by
+`SecurityOverviewPane.tsx`. `SecurityPane.tsx` is the retired Pro pane, kept
+only for its `TeamsVariant` type).
+**Re-derived 2026-09-01: the org Security page is the events canon.** A
+team's findings are its largest-remainder share of `eventsTotal(range)`
+(`security/events-data.ts`), weighted by the team's request volume, so the
+seed teams sum EXACTLY to the org page's number at every preset range
+(asserted in `teams.test.ts`; all-time: General (the default team) ~686 / Platform ~368 /
+Design ~161 of 1,215). Outcomes split by the org's 31:14:2
+`splitEventMix`; categories allocate the findings 8:5:3 by `ATTACK_MIX`
+(largest remainder, so they sum EXACTLY to findings, as the org Attack-types
+card sums to the org total since 2026-09-01); members get each category
+allocated by their request share, and a member's Events total is the sum of
+their three columns.
+`REQUEST_ROWS_ALL` is no longer imported — the ~10 recorded findings stay
+as org-page drill-in exemplars only. Checks scale by the USAGE canon
+(`RANGE_SCALE`, All = 8.5×) so "out of N checks" agrees with the Usage
+tab; the org events canon scales by the Requests-page ratios instead, so
+the implied finding RATE wobbles ~20% across ranges — accepted drift,
+nothing on screen divides the two. API: `securityForTeamAtRange(team,
+range, customRange, teams)` (pass live page state so shares settle),
+`securityForTeam` = the all-time wrapper Pro uses, `teamEventShares`.
+The arithmetic, which every card obeys:
+
+```text
+requestStage  = requests                (the inbound scan always records)
+outputStage   = requests × 0.0777       (reply rows exist only when the
+                                         output scan recorded a result —
+                                         the dev build's write rule,
+                                         anchored at 1,612/20,737)
+checks        = requestStage + outputStage
+findings      = blocked + redacted + flagged   (the team's event share)
+allowed       = checks − findings
+```
+
+**Pro pane** (frozen): five stacked count cards — summary, By outcome, By
+category, By pipeline stage, By member; zero-findings teams render the
+"Nothing to attribute" bodies (no team seeds that state anymore, but the
+shape survives for traffic-less teams). **Enterprise pane (2026-09-01,
+PRD 8.4's oversight-metadata set — types, verdicts, timestamps, counts):**
+"Overview" SectionTitle + range pill + DateRangePicker (defaults All,
+UsagePane's exact header group); a Total-events hero cloned from the org
+Security page (HeroNumeric + Blocked/Flagged/Redacted BreakdownRow legend
+plus an area chart, NO delta chip) whose series is `teamSparkSeries` settled
+onto the findings headline, so sum(chart) = the hero number and range
+shapes share one backbone; Action types and Attack types as org-style
+horizontal-bar cards; By member as a table with one column per threat type
+(ATTACK_MIX order) plus an Events total: `TeamMemberSlice.byCategory`, each
+column allocated by member request weight so it sums EXACTLY to the Attack
+types card; the row total IS the sum of its three columns, so rows, columns
+and the headline all reconcile (test-guarded in `teams.test.ts`). The
+by-member block is TWO of that table (2026-09-02), mirroring the Usage tab:
+"Events by current members" (`!former`) then, only when a former member has
+events, "Events by past members" — PRD 3's immutable history, so a member
+who moved out keeps the events they generated here. Each table owns its own
+`useTableSort()`, so the two sort independently.
+REMOVED 2026-09-01 against PRD
+8.4 (counts by type and verdict only): the "What this covers" summary card
+(explanatory UI) and the "By pipeline stage" tiles (the dev build's
+request/output scan-phase GROUP BY, no PRD sentence). The data layer still
+computes `byStage` / `checks`; nothing renders them on Enterprise. Counts
+and labels only — neither pane renders prompt or response text.
+
+**Policies tab** (Enterprise only, added 2026-09-02;
+`src/pages/teams/PoliciesPane.tsx` → `TeamPoliciesPane`). AG-624 / PRD 8.5
+"team-level policies". The org Policies page's **Pro body**, cloned into a
+pane the way `SecurityOverviewPane.tsx` cloned the org Security page: the
+`PolicyCard` stack (three collapsed cards — Prompt injection, PII / PHI,
+Credentials — each opening to an enable card, an "Action on detection"
+radio panel and a Sensitivity slider or Scan-direction segmented, plus the
+`DetailCard` explainer) with `PolicyCard` / `SettingsHalf` / `DetailCard` /
+`ActionHalf` and every config table (`POLICIES`, `ICON_COLOR`,
+`ACTION_*`, `SCAN_DIRECTION_*`, `DEFAULT_ACTION`, `FREE_TOGGLE_CARD`'s
+copy) shared with the org page via `src/pages/policies/config.ts` — one
+source, so a policy added there appears on both. DROPPED in the clone:
+`DashboardChrome`, `PageTitle` + intro copy, `FreePlanNoticeBanner`,
+`ProBenefitsCard`, the `variant` prop and every `variant === "free"`
+branch; the org page's Free-named `FreeToggleCard` survives as
+`PolicyEnableCard` (identical markup, minus the Free-only `badge` slot)
+because it carries the enable toggle. Props are `{ team, onChange }`;
+state reads `team.policies` and every toggle / sensitivity / scanDirection
+/ action edit calls `onChange` with a new array. No KPI rail (the org
+page's is commented out too).
+
+**Token savings tab** (Enterprise only, added 2026-09-02;
+`src/pages/teams/TokenSavingsPane.tsx` → `TeamTokenSavingsPane`). AG-624 /
+PRD 8.5 "compression settings". The org Token savings page's Pro body:
+"Overview" `SectionTitle` + `RANGE_OPTIONS` pill + `DateRangePicker`
+(defaults All, no `?range=` read — the tab is not a deep-link target), a
+3-column `KpiRail` (Total saved / Caching / Compression), then "Savings
+options" = the Compression card (Advanced card in its already-entitled
+shape: neutral chrome, enable Switch instead of an Upgrade CTA, blue Pro
+badge + blue benefit checks retained) and the Caching card (enable Switch +
+TTL `Select`). DROPPED: chrome, `PageTitle`, the `plan` prop, the Free
+`basicCard` + `FREE_COMPRESSION_BENEFITS`, `SavingsHeadline` (a Free-only
+upsell hook), `PlanComparisonDialog`, `useNavigate`, `useSearchParams`.
+Props are `{ team, teams, onChange }`; the compression / caching switches
+and the TTL select read `team.savings` and call `onChange`, keeping the org
+page's `toast` on every change.
+
+Tiles come from `teamSavingsKpis(team, teams, effectiveRange)`
+(`src/pages/teams/savings-data.ts`, tested in `savings-data.test.ts`), NOT
+the org `KPI_BY_RANGE`. Savings is a RATE, so it does not scale with
+traffic share the way spend does; the one fiction, single-sourced there, is
+that a team's rates follow its prompt size — compression scales with the
+team's average tokens per message relative to the org, caching scales
+inversely, both clamped to 0.6–1.4 so no team drifts far from the org
+canon. A component the team has switched OFF is zeroed, and Total saved is
+the per-point SUM of the caching and compression sparks, so the three tiles
+reconcile by construction and flipping a switch visibly moves the rail
+(charts-must-reconcile). `token-savings-data.ts` was extracted from
+`TokenSavings.tsx` the same day so both surfaces share `KPI_BY_RANGE`,
+`RANGE_OPTIONS`, `RANGE_DELTA_NOTE`, `SPARK_STOPS`, `resampleSpark`,
+`sparkDates`, `sparkDelta` and the `PresetRange` / `Range` / `CustomRange`
+/ `SavingsKpi` types.
+
+**Not in this phase** (do not infer from the AG-624 ticket text): org-level
+forced settings, the org → team lock cascade, the locked read-only
+rendering with "who set this", and the not-entitled state. Both panes are
+live, editable, Enterprise-only — no Free or Pro twin, no plan-comparison
+dialog, no upsell card.
+
+**Loading states (2026-09-02, AG-695 item 10).** `src/pages/teams/use-theatre-loading.ts`
+holds the whole mechanism:
+
+- `TEAMS_LOADING_THEATRE_MS = 2000` and `useTheatreLoading(): boolean` —
+  `true` on mount, `false` after the delay (`useState` + `useEffect` with a
+  cleared timeout). This is **demo theatre**: the Teams data is a synchronous
+  seed, so without a delay no skeleton would ever be seen. In the real app
+  the hook's return is replaced by the query's `isLoading` and **nothing else
+  changes** — every consumer already takes `loading` as a plain boolean.
+- **One call per PAGE mount, never per pane.** `TeamsEnterprise` calls it once
+  and passes `loading` to `TeamsTable`. `TeamDetailEnterprise` calls it once in
+  the page body and passes `loading` down to `TeamDetailBody` and on to every
+  pane as a prop, so **switching tabs does not restart the skeletons** — a
+  per-pane hook would re-run the wait on every tab click.
+- `skeletonRowIds(realRowCount)` — stable keys for skeleton table rows, one
+  per real row, floored at one. Matching the real count is what keeps the
+  swap free of layout shift on every table (measured 0px, 2026-09-02); a
+  real implementation renders its page size here instead.
+- The hook lives in its own `.ts` module because
+  `react-refresh/only-export-components` forbids a non-component export from a
+  component file.
+
+Which surfaces skeleton, and which deliberately do not:
+
+| Surface | Skeletoned | Not skeletoned |
+| --- | --- | --- |
+| `TeamsEnterprise` — Your teams table | every cell: name, Members, Keys, Manager, Spend, the budget meter track + caption, the row-action square | column heads, page title, Create team. **Archived teams** card (session-only, cannot be mid-fetch) |
+| `TeamDetailEnterprise` — Members tab | name + 16px avatar disc, the 32px role-`Select` box, Joined, the 24px remove square (absent on Default, as in the real row) | search, role filter, Add member, tab counts |
+| Keys tab | key, prefix, member + disc, a badge-shaped Status box, Last used, remove square | search, Add key |
+| Budget tab | `BudgetSummary` — meter fill, its two readings, and the **Remaining** fact | the cap / Enforcement / Warn at / Block at / Window facts (budget _configuration_, already known), card titles, reset copy, the header status badge, `BudgetBreachBanner` |
+| Usage tab | three `CompactKpi` values + sparklines; every `UsageBreakdown` cell, Saved included | range pill + custom picker, section titles, column heads |
+| Security tab (`SecurityOverviewPane`) | `HeroNumeric` + `DeltaTag`, the area-chart plot area (same `h-24` box), Action- and Attack-types bars + counts + labels, both member tables | range chrome, card titles / descriptions, the bar **tracks**, the tier `GuardrailEmptyState` (an entitlement answer, not a fetch) |
+| Token savings tab (`TokenSavingsPane`) | the three `KpiTile` values, deltas and sparklines | the `%` unit; the Compression and Caching cards — controls reading `team.savings`, not readings of traffic |
+| Policies tab (`PoliciesPane`) | — | nothing: every row is a control |
+| Settings tab, all dialogs | — | nothing |
+
+Accessibility: the region root carries `aria-busy` while loading, skeletons are
+`aria-hidden` at the primitive, and each page renders exactly one
+`sr-only role="status"` "Loading…". No visible spinner and no visible loading
+text. The primitive contract lives in `design.md` §7 "Skeleton".
 
 ---
 
@@ -1531,7 +2122,7 @@ only where a modal is still the target:
 **The notifications bell is a producer of both mechanisms** (2026-08-24):
 every `NotificationItem.href` in `src/data/notifications.ts` targets one of
 the routes above — `/security?open=`, `/messages-findings/:requestId`, or a
-plain page route (`/billing`, `/api-keys`, `/team`) — and the menu navigates
+plain page route (`/billing`, `/api-keys`, `/members`) — and the menu navigates
 on item click.
 
 **Other deep-link params:**
@@ -1709,6 +2300,7 @@ Voice conventions layered on top:
 | `FilterToolbar` | custom flex wrapper | `<FilterToolbar>` shell for "SearchInput + Selects" pattern. Used on Team, Conversations, Messages, Models, Activity, AuditTrail, Security toolbars. Children pass through. Extracted 2026-05-17. |
 | `Monogram` | custom span | Avatar/initial chip with `size` variant (`sm` size-4 / `md` size-7), shared `AvatarTone` type + `AVATAR_TONE_CLS` tone map. Initials caller-supplied. Used by Team, Activity. Extracted 2026-05-17. |
 | `WorkspaceSwitcher` | `Menu` | Workspace dropdown (plan badge + name + ChevronsUpDown). Rendered by `DashboardChrome` in the top bar, NOT in the sidebar. Compact h-8 chrome. **Also the runtime tier switch** — Pro / Default / Free items navigate the current pathname through `lib/plan.ts` (§2). Promoted 2026-05-17. |
+| `ViewRoleSwitch` (`view-role-switch.tsx`) | `Select` | "Viewing as" Admin / Manager / Member. Enterprise only; top bar + tight-band rail slot + mobile drawer. Writes `teamsStore.viewRole` (§2 role switch, §5.5 view scope). Added 2026-09-03. |
 | `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. `w-100` (400px) surface. Renders the whole non-archived `NOTIFICATION_HISTORY` — **not** the newest-8 peek (changed 2026-08-25) — as full-bleed button rows in a `max-h-96 overflow-y-auto` band: `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots); item click = mark read → close → `navigate(href)`. **Windowed render:** 8 rows, +8 per bottom-reach, via a zero-height IntersectionObserver sentinel as the scroll region's last child (`rootMargin: 96px`, root = the band — the `ScrollBottomSentinel` pattern from `ask-ai-scroll-to-latest.tsx`); window resets to 8 on open and on tab switch (which also resets `scrollTop`). **Counts are global:** badge presence, `aria-label` count and the Unread tab's `TabsCount` chip all read one `unreadCount` = unread among ALL non-archived history, the same number as the page's Inbox chip. Unread/All `Segmented` tabs — the Unread option carries its count through `Segmented`'s `options[].count`, which composes the shared `<TabsCount>` (memoize the options array: it is a dep of the pill variant's measuring layout effect). All tab is uncounted. Actions are tab-scoped and both act on the full list, never the window: "Mark all as read" sweeps the whole history, "Archive all" files every non-archived row. Persistent footer row: quiet full-width ghost `View all notifications` → `/notifications?view=feed`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
@@ -1732,6 +2324,7 @@ Voice conventions layered on top:
 | `DetailList` / `DetailRow` | custom ul/li | Modal detail section. 4-col grid, label col-1 / value col-3 |
 | `UserMenu` | custom | Shared avatar dropdown — workspace identity, plan pill, sign-out |
 | `DateRangePicker` | Base UI Popover + react-day-picker v10 | Paired with `SegmentedPill` for time scopes |
+| `Skeleton` / `SkeletonText` (`skeleton.tsx`, added 2026-09-02) | custom div / span | Loading placeholders. `Skeleton` is the shadcn primitive verbatim: `data-slot="skeleton"`, `aria-hidden`, `animate-pulse rounded-sm bg-muted motion-reduce:animate-none`, `className` through `cn`. **`animate-pulse` is the only sanctioned loading motion — no spinners, no shimmer.** `SkeletonText` is the shift-proof value bar: an invisible `&nbsp;` carries the parent voice's line box AND baseline (so an `items-baseline` sibling like a `DeltaTag` cannot move) while the bar itself is absolutely positioned and centred, making its height decorative. `size` = `sm` (h-3, 12px voices) / `default` (h-4, 14px voices) / `hero` (h-6) / `heroLg` (h-7); width from a `w-*` class. Rule: **skeleton the value, keep the chrome** — column heads, titles, toolbars, tabs and units render as themselves, and an empty state never shows while loading. `HeroNumeric` / `CompactKpi` / `KpiTile` / `DeltaTag` / `BudgetSummary` each take an optional `loading?: boolean` (default false) so a call site never forks a tile to fake the state. First consumers: the two Enterprise Teams pages (§6 → Teams pages → Loading states). Contract: `design.md` §7 "Skeleton". |
 
 **Never use `@radix-ui/*`.** All popover/menu/tooltip/dialog primitives use `@base-ui/react/*`.
 

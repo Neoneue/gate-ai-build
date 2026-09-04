@@ -44,10 +44,12 @@ import {
   type FindingActionKind,
   getRequestFindings,
   type RequestFinding,
+  requestTimeLabel,
   resolveInjectionCopy,
 } from "@/data/requests";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
 import { formatCompactCount } from "@/lib/formatters";
+import { BUDGET_BLOCK_USER_MESSAGE } from "@/pages/requests/budget-block-rows";
 import {
   RESPONSE_BADGE,
   responseLabel,
@@ -282,6 +284,27 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                         ) : null}
                         <FullRequestCollapsible row={row} />
                       </>
+                    ) : row.blockReason === "budget" ? (
+                      <>
+                        {/* Budget block (PRD §3): no detector fired, so the
+                            left column is the message plus the distinct
+                            budget error, the provider-error shape. */}
+                        <DetailMessageSubcard
+                          content={resolveRequestTurns(row).userContent}
+                          label="User message"
+                        />
+                        {row.errorDetail ? (
+                          <section className="flex flex-col gap-2">
+                            <PanelHeading title="Error detail" />
+                            <div className="rounded-xs border border-border bg-background p-4">
+                              <p className="type-copy-14 text-pretty text-foreground">
+                                {row.errorDetail}
+                              </p>
+                            </div>
+                          </section>
+                        ) : null}
+                        <FullRequestCollapsible row={row} />
+                      </>
                     ) : row.status === "success" &&
                       row.guardrail === "allow" ? (
                       /* Clean success/allow pass, no detector fired: show the
@@ -431,7 +454,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                       label="Timestamp"
                       value={
                         <span className="type-mono-14 text-foreground">
-                          {row.day}, {row.time}
+                          {requestTimeLabel(row)}
                         </span>
                       }
                     />
@@ -1238,11 +1261,11 @@ function KpiRail({ row }: { row: RequestRow }) {
       <KpiTile label="Latency" value={row.latency} />
       <KpiTile label="Cost" value={row.cost} />
       <KpiTile
-        label="Tokens In"
+        label="Tokens in"
         value={formatCompactCount(toRawInt(row.inTokens))}
       />
       <KpiTile
-        label="Tokens Out"
+        label="Tokens out"
         value={formatCompactCount(toRawInt(row.outTokens))}
       />
       <KpiTile label="Compression" value={compressionValue(row)} />
@@ -1279,6 +1302,9 @@ function KpiTile({ label, value }: { label: string; value: string }) {
    Single source of truth for the demo so the modal stays in lock-step with
    the row's status pill. */
 function sampleRequestContent(row: RequestRow): string {
+  if (row.blockReason === "budget") {
+    return BUDGET_BLOCK_USER_MESSAGE;
+  }
   if (row.guardrail === "block") {
     switch (row.guardrailReason) {
       case "injection":

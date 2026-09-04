@@ -113,7 +113,7 @@ export function RequestTracePanel({
           so it doesn't shrink when the body scrolls. */}
       <div className="flex flex-none items-center justify-between border-border border-b bg-card px-4 py-3">
         <span className="type-label-14 text-foreground" id="conv-trace-eyebrow">
-          Request Trace
+          Request trace
         </span>
         <span className="type-mono-12 text-muted-foreground">
           {countLabel ?? `${(trace ?? []).length} messages`}

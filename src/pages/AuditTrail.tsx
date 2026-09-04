@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Timestamp } from "@/components/ui/timestamp";
@@ -41,16 +42,18 @@ import {
 } from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
 import {
-  EVENT_ROWS,
   type EventKind,
   type EventRow,
   fmtRelative,
   KIND_BADGE_VARIANT,
   truncateHex,
 } from "@/data/audit-trail";
+import { useAuditRows } from "@/data/audit-trail-store";
+import { memberById } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCompactCount } from "@/lib/formatters";
+import { useViewScope } from "@/pages/teams/view-scope";
 import { AuditRecordDialog } from "./AuditRecordDialog";
 
 /** Comparable value per sortable column for the audit event log. Time sorts
@@ -93,7 +96,17 @@ export function AuditTrail() {
 
   // No range filter on this surface — KPIs and EventLog read the full event
   // set. EventLog further narrows by kind + query.
-  const rows = EVENT_ROWS;
+  // A Manager or Member is a user and reads THEIR OWN audit log; the org's
+  // log is the Admin's (user 2026-09-03; view-scope.ts).
+  const allRows = useAuditRows();
+  const scope = useViewScope();
+  const rows = useMemo(() => {
+    if (!scope.scoped) {
+      return allRows;
+    }
+    const me = memberById(scope.userId)?.name;
+    return allRows.filter((r) => r.member === me);
+  }, [allRows, scope]);
 
   return (
     <DashboardChrome
@@ -250,6 +263,7 @@ const KIND_OPTIONS: { value: EventKind; label: string }[] = [
 ];
 
 function EventLog({ rows }: { rows: EventRow[] }) {
+  const scope = useViewScope();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
@@ -356,7 +370,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
     [filteredRows, sort]
   );
 
-  const perPage = Number.parseInt(rowsPerPage, 10);
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
   const pageRows = sortedRows.slice((page - 1) * perPage, page * perPage);
 
   const isEmpty = filteredRows.length === 0;
@@ -466,21 +480,24 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label className="type-label-14 text-muted-foreground">
-                Member
-              </Label>
-              <MultiSelect
-                aria-label="Filter by member"
-                onValueChange={setDraftMembers}
-                options={MEMBER_OPTIONS.map((name) => ({
-                  value: name,
-                  label: name,
-                }))}
-                placeholder="All members"
-                value={draftMembers}
-              />
-            </div>
+            {/* One member's log has nothing to filter by member. */}
+            {scope.scoped ? null : (
+              <div className="flex flex-col gap-2">
+                <Label className="type-label-14 text-muted-foreground">
+                  Member
+                </Label>
+                <MultiSelect
+                  aria-label="Filter by member"
+                  onValueChange={setDraftMembers}
+                  options={MEMBER_OPTIONS.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  placeholder="All members"
+                  value={draftMembers}
+                />
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <Label className="type-label-14 text-muted-foreground">

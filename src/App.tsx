@@ -72,6 +72,11 @@ const Models = lazy(() =>
 const Policies = lazy(() =>
   import("@/pages/Policies").then((m) => ({ default: m.Policies }))
 );
+const PoliciesEnterprise = lazy(() =>
+  import("@/pages/PoliciesEnterprise").then((m) => ({
+    default: m.PoliciesEnterprise,
+  }))
+);
 const Requests = lazy(() =>
   import("@/pages/Requests").then((m) => ({ default: m.Requests }))
 );
@@ -102,6 +107,24 @@ const Settings = lazy(() =>
 const Team = lazy(() =>
   import("@/pages/Team").then((m) => ({ default: m.Team }))
 );
+const TeamsDefault = lazy(() =>
+  import("@/pages/TeamsDefault").then((m) => ({ default: m.TeamsDefault }))
+);
+const TeamsEnterprise = lazy(() =>
+  import("@/pages/TeamsEnterprise").then((m) => ({
+    default: m.TeamsEnterprise,
+  }))
+);
+const TeamDetailEnterprise = lazy(() =>
+  import("@/pages/TeamDetailEnterprise").then((m) => ({
+    default: m.TeamDetailEnterprise,
+  }))
+);
+const TeamDetailDefault = lazy(() =>
+  import("@/pages/TeamDetailDefault").then((m) => ({
+    default: m.TeamDetailDefault,
+  }))
+);
 const SignIn = lazy(() =>
   import("@/pages/SignIn").then((m) => ({ default: m.SignIn }))
 );
@@ -110,6 +133,11 @@ const SignUp = lazy(() =>
 );
 const TokenSavings = lazy(() =>
   import("@/pages/TokenSavings").then((m) => ({ default: m.TokenSavings }))
+);
+const TokenSavingsEnterprise = lazy(() =>
+  import("@/pages/TokenSavingsEnterprise").then((m) => ({
+    default: m.TokenSavingsEnterprise,
+  }))
 );
 const TokenSavingsFree = lazy(() =>
   import("@/pages/TokenSavingsFree").then((m) => ({
@@ -308,7 +336,9 @@ export default function App() {
             <Route element={<Policies />} path="/policies" />
             <Route element={<AuditTrail />} path="/audit-trail" />
             <Route element={<Activity />} path="/activity" />
-            <Route element={<Team />} path="/team" />
+            <Route element={<Team />} path="/members" />
+            <Route element={<TeamsEnterprise />} path="/teams" />
+            <Route element={<TeamDetailEnterprise />} path="/teams/:teamId" />
             <Route element={<Notifications />} path="/notifications" />
             <Route
               element={<Settings showCancelPlan={false} />}
@@ -335,7 +365,12 @@ export default function App() {
               path="/audit-trail-default"
             />
             <Route element={<ActivityDefault />} path="/activity-default" />
-            <Route element={<TeamDefault />} path="/team-default" />
+            <Route element={<TeamDefault />} path="/members-default" />
+            <Route element={<TeamsDefault />} path="/teams-default" />
+            <Route
+              element={<TeamDetailDefault />}
+              path="/teams-default/:teamId"
+            />
             <Route element={<BillingDefault />} path="/billing-default" />
             <Route
               element={<NotificationsDefault />}
@@ -350,10 +385,51 @@ export default function App() {
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
             <Route element={<ActivityFree />} path="/activity-free" />
-            <Route element={<TeamFree />} path="/team-free" />
+            <Route element={<TeamFree />} path="/members-free" />
             <Route element={<ApiKeysFree />} path="/api-keys-free" />
             <Route element={<NotificationsFree />} path="/notifications-free" />
             <Route element={<SettingsFree />} path="/settings-free" />
+            {/* Enterprise-workspace twins — reached via the workspace
+             * switcher. Every route reuses the Pro page component under the
+             * Enterprise chrome, so in-page cross-links may land back on Pro
+             * paths. Teams is one build for Pro + Enterprise (the Enterprise
+             * design is the north star); it derives its subtree from the
+             * pathname, so its links stay in-tier. */}
+            <Route element={<Dashboard />} path="/overview-enterprise" />
+            <Route element={<Requests />} path="/messages-enterprise" />
+            <Route
+              element={<Conversations />}
+              path="/conversations-enterprise"
+            />
+            <Route element={<Models />} path="/models-enterprise" />
+            <Route
+              element={<TokenSavingsEnterprise />}
+              path="/token-savings-enterprise"
+            />
+            <Route element={<Limits />} path="/limits-enterprise" />
+            <Route element={<Security />} path="/security-enterprise" />
+            <Route
+              element={<PoliciesEnterprise />}
+              path="/policies-enterprise"
+            />
+            <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
+            <Route element={<Activity />} path="/activity-enterprise" />
+            <Route element={<Team />} path="/members-enterprise" />
+            <Route element={<TeamsEnterprise />} path="/teams-enterprise" />
+            <Route
+              element={<TeamDetailEnterprise />}
+              path="/teams-enterprise/:teamId"
+            />
+            <Route element={<Billing />} path="/billing-enterprise" />
+            <Route element={<ApiKeys />} path="/api-keys-enterprise" />
+            <Route
+              element={<Notifications />}
+              path="/notifications-enterprise"
+            />
+            <Route
+              element={<Settings showCancelPlan={false} />}
+              path="/settings-enterprise"
+            />
             {/* Unknown routes fall back to Requests. */}
             <Route element={<Navigate replace to="/overview" />} path="*" />
           </Route>

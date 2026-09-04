@@ -17,6 +17,7 @@ const TYPE_FONT_SIZE_UTILITIES = [
   "type-heading-18",
   "type-heading-20",
   "type-heading-24",
+  "type-heading-28",
   "type-heading-32",
   "type-heading-40",
   "type-heading-48",

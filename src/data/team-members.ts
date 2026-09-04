@@ -4,6 +4,7 @@
 // presentation (role labels, filters, row actions).
 
 import type { AvatarTone } from "@/components/ui/monogram-types";
+import { authoredDate } from "@/lib/demo-clock";
 
 export type MemberRole = "owner" | "admin" | "member";
 
@@ -23,7 +24,7 @@ export const MEMBER_ROWS: MemberRow[] = [
     email: "chad@constellationnetwork.io",
     avatarTone: "blue",
     role: "owner",
-    joined: new Date(2026, 3, 20),
+    joined: authoredDate(2026, 3, 20),
   },
   {
     id: "usr_kira",
@@ -31,7 +32,7 @@ export const MEMBER_ROWS: MemberRow[] = [
     email: "kira.tan@acme.io",
     avatarTone: "rose",
     role: "admin",
-    joined: new Date(2026, 3, 22),
+    joined: authoredDate(2026, 3, 22),
   },
   {
     id: "usr_mate",
@@ -39,7 +40,7 @@ export const MEMBER_ROWS: MemberRow[] = [
     email: "mateus.silva@ebux.com",
     avatarTone: "emerald",
     role: "member",
-    joined: new Date(2026, 4, 1),
+    joined: authoredDate(2026, 4, 1),
   },
   {
     id: "usr_jordan",
@@ -47,6 +48,6 @@ export const MEMBER_ROWS: MemberRow[] = [
     email: "jordan.lee@acme.io",
     avatarTone: "amber",
     role: "member",
-    joined: new Date(2026, 5, 6), // 2026-06-06 — the newest member; feeds the "Member added" notification
+    joined: authoredDate(2026, 5, 6), // authored 2026-06-06, the newest member; feeds the "Member added" notification
   },
 ];

@@ -54,7 +54,7 @@ const FONT_RE = /\btext-\[\s*[\d.]+(?:px|rem|em)\s*\]/;
 //
 // Sanctioned sizes mirror design.md §Type scale (the `type-*` voice table).
 const TYPE_SCALE = new Set([
-  10, 12, 14, 16, 18, 20, 24, 32, 40, 48, 56, 64, 72,
+  10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72,
 ]);
 // `fontSize: 11`, `fontSize={11}`, `fontSize: "11px"`, `font-size: 11px`.
 // Unitless, px, and quoted forms; rem/em are left alone (they are relative and

@@ -1,26 +1,81 @@
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type * as React from "react";
+import { useHorizontalScrollOverflow } from "@/hooks/use-scroll-overflow";
 import type { SortState } from "@/hooks/use-table-sort";
 import { cn } from "@/lib/utils";
 
+/* Shared recipe for the two scroll-shadow overlays. 48px of gradient from the
+ * Card surface the table sits on out to transparent — `from-card` (never a
+ * literal) so it blends in both themes. `pointer-events-none` is load-bearing:
+ * the fade sits ON TOP of the last visible column, and without it a row click
+ * or a scrollbar drag under the fade would be swallowed. `aria-hidden` at the
+ * call site — this is a pure affordance with no content. */
+const TABLE_FADE =
+  "pointer-events-none absolute inset-y-0 z-10 w-12 transition-opacity duration-100 ease-out motion-reduce:transition-none";
+
 function Table({ className, ...props }: React.ComponentProps<"table">) {
-  // The `:not(:first-child)` guard lives at the container so the header's
+  const { ref, canScrollLeft, canScrollRight } = useHorizontalScrollOverflow();
+  // Both false when the content fits, so a non-overflowing table renders no
+  // overlays at all — same DOM it had before the affordance existed.
+  const overflowing = canScrollLeft || canScrollRight;
+
+  // The `:not(:first-child)` guard lives at the OUTER wrapper so the header's
   // top hairline only renders when something sits above the table (e.g.,
   // a toolbar inside the same Card). When the table is the first child of
   // its parent (e.g., the Providers table that sits directly inside a Card
   // density=flush), the Card's `--shadow-border` ring owns the top edge by
   // itself — stacking the header's `border-t` on top of the ring at the
   // same y-position is what reads as a "darker line" along the top.
+  //
+  // It MOVED here (from the scrollport) when the fades were added, and the
+  // selector grew one `>div` hop to match: the wrapper now occupies the exact
+  // DOM slot the scrollport used to, so its first-child status — and therefore
+  // the hairline — is unchanged for every consumer. The extra `>div` can only
+  // resolve to the scrollport; the two fade divs hold no table.
+  //
+  // Two levels because absolutely-positioned children of a scrollport are part
+  // of its scrollable content and scroll AWAY with it. The fades have to hug
+  // the scrollport's visible edges, so they hang off a non-scrolling parent.
+  // The scrollport keeps its own `relative` regardless — anything inside a
+  // cell that positions against it still resolves to the same box as before.
   return (
     <div
-      className="relative w-full overflow-x-auto [&:not(:first-child)>table>thead>tr]:border-border [&:not(:first-child)>table>thead>tr]:border-t"
-      data-slot="table-container"
+      className="relative w-full [&:not(:first-child)>div>table>thead>tr]:border-border [&:not(:first-child)>div>table>thead>tr]:border-t"
+      data-slot="table-wrapper"
     >
-      <table
-        className={cn("type-copy-14 w-full caption-bottom", className)}
-        data-slot="table"
-        {...props}
-      />
+      <div
+        className="relative w-full overflow-x-auto"
+        data-slot="table-container"
+        ref={ref}
+      >
+        <table
+          className={cn("type-copy-14 w-full caption-bottom", className)}
+          data-slot="table"
+          {...props}
+        />
+      </div>
+      {overflowing ? (
+        <>
+          <div
+            aria-hidden
+            className={cn(
+              TABLE_FADE,
+              "left-0 bg-gradient-to-r from-card to-transparent",
+              canScrollLeft ? "opacity-100" : "opacity-0"
+            )}
+            data-slot="table-fade-start"
+          />
+          <div
+            aria-hidden
+            className={cn(
+              TABLE_FADE,
+              "right-0 bg-gradient-to-l from-card to-transparent",
+              canScrollRight ? "opacity-100" : "opacity-0"
+            )}
+            data-slot="table-fade-end"
+          />
+        </>
+      ) : null}
     </div>
   );
 }

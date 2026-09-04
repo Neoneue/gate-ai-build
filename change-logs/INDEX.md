@@ -7,13 +7,141 @@ diff against and replicate across surfaces.
 **Find the change, then open only that file.** Thirty files is roughly 90k
 tokens; this index exists so nothing has to glob the directory.
 
+## September 2026
+
+### [2026-09-04](./2026-09/changelog-9-4.md)
+
+- Messages: budget-blocked row reads a UUID prefix, not "budget-block"
+
+### [2026-09-03](./2026-09/changelog-9-3.md)
+
+- Sentence case everywhere: nav labels and page titles first
+- Sentence case: card, KPI, field and button titles
+- Callout is the blue info banner
+- `type-heading-28` step
+- Text inputs default `autoComplete="off"`
+- Segmented gains `disabled`
+- Nav icons: Limits is Gauge, Policies is ShieldCheck
+- Team page: Overview tab
+- Team page: member scope dropdown
+- Team page: search inputs on the breakdown tables
+- Team page: Settings tab = General / Policies / Token savings
+- Team page: Add key and remove-key dropped
+- Teams list: Current teams / Archived teams / Settings tabs
+- Archived teams drill in read-only
+- Org-level Settings tab and the lock cascade
+- Enterprise "My policies" and "My token savings" pages
+- "Viewing as" role switch (Admin / Manager), Enterprise only
+- Audit trail records settings changes
+- Archived team: controls hidden
+- Messages: budget-blocked 429 row
+- Default workspace: no forced settings
+- Team-manager view, scaffold (in progress)
+- Role switch: Admin / Manager / Member, member read-only team page
+- Skeleton theatre: 2 s to 1 s
+- Limits stays for Manager and Member, scoped to their own keys
+- Archive, not Delete, on teams
+- Archived teams have no budget
+- Fresh teams read zero savings, no zero-delta chips
+- Development team, 1 s skeleton theatre
+- Role switch snaps to Admin off Enterprise, member subtitle, placeholder
+- Manager / Member read their own keys on every org-wide page
+- No org delta chips on scoped KPIs
+- Members have no Teams surface
+- One model per conversation
+- Sidebar: "Manage" is "My settings", Limits moves to Workspace
+- Block threshold field restored on hard budgets
+- Audit trail: a user sees their own log
+- Budget: admins can opt out of soft warning alerts
+
+### [2026-09-02](./2026-09/changelog-9-2.md)
+
+- Team budgets: status word, warn tick, blocked banner
+- Breach banner: 8px more air above the tabs
+- Teams list: default team named General; column widths rebalanced
+- Team budgets: seeds carry no hard cap, three windows each
+- Default team named plainly, badge dropped; dialogs say where history stays
+- Team spend stays with the team that ran it; "Former member" rows
+- Usage tab: Spend by current members / Spend by past members
+- Teams list: caption names the cap mode; team page gains a Settings tab
+- Status word "Blocked"; Teams list columns 20/10/8/14/12/36
+- Block threshold field; "Messages" wording; Usage by tables gain token columns
+- Budget and team-name forms: validation messages under invalid fields
+- Skeleton primitive and 2 s theatre loading on the Teams pages
+- Team detail: Policies and Token savings tabs
+- Security tab: Events by current members / past members
+- Usage tab: Saved column on the member tables
+- Budget dialog: Block threshold input removed; alert recipients named
+- Teams list: Archived teams section
+
+### [2026-09-01](./2026-09/changelog-9-1.md)
+
+- Team usage math: by-model requests reconcile with the team total
+- One scaled projection per range: scaleUsage()
+- Budget bars fill with success / warning gradients
+- Enterprise Budget tab: window-aware table titles, scope Callout removed
+- Enterprise Teams list: "Your teams" section title
+- Team sparklines: one daily backbone, windowed per range
+- Multi-window team budgets: one cap per window, shared enforcement
+- Chart bars take `--chart-N-soft` gradient ends
+- MultiSelect: opt-in `minSelected` and `showSelectedLabels`
+- BudgetSummary: label + value facts with Info tooltips
+- Enterprise Budget dialog: window multi-select, per-window amounts, scrollable
+- Enterprise Budget tab: header pill scopes card and tables to a window
+- Enterprise Teams list: org budget card removed, tightest-window meter, widths
+- Enterprise team detail: tab order, Keys Member column, small monograms
+- Enterprise Security tab: overview pane, threat types per member, two sections removed
+- Teams store shared by list and detail
+- Members rename: nav label and routes
+- Enterprise Budget tab: stacked per-window cards, tables leave
+- Enterprise team Members tab: Status becomes Joined
+- Members page Invitations table: Actions column no longer overflows
+- Demo clock: every authored date shifts onto the real calendar
+- Members page: full-width search, toolbar leaves the card
+- Enterprise team detail: Members and Keys toolbars, primary Add buttons
+- Enterprise Keys tab: Status renders the ApiKeys badge
+- Enterprise Usage and Security tabs: member wording, sortable events table
+- Teams: one build for Pro, Default and Enterprise
+- Budget dialog: Hard enforcement shows a warning note
+- Team Members tab: removal moves the member and their keys to Default
+- Attack types sum to the event total on Security, Activity and team Security
+
 ## August 2026
+
+### [2026-08-31](./2026-08/changelog-8-31.md)
+
+- Manager role is per-membership; co-managers allowed
+- Budgets drop the block threshold, gain quick-pick presets
+- Enterprise workspace tier joins Pro / Default / Free
+- Team member roles are org roles; the manager select is gone
+- BudgetMeter gains a warn state; fill logic shared via budget-band
+- New Callout primitive: quiet persistent info banner
+- Line tab rails are no longer vertically scrollable
+- Teams seed splits members and keys into real teams
+- Teams list: budget utilization column + deleted-teams card
+- Team detail: header actions, sortable spend tables, richer Keys tab
+- Team Security tab counts findings and renders zero-findings states
+- Enterprise Teams list: CTA-only header, deduped org budget card
+- Enterprise team detail: Usage tab gets Activity's chart treatment
+- Enterprise team detail: Budget tab combined into one card + Callout
+- Enterprise team detail: Members / Keys table parity
+
+### [2026-08-28](./2026-08/changelog-8-28.md)
+
+- Nav items can hide per workspace variant
+- MultiSelect options carry an optional description line
+- SettingsRow title widens to ReactNode
+- Teams workspace pages cloned from staging
 
 ### [2026-08-27](./2026-08/changelog-8-27.md)
 
 - Back navigation restores the content scroll
+- Rows-per-page 100 becomes All
+- Table scroll edge fades
 - Org security events gain the scope tray
 - Channel row icon centers on the first two lines
+- Notifications feed: bulk mark-as-read, Gmail select, 48px rows
+- Limits table: width scheme, resets format, actions alignment
 
 ### [2026-08-25](./2026-08/changelog-8-25.md)
 

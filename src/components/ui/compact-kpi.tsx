@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/chart";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * DeltaTag — directional arrow + delta value, optional trailing note.
@@ -23,6 +24,7 @@ export function DeltaTag({
   note,
   inverted = false,
   size = "sm",
+  loading = false,
 }: {
   delta: string;
   note?: string;
@@ -30,6 +32,12 @@ export function DeltaTag({
   /** `sm` (default) for dense KPI rows; `md` bumps the value, note, and
    *  arrow one step up for hero-scale cards. */
   size?: "sm" | "md";
+  /** Swap the whole chip — arrow, value AND note — for one skeleton bar
+   *  while the reading is in flight. The note goes with it on purpose: a
+   *  "vs last 7d" hanging off a bar reads as a broken number, and keeping
+   *  live text beside a skeleton would let the copy slide sideways when the
+   *  real delta lands. */
+  loading?: boolean;
 }) {
   const trimmed = delta.trim();
   const negative = trimmed.startsWith("-");
@@ -45,6 +53,19 @@ export function DeltaTag({
   const iconCls = size === "md" ? "size-4" : "size-3.5";
   const valueCls = size === "md" ? "text-sm" : "text-xs/4";
   const noteCls = size === "md" ? "text-sm" : "text-xs";
+  if (loading) {
+    // The type class stays on the wrapper so the skeleton's line box is the
+    // chip's own leading (16px at `sm`, 20px at `md`) — identical to the
+    // rendered chip, whose height is that same line box.
+    return (
+      <span className={`inline-flex items-center ${valueCls}`}>
+        <SkeletonText
+          className={size === "md" ? "w-40" : "w-32"}
+          size={size === "md" ? "default" : "sm"}
+        />
+      </span>
+    );
+  }
   return (
     <div className="inline-flex items-center gap-1">
       <span className={`inline-flex items-center gap-0 ${toneCls}`}>
@@ -79,6 +100,7 @@ export function CompactKpi({
   noteLine,
   spark,
   flat = false,
+  loading = false,
 }: {
   title: string;
   value: string;
@@ -97,6 +119,10 @@ export function CompactKpi({
   noteLine?: string;
   spark?: React.ReactNode;
   flat?: boolean;
+  /** Swap the value, the delta / note line and the sparkline for skeletons
+   *  of the same box while the reading is in flight. The Eyebrow title and
+   *  the `valueSuffix` unit stay — both are known before the fetch. */
+  loading?: boolean;
 }) {
   const baseCls = flat
     ? "flex flex-col gap-2 bg-card p-4"
@@ -107,7 +133,7 @@ export function CompactKpi({
         <Eyebrow as="div">{title}</Eyebrow>
       </div>
       <div className="flex items-baseline gap-2">
-        <HeroNumeric>{value}</HeroNumeric>
+        <HeroNumeric loading={loading}>{value}</HeroNumeric>
         {valueSuffix ? (
           <span className="inline-flex items-center text-muted-foreground">
             <span aria-hidden className="inline-block h-3.5 w-0" />
@@ -120,14 +146,21 @@ export function CompactKpi({
           <DeltaTag
             delta={delta}
             inverted={deltaInverted}
+            loading={loading}
             note={deltaNote}
             size={deltaSize}
           />
         ) : (
-          <span className="type-copy-14 text-muted-foreground">{noteLine}</span>
+          <span className="type-copy-14 text-muted-foreground">
+            {loading && noteLine ? <SkeletonText className="w-24" /> : noteLine}
+          </span>
         )}
       </div>
-      {spark == null ? null : <div className="mt-3">{spark}</div>}
+      {spark == null ? null : (
+        <div className="mt-3">
+          {loading ? <Skeleton className="mt-1 h-9 w-full" /> : spark}
+        </div>
+      )}
     </div>
   );
 }

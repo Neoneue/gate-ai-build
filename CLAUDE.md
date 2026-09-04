@@ -5,6 +5,12 @@ Shared project instructions, kept minimal; per-area detail lives in
 
 ## Local reminders
 
+- **On every new session, read [`handoff.md`](./handoff.md) first, IN
+  FULL.** A SessionStart hook injects it, but output over ~20KB arrives as a
+  2KB preview plus a "Full output saved to: `<path>`" line. Read that path (or
+  the file) whole before replying. The first reply of the session opens with
+  one line: `I read the handoff doc (<title date>). Top OPEN: <first OPEN
+  item>.` The user must never have to ask whether the handoff was read.
 - Work on `dev` (permanent preview branch); never commit directly to `main`
   (prod). Promote by opening a PR `dev` -> `main`, merged with a **merge commit**
   (never squash/rebase — `dev` is long-lived and would diverge), then sync
@@ -41,10 +47,10 @@ Read the relevant doc before working in its area. Do not re-inject on every prom
 | [`docs/Presidio-findings.md`](./docs/Presidio-findings.md) | PII detection truth — built-in Presidio recognizers. Read before authoring any PII finding value. |
 | [`docs/Credentials-findings.md`](./docs/Credentials-findings.md) | Credential/secret detection — regex + Shannon entropy (NOT Presidio). |
 | [`docs/Injection-findings.md`](./docs/Injection-findings.md) | Prompt-injection detection — ML classifier (NOT Presidio/regex); §3 = the 10 verdict enums. |
-| [`PRODUCT.md`](./PRODUCT.md) | Product context / register. |
 | [`README.md`](./README.md) | Repo overview, stack, routes. |
 
 The whole `docs/` folder is **local-only** (gitignored): the findings docs above,
-`handoff.md` resume notes, the `message-script.md` / `request-trace.md` session
+the `message-script.md` / `request-trace.md` session
 sources, staging captures, audit `.docx`. They resolve only on a machine that
-already has them. The committed, tracked UI change logs live in `change-logs/`.
+already has them. `handoff.md` (repo root, also gitignored) holds the resume
+notes. The committed, tracked UI change logs live in `change-logs/`.

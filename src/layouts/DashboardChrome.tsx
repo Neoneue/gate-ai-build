@@ -24,12 +24,21 @@ import {
   type SidebarSection,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ViewRoleSwitch } from "@/components/ui/view-role-switch";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
+import {
+  isDefaultSurface,
+  isEnterpriseSurface,
+  isFreeSurface,
+} from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
+  ENTERPRISE_MEMBER_SIDEBAR_SECTIONS,
+  ENTERPRISE_SIDEBAR_SECTIONS,
+  ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
 } from "./nav-sections";
@@ -75,17 +84,35 @@ export function DashboardChrome({
   const mainRef = useScrollRestoration<HTMLElement>();
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
+  const isEnterprise = isEnterpriseSurface(pathname);
+  const viewRole = useViewRole();
+  // The role switch only exists on Enterprise. Leaving for another workspace
+  // snaps the role back to Admin so a Manager / Member gating never leaks
+  // onto Default, Free or Pro pages (they have one signed-in owner).
+  useEffect(() => {
+    if (!isEnterprise && viewRole !== "admin") {
+      teamsStore.setViewRole("admin");
+    }
+  }, [isEnterprise, viewRole]);
   const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isFree
       ? FREE_SIDEBAR_SECTIONS
-      : SIDEBAR_SECTIONS;
+      : isEnterprise
+        ? viewRole === "admin"
+          ? ENTERPRISE_SIDEBAR_SECTIONS
+          : viewRole === "manager"
+            ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
+            : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
+        : SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
     : isFree
       ? "/overview-free"
-      : "/overview";
+      : isEnterprise
+        ? "/overview-enterprise"
+        : "/overview";
   // Upgrade promo in the rail follows the same tier signal as the nav lock
   // icons and the workspace badge (see lib/plan.ts): shown on the two non-PRO
   // surfaces, absent on PRO. It lands on that tier's own Billing page rather
@@ -155,8 +182,9 @@ export function DashboardChrome({
             showLocks={showLocks}
             topSlot={
               switcherInRail ? (
-                <div className="border-border border-b px-3 pt-3 pb-3">
-                  <WorkspaceSwitcher className="w-full" />
+                <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
+                  <WorkspaceSwitcher className="w-full" compactBadge />
+                  {isEnterprise ? <ViewRoleSwitch className="w-full" /> : null}
                 </div>
               ) : undefined
             }
@@ -174,6 +202,7 @@ export function DashboardChrome({
             overviewPath={overviewPath}
             sections={sections}
             showLocks={showLocks}
+            showViewRole={isEnterprise}
             sidebarExpanded={sidebarExpanded}
             switcherInRail={switcherInRail}
             upgradePath={upgradePath}
@@ -257,6 +286,7 @@ function DashTopBar({
   onToggleAskAi,
   switcherInRail,
   upgradePath,
+  showViewRole,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -270,6 +300,8 @@ function DashTopBar({
   onToggleAskAi: () => void;
   switcherInRail: boolean;
   upgradePath?: string;
+  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  showViewRole: boolean;
 }) {
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -324,8 +356,9 @@ function DashTopBar({
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
         {switcherInRail ? null : (
-          <div className="hidden lg:block">
+          <div className="hidden items-center gap-2 lg:flex">
             <WorkspaceSwitcher />
+            {showViewRole ? <ViewRoleSwitch /> : null}
           </div>
         )}
       </div>
@@ -353,6 +386,7 @@ function DashTopBar({
           overviewPath={overviewPath}
           sections={sections}
           showLocks={showLocks}
+          showViewRole={showViewRole}
           upgradePath={upgradePath}
         />
       </div>
@@ -371,6 +405,7 @@ function MobileNav({
   onNavigate,
   overviewPath,
   showLocks,
+  showViewRole,
   upgradePath,
 }: {
   sections: SidebarSection[];
@@ -378,6 +413,8 @@ function MobileNav({
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   showLocks?: boolean;
+  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  showViewRole: boolean;
   upgradePath?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -421,8 +458,9 @@ function MobileNav({
           sections={sections}
           showLocks={showLocks}
           topSlot={
-            <div className="border-border border-b px-3 pt-3 pb-3 lg:hidden">
+            <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />
+              {showViewRole ? <ViewRoleSwitch className="w-full" /> : null}
             </div>
           }
           upgradePath={upgradePath}

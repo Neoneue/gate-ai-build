@@ -74,9 +74,13 @@ describe("request rows are priced from the catalog", () => {
     expect(wrong).toEqual([]);
   });
 
-  it("prices at least the 41 rows the gateway metered", () => {
+  it("prices exactly the 26 rows the gateway metered", () => {
+    // 26 since 2026-09-03: cnv_skylark_18, cnv_polaris_55 and cnv_orion_70
+    // moved to Kira's and Mateus's BYOK keys (openclaw, nova-chat,
+    // hermes-agent), so their rows are unmetered; cnv_lyra_92 moved onto the
+    // Gate key atlas-eval and is priced.
     const costed = REQUEST_ROWS_ALL.filter((r) => r.cost.trim() !== "—");
-    expect(costed.length).toBe(41);
+    expect(costed.length).toBe(26);
     // Guards the opposite failure to the one above: a codemod that blanked the
     // column would pass a per-row equality check vacuously.
     expect(costed.every((r) => money(r.cost) > 0)).toBe(true);

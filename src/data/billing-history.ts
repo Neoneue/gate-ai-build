@@ -2,6 +2,9 @@
 // feed. Lifted out of Billing.tsx (2026-08-24) so chrome-level surfaces can
 // read the rows without importing the page chunk.
 
+import { authoredDate } from "@/lib/demo-clock";
+import { formatDateNumeric } from "@/lib/formatters";
+
 export type HistoryRow = {
   id: string;
   date: Date;
@@ -15,44 +18,52 @@ export type HistoryRow = {
 export const HISTORY_ROWS: HistoryRow[] = [
   {
     id: "h-6",
-    date: new Date(2026, 5, 6, 9, 14, 38),
+    date: authoredDate(2026, 5, 6, 9, 14, 38),
     type: "Credits added",
     amount: 25.0,
     balanceAfter: 49.992_38,
   },
   {
     id: "h-5",
-    date: new Date(2026, 4, 29, 14, 30, 0),
+    date: authoredDate(2026, 4, 29, 14, 30, 0),
     type: "Adjustment",
     amount: 0.005_29,
     balanceAfter: 24.992_38,
   },
   {
     id: "h-4",
-    date: new Date(2026, 4, 29, 10, 15, 0),
+    date: authoredDate(2026, 4, 29, 10, 15, 0),
     type: "Adjustment",
     amount: 0.007_09,
     balanceAfter: 24.987_09,
   },
   {
     id: "h-3",
-    date: new Date(2026, 4, 12, 16, 47, 12),
+    date: authoredDate(2026, 4, 12, 16, 47, 12),
     type: "Gateway request",
     amount: -0.01,
     balanceAfter: 24.98,
   },
   {
     id: "h-2",
-    date: new Date(2026, 4, 12, 14, 22, 5),
+    date: authoredDate(2026, 4, 12, 14, 22, 5),
     type: "Gateway request",
     amount: -0.01,
     balanceAfter: 24.99,
   },
   {
     id: "h-1",
-    date: new Date(2026, 4, 12, 9, 14, 38),
+    date: authoredDate(2026, 4, 12, 9, 14, 38),
     type: "Credits added",
     amount: 25.0,
     balanceAfter: 25.0,
   },
 ];
+
+/**
+ * Period end shown on the Pro Billing page ("Renews on ...") and in the
+ * cancel-plan dialog intro. Same workspace, same subscription, so both
+ * surfaces read this one definition. Authored 2026-06-12, shifted by the
+ * demo clock like every other billing date.
+ */
+export const BILLING_PERIOD_END = formatDateNumeric(authoredDate(2026, 5, 12));

@@ -29,11 +29,12 @@ import { SegmentedPill } from "@/components/ui/segmented-pill";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCompactCount } from "@/lib/formatters";
 import { type CustomRange, type PresetRange, RANGE_OPTIONS } from "@/lib/range";
+import { cn } from "@/lib/utils";
 import { EventsTableSection } from "@/pages/security/EventsTable";
 import {
-  ATTACK_MIX,
+  type ATTACK_MIX,
+  attackTypeCounts,
   buildEventsChartView,
-  EVENT_MIX_TOTAL,
   type EventsRange,
   eventsTotal,
   fmtCount,
@@ -41,6 +42,9 @@ import {
   RANGE_DELTA_NOTE,
   splitEventMix,
 } from "@/pages/security/events-data";
+import { scopedSecurity } from "@/pages/teams/scoped-security";
+import { useTeams } from "@/pages/teams/teams-store";
+import { useViewScope } from "@/pages/teams/view-scope";
 
 const WHITESPACE_GLOBAL_RE = /\s+/g;
 
@@ -72,8 +76,12 @@ function HeroMetricCard({
   // largest-remainder split onto the 31:14:2 ratio, so blocked + flagged +
   // redacted sum EXACTLY to `total`. Chart, Action categories card, and
   // table "of N" all derive from the same two functions, so they reconcile.
-  const total = eventsTotal(range, customRange);
-  const { blocked, flagged, redacted } = splitEventMix(total);
+  // Manager: their team's share of the canon; Member: their own keys'
+  // (scoped-security.ts). Admin: the org.
+  const scope = useViewScope();
+  const teams = useTeams();
+  const scoped = scopedSecurity(scope, range, customRange, teams);
+  const total = scoped ? scoped.findings : eventsTotal(range, customRange);
   const note = RANGE_DELTA_NOTE[range];
 
   // Chart: total-events trace + date/time axis, driven by the page range.
@@ -86,37 +94,16 @@ function HeroMetricCard({
 
   return (
     <Card className="px-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex shrink-0 flex-col gap-2">
-          <Eyebrow>Total events</Eyebrow>
-          <div className="flex flex-col gap-1">
-            <HeroNumeric size="lg">{formatCompactCount(total)}</HeroNumeric>
-            <DeltaTag delta="+22.4%" note={note} size="md" />
-          </div>
-        </div>
-
-        {/* Right-aligned mono breakdown — grid (not stacked flex) so all
-            three rows share the same label / dot / value column tracks.
-            Each BreakdownRow returns three grid cells; the dot column is
-            fixed-width so dots align across rows regardless of label or
-            value length. Maps to the Action categories: Blocked / Flagged
-            / Redacted. */}
-        <div className="grid shrink-0 grid-cols-[auto_auto_auto] items-center gap-x-2 gap-y-2">
-          <BreakdownRow
-            label="Blocked"
-            tone="danger"
-            value={formatCompactCount(blocked)}
-          />
-          <BreakdownRow
-            label="Flagged"
-            tone="warning"
-            value={formatCompactCount(flagged)}
-          />
-          <BreakdownRow
-            label="Redacted"
-            tone="warning"
-            value={formatCompactCount(redacted)}
-          />
+      <div className="flex shrink-0 flex-col gap-2">
+        <Eyebrow>Total events</Eyebrow>
+        {/* Delta rides beside the number on its BASELINE (16px gap), and the
+            Blocked / Flagged / Redacted legend is gone (2026-09-01): the
+            Action-types card below carries those exact numbers, so the
+            legend was a second reading of them. Matches the team Security
+            tab's hero. */}
+        <div className="flex items-baseline gap-4">
+          <HeroNumeric size="lg">{formatCompactCount(total)}</HeroNumeric>
+          {scoped ? null : <DeltaTag delta="+22.4%" note={note} size="md" />}
         </div>
       </div>
 
@@ -221,45 +208,6 @@ function HeroMetricCard({
         </ChartContainer>
       </div>
     </Card>
-  );
-}
-
-// Indicator dot colors — one stop lighter than the StatusDot defaults so
-// the Total events breakdown matches the lightened Action Categories bars.
-const BREAKDOWN_DOT: Record<"success" | "danger" | "warning" | "info", string> =
-  {
-    success: "var(--color-success-500)",
-    danger: "var(--color-danger-500)",
-    warning: "var(--color-warning-500)",
-    info: "var(--color-blue-500)",
-  };
-
-function BreakdownRow({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "success" | "danger" | "warning" | "info";
-}) {
-  // Returns three grid cells (no wrapper element). Parent is a 3-col grid
-  // so dots and values align across rows. `justify-self-end` right-aligns
-  // text-flow cells within their tracks.
-  return (
-    <>
-      <span className="type-label-12 justify-self-end text-muted-foreground tracking-tight">
-        {label}
-      </span>
-      <span
-        aria-hidden
-        className="size-2 shrink-0 rounded-full"
-        style={{ backgroundColor: BREAKDOWN_DOT[tone] }}
-      />
-      <span className="type-mono-12 justify-self-end font-medium text-foreground">
-        {value}
-      </span>
-    </>
   );
 }
 
@@ -371,8 +319,10 @@ function MiddleRow({
 type AttackCategory = {
   label: string;
   count: number;
-  /** Chart palette CSS var. */
-  color: string;
+  /** Bar fill — the site-wide gradient recipe (darker origin → lighter
+   *  leading edge). Chart slots run to their `-soft` twin, semantic families
+   *  to their own 400 step. */
+  fill: string;
 };
 
 // Right card. Mirrors the 3 enforced checks in DETECTION_CHECKS — Prompt
@@ -383,23 +333,24 @@ type AttackCategory = {
 // Activity's "Top attack types" card — with the chart colors mapped here;
 // the card scales them proportionally to the range total the same way the
 // old model did (per-baseline-unit share of the total).
-const ATTACK_COLORS: Record<(typeof ATTACK_MIX)[number]["key"], string> = {
-  pii: "var(--color-chart-3)",
-  injection: "var(--color-chart-1)",
-  credential: "var(--color-chart-4)",
+const ATTACK_FILL: Record<(typeof ATTACK_MIX)[number]["key"], string> = {
+  pii: "bg-gradient-to-r from-chart-3 to-chart-3-soft",
+  injection: "bg-gradient-to-r from-chart-1 to-chart-1-soft",
+  credential: "bg-gradient-to-r from-chart-4 to-chart-4-soft",
 };
-const ATTACK_CATEGORIES: AttackCategory[] = ATTACK_MIX.map((c) => ({
-  label: c.label,
-  count: c.units,
-  color: ATTACK_COLORS[c.key],
-}));
 
-// Static label + color metadata — counts are range-dependent and injected at
+// Static label + fill metadata — counts are range-dependent and injected at
 // render time via useMemo.
 const ACTION_CATEGORY_META = [
-  { label: "Blocked", color: "var(--color-danger-500)" },
-  { label: "Flagged", color: "var(--color-warning-500)" },
-  { label: "Redacted", color: "var(--color-warning-500)" },
+  { label: "Blocked", fill: "bg-gradient-to-r from-danger-500 to-danger-400" },
+  {
+    label: "Flagged",
+    fill: "bg-gradient-to-r from-warning-500 to-warning-400",
+  },
+  {
+    label: "Redacted",
+    fill: "bg-gradient-to-r from-warning-500 to-warning-400",
+  },
 ] as const;
 
 // Left card. Blocked / Flagged / Redacted as a horizontal bar breakdown.
@@ -413,8 +364,11 @@ function ActionCategoriesCard({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
+  const scope = useViewScope();
+  const teams = useTeams();
+  const scoped = scopedSecurity(scope, range, customRange, teams);
   const { blocked, flagged, redacted } = splitEventMix(
-    eventsTotal(range, customRange)
+    scoped ? scoped.findings : eventsTotal(range, customRange)
   );
   const categories = useMemo<AttackCategory[]>(() => {
     const counts = [blocked, flagged, redacted];
@@ -432,9 +386,9 @@ function ActionCategoriesCard({
   );
 }
 
-// Right card. Attack-detection mix, scaled proportionally to the range
-// total: each baseline unit is worth (rangeTotal / EVENT_MIX_TOTAL) events,
-// matching the old `count × scale` behaviour now that scale is gone.
+// Right card. Attack-detection mix from the shared `attackTypeCounts`, so
+// the three bars sum exactly to the range's event total (the same integers
+// Activity's "Top attack types" card and the team Security tab show).
 function AttackCategoriesCard({
   range,
   customRange,
@@ -442,14 +396,23 @@ function AttackCategoriesCard({
   range: EventsRange;
   customRange: CustomRange | null;
 }) {
-  const total = eventsTotal(range, customRange);
+  const scope = useViewScope();
+  const teams = useTeams();
   const categories = useMemo<AttackCategory[]>(() => {
-    const perUnit = total / EVENT_MIX_TOTAL;
-    return ATTACK_CATEGORIES.map((c) => ({
-      ...c,
-      count: Math.round(c.count * perUnit),
+    const scoped = scopedSecurity(scope, range, customRange, teams);
+    const counts = scoped
+      ? scoped.byCategory.map((c) => ({
+          key: c.id,
+          label: c.label,
+          count: c.count,
+        }))
+      : attackTypeCounts(range, customRange);
+    return counts.map((c) => ({
+      label: c.label,
+      count: c.count,
+      fill: ATTACK_FILL[c.key as (typeof ATTACK_MIX)[number]["key"]],
     }));
-  }, [total]);
+  }, [range, customRange, scope, teams]);
   return (
     <CategoryBreakdownCard
       categories={categories}
@@ -504,8 +467,8 @@ function CategoryBreakdownCard({
                 role="meter"
               >
                 <div
-                  className="h-full rounded-full"
-                  style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                  className={cn("h-full rounded-full", cat.fill)}
+                  style={{ width: `${pct}%` }}
                 />
               </div>
               <span className="type-mono-14 justify-self-end whitespace-nowrap pl-2 text-foreground">

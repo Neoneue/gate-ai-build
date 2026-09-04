@@ -66,20 +66,41 @@ If `handoff.md` does not exist, create it with the structure in "Shape" below.
   learned something durable (a real gotcha, an enforced protocol, a measurement
   method that cost time to discover), and FIX them when they go stale rather
   than leaving a contradiction.
-- **~750 lines is a backstop, not a target.** If LATEST is getting long, it is
-  probably narrating instead of stating. If RECENT is long, digests are not
-  compressed enough.
+- **Write UNDER budget first, then fill; never write over and cut.** Cutting
+  a 19KB file back to 18KB has cost 6 to 8 edit rounds per run. Before
+  writing, measure the parts you are keeping: `wc -c` on the file, then
+  subtract the bytes of the section you are replacing to get the budget for
+  the new text. Draft the new LATEST + OPEN to at most 80% of that budget
+  (terse bullets: hash, file, value; point at changelog / git log for
+  narrative). Write once, check `wc -c`. If there is room left, add the
+  next most useful fact; if over, you already know what to drop because you
+  wrote in priority order (OPEN > LATEST shipped > measurements > decisions).
+- **18KB (`wc -c` under 18000) and 500 lines are the hard caps.** Check both
+  with `wc -c handoff.md; wc -l handoff.md` before finishing. The byte cap
+  is what keeps the SessionStart hook from truncating the file to a 2KB
+  preview. Over either cap, compress RECENT first, then LATEST narration
+  (point at changelogs / git log instead of restating them), never OPEN. The file must hold the entire last session at the detail a
+  fresh session needs to resume without the user filling anything in.
+- **The RESUME PROTOCOL block stays at the very top and under 1KB.** The
+  SessionStart hook truncates output over ~20KB to a 2KB preview, so this
+  block is the only part guaranteed to arrive. It tells the next session to
+  read the persisted path in full and to open its first reply with
+  `I read the handoff doc (<date>). Top OPEN: <item>.` Refresh its "Top OPEN item
+  right now" line on EVERY run to match the first item under `## OPEN / next`.
 
 ## Shape
 
 ```markdown
-# Handoff — <YYYY-MM-DD> (CT) — resume here
+# Handoff - <YYYY-MM-DD> (CT) - resume here
+
+## RESUME PROTOCOL (read this block first, every session)
+
+<verbatim from the current file: hook truncation warning, read-in-full rule,
+the `I read the handoff doc` opening line, the 18KB + 500-line caps and section order, then
+"Top OPEN item right now: <first OPEN item>" refreshed this run>
 
 <one-paragraph preamble: what this file is, the no-em-dash rule, how the user
 works (branch discipline, literal values, dislikes reflexive re-verification)>
-
-## Working agreements (permanent)
-## Tooling gotchas (permanent)
 
 ## OPEN / next
 
@@ -87,7 +108,7 @@ works (branch discipline, literal values, dislikes reflexive re-verification)>
 Lives across sessions; items leave only when resolved, naming where the
 resolution landed.>
 
-## LATEST — <YYYY-MM-DD> (CT)
+## LATEST - <YYYY-MM-DD> (CT)
 
 <2-3 lines: what thread(s), committed or not, branch, tree state, verification
 state, dev server port>
@@ -99,17 +120,21 @@ state, dev server port>
 <If this session established numbers that were expensive to measure, put the
 table here AND say where the same numbers live in the code.>
 
-## RECENT — rolling digest (max 3, newest first)
+## Working agreements (permanent)
+## Tooling gotchas (permanent)
 
-### <YYYY-MM-DD> — <one-line theme>
+## RECENT - rolling digest (max 3, newest first)
+
+### <YYYY-MM-DD> - <one-line theme>
 <5-8 lines: hashes, one line per thread, non-derivable facts only.
 Mark UNCOMMITTED work loudly; that mark pins the digest until resolved.>
 ```
 
 ## Steps
 
-1. Read the existing `handoff.md` if there is one. Keep the preamble and both
-   permanent sections; note anything in them that this session proved stale.
+1. Read the existing `handoff.md` if there is one. Keep the RESUME PROTOCOL
+   block, the preamble and both permanent sections; note anything in them
+   that this session proved stale.
 2. Establish real state: `git branch --show-current`, `git status --short`, and
    the verification commands above. Do not guess any of it.
 3. Apply the lifecycle: same-day -> update LATEST in place; new day -> demote
@@ -120,7 +145,10 @@ Mark UNCOMMITTED work loudly; that mark pins the digest until resolved.>
    remove resolved ones with a pointer to where they landed.
 5. Fold any durable lesson into the permanent sections, and correct anything
    there that has gone stale.
-6. Run `npm run lint:md` (handoff.md is excluded from the glob, but the run
+6. Refresh the "Top OPEN item right now" line in the RESUME PROTOCOL block
+   and confirm `wc -c handoff.md` is under 18000 and `wc -l handoff.md` is
+   500 or under.
+7. Run `npm run lint:md` (handoff.md is excluded from the glob, but the run
    confirms you did not break a tracked doc while editing).
-7. Report in one or two lines what the handoff now says is open, so the user
+8. Report in one or two lines what the handoff now says is open, so the user
    can correct the framing before the session ends.

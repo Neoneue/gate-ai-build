@@ -40,10 +40,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatDateTime, formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { currentUserId, useViewRole } from "@/pages/teams/teams-store";
 
 /** Comparable value per sortable column for the Limits table.
  *  Numeric columns (threshold/used) parse out $/commas; period maps to a
@@ -90,6 +92,20 @@ export function Limits() {
     () => searchParams.get("create") === "1"
   );
   const [limits, setLimits] = useState<Limit[]>([]);
+  // Role scope (AG-695 AC 3, user 2026-09-03): caps run "at the org,
+  // project, or key level". Admin: Org-wide plus the seeded keys. Manager /
+  // Member: only the keys THEY own; org-wide rows read as locked (no
+  // actions), the AG-624 "read-only, with who set it" treatment.
+  const isAdmin = useViewRole() === "admin";
+  const scopes = useMemo<readonly LimitScope[]>(
+    () =>
+      isAdmin
+        ? LIMIT_SCOPES
+        : API_KEY_SEED_ROWS.filter(
+            (k) => k.ownerId === currentUserId() && !k.revoked
+          ).map((k) => ({ value: k.id, name: k.name, masked: k.masked })),
+    [isAdmin]
+  );
   const openCreate = () => setCreateOpen(true);
   const addLimit = (limit: Limit) => setLimits((prev) => [limit, ...prev]);
   const removeLimit = (id: string) =>
@@ -122,12 +138,17 @@ export function Limits() {
           the class is a no-op until the column is wide enough to bind. */}
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader onCreate={openCreate} />
-        <LimitsSection limits={limits} onRemove={removeLimit} />
+        <LimitsSection
+          canEditOrg={isAdmin}
+          limits={limits}
+          onRemove={removeLimit}
+        />
       </div>
       <CreateLimitDialog
         onCreate={addLimit}
         onOpenChange={handleCreateOpenChange}
         open={createOpen}
+        scopes={scopes}
       />
     </DashboardChrome>
   );
@@ -165,9 +186,12 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
 function LimitsSection({
   limits,
   onRemove,
+  canEditOrg,
 }: {
   limits: Limit[];
   onRemove: (id: string) => void;
+  /** False for Manager / Member: org-wide rows are read-only (no actions). */
+  canEditOrg: boolean;
 }) {
   // Snapshot `now` once per limits change. Without this, calling
   // `resetsAt(new Date(), ...)` per row in the JSX recomputes on every
@@ -210,21 +234,27 @@ function LimitsSection({
           <TableRow className="hover:bg-transparent">
             {/* `table-fixed` + an explicit width on EVERY column — same
                   load-bearing pattern as the Team and Activity tables.
-                  Widths sum to 100% and are RANKED, not eyeballed: Name is
-                  the widest (it is the row's identifier), Scope second, and
-                  the rest get their measured content need (widest rendered
-                  cell + the 24px of cell padding) rounded up to the next
-                  whole percent. Against the 1400px floor that is Name
-                  238px / Scope 182px, so a full limit name fits without
-                  truncating and "Org-wide (all keys)" — the longest scope
-                  value, 128px — clears with room to spare instead of
-                  breaking mid-word. The floor rose 1000 → 1400px when
-                  Enforcement and Alerts landed, so the table now always
-                  scrolls horizontally inside the max-w-5xl column; ten
-                  columns cannot avoid that, and squeezing the row
-                  identifier to dodge it was the worse trade. */}
+                  Widths sum to 100%: Name largest at 15% (the row's identifier),
+                  Actions smallest at 5% (a lone icon button), and
+                  the data columns tuned per user direction
+                  2026-08-27: Scope 12.5 / Enforcement 7.5 (a
+                  quarter of Enforcement moved to Scope), Resets on
+                  12.5 / Period 7.5 (same move), Used 12 / Type 8 (a
+                  $1,000,000 threshold renders "$0 / $1,000,000",
+                  ~158px, which overflowed a 140px column and bled
+                  into Threshold - table-fixed + nowrap paints
+                  oversized content outside its cell), Threshold and
+                  Alerts at 10. Against the 1400px floor that is
+                  Name 210 / Scope 175 / Type 112 / Enforcement 105
+                  / Threshold 140 / Used 168 / Alerts 140 / Period
+                  105 / Resets 175 / Actions 70 px. The floor rose
+                  1000 -> 1400px when Enforcement and Alerts landed,
+                  so the table always scrolls horizontally inside
+                  the max-w-5xl column; ten columns cannot avoid
+                  that, and squeezing the row identifier to dodge it
+                  was the worse trade. */}
             <SortableTableHead
-              className="w-[17%] whitespace-nowrap"
+              className="w-[15%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="name"
@@ -232,7 +262,7 @@ function LimitsSection({
               Name
             </SortableTableHead>
             <SortableTableHead
-              className="w-[13%] whitespace-nowrap"
+              className="w-[12.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="scope"
@@ -240,7 +270,7 @@ function LimitsSection({
               Scope
             </SortableTableHead>
             <SortableTableHead
-              className="w-[7%] whitespace-nowrap"
+              className="w-[8%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="type"
@@ -252,7 +282,7 @@ function LimitsSection({
                   "show me every rule that actually blocks" is the question
                   an operator asks first. */}
             <SortableTableHead
-              className="w-[9%] whitespace-nowrap"
+              className="w-[7.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="enforcement"
@@ -260,7 +290,7 @@ function LimitsSection({
               Enforcement
             </SortableTableHead>
             <SortableTableHead
-              className="w-[8%] whitespace-nowrap"
+              className="w-[10%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -269,7 +299,7 @@ function LimitsSection({
               Threshold
             </SortableTableHead>
             <SortableTableHead
-              className="w-[11%] whitespace-nowrap"
+              className="w-[12%] whitespace-nowrap"
               numeric
               onSort={toggleSort}
               sort={sort}
@@ -279,16 +309,16 @@ function LimitsSection({
             </SortableTableHead>
             {/* Not sortable: a SET of percent marks has no honest
                   ordering, the same reason "Resets on" stays plain. */}
-            <TableHead className="w-[12%] whitespace-nowrap">Alerts</TableHead>
+            <TableHead className="w-[10%] whitespace-nowrap">Alerts</TableHead>
             <SortableTableHead
-              className="w-[6%] whitespace-nowrap"
+              className="w-[7.5%] whitespace-nowrap"
               onSort={toggleSort}
               sort={sort}
               sortKey="period"
             >
               Period
             </SortableTableHead>
-            <TableHead className="w-[12%] whitespace-nowrap">
+            <TableHead className="w-[12.5%] whitespace-nowrap">
               Resets on
             </TableHead>
             <TableHead className="w-[5%] pr-4 pl-0 text-right">
@@ -361,10 +391,16 @@ function LimitsSection({
                   {resetsAtMap.get(limit.id) ?? "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                  <LimitActionsMenu
-                    limitName={limit.name}
-                    onRemove={() => onRemove(limit.id)}
-                  />
+                  {limit.scope === "org" && !canEditOrg ? (
+                    <span className="type-copy-14 text-muted-foreground">
+                      Set by an org admin
+                    </span>
+                  ) : (
+                    <LimitActionsMenu
+                      limitName={limit.name}
+                      onRemove={() => onRemove(limit.id)}
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             );
@@ -388,7 +424,7 @@ function LimitActionsMenu({
         render={
           <Button
             aria-label={`Actions for ${limitName}`}
-            className="text-muted-foreground hover:text-foreground"
+            className="-mr-2 text-muted-foreground hover:text-foreground"
             size="icon-sm"
             variant="ghost"
           />
@@ -447,11 +483,12 @@ const LIMIT_PERIODS = [
 // source); keep in sync if that seed changes. Revoked keys (e.g.
 // test-key) are intentionally excluded — a limit on a revoked key is
 // meaningless.
-const LIMIT_SCOPES = [
+type LimitScope = { value: string; name: string; masked: string | null };
+const LIMIT_SCOPES: readonly LimitScope[] = [
   { value: "org", name: "Org-wide (all keys)", masked: null },
   { value: "sk-gw-c4aeb3a8", name: "prod-web", masked: "sk-gw-…c4ae" },
   { value: "sk-gw-9f3064ce", name: "prod-agent", masked: "sk-gw-…9f30" },
-] as const;
+];
 
 type Limit = {
   id: string;
@@ -473,9 +510,15 @@ const LIMIT_TYPE_BY_VALUE = new Map<string, (typeof LIMIT_TYPES)[number]>(
 const LIMIT_PERIOD_BY_VALUE = new Map<string, (typeof LIMIT_PERIODS)[number]>(
   LIMIT_PERIODS.map((p) => [p.value, p])
 );
-const LIMIT_SCOPE_BY_VALUE = new Map<string, (typeof LIMIT_SCOPES)[number]>(
-  LIMIT_SCOPES.map((s) => [s.value, s])
-);
+// Lookup covers the admin list AND every seeded key, so a Manager / Member
+// row (scoped to their own key) resolves its name and masked id.
+const LIMIT_SCOPE_BY_VALUE = new Map<string, LimitScope>([
+  ...API_KEY_SEED_ROWS.map((k): [string, LimitScope] => [
+    k.id,
+    { value: k.id, name: k.name, masked: k.masked },
+  ]),
+  ...LIMIT_SCOPES.map((s): [string, LimitScope] => [s.value, s]),
+]);
 const LIMIT_ENFORCEMENT_BY_VALUE = new Map<
   string,
   (typeof LIMIT_ENFORCEMENTS)[number]
@@ -502,15 +545,20 @@ const usedLabel = (type: string, used: string, threshold: string) => {
   const prefix = type === "spend" ? "$" : "";
   return `${prefix}${u} / ${prefix}${t}`;
 };
+// Boundaries are computed in UTC (below), but the cell shows no "UTC"
+// label and carries seconds, matching the house timestamp voice
+// ("Jun 6, 00:10:49") used by every other datetime cell (user direction
+// 2026-08-27).
 const fmtResetDate = (d: Date) =>
-  `${formatDateTime(d, {
+  formatDateTime(d, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
     timeZone: "UTC",
-  })} UTC`;
+  });
 /** Computes the next reset boundary for a limit period. Takes `now` as a
  *  parameter so callers can share a single timestamp across rows — calling
  *  `new Date()` at render time per row caused the column to flicker on
@@ -590,16 +638,26 @@ function CreateLimitDialog({
   open,
   onOpenChange,
   onCreate,
+  scopes,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   onCreate: (limit: Limit) => void;
+  /** Scope options for the signed-in role; the first is the default. */
+  scopes: readonly LimitScope[];
 }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("spend");
   const [threshold, setThreshold] = useState("");
   const [period, setPeriod] = useState("1d");
-  const [scope, setScope] = useState("org");
+  const [scope, setScope] = useState(scopes[0]?.value ?? "org");
+  // The dialog stays mounted across a role switch, so a value picked (or
+  // defaulted) under one role can fall outside the next role's options.
+  // Snap to the first valid option instead of showing a scope the role
+  // cannot set.
+  const scopeValue = scopes.some((s) => s.value === scope)
+    ? scope
+    : (scopes[0]?.value ?? "org");
   const [enforcement, setEnforcement] = useState("block");
   const [pickedAlerts, setPickedAlerts] = useState<number[]>(
     DEFAULT_ALERT_PERCENTS
@@ -652,7 +710,7 @@ function CreateLimitDialog({
     setType("spend");
     setThreshold("");
     setPeriod("1d");
-    setScope("org");
+    setScope(scopes[0]?.value ?? "org");
     setEnforcement("block");
     setPickedAlerts(DEFAULT_ALERT_PERCENTS);
   };
@@ -664,7 +722,7 @@ function CreateLimitDialog({
       type,
       threshold,
       period,
-      scope,
+      scope: scopeValue,
       used: "0",
       enforcement: isRequests ? "block" : enforcement,
       alerts: [...alertPercents],
@@ -779,7 +837,7 @@ function CreateLimitDialog({
             >
               Scope
             </Label>
-            <Select onValueChange={setScope} value={scope}>
+            <Select onValueChange={setScope} value={scopeValue}>
               <SelectTrigger className="w-full" id="create-limit-scope">
                 {/* Function-child keeps the trigger single-line — the
                     two-line key body is for the popup only. */}
@@ -788,7 +846,7 @@ function CreateLimitDialog({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {LIMIT_SCOPES.map((s) => (
+                {scopes.map((s) => (
                   <SelectItem
                     className={s.masked ? "h-auto items-start py-2" : undefined}
                     key={s.value}

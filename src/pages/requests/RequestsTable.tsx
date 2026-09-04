@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import {
   Tooltip,
@@ -47,10 +48,13 @@ import {
   isByokKey,
   keyLabel,
   REQUEST_ROWS_ALL,
+  requestDayLabel,
   requestIdLabel,
   requestRowId,
 } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { inScope, useViewScope } from "@/pages/teams/view-scope";
+import { useBudgetBlockRows } from "./budget-block-rows";
 import {
   conversationTitle,
   GUARDRAIL_BADGE,
@@ -91,7 +95,30 @@ export function RequestsTableSection({
   // doesn't have those pages. When the user picks a custom range, the
   // total comes from buildCustomHeroView so the pagination footer stays
   // in lock-step with the hero card's headline number.
-  const rows = RANGE_ROWS[range] ?? REQUEST_ROWS_ALL;
+  // Budget-blocked messages (PRD §3) lead the list on every range: they
+  // are "now", derived live from the teams store, one per blocking team.
+  const blockRows = useBudgetBlockRows();
+  // Managers and members read their own keys' messages (view-scope.ts);
+  // Admin reads the org.
+  const scope = useViewScope();
+  const rows = useMemo(
+    () =>
+      [...blockRows, ...(RANGE_ROWS[range] ?? REQUEST_ROWS_ALL)].filter((r) =>
+        inScope(scope, r.keyId)
+      ),
+    [blockRows, range, scope]
+  );
+  const keyOptions = scope.keyNames
+    ? [...scope.keyNames]
+    : [
+        "prod-web",
+        "prod-agent",
+        "development",
+        "openclaw",
+        "hermes-agent",
+        "nova-chat",
+        "test-key",
+      ];
   const [model, setModel] = useState("all");
   const [keyId, setKeyId] = useState("all");
   // Response + guardrail filters are independent (split out of the single
@@ -217,8 +244,8 @@ export function RequestsTableSection({
   );
 
   // Page the visible rows by the footer's rows-per-page selector. Without this
-  // the table rendered every row and the 10/25/50/100 control did nothing.
-  const perPage = Number(rowsPerPage) || sortedRows.length || 1;
+  // the table rendered every row and the 10/25/50/All control did nothing.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
   const pagedRows = useMemo(
     () =>
       sortedRows.slice((page - 1) * perPage, (page - 1) * perPage + perPage),
@@ -329,13 +356,11 @@ export function RequestsTableSection({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All keys</SelectItem>
-                    <SelectItem value="prod-web">prod-web</SelectItem>
-                    <SelectItem value="prod-agent">prod-agent</SelectItem>
-                    <SelectItem value="development">development</SelectItem>
-                    <SelectItem value="openclaw">openclaw</SelectItem>
-                    <SelectItem value="hermes-agent">hermes-agent</SelectItem>
-                    <SelectItem value="nova-chat">nova-chat</SelectItem>
-                    <SelectItem value="test-key">test-key</SelectItem>
+                    {keyOptions.map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {k}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -717,7 +742,7 @@ export function RequestsTableSection({
                             render={(props) => (
                               <span {...props} className="text-foreground">
                                 <span className="type-copy-14 tabular-nums">
-                                  {row.day},
+                                  {requestDayLabel(row)},
                                 </span>{" "}
                                 <span className="type-mono-14">{row.time}</span>
                               </span>

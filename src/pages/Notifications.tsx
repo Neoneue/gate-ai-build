@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
@@ -53,6 +54,7 @@ import { NOTIFICATION_HISTORY, NOTIFICATIONS_NOW } from "@/data/notifications";
 import {
   archiveAll,
   archiveOne,
+  markAllRead,
   markRead,
   useNotificationsReadState,
 } from "@/data/notifications-store";
@@ -486,7 +488,7 @@ function PageHeader() {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-        <PageTitle>My Notifications</PageTitle>
+        <PageTitle>My notifications</PageTitle>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Manage how this workspace's notifications reach you.
         </p>
@@ -1025,12 +1027,19 @@ function SecurityScopePanel({
  * and a refresh restores every row, which is the demo lifecycle (see
  * `@/data/notifications-store`).
  *
+ * A selection carries TWO bulk verbs, not one: "Mark as read" writes
+ * `readIds` via `markAllRead` and moves nothing, "Archive" writes
+ * `archivedIds` and reads nothing. That is the same two-axis split the tabs
+ * are built on, expressed as buttons — so the pair can be run in sequence
+ * (read the batch, then file it) and neither answer is implied by the other.
+ *
  * BULK SELECT IS INBOX-ONLY, and PAGE-SCOPED. The Archive tab gets no
- * checkbox column because the only bulk verb that could apply there is
- * unarchive, which does not exist — a column of controls whose action has not
- * shipped is worse than no column. Selection covers exactly the ten rows you
- * can see and clears on page change, rows-per-page change and tab switch: a
- * "select all" that silently reached 38 rows across four pages you never
+ * checkbox column: unarchive does not exist, and a column of controls whose
+ * action has not shipped is worse than no column. Adding a second bulk verb
+ * does not reopen that — the checkbox column stays on the Inbox, so both
+ * verbs act on an Inbox page selection. Selection covers exactly the ten rows
+ * you can see and clears on page change, rows-per-page change and tab switch:
+ * a "select all" that silently reached 38 rows across four pages you never
  * looked at is the classic bulk-action footgun, and archiving is the one
  * gesture on this page with no undo (user direction 2026-08-25).
  *
@@ -1144,7 +1153,12 @@ function FeedRow({
           />
         </TableCell>
       ) : null}
-      <TableCell className="whitespace-nowrap">
+      {/* pl-1 on the Inbox tab only (user direction 2026-08-27): pulls the
+          title 8px toward the checkbox column (12px px-3 -> 4px), which
+          narrows the horizontal drift against the Archive tab, whose
+          first column keeps the standard padding. Keyed off
+          onToggleSelect, the same flag that renders the checkbox cell. */}
+      <TableCell className={cn("whitespace-nowrap", onToggleSelect && "pl-1")}>
         <span className="flex min-w-0 items-center gap-2">
           <item.Icon
             aria-hidden
@@ -1199,20 +1213,36 @@ function FeedRow({
         {fmtRelative(item.at, NOTIFICATIONS_NOW)}
       </TableCell>
       {onArchive ? (
-        <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-          <IconActionButton
-            aria-label={`Archive notification: ${item.title}`}
-            /* The row is a role="link" that activates on click AND on
+        <TableCell className="whitespace-nowrap py-0 pr-4 pl-0 text-right">
+          {/* Block flex wrapper, not the button bare in the cell: an
+              inline-flex control rides the text baseline, and the
+              descender space under the 24px box makes a 26px line box,
+              which pushed Inbox rows to 50px while the Archive tab's
+              text-only rows sat at the h-12 floor of 48 (user measured
+              2026-08-27). A block container opts out of that line-box
+              math; justify-end keeps the cell's right alignment. py-0 on the
+              cell matters too: tr height is BORDER-box, so when the h-12
+              floor governs, the 1px divider lives inside the 48 - but a
+              cell whose padding+content demands a full 48 forces
+              48 content + 1 border = 49px rows, one taller than the
+              Archive tab's floor-governed 48 (probe-measured 2026-08-27).
+              With py-0 the 24px button centers via align-middle and every
+              row on both tabs sits at exactly 48. */}
+          <span className="flex justify-end">
+            <IconActionButton
+              aria-label={`Archive notification: ${item.title}`}
+              /* The row is a role="link" that activates on click AND on
                Enter/Space, so the action has to stop BOTH or archiving would
                also navigate away from the page you archived on. */
-            onClick={(event) => {
-              event.stopPropagation();
-              onArchive(item);
-            }}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <Archive aria-hidden className="size-4" strokeWidth={1.75} />
-          </IconActionButton>
+              onClick={(event) => {
+                event.stopPropagation();
+                onArchive(item);
+              }}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <Archive aria-hidden className="size-4" strokeWidth={1.75} />
+            </IconActionButton>
+          </span>
         </TableCell>
       ) : null}
     </NavTableRow>
@@ -1237,38 +1267,81 @@ function FeedRow({
  * no-handrolling); the two button labels take the label voice from `Button`.
  * The count is spelled out in both grammatical numbers rather than "(s)".
  *
- * The question mark is deliberate. "Move 3 notifications to the Archive?" is
- * the banner asking, with Archive and Cancel as its two answers — a bare
- * "3 selected" would make the buttons the only thing carrying intent, and
- * archiving is the one action on this page with no undo. */
+ * The sentence is a COUNT STATEMENT, not a question. It was "Move 3
+ * notifications to the Archive?" while Archive was the only verb it could
+ * have named; with two verbs in the group a question would frame one of them
+ * as the answer, so the prose states what is selected and each button carries
+ * its own intent.
+ *
+ * Prose left, verbs FLUSH RIGHT (`justify-between`, user direction). The
+ * banner spans the full Inbox row, so a left-packed group left the buttons
+ * floating mid-row with no edge to sit against; the right rail lines them up
+ * with the archive glyph column beneath.
+ *
+ * TWO EQUAL-WEIGHT VERBS, Mark as read then Archive, and NEITHER is primary
+ * (user direction: "primary black looks odd there because we're promoting
+ * read over the other"). Both take `outline`. Giving either one the `default`
+ * neutral-900 fill would nominate it as the thing you came here to do, and
+ * the banner does not know which — reading a batch and filing a batch are
+ * peers, and they are frequently run in that order on the same selection.
+ * `secondary` is NOT available as the shared variant: `--secondary` and
+ * `--accent` both resolve to neutral-100, so a secondary fill would vanish
+ * into the banner's own `bg-accent`, where outline's `bg-card` + `shadow-xs`
+ * reads as a lifted control against it. Archive keeps its glyph because it
+ * already had one; Mark as read is not given a matching icon to even the pair
+ * up, since two icons at this size read as toolbar chrome rather than as two
+ * sentences you can click.
+ *
+ * THERE IS NO CANCEL. The header checkbox is the way out — it sits directly
+ * above the banner, already paints `indeterminate` while a partial selection
+ * is live, and clearing it drops the selection and the banner with it. A
+ * third button whose only job was to undo the checkbox was competing with the
+ * two real verbs for the same rail.
+ *
+ * `markReadDisabled` arrives already computed from the page's read-state
+ * subscription (`isUnread`, the same predicate that paints row ink), so a
+ * selection that is entirely read shows the button dimmed instead of
+ * offering a click that writes nothing. */
 function FeedBulkBanner({
   count,
+  markReadDisabled,
   onArchive,
-  onCancel,
+  onMarkRead,
 }: {
   count: number;
+  markReadDisabled: boolean;
   onArchive: () => void;
-  onCancel: () => void;
+  onMarkRead: () => void;
 }) {
   return (
     <TableRow className="bg-accent">
       <TableCell colSpan={FEED_INBOX_COLUMN_COUNT}>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <span>
-            Move {count} {count === 1 ? "notification" : "notifications"} to the
-            Archive?
+            {count} {count === 1 ? "notification" : "notifications"} selected
           </span>
           <div className="flex items-center gap-2">
-            <Button onClick={onArchive} size="sm" type="button">
+            <Button
+              disabled={markReadDisabled}
+              onClick={onMarkRead}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Mark as read
+            </Button>
+            <Button
+              onClick={onArchive}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
               <Archive
                 aria-hidden
                 data-icon="inline-start"
                 strokeWidth={1.75}
               />
               Archive
-            </Button>
-            <Button onClick={onCancel} size="sm" type="button" variant="ghost">
-              Cancel
             </Button>
           </div>
         </div>
@@ -1432,7 +1505,7 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
     }
   }
 
-  const perPage = Number(rowsPerPage);
+  const perPage = resolveRowsPerPage(rowsPerPage, items.length);
   const totalPages = Math.max(1, Math.ceil(items.length / perPage));
   const safePage = Math.min(page, totalPages);
   const pageRows = items.slice((safePage - 1) * perPage, safePage * perPage);
@@ -1466,12 +1539,22 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
       return next;
     });
 
-  /** Exactly the visible page, both ways: select-all takes `pageRows`, and
+  /** GMAIL'S RULE, and the branch is on `selectedCount > 0`, NOT on
+   *  `allOnPageSelected`: ANY live selection clears, and only an empty one
+   *  selects the page. The difference is the indeterminate dash state, where
+   *  the two disagree — from a partial selection this used to ADD the rest of
+   *  the page, and the user's direction is that it deselects instead. That is
+   *  the right reading of the control: the dash answers "get me out of this
+   *  selection", not "finish it". A one-click escape from a half-made
+   *  selection is worth more than a second route to select-all, which the
+   *  empty box already gives you one click later.
+   *
+   *  Exactly the visible page, both ways: select-all takes `pageRows`, and
    *  deselect-all drops to empty rather than subtracting — since the Set can
    *  only ever hold this page, the two are the same thing. */
   const toggleAllOnPage = () =>
     setSelectedIds(
-      allOnPageSelected
+      selectedCount > 0
         ? new Set<string>()
         : new Set(pageRows.map((item) => item.id))
     );
@@ -1481,6 +1564,15 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
   const archiveSelected = () => {
     archiveAll(selectedOnPage.map((item) => item.id));
     clearSelection();
+  };
+
+  /** Same one-snapshot store call, and it deliberately does NOT clear the
+   *  selection. The stated flow is mark as read, THEN archive the same batch,
+   *  so the rows stay ticked and the banner stays up for the second verb —
+   *  Gmail holds its selection through mark-as-read for the same reason.
+   *  Archive still clears, because the rows it acted on have left the tab. */
+  const markSelectedRead = () => {
+    markAllRead(selectedOnPage.map((item) => item.id));
   };
 
   /** Paging away from a selection would leave `selectedIds` describing rows
@@ -1567,7 +1659,11 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
                       </TableHead>
                     ) : null}
                     <TableHead
-                      className={cn(columns.title, "whitespace-nowrap")}
+                      className={cn(
+                        columns.title,
+                        "whitespace-nowrap",
+                        onInbox && "pl-1"
+                      )}
                     >
                       Notification
                     </TableHead>
@@ -1609,8 +1705,9 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
                   {selectedCount > 0 ? (
                     <FeedBulkBanner
                       count={selectedCount}
+                      markReadDisabled={!selectedOnPage.some(isUnread)}
                       onArchive={archiveSelected}
-                      onCancel={clearSelection}
+                      onMarkRead={markSelectedRead}
                     />
                   ) : null}
                   {pageRows.map((item) => (

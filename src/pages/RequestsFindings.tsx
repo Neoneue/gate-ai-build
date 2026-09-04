@@ -4,6 +4,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { useBudgetBlockRows } from "@/pages/requests/budget-block-rows";
 import { RequestDetailBodyV2 } from "./requests/RequestDetailBody";
 import type { RequestRow } from "./requests/types";
 
@@ -24,8 +25,11 @@ export function RequestsFindings() {
     toggleSidebar: () => void;
   }>();
 
+  const blockRows = useBudgetBlockRows();
   const row: RequestRow | undefined = requestId
-    ? REQUEST_ROWS_ALL.find((r) => requestRowId(r) === requestId)
+    ? [...blockRows, ...REQUEST_ROWS_ALL].find(
+        (r) => requestRowId(r) === requestId
+      )
     : undefined;
 
   return (
@@ -44,7 +48,7 @@ export function RequestsFindings() {
             size="sm"
             type="button"
           >
-            View Conversation
+            View conversation
             <ExternalLink aria-hidden data-icon="inline-end" />
           </Button>
         )}

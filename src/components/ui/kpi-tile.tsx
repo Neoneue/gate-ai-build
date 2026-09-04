@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { DeltaTag } from "@/components/ui/compact-kpi";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TextLink } from "@/components/ui/text-link";
 
 export function KpiTile({
@@ -18,6 +19,7 @@ export function KpiTile({
   linkLabel,
   deltaRow,
   deltaNote,
+  loading = false,
 }: {
   title: string;
   /** Optional adornment rendered after the title, e.g. an info-icon tooltip. */
@@ -36,8 +38,16 @@ export function KpiTile({
   deltaRow?: boolean;
   /** Trailing comparison copy for the delta tag, e.g. "vs last 7d". */
   deltaNote?: string;
+  /** Swap the value, the delta tag and the sparkline for skeletons of the
+   *  same box while the reading is in flight. Optional and off by default,
+   *  so no other rail changes. The Eyebrow title, the `valueSuffix` unit,
+   *  the live dot and the outbound link all stay — none of them is waiting
+   *  on the fetch. */
+  loading?: boolean;
 }) {
-  const deltaEl = delta ? <DeltaTag delta={delta} note={deltaNote} /> : null;
+  const deltaEl = delta ? (
+    <DeltaTag delta={delta} loading={loading} note={deltaNote} />
+  ) : null;
   const linkEl = href ? (
     <TextLink
       as="a"
@@ -63,7 +73,7 @@ export function KpiTile({
         {titleInfo}
       </div>
       <div className="flex items-baseline gap-2">
-        <HeroNumeric>{value}</HeroNumeric>
+        <HeroNumeric loading={loading}>{value}</HeroNumeric>
         {valueSuffix ? (
           <span className="type-heading-24 text-muted-foreground">
             {valueSuffix}
@@ -81,7 +91,11 @@ export function KpiTile({
       {caption ? (
         <p className="type-copy-14 m-0 text-muted-foreground">{caption}</p>
       ) : null}
-      {spark ? <div className="mt-1">{spark}</div> : null}
+      {spark ? (
+        <div className="mt-1">
+          {loading ? <Skeleton className="mt-1 h-9 w-full" /> : spark}
+        </div>
+      ) : null}
     </div>
   );
 }

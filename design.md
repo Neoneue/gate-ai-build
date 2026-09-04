@@ -70,18 +70,22 @@ colors:
   success-50: "oklch(0.982 0.018 155.826)"
   success-100: "oklch(0.962 0.044 156.743)"
   success-200: "oklch(0.925 0.084 155.995)"
+  success-400: "oklch(0.792 0.209 151.711)"  # budget-meter under-fill gradient edge (§7 Budget meter)
   success-500: "oklch(0.723 0.219 149.579)"
   success-600: "oklch(0.627 0.194 149.214)"
   success-700: "oklch(0.527 0.154 150.069)"
   warning-50: "oklch(0.987 0.022 95.277)"
   warning-100: "oklch(0.962 0.059 95.617)"
   warning-200: "oklch(0.924 0.120 95.746)"
+  warning-400: "oklch(0.828 0.189 84.429)"  # budget-meter warned-fill gradient edge (§7 Budget meter)
   warning-500: "oklch(0.769 0.188 70.080)"
   warning-600: "oklch(0.666 0.179 58.318)"
   warning-700: "oklch(0.555 0.163 48.998)"
   danger-50: "oklch(0.971 0.013 17.380)"
   danger-100: "oklch(0.936 0.032 17.717)"
   danger-200: "oklch(0.885 0.062 18.334)"
+  danger-400: "oklch(0.704 0.191 22.216)"  # blocked-bar gradient edge (§7 Data bars & meters); also dark --destructive
+  danger-500: "oklch(0.637 0.237 25.331)"  # blocked-bar gradient origin; events-chart stroke + Blocked dot
   danger-600: "oklch(0.577 0.245 27.325)"  # semantic --destructive
   danger-700: "oklch(0.505 0.213 27.518)"
 
@@ -99,6 +103,24 @@ colors:
   # Dark mode re-tunes chart-1..8 in place (`.dark`, src/index.css): same
   # hue/chroma, lightness lowered 0.05 (5 points darker) against --canvas-bg.
   # Light-mode values above are unchanged.
+  #
+  # chart-N-soft — GRADIENT LEADING EDGE for a chart-token data bar (added
+  # 2026-09-01, see §7 Data bars & meters). The categorical palette has no
+  # rungs, so a bar painted from a chart slot had no lighter 400 step to run
+  # to. Each twin is DERIVED, never a literal:
+  #     --chart-N-soft: color-mix(in oklch, var(--chart-N), white 20%)
+  # 20% toward white lifts L by +0.056…0.076 and eases chroma off 20%, which
+  # brackets the ramp's own 500 -> 400 step (success +0.069, danger +0.067,
+  # warning +0.059). Because it derives over the palette var, the dark twins
+  # come free; both themes are re-declared in `.dark` only so a scoped dark
+  # container resolves against its own block. Resolved values:
+  chart-1-soft: "oklch(0.696 0.144 255)"  # light · dark oklch(0.656 0.144 255)
+  chart-2-soft: "oklch(0.776 0.136 50)"  # light · dark oklch(0.736 0.136 50)
+  chart-3-soft: "oklch(0.776 0.160 145)"  # light · dark oklch(0.736 0.160 145)
+  chart-4-soft: "oklch(0.760 0.144 290)"  # light · dark oklch(0.720 0.144 290)
+  # Only the four slots a bar consumes today exist. A fifth slot taking a bar
+  # fill gets its twin added here and in src/index.css FIRST — never a
+  # one-off lighter value at the call site.
 
   syntax-keyword: "#B6491A"  # curl flags / orange-red
   syntax-variable: "#D69E2E"  # $KEY interpolations
@@ -377,6 +399,7 @@ components:
   toast:             { backgroundColor: "{colors.background}", textColor: "{colors.neutral-900}", rounded: 8, elevation: "shadow-popup" }
   status-dot:   { rounded: "{rounded.full}" }  # tones: success-600, warning-600, destructive, blue-600, neutral-500
   tag:          { backgroundColor: "{colors.neutral-100}", textColor: "{colors.neutral-900}", rounded: "{rounded.full}", height: 24, typography: "{typography.body-xs}" }
+  skeleton:     { backgroundColor: "{colors.muted}", rounded: "{rounded.sm}" }  # loading placeholder — animate-pulse is the ONLY sanctioned loading motion; radius overridden per stand-in (rounded-full for avatar/meter, rounded-xs for badge/icon-button)
 
   switch:   { backgroundColor: "{colors.primary}" }  # checked = primary, unchecked = input (neutral-200); thumb rounded-full
   checkbox: { backgroundColor: "{colors.primary}", textColor: "{colors.primary-foreground}", rounded: "{rounded.xs}" }  # checked state
@@ -479,7 +502,21 @@ The destructive family is the one place a *strength* of the same token is wanted
 
 **Both rungs are derived, not resolved:** `color-mix(in oklab, var(--destructive) N%, transparent)`. They therefore track the token through the `danger-600` (light) → `danger-400` (dark) flip on their own, with no per-theme literal to keep in sync — the same idiom as `--accent-muted`. They are re-declared in `.dark` for the same two reasons that token is: the pair reads together, and a scoped `.dark` container that is not the root element resolves the rungs against the dark `--destructive` rather than the light one.
 
-**These three are the ONLY sanctioned destructive strengths.** A bare `border-destructive/30` or `bg-destructive/70` at a call site is off-token in exactly the way an invented hex is — use the named rung, or add a rung here first. The `destructive/N` modifiers already baked into `Button`’s own variant recipe (`bg-destructive/10`, `ring-destructive/20`) are that primitive’s internal contract and stay as they are; new work uses the ladder.
+**These three are the ONLY sanctioned destructive strengths for edges, accents and actions.** A bare `border-destructive/70` or `bg-destructive/50` at a call site is off-token in exactly the way an invented hex is — use the named rung, or add a rung here first. Dark-mode status WASHES (the tinted background of a banner, note or badge) are a separate closed ladder, below. The `destructive/N` modifiers already baked into `Button`’s own variant recipe (`bg-destructive/10`, `ring-destructive/20`) are that primitive’s internal contract and stay as they are.
+
+### Status wash ladder — tinted surfaces, dark mode *(added 2026-09-02)*
+
+A status surface (a banner that reports an event, an inline note that states a consequence, a badge) needs a wash of its family behind the ink. In light mode the wash is a ramp step (`-50` for surfaces, `-100` for badges). In dark mode a ramp step reads as a flat block, so the wash is an ALPHA of the family colour over the page, and those alphas are **a closed set of three rungs**, one per surface weight. Both status families use the same rungs. ← code-direct: `src/pages/teams/budget.tsx` (`BudgetBreachBanner`), `src/pages/teams/dialogs.tsx` (hard-enforcement note), `src/pages/ApiKeys.tsx` (one-time key note), `src/components/ui/badge.tsx`
+
+| Rung | Surface | Destructive utilities (dark) | Warning utilities (dark) | Light twin |
+| --- | --- | --- | --- | --- |
+| **10%** | **Alert banner**: full-width, `role="alert"`, reports that something IS happening (a hard budget blocking, a cap exceeded). The lightest wash because the surface is large and sits in the page flow. | `dark:bg-destructive/10 dark:border-destructive/30` | `dark:bg-warning-500/10 dark:border-warning-500/30` | `bg-danger-50 border-danger-200` / `bg-warning-50 border-warning-200` |
+| **15%** | **Inline note**: `role="note"`, inside a dialog or card, states a consequence before the user confirms (hard enforcement, one-time key reveal, cancel-plan consequences). | `dark:bg-destructive/15 dark:border-destructive/30` | `dark:bg-warning-500/15 dark:border-warning-500/30` | same as above |
+| **20%** | **Badge**: the smallest surface, so the deepest wash. This is the `Badge` primitive's own `destructive` / `warning` recipe. | `dark:bg-destructive/20` | `dark:bg-warning-500/15` (the primitive's current value; stays) | `bg-danger-100` / `bg-warning-100` |
+
+Ink is the same at every rung: `text-danger-800 dark:text-danger-300` and `text-warning-700 dark:text-warning-300` (§2 dark-mode mapping table). Border is always the 30% rung of the family; only the background steps.
+
+Rules: (1) the destructive family writes `destructive/N` (it tracks the `danger-600` → `danger-400` flip through the semantic token); the warning family has no semantic token (see "Do not use") and writes `warning-500/N`. (2) A surface takes the rung for its weight; do not pick a rung for taste. The one sanctioned deviation: a badge that sits ON an alert banner's surface, or reports the same state beside it, may drop to the banner's 10% so the two read as one system (the budget status `Blocking` / `Exceeded` badges, 2026-09-02). (3) `/[N%]` arbitrary alphas are off-token; the three rungs are the set. Add a rung here first if a fourth weight is ever needed.
 
 ### Chart palette (categorical, 8-slot)
 
@@ -733,6 +770,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Heading 48 | `type-heading-48` | `font-sans text-5xl/14 font-medium tracking-tight` |
 | Heading 40 | `type-heading-40` | `font-sans text-4xl/12 font-medium tracking-tight` |
 | Heading 32 | `type-heading-32` | `font-sans text-3xl/10 font-medium tracking-tight` |
+| Heading 28 | `type-heading-28` | `font-sans font-medium tracking-tight` at 28px/36px (Teams Overview tab header only) |
 | Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium tracking-snug` |
 | Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium tracking-snug` |
 | Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium tracking-snug` |
@@ -1191,6 +1229,21 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 - **Select** (`select.tsx`) — Base UI. Trigger: `bg-muted border-border rounded-sm h-9 text-sm`. **Two sizes:** `sm` `h-8 text-xs` (32px) · **`default` `h-9 text-sm`** (36px, the primitive default, identical to `<Input>` so the two sit flush in a filter row). `sm` is for compact chrome inside an already-dense row — the `DateRangePicker`'s four month/year triggers, `TablePaginationFooter`'s rows-per-page, and a few card-header range selectors. `xs` was deleted unused **2026-08-10**; `lg` was renamed to `default` the same day. Content: `rounded-sm border border-border bg-card shadow-md text-popover-foreground` with **`p-1`** (2026-06-04, was `py-1`) so each `rounded-xs` item insets 4px from the popup edge and the highlighted/selected row never bleeds edge-to-edge — same inset recipe as `Menu`. Item: `h-8 rounded-xs py-0 pr-8 pl-3 text-sm` (the 32px row height carries the vertical rhythm, so there is no `py-*`; `pr-8` reserves the checkmark gutter). **Asymmetric padding** `pl-3 pr-2` across all sizes (12px text side / 8px chevron side; default dropped from `pl-4 pr-3` on 2026-07-16) — optical balance: text side wants more air, chevron has built-in bounding-box whitespace. Long lists use `<SelectGroup>` + `<SelectLabel>` + `<SelectSeparator>` to group (e.g. First-party vs Marketplace). **Chevron rotates 180° while open** (2026-06-04): trigger carries `group/select`, the `ChevronDownIcon` is `group-aria-expanded/select:rotate-180 transition-transform duration-150 ease-out motion-reduce:transition-none` — transform-only, 150ms, the `--ease-out` curve; transitions back to 0 on close. **SelectValue shows the item label, not the raw value** — a context map collects `value → children` from `SelectItem`s (Base UI's `Select.Value` would otherwise render the raw value, e.g. `all` instead of `All models`). **The field `<Label>` must NOT use `htmlFor` pointing at the trigger** — a `<label for>` forwards clicks to its control, so clicking the field title would open the dropdown; give the trigger an `aria-label` for the accessible name instead.
 - **Dropdown positioning standard (codified 2026-06-04):** every overlay primitive — `Select`, `Popover`, `Menu`, `DateRangePicker` — defaults to open BELOW the trigger (`side="bottom"`), right-aligned to it (`align="end"`), with an 8px gap (`sideOffset={8}`). `Select` sets `alignItemWithTrigger={false}` so it renders as a real dropdown that **flips up** when near the viewport bottom (Base UI collision avoidance), NOT the macOS-style overlay that centered the selected item over the trigger. Left-anchored triggers (sidebar workspace switcher, side-opening user menu) keep their intentional `align="start"` / non-bottom side.
+- **MultiSelect** (`multi-select.tsx`) — checkbox list on a Popover, reusing `selectTriggerVariants()` so it sits flush beside a `SelectTrigger`. Pinned search input + a `(Select All)` row above the options. **Options may carry a `description` (added 2026-08-28)** — an optional second line under the label, in `type-copy-12 text-muted-foreground`, for context the user needs BEFORE committing rather than after. Its one consumer today is the Teams "Add members" picker, where a candidate already on another team reads `Currently on Platform`, so the move is visible while choosing. Search matches label + description. Omit it and the row renders single-line exactly as before; no existing call site moved.
+
+  **Five opt-in props (added 2026-09-01: three for the Teams Add members / Add keys pickers, two more for the Budget windows picker).** All default to today's behaviour, so the Notifications and Audit Trail filter pickers are byte-for-byte unchanged. They are wired in `teams/dialogs.tsx` on the ONE shared `AddEntitiesBody`, which is why the members picker and the keys picker cannot drift apart.
+
+  | Prop | Default | What it does |
+  | --- | --- | --- |
+  | `maxVisibleOptions?: number` | unset (`max-h-56` scrollport) | Caps the option scrollport to N rows. Search input and footer stay pinned OUTSIDE the scrollport, so they never scroll away. |
+  | `selectAll?: boolean` | `true` | `false` drops the `(Select All)` row. Selecting an entire candidate list is not a real intent on the Teams pickers (user direction: "I doubt that will get used much"), and with a commit footer the row is one more thing between you and Apply. |
+  | `commitMode?: boolean` | `false` | STAGES selection. Toggles write to internal state, not through `onValueChange`; the popup grows an Apply / Cancel footer. Apply commits and closes. Cancel, Escape and click-away all discard, so the trigger label only ever reads committed state. |
+  | `minSelected?: number` | unset | Floor for a `commitMode` picker: Apply stays disabled while the staged selection is below it. Budget windows pass `1` (a budget needs at least one window). |
+  | `showSelectedLabels?: boolean` | `false` | Trigger reads the chosen labels comma-joined in OPTION order ("Weekly, Monthly") instead of "N selected". For short fixed lists where the names fit; rosters keep the count. Budget windows only. |
+
+  **Row geometry is the source of the cap, not a guessed pixel value.** A row is `px-2 py-1.5` around `type-label-14` (20px line box), and the `size-4` Checkbox never drives the height, so a single-line row is exactly **32px**; a described row adds the `type-copy-12` second line at 16px, so **48px**. Scrollport padding is `p-1` = **8px**. The cap sums the first N rows' real heights plus that padding, so a described list and a plain list both show exactly N: at 4 rows that is **136px** single-line, **200px** described. Every number is a 4px multiple. The cap is applied ONLY when the filtered list actually exceeds N — a max-height derived from a short list would clip the "No options found" line, and a short list scrolls no differently uncapped.
+
+  **Footer recipe:** `flex items-center justify-end gap-2 border-border border-t p-2`, primary last, both buttons `size="sm"` (`Cancel` outline, `Apply` default). Same border-t-plus-tighter-padding convention as `DialogScrollFooter` / `CardFooter` — the band reads as chrome, not content — at the popover's own `p-2` internal rhythm rather than a dialog's `px-6 py-4`. Both carry `type="button"`: these pickers live inside the Add-members `<form>`, and a default submit button would file the whole dialog instead of applying the selection.
 - **Toggle** (`toggle.tsx`) — `rounded-sm h-8 px-3 text-sm font-medium`, `data-[state=on]:bg-muted`. Wrap with `<ToggleGroup>` for multi-select.
 
 **Rule (filter-pill toolbar):** `<SelectTrigger size="sm">` filter pills in dense table toolbars render **chevron only, no leading category icon**. Generic filter glyphs are noise next to the chevron-down. Exception: dropdowns where a leading icon carries category-specific info AND is used consistently across 4+ filters in the same surface.
@@ -1199,7 +1252,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 ### Lists / Tables
 
-- **Table** (`table.tsx`) — body of every list view. **No standalone chrome** — Table composes inside a `<Card density="flush">` which supplies the rounded-md + border + shadow-xs shell. Table itself adds only `overflow-x-auto` on the wrapper, plus `border-t border-border` on the thead row when it doesn't sit at the Card's top edge (so toolbar → table → pagination stacks render the separator hairlines correctly). Header: `bg-neutral-50` + `border-t border-border`. **Header row height `h-10` (40px, raised from 36 on 2026-06-04).** **Header cell: sans Title Case `font-medium text-neutral-500`** — NOT mono UPPERCASE eyebrow. Outer cell padding `px-4` (first/last col), inner `px-3`. Row hover: `bg-neutral-50`.
+- **Table** (`table.tsx`) — body of every list view. **No standalone chrome** — Table composes inside a `<Card density="flush">` which supplies the rounded-md + border + shadow-xs shell. Table itself adds only `overflow-x-auto` on the scrollport, plus `border-t border-border` on the thead row when it doesn't sit at the Card's top edge (so toolbar → table → pagination stacks render the separator hairlines correctly). **Two wrapper levels since 2026-08-27:** an outer `relative w-full` shell (`data-slot="table-wrapper"`) holding the `relative w-full overflow-x-auto` scrollport (`data-slot="table-container"`) plus the scroll-shadow fades. The `:not(:first-child)` hairline guard moved to the outer shell and grew one hop (`[&:not(:first-child)>div>table>thead>tr]`) — the shell occupies the exact DOM slot the scrollport used to, so first-child status, and therefore the hairline, is unchanged everywhere. **Scroll-shadow affordance (Carbon/Material):** 48px (`w-12`) gradient overlays at the scrollport's visible edges — `bg-gradient-to-r from-card to-transparent` at the start, `bg-gradient-to-l from-card to-transparent` at the end — `pointer-events-none` (a row click and a scrollbar drag pass straight through), `aria-hidden`, `z-10`, `transition-opacity duration-100 ease-out motion-reduce:transition-none`. Each side shows only when there is content that way; **both are absent from the DOM when the table fits**, so a non-overflowing table (Team at desktop, ApiKeys / AuditTrail above their `min-w` floor) renders exactly as it did before. Edge state comes from `useHorizontalScrollOverflow` (`src/hooks/use-scroll-overflow.ts`): a callback ref into state (never a `useRef` + mount effect, which never re-runs when the node appears), a passive `scroll` listener, and a `ResizeObserver` on **both** the scrollport (Ask AI push panel, sidebar rail collapse) and its table child (a `table-fixed` redistribution changes `scrollWidth` with no container resize). The fades cannot live inside the scrollport: absolutely-positioned children of a scroller are part of its scrollable content and scroll away with it. Header: `bg-neutral-50` + `border-t border-border`. **Header row height `h-10` (40px, raised from 36 on 2026-06-04).** **Header cell: sans Title Case `font-medium text-neutral-500`** — NOT mono UPPERCASE eyebrow. Outer cell padding `px-4` (first/last col), inner `px-3`. Row hover: `bg-neutral-50`.
 - **SortableTableHead** (`table.tsx`, codified 2026-06-04) — drop-in `<TableHead>` replacement for sortable columns. Click-to-sort header: a `⇅` (ChevronsUpDown) glyph **fades in on hover** when the column is inactive and **persists as a directional `↑`/`↓`** (ArrowUp/ArrowDown) when it's the active sort. **Three-state cycle:** click 1 = ascending, 2 = descending, 3 = unsorted (restores authored order) — never locks the user in. Click target is **content-width** (label + glyph, `max-w-1/2`), so the empty cell area isn't clickable. `aria-sort` on the `<th>`. **Numeric columns (`numeric` prop, right-aligned) put the glyph to the LEFT of the label (`flex-row-reverse`)** so the label stays flush to the column's right edge and lines up with the right-aligned data below it; without this the glyph pushes the label left of the numbers (added 2026-06-04). Left-aligned columns keep label-then-glyph. Pairs with the `useTableSort` hook + `sortRows` / `parseNumeric` helpers (`src/hooks/use-table-sort.ts`) — local state, NO TanStack; the table supplies a `getValue(row, key)` accessor (numeric columns parse via `parseNumeric`, em-dash/empty → null → sorts last). Sort runs after filter/search, before pagination; default unsorted. Applied to every data table; action/checkbox/tooltip-header/no-comparable columns stay plain `<TableHead>`. **Don't hand-roll** — extend the primitive.
 - **Pagination** (`pagination.tsx`) — **renders as `<button type="button">`, not `<a>`** (no router in this app; visual = link styling, semantics = button). Same conversion applies to inline anchors in composed surfaces (modal subtitle refs, row-title links).
 - **TablePaginationFooter** (`table-pagination-footer.tsx`) — **single source of truth for table pagination chrome.** Composes count summary + rows-per-page Select + windowed page links. State (page + rowsPerPage) lives in parent; primitive is controlled. `buildPageWindow` helper exported. **Don't hand-roll** — extend the primitive.
@@ -1255,6 +1308,115 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **Tooltip** (`tooltip.tsx`) — Base UI `Tooltip.*` thin wrapper. Surface: `rounded-sm bg-popover shadow-md` with `text-xs` body. Mandatory on every `<Timestamp>` (relative ↔ absolute pairing), on Cost-column dashes for BYOK rows (Requests), and on truncated identifiers. Trigger needs `tabIndex={0}` whenever the tooltip carries content keyboard users must reach (BYOK Info icon, Cost cell dash).
 - **Separator** (`separator.tsx`) — Base UI `Separator` wrapper. Renders a 1px `bg-border` rule. Use for in-card section breaks where `border-t` on the next child would couple to the child instead of belonging to the parent layout. Rare — most rhythm in this codebase comes from `border-t` + spacing rather than dedicated rules.
 
+### Callout *(added 2026-08-31)*
+
+- **Callout** (`callout.tsx`) — persistent INFO banner for scope-setting
+  context that must sit near the surface it qualifies. Blue info tint
+  (2026-09-03) so info, warning and danger banners share one recipe. Surface:
+  `rounded-md border border-blue-300 bg-blue-50 px-4 py-3
+  dark:border-blue-500/30 dark:bg-blue-500/10` — the dark side mirrors the
+  danger banner's 10% wash / 30% border. Ink: `type-copy-14 text-blue-900
+  dark:text-blue-300` with a 16px `Info` glyph in the same ink, in an `h-5`
+  wrapper so the icon centers on the first text line and stays put when the
+  copy wraps. `role="note"`, no dismiss affordance: it states a fact about
+  the page, it does not report an event. Warning/error banners keep their own
+  status semantics (`BudgetBreachBanner`); do not add tone props here.
+  Consumers: the team Settings tab's "Locked by your organization" notes, the
+  Default team's Settings note, the cancel-plan dialog.
+
+### Data bars & meters *(site-wide rule, 2026-09-01)*
+
+**Every progress / meter / data bar on the site is a gradient fill: darker at
+the origin, lighter at the leading edge.** User direction 2026-09-01, extending
+the budget-meter ruling of 2026-08-31 to every bar. One recipe, no per-surface
+variation:
+
+| Part | Value |
+| --- | --- |
+| Track | `h-1.5 w-full overflow-hidden rounded-full bg-muted` (list-column meters run `h-2 w-24`) |
+| Fill | `h-full rounded-full` + `bg-gradient-to-r from-{family}-500 to-{family}-400` |
+| Width | inline `style={{ width: '{pct}%' }}` — the ONLY inline style a bar carries |
+
+- **Semantic families** run 500 → 400: `success`, `warning`, `danger`. The 400
+  step is the leading edge, the 500 the origin.
+- **Chart-palette bars** run `from-chart-N to-chart-N-soft`. The categorical
+  palette has no rungs, so the `-soft` twins (§2 ramp block) exist precisely to
+  give a chart bar a leading edge; they are derived from the palette var, so
+  both themes come free.
+- **Never paint a bar with an inline `backgroundColor`.** The fill is a class
+  string, so it is greppable, theme-correct, and can't drift into a one-off
+  colour. Bar metadata carries a `fill` class string, not a CSS var.
+- **The one solid fill left on the site** is budget `over` =
+  `bg-destructive` (standing user direction, 2026-08-31). It is a limit
+  breached, not a quantity, and it does not read as a gradient.
+- Geometry, radius, track colour and the transition are **unchanged** by this
+  rule — it governs the fill paint only.
+
+Consumers (all converted 2026-09-01): budget meters ×3 surfaces
+(`teams/budget-band.ts`, already correct), the org Security page's **Action
+types** + **Attack types** cards (`Security.tsx`), and the Enterprise team
+Security tab's twin pair (`teams/SecurityOverviewPane.tsx`).
+
+**Not bars, deliberately excluded:** the Policies sensitivity spectrum
+(`Policies.tsx`) — a slider control with a thumb, whose filled rail is a
+`bg-muted-foreground` control affordance rather than a quantity; Recharts
+strokes / areas / bar segments (a chart series is not a meter); sparklines;
+the tab indicator; and every decorative `rounded-full` (dots, avatars, pills,
+switches).
+
+### Budget meter *(fills updated 2026-08-31)*
+
+- **BudgetMeter / budget bands** (`src/pages/teams/budget.tsx`; band logic
+  split into `src/pages/teams/budget-band.ts` so `budget.tsx` keeps exporting
+  components only). One `BAND_FILL` ladder colours every budget bar — the
+  Teams list column's compact meter, the org budget card, and the detail
+  Budget tab, Pro and Enterprise alike — so a row that reads amber opens onto
+  an amber bar (charts-must-reconcile: one constant, two readings). Track:
+  `h-1.5 w-full rounded-full bg-muted`; the fill transitions width only.
+  Bands from `budgetBand()`: `under` = `bg-gradient-to-r from-success-500
+  to-success-400`, `warned` (spend at/past the warn %) = the same gradient
+  shape in the warning family, `over` = solid `bg-destructive`. Under was
+  `bg-primary` until 2026-08-31 — primary resolves near-white in dark and
+  read as an UNFILLED track; the green/amber/red ladder also matches the
+  AG-514 build's budget-bar states. The gradient runs darker 500 at the
+  origin to lighter 400 at the leading edge (user direction, 2026-08-31).
+  These are **data fills on a meter, not surface chrome** — the §2 migration
+  row that drops gradients for `bg-accent` governs surface washes and does
+  not bar them. First consumers of `success-400` / `warning-400` (ramp block
+  above updated); raw ramp steps are correct here because a meter fill is a
+  status *reading*, not a themed semantic role — same reasoning as the badge
+  tone recipes. **Generalised 2026-09-01** — this ladder is now one instance
+  of the site-wide bar rule above (Data bars & meters); `over` is the single
+  sanctioned solid fill.
+- **Band boundary (2026-09-02):** `over` starts AT the block point
+  (`spend >= blockPoint`), not past it. For a soft budget the block point is
+  the cap; for a hard budget it is `cap × blockThreshold%` (data-model field,
+  default 100; the form's "Block threshold" input was removed 2026-09-02, so
+  every saved budget blocks at its cap). A hard budget
+  cannot pass its block point, so that percent is its terminal, blocked
+  state and reads red; a soft budget keeps counting past 100% and reads red
+  as exceeded. Hard budgets never display spend above the block point
+  (`budgetSpendShown` / `budgetPercentLabel(…, enforcement, blockThreshold)`).
+  The Budget tab adds a "Block at" fact for hard budgets.
+- **Status word (2026-09-02):** every off-nominal meter carries a `Badge`
+  beside it — `Warning` (warning variant) from the warn line, `Exceeded`
+  (destructive, soft past cap) or `Blocked` (destructive, hard at cap).
+  Colour alone is not a state. `ok` renders nothing. One helper,
+  `budgetStatus()` in `budget-band.ts`, decides it for the list row and the
+  Budget tab card.
+- **Warn tick (2026-09-02):** a 1px full-height hairline on the track at the
+  warn threshold, `absolute inset-y-0 w-px bg-foreground/40`, `aria-hidden`,
+  skipped once the fill reaches the cap. `foreground/40` is used because no
+  border token reads against both the saturated fill and the `bg-muted`
+  track; it is the ONE sanctioned alpha of `foreground` and exists for
+  meter ticks only.
+- **Breach banner (2026-09-02):** when any window is `blocking` or
+  `exceeded`, the team page shows one full-width alert above the tabs at
+  the 10% wash rung (§2 Status wash ladder), `OctagonAlert size-4` in an
+  `h-5` wrapper, title `type-label-14` + body `type-copy-14`, one list item
+  per breached window. Copy is single-sourced in `src/data/teams.ts`
+  (`budgetBreachTitle`, `budgetBreachBody`, `budgetResetLabel`).
+
 ### Modal / Drawer
 
 - **Dialog** (`dialog.tsx`) — centered modal. **Modal tier:** `rounded-xl` (**16px LOCKED**) + `shadow-lg`. Overlay: `bg-neutral-900/40 backdrop-blur-xs`. The primitive ships **three content shells** and a set of section slots so every modal in the project composes from the same source — *do not* hand-roll modal chrome on a consumer.
@@ -1301,6 +1463,23 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 
 **Rule:** Pick `inverted` by asking "is rising in this metric *unambiguously* bad?" If no, don't invert.
 
+### Skeleton — loading placeholders *(added 2026-09-02)*
+
+`skeleton.tsx`. Two exports; there was no skeleton anywhere on the site before this, so this is the whole vocabulary.
+
+- **`<Skeleton>`** — the shadcn primitive, unchanged: a `<div>` with `data-slot="skeleton"`, `aria-hidden`, and `animate-pulse rounded-sm bg-muted motion-reduce:animate-none`. `className` passes through `cn` for size (`h-*`, `w-*`, `size-*`) and for a radius override when it stands in for something that is not card-tier (`rounded-full` for an avatar disc or a meter track, `rounded-xs` for a badge or an icon button).
+- **`animate-pulse` is the ONLY sanctioned loading motion.** No spinners, no shimmer sweep, no progress bars, no skeleton that fades in. `motion-reduce:animate-none` lives on the primitive, so the reduced-motion gate cannot be forgotten at a call site.
+- **`bg-muted` is the fill.** Not `bg-neutral-100`, not an opacity on `bg-foreground` — a skeleton has to read in both themes and `--muted` is the semantic subtle-fill token.
+- **`<SkeletonText className="w-32">`** — a value skeleton that cannot shift the layout. An invisible `&nbsp;` carries the parent voice's own line box **and its baseline**, so the row keeps its height and any `items-baseline` sibling (a `DeltaTag` beside a `HeroNumeric`) stays put; the bar itself is absolutely positioned and vertically centred, so its height is decorative and can never add to the line box. `size` picks the bar against the voice: `sm` (h-3, for the 12px voices) · `default` (h-4, for the 14px voices) · `hero` (h-6, `HeroNumeric` default) · `heroLg` (h-7, `HeroNumeric` lg). Width comes from a `w-*` class, the way every shadcn skeleton sizes itself.
+
+**SKELETON THE VALUE, KEEP THE CHROME.** Column heads, section and card titles, eyebrows, toolbars, search fields, range pills, tabs, switches, units (`%`, `/min`) and empty-state *copy* are all known before the fetch resolves — they render as themselves. Only what the request answers gets a skeleton: numbers, names, timestamps, bar fills, sparklines, status badges attached to a reading. Corollaries:
+
+- **An empty state is a conclusion, not a loading state.** Gate every `rows.length === 0` branch on `!loading` — a surface must never claim "no members" while it is still asking.
+- **A meter or a chart keeps its box and loses its value.** Replace the plot area with a `<Skeleton>` of the *same* height (`h-24` for a hero chart, `h-9` for a `CompactSpark`) and drop `role="meter"` while loading — an axis with no series reads as a flat line at zero, and a meter with no value announces a reading the page does not have.
+- **The value slot belongs to the primitive.** `HeroNumeric`, `CompactKpi`, `KpiTile`, `DeltaTag` and `BudgetSummary` each take an optional `loading?: boolean` (default `false`) that swaps their own value / delta / spark for skeletons of the identical box. Don't fork a tile at the call site to fake a loading state — that is hand-rolling, and it is how the two states drift apart.
+- **Announce once per page, not per skeleton.** Skeletons are `aria-hidden`; the region root carries `aria-busy` and the page renders exactly one `sr-only role="status"` "Loading…". Never a visible spinner or visible "Loading" text.
+- **Row count matches what is coming.** A placeholder block one row too tall collapses when the data lands, which is the jump skeletons exist to prevent. Teams renders exactly one skeleton row per real row, floored at one (`skeletonRowIds`, `pages/teams/use-theatre-loading.ts`).
+
 ### Hero Numerics & KPIs
 
 - **HeroNumeric** (`hero-numeric.tsx`) — **single source of truth for sans-tabular hero numerics ≥24px.** Recipe: `font-sans font-medium tabular-nums tracking-tight text-neutral-900`. Sizes: `default` (text-2xl/8, 24px — KPI rail, Top Keys hero) and `lg` (text-3xl/9, 32px — Requests page hero). **Don't hand-roll.** **Don't extend below 20px** — mono digit-shape tells become visible at ~18px.
@@ -1341,7 +1520,7 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **MiniRadioGroup / MiniRadio** (`mini-radio-group.tsx`, codified 2026-07-28) — 32px bordered track of 24px choices (`h-8 rounded-sm border-border bg-card px-1` track; `h-6 rounded-xs type-label-12` items, `bg-muted` when selected). **Not `Segmented`, and the difference is not size**: Segmented is a MUTED track with a raised card thumb; this is a CARD track with a muted thumb — inverted. It is also a true `role="radiogroup"` (single choice), where Segmented is a view switcher. One consumer: the BYOK/PAYG mode switch on `DashboardDefault`. If a second appears, reconcile the two rather than adding a third look.
 - **ExpandingAction** (`expanding-action.tsx`, codified 2026-07-28) — 32px icon key that opens on hover/focus to reveal its label (`w-8` → `hover:w-30`, `[transition:width_300ms_var(--ease-drawer)]`). **Deliberately not a `Button` variant**: width-on-hover is not button behavior — a Button is a fixed box whose contents may change; this is a box that changes size and reflows its neighbours. Putting it on `Button` would give every button in the app the ability to resize itself. The label is always in the DOM (`opacity-0` → `100`) so the accessible name never depends on hover. One consumer: "Mark invalid" in the Security event dialog.
 - **TabsCount** (`tabs-count.tsx`, codified 2026-05-10) — mono count chip sitting inside a `<TabsTrigger>`. Recipe: `inline-flex items-center justify-center min-w-5 h-5 px-2 rounded-xs bg-neutral-100 text-neutral-500 font-mono text-xs font-medium tabular-nums`. Consumers: Models modality tabs (All types `(146)` / Text / Embeddings / Audio / Rerank), Team line-variant tab counts.
-- **SettingsRow** (`settings-row.tsx`, codified 2026-05-10) — title + subtitle on the left, control on the right. Lifted from CMP-018's local definition after the same shape appeared in `SecurityCard`'s passkey row with two minor variants. API exposes three modes: default (input-bearing, title renders as `<Label htmlFor={id}>`), `static` (title renders as heading-styled `<span>` — read-only state with a Badge), and `titleAs="h4"` (title as `<h4>` heading — used when the row sits inside a Card whose CardTitle is the section heading and this row needs a sub-heading semantically). Vertical alignment via `alignTop` (`items-start`). Rhythm: first row gets no top border; subsequent rows get `border-t border-neutral-200`. Rendered as `flex justify-between gap-6 py-4`.
+- **SettingsRow** (`settings-row.tsx`, codified 2026-05-10) — title + subtitle on the left, control on the right. Lifted from CMP-018's local definition after the same shape appeared in `SecurityCard`'s passkey row with two minor variants. API exposes three modes: default (input-bearing, title renders as `<Label htmlFor={id}>`), `static` (title renders as heading-styled `<span>` — read-only state with a Badge), and `titleAs="h4"` (title as `<h4>` heading — used when the row sits inside a Card whose CardTitle is the section heading and this row needs a sub-heading semantically). Vertical alignment via `alignTop` (`items-start`). Rhythm: first row gets no top border; subsequent rows get `border-t border-neutral-200`. Rendered as `flex justify-between gap-6 py-4`. **Widened 2026-08-28** for the team detail Security tab: `title` takes a `ReactNode` (so a row can be named by a `<Badge>` — the "By outcome" list names each row by its verdict badge) and `subtitle` is optional (stat rows whose label needs no gloss — a member's name, a category id — render title + count alone). A string title with a subtitle behaves exactly as before; no existing call site moved.
 
 ### Toast — `{components.toast}`
 
@@ -1381,12 +1560,18 @@ The hairline doesn't reach the rounded corners or section edges — reads lighte
 
 When one section is the focal action, accent it with `bg-blue-50` (and the icon chip with `bg-blue-100 text-blue-700`) — matches the `bg-blue-50` quick-action accent used on the Overview dashboard. **Don't invert** (white text on solid blue) — too marketing-loud for the operator-tool register.
 
-#### Section header capitalization
+#### Capitalization (site-wide, 2026-09-03)
 
-- Card titles: **Title Case** (`Recent Requests`, `Top Keys`, `Request Volume`, `Quick Actions`).
-- Field/column labels: **sentence case** for technical terms (`Leaf hash`, `Anchor root`, `Anchored`).
-- Single-word labels: unaffected.
-- Eyebrows: **MONO UPPERCASE TRACKED** (`REQUESTS / 1H`, `TOTAL COST`).
+- **Sentence case everywhere**: nav items, page titles, section and card
+  titles, tabs, buttons, field and column labels (`Security events`, `Audit
+  trail`, `My token savings`, `Recent requests`, `Leaf hash`). Decided on the
+  2026-09-03 call; matches Anthropic Console, OpenAI platform, Vercel, Linear,
+  Stripe, GitHub. The earlier Title Case rule for card titles is retired;
+  card titles still carrying it are legacy, fix on touch.
+- Proper nouns and acronyms keep their casing (`API keys`, `PII / PHI
+  scanner`, `LLM`, `Gate`).
+- Eyebrows and KPI labels: **MONO UPPERCASE TRACKED** (`REQUESTS / 1H`,
+  `TOTAL COST`). Never on a form/input label.
 
 ---
 

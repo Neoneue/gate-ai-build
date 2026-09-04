@@ -366,6 +366,23 @@ and (pointer: fine)) and (&:hover));
   --chart-6: oklch(0.75 0.13 195);  /* teal */
   --chart-7: oklch(0.85 0.16 88);   /* amber */
   --chart-8: oklch(0.68 0.20 335);  /* magenta — fills the 290°→18° hue gap */
+  /* Gradient LEADING EDGE for a chart-token data bar. Every progress / meter
+     fill on the site runs darker-at-the-origin to lighter-at-the-edge
+     (design.md §Data bars & meters), which the semantic families express as
+     `from-{family}-500 to-{family}-400`. The categorical palette has no rungs
+     — a chart slot is one value, not a ramp — so a bar painted from a chart
+     token had no lighter step to run to. Each twin is its slot mixed 20%
+     toward white in OKLCH: +0.056…0.076 L, which brackets the ramp's own
+     500 → 400 step (success +0.069, danger +0.067, warning +0.059), with
+     chroma easing off 20% so the tip reads lighter rather than louder.
+     Derived over var(--chart-N) rather than restated per theme, so the dark
+     palette's 5-points-darker slots come free — same derivation idiom as
+     --accent-muted. Only the four slots a bar consumes today are defined; add
+     the twin when a fifth slot takes a fill. */
+  --chart-1-soft: color-mix(in oklch, var(--chart-1), white 20%);
+  --chart-2-soft: color-mix(in oklch, var(--chart-2), white 20%);
+  --chart-3-soft: color-mix(in oklch, var(--chart-3), white 20%);
+  --chart-4-soft: color-mix(in oklch, var(--chart-4), white 20%);
   --radius: 0.625rem;
   --sidebar: var(--color-white);
   --sidebar-foreground: var(--color-neutral-900);
@@ -499,6 +516,12 @@ body {
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  /* Aliased so a bar can name the leading edge as a gradient stop
+     (`to-chart-3-soft`); see the token note in :root. */
+  --color-chart-4-soft: var(--chart-4-soft);
+  --color-chart-3-soft: var(--chart-3-soft);
+  --color-chart-2-soft: var(--chart-2-soft);
+  --color-chart-1-soft: var(--chart-1-soft);
   --color-ring: var(--ring);
     --color-chart-grid: var(--chart-grid);
   --color-input: var(--input);
@@ -637,6 +660,16 @@ body {
   --chart-7: oklch(0.80 0.16 88);
   --chart-8: oklch(0.63 0.20 335);
 
+  /* Chart-bar gradient edges, dark. Same derivation as light — see the note
+     there. Re-declared rather than inherited for the same reason as the
+     destructive ladder: a scoped `.dark` container (one that is not the root
+     element) resolves the twins against THIS block's palette rather than the
+     light one. */
+  --chart-1-soft: color-mix(in oklch, var(--chart-1), white 20%);
+  --chart-2-soft: color-mix(in oklch, var(--chart-2), white 20%);
+  --chart-3-soft: color-mix(in oklch, var(--chart-3), white 20%);
+  --chart-4-soft: color-mix(in oklch, var(--chart-4), white 20%);
+
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);
   /* One step up from the --card-muted (neutral-800) surface the control sits
@@ -770,6 +803,13 @@ body {
   }
   .type-heading-32 {
     @apply font-sans text-3xl/10 font-medium tracking-tight;
+  }
+  /* 28px step for in-tab section headers (Teams Overview tab): one step
+     under the page title, above the 24px block titles. */
+  .type-heading-28 {
+    @apply font-sans font-medium tracking-tight;
+    font-size: 28px;
+    line-height: 36px;
   }
 
   /* Sans heading tiers 16–24 carry tracking-snug; the display tier (32+)

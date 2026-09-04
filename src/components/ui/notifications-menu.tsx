@@ -251,7 +251,10 @@ function NotificationsMenu({
     }
     /* The tab's whole list, not the rendered window: "Archive all" that left
        30 rows behind because you had not scrolled would be a lie, and the
-       band it drops you on says "All caught up!". */
+       band it drops you on says "All caught up!". Unread rows are swept too,
+       matching Vercel and Linear (user ruled 2026-08-27): archive is a
+       location verb, not a read verb, and the /notifications Archive tab
+       keeps an archived unread row visibly unread, so nothing is buried. */
     archiveAll(nonArchived.map((item) => item.id));
   };
 

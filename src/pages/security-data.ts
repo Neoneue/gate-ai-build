@@ -1,5 +1,6 @@
 import { HeartPulse, KeyRound, ShieldAlert, UserRound } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { parseAuthoredEventTime } from "@/lib/demo-clock";
 
 type RiskTier = "critical" | "elevated" | "normal";
 type EventAction = "blocked" | "flagged" | "redacted";
@@ -45,11 +46,12 @@ export type EventRow = {
 
 // Parses a stored `YYYY-MM-DD HH:MM:SS` string into a Date so the shared
 // <Timestamp> primitive can render the absolute value and compute its
-// relative-time tooltip from the same instant. Forces local midnight so the
-// day rendered stays the day the event was filed.
+// relative-time tooltip from the same instant. The stored strings are the
+// AUTHORED calendar; the demo clock shifts them forward by whole days at
+// parse time (H:M:S preserved), so every feed reads as if used through real
+// yesterday. `eventSortValue` keeps sorting on the raw string (monotonic).
 export function parseEventTime(stored: string): Date {
-  const [datePart, timePart] = stored.split(" ");
-  return new Date(`${datePart}T${timePart}`);
+  return parseAuthoredEventTime(stored);
 }
 
 export const ACTION_BADGE: Record<
@@ -299,7 +301,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:46:23",
     relative: "4m ago",
     type: "credential",
-    key: "prod-agent (sk-gw-930)",
+    key: "hermes-agent (sk-gw-c60)",
     action: "blocked",
     requestId: "req_orion_4203",
     conversationId: "cnv_orion_70",
@@ -316,7 +318,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:43:10",
     relative: "7m ago",
     type: "injection",
-    key: "development (sk-gw-7d2)",
+    key: "atlas-eval (sk-gw-58e)",
     action: "flagged",
     requestId: "req_lyra_4207",
     conversationId: "cnv_lyra_92",
@@ -333,7 +335,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:42:26",
     relative: "8m ago",
     type: "injection",
-    key: "openclaw (sk-gw-1ab)",
+    key: "prod-agent (sk-gw-930)",
     action: "blocked",
     requestId: "req_meridian_4208",
     conversationId: "cnv_meridian_07",
@@ -350,7 +352,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:41:08",
     relative: "9m ago",
     type: "pii",
-    key: "hermes-agent (sk-gw-c60)",
+    key: "openclaw (sk-gw-1ab)",
     action: "redacted",
     requestId: "req_skylark_4209",
     conversationId: "cnv_skylark_18",
@@ -367,7 +369,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:40:44",
     relative: "9m ago",
     type: "injection",
-    key: "nova-chat (sk-gw-e15)",
+    key: "test-key (sk-gw-9f4)",
     action: "blocked",
     requestId: "req_vela_4209",
     conversationId: "cnv_vela_21",
@@ -384,7 +386,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:39:58",
     relative: "10m ago",
     type: "pii",
-    key: "test-key (sk-gw-9f4)",
+    key: "nova-chat (sk-gw-e15)",
     action: "flagged",
     requestId: "req_polaris_4210",
     conversationId: "cnv_polaris_55",
@@ -418,7 +420,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:36:33",
     relative: "13m ago",
     type: "phi",
-    key: "prod-agent (sk-gw-930)",
+    key: "hermes-agent (sk-gw-c60)",
     action: "flagged",
     requestId: "req_orion_4213",
     conversationId: "cnv_orion_70",
@@ -435,7 +437,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:34:42",
     relative: "15m ago",
     type: "pii",
-    key: "development (sk-gw-7d2)",
+    key: "atlas-eval (sk-gw-58e)",
     action: "redacted",
     requestId: "req_lyra_4215",
     conversationId: "cnv_lyra_92",
@@ -452,7 +454,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:32:18",
     relative: "18m ago",
     type: "phi",
-    key: "openclaw (sk-gw-1ab)",
+    key: "prod-agent (sk-gw-930)",
     action: "redacted",
     requestId: "req_meridian_4218",
     conversationId: "cnv_meridian_07",
@@ -469,7 +471,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:31:51",
     relative: "18m ago",
     type: "injection",
-    key: "hermes-agent (sk-gw-c60)",
+    key: "openclaw (sk-gw-1ab)",
     action: "flagged",
     requestId: "req_skylark_4218",
     conversationId: "cnv_skylark_18",
@@ -486,7 +488,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:30:09",
     relative: "20m ago",
     type: "credential",
-    key: "nova-chat (sk-gw-e15)",
+    key: "test-key (sk-gw-9f4)",
     action: "flagged",
     requestId: "req_vela_4220",
     conversationId: "cnv_vela_21",
@@ -503,7 +505,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:29:32",
     relative: "21m ago",
     type: "phi",
-    key: "test-key (sk-gw-9f4)",
+    key: "nova-chat (sk-gw-e15)",
     action: "redacted",
     requestId: "req_polaris_4221",
     conversationId: "cnv_polaris_55",
@@ -537,7 +539,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:24:47",
     relative: "25m ago",
     type: "injection",
-    key: "prod-agent (sk-gw-930)",
+    key: "hermes-agent (sk-gw-c60)",
     action: "flagged",
     requestId: "req_orion_4225",
     conversationId: "cnv_orion_70",
@@ -554,7 +556,7 @@ export const EVENT_ROWS: EventRow[] = [
     time: "2026-05-12 09:21:09",
     relative: "29m ago",
     type: "pii",
-    key: "prod-web (sk-gw-438)",
+    key: "atlas-eval (sk-gw-58e)",
     action: "flagged",
     requestId: "req_lyra_4229",
     conversationId: "cnv_lyra_92",

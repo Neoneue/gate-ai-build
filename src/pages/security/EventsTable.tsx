@@ -52,17 +52,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TextLink } from "@/components/ui/text-link";
 import { Textarea } from "@/components/ui/textarea";
 import { Timestamp } from "@/components/ui/timestamp";
 import { UploadIcon } from "@/components/ui/upload";
+import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { getEventFindingCopy } from "@/data/requests";
+import { memberById } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import type { CustomRange } from "@/lib/range";
 import {
   DETECTION_CHECKS,
-  EVENT_KEYS,
   type EventsRange,
   eventSortValue,
   eventsTotal,
@@ -75,6 +77,20 @@ import {
   parseEventTime,
   TYPE_META,
 } from "@/pages/security-data";
+import {
+  scopedSecurity,
+  securityKeyNames,
+} from "@/pages/teams/scoped-security";
+import { useTeams } from "@/pages/teams/teams-store";
+import { eventKeyName, useViewScope } from "@/pages/teams/view-scope";
+
+/** Who owns the key an event ran on (MEMBER_ROWS id), for the Manager's
+ *  by-user filter (PRD 8.4: "the event detail on the Security page filtered
+ *  by user"). */
+function eventOwnerId(row: EventRow): string | undefined {
+  const name = eventKeyName(row.key);
+  return API_KEY_SEED_ROWS.find((k) => k.name === name)?.ownerId;
+}
 
 /* Analyst verdict on a security event — one mutually exclusive state, not
  * three toggles. `unreviewed` is where every event starts. Declared here
@@ -120,6 +136,29 @@ export function EventsTableSection({
   const [type, setType] = useState("all");
   const [keyFilter, setKeyFilter] = useState("all");
   const [action, setAction] = useState("all");
+  const [userFilter, setUserFilter] = useState("all");
+  // Which events this viewer may see (scoped-security.ts): Admin all, a
+  // Manager their team's users', a Member their own keys'.
+  const scope = useViewScope();
+  const teams = useTeams();
+  const visibleKeyNames = securityKeyNames(scope);
+  const scopedRows = useMemo(
+    () =>
+      visibleKeyNames
+        ? EVENT_ROWS.filter((r) => visibleKeyNames.has(eventKeyName(r.key)))
+        : EVENT_ROWS,
+    [visibleKeyNames]
+  );
+  const keyOptions = useMemo(
+    () => [...new Set(scopedRows.map((r) => r.key))],
+    [scopedRows]
+  );
+  // Manager only: the team's members as a by-user filter.
+  const userOptions = scope.managedTeam
+    ? scope.managedTeam.memberIds
+        .map((id) => memberById(id))
+        .filter((m): m is NonNullable<typeof m> => m !== undefined)
+    : [];
   // Filters Dialog — the three single-select event filters (Type / Action /
   // Key) collapsed off the toolbar into a modal, mirroring Requests. Each
   // <Select> moves verbatim (single value, single onValueChange); only the
@@ -132,13 +171,15 @@ export function EventsTableSection({
   const [draftType, setDraftType] = useState("all");
   const [draftKeyFilter, setDraftKeyFilter] = useState("all");
   const [draftAction, setDraftAction] = useState("all");
-  const activeFilterCount = [type, action, keyFilter].filter(
+  const [draftUserFilter, setDraftUserFilter] = useState("all");
+  const activeFilterCount = [type, action, keyFilter, userFilter].filter(
     (v) => v !== "all"
   ).length;
   const draftActiveFilterCount = [
     draftType,
     draftAction,
     draftKeyFilter,
+    draftUserFilter,
   ].filter((v) => v !== "all").length;
   // Seed draft ← committed in the open handler (opening is a user event, not
   // derived state). Committed filters can't change while the modal is open
@@ -147,21 +188,24 @@ export function EventsTableSection({
     setDraftType(type);
     setDraftAction(action);
     setDraftKeyFilter(keyFilter);
+    setDraftUserFilter(userFilter);
     setFiltersOpen(true);
-  }, [type, action, keyFilter]);
+  }, [type, action, keyFilter, userFilter]);
   // Reset clears the DRAFT only (staged); committed state is untouched until
   // Apply.
   const resetFilters = useCallback(() => {
     setDraftType("all");
     setDraftAction("all");
     setDraftKeyFilter("all");
+    setDraftUserFilter("all");
   }, []);
   const applyFilters = useCallback(() => {
     setType(draftType);
     setAction(draftAction);
     setKeyFilter(draftKeyFilter);
+    setUserFilter(draftUserFilter);
     setFiltersOpen(false);
-  }, [draftType, draftAction, draftKeyFilter]);
+  }, [draftType, draftAction, draftKeyFilter, draftUserFilter]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
   // Row-click drill-in — selectedRow doubles as the dialog `open` signal.
@@ -193,7 +237,7 @@ export function EventsTableSection({
   // Reset to page 1 whenever filters or range change — render-time pattern,
   // not useEffect (see Activity UsageByKey for the canonical shape).
   const [prevResetKey, setPrevResetKey] = useState("");
-  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${query}|${type}|${keyFilter}|${action}`;
+  const resetKey = `${range}|${customRange?.from}|${customRange?.to}|${query}|${type}|${keyFilter}|${action}|${userFilter}`;
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setPage(1);
@@ -201,11 +245,14 @@ export function EventsTableSection({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return EVENT_ROWS.filter((r) => {
+    return scopedRows.filter((r) => {
       if (type !== "all" && r.type !== type) {
         return false;
       }
       if (keyFilter !== "all" && r.key !== keyFilter) {
+        return false;
+      }
+      if (userFilter !== "all" && eventOwnerId(r) !== userFilter) {
         return false;
       }
       if (action !== "all" && r.action !== action) {
@@ -216,7 +263,7 @@ export function EventsTableSection({
       }
       return r.key.toLowerCase().includes(q);
     });
-  }, [query, type, keyFilter, action]);
+  }, [query, type, keyFilter, action, userFilter, scopedRows]);
 
   // Sort after filter, before pagination. Default (key=null) preserves the
   // authored reverse-chronological order.
@@ -232,11 +279,14 @@ export function EventsTableSection({
   // the hero "Total events" KPI: unfiltered, it's exactly the range total
   // (eventsTotal); with filters active it scales by the filtered fraction
   // of the sample. Rows past page 1 are the implied tail we don't render.
-  const rangeTotal = eventsTotal(range, customRange);
-  const scaledTotal = Math.round(
-    rangeTotal * (filtered.length / EVENT_ROWS.length)
-  );
-  const perPage = Number(rowsPerPage);
+  const rangeTotal =
+    scopedSecurity(scope, range, customRange, teams)?.findings ??
+    eventsTotal(range, customRange);
+  const scaledTotal =
+    scopedRows.length === 0
+      ? 0
+      : Math.round(rangeTotal * (filtered.length / scopedRows.length));
+  const perPage = resolveRowsPerPage(rowsPerPage, scaledTotal);
   // Cap the rendered rows to `scaledTotal` — at low-volume ranges (e.g. 24H
   // ≈ 12 events) the 16-row sample is larger than the actual total, so an
   // uncapped slice would render more rows than the footer's "of N" claims.
@@ -386,7 +436,7 @@ export function EventsTableSection({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All keys</SelectItem>
-                  {EVENT_KEYS.map((k) => (
+                  {keyOptions.map((k) => (
                     <SelectItem key={k} value={k}>
                       {k}
                     </SelectItem>
@@ -394,6 +444,34 @@ export function EventsTableSection({
                 </SelectContent>
               </Select>
             </div>
+
+            {userOptions.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <Label className="type-label-14 text-muted-foreground">
+                  User
+                </Label>
+                <Select
+                  onValueChange={setDraftUserFilter}
+                  value={draftUserFilter}
+                >
+                  <SelectTrigger
+                    aria-label="User"
+                    className="w-full border-border bg-card text-foreground"
+                    id="filter-user"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All users</SelectItem>
+                    {userOptions.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
 
             <DialogFooter className="flex-row items-center justify-between sm:justify-between">
               <Button

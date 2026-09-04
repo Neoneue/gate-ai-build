@@ -39,16 +39,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Timestamp } from "@/components/ui/timestamp";
-import { HISTORY_ROWS, type HistoryRow } from "@/data/billing-history";
-import { sortRows, useTableSort } from "@/hooks/use-table-sort";
-import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatCurrency } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 import {
   BILLING_PERIOD_END,
-  CancelPlanDialog,
-} from "@/pages/cancel-plan-dialog";
+  HISTORY_ROWS,
+  type HistoryRow,
+} from "@/data/billing-history";
+import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import { CancelPlanDialog } from "@/pages/cancel-plan-dialog";
 import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
+
+// "Last top-up" reads the newest Credits-added row (HISTORY_ROWS is newest
+// first) so the card copy and the history table can never disagree on the date.
+function lastTopUpLabel(): string {
+  const row = HISTORY_ROWS.find((r) => r.type === "Credits added");
+  return row ? `${formatDateNumeric(row.date)} · $25` : "None yet";
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page (route: /billing, sidebar: "Billing")
@@ -233,7 +241,7 @@ function CreditsCard() {
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value="Jun 6, 2026 · $25" />
+          <CreditStatRow label="Last top-up" value={lastTopUpLabel()} />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
