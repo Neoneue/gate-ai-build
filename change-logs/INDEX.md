@@ -13,6 +13,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Heading ladder: 18px retired, dialog and block titles at 20
 - Heading ladder: 28px retired, Teams Overview tab header at 24
+- Lazy shells: notifications list and Ask AI panel load on first open
 - Team Overview: tab header stands apart from the ruled sections
 - Team Overview: section subtitles in the site's own words
 - Team Settings titles match the Settings page at 20

@@ -32,6 +32,23 @@ Before: the Teams Overview tab header "Team overview" was the site's only
 the ladder is 32 / 24 / 20 / 16 everywhere. `design.md` marks the 28 row
 retired; the class stays for the lint allowlist.
 
+### Lazy shells: notifications list and Ask AI panel load on first open `d2275d6`
+
+Before: every dashboard page shipped the notifications list, the Ask AI
+panel with its markdown renderer, and the full Framer Motion runtime inside
+the chrome chunk (219 KB gzip), and the Messages table pulled the 425 KB
+transcript chunk for its preview column. After (`plans/bundle-split.md`):
+the bell trigger and unread badge stay eager (count from pinned seed ids in
+`data/notifications-seed-ids.ts`); the popup body is `notifications-menu-body.tsx`
+behind `React.lazy` with an empty shell fallback (`h-12` toolbar band +
+`h-96` list; 16px shorter than the settled list on first open). The Ask AI
+panel mounts on first open and stays mounted. The twelve animated icons use
+`m.` under one `LazyMotion strict` wrapper in `DashboardChrome.tsx`. The
+Messages preview column reads the generated `data/request-previews.ts`
+(`npm run build:previews`). Chrome chunk 219 KB to 80 KB gzip; Overview first
+load 427 KB to 268 KB gzip. Nothing changes visually. Same day: `9d6b526`
+removed 1,691 lines of unimported and unreachable code, no UI change.
+
 ## Sections
 
 ### Team Overview: tab header stands apart from the ruled sections `e31f916`
