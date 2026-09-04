@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-04](./2026-09/changelog-9-4.md)
+
+- Messages: budget-blocked row reads a UUID prefix, not "budget-block"
+
 ### [2026-09-03](./2026-09/changelog-9-3.md)
 
 - Sentence case everywhere: nav labels and page titles first
