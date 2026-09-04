@@ -197,10 +197,9 @@ export function TeamDetailEnterprise({
   const viewRole = useViewRole();
   const ownTeam = useCurrentUserTeam();
   const manager = viewRole === "manager";
-  // Member view (user 2026-09-03): own team, read-only, Overview + Members
-  // only; the roster is a pure list (no add, remove or role select).
-  const member = viewRole === "member";
-  const teamRole = manager || member;
+  // Members have no Teams surface (259e400): team routes bounce to Overview,
+  // so only Admin and Manager ever render this page.
+  const teamRole = manager;
   const { pathname } = useLocation();
 
   // ONE call, in the PAGE body — not in a pane. Every tab reads this same
@@ -210,6 +209,9 @@ export function TeamDetailEnterprise({
   const loading = useTheatreLoading();
 
   // Members have no Teams surface (confirmed 2026-09-03): bounce to Overview.
+  // The only place the member role is read on this page; everything below
+  // renders for Admin and Manager alone.
+  const member = viewRole === "member";
   if (member) {
     return <Navigate replace to={overviewPathFor(pathname)} />;
   }
@@ -297,7 +299,6 @@ export function TeamDetailEnterprise({
             archived={archived}
             loading={loading}
             manager={manager}
-            member={member}
             onDeleteTeam={handleDeleteTeam}
             onMoveMembers={moveMembers}
             onPatch={patch}
@@ -346,7 +347,6 @@ function TeamDetailBody({
   onDeleteTeam,
   archived,
   manager,
-  member,
   variant,
   loading,
 }: {
@@ -361,14 +361,12 @@ function TeamDetailBody({
   archived: boolean;
   /** Team-manager view: budgets and settings read-only, no role select. */
   manager: boolean;
-  /** Member view: Overview + Members only, roster is a pure list. */
-  member: boolean;
   variant: TeamsVariant;
   /** Threaded down to every pane from the ONE page-level hook call, so the
    *  skeletons do not restart when a tab changes. */
   loading: boolean;
 }) {
-  const teamRole = manager || member;
+  const teamRole = manager;
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
   // lands on teams. Data tabs (Usage, Budget, Security) follow.
@@ -426,9 +424,7 @@ function TeamDetailBody({
               ? "Can’t be renamed or deleted."
               : archived
                 ? "Archived. Members, keys, and usage history for this team."
-                : member
-                  ? "Members and usage for this team."
-                  : "Members, keys, and budget for this team."}
+                : "Members, keys, and budget for this team."}
           </p>
         </div>
       </div>
@@ -456,19 +452,15 @@ function TeamDetailBody({
             <span>Members</span>
             <TabsCount>{team.memberIds.length}</TabsCount>
           </TabsTrigger>
-          {member ? null : (
-            <TabsTrigger value="keys">
-              <span>Keys</span>
-              <TabsCount>{team.keyIds.length}</TabsCount>
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="keys">
+            <span>Keys</span>
+            <TabsCount>{team.keyIds.length}</TabsCount>
+          </TabsTrigger>
           {/* Archived teams have no budget (user 2026-09-03): nothing
               attributes to them, so a cap has nothing to enforce. Usage
               history lives on Overview. */}
-          {archived || member ? null : (
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-          )}
-          {archived || member ? null : (
+          {archived ? null : <TabsTrigger value="budget">Budget</TabsTrigger>}
+          {archived ? null : (
             <TabsTrigger value="settings">Settings</TabsTrigger>
           )}
         </TabsList>
@@ -587,7 +579,6 @@ function TeamDetailBody({
             onMoveMembers={onMoveMembers}
             onPatch={onPatch}
             onRemoveMember={onRemoveMember}
-            readOnly={member}
             team={team}
             teams={teams}
           />
@@ -1364,7 +1355,6 @@ function MembersPane({
   loading,
   archived = false,
   canAssignRoles = true,
-  readOnly = false,
 }: {
   team: TeamRow;
   teams: TeamRow[];
@@ -1378,11 +1368,8 @@ function MembersPane({
   /** Frozen snapshot of a deleted team: no Add member, no role select, no
    *  remove. The roster is a record, not a roster to manage. */
   archived?: boolean;
-  /** Member view (user 2026-09-03): same pure list as `archived`, on a live
-   *  team. Managing the roster is manager / admin (PRD §8.4). */
-  readOnly?: boolean;
 }) {
-  const frozen = archived || readOnly;
+  const frozen = archived;
   const [addOpen, setAddOpen] = useState(false);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
     null

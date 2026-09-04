@@ -1,8 +1,9 @@
 import { createContext, type RefObject, useContext } from "react";
 
 /** See portal-target.tsx for the full contract. */
-export const PortalTargetContext =
-  createContext<RefObject<HTMLElement | null> | null>(null);
+const PortalTargetContext = createContext<RefObject<HTMLElement | null> | null>(
+  null
+);
 
 /**
  * Returns the current portal target ref, or `null` if no provider is in

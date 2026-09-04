@@ -41,7 +41,7 @@ const MAX_TITLE_WORDS = 6;
  *
  * "How do I rotate a key?" → "Rotate a key"
  */
-export function heuristicTitle(input: string): string {
+function heuristicTitle(input: string): string {
   let text = input.trim();
 
   // 1. Leading scaffolding, repeatedly — the compare is lowercase but the cut

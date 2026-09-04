@@ -17,7 +17,6 @@ import {
 import type { CustomRange, PresetRange } from "@/lib/range";
 import {
   ACTION_BADGE,
-  EVENT_ROWS,
   type EventCategory,
   type EventRow,
   TYPE_META,
@@ -42,7 +41,7 @@ export const EVENTS_RANGE_TOTAL: Record<PresetRange, number> = {
 // Per-day event rate for the custom-range estimate: derived from the 30d
 // total (562 ÷ 30 ≈ 18.73 events/day). Already includes the 25% coupling
 // since 562 is itself 25% of the 30d request total.
-export const EVENTS_PER_DAY = 562 / 30;
+const EVENTS_PER_DAY = 562 / 30;
 
 /** Total events for the active range. Presets read the explicit table;
  *  custom approximates a proportional request estimate via the per-day
@@ -72,8 +71,8 @@ export const fmtCount = (n: number) => formatNumber(n);
 // "Total events" KPI + breakdown + chart, the Action categories card, the
 // events table's "of N") derives from eventsTotal() + splitEventMix() so
 // the surfaces reconcile.
-export const EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 } as const;
-export const EVENT_MIX_TOTAL =
+const EVENT_MIX = { blocked: 31, flagged: 14, redacted: 2 } as const;
+const EVENT_MIX_TOTAL =
   EVENT_MIX.blocked + EVENT_MIX.flagged + EVENT_MIX.redacted;
 
 export type EventMixSplit = {
@@ -259,7 +258,7 @@ export function buildSpark(
  *  buckets first so the silhouette is visually unchanged. Applied to the
  *  Blocked / Flagged / Redacted sparks so they — and their per-bucket sum
  *  — reconcile exactly with the KpiRail tiles and the hero headline. */
-export function normalizeSparkTo(spark: number[], target: number): number[] {
+function normalizeSparkTo(spark: number[], target: number): number[] {
   const out = [...spark];
   const n = out.length;
   if (n === 0) {
@@ -539,10 +538,6 @@ export const TYPE_DETAILS: Record<
 export function getEventDetail(row: EventRow) {
   return TYPE_DETAILS[row.type];
 }
-
-// Distinct API keys present in the sample — drives the toolbar Key filter
-// so its options reconcile with the rows instead of being hand-listed.
-export const EVENT_KEYS = [...new Set(EVENT_ROWS.map((r) => r.key))];
 
 /** Comparable value per sortable column for the Recent events table. Time is
  *  the stored "YYYY-MM-DD HH:MM:SS" string, which sorts chronologically as a

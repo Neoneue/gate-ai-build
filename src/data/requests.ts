@@ -192,25 +192,12 @@ export const CATEGORY_LABEL: Record<FindingCategory, string> = {
   credential: "Credential",
   injection: "Injection",
 };
-// The Policy field renders as the originating scanner, not the raw policy
-// slug — exactly one of three, keyed off the finding category.
-export const POLICY_SCANNER_LABEL: Record<FindingCategory, string> = {
-  injection: "Prompt injection scanner",
-  pii: "PII scanner",
-  credential: "Credentials scanner",
-};
 const ENTITY_LABEL: Record<string, string> = {
   email: "Email",
   "openai-key": "OpenAI",
   "aws-key": "AWS",
   "anthropic-key": "Anthropic",
   "prompt-injection": "Prompt injection",
-};
-// Detection-method display labels for the finding-card subtitle.
-export const METHOD_LABEL: Record<string, string> = {
-  presidio: "Presidio",
-  "entropy+regex": "Entropy+Regex",
-  classifier: "Classifier",
 };
 // Human descriptor for the finding banner sentence.
 const ENTITY_DESCRIPTOR: Record<string, string> = {
@@ -256,7 +243,7 @@ function categoryBannerToken(
  *  injection mockup) or per-group segments where `what` is the entity
  *  descriptor, so the view can emphasize it. `findingBannerSentence` renders the
  *  plain string from the same data, keeping non-React callers on a string. */
-export function findingBannerSegments(
+function findingBannerSegments(
   findings: RequestFinding[]
 ): { plain: string } | { segments: FindingBannerSegment[] } {
   // Mockup: a single flagged prompt-injection finding shows the gateway's
@@ -321,7 +308,7 @@ export function findingBannerSegments(
   };
 }
 
-export function findingBannerSentence(findings: RequestFinding[]): string {
+function findingBannerSentence(findings: RequestFinding[]): string {
   const result = findingBannerSegments(findings);
   if ("plain" in result) {
     return result.plain;

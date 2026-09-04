@@ -7,7 +7,6 @@ import {
 } from "@/data/teams";
 import { API_KEY_ROWS } from "@/pages/activity-data";
 import {
-  ADMIN_USER_ID,
   currentUserId,
   useTeams,
   useViewRole,
@@ -57,7 +56,7 @@ export function ownKeyNames(userId: string): Set<string> {
 
 /** Fraction of the org's 7d requests that ran on `names`. BYOK keys count:
  *  Gate saw the traffic even though the provider billed it. */
-export function requestShareFor(names: Set<string>): number {
+function requestShareFor(names: Set<string>): number {
   const total = API_KEY_ROWS.reduce((a, r) => a + r.requests, 0) || 1;
   const own = API_KEY_ROWS.filter((r) => names.has(r.key)).reduce(
     (a, r) => a + r.requests,
@@ -68,7 +67,7 @@ export function requestShareFor(names: Set<string>): number {
 
 /** One person as a team: their id, their live keys as membership, every key
  *  they ever owned as history. `usageForTeam` and friends need nothing else. */
-export function ownTeamRow(userId: string): TeamRow {
+function ownTeamRow(userId: string): TeamRow {
   const own = API_KEY_SEED_ROWS.filter((k) => k.ownerId === userId);
   return {
     id: `scope_${userId}`,
@@ -114,8 +113,6 @@ export function viewScopeFor(
     requestShare: requestShareFor(keyNames),
   };
 }
-
-export const ADMIN_SCOPE: ViewScope = viewScopeFor("admin", ADMIN_USER_ID, []);
 
 export function useViewScope(): ViewScope {
   const role = useViewRole();

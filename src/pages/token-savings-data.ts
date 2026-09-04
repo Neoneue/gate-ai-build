@@ -32,7 +32,7 @@ export const RANGE_DELTA_NOTE: Record<Range, string> = {
 // every tile's sparkline ENDS at its headline value so the trend reconciles.
 // Total saved === caching + compression (rounded): all 0.15+13.7≈13.9,
 // 7d 0.18+14.0≈14.2, 30d 0.14+13.4≈13.5, 24h 0.11+12.7≈12.8.
-export const KPI_COLORS = {
+const KPI_COLORS = {
   total: "var(--color-chart-1)",
   caching: "var(--color-chart-3)",
   compression: "var(--color-chart-7)",
@@ -153,7 +153,7 @@ export const SPARK_STOPS: Record<PresetRange, number> = {
   "30d": 14,
 };
 // Step per stop, in the range's native unit (hours for 24h, days otherwise).
-export const SPARK_STEP: Record<PresetRange, number> = {
+const SPARK_STEP: Record<PresetRange, number> = {
   all: 1, // months
   "24h": 2, // hours
   "7d": 1, // days

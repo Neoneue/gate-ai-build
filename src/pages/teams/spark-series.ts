@@ -24,7 +24,7 @@ import { distributeSeries } from "@/pages/activity-data";
 
 /** Days of history behind the "All" range. RANGE_SCALE.all = 8.5 weeks —
  *  the mock workspace's lifetime — which getRangeDates also spans. */
-export const ALL_SPAN_DAYS = 60;
+const ALL_SPAN_DAYS = 60;
 
 /** The canonical daily curve: the metric's lifetime total spread across the
  *  All span. Seed carries team + metric only — NEVER the range; a per-range

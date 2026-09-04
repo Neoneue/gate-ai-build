@@ -1,14 +1,3 @@
-/** A surface is on a non-PRO experience when a path segment ends in
- * `-default` or `-free`. Single source of truth consumed by the sidebar lock
- * icons and the workspace badge — if the badge says PRO, the locks are hidden,
- * and vice versa.
- *
- * The tier suffix is matched at a SEGMENT boundary, not just at the end of
- * the pathname: detail drill-ins like `/teams-enterprise/:teamId` and
- * `/teams-default/:teamId` carry their tier in the first segment, and an
- * end-anchored test dropped them back into PRO chrome. */
-export const FREE_SURFACE = /-(default|free)(?=\/|$)/;
-
 const DEFAULT_SEGMENT = /-default(?=\/|$)/;
 const FREE_SEGMENT = /-free(?=\/|$)/;
 const ENTERPRISE_SEGMENT = /-enterprise(?=\/|$)/;
@@ -48,11 +37,6 @@ const TIER_SUFFIX = /-(default|free|enterprise)(?=\/|$)/;
 const toBasePath = (pathname: string): string =>
   pathname.replace(TIER_SUFFIX, "");
 
-/** Returns true for any non-PRO surface (default or free). Used by sidebar
- *  lock icons and any shared "is this gated?" check. */
-export const isNonProSurface = (pathname: string): boolean =>
-  FREE_SURFACE.test(pathname);
-
 /** Nav bases that have a `-free` twin. */
 const FREE_TWINS = new Set([
   "/overview",
@@ -73,7 +57,7 @@ const FREE_TWINS = new Set([
 ]);
 
 /** Nav bases that have a `-default` twin. */
-export const DEFAULT_TWINS = new Set([
+const DEFAULT_TWINS = new Set([
   "/overview",
   "/messages",
   "/conversations",
@@ -94,7 +78,7 @@ export const DEFAULT_TWINS = new Set([
 /** Nav bases that have an `-enterprise` twin. Teams is the only page with a
  *  real divergent Enterprise build (A/B vs Pro); every other base reuses the
  *  Pro page component under the Enterprise chrome (see App.tsx). */
-export const ENTERPRISE_TWINS = new Set([
+const ENTERPRISE_TWINS = new Set([
   "/overview",
   "/messages",
   "/conversations",

@@ -17,10 +17,10 @@
 
 /** SCRIPTED. The session name this intent takes in the chat picker. Approved
  *  copy — verbatim, not derived from the question. */
-export const GATE_CONNECT_TITLE = "Setup Gate Connect app";
+const GATE_CONNECT_TITLE = "Setup Gate Connect app";
 
 /** SCRIPTED. Doc-sourced answer to the Gate Connect setup question. */
-export const GATE_CONNECT_REPLY = `Gate Connect routes the AI apps you already run through Gate, with no code changes. You sign in once, turn on the apps you want covered, and they keep working exactly as before, with Gate's security scanning, audit trail, and cost tracking running underneath. The same flow covers Claude Code, Claude Desktop, Codex, and the other apps Gate Connect supports.
+const GATE_CONNECT_REPLY = `Gate Connect routes the AI apps you already run through Gate, with no code changes. You sign in once, turn on the apps you want covered, and they keep working exactly as before, with Gate's security scanning, audit trail, and cost tracking running underneath. The same flow covers Claude Code, Claude Desktop, Codex, and the other apps Gate Connect supports.
 
 ### Step 1. Install Gate Connect
 
@@ -63,7 +63,7 @@ If nothing shows up, check that the app is turned on in **Routing** and that you
 /** SCRIPTED. Shown for anything the script does not cover. Deliberately says
  *  nothing about the product — no invented facts. EASY TO CHANGE: this exact
  *  string is the whole fallback. */
-export const UNMATCHED_REPLY = `I'm not connected to the live docs yet, so I can only answer from a short scripted demo. Try asking me how to set up the Gate Connect app.`;
+const UNMATCHED_REPLY = `I'm not connected to the live docs yet, so I can only answer from a short scripted demo. Try asking me how to set up the Gate Connect app.`;
 
 /* ─── Trigger matching ────────────────────────────────────────────────────── */
 
@@ -100,7 +100,7 @@ export function matchesGateConnectSetup(input: string): boolean {
 }
 
 /** Pick the scripted reply for a question. */
-export function selectReply(input: string): string {
+function selectReply(input: string): string {
   return matchesGateConnectSetup(input) ? GATE_CONNECT_REPLY : UNMATCHED_REPLY;
 }
 
@@ -153,10 +153,7 @@ const sleep = (ms: number, signal?: AbortSignal) =>
  * can be mid-stream). Whitespace is kept attached to the preceding word, so
  * concatenating every chunk reproduces the source string exactly.
  */
-export function chunkOnWordBoundaries(
-  text: string,
-  wordsPerChunk: number
-): string[] {
+function chunkOnWordBoundaries(text: string, wordsPerChunk: number): string[] {
   const tokens = text.match(/\S+\s*/g) ?? [];
   const chunks: string[] = [];
   for (let i = 0; i < tokens.length; i += wordsPerChunk) {

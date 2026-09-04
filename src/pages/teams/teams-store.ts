@@ -2,11 +2,9 @@ import { useSyncExternalStore } from "react";
 import { auditStore } from "@/data/audit-trail-store";
 import {
   memberById,
-  ORG_BUDGET_SEED,
   TEAM_POLICIES_SEED,
   TEAM_SAVINGS_SEED,
   TEAM_SEED_ROWS,
-  type TeamBudget,
   type TeamRow,
   type TeamSavings,
 } from "@/data/teams";
@@ -38,8 +36,6 @@ const USER_ID_FOR_ROLE: Record<ViewRole, string> = {
   manager: MANAGER_USER_ID,
   member: MEMBER_USER_ID,
 };
-/** @deprecated read `currentUserId()`; kept for the resolver tests. */
-export const CURRENT_USER_ID = ADMIN_USER_ID;
 
 /** The signed-in user for the active view role. The sidebar "My settings"
  *  pages resolve their team from the live store, so moving them between
@@ -100,7 +96,6 @@ const emit = () => {
 
 export const teamsStore = {
   teams: TEAM_SEED_ROWS as TeamRow[],
-  orgBudget: ORG_BUDGET_SEED as TeamBudget | null,
   /** Deleted teams keep their historical spend attribution on the list's
    *  "Deleted teams" card, wherever the delete happened. */
   deletedTeams: [] as DeletedTeamSnapshot[],
@@ -124,10 +119,6 @@ export const teamsStore = {
     this.teams = typeof next === "function" ? next(this.teams) : next;
     emit();
   },
-  setOrgBudget(next: TeamBudget | null) {
-    this.orgBudget = next;
-    emit();
-  },
   appendDeleted(snapshot: DeletedTeamSnapshot) {
     this.deletedTeams = [...this.deletedTeams, snapshot];
     emit();
@@ -145,14 +136,6 @@ export function useTeams(): TeamRow[] {
     (cb) => teamsStore.subscribe(cb),
     () => teamsStore.teams,
     () => teamsStore.teams
-  );
-}
-
-export function useOrgBudget(): TeamBudget | null {
-  return useSyncExternalStore(
-    (cb) => teamsStore.subscribe(cb),
-    () => teamsStore.orgBudget,
-    () => teamsStore.orgBudget
   );
 }
 

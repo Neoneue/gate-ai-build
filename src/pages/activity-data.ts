@@ -424,12 +424,12 @@ const rounded = (s: TokenSplit): TokenSplit => ({
 
 /** 7d in/out tokens per Gate key — what UsageByKey's Tokens In / Tokens Out
  *  columns show, and the exact tokens its Spend column was priced from. */
-export const KEY_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
+const KEY_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
   Object.entries(splitBy((c) => c.apiKey)).map(([k, v]) => [k, rounded(v)])
 );
 
 /** 7d in/out tokens per catalog model — the Top Models card's two columns. */
-export const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
+const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
   Object.entries(splitBy((c) => c.model)).map(([k, v]) => [k, rounded(v)])
 );
 
@@ -438,7 +438,7 @@ export const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
  *  actually costs depends on where its traffic was sent. Grouping the same
  *  cells that produced MODEL_TOKENS_7D is what keeps the Spend column and the
  *  token columns beside it describing one transaction. */
-export const MODEL_SPEND_7D: Record<string, number> = settle(
+const MODEL_SPEND_7D: Record<string, number> = settle(
   groupUsage((c) => c.model, cellSpend),
   2
 );
@@ -694,7 +694,7 @@ export function splitAcrossBuckets(
   return out;
 }
 
-export function paletteColor(slot: number): string {
+function paletteColor(slot: number): string {
   return CHART_PALETTE[(slot - 1) % CHART_PALETTE.length]!;
 }
 
@@ -717,7 +717,7 @@ const DEVICE_BY_OWNER: Record<string, string> = {
 
 /** Resolves an owner to their default device name. Unknown owners render an em
  *  dash rather than a plausible-looking guess. */
-export function deviceFor(owner: string): string {
+function deviceFor(owner: string): string {
   return DEVICE_BY_OWNER[owner] ?? "—";
 }
 
@@ -1321,7 +1321,7 @@ function byokCellsFor(key: string): UsageCell[] {
   });
 }
 
-export function usageCellsFor(names: Set<string>): UsageCell[] {
+function usageCellsFor(names: Set<string>): UsageCell[] {
   const gate = USAGE_7D.filter((c) => names.has(c.apiKey));
   const byok = [...names].flatMap(byokCellsFor);
   return [...gate, ...byok];

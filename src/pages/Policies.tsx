@@ -39,9 +39,6 @@ import {
 // Static KPI constants — kept for when the rail is restored. Detections /
 // block rate / avg latency are not wired to live data yet; only the
 // "Active Policies" tile reconciles (its numerator = activeCount).
-// const DETECTIONS_7D = 1;
-// const BLOCK_RATE_PCT = 14;
-// const AVG_LATENCY_MS = 31;
 
 export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
   const navigate = useNavigate();

@@ -98,7 +98,7 @@ const turnCount = (seed: ConversationRow, requestCount: number): number =>
 // ── the owned set ───────────────────────────────────────────────────────────
 // A conversation's requests, oldest-first. REQUEST_ROWS_ALL is reverse-chrono
 // (most recent first), so a conversation's slice reversed reads chronologically.
-export function getConversationRequests(
+function getConversationRequests(
   conversationId: string,
   allRows: RequestRow[]
 ): RequestRow[] {

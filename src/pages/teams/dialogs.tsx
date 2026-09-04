@@ -787,16 +787,6 @@ const ADD_MEMBERS_COPY: AddEntitiesCopy = {
     "Someone already on another team moves here. Their past requests stay with that team; only new traffic counts here.",
 };
 
-const ADD_KEYS_COPY: AddEntitiesCopy = {
-  title: "Add keys",
-  description:
-    "Only active keys can be assigned. A key belongs to one team at a time. A key already on another team moves here; its past requests stay with that team.",
-  fieldLabel: "API keys",
-  placeholder: "Select keys",
-  submitLabel: "Add keys",
-  emptyNote: "Every active key is already assigned to a team.",
-};
-
 export function AddMembersDialog(props: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -804,15 +794,6 @@ export function AddMembersDialog(props: {
   options: MultiSelectOption[];
 }) {
   return <AddEntitiesDialog copy={ADD_MEMBERS_COPY} {...props} />;
-}
-
-export function AddKeysDialog(props: {
-  open: boolean;
-  onOpenChange: (next: boolean) => void;
-  onAdd: (ids: string[]) => void;
-  options: MultiSelectOption[];
-}) {
-  return <AddEntitiesDialog copy={ADD_KEYS_COPY} {...props} />;
 }
 
 /* ─── 5. Rename team ────────────────────────────────────────────────────── */
@@ -946,52 +927,6 @@ export function DeleteTeamDialog({
 }
 
 /* ─── 7. Remove key from team ───────────────────────────────────────────── */
-
-/** Removing a key never detaches it — it moves to the default team, so its
- *  spend keeps rolling up somewhere. The confirm exists because the row's
- *  trash glyph reads as "revoke" at a glance, and this is not that. */
-export function RemoveTeamKeyDialog({
-  open,
-  onOpenChange,
-  keyLabel,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (next: boolean) => void;
-  /** `name (sk-gw-…NNNN)` — the same two-part form the table cell shows. */
-  keyLabel: string;
-  onConfirm: () => void;
-}) {
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-4 sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle>Remove {keyLabel} from this team?</DialogTitle>
-          <DialogDescription>
-            This key moves to the default team and keeps working. Its past
-            requests stay with this team; only new traffic counts toward the
-            default team.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose
-            render={<Button size="default" type="button" variant="outline" />}
-          >
-            Cancel
-          </DialogClose>
-          <Button
-            onClick={onConfirm}
-            size="default"
-            type="button"
-            variant="destructive"
-          >
-            Remove key
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* ─── 8. Remove member from team ────────────────────────────────────────── */
 

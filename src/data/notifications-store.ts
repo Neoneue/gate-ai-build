@@ -66,7 +66,7 @@ const INITIAL_STATE: NotificationsReadState = {
   ),
 };
 
-export const notificationsStore = {
+const notificationsStore = {
   state: INITIAL_STATE,
   listeners: new Set<() => void>(),
   subscribe(listener: () => void) {
