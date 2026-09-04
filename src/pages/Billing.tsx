@@ -359,7 +359,7 @@ function AddCreditsDialog({
         style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-foreground">
+          <DialogTitle className="type-heading-20 text-foreground">
             Add credits
           </DialogTitle>
           <DialogDescription>
@@ -525,7 +525,7 @@ function AutoRechargeDialog({
         style={{ width: "calc(100% - 2rem)", maxWidth: 500 }}
       >
         <DialogHeader>
-          <DialogTitle className="type-heading-18 text-foreground">
+          <DialogTitle className="type-heading-20 text-foreground">
             Auto-recharge
           </DialogTitle>
           <DialogDescription>

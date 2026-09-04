@@ -568,7 +568,7 @@ export function CreateKeyDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle className="type-heading-18 text-foreground">
+            <DialogTitle className="type-heading-20 text-foreground">
               Create API key
             </DialogTitle>
             <DialogDescription>
@@ -675,7 +675,7 @@ export function KeyCreatedDialog({
               className="size-5 shrink-0 text-success-600"
               strokeWidth={1.75}
             />
-            <DialogTitle className="type-heading-18 text-foreground">
+            <DialogTitle className="type-heading-20 text-foreground">
               Key created. Copy it now.
             </DialogTitle>
           </div>

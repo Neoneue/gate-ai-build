@@ -59,7 +59,7 @@ export function EmptyState({
     >
       {icon}
       <div className="flex flex-col gap-3">
-        <h3 className="type-heading-18 m-0 text-foreground">{title}</h3>
+        <h3 className="type-heading-20 m-0 text-foreground">{title}</h3>
         {/* body + footnote share one 4px stack so the pointer hugs the
             sentence it qualifies, while the 12px gap-3 still separates the
             pair from the heading. A single child makes the wrapper a no-op,

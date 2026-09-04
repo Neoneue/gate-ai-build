@@ -173,6 +173,7 @@ export function TeamSecurityOverviewPane({
   loading,
   title = "Overview",
   titleClassName,
+  description,
   controlledRange,
   memberId,
 }: {
@@ -187,6 +188,10 @@ export function TeamSecurityOverviewPane({
    *  stacks this block under Usage and names it "Security". */
   title?: string;
   titleClassName?: string;
+  /** One-line gloss under the title. The team Overview tab passes it so
+   *  the 24px block title reads as a main section, not another table
+   *  heading. Omitted everywhere else, and then nothing renders. */
+  description?: string;
   /** Controlled range (Overview tab). When set, the section's own range
    *  chrome is hidden and the tab-level picker drives every number. */
   controlledRange?: { range: Range; customRange: CustomRange | null };
@@ -259,7 +264,14 @@ export function TeamSecurityOverviewPane({
        as a section rather than more bento. */
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className={titleClassName}>{title}</SectionTitle>
+        <div className="flex flex-col gap-2">
+          <SectionTitle className={titleClassName}>{title}</SectionTitle>
+          {description ? (
+            <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+              {description}
+            </p>
+          ) : null}
+        </div>
         {controlledRange ? null : (
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedPill

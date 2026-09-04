@@ -49,13 +49,13 @@ export function SettingsStack({
     <div className="flex flex-col gap-8 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-8">
       {lockCard || general ? (
         <div className="flex flex-col gap-4">
-          <SectionTitle className="type-heading-24">General</SectionTitle>
+          <SectionTitle>General</SectionTitle>
           {lockCard}
           {general}
         </div>
       ) : null}
       <div className="flex flex-col gap-4">
-        <SectionTitle className="type-heading-24">Policies</SectionTitle>
+        <SectionTitle>Policies</SectionTitle>
         {locked && lockedBy ? <Callout>{lockedBy}</Callout> : null}
         <TeamPoliciesPane
           locked={locked}
@@ -64,7 +64,7 @@ export function SettingsStack({
         />
       </div>
       <div className="flex flex-col gap-4">
-        <SectionTitle className="type-heading-24">Token savings</SectionTitle>
+        <SectionTitle>Token savings</SectionTitle>
         {locked && lockedBy ? <Callout>{lockedBy}</Callout> : null}
         <TeamSavingsOptionCards
           locked={locked}

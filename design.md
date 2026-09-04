@@ -745,7 +745,7 @@ Heading voices resolve through the semantic `type-heading-*` utilities (see "Sem
 | `h1` | Geist | 32 | 500 | 40 | tight | Page title (artboard h1). | `type-heading-32` (text-3xl/10, tracking-tight). |
 | `h2` | Geist | 24 | 500 | 32 | snug | Superseded as the section-title voice by `h3` (20px, below). The h2 *element* still carries `SectionTitle as="h2"` (at 20px) when a section has sub-headings (e.g. Overview "Get started"). | `type-heading-24` (text-2xl/8, tracking-snug). |
 | `h3` | Geist | 20 | 500 | 28 | snug | Page section titles via `<SectionTitle>` — "Overview", "Recent …", "Activity This Week", "Get started". Default `<h3>` element; `as` overrides level without changing the voice. | `type-heading-20` (text-xl/7, tracking-snug). |
-| `h4` | Geist | 18 | 500 | 28 | snug | Card title, modal hero ID, modal `KpiTile` value (mono — below sans-hero threshold). | `type-heading-18` (text-lg/7, tracking-snug). |
+| `h4` | Geist | 18 | 500 | 28 | snug | RETIRED from the UI 2026-09-04: every `type-heading-18` consumer (dialog titles, empty-state titles, plan-card titles, the Overview feed CardTitle) moved to `type-heading-20`, so block titles, table titles and dialog titles share one 20px voice next to 24px sections and 32px page titles. The class stays defined for the lint allowlist; do not reintroduce it. | `type-heading-18` (text-lg/7, tracking-snug), unused. |
 | `body` | Geist | 16 | 400 | 24 | normal | Card subtitles, button labels, body in spacious surfaces. | text-base. |
 | `body-sm` | Geist | 14 | 400 | 20 | normal | Modal field labels, body in compact surfaces, eyebrow default. | text-sm. |
 | `body-xs` | Geist | 12 | 400 | 16 | normal | Eyebrow sm, table column heads, breadcrumbs, dense metadata. | text-xs. |

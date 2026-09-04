@@ -67,7 +67,7 @@ export function AskAiEmptyState({ className, onSelect }: AskAiEmptyStateProps) {
           strokeWidth={1.75}
         />
         <h2
-          className="type-heading-18 text-center text-foreground"
+          className="type-heading-20 text-center text-foreground"
           id={titleId}
         >
           How can I assist you today?
