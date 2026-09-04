@@ -12,6 +12,9 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-04](./2026-09/changelog-9-4.md)
 
 - Heading ladder: 18px retired, dialog and block titles at 20
+- Heading ladder: 28px retired, Teams Overview tab header at 24
+- Team Overview: tab header stands apart from the ruled sections
+- Team Overview: section subtitles in the site's own words
 - Team Settings titles match the Settings page at 20
 - Team Overview: section subtitles under Usage, Security, Token savings
 - Messages: budget-blocked row reads a UUID prefix, not "budget-block"

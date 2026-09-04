@@ -23,7 +23,41 @@ The class stays defined in `index.css` for the lint allowlist; `design.md`
 h4 row marks it retired. The Ask AI markdown `h2` (`text-lg/7`) is left, so
 markdown h1 and h2 stay distinct.
 
+### Heading ladder: 28px retired, Teams Overview tab header at 24 `86da091`
+
+Before: the Teams Overview tab header "Team overview" was the site's only
+`type-heading-28`, giving the team detail page four title levels (32 page,
+28 tab header, 24 section, 20 block). After: the tab header sits at
+`type-heading-24` over its 16px subtitle, the same pair the sections use, so
+the ladder is 32 / 24 / 20 / 16 everywhere. `design.md` marks the 28 row
+retired; the class stays for the lint allowlist.
+
 ## Sections
+
+### Team Overview: tab header stands apart from the ruled sections `e31f916`
+
+Before: the Overview tab wrapper ruled and padded every child after the
+first, so "Team overview" (title, subtitle, range and member controls) got the
+same rule-below and 32px rhythm as Usage, Security and Token savings and read
+as a fourth sibling section. After: two groups at `gap-6`. The header group
+carries no rule; the section group keeps `gap-8` with the rule and `pt-8`
+between its three panes only. Tab header to first section is 24px. The same
+wrapper had forced every non-24 `SectionTitle` in the tab to `text-lg/7`
+(18px); that selector is gone, so "Usage by current members" and the other
+table titles render at the 20px default. Rule to hold: tab header, no rule,
+controls right; sections, rule above, no controls.
+`src/pages/TeamDetailEnterprise.tsx`.
+
+### Team Overview: section subtitles in the site's own words `86da091`
+
+Before: the Security and Token savings subtitles read "What the gateway caught
+on this team's traffic, and where it clustered." and "What compression
+returned to this team against raw provider cost." After, borrowing the
+Security events and Token savings page subtitles: "Prompt injection, PII, and
+credential events your policies caught on this team's traffic, and which
+members they came from." and "What this team saved by caching, compressing and
+deduplicating requests, compared with what it would have spent otherwise."
+Usage unchanged. `src/pages/TeamDetailEnterprise.tsx` Overview tab.
 
 ### Team Settings titles match the Settings page at 20 `9434e08`
 

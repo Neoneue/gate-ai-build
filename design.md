@@ -770,7 +770,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Heading 48 | `type-heading-48` | `font-sans text-5xl/14 font-medium tracking-tight` |
 | Heading 40 | `type-heading-40` | `font-sans text-4xl/12 font-medium tracking-tight` |
 | Heading 32 | `type-heading-32` | `font-sans text-3xl/10 font-medium tracking-tight` |
-| Heading 28 | `type-heading-28` | `font-sans font-medium tracking-tight` at 28px/36px (Teams Overview tab header only) |
+| Heading 28 | `type-heading-28` | `font-sans font-medium tracking-tight` at 28px/36px. RETIRED 2026-09-04: its only consumer, the Teams Overview tab header, now sits at `type-heading-24` so a tab header and a section share one level (ladder 32 / 24 / 20 / 16). Class kept for the lint allowlist; do not reintroduce. |
 | Heading 24 | `type-heading-24` | `font-sans text-2xl/8 font-medium tracking-snug` |
 | Heading 20 | `type-heading-20` | `font-sans text-xl/7 font-medium tracking-snug` |
 | Heading 18 | `type-heading-18` | `font-sans text-lg/7 font-medium tracking-snug` |
