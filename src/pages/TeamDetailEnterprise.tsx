@@ -83,7 +83,11 @@ import {
   formatNumber,
   formatSparkLabel,
 } from "@/lib/formatters";
-import { overviewPathFor, teamsListPath } from "@/lib/plan";
+import {
+  isEnterpriseSurface,
+  overviewPathFor,
+  teamsListPath,
+} from "@/lib/plan";
 import {
   type CustomRange,
   effectiveScale,
@@ -367,6 +371,20 @@ function TeamDetailBody({
   loading: boolean;
 }) {
   const teamRole = manager;
+  // Team forced settings — the lock card and the org → team cascade — are
+  // ENTERPRISE-ONLY (PRD `docs/prds/org-team-hierarchy-prd.md` §3 "Plan
+  // availability" and §8.5; AG-624 lines 11 / 29). Default AND Pro are both
+  // unentitled, and one build serves /teams/:teamId, /teams-default/:teamId
+  // and /teams-enterprise/:teamId, so the tier has to be read off the
+  // pathname, not off `variant` (which defaults to "pro" and was handing Pro
+  // admins a lock card they are not entitled to). Not-entitled state is
+  // HIDDEN: ticket "the not-entitled state (feature hidden or upsell)".
+  const entitled = isEnterpriseSurface(useLocation().pathname);
+  // Unentitled ADMIN still gets General — rename / delete — which is exactly
+  // what the Default workspace shows today. Unentitled MANAGER has nothing
+  // left: no forced settings to read, and manager write beyond membership is
+  // a non-goal (PRD §5), so the tab is hidden rather than rendered empty.
+  const showSettings = entitled || !manager;
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
   // lands on teams. Data tabs (Usage, Budget, Security) follow.
@@ -444,7 +462,13 @@ function TeamDetailBody({
       <Tabs
         className="gap-6"
         onValueChange={(v) => setTab(v as TabId)}
-        value={tab}
+        // Render-time fallback, not a second source of truth: the workspace
+        // switcher navigates client-side between /teams-enterprise/:teamId and
+        // /teams/:teamId, and React reuses this instance (same element type,
+        // same route position), so `tab` can still read "settings" after the
+        // trigger stops rendering. Fall back to the first tab rather than
+        // paint an empty panel.
+        value={tab === "settings" && !showSettings ? "overview" : tab}
       >
         <TabsList className="-mt-2 px-0" variant="line">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -460,7 +484,7 @@ function TeamDetailBody({
               attributes to them, so a cap has nothing to enforce. Usage
               history lives on Overview. */}
           {archived ? null : <TabsTrigger value="budget">Budget</TabsTrigger>}
-          {archived ? null : (
+          {archived || !showSettings ? null : (
             <TabsTrigger value="settings">Settings</TabsTrigger>
           )}
         </TabsList>
@@ -625,35 +649,42 @@ function TeamDetailBody({
             teams={teams}
           />
         </TabsContent>
-        <TabsContent value="settings">
-          {variant === "default" ? (
-            // Not entitled (AG-624): no forced settings, no lock. Default is
-            // the Free-plan workspace, so Settings is the General block only.
-            <GeneralSettings
-              onDelete={() => setDeleteOpen(true)}
-              onRename={() => setRenameOpen(true)}
-              team={team}
-            />
-          ) : manager ? (
-            // Team-manager view: read-only. No rename / delete, no lock card
-            // (PRD §5: manager write beyond membership is a non-goal).
-            <SettingsStack
-              locked
-              lockedBy="Read-only. Team settings are managed by an org admin."
-              onPoliciesChange={() => undefined}
-              onSavingsChange={() => undefined}
-              policies={team.policies}
-              savings={team.savings}
-            />
-          ) : (
-            <SettingsTab
-              onDelete={() => setDeleteOpen(true)}
-              onPatch={onPatch}
-              onRename={() => setRenameOpen(true)}
-              team={team}
-            />
-          )}
-        </TabsContent>
+        {showSettings ? (
+          <TabsContent value="settings">
+            {entitled ? (
+              manager ? (
+                // Team-manager view: read-only. No rename / delete, no lock card
+                // (PRD §5: manager write beyond membership is a non-goal).
+                <SettingsStack
+                  locked
+                  lockedBy="Read-only. Team settings are managed by an org admin."
+                  onPoliciesChange={() => undefined}
+                  onSavingsChange={() => undefined}
+                  policies={team.policies}
+                  savings={team.savings}
+                />
+              ) : (
+                <SettingsTab
+                  onDelete={() => setDeleteOpen(true)}
+                  onPatch={onPatch}
+                  onRename={() => setRenameOpen(true)}
+                  team={team}
+                />
+              )
+            ) : (
+              // Not entitled (AG-624): no forced settings, no lock card, no
+              // org → team cascade. Forced settings are Enterprise-only (PRD
+              // §3, §8.5), so Pro and Default both land here — Settings is the
+              // General block alone. Admin only; the manager case never
+              // renders, its trigger is hidden above.
+              <GeneralSettings
+                onDelete={() => setDeleteOpen(true)}
+                onRename={() => setRenameOpen(true)}
+                team={team}
+              />
+            )}
+          </TabsContent>
+        ) : null}
       </Tabs>
 
       <RenameTeamDialog

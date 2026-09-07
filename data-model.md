@@ -1969,11 +1969,17 @@ reconcile by construction and flipping a switch visibly moves the rail
 `sparkDates`, `sparkDelta` and the `PresetRange` / `Range` / `CustomRange`
 / `SavingsKpi` types.
 
-**Not in this phase** (do not infer from the AG-624 ticket text): org-level
-forced settings, the org → team lock cascade, the locked read-only
-rendering with "who set this", and the not-entitled state. Both panes are
-live, editable, Enterprise-only — no Free or Pro twin, no plan-comparison
-dialog, no upsell card.
+**Forced settings are ENTERPRISE-ONLY** (PRD §3 "Plan availability" and §8.5;
+AG-624). Org-level forced settings, the org → team lock cascade, and the locked
+read-only rendering with "who set this" appear on `-enterprise` routes and
+nowhere else — the entitlement is read from the pathname via
+`isEnterpriseSurface`, because one build (`TeamsEnterprise` /
+`TeamDetailEnterprise`) serves Pro `/teams`, `/teams-default` and
+`/teams-enterprise` alike. The not-entitled state is HIDDEN, not an upsell: on
+Pro and Default the Teams list has no org Settings tab (`OrgSettingsPane`) and
+the team's Settings tab drops to the General block (rename / delete) with no
+`LockSettingsCard` — no plan-comparison dialog, no upsell card. Both panes are
+live and editable wherever they render.
 
 **Loading states (2026-09-02, AG-695 item 10).** `src/pages/teams/use-theatre-loading.ts`
 holds the whole mechanism:

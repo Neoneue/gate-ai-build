@@ -41,7 +41,11 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
-import { overviewPathFor, teamsListPath } from "@/lib/plan";
+import {
+  isEnterpriseSurface,
+  overviewPathFor,
+  teamsListPath,
+} from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { BudgetStatusBadge, BudgetWarnTick } from "@/pages/teams/budget";
 import { budgetFillClass } from "@/pages/teams/budget-band";
@@ -127,16 +131,15 @@ function teamSortValue(
   }
 }
 
-export function TeamsEnterprise({
-  variant = "pro",
-}: {
-  /** Default is the Free-plan workspace: no Enterprise entitlement, so the
-   *  org Settings tab (forced settings, AG-624) is hidden there. Ticket:
-   *  "the not-entitled state (feature hidden or upsell)"; hidden, user
-   *  decision 2026-09-03. */
-  variant?: TeamsVariant;
-} = {}) {
-  const entitled = variant !== "default";
+export function TeamsEnterprise(
+  _props: {
+    /** Presentation only: the Default twin (TeamsDefault) passes "default" so
+     *  the panes this build shares with Pro render in their Default shape. It
+     *  does NOT decide entitlement — see `entitled` below — and is kept on the
+     *  signature because TeamsDefault still sets it. */
+    variant?: TeamsVariant;
+  } = {}
+) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -147,6 +150,16 @@ export function TeamsEnterprise({
   const viewRole = useViewRole();
   const ownTeam = useCurrentUserTeam();
   const { pathname } = useLocation();
+
+  // Org forced settings (the Settings tab) are ENTERPRISE-ONLY: PRD
+  // `docs/prds/org-team-hierarchy-prd.md` §3 "Plan availability" and §8.5,
+  // AG-624 lines 11 / 29. Default AND Pro are both unentitled — this one build
+  // serves /teams (Pro), /teams-default and /teams-enterprise, so the tier has
+  // to come off the pathname, not off `variant` (which defaults to "pro" and
+  // was letting Pro admins see the tab). Not-entitled state is HIDDEN, not an
+  // upsell: ticket "the not-entitled state (feature hidden or upsell)",
+  // hidden per user decision 2026-09-03.
+  const entitled = isEnterpriseSurface(pathname);
 
   // The tier the user is in owns the whole subtree: a row opened from
   // /teams-enterprise drills into /teams-enterprise/:teamId, /teams-default
@@ -282,7 +295,13 @@ export function TeamsEnterprise({
           onValueChange={(v) =>
             setListTab(v as "current" | "archived" | "settings")
           }
-          value={listTab}
+          // Render-time fallback, not a second source of truth: the workspace
+          // switcher navigates client-side between /teams-enterprise and
+          // /teams, and React reuses this instance (same element type, same
+          // route position), so `listTab` can still read "settings" after the
+          // trigger stops rendering. Fall back to the first tab rather than
+          // paint an empty panel.
+          value={listTab === "settings" && !entitled ? "current" : listTab}
         >
           <TabsList className="-mt-2 px-0" variant="line">
             <TabsTrigger value="current">
