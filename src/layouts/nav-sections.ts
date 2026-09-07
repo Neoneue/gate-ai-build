@@ -193,29 +193,51 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
 export const ENTERPRISE_SIDEBAR_SECTIONS: SidebarSection[] =
   buildVariantSections("-enterprise", new Set<string>(), new Set<string>());
 
-/** Enterprise sidebar for the team-manager view (AG-695 AC 3; PRD §6,
- *  §8.4): a manager lands on their own team under Teams. Org-admin
- *  surfaces are hidden: Members (org roster, invites are owner/admin),
- *  Billing. Audit trail stays: anyone in the org sees it (user
- *  2026-09-03). Limits stays: caps run "at the org, project, or key level",
- *  so a manager or member sets limits on THEIR OWN keys; the org-wide scope
- *  is admin-only there (user 2026-09-03). Keys and Security events stay: a
- *  user still has to see their own keys and events. */
+/** Drop `hidden` nav ids from a section set, then drop any section left with
+ *  no items (a group whose every item is hidden would otherwise render as a
+ *  bare eyebrow with nothing under it). Applied to the PRO and the ENTERPRISE
+ *  sets alike: the role variants differ only in which base set they filter. */
+const withoutItems = (
+  sections: SidebarSection[],
+  hidden: Set<string>
+): SidebarSection[] =>
+  sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => !hidden.has(item.id)),
+    }))
+    .filter((section) => section.items.length > 0);
+
+/** Sidebar for the team-manager view (AG-695 AC 3; PRD §6, §8.4): a manager
+ *  lands on their own team under Teams. Org-admin surfaces are hidden:
+ *  Members (org roster, invites are owner/admin), Billing. Audit trail
+ *  stays: anyone in the org sees it (user 2026-09-03). Limits stays: caps run
+ *  "at the org, project, or key level", so a manager or member sets limits on
+ *  THEIR OWN keys; the org-wide scope is admin-only there (user 2026-09-03).
+ *  Keys and Security events stay: a user still has to see their own keys and
+ *  events. Applies on Pro and Enterprise alike — PRD §3 scopes teams,
+ *  budgets, roll-up and the manager role to BOTH plans. */
 const HIDDEN_FOR_TEAM_ROLES = new Set<string>(["team", "billing"]);
 
 export const ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS: SidebarSection[] =
-  ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => !HIDDEN_FOR_TEAM_ROLES.has(item.id)),
-  })).filter((section) => section.items.length > 0);
+  withoutItems(ENTERPRISE_SIDEBAR_SECTIONS, HIDDEN_FOR_TEAM_ROLES);
 
-/** Enterprise sidebar for the member view: a member has no Teams surface
- *  at all (confirmed 2026-09-03; PRD §8.4 gives team read access to the
- *  manager role only). Everything else is the manager's set. */
+/** Sidebar for the member view: a member has no Teams surface at all
+ *  (confirmed 2026-09-03; PRD §8.4 gives team read access to the manager role
+ *  only). Everything else is the manager's set. */
 const HIDDEN_FOR_MEMBER = new Set<string>([...HIDDEN_FOR_TEAM_ROLES, "teams"]);
 
 export const ENTERPRISE_MEMBER_SIDEBAR_SECTIONS: SidebarSection[] =
-  ENTERPRISE_SIDEBAR_SECTIONS.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => !HIDDEN_FOR_MEMBER.has(item.id)),
-  })).filter((section) => section.items.length > 0);
+  withoutItems(ENTERPRISE_SIDEBAR_SECTIONS, HIDDEN_FOR_MEMBER);
+
+/** The same two role variants on PRO — filtered from SIDEBAR_SECTIONS, so
+ *  every remaining item keeps its unsuffixed Pro path. */
+export const PRO_TEAM_ROLE_SIDEBAR_SECTIONS: SidebarSection[] = withoutItems(
+  SIDEBAR_SECTIONS,
+  HIDDEN_FOR_TEAM_ROLES
+);
+
+export const PRO_MEMBER_SIDEBAR_SECTIONS: SidebarSection[] = withoutItems(
+  SIDEBAR_SECTIONS,
+  HIDDEN_FOR_MEMBER
+);

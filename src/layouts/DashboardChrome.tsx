@@ -31,6 +31,7 @@ import {
   isDefaultSurface,
   isEnterpriseSurface,
   isFreeSurface,
+  isTeamRoleSurface,
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
@@ -40,6 +41,8 @@ import {
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
+  PRO_MEMBER_SIDEBAR_SECTIONS,
+  PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
 } from "./nav-sections";
 
@@ -95,15 +98,20 @@ export function DashboardChrome({
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
+  // Teams, budgets, roll-up and the team-manager role exist on BOTH Pro and
+  // Enterprise (PRD §3 "Plan availability"); only the org/team forced
+  // settings are Enterprise-only.
+  const hasTeamRoles = isTeamRoleSurface(pathname);
   const viewRole = useViewRole();
-  // The role switch only exists on Enterprise. Leaving for another workspace
-  // snaps the role back to Admin so a Manager / Member gating never leaks
-  // onto Default, Free or Pro pages (they have one signed-in owner).
+  // The role switch exists on Pro and Enterprise. Leaving for a workspace
+  // without roles snaps the role back to Admin so a Manager / Member gating
+  // never leaks onto Default or Free pages — those are single-owner
+  // workspaces with one signed-in owner.
   useEffect(() => {
-    if (!isEnterprise && viewRole !== "admin") {
+    if (!hasTeamRoles && viewRole !== "admin") {
       teamsStore.setViewRole("admin");
     }
-  }, [isEnterprise, viewRole]);
+  }, [hasTeamRoles, viewRole]);
   const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
@@ -115,7 +123,11 @@ export function DashboardChrome({
           : viewRole === "manager"
             ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
             : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
-        : SIDEBAR_SECTIONS;
+        : viewRole === "admin"
+          ? SIDEBAR_SECTIONS
+          : viewRole === "manager"
+            ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
+            : PRO_MEMBER_SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
     : isFree
@@ -203,7 +215,7 @@ export function DashboardChrome({
                 switcherInRail ? (
                   <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
                     <WorkspaceSwitcher className="w-full" compactBadge />
-                    {isEnterprise ? (
+                    {hasTeamRoles ? (
                       <ViewRoleSwitch className="w-full" />
                     ) : null}
                   </div>
@@ -223,7 +235,7 @@ export function DashboardChrome({
               overviewPath={overviewPath}
               sections={sections}
               showLocks={showLocks}
-              showViewRole={isEnterprise}
+              showViewRole={hasTeamRoles}
               sidebarExpanded={sidebarExpanded}
               switcherInRail={switcherInRail}
               upgradePath={upgradePath}
@@ -330,7 +342,7 @@ function DashTopBar({
   onToggleAskAi: () => void;
   switcherInRail: boolean;
   upgradePath?: string;
-  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
 }) {
   return (
@@ -443,7 +455,7 @@ function MobileNav({
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   showLocks?: boolean;
-  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
   upgradePath?: string;
 }) {

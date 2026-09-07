@@ -3,6 +3,9 @@ import {
   ENTERPRISE_MEMBER_SIDEBAR_SECTIONS,
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
+  PRO_MEMBER_SIDEBAR_SECTIONS,
+  PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
+  SIDEBAR_SECTIONS,
 } from "./nav-sections";
 
 const ids = (sections: typeof ENTERPRISE_SIDEBAR_SECTIONS) =>
@@ -36,4 +39,50 @@ test("member sidebar also hides Teams (confirmed 2026-09-03)", () => {
   expect(member).toEqual(
     admin.filter((id) => !["team", "billing", "teams"].includes(id))
   );
+});
+
+/* Pro carries the same role variants as Enterprise: PRD §3 scopes teams,
+ * budgets, roll-up and the team-manager role to BOTH plans — only the
+ * org/team forced settings are Enterprise-only. */
+
+test("Pro team-role sidebar hides Members and Billing (PRD §3)", () => {
+  const admin = ids(SIDEBAR_SECTIONS);
+  const teamRole = ids(PRO_TEAM_ROLE_SIDEBAR_SECTIONS);
+  for (const hidden of ["team", "billing"]) {
+    expect(admin).toContain(hidden);
+    expect(teamRole).not.toContain(hidden);
+  }
+  for (const kept of [
+    "audit-trail",
+    "api-keys",
+    "limits",
+    "security-events",
+    "teams",
+  ]) {
+    expect(teamRole).toContain(kept);
+  }
+  expect(teamRole).toEqual(
+    admin.filter((id) => !["team", "billing"].includes(id))
+  );
+});
+
+test("Pro member sidebar also hides Teams", () => {
+  const admin = ids(SIDEBAR_SECTIONS);
+  const member = ids(PRO_MEMBER_SIDEBAR_SECTIONS);
+  expect(member).not.toContain("teams");
+  expect(member).toEqual(
+    admin.filter((id) => !["team", "billing", "teams"].includes(id))
+  );
+});
+
+test("Pro role sidebars keep unsuffixed paths", () => {
+  const paths = [
+    ...PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
+    ...PRO_MEMBER_SIDEBAR_SECTIONS,
+  ].flatMap((s) => s.items.map((i) => i.pageId));
+  expect(paths.length).toBeGreaterThan(0);
+  for (const pageId of paths) {
+    expect(pageId).toBeDefined();
+    expect(pageId).not.toMatch(/-(default|free|enterprise)(?=\/|$)/);
+  }
 });
