@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "npm run fix -- --skip=correctness/noUnusedImports",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); if [ -n \"$f\" ] && [ -f \"$f\" ]; then npx biome check --write --skip=correctness/noUnusedImports \"$f\"; fi",
             "type": "command"
           },
           {

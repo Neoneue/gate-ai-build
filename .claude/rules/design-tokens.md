@@ -16,8 +16,9 @@ every value you write must map to a named token or voice defined in `design.md`.
 - **Never invent a color.** Use the semantic / neutral tokens (`bg-card`,
   `text-neutral-700`, `border-border`, …). No hex, no `rgb()/oklch()/hsl()`,
   no `*-[#…]` arbitrary-color classes, no inline `style` colors.
-- **Never invent a type size or voice.** Use the scale — h1 32 / h2 24 /
-  h3 20 / h4 18 / body 16 (plus the named voices). No `text-[Npx]`. Prefer the
+- **Never invent a type size or voice.** Use the heading ladder — 32 page /
+  24 section / 20 block / 16 card title, body 16 (plus the named voices); 18
+  and 28 are retired. No `text-[Npx]`. Prefer the
   heading components (`SectionTitle`, `CardTitle`) over hand-rolled
   `<hN className="text-…">`.
 - **One tracking system.** h2–h4 / body = normal tracking; only the page-title
