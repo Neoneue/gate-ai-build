@@ -91,3 +91,20 @@ Default: the Teams list has Current and Archived only; a Pro admin's team
 Settings tab is rename and archive only; a Pro manager has no Settings tab.
 Enterprise is unchanged. When the active tab disappears across a workspace
 switch, Teams falls back to Current teams and Team detail to Overview.
+
+### Site map: standalone /site-map flow chart of every workspace and role `9366dac`
+
+New reference page for developers and product, typed at `/site-map`, no
+sidebar link, admin-only (any other role is sent to Overview). Standalone
+document outside the dashboard shell (`src/pages/SiteMap.tsx`). Root node
+"Signed in as Chad Ponticas" forks into Free, Pro and Enterprise columns;
+Pro and Enterprise fork again into Admin / Manager / Member cards, Free
+into a single Admin card with the snap-to-Admin note and a Default footnote.
+Every card is drawn from the constants the app itself uses
+(`src/layouts/nav-sections.ts` sets, `src/data/team-members.ts` roster,
+`src/lib/plan.ts` helpers): persona, data scope, Teams landing path,
+sidebar items with their literal routes and lock marks, the two detail-route
+twins, and the PRD sections that justify the node. Two closing sections list
+the Enterprise-only surfaces and the detail-page not-found rule, then a
+callout marks manager prompt visibility (AG-697) as not built.
+`src/pages/site-map/data.ts` holds the matrix; 11 tests pin it.

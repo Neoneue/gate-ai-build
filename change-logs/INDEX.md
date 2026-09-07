@@ -18,6 +18,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Messages hero: headline equals the sum of the bars for scoped roles
 - Models: the table pages
 - Teams: forced settings gate on the Enterprise entitlement
+- Site map: standalone /site-map flow chart of every workspace and role
 
 ### [2026-09-04](./2026-09/changelog-9-4.md)
 
