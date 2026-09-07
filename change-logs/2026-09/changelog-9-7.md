@@ -78,3 +78,16 @@ Before: `Models.tsx` passed the full filtered list to the table while the
 footer paged, so "Page 1 of 3" at 10 rows always rendered every model.
 After: the body slices with `resolveRowsPerPage`, same form as Audit trail.
 Page 3 at 10 rows shows 5 models and "Showing 21 to 25 of 25".
+
+### Teams: forced settings gate on the Enterprise entitlement `e9c9cae`
+
+Before: `TeamsEnterprise` and `TeamDetailEnterprise` read entitlement from
+the page `variant`, which only the Default twin sets, so the Pro routes
+(`/teams`, `/teams/:teamId`) showed the org Settings tab, the team lock
+card and the org to team lock cascade. PRD sections 3 and 8.5 and ticket
+AG-624 make forced settings Enterprise-only, not-entitled state hidden.
+After: `entitled = isEnterpriseSurface(pathname)` in both pages. Pro and
+Default: the Teams list has Current and Archived only; a Pro admin's team
+Settings tab is rename and archive only; a Pro manager has no Settings tab.
+Enterprise is unchanged. When the active tab disappears across a workspace
+switch, Teams falls back to Current teams and Team detail to Overview.

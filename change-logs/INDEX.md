@@ -17,6 +17,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Messages, Conversations: a row outside the viewer's keys reads as not found
 - Messages hero: headline equals the sum of the bars for scoped roles
 - Models: the table pages
+- Teams: forced settings gate on the Enterprise entitlement
 
 ### [2026-09-04](./2026-09/changelog-9-4.md)
 
