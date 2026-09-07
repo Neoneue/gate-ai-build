@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo, useState } from "react";
 import {
   Link,
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -69,6 +70,7 @@ import {
   formatNumber,
   formatTimestamp,
 } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
   API_KEY_ROWS,
@@ -730,6 +732,7 @@ function PreviewCard({
 
 function LatestRequestsTable() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const scope = useViewScope();
   // Admin: the trailing-hour anchor rows. A scoped user: their own latest
   // messages, which may sit further back than the last hour.
@@ -760,7 +763,9 @@ function LatestRequestsTable() {
               key={row.requestId ?? i}
               onActivate={() => {
                 if (row.requestId) {
-                  navigate(`/messages-findings/${row.requestId}`);
+                  navigate(
+                    withTierOf(pathname, `/messages-findings/${row.requestId}`)
+                  );
                 }
               }}
             >

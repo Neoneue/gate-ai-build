@@ -1,10 +1,17 @@
 import { ExternalLink } from "lucide-react";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { withTierOf } from "@/lib/plan";
 import { useBudgetBlockRows } from "@/pages/requests/budget-block-rows";
+import { inScope, useViewScope } from "@/pages/teams/view-scope";
 import { RequestDetailBodyV2 } from "./requests/RequestDetailBody";
 import type { RequestRow } from "./requests/types";
 
@@ -19,6 +26,7 @@ import type { RequestRow } from "./requests/types";
 
 export function RequestsFindings() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { requestId } = useParams<{ requestId: string }>();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -26,11 +34,14 @@ export function RequestsFindings() {
   }>();
 
   const blockRows = useBudgetBlockRows();
-  const row: RequestRow | undefined = requestId
+  const scope = useViewScope();
+  const found: RequestRow | undefined = requestId
     ? [...blockRows, ...REQUEST_ROWS_ALL].find(
         (r) => requestRowId(r) === requestId
       )
     : undefined;
+  // Out of the viewer's key scope reads exactly like a missing row.
+  const row = found && inScope(scope, found.keyId) ? found : undefined;
 
   return (
     <DashboardChrome
@@ -41,10 +52,17 @@ export function RequestsFindings() {
     >
       {/* Back breadcrumb to Requests (top-left); View Conversation (top-right). */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <BackLink label="Messages" onClick={() => navigate("/messages")} />
+        <BackLink
+          label="Messages"
+          onClick={() => navigate(withTierOf(pathname, "/messages"))}
+        />
         {row && (
           <Button
-            onClick={() => navigate(`/conversations-trace/${row.conversation}`)}
+            onClick={() =>
+              navigate(
+                withTierOf(pathname, `/conversations-trace/${row.conversation}`)
+              )
+            }
             size="sm"
             type="button"
           >

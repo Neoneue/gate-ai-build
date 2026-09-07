@@ -1,7 +1,14 @@
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
 import { BackLink } from "@/components/ui/back-link";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { withTierOf } from "@/lib/plan";
+import { inScope, useViewScope } from "@/pages/teams/view-scope";
 import { ConversationDetailBody } from "./conversations/ConversationDetail";
 import type { ConversationRow } from "./conversations/types";
 
@@ -17,15 +24,19 @@ import type { ConversationRow } from "./conversations/types";
  * ────────────────────────────────────────────────────────────────────────── */
 export function ConversationsTrace() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { conversationId } = useParams();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
     toggleSidebar: () => void;
   }>();
 
-  const row: ConversationRow | undefined = conversationId
+  const scope = useViewScope();
+  const found: ConversationRow | undefined = conversationId
     ? CONVERSATION_ROWS.find((r) => r.conversationId === conversationId)
     : undefined;
+  // Out of the viewer's key scope reads exactly like a missing row.
+  const row = found && inScope(scope, found.initiator) ? found : undefined;
 
   return (
     <DashboardChrome
@@ -39,7 +50,7 @@ export function ConversationsTrace() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <BackLink
           label="Conversations"
-          onClick={() => navigate("/conversations")}
+          onClick={() => navigate(withTierOf(pathname, "/conversations"))}
         />
       </div>
 

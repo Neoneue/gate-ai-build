@@ -16,6 +16,14 @@ export const isFreeSurface = (pathname: string): boolean =>
 export const isEnterpriseSurface = (pathname: string): boolean =>
   ENTERPRISE_SEGMENT.test(pathname);
 
+/** Returns true on the tiers that have teams, budgets, roll-up and the
+ *  team-manager role: Pro (no suffix) and Enterprise (PRD
+ *  `docs/prds/org-team-hierarchy-prd.md` §3 "Plan availability" — only the
+ *  org/team FORCED settings are Enterprise-only). Default and Free are
+ *  single-owner workspaces with no roles, so they are the exclusions. */
+export const isTeamRoleSurface = (pathname: string): boolean =>
+  !(isDefaultSurface(pathname) || isFreeSurface(pathname));
+
 /** Teams list path for the tier the user is currently in. One Teams build
  *  serves Pro and Enterprise (and the Default twin); the pathname, not a
  *  prop, decides which subtree drill-ins and back-links stay inside. */
@@ -41,7 +49,9 @@ const toBasePath = (pathname: string): string =>
 const FREE_TWINS = new Set([
   "/overview",
   "/messages",
+  "/messages-findings",
   "/conversations",
+  "/conversations-trace",
   "/models",
   "/token-savings",
   "/limits",
@@ -60,7 +70,9 @@ const FREE_TWINS = new Set([
 const DEFAULT_TWINS = new Set([
   "/overview",
   "/messages",
+  "/messages-findings",
   "/conversations",
+  "/conversations-trace",
   "/models",
   "/token-savings",
   "/limits",
@@ -81,7 +93,9 @@ const DEFAULT_TWINS = new Set([
 const ENTERPRISE_TWINS = new Set([
   "/overview",
   "/messages",
+  "/messages-findings",
   "/conversations",
+  "/conversations-trace",
   "/models",
   "/token-savings",
   "/limits",
@@ -100,16 +114,52 @@ const ENTERPRISE_TWINS = new Set([
 /** Insert a tier suffix after the FIRST segment when that base has a twin, so
  *  detail drill-ins survive a tier switch: `/teams/t1` + `-enterprise` →
  *  `/teams-enterprise/t1`. Falls back to that tier's Overview otherwise. */
+const splitFirstSegment = (path: string): [head: string, rest: string] => {
+  const slash = path.indexOf("/", 1);
+  return slash === -1 ? [path, ""] : [path.slice(0, slash), path.slice(slash)];
+};
+
 const withSuffix = (
   base: string,
   suffix: string,
   twins: Set<string>,
   fallback: string
 ): string => {
-  const slash = base.indexOf("/", 1);
-  const head = slash === -1 ? base : base.slice(0, slash);
-  const rest = slash === -1 ? "" : base.slice(slash);
+  const [head, rest] = splitFirstSegment(base);
   return twins.has(head) ? `${head}${suffix}${rest}` : fallback;
+};
+
+/** Tier suffix of the pathname the user is currently on ("" for Pro). */
+const tierSuffixOf = (
+  pathname: string
+): "" | "-default" | "-free" | "-enterprise" => {
+  if (isDefaultSurface(pathname)) {
+    return "-default";
+  }
+  if (isFreeSurface(pathname)) {
+    return "-free";
+  }
+  if (isEnterpriseSurface(pathname)) {
+    return "-enterprise";
+  }
+  return "";
+};
+
+/** Carry the CURRENT pathname's tier onto a PRO target path so cross-links
+ *  stay in-tier: on `/messages-enterprise`, `/messages-findings/abc` ->
+ *  `/messages-findings-enterprise/abc`; on a Pro path the target is returned
+ *  unchanged. The suffix goes after the target's first segment, matching how
+ *  the twin routes are declared in App.tsx. */
+export const withTierOf = (
+  currentPathname: string,
+  targetProPath: string
+): string => {
+  const suffix = tierSuffixOf(currentPathname);
+  if (suffix === "") {
+    return targetProPath;
+  }
+  const [head, rest] = splitFirstSegment(toBasePath(targetProPath));
+  return `${head}${suffix}${rest}`;
 };
 
 /** PRO path → its Free twin. Falls back to Free home if no twin exists.

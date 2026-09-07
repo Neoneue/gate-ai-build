@@ -353,8 +353,16 @@ export default function App() {
             {/* Default-workspace twins — reached via the workspace switcher. */}
             <Route element={<RequestsDefault />} path="/messages-default" />
             <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-default/:requestId"
+            />
+            <Route
               element={<ConversationsDefault />}
               path="/conversations-default"
+            />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-default/:conversationId"
             />
             <Route element={<ModelsDefault />} path="/models-default" />
             <Route
@@ -382,7 +390,15 @@ export default function App() {
             {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
             <Route element={<RequestsFree />} path="/messages-free" />
+            <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-free/:requestId"
+            />
             <Route element={<ConversationsFree />} path="/conversations-free" />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-free/:conversationId"
+            />
             <Route element={<ModelsFree />} path="/models-free" />
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
@@ -400,8 +416,16 @@ export default function App() {
             <Route element={<Dashboard />} path="/overview-enterprise" />
             <Route element={<Requests />} path="/messages-enterprise" />
             <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-enterprise/:requestId"
+            />
+            <Route
               element={<Conversations />}
               path="/conversations-enterprise"
+            />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-enterprise/:conversationId"
             />
             <Route element={<Models />} path="/models-enterprise" />
             <Route
