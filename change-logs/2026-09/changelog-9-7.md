@@ -108,3 +108,27 @@ twins, and the PRD sections that justify the node. Two closing sections list
 the Enterprise-only surfaces and the detail-page not-found rule, then a
 callout marks manager prompt visibility (AG-697) as not built.
 `src/pages/site-map/data.ts` holds the matrix; 11 tests pin it.
+
+### Roles: a page hidden from the sidebar is blocked by URL `b6be012`
+
+Before: the sidebar hid Members and Billing for Manager and Member and
+Teams for Member, but only Teams enforced it; typing `/members` or
+`/billing` (or their Enterprise twins) as Manager or Member rendered the
+admin page. After: `DashboardChrome` checks the page's nav id against the
+role's own sidebar sections (`sectionsIncludePage`,
+`src/layouts/nav-sections.ts`) and redirects to that workspace's Overview
+when it is absent. Admin is unrestricted. Hidden and blocked are now the
+same list by construction. Verified in the browser: Manager and Member on
+Pro and Enterprise land on Overview for Billing, Members and (Member) Teams;
+Admin opens all three.
+
+### Sidebar: unused lock affordance removed `b6be012`
+
+Before: the sidebar carried a dormant lock mechanism (empty locked set,
+padlock icon, hidden "Pro feature" label, `showLocks` plumbing) that no
+PRD sentence describes and no workspace used. After: deleted from
+`sidebar.tsx`, `nav-sections.ts`, `DashboardChrome.tsx` and the site map.
+A page a role cannot see is hidden, and that is the only mechanism. The
+Teams "locked settings" concept (PRD 8.5 forced settings) is unrelated and
+unchanged. Site map "Hidden pages" rule lists the hidden ids per role from
+the same helper the chrome uses.
