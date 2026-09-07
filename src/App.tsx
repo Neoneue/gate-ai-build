@@ -130,6 +130,9 @@ const TeamDetailDefault = lazy(() =>
 const SignIn = lazy(() =>
   import("@/pages/SignIn").then((m) => ({ default: m.SignIn }))
 );
+const SiteMap = lazy(() =>
+  import("@/pages/SiteMap").then((m) => ({ default: m.SiteMap }))
+);
 const SignUp = lazy(() =>
   import("@/pages/SignUp").then((m) => ({ default: m.SignUp }))
 );
@@ -301,6 +304,11 @@ export default function App() {
             <Route element={<SignIn />} path="/sign-in" />
             <Route element={<SignUp />} path="/sign-up" />
           </Route>
+          {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
+              A chart of the shell cannot be read from inside the shell, so it
+              mounts at the root beside the auth routes. Admin-only; the page
+              itself bounces any other role to /overview. */}
+          <Route element={<SiteMap />} path="/site-map" />
           <Route element={<Layout />}>
             <Route element={<Navigate replace to="/overview" />} index />
             <Route element={<Dashboard />} path="/overview" />
