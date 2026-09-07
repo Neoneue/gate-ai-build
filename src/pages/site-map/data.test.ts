@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
 import {
+  DETAIL_PAGE_RULES,
+  hiddenNavIdsFor,
   PRD_REFS,
   rowsForWorkspace,
   SITE_MAP_COLUMNS,
@@ -151,4 +153,71 @@ test("each row names the real nav-sections constant it renders", () => {
     "enterprise/manager": "ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS",
     "enterprise/member": "ENTERPRISE_MEMBER_SIDEBAR_SECTIONS",
   });
+});
+
+/* ─── Hidden = blocked ───────────────────────────────────────────────────
+ * `hiddenNavIds` is derived with the same `sectionsIncludePage` call the
+ * chrome guards with (`layouts/DashboardChrome.tsx`), so the sheet cannot
+ * describe a rule the shell does not enforce. */
+
+test("hidden nav ids are derived per role, never typed", () => {
+  const hidden = Object.fromEntries(
+    SITE_MAP_MATRIX.map((r) => [
+      `${r.workspace}/${r.role}`,
+      [...r.hiddenNavIds].sort(),
+    ])
+  );
+  expect(hidden).toEqual({
+    "free/admin": ["teams"],
+    "default/admin": [],
+    "pro/admin": [],
+    "pro/manager": ["billing", "team"],
+    "pro/member": ["billing", "team", "teams"],
+    "enterprise/admin": [],
+    "enterprise/manager": ["billing", "team"],
+    "enterprise/member": ["billing", "team", "teams"],
+  });
+});
+
+test("a hidden id is absent from that row's own sidebar and routes", () => {
+  for (const row of SITE_MAP_MATRIX) {
+    const suffix =
+      SITE_MAP_WORKSPACES.find((w) => w.id === row.workspace)?.suffix ?? "";
+    for (const id of row.hiddenNavIds) {
+      expect(itemIds(row)).not.toContain(id);
+    }
+    // …and every id it does carry is one the chrome would let it render.
+    for (const id of itemIds(row)) {
+      expect(row.hiddenNavIds).not.toContain(id);
+    }
+    expect(row.routes).toContain(`/overview${suffix}`);
+  }
+});
+
+test("hiddenNavIdsFor reads the matrix rather than a second list", () => {
+  for (const row of SITE_MAP_MATRIX) {
+    expect(hiddenNavIdsFor(row.workspace, row.role)).toEqual(row.hiddenNavIds);
+  }
+  expect(hiddenNavIdsFor("pro", "member")).toContain("teams");
+});
+
+test("the Hidden pages rule names the ids it derives", () => {
+  const entry = DETAIL_PAGE_RULES.find((e) => e.term === "Hidden pages");
+  expect(entry).toBeDefined();
+  expect(entry?.detail).toContain("hidden from that role's sidebar");
+  expect(entry?.detail).toContain("blocked by URL");
+  expect(entry?.detail).toContain("Admin sees every page");
+  for (const id of hiddenNavIdsFor("pro", "member")) {
+    expect(entry?.detail).toContain(id);
+  }
+});
+
+test("no nav row on the sheet is inert: every item has a route", () => {
+  for (const row of SITE_MAP_MATRIX) {
+    for (const section of row.sidebar) {
+      for (const item of section.items) {
+        expect(item.pageId).toBeTruthy();
+      }
+    }
+  }
 });

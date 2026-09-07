@@ -1,4 +1,3 @@
-import { Lock } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -101,8 +100,9 @@ function FlowChart() {
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           A workspace is a path suffix. A role is the "Viewing as" switch, which
           exists only where the workspace carries team roles. Monospace text is
-          a literal route; a padlock marks a nav item the sidebar renders as an
-          inert lock rather than a link.
+          a literal route. A page a role cannot see is hidden from its sidebar
+          and blocked by URL — typing the path sends the viewer to Overview.
+          Admins see every page, so every row below is one they can reach.
         </p>
       </div>
 
@@ -311,19 +311,9 @@ function NavGroup({ section }: { section: SidebarSection }) {
               <span className="type-label-12 text-foreground">
                 {item.label}
               </span>
-              {item.locked ? (
-                <>
-                  <Lock
-                    aria-hidden="true"
-                    className="size-3 shrink-0 text-muted-foreground"
-                    strokeWidth={1.75}
-                  />
-                  <span className="sr-only">locked</span>
-                </>
-              ) : null}
             </span>
             <span className="type-mono-12 break-all text-muted-foreground">
-              {item.pageId ?? "no route"}
+              {item.pageId}
             </span>
           </li>
         ))}

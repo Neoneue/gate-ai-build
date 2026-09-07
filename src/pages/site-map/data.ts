@@ -9,6 +9,7 @@ import {
   PRO_MEMBER_SIDEBAR_SECTIONS,
   PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
+  sectionsIncludePage,
 } from "@/layouts/nav-sections";
 import { isEnterpriseSurface, isTeamRoleSurface } from "@/lib/plan";
 import {
@@ -243,11 +244,7 @@ const SIDEBAR_BY_WORKSPACE_ROLE: Record<
 /* ─── Teams landing (pages/TeamsEnterprise.tsx bounce order) ───────────── */
 
 const navPathsOf = (sections: SidebarSection[]): string[] =>
-  sections.flatMap((section) =>
-    section.items
-      .map((item) => item.pageId)
-      .filter((path): path is string => Boolean(path))
-  );
+  sections.flatMap((section) => section.items.map((item) => item.pageId));
 
 type TeamsLanding = { path: string; note: string };
 
@@ -299,6 +296,22 @@ function prdRefsFor(workspace: WorkspaceNode, role: ViewRole): string[] {
   return refs;
 }
 
+/* ─── Hidden pages per view ────────────────────────────────────────────── */
+
+/** Every nav id the product has, read off the base Pro admin sidebar — the
+ *  only view that carries all of them. */
+const ALL_NAV_IDS: string[] = SIDEBAR_SECTIONS.flatMap((section) =>
+  section.items.map((item) => item.id)
+);
+
+/** The ids this view does not get, derived by asking the same question the
+ *  chrome asks before it renders a page: `sectionsIncludePage`. Hidden from
+ *  the sidebar and blocked by URL are one fact, computed once in
+ *  `layouts/nav-sections.ts`, so this page cannot describe a rule the shell
+ *  does not enforce. */
+const hiddenNavIdsOf = (sections: SidebarSection[]): string[] =>
+  ALL_NAV_IDS.filter((id) => !sectionsIncludePage(sections, id));
+
 /* ─── The matrix ───────────────────────────────────────────────────────── */
 
 export type MatrixRow = {
@@ -320,6 +333,9 @@ export type MatrixRow = {
   routes: string[];
   /** The two detail routes for this workspace, kept separate for the chart. */
   detailRoutes: string[];
+  /** Nav ids this view cannot reach: absent from its sidebar, and bounced to
+   *  Overview if typed. Derived from the nav constants, never listed by hand. */
+  hiddenNavIds: string[];
   /** PRD sections that justify this node. Never empty. */
   prdRefs: string[];
   /** Enterprise entitlement for org/team forced settings. */
@@ -353,6 +369,7 @@ function buildRow(workspace: WorkspaceNode, role: ViewRole): MatrixRow {
     teamsLanding,
     routes,
     detailRoutes,
+    hiddenNavIds: hiddenNavIdsOf(binding.sections),
     prdRefs: prdRefsFor(workspace, role),
     entitledForcedSettings: workspace.entitledForcedSettings,
   };
@@ -373,6 +390,16 @@ export const rowsForWorkspace = (id: WorkspaceId): MatrixRow[] =>
 
 export const roleById = (id: ViewRole): RoleNode | undefined =>
   ROLE_BY_ID.get(id);
+
+/** The hidden ids for one workspace × role node, for prose that has to name
+ *  them. Reads the matrix rather than the constants a second time. */
+export const hiddenNavIdsFor = (
+  workspace: WorkspaceId,
+  role: ViewRole
+): string[] =>
+  SITE_MAP_MATRIX.find(
+    (row) => row.workspace === workspace && row.role === role
+  )?.hiddenNavIds ?? [];
 
 /** Copy shown where a workspace has no switch. */
 export const NO_SWITCH_NOTE = "No role switch; role snaps to Admin on arrival.";
@@ -405,6 +432,10 @@ export const ENTERPRISE_ONLY_SURFACES: ReferenceEntry[] = [
   },
 ];
 
+/** Nav ids as prose. Ids, not labels: this sheet is read against the code. */
+const idList = (ids: string[]): string =>
+  ids.length > 0 ? ids.join(", ") : "nothing";
+
 /** How the two detail surfaces behave across workspaces and roles. */
 export const DETAIL_PAGE_RULES: ReferenceEntry[] = [
   {
@@ -426,6 +457,10 @@ export const DETAIL_PAGE_RULES: ReferenceEntry[] = [
     term: "Teams",
     detail:
       "Admin sees the list. Manager is redirected onto their own team. Member has no Teams surface and is sent to Overview.",
+  },
+  {
+    term: "Hidden pages",
+    detail: `A page a role cannot see is hidden from that role's sidebar and blocked by URL: typing the path sends the viewer to Overview. Admin sees every page. Manager loses ${idList(hiddenNavIdsFor("pro", "manager"))}; Member loses ${idList(hiddenNavIdsFor("pro", "member"))}; the same on Enterprise. The Free workspace hides ${idList(hiddenNavIdsFor("free", "admin"))} from everyone, admin included: the PRD scopes it to Pro and Enterprise. One guard in layouts/DashboardChrome.tsx enforces both halves, so what the rail hides and what the URL blocks cannot disagree.`,
   },
 ];
 

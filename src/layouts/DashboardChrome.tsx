@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
-import { useLocation, useOutletContext } from "react-router-dom";
+import { Navigate, useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
@@ -44,6 +44,7 @@ import {
   PRO_MEMBER_SIDEBAR_SECTIONS,
   PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
+  sectionsIncludePage,
 } from "./nav-sections";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -89,8 +90,8 @@ export function DashboardChrome({
   hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
-  // Sidebar PRO-feature locks show on non-PRO surfaces. Section set is chosen
-  // per workspace tier so nav links stay within their variant.
+  // Section set is chosen per workspace tier so nav links stay within their
+  // variant, then narrowed by the viewer's role.
   const { pathname } = useLocation();
   // Restores <main>'s scroll position on back/forward; see the hook for why
   // the store lives outside this (per-page remounted) component.
@@ -112,7 +113,6 @@ export function DashboardChrome({
       teamsStore.setViewRole("admin");
     }
   }, [hasTeamRoles, viewRole]);
-  const showLocks = isDefault || isFree;
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isFree
@@ -135,10 +135,10 @@ export function DashboardChrome({
       : isEnterprise
         ? "/overview-enterprise"
         : "/overview";
-  // Upgrade promo in the rail follows the same tier signal as the nav lock
-  // icons and the workspace badge (see lib/plan.ts): shown on the two non-PRO
-  // surfaces, absent on PRO. It lands on that tier's own Billing page rather
-  // than the PRO one, so the CTA never jumps the user across workspaces.
+  // Upgrade promo in the rail follows the same tier signal as the workspace
+  // badge (see lib/plan.ts): shown on the two non-PRO surfaces, absent on PRO.
+  // It lands on that tier's own Billing page rather than the PRO one, so the
+  // CTA never jumps the user across workspaces.
   // `?manage=1` opens the plan-comparison dialog on arrival (BillingFree's
   // PlanCard reads and strips it) so one click reaches the plan picker
   // instead of dropping the user on the page to hunt for the button.
@@ -197,6 +197,20 @@ export function DashboardChrome({
   // via state (rail collapse / panel close) or matchMedia (viewport widens).
   const switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight;
   const closeAskAi = () => setAskAiOpen(false);
+  // Hidden in the sidebar means blocked by URL. `sections` is already this
+  // workspace × role's nav, so a page missing from it is a page this viewer
+  // cannot see, and typing its path lands on Overview instead of the admin
+  // surface. Admin sees every page, so the test is inert there. One guard in
+  // the chrome is what keeps the two halves equal by construction — a per-page
+  // check would be a second list free to disagree with the rail.
+  // PRD §3 (roles and plan availability), §8.4 (team-scoped access),
+  // §11 (acceptance).
+  // Placed below every hook above: the early return must never change hook
+  // order. Overview is always reachable (every variant carries `overview`),
+  // so the redirect target cannot bounce again.
+  if (!sectionsIncludePage(sections, activeNavId)) {
+    return <Navigate replace to={overviewPath} />;
+  }
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
@@ -210,7 +224,6 @@ export function DashboardChrome({
               onNavigate={onNavigate}
               overviewPath={overviewPath}
               sections={sections}
-              showLocks={showLocks}
               topSlot={
                 switcherInRail ? (
                   <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
@@ -234,7 +247,6 @@ export function DashboardChrome({
               onToggleSidebar={onToggleSidebar}
               overviewPath={overviewPath}
               sections={sections}
-              showLocks={showLocks}
               showViewRole={hasTeamRoles}
               sidebarExpanded={sidebarExpanded}
               switcherInRail={switcherInRail}
@@ -323,7 +335,6 @@ function DashTopBar({
   activeNavId,
   onNavigate,
   overviewPath,
-  showLocks,
   askAiOpen,
   onToggleAskAi,
   switcherInRail,
@@ -337,7 +348,6 @@ function DashTopBar({
   activeNavId: string;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
-  showLocks?: boolean;
   askAiOpen: boolean;
   onToggleAskAi: () => void;
   switcherInRail: boolean;
@@ -427,7 +437,6 @@ function DashTopBar({
           onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
-          showLocks={showLocks}
           showViewRole={showViewRole}
           upgradePath={upgradePath}
         />
@@ -446,7 +455,6 @@ function MobileNav({
   activeId,
   onNavigate,
   overviewPath,
-  showLocks,
   showViewRole,
   upgradePath,
 }: {
@@ -454,7 +462,6 @@ function MobileNav({
   activeId: string;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
-  showLocks?: boolean;
   /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
   upgradePath?: string;
@@ -498,7 +505,6 @@ function MobileNav({
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}
-          showLocks={showLocks}
           topSlot={
             <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />
