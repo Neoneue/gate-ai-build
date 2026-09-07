@@ -3,7 +3,6 @@ paths:
   - "src/**/*.tsx"
   - "src/**/*.ts"
   - "src/**/*.css"
-  - "public/design-system.html"
 ---
 
 # Rule: design values are a closed set

@@ -963,7 +963,7 @@ real. `fallbackRequestUuid` still seeds on the RAW `day`/`time` strings so
 `releasedAt` (real API data) and transcript text in `request-bodies.ts`
 (49 dates). Authored distances are preserved, so May 12 content
 (security feeds, audit rows, conversation turns) lands ~25 days before
-DEMO_TODAY. Plan and survey: `plans/demo-clock-shift.md`.
+DEMO_TODAY.
 
 ### 5.3 Key generators
 
