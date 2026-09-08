@@ -157,6 +157,16 @@ export function teamEventShares(
   return new Map(teams.map((t, i) => [t.id, shares[i] ?? 0]));
 }
 
+/** The allocation set for `team`: the live list, plus `team` itself when it
+ *  is not on it. An ARCHIVED team renders from a frozen snapshot after it has
+ *  left the live list; without this its lookup misses and it reads 0 findings
+ *  while its checks still count, and every member row vanishes with it. Its
+ *  historical keys still earned their share (PRD 3 Reassignment), so it takes
+ *  part in the split like any live team. */
+export function teamsIncluding(teams: TeamRow[], team: TeamRow): TeamRow[] {
+  return teams.some((t) => t.id === team.id) ? teams : [...teams, team];
+}
+
 const memberIdFor = (owner: string): string =>
   MEMBER_ROWS.find((m) => m.name === owner)?.id ?? owner;
 
@@ -176,7 +186,10 @@ export function securityForTeamAtRange(
   const requests = Math.round(teamRequests7d(team) * scale);
 
   // Events: this team's share of the org Security page's canon.
-  const findings = teamEventShares(range, customRange, teams).get(team.id) ?? 0;
+  const findings =
+    teamEventShares(range, customRange, teamsIncluding(teams, team)).get(
+      team.id
+    ) ?? 0;
   const { blocked, flagged, redacted } = splitEventMix(findings);
 
   const requestStage = requests;
