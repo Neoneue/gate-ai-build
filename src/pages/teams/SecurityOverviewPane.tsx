@@ -67,6 +67,7 @@ import {
   type TeamMemberSlice,
   type TeamSecurity,
   teamEventShares,
+  teamsIncluding,
 } from "@/pages/teams/security-data";
 import { teamSparkSeries } from "@/pages/teams/spark-series";
 import { skeletonRowIds } from "@/pages/teams/use-theatre-loading";
@@ -368,7 +369,8 @@ function HeroEventsCard({
   // chart's tail and the 7D chart describe the same days.
   const teamSeed = [...team.id].reduce((a, c) => a + c.charCodeAt(0), 0);
   const count = getBucketCount(range, customRange);
-  const findings7d = teamEventShares("7d", null, teams).get(team.id) ?? 0;
+  const findings7d =
+    teamEventShares("7d", null, teamsIncluding(teams, team)).get(team.id) ?? 0;
   const series = teamSparkSeries(
     findings7d,
     security.findings,
