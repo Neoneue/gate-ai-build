@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-08](./2026-09/changelog-9-8.md)
+
+- Teams: an archived team keeps its security events and member rows
+
 ### [2026-09-07](./2026-09/changelog-9-7.md)
 
 - Viewing as switch on Pro: team roles belong to Pro and Enterprise
