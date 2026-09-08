@@ -1,6 +1,6 @@
 import { CreditCard, Info, KeyRound, TriangleAlert } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ import {
   requestRowId,
 } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { withTierOf } from "@/lib/plan";
 import { inScope, useViewScope } from "@/pages/teams/view-scope";
 import { useBudgetBlockRows } from "./budget-block-rows";
 import {
@@ -200,8 +201,10 @@ export function RequestsTableSection({
   // Row-click drill-in navigates to the /messages-findings/:id page
   // (URL-addressable, shareable, multi-tab — the GitHub model).
   const navigate = useNavigate();
-  const openRow = (row: RequestRow) =>
-    navigate(`/messages-findings/${requestRowId(row)}`);
+  const { pathname } = useLocation();
+  const findingsPath = (row: RequestRow) =>
+    withTierOf(pathname, `/messages-findings/${requestRowId(row)}`);
+  const openRow = (row: RequestRow) => navigate(findingsPath(row));
 
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
@@ -764,7 +767,7 @@ export function RequestsTableSection({
                       <TableCell className="whitespace-nowrap">
                         <RowActionButton
                           aria-label={`Inspect ${row.code} message to ${modelName(row.model)} at ${row.time}`}
-                          href={`/messages-findings/${requestRowId(row)}`}
+                          href={findingsPath(row)}
                         >
                           <VendorAvatar vendor={row.vendor} />
                           {/* Name only. A canonical-id second line was added

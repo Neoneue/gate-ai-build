@@ -15,7 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,7 @@ import {
 } from "@/data/requests";
 import { errorExplanation, errorOrigin } from "@/lib/error-origin";
 import { formatCompactCount } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import { BUDGET_BLOCK_USER_MESSAGE } from "@/pages/requests/budget-block-rows";
 import {
   RESPONSE_BADGE,
@@ -61,8 +62,9 @@ import type { RequestRow } from "./types";
 
 export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const openConversation = () =>
-    navigate(`/conversations-trace/${row.conversation}`);
+    navigate(withTierOf(pathname, `/conversations-trace/${row.conversation}`));
   // Provider/upstream failure attribution — drives the metadata panel's
   // Error origin row (badge). Null on success and guardrail-block rows.
   const errorOriginInfo = errorOrigin(row.errorSource);

@@ -4,18 +4,21 @@ import { scaleByShare } from "@/pages/teams/view-scope";
 import type { CustomRange, HeroView, RangeKey } from "./types";
 
 /** A Manager's or Member's reading of the hero: the org canon allocated by
- *  their share of request volume (view-scope.ts). Total = success + errors
- *  still holds, and the trace keeps its shape at the smaller scale. */
+ *  their share of request volume (view-scope.ts). Buckets are scaled first
+ *  and `total` is their sum, so the headline always reconciles with the
+ *  bars (per-bucket rounding would otherwise drift from a separately
+ *  rounded total). Total = success + errors still holds, and the trace
+ *  keeps its shape at the smaller scale. */
 export function scaleHeroView(view: HeroView, share: number): HeroView {
   if (share === 1) {
     return view;
   }
-  const total = scaleByShare(view.total, share);
-  const success = Math.min(total, scaleByShare(view.success, share));
   const data = view.data.map((d) => ({
     ...d,
     requests: scaleByShare(d.requests, share),
   }));
+  const total = data.reduce((sum, d) => sum + d.requests, 0);
+  const success = Math.min(total, scaleByShare(view.success, share));
   return {
     ...view,
     total,

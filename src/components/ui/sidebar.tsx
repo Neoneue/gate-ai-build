@@ -1,4 +1,4 @@
-import { Lock, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import type * as React from "react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Separator } from "@/components/ui/separator";
@@ -29,12 +29,12 @@ export type SidebarItem = {
   id: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;
-  /** When set, clicking the item calls the surface's `onNavigate(pageId)`
-   *  so the inner sidebar can drive the outer App router. */
-  pageId?: string;
-  /** Show a muted, right-flush lock icon on this row — used to mark
-   * Pro-gated features in the free-tier sidebar. */
-  locked?: boolean;
+  /** The URL this row navigates to — clicking calls the surface's
+   *  `onNavigate(pageId)` so the inner sidebar drives the outer App router.
+   *  Required: every rendered row is a live destination. A page a role cannot
+   *  reach is dropped from `sections` (and blocked by URL in
+   *  `layouts/DashboardChrome.tsx`), never rendered inert. */
+  pageId: string;
 };
 
 export type SidebarSection = {
@@ -59,11 +59,6 @@ export interface SidebarProps {
    *  /overview-default). Logo click navigates here. */
   overviewPath?: string;
   sections: SidebarSection[];
-  /** When true, PRO-gated items (those flagged `locked`) render a lock icon.
-   * Driven by the surface tier — passed true only on FREE/default surfaces so
-   * the lock mirrors the workspace PRO/FREE badge. Defaults to false (PRO,
-   * unlocked). */
-  showLocks?: boolean;
   /** Optional node rendered above the nav sections in the EXPANDED rail
    *  (below the brand, full-width). Used to relocate the workspace switcher
    *  into the rail when the top bar is too tight to hold it (desktop rail +
@@ -89,7 +84,6 @@ export function Sidebar({
   overviewPath,
   brand,
   userArea,
-  showLocks = false,
   topSlot,
   upgradePath,
 }: SidebarProps) {
@@ -133,7 +127,6 @@ export function Sidebar({
           onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
-          showLocks={showLocks}
           topSlot={topSlot}
           upgradePath={upgradePath}
           userArea={userArea}
@@ -187,7 +180,6 @@ function SidebarCollapsed({
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
-                const isDisabled = !item.pageId;
                 return (
                   <button
                     aria-current={isActive ? "page" : undefined}
@@ -198,15 +190,10 @@ function SidebarCollapsed({
                     className={
                       isActive
                         ? "flex size-9 items-center justify-center rounded-sm bg-accent text-accent-foreground transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                        : isDisabled
-                          ? "flex size-9 cursor-not-allowed items-center justify-center rounded-sm text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                          : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                     }
-                    disabled={isDisabled}
                     key={item.id}
-                    onClick={
-                      item.pageId ? () => onNavigate?.(item.pageId!) : undefined
-                    }
+                    onClick={() => onNavigate?.(item.pageId)}
                     type="button"
                   >
                     <Icon className="size-[18px]" strokeWidth={1.5} />
@@ -232,7 +219,6 @@ export interface SidebarPanelProps {
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   sections: SidebarSection[];
-  showLocks?: boolean;
   /** Optional node rendered above the nav sections (below the brand header).
    *  Used by the mobile drawer to host the workspace switcher above Overview
    *  at the compact `xs` breakpoint. */
@@ -267,7 +253,6 @@ export function SidebarPanel({
   overviewPath,
   brand,
   userArea,
-  showLocks,
   topSlot,
   upgradePath,
 }: SidebarPanelProps) {
@@ -296,22 +281,16 @@ export function SidebarPanel({
             {section.items.map((item) => {
               const Icon = item.icon;
               const isActive = activeId === item.id;
-              const isDisabled = !item.pageId;
               return (
                 <button
                   aria-current={isActive ? "page" : undefined}
                   className={
                     isActive
                       ? "flex h-9 items-center gap-3 rounded-sm border border-border bg-accent px-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                      : isDisabled
-                        ? "flex h-9 cursor-not-allowed items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground opacity-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                        : "flex h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                      : "flex h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                   }
-                  disabled={isDisabled}
                   key={item.id}
-                  onClick={
-                    item.pageId ? () => onNavigate?.(item.pageId!) : undefined
-                  }
+                  onClick={() => onNavigate?.(item.pageId)}
                   type="button"
                 >
                   <Icon
@@ -322,16 +301,6 @@ export function SidebarPanel({
                     strokeWidth={1.75}
                   />
                   <span className="type-label-14">{item.label}</span>
-                  {item.locked && showLocks ? (
-                    <>
-                      <Lock
-                        aria-hidden
-                        className="ml-auto size-4 shrink-0 text-muted-foreground/60"
-                        strokeWidth={1.75}
-                      />
-                      <span className="sr-only">(Pro feature)</span>
-                    </>
-                  ) : null}
                 </button>
               );
             })}

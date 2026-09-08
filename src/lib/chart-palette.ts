@@ -34,15 +34,3 @@ export const CHART_PALETTE = [
 ] as const;
 
 export type ChartSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
-/**
- * Pick a chart-palette color by 1-based slot. Mirrors `seriesColor`
- * helpers across artboards — wraps with modulo so slot==9 falls back
- * to slot 1 instead of throwing.
- */
-export function chartSlot(slot: ChartSlot | number): string {
-  const idx =
-    (((slot - 1) % CHART_PALETTE.length) + CHART_PALETTE.length) %
-    CHART_PALETTE.length;
-  return CHART_PALETTE[idx]!;
-}

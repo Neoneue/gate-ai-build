@@ -21,7 +21,7 @@ import {
     ordinary content growth briefly opens a small gap that a naive
     `scrollHeight - scrollTop - clientHeight` check misreads as "the user
     scrolled away". Also supplied to the observer as `rootMargin`. */
-export const BOTTOM_THRESHOLD_PX = 60;
+const BOTTOM_THRESHOLD_PX = 60;
 
 const distanceFromBottom = (el: HTMLElement) =>
   el.scrollHeight - el.scrollTop - el.clientHeight;

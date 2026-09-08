@@ -9,11 +9,7 @@
  * file owns what is genuinely Activity's: how many buckets a range has, how
  * they fold as the column narrows, and how they are labelled.
  */
-import {
-  CHART_MARGIN,
-  CHART_Y_AXIS_WIDTH,
-  getChartPlotWidth,
-} from "@/components/ui/chart-geometry";
+import { getChartPlotWidth } from "@/components/ui/chart-geometry";
 import { DEMO_NOW, DEMO_TODAY } from "@/lib/demo-clock";
 import {
   formatCurrency,
@@ -28,7 +24,7 @@ import {
   type Range,
 } from "@/lib/range";
 
-export const BUCKET_COUNTS: Record<PresetRange, number> = {
+const BUCKET_COUNTS: Record<PresetRange, number> = {
   "24h": 12,
   "7d": 7,
   "30d": 30,
@@ -96,16 +92,6 @@ export const BAR_DENSITY_TIERS: readonly {
  *  ~370px column; it exists so an unforeseen layout cannot produce a picket
  *  fence. */
 export const MIN_BAR_PITCH = 19;
-
-/** Horizontal chrome (px) the chart spends before it can plot a bar: the
- *  BarChart's right margin plus the fixed YAxis reserve. Exact rather than
- *  measured now that both are constants — the YAxis no longer auto-sizes to
- *  whichever tick strings the current metric happens to produce.
- *
- *  Only the backstop consumes this. The ladder keys off the column, never the
- *  plotted area, and that is deliberate: a rule that fed the plot back in
- *  would oscillate. */
-export const CHART_CHROME_PX = CHART_Y_AXIS_WIDTH + CHART_MARGIN.right;
 
 /** How many adjacent buckets to fold into one bar in a content column
  *  `columnWidth` wide. 1 means "draw every bucket".

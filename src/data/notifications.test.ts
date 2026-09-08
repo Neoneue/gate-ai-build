@@ -6,6 +6,10 @@ import {
   NOTIFICATIONS_CAP,
   NOTIFICATIONS_NOW,
 } from "@/data/notifications";
+import {
+  NOTIFICATION_SEED_ARCHIVED_IDS,
+  NOTIFICATION_SEED_UNREAD_IDS,
+} from "@/data/notifications-seed-ids";
 import { REQUEST_ROWS_ALL, requestRowId } from "@/data/requests";
 import { EVENT_ROWS as SECURITY_EVENT_ROWS } from "@/pages/security-data";
 
@@ -109,5 +113,22 @@ describe("NOTIFICATION_ITEMS", () => {
       expect(item.copy.length).toBeGreaterThan(0);
       expect(item.Icon).toBeDefined();
     }
+  });
+});
+
+describe("notifications-seed-ids", () => {
+  /* The eager bell badge and the store's INITIAL_STATE read these constants
+     instead of the seed (bundle split, plans/bundle-split.md step 1). They
+     must equal the seed's split exactly, in order. */
+  it("NOTIFICATION_SEED_UNREAD_IDS equals the seed's unread ids", () => {
+    expect([...NOTIFICATION_SEED_UNREAD_IDS]).toEqual(
+      NOTIFICATION_HISTORY.filter((item) => item.unread).map((item) => item.id)
+    );
+  });
+
+  it("NOTIFICATION_SEED_ARCHIVED_IDS equals the seed's read ids", () => {
+    expect([...NOTIFICATION_SEED_ARCHIVED_IDS]).toEqual(
+      NOTIFICATION_HISTORY.filter((item) => !item.unread).map((item) => item.id)
+    );
   });
 });

@@ -8,10 +8,12 @@ import {
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
-import { AuthLayout } from "@/layouts/AuthLayout";
 
 /* Route-level code splitting: each page loads as its own chunk on first
  * visit instead of shipping the whole dashboard in the entry bundle. */
+const AuthLayout = lazy(() =>
+  import("@/layouts/AuthLayout").then((m) => ({ default: m.AuthLayout }))
+);
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );
@@ -127,6 +129,9 @@ const TeamDetailDefault = lazy(() =>
 );
 const SignIn = lazy(() =>
   import("@/pages/SignIn").then((m) => ({ default: m.SignIn }))
+);
+const SiteMap = lazy(() =>
+  import("@/pages/SiteMap").then((m) => ({ default: m.SiteMap }))
 );
 const SignUp = lazy(() =>
   import("@/pages/SignUp").then((m) => ({ default: m.SignUp }))
@@ -299,6 +304,11 @@ export default function App() {
             <Route element={<SignIn />} path="/sign-in" />
             <Route element={<SignUp />} path="/sign-up" />
           </Route>
+          {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
+              A chart of the shell cannot be read from inside the shell, so it
+              mounts at the root beside the auth routes. Admin-only; the page
+              itself bounces any other role to /overview. */}
+          <Route element={<SiteMap />} path="/site-map" />
           <Route element={<Layout />}>
             <Route element={<Navigate replace to="/overview" />} index />
             <Route element={<Dashboard />} path="/overview" />
@@ -351,8 +361,16 @@ export default function App() {
             {/* Default-workspace twins — reached via the workspace switcher. */}
             <Route element={<RequestsDefault />} path="/messages-default" />
             <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-default/:requestId"
+            />
+            <Route
               element={<ConversationsDefault />}
               path="/conversations-default"
+            />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-default/:conversationId"
             />
             <Route element={<ModelsDefault />} path="/models-default" />
             <Route
@@ -380,7 +398,15 @@ export default function App() {
             {/* Free-tier twins — reached via the workspace switcher. */}
             <Route element={<DashboardFree />} path="/overview-free" />
             <Route element={<RequestsFree />} path="/messages-free" />
+            <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-free/:requestId"
+            />
             <Route element={<ConversationsFree />} path="/conversations-free" />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-free/:conversationId"
+            />
             <Route element={<ModelsFree />} path="/models-free" />
             <Route element={<PoliciesFree />} path="/policies-free" />
             <Route element={<AuditTrailFree />} path="/audit-trail-free" />
@@ -398,8 +424,16 @@ export default function App() {
             <Route element={<Dashboard />} path="/overview-enterprise" />
             <Route element={<Requests />} path="/messages-enterprise" />
             <Route
+              element={<RequestsFindings />}
+              path="/messages-findings-enterprise/:requestId"
+            />
+            <Route
               element={<Conversations />}
               path="/conversations-enterprise"
+            />
+            <Route
+              element={<ConversationsTrace />}
+              path="/conversations-trace-enterprise/:conversationId"
             />
             <Route element={<Models />} path="/models-enterprise" />
             <Route

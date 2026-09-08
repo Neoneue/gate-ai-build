@@ -12,7 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,7 @@ import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { getEventFindingCopy } from "@/data/requests";
 import { memberById } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
+import { withTierOf } from "@/lib/plan";
 import type { CustomRange } from "@/lib/range";
 import {
   DETECTION_CHECKS,
@@ -723,13 +724,15 @@ function ThreatEventDetailBody({
   onVerdictChange: (value: EventVerdict) => void;
 }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const actionMeta = ACTION_BADGE[row.action];
   const detail = getEventDetail(row);
   const requestId = row.requestId;
   const conversationId = row.conversationId;
   const openConversation = () =>
     navigate(`/conversations?open=${conversationId}`);
-  const openRequest = () => navigate(`/messages-findings/${requestId}`);
+  const openRequest = () =>
+    navigate(withTierOf(pathname, `/messages-findings/${requestId}`));
   const flaggedSet = new Set(detail.flagged);
 
   // Reconcile against the matching Requests row so the message + detection

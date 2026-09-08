@@ -3,7 +3,6 @@ paths:
   - "src/**/*.tsx"
   - "src/**/*.ts"
   - "src/**/*.css"
-  - "public/design-system.html"
 ---
 
 # Rule: never hardcode a color, ever. Tokenize by semantic intent.
@@ -67,14 +66,6 @@ missing semantic token is not license to drop in a raw ramp.
   the ramp IS the point. Even then, verify it still reads in BOTH themes.
 
 Everything else that renders a color is UI code and obeys the one rule.
-
-## Applies everywhere, including standalone HTML
-
-`public/design-system.html` is not exempt because it is hand-written and
-Tailwind-free. It defines the same semantic tokens in `:root` and
-`[data-theme="dark"]` (mirroring `src/index.css`) precisely so every specimen
-can reference them and flip. A reference page that hardcodes ramps is lying
-about the system it claims to document.
 
 ## Self-check before you write any color
 

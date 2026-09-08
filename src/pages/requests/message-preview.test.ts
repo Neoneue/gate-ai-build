@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { getRequestBody } from "@/data/request-bodies";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
-import { messagePreview } from "./message-preview";
+import { buildMessagePreview, messagePreview } from "./message-preview";
 
 describe("messagePreview", () => {
   // The Messages table renders this string on a row. A value the gateway
@@ -50,5 +51,21 @@ describe("messagePreview", () => {
     // the command the operator needs to tell one row from the next.
     expect(preview).not.toBe("tool: Bash");
     expect(preview?.length).toBeGreaterThan("tool: Bash".length);
+  });
+
+  // The table reads a GENERATED map (src/data/request-previews.ts) so the
+  // list pages skip the transcript blob. This pins it to the inline
+  // resolution over the real bodies, row by row, so an edit to a row, a body
+  // or a finding without `npm run build:previews` fails here instead of
+  // shipping a stale or unmasked preview.
+  it("generated previews match the inline resolution for every row", () => {
+    const drift: string[] = [];
+    for (const row of REQUEST_ROWS_ALL) {
+      const expected = buildMessagePreview(row, getRequestBody(row));
+      if (messagePreview(row) !== expected) {
+        drift.push(`${row.conversation} ${row.time}`);
+      }
+    }
+    expect(drift).toEqual([]);
   });
 });

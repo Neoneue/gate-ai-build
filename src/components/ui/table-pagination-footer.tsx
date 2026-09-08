@@ -14,7 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ROWS_ALL, resolveRowsPerPage } from "@/components/ui/table-pagination";
+import {
+  ROWS_ALL,
+  resolveRowsPerPage,
+  rowsPerPageOptions,
+} from "@/components/ui/table-pagination";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TablePaginationFooter — bottom strip of any paginated table.
@@ -32,12 +36,13 @@ import { ROWS_ALL, resolveRowsPerPage } from "@/components/ui/table-pagination";
  * read the truncation pattern (rare, but supported).
  *
  * Rows-per-page offers 10 / 25 / 50 / All (user direction 2026-08-27: the
- * 100 step became All). "All" resolves to the whole list via
+ * 100 step became All), minus any step larger than the list itself (user
+ * direction 2026-09-07). Under 10 rows only "All" is left, and the select,
+ * its label, and its separator drop out entirely — the count summary and
+ * page controls are unchanged. "All" resolves to the whole list via
  * `resolveRowsPerPage`, which every consumer that slices its own rows must
  * use for its page math, so the option list and the slicing cannot drift.
  * ───────────────────────────────────────────────────────────────────────── */
-
-const ROWS_PER_PAGE_OPTIONS = ["10", "25", "50", ROWS_ALL];
 
 /**
  * Constant-width truncated-pagination window (`1 … 3 4 5 … 7` shape, GitHub
@@ -86,6 +91,17 @@ export function TablePaginationFooter({
   onRowsPerPageChange,
 }: TablePaginationFooterProps) {
   const perPage = resolveRowsPerPage(rowsPerPage, total);
+  const options = rowsPerPageOptions(total);
+  // A page size the list can no longer support (a stale "50" on a 20-row
+  // list) falls back to "All" for display, matching what
+  // `resolveRowsPerPage` already does for the slice math. Derived in
+  // render, never synced with an effect.
+  const effectiveRowsPerPage = options.includes(rowsPerPage)
+    ? rowsPerPage
+    : ROWS_ALL;
+  // Only "All" survives on a list shorter than the smallest step, and a
+  // one-option select is chrome with nothing to choose.
+  const showRowsSelect = options.length > 1;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = (safePage - 1) * perPage + 1;
@@ -103,34 +119,38 @@ export function TablePaginationFooter({
           </span>{" "}
           of <span className="font-medium">{total.toLocaleString()}</span>
         </span>
-        <span aria-hidden className="text-muted-foreground">
-          ·
-        </span>
-        <span className="font-medium font-mono text-muted-foreground text-xs">
-          Rows
-        </span>
-        <Select
-          onValueChange={(v: string) => {
-            onRowsPerPageChange(v);
-            onPageChange(1);
-          }}
-          value={rowsPerPage}
-        >
-          <SelectTrigger
-            aria-label="Rows per page"
-            className="border-border bg-card text-foreground"
-            size="sm"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROWS_PER_PAGE_OPTIONS.map((n) => (
-              <SelectItem key={n} value={n}>
-                {n}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showRowsSelect ? (
+          <>
+            <span aria-hidden className="text-muted-foreground">
+              ·
+            </span>
+            <span className="font-medium font-mono text-muted-foreground text-xs">
+              Rows
+            </span>
+            <Select
+              onValueChange={(v: string) => {
+                onRowsPerPageChange(v);
+                onPageChange(1);
+              }}
+              value={effectiveRowsPerPage}
+            >
+              <SelectTrigger
+                aria-label="Rows per page"
+                className="border-border bg-card text-foreground"
+                size="sm"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((n) => (
+                  <SelectItem key={n} value={n}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        ) : null}
       </div>
 
       <Pagination className="mx-0 w-fit justify-end">

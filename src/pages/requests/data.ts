@@ -15,7 +15,7 @@ import { parseNumeric } from "@/hooks/use-table-sort";
 import type { GuardrailAction, RequestRow, ResponseStatus } from "./types";
 
 /** Chronological sort key: the row's demo-clock-shifted instant in ms. */
-export function rowTimeValue(row: RequestRow): number {
+function rowTimeValue(row: RequestRow): number {
   return requestDate(row).getTime();
 }
 

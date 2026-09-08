@@ -120,7 +120,7 @@ export function BudgetWarnTick({
   );
 }
 
-export function BudgetMeter({
+function BudgetMeter({
   spend,
   cap,
   warnThreshold,

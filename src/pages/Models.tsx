@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
@@ -177,6 +178,11 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
   const resetToFirstPage = () => setPage(1);
 
+  // Page the visible rows by the footer's rows-per-page selector. The footer
+  // only computes labels; slicing is the caller's job (see AuditTrail).
+  const perPage = resolveRowsPerPage(rowsPerPage, filtered.length);
+  const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
+
   const isEmpty = filtered.length === 0;
 
   const clearFilters = () => {
@@ -252,7 +258,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             />
           ) : (
             <>
-              <ModelsTable onSelect={onSelect} rows={filtered} />
+              <ModelsTable onSelect={onSelect} rows={pageRows} />
 
               <TablePaginationFooter
                 onPageChange={setPage}

@@ -1,11 +1,13 @@
 /** Message-column preview text for the Messages table.
  *
  *  Split into its own module because it is the ONLY thing on this page that
- *  needs `@/data/request-bodies` (~440 KB of verbatim transcripts). Keeping it
- *  out of `./data` matters: that file is imported by `Requests.tsx`, so
- *  putting this there would drag the transcripts onto every route that pulls
- *  the row data in. Only RequestsTable imports this, so the weight stays
- *  on /messages.
+ *  needs the message bodies. It used to import `@/data/request-bodies`
+ *  (~425 KB of verbatim transcripts) directly, which put that chunk on the
+ *  Messages and Conversations list pages. The previews are now PRECOMPUTED by
+ *  `scripts/build-request-previews.mjs` into `@/data/request-previews` (one
+ *  masked line per row, ~20 KB); `messagePreview` reads that map and this
+ *  module no longer touches the blob. `buildMessagePreview` below is the
+ *  source of truth the generator and the drift test both call.
  *
  *  Coverage across the 153 rows, measured rather than assumed:
  *    userMessage  13   real user turns
@@ -20,7 +22,9 @@
  *  `Bash: grep -n "isVerySlow" src/pages/...` with no prefixing of our own. */
 
 import { redactFindings } from "@/data/redact";
-import { getRequestBody } from "@/data/request-bodies";
+import type { RequestBodyDetail } from "@/data/request-bodies";
+import { REQUEST_PREVIEWS } from "@/data/request-previews";
+import { requestRowId } from "@/data/requests";
 import type { RequestRow } from "./types";
 
 /** First non-blank line, with interior whitespace runs collapsed so tabs and
@@ -55,9 +59,10 @@ function firstLine(text: string | undefined): string {
  *  rendering; this single line can be a user turn OR a tool call, so a
  *  role-scoped mask would leave a hole the detail view does not have.
  *  Over-masking shows a placeholder; under-masking leaks a secret. */
-export function messagePreview(row: RequestRow): string | undefined {
-  const body = getRequestBody(row);
-
+export function buildMessagePreview(
+  row: RequestRow,
+  body: RequestBodyDetail
+): string | undefined {
   const text =
     firstLine(body.userMessage).replace(/^User:\s*/, "") ||
     firstLine(body.toolArgs) ||
@@ -67,4 +72,11 @@ export function messagePreview(row: RequestRow): string | undefined {
     return;
   }
   return redactFindings(row.findings, text);
+}
+
+/** Table-facing lookup. Reads the generated map so the list pages never load
+ *  the transcript blob; the value is exactly `buildMessagePreview(row,
+ *  getRequestBody(row))`, pinned by the drift test. */
+export function messagePreview(row: RequestRow): string | undefined {
+  return REQUEST_PREVIEWS[requestRowId(row)];
 }

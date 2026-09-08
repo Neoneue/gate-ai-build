@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -43,6 +44,7 @@ import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_NOW } from "@/lib/demo-clock";
 import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import {
   type CustomRange,
   effectiveScale,
@@ -437,6 +439,9 @@ function ConversationsTableSection({
   customRange: CustomRange | null;
 }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const tracePath = (id: string) =>
+    withTierOf(pathname, `/conversations-trace/${id}`);
   const scale = effectiveScale(range, customRange);
   const scope = useViewScope();
   const keyOptions = scope.keyNames
@@ -664,18 +669,14 @@ function ConversationsTableSection({
                     <TableRow
                       className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
                       key={row.conversationId}
-                      onClick={() =>
-                        navigate(`/conversations-trace/${row.conversationId}`)
-                      }
+                      onClick={() => navigate(tracePath(row.conversationId))}
                     >
                       <TableCell className="max-w-0 whitespace-nowrap">
                         <RowActionButton
                           aria-label={`Inspect conversation ${row.title}`}
                           layout="stack"
                           onClick={() =>
-                            navigate(
-                              `/conversations-trace/${row.conversationId}`
-                            )
+                            navigate(tracePath(row.conversationId))
                           }
                         >
                           <span

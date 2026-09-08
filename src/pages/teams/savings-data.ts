@@ -61,7 +61,7 @@ export function teamSavingsFactors(
 }
 
 /** Format a rate the way the org tiles do: two decimals under 1%, else one. */
-export function formatSavingsRate(n: number): string {
+function formatSavingsRate(n: number): string {
   return n.toFixed(Math.abs(n) < 1 ? 2 : 1);
 }
 

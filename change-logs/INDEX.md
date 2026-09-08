@@ -9,10 +9,24 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-07](./2026-09/changelog-9-7.md)
+
+- Viewing as switch on Pro: team roles belong to Pro and Enterprise
+- Rows per page never offers a size the list cannot fill
+- Messages, Conversations: detail pages stay in the viewer's workspace and role
+- Messages, Conversations: a row outside the viewer's keys reads as not found
+- Messages hero: headline equals the sum of the bars for scoped roles
+- Models: the table pages
+- Teams: forced settings gate on the Enterprise entitlement
+- Site map: standalone /site-map flow chart of every workspace and role
+- Roles: a page hidden from the sidebar is blocked by URL
+- Sidebar: unused lock affordance removed
+
 ### [2026-09-04](./2026-09/changelog-9-4.md)
 
 - Heading ladder: 18px retired, dialog and block titles at 20
 - Heading ladder: 28px retired, Teams Overview tab header at 24
+- Lazy shells: notifications list and Ask AI panel load on first open
 - Team Overview: tab header stands apart from the ruled sections
 - Team Overview: section subtitles in the site's own words
 - Team Settings titles match the Settings page at 20

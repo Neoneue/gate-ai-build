@@ -23,7 +23,7 @@
 
 import { useEffect, useState } from "react";
 
-export const TEAMS_LOADING_THEATRE_MS = 1000;
+const TEAMS_LOADING_THEATRE_MS = 1000;
 
 /** Stable React keys for skeleton table rows, one per row that is coming.
  *  The demo knows the row count up front (the data is local), so the

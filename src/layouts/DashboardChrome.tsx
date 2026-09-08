@@ -5,10 +5,10 @@ import {
   PanelLeftOpen,
   Sparkles,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
-import { useLocation, useOutletContext } from "react-router-dom";
+import { domAnimation, LazyMotion } from "motion/react";
+import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
+import { Navigate, useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
-import { AskAiPanel } from "@/components/ui/ask-ai-panel";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
 import { NotificationsMenu } from "@/components/ui/notifications-menu";
@@ -31,6 +31,7 @@ import {
   isDefaultSurface,
   isEnterpriseSurface,
   isFreeSurface,
+  isTeamRoleSurface,
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
@@ -40,7 +41,10 @@ import {
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
+  PRO_MEMBER_SIDEBAR_SECTIONS,
+  PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
+  sectionsIncludePage,
 } from "./nav-sections";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -68,6 +72,16 @@ export interface DashboardChromeProps {
   sidebarExpanded: boolean;
 }
 
+/* The Ask AI panel carries react-markdown and its remark / micromark tree
+ * (about 290 KB of source) plus the dot-matrix animation. It is closed by
+ * default, so it loads on first open and stays mounted afterwards so the
+ * thread survives close / reopen (plans/bundle-split.md step 2). */
+const AskAiPanel = lazy(() =>
+  import("@/components/ui/ask-ai-panel").then((m) => ({
+    default: m.AskAiPanel,
+  }))
+);
+
 export function DashboardChrome({
   activeNavId,
   sidebarExpanded,
@@ -76,8 +90,8 @@ export function DashboardChrome({
   hideDocsButton = false,
   children,
 }: DashboardChromeProps) {
-  // Sidebar PRO-feature locks show on non-PRO surfaces. Section set is chosen
-  // per workspace tier so nav links stay within their variant.
+  // Section set is chosen per workspace tier so nav links stay within their
+  // variant, then narrowed by the viewer's role.
   const { pathname } = useLocation();
   // Restores <main>'s scroll position on back/forward; see the hook for why
   // the store lives outside this (per-page remounted) component.
@@ -85,16 +99,20 @@ export function DashboardChrome({
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
+  // Teams, budgets, roll-up and the team-manager role exist on BOTH Pro and
+  // Enterprise (PRD §3 "Plan availability"); only the org/team forced
+  // settings are Enterprise-only.
+  const hasTeamRoles = isTeamRoleSurface(pathname);
   const viewRole = useViewRole();
-  // The role switch only exists on Enterprise. Leaving for another workspace
-  // snaps the role back to Admin so a Manager / Member gating never leaks
-  // onto Default, Free or Pro pages (they have one signed-in owner).
+  // The role switch exists on Pro and Enterprise. Leaving for a workspace
+  // without roles snaps the role back to Admin so a Manager / Member gating
+  // never leaks onto Default or Free pages — those are single-owner
+  // workspaces with one signed-in owner.
   useEffect(() => {
-    if (!isEnterprise && viewRole !== "admin") {
+    if (!hasTeamRoles && viewRole !== "admin") {
       teamsStore.setViewRole("admin");
     }
-  }, [isEnterprise, viewRole]);
-  const showLocks = isDefault || isFree;
+  }, [hasTeamRoles, viewRole]);
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isFree
@@ -105,7 +123,11 @@ export function DashboardChrome({
           : viewRole === "manager"
             ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
             : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
-        : SIDEBAR_SECTIONS;
+        : viewRole === "admin"
+          ? SIDEBAR_SECTIONS
+          : viewRole === "manager"
+            ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
+            : PRO_MEMBER_SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
     : isFree
@@ -113,10 +135,10 @@ export function DashboardChrome({
       : isEnterprise
         ? "/overview-enterprise"
         : "/overview";
-  // Upgrade promo in the rail follows the same tier signal as the nav lock
-  // icons and the workspace badge (see lib/plan.ts): shown on the two non-PRO
-  // surfaces, absent on PRO. It lands on that tier's own Billing page rather
-  // than the PRO one, so the CTA never jumps the user across workspaces.
+  // Upgrade promo in the rail follows the same tier signal as the workspace
+  // badge (see lib/plan.ts): shown on the two non-PRO surfaces, absent on PRO.
+  // It lands on that tier's own Billing page rather than the PRO one, so the
+  // CTA never jumps the user across workspaces.
   // `?manage=1` opens the plan-comparison dialog on arrival (BillingFree's
   // PlanCard reads and strips it) so one click reaches the plan picker
   // instead of dropping the user on the page to hunt for the button.
@@ -129,6 +151,14 @@ export function DashboardChrome({
   // and read via the outlet context, so it survives navigation (each page
   // remounts its own DashboardChrome) and refresh. Default closed.
   const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
+  // Once opened, the panel stays mounted (closed state is width 0 / inert),
+  // so the lazy chunk is fetched exactly once per chrome mount. Render-phase
+  // latch (the Conversations `?open=` pattern), not an effect: it settles in
+  // the same render the panel opens, so there is no closed-then-open frame.
+  const [askAiEverOpened, setAskAiEverOpened] = useState(askAiOpen);
+  if (askAiOpen && !askAiEverOpened) {
+    setAskAiEverOpened(true);
+  }
   // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
   // content in sync). Below lg there's no rail and no horizontal room, so the
   // same shell opens in a right-docked Sheet instead. `isDesktop` gates which
@@ -167,64 +197,79 @@ export function DashboardChrome({
   // via state (rail collapse / panel close) or matchMedia (viewport widens).
   const switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight;
   const closeAskAi = () => setAskAiOpen(false);
+  // Hidden in the sidebar means blocked by URL. `sections` is already this
+  // workspace × role's nav, so a page missing from it is a page this viewer
+  // cannot see, and typing its path lands on Overview instead of the admin
+  // surface. Admin sees every page, so the test is inert there. One guard in
+  // the chrome is what keeps the two halves equal by construction — a per-page
+  // check would be a second list free to disagree with the rail.
+  // PRD §3 (roles and plan availability), §8.4 (team-scoped access),
+  // §11 (acceptance).
+  // Placed below every hook above: the early return must never change hook
+  // order. Overview is always reachable (every variant carries `overview`),
+  // so the redirect target cannot bounce again.
+  if (!sectionsIncludePage(sections, activeNavId)) {
+    return <Navigate replace to={overviewPath} />;
+  }
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
-      <div className="flex flex-row lg:min-h-0 lg:flex-1">
-        {/* Persistent rail on desktop (lg+). Below lg it is hidden and
+    <LazyMotion features={domAnimation} strict>
+      <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
+        <div className="flex flex-row lg:min-h-0 lg:flex-1">
+          {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
-        <div className="hidden shrink-0 lg:flex">
-          <Sidebar
-            activeId={activeNavId}
-            expanded={sidebarExpanded}
-            onNavigate={onNavigate}
-            overviewPath={overviewPath}
-            sections={sections}
-            showLocks={showLocks}
-            topSlot={
-              switcherInRail ? (
-                <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
-                  <WorkspaceSwitcher className="w-full" compactBadge />
-                  {isEnterprise ? <ViewRoleSwitch className="w-full" /> : null}
-                </div>
-              ) : undefined
-            }
-            upgradePath={upgradePath}
-          />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
-          <DashTopBar
-            activeNavId={activeNavId}
-            askAiOpen={askAiOpen}
-            hideDocsButton={hideDocsButton}
-            onNavigate={onNavigate}
-            onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
-            onToggleSidebar={onToggleSidebar}
-            overviewPath={overviewPath}
-            sections={sections}
-            showLocks={showLocks}
-            showViewRole={isEnterprise}
-            sidebarExpanded={sidebarExpanded}
-            switcherInRail={switcherInRail}
-            upgradePath={upgradePath}
-          />
-          {/* Content pane. Below lg the document flows and scrolls naturally
+          <div className="hidden shrink-0 lg:flex">
+            <Sidebar
+              activeId={activeNavId}
+              expanded={sidebarExpanded}
+              onNavigate={onNavigate}
+              overviewPath={overviewPath}
+              sections={sections}
+              topSlot={
+                switcherInRail ? (
+                  <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3">
+                    <WorkspaceSwitcher className="w-full" compactBadge />
+                    {hasTeamRoles ? (
+                      <ViewRoleSwitch className="w-full" />
+                    ) : null}
+                  </div>
+                ) : undefined
+              }
+              upgradePath={upgradePath}
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
+            <DashTopBar
+              activeNavId={activeNavId}
+              askAiOpen={askAiOpen}
+              hideDocsButton={hideDocsButton}
+              onNavigate={onNavigate}
+              onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
+              onToggleSidebar={onToggleSidebar}
+              overviewPath={overviewPath}
+              sections={sections}
+              showViewRole={hasTeamRoles}
+              sidebarExpanded={sidebarExpanded}
+              switcherInRail={switcherInRail}
+              upgradePath={upgradePath}
+            />
+            {/* Content pane. Below lg the document flows and scrolls naturally
               (no forced fill, no internal scroll). At lg+ the pane becomes a
               bounded flex child that scrolls internally — `flex-1 min-h-0`
               (without `min-h-0` a flex item won't shrink below its content and
               the scroll container never forms). `[&>*]:shrink-0` keeps direct
               children at their natural heights so the pane scrolls instead of
               squashing them. */}
-          {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
+            {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
-          <main
-            className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
-            ref={mainRef}
-          >
-            {children}
-          </main>
-        </div>
-        {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
+            <main
+              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              ref={mainRef}
+            >
+              {children}
+            </main>
+          </div>
+          {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
             `hidden … lg:flex` pattern). As a `shrink-0` sibling of the
             `flex-1 min-w-0` main column, animating its width from 0 → 368px
             condenses the top bar AND content together (the push effect). The
@@ -233,41 +278,50 @@ export function DashboardChrome({
             animation is the sanctioned mechanism here (per the build brief);
             `motion-reduce` snaps it instantly. `inert` when closed drops the
             offscreen skeleton out of the tab order. */}
-        <div
-          className={cn(
-            "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
-            askAiOpen ? "lg:w-[368px]" : "lg:w-0"
-          )}
-        >
           <div
-            className="flex h-full w-[368px] flex-col border-border border-l bg-card"
-            inert={!askAiOpen}
+            className={cn(
+              "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
+              askAiOpen ? "lg:w-[368px]" : "lg:w-0"
+            )}
           >
-            <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+            <div
+              className="flex h-full w-[368px] flex-col border-border border-l bg-card"
+              inert={!askAiOpen}
+            >
+              {askAiEverOpened ? (
+                <Suspense fallback={null}>
+                  <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+                </Suspense>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
-      {/* Below lg the docked column is hidden (no rail, no horizontal room), so
+        {/* Below lg the docked column is hidden (no rail, no horizontal room), so
           the same shell opens in a right-docked Sheet. `isDesktop` keeps this
           closed on lg+ so it never portals open beside the docked column; the
           Base-UI flicker fix (`data-closed:fill-mode-forwards`) is inherited
           from SheetContent. */}
-      <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
-        <SheetContent
-          className="w-full gap-0 p-0 sm:max-w-[368px]"
-          showCloseButton={false}
-          side="right"
-        >
-          <SheetTitle className="sr-only">Ask AI</SheetTitle>
-          <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
-        </SheetContent>
-      </Sheet>
-      {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
+        <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
+          <SheetContent
+            className="w-full gap-0 p-0 sm:max-w-[368px]"
+            showCloseButton={false}
+            side="right"
+          >
+            <SheetTitle className="sr-only">Ask AI</SheetTitle>
+            {askAiEverOpened ? (
+              <Suspense fallback={null}>
+                <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
+              </Suspense>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+        {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
           not to this scroll container — placing it here as a sibling keeps
           the stacking context clean while the `fixed` rule escapes any
           overflow clipping from the scrollable content pane above. */}
-      <FeedbackFab askAiOpen={askAiOpen} />
-    </div>
+        <FeedbackFab askAiOpen={askAiOpen} />
+      </div>
+    </LazyMotion>
   );
 }
 
@@ -281,7 +335,6 @@ function DashTopBar({
   activeNavId,
   onNavigate,
   overviewPath,
-  showLocks,
   askAiOpen,
   onToggleAskAi,
   switcherInRail,
@@ -295,12 +348,11 @@ function DashTopBar({
   activeNavId: string;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
-  showLocks?: boolean;
   askAiOpen: boolean;
   onToggleAskAi: () => void;
   switcherInRail: boolean;
   upgradePath?: string;
-  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
 }) {
   return (
@@ -385,7 +437,6 @@ function DashTopBar({
           onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
-          showLocks={showLocks}
           showViewRole={showViewRole}
           upgradePath={upgradePath}
         />
@@ -404,7 +455,6 @@ function MobileNav({
   activeId,
   onNavigate,
   overviewPath,
-  showLocks,
   showViewRole,
   upgradePath,
 }: {
@@ -412,8 +462,7 @@ function MobileNav({
   activeId: string;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
-  showLocks?: boolean;
-  /** Enterprise only: the "Viewing as" Admin / Manager switch. */
+  /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
   upgradePath?: string;
 }) {
@@ -456,7 +505,6 @@ function MobileNav({
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}
-          showLocks={showLocks}
           topSlot={
             <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />

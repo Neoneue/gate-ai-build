@@ -12,7 +12,9 @@ import {
 } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * ViewRoleSwitch — "Viewing as" Admin / Manager / Member, Enterprise only.
+ * ViewRoleSwitch — "Viewing as" Admin / Manager / Member, on Pro and
+ * Enterprise (PRD §3: teams, budgets, roll-up and the team-manager role
+ * exist on both plans; only the org/team forced settings are Enterprise-only).
  * Sits right of the workspace switcher in the top bar (user 2026-09-03).
  * Drives the AG-695 role variants: the team-role sidebar, landing on the
  * user's own team, and every hidden or read-only pane. Admin is the seeded

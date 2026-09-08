@@ -38,12 +38,6 @@ function orgRemainder(own: TeamRow): TeamRow {
   };
 }
 
-/** The team whose security a scoped user reads: the managed team for a
- *  Manager, themself for a Member. Null when unscoped. */
-export function securityTeam(scope: ViewScope): TeamRow | null {
-  return scope.managedTeam ?? scope.ownTeam;
-}
-
 /** Key names whose events a scoped user may see. Null when unscoped. */
 export function securityKeyNames(scope: ViewScope): Set<string> | null {
   if (!scope.scoped) {

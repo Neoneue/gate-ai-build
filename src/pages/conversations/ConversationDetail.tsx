@@ -6,7 +6,7 @@
  */
 import { ExternalLink, TriangleAlert } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -31,6 +31,7 @@ import {
 } from "@/data/conversationDetail";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { formatCompactCount } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { RequestTracePanel } from "./RequestTracePanel";
 import type {
@@ -111,6 +112,7 @@ export function ConversationDetailBody({
   variant?: "page" | "modal";
 }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   // Cross-link selection state — clicking a message bubble or trace step
   // sets the active requestId; both panels paint the matching item with
   // the selection treatment (blue ring on the bubble, blue left-bar +
@@ -400,7 +402,12 @@ export function ConversationDetailBody({
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
-                            navigate(`/messages-findings/${activeRequestId}`);
+                            navigate(
+                              withTierOf(
+                                pathname,
+                                `/messages-findings/${activeRequestId}`
+                              )
+                            );
                           }
                         }}
                         size="sm"
@@ -474,7 +481,12 @@ export function ConversationDetailBody({
                         disabled={!activeRequestId}
                         onClick={() => {
                           if (activeRequestId) {
-                            navigate(`/messages-findings/${activeRequestId}`);
+                            navigate(
+                              withTierOf(
+                                pathname,
+                                `/messages-findings/${activeRequestId}`
+                              )
+                            );
                           }
                         }}
                         size="sm"
@@ -548,7 +560,12 @@ export function ConversationDetailBody({
                           disabled={!activeRequestId}
                           onClick={() => {
                             if (activeRequestId) {
-                              navigate(`/messages-findings/${activeRequestId}`);
+                              navigate(
+                                withTierOf(
+                                  pathname,
+                                  `/messages-findings/${activeRequestId}`
+                                )
+                              );
                             }
                           }}
                           size="sm"
