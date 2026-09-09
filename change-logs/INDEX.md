@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-09](./2026-09/changelog-9-9.md)
+
+- Impeccable design skill updated to 4.3.1
+
 ### [2026-09-08](./2026-09/changelog-9-8.md)
 
 - Teams: an archived team keeps its security events and member rows
