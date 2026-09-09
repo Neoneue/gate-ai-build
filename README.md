@@ -1,6 +1,6 @@
 # Constellation Gate AI · App
 
-The live web application for Constellation Gate AI. Forked from the `mvp` design lab — same React + TypeScript + Vite stack, same design system primitives in `src/components/ui/`, but stripped of the artboard explorer chrome and spec sheets. This repo builds and deploys the production product surface, nothing else.
+The design demo build for Constellation Gate AI. Forked from the `mvp` design lab — same React + TypeScript + Vite stack, same design system primitives in `src/components/ui/`, but stripped of the artboard explorer chrome and spec sheets. This repo builds and deploys the production product surface, nothing else.
 
 ## Routes
 
