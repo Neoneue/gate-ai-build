@@ -163,9 +163,13 @@ export function Notifications({
  * One declaration drives the section-line headers AND the per-row cells, so
  * the two can never drift out of alignment. `CHANNEL_COL` is the shared
  * column width; the header strip carries the card's own `px-4` as `pr-4` so
- * a header sits exactly over the checkbox beneath it. */
+ * a header sits exactly over the checkbox beneath it. 32px = the Switch's
+ * width, so the LAST column centres exactly under the delivery-channel
+ * toggles above it (16px card padding + 16px), and `CHANNEL_GAP` (16px)
+ * keeps the two boxes a hand's width apart instead of a column's. */
 
-const CHANNEL_COL = "w-16";
+const CHANNEL_COL = "w-8";
+const CHANNEL_GAP = "gap-4";
 
 const CHANNEL_COLUMNS: Array<{ key: keyof ChannelSelection; label: string }> = [
   { key: "email", label: "Email" },
@@ -633,7 +637,7 @@ function ChannelsCard({
                   batch into a digest. At least one has to stay selected.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div className="flex flex-col gap-3">
                 {EMAIL_FREQUENCIES.map((frequency) => {
                   const on = prefs.emailFrequency.includes(frequency.id);
                   return (
@@ -677,12 +681,15 @@ function ChannelsCard({
 
 function ColumnHeaders() {
   return (
-    <div className="flex shrink-0 items-center gap-4 pr-4">
+    <div className={cn("flex shrink-0 items-center pr-4", CHANNEL_GAP)}>
       {CHANNEL_COLUMNS.map((column) => (
         <span
           className={cn(
             CHANNEL_COL,
-            "type-label-12 text-center text-muted-foreground"
+            // The column is the Switch's 32px, narrower than "In-app"; the
+            // label centres on the column axis and overflows both sides
+            // instead of wrapping, so the axis under it never moves.
+            "type-label-12 flex justify-center whitespace-nowrap text-muted-foreground"
           )}
           key={column.key}
         >
@@ -709,8 +716,8 @@ function TypeRow({
   selection: ChannelSelection;
 }) {
   return (
-    <div className="flex items-center gap-4 px-4 py-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+    <div className={cn("flex items-center px-4 py-4", CHANNEL_GAP)}>
+      <div className="flex min-w-0 flex-1 flex-col gap-1 pr-1">
         <span className="type-label-14 text-foreground">{name}</span>
         <p className="type-copy-12 m-0 text-pretty text-muted-foreground">
           {description}

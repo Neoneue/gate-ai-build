@@ -111,7 +111,7 @@ function NotificationsMenu({
             }
             className="relative"
             size="icon"
-            variant="outline"
+            variant="ghost-to-outline"
           >
             <BellIcon aria-hidden size={16} strokeWidth={1.75} />
             {unreadCount > 0 ? (
@@ -123,10 +123,33 @@ function NotificationsMenu({
           </Button>
         }
       />
+      {/* Below `lg` the panel is a full-width drop-down hung from the 64px top
+          bar (the bar is `sticky top-0` there, so `top-16` meets its bottom
+          edge), not a 400px popover clamped against a 390px viewport. The
+          Positioner's inline `transform` is what Base UI anchors with, so the
+          override is `max-lg:transform-none!` plus fixed inset; at `lg`+ every
+          override drops away and Base UI's anchoring returns. Only the
+          placement moves; the Popup keeps the primitive's surface recipe and
+          swaps its top radius for a straight edge that meets the bar. */}
       <PopoverContent
         align={align}
         aria-label="Notifications"
-        className="w-100 p-0"
+        // 50% scrim below `lg` (user call 2026-09-09; the Sheet's is 40%): the
+        // page dims so the top sheet reads as the front layer. Starts under
+        // the bar (`top-16`), so the bar itself stays lit. No scrim at `lg`+.
+        backdropClassName="top-16 bg-neutral-900/50 supports-backdrop-filter:backdrop-blur-xs lg:hidden"
+        className={cn(
+          "w-full rounded-t-none border-t-0 p-0 lg:w-100 lg:rounded-t-sm lg:border-t",
+          // Below `lg` it MOVES like the Sheet, not like a popover: slide down
+          // from BEHIND the bar on open (300ms), back up behind it on dismiss
+          // (200ms), on the drawer curve. The Positioner starts at the bar's
+          // bottom edge and clips (`overflow-hidden`), so the travelling panel
+          // is never painted over the bar. The primitive's fade / zoom is
+          // switched off with `max-lg:` overrides and returns untouched at
+          // `lg`+.
+          "max-lg:data-open:slide-in-from-top max-lg:data-closed:slide-out-to-top max-lg:data-open:fade-in-100 max-lg:data-closed:fade-out-100 max-lg:data-open:zoom-in-100 max-lg:data-closed:zoom-out-100 max-lg:duration-300 max-lg:ease-[var(--ease-drawer)] max-lg:will-change-transform max-lg:data-closed:duration-200"
+        )}
+        positionerClassName="max-lg:fixed! max-lg:inset-x-0! max-lg:top-16! max-lg:w-auto! max-lg:transform-none! max-lg:overflow-hidden"
         side={side}
         sideOffset={sideOffset}
       >

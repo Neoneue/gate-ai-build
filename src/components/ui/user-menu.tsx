@@ -12,6 +12,9 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 
+/* Desktop-only (`lg`+). Below `lg` the nav Sheet renders the same account
+ * actions inline at its foot instead — a popover inside a drawer is a second
+ * layer over a layer on a phone. See `SidebarAccountRows` in `sidebar.tsx`. */
 type UserMenuProps = {
   children: React.ReactElement;
   onNavigate?: (pageId: string) => void;

@@ -32,6 +32,19 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        /* The ONE responsive variant (added 2026-09-09) — `ghost` below `lg`,
+           `outline` from `lg`. Same reasoning as the responsive `icon-action`
+           size below: `variant` is a prop and cannot carry a breakpoint, and
+           re-declaring a variant's border / fill / shadow in a call-site
+           className is hand-rolling (`.claude/rules/no-handrolling.md`).
+           Written so the `lg`+ half is byte-for-byte the `outline` recipe —
+           the ghost-only dark hover is fenced behind `max-lg:` — which is why
+           desktop is provably unchanged. Base already reserves the 1px
+           (`border border-transparent`), so dropping the edge below `lg`
+           moves no pixels. Consumer: the top bar's notifications bell, where
+           below `lg` the hamburger is the only bordered control. */
+        "ghost-to-outline":
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground lg:border-border lg:bg-card lg:shadow-xs lg:dark:border-input max-lg:dark:hover:bg-muted/50",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 dark:hover:bg-destructive/30",
         link: "text-primary underline-offset-4 hover:underline active:opacity-80",

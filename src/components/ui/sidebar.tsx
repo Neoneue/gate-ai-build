@@ -1,9 +1,11 @@
-import { MoreHorizontal } from "lucide-react";
+import { BookOpen, Moon, MoreHorizontal, Sun, UserRound } from "lucide-react";
 import type * as React from "react";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { LogoutIcon } from "@/components/ui/logout";
 import { Separator } from "@/components/ui/separator";
 import { SidebarUpgradeCard } from "@/components/ui/sidebar-upgrade-card";
 import { UserMenu } from "@/components/ui/user-menu";
+import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -213,9 +215,22 @@ function SidebarCollapsed({
 
 /* ─── Expanded (240px full nav) ─────────────────────────────────────────── */
 
+/* The nav row recipe, extracted 2026-09-09 so the mobile account rows at the
+ * foot of the Sheet can BE nav rows rather than a second paste of the same
+ * string (`.claude/rules/no-handrolling.md`). Values are unchanged: 36px row,
+ * 16px glyph, `type-label-14` label, quiet by colour and structural by weight. */
+const NAV_ROW =
+  "flex h-10 lg:h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+
+const NAV_ROW_ACTIVE =
+  "flex h-10 lg:h-9 items-center gap-3 rounded-sm border border-border bg-accent px-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+
 export interface SidebarPanelProps {
   activeId: string;
   brand?: React.ReactNode;
+  /** Mirrors `DashboardChrome.hideDocsButton`. Reaches the below-`lg` account
+   *  rows, the mobile home of the top bar's Docs button. */
+  hideDocsButton?: boolean;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   sections: SidebarSection[];
@@ -252,6 +267,7 @@ export function SidebarPanel({
   onNavigate,
   overviewPath,
   brand,
+  hideDocsButton,
   userArea,
   topSlot,
   upgradePath,
@@ -270,60 +286,71 @@ export function SidebarPanel({
       {topSlot}
 
       {/* Nav sections */}
-      <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pt-3 pb-6">
-        {sections.map((section, i) => (
-          <div className="flex flex-col" key={section.label ?? `top-${i}`}>
-            {section.label ? (
-              <Eyebrow as="div" className="px-2 pt-1 pb-2">
-                {section.label}
-              </Eyebrow>
-            ) : null}
-            {section.items.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeId === item.id;
-              return (
-                <button
-                  aria-current={isActive ? "page" : undefined}
-                  className={
-                    isActive
-                      ? "flex h-9 items-center gap-3 rounded-sm border border-border bg-accent px-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                      : "flex h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                  }
-                  key={item.id}
-                  onClick={() => onNavigate?.(item.pageId)}
-                  type="button"
-                >
-                  <Icon
-                    className={cn(
-                      "size-4 shrink-0",
-                      isActive && "text-foreground"
-                    )}
-                    strokeWidth={1.75}
-                  />
-                  <span className="type-label-14">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+      {/* Below `lg` the nav and the account block share ONE scroll container
+          so the account rows travel with the links instead of pinning to the
+          foot and eating viewport. At `lg`+ the wrapper is display: contents,
+          so the desktop rail keeps its `flex-1` nav and pinned user area. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:contents">
+        <nav className="flex flex-col gap-4 px-3 pt-3 pb-6 lg:flex-1 lg:overflow-y-auto">
+          {sections.map((section, i) => (
+            <div className="flex flex-col" key={section.label ?? `top-${i}`}>
+              {section.label ? (
+                <Eyebrow as="div" className="px-2 pt-1 pb-2">
+                  {section.label}
+                </Eyebrow>
+              ) : null}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeId === item.id;
+                return (
+                  <button
+                    aria-current={isActive ? "page" : undefined}
+                    className={isActive ? NAV_ROW_ACTIVE : NAV_ROW}
+                    key={item.id}
+                    onClick={() => onNavigate?.(item.pageId)}
+                    type="button"
+                  >
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0",
+                        isActive && "text-foreground"
+                      )}
+                      strokeWidth={1.75}
+                    />
+                    <span className="type-label-14">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
 
-      {/* Upgrade promo. In Figma this is the last child of `nav-list`, which
+        {/* Upgrade promo. In Figma this is the last child of `nav-list`, which
           is SPACE_BETWEEN — nav at the top, card pinned to the bottom. Here
           the <nav> above is already `flex-1`, so it takes the slack and the
           card lands in the same place, one level out: it is a promo, not a
           destination, and does not belong inside the nav landmark. Aligns to
           the nav items on `px-3`; `pb-4` is the 16px `nav-list` bottom
           padding, measured off the frame. */}
-      {upgradePath ? (
-        <div className="shrink-0 px-3 pb-4">
-          <SidebarUpgradeCard onClick={() => onNavigate?.(upgradePath)} />
-        </div>
-      ) : null}
+        {upgradePath ? (
+          <div className="shrink-0 px-3 pb-4">
+            <SidebarUpgradeCard onClick={() => onNavigate?.(upgradePath)} />
+          </div>
+        ) : null}
 
-      {/* Bottom user area */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-4">
-        {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
+        {/* Bottom user area — `lg`+ only. Below `lg` a popover inside the nav
+          Sheet would stack a layer on a layer on a phone, so the same account
+          actions render INLINE underneath instead (SidebarAccountRows). The
+          two never both render: this row is `hidden lg:flex`, that block is
+          `lg:hidden`. */}
+        <div className="hidden shrink-0 items-center justify-between gap-2 border-border border-t px-3 py-4 lg:flex">
+          {userArea ?? <DefaultUserArea onNavigate={onNavigate} />}
+        </div>
+
+        <SidebarAccountRows
+          hideDocsButton={hideDocsButton}
+          onNavigate={onNavigate}
+        />
       </div>
     </div>
   );
@@ -352,6 +379,102 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
         src="/gate-ai-logo-dark.png"
       />
     </button>
+  );
+}
+
+/* Below `lg` the account actions sit at the foot of the Sheet, not in a
+ * popover: a menu inside a drawer stacks a layer on a layer on a phone. The
+ * pattern is the Vercel / GitHub mobile account block: a tinted profile band
+ * (`bg-card-muted`, the inset surface) splits account from navigation, then
+ * label-left icon-right rows for the actions the compact top bar gave up (Docs,
+ * theme) plus the `UserMenu` items (Settings, Sign out). The theme row is a
+ * whole-row toggle like its neighbours (a 32px icon alone is too small a
+ * touch target); the trailing sun / moon glyph reports the current state.
+ * Sign out stays quiet: colour is for status, not for a routine action. */
+const ACCOUNT_ROW =
+  "flex h-10 w-full items-center justify-between gap-3 rounded-sm border border-transparent px-2 text-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+
+function SidebarAccountRows({
+  hideDocsButton,
+  onNavigate,
+}: {
+  hideDocsButton?: boolean;
+  onNavigate?: (pageId: string) => void;
+}) {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <div className="flex shrink-0 flex-col lg:hidden">
+      <div className="flex items-center gap-3 border-border border-t bg-card-muted px-5 py-4">
+        <span
+          aria-hidden
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
+        >
+          CP
+        </span>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="type-label-14 truncate text-foreground leading-tight">
+            Chad Ponticas
+          </span>
+          <span
+            className="type-copy-12 truncate text-muted-foreground leading-tight"
+            title="chad@constellationnetwork.io"
+          >
+            chad@constellationnetwork.io
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col border-border border-t px-3 pt-3 pb-4">
+        <button
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          className={ACCOUNT_ROW}
+          onClick={toggle}
+          type="button"
+        >
+          <span className="type-label-14">Theme</span>
+          {isDark ? (
+            <Moon
+              className="size-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          ) : (
+            <Sun
+              className="size-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          )}
+        </button>
+        <button
+          className={ACCOUNT_ROW}
+          onClick={() => onNavigate?.("/settings")}
+          type="button"
+        >
+          <span className="type-label-14">Account settings</span>
+          <UserRound
+            className="size-4 shrink-0 text-muted-foreground"
+            strokeWidth={1.75}
+          />
+        </button>
+        {hideDocsButton ? null : (
+          <button className={ACCOUNT_ROW} type="button">
+            <span className="type-label-14">Docs</span>
+            <BookOpen
+              className="size-4 shrink-0 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+          </button>
+        )}
+        <button className={ACCOUNT_ROW} type="button">
+          <span className="type-label-14">Sign out</span>
+          <LogoutIcon
+            aria-hidden
+            className="size-4 shrink-0 text-muted-foreground"
+            size={16}
+            strokeWidth={1.75}
+          />
+        </button>
+      </div>
+    </div>
   );
 }
 

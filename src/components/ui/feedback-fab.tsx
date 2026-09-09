@@ -75,7 +75,10 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
       <Button
         aria-label="Send feedback"
         className={cn(
-          "fixed right-6 bottom-6 z-40",
+          // Anchored to the page gutter: 16px where the top bar and content
+          // run `px-4`, 24px from `sm` where they step to `px-6`, so the bubble
+          // lines up with the content edge at every width.
+          "fixed right-4 bottom-4 z-40 sm:right-6 sm:bottom-6",
           // 48px launcher — one step above `size="icon"` (36px), which is a
           // toolbar glyph, not a viewport-anchored bubble. The only geometry
           // the primitive does not carry.
