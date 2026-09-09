@@ -414,11 +414,35 @@ function DashTopBar({
           </div>
         )}
       </div>
+      {/* Below `lg` the top bar carries four items only — logomark, bell,
+          Ask AI, hamburger. The theme toggle and Docs leave the bar and
+          reappear as rows in the inline account block at the foot of the nav
+          Sheet (`SidebarAccountRows` in sidebar.tsx); at `lg`+ everything
+          here renders exactly as before.
+
+          Ask AI is TWO buttons rather than one with a responsive size,
+          because a `size` override in a call-site className is hand-rolling
+          the primitive (`.claude/rules/no-handrolling.md`); responsive
+          visibility is not. Below `lg` the bell and Ask AI are BORDERLESS —
+          the bell on the responsive `ghost-to-outline` variant, the
+          mobile-only Ask AI on plain `ghost` — so the hamburger is the one
+          bordered control in the compact bar. */}
       <div className="flex items-center gap-2">
         <NotificationsMenu />
-        <ThemeToggle />
+        <ThemeToggle className="hidden lg:inline-flex" />
         <Button
           aria-expanded={askAiOpen}
+          aria-label="Ask AI"
+          className="lg:hidden"
+          onClick={onToggleAskAi}
+          size="icon"
+          variant="ghost"
+        >
+          <Sparkles aria-hidden size={16} />
+        </Button>
+        <Button
+          aria-expanded={askAiOpen}
+          className="hidden lg:inline-flex"
           onClick={onToggleAskAi}
           size="default"
           variant="outline"
@@ -427,13 +451,18 @@ function DashTopBar({
           Ask AI
         </Button>
         {hideDocsButton ? null : (
-          <Button size="default" variant="outline">
+          <Button
+            className="hidden lg:inline-flex"
+            size="default"
+            variant="outline"
+          >
             <BookOpen aria-hidden data-icon="inline-start" size={16} />
             Docs
           </Button>
         )}
         <MobileNav
           activeId={activeNavId}
+          hideDocsButton={hideDocsButton}
           onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
@@ -447,12 +476,13 @@ function DashTopBar({
 
 /* ─── Mobile nav (below md) ─────────────────────────────────────────────────
  * Below md the persistent rail is hidden, so the primary nav lives behind a
- * hamburger in the top-bar right group (after Docs). It opens the shared
+ * hamburger, the last item in the top-bar right group. It opens the shared
  * <SidebarPanel> in a right-docked Sheet (shadcn `side` API), so mobile and
  * desktop navigation never drift. A nav tap closes the sheet. */
 function MobileNav({
   sections,
   activeId,
+  hideDocsButton,
   onNavigate,
   overviewPath,
   showViewRole,
@@ -460,6 +490,9 @@ function MobileNav({
 }: {
   sections: SidebarSection[];
   activeId: string;
+  /** Mirrors `DashTopBar.hideDocsButton` — when true the Docs row is omitted
+   *  from the user menu at the foot of the Sheet as well as from the top bar. */
+  hideDocsButton?: boolean;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
@@ -502,6 +535,7 @@ function MobileNav({
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <SidebarPanel
           activeId={activeId}
+          hideDocsButton={hideDocsButton}
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}

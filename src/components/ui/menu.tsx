@@ -82,7 +82,7 @@ function MenuItem({
   return (
     <MenuPrimitive.Item
       className={cn(
-        "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-xs px-2 text-sm outline-none transition-colors duration-100 ease-out data-disabled:pointer-events-none data-disabled:opacity-50 motion-reduce:transition-none",
+        "relative flex h-9 cursor-pointer select-none items-center gap-2 rounded-xs px-2 text-sm outline-none transition-colors duration-100 ease-out data-disabled:pointer-events-none data-disabled:opacity-50 motion-reduce:transition-none lg:h-8",
         variant === "destructive"
           ? "text-danger-700 focus-visible:bg-danger-50 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-700 dark:text-danger-300 dark:data-[highlighted]:bg-danger-500/15 dark:data-[highlighted]:text-danger-300 dark:focus-visible:bg-danger-500/15 [&_svg]:text-danger-700 dark:[&_svg]:text-danger-300"
           : cn(

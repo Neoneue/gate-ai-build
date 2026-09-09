@@ -13,14 +13,14 @@ import { cn } from "@/lib/utils";
  * both themes (a raw neutral hover would darken in dark mode).
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
 
   return (
     <Button
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      className="text-muted-foreground hover:text-foreground"
+      className={cn("text-muted-foreground hover:text-foreground", className)}
       onClick={toggle}
       size="icon"
       variant="ghost"
