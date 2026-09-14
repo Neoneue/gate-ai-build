@@ -113,7 +113,12 @@ function NotificationsMenu({
             size="icon"
             variant="ghost-to-outline"
           >
-            <BellIcon aria-hidden size={16} strokeWidth={1.75} />
+            <BellIcon
+              aria-hidden
+              className="[&>svg]:size-5 lg:[&>svg]:size-4"
+              size={16}
+              strokeWidth={1.75}
+            />
             {unreadCount > 0 ? (
               <span
                 aria-hidden

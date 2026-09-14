@@ -398,12 +398,19 @@ function DashTopBar({
          *  the nav moves into the hamburger Sheet; the workspace switcher lives
          *  in that Sheet below lg. At lg+ the rail carries the brand and the
          *  switcher sits here in the top bar. */}
-        <img
-          alt=""
-          aria-hidden
-          className="h-8 w-auto lg:hidden"
-          src="/gate-ai-logo-mark.png"
-        />
+        <button
+          aria-label="Go to overview"
+          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 lg:hidden"
+          onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
+          type="button"
+        >
+          <img
+            alt=""
+            aria-hidden
+            className="h-8 w-auto"
+            src="/gate-ai-logo-mark.png"
+          />
+        </button>
         {/* At lg+ the switcher normally lives here. In the tight band (rail +
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
@@ -438,7 +445,7 @@ function DashTopBar({
           size="icon"
           variant="ghost"
         >
-          <Sparkles aria-hidden size={16} />
+          <Sparkles aria-hidden className="size-5" size={20} />
         </Button>
         <Button
           aria-expanded={askAiOpen}
@@ -529,7 +536,7 @@ function MobileNav({
           />
         }
       >
-        <Menu aria-hidden className="size-4" strokeWidth={1.75} />
+        <Menu aria-hidden className="size-5" strokeWidth={1.75} />
       </SheetTrigger>
       <SheetContent className="w-75 gap-0 p-0" side="right">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
