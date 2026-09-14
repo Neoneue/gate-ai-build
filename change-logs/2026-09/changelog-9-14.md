@@ -49,6 +49,43 @@ providers. `formatTokenCount` renders one decimal at the M step (1.0M, never
 1M). `ProviderStack` renders marks in `PROVIDER_ORDER` on every row instead
 of each model's own API order.
 
+### Models: feed-reconciled catalog, rank column, Features strip, card hover `7457acd`
+
+Before: the 29 curated catalog rows carried hand-typed prices, context
+windows and capability tags, four of them authored today from research, and
+several had drifted from the gateway (DeepSeek V4 Pro $0.44 vs $1.76 in,
+Gemini 3.6 Flash $1.50 vs $0.75). After: `scripts/generate-models-catalog.mjs`
+regenerates `src/data/models-catalog.ts` AND overwrites every curated row's
+pricing, context, max output, capabilities and release date from the public
+`GET /v1/models`, so no number in either file is typed by hand (PRD AG-675
+G4). Price basis is the feed's billed PAYG rate with markup 1. Eight models
+that carry seeded traffic (Haiku 4.5, Opus 4.7, Opus 4.8, Sonnet 5, DeepSeek
+V4 Pro, Gemini 3.1 Pro Preview, Kimi K2 Thinking, Qwen3 Next) keep pinned
+prices because Messages, Conversations, Activity and Teams dollar figures
+were computed from them and are asserted to the cent. Best for research
+swaps GPT-6 Astra (no PDF input in the feed) for Claude Opus 4.6 and its
+subtitle now reads "PDF input, reasoning and million-token context", tested.
+
+Shelf tables (`src/pages/models/ModelShelves.tsx`): a `#` rank column
+(`type-mono-14 text-muted-foreground`, right-aligned, sr-only "Rank") leads
+each row; widths re-pinned 4 / 30 / 9 / 15 / 15 / 17 / 10 percent, identical
+across the four shelves. Main catalog table headers pinned
+20 / 28 / 8.5 / 8.5 / 8.5 / 18 / 8.5 percent; they bite from about 1600px, at
+1440 every column already sits at its content minimum.
+
+`CapabilityStrip` (`src/pages/Models.tsx`) shows the first four of
+`CAPABILITY_ORDER` (tool use, reasoning, vision, web search, then PDF in,
+caching, JSON, streaming, audio, video) and collapses the rest into a
+`Badge size="xs"` `+N` chip with a Tooltip listing the hidden labels. Column
+header renamed Capabilities -> Features on both tables. The detail page's
+full badge list is unchanged.
+
+Featured cards: badge at 10px via `Badge size="xs"`, DeepSeek tagline "Open
+weight", `p-4` with 16px between badge, name and stats (138px card), names
+truncate and show a Tooltip only when clipped (`useIsTruncated`,
+`src/hooks/use-is-truncated.ts`), and the card takes the new
+`Card interactive` hover.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`
@@ -104,3 +141,13 @@ fifteen monochrome vendor marks inlined from `@lobehub/icons-static-svg`
 1.95.0 (new devDependency) with a `LobeMark` slug map. It was built for a
 card watermark that was then dropped as too close to OpenRouter's motif; it
 is kept for the detail hero or Free models table.
+
+### Card: `interactive` variant `7457acd`
+
+Before: `Card` had no hover affordance, so a clickable card needed a
+call-site recipe. After: `interactive` prop on `card.tsx` adds
+`cursor-pointer` and the table-row hover fill (`hover:bg-accent`, 150ms,
+reduced-motion safe); press and focus stay on the inner `RowActionButton`.
+Documented in design.md. Note recorded in both places: `hover-fine:` is
+inert site-wide because the custom variant in `src/index.css` compiles to
+invalid nested CSS; the variant uses plain `hover:` until that is repaired.

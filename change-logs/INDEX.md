@@ -15,6 +15,8 @@ tokens; this index exists so nothing has to glob the directory.
 - Models catalog: all 416 live ids, sourced release dates, four new rows
 - VendorAvatar: initials tile for vendors without a brand mark
 - Badge: `size="xs"`, 16px pill at 10px type
+- Models: feed-reconciled catalog, rank column, Features strip, card hover
+- Card: `interactive` variant
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface
