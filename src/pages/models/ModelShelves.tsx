@@ -60,7 +60,7 @@ export function FeaturedModels({
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           Four models we would start with today. Frontier capability on the
-          left, a fast open-weight option on the right, and the two that sit
+          left, a fast, lightweight option on the right, and the two that sit
           between.
         </p>
       </div>

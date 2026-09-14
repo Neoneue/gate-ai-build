@@ -31,7 +31,7 @@ export const FEATURED_PICKS: readonly FeaturedPick[] = [
   { id: "anthropic/claude-fable-5-1", tagline: "Frontier reasoning" },
   { id: "openai/gpt-6-astra", tagline: "Deep reasoning" },
   { id: "anthropic/claude-sonnet-5", tagline: "Balanced" },
-  { id: "deepseek/deepseek-v4-flash", tagline: "Open weight" },
+  { id: "deepseek/deepseek-v4-flash", tagline: "Fast and light" },
 ];
 
 export const FEATURED_MODEL_IDS: readonly string[] = FEATURED_PICKS.map(
