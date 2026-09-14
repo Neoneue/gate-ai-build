@@ -65,7 +65,9 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
               {
                 label: "Input / output",
                 value:
-                  free.access === "pro-only" ? "Free (Pro plan only)" : "Free",
+                  plan === "free" && free.access === "pro-only"
+                    ? "Free (Pro plan only)"
+                    : "Free",
               },
             ]}
           />
