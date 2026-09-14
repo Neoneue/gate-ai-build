@@ -211,6 +211,13 @@ Documented in design.md. Note recorded in both places: `hover-fine:` is
 inert site-wide because the custom variant in `src/index.css` compiles to
 invalid nested CSS; the variant uses plain `hover:` until that is repaired.
 
+**Press moved onto the card (`a8507d4`).** Before: the 0.98 press scale sat on
+the inner `RowActionButton`, so on a flush card only the content shrank while
+the border stood still. After: `interactive` carries `active:scale-[0.98]`
+(with `transition-[background-color,transform]` and the reduced-motion
+opt-out), because `:active` propagates to ancestors and the framed card
+presses as one object. The button keeps the focus ring and no longer scales.
+
 ### TableRow: 48px floor `d1318bc`
 
 Before: body rows were content-sized (`py-3` cells), landing at 45 to 46px
