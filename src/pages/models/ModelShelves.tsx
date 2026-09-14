@@ -111,8 +111,9 @@ export function FeaturedCard({
   return (
     // `density="flush"` hands the padding to the button so the whole card is
     // the hit target, not a padded box with a button inside it. Press + focus
-    // are the house recipe (see SidebarUpgradeCard): 150ms transform, 0.98 on
-    // press, both opted out under reduced motion.
+    // are the house recipe: hover fill and the 0.98 press scale live on the
+    // Card (`interactive`) so the whole framed card presses as one object;
+    // the button keeps the focus ring.
     <Card
       className={cn("group/card relative", dimmed && "opacity-75")}
       density="flush"
@@ -136,7 +137,7 @@ export function FeaturedCard({
           earlier 124px cap was lifted for the extra air. */}
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
-        className="relative h-full justify-start gap-4 p-4 transition-transform duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        className="relative h-full justify-start gap-4 p-4"
         layout="stack"
         onClick={() => onSelect(model)}
       >

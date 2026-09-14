@@ -45,10 +45,13 @@ function Card({
    * after a tap — identical to `TableRow`'s recipe, which is the point: a
    * clickable card and a clickable row must not feel like two systems.
    *
-   * Press and focus are NOT here. They belong to the interactive child
-   * (`RowActionButton`, `Button`) which owns the real focus ring and the
-   * 0.98 press scale; a card cannot take focus, so it must not pretend to.
-   * Never paint this hover onto a call site's `className`.
+   * The 0.98 press scale IS here (moved 2026-09-14): `:active` propagates
+   * to ancestors, so the whole framed card presses as one object. When the
+   * scale lived on the inner `RowActionButton` of a flush card only the
+   * content shrank and the border stood still, which read as broken. Focus
+   * stays on the interactive child, which owns the real focus ring; a card
+   * cannot take focus, so it must not pretend to. Never paint this hover or
+   * press onto a call site's `className`.
    */
   interactive?: boolean;
 }) {
@@ -72,7 +75,7 @@ function Card({
         // itself uses plain `hover:`, which is why row hover works at all.
         // When `hover-fine` is repaired site-wide, this moves with it.
         interactive &&
-          "cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent motion-reduce:transition-none",
+          "cursor-pointer transition-[background-color,transform] duration-150 ease-out hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
         className
       )}
       data-density={density}
