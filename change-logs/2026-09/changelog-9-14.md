@@ -97,8 +97,9 @@ reuse `FeaturedCard` (`src/pages/models/FreeModels.tsx`,
 `src/data/free-models.ts`). The rows are the two cheapest tool-capable
 models in the live feed: gpt-oss-20B (badge "Lightweight", Free + Pro, price
 "Free") and DeepSeek V4 Flash 0731 (badge "Long context", Pro only, price
-"Free (Pro plan only)"). On `/models-free` and `/models-default` the Pro-only
-card rests at `opacity-75` with no hover fill (`FeaturedCard dimmed`, still
+"Free (Pro plan only)" on Free and Default surfaces, plain "Free" on Pro and
+Enterprise where the plan already grants it, `d94a7ac`). On `/models-free` and
+`/models-default` the Pro-only card rests at `opacity-75` with no hover fill (`FeaturedCard dimmed`, still
 drills in), and a promo banner follows the cards: `Card` with
 `border-promo-border`, promo shadow, the quiet dot texture, `SparklesIcon`,
 "Pro comes with a premium free model" / "Upgrade and a more capable model
