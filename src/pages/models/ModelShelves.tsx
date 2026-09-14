@@ -59,8 +59,8 @@ export function FeaturedModels({
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          Four models we would start with today. Frontier capability on the
-          left, a fast, lightweight option on the right, and the two that sit
+          Four models we would start with today. The strongest performer sits on
+          the left and the lightest on the right, with two balanced picks in
           between.
         </p>
       </div>
