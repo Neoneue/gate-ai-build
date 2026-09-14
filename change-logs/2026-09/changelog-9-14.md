@@ -134,6 +134,17 @@ three main sections behind two `Separator`s. The component, the picks and
 copy in `src/pages/models/curation.ts`, and `curation.test.ts` stay in the
 tree so the block can return by re-mounting one line.
 
+### Featured and Free cards: vendor mark on hover `77332fc`
+
+Before: the cards had no watermark (the always-on 10% mono mark was dropped
+earlier today as too close to OpenRouter's motif). After: `FeaturedCard`
+mounts `LobeMark` (96px, `src/components/icons/lobe-mark.tsx`) clipped in
+the top-right corner at `opacity-0`, fading to `text-foreground/10` over
+150ms on card hover (`group/card` on the `Card`, `group-hover/card:` on the
+mark). At rest the card is plain; the mark is the pointer's reward. The
+dimmed Pro-only card, which has no hover, gets no mark. The button is
+`relative` so content paints above the mark. Card height stays 138px.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`

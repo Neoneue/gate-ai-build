@@ -21,6 +21,7 @@ tokens; this index exists so nothing has to glob the directory.
 - TableRow: 48px floor
 - MultiSelect: `popupWidth`
 - Models: the four curated shelves are hidden
+- Featured and Free cards: vendor mark on hover
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface
