@@ -1,7 +1,7 @@
 /** Pure data + helpers for the Requests (Messages) page: sort keys,
  *  badge variant maps, filter options, and the per-range row sets.
  *  No JSX, no React — shared by the page, table, and detail modal. */
-import type { Vendor } from "@/components/icons/vendor-meta";
+import type { Vendor, VendorSlug } from "@/components/icons/vendor-meta";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { MODEL_OPTIONS, modelName } from "@/data/models";
 import {
@@ -120,7 +120,7 @@ export const GUARDRAIL_BADGE: Record<
 export const MODEL_FILTER_OPTIONS: {
   value: string;
   label: string;
-  vendor: Vendor;
+  vendor: VendorSlug;
 }[] = (() => {
   const used = new Set(REQUEST_ROWS_ALL.map((r) => r.model));
   return MODEL_OPTIONS.filter((m) => used.has(m.handle)).map((m) => ({

@@ -843,6 +843,12 @@ specifies 10px, and never for running prose — it is supporting chrome inside a
 single promo surface, not a body voice. Raw `text-2xs` is not a call-site
 class; the voice is.
 
+**Second consumer (2026-09-14): `Badge size="xs"`.** A 16px pill at 10px mono
+type, added to the Badge primitive for the positioning tagline on the Models
+page's Featured cards ("Frontier reasoning", "Balanced"), where the default
+12px badge outweighed the model name beside it. Reached only through the
+`size` prop on `badge.tsx`; still never a call-site `text-2xs`.
+
 **Global input-helper rule:** all helper text under inputs uses
 `type-input-helper` (locked recipe: `font-sans text-xs font-normal` = 12px,
 line-height 16px, plus `mt-2` = 8px gap from the input). Do not hand-roll
@@ -1448,7 +1454,7 @@ switches).
 
 ### Badges, Pills, Tags
 
-- **Badge** (`badge.tsx`) — base: `h-5 rounded-xs border border-transparent px-2 font-mono text-xs font-medium tabular-nums uppercase`. **Locked contract (2026-05-11; uppercase + AA contrast 2026-06-04):**
+- **Badge** (`badge.tsx`) — base: `h-5 rounded-xs border border-transparent px-2 font-mono text-xs font-medium tabular-nums uppercase`. `size="xs"` swaps in `h-4 text-2xs` (Micro tier, §3) for the Featured-card tagline only. **Locked contract (2026-05-11; uppercase + AA contrast 2026-06-04):**
   - **Text-only.** Color tone (bg + text) IS the indicator. **Do NOT nest `<StatusDot/>`, lucide icons, or any other glyph inside a `<Badge>`** — redundant signal, asymmetric padding, bad UI. The prior `has-data-[icon=*]:p*-1.5` asymmetric-padding rules were removed along with icon support because they enabled the dot-in-badge anti-pattern.
   - **Symmetric `px-2` padding always.**
   - **Uppercase at the primitive (2026-06-04).** `text-transform: uppercase` is baked in so `<Badge>blocked</Badge>` renders "BLOCKED". Consumers write the data as it lives in the model; visual case is the primitive's job. Digits/symbols unchanged ("200 OK" stays "200 OK"). Was `capitalize` (first-letter only); raised to full uppercase. (An even-earlier `first-letter:uppercase` attempt failed — CSS `::first-letter` doesn't apply to inline-flex, only block-level.)

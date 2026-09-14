@@ -32,8 +32,9 @@ import {
   Zap,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import type { ProviderId, Vendor } from "@/components/icons/vendor-meta";
+import type { ProviderId, VendorSlug } from "@/components/icons/vendor-meta";
 import { formatCurrency } from "@/lib/formatters";
+import { CATALOG_ROWS } from "./models-catalog";
 
 export type { ProviderId } from "@/components/icons/vendor-meta";
 
@@ -125,7 +126,9 @@ export type Model = {
   /** Canonical `vendor/model` id — this IS the handle you pass to the
    *  gateway, and what the Model ID column renders. */
   id: string;
-  vendor: Vendor;
+  /** Vendor slug from the feed's `owned_by`. Known vendors carry a brand
+   *  mark in VENDOR_META; the rest render an initials avatar. */
+  vendor: VendorSlug;
   name: string;
   description: string;
   modality: Modality;
@@ -159,10 +162,10 @@ export function formatTokenCount(value: number | null): string {
   if (value === null || value === 0) {
     return EM_DASH;
   }
+  // Always one decimal at the M step (1.0M / 1.1M), so a 1,000,000 window
+  // and a 1,048,576 one read at the same precision side by side.
   if (value >= 1_000_000) {
-    return value % 1_000_000 === 0
-      ? `${value / 1_000_000}M`
-      : `${(value / 1_000_000).toFixed(1)}M`;
+    return `${(value / 1_000_000).toFixed(1)}M`;
   }
   return value % 1000 === 0
     ? `${value / 1000}K`
@@ -230,7 +233,7 @@ export type ModelSort = "popular" | "newest" | "cheapest" | "largest-context";
  *                  count, then name. We have no traffic data, and MODELS is
  *                  already stored in prod's popular order, so this is the
  *                  identity — which is exactly what makes it the default.
- *  newest          releasedAt descending; the 22 models without one sink to
+ *  newest          releasedAt descending; any model without one sinks to
  *                  the bottom and resolve alphabetically.
  *  cheapest        effective (marked-up) input price ascending, so the order
  *                  matches the number the eye actually reads in the column.
@@ -274,7 +277,12 @@ export function sortModels(rows: Model[], sort: ModelSort): Model[] {
 
 /* ─── Catalog ────────────────────────────────────────────────────────────── */
 
-export const MODELS: Model[] = [
+/**
+ * Hand-authored rows, kept in prod's "Most popular" order (the identity sort
+ * below). Every number is a real catalog value; these rows carry the
+ * per-provider detail the public feed lacks.
+ */
+const CURATED_ROWS: Model[] = [
   {
     id: "qwen/qwen3-next-80b-a3b-instruct",
     vendor: "qwen",
@@ -292,7 +300,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: [],
-    releasedAt: "2025-12-30T06:06:31.000Z",
+    releasedAt: "2025-09-11T00:00:00.000Z",
     providers: [
       {
         id: "alibaba",
@@ -344,7 +352,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-06-09T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -389,7 +397,7 @@ export const MODELS: Model[] = [
       "streaming",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-10-15T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -426,7 +434,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: ["tools", "vision"],
-    releasedAt: null,
+    releasedAt: "2025-08-05T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -470,7 +478,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-11-24T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -514,7 +522,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-05T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -558,7 +566,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-04-16T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -602,7 +610,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-28T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -646,7 +654,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-24T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -690,7 +698,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-09-29T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -734,7 +742,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-17T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -778,7 +786,7 @@ export const MODELS: Model[] = [
       "responseSchema",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-06-30T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -901,7 +909,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: ["tools", "vision", "responseSchema", "audioOutput"],
-    releasedAt: null,
+    releasedAt: "2025-06-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -946,7 +954,7 @@ export const MODELS: Model[] = [
       "webSearch",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-07-22T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -983,7 +991,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: ["tools", "vision", "responseSchema", "audioOutput"],
-    releasedAt: null,
+    releasedAt: "2025-06-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1028,7 +1036,7 @@ export const MODELS: Model[] = [
       "webSearch",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-12-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1075,7 +1083,7 @@ export const MODELS: Model[] = [
       "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-07T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1122,7 +1130,7 @@ export const MODELS: Model[] = [
       "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-03-03T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1167,7 +1175,7 @@ export const MODELS: Model[] = [
       "audioInput",
       "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-19T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1215,7 +1223,7 @@ export const MODELS: Model[] = [
       "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-19T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1263,7 +1271,7 @@ export const MODELS: Model[] = [
       "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-21T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1311,7 +1319,7 @@ export const MODELS: Model[] = [
       "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-21T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1348,7 +1356,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: ["tools", "webSearch"],
-    releasedAt: null,
+    releasedAt: "2025-11-06T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1368,6 +1376,186 @@ export const MODELS: Model[] = [
       },
     ],
   },
+  {
+    id: "anthropic/claude-fable-5-1",
+    vendor: "anthropic",
+    name: "Claude Fable 5.1",
+    description:
+      "Anthropic's most capable widely released model. Claude Fable 5.1 extends Fable 5 with stronger long-running agentic coding, multistep research, and document, spreadsheet, and slide work, with adaptive reasoning on by default.",
+    modality: "text",
+    contextWindow: 1_000_000,
+    maxOutputTokens: 128_000,
+    pricing: {
+      inputPer1M: 10,
+      outputPer1M: 50,
+      cachedInputReadPer1M: 0.25,
+      cachedInputWritePer1M: 12.5,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "vision",
+      "reasoning",
+      "promptCaching",
+      "responseSchema",
+      "streaming",
+      "webSearch",
+      "pdfInput",
+    ],
+    releasedAt: "2026-09-01T00:00:00.000Z",
+    providers: [
+      {
+        id: "vertex",
+        nativeModelId: "anthropic/claude-fable-5-1",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "openrouter",
+        nativeModelId: "anthropic/claude-fable-5-1",
+        paygMarkup: 1.1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "openai/gpt-6-astra",
+    vendor: "openai",
+    name: "GPT-6 Astra",
+    description:
+      "OpenAI's most capable model, built for the hardest end-to-end work: complex reasoning, agentic coding, computer use, research, and document creation. Reasoning effort is configurable from low to max.",
+    modality: "text",
+    contextWindow: 1_050_000,
+    maxOutputTokens: 128_000,
+    pricing: {
+      inputPer1M: 10,
+      outputPer1M: 50,
+      cachedInputReadPer1M: 1,
+      cachedInputWritePer1M: 12.5,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "vision",
+      "reasoning",
+      "promptCaching",
+      "responseSchema",
+      "streaming",
+      "webSearch",
+    ],
+    releasedAt: "2026-09-04T00:00:00.000Z",
+    providers: [
+      {
+        id: "openrouter",
+        nativeModelId: "openai/gpt-6-astra",
+        paygMarkup: 1.1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "google/gemini-3-8-flash",
+    vendor: "google",
+    name: "Gemini 3.8 Flash",
+    description:
+      "Google's most intelligent Flash model, with significant gains over 3.7 Flash across software engineering, agentic tasks, and multi-step reasoning. Three thinking levels, Search grounding, and native audio, image, video, and PDF input.",
+    modality: "text",
+    contextWindow: 1_048_576,
+    maxOutputTokens: 65_536,
+    pricing: {
+      inputPer1M: 0.75,
+      outputPer1M: 3.75,
+      cachedInputReadPer1M: null,
+      cachedInputWritePer1M: null,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "vision",
+      "reasoning",
+      "promptCaching",
+      "responseSchema",
+      "streaming",
+      "webSearch",
+      "audioInput",
+      "pdfInput",
+      "videoInput",
+    ],
+    releasedAt: "2026-09-02T00:00:00.000Z",
+    providers: [
+      {
+        id: "vertex",
+        nativeModelId: "google/gemini-3.8-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "openrouter",
+        nativeModelId: "google/gemini-3.8-flash",
+        paygMarkup: 1.1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "deepseek/deepseek-v4-1-flash",
+    vendor: "deepseek",
+    name: "DeepSeek V4.1 Flash",
+    description:
+      "Sparse mixture-of-experts model on DeepSeek's first causal encoder-decoder architecture, with 8B to 16B active parameters from a 552B backbone. Built for coding, terminal and computer-use agents, and long-horizon tasks, with native image understanding.",
+    modality: "text",
+    contextWindow: 1_048_576,
+    maxOutputTokens: 1_048_576,
+    pricing: {
+      inputPer1M: 0.15,
+      outputPer1M: 0.6,
+      cachedInputReadPer1M: null,
+      cachedInputWritePer1M: null,
+    },
+    pricingMarkup: 1.1,
+    capabilities: ["tools", "vision", "promptCaching", "streaming"],
+    releasedAt: "2026-09-10T00:00:00.000Z",
+    providers: [
+      {
+        id: "openrouter",
+        nativeModelId: "deepseek/deepseek-v4.1-flash",
+        paygMarkup: 1.1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "alibaba",
+        nativeModelId: "deepseek-v4.1-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+];
+
+const CURATED_IDS = new Set(CURATED_ROWS.map((m) => m.id));
+
+/**
+ * The full routable catalog: curated rows first, then every other row of
+ * the gateway's public `GET /v1/models` (see models-catalog.ts, generated
+ * 2026-09-14, 416 ids in total).
+ */
+export const MODELS: Model[] = [
+  ...CURATED_ROWS,
+  ...CATALOG_ROWS.filter((m) => !CURATED_IDS.has(m.id)),
 ];
 
 /* ─── Static derivations ─────────────────────────────────────────────────── */
@@ -1398,7 +1586,11 @@ export const MODALITY_COUNTS: Record<Modality, number> = (() => {
 /** Flat (handle, label, vendor) list — exported for the PAYG Manual setup
  *  model picker so it stays in sync with the catalog. The canonical id IS
  *  the handle. */
-export type ModelOption = { handle: string; label: string; vendor: Vendor };
+export type ModelOption = {
+  handle: string;
+  label: string;
+  vendor: VendorSlug;
+};
 
 export const MODEL_OPTIONS: ModelOption[] = MODELS.map((m) => ({
   handle: m.id,

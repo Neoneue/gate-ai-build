@@ -1,5 +1,5 @@
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
-import { VENDOR_META } from "@/components/icons/vendor-meta";
+import { vendorLabel } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -85,7 +85,7 @@ export function SetupModels() {
                   <TableCell>
                     <span className="inline-flex items-center gap-2 text-muted-foreground">
                       <VendorAvatar decorative vendor={model.vendor} />
-                      {VENDOR_META[model.vendor].label}
+                      {vendorLabel(model.vendor)}
                     </span>
                   </TableCell>
                   <TableCell className="type-mono-14 text-right text-muted-foreground">

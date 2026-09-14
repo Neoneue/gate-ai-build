@@ -22,6 +22,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@eslint/js": "^10.0.1",
+    "@lobehub/icons-static-svg": "^1.95.0",
     "@tailwindcss/vite": "^4.2.4",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",

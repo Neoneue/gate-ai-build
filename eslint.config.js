@@ -16,6 +16,7 @@ export default defineConfig([
     "dist",
     ".claude/**",
     "src/lib/dotmatrix-*",
+    "src/data/models-catalog.ts",
     "src/components/ui/dotm-*",
   ]),
   {

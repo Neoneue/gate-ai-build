@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   SortableTableHead,
   Table,
@@ -67,6 +68,7 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { FeaturedModels, ModelShelves } from "@/pages/models/ModelShelves";
 import {
   PAYG_TOOL_CAPTIONS,
   type PaygToolId,
@@ -196,81 +198,108 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     <>
       <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
-      {/* Modality tabs — promoted out of the filter-pill row so each
+      {/* Curated blocks. Three MAIN sections on this page — Featured, the
+          shelves, and the catalog — separated by a rule; the four shelves
+          inside the middle block are sub-sections and carry spacing only. */}
+      <Separator />
+
+      <FeaturedModels onSelect={onSelect} />
+
+      <Separator />
+
+      <ModelShelves onSelect={onSelect} />
+
+      <Separator />
+
+      {/* Catalog header + Tabs share one gap-4 column so the header reads as
+          the Tabs' own heading rather than as a third free-floating block. */}
+      <div className="flex flex-col gap-4">
+        <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
+          <h2 className="type-heading-24 m-0 text-foreground">
+            Explore our catalog
+          </h2>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+            Every model Gate can send your requests to. Search by name, filter
+            by provider, and compare what each one costs and can do.
+          </p>
+        </div>
+
+        {/* Modality tabs — promoted out of the filter-pill row so each
           modality is a visible peer scope. Underline `line` variant
           matches the Settings / Team tab register elsewhere in the
           shell. Count chip uses the shared <TabsCount> primitive.
           Two tabs, because prod has two: every model is text. */}
-      <Tabs
-        className="gap-4"
-        onValueChange={(v) => {
-          setModality(v as "all" | Modality);
-          resetToFirstPage();
-        }}
-        value={modality}
-      >
-        <TabsList className="mt-2 px-0" variant="line">
-          <TabsTrigger value="all">
-            All types
-            <TabsCount>{MODELS.length}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="text">
-            Text
-            <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
-          </TabsTrigger>
-        </TabsList>
+        <Tabs
+          className="gap-4"
+          onValueChange={(v) => {
+            setModality(v as "all" | Modality);
+            resetToFirstPage();
+          }}
+          value={modality}
+        >
+          <TabsList className="mt-2 px-0" variant="line">
+            <TabsTrigger value="all">
+              All types
+              <TabsCount>{MODELS.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="text">
+              Text
+              <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
+            </TabsTrigger>
+          </TabsList>
 
-        {isEmpty ? null : (
-          <Toolbar
-            onProviderChange={(v) => {
-              setProvider(v);
-              resetToFirstPage();
-            }}
-            onSearchChange={(v) => {
-              setSearch(v);
-              resetToFirstPage();
-            }}
-            onSortChange={(v) => {
-              setSort(v);
-              resetToFirstPage();
-            }}
-            provider={provider}
-            search={search}
-            sort={sort}
-          />
-        )}
-
-        <Card density="flush">
-          {isEmpty ? (
-            <TableEmptyState
-              action={
-                <Button
-                  className="border-border bg-card text-foreground"
-                  onClick={clearFilters}
-                  size="sm"
-                  variant="outline"
-                >
-                  Clear filters
-                </Button>
-              }
-              body="Try a broader search, a different type, or clear the filters to see every routable model."
-              title="No models match these filters"
+          {isEmpty ? null : (
+            <Toolbar
+              onProviderChange={(v) => {
+                setProvider(v);
+                resetToFirstPage();
+              }}
+              onSearchChange={(v) => {
+                setSearch(v);
+                resetToFirstPage();
+              }}
+              onSortChange={(v) => {
+                setSort(v);
+                resetToFirstPage();
+              }}
+              provider={provider}
+              search={search}
+              sort={sort}
             />
-          ) : (
-            <>
-              <ModelsTable onSelect={onSelect} rows={pageRows} />
-
-              <TablePaginationFooter
-                onPageChange={setPage}
-                onRowsPerPageChange={setRowsPerPage}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                total={filtered.length}
-              />
-            </>
           )}
-        </Card>
-      </Tabs>
+
+          <Card density="flush">
+            {isEmpty ? (
+              <TableEmptyState
+                action={
+                  <Button
+                    className="border-border bg-card text-foreground"
+                    onClick={clearFilters}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Clear filters
+                  </Button>
+                }
+                body="Try a broader search, a different type, or clear the filters to see every routable model."
+                title="No models match these filters"
+              />
+            ) : (
+              <>
+                <ModelsTable onSelect={onSelect} rows={pageRows} />
+
+                <TablePaginationFooter
+                  onPageChange={setPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  total={filtered.length}
+                />
+              </>
+            )}
+          </Card>
+        </Tabs>
+      </div>
 
       <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
@@ -535,7 +564,7 @@ function ModelsTable({
  *  Next reports no context window; most provider rows have no telemetry yet),
  *  so it recedes to muted and carries an sr-only explanation rather than
  *  announcing as bare punctuation. */
-function NumericCell({ value }: { value: string }) {
+export function NumericCell({ value }: { value: string }) {
   const isMissing = value === EM_DASH;
   return (
     <TableCell
@@ -556,7 +585,11 @@ function NumericCell({ value }: { value: string }) {
   );
 }
 
-function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
+export function CapabilityStrip({
+  capabilities,
+}: {
+  capabilities: Capability[];
+}) {
   if (capabilities.length === 0) {
     return (
       <span className="type-mono-12 text-muted-foreground">{EM_DASH}</span>
@@ -589,16 +622,19 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   );
 }
 
-function ProviderStack({ providers }: { providers: ModelProvider[] }) {
-  // Order is the model's OWN provider order, straight from the API — it
-  // varies row to row (Qwen leads with Alibaba, most Anthropic rows lead
-  // with Vertex, the Gemini rows lead with OpenRouter) and the label reads
-  // in that same order, exactly like prod.
-  const names = providers.map((p) => PROVIDER_META[p.id].label);
-  const ariaLabel = `Available from ${providers.length} providers: ${names.join(", ")}`;
+export function ProviderStack({ providers }: { providers: ModelProvider[] }) {
+  // Marks render in PROVIDER_ORDER (Alibaba, Vertex, OpenRouter) on every
+  // row, so the column scans as one axis. Until 2026-09-14 the stack kept
+  // each model's own API order, which flipped Vertex / OpenRouter between
+  // neighbouring rows; prod still does that, this build deliberately does not.
+  const ordered = PROVIDER_ORDER.filter((id) =>
+    providers.some((p) => p.id === id)
+  ).map((id) => providers.find((p) => p.id === id) as ModelProvider);
+  const names = ordered.map((p) => PROVIDER_META[p.id].label);
+  const ariaLabel = `Available from ${ordered.length} providers: ${names.join(", ")}`;
   return (
     <div aria-label={ariaLabel} className="flex items-center gap-2" role="img">
-      {providers.map((p) => (
+      {ordered.map((p) => (
         // `inline-flex items-center` on the wrapper so the inline-flex
         // ProviderAvatar inside centers vertically. A plain `<span>` here
         // inherits the cell's 21px line-box and the SVG hangs from the

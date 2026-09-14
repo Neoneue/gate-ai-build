@@ -43,6 +43,32 @@ export type Vendor =
   | "moonshotai"
   | "qwen";
 
+/** Any `owned_by` slug the catalog feed can carry. Known vendors narrow to
+ *  `Vendor` and get a brand mark; unknown ones fall back to initials. */
+export type VendorSlug = Vendor | (string & {});
+
+export function isKnownVendor(slug: VendorSlug): slug is Vendor {
+  return Object.hasOwn(VENDOR_META, slug);
+}
+
+export function vendorMeta(slug: VendorSlug): VendorMeta | undefined {
+  return isKnownVendor(slug) ? VENDOR_META[slug] : undefined;
+}
+
+/** Brand label for known vendors; a humanized slug ("z-ai" -> "Z Ai") for
+ *  the rest, so aria labels and filter menus never show a raw slug. */
+export function vendorLabel(slug: VendorSlug): string {
+  const meta = vendorMeta(slug);
+  if (meta) {
+    return meta.label;
+  }
+  return slug
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export interface VendorMeta {
   color: string;
   icon: IconType;
