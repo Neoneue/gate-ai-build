@@ -9,6 +9,12 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-14](./2026-09/changelog-9-14.md)
+
+- Top bar logomark navigates to Overview below `lg`
+- Top bar glyphs are 20px below `lg`, wrapper stays 36px
+- Navigation sheet profile band on the card surface
+
 ### [2026-09-09](./2026-09/changelog-9-9.md)
 
 - Impeccable design skill updated to 4.3.1

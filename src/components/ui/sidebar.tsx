@@ -384,8 +384,8 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
 
 /* Below `lg` the account actions sit at the foot of the Sheet, not in a
  * popover: a menu inside a drawer stacks a layer on a layer on a phone. The
- * pattern is the Vercel / GitHub mobile account block: a tinted profile band
- * (`bg-card-muted`, the inset surface) splits account from navigation, then
+ * pattern is the Vercel / GitHub mobile account block: a profile band
+ * (`bg-card`, matching the top bar) splits account from navigation, then
  * label-left icon-right rows for the actions the compact top bar gave up (Docs,
  * theme) plus the `UserMenu` items (Settings, Sign out). The theme row is a
  * whole-row toggle like its neighbours (a 32px icon alone is too small a
@@ -405,7 +405,7 @@ function SidebarAccountRows({
   const isDark = theme === "dark";
   return (
     <div className="flex shrink-0 flex-col lg:hidden">
-      <div className="flex items-center gap-3 border-border border-t bg-card-muted px-5 py-4">
+      <div className="flex items-center gap-3 border-border border-t bg-card px-5 py-4">
         <span
           aria-hidden
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
