@@ -56,11 +56,11 @@ describe("models curation", () => {
     }
   });
 
-  it("every research pick has web search or PDF input and a 1M+ context", () => {
+  it("every research pick has PDF input, reasoning and a 1M+ context", () => {
     const research = SHELVES.find((s) => s.id === "research");
     for (const m of shelfRows(research as (typeof SHELVES)[number])) {
       const caps = new Set(m.capabilities);
-      expect(caps.has("webSearch") || caps.has("pdfInput"), m.id).toBe(true);
+      expect(caps.has("pdfInput") && caps.has("reasoning"), m.id).toBe(true);
       expect(m.contextWindow ?? 0, m.id).toBeGreaterThanOrEqual(1_000_000);
     }
   });

@@ -7,6 +7,7 @@ function Card({
   size = "default",
   density = "default",
   tone = "default",
+  interactive = false,
   ...props
 }: React.ComponentProps<"div"> & {
   size?: "default" | "sm";
@@ -34,6 +35,22 @@ function Card({
    * Never paint a danger border onto a call site's `className`.
    */
   tone?: "default" | "danger";
+  /**
+   * The whole card is one click target (it navigates or opens a detail), so
+   * it takes the same hover the table rows take: `hover-fine:bg-accent` plus
+   * `cursor-pointer`, 150ms ease-out on background-color only, opted out
+   * under reduced motion. Added 2026-09-14 for the Models Featured cards.
+   *
+   * `hover-fine` (not bare `hover:`) so a touch device never latches the fill
+   * after a tap — identical to `TableRow`'s recipe, which is the point: a
+   * clickable card and a clickable row must not feel like two systems.
+   *
+   * Press and focus are NOT here. They belong to the interactive child
+   * (`RowActionButton`, `Button`) which owns the real focus ring and the
+   * 0.98 press scale; a card cannot take focus, so it must not pretend to.
+   * Never paint this hover onto a call site's `className`.
+   */
+  interactive?: boolean;
 }) {
   return (
     <div
@@ -43,9 +60,23 @@ function Card({
         // the old hard `border + shadow-xs` combo. Adapts to any background
         // without re-tinting the edge.
         "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        // Interactive: `TableRow`'s hover recipe, verbatim — plain
+        // `hover:bg-accent`, `transition-[background-color]` (never
+        // `transition-colors`: interpolating the border smudges, see
+        // table.tsx), `motion-reduce:transition-none`.
+        //
+        // NOT `hover-fine:` — the `@custom-variant hover-fine` in index.css
+        // currently compiles to invalid nested CSS
+        // (`(@media …) and (&:hover) { … }`), so every `hover-fine:*` in the
+        // codebase is inert, including the ones on the shelf rows. `TableRow`
+        // itself uses plain `hover:`, which is why row hover works at all.
+        // When `hover-fine` is repaired site-wide, this moves with it.
+        interactive &&
+          "cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent motion-reduce:transition-none",
         className
       )}
       data-density={density}
+      data-interactive={interactive}
       data-size={size}
       data-slot="card"
       data-tone={tone}

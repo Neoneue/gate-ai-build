@@ -65,12 +65,12 @@ const byIds =
       .filter((m): m is Model => m !== undefined)
       .slice(0, SHELF_ROW_COUNT);
 
-/** Each row carries web search or PDF input AND a 1M+ context window, so
- *  the shelf's subtitle is true of every pick (checked in curation.test). */
+/** Each row carries PDF input, reasoning AND a 1M+ context window, so the
+ *  shelf's subtitle is true of every pick (checked in curation.test). */
 export const RESEARCH_MODEL_IDS: readonly string[] = [
   "anthropic/claude-fable-5-1",
-  "openai/gpt-6-astra",
   "google/gemini-3-1-pro-preview",
+  "anthropic/claude-opus-4-6",
   "google/gemini-3-8-flash",
 ];
 
@@ -94,7 +94,7 @@ export const SHELVES: readonly Shelf[] = [
     id: "research",
     title: "Best for research",
     subtitle:
-      "We reach for these when the job is reading a hundred sources and coming back with one answer. Web search, PDF input and million-token context.",
+      "We reach for these when the job is reading a hundred sources and coming back with one answer. PDF input, reasoning and million-token context.",
     rows: byIds(RESEARCH_MODEL_IDS),
   },
   {

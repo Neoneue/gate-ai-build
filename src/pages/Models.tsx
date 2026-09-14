@@ -45,6 +45,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { TextLink } from "@/components/ui/text-link";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  CAPABILITY_INLINE_MAX,
   CAPABILITY_META,
   CAPABILITY_ORDER,
   type Capability,
@@ -448,7 +454,7 @@ function ModelsTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[20%] whitespace-nowrap"
             onSort={toggleSort}
             sort={sort}
             sortKey="name"
@@ -456,7 +462,7 @@ function ModelsTable({
             Model
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[28%] whitespace-nowrap"
             onSort={toggleSort}
             sort={sort}
             sortKey="handle"
@@ -464,7 +470,7 @@ function ModelsTable({
             Model ID
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -473,7 +479,7 @@ function ModelsTable({
             Context
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -482,7 +488,7 @@ function ModelsTable({
             Input
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -490,8 +496,10 @@ function ModelsTable({
           >
             Output
           </SortableTableHead>
-          <TableHead className="whitespace-nowrap">Capabilities</TableHead>
-          <TableHead className="whitespace-nowrap">Providers</TableHead>
+          <TableHead className="w-[18%] whitespace-nowrap">Features</TableHead>
+          <TableHead className="w-[8.5%] whitespace-nowrap">
+            Providers
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -598,13 +606,22 @@ export function CapabilityStrip({
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Tool use is always leftmost when present). Each icon
   // carries `aria-label` for SR identification AND a native `title` so
-  // sighted-mouse users get the capability name on hover — without
-  // introducing a Tooltip primitive.
+  // sighted-mouse users get the capability name on hover.
+  //
+  // Only the first CAPABILITY_INLINE_MAX render as glyphs (2026-09-14).
+  // CAPABILITY_ORDER is decision value, so the four that survive are the four
+  // a reader actually picks a model on; the tail collapses into one +N chip.
+  // Ten glyphs on the widest row made the column the widest thing in the
+  // table while carrying the least signal per pixel, and no row could be
+  // read at a glance because every row had a different strip length.
   const have = new Set(capabilities);
   const ordered = CAPABILITY_ORDER.filter((c) => have.has(c));
+  const inline = ordered.slice(0, CAPABILITY_INLINE_MAX);
+  const hidden = ordered.slice(CAPABILITY_INLINE_MAX);
+  const hiddenLabels = hidden.map((c) => CAPABILITY_META[c].label);
   return (
     <div className="flex items-center gap-1">
-      {ordered.map((c) => {
+      {inline.map((c) => {
         const meta = CAPABILITY_META[c];
         const Icon = meta.icon;
         return (
@@ -618,6 +635,36 @@ export function CapabilityStrip({
           </span>
         );
       })}
+      {hidden.length > 0 ? (
+        // The chip carries the hidden labels in its `aria-label`, so a screen
+        // reader hears every capability the row has even though only four are
+        // drawn — the tooltip is the sighted equivalent of the same string.
+        // The Badge is the trigger itself (Base UI `render`), never a nested
+        // <button>, so a click still reaches the row's drill-in; Base UI's
+        // `closeOnClick` default keeps the tooltip from riding along to the
+        // next view.
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Badge
+                aria-label={`${hidden.length} more: ${hiddenLabels.join(", ")}`}
+                className="shrink-0"
+                size="xs"
+                variant="neutral"
+              />
+            }
+          >
+            {`+${hidden.length}`}
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="flex flex-col">
+              {hiddenLabels.map((label) => (
+                <span key={label}>{label}</span>
+              ))}
+            </span>
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   );
 }

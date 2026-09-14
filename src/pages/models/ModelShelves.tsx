@@ -91,7 +91,7 @@ function FeaturedCard({
     // the hit target, not a padded box with a button inside it. Press + focus
     // are the house recipe (see SidebarUpgradeCard): 150ms transform, 0.98 on
     // press, both opted out under reduced motion.
-    <Card density="flush">
+    <Card density="flush" interactive>
       {/* One 16px rhythm: `gap-4` sets badge -> identity here and identity ->
           stats on the inner group, so the three rows read as peers. With
           `p-4` and the 16px `size="xs"` badge the card lands at 138px; the
@@ -232,32 +232,49 @@ function ShelfTable({
             7.3 points split evenly onto Input and Output, which were the two
             columns running tightest against their content. */}
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-[27%] whitespace-nowrap">Model</TableHead>
+          {/* Rank head shows the leaderboard glyph "#" (user call 2026-09-14):
+              one character keeps the 4% column quiet while a titled "Rank"
+              would announce the editorial order louder than intended. The
+              sr-only text still names the column "Rank" for a screen reader;
+              the glyph itself is hidden from assistive tech so it is not read
+              as "number". */}
+          <TableHead className="w-[4%] whitespace-nowrap text-right">
+            <span aria-hidden>#</span>
+            <span className="sr-only">Rank</span>
+          </TableHead>
+          <TableHead className="w-[30%] whitespace-nowrap">Model</TableHead>
           {/* `text-right` so each numeric head sits over its own right-aligned
               NumericCell column, exactly as SortableTableHead's `numeric` does
               on the catalog table below. */}
           <TableHead className="w-[9%] whitespace-nowrap text-right">
             Context
           </TableHead>
-          <TableHead className="w-[16%] whitespace-nowrap text-right">
+          <TableHead className="w-[15%] whitespace-nowrap text-right">
             Input
           </TableHead>
-          <TableHead className="w-[16%] whitespace-nowrap text-right">
+          <TableHead className="w-[15%] whitespace-nowrap text-right">
             Output
           </TableHead>
-          <TableHead className="w-[22%] whitespace-nowrap">
-            Capabilities
-          </TableHead>
+          <TableHead className="w-[17%] whitespace-nowrap">Features</TableHead>
           <TableHead className="w-[10%] whitespace-nowrap">Providers</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((model) => (
+        {rows.map((model, index) => (
           <TableRow
             className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
             key={model.id}
             onClick={() => onSelect(model)}
           >
+            {/* The shelf is an ordered editorial answer, so the position is
+                real information — but it is the quietest thing in the row.
+                Muted mono, right-aligned, no "#" and no badge: it reads as
+                "our first suggestion", not as a leaderboard. `type-mono-14`
+                already carries `tabular-nums`, so the digits align without a
+                call-site repeat of it. */}
+            <TableCell className="type-mono-14 whitespace-nowrap text-right text-muted-foreground">
+              {index + 1}
+            </TableCell>
             <TableCell className="whitespace-nowrap">
               <RowActionButton
                 aria-label={`Inspect ${model.name}`}
