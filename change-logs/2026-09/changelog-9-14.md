@@ -15,7 +15,9 @@ catalog table of 25 hand-authored rows. After: between the page header and
 the catalog sit three new blocks, separated by hairline `Separator`s.
 **Featured models** (h2 `type-heading-24`, `type-copy-14` subtitle) is a
 `grid-cols-2 @3xl:grid-cols-4` row of 138px cards: a 10px mono positioning
-badge (Frontier reasoning / Deep reasoning / Balanced / Open weight), the
+badge (Frontier reasoning / Deep reasoning / Balanced / Fast and light, the
+last renamed from "Open weight" in `2e549f3` with the subtitle now reading "a
+fast, lightweight option on the right"), the
 brand-coloured `VendorAvatar` plus name, then Context and Input / output in
 mono, with `p-4` and 16px between each row. Names truncate and show the full
 name in a `Tooltip` only when clipped (`useIsTruncated`,
