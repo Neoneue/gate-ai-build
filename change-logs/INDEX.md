@@ -11,6 +11,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 
+- Models: Featured row, four curated shelves, catalog header
+- Models catalog: all 416 live ids, sourced release dates, four new rows
+- VendorAvatar: initials tile for vendors without a brand mark
+- Badge: `size="xs"`, 16px pill at 10px type
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface
