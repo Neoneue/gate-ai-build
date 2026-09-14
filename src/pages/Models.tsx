@@ -76,7 +76,7 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { FreeModels } from "@/pages/models/FreeModels";
-import { FeaturedModels, ModelShelves } from "@/pages/models/ModelShelves";
+import { FeaturedModels } from "@/pages/models/ModelShelves";
 import {
   PAYG_TOOL_CAPTIONS,
   type PaygToolId,
@@ -216,10 +216,8 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     <>
       <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
-      {/* Curated blocks. Four MAIN sections on this page — Featured, the
-          free models, the shelves, and the catalog — separated by a rule; the
-          four shelves inside the shelves block are sub-sections and carry
-          spacing only. */}
+      {/* Curated blocks. Three MAIN sections on this page, Featured, the
+          free models, and the catalog, separated by a rule. */}
       <Separator />
 
       <FeaturedModels onSelect={onSelect} />
@@ -230,9 +228,12 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
 
       <Separator />
 
-      <ModelShelves onSelect={onSelect} />
-
-      <Separator />
+      {/* The four curated shelves (`ModelShelves`) are HIDDEN as of
+          2026-09-14 on the CTO's call: "drop the subcategory pages, we
+          didn't want to suggest tons of different models, 4 to 6 to make it
+          easy to pick, then the full catalog". Component, data
+          (`src/pages/models/curation.ts`) and tests stay so the block can
+          return by re-mounting it here. */}
 
       {/* Catalog header + Tabs share one gap-4 column so the header reads as
           the Tabs' own heading rather than as a third free-floating block. */}
