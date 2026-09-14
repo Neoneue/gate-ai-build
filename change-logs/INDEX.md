@@ -20,6 +20,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Models: Free models from Gate, modality tabs, Features filter
 - TableRow: 48px floor
 - MultiSelect: `popupWidth`
+- Models: the four curated shelves are hidden
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface

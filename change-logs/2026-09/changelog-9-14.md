@@ -118,6 +118,19 @@ triggers match at 36px. Empty-state copy mentions fewer features.
 Featured card grid is `grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-4`: 1-up on
 phones, 2-up through 1280, 4-up from 1366, so the price line never wraps.
 
+### Models: the four curated shelves are hidden `774b69e`
+
+Before: Best for research, Best for 24/7 runs, Newest models on Gate and
+Most popular on Gate rendered as four tables between the Free models block
+and the catalog. After: `ModelShelves` is no longer mounted in
+`ModelsSurface` (`src/pages/Models.tsx`), on the CTO's call the same day:
+"drop the subcategory pages, we didn't want to suggest tons of different
+models, 4 to 6 to make it easy to pick something, then the full catalog".
+The page is now Featured models, Free models from Gate, Explore our catalog,
+three main sections behind two `Separator`s. The component, the picks and
+copy in `src/pages/models/curation.ts`, and `curation.test.ts` stay in the
+tree so the block can return by re-mounting one line.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`
