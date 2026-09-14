@@ -1,3 +1,4 @@
+import { LobeMark } from "@/components/icons/lobe-mark";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import {
   type Model,
 } from "@/data/models";
 import { useIsTruncated } from "@/hooks/use-is-truncated";
+import { cn } from "@/lib/utils";
 import { CapabilityStrip, NumericCell, ProviderStack } from "@/pages/Models";
 import {
   featuredModels,
@@ -112,17 +114,29 @@ export function FeaturedCard({
     // are the house recipe (see SidebarUpgradeCard): 150ms transform, 0.98 on
     // press, both opted out under reduced motion.
     <Card
-      className={dimmed ? "opacity-75" : undefined}
+      className={cn("group/card relative", dimmed && "opacity-75")}
       density="flush"
       interactive={!dimmed}
     >
+      {/* Hover reveal (user call 2026-09-14): the monochrome vendor mark,
+          clipped in the top-right corner, fades from 0 to 10% ink on hover.
+          At rest the card is plain so it does not read as OpenRouter's
+          watermark motif; on hover it is the reward for the pointer. Skipped
+          on a dimmed card, which has no hover state. */}
+      {dimmed ? null : (
+        <LobeMark
+          className="pointer-events-none absolute -top-4 -right-4 text-foreground/10 opacity-0 transition-opacity duration-150 ease-out group-hover/card:opacity-100 motion-reduce:transition-none"
+          size={96}
+          vendor={model.vendor}
+        />
+      )}
       {/* One 16px rhythm: `gap-4` sets badge -> identity here and identity ->
           stats on the inner group, so the three rows read as peers. With
           `p-4` and the 16px `size="xs"` badge the card lands at 138px; the
           earlier 124px cap was lifted for the extra air. */}
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
-        className="h-full justify-start gap-4 p-4 transition-transform duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        className="relative h-full justify-start gap-4 p-4 transition-transform duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
         layout="stack"
         onClick={() => onSelect(model)}
       >
