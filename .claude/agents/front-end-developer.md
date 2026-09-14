@@ -156,6 +156,7 @@ This is the critical part. You have skill sets bundled with you. They aren't pos
 | “What’s wrong?” — holistic design review + suggested follow-ups | `/impeccable critique` |
 | Technical QA report only (a11y, perf, theming, responsive); document, don’t fix | `/impeccable audit` |
 | Last pass before ship — alignment, states, consistency, micro-details | `/impeccable polish` |
+| Micro-detail values: concentric radius, optical alignment, surface depth, icon sizing, hit areas, enter / exit and icon transitions | `.claude/skills/better-ui/SKILL.md` (jakubkrehel `better-ui`, installed 2026-09-14) plus its `surfaces.md` / `animations.md` / `icons.md` as the row applies. Exact values, not ranges; design.md tokens still win on any conflict. |
 | UI drifted from tokens / design system | `/impeccable normalize` |
 | Too busy / cluttered — simplify | `/impeccable distill` |
 | Copy, labels, errors, microcopy unclear | `/impeccable clarify` |
