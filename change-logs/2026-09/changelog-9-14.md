@@ -86,6 +86,37 @@ truncate and show a Tooltip only when clipped (`useIsTruncated`,
 `src/hooks/use-is-truncated.ts`), and the card takes the new
 `Card interactive` hover.
 
+### Models: Free models from Gate, modality tabs, Features filter `d1318bc`
+
+Before: the Models page had no free-model surface, two modality tabs that both
+read 416, and a toolbar of search, provider and sort. After: a **Free models
+from Gate** section sits between Featured and the shelves, behind its own
+`Separator`: h2 `type-heading-24`, subtitle "Models Gate supports at no cost
+for your plan, so you can ship without a paid balance.", and two cards that
+reuse `FeaturedCard` (`src/pages/models/FreeModels.tsx`,
+`src/data/free-models.ts`). The rows are the two cheapest tool-capable
+models in the live feed: gpt-oss-20B (badge "Lightweight", Free + Pro, price
+"Free") and DeepSeek V4 Flash 0731 (badge "Long context", Pro only, price
+"Free (Pro plan only)"). On `/models-free` and `/models-default` the Pro-only
+card rests at `opacity-75` with no hover fill (`FeaturedCard dimmed`, still
+drills in), and a promo banner follows the cards: `Card` with
+`border-promo-border`, promo shadow, the quiet dot texture, `SparklesIcon`,
+"Pro comes with a premium free model" / "Upgrade and a more capable model
+joins your free set at no cost, alongside everything the Free plan already
+includes.", and a `variant="promo"` Upgrade to Pro routing to that tier's
+`/billing-*?manage=1`. Absent on Pro and Enterprise.
+
+Catalog tabs now read the feed's `type`: All types 416 / Text 240 /
+Multimodal 176 (`Modality` widened, generator and reconcile map
+`language` -> text, `multimodal` -> multimodal). A **Features** `MultiSelect`
+(11 capability options in `CAPABILITY_ORDER`, intersect semantics, "All
+features" placeholder, `popupWidth="content"`) sits between the provider and
+sort Selects; the sort trigger dropped its stray `size="sm"` so all three
+triggers match at 36px. Empty-state copy mentions fewer features.
+
+Featured card grid is `grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-4`: 1-up on
+phones, 2-up through 1280, 4-up from 1366, so the price line never wraps.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`
@@ -151,3 +182,20 @@ reduced-motion safe); press and focus stay on the inner `RowActionButton`.
 Documented in design.md. Note recorded in both places: `hover-fine:` is
 inert site-wide because the custom variant in `src/index.css` compiles to
 invalid nested CSS; the variant uses plain `hover:` until that is repaired.
+
+### TableRow: 48px floor `d1318bc`
+
+Before: body rows were content-sized (`py-3` cells), landing at 45 to 46px
+wherever a cell held one 14px line (Models list, shelf tables) and 48 or
+more elsewhere. After: `TableRow` carries `h-12`, a MINIMUM on `<tr>` so
+taller rows (Conversations 65, Teams 57) are unchanged. Site rule: no body
+row under 48px. Recorded in design.md's Table entry.
+
+### MultiSelect: `popupWidth` `d1318bc`
+
+Before: the popup was always `w-(--anchor-width)`, which clipped labels
+behind a compact trigger. After: `popupWidth="anchor"` (default, unchanged
+for Audit Trail and the Teams pickers) or `"content"`, which floors at the
+trigger width and grows to the longest label (`w-max min-w-(--anchor-width)
+max-w-(--available-width)`). Models "All features" went from 122 to 153px
+with no clipped label. Documented in design.md.

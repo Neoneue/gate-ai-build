@@ -17,6 +17,9 @@ tokens; this index exists so nothing has to glob the directory.
 - Badge: `size="xs"`, 16px pill at 10px type
 - Models: feed-reconciled catalog, rank column, Features strip, card hover
 - Card: `interactive` variant
+- Models: Free models from Gate, modality tabs, Features filter
+- TableRow: 48px floor
+- MultiSelect: `popupWidth`
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface
