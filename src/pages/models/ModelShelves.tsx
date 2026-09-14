@@ -65,7 +65,7 @@ export function FeaturedModels({
         </p>
       </div>
 
-      <div className="grid @3xl:grid-cols-4 grid-cols-2 gap-4">
+      <div className="grid @5xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
         {models.map((model) => (
           <FeaturedCard key={model.id} model={model} onSelect={onSelect} />
         ))}
@@ -74,24 +74,48 @@ export function FeaturedModels({
   );
 }
 
-function FeaturedCard({
+/** The Featured card is also the Free-models card (`FreeModels.tsx`): same
+ *  anatomy, same 138px height, only the badge text and the two stat values
+ *  differ. Both are props with the Featured reading as the default, so the two
+ *  blocks cannot drift apart the way two copies of this markup would. */
+export function FeaturedCard({
   model,
   onSelect,
+  badge,
+  stats,
+  dimmed = false,
 }: {
   model: Model;
   onSelect: (model: Model) => void;
+  /** Overrides the curated positioning tagline. */
+  badge?: string;
+  /** Overrides the default Context + Input / output pair. Two entries. */
+  stats?: { label: string; value: string }[];
+  /** Rests at 75% opacity (well above the primitives' 50% disabled wash so
+   *  every line stays legible) with no hover fill. The drill-in stays live so
+   *  the detail page is reachable. Used for a Pro-only free model on a Free
+   *  surface; the upgrade banner below is the action. */
+  dimmed?: boolean;
 }) {
-  const tagline = featuredTagline(model);
+  const tagline = badge ?? featuredTagline(model);
   const { ref: nameRef, isTruncated } = useIsTruncated();
   const context = formatTokenCount(model.contextWindow);
   const input = formatPricePerM(listPrice(model, "inputPer1M"));
   const output = formatPricePerM(listPrice(model, "outputPer1M"));
+  const statPair = stats ?? [
+    { label: "Context", value: context },
+    { label: "Input / output", value: `${input} / ${output}` },
+  ];
   return (
     // `density="flush"` hands the padding to the button so the whole card is
     // the hit target, not a padded box with a button inside it. Press + focus
     // are the house recipe (see SidebarUpgradeCard): 150ms transform, 0.98 on
     // press, both opted out under reduced motion.
-    <Card density="flush" interactive>
+    <Card
+      className={dimmed ? "opacity-75" : undefined}
+      density="flush"
+      interactive={!dimmed}
+    >
       {/* One 16px rhythm: `gap-4` sets badge -> identity here and identity ->
           stats on the inner group, so the three rows read as peers. With
           `p-4` and the 16px `size="xs"` badge the card lands at 138px; the
@@ -146,11 +170,13 @@ function FeaturedCard({
               would clip inside a 4-up card in the narrow band just above the
               @3xl switch. */}
           <span className="flex w-full min-w-0 flex-wrap gap-x-4 gap-y-2">
-            <FeaturedStat label="Context" value={context} />
-            <FeaturedStat
-              label="Input / output"
-              value={`${input} / ${output}`}
-            />
+            {statPair.map((stat) => (
+              <FeaturedStat
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+              />
+            ))}
           </span>
         </span>
       </RowActionButton>

@@ -40,10 +40,12 @@ export type { ProviderId } from "@/components/icons/vendor-meta";
 
 /* ─── Type model ─────────────────────────────────────────────────────────── */
 
-/** Every model in prod's catalog is `text`. Embeddings / audio / rerank
- *  modalities were removed with the invented catalog; prod's tab strip is
- *  "All types" + "Text" and nothing else. */
-export type Modality = "text";
+/** The feed's `type`: `language` -> "text", `multimodal` -> "multimodal".
+ *  Gate serves text-producing models only; image, audio and video are INPUT
+ *  capabilities on multimodal chat models, so the tab strip is "All types"
+ *  + "Text" + "Multimodal" and nothing else (2026-09-14, matches the
+ *  marketing catalog). */
+export type Modality = "text" | "multimodal";
 
 /** The API exposes 13 capability flags. `systemMessages` and
  *  `parallelToolCalls` are deliberately absent: prod's table renders 11 and
@@ -429,7 +431,7 @@ const CURATED_ROWS: Model[] = [
     name: "Claude Opus 4.1",
     description:
       "Claude Opus 4.1 is an updated version of Anthropic’s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains in multi-file code refactoring, debugging precision, and detail-oriented reasoning. The model supports extended thinking up to 64K tokens and is optimized for tasks involving research, data analysis, and tool-assisted reasoning.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 200_000,
     maxOutputTokens: 32_000,
     pricing: {
@@ -650,7 +652,7 @@ const CURATED_ROWS: Model[] = [
     name: "Claude Opus 5",
     description:
       "Claude Opus 5 is Anthropic’s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis of charts and documents, complex office deliverables, and coordinating parallel subagents.\n\nThe model maintains strong instruction following and tool use across extended tasks, while remaining effective at lower effort settings for workloads that prioritize latency and token efficiency.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_000_000,
     maxOutputTokens: 128_000,
     pricing: {
@@ -783,7 +785,7 @@ const CURATED_ROWS: Model[] = [
     name: "Claude Sonnet 5",
     description:
       "Sonnet 5 is Anthropic's most capable Sonnet-class model, with frontier performance across coding, agents, and professional work. It supports adaptive thinking with selectable reasoning effort levels (low, medium, high, max, and x-high), a 1M-token context window, and text, image, and file inputs. Sonnet 5 uses an updated tokenizer and includes real-time cyber safeguards that block certain high-risk dual-use activities.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_000_000,
     maxOutputTokens: 128_000,
     pricing: {
@@ -1433,7 +1435,7 @@ const CURATED_ROWS: Model[] = [
     name: "GPT-6 Astra",
     description:
       "OpenAI's most capable model, built for the hardest end-to-end work: complex reasoning, agentic coding, computer use, research, and document creation. Reasoning effort is configurable from low to max.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_050_000,
     maxOutputTokens: 128_000,
     pricing: {
@@ -1513,7 +1515,7 @@ const CURATED_ROWS: Model[] = [
     name: "DeepSeek V4.1 Flash",
     description:
       "Sparse mixture-of-experts model on DeepSeek's first causal encoder-decoder architecture, with 8B to 16B active parameters from a 552B backbone. Built for coding, terminal and computer-use agents, and long-horizon tasks, with native image understanding.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_048_576,
     maxOutputTokens: 384_000,
     pricing: {
@@ -1582,7 +1584,7 @@ export const TOTAL_PROVIDERS = (() => {
 })();
 
 export const MODALITY_COUNTS: Record<Modality, number> = (() => {
-  const counts: Record<Modality, number> = { text: 0 };
+  const counts: Record<Modality, number> = { text: 0, multimodal: 0 };
   for (const m of MODELS) {
     counts[m.modality]++;
   }

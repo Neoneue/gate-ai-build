@@ -172,7 +172,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova 2 Lite",
     "description": "Multimodal reasoning model for visual analysis, planning, and tool use",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 64000,
     "pricing": {
@@ -209,7 +209,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova 2 Lite",
     "description": "Nova 2 Lite is a fast, cost-effective reasoning model for everyday workloads that can process text, images, and videos to generate text. Nova 2 Lite demonstrates standout capabilities in processing...",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 65535,
     "pricing": {
@@ -241,7 +241,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova Lite",
     "description": "Efficient model for low-latency assistance, extraction, and routine automation",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 300000,
     "maxOutputTokens": 10000,
     "pricing": {
@@ -277,7 +277,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova Lite 1.0",
     "description": "Amazon Nova Lite 1.0 is a very low-cost multimodal model from Amazon that focused on fast processing of image, video, and text inputs to generate text output. Amazon Nova Lite can handle real-time customer interactions, document analysis, and visual question-answering tasks with high accuracy.\n\nWith an input context of 300K tokens, it can analyze multiple images or up to 30 minutes of video in a single input.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 300000,
     "maxOutputTokens": 5120,
     "pricing": {
@@ -371,7 +371,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova Premier 1.0",
     "description": "Amazon Nova Premier is the most capable of Amazon’s multimodal models for complex reasoning tasks and for use as the best teacher for distilling custom models.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 32000,
     "pricing": {
@@ -402,7 +402,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova Pro",
     "description": "Flagship model for demanding analysis, coding, and production agent workflows",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 300000,
     "maxOutputTokens": 10000,
     "pricing": {
@@ -438,7 +438,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "amazon",
     "name": "Nova Pro 1.0",
     "description": "Amazon Nova Pro 1.0 is a capable multimodal model from Amazon focused on providing a combination of accuracy, speed, and cost for a wide range of tasks. As of December 2024, it achieves state-of-the-art performance on key benchmarks including visual question answering (TextVQA) and video understanding (VATEX).\n\nAmazon Nova Pro demonstrates strong capabilities in processing both visual and textual information and at analyzing financial documents.\n\n**NOTE**: Video input is not supported at this time.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 300000,
     "maxOutputTokens": 5120,
     "pricing": {
@@ -499,7 +499,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude 3 Haiku",
     "description": "Claude 3 Haiku is Anthropic's fastest and most compact model for\nnear-instant responsiveness. Quick and accurate targeted performance.\n\nSee the launch announcement and benchmark results [here](https://www.anthropic.com/news/claude-3-haiku)\n\n#multimodal",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -561,7 +561,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Fable Latest",
     "description": "This model always redirects to the latest model in the Claude Fable family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -594,7 +594,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Haiku Latest",
     "description": "This model always redirects to the latest model in the Claude Haiku family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 64000,
     "pricing": {
@@ -627,7 +627,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Opus 4",
     "description": "Claude Opus 4 is benchmarked as the world’s best coding model, at time of release, bringing sustained performance on complex, long-running tasks and agent workflows. It sets new benchmarks in software engineering, achieving leading results on SWE-bench (72.5%) and Terminal-bench (43.2%). Opus 4 supports extended, agentic workflows, handling thousands of task steps continuously for hours without degradation. \n\nRead more at the [blog post here](https://www.anthropic.com/news/claude-4)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 32000,
     "pricing": {
@@ -660,7 +660,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Opus 4.6",
     "description": "High-end Claude for difficult coding, planning, and slower expert reasoning",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -696,7 +696,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Opus Latest",
     "description": "This model always redirects to the latest model in the Claude Opus family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -729,7 +729,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Sonnet 4",
     "description": "",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 64000,
     "pricing": {
@@ -765,7 +765,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "anthropic",
     "name": "Claude Sonnet Latest",
     "description": "This model always redirects to the latest model in the Claude Sonnet family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -829,7 +829,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "baidu",
     "name": "Baidu: ERNIE 4.5 VL 424B A47B",
     "description": "ERNIE-4.5-VL-424B-A47B is a multimodal Mixture-of-Experts (MoE) model from Baidu’s ERNIE 4.5 series, featuring 424B total parameters with 47B active per token. It is trained jointly on text and image data using a heterogeneous MoE architecture and modality-isolated routing to enable high-fidelity cross-modal reasoning, image understanding, and long-context generation (up to 131k tokens). Fine-tuned with techniques like SFT, DPO, UPO, and RLVR, this model supports both “thinking” and non-thinking inference modes. Designed for vision-language tasks in English and Chinese, it is optimized for efficient scaling and can operate under 4-bit/8-bit quantization.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 123000,
     "maxOutputTokens": 16000,
     "pricing": {
@@ -860,7 +860,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed 1.6",
     "description": "Seed 1.6 is a general-purpose model released by the ByteDance Seed team. It incorporates multimodal capabilities and adaptive deep thinking with a 256K context window.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -893,7 +893,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed 1.6 Flash",
     "description": "Seed 1.6 Flash is an ultra-fast multimodal deep thinking model by ByteDance Seed, supporting both text and visual understanding. It features a 256k context window and can generate outputs of up to 16k tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -926,7 +926,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed-2.0-Code",
     "description": "Seed 2.0 Code is a model from ByteDance Seed optimized for agentic coding. It is suited for frontend development, multilingual programming tasks, and coding-agent workflows in tools such as Claude Code, Kilo, and OpenCode.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -959,7 +959,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed-2.0-Lite",
     "description": "Seed-2.0-Lite is a versatile, cost‑efficient enterprise workhorse that delivers strong multimodal and agent capabilities while offering noticeably lower latency, making it a practical default choice for most production workloads across text, vision, and tools. Engineered for high-frequency visual understanding and agentic workflows, it's an ideal choice for deployment at scale with minimal latency.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -992,7 +992,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed-2.0-Mini",
     "description": "Seed-2.0-mini targets latency-sensitive, high-concurrency, and cost-sensitive scenarios, emphasizing fast response and flexible inference deployment. It delivers performance comparable to ByteDance-Seed-1.6, supports 256k context, four reasoning effort modes (minimal/low/medium/high), multimodal understanding, and is optimized for lightweight tasks where cost and speed take priority.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -1025,7 +1025,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance-seed",
     "name": "ByteDance Seed: Seed 2.1 Turbo",
     "description": "Seed 2.1 Turbo is a multimodal model from ByteDance Seed for coding and long-horizon agent workflows. It is suited for end-to-end software delivery, multi-step task execution, and understanding visual and video content, with capabilities for planning, debugging, and self-correction.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -1058,7 +1058,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "bytedance",
     "name": "ByteDance: UI-TARS 7B",
     "description": "UI-TARS-1.5 is a multimodal vision-language agent optimized for GUI-based environments, including desktop interfaces, web browsers, mobile systems, and games. Built by ByteDance, it builds upon the UI-TARS framework with reinforcement learning-based reasoning, enabling robust action planning and execution across virtual interfaces.\n\nThis model achieves state-of-the-art results on a range of interactive and grounding benchmarks, including OSworld, WebVoyager, AndroidWorld, and ScreenSpot. It also demonstrates perfect task completion across diverse Poki games and outperforms prior models in Minecraft agent tasks. UI-TARS-1.5 supports thought decomposition during inference and shows strong scaling across variants, with the 1.5 version notably exceeding the performance of earlier 72B and 7B checkpoints.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 2048,
     "pricing": {
@@ -1337,7 +1337,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "deepseek",
     "name": "DeepSeek Flash Latest",
     "description": "This model always redirects to the latest model in the DeepSeek Flash family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -1694,7 +1694,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "deepseek",
     "name": "DeepSeek V4 Flash Vision Exp",
     "description": "DeepSeek V4 Flash Vision Exp is an experimental vision-enabled version of [DeepSeek V4 Flash 0731](https://openrouter.ai/deepseek/deepseek-v4-flash-0731) from DeepSeek, adding image understanding while matching the base model on text capabilities including agents, reasoning, and world knowledge. It is a sparse mixture-of-experts model with 13B active parameters out of 284B total.\n\nIt is suited for document and chart understanding, visual question answering, and multimodal agent workflows that interleave text and images. Chat prefix completion is supported, but FIM completion is not.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -1761,7 +1761,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "deepseek",
     "name": "DeepSeek-R1",
     "description": "Classic open reasoning model for transparent math, coding, and deliberate problem solving",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -1857,7 +1857,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemini 2.5 Pro Preview 06-05",
     "description": "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy and nuanced context handling. Gemini 2.5 Pro achieves top-tier performance on multiple benchmarks, including first-place positioning on the LMArena leaderboard, reflecting superior human-preference alignment and complex problem-solving abilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -1893,7 +1893,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemini 2.5 Pro Preview 05-06",
     "description": "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy and nuanced context handling. Gemini 2.5 Pro achieves top-tier performance on multiple benchmarks, including first-place positioning on the LMArena leaderboard, reflecting superior human-preference alignment and complex problem-solving abilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 65535,
     "pricing": {
@@ -2025,7 +2025,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemini 3.1 Pro Preview Custom Tools",
     "description": "Gemini 3.1 Pro Preview Custom Tools is a variant of Gemini 3.1 Pro that improves tool selection behavior by preventing overuse of a general bash tool when more efficient third-party or user-defined functions are available. This specialized preview endpoint significantly increases function calling reliability and ensures the model selects the most appropriate tool in coding agents and complex, multi-tool workflows.\n\nIt retains the core strengths of Gemini 3.1 Pro, including multimodal reasoning across text, image, video, audio, and code, a 1M-token context window, and strong software engineering performance.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -2131,7 +2131,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Nano Banana Pro (Gemini 3 Pro Image Preview)",
     "description": "Nano Banana Pro is Google’s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and high-fidelity visual synthesis. The model generates context-rich graphics, from infographics and diagrams to cinematic composites, and can incorporate real-time information via Search grounding.\n\nIt offers industry-leading text rendering in images (including long passages and multilingual layouts), consistent multi-image blending, and accurate identity preservation across up to five subjects. Nano Banana Pro adds fine-grained creative controls such as localized edits, lighting and focus adjustments, camera transformations, and support for 2K/4K outputs and flexible aspect ratios. It is designed for professional-grade design, product visualization, storyboarding, and complex multi-element compositions while remaining efficient for general image creation workflows.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 65536,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -2202,7 +2202,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemini Flash Latest",
     "description": "This model always redirects to the latest model in the Gemini Flash family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -2268,7 +2268,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemini Pro Latest",
     "description": "This model always redirects to the latest model in the Gemini Pro family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -2331,7 +2331,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemma 3.12B",
     "description": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, and chat capabilities, including structured outputs and function calling. Gemma 3 12B is the second largest in the family of Gemma 3 models after [Gemma 3 27B](google/gemma-3-27b-it)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -2363,7 +2363,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemma 3.27B",
     "description": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, and chat capabilities, including structured outputs and function calling. Gemma 3 27B is Google's latest open source model, successor to [Gemma 2](google/gemma-2-27b-it)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 117964,
     "pricing": {
@@ -2396,7 +2396,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemma 3.4B IT",
     "description": "Open Gemma instruction model for efficient chat and self-hosted deployments",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -2427,7 +2427,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemma 4.26B A4B",
     "description": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference — delivering near-31B quality at a fraction of the compute cost. Supports multimodal input including text, images, and video (up to 60s at 1fps). Features a 256K token context window, native function calling, configurable thinking/reasoning mode, and structured output support. Released under Apache 2.0.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -2491,7 +2491,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "google",
     "name": "Gemma 4.31B",
     "description": "Gemma 4 31B Instruct is Google DeepMind's 30.7B dense multimodal model supporting text and image input with text output. Features a 256K token context window, configurable thinking/reasoning mode, native function calling, and multilingual support across 140+ languages. Strong on coding, reasoning, and document understanding tasks. Apache 2.0 license.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -2778,7 +2778,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "inclusionai",
     "name": "inclusionAI: Ling 3.0 Flash VL",
     "description": "Ling 3.0 Flash VL builds on Ling 3.0 Flash (124B total / 5.5B active MoE from InclusionAI), further strengthening its language capabilities while adding native visual perception and advanced visual agent capabilities. Hybrid instant/reasoning model with tool calling.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -3146,7 +3146,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Llama 4 Maverick",
     "description": "Llama 4 Maverick 17B Instruct (128E) is a high-capacity multimodal language model from Meta, built on a mixture-of-experts (MoE) architecture with 128 experts and 17 billion active parameters per forward pass (400B total). It supports multilingual text and image input, and produces multilingual text and code output across 12 supported languages. Optimized for vision-language tasks, Maverick is instruction-tuned for assistant-like behavior, image reasoning, and general-purpose multimodal interaction.\n\nMaverick features early fusion for native multimodality and a 1 million token context window. It was trained on a curated mixture of public, licensed, and Meta-platform data, covering ~22 trillion tokens, with a knowledge cutoff in August 2024. Released on April 5, 2025 under the Llama 4 Community License, Maverick is suited for research and commercial applications requiring advanced multimodal understanding and high model throughput.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -3208,7 +3208,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Llama 4 Scout",
     "description": "Llama 4 Scout 17B Instruct (16E) is a mixture-of-experts (MoE) language model developed by Meta, activating 17 billion parameters out of a total of 109B. It supports native multimodal input (text and image) and multilingual output (text and code) across 12 supported languages. Designed for assistant-style interaction and visual reasoning, Scout uses 16 experts per forward pass and features a context length of 10 million tokens, with a training corpus of ~40 trillion tokens.\n\nBuilt for high efficiency and local or commercial deployment, Llama 4 Scout incorporates early fusion for seamless modality integration. It is instruction-tuned for use in multilingual chat, captioning, and image understanding tasks. Released under the Llama 4 Community License, it was last trained on data up to August 2024 and launched publicly on April 5, 2025.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 327680,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -3240,7 +3240,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Llama Guard 4.12B",
     "description": "Llama Guard 4 is a Llama 4 Scout-derived multimodal pretrained model, fine-tuned for content safety classification. Similar to previous versions, it can be used to classify content in both LLM inputs (prompt classification) and in LLM responses (response classification). It acts as an LLM—generating text in its output that indicates whether a given prompt or response is safe or unsafe, and if unsafe, it also lists the content categories violated.\n\nLlama Guard 4 was aligned to safeguard against the standardized MLCommons hazards taxonomy and designed to support multimodal Llama 4 capabilities. Specifically, it combines features from previous Llama Guard models, providing content moderation for English and multiple supported languages, along with enhanced capabilities to handle mixed text-and-image prompts, including multiple images. Additionally, Llama Guard 4 is integrated into the Llama Moderations API, extending robust safety classification to text and images.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 163840,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -3271,7 +3271,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.1.70B Instruct",
     "description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 2048,
     "pricing": {
@@ -3302,7 +3302,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.1.8B Instruct",
     "description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 2048,
     "pricing": {
@@ -3333,7 +3333,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.2.11B Instruct",
     "description": "",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3365,7 +3365,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.2.1B Instruct",
     "description": "",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3396,7 +3396,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.2.3B Instruct",
     "description": "",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3427,7 +3427,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.2.90B Instruct",
     "description": "",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3459,7 +3459,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Meta Llama 3.3.70B Instruct",
     "description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3550,7 +3550,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Llama 4 Maverick 17B Instruct",
     "description": "Open multimodal Llama for strong reasoning with efficient everyday serving",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3581,7 +3581,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Llama 4 Scout 17B Instruct",
     "description": "Open Llama with long-context vision for efficient multimodal agents",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -3612,7 +3612,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Glimmer 30B",
     "description": "Muse Glimmer 30B is a dense, open-weight multimodal model from Meta Superintelligence Labs, distilled from Muse Spark and optimized for autonomous agents on consumer hardware. It is suited for long-horizon agentic and coding workflows, with multi-step reasoning, reliable tool use, failure recovery, image understanding, and multilingual support across more than 100 languages.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 117964,
     "pricing": {
@@ -3645,7 +3645,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Spark 1.1",
     "description": "Muse Spark 1.1 is a multimodal reasoning model from Meta, built for agentic tasks. It accepts text, images, video, audio, and PDF documents and returns text, with a 1M-token context window.\n\nThe model is designed to orchestrate multi-agent workflows, acting as either a main agent that plans and delegates or as a subagent, and generalizes zero-shot to new tools, MCP servers, and custom skills. It supports structured output, parallel function calling, built-in search with citations, and configurable reasoning effort. Meta reports strong performance on real-world coding across large codebases, computer-use workflows, and visual-to-code generation.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -3681,7 +3681,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Spark 1.2",
     "description": "Muse Spark 1.2 is a reasoning model from Meta, designed for complex agentic tasks. It accepts text, images, video, audio, and PDF documents, returns text, and offers a 1M-token context window.\n\nThe model is built to support multi-agent workflows, whether as either a main agent that plans and delegates or as a subagent executing in parallel. It works across multiple coding harnesses and supports structured output, parallel function calling, and configurable reasoning effort. In Meta’s testing, it performs well on multi-file refactors, extended debugging sessions, whole-repository generation, and tasks that stretch well past a single prompt.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -3717,7 +3717,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Spark 1.2 Contributor",
     "description": "Muse Spark 1.2 contributor tier is a reasoning model from Meta designed for developers who want to start building at an even lower cost. It’s meaningfully cheaper than Muse Spark 1.2. Your prompts and outputs may be used to improve Meta’s products, making it ideal for experimentation, learning, and early-stage projects without worry about spend.\n\nIt is a reasoning model from Meta, tailored for complex agentic tasks. It accepts text, images, video, audio, and PDF documents, returns text, and offers a 1M-token context window. The model is built to support multi-agent workflows, whether as either a main agent that plans and delegates or as a subagent executing in parallel. It works across multiple coding harnesses and supports structured output, parallel function calling, and configurable reasoning effort. In Meta’s testing, it performs well on multi-file refactors, extended debugging sessions, whole-repository generation, and tasks that stretch well past a single prompt.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -3753,7 +3753,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Spark 1.3",
     "description": "Muse Spark 1.3 is a multimodal reasoning model from Meta for long-running agentic, multi-agent, and coding workflows. It is designed to keep track of information across extended tasks, work through conflicting inputs, and request clarification or confirmation when needed, with an emphasis on concise execution.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -3789,7 +3789,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "meta-llama",
     "name": "Muse Spark 1.3 Contributor",
     "description": "Muse Spark 1.3 Contributor is the cost-efficient contributor tier of Meta’s multimodal reasoning model for experimentation, learning, and early-stage agentic, multi-agent, and coding workflows. It is designed to track information across extended tasks, work through conflicting inputs, and request clarification or confirmation when needed. Prompts and outputs may be used to improve Meta’s products.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -3885,7 +3885,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "minimax",
     "name": "MiniMax: MiniMax-01",
     "description": "MiniMax-01 is a combines MiniMax-Text-01 for text generation and MiniMax-VL-01 for image understanding. It has 456 billion parameters, with 45.9 billion parameters activated per inference, and can handle a context of up to 4 million tokens.\n\nThe text model adopts a hybrid architecture that combines Lightning Attention, Softmax Attention, and Mixture-of-Experts (MoE). The image model adopts the “ViT-MLP-LLM” framework and is trained on top of the text model.\n\nTo read more about the release, see: https://www.minimaxi.com/en/news/minimax-01-series-2",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000192,
     "maxOutputTokens": 900172,
     "pricing": {
@@ -4170,7 +4170,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "minimax",
     "name": "MiniMax: MiniMax M3",
     "description": "MiniMax-M3 is a multimodal foundation model from MiniMax. It supports text, image, and video inputs with text output, a 1M-token context window, and is suited for long-horizon agentic work, coding, and tool use. It is built on MiniMax Sparse Attention (MSA), which replaces full attention with KV-block selection to cut per-token compute at long context — roughly 1/20 the cost of the previous generation at 1M tokens, with substantially faster prefill and decode while retaining quality across most tasks.\n\nTrained as a native multimodal model on interleaved data and tuned for multi-turn, production-like collaboration via an interactive user-simulator framework, the model is oriented toward sustained, multi-step tasks rather than single-turn execution.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 524288,
     "maxOutputTokens": 512000,
     "pricing": {
@@ -4299,7 +4299,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Magistral Small 2509",
     "description": "Mistral reasoning model for transparent analysis, math, and complex decisions",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -4332,7 +4332,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 3.14B 2512",
     "description": "The largest model in the Ministral 3 family, Ministral 3 14B offers frontier capabilities and performance comparable to its larger Mistral Small 3.2 24B counterpart. A powerful and efficient language model with vision capabilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 209715,
     "pricing": {
@@ -4364,7 +4364,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 14B 3.0",
     "description": "Compact Mistral model for edge, latency-sensitive, and cost-efficient workloads",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -4396,7 +4396,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 3B",
     "description": "Compact Mistral model for edge, latency-sensitive, and cost-efficient workloads",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -4428,7 +4428,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 3.8B",
     "description": "Compact Mistral model for edge, latency-sensitive, and cost-efficient workloads",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -4460,7 +4460,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 3.3B 2512",
     "description": "The smallest model in the Ministral 3 family, Ministral 3 3B is a powerful, efficient tiny language model with vision capabilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 104857,
     "pricing": {
@@ -4492,7 +4492,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Ministral 3.8B 2512",
     "description": "A balanced model in the Ministral 3 family, Ministral 3 8B is a powerful, efficient tiny language model with vision capabilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 209715,
     "pricing": {
@@ -4554,7 +4554,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Large 3.2512",
     "description": "Mistral Large 3 2512 is Mistral’s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters (675B total), and released under the Apache 2.0 license.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 209715,
     "pricing": {
@@ -4586,7 +4586,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Large 3",
     "description": "Flagship Mistral model for advanced reasoning, coding, and multilingual work",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -4618,7 +4618,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Medium 3",
     "description": "Mistral Medium 3 is a high-performance enterprise-grade language model designed to deliver frontier-level capabilities at significantly reduced operational cost. It balances state-of-the-art reasoning and multimodal performance with 8× lower cost compared to traditional large models, making it suitable for scalable deployments across professional and industrial use cases.\n\nThe model excels in domains such as coding, STEM reasoning, and enterprise adaptation. It supports hybrid, on-prem, and in-VPC deployments and is optimized for integration into custom workflows. Mistral Medium 3 offers competitive accuracy relative to larger models like Claude Sonnet 3.5/3.7, Llama 4 Maverick, and Command R+, while maintaining broad compatibility across cloud environments.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 104857,
     "pricing": {
@@ -4652,7 +4652,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Medium 3.1",
     "description": "Mistral Medium 3.1 is an updated version of Mistral Medium 3, which is a high-performance enterprise-grade language model designed to deliver frontier-level capabilities at significantly reduced operational cost. It balances state-of-the-art reasoning and multimodal performance with 8× lower cost compared to traditional large models, making it suitable for scalable deployments across professional and industrial use cases.\n\nThe model excels in domains such as coding, STEM reasoning, and enterprise adaptation. It supports hybrid, on-prem, and in-VPC deployments and is optimized for integration into custom workflows. Mistral Medium 3.1 offers competitive accuracy relative to larger models like Claude Sonnet 3.5/3.7, Llama 4 Maverick, and Command R+, while maintaining broad compatibility across cloud environments.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 104857,
     "pricing": {
@@ -4686,7 +4686,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Medium 3.5",
     "description": "Mistral Medium 3.5 is a dense 128B instruction-following model from Mistral AI. It supports text and image inputs with text output, and is designed for agentic workflows, coding, and complex multi-step reasoning. It is particularly strong at reliable multi-tool calling and long-horizon tasks, with a 256K context window, configurable reasoning effort per request, and a custom vision encoder that handles variable image sizes and aspect ratios. Self-hostable on as few as four GPUs and available under open weights.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 209715,
     "pricing": {
@@ -4784,7 +4784,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Small 4",
     "description": "Mistral Small 4 is the next major release in the Mistral Small family, unifying the capabilities of several flagship Mistral models into a single system. It combines strong reasoning from Magistral, multimodal understanding from Pixtral, and agentic coding capabilities from Devstral, enabling one model to handle complex analysis, software development, and visual tasks within the same workflow.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 209715,
     "pricing": {
@@ -4848,7 +4848,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Small 3.1.24B",
     "description": "Mistral Small 3.1 24B Instruct is an upgraded variant of Mistral Small 3 (2501), featuring 24 billion parameters with advanced multimodal capabilities. It provides state-of-the-art performance in text-based reasoning and vision tasks, including image analysis, programming, mathematical reasoning, and multilingual support across dozens of languages. Equipped with an extensive 128k token context window and optimized for efficient local inference, it supports use cases such as conversational agents, function calling, long-document comprehension, and privacy-sensitive deployments. The updated version is [Mistral Small 3.2](mistralai/mistral-small-3.2-24b-instruct)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 102400,
     "pricing": {
@@ -4878,7 +4878,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Small 3.2.24B",
     "description": "Mistral-Small-3.2-24B-Instruct-2506 is an updated 24B parameter model from Mistral optimized for instruction following, repetition reduction, and improved function calling. Compared to the 3.1 release, version 3.2 significantly improves accuracy on WildBench and Arena Hard, reduces infinite generations, and delivers gains in tool use and structured output tasks.\n\nIt supports image and text inputs with structured outputs, function/tool calling, and strong performance across coding (HumanEval+, MBPP), STEM (MMLU, MATH, GPQA), and vision benchmarks (ChartQA, DocVQA).",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -4971,7 +4971,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "mistralai",
     "name": "Mistral Pixtral Large 25.02",
     "description": "Mistral vision-language model for image understanding and multimodal chat",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -5156,7 +5156,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "moonshotai",
     "name": "MoonshotAI: Kimi K2.5",
     "description": "Kimi K2.5 is Moonshot AI's native multimodal model, delivering state-of-the-art visual coding capability and a self-directed agent swarm paradigm. Built on Kimi K2 with continued pretraining over approximately 15T mixed visual and text tokens, it delivers strong performance in general reasoning, visual coding, and agentic tool-calling.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -5190,7 +5190,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "moonshotai",
     "name": "MoonshotAI: Kimi K2.6",
     "description": "Kimi K2.6 is Moonshot AI's next-generation multimodal model, designed for long-horizon coding, coding-driven UI/UX generation, and multi-agent orchestration. It handles complex end-to-end coding tasks across Python, Rust, and Go, and can convert prompts and visual inputs into production-ready interfaces. Its agent swarm architecture scales to hundreds of parallel sub-agents for autonomous task decomposition - delivering documents, websites, and spreadsheets in a single run without human oversight.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -5224,7 +5224,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "moonshotai",
     "name": "MoonshotAI: Kimi K2.7 Code",
     "description": "MoonshotAI: Kimi K2.7 Code is a coding-focused model in Moonshot AI's Kimi K2 family, built to complete end-to-end programming tasks reliably over long contexts. It uses a native multimodal mixture-of-experts architecture that accepts text and image input, and it always operates in a thinking mode, preserving full reasoning content across multi-turn conversations. With a 256K-token context window, it targets long-horizon coding, agentic task decomposition, and multi-turn dialogue. The model activates 32B parameters out of roughly 1T total.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -5258,7 +5258,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "moonshotai",
     "name": "Kimi K2.5",
     "description": "Kimi multimodal agent model for visual understanding, coding, and planning",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 262144,
     "pricing": {
@@ -5320,7 +5320,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "moonshotai",
     "name": "MoonshotAI: Kimi Latest",
     "description": "This model always redirects to the latest model in the Kimi family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 943718,
     "pricing": {
@@ -5411,7 +5411,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "nex-agi",
     "name": "Nex AGI: Nex-N2-Mini",
     "description": "Nex-N2-Mini is an open-source agentic mixture-of-experts model from Nex AGI, the smaller sibling in the Nex-N2 series. It accepts text and image input and is built for coding, tool use, deep research, and long-horizon agentic workflows, with a 262K-token context window and native reasoning support.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -5444,7 +5444,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "nex-agi",
     "name": "Nex AGI: Nex-N2-Pro",
     "description": "Nex-N2-Pro is an agentic mixture-of-experts model from Nex AGI, with 17B active parameters out of 397B total. Built on the Qwen3.5 architecture, it accepts text and image input and produces text output, and supports reasoning, function calling, and structured outputs. It is designed for coding, tool use, deep research, and long-horizon agentic workflows, unifying planning, code implementation, debugging, and iteration into a single execution loop.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -5598,7 +5598,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "nvidia",
     "name": "NVIDIA: Nemotron 3.5 Content Safety",
     "description": "NVIDIA Nemotron 3.5 Content Safety is a compact 4B-parameter multimodal guardrail model from NVIDIA, fine-tuned from Google Gemma-3-4B. It moderates both inputs to and responses from LLMs and VLMs, accepting text and image input and returning text output: a safe/unsafe classification for the user prompt and the response, safety category labels, and an optional reasoning trace. It covers 12 languages with a context window of up to 128K tokens.\n\nIt is suited for prompt and response moderation, content classification, safety pipelines, and enterprise AI guardrails with policy enforcement, and includes a togglable reasoning mode. It is part of the NVIDIA Nemotron family of open models for agentic AI.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 117964,
     "pricing": {
@@ -5760,7 +5760,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "nvidia",
     "name": "NVIDIA Nemotron Nano 12B v2 VL BF16",
     "description": "Nemotron multimodal model for visual reasoning and agentic AI workflows",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -6038,7 +6038,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4.1",
     "description": "GPT-4.1 is a flagship large language model optimized for advanced instruction following, real-world software engineering, and long-context reasoning. It supports a 1 million token context window and outperforms GPT-4o and GPT-4.5 across coding (54.6% SWE-bench Verified), instruction compliance (87.4% IFEval), and multimodal understanding benchmarks. It is tuned for precise code diffs, agent reliability, and high recall in large document contexts, making it ideal for agents, IDE tooling, and enterprise knowledge retrieval.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1047576,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -6071,7 +6071,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4.1 Mini",
     "description": "GPT-4.1 Mini is a mid-sized model delivering performance competitive with GPT-4o at substantially lower latency and cost. It retains a 1 million token context window and scores 45.1% on hard instruction evals, 35.8% on MultiChallenge, and 84.1% on IFEval. Mini also shows strong coding ability (e.g., 31.6% on Aider’s polyglot diff benchmark) and vision understanding, making it suitable for interactive applications with tight performance constraints.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1047576,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -6104,7 +6104,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4.1 Nano",
     "description": "For tasks that demand low latency, GPT‑4.1 nano is the fastest and cheapest model in the GPT-4.1 series. It delivers exceptional performance at a small size with its 1 million token context window, and scores 80.1% on MMLU, 50.3% on GPQA, and 9.8% on Aider polyglot coding – even higher than GPT‑4o mini. It’s ideal for tasks like classification or autocompletion.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1047576,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -6137,7 +6137,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4 Turbo",
     "description": "The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling.\n\nTraining data: up to December 2023.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 4096,
     "pricing": {
@@ -6200,7 +6200,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4o",
     "description": "GPT-4o (\"o\" for \"omni\") is OpenAI's latest AI model, supporting both text and image inputs with text outputs. It maintains the intelligence level of [GPT-4 Turbo](/models/openai/gpt-4-turbo) while being twice as fast and 50% more cost-effective. GPT-4o also offers improved performance in processing non-English languages and enhanced visual capabilities.\n\nFor benchmarking against other models, it was briefly called [\"im-also-a-good-gpt2-chatbot\"](https://twitter.com/LiamFedus/status/1790064963966370209)\n\n#multimodal",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -6234,7 +6234,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-4o-mini",
     "description": "GPT-4o mini is OpenAI's newest model after [GPT-4 Omni](/models/openai/gpt-4o), supporting both text and image inputs with text outputs. As their most advanced small model, it is many multiples more affordable...",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -6269,7 +6269,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5",
     "description": "GPT-5 is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy in high-stakes use cases. It supports test-time routing features and advanced prompt understanding, including user-specified intent like \"think hard about this.\" Improvements include reductions in hallucination, sycophancy, and better performance in coding, writing, and health-related tasks.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6302,7 +6302,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.1",
     "description": "GPT-5.1 is the latest frontier-grade model in the GPT-5 series, offering stronger general-purpose reasoning, improved instruction adherence, and a more natural conversational style compared to GPT-5. It uses adaptive reasoning to allocate computation dynamically, responding quickly to simple queries while spending more depth on complex tasks. The model produces clearer, more grounded explanations with reduced jargon, making it easier to follow even on technical or multi-step problems.\n\nBuilt for broad task coverage, GPT-5.1 delivers consistent gains across math, coding, and structured analysis workloads, with more coherent long-form answers and improved tool-use reliability. It also features refined conversational alignment, enabling warmer, more intuitive responses without compromising precision. GPT-5.1 serves as the primary full-capability successor to GPT-5",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6337,7 +6337,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.1-Codex",
     "description": "GPT-5.1-Codex is a specialized version of GPT-5.1 optimized for software engineering and coding workflows. It is designed for both interactive development sessions and long, independent execution of complex engineering tasks. The model supports building projects from scratch, feature development, debugging, large-scale refactoring, and code review. Compared to GPT-5.1, Codex is more steerable, adheres closely to developer instructions, and produces cleaner, higher-quality code outputs. Reasoning effort can be adjusted with the `reasoning.effort` parameter. Read the [docs here](https://openrouter.ai/docs/use-cases/reasoning-tokens#reasoning-effort-level)\n\nCodex integrates into developer environments including the CLI, IDE extensions, GitHub, and cloud tasks. It adapts reasoning effort dynamically—providing fast responses for small tasks while sustaining extended multi-hour runs for large projects. The model is trained to perform structured code reviews, catching critical flaws by reasoning over dependencies and validating behavior against tests. It also supports multimodal inputs such as images or screenshots for UI development and integrates tool use for search, dependency installation, and environment setup. Codex is intended specifically for agentic coding applications.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6371,7 +6371,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.1-Codex-Max",
     "description": "GPT-5.1-Codex-Max is OpenAI’s latest agentic coding model, designed for long-running, high-context software development tasks. It is based on an updated version of the 5.1 reasoning stack and trained on agentic workflows spanning software engineering, mathematics, and research. \nGPT-5.1-Codex-Max delivers faster performance, improved reasoning, and higher token efficiency across the development lifecycle.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6405,7 +6405,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.1-Codex-Mini",
     "description": "GPT-5.1-Codex-Mini is a smaller and faster version of GPT-5.1-Codex",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6439,7 +6439,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.2",
     "description": "GPT-5.2 is the latest frontier-grade model in the GPT-5 series, offering stronger agentic and long context perfomance compared to GPT-5.1. It uses adaptive reasoning to allocate computation dynamically, responding quickly to simple queries while spending more depth on complex tasks.\n\nBuilt for broad task coverage, GPT-5.2 delivers consistent gains across math, coding, sciende, and tool calling workloads, with more coherent long-form answers and improved tool-use reliability.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6473,7 +6473,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.2 Chat",
     "description": "GPT-5.2 Chat (AKA Instant) is the fast, lightweight member of the 5.2 family, optimized for low-latency chat while retaining strong general intelligence. It uses adaptive reasoning to selectively “think” on harder queries, improving accuracy on math, coding, and multi-step tasks without slowing down typical conversations. The model is warmer and more conversational by default, with better instruction following and more stable short-form reasoning. GPT-5.2 Chat is designed for high-throughput, interactive workloads where responsiveness and consistency matter more than deep deliberation.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 32000,
     "pricing": {
@@ -6506,7 +6506,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.2-Codex",
     "description": "GPT-5.2-Codex is an upgraded version of GPT-5.1-Codex optimized for software engineering and coding workflows. It is designed for both interactive development sessions and long, independent execution of complex engineering tasks. The model supports building projects from scratch, feature development, debugging, large-scale refactoring, and code review. Compared to GPT-5.1-Codex, 5.2-Codex is more steerable, adheres closely to developer instructions, and produces cleaner, higher-quality code outputs. Reasoning effort can be adjusted with the `reasoning.effort` parameter. Read the [docs here](https://openrouter.ai/docs/use-cases/reasoning-tokens#reasoning-effort-level)\n\nCodex integrates into developer environments including the CLI, IDE extensions, GitHub, and cloud tasks. It adapts reasoning effort dynamically—providing fast responses for small tasks while sustaining extended multi-hour runs for large projects. The model is trained to perform structured code reviews, catching critical flaws by reasoning over dependencies and validating behavior against tests. It also supports multimodal inputs such as images or screenshots for UI development and integrates tool use for search, dependency installation, and environment setup. Codex is intended specifically for agentic coding applications.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6539,7 +6539,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.2 Pro",
     "description": "GPT-5.2 Pro is OpenAI’s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy in high-stakes use cases. It supports test-time routing features and advanced prompt understanding, including user-specified intent like \"think hard about this.\" Improvements include reductions in hallucination, sycophancy, and better performance in coding, writing, and health-related tasks.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6572,7 +6572,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.3-Codex",
     "description": "GPT-5.3-Codex is OpenAI’s most advanced agentic coding model, combining the frontier software engineering performance of GPT-5.2-Codex with the broader reasoning and professional knowledge capabilities of GPT-5.2. It achieves state-of-the-art results on SWE-Bench Pro and strong performance on Terminal-Bench 2.0 and OSWorld-Verified, reflecting improved multi-language coding, terminal proficiency, and real-world computer-use skills. The model is optimized for long-running, tool-using workflows and supports interactive steering during execution, making it suitable for complex development tasks, debugging, deployment, and iterative product work.\n\nBeyond coding, GPT-5.3-Codex performs strongly on structured knowledge-work benchmarks such as GDPval, supporting tasks like document drafting, spreadsheet analysis, slide creation, and operational research across domains. It is trained with enhanced cybersecurity awareness, including vulnerability identification capabilities, and deployed with additional safeguards for high-risk use cases. Compared to prior Codex models, it is more token-efficient and approximately 25% faster, targeting professional end-to-end workflows that span reasoning, execution, and computer interaction.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6607,7 +6607,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.4",
     "description": "GPT-5.4 is OpenAI’s latest frontier model, unifying the Codex and GPT lines into a single system. It features a 1M+ token context window (922K input, 128K output) with support for text and image inputs, enabling high-context reasoning, coding, and multimodal analysis within the same workflow.\n\nThe model delivers improved performance in coding, document understanding, tool use, and instruction following. It is designed as a strong default for both general-purpose tasks and software engineering, capable of generating production-quality code, synthesizing information across multiple sources, and executing complex multi-step workflows with fewer iterations and greater token efficiency.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6642,7 +6642,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.4 Image 2",
     "description": "[GPT-5.4](https://openrouter.ai/openai/gpt-5.4) Image 2 combines OpenAI's GPT-5.4 model with state-of-the-art image generation capabilities from GPT Image 2. It enables rich multimodal workflows, allowing users to seamlessly move between reasoning, coding, and visual generation within the same interaction.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 272000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6674,7 +6674,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.4 Mini",
     "description": "GPT-5.4 mini brings the core capabilities of GPT-5.4 to a faster, more efficient model optimized for high-throughput workloads. It supports text and image inputs with strong performance across reasoning, coding, and tool use, while reducing latency and cost for large-scale deployments.\n\nThe model is designed for production environments that require a balance of capability and efficiency, making it well suited for chat applications, coding assistants, and agent workflows that operate at scale. GPT-5.4 mini delivers reliable instruction following, solid multi-step reasoning, and consistent performance across diverse tasks with improved cost efficiency.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6709,7 +6709,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.4 Nano",
     "description": "GPT-5.4 nano is the most lightweight and cost-efficient variant of the GPT-5.4 family, optimized for speed-critical and high-volume tasks. It supports text and image inputs and is designed for low-latency use cases such as classification, data extraction, ranking, and sub-agent execution.\n\nThe model prioritizes responsiveness and efficiency over deep reasoning, making it ideal for pipelines that require fast, reliable outputs at scale. GPT-5.4 nano is well suited for background tasks, real-time systems, and distributed agent architectures where minimizing cost and latency is essential.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6744,7 +6744,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.4 Pro",
     "description": "GPT-5.4 Pro is OpenAI's most advanced model, building on GPT-5.4's unified architecture with enhanced reasoning capabilities for complex, high-stakes tasks. It features a 1M+ token context window (922K input, 128K output) with support for text and image inputs. Optimized for step-by-step reasoning, instruction following, and accuracy, GPT-5.4 Pro excels at agentic coding, long-context workflows, and multi-step problem solving.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6778,7 +6778,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.5",
     "description": "GPT-5.5 is OpenAI’s frontier model designed for complex professional workloads, building on GPT-5.4 with stronger reasoning, higher reliability, and improved token efficiency on hard tasks. It features a 1M+ token context window (922K input, 128K output) with support for text and image inputs, enabling large-scale reasoning, coding, and multimodal workflows within a single system.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6813,7 +6813,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.5 Pro",
     "description": "GPT-5.5 Pro is OpenAI’s high-capability model optimized for deep reasoning and accuracy on complex, high-stakes workloads. It features a 1M+ token context window (922K input, 128K output) with support for text and image inputs, and is designed for long-horizon problem solving, agentic coding, and precise execution across multi-step workflows.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6847,7 +6847,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Luna",
     "description": "GPT-5.6 Luna is a fast, cost-efficient model in OpenAI's GPT-5.6 series. It is suited for high-volume, latency-sensitive tasks such as chat, classification, and lightweight agentic workflows, providing capable reasoning for its price tier.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6882,7 +6882,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Luna Pro",
     "description": "GPT-5.6 Luna Pro is the same underlying model as [GPT-5.6 Luna](https://openrouter.ai/openai/gpt-5.6-luna), served with `reasoning.mode` set to `pro` for higher-quality responses on complex tasks.\n\nLearn more in OpenAI's docs: https://developers.openai.com/api/docs/guides/reasoning#reasoning-mode",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6917,7 +6917,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Sol",
     "description": "GPT-5.6 Sol is the flagship model in OpenAI's GPT-5.6 series. It is suited for complex reasoning, coding, and agentic workflows, and is particularly strong at command-line and multi-step coding tasks and long-horizon problem solving.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6952,7 +6952,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Sol Pro",
     "description": "GPT-5.6 Sol Pro is the same underlying model as [GPT-5.6 Sol](https://openrouter.ai/openai/gpt-5.6-sol), served with `reasoning.mode` set to `pro` for higher-quality responses on complex tasks.\n\nLearn more in OpenAI's docs: https://developers.openai.com/api/docs/guides/reasoning#reasoning-mode",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -6987,7 +6987,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Terra",
     "description": "GPT-5.6 Terra is a balanced model in OpenAI's GPT-5.6 series, positioned between the flagship Sol tier and the cost-efficient Luna tier. It is suited for everyday coding, reasoning, and agentic tasks where capability and cost need to be balanced, offering strong performance at roughly half the cost of Sol.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7022,7 +7022,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Terra Pro",
     "description": "GPT-5.6 Terra Pro is the same underlying model as [GPT-5.6 Terra](https://openrouter.ai/openai/gpt-5.6-terra), served with `reasoning.mode` set to `pro` for higher-quality responses on complex tasks.\n\nLearn more in OpenAI's docs: https://developers.openai.com/api/docs/guides/reasoning#reasoning-mode",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7057,7 +7057,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5 Image",
     "description": "[GPT-5](https://openrouter.ai/openai/gpt-5) Image combines OpenAI's GPT-5 model with state-of-the-art image generation capabilities. It offers major improvements in reasoning, code quality, and user experience while incorporating GPT Image 1's superior instruction following, text rendering, and detailed image editing.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7089,7 +7089,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5 Image Mini",
     "description": "GPT-5 Image Mini combines OpenAI's advanced language capabilities, powered by [GPT-5 Mini](https://openrouter.ai/openai/gpt-5-mini), with GPT Image 1 Mini for efficient image generation. This natively multimodal model features superior instruction following, text rendering, and detailed image editing with reduced latency and cost. It excels at high-quality visual creation while maintaining strong text understanding, making it ideal for applications that require both efficient image generation and text processing at scale.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7121,7 +7121,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5 Mini",
     "description": "GPT-5 Mini is a compact version of GPT-5, designed to handle lighter-weight reasoning tasks. It provides the same instruction-following and safety-tuning benefits as GPT-5, but with reduced latency and cost. GPT-5 Mini is the successor to OpenAI's o4-mini model.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7154,7 +7154,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5 Nano",
     "description": "GPT-5-Nano is the smallest and fastest variant in the GPT-5 system, optimized for developer tools, rapid interactions, and ultra-low latency environments. While limited in reasoning depth compared to its larger counterparts, it retains key instruction-following and safety features. It is the successor to GPT-4.1-nano and offers a lightweight option for cost-sensitive or real-time applications.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7187,7 +7187,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5 Pro",
     "description": "GPT-5 Pro is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy in high-stakes use cases. It supports test-time routing features and advanced prompt understanding, including user-specified intent like \"think hard about this.\" Improvements include reductions in hallucination, sycophancy, and better performance in coding, writing, and health-related tasks.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7221,7 +7221,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Luna",
     "description": "Cost-efficient GPT-5.6 model for fast, high-volume workloads",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7254,7 +7254,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Sol",
     "description": "Frontier GPT-5.6 model for complex professional work, coding, and agentic workflows",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7287,7 +7287,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-5.6 Terra",
     "description": "Balanced GPT-5.6 model for capable, cost-efficient everyday work",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7320,7 +7320,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT-6 Astra Pro",
     "description": "GPT-6 Astra Pro is the same underlying model as [GPT-6 Astra](https://openrouter.ai/openai/gpt-6-astra), served with `reasoning.mode` set to `pro` for higher-quality responses on complex tasks.\n\nLearn more in OpenAI's docs: https://developers.openai.com/api/docs/guides/reasoning#reasoning-mode",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7355,7 +7355,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Astra Latest",
     "description": "This model always redirects to the latest model in the GPT Astra family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7388,7 +7388,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Audio",
     "description": "The gpt-audio model is OpenAI's first generally available audio model. The new snapshot features an upgraded decoder for more natural sounding voices and maintains better voice consistency. Audio is priced at $32 per million input tokens and $64 per million output tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -7420,7 +7420,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Audio Mini",
     "description": "A cost-efficient version of GPT Audio. The new snapshot features an upgraded decoder for more natural sounding voices and maintains better voice consistency. Input is priced at $0.60 per million tokens and output is priced at $2.40 per million tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -7452,7 +7452,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Chat Latest",
     "description": "GPT Chat Latest points to OpenAI's stable API alias `chat-latest` that always resolves to the latest Instant chat model used in ChatGPT. As OpenAI rolls out new Instant model updates in the future, they are routed behind this slug automatically.\n\nFor more info, see: https://developers.openai.com/api/docs/models/chat-latest",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7486,7 +7486,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Latest",
     "description": "This model always redirects to the latest model in the OpenAI GPT family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7519,7 +7519,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Luna Latest",
     "description": "This model always redirects to the latest model in the GPT Luna family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7552,7 +7552,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Mini Latest",
     "description": "This model always redirects to the latest model in the GPT Mini family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 400000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7805,7 +7805,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Sol Latest",
     "description": "This model always redirects to the latest model in the GPT Sol family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7838,7 +7838,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "GPT Terra Latest",
     "description": "This model always redirects to the latest model in the GPT Terra family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1050000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -7871,7 +7871,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o1",
     "description": "The latest and strongest model family from OpenAI, o1 is designed to spend more time thinking before responding. The o1 model series is trained with large-scale reinforcement learning to reason using chain of thought. \n\nThe o1 models are optimized for math, science, programming, and other STEM-related tasks. They consistently exhibit PhD-level accuracy on benchmarks in physics, chemistry, and biology. Learn more in the [launch announcement](https://openai.com/o1).",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -7905,7 +7905,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o1-pro",
     "description": "The o1 series of models are trained with reinforcement learning to think before they answer and perform complex reasoning. The o1-pro model uses more compute to think harder and provide consistently better answers.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -7938,7 +7938,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o3",
     "description": "o3 is a well-rounded and powerful model across domains. It sets a new standard for math, science, coding, and visual reasoning tasks. It also excels at technical writing and instruction-following. Use it to think through multi-step problems that involve analysis across text, code, and images.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -8039,7 +8039,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o3 Pro",
     "description": "The o-series of models are trained with reinforcement learning to think before they answer and perform complex reasoning. The o3-pro model uses more compute to think harder and provide consistently better answers.\n\nNote that BYOK is required for this model. Set up here: https://openrouter.ai/settings/integrations",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -8073,7 +8073,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o4 Mini",
     "description": "OpenAI o4-mini is a compact reasoning model in the o-series, optimized for fast, cost-efficient performance while retaining strong multimodal and agentic capabilities. It supports tool use and demonstrates competitive reasoning and coding performance across benchmarks like AIME (99.5% with Python) and SWE-bench, outperforming its predecessor o3-mini and even approaching o3 in some domains.\n\nDespite its smaller size, o4-mini exhibits high accuracy in STEM tasks, visual problem solving (e.g., MathVista, MMMU), and code editing. It is especially well-suited for high-throughput scenarios where latency or cost is critical. Thanks to its efficient architecture and refined reinforcement learning training, o4-mini can chain tools, generate structured outputs, and solve multi-step tasks with minimal delay—often in under a minute.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -8108,7 +8108,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "openai",
     "name": "o4 Mini High",
     "description": "OpenAI o4-mini-high is the same model as [o4-mini](/openai/o4-mini) with reasoning_effort set to high. OpenAI o4-mini is a compact reasoning model in the o-series, optimized for fast, cost-efficient performance while retaining...",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 100000,
     "pricing": {
@@ -8143,7 +8143,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "perceptron",
     "name": "Perceptron: Perceptron Mk1",
     "description": "Perceptron Mk1 (Mark One) is Perceptron's highest-quality vision-language model for video and embodied reasoning.** It accepts image and video inputs paired with natural language queries, and produces detailed visual understanding responses, either structured or natural language. It excels at video understanding tasks like video QA, summarization, and event detection. On image inputs, it advances point-by-example grounding from multimodal prompts, OCR and document parsing on messy real-world inputs, open vocabulary object detection and counting, and hand pose estimation.\n\nReasoning can be enabled per request to trade latency for deeper analysis on harder tasks. Structured annotations are emitted inline with text only when explicitly requested via the `annotation_format` parameter (pass `\"point\"`, `\"box\"`, or `\"polygon\"` for spatial localization on images, or `\"clip\"` (start/end timestamps) for temporal segments in video). Without `annotation_format`, the model returns natural-language text only.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -8174,7 +8174,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "perplexity",
     "name": "Sonar",
     "description": "Sonar is lightweight, affordable, fast, and simple to use — now featuring citations and the ability to customize sources. It is designed for companies seeking to integrate lightweight question-and-answer features optimized for speed.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 127072,
     "maxOutputTokens": 114364,
     "pricing": {
@@ -8236,7 +8236,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "perplexity",
     "name": "Sonar Pro",
     "description": "Note: Sonar Pro pricing includes Perplexity search pricing. See [details here](https://docs.perplexity.ai/guides/pricing#detailed-pricing-breakdown-for-sonar-reasoning-pro-and-sonar-pro) For enterprises seeking more advanced capabilities, the Sonar Pro API can handle in-depth, multi-step queries with added extensibility, like...",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 8000,
     "pricing": {
@@ -8267,7 +8267,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "perplexity",
     "name": "Sonar Pro Search",
     "description": "Exclusively available on the OpenRouter API, Sonar Pro's new Pro Search mode is Perplexity's most advanced agentic search system. It is designed for deeper reasoning and analysis. Pricing is based on tokens plus $18 per thousand requests. This model powers the Pro Search mode on the Perplexity platform.\n\nSonar Pro Search adds autonomous, multi-step reasoning to Sonar Pro. So, instead of just one query + synthesis, it plans and executes entire research workflows using tools.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 200000,
     "maxOutputTokens": 8000,
     "pricing": {
@@ -8299,7 +8299,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "perplexity",
     "name": "Sonar Reasoning Pro",
     "description": "Note: Sonar Pro pricing includes Perplexity search pricing. See [details here](https://docs.perplexity.ai/guides/pricing#detailed-pricing-breakdown-for-sonar-reasoning-pro-and-sonar-pro) Sonar Reasoning Pro is a premier reasoning model powered by DeepSeek R1 with Chain of Thought (CoT). Designed for...",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 115200,
     "pricing": {
@@ -8709,7 +8709,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen2.5 VL 72B Instruct",
     "description": "Qwen2.5-VL is proficient in recognizing common objects such as flowers, birds, fish, and insects. It is also highly capable of analyzing texts, charts, icons, graphics, and layouts within images.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 115200,
     "pricing": {
@@ -9121,7 +9121,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3.5-9B",
     "description": "Qwen3.5-9B is a multimodal foundation model from the Qwen3.5 family, designed to deliver strong reasoning, coding, and visual understanding in an efficient 9B-parameter architecture. It uses a unified vision-language design with early fusion of multimodal tokens, allowing the model to process and reason across text and images within the same context.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 235929,
     "pricing": {
@@ -9182,7 +9182,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3.5-Flash",
     "description": "The Qwen3.5 native vision-language Flash models are built on a hybrid architecture that integrates a linear attention mechanism with a sparse mixture-of-experts model, achieving higher inference efficiency. Compared to the 3 series, these models deliver a leap forward in performance for both pure text and multimodal tasks, offering fast response times while balancing inference speed and overall performance.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -9243,7 +9243,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3.5 Plus 2026-02-15",
     "description": "The Qwen3.5 native vision-language series Plus models are built on a hybrid architecture that integrates linear attention mechanisms with sparse mixture-of-experts models, achieving higher inference efficiency. In a variety of task evaluations, the 3.5 series consistently demonstrates performance on par with state-of-the-art leading models. Compared to the 3 series, these models show a leap forward in both pure-text and multimodal capabilities.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -9276,7 +9276,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3.6.27B",
     "description": "Qwen3.6 27B is a dense 27-billion-parameter language model from the Qwen Team at Alibaba, released in April 2026. It features hybrid multimodal capabilities — accepting text, image, and video inputs — and supports a 262,144-token context window.\n\nThe model is designed for agentic coding and reasoning tasks, with particular strength in repository-level code comprehension, front-end development workflows, and multi-step problem solving. It includes a built-in thinking mode for extended reasoning and preserves thinking context across conversation history. Qwen3.6 27B supports 201 languages and dialects and is released under the Apache 2.0 license.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -9571,7 +9571,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3.8.27B",
     "description": "Qwen3.8 27B is an open-weight dense vision-language model from Qwen. It is suited for coding, professional workflows, research, multimodal interaction, and long-running agent tasks, with flexible thinking that can be enabled or disabled.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -10073,7 +10073,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "qwen",
     "name": "Qwen3 VL 235B A22B",
     "description": "Qwen vision-language model for visual reasoning, documents, and agent tasks",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -10385,7 +10385,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "rekaai",
     "name": "Reka Edge",
     "description": "Reka Edge is an extremely efficient 7B multimodal vision-language model that accepts image/video+text inputs and generates text outputs. This model is optimized specifically to deliver industry-leading performance in image understanding, video analysis, object detection, and agentic tool-use.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 16384,
     "maxOutputTokens": 14745,
     "pricing": {
@@ -10505,7 +10505,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "sakana",
     "name": "Sakana: Fugu Max",
     "description": "Fugu Max is the cost-performance model in Sakana AI's Fugu family. Rather than a single monolithic model, Fugu is a learned multi-agent orchestration system: a language model trained to route tasks across a fixed pool of open-weights and specialized models, including NVIDIA's Nemotron family, and to recursively call instances of itself.\n\nFugu Max dynamically selects efficient combinations of expert agents to improve quality and cost together, and is priced flat regardless of context length. It supports configurable reasoning effort (high, xhigh, max), function calling, structured outputs, image and PDF input, and built-in web search and web fetch. Orchestration tokens consumed by the system are billed as standard input/output tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -10538,7 +10538,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "sakana",
     "name": "Sakana: Fugu Ultra",
     "description": "Fugu Ultra is the higher-performance model in Sakana AI's Fugu family. Rather than a single monolithic model, Fugu is a learned multi-agent orchestration system: a language model trained to route tasks across a swappable pool of underlying models and to recursively call instances of itself.\n\nFugu Ultra prioritizes answer quality on complex, multi-step reasoning, coding, and agentic workflows. It supports configurable reasoning effort, tool calling, and built-in web search. Orchestration tokens consumed by the system are billed as standard input/output tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -10571,7 +10571,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "sakana",
     "name": "Sakana: Fugu Ultra v2",
     "description": "Fugu Ultra v2 is the higher-performance model in Sakana AI's Fugu family. Rather than a single monolithic model, Fugu is a learned multi-agent orchestration system: a language model trained to route tasks across a fixed pool of open and specialized models and to recursively call instances of itself.\n\nFugu Ultra v2 prioritizes answer quality on complex multi-step reasoning, autonomous research, and full-stack software development, and does not rely on individual proprietary frontier models in its pool. It supports configurable reasoning effort (high, xhigh, max), function calling, structured outputs, image and PDF input, and built-in web search. Prompts above 272K tokens are billed at a higher rate. Orchestration tokens consumed by the system are billed as standard input/output tokens.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 128000,
     "pricing": {
@@ -10604,7 +10604,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "sakana",
     "name": "Sakana: Sakana Namazu",
     "description": "Sakana Namazu is a Japanese-specialized reasoning model from Sakana AI, based on Kimi K2.6 with additional training for Japanese language and business contexts. It is suited for Japanese instruction following, business writing, mathematics, coding, research, and multi-step agent workflows.\n\nSakana AI may use inputs for model training and improvement by default, with an opt-out available in the Sakana Console. Processing entirely within Japan is not guaranteed.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 262144,
     "maxOutputTokens": 65536,
     "pricing": {
@@ -10759,7 +10759,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "stepfun",
     "name": "StepFun: Step 3.7 Flash",
     "description": "Step 3.7 Flash is StepFun's latest high-efficiency multimodal Mixture-of-Experts model. It pairs a 196B-parameter language backbone with a vision encoder for native image and video understanding, activating roughly 11B parameters per token. The model supports a 256K context window and exposes selectable reasoning levels (high/medium/low), letting callers trade off speed, cost, and depth of reasoning.\n\nDesigned for coding, agentic workflows, structured outputs, and long-context productivity tasks.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 256000,
     "maxOutputTokens": 230400,
     "pricing": {
@@ -11097,7 +11097,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "thinkingmachines",
     "name": "Thinking Machines: Inkling",
     "description": "Inkling is an open-weight multimodal mixture-of-experts model from Thinking Machines Lab, with 41B active parameters out of 975B total. It is designed for general-purpose reasoning, coding, agentic and tool-use systems, retrieval-augmented generation, instruction following, and multilingual conversational applications. Its native image and audio understanding supports multimodal analysis alongside text.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 524288,
     "maxOutputTokens": 471859,
     "pricing": {
@@ -11225,7 +11225,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "writer",
     "name": "Writer Palmyra X4",
     "description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -11257,7 +11257,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "writer",
     "name": "Writer Palmyra X5",
     "description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 8192,
     "pricing": {
@@ -11289,7 +11289,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok 4.20",
     "description": "Grok 4.20 is a reasoning model from SpaceXAI with industry-leading speed and agentic tool calling capabilities. It combines the lowest hallucination rate on the market with strict prompt adherance, delivering consistently precise and truthful responses.\n\nReasoning can be enabled/disabled using the `reasoning` `enabled` parameter in the API. [Learn more in our docs](https://openrouter.ai/docs/use-cases/reasoning-tokens#controlling-reasoning-tokens)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 2000000,
     "maxOutputTokens": 1800000,
     "pricing": {
@@ -11324,7 +11324,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok 4.20 Multi-Agent",
     "description": "Grok 4.20 Multi-Agent is a variant of SpaceXAI’s Grok 4.20 designed for collaborative, agent-based workflows. Multiple agents operate in parallel to conduct deep research, coordinate tool use, and synthesize information across complex tasks.\n\nReasoning effort behavior:\n- low / medium: 4 agents\n- high / xhigh: 16 agents",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 2000000,
     "maxOutputTokens": 1800000,
     "pricing": {
@@ -11358,7 +11358,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok 4.3",
     "description": "Grok 4.3 is a reasoning model from SpaceXAI. It accepts text and image inputs with text output, and is suited for agentic workflows, instruction-following tasks, and applications requiring high factual accuracy. Reasoning can be configured between none/low/medium/high (default low) effort levels.\n\nIt supports a 1 million token context window with no output token limit, making it well-suited for long-document analysis, deep research, and multi-step agentic tasks. Pricing is tiered: requests exceeding 200k total tokens are billed at a higher rate.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1000000,
     "maxOutputTokens": 900000,
     "pricing": {
@@ -11393,7 +11393,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok 4.5",
     "description": "Grok 4.5 is a model from SpaceXAI with frontier performance on coding, knowledge work, and STEM.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 500000,
     "maxOutputTokens": 450000,
     "pricing": {
@@ -11428,7 +11428,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok 4.6",
     "description": "Grok 4.6 is SpaceXAI's smartest model with frontier performance on coding, knowledge work, and STEM.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 500000,
     "maxOutputTokens": 450000,
     "pricing": {
@@ -11463,7 +11463,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "SpaceXAI: Grok Build 0.1",
     "description": "Grok Build 0.1 is SpaceXAI’s fast coding model trained specifically for agentic software engineering workflows. It supports text and image inputs with text output, and is optimized for interactive coding agents, tool use, and multi-step development tasks. The model powers SpaceXAI’s Grok Build CLI and features a 256K context window with no text output limit, making it well suited for long-horizon coding and automation workflows. Currently in early access.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 256000,
     "maxOutputTokens": 230400,
     "pricing": {
@@ -11498,7 +11498,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "x-ai",
     "name": "Grok Latest",
     "description": "This model always redirects to the latest Grok model from xAI.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 500000,
     "maxOutputTokens": 450000,
     "pricing": {
@@ -11531,7 +11531,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "xai",
     "name": "Grok 4.6",
     "description": "xAI's frontier model for long-running agents, coding, knowledge work, and visual projects",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 500000,
     "maxOutputTokens": 500000,
     "pricing": {
@@ -11564,7 +11564,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "xiaomi",
     "name": "Xiaomi: MiMo-V2.5",
     "description": "MiMo-V2.5 is a native omnimodal model by Xiaomi. It delivers Pro-level agentic performance at roughly half the inference cost, while surpassing MiMo-V2-Omni in multimodal perception across image and video understanding tasks. Its 1M context window supports complete documents, extended conversations, and complex task contexts in a single pass, making it ideal for integration with agent frameworks where strong reasoning, rich perception, and cost efficiency all matter.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -11698,7 +11698,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "z-ai",
     "name": "Z.ai: GLM 4.5V",
     "description": "GLM-4.5V is a vision-language foundation model for multimodal agent applications. Built on a Mixture-of-Experts (MoE) architecture with 106B parameters and 12B activated parameters, it achieves state-of-the-art results in video understanding, image Qu0026A, OCR, and document parsing, with strong gains in front-end web coding, grounding, and spatial reasoning. It offers a hybrid inference mode: a \"thinking mode\" for deep reasoning and a \"non-thinking mode\" for fast responses. Reasoning behavior can be toggled via the `reasoning` `enabled` boolean. [Learn more in our docs](https://openrouter.ai/docs/use-cases/reasoning-tokens#enable-reasoning-with-default-config)",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 65536,
     "maxOutputTokens": 16384,
     "pricing": {
@@ -11765,7 +11765,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "z-ai",
     "name": "Z.ai: GLM 4.6V",
     "description": "GLM-4.6V is a large multimodal model designed for high-fidelity visual understanding and long-context reasoning across images, documents, and mixed media. It supports up to 128K tokens, processes complex page layouts and charts directly as visual inputs, and integrates native multimodal function calling to connect perception with downstream tool execution. The model also enables interleaved image-text generation and UI reconstruction workflows, including screenshot-to-HTML synthesis and iterative visual editing.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 131072,
     "maxOutputTokens": 32768,
     "pricing": {
@@ -11996,7 +11996,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "z-ai",
     "name": "Z.ai: GLM 5.3 Flash",
     "description": "GLM-5.3-Flash is a native multimodal model from Z.ai. It is suited for efficient coding and long-horizon agent tasks. Its hybrid sparse and linear attention architecture maintains accurate long-context behavior while reducing compute overhead.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -12063,7 +12063,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "z-ai",
     "name": "Z.ai: GLM 5V Turbo",
     "description": "GLM-5V-Turbo is Z.ai’s first native multimodal agent foundation model, built for vision-based coding and agent-driven tasks. It natively handles image, video, and text inputs, excels at long-horizon planning, complex coding, and task execution, and works seamlessly with agents to complete the full loop of “perceive → plan → execute“.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 202752,
     "maxOutputTokens": 131072,
     "pricing": {
@@ -12097,7 +12097,7 @@ export const CATALOG_ROWS: Model[] = [
     "vendor": "z-ai",
     "name": "Z.ai: GLM Flash Latest",
     "description": "This model always redirects to the latest model in the GLM Flash family.",
-    "modality": "text",
+    "modality": "multimodal",
     "contextWindow": 1048576,
     "maxOutputTokens": 131072,
     "pricing": {

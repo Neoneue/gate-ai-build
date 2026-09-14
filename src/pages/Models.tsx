@@ -18,6 +18,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { InlineCode } from "@/components/ui/inline-code";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
@@ -74,6 +75,7 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { FreeModels } from "@/pages/models/FreeModels";
 import { FeaturedModels, ModelShelves } from "@/pages/models/ModelShelves";
 import {
   PAYG_TOOL_CAPTIONS,
@@ -163,6 +165,9 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const [modality, setModality] = useState<"all" | Modality>("all");
   const [search, setSearch] = useState("");
   const [provider, setProvider] = useState("all");
+  // Empty = no capability filter. A non-empty selection INTERSECTS: a row has
+  // to carry every capability picked, so each addition narrows the catalog.
+  const [features, setFeatures] = useState<Capability[]>([]);
   const [sort, setSort] = useState<ModelSort>("popular");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
@@ -176,13 +181,19 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       if (provider !== "all" && !m.providers.some((p) => p.id === provider)) {
         return false;
       }
+      if (
+        features.length > 0 &&
+        !features.every((c) => m.capabilities.includes(c))
+      ) {
+        return false;
+      }
       if (q && !matchesQuery(m, q)) {
         return false;
       }
       return true;
     });
     return sortModels(rows, sort);
-  }, [modality, search, provider, sort]);
+  }, [modality, search, provider, features, sort]);
 
   const resetToFirstPage = () => setPage(1);
 
@@ -197,6 +208,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     setSearch("");
     setModality("all");
     setProvider("all");
+    setFeatures([]);
     resetToFirstPage();
   };
 
@@ -204,12 +216,17 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     <>
       <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
-      {/* Curated blocks. Three MAIN sections on this page — Featured, the
-          shelves, and the catalog — separated by a rule; the four shelves
-          inside the middle block are sub-sections and carry spacing only. */}
+      {/* Curated blocks. Four MAIN sections on this page — Featured, the
+          free models, the shelves, and the catalog — separated by a rule; the
+          four shelves inside the shelves block are sub-sections and carry
+          spacing only. */}
       <Separator />
 
       <FeaturedModels onSelect={onSelect} />
+
+      <Separator />
+
+      <FreeModels onSelect={onSelect} />
 
       <Separator />
 
@@ -234,7 +251,8 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           modality is a visible peer scope. Underline `line` variant
           matches the Settings / Team tab register elsewhere in the
           shell. Count chip uses the shared <TabsCount> primitive.
-          Two tabs, because prod has two: every model is text. */}
+          Three tabs from the feed's `type`: language -> Text, multimodal ->
+          Multimodal (2026-09-14, matches the marketing catalog). */}
         <Tabs
           className="gap-4"
           onValueChange={(v) => {
@@ -252,10 +270,19 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
               Text
               <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
             </TabsTrigger>
+            <TabsTrigger value="multimodal">
+              Multimodal
+              <TabsCount>{MODALITY_COUNTS.multimodal}</TabsCount>
+            </TabsTrigger>
           </TabsList>
 
           {isEmpty ? null : (
             <Toolbar
+              features={features}
+              onFeaturesChange={(v) => {
+                setFeatures(v);
+                resetToFirstPage();
+              }}
               onProviderChange={(v) => {
                 setProvider(v);
                 resetToFirstPage();
@@ -287,7 +314,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                     Clear filters
                   </Button>
                 }
-                body="Try a broader search, a different type, or clear the filters to see every routable model."
+                body="Try a broader search, a different type, fewer features, or clear the filters to see every routable model."
                 title="No models match these filters"
               />
             ) : (
@@ -348,6 +375,8 @@ function Toolbar({
   onSearchChange,
   provider,
   onProviderChange,
+  features,
+  onFeaturesChange,
   sort,
   onSortChange,
 }: {
@@ -355,6 +384,8 @@ function Toolbar({
   onSearchChange: (v: string) => void;
   provider: string;
   onProviderChange: (v: string) => void;
+  features: Capability[];
+  onFeaturesChange: (v: Capability[]) => void;
   sort: ModelSort;
   onSortChange: (v: ModelSort) => void;
 }) {
@@ -363,8 +394,9 @@ function Toolbar({
        RequestsTable. `<main>` declares `@container`, so `@2xl:` (672px
        inline-size) reads the column the toolbar lives in rather than the
        window, which the Ask AI panel narrows without touching. Below it:
-       search full-width on row 1, the two Selects splitting row 2 evenly
-       via `min-w-0 flex-1`. */
+       search full-width on row 1, the provider Select, the features
+       MultiSelect and the sort Select splitting row 2 evenly via
+       `min-w-0 flex-1`. */
     <div className="flex flex-wrap items-center gap-2">
       <SearchInput
         ariaLabel="Search models"
@@ -396,11 +428,26 @@ function Toolbar({
         </SelectContent>
       </Select>
 
+      {/* Capabilities, in CAPABILITY_ORDER so the picker reads the same way
+          the row strip and the detail page do. Live-applying (no commitMode):
+          it is a filter, and each toggle is a cheap, reversible narrowing. */}
+      <MultiSelect
+        aria-label="Filter by features"
+        className="w-auto min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+        onValueChange={(v) => onFeaturesChange(v as Capability[])}
+        options={CAPABILITY_ORDER.map((c) => ({
+          value: c,
+          label: CAPABILITY_META[c].label,
+        }))}
+        placeholder="All features"
+        popupWidth="content"
+        value={features}
+      />
+
       <Select onValueChange={(v) => onSortChange(v as ModelSort)} value={sort}>
         <SelectTrigger
           aria-label="Sort"
           className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
-          size="sm"
         >
           <SelectValue />
         </SelectTrigger>

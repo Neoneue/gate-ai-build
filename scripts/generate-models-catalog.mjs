@@ -89,6 +89,7 @@ const caps = (tags) =>
   [...new Set((tags ?? []).map((t) => TAG[t]).filter(Boolean))].sort(
     (a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)
   );
+const modality = (t) => (t === "multimodal" ? "multimodal" : "text");
 const iso = (unix) => (unix ? new Date(unix * 1000).toISOString() : null);
 const tsNum = (n) =>
   n == null
@@ -129,6 +130,7 @@ function reconcileCurated(src, feedById) {
       b = b.replace(/pricingMarkup: [\d.]+,/, "pricingMarkup: 1,");
       b = b.replace(/paygMarkup: [\d.]+,/g, "paygMarkup: 1,");
     }
+    b = b.replace(/modality: "[a-z]+",/, `modality: "${modality(f.type)}",`);
     b = b.replace(
       /contextWindow: (?:[\d_]+|null),/,
       `contextWindow: ${tsNum(f.context_window ?? null)},`
@@ -163,7 +165,7 @@ function buildCatalog(feed, curatedIds, fetchedOn) {
       vendor: x.owned_by,
       name: fixName(x.name),
       description: x.description ?? "",
-      modality: "text",
+      modality: modality(x.type),
       contextWindow: x.context_window ?? null,
       maxOutputTokens: x.max_tokens ?? null,
       pricing: {

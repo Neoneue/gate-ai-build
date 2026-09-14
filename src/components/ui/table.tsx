@@ -124,7 +124,12 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
         // (verified: alpha and lightness ramp at different rates in OKLab).
         // Letting the border snap instantly matches TableHeader/TableFooter,
         // which already snap with no visible artifact.
-        "border-border border-b transition-[background-color] hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
+        // `h-12` is a FLOOR, not a fixed height: on a <tr> `height` acts as
+        // a minimum, so content-heavy rows still grow. Site rule 2026-09-14:
+        // no body row renders under 48px. Before this the row was
+        // content-sized and landed at 45 to 46px wherever a cell held only
+        // a 14px line (Models list, shelf tables), 48 or more elsewhere.
+        "h-12 border-border border-b transition-[background-color] hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
         className
       )}
       data-slot="table-row"
