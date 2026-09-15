@@ -74,20 +74,11 @@ export function FeaturedModels({
           Between @5xl and @7xl the row stays 2-up, which is also where the
           cards are wide enough to earn the 24px stat gap. */}
       <div className="grid @7xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
-        {/* 100ms stagger so the four cards resolve left to right instead of
-            landing as one block. `grid h-full` on the wrapper keeps the card
-            stretching to the row height the way it did as a direct grid item;
-            `fill-mode-backwards` holds the pre-enter state during the delay so
-            a late card cannot flash at full opacity first. `motion-safe:` gates
-            the whole thing. */}
-        {models.map((model, i) => (
-          <div
-            className="motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-3 grid h-full duration-300 ease-out motion-safe:animate-in motion-safe:fill-mode-backwards"
-            key={model.id}
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
-            <FeaturedCard model={model} onSelect={onSelect} />
-          </div>
+        {/* No mount animation: cards render in place on load. A staggered
+            entrance fits a marketing page, not a dashboard someone refreshes
+            all day (removed 2026-09-15). */}
+        {models.map((model) => (
+          <FeaturedCard key={model.id} model={model} onSelect={onSelect} />
         ))}
       </div>
     </section>
@@ -338,16 +329,16 @@ function ShelfTable({
           {/* `text-right` so each numeric head sits over its own right-aligned
               NumericCell column, exactly as SortableTableHead's `numeric` does
               on the catalog table below. */}
-          <TableHead className="w-[9%] whitespace-nowrap text-right">
+          <TableHead className="w-[12%] whitespace-nowrap text-right">
             Context
           </TableHead>
-          <TableHead className="w-[15%] whitespace-nowrap text-right">
+          <TableHead className="w-[16%] whitespace-nowrap text-right">
             Input
           </TableHead>
-          <TableHead className="w-[15%] whitespace-nowrap text-right">
+          <TableHead className="w-[16%] whitespace-nowrap text-right">
             Output
           </TableHead>
-          <TableHead className="w-[17%] whitespace-nowrap">Features</TableHead>
+          <TableHead className="w-[12%] whitespace-nowrap">Features</TableHead>
           <TableHead className="w-[10%] whitespace-nowrap">Providers</TableHead>
         </TableRow>
       </TableHeader>
