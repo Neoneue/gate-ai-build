@@ -2,7 +2,7 @@
 
 > **Source:** Vercel Design Guidelines (vercel.com/design/guidelines). Canonical reference for web UI quality — accessibility, interactions, performance, content, forms, animation, layout, visual design, and copywriting.
 
-> **Reading order:** Apply these rules when writing ANY UI code or building ANY Figma frame. They are target-agnostic. **Figma note:** implement via Plugin API nodes; map barrier, motion, a11y and content checks to screenshots and specs where browser-only APIs do not apply. In this project `design.md` wins on every visual value; this file governs behavior and accessibility.
+> **Reading order:** Apply these rules when writing ANY UI code. In this project `design.md` wins on every visual value; this file governs behavior and accessibility.
 
 > **Relationship to skills:** The `skills/web-design-guidelines/` skill is a compact subset. This knowledge file is the complete, canonical reference. When they conflict, this file wins.
 
