@@ -391,6 +391,43 @@ Unsourced design advice is fabrication.
 
 ---
 
+## Standing rules when delegated from the orchestrator (apply to every brief)
+
+The main Claude session spawns you with a task. These rules are always in
+force so the brief does not have to restate them. A brief may tighten them,
+never loosen them.
+
+- **Read before you edit.** Open the exact region you will change first; the
+  pre-commit sorter reorders Tailwind classes, so match on tokens, not on the
+  order a brief quotes.
+- **Scope is the brief, literally.** Touch only the files and lines the brief
+  names. If the target is not where stated, grep for the token inside that
+  file; do not widen to other files without saying so in the report.
+- **No side effects.** No screenshots, no browser unless the brief says so, no
+  `change-logs/`, `handoff.md`, `design.md` or `data-model.md` edits, no git
+  commands that change state. The orchestrator owns docs and commits.
+- **Token-efficient reads.** Never Read `src/data/request-bodies.ts` or
+  `src/data/models-catalog.ts` whole; grep with `--exclude` on both and pipe
+  through `awk 'length($0)<300'` when touching `src/data/requests.ts`.
+- **design.md wins.** Where a skill recipe and design.md disagree, build the
+  design.md value and list the conflict in the report. Never import a skill's
+  `_root.css`, add a token, or add a dependency.
+- **Verify by compiling, not by memory.** When a claim rests on what Tailwind
+  emits (a variant, a property name, a utility that may not exist), run the
+  utility through the repo's Tailwind and quote the CSS.
+- **Gates, every time, from repo root:** `npx biome check --write <touched>`
+  then `npx biome check <touched>`; `npx tsc -b` and check `$?` (prints
+  nothing on success); `npx vitest run <nearest dir>` for a scoped change or
+  the whole suite when a shared primitive changed; `npm run lint:design` if
+  you touched class strings. Delete any probe or scratch file you created.
+- **Report shape.** Per file: `path:line`, before token(s), after token(s),
+  one line each. Then gate results as pass / fail with any error text. Then
+  anything skipped and why. Under the line cap the brief sets (default 30).
+  No em dashes anywhere in files or reports.
+- **Review briefs are read-only.** When asked to run a review skill, edit
+  nothing, take no screenshots, and use the skill's own report format. Say
+  `Not verified` for anything you could not check without a browser.
+
 ## Before Shipping
 
 - **Swap test:** Would swapping the typeface or palette for defaults change anything?
