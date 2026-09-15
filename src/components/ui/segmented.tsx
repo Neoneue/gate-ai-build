@@ -176,7 +176,7 @@ function SegmentedPillVariant({
           // mount) so the indicator paints in place on first render and only
           // user selection slides — robust even inside an opening popover.
           animate &&
-            "transition-[transform,width] duration-[220ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
+            "transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
         )}
         style={{
           transform: `translate(${indicator.x}px, ${indicator.y}px)`,

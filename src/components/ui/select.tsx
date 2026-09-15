@@ -174,7 +174,7 @@ function SelectContent({
       >
         <SelectPrimitive.Popup
           className={cn(
-            "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate z-50 max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-sm border border-border bg-card p-1 text-popover-foreground shadow-md duration-150 ease-out data-[align-trigger=true]:animate-none data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards motion-reduce:animate-none motion-reduce:duration-0",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate z-50 max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-sm border border-border bg-card p-1 text-popover-foreground shadow-md duration-150 ease-out data-[align-trigger=true]:animate-none data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0",
             className
           )}
           data-align-trigger={alignItemWithTrigger}
