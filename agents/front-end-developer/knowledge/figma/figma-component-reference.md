@@ -1,7 +1,7 @@
 # shadcn → Figma Frame Mapping
 
 > **Purpose:** Maps shadcn components to their Figma frame structure. How to translate React render output into Figma auto-layout frames, variable bindings, and text styles.
-> **Companion files:** `default-tokens.md` has the variant classes and token values. This file covers HOW to build them in Figma — not what values to use.
+> **Companion files:** the project `design.md` and `src/index.css` hold the token values; `src/components/ui/*.tsx` holds the variant classes (Base UI primitives, not Radix). This file covers HOW to build them in Figma — not what values to use.
 > **Rule:** Before building ANY element on canvas, ask: "What shadcn component is this?" Look it up here. Don't design — replicate.
 > **Always read the installed component source** (`components/ui/*.tsx`) for exact values — they change between presets.
 > **Figma runtime:** This file is the **parity map** (Tailwind → frame properties). **`knowledge/figma/plugin-api.md`** is how Figma’s API actually sets those properties; **`knowledge/figma/mcp-workflow.md`** is how you invoke tools (`use_figma`, `get_design_context`, `search_design_system`, etc.). Know both.
@@ -140,7 +140,7 @@ Frame (VERTICAL auto-layout, FILL width)
 │   └── TableRow × N (HORIZONTAL, border-b 1px)
 │       └── TableCell × N
 │           ├── padding: p-3=12
-│           └── content varies (see blocks-and-patterns.md for cell types)
+│           └── content varies (cell types per `src/components/ui/table.tsx`)
 └── Pagination (HORIZONTAL, justify-between, px-4 py-4)
     ├── Left: "Rows per page" + Select (h-8)
     └── Right: "Page X of Y" + prev/next buttons
@@ -269,7 +269,7 @@ If code groups elements in a div, Figma groups them in a frame. No flattening.
 ## Building Process
 
 1. **Read the component source** (`components/ui/*.tsx`) for exact variant classes
-2. **Check `default-tokens.md`** for token values and opacity patterns
+2. **Check `design.md` and `src/index.css`** for token values and opacity patterns
 3. **Map classes → Figma properties** using the table above
 4. **Bind ALL colors** to Mode collection variables via `setBoundVariableForPaint`
 5. **Bind ALL radii** to Theme radius variables via `setBoundVariable`

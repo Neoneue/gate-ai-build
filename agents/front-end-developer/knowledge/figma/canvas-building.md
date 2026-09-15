@@ -1,6 +1,6 @@
 # Figma Canvas — Building Foundations
 
-> **Reading order:** For screens/components, align intent with `knowledge/core/craft-methodology.md` + `design-process-rules.md` (hierarchy before pixels). Then `plugin-api.md` (how Figma’s document works) → `mcp-workflow.md` (MCP tools) → This file (build patterns) → `canvas-elements.md` (icons, instances, effects) → **host `system.md`** (Theme + Project) when present
+> **Reading order:** Decide hierarchy from the project `design.md` and the page PRD before touching the canvas. Then `plugin-api.md` (how Figma’s document works) → `mcp-workflow.md` (MCP tools) → This file (build patterns) → `canvas-elements.md` (icons, instances, effects).
 
 > **Source:** Figma Plugin API official documentation (developers.figma.com), Figma Plugin typings, Figma plugin-samples repository.
 
@@ -494,7 +494,7 @@ if (bodyStyle) {
 **The workflow:**
 1. Load all text styles at the start of a build: `const styles = await figma.getLocalTextStylesAsync()`
 2. Build a lookup: `const styleMap = {}; styles.forEach(s => styleMap[s.name] = s);`
-3. For each text node, find the matching style name from system.md type scale
+3. For each text node, find the matching style name from design.md type scale
 4. Apply via `setTextStyleIdAsync` — this sets fontSize, fontName, lineHeight, letterSpacing all at once
 5. Only set manual properties if no style matches
 

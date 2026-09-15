@@ -586,7 +586,7 @@ const result = variable.resolveForConsumer(node);
 □ Test: set dark mode on a frame, verify all nodes switch correctly
 □ Name variables consistently (lowercase, hyphens, semantic names)
 □ Scope variables to appropriate property types
-□ Document decisions in system.md
+□ Document decisions in design.md
 ```
 
 ---

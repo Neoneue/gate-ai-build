@@ -4,8 +4,6 @@
 
 > **Canonical docs (Figma):** [Figma MCP Server](https://developers.figma.com/docs/figma-mcp-server/), [Tools and prompts](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), [Write to canvas](https://developers.figma.com/docs/figma-mcp-server/write-to-canvas/), [Plans, access, and permissions](https://developers.figma.com/docs/figma-mcp-server/plans-access-and-permissions/), [Plugin API](https://developers.figma.com/docs/plugins/api/api-reference/). Prefer these over third-party writeups when behavior disagrees.
 
-> **Doc verification:** See `knowledge/figma/documentation-sources.md` for the verification log, Context7 library IDs, official URLs, and residual gaps. Supported-file-type rows and `use_figma` limits here were checked against [Tools and prompts](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/) and [Write to canvas](https://developers.figma.com/docs/figma-mcp-server/write-to-canvas/). Plugin API details were cross-checked with Context7 (`/websites/developers_figma`) plus direct API page fetches where needed.
-
 > **MCP server variants:** Different hosts may register **more than one** Figma-related MCP server. Tool **names** match Figma’s catalog (`get_design_context`, `use_figma`, …); the **invocation name** in the client (e.g. `mcp__…__get_metadata`) depends on install. Check the local tool descriptors under your MCP config for **required parameters** — read-only and plugin-backed tools do not always share the same schema (some omit `fileKey` and rely on the linked file or current selection).
 
 ---
@@ -140,7 +138,7 @@ Executes JavaScript in a **Plugin API context** with the global `figma` object. 
 - **Read calls:** `use_figma` calls that only **return data** (e.g. `getLocalTextStylesAsync()`) do NOT need a screenshot — just use the returned data
 - Prefer `search_design_system` before inventing new components when libraries exist
 - Code must follow the build order from `canvas-building.md` (for writes)
-- Project tokens: follow **host `system.md`** (Theme + Project) — no stray hardcoded colors/spacing/radii (for writes)
+- Project tokens: follow **project `design.md`** — no stray hardcoded colors/spacing/radii (for writes)
 - Respect **dynamic page loading**: on large files, use `PageNode.loadAsync` / `figma.loadAllPagesAsync` patterns from `plugin-api.md` before assuming `children` are populated
 
 **Choosing `use_figma` vs `generate_figma_design`:** Figma’s tool description: default to **`use_figma`** for writes; use **`generate_figma_design`** when capturing a web page/view into Figma for the first time (then iterate with `use_figma`).
@@ -231,7 +229,7 @@ return JSON.stringify({
 **How to detect:** Compare style IDs returned by `getLocalTextStylesAsync()` against `textStyleId` on actual canvas text nodes. If they don't match, the nodes use library styles.
 
 **Solutions (in order of preference):**
-1. **Query the library source file directly.** If you know the library file's key, call `use_figma` with that fileKey to read the canonical style definitions. Check **host `system.md`** (Theme + Project) or ask the user for the library file key.
+1. **Query the library source file directly.** If you know the library file's key, call `use_figma` with that fileKey to read the canonical style definitions. Check **project `design.md`** or ask the user for the library file key.
 2. **Read styles from canvas nodes.** Find a text node that uses the style, read its `letterSpacing`, `fontSize`, `fontName` properties directly — these reflect the applied (library) style, not the stale local copy.
 3. **Use `search_design_system`** with `includeStyles: true` — this searches across all linked libraries.
 
@@ -287,7 +285,7 @@ Note: Node IDs for the specific elements you'll touch
 
 ### Step 1 — Read knowledge files
 Before any Figma work in a session, read:
-1. **Host `system.md`** (Theme + Project) — tokens, component specs
+1. **Host `design.md`** (Theme + Project) — tokens, component specs
 2. `knowledge/figma/canvas-building.md` — build order, patterns
 3. `knowledge/figma/component-architecture.md` — if building components
 4. `knowledge/figma/variables-and-theming.md` — if working with variables
@@ -455,7 +453,7 @@ if (page) {
 **Hook blocks the call**
 - The pre-hook detected missing methodology citations or hardcoded values
 - Read the hook error message — it tells you exactly what's missing
-- Fix the code to include citations and use system.md values
+- Fix the code to include citations and use design.md values
 
 **Large response (exceeds token limit)**
 - The node has too many children (e.g., icon library with 1468 icons)
@@ -500,11 +498,11 @@ If the screenshot reveals problems:
 For write calls, the pre-hook evaluator checks for:
 - Variable binding (not hardcoded values)
 - Correct build order
-- Values from system.md
+- Values from design.md
 
 Include comments that reference your sources in write scripts:
 ```js
-// system.md: card padding 24px, border 1px --border, radius-lg 10px
+// design.md: card padding 24px, border 1px --border, radius-lg 10px
 // canvas-building.md: build order — create leaves → parent frames → appendChild → sizing → bind variables
 ```
 

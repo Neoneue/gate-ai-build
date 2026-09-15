@@ -55,7 +55,7 @@ See `references/anti-fabrication-examples.md` for concrete failure cases from pa
 
 - `knowledge/figma/mcp-workflow.md` §get_design_context + §Code Connect
 - `knowledge/shadcn/default-tokens.md` — recognize shadcn semantic Tailwind in the output
-- `knowledge/shadcn/figma-component-reference.md` — inverse mapping (shadcn ↔ Figma frame names)
+- `knowledge/figma/figma-component-reference.md` — inverse mapping (shadcn ↔ Figma frame names)
 - **`references/anti-fabrication-examples.md`** — five concrete failure cases and how to avoid them
 - **`references/multi-component-flow.md`** — only when extracting a flow / whole screen
 

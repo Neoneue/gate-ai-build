@@ -113,7 +113,7 @@ When given a shadcn preset (`--preset b1ZOMFgwd`):
 3. **Read `.dark`** block → these are Dark mode values
 4. **Create Primitive variables** from the raw OKLCH values (convert to RGB for Figma)
 5. **Create Semantic variables** that alias to Primitives, with Light and Dark modes
-6. **Update system.md** with the preset's tokens
+6. **Update design.md** with the preset's tokens
 
 ### OKLCH to RGB conversion
 
@@ -334,7 +334,7 @@ pnpm dlx shadcn@latest init --preset <CODE> --template next
 2. Read the `:root` and `.dark` blocks for all token values
 3. Update Figma's Primitive variables with the preset's raw color values
 4. Update Semantic variable aliases to point to new Primitives
-5. Update system.md with the new Direction, colors, and font
+5. Update design.md with the new Direction, colors, and font
 6. Rebuild any components that depend on `--primary` (button bg changes)
 
 ### Available base colors

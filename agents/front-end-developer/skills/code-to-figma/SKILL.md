@@ -10,7 +10,7 @@ metadata:
 
 # code-to-figma
 
-Translate an existing React component into a Figma frame tree with proper auto-layout, bound variables, and applied text styles. Figma becomes the team-visible design artifact; refinements made there get pulled back via `figma-to-code`. This is the heavier, token-bound sibling of `code-to-paper` — use it when the work needs to reach designers or stakeholders who live in Figma.
+Translate an existing React component into a Figma frame tree with proper auto-layout, bound variables, and applied text styles. Figma becomes the team-visible design artifact; refinements made there get pulled back via `figma-to-code`.
 
 ## When to use
 
@@ -21,7 +21,6 @@ Translate an existing React component into a Figma frame tree with proper auto-l
 
 **Don't use when:**
 - Starting from scratch with no code — a designer should author in Figma first, then use `design-extractor` to pull tokens back
-- Quick visual iteration only — `code-to-paper` is 10× faster and Paper's `get_jsx` round-trip is cleaner
 - The Figma file isn't set up for the stack — verify variables + text styles exist via `get_variable_defs` before writing
 
 ## Prerequisites
@@ -59,7 +58,7 @@ Capture style names + IDs. You'll use these for `setTextStyleIdAsync` — never 
 
 ### 2. Read the source code
 
-Same as `code-to-paper` — identify shadcn imports, strip state/handlers, pick default states, identify Tailwind classes. Additionally note:
+Identify shadcn imports, strip state/handlers, pick default states, identify Tailwind classes. Additionally note:
 
 - **Component structure must mirror DOM 1:1 in Figma** (unlike Paper where we flatten). Every wrapper `<div>` becomes a frame. This preserves Code Connect accuracy and downstream `get_design_context` roundtrip fidelity.
 - **shadcn primitives** — check if Code Connect mappings exist (`get_code_connect_map({ fileKey })`). If yes, reuse the mapped component via `importComponentByKeyAsync`. If no, build from scratch.

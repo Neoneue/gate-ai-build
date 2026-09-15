@@ -371,7 +371,7 @@ Icon color adapts automatically via the `base/foreground` variable. When a paren
 Before writing canvas code:
 
 ```
-□ Read system.md — know your tokens and personality direction
+□ Read design.md — know your tokens and personality direction
 □ Read canvas-building.md — know the build order
 □ Define information hierarchy — primary, secondary, tertiary
 □ Plan the frame tree — sketch the nesting structure

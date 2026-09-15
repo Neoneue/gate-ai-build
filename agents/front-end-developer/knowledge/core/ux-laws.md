@@ -4,8 +4,6 @@
 
 > **How to use this file:** This is a decision-support reference, not a reading assignment. When you're about to add an element, change a layout, pick a color, or make any UI call — scan the theme that governs the decision, read the 2-3 relevant laws, and apply. The Pre-flight Checklist at the bottom is for use before every Paper or Figma write.
 
-> **Reading order:** `craft-methodology.md` → `craft-checks.md` → `design-process-rules.md` → `ux-methodology.md` → **This file** → `design-recipes.md` → `pre-ship-quality-checklist.md`
-
 ---
 
 ## How the laws cluster
