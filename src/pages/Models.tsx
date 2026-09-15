@@ -648,8 +648,10 @@ export function CapabilityStrip({
   }
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Tool use is always leftmost when present). Each icon
-  // carries `aria-label` for SR identification AND a native `title` so
-  // sighted-mouse users get the capability name on hover.
+  // carries `aria-label` + `role="img"` for SR identification AND a hover
+  // tooltip, so sighted-mouse users get the capability name on hover. The
+  // tooltip is the project primitive, not a native `title`: one hover voice
+  // across the page, and the `+N` chip beside it already reads that way.
   //
   // Only the first CAPABILITY_INLINE_MAX render as glyphs (2026-09-14).
   // CAPABILITY_ORDER is decision value, so the four that survive are the four
@@ -663,19 +665,29 @@ export function CapabilityStrip({
   const hidden = ordered.slice(CAPABILITY_INLINE_MAX);
   const hiddenLabels = hidden.map((c) => CAPABILITY_META[c].label);
   return (
-    <div className="flex items-center gap-1">
+    // 8px between glyphs (user call 2026-09-15, up from 4px): at 4px the four
+    // marks read as one smear, at 8px each one is its own object and the strip
+    // still scans as a single group.
+    <div className="flex items-center gap-2">
       {inline.map((c) => {
         const meta = CAPABILITY_META[c];
         const Icon = meta.icon;
         return (
-          <span className="inline-flex shrink-0" key={c} title={meta.label}>
-            <Icon
-              aria-label={meta.label}
-              className="size-4 shrink-0 text-muted-foreground"
-              role="img"
-              strokeWidth={1.75}
-            />
-          </span>
+          // The wrapping span IS the trigger (Base UI `render`), never a
+          // nested <button> — this strip renders inside the catalog row's
+          // drill-in button and inside the Featured card's, and a button in a
+          // button is invalid markup that swallows the click.
+          <Tooltip key={c}>
+            <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
+              <Icon
+                aria-label={meta.label}
+                className="size-4 shrink-0 text-muted-foreground"
+                role="img"
+                strokeWidth={1.75}
+              />
+            </TooltipTrigger>
+            <TooltipContent>{meta.label}</TooltipContent>
+          </Tooltip>
         );
       })}
       {hidden.length > 0 ? (
@@ -692,7 +704,6 @@ export function CapabilityStrip({
               <Badge
                 aria-label={`${hidden.length} more: ${hiddenLabels.join(", ")}`}
                 className="shrink-0"
-                size="xs"
                 variant="neutral"
               />
             }

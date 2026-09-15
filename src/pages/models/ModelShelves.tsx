@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { LobeMark } from "@/components/icons/lobe-mark";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -60,20 +61,26 @@ export function FeaturedModels({
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           The Gate team's suggested starting points for your project. Each one
           is a strong default for a different kind of work, so you can see what
           it costs and pick one with confidence.
         </p>
       </div>
 
-      {/* 4-up switches at @7xl (1280px main), not @5xl. The card's stat grid
-          is 216px of fixed tracks plus 32px of gaps = 248px, and a quarter
-          track only clears that once the page column passes 1280 (card 308,
-          content 274). At @5xl the card was 244 wide and the prices clipped.
-          Between @5xl and @7xl the row stays 2-up, which is also where the
-          cards are wide enough to earn the 24px stat gap. */}
-      <div className="grid @7xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
+      {/* 2 x 2 from @4xl, stacked below it. There is no 4-up tier: the fourth
+          stat (Features) takes the stat block to 344px of fixed tracks plus
+          48px of gaps = 392px, so a card needs 424px of width (p-4 both sides)
+          to hold all four stats in one row, and a quarter of the page column
+          never clears that on any width this dashboard runs at (a 4-up card at
+          1280 main is 308 wide, 274 of content).
+
+          A 2-up card is (main - 16) / 2, so 424px of card needs 864px of page
+          column. @4xl (896 main, card 440, content 408) is the first rung that
+          clears it; @3xl would give a 376px card, and at @xl (576 main, card
+          280) the stat row clipped by 66px. Below @4xl the row stacks, where a
+          1-up card is wide again. */}
+      <div className="grid @4xl:grid-cols-2 grid-cols-1 gap-4">
         {/* No mount animation: cards render in place on load. A staggered
             entrance fits a marketing page, not a dashboard someone refreshes
             all day (removed 2026-09-15). */}
@@ -100,8 +107,9 @@ export function FeaturedCard({
   onSelect: (model: Model) => void;
   /** Overrides the curated positioning tagline. */
   badge?: string;
-  /** Overrides the default Context + Input + Output set. Three entries. */
-  stats?: { label: string; value: string }[];
+  /** Overrides the default Context + Input + Output set. Three entries. A
+   *  value may be a node (the capability strip) rather than a string. */
+  stats?: { label: string; value: ReactNode }[];
   /** Rests at 75% opacity (well above the primitives' 50% disabled wash so
    *  every line stays legible) with no hover fill. The drill-in stays live so
    *  the detail page is reachable. Used for a Pro-only free model on a Free
@@ -117,6 +125,13 @@ export function FeaturedCard({
     { label: "Context", value: context },
     { label: "Input", value: input },
     { label: "Output", value: output },
+    // The same strip the catalog table renders, imported rather than rebuilt
+    // (`Models.tsx`), so a card and its row cannot disagree about what a model
+    // can do. Four glyphs plus the `+N` chip, tooltips and all.
+    {
+      label: "Features",
+      value: <CapabilityStrip capabilities={model.capabilities} />,
+    },
   ];
   return (
     // `density="flush"` hands the padding to the button so the whole card is
@@ -148,13 +163,14 @@ export function FeaturedCard({
           vendor={model.vendor}
         />
       )}
-      {/* One 16px rhythm: `gap-4` sets badge -> identity here and identity ->
-          stats on the inner group, so the three rows read as peers. With
-          `p-4` and the 16px `size="xs"` badge the card lands at 138px; the
-          earlier 124px cap was lifted for the extra air. */}
+      {/* `gap-5` (20px) sets badge -> identity here; the inner group keeps
+          `gap-4` between identity and stats, so the badge sits 4px further
+          from the name than the name does from the stats. With `p-4`, the
+          default 20px `Badge` and the `type-label-18` name (18/20, was
+          `type-label-16` at 16/24) the card measures 146px. */}
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
-        className="relative h-full justify-start gap-4 rounded-md p-4 focus-visible:ring-inset"
+        className="relative h-full justify-start gap-5 rounded-md p-4 focus-visible:ring-inset"
         layout="stack"
         onClick={() => onSelect(model)}
       >
@@ -163,11 +179,7 @@ export function FeaturedCard({
             mono, 500, 12px, UPPERCASE, `h-5`), so the tagline ships in
             sentence case and the primitive does the casing. Not `Eyebrow` —
             that voice is reserved for the nav rail and KPI tiles. */}
-        {tagline ? (
-          <Badge size="xs" variant="neutral">
-            {tagline}
-          </Badge>
-        ) : null}
+        {tagline ? <Badge variant="neutral">{tagline}</Badge> : null}
 
         <span className="flex w-full min-w-0 flex-col gap-4">
           <span className="flex w-full min-w-0 items-center gap-2">
@@ -184,7 +196,7 @@ export function FeaturedCard({
               <TooltipTrigger
                 render={
                   <span
-                    className="type-label-16 truncate text-foreground"
+                    className="type-label-18 truncate text-foreground"
                     ref={nameRef}
                   />
                 }
@@ -201,34 +213,72 @@ export function FeaturedCard({
               value each column class can ever hold, never to the value this
               card happens to have. Across all 416 catalog models the widest
               context is `131.1K` (6 mono chars, 50px) and the widest price is
-              `$184.80/M` (9 chars, 76px), so the tracks are 56 / 80 / 80 on
-              the 8pt grid. `131.1K` and `1.0M` therefore share one track
+              `$184.80/M` (9 chars, 76px). The fourth track holds the
+              capability strip: 4 glyphs at 16px plus 3 x 8px gaps = 88, then
+              the 8px gap and the default `Badge` (h-5, px-2 = 16px of padding
+              around the 12px mono `+N`, measured at 32px). 88 + 8 + 32 = 128
+              exactly, and `CAPABILITY_ORDER` holds 11 entries against an inline
+              max of 4, so `+7` is the widest chip that can ever render and 32
+              is the real ceiling, not a sample. Tracks are 56 / 80 / 80 / 128 =
+              344.
+              `131.1K` and `1.0M` therefore share one track
               width, prices share another, and every card in the row puts its
               labels and its mono values on the same x. Equal thirds gave
               Context as much room as a price and floated it away from Input;
               content-sized tracks drifted the third stat by up to 9px card to
               card. Whatever width is left over is trailing space, not track.
 
-              The Free card's two stats keep the same 56px first track, so its
-              second label starts on the Featured x; the second track takes
-              the remainder because `Free (Pro plan only)` is a phrase, not a
-              number to align.
+              The Free card's three stats keep the same 56px first track, so
+              its second label starts on the Featured x. The second track is
+              `max-content`: the price is a word or a short phrase, and
+              Features must sit one gap after it, not at the card's far edge
+              (a `1fr` track sent it there) and not a fixed 176px away on a
+              card that only says `Free`. Cross-card alignment of Features is
+              given up on purpose here; closeness wins. The third is the same
+              128px Features track: 56 / max-content / 128. Below @md/card it
+              folds to 56 / 1fr with Features on its own row, as the 4-stat
+              set does.
 
-              Gap ladder, keyed to card inline-size, no half steps: 16px up to
-              @md/card (448px) and 24px above it. Every 4-up card (308-395px)
-              sits at 16px, a 2-up card at 24px from ~1024px of page width up,
-              and a 1-up card is back at 16px on a phone (358px) - width buys
-              the air, not the column count. */}
+              Below @md/card (448px) the card cannot hold four columns at all,
+              so Features drops to its own full-width row under the three
+              numbers (`col-span-3`) while the first three keep their x. The
+              8px `gap-y-2` between the two rows is deliberately tighter than
+              the column gap: this is one stat block folding, not two blocks
+              stacked.
+
+              Column-gap ladder, keyed to card inline-size, no half steps:
+              16px up to @lg/card (512px) and 24px above it. The 24px tier
+              needs 344 of track plus 72 of gap = 416 of content, so a 448px
+              card; @md/card (448) sat exactly on that edge and clipped by 8px
+              at 1200px of viewport with the old tracks, so the tier stays at
+              @lg. The 16px tier needs 392 of content, a 424px card, which the
+              @md/card four-column rung (448) clears. Width buys the air, not
+              the column count. */}
           <span
             className={cn(
-              "grid w-full min-w-0 @md/card:gap-6 gap-4",
-              statRow.length === 2
-                ? "grid-cols-[56px_1fr]"
-                : "grid-cols-[56px_80px_80px]"
+              "grid w-full min-w-0 @lg/card:gap-x-6 gap-x-4 gap-y-2",
+              statRow.length === 2 && "grid-cols-[56px_1fr]",
+              statRow.length === 3 &&
+                "@md/card:grid-cols-[56px_max-content_128px] grid-cols-[56px_1fr]",
+              statRow.length === 4 &&
+                "@md/card:grid-cols-[56px_80px_80px_128px] grid-cols-[56px_80px_80px]"
             )}
           >
-            {statRow.map((stat) => (
+            {statRow.map((stat, i) => (
               <FeaturedStat
+                className={
+                  // Features is always the LAST stat and always the one that
+                  // wraps: its own full-width row until the card can hold the
+                  // extra column. Keyed to the last index rather than to a
+                  // fixed number, so the 3-stat Free set and the 4-stat
+                  // Featured set fold the same way.
+                  i === statRow.length - 1 && statRow.length > 2
+                    ? cn(
+                        "@md/card:col-span-1",
+                        statRow.length === 4 ? "col-span-3" : "col-span-2"
+                      )
+                    : undefined
+                }
                 key={stat.label}
                 label={stat.label}
                 value={stat.value}
@@ -241,13 +291,29 @@ export function FeaturedCard({
   );
 }
 
-function FeaturedStat({ label, value }: { label: string; value: string }) {
+function FeaturedStat({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: ReactNode;
+  /** Grid placement only (the Features stat's wrap span). */
+  className?: string;
+}) {
   return (
-    <span className="flex min-w-0 flex-col">
+    <span className={cn("flex min-w-0 flex-col", className)}>
       <span className="type-copy-12 text-muted-foreground">{label}</span>
-      <span className="type-mono-14 whitespace-nowrap text-foreground">
-        {value}
-      </span>
+      {/* A string value takes the mono numeric voice. A node (the capability
+          strip) brings its own voice and only needs the same 20px line box,
+          so the two kinds of stat sit on one baseline grid. */}
+      {typeof value === "string" ? (
+        <span className="type-mono-14 whitespace-nowrap text-foreground">
+          {value}
+        </span>
+      ) : (
+        <span className="flex h-5 items-center">{value}</span>
+      )}
     </span>
   );
 }
