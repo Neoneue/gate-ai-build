@@ -23,8 +23,8 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   // top hairline only renders when something sits above the table (e.g.,
   // a toolbar inside the same Card). When the table is the first child of
   // its parent (e.g., the Providers table that sits directly inside a Card
-  // density=flush), the Card's `--shadow-border` ring owns the top edge by
-  // itself — stacking the header's `border-t` on top of the ring at the
+  // density=flush), the Card's own `border-border` edge owns the top line by
+  // itself — stacking the header's `border-t` on top of that border at the
   // same y-position is what reads as a "darker line" along the top.
   //
   // It MOVED here (from the scrollport) when the fades were added, and the
@@ -129,7 +129,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
         // no body row renders under 48px. Before this the row was
         // content-sized and landed at 45 to 46px wherever a cell held only
         // a 14px line (Models list, shelf tables), 48 or more elsewhere.
-        "h-12 border-border border-b transition-[background-color] hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
+        "h-12 border-border border-b transition-[background-color] ease-out hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
         className
       )}
       data-slot="table-row"
@@ -222,6 +222,9 @@ function SortableTableHead({
   numeric?: boolean;
 }) {
   const active = sort.key === sortKey;
+  // One recipe for all three glyphs; only opacity differs between states.
+  const sortGlyph =
+    "size-3.5 shrink-0 [grid-area:1/1] transition-opacity duration-150 ease-out motion-reduce:transition-none";
   return (
     <th
       aria-sort={
@@ -254,27 +257,37 @@ function SortableTableHead({
         type="button"
       >
         <span>{children}</span>
-        {active ? (
-          sort.dir === "asc" ? (
-            <ArrowUp
-              aria-hidden
-              className="size-3.5 shrink-0 text-foreground"
-              strokeWidth={2}
-            />
-          ) : (
-            <ArrowDown
-              aria-hidden
-              className="size-3.5 shrink-0 text-foreground"
-              strokeWidth={2}
-            />
-          )
-        ) : (
-          <ChevronsUpDown
-            aria-hidden
-            className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/sort:opacity-100 motion-reduce:transition-none"
+        {/* Stacked cross-fade, same recipe as `CopyIconSwap` in
+            copy-button.tsx: all three glyphs stay mounted in one grid cell and
+            only opacity moves, so the arrow fades in instead of popping and
+            the slot never resizes. The neutral chevron keeps its
+            hover-reveal, and is held at 0 once a direction is active. */}
+        <span aria-hidden="true" className="grid">
+          <ArrowUp
+            className={cn(
+              sortGlyph,
+              "text-foreground",
+              active && sort.dir === "asc" ? "opacity-100" : "opacity-0"
+            )}
             strokeWidth={2}
           />
-        )}
+          <ArrowDown
+            className={cn(
+              sortGlyph,
+              "text-foreground",
+              active && sort.dir === "desc" ? "opacity-100" : "opacity-0"
+            )}
+            strokeWidth={2}
+          />
+          <ChevronsUpDown
+            className={cn(
+              sortGlyph,
+              "text-muted-foreground opacity-0",
+              !active && "group-hover/sort:opacity-100"
+            )}
+            strokeWidth={2}
+          />
+        </span>
       </button>
     </th>
   );

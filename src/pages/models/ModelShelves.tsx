@@ -68,8 +68,20 @@ export function FeaturedModels({
       </div>
 
       <div className="grid @5xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
-        {models.map((model) => (
-          <FeaturedCard key={model.id} model={model} onSelect={onSelect} />
+        {/* 100ms stagger so the four cards resolve left to right instead of
+            landing as one block. `grid h-full` on the wrapper keeps the card
+            stretching to the row height the way it did as a direct grid item;
+            `fill-mode-backwards` holds the pre-enter state during the delay so
+            a late card cannot flash at full opacity first. `motion-safe:` gates
+            the whole thing. */}
+        {models.map((model, i) => (
+          <div
+            className="motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-3 grid h-full duration-300 ease-out motion-safe:animate-in motion-safe:fill-mode-backwards"
+            key={model.id}
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <FeaturedCard model={model} onSelect={onSelect} />
+          </div>
         ))}
       </div>
     </section>
@@ -115,7 +127,10 @@ export function FeaturedCard({
     // Card (`interactive`) so the whole framed card presses as one object;
     // the button keeps the focus ring.
     <Card
-      className={cn("group/card relative", dimmed && "opacity-75")}
+      className={cn(
+        "group/card relative",
+        dimmed && "cursor-pointer opacity-75"
+      )}
       density="flush"
       interactive={!dimmed}
     >
@@ -137,7 +152,7 @@ export function FeaturedCard({
           earlier 124px cap was lifted for the extra air. */}
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
-        className="relative h-full justify-start gap-4 p-4"
+        className="relative h-full justify-start gap-4 rounded-md p-4 focus-visible:ring-inset"
         layout="stack"
         onClick={() => onSelect(model)}
       >
@@ -303,7 +318,7 @@ function ShelfTable({
       <TableBody>
         {rows.map((model, index) => (
           <TableRow
-            className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+            className="cursor-pointer"
             key={model.id}
             onClick={() => onSelect(model)}
           >

@@ -58,10 +58,8 @@ function Card({
   return (
     <div
       className={cn(
-        // Skill: surfaces.md — `--shadow-border` provides a layered ring
-        // (1px neutral-800/6%) plus subtle ambient lift in one token, replacing
-        // the old hard `border + shadow-xs` combo. Adapts to any background
-        // without re-tinting the edge.
+        // Card tier: honest border-border + shadow-xs (design.md, Material
+        // ladder). Tailwind shadow scale only: xs/sm/md/lg.
         "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         // Interactive: `TableRow`'s hover recipe, verbatim — plain
         // `hover:bg-accent`, `transition-[background-color]` (never
@@ -75,7 +73,7 @@ function Card({
         // itself uses plain `hover:`, which is why row hover works at all.
         // When `hover-fine` is repaired site-wide, this moves with it.
         interactive &&
-          "cursor-pointer transition-[background-color,transform] duration-150 ease-out hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+          "cursor-pointer transition-[background-color,scale] duration-150 ease-out hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
         className
       )}
       data-density={density}

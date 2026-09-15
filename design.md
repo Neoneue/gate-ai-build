@@ -1106,6 +1106,7 @@ Animate intent, not decoration. Transition only `colors`, `box-shadow`, `opacity
 | 200ms | duration | Dialog enter (fade + zoom-in-95), sliding indicator, toast |
 | 120ms | duration | Dialog close, held by `data-closed:fill-mode-forwards` |
 | 300ms | duration | Sheet slide-in from right |
+| `active:scale-[0.98]` | press scale | Card `interactive` and Button. Always 0.98; 0.96 (the `better-ui` skill default) was rejected as too strong. Pair with `motion-reduce:active:scale-100`. |
 
 Easings are declared in `@theme` (`index.css:168–171`). Base UI + tw-animate-css exits need `data-closed:fill-mode-forwards` on both popup and overlay, or they flicker back to opacity 1 for ~28ms before unmount (see §7 Dialog).
 

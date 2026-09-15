@@ -306,12 +306,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             {isEmpty ? (
               <TableEmptyState
                 action={
-                  <Button
-                    className="border-border bg-card text-foreground"
-                    onClick={clearFilters}
-                    size="sm"
-                    variant="outline"
-                  >
+                  <Button onClick={clearFilters} size="sm" variant="outline">
                     Clear filters
                   </Button>
                 }
@@ -434,7 +429,7 @@ function Toolbar({
           it is a filter, and each toggle is a cheap, reversible narrowing. */}
       <MultiSelect
         aria-label="Filter by features"
-        className="w-auto min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+        className="w-auto min-w-0 @2xl:flex-none flex-1"
         onValueChange={(v) => onFeaturesChange(v as Capability[])}
         options={CAPABILITY_ORDER.map((c) => ({
           value: c,
@@ -560,7 +555,7 @@ function ModelsTable({
           const outputPrice = formatPricePerM(listPrice(model, "outputPer1M"));
           return (
             <TableRow
-              className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+              className="cursor-pointer"
               key={model.id}
               onClick={() => onSelect(model)}
             >
