@@ -2,7 +2,6 @@
   "ignores": [
     "node_modules/**",
     ".claude/**",
-    ".agents/**",
     "dist/**",
     "build/**",
     ".git/**",
