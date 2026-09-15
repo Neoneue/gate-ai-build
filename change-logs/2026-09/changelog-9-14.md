@@ -322,3 +322,18 @@ Comment-only. `card.tsx`, `code-card.tsx`, `table.tsx` and `empty-state.tsx`
 still described a `--shadow-border` ring token migrated away on 2026-05-15.
 Each now states the live recipe (`border-border` + `shadow-xs`, Tailwind
 shadow scale only). `grep shadow-border src` returns 0.
+
+### Notifications: unread dot animates in and out `9dd455f`
+
+First install from the `transitions-dev` skill (recipe 03, notification
+badge), rebuilt on the project's own ladder. Before: the bell's unread dot
+(`size-2 rounded-full bg-destructive`) mounted and unmounted with no
+motion. After: the dot stays in the DOM and the unread boolean drives
+`scale-100 opacity-100 duration-200` versus `scale-0 opacity-0
+duration-150` over `transition-[opacity,scale] ease-out
+motion-reduce:transition-none`, so it pops in slightly slower than it
+leaves and both directions are interruptible. `pointer-events-none` keeps
+the invisible dot from catching clicks. Dropped from the recipe: the
+diagonal keyframe, blur, bounce curve, its `_root.css` tokens and 500 /
+180ms literals. Position classes and the trigger `aria-label` are
+unchanged (`src/components/ui/notifications-menu.tsx`).
