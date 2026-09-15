@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-15](./2026-09/changelog-9-15.md)
+
+- Models: Featured cards on a per-card grid, split stats, CMS seed badges
+
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 
 - Models: better-ui polish pass
