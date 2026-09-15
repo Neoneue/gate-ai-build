@@ -25,14 +25,12 @@ dist-ssr
 
 # Local Claude Code state
 .claude/settings.local.json
-# Impeccable now lives in the (ignored) front-end-developer kit; only its cache is listed here
+# Impeccable native engine, fetched per machine by `npx impeccable update --project`
+.claude/front-end-developer/skills/impeccable/scripts/bin/
 .impeccable/
 .claude/worktrees/
 .tmp/
 .tmp-screenshots/
-
-# Vendored agent bundle (sourced separately)
-front-end-developer/
 
 # Local-only project notes (not shipped). The whole docs/ folder stays local;
 # the committed UI change logs live in change-logs/ (tracked) instead.

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "figma-design",
+  "owner": "manutej",
+  "repo": "luxor-claude-marketplace",
+  "path": "plugins/luxor-design-toolkit/skills/figma-design",
+  "branch": "main",
+  "sha": "92d2cd3dcf1b955f4dc14731feabf84aa0168774",
+  "source": "manual"
+}
