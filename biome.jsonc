@@ -14,7 +14,9 @@
       "!src/index.css",
       "!public/design-system.html",
       "!.claude",
+      "!agents",
       "!src/lib/dotmatrix-*",
+      "!src/data/models-catalog.ts",
       "!src/components/ui/dotm-*",
       "!src/components/dotmatrix-loader.css"
     ]

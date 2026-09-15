@@ -88,7 +88,7 @@ export function SegmentedPill({
           // Gate the slide behind reduced-motion; only enable the transition
           // once measured so the indicator never slides in from origin (0,0).
           indicator.ready &&
-            "transition-[transform,width] duration-[220ms] ease-[cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none"
+            "transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
         )}
         style={{
           transform: `translate(${indicator.x}px, ${indicator.y}px)`,

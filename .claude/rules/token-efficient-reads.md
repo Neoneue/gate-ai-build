@@ -9,6 +9,7 @@ grepped naively. The split exists precisely so you never have to load them.
 | File | What it is | How to treat it |
 | --- | --- | --- |
 | `src/data/request-bodies.ts` | ~450 KB of verbatim message bodies (`REQUEST_BODIES`, keyed by `requestRowId`). Marked "do not edit". | Never Read whole. Never needs editing for row/label/finding work — it is looked up at runtime via `getRequestBody(row)`. |
+| `src/data/models-catalog.ts` | ~400 KB GENERATED catalog (`CATALOG_ROWS`, 387 rows from the gateway's public `/v1/models`, 2026-09-14). Header comment holds the field notes. | Never Read whole; regenerate rather than edit. Excluded from Biome and ESLint. Questions about it run as code over the file. |
 | `src/data/requests.ts` | Row metadata + findings. Still contains the `SHARED_TRANSCRIPT_*` consts and long `evidence:` strings. | Read the API region (helpers/types, top ~550 lines) with offset/limit; the row arrays below are data. |
 
 ## Working rules

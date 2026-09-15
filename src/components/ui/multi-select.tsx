@@ -92,6 +92,13 @@ type MultiSelectProps = {
    *  ("Weekly, Monthly"), instead of "N selected". For short fixed lists
    *  where the names fit; long rosters keep the count. Default off. */
   showSelectedLabels?: boolean;
+  /** Popup width. `anchor` (default) matches the trigger, which suits the
+   *  wide filter fields on Audit Trail and the Teams pickers. `content`
+   *  floors at the trigger width and grows to the longest label, for a
+   *  compact trigger whose labels would otherwise clip (Models "All
+   *  features", 2026-09-14). Default off so every existing picker keeps its
+   *  shape. */
+  popupWidth?: "anchor" | "content";
   "aria-label": string;
   className?: string;
   disabled?: boolean;
@@ -108,6 +115,7 @@ function MultiSelect({
   showSelectedLabels = false,
   commitMode = false,
   minSelected,
+  popupWidth = "anchor",
   className,
   disabled,
   "aria-label": ariaLabel,
@@ -243,7 +251,15 @@ function MultiSelect({
         <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none" />
       </PopoverTrigger>
 
-      <PopoverContent align="start" className="w-(--anchor-width) p-0">
+      <PopoverContent
+        align="start"
+        className={cn(
+          "p-0",
+          popupWidth === "content"
+            ? "w-max min-w-(--anchor-width) max-w-(--available-width)"
+            : "w-(--anchor-width)"
+        )}
+      >
         {searchable ? (
           <div className="border-border border-b p-2">
             <div className="flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">

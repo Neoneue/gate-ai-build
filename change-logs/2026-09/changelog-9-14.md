@@ -6,6 +6,185 @@ Prior day: [`changelog-9-9.md`](./changelog-9-9.md)
 
 ---
 
+## Sections
+
+### Models: Featured row, four curated shelves, catalog header `d4642da`
+
+Before: the Models list page was a title, modality tabs, a toolbar and one
+catalog table of 25 hand-authored rows. After: between the page header and
+the catalog sit three new blocks, separated by hairline `Separator`s.
+**Featured models** (h2 `type-heading-24`, `type-copy-14` subtitle) is a
+`grid-cols-2 @3xl:grid-cols-4` row of 138px cards: a 10px mono positioning
+badge (Frontier reasoning / Deep reasoning / Balanced / Fast and light, the
+last renamed from "Open weight" in `2e549f3` with the subtitle rewritten in
+`94e637e` to "The strongest performer sits on the left and the lightest on
+the right, with two balanced picks in between."), the
+brand-coloured `VendorAvatar` plus name, then Context and Input / output in
+mono, with `p-4` and 16px between each row. Names truncate and show the full
+name in a `Tooltip` only when clipped (`useIsTruncated`,
+`src/hooks/use-is-truncated.ts`). Below it, **four shelves** stacked full
+width, each an h2 `type-heading-20` plus a curated-voice subtitle and a
+four-row table in `Card density="flush"`: Best for research, Best for 24/7
+runs, Newest models on Gate, Most popular on Gate. Columns are Model,
+Context, Input, Output, Capabilities, Providers at pinned widths
+27 / 9 / 16 / 16 / 22 / 10 percent so every shelf lays out identically;
+below about 832px the table scrolls horizontally inside its Card. Then an
+**Explore our catalog** header (h2 `type-heading-24`, `type-copy-16`
+subtitle) above the existing tabs and table. Picks and copy live in
+`src/pages/models/curation.ts`; the two "Best for" shelves are allowlists
+whose subtitle names the property that earned the pick (Notion AG-675
+allows editorial groups, not quality rankings); Newest is allowlisted to the
+four September 2026 releases and Popular is prod's catalog order. Files:
+`src/pages/models/ModelShelves.tsx`, `src/pages/Models.tsx`
+(`ModelsSurface`; `NumericCell`, `CapabilityStrip`, `ProviderStack` now
+exported).
+
+### Models catalog: all 416 live ids, sourced release dates, four new rows `d4642da`
+
+Before: 25 rows, 3 with a release date. After: `MODELS` is 29 curated rows
+(prod's popular order) followed by 387 rows generated from the gateway's
+public `GET /v1/models` (fetched 2026-09-14) in
+`src/data/models-catalog.ts`, excluded from Biome and ESLint and listed in
+the token-efficient-reads rule. New curated rows: Claude Fable 5.1, GPT-6
+Astra, Gemini 3.8 Flash, DeepSeek V4.1 Flash. Every curated row carries a
+sourced release date. The page header now reads 416 models across 3
+providers. `formatTokenCount` renders one decimal at the M step (1.0M, never
+1M). `ProviderStack` renders marks in `PROVIDER_ORDER` on every row instead
+of each model's own API order.
+
+### Models: feed-reconciled catalog, rank column, Features strip, card hover `7457acd`
+
+Before: the 29 curated catalog rows carried hand-typed prices, context
+windows and capability tags, four of them authored today from research, and
+several had drifted from the gateway (DeepSeek V4 Pro $0.44 vs $1.76 in,
+Gemini 3.6 Flash $1.50 vs $0.75). After: `scripts/generate-models-catalog.mjs`
+regenerates `src/data/models-catalog.ts` AND overwrites every curated row's
+pricing, context, max output, capabilities and release date from the public
+`GET /v1/models`, so no number in either file is typed by hand (PRD AG-675
+G4). Price basis is the feed's billed PAYG rate with markup 1. Eight models
+that carry seeded traffic (Haiku 4.5, Opus 4.7, Opus 4.8, Sonnet 5, DeepSeek
+V4 Pro, Gemini 3.1 Pro Preview, Kimi K2 Thinking, Qwen3 Next) keep pinned
+prices because Messages, Conversations, Activity and Teams dollar figures
+were computed from them and are asserted to the cent. Best for research
+swaps GPT-6 Astra (no PDF input in the feed) for Claude Opus 4.6 and its
+subtitle now reads "PDF input, reasoning and million-token context", tested.
+
+Shelf tables (`src/pages/models/ModelShelves.tsx`): a `#` rank column
+(`type-mono-14 text-muted-foreground`, right-aligned, sr-only "Rank") leads
+each row; widths re-pinned 4 / 30 / 9 / 15 / 15 / 17 / 10 percent, identical
+across the four shelves. Main catalog table headers pinned
+20 / 28 / 8.5 / 8.5 / 8.5 / 18 / 8.5 percent; they bite from about 1600px, at
+1440 every column already sits at its content minimum.
+
+`CapabilityStrip` (`src/pages/Models.tsx`) shows the first four of
+`CAPABILITY_ORDER` (tool use, reasoning, vision, web search, then PDF in,
+caching, JSON, streaming, audio, video) and collapses the rest into a
+`Badge size="xs"` `+N` chip with a Tooltip listing the hidden labels. Column
+header renamed Capabilities -> Features on both tables. The detail page's
+full badge list is unchanged.
+
+Featured cards: badge at 10px via `Badge size="xs"`, DeepSeek tagline "Open
+weight", `p-4` with 16px between badge, name and stats (138px card), names
+truncate and show a Tooltip only when clipped (`useIsTruncated`,
+`src/hooks/use-is-truncated.ts`), and the card takes the new
+`Card interactive` hover.
+
+### Models: Free models from Gate, modality tabs, Features filter `d1318bc`
+
+Before: the Models page had no free-model surface, two modality tabs that both
+read 416, and a toolbar of search, provider and sort. After: a **Free models
+from Gate** section sits between Featured and the shelves, behind its own
+`Separator`: h2 `type-heading-24`, subtitle "Models Gate supports at no cost
+for your plan, so you can ship without a paid balance.", and two cards that
+reuse `FeaturedCard` (`src/pages/models/FreeModels.tsx`,
+`src/data/free-models.ts`). The rows are the two cheapest tool-capable
+models in the live feed: gpt-oss-20B (badge "Lightweight", Free + Pro, price
+"Free") and DeepSeek V4 Flash 0731 (badge "Long context", Pro only, price
+"Free (Pro plan only)" on Free and Default surfaces, plain "Free" on Pro and
+Enterprise where the plan already grants it, `d94a7ac`). On `/models-free` and
+`/models-default` the Pro-only card rests at `opacity-75` with no hover fill (`FeaturedCard dimmed`, still
+drills in), and a promo banner follows the cards: `Card` with
+`border-promo-border`, promo shadow, the quiet dot texture, `SparklesIcon`,
+"Pro comes with a premium free model" / "Upgrade and a more capable model
+joins your free set at no cost, alongside everything the Free plan already
+includes.", and a `variant="promo"` Upgrade to Pro routing to that tier's
+`/billing-*?manage=1`. Absent on Pro and Enterprise.
+
+Catalog tabs now read the feed's `type`: All types 416 / Text 240 /
+Multimodal 176 (`Modality` widened, generator and reconcile map
+`language` -> text, `multimodal` -> multimodal). A **Features** `MultiSelect`
+(11 capability options in `CAPABILITY_ORDER`, intersect semantics, "All
+features" placeholder, `popupWidth="content"`) sits between the provider and
+sort Selects; the sort trigger dropped its stray `size="sm"` so all three
+triggers match at 36px. Empty-state copy mentions fewer features.
+
+Featured card grid is `grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-4`: 1-up on
+phones, 2-up through 1280, 4-up from 1366, so the price line never wraps.
+
+### Models: the four curated shelves are hidden `774b69e`
+
+Before: Best for research, Best for 24/7 runs, Newest models on Gate and
+Most popular on Gate rendered as four tables between the Free models block
+and the catalog. After: `ModelShelves` is no longer mounted in
+`ModelsSurface` (`src/pages/Models.tsx`), on the CTO's call the same day:
+"drop the subcategory pages, we didn't want to suggest tons of different
+models, 4 to 6 to make it easy to pick something, then the full catalog".
+The page is now Featured models, Free models from Gate, Explore our catalog,
+three main sections behind two `Separator`s. The component, the picks and
+copy in `src/pages/models/curation.ts`, and `curation.test.ts` stay in the
+tree so the block can return by re-mounting one line.
+
+### Featured and Free cards: vendor mark on hover `77332fc`
+
+Before: the cards had no watermark (the always-on 10% mono mark was dropped
+earlier today as too close to OpenRouter's motif). After: `FeaturedCard`
+mounts `LobeMark` (96px, `src/components/icons/lobe-mark.tsx`) clipped in
+the top-right corner at `opacity-0`, fading to `text-foreground/10` over
+150ms on card hover (`group/card` on the `Card`, `group-hover/card:` on the
+mark). At rest the card is plain; the mark is the pointer's reward. The
+dimmed Pro-only card, which has no hover, gets no mark. The button is
+`relative` so content paints above the mark. Card height stays 138px.
+
+### Models: better-ui polish pass `2892e27`
+
+First run of the `better-ui` skill (installed `f00eae0`) against the Models
+page. Two HIGH, four MEDIUM and two LOW findings applied; the rest are
+recorded as project decisions below.
+
+- **Featured row staggers in.** Before: the four `FeaturedCard`s appeared
+  at once. After: each card is wrapped in a `grid h-full` div carrying
+  `motion-safe:animate-in fade-in-0 slide-in-from-bottom-3
+  fill-mode-backwards duration-300 ease-out` with a 100ms `animationDelay`
+  per index, so the ranked left-to-right order reads as a sequence
+  (`src/pages/models/ModelShelves.tsx`). Route-level entrance only; the Free
+  models row and catalog rows are not staggered.
+- **Catalog rows drop the dead `hover-fine:` recipe.** Before: the Models
+  catalog row and the shelf row passed `cursor-pointer
+  transition-[background-color] duration-150 ease-out hover-fine:bg-accent
+  motion-reduce:transition-none`; `hover-fine:` compiles to nothing and the
+  transition duplicated the primitive with a different easing. After: the
+  call sites pass `cursor-pointer` only and `TableRow` owns `ease-out`.
+  `hover-fine:` count on the Models surface: 2 to 0.
+- **Dimmed Pro-only Free card keeps the pointer.** Before: `dimmed` removed
+  hover and press (intended) but also `cursor-pointer`, so a live link read
+  as disabled. After: `dimmed && "cursor-pointer opacity-75"`.
+- **Hand-rolled trigger classes removed.** The outline Button (`Models.tsx`
+  detail header) and the Features `MultiSelect` dropped `border-border
+  bg-card text-foreground`; their primitives already supply it. The two
+  `Select` triggers keep `bg-card` because `selectTriggerVariants` defaults
+  to `bg-muted`; open question whether to add a `bg-card` variant.
+- **Skipped, on purpose.** Quick start rail icons stay mixed: `openclaw.svg`
+  is a multi-colour gradient mark and cannot become a `currentColor` inline;
+  no Hermes / Nous mark exists in `public/icons/providers/`.
+
+**Decisions recorded against the skill (design.md wins):** press scale stays
+`0.98` (0.96 is too strong; now a row in design.md Motion). Radius keeps the
+Tailwind ladder 24 / 16 / 8 / 4 rather than concentric arithmetic. Lucide
+stroke stays a global `1.75` (research 2026-09-14: every fixed-geometry SVG
+set ships one stroke; text-weight matching is native to SF Symbols and
+Material Symbols only). Surfaces keep honest `border-border` + `shadow-xs`,
+never a shadow-as-border ring.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`
@@ -39,3 +218,135 @@ one step darker than the top bar and the sheet body. After: `bg-card`, the same
 surface as the top bar, so the avatar, name and email row reads as part of the
 sheet rather than an inset panel. The block is `lg:hidden`, so the desktop
 avatar popover is untouched.
+
+### VendorAvatar: initials tile for vendors without a brand mark `d4642da`
+
+Before: `VendorAvatar` indexed `VENDOR_META` directly and the `Model.vendor`
+type was the ten-member `Vendor` union. After: `Model.vendor` is
+`VendorSlug` (any `owned_by` slug); `vendorMeta()` / `vendorLabel()` /
+`isKnownVendor()` in `vendor-meta.tsx` resolve it, and unknown vendors
+render a `size-4 rounded-sm bg-muted` mono uppercase two-letter tile, the
+same fallback prod shows for Z.ai. `SetupModels`, the Requests and
+Conversations model filters follow the wider type.
+
+### Badge: `size="xs"`, 16px pill at 10px type `d4642da`
+
+Before: one badge height, `h-5 text-xs`. After: a `size` variant on
+`badge.tsx` with `default` unchanged and `xs` = `h-4 text-2xs`, the fenced
+Micro-tier step. Only consumer: the Featured-card positioning tagline, where
+the 12px badge outweighed the model name. design.md §3 Micro tier and the
+Badge entry record it. Also added: `src/components/icons/lobe-mark.tsx`,
+fifteen monochrome vendor marks inlined from `@lobehub/icons-static-svg`
+1.95.0 (new devDependency) with a `LobeMark` slug map. It was built for a
+card watermark that was then dropped as too close to OpenRouter's motif; it
+is kept for the detail hero or Free models table.
+
+### Card: `interactive` variant `7457acd`
+
+Before: `Card` had no hover affordance, so a clickable card needed a
+call-site recipe. After: `interactive` prop on `card.tsx` adds
+`cursor-pointer` and the table-row hover fill (`hover:bg-accent`, 150ms,
+reduced-motion safe); press and focus stay on the inner `RowActionButton`.
+Documented in design.md. Note recorded in both places: `hover-fine:` is
+inert site-wide because the custom variant in `src/index.css` compiles to
+invalid nested CSS; the variant uses plain `hover:` until that is repaired.
+
+**Press moved onto the card (`a8507d4`).** Before: the 0.98 press scale sat on
+the inner `RowActionButton`, so on a flush card only the content shrank while
+the border stood still. After: `interactive` carries `active:scale-[0.98]`
+(with `transition-[background-color,transform]` and the reduced-motion
+opt-out), because `:active` propagates to ancestors and the framed card
+presses as one object. The button keeps the focus ring and no longer scales.
+
+### TableRow: 48px floor `d1318bc`
+
+Before: body rows were content-sized (`py-3` cells), landing at 45 to 46px
+wherever a cell held one 14px line (Models list, shelf tables) and 48 or
+more elsewhere. After: `TableRow` carries `h-12`, a MINIMUM on `<tr>` so
+taller rows (Conversations 65, Teams 57) are unchanged. Site rule: no body
+row under 48px. Recorded in design.md's Table entry.
+
+### MultiSelect: `popupWidth` `d1318bc`
+
+Before: the popup was always `w-(--anchor-width)`, which clipped labels
+behind a compact trigger. After: `popupWidth="anchor"` (default, unchanged
+for Audit Trail and the Teams pickers) or `"content"`, which floors at the
+trigger width and grows to the longest label (`w-max min-w-(--anchor-width)
+max-w-(--available-width)`). Models "All features" went from 122 to 153px
+with no clipped label. Documented in design.md.
+
+### Card `interactive`: press transitions `scale` `2892e27`
+
+Before: `transition-[background-color,transform]` beside
+`active:scale-[0.98]`. Tailwind v4 emits `scale: 0.98` as its own property,
+so `transform` never matched and the press snapped in and out at 0ms.
+After: `transition-[background-color,scale]`; the press animates over the
+150ms `ease-out` and can be interrupted mid-press. Applies to every
+`interactive` Card (Featured and Free cards on Models).
+
+### Featured and Free cards: focus ring inset `2892e27`
+
+Before: the inner `RowActionButton` fills a `density="flush"` Card that
+carries `overflow-hidden`, so its outer `focus-visible:ring-3` was clipped
+on all four sides and keyboard focus was invisible. After: the button adds
+`rounded-md focus-visible:ring-inset` (the `NavTableRow` recipe), so the
+ring draws inside the 8px card corner (`ModelShelves.tsx` `FeaturedCard`).
+
+### Table: sort glyphs cross-fade `2892e27`
+
+Before: the sortable head ternaried between `ArrowUp`, `ArrowDown` and
+`ChevronsUpDown`, mounting and unmounting on click, so the slot faded in
+on hover and hard-cut on sort. After: all three glyphs sit in one
+`aria-hidden` grid slot (`[grid-area:1/1]`) and swap via
+`transition-opacity duration-150 ease-out`; the neutral chevron keeps its
+hover reveal until a direction is active. Same recipe as `CopyIconSwap`.
+Site-wide on every sortable table; `aria-sort` is unchanged.
+
+### TableRow owns `ease-out` `2892e27`
+
+Before: the base row transition used Tailwind's default easing while two
+Models call sites overrode it with the project `ease-out`. After: `ease-out`
+lives on `TableRow` in `table.tsx`, so every row on the site eases the same
+way and call sites pass no transition classes.
+
+### Badge: transition names real properties `2892e27`
+
+Before: `transition-[colors,box-shadow]`; `colors` is not a CSS property, so
+no badge colour ever transitioned, only the shadow. After:
+`transition-[color,background-color,border-color,box-shadow]`. Visible on
+the `ghost` and `link` variants; the Models badges have no colour state.
+
+### Stale `--shadow-border` comments rewritten `2892e27`
+
+Comment-only. `card.tsx`, `code-card.tsx`, `table.tsx` and `empty-state.tsx`
+still described a `--shadow-border` ring token migrated away on 2026-05-15.
+Each now states the live recipe (`border-border` + `shadow-xs`, Tailwind
+shadow scale only). `grep shadow-border src` returns 0.
+
+### Notifications: unread dot animates in and out `9dd455f`
+
+First install from the `transitions-dev` skill (recipe 03, notification
+badge), rebuilt on the project's own ladder. Before: the bell's unread dot
+(`size-2 rounded-full bg-destructive`) mounted and unmounted with no
+motion. After: the dot stays in the DOM and the unread boolean drives
+`scale-100 opacity-100 duration-200` versus `scale-0 opacity-0
+duration-150` over `transition-[opacity,scale] ease-out
+motion-reduce:transition-none`, so it pops in slightly slower than it
+leaves and both directions are interruptible. `pointer-events-none` keeps
+the invisible dot from catching clicks. Dropped from the recipe: the
+diagonal keyframe, blur, bounce curve, its `_root.css` tokens and 500 /
+180ms literals. Position classes and the trigger `aria-label` are
+unchanged (`src/components/ui/notifications-menu.tsx`).
+
+### Motion: segmented indicators and popup close timing `1e6ef48`
+
+From the `transitions-polish` review (first run 2026-09-14; the rest of its
+findings are parked). Before: `Segmented` and `SegmentedPill` slid their
+indicator over `duration-[220ms]` on a bespoke
+`cubic-bezier(0.77,0,0.175,1)` while `Tabs` and design.md's Motion table
+say 200ms `ease-out`. After: both use `duration-200 ease-out`
+(`segmented.tsx`, `segmented-pill.tsx`). Before: the `Select` popup and the
+hand-rolled row-actions menu on Team closed at the same 150ms they open
+with, while Menu, Popover and Tooltip close at 100ms. After: both carry
+`data-closed:duration-100`, so every floating surface on the site opens at
+150ms and closes at 100ms (`select.tsx`, `pages/Team.tsx`).

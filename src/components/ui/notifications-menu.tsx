@@ -63,6 +63,20 @@ type NotificationsMenuProps = {
  *  rail, hence the local recipe rather than the primitive. */
 const UNREAD_DOT = "size-2 rounded-full bg-destructive";
 
+/** Enter / exit for that dot (the transitions-dev "notification badge" recipe,
+ *  reduced to this system's ladder). The dot now stays MOUNTED and moves
+ *  between `scale-0/opacity-0` and `scale-100/opacity-100`, because an
+ *  unmounted node has nothing to animate out — `unreadCount` drives the classes
+ *  instead of the render. Only opacity + scale move: the recipe's diagonal
+ *  slide, 2px blur and overshoot curve are all off-token here, so the motion is
+ *  the project's `ease-out` with the recipe's open/close asymmetry (200ms in,
+ *  150ms out). Plain transitions in both directions, so an unread arriving
+ *  mid-exit reverses from wherever the dot is rather than jumping. The
+ *  recipe's `pointer-events-none` is kept, and matters more now that the
+ *  invisible state is permanently in the DOM. */
+const UNREAD_DOT_MOTION =
+  "pointer-events-none transition-[opacity,scale] ease-out motion-reduce:transition-none";
+
 /* ─── Menu ───────────────────────────────────────────────────────────── */
 
 function NotificationsMenu({
@@ -119,12 +133,17 @@ function NotificationsMenu({
               size={16}
               strokeWidth={1.75}
             />
-            {unreadCount > 0 ? (
-              <span
-                aria-hidden
-                className={cn("absolute top-2 right-2", UNREAD_DOT)}
-              />
-            ) : null}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-2 right-2",
+                UNREAD_DOT,
+                UNREAD_DOT_MOTION,
+                unreadCount > 0
+                  ? "scale-100 opacity-100 duration-200"
+                  : "scale-0 opacity-0 duration-150"
+              )}
+            />{" "}
           </Button>
         }
       />

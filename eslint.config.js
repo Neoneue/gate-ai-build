@@ -15,7 +15,9 @@ export default defineConfig([
   globalIgnores([
     "dist",
     ".claude/**",
+    "agents/**",
     "src/lib/dotmatrix-*",
+    "src/data/models-catalog.ts",
     "src/components/ui/dotm-*",
   ]),
   {

@@ -9,8 +9,33 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-15](./2026-09/changelog-9-15.md)
+
+- Models: Featured cards on a per-card grid, split stats, CMS seed badges
+- Models: Featured cards no longer animate on load, Context column wider
+
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 
+- Models: better-ui polish pass
+- Card `interactive`: press transitions `scale`
+- Featured and Free cards: focus ring inset
+- Table: sort glyphs cross-fade
+- TableRow owns `ease-out`
+- Badge: transition names real properties
+- Stale `--shadow-border` comments rewritten
+- Notifications: unread dot animates in and out
+- Motion: segmented indicators and popup close timing
+- Models: Featured row, four curated shelves, catalog header
+- Models catalog: all 416 live ids, sourced release dates, four new rows
+- VendorAvatar: initials tile for vendors without a brand mark
+- Badge: `size="xs"`, 16px pill at 10px type
+- Models: feed-reconciled catalog, rank column, Features strip, card hover
+- Card: `interactive` variant
+- Models: Free models from Gate, modality tabs, Features filter
+- TableRow: 48px floor
+- MultiSelect: `popupWidth`
+- Models: the four curated shelves are hidden
+- Featured and Free cards: vendor mark on hover
 - Top bar logomark navigates to Overview below `lg`
 - Top bar glyphs are 20px below `lg`, wrapper stays 36px
 - Navigation sheet profile band on the card surface

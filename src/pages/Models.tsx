@@ -18,6 +18,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { InlineCode } from "@/components/ui/inline-code";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { SearchInput } from "@/components/ui/search-input";
@@ -28,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   SortableTableHead,
   Table,
@@ -44,6 +46,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { TextLink } from "@/components/ui/text-link";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  CAPABILITY_INLINE_MAX,
   CAPABILITY_META,
   CAPABILITY_ORDER,
   type Capability,
@@ -67,6 +75,8 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatNumber, linesToString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { FreeModels } from "@/pages/models/FreeModels";
+import { FeaturedModels } from "@/pages/models/ModelShelves";
 import {
   PAYG_TOOL_CAPTIONS,
   type PaygToolId,
@@ -155,6 +165,9 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const [modality, setModality] = useState<"all" | Modality>("all");
   const [search, setSearch] = useState("");
   const [provider, setProvider] = useState("all");
+  // Empty = no capability filter. A non-empty selection INTERSECTS: a row has
+  // to carry every capability picked, so each addition narrows the catalog.
+  const [features, setFeatures] = useState<Capability[]>([]);
   const [sort, setSort] = useState<ModelSort>("popular");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
@@ -168,13 +181,19 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       if (provider !== "all" && !m.providers.some((p) => p.id === provider)) {
         return false;
       }
+      if (
+        features.length > 0 &&
+        !features.every((c) => m.capabilities.includes(c))
+      ) {
+        return false;
+      }
       if (q && !matchesQuery(m, q)) {
         return false;
       }
       return true;
     });
     return sortModels(rows, sort);
-  }, [modality, search, provider, sort]);
+  }, [modality, search, provider, features, sort]);
 
   const resetToFirstPage = () => setPage(1);
 
@@ -189,6 +208,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     setSearch("");
     setModality("all");
     setProvider("all");
+    setFeatures([]);
     resetToFirstPage();
   };
 
@@ -196,81 +216,119 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
     <>
       <PageHeader modelCount={MODELS.length} providerCount={TOTAL_PROVIDERS} />
 
-      {/* Modality tabs — promoted out of the filter-pill row so each
+      {/* Curated blocks. Three MAIN sections on this page, Featured, the
+          free models, and the catalog, separated by a rule. */}
+      <Separator />
+
+      <FeaturedModels onSelect={onSelect} />
+
+      <Separator />
+
+      <FreeModels onSelect={onSelect} />
+
+      <Separator />
+
+      {/* The four curated shelves (`ModelShelves`) are HIDDEN as of
+          2026-09-14 on the CTO's call: "drop the subcategory pages, we
+          didn't want to suggest tons of different models, 4 to 6 to make it
+          easy to pick, then the full catalog". Component, data
+          (`src/pages/models/curation.ts`) and tests stay so the block can
+          return by re-mounting it here. */}
+
+      {/* Catalog header + Tabs share one gap-4 column so the header reads as
+          the Tabs' own heading rather than as a third free-floating block. */}
+      <div className="flex flex-col gap-4">
+        <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
+          <h2 className="type-heading-24 m-0 text-foreground">
+            Explore our catalog
+          </h2>
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+            Every model Gate can send your requests to. Search by name, filter
+            by provider, and compare what each one costs and can do.
+          </p>
+        </div>
+
+        {/* Modality tabs — promoted out of the filter-pill row so each
           modality is a visible peer scope. Underline `line` variant
           matches the Settings / Team tab register elsewhere in the
           shell. Count chip uses the shared <TabsCount> primitive.
-          Two tabs, because prod has two: every model is text. */}
-      <Tabs
-        className="gap-4"
-        onValueChange={(v) => {
-          setModality(v as "all" | Modality);
-          resetToFirstPage();
-        }}
-        value={modality}
-      >
-        <TabsList className="mt-2 px-0" variant="line">
-          <TabsTrigger value="all">
-            All types
-            <TabsCount>{MODELS.length}</TabsCount>
-          </TabsTrigger>
-          <TabsTrigger value="text">
-            Text
-            <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
-          </TabsTrigger>
-        </TabsList>
+          Three tabs from the feed's `type`: language -> Text, multimodal ->
+          Multimodal (2026-09-14, matches the marketing catalog). */}
+        <Tabs
+          className="gap-4"
+          onValueChange={(v) => {
+            setModality(v as "all" | Modality);
+            resetToFirstPage();
+          }}
+          value={modality}
+        >
+          <TabsList className="mt-2 px-0" variant="line">
+            <TabsTrigger value="all">
+              All types
+              <TabsCount>{MODELS.length}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="text">
+              Text
+              <TabsCount>{MODALITY_COUNTS.text}</TabsCount>
+            </TabsTrigger>
+            <TabsTrigger value="multimodal">
+              Multimodal
+              <TabsCount>{MODALITY_COUNTS.multimodal}</TabsCount>
+            </TabsTrigger>
+          </TabsList>
 
-        {isEmpty ? null : (
-          <Toolbar
-            onProviderChange={(v) => {
-              setProvider(v);
-              resetToFirstPage();
-            }}
-            onSearchChange={(v) => {
-              setSearch(v);
-              resetToFirstPage();
-            }}
-            onSortChange={(v) => {
-              setSort(v);
-              resetToFirstPage();
-            }}
-            provider={provider}
-            search={search}
-            sort={sort}
-          />
-        )}
-
-        <Card density="flush">
-          {isEmpty ? (
-            <TableEmptyState
-              action={
-                <Button
-                  className="border-border bg-card text-foreground"
-                  onClick={clearFilters}
-                  size="sm"
-                  variant="outline"
-                >
-                  Clear filters
-                </Button>
-              }
-              body="Try a broader search, a different type, or clear the filters to see every routable model."
-              title="No models match these filters"
+          {isEmpty ? null : (
+            <Toolbar
+              features={features}
+              onFeaturesChange={(v) => {
+                setFeatures(v);
+                resetToFirstPage();
+              }}
+              onProviderChange={(v) => {
+                setProvider(v);
+                resetToFirstPage();
+              }}
+              onSearchChange={(v) => {
+                setSearch(v);
+                resetToFirstPage();
+              }}
+              onSortChange={(v) => {
+                setSort(v);
+                resetToFirstPage();
+              }}
+              provider={provider}
+              search={search}
+              sort={sort}
             />
-          ) : (
-            <>
-              <ModelsTable onSelect={onSelect} rows={pageRows} />
-
-              <TablePaginationFooter
-                onPageChange={setPage}
-                onRowsPerPageChange={setRowsPerPage}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                total={filtered.length}
-              />
-            </>
           )}
-        </Card>
-      </Tabs>
+
+          <Card density="flush">
+            {isEmpty ? (
+              <TableEmptyState
+                action={
+                  <Button onClick={clearFilters} size="sm" variant="outline">
+                    Clear filters
+                  </Button>
+                }
+                body="Try a broader search, a different type, fewer features, or clear the filters to see every routable model."
+                title="No models match these filters"
+              />
+            ) : (
+              <>
+                <ModelsTable onSelect={onSelect} rows={pageRows} />
+
+                <TablePaginationFooter
+                  onPageChange={setPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  total={filtered.length}
+                />
+              </>
+            )}
+          </Card>
+        </Tabs>
+      </div>
 
       <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
@@ -313,6 +371,8 @@ function Toolbar({
   onSearchChange,
   provider,
   onProviderChange,
+  features,
+  onFeaturesChange,
   sort,
   onSortChange,
 }: {
@@ -320,6 +380,8 @@ function Toolbar({
   onSearchChange: (v: string) => void;
   provider: string;
   onProviderChange: (v: string) => void;
+  features: Capability[];
+  onFeaturesChange: (v: Capability[]) => void;
   sort: ModelSort;
   onSortChange: (v: ModelSort) => void;
 }) {
@@ -328,8 +390,9 @@ function Toolbar({
        RequestsTable. `<main>` declares `@container`, so `@2xl:` (672px
        inline-size) reads the column the toolbar lives in rather than the
        window, which the Ask AI panel narrows without touching. Below it:
-       search full-width on row 1, the two Selects splitting row 2 evenly
-       via `min-w-0 flex-1`. */
+       search full-width on row 1, the provider Select, the features
+       MultiSelect and the sort Select splitting row 2 evenly via
+       `min-w-0 flex-1`. */
     <div className="flex flex-wrap items-center gap-2">
       <SearchInput
         ariaLabel="Search models"
@@ -361,11 +424,26 @@ function Toolbar({
         </SelectContent>
       </Select>
 
+      {/* Capabilities, in CAPABILITY_ORDER so the picker reads the same way
+          the row strip and the detail page do. Live-applying (no commitMode):
+          it is a filter, and each toggle is a cheap, reversible narrowing. */}
+      <MultiSelect
+        aria-label="Filter by features"
+        className="w-auto min-w-0 @2xl:flex-none flex-1"
+        onValueChange={(v) => onFeaturesChange(v as Capability[])}
+        options={CAPABILITY_ORDER.map((c) => ({
+          value: c,
+          label: CAPABILITY_META[c].label,
+        }))}
+        placeholder="All features"
+        popupWidth="content"
+        value={features}
+      />
+
       <Select onValueChange={(v) => onSortChange(v as ModelSort)} value={sort}>
         <SelectTrigger
           aria-label="Sort"
           className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
-          size="sm"
         >
           <SelectValue />
         </SelectTrigger>
@@ -419,7 +497,7 @@ function ModelsTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[20%] whitespace-nowrap"
             onSort={toggleSort}
             sort={sort}
             sortKey="name"
@@ -427,7 +505,7 @@ function ModelsTable({
             Model
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[28%] whitespace-nowrap"
             onSort={toggleSort}
             sort={sort}
             sortKey="handle"
@@ -435,7 +513,7 @@ function ModelsTable({
             Model ID
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -444,7 +522,7 @@ function ModelsTable({
             Context
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -453,7 +531,7 @@ function ModelsTable({
             Input
           </SortableTableHead>
           <SortableTableHead
-            className="whitespace-nowrap"
+            className="w-[8.5%] whitespace-nowrap"
             numeric
             onSort={toggleSort}
             sort={sort}
@@ -461,8 +539,10 @@ function ModelsTable({
           >
             Output
           </SortableTableHead>
-          <TableHead className="whitespace-nowrap">Capabilities</TableHead>
-          <TableHead className="whitespace-nowrap">Providers</TableHead>
+          <TableHead className="w-[18%] whitespace-nowrap">Features</TableHead>
+          <TableHead className="w-[8.5%] whitespace-nowrap">
+            Providers
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -475,7 +555,7 @@ function ModelsTable({
           const outputPrice = formatPricePerM(listPrice(model, "outputPer1M"));
           return (
             <TableRow
-              className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+              className="cursor-pointer"
               key={model.id}
               onClick={() => onSelect(model)}
             >
@@ -535,7 +615,7 @@ function ModelsTable({
  *  Next reports no context window; most provider rows have no telemetry yet),
  *  so it recedes to muted and carries an sr-only explanation rather than
  *  announcing as bare punctuation. */
-function NumericCell({ value }: { value: string }) {
+export function NumericCell({ value }: { value: string }) {
   const isMissing = value === EM_DASH;
   return (
     <TableCell
@@ -556,7 +636,11 @@ function NumericCell({ value }: { value: string }) {
   );
 }
 
-function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
+export function CapabilityStrip({
+  capabilities,
+}: {
+  capabilities: Capability[];
+}) {
   if (capabilities.length === 0) {
     return (
       <span className="type-mono-12 text-muted-foreground">{EM_DASH}</span>
@@ -565,13 +649,22 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
   // Render in canonical order so cross-row scanning lands on the same icon
   // in the same x-slot (Tool use is always leftmost when present). Each icon
   // carries `aria-label` for SR identification AND a native `title` so
-  // sighted-mouse users get the capability name on hover — without
-  // introducing a Tooltip primitive.
+  // sighted-mouse users get the capability name on hover.
+  //
+  // Only the first CAPABILITY_INLINE_MAX render as glyphs (2026-09-14).
+  // CAPABILITY_ORDER is decision value, so the four that survive are the four
+  // a reader actually picks a model on; the tail collapses into one +N chip.
+  // Ten glyphs on the widest row made the column the widest thing in the
+  // table while carrying the least signal per pixel, and no row could be
+  // read at a glance because every row had a different strip length.
   const have = new Set(capabilities);
   const ordered = CAPABILITY_ORDER.filter((c) => have.has(c));
+  const inline = ordered.slice(0, CAPABILITY_INLINE_MAX);
+  const hidden = ordered.slice(CAPABILITY_INLINE_MAX);
+  const hiddenLabels = hidden.map((c) => CAPABILITY_META[c].label);
   return (
     <div className="flex items-center gap-1">
-      {ordered.map((c) => {
+      {inline.map((c) => {
         const meta = CAPABILITY_META[c];
         const Icon = meta.icon;
         return (
@@ -585,20 +678,53 @@ function CapabilityStrip({ capabilities }: { capabilities: Capability[] }) {
           </span>
         );
       })}
+      {hidden.length > 0 ? (
+        // The chip carries the hidden labels in its `aria-label`, so a screen
+        // reader hears every capability the row has even though only four are
+        // drawn — the tooltip is the sighted equivalent of the same string.
+        // The Badge is the trigger itself (Base UI `render`), never a nested
+        // <button>, so a click still reaches the row's drill-in; Base UI's
+        // `closeOnClick` default keeps the tooltip from riding along to the
+        // next view.
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Badge
+                aria-label={`${hidden.length} more: ${hiddenLabels.join(", ")}`}
+                className="shrink-0"
+                size="xs"
+                variant="neutral"
+              />
+            }
+          >
+            {`+${hidden.length}`}
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="flex flex-col">
+              {hiddenLabels.map((label) => (
+                <span key={label}>{label}</span>
+              ))}
+            </span>
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   );
 }
 
-function ProviderStack({ providers }: { providers: ModelProvider[] }) {
-  // Order is the model's OWN provider order, straight from the API — it
-  // varies row to row (Qwen leads with Alibaba, most Anthropic rows lead
-  // with Vertex, the Gemini rows lead with OpenRouter) and the label reads
-  // in that same order, exactly like prod.
-  const names = providers.map((p) => PROVIDER_META[p.id].label);
-  const ariaLabel = `Available from ${providers.length} providers: ${names.join(", ")}`;
+export function ProviderStack({ providers }: { providers: ModelProvider[] }) {
+  // Marks render in PROVIDER_ORDER (Alibaba, Vertex, OpenRouter) on every
+  // row, so the column scans as one axis. Until 2026-09-14 the stack kept
+  // each model's own API order, which flipped Vertex / OpenRouter between
+  // neighbouring rows; prod still does that, this build deliberately does not.
+  const ordered = PROVIDER_ORDER.filter((id) =>
+    providers.some((p) => p.id === id)
+  ).map((id) => providers.find((p) => p.id === id) as ModelProvider);
+  const names = ordered.map((p) => PROVIDER_META[p.id].label);
+  const ariaLabel = `Available from ${ordered.length} providers: ${names.join(", ")}`;
   return (
     <div aria-label={ariaLabel} className="flex items-center gap-2" role="img">
-      {providers.map((p) => (
+      {ordered.map((p) => (
         // `inline-flex items-center` on the wrapper so the inline-flex
         // ProviderAvatar inside centers vertically. A plain `<span>` here
         // inherits the cell's 21px line-box and the SVG hangs from the

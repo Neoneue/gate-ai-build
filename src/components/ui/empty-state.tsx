@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
  *
  * Heading is `<h3>` (page already owns h2). Card chrome matches the <Card>
  * primitive exactly — `border border-border shadow-xs` (the 2026-05-15
- * everyday material tier; updated 2026-06-09 from the prior
- * `shadow-(--shadow-border)` ring so empty states match real cards). The
+ * everyday material tier; updated 2026-06-09 from the prior bespoke ring
+ * token so empty states match real cards). The
  * `icon` slot is optional — CMP-017's invitations pane omits it; CMP-018's
  * integrations tab includes a Layers chip above the heading. The `action`
  * slot accepts any React node — typically a `<Button size="default">`, sometimes wired

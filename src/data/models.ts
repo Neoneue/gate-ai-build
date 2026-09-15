@@ -32,17 +32,20 @@ import {
   Zap,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import type { ProviderId, Vendor } from "@/components/icons/vendor-meta";
+import type { ProviderId, VendorSlug } from "@/components/icons/vendor-meta";
 import { formatCurrency } from "@/lib/formatters";
+import { CATALOG_ROWS } from "./models-catalog";
 
 export type { ProviderId } from "@/components/icons/vendor-meta";
 
 /* ─── Type model ─────────────────────────────────────────────────────────── */
 
-/** Every model in prod's catalog is `text`. Embeddings / audio / rerank
- *  modalities were removed with the invented catalog; prod's tab strip is
- *  "All types" + "Text" and nothing else. */
-export type Modality = "text";
+/** The feed's `type`: `language` -> "text", `multimodal` -> "multimodal".
+ *  Gate serves text-producing models only; image, audio and video are INPUT
+ *  capabilities on multimodal chat models, so the tab strip is "All types"
+ *  + "Text" + "Multimodal" and nothing else (2026-09-14, matches the
+ *  marketing catalog). */
+export type Modality = "text" | "multimodal";
 
 /** The API exposes 13 capability flags. `systemMessages` and
  *  `parallelToolCalls` are deliberately absent: prod's table renders 11 and
@@ -85,19 +88,25 @@ export const CAPABILITY_META: Record<Capability, CapabilityMeta> = {
 /** Canonical render order, reverse-engineered from prod's own rows and
  *  verified to reproduce all 25 capability strips exactly. Cross-row
  *  scanning lands on the same icon in the same x-slot. */
+/** Display order = decision value. The first four are the majors the
+ *  table strip shows inline; everything after collapses into its +N chip
+ *  (2026-09-14). The detail page lists all of them in this order. */
 export const CAPABILITY_ORDER: Capability[] = [
   "tools",
-  "vision",
   "reasoning",
+  "vision",
+  "webSearch",
+  "pdfInput",
   "promptCaching",
   "responseSchema",
   "streaming",
-  "webSearch",
   "audioInput",
-  "pdfInput",
   "videoInput",
   "audioOutput",
 ];
+
+/** How many capability glyphs a table row shows before the +N chip. */
+export const CAPABILITY_INLINE_MAX = 4;
 
 export type ModelPricing = {
   inputPer1M: number;
@@ -125,7 +134,9 @@ export type Model = {
   /** Canonical `vendor/model` id — this IS the handle you pass to the
    *  gateway, and what the Model ID column renders. */
   id: string;
-  vendor: Vendor;
+  /** Vendor slug from the feed's `owned_by`. Known vendors carry a brand
+   *  mark in VENDOR_META; the rest render an initials avatar. */
+  vendor: VendorSlug;
   name: string;
   description: string;
   modality: Modality;
@@ -159,10 +170,10 @@ export function formatTokenCount(value: number | null): string {
   if (value === null || value === 0) {
     return EM_DASH;
   }
+  // Always one decimal at the M step (1.0M / 1.1M), so a 1,000,000 window
+  // and a 1,048,576 one read at the same precision side by side.
   if (value >= 1_000_000) {
-    return value % 1_000_000 === 0
-      ? `${value / 1_000_000}M`
-      : `${(value / 1_000_000).toFixed(1)}M`;
+    return `${(value / 1_000_000).toFixed(1)}M`;
   }
   return value % 1000 === 0
     ? `${value / 1000}K`
@@ -230,7 +241,7 @@ export type ModelSort = "popular" | "newest" | "cheapest" | "largest-context";
  *                  count, then name. We have no traffic data, and MODELS is
  *                  already stored in prod's popular order, so this is the
  *                  identity — which is exactly what makes it the default.
- *  newest          releasedAt descending; the 22 models without one sink to
+ *  newest          releasedAt descending; any model without one sinks to
  *                  the bottom and resolve alphabetically.
  *  cheapest        effective (marked-up) input price ascending, so the order
  *                  matches the number the eye actually reads in the column.
@@ -274,7 +285,12 @@ export function sortModels(rows: Model[], sort: ModelSort): Model[] {
 
 /* ─── Catalog ────────────────────────────────────────────────────────────── */
 
-export const MODELS: Model[] = [
+/**
+ * Hand-authored rows, kept in prod's "Most popular" order (the identity sort
+ * below). Every number is a real catalog value; these rows carry the
+ * per-provider detail the public feed lacks.
+ */
+const CURATED_ROWS: Model[] = [
   {
     id: "qwen/qwen3-next-80b-a3b-instruct",
     vendor: "qwen",
@@ -338,13 +354,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-06-09T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -357,7 +373,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-fable-5",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -372,7 +388,7 @@ export const MODELS: Model[] = [
       "Claude Haiku 4.5 is Anthropic’s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and latency of larger Claude models. Matching Claude Sonnet 4’s performance across reasoning, coding, and computer-use tasks, Haiku 4.5 brings frontier-level capability to real-time and high-volume applications.\n\nIt introduces extended thinking to the Haiku line; enabling controllable reasoning depth, summarized or interleaved thought output, and tool-assisted workflows with full support for coding, bash, web search, and computer-use tools. Scoring u003e73% on SWE-bench Verified, Haiku 4.5 ranks among the world’s best coding models while maintaining exceptional responsiveness for sub-agents, parallelized execution, and scaled deployment.",
     modality: "text",
     contextWindow: 200_000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 64_000,
     pricing: {
       inputPer1M: 1,
       outputPer1M: 5,
@@ -382,14 +398,14 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
       "streaming",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-10-15T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -415,7 +431,7 @@ export const MODELS: Model[] = [
     name: "Claude Opus 4.1",
     description:
       "Claude Opus 4.1 is an updated version of Anthropic’s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains in multi-file code refactoring, debugging precision, and detail-oriented reasoning. The model supports extended thinking up to 64K tokens and is optimized for tasks involving research, data analysis, and tool-assisted reasoning.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 200_000,
     maxOutputTokens: 32_000,
     pricing: {
@@ -425,8 +441,16 @@ export const MODELS: Model[] = [
       cachedInputWritePer1M: 18.75,
     },
     pricingMarkup: 1,
-    capabilities: ["tools", "vision"],
-    releasedAt: null,
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema",
+      "streaming",
+    ],
+    releasedAt: "2025-08-05T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -439,7 +463,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-opus-4.1",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -464,13 +488,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-11-24T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -483,7 +507,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-opus-4.5",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -508,13 +532,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-05T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -527,7 +551,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-opus-4.6",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -552,13 +576,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-04-16T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -596,13 +620,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-28T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -628,25 +652,26 @@ export const MODELS: Model[] = [
     name: "Claude Opus 5",
     description:
       "Claude Opus 5 is Anthropic’s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis of charts and documents, complex office deliverables, and coordinating parallel subagents.\n\nThe model maintains strong instruction following and tool use across extended tasks, while remaining effective at lower effort settings for workloads that prioritize latency and token efficiency.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_000_000,
     maxOutputTokens: 128_000,
     pricing: {
-      inputPer1M: 5,
-      outputPer1M: 25,
-      cachedInputReadPer1M: 0.5,
-      cachedInputWritePer1M: 6.25,
+      inputPer1M: 5.5,
+      outputPer1M: 27.5,
+      cachedInputReadPer1M: 0.55,
+      cachedInputWritePer1M: 6.875,
     },
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
+      "streaming",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-24T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -659,7 +684,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-opus-5",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -684,13 +709,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-09-29T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -703,7 +728,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-sonnet-4.5",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -728,13 +753,13 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-17T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -747,7 +772,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "anthropic/claude-sonnet-4.6",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -760,7 +785,7 @@ export const MODELS: Model[] = [
     name: "Claude Sonnet 5",
     description:
       "Sonnet 5 is Anthropic's most capable Sonnet-class model, with frontier performance across coding, agents, and professional work. It supports adaptive thinking with selectable reasoning effort levels (low, medium, high, max, and x-high), a 1M-token context window, and text, image, and file inputs. Sonnet 5 uses an updated tokenizer and includes real-time cyber safeguards that block certain high-risk dual-use activities.",
-    modality: "text",
+    modality: "multimodal",
     contextWindow: 1_000_000,
     maxOutputTokens: 128_000,
     pricing: {
@@ -772,13 +797,14 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "pdfInput",
+      "streaming",
     ],
-    releasedAt: null,
+    releasedAt: "2026-06-30T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -805,28 +831,22 @@ export const MODELS: Model[] = [
     description:
       "DeepSeek V4 Flash is an efficiency-optimized Mixture-of-Experts model from DeepSeek with 284B total parameters and 13B activated parameters, supporting a 1M-token context window. It is designed for fast inference and high-throughput workloads, while maintaining strong reasoning and coding performance.\n\nThe model includes hybrid attention for efficient long-context processing. Reasoning efforts `high` and `xhigh` are supported; `xhigh` maps to max reasoning. It is well suited for applications such as coding assistants, chat systems, and agent workflows where responsiveness and cost efficiency are important.",
     modality: "text",
-    contextWindow: 1_048_576,
-    maxOutputTokens: 393_216,
+    contextWindow: 1_024_000,
+    maxOutputTokens: 384_000,
     pricing: {
-      inputPer1M: 0.14,
-      outputPer1M: 0.28,
-      cachedInputReadPer1M: 0.028,
+      inputPer1M: 0.087_318,
+      outputPer1M: 0.174_636,
+      cachedInputReadPer1M: 0.017_464,
       cachedInputWritePer1M: 0,
     },
-    pricingMarkup: 1.1,
-    capabilities: [
-      "tools",
-      "reasoning",
-      "promptCaching",
-      "responseSchema",
-      "streaming",
-    ],
+    pricingMarkup: 1,
+    capabilities: ["tools", "reasoning", "promptCaching", "responseSchema"],
     releasedAt: "2026-04-24T03:17:46.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "deepseek/deepseek-v4-flash",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: 5052,
         throughputTps: 43.653_316_380_589_104,
         sampleCount: 91,
@@ -849,7 +869,7 @@ export const MODELS: Model[] = [
       "DeepSeek V4 Pro is a large-scale Mixture-of-Experts model from DeepSeek with 1.6T total parameters and 49B activated parameters, supporting a 1M-token context window. It is designed for advanced reasoning, coding, and long-horizon agent workflows, with strong performance across knowledge, math, and software engineering benchmarks.\n\nBuilt on the same architecture as DeepSeek V4 Flash, it introduces a hybrid attention system for efficient long-context processing. Reasoning efforts `high` and `xhigh` are supported; `xhigh` maps to max reasoning. It is well suited for complex workloads such as full-codebase analysis, multi-step automation, and large-scale information synthesis, where both capability and efficiency are critical.",
     modality: "text",
     contextWindow: 1_048_576,
-    maxOutputTokens: 384_000,
+    maxOutputTokens: 393_216,
     pricing: {
       inputPer1M: 0.435,
       outputPer1M: 0.87,
@@ -857,13 +877,7 @@ export const MODELS: Model[] = [
       cachedInputWritePer1M: 0,
     },
     pricingMarkup: 1.1,
-    capabilities: [
-      "tools",
-      "reasoning",
-      "promptCaching",
-      "responseSchema",
-      "streaming",
-    ],
+    capabilities: ["tools", "reasoning", "promptCaching", "responseSchema"],
     releasedAt: "2026-04-24T03:17:59.000Z",
     providers: [
       {
@@ -892,21 +906,27 @@ export const MODELS: Model[] = [
       'Gemini 2.5 Flash is Google\'s state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and scientific tasks. It includes built-in "thinking" capabilities, enabling it to provide responses with greater accuracy and nuanced context handling. \n\nAdditionally, Gemini 2.5 Flash is configurable through the "max tokens for reasoning" parameter, as described in the documentation (https://openrouter.ai/docs/use-cases/reasoning-tokens#max-tokens-for-reasoning).',
     modality: "text",
     contextWindow: 1_048_576,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 65_535,
     pricing: {
       inputPer1M: 0.3,
       outputPer1M: 2.5,
-      cachedInputReadPer1M: null,
+      cachedInputReadPer1M: 0.03,
       cachedInputWritePer1M: null,
     },
     pricingMarkup: 1,
-    capabilities: ["tools", "vision", "responseSchema", "audioOutput"],
-    releasedAt: null,
+    capabilities: [
+      "tools",
+      "vision",
+      "promptCaching",
+      "responseSchema",
+      "audioOutput",
+    ],
+    releasedAt: "2025-06-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-2.5-flash",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -939,19 +959,19 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "webSearch",
-      "pdfInput",
+      "audioInput",
     ],
-    releasedAt: null,
+    releasedAt: "2025-07-22T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-2.5-flash-lite",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -974,21 +994,27 @@ export const MODELS: Model[] = [
       "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy and nuanced context handling. Gemini 2.5 Pro achieves top-tier performance on multiple benchmarks, including first-place positioning on the LMArena leaderboard, reflecting superior human-preference alignment and complex problem-solving abilities.",
     modality: "text",
     contextWindow: 1_048_576,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 65_535,
     pricing: {
       inputPer1M: 1.25,
       outputPer1M: 10,
-      cachedInputReadPer1M: null,
+      cachedInputReadPer1M: 0.125,
       cachedInputWritePer1M: null,
     },
     pricingMarkup: 1,
-    capabilities: ["tools", "vision", "responseSchema", "audioOutput"],
-    releasedAt: null,
+    capabilities: [
+      "tools",
+      "vision",
+      "promptCaching",
+      "responseSchema",
+      "audioOutput",
+    ],
+    releasedAt: "2025-06-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-2.5-pro",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1021,19 +1047,19 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
-      "promptCaching",
-      "responseSchema",
+      "vision",
       "webSearch",
       "pdfInput",
+      "promptCaching",
+      "responseSchema",
     ],
-    releasedAt: null,
+    releasedAt: "2025-12-17T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3-flash-preview",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1066,21 +1092,21 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "webSearch",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "webSearch",
       "audioInput",
-      "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-07T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3.1-flash-lite",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1113,16 +1139,16 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "webSearch",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "webSearch",
       "audioInput",
-      "pdfInput",
       "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-03-03T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1135,7 +1161,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3.1-flash-lite-preview",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1160,14 +1186,14 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
       "audioInput",
-      "pdfInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-02-19T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1205,22 +1231,19 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "streaming",
-      "webSearch",
       "audioInput",
-      "pdfInput",
-      "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-05-19T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3.5-flash",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1253,17 +1276,14 @@ export const MODELS: Model[] = [
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "streaming",
-      "webSearch",
       "audioInput",
-      "pdfInput",
-      "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-21T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1276,7 +1296,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3.5-flash-lite",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1293,25 +1313,22 @@ export const MODELS: Model[] = [
     contextWindow: 1_048_576,
     maxOutputTokens: 65_536,
     pricing: {
-      inputPer1M: 1.5,
-      outputPer1M: 7.5,
-      cachedInputReadPer1M: 0.15,
+      inputPer1M: 0.75,
+      outputPer1M: 3.75,
+      cachedInputReadPer1M: 0.075,
       cachedInputWritePer1M: null,
     },
     pricingMarkup: 1,
     capabilities: [
       "tools",
-      "vision",
       "reasoning",
+      "vision",
+      "pdfInput",
       "promptCaching",
       "responseSchema",
-      "streaming",
-      "webSearch",
       "audioInput",
-      "pdfInput",
-      "videoInput",
     ],
-    releasedAt: null,
+    releasedAt: "2026-07-21T00:00:00.000Z",
     providers: [
       {
         id: "vertex",
@@ -1324,7 +1341,7 @@ export const MODELS: Model[] = [
       {
         id: "openrouter",
         nativeModelId: "google/gemini-3.6-flash",
-        paygMarkup: 1.1,
+        paygMarkup: 1,
         latencyP50Ms: null,
         throughputTps: null,
         sampleCount: 0,
@@ -1348,7 +1365,7 @@ export const MODELS: Model[] = [
     },
     pricingMarkup: 1,
     capabilities: ["tools", "webSearch"],
-    releasedAt: null,
+    releasedAt: "2025-11-06T00:00:00.000Z",
     providers: [
       {
         id: "openrouter",
@@ -1368,6 +1385,185 @@ export const MODELS: Model[] = [
       },
     ],
   },
+  {
+    id: "anthropic/claude-fable-5-1",
+    vendor: "anthropic",
+    name: "Claude Fable 5.1",
+    description:
+      "Anthropic's most capable widely released model. Claude Fable 5.1 extends Fable 5 with stronger long-running agentic coding, multistep research, and document, spreadsheet, and slide work, with adaptive reasoning on by default.",
+    modality: "text",
+    contextWindow: 1_000_000,
+    maxOutputTokens: 128_000,
+    pricing: {
+      inputPer1M: 10,
+      outputPer1M: 50,
+      cachedInputReadPer1M: 0.25,
+      cachedInputWritePer1M: 12.5,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema",
+    ],
+    releasedAt: "2026-09-01T00:00:00.000Z",
+    providers: [
+      {
+        id: "vertex",
+        nativeModelId: "anthropic/claude-fable-5-1",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "openrouter",
+        nativeModelId: "anthropic/claude-fable-5-1",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "openai/gpt-6-astra",
+    vendor: "openai",
+    name: "GPT-6 Astra",
+    description:
+      "OpenAI's most capable model, built for the hardest end-to-end work: complex reasoning, agentic coding, computer use, research, and document creation. Reasoning effort is configurable from low to max.",
+    modality: "multimodal",
+    contextWindow: 1_050_000,
+    maxOutputTokens: 128_000,
+    pricing: {
+      inputPer1M: 11,
+      outputPer1M: 55,
+      cachedInputReadPer1M: 1.1,
+      cachedInputWritePer1M: 13.75,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "promptCaching",
+      "streaming",
+    ],
+    releasedAt: "2026-09-04T00:00:00.000Z",
+    providers: [
+      {
+        id: "openrouter",
+        nativeModelId: "openai/gpt-6-astra",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "google/gemini-3-8-flash",
+    vendor: "google",
+    name: "Gemini 3.8 Flash",
+    description:
+      "Google's most intelligent Flash model, with significant gains over 3.7 Flash across software engineering, agentic tasks, and multi-step reasoning. Three thinking levels, Search grounding, and native audio, image, video, and PDF input.",
+    modality: "text",
+    contextWindow: 1_048_576,
+    maxOutputTokens: 65_536,
+    pricing: {
+      inputPer1M: 0.75,
+      outputPer1M: 3.75,
+      cachedInputReadPer1M: 0.075,
+      cachedInputWritePer1M: null,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema",
+      "audioInput",
+    ],
+    releasedAt: "2026-09-02T00:00:00.000Z",
+    providers: [
+      {
+        id: "vertex",
+        nativeModelId: "google/gemini-3.8-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "openrouter",
+        nativeModelId: "google/gemini-3.8-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+  {
+    id: "deepseek/deepseek-v4-1-flash",
+    vendor: "deepseek",
+    name: "DeepSeek V4.1 Flash",
+    description:
+      "Sparse mixture-of-experts model on DeepSeek's first causal encoder-decoder architecture, with 8B to 16B active parameters from a 552B backbone. Built for coding, terminal and computer-use agents, and long-horizon tasks, with native image understanding.",
+    modality: "multimodal",
+    contextWindow: 1_048_576,
+    maxOutputTokens: 384_000,
+    pricing: {
+      inputPer1M: 0.165,
+      outputPer1M: 0.66,
+      cachedInputReadPer1M: 0.0033,
+      cachedInputWritePer1M: null,
+    },
+    pricingMarkup: 1,
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "promptCaching",
+      "responseSchema",
+    ],
+    releasedAt: "2026-09-10T06:21:25.000Z",
+    providers: [
+      {
+        id: "openrouter",
+        nativeModelId: "deepseek/deepseek-v4.1-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+      {
+        id: "alibaba",
+        nativeModelId: "deepseek-v4.1-flash",
+        paygMarkup: 1,
+        latencyP50Ms: null,
+        throughputTps: null,
+        sampleCount: 0,
+      },
+    ],
+  },
+];
+
+const CURATED_IDS = new Set(CURATED_ROWS.map((m) => m.id));
+
+/**
+ * The full routable catalog: curated rows first, then every other row of
+ * the gateway's public `GET /v1/models` (see models-catalog.ts, generated
+ * 2026-09-14, 416 ids in total).
+ */
+export const MODELS: Model[] = [
+  ...CURATED_ROWS,
+  ...CATALOG_ROWS.filter((m) => !CURATED_IDS.has(m.id)),
 ];
 
 /* ─── Static derivations ─────────────────────────────────────────────────── */
@@ -1388,7 +1584,7 @@ export const TOTAL_PROVIDERS = (() => {
 })();
 
 export const MODALITY_COUNTS: Record<Modality, number> = (() => {
-  const counts: Record<Modality, number> = { text: 0 };
+  const counts: Record<Modality, number> = { text: 0, multimodal: 0 };
   for (const m of MODELS) {
     counts[m.modality]++;
   }
@@ -1398,7 +1594,11 @@ export const MODALITY_COUNTS: Record<Modality, number> = (() => {
 /** Flat (handle, label, vendor) list — exported for the PAYG Manual setup
  *  model picker so it stays in sync with the catalog. The canonical id IS
  *  the handle. */
-export type ModelOption = { handle: string; label: string; vendor: Vendor };
+export type ModelOption = {
+  handle: string;
+  label: string;
+  vendor: VendorSlug;
+};
 
 export const MODEL_OPTIONS: ModelOption[] = MODELS.map((m) => ({
   handle: m.id,

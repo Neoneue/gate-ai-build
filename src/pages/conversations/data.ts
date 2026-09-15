@@ -5,7 +5,7 @@
  *  used to be a hand-typed array inside `Conversations.tsx` listing ten models,
  *  six of which the gateway does not serve. It is derived now, and living out
  *  here means the catalog-coverage test can read it without importing a page. */
-import type { Vendor } from "@/components/icons/vendor-meta";
+import type { VendorSlug } from "@/components/icons/vendor-meta";
 import { getConversationView } from "@/data/conversationDetail";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { MODEL_OPTIONS } from "@/data/models";
@@ -19,7 +19,7 @@ import { REQUEST_ROWS_ALL } from "@/data/requests";
 export const MODEL_FILTER_OPTIONS: {
   value: string;
   label: string;
-  vendor: Vendor;
+  vendor: VendorSlug;
 }[] = (() => {
   const used = new Set(
     CONVERSATION_ROWS.flatMap(

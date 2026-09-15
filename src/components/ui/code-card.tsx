@@ -102,9 +102,7 @@ export function CodeCard({
       className={cn(
         // flat default is the card tier: an explicit 1px border carries the
         // edge and `shadow-xs` adds the lift, same recipe as Card (design.md
-        // §5.0 — the elevation scale is Tailwind's steps, nothing else). The
-        // legacy `--shadow-border` ring it used to carry bundled both jobs
-        // into one token; the border is what replaces the ring layer.
+        // §5.0 — the elevation scale is Tailwind's steps, nothing else).
         // `raised` promotes to the menu/popup tier, `shadow-md`.
         "flex flex-col overflow-hidden rounded-md border border-border bg-card shadow-xs",
         elevation === "raised" && "shadow-md",

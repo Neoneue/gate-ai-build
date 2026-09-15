@@ -23,9 +23,19 @@ const badgeVariants = cva(
   //   5. **Variants encode tone.** `success` / `warning` / `destructive` /
   //      `info` / `neutral` / `outline` / `ghost` / `secondary` / `link` /
   //      `default`.
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-xs border border-transparent px-2 font-medium font-mono text-xs uppercase tabular-nums transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-xs border border-transparent px-2 font-medium font-mono text-xs uppercase tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0",
   {
     variants: {
+      /* Size. `default` is the 20px pill at 12px type every status badge
+       * uses. `xs` (added 2026-09-14) is a 16px pill at 10px type through the
+       * fenced `--text-2xs` step (design.md §3 "Micro tier"); its one
+       * consumer is the positioning tagline on the Models page's Featured
+       * cards, where a 12px mono badge outweighed the model name beside it.
+       * A second consumer edits the micro-tier paragraph in design.md. */
+      size: {
+        default: "",
+        xs: "h-4 text-2xs",
+      },
       variant: {
         default: "bg-primary text-primary-foreground",
         secondary: "bg-secondary text-secondary-foreground",
@@ -46,6 +56,7 @@ const badgeVariants = cva(
       },
     },
     defaultVariants: {
+      size: "default",
       variant: "default",
     },
   }
@@ -54,6 +65,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant = "default",
+  size = "default",
   render,
   ...props
 }: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
@@ -61,13 +73,14 @@ function Badge({
     defaultTagName: "span",
     props: mergeProps<"span">(
       {
-        className: cn(badgeVariants({ variant }), className),
+        className: cn(badgeVariants({ size, variant }), className),
       },
       props
     ),
     render,
     state: {
       slot: "badge",
+      size,
       variant,
     },
   });
