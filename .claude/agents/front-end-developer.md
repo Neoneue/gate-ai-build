@@ -152,7 +152,6 @@ one primary skill plus stack helpers.** Do not scan the folder.
 | Adding or fixing a shadcn-style primitive | `agents/front-end-developer/skills/shadcn/SKILL.md`, then port to Base UI per the existing files in `src/components/ui/` |
 | WCAG + visual review on specific files | `agents/front-end-developer/skills/rams/SKILL.md` |
 | Brand voice and assets | `agents/front-end-developer/skills/brand/SKILL.md` |
-| Extract or seed a `design.md`, swap a theme preset | `design-extractor`, `design-seed`, `theme-swap`. Not for this repo; `design.md` exists and is settled. Use only if Chad asks. |
 
 **While implementing, always:** `web-design-guidelines` from the first line
 (a11y, semantics, focus, forms, touch targets), `react-best-practices` for
