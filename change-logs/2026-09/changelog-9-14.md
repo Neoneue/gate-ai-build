@@ -337,3 +337,16 @@ the invisible dot from catching clicks. Dropped from the recipe: the
 diagonal keyframe, blur, bounce curve, its `_root.css` tokens and 500 /
 180ms literals. Position classes and the trigger `aria-label` are
 unchanged (`src/components/ui/notifications-menu.tsx`).
+
+### Motion: segmented indicators and popup close timing `1e6ef48`
+
+From the `transitions-polish` review (first run 2026-09-14; the rest of its
+findings are parked). Before: `Segmented` and `SegmentedPill` slid their
+indicator over `duration-[220ms]` on a bespoke
+`cubic-bezier(0.77,0,0.175,1)` while `Tabs` and design.md's Motion table
+say 200ms `ease-out`. After: both use `duration-200 ease-out`
+(`segmented.tsx`, `segmented-pill.tsx`). Before: the `Select` popup and the
+hand-rolled row-actions menu on Team closed at the same 150ms they open
+with, while Menu, Popover and Tooltip close at 100ms. After: both carry
+`data-closed:duration-100`, so every floating surface on the site opens at
+150ms and closes at 100ms (`select.tsx`, `pages/Team.tsx`).

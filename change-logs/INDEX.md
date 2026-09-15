@@ -19,6 +19,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Badge: transition names real properties
 - Stale `--shadow-border` comments rewritten
 - Notifications: unread dot animates in and out
+- Motion: segmented indicators and popup close timing
 - Models: Featured row, four curated shelves, catalog header
 - Models catalog: all 416 live ids, sourced release dates, four new rows
 - VendorAvatar: initials tile for vendors without a brand mark
