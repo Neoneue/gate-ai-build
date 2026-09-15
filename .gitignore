@@ -26,7 +26,7 @@ dist-ssr
 # Local Claude Code state
 .claude/settings.local.json
 # Impeccable native engine, fetched per machine by `npx impeccable update --project`
-.claude/front-end-developer/skills/impeccable/scripts/bin/
+agents/front-end-developer/skills/impeccable/scripts/bin/
 .impeccable/
 .claude/worktrees/
 .tmp/

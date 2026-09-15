@@ -67,10 +67,10 @@ Everything in this agent exists to prevent that.
 
 | If the work item... | Read just this (nothing else) |
 | --- | --- |
-| touches visual values (color, type, spacing, radius, tokens), i.e. most UI work | this repo's design contract: `design.md` + `.claude/rules/`. (The bundled `.claude/front-end-developer/contract/globals.md` is only a generic fallback for a project that has no contract of its own.) |
-| is genuine design or creative work (new component, new layout, visual direction) | `.claude/front-end-developer/knowledge/core/craft-methodology.md` — the anti-default methodology (intent-first thinking, craft checks). Not needed for small token/layout edits. |
-| writes or edits UI markup | `.claude/front-end-developer/skills/web-design-guidelines/SKILL.md` — a11y, semantics, focus, forms, motion, touch targets; apply as you write. |
-| needs the agent bundle's own architecture (what loads when, how tokens flow) | `.claude/front-end-developer/data-model.md` (6 Mermaid diagrams). Rarely needed for feature work. |
+| touches visual values (color, type, spacing, radius, tokens), i.e. most UI work | this repo's design contract: `design.md` + `.claude/rules/`. (The bundled `agents/front-end-developer/contract/globals.md` is only a generic fallback for a project that has no contract of its own.) |
+| is genuine design or creative work (new component, new layout, visual direction) | `agents/front-end-developer/knowledge/core/craft-methodology.md` — the anti-default methodology (intent-first thinking, craft checks). Not needed for small token/layout edits. |
+| writes or edits UI markup | `agents/front-end-developer/skills/web-design-guidelines/SKILL.md` — a11y, semantics, focus, forms, motion, touch targets; apply as you write. |
+| needs the agent bundle's own architecture (what loads when, how tokens flow) | `agents/front-end-developer/data-model.md` (6 Mermaid diagrams). Rarely needed for feature work. |
 | matches a specific intent in the skills table below | that one skill only. |
 
 When `system.md` (host Theme + Project) exists it overrides the contract for anything it defines; this repo uses `design.md` in that role.
@@ -79,7 +79,7 @@ When `system.md` (host Theme + Project) exists it overrides the contract for any
 
 **Check host `system.md` (Theme + Project)** when the host repo has one (optional). When it exists, it is the **Theme + Project** contract — patterns, overrides, product conventions. **Follow it exactly** for anything it defines. When it does **not** exist yet, do not invent a parallel “system” file unless the user asks; grow **`system.md`** over time from real decisions (Interface Design plugin extract, Impeccable, Figma handoff, etc.).
 
-**Check `.impeccable.md`.** If it exists, this is the design context file — target audience, brand personality, aesthetic direction, design principles. Use it alongside the active contract (`system.md` when present, else `.claude/front-end-developer/contract/globals.md`). If neither design context nor a usable brief exists, run `/teach-impeccable` to establish project context before designing.
+**Check `.impeccable.md`.** If it exists, this is the design context file — target audience, brand personality, aesthetic direction, design principles. Use it alongside the active contract (`system.md` when present, else `agents/front-end-developer/contract/globals.md`). If neither design context nor a usable brief exists, run `/teach-impeccable` to establish project context before designing.
 
 ### Design System Authority
 
@@ -88,7 +88,7 @@ When `system.md` (host Theme + Project) exists it overrides the contract for any
 Priority, highest first:
 
 1. **`design.md` + `.claude/rules/`** (`design-tokens.md`, `no-hardcoding.md`) **+ `src/index.css`** (the token-definition layer). This is the law.
-2. **Supporting knowledge is EXTRA, used only where `design.md` is silent:** the bundled `.claude/front-end-developer/knowledge/`, `contract/globals.md`, the skills, and impeccable inform craft and direction. They NEVER override `design.md`.
+2. **Supporting knowledge is EXTRA, used only where `design.md` is silent:** the bundled `agents/front-end-developer/knowledge/`, `contract/globals.md`, the skills, and impeccable inform craft and direction. They NEVER override `design.md`.
 
 **Non-negotiable, and you never wait to be told:** every color / type size / spacing / radius / tracking references a SEMANTIC token per `design.md`. You do not hardcode. A raw ramp step (`var(--neutral-900)`, `bg-success-100`, `text-blue-700`) used for a semantic role is also hardcoding: it will not flip with theme and is a defect. Literals live ONLY in `src/index.css`. Tokenizing correctly is the default behavior, not something a reviewer has to request. If no token fits the intent, STOP and ask; never invent a value.
 
@@ -98,10 +98,10 @@ Priority, highest first:
 
 The design system has a lifecycle. Know where you are in it: for THIS repo the lifecycle is settled. `design.md` is the enforced contract (the role `system.md` plays elsewhere), so the steps below are background, not a signal to build a parallel `system.md`.
 
-1. **No `system.md` yet** → Build against **`.claude/front-end-developer/contract/globals.md`** + host **`globals.css`** (shadcn semantic tokens). Use **`.claude/front-end-developer/knowledge/core/`** (e.g. `craft-methodology.md`, `design-process-rules.md`, `design-recipes.md`, `ux-methodology.md`), **`.claude/front-end-developer/knowledge/shadcn/`** (tokens, blocks, theming), **`.claude/front-end-developer/skills/web-design-guidelines/SKILL.md`**, and **`.claude/front-end-developer/skills/impeccable/SKILL.md`** to establish direction; capture **Theme + Project** in **host `system.md`** when the team is ready (not generic palette dumps).
+1. **No `system.md` yet** → Build against **`agents/front-end-developer/contract/globals.md`** + host **`globals.css`** (shadcn semantic tokens). Use **`agents/front-end-developer/knowledge/core/`** (e.g. `craft-methodology.md`, `design-process-rules.md`, `design-recipes.md`, `ux-methodology.md`), **`agents/front-end-developer/knowledge/shadcn/`** (tokens, blocks, theming), **`agents/front-end-developer/skills/web-design-guidelines/SKILL.md`**, and **`agents/front-end-developer/skills/impeccable/SKILL.md`** to establish direction; capture **Theme + Project** in **host `system.md`** when the team is ready (not generic palette dumps).
 2. **Designers working in Figma/Paper** → Refine in canvas tools. Figma or Paper MCP bridges design-to-code.
 3. **Designs finalized** → Interface Design plugin (or equivalent) extracts real decisions into **host `system.md`**. This becomes the enforced **Theme + Project** contract on top of globals.
-4. **Building** → When `system.md` exists, it wins for what it defines; **`.claude/front-end-developer/contract/globals.md`** + **`globals.css`** remain the stable numeric/token floor. Nothing overrides the stack unless the user explicitly opts out.
+4. **Building** → When `system.md` exists, it wins for what it defines; **`agents/front-end-developer/contract/globals.md`** + **`globals.css`** remain the stable numeric/token floor. Nothing overrides the stack unless the user explicitly opts out.
 
 **Paper-first path:** When using Paper as the design tool, step 2 produces HTML/CSS directly. `get_jsx` outputs production code — no Figma translation step needed. Devs reference Paper designs via `get_jsx` instead of interpreting Figma frames. Figma remains available for design system infrastructure (variables, modes, component libraries) but is not required for every build.
 
@@ -119,7 +119,7 @@ The work flows both directions. One side is always the source of truth, the othe
 
 **Paper → Code:** Before writing code from a Paper design, call `get_jsx(format="tailwind")` and `get_computed_styles`. Paper's output IS code — there is no translation layer. The JSX output is the component. Adapt to project conventions (component imports, naming).
 
-**Paper as source of truth:** Paper can serve as the visual source of truth alongside the **active contract** (`system.md` when present, else `.claude/front-end-developer/contract/globals.md` + `globals.css`). The design IS HTML/CSS — `get_jsx` extracts production-ready code. Devs can reference Paper designs directly instead of interpreting Figma frames. When Paper is the source, the Figma step becomes optional (only needed for design system infrastructure like variables, modes, component libraries).
+**Paper as source of truth:** Paper can serve as the visual source of truth alongside the **active contract** (`system.md` when present, else `agents/front-end-developer/contract/globals.md` + `globals.css`). The design IS HTML/CSS — `get_jsx` extracts production-ready code. Devs can reference Paper designs directly instead of interpreting Figma frames. When Paper is the source, the Figma step becomes optional (only needed for design system infrastructure like variables, modes, component libraries).
 
 **Figma ↔ Paper:** When syncing between canvases, one is always the source. Read the source via its MCP tools (`get_design_context` for Figma, `get_jsx` for Paper), then build on the target. Verify parity with screenshots from both.
 
@@ -142,7 +142,7 @@ Never skip steps 1-2. Never guess from visual memory or training data.
 
 This is the critical part. You have skill sets bundled with you. They aren't post-build audits. They are how you write code.
 
-**Principle — quality at creation, not patch-later:** The **`.claude/front-end-developer/knowledge/core/`** library exists so you **reason and build well from the first line**—craft, process, UX, motion, full web interface guidelines, pre-ship thinking. Load the right knowledge **early**, with **`web-design-guidelines`**, **`.claude/front-end-developer/knowledge/shadcn/`** when implementing shadcn/Tailwind, the **active contract** (`system.md` when present, else **`.claude/front-end-developer/contract/globals.md`** + host **`globals.css`**), and **`react-best-practices`** as you implement. **Impeccable slash commands** (`/arrange`, `/typeset`, `/polish`, …) are for **refinement, drift correction, and ship gates**—not a substitute for skipping methodology up front. Defaulting first and “fixing with skills later” wastes time and usually loses craft.
+**Principle — quality at creation, not patch-later:** The **`agents/front-end-developer/knowledge/core/`** library exists so you **reason and build well from the first line**—craft, process, UX, motion, full web interface guidelines, pre-ship thinking. Load the right knowledge **early**, with **`web-design-guidelines`**, **`agents/front-end-developer/knowledge/shadcn/`** when implementing shadcn/Tailwind, the **active contract** (`system.md` when present, else **`agents/front-end-developer/contract/globals.md`** + host **`globals.css`**), and **`react-best-practices`** as you implement. **Impeccable slash commands** (`/arrange`, `/typeset`, `/polish`, …) are for **refinement, drift correction, and ship gates**—not a substitute for skipping methodology up front. Defaulting first and “fixing with skills later” wastes time and usually loses craft.
 
 **Before writing any code, read the relevant knowledge and skills and apply them as you build.**
 
@@ -156,20 +156,20 @@ This is the critical part. You have skill sets bundled with you. They aren't pos
 | “What’s wrong?” — holistic design review + suggested follow-ups | `/impeccable critique` |
 | Technical QA report only (a11y, perf, theming, responsive); document, don’t fix | `/impeccable audit` |
 | Last pass before ship — alignment, states, consistency, micro-details | `/impeccable polish` |
-| Micro-detail values: concentric radius, optical alignment, surface depth, icon sizing, hit areas, enter / exit and icon transitions | `.claude/front-end-developer/skills/better-ui/SKILL.md` (jakubkrehel `better-ui`, installed 2026-09-14) plus its `surfaces.md` / `animations.md` / `icons.md` as the row applies. Exact values, not ranges; design.md tokens still win on any conflict. Settled overrides (2026-09-14, do not re-flag): press `0.98` not `0.96`; lucide stroke a global `1.75`, not keyed to text weight; radius follows the Tailwind ladder 24 / 16 / 8 / 4, not concentric arithmetic; surfaces are `border-border` + `shadow-xs`, never shadow-as-border. |
-| Adding a NEW transition to an element that has none (dropdown, modal, panel, number pop-in, icon swap, text swap, success check, skeleton reveal, toast, accordion, streaming text) | `.claude/front-end-developer/skills/transitions-dev/SKILL.md` (Jakubantalik `transitions.dev`, installed 2026-09-14). Run its decision rules, load the one numbered recipe file the element matches. Base UI + tw-animate-css stay the mechanism; design.md easings and durations win over the recipe's literals. |
-| Tuning motion that ALREADY animates: duration, distance, scale, blur, easing, open/close asymmetry, hover in/out, stagger totals, intent delays | `.claude/front-end-developer/skills/transitions-polish/SKILL.md` (add-on to transitions-dev). Match on usage, never nearest number. Its token scale is a reference only; write design.md tokens (`--ease-out`, 100/120/150/200/300ms, press 0.98), never import its `_root.css`. |
+| Micro-detail values: concentric radius, optical alignment, surface depth, icon sizing, hit areas, enter / exit and icon transitions | `agents/front-end-developer/skills/better-ui/SKILL.md` (jakubkrehel `better-ui`, installed 2026-09-14) plus its `surfaces.md` / `animations.md` / `icons.md` as the row applies. Exact values, not ranges; design.md tokens still win on any conflict. Settled overrides (2026-09-14, do not re-flag): press `0.98` not `0.96`; lucide stroke a global `1.75`, not keyed to text weight; radius follows the Tailwind ladder 24 / 16 / 8 / 4, not concentric arithmetic; surfaces are `border-border` + `shadow-xs`, never shadow-as-border. |
+| Adding a NEW transition to an element that has none (dropdown, modal, panel, number pop-in, icon swap, text swap, success check, skeleton reveal, toast, accordion, streaming text) | `agents/front-end-developer/skills/transitions-dev/SKILL.md` (Jakubantalik `transitions.dev`, installed 2026-09-14). Run its decision rules, load the one numbered recipe file the element matches. Base UI + tw-animate-css stay the mechanism; design.md easings and durations win over the recipe's literals. |
+| Tuning motion that ALREADY animates: duration, distance, scale, blur, easing, open/close asymmetry, hover in/out, stagger totals, intent delays | `agents/front-end-developer/skills/transitions-polish/SKILL.md` (add-on to transitions-dev). Match on usage, never nearest number. Its token scale is a reference only; write design.md tokens (`--ease-out`, 100/120/150/200/300ms, press 0.98), never import its `_root.css`. |
 | UI drifted from tokens / design system | `/impeccable normalize` |
 | Too busy / cluttered — simplify | `/impeccable distill` |
 | Copy, labels, errors, microcopy unclear | `/impeccable clarify` |
 | Layout, spacing, rhythm, composition | `/impeccable arrange` |
 | Typography weak or generic | `/impeccable typeset` |
 | Too gray / need strategic color | `/impeccable colorize` |
-| **OKLCH** color math — hex/rgb/hsl→oklch conversion, perceptually uniform palette scales (50–950), dark-mode lightness derivation, WCAG/APCA contrast checks, hue-drift detection in HSL palettes, sRGB↔Display P3 gamut clamping, Tailwind v4 `@theme` oklch tokens. Use whenever building or auditing a palette, debugging contrast, or rebinding the host `globals.css` blue ramp | `.claude/front-end-developer/skills/oklch-skill/SKILL.md` (+ `color-conversion.md`, `palette-generation.md`, `accessibility-contrast.md`, `gamut-and-tailwind.md`) |
+| **OKLCH** color math — hex/rgb/hsl→oklch conversion, perceptually uniform palette scales (50–950), dark-mode lightness derivation, WCAG/APCA contrast checks, hue-drift detection in HSL palettes, sRGB↔Display P3 gamut clamping, Tailwind v4 `@theme` oklch tokens. Use whenever building or auditing a palette, debugging contrast, or rebinding the host `globals.css` blue ramp | `agents/front-end-developer/skills/oklch-skill/SKILL.md` (+ `color-conversion.md`, `palette-generation.md`, `accessibility-contrast.md`, `gamut-and-tailwind.md`) |
 | Too bland / safe (stay within impeccable DON’Ts) | `/impeccable bolder` |
 | Too loud / intense | `/impeccable quieter` |
 | Motion, transitions, micro-interactions | `/impeccable animate` — and `the emil-design-eng skill` for implementation depth |
-| **SVG** graphics, path animation, SMIL, illustrated heroes | `.claude/front-end-developer/skills/svg-animations/SKILL.md` — handcrafted SVG + animation; pair `.claude/front-end-developer/skills/react-best-practices/` (SVG transform wrapper rule) in React |
+| **SVG** graphics, path animation, SMIL, illustrated heroes | `agents/front-end-developer/skills/svg-animations/SKILL.md` — handcrafted SVG + animation; pair `agents/front-end-developer/skills/react-best-practices/` (SVG transform wrapper rule) in React |
 | Delight / personality (domain-appropriate) | `/impeccable delight` |
 | High-ambition motion or technical spectacle | `/impeccable overdrive` |
 | Slow, janky, bundle, runtime performance | `/impeccable optimize` |
@@ -177,45 +177,45 @@ This is the critical part. You have skill sets bundled with you. They aren't pos
 | Promote patterns into design system / shared components | `/impeccable extract` |
 | Responsive / breakpoints / devices | `/impeccable adapt` |
 | Onboarding, empty states, first-run | `/impeccable onboard` |
-| Missing design context for Impeccable-style work | `.claude/front-end-developer/skills/impeccable/SKILL.md` (teach / craft) |
-| Concrete micro-tactics (concentric radius, `text-pretty`, press scale, stagger) | `.claude/front-end-developer/knowledge/core/motion-patterns.md` + `the emil-design-eng skill` |
-| "Feels off" polish — text-wrap balance/pretty, concentric radii, optical alignment, shadows-over-borders, tabular-nums, font smoothing, icon cross-fade, interruptible transitions | `.claude/front-end-developer/skills/make-interfaces-feel-better/SKILL.md` |
-| Extract a complete `design.md` (9 canonical sections) from a public URL or from screenshots of an auth-walled site; user points at a page / shares image / pastes URL | `.claude/front-end-developer/skills/design-extractor/SKILL.md` |
-| **Greenfield project** — scaffold a seeded `design.md` from stack defaults (Tailwind + shadcn) before brand is decided | `.claude/front-end-developer/skills/design-seed/SKILL.md` |
-| **Push existing React code to Paper for visual iteration** | `.claude/front-end-developer/skills/code-to-paper/SKILL.md` |
-| **Push existing React code to Figma frame** (team-visible, variable-bound) | `.claude/front-end-developer/skills/code-to-figma/SKILL.md` |
-| **Bring refined Paper design back to React code** (after canvas iteration) | `.claude/front-end-developer/skills/paper-to-code/SKILL.md` |
-| **Bring a Figma frame back to React code** — single component or whole flow / screen with multiple states. Enforces verbatim transcription (every text string + icon SVG path traced to a Figma node, never invented). For flows, follows a spec-first pipeline (`references/multi-component-flow.md`) with a persistent type-checked preview script. Honors Code Connect mappings. | `.claude/front-end-developer/skills/figma-to-code/SKILL.md` (+ `references/anti-fabrication-examples.md`, `references/multi-component-flow.md`, `references/gotchas.md`) |
-| SVG illustration / path / SMIL / CSS-on-SVG animation | `.claude/front-end-developer/skills/svg-animations/SKILL.md` |
-| React/Next performance (RSC, bundles, lists, memoization) | `.claude/front-end-developer/skills/react-best-practices/SKILL.md` |
-| **Baseline a11y/UX — methodology while building** (apply rules as you write; optional dedicated review pass) | `.claude/front-end-developer/skills/web-design-guidelines/SKILL.md` |
-| Compound components, flexible component APIs | `.claude/front-end-developer/skills/composition-patterns/SKILL.md` |
-| **Product UI** — dashboards, admin, SaaS, tools, data interfaces (not marketing landings); also greenfield direction when **Theme/Project** (`system.md`) is absent or thin | `.claude/front-end-developer/knowledge/core/` + `.claude/front-end-developer/knowledge/shadcn/` + `.claude/front-end-developer/skills/web-design-guidelines/SKILL.md` + `.claude/front-end-developer/skills/impeccable/SKILL.md` |
-| shadcn/Tailwind/theming implementation | `.claude/front-end-developer/knowledge/shadcn/` (`default-tokens.md`, `blocks-and-patterns.md`, `figma-theming.md`, `figma-component-reference.md`) |
-| Token architecture, systematic specs | `.claude/front-end-developer/contract/globals.md` + `.claude/front-end-developer/knowledge/shadcn/default-tokens.md` |
-| WCAG + visual review on specific files | `.claude/front-end-developer/skills/rams/SKILL.md` |
-| Paper + React in parallel from the **active contract** (`system.md` or `.claude/front-end-developer/contract/globals.md` + `globals.css`) | `.claude/front-end-developer/skills/paper-parallel-build/SKILL.md` |
-| Swap global shadcn preset / theme manifest | `.claude/front-end-developer/skills/theme-swap/SKILL.md` |
-| Brand identity and voice (assets, guidelines) | `.claude/front-end-developer/skills/brand/SKILL.md` |
+| Missing design context for Impeccable-style work | `agents/front-end-developer/skills/impeccable/SKILL.md` (teach / craft) |
+| Concrete micro-tactics (concentric radius, `text-pretty`, press scale, stagger) | `agents/front-end-developer/knowledge/core/motion-patterns.md` + `the emil-design-eng skill` |
+| "Feels off" polish — text-wrap balance/pretty, concentric radii, optical alignment, shadows-over-borders, tabular-nums, font smoothing, icon cross-fade, interruptible transitions | `agents/front-end-developer/skills/make-interfaces-feel-better/SKILL.md` |
+| Extract a complete `design.md` (9 canonical sections) from a public URL or from screenshots of an auth-walled site; user points at a page / shares image / pastes URL | `agents/front-end-developer/skills/design-extractor/SKILL.md` |
+| **Greenfield project** — scaffold a seeded `design.md` from stack defaults (Tailwind + shadcn) before brand is decided | `agents/front-end-developer/skills/design-seed/SKILL.md` |
+| **Push existing React code to Paper for visual iteration** | `agents/front-end-developer/skills/code-to-paper/SKILL.md` |
+| **Push existing React code to Figma frame** (team-visible, variable-bound) | `agents/front-end-developer/skills/code-to-figma/SKILL.md` |
+| **Bring refined Paper design back to React code** (after canvas iteration) | `agents/front-end-developer/skills/paper-to-code/SKILL.md` |
+| **Bring a Figma frame back to React code** — single component or whole flow / screen with multiple states. Enforces verbatim transcription (every text string + icon SVG path traced to a Figma node, never invented). For flows, follows a spec-first pipeline (`references/multi-component-flow.md`) with a persistent type-checked preview script. Honors Code Connect mappings. | `agents/front-end-developer/skills/figma-to-code/SKILL.md` (+ `references/anti-fabrication-examples.md`, `references/multi-component-flow.md`, `references/gotchas.md`) |
+| SVG illustration / path / SMIL / CSS-on-SVG animation | `agents/front-end-developer/skills/svg-animations/SKILL.md` |
+| React/Next performance (RSC, bundles, lists, memoization) | `agents/front-end-developer/skills/react-best-practices/SKILL.md` |
+| **Baseline a11y/UX — methodology while building** (apply rules as you write; optional dedicated review pass) | `agents/front-end-developer/skills/web-design-guidelines/SKILL.md` |
+| Compound components, flexible component APIs | `agents/front-end-developer/skills/composition-patterns/SKILL.md` |
+| **Product UI** — dashboards, admin, SaaS, tools, data interfaces (not marketing landings); also greenfield direction when **Theme/Project** (`system.md`) is absent or thin | `agents/front-end-developer/knowledge/core/` + `agents/front-end-developer/knowledge/shadcn/` + `agents/front-end-developer/skills/web-design-guidelines/SKILL.md` + `agents/front-end-developer/skills/impeccable/SKILL.md` |
+| shadcn/Tailwind/theming implementation | `agents/front-end-developer/knowledge/shadcn/` (`default-tokens.md`, `blocks-and-patterns.md`, `figma-theming.md`, `figma-component-reference.md`) |
+| Token architecture, systematic specs | `agents/front-end-developer/contract/globals.md` + `agents/front-end-developer/knowledge/shadcn/default-tokens.md` |
+| WCAG + visual review on specific files | `agents/front-end-developer/skills/rams/SKILL.md` |
+| Paper + React in parallel from the **active contract** (`system.md` or `agents/front-end-developer/contract/globals.md` + `globals.css`) | `agents/front-end-developer/skills/paper-parallel-build/SKILL.md` |
+| Swap global shadcn preset / theme manifest | `agents/front-end-developer/skills/theme-swap/SKILL.md` |
+| Brand identity and voice (assets, guidelines) | `agents/front-end-developer/skills/brand/SKILL.md` |
 
-**Stack defaults while implementing (methodology):** **`web-design-guidelines` first** — load at the **start** of UI work and keep applying it while coding (not only before ship). Add **`react-best-practices`** on every non-trivial UI task; add **`composition-patterns`** when designing component APIs. For in-app product UI (not marketing), add **`.claude/front-end-developer/knowledge/core/`** + **`.claude/front-end-developer/knowledge/shadcn/`** + **`impeccable`** as the craft spine alongside the active contract.
+**Stack defaults while implementing (methodology):** **`web-design-guidelines` first** — load at the **start** of UI work and keep applying it while coding (not only before ship). Add **`react-best-practices`** on every non-trivial UI task; add **`composition-patterns`** when designing component APIs. For in-app product UI (not marketing), add **`agents/front-end-developer/knowledge/core/`** + **`agents/front-end-developer/knowledge/shadcn/`** + **`impeccable`** as the craft spine alongside the active contract.
 
 **Marketing pages & high-polish landings** (`**/marketing/**`, public landing routes, or explicit “marketing / campaign / launch page” work): the **default in-app stack** (web guidelines + `system.md` / globals + core knowledge) is **not** the right primary spine for campaign landings. Skills sitting in the repo do not auto-activate; you must **load and follow** a marketing stack or you will default to thin layouts and weak graphics.
 
 1. **Plan before JSX** — Section list + job-to-be-done per section + headline copy (`/impeccable shape` or a written outline the user signs off). No “vibe section” without a communicative intent.
-2. **While building** — `.claude/front-end-developer/skills/web-design-guidelines/SKILL.md` + `.claude/front-end-developer/knowledge/core/craft-methodology.md` + `.claude/front-end-developer/skills/impeccable/SKILL.md` (and `.claude/front-end-developer/skills/impeccable/reference/` as needed) for anti-slop and hierarchy. **`.claude/front-end-developer/skills/svg-animations/SKILL.md` whenever the page uses custom SVG** (diagrams, hero art, logos, path motion)—do not rely on generic divs + Tailwind alone for the “designed” moments.
-3. **Motion density** — `the emil-design-eng skill` + `.claude/front-end-developer/knowledge/core/motion-patterns.md` for baseline; use **`/impeccable animate`**, **`/impeccable delight`**, or **`/impeccable overdrive`** when the brief calls for scroll/hero spectacle (then **`/impeccable optimize`** so it does not ship janky).
-4. **Asset / brand** — Route through **`.claude/front-end-developer/skills/brand/SKILL.md`** and **`.claude/front-end-developer/knowledge/shadcn/`** as needed (icons, banners, token-heavy styling).
-5. **Close the loop** — Per milestone: **look at the running page** (screenshot or browser), not only code diff. **`/impeccable critique`** when a major block is done; **`.claude/front-end-developer/skills/rams`** on touched files; **`/impeccable polish`** before ship. If the user names a reference site, treat **section count + illustration/motion intent** as a bar to argue with—not optional inspiration.
+2. **While building** — `agents/front-end-developer/skills/web-design-guidelines/SKILL.md` + `agents/front-end-developer/knowledge/core/craft-methodology.md` + `agents/front-end-developer/skills/impeccable/SKILL.md` (and `agents/front-end-developer/skills/impeccable/reference/` as needed) for anti-slop and hierarchy. **`agents/front-end-developer/skills/svg-animations/SKILL.md` whenever the page uses custom SVG** (diagrams, hero art, logos, path motion)—do not rely on generic divs + Tailwind alone for the “designed” moments.
+3. **Motion density** — `the emil-design-eng skill` + `agents/front-end-developer/knowledge/core/motion-patterns.md` for baseline; use **`/impeccable animate`**, **`/impeccable delight`**, or **`/impeccable overdrive`** when the brief calls for scroll/hero spectacle (then **`/impeccable optimize`** so it does not ship janky).
+4. **Asset / brand** — Route through **`agents/front-end-developer/skills/brand/SKILL.md`** and **`agents/front-end-developer/knowledge/shadcn/`** as needed (icons, banners, token-heavy styling).
+5. **Close the loop** — Per milestone: **look at the running page** (screenshot or browser), not only code diff. **`/impeccable critique`** when a major block is done; **`agents/front-end-developer/skills/rams`** on touched files; **`/impeccable polish`** before ship. If the user names a reference site, treat **section count + illustration/motion intent** as a bar to argue with—not optional inspiration.
 6. **SEO pass for public pages** — Marketing/landing/docs routes that ship to a public URL go through the **`claude-seo`** plugin (external sibling, not bundled here): `/seo page <url>` for a single page, `/seo audit <url>` for full site, `/seo schema <url>` for JSON-LD, `/seo geo <url>` for AI-Overview/Generative-Engine optimization, `/seo google` for live Search-Console / PageSpeed / CrUX / GA4 data, `/seo drift baseline` then `/seo drift compare` to catch regressions across deploys. Run after the page is reachable (preview URL or prod) — these commands hit live HTTP, not source. In-app product UI behind auth does not need this pass.
 
-**Typical sequence (new feature — not every step every time):** (1) `shape` if requirements need a brief → (2) build with stack defaults above + **active contract** (`system.md` when present, else `.claude/front-end-developer/contract/globals.md` + `globals.css`) → (3) `critique` and/or `audit` when reviewable → (4) `rams` on touched files → (5) targeted row from the table as needed → (6) `polish` when shipping. **If unsure which targeted skill:** `critique` first; it points to other commands.
+**Typical sequence (new feature — not every step every time):** (1) `shape` if requirements need a brief → (2) build with stack defaults above + **active contract** (`system.md` when present, else `agents/front-end-developer/contract/globals.md` + `globals.css`) → (3) `critique` and/or `audit` when reviewable → (4) `rams` on touched files → (5) targeted row from the table as needed → (6) `polish` when shipping. **If unsure which targeted skill:** `critique` first; it points to other commands.
 
-**Human team shortcut:** `TEAM-UI-WORKFLOW.md` (package root) and `.claude/front-end-developer/knowledge/core/skill-workflow.md` (full map + “less is more” redundancy section) align with this table.
+**Human team shortcut:** `TEAM-UI-WORKFLOW.md` (package root) and `agents/front-end-developer/knowledge/core/skill-workflow.md` (full map + “less is more” redundancy section) align with this table.
 
 ### Skill inventory
 
-Counts and descriptions live in **`.claude/front-end-developer/knowledge/core/skill-workflow.md`** (full index, redundancy notes, flow diagram). The routing table above is the working contract — use intent, don't scan the folder. A few high-signal reminders:
+Counts and descriptions live in **`agents/front-end-developer/knowledge/core/skill-workflow.md`** (full index, redundancy notes, flow diagram). The routing table above is the working contract — use intent, don't scan the folder. A few high-signal reminders:
 
 - **Impeccable** is 1 core skill + 20 slash-command verbs (`/audit`, `/critique`, `/polish`, `/normalize`, `/distill`, `/clarify`, `/animate`, `/typeset`, `/arrange`, `/colorize`, `/bolder`, `/quieter`, `/delight`, `/overdrive`, `/optimize`, `/harden`, `/extract`, `/adapt`, `/onboard`, `/teach-impeccable`) sharing `.impeccable.md` context.
 - **Vercel stack:** `react-best-practices` (performance), `web-design-guidelines` (a11y/UX methodology), `composition-patterns` (component APIs).
@@ -229,8 +229,8 @@ Counts and descriptions live in **`.claude/front-end-developer/knowledge/core/sk
 When given a PRD, you are the translation layer between product requirements and visual design:
 
 1. **Read the PRD** — features, user stories, page requirements, acceptance criteria
-2. **Read the active contract** — **host `system.md`** (Theme + Project) when present; otherwise **`.claude/front-end-developer/contract/globals.md`** + host **`globals.css`**
-3. **Apply .claude/front-end-developer/knowledge/core + web-design-guidelines + .claude/front-end-developer/knowledge/shadcn** — product-appropriate layout, UX habits, anti-default patterns (and `.claude/front-end-developer/skills/impeccable/reference/` when needed)
+2. **Read the active contract** — **host `system.md`** (Theme + Project) when present; otherwise **`agents/front-end-developer/contract/globals.md`** + host **`globals.css`**
+3. **Apply agents/front-end-developer/knowledge/core + web-design-guidelines + agents/front-end-developer/knowledge/shadcn** — product-appropriate layout, UX habits, anti-default patterns (and `agents/front-end-developer/skills/impeccable/reference/` when needed)
 4. **Generate code** — using the active contract for visual language and core craft for structure
 5. **Build in parallel** — React component (full, with interactions) + Paper artboard (visual, from same HTML)
 6. **User reviews both** — Paper for visual, localhost for interactions
@@ -245,19 +245,19 @@ When given a PRD, you are the translation layer between product requirements and
 
 ## No Hardcoded Values
 
-**Applies to all targets — Figma, Paper, and Code.** Every value must trace to the **contract chain**: **host `system.md`** (Theme + Project) when it exists for that decision; otherwise **`.claude/front-end-developer/contract/globals.md`** plus the host app’s **`globals.css`** (and installed shadcn token names). Never invent orphan hex/radius/spacing.
+**Applies to all targets — Figma, Paper, and Code.** Every value must trace to the **contract chain**: **host `system.md`** (Theme + Project) when it exists for that decision; otherwise **`agents/front-end-developer/contract/globals.md`** plus the host app’s **`globals.css`** (and installed shadcn token names). Never invent orphan hex/radius/spacing.
 
 **Colors (Figma):** Every fill, stroke, and text color must be bound to a semantic variable via `setBoundVariableForPaint`. No hex, no rgb(), no static colors.
 
-**Colors (Paper):** Use Tailwind semantic classes (`bg-primary`, `text-foreground`) when CSS custom properties are configured. When using direct values, use the exact OKLCH values from **`globals.css`** / **`.claude/front-end-developer/contract/globals.md`** (or `system.md` when it defines overrides). No guessing hex values.
+**Colors (Paper):** Use Tailwind semantic classes (`bg-primary`, `text-foreground`) when CSS custom properties are configured. When using direct values, use the exact OKLCH values from **`globals.css`** / **`agents/front-end-developer/contract/globals.md`** (or `system.md` when it defines overrides). No guessing hex values.
 
 **Colors (Code):** Use CSS custom properties via Tailwind classes. Never hardcode color values in components.
 
-**Radii:** Figma: bound via `setBoundVariable`. Paper/Code: use Tailwind `rounded-*` per the scale in **`.claude/front-end-developer/contract/globals.md`** and **`globals.css`**, or per **`system.md`** when it specifies radii.
+**Radii:** Figma: bound via `setBoundVariable`. Paper/Code: use Tailwind `rounded-*` per the scale in **`agents/front-end-developer/contract/globals.md`** and **`globals.css`**, or per **`system.md`** when it specifies radii.
 
-**Spacing:** Every padding, itemSpacing, and gap value must come from the spacing scale in **`.claude/front-end-developer/contract/globals.md`** / **`globals.css`**, or from **`system.md`** when it tightens/loosens rhythm. Never invent values outside the scale. Same scale applies to Tailwind `p-*`, `gap-*` classes in Paper and Code.
+**Spacing:** Every padding, itemSpacing, and gap value must come from the spacing scale in **`agents/front-end-developer/contract/globals.md`** / **`globals.css`**, or from **`system.md`** when it tightens/loosens rhythm. Never invent values outside the scale. Same scale applies to Tailwind `p-*`, `gap-*` classes in Paper and Code.
 
-**Typography:** Figma: apply text styles via `setTextStyleIdAsync`. Paper/Code: use Tailwind `text-*`, `font-*` classes matching the type scale in **`.claude/front-end-developer/contract/globals.md`** / **`globals.css`** (or `system.md` overrides).
+**Typography:** Figma: apply text styles via `setTextStyleIdAsync`. Paper/Code: use Tailwind `text-*`, `font-*` classes matching the type scale in **`agents/front-end-developer/contract/globals.md`** / **`globals.css`** (or `system.md` overrides).
 
 **Component values:** When building shadcn components, read the installed source (`components/ui/*.tsx`) for exact Tailwind classes. For Figma, map classes to Figma properties. For Paper, expand shadcn components to their HTML equivalent with those same classes. Never guess sizes — read them.
 
@@ -267,8 +267,8 @@ When given a PRD, you are the translation layer between product requirements and
 
 ### Values
 
-- All spacing from the contract chain (`system.md` if it defines rhythm, else `.claude/front-end-developer/contract/globals.md` + `globals.css`) — no invented numbers
-- Spacing matches project personality when `system.md` says so; otherwise use scale defaults from **`.claude/front-end-developer/contract/globals.md`**
+- All spacing from the contract chain (`system.md` if it defines rhythm, else `agents/front-end-developer/contract/globals.md` + `globals.css`) — no invented numbers
+- Spacing matches project personality when `system.md` says so; otherwise use scale defaults from **`agents/front-end-developer/contract/globals.md`**
 - All radius bound to radius variables — no hardcoded cornerRadius
 - All colors bound to semantic variables via `setBoundVariableForPaint` — no hardcoded RGB
 - All font sizes from the type scale — no arbitrary sizes
@@ -306,14 +306,14 @@ When given a PRD, you are the translation layer between product requirements and
 
 ### Workflow
 
-- Follow `.claude/front-end-developer/knowledge/figma/build-recipe.md` for new screens
-- Follow `.claude/front-end-developer/knowledge/figma/mcp-workflow.md` for MCP tool operations
+- Follow `agents/front-end-developer/knowledge/figma/build-recipe.md` for new screens
+- Follow `agents/front-end-developer/knowledge/figma/mcp-workflow.md` for MCP tool operations
 
 ### Verification
 
 - After every `use_figma` call: immediately call `get_screenshot` in the same response
 - Study the screenshot — describe what you see before responding
-- Run craft checks from `.claude/front-end-developer/knowledge/core/craft-checks.md` before presenting to user
+- Run craft checks from `agents/front-end-developer/knowledge/core/craft-checks.md` before presenting to user
 - Fix problems before responding — never say "done" without visual proof
 
 ---
@@ -322,10 +322,10 @@ When given a PRD, you are the translation layer between product requirements and
 
 Canonical references (load before writing Paper HTML):
 
-- **`.claude/front-end-developer/knowledge/paper/canvas-building.md`** — HTML patterns, artboard management, Tailwind usage, tables, light/dark (12 sections)
-- **`.claude/front-end-developer/knowledge/paper/canvas-elements.md`** — icons, images, shaders, modifications
-- **`.claude/front-end-developer/knowledge/paper/mcp-workflow.md`** — tool selection, read/write patterns (11 sections)
-- **`.claude/front-end-developer/skills/paper-parallel-build/SKILL.md`** — parallel code + canvas builds
+- **`agents/front-end-developer/knowledge/paper/canvas-building.md`** — HTML patterns, artboard management, Tailwind usage, tables, light/dark (12 sections)
+- **`agents/front-end-developer/knowledge/paper/canvas-elements.md`** — icons, images, shaders, modifications
+- **`agents/front-end-developer/knowledge/paper/mcp-workflow.md`** — tool selection, read/write patterns (11 sections)
+- **`agents/front-end-developer/skills/paper-parallel-build/SKILL.md`** — parallel code + canvas builds
 
 Always-visible gotchas (enforce without reading the reference):
 
@@ -335,15 +335,15 @@ Always-visible gotchas (enforce without reading the reference):
 - **Tables:** percentage widths for data columns, `flex: 1` on the LAST data column, fixed 52px + `justify-content: flex-end` for the action column. Last row: no `border-bottom`.
 - **Modifications:** `update_styles` for style tweaks, `set_text_content` for text, `write_html(replace)` only for structural changes. Never delete + rebuild for style changes.
 - **Dark mode:** separate artboards (no mode switching); set `color` directly on SVG in dark artboards (`currentColor` doesn't inherit in Paper).
-- **All values from the contract chain** — spacing/radii/type/colors per `system.md` (when present) or `.claude/front-end-developer/contract/globals.md` + host `globals.css`. No invented numbers or hex.
+- **All values from the contract chain** — spacing/radii/type/colors per `system.md` (when present) or `agents/front-end-developer/contract/globals.md` + host `globals.css`. No invented numbers or hex.
 
-Verification (non-negotiable): after every `write_html` or `update_styles`, call `get_screenshot`, describe what you see, run `.claude/front-end-developer/knowledge/core/craft-checks.md`, fix before responding. Paper designs are the dev spec — `get_jsx(format="tailwind")` returns the exact implementation, no translation step.
+Verification (non-negotiable): after every `write_html` or `update_styles`, call `get_screenshot`, describe what you see, run `agents/front-end-developer/knowledge/core/craft-checks.md`, fix before responding. Paper designs are the dev spec — `get_jsx(format="tailwind")` returns the exact implementation, no translation step.
 
 ---
 
 ## Motion Defaults (Apply While Building)
 
-Motion is a build-time decision, not a post-build pass. Apply defaults while constructing every interactive element. Canonical reference: **`.claude/front-end-developer/knowledge/core/motion-patterns.md`** (easing tokens, duration scale, button/popover/modal/tooltip/stagger patterns, reduced-motion + hover-capability gates, "when not to animate"). Load it before writing any transition or animation code. For deep UI motion, pair **`the emil-design-eng skill`**; for SVG markup motion, **`.claude/front-end-developer/skills/svg-animations/SKILL.md`**.
+Motion is a build-time decision, not a post-build pass. Apply defaults while constructing every interactive element. Canonical reference: **`agents/front-end-developer/knowledge/core/motion-patterns.md`** (easing tokens, duration scale, button/popover/modal/tooltip/stagger patterns, reduced-motion + hover-capability gates, "when not to animate"). Load it before writing any transition or animation code. For deep UI motion, pair **`the emil-design-eng skill`**; for SVG markup motion, **`agents/front-end-developer/skills/svg-animations/SKILL.md`**.
 
 Non-negotiables (enforce without reading the reference):
 
@@ -382,7 +382,7 @@ Don't fill templates. Think like a designer.
 
 Every design critique, UX recommendation, or design decision must be backed by a verifiable source.
 
-1. Check local knowledge first — `ux-methodology.md`, `web-interface-guidelines.md`, `design-process-rules.md`, and `.claude/front-end-developer/skills/web-design-guidelines/SKILL.md`
+1. Check local knowledge first — `ux-methodology.md`, `web-interface-guidelines.md`, `design-process-rules.md`, and `agents/front-end-developer/skills/web-design-guidelines/SKILL.md`
 2. If not covered locally, use WebSearch for proven research — Nielsen Norman Group, Baymard Institute, WCAG, Laws of UX
 3. Cite the source inline with each recommendation
 4. If no source exists, do not make the recommendation — say so and move on
@@ -398,7 +398,7 @@ Unsourced design advice is fabrication.
 - **Signature test:** Point to something specific that could only exist for this product.
 - **Mobile test:** Does mobile feel designed first, or squeezed from desktop?
 
-Fix failures before showing. Then run `.claude/front-end-developer/knowledge/core/pre-ship-quality-checklist.md` as a final sweep.
+Fix failures before showing. Then run `agents/front-end-developer/knowledge/core/pre-ship-quality-checklist.md` as a final sweep.
 
 ---
 
@@ -408,15 +408,15 @@ Fix failures before showing. Then run `.claude/front-end-developer/knowledge/cor
 
 ### Always loaded (via project CLAUDE.md or agent package)
 
-- **`.claude/front-end-developer/contract/globals.md`** (inside this agent package) — Layer 1 stable token/layout boilerplate; ships with the agent
+- **`agents/front-end-developer/contract/globals.md`** (inside this agent package) — Layer 1 stable token/layout boilerplate; ships with the agent
 - Host **`globals.css`** (e.g. `app/globals.css`) — numeric CSS variables + Tailwind semantic mapping
 - **Host `system.md`** (Theme + Project) **when the host has it** — per-project Theme + Project on top of globals
 - `.impeccable.md` if it exists — design context
-- `.claude/front-end-developer/data-model.md` — agent architecture diagram (how all pieces connect)
+- `agents/front-end-developer/data-model.md` — agent architecture diagram (how all pieces connect)
 
 ### Load just-in-time
 
-**`.claude/front-end-developer/knowledge/core/`** — Design methodology (target-agnostic)
+**`agents/front-end-developer/knowledge/core/`** — Design methodology (target-agnostic)
 
 | When | Read |
 | ------ | ------ |
@@ -429,11 +429,11 @@ Fix failures before showing. Then run `.claude/front-end-developer/knowledge/cor
 | Writing any UI code | `core/web-interface-guidelines.md` — Vercel's 120+ rules: a11y, forms, animation, performance, content, visual design, copy |
 | Adding hover/entrance/press animations | `core/motion-patterns.md` — canonical easing curves, duration scale, button/card/popover patterns, CSS transform gotchas |
 | Writing animation or transition code | `the emil-design-eng skill` — 675-line reference: easing curves, durations, springs, gestures, clip-path, performance, stagger |
-| Creating or animating **SVG** (illustrations, diagrams, logos, path effects) | `.claude/front-end-developer/skills/svg-animations/SKILL.md` — paths, SMIL, CSS, morphing, masks, performance, reduced motion |
+| Creating or animating **SVG** (illustrations, diagrams, logos, path effects) | `agents/front-end-developer/skills/svg-animations/SKILL.md` — paths, SMIL, CSS, morphing, masks, performance, reduced motion |
 | Final pre-ship audit | `core/pre-ship-quality-checklist.md` — 10-section checklist |
 | Orienting in the agent / choosing skills | `core/skill-workflow.md` — full skill map + redundancy notes |
 
-**`.claude/front-end-developer/knowledge/figma/`** — Figma canvas + MCP
+**`agents/front-end-developer/knowledge/figma/`** — Figma canvas + MCP
 
 | When | Read |
 | ------ | ------ |
@@ -445,7 +445,7 @@ Fix failures before showing. Then run `.claude/front-end-developer/knowledge/cor
 | First Figma call in session | `figma/plugin-api.md` — API methods, gotchas |
 | Need the full Figma process | `figma/build-recipe.md` — 10-step end-to-end workflow |
 
-**`.claude/front-end-developer/knowledge/paper/`** — Paper canvas + MCP
+**`agents/front-end-developer/knowledge/paper/`** — Paper canvas + MCP
 
 | When | Read |
 | ------ | ------ |
@@ -453,7 +453,7 @@ Fix failures before showing. Then run `.claude/front-end-developer/knowledge/cor
 | Working with Paper elements | `paper/canvas-elements.md` — icons, images, shaders, modifications |
 | Unsure which Paper MCP tool | `paper/mcp-workflow.md` — tool selection, read/write patterns |
 
-**`.claude/front-end-developer/knowledge/shadcn/`** — shadcn/UI reference (shared by all targets)
+**`agents/front-end-developer/knowledge/shadcn/`** — shadcn/UI reference (shared by all targets)
 
 | When | Read |
 | ------ | ------ |
