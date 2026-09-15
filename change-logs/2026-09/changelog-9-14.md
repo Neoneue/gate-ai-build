@@ -145,6 +145,46 @@ mark). At rest the card is plain; the mark is the pointer's reward. The
 dimmed Pro-only card, which has no hover, gets no mark. The button is
 `relative` so content paints above the mark. Card height stays 138px.
 
+### Models: better-ui polish pass `2892e27`
+
+First run of the `better-ui` skill (installed `f00eae0`) against the Models
+page. Two HIGH, four MEDIUM and two LOW findings applied; the rest are
+recorded as project decisions below.
+
+- **Featured row staggers in.** Before: the four `FeaturedCard`s appeared
+  at once. After: each card is wrapped in a `grid h-full` div carrying
+  `motion-safe:animate-in fade-in-0 slide-in-from-bottom-3
+  fill-mode-backwards duration-300 ease-out` with a 100ms `animationDelay`
+  per index, so the ranked left-to-right order reads as a sequence
+  (`src/pages/models/ModelShelves.tsx`). Route-level entrance only; the Free
+  models row and catalog rows are not staggered.
+- **Catalog rows drop the dead `hover-fine:` recipe.** Before: the Models
+  catalog row and the shelf row passed `cursor-pointer
+  transition-[background-color] duration-150 ease-out hover-fine:bg-accent
+  motion-reduce:transition-none`; `hover-fine:` compiles to nothing and the
+  transition duplicated the primitive with a different easing. After: the
+  call sites pass `cursor-pointer` only and `TableRow` owns `ease-out`.
+  `hover-fine:` count on the Models surface: 2 to 0.
+- **Dimmed Pro-only Free card keeps the pointer.** Before: `dimmed` removed
+  hover and press (intended) but also `cursor-pointer`, so a live link read
+  as disabled. After: `dimmed && "cursor-pointer opacity-75"`.
+- **Hand-rolled trigger classes removed.** The outline Button (`Models.tsx`
+  detail header) and the Features `MultiSelect` dropped `border-border
+  bg-card text-foreground`; their primitives already supply it. The two
+  `Select` triggers keep `bg-card` because `selectTriggerVariants` defaults
+  to `bg-muted`; open question whether to add a `bg-card` variant.
+- **Skipped, on purpose.** Quick start rail icons stay mixed: `openclaw.svg`
+  is a multi-colour gradient mark and cannot become a `currentColor` inline;
+  no Hermes / Nous mark exists in `public/icons/providers/`.
+
+**Decisions recorded against the skill (design.md wins):** press scale stays
+`0.98` (0.96 is too strong; now a row in design.md Motion). Radius keeps the
+Tailwind ladder 24 / 16 / 8 / 4 rather than concentric arithmetic. Lucide
+stroke stays a global `1.75` (research 2026-09-14: every fixed-geometry SVG
+set ships one stroke; text-weight matching is native to SF Symbols and
+Material Symbols only). Surfaces keep honest `border-border` + `shadow-xs`,
+never a shadow-as-border ring.
+
 ## Components
 
 ### Top bar logomark navigates to Overview below `lg` `e3642bb`
@@ -234,3 +274,51 @@ for Audit Trail and the Teams pickers) or `"content"`, which floors at the
 trigger width and grows to the longest label (`w-max min-w-(--anchor-width)
 max-w-(--available-width)`). Models "All features" went from 122 to 153px
 with no clipped label. Documented in design.md.
+
+### Card `interactive`: press transitions `scale` `2892e27`
+
+Before: `transition-[background-color,transform]` beside
+`active:scale-[0.98]`. Tailwind v4 emits `scale: 0.98` as its own property,
+so `transform` never matched and the press snapped in and out at 0ms.
+After: `transition-[background-color,scale]`; the press animates over the
+150ms `ease-out` and can be interrupted mid-press. Applies to every
+`interactive` Card (Featured and Free cards on Models).
+
+### Featured and Free cards: focus ring inset `2892e27`
+
+Before: the inner `RowActionButton` fills a `density="flush"` Card that
+carries `overflow-hidden`, so its outer `focus-visible:ring-3` was clipped
+on all four sides and keyboard focus was invisible. After: the button adds
+`rounded-md focus-visible:ring-inset` (the `NavTableRow` recipe), so the
+ring draws inside the 8px card corner (`ModelShelves.tsx` `FeaturedCard`).
+
+### Table: sort glyphs cross-fade `2892e27`
+
+Before: the sortable head ternaried between `ArrowUp`, `ArrowDown` and
+`ChevronsUpDown`, mounting and unmounting on click, so the slot faded in
+on hover and hard-cut on sort. After: all three glyphs sit in one
+`aria-hidden` grid slot (`[grid-area:1/1]`) and swap via
+`transition-opacity duration-150 ease-out`; the neutral chevron keeps its
+hover reveal until a direction is active. Same recipe as `CopyIconSwap`.
+Site-wide on every sortable table; `aria-sort` is unchanged.
+
+### TableRow owns `ease-out` `2892e27`
+
+Before: the base row transition used Tailwind's default easing while two
+Models call sites overrode it with the project `ease-out`. After: `ease-out`
+lives on `TableRow` in `table.tsx`, so every row on the site eases the same
+way and call sites pass no transition classes.
+
+### Badge: transition names real properties `2892e27`
+
+Before: `transition-[colors,box-shadow]`; `colors` is not a CSS property, so
+no badge colour ever transitioned, only the shadow. After:
+`transition-[color,background-color,border-color,box-shadow]`. Visible on
+the `ghost` and `link` variants; the Models badges have no colour state.
+
+### Stale `--shadow-border` comments rewritten `2892e27`
+
+Comment-only. `card.tsx`, `code-card.tsx`, `table.tsx` and `empty-state.tsx`
+still described a `--shadow-border` ring token migrated away on 2026-05-15.
+Each now states the live recipe (`border-border` + `shadow-xs`, Tailwind
+shadow scale only). `grep shadow-border src` returns 0.

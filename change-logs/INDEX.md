@@ -11,6 +11,13 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 
+- Models: better-ui polish pass
+- Card `interactive`: press transitions `scale`
+- Featured and Free cards: focus ring inset
+- Table: sort glyphs cross-fade
+- TableRow owns `ease-out`
+- Badge: transition names real properties
+- Stale `--shadow-border` comments rewritten
 - Models: Featured row, four curated shelves, catalog header
 - Models catalog: all 416 live ids, sourced release dates, four new rows
 - VendorAvatar: initials tile for vendors without a brand mark
