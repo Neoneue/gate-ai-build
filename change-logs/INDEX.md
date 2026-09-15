@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-15](./2026-09/changelog-9-15.md)
 
 - Models: Featured cards on a per-card grid, split stats, CMS seed badges
+- Models: Featured cards no longer animate on load, Context column wider
 
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 

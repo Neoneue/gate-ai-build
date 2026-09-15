@@ -36,3 +36,16 @@ Prior day: [`changelog-9-14.md`](./changelog-9-14.md)
   your project. Each one is a strong default for a different kind of work, so
   you can see what it costs and pick one with confidence." The left-right
   framing broke once the cards stack at 2x2.
+
+### Models: Featured cards no longer animate on load, Context column wider `67190bf`
+
+- **Mount stagger removed.** Before: each Featured card sat in a wrapper
+  with `motion-safe:animate-in fade-in-0 slide-in-from-bottom-3
+  duration-300 fill-mode-backwards` and a 100ms per-card `animationDelay`,
+  so the row faded and slid in on every refresh. After: the cards render in
+  place as direct grid items, no wrapper, no entrance motion. A staggered
+  entrance fits a marketing page, not a dashboard someone refreshes all day
+  (`src/pages/models/ModelShelves.tsx`).
+- **Featured table widths.** Before: Context 9%, Input 15%, Output 15%,
+  Features 17%. After: Context 12%, Input 16%, Output 16%, Features 12%.
+  Rank 4%, Model 30% and Providers 10% unchanged; total stays 100%.
