@@ -5,6 +5,7 @@ import { SparklesIcon } from "@/components/ui/sparkles";
 import { effectivePlan, freeModelRows } from "@/data/free-models";
 import { formatTokenCount, type Model } from "@/data/models";
 import { isDefaultSurface } from "@/lib/plan";
+import { CapabilityStrip } from "../Models";
 import { FeaturedCard } from "./ModelShelves";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -17,7 +18,8 @@ import { FeaturedCard } from "./ModelShelves";
  * `FeaturedCard` takes the badge text and the stat pair as props and this
  * block supplies a positioning tagline for the badge (same vocabulary as
  * Featured) and the price ("Free", or "Free (Pro plan only)" on a Pro-only
- * row, which is where the plan is stated); everything else, padding, gaps, 138px height,
+ * row, which is where the plan is stated); everything else, padding, gaps, the
+ * 146px height,
  * truncate + tooltip on the name, the drill-in press recipe, comes from the
  * one component.
  * ───────────────────────────────────────────────────────────────────────── */
@@ -40,7 +42,7 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
         <h2 className="type-heading-24 m-0 text-foreground">
           Free models from Gate
         </h2>
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Models Gate supports at no cost for your plan, so you can ship without
           a paid balance.
         </p>
@@ -68,6 +70,13 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
                   plan === "free" && free.access === "pro-only"
                     ? "Free (Pro plan only)"
                     : "Free",
+              },
+              // Same strip the Featured cards and the catalog rows render,
+              // imported rather than rebuilt: a free model states what it can
+              // do in the same place a paid one does.
+              {
+                label: "Features",
+                value: <CapabilityStrip capabilities={model.capabilities} />,
               },
             ]}
           />

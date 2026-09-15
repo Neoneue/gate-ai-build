@@ -777,7 +777,7 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Heading 16 | `type-heading-16` | `font-sans text-base/6 font-medium tracking-snug` |
 | Heading 14 | `type-heading-14` | `font-sans text-sm font-medium` |
 | Label 20 | `type-label-20` | `font-sans text-xl/8 font-normal tracking-tight` |
-| Label 18 | `type-label-18` | `font-sans text-lg/5 font-normal tracking-tight` |
+| Label 18 | `type-label-18` | `font-sans text-lg/5 font-medium tracking-tight` |
 | Label 16 | `type-label-16` | `font-sans text-base font-medium tracking-tight` |
 | Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
 | Label 12 | `type-label-12` | `font-sans text-xs font-medium` |

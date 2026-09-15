@@ -13,6 +13,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Models: Featured cards on a per-card grid, split stats, CMS seed badges
 - Models: Featured cards no longer animate on load, Context column wider
+- Models: Features strip on the cards, 2x2 grid, default badges, 18px names
 
 ### [2026-09-14](./2026-09/changelog-9-14.md)
 
