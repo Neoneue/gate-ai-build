@@ -23,15 +23,17 @@ import { MODELS, type Model, sortModels } from "@/data/models";
 export const SHELF_ROW_COUNT = 4;
 
 /** Featured: one row of compact cards under the page header. The tagline is
- *  the per-card "why", two or three words in the marketing site's badge
- *  vocabulary (positioning, not a rank). */
+ *  the per-card "why", an outcome the reader picks on ("Fastest", "Best
+ *  value"), ordered strongest to lightest. SEED DATA: in prod
+ *  the badge label and the model it attaches to come from the backoffice
+ *  CMS (2026-09-15); this list mirrors that shape for the mock build. */
 export type FeaturedPick = { id: string; tagline: string };
 
 export const FEATURED_PICKS: readonly FeaturedPick[] = [
-  { id: "anthropic/claude-fable-5-1", tagline: "Frontier reasoning" },
-  { id: "openai/gpt-6-astra", tagline: "Deep reasoning" },
-  { id: "anthropic/claude-sonnet-5", tagline: "Balanced" },
-  { id: "deepseek/deepseek-v4-flash", tagline: "Fast and light" },
+  { id: "anthropic/claude-fable-5-1", tagline: "Most capable" },
+  { id: "openai/gpt-6-astra", tagline: "Best for coding" },
+  { id: "anthropic/claude-sonnet-5", tagline: "Best value" },
+  { id: "deepseek/deepseek-v4-flash", tagline: "Fastest" },
 ];
 
 export const FEATURED_MODEL_IDS: readonly string[] = FEATURED_PICKS.map(

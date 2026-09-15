@@ -61,13 +61,19 @@ export function FeaturedModels({
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          Four models we would start with today. The strongest performer sits on
-          the left and the lightest on the right, with two balanced picks in
-          between.
+          The Gate team's suggested starting points for your project. Each one
+          is a strong default for a different kind of work, so you can see what
+          it costs and pick one with confidence.
         </p>
       </div>
 
-      <div className="grid @5xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
+      {/* 4-up switches at @7xl (1280px main), not @5xl. The card's stat grid
+          is 216px of fixed tracks plus 32px of gaps = 248px, and a quarter
+          track only clears that once the page column passes 1280 (card 308,
+          content 274). At @5xl the card was 244 wide and the prices clipped.
+          Between @5xl and @7xl the row stays 2-up, which is also where the
+          cards are wide enough to earn the 24px stat gap. */}
+      <div className="grid @7xl:grid-cols-4 @xl:grid-cols-2 grid-cols-1 gap-4">
         {/* 100ms stagger so the four cards resolve left to right instead of
             landing as one block. `grid h-full` on the wrapper keeps the card
             stretching to the row height the way it did as a direct grid item;
@@ -89,7 +95,7 @@ export function FeaturedModels({
 }
 
 /** The Featured card is also the Free-models card (`FreeModels.tsx`): same
- *  anatomy, same 138px height, only the badge text and the two stat values
+ *  anatomy, same 138px height, only the badge text and the stat values
  *  differ. Both are props with the Featured reading as the default, so the two
  *  blocks cannot drift apart the way two copies of this markup would. */
 export function FeaturedCard({
@@ -103,7 +109,7 @@ export function FeaturedCard({
   onSelect: (model: Model) => void;
   /** Overrides the curated positioning tagline. */
   badge?: string;
-  /** Overrides the default Context + Input / output pair. Two entries. */
+  /** Overrides the default Context + Input + Output set. Three entries. */
   stats?: { label: string; value: string }[];
   /** Rests at 75% opacity (well above the primitives' 50% disabled wash so
    *  every line stays legible) with no hover fill. The drill-in stays live so
@@ -116,9 +122,10 @@ export function FeaturedCard({
   const context = formatTokenCount(model.contextWindow);
   const input = formatPricePerM(listPrice(model, "inputPer1M"));
   const output = formatPricePerM(listPrice(model, "outputPer1M"));
-  const statPair = stats ?? [
+  const statRow = stats ?? [
     { label: "Context", value: context },
-    { label: "Input / output", value: `${input} / ${output}` },
+    { label: "Input", value: input },
+    { label: "Output", value: output },
   ];
   return (
     // `density="flush"` hands the padding to the button so the whole card is
@@ -128,7 +135,11 @@ export function FeaturedCard({
     // the button keeps the focus ring.
     <Card
       className={cn(
-        "group/card relative",
+        // `@container/card` makes the stat grid below answer to THIS card's
+        // width rather than to the page's. The same card is 274px wide in a
+        // 4-up row, 450px in a 2-up row and 574px 1-up, and only the card
+        // knows which it is.
+        "group/card @container/card relative",
         dimmed && "cursor-pointer opacity-75"
       )}
       density="flush"
@@ -169,7 +180,7 @@ export function FeaturedCard({
 
         <span className="flex w-full min-w-0 flex-col gap-4">
           <span className="flex w-full min-w-0 items-center gap-2">
-            <VendorAvatar vendor={model.vendor} />
+            <VendorAvatar size="md" vendor={model.vendor} />
             {/* The name span IS the tooltip trigger — `render` puts Base UI's
                 hover handlers on the existing element rather than wrapping it,
                 so the flex row is unchanged. `TooltipContent` mounts ONLY when
@@ -182,7 +193,7 @@ export function FeaturedCard({
               <TooltipTrigger
                 render={
                   <span
-                    className="type-label-14 truncate text-foreground"
+                    className="type-label-16 truncate text-foreground"
                     ref={nameRef}
                   />
                 }
@@ -195,12 +206,37 @@ export function FeaturedCard({
             </Tooltip>
           </span>
 
-          {/* Two stats, side by side at card width and wrapping below it.
-              `$3.00/M / $15.00/M` needs ~160px, which a rigid 2-column grid
-              would clip inside a 4-up card in the narrow band just above the
-              @3xl switch. */}
-          <span className="flex w-full min-w-0 flex-wrap gap-x-4 gap-y-2">
-            {statPair.map((stat) => (
+          {/* The card's own grid: FIXED, unequal tracks, sized to the widest
+              value each column class can ever hold, never to the value this
+              card happens to have. Across all 416 catalog models the widest
+              context is `131.1K` (6 mono chars, 50px) and the widest price is
+              `$184.80/M` (9 chars, 76px), so the tracks are 56 / 80 / 80 on
+              the 8pt grid. `131.1K` and `1.0M` therefore share one track
+              width, prices share another, and every card in the row puts its
+              labels and its mono values on the same x. Equal thirds gave
+              Context as much room as a price and floated it away from Input;
+              content-sized tracks drifted the third stat by up to 9px card to
+              card. Whatever width is left over is trailing space, not track.
+
+              The Free card's two stats keep the same 56px first track, so its
+              second label starts on the Featured x; the second track takes
+              the remainder because `Free (Pro plan only)` is a phrase, not a
+              number to align.
+
+              Gap ladder, keyed to card inline-size, no half steps: 16px up to
+              @md/card (448px) and 24px above it. Every 4-up card (308-395px)
+              sits at 16px, a 2-up card at 24px from ~1024px of page width up,
+              and a 1-up card is back at 16px on a phone (358px) - width buys
+              the air, not the column count. */}
+          <span
+            className={cn(
+              "grid w-full min-w-0 @md/card:gap-6 gap-4",
+              statRow.length === 2
+                ? "grid-cols-[56px_1fr]"
+                : "grid-cols-[56px_80px_80px]"
+            )}
+          >
+            {statRow.map((stat) => (
               <FeaturedStat
                 key={stat.label}
                 label={stat.label}

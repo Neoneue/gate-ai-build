@@ -845,7 +845,7 @@ class; the voice is.
 
 **Second consumer (2026-09-14): `Badge size="xs"`.** A 16px pill at 10px mono
 type, added to the Badge primitive for the positioning tagline on the Models
-page's Featured cards ("Frontier reasoning", "Balanced"), where the default
+page's Featured cards ("Most capable", "Fastest"; labels come from the backoffice CMS), where the default
 12px badge outweighed the model name beside it. Reached only through the
 `size` prop on `badge.tsx`; still never a call-site `text-2xs`.
 
