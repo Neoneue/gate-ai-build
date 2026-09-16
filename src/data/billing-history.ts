@@ -66,4 +66,5 @@ export const HISTORY_ROWS: HistoryRow[] = [
  * surfaces read this one definition. Authored 2026-06-12, shifted by the
  * demo clock like every other billing date.
  */
-export const BILLING_PERIOD_END = formatDateNumeric(authoredDate(2026, 5, 12));
+export const BILLING_PERIOD_END_DATE: Date = authoredDate(2026, 5, 12);
+export const BILLING_PERIOD_END = formatDateNumeric(BILLING_PERIOD_END_DATE);

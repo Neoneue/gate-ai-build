@@ -27,7 +27,8 @@ dist-ssr
 .claude/settings.local.json
 # Impeccable native engine, fetched per machine by `npx impeccable update --project`
 agents/front-end-developer/skills/impeccable/scripts/bin/
-.impeccable/
+.impeccable/*
+!.impeccable/config.json
 .claude/worktrees/
 .tmp/
 .tmp-screenshots/

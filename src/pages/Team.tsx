@@ -18,6 +18,7 @@ import { IconActionButton } from "@/components/ui/icon-action-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Monogram } from "@/components/ui/monogram";
+import { initialsOf } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
 import { SearchInput } from "@/components/ui/search-input";
 import {
@@ -62,7 +63,6 @@ const INV_01_SENT = authoredDate(2026, 5, 5);
 const INV_02_SENT = authoredDate(2026, 5, 4);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const WHITESPACE_RE = /\s+/;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-017 — Team (Workspace Admin)
@@ -874,12 +874,4 @@ function RowActionsMenu({
       </MenuPrimitive.Portal>
     </MenuPrimitive.Root>
   );
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(WHITESPACE_RE);
-  if (parts.length === 1) {
-    return parts[0]!.slice(0, 2).toUpperCase();
-  }
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }

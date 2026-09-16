@@ -54,6 +54,7 @@ graph LR
     LAYOUT --> SET["/settings → Settings.tsx"]
     LAYOUT --> KEYS["/api-keys → ApiKeys.tsx"]
     LAYOUT --> BILL["/billing → Billing.tsx"]
+    LAYOUT --> BILLENT["/billing-enterprise → BillingEnterprise.tsx"]
 ```
 
 - The graph shows the **PRO** surfaces only. `App.tsx` declares 61 paths in
@@ -1003,6 +1004,7 @@ function buildSpark(total: number, seed: number): number[]
 | `TEAM_SEED_ROWS` | `src/data/teams.ts` | `TeamRow[]` — Default / Platform / Design | 3 |
 | `ASSIGNABLE_KEYS` | `src/data/teams.ts` (derived: `API_KEY_SEED_ROWS` minus revoked) | `ApiKeyRow[]` | 9 |
 | `HISTORY_ROWS` | `src/data/billing-history.ts` (lifted from Billing.tsx) | `HistoryRow[]` | 6 |
+| `enterpriseInvoiceRows()` | `src/data/billing-enterprise.ts` (derived from `MEMBER_ROWS` joined dates + `ENTERPRISE_SEAT_RATE_USD`, a flagged PLACEHOLDER) | `EnterpriseInvoiceRow[]` | 2 |
 | `NOTIFICATION_HISTORY` | `src/data/notifications.ts` (derived, not authored) | `NotificationItem[]` | 38 |
 | `NOTIFICATION_ITEMS` | `src/data/notifications.ts` (= history.slice(0, 8)) | `NotificationItem[]` | 8 |
 | `NOTIFICATION_CATALOG` | `src/data/notification-catalog.ts` | `NotificationType[]` | 13 |
@@ -2065,6 +2067,18 @@ text. The primitive contract lives in `design.md` §7 "Skeleton".
 ### Billing page (`/billing` → `Billing.tsx`)
 
 Billing-specific layout (does not use `DashboardChrome`). Details TBD. The plan card's "Manage subscription" opens `plan-comparison-dialog-pro.tsx`, whose Free-plan CTA ("Cancel Pro plan") closes it and opens the shared `CancelPlanDialog` (`pages/cancel-plan-dialog.tsx`) — the same controlled dialog the Settings Cancel plan card uses, so the cancellation copy has one source. Shared `BILLING_PERIOD_END` constant lives in that dialog file and feeds Billing's renewal line.
+
+`?state=revoked` (one-way preview param, not stripped) renders a `Callout` under the header: the notice an admin sees after Constellation Support removes the Enterprise entitlement and the org falls back to Pro. Absent the param the Pro page is unchanged.
+
+### Enterprise Billing page (`/billing-enterprise` → `BillingEnterprise.tsx`, added 2026-09-16)
+
+Own build, not the Pro component. Enterprise is a Support-granted entitlement billed BY SEAT through its own Stripe configuration (H2 PRD §3, §10), so there is no checkout, plan-comparison or cancel dialog. Section order follows the H1 Billing PRD: Plan card (`Enterprise` hero, description, Seats sub-card of label/value stat rows: Seats · Price per seat · Current period · Next invoice (PRD vocabulary: billing unit = seat, people = members; "user" appears only in the live Pro price string "$20 / user / month"); footer sentence + `Contact support` no-op button with the site's `Headset` icon), **Changes this period** table card (Member · Seats +1 or -1 · Date · Amount; removals $0.00), and **History** (Date · Description · Seats · Amount · Status; no Credits or Payment method card: no PRD sentence gives Enterprise a PAYG balance, and Support provisions Enterprise billing per H2 §10; Credits on Enterprise is an open question for the Gate Core review). The History card is the shared `BillingHistorySection` in `src/pages/billing/` with an `Invoice portal` action; rows are billing EVENTS, so there is no per-row download. A billing period is a CALENDAR MONTH anchored to the demo clock's current month (user direction); Pro keeps its anniversary renewal per H1.
+
+Data: `src/data/billing-seats.ts` is the shared seat-billing engine (periods, prorations, additions/removals, `InvoiceRow`, PAYG receipts from `HISTORY_ROWS`); `src/data/billing-enterprise.ts` binds it to calendar months at `ENTERPRISE_SEAT_RATE_USD`, `src/data/billing-pro.ts` binds it to the Pro anniversary (`BILLING_PERIOD_END_DATE`, two periods) at `PRO_SEAT_RATE_USD` and gives Free receipts only. Seat count = accepted members (`MEMBER_ROWS`); pending invitations are not seats. `FORMER_MEMBER_ROWS` are mock departed members so removals and history exist. Three months of history: a monthly seat charge on each 1st billing the people present that day, one prorated row per mid-month addition, no row for removals. The per-seat rate `ENTERPRISE_SEAT_RATE_USD` ($50) is a flagged PLACEHOLDER. `enterpriseBillingView(state)` is the single read the page makes.
+
+Preview states drive off `?state=` (one-way, not stripped; unknown → `active`) and a `Billing state` Select beside the page title (mock-site affordance like "Viewing as"): `Current`, `Upgraded to Enterprise` (day one: granted today, one prorated first charge, no changes yet), `Billing being set up` (no charge, empty invoices, no Changes card), `Payment failed` (danger `role="alert"` banner with amount + date, newest seat invoice `Failed`). The revoke case renders on `/billing?state=revoked` only. Billing is admin-only on every plan (`nav-sections.ts` drops it for Manager / Member; chrome guard redirects the URL).
+
+Pro and Free plan cards adopted the same Seats / Plan details stat-row sub-card on 2026-09-16 (design-lead decision overriding the ticket's "unchanged" line for layout consistency), Pro and Free keep the LIVE product's **History** balance ledger (Date · Type · Amount · Balance after, gateway messages grouped per day and expandable), now shared as `src/pages/billing/HistorySection.tsx`; the Enterprise History is the seat-invoice list. `src/data/billing-pro.ts` (anniversary user charges for Pro) exists but is not rendered on Pro/Free while live shows the ledger. Pro is priced PER SEAT (H2 §3; H1's flat "$X TBD" superseded), 4 seats × $20; the plan-comparison dialog keeps the live strings "$20 per user / month" and "$20/user/month after your 14-day trial ends".
 
 ---
 

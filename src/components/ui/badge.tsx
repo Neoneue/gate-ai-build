@@ -53,6 +53,16 @@ const badgeVariants = cva(
           "bg-warning-100 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300",
         info: "bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
         neutral: "bg-muted text-muted-foreground",
+        /* Plan tier, not a status: Enterprise is violet (user direction
+           2026-09-16). Same rung recipe as `info` / `warning`, on
+           Tailwind v4's default violet scale — index.css carries no
+           violet ramp and the chart palette is off-limits for badges.
+           Named by ROLE so a tier badge never reads as a status. */
+        enterprise:
+          "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+        /* Pro's plan-tier badge. Indigo, NOT the shared `info` blue: blue
+           is a status tone used elsewhere, and a tier is not a status. */
+        pro: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
       },
     },
     defaultVariants: {

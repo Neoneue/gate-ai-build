@@ -1,16 +1,10 @@
 import { Plus } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import {
-  useNavigate,
-  useOutletContext,
-  useSearchParams,
-} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -27,152 +21,31 @@ import {
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { OptionTile } from "@/components/ui/option-tile";
-import { PageTitle } from "@/components/ui/page-title";
 import { RefreshCWIcon } from "@/components/ui/refresh-cw";
-import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
-import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatCurrency } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
-import { HistorySection } from "@/pages/billing/HistorySection";
-import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
+import { HISTORY_ROWS } from "@/data/billing-history";
+import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 
-/* ─────────────────────────────────────────────────────────────────────────
- * Billing page — Free-plan duplicate (route: /billing-free, sidebar: "Billing")
+/* ──────────────────────────────────────────────────────────────────────
+ * Credits card and its two dialogs, lifted VERBATIM out of Billing.tsx on
+ * 2026-09-16 so the Enterprise page can render the same surface instead of
+ * duplicating ~500 lines. Pay-as-you-go credits are plan-independent: the
+ * balance funds gateway-routed requests on every paid tier, so Pro and
+ * Enterprise share this module. Free keeps its own copies (BillingFree.tsx),
+ * which differ.
  *
- * Three sections stacked: plan + credits row (50/50), and the History
- * table. Mock data assumes a fresh workspace with one $25 top-up and two
- * gateway-request debits — reconciles with the Credits hero ($24.98 = the
- * running balance after the last history row).
- * ───────────────────────────────────────────────────────────────────────── */
+ * `CreditStatRow` is exported because the Seats sub-card on both pages uses
+ * the same label/value row.
+ * ───────────────────────────────────────────────────────────────────── */
 
-export function BillingFree() {
-  const navigate = useNavigate();
-  const { sidebarExpanded, toggleSidebar } = useOutletContext<{
-    sidebarExpanded: boolean;
-    toggleSidebar: () => void;
-  }>();
+const MIN_TOPUP = 5;
+const MAX_TOPUP = 1000;
 
-  return (
-    <DashboardChrome
-      activeNavId="billing"
-      onNavigate={(path: string) => navigate(path)}
-      onToggleSidebar={toggleSidebar}
-      sidebarExpanded={sidebarExpanded}
-    >
-      {/* Content stays fluid, then caps so the cards don't stretch across
-          ultrawide displays. CONTAINER query, not viewport: the Ask AI
-          panel narrows this column without narrowing the window. `@5xl`
-          (1024px inline-size) is the same number as the `max-w-5xl` cap, so
-          the class is a no-op until the column is wide enough to bind. */}
-      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
-        <PageHeader />
-        <PlanCreditsRow />
-        <PaymentMethodCard />
-        <HistorySection />
-      </div>
-    </DashboardChrome>
-  );
-}
-
-function PageHeader() {
-  return (
-    <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-      <PageTitle>Billing</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-        Manage your plan, track credit usage, and review every gateway
-        transaction.
-      </p>
-    </div>
-  );
-}
-
-/* ─── Plan + Credits (stacked, each full-width row) ──────────────────── */
-
-function PlanCreditsRow() {
-  return (
-    <div className="grid grid-cols-1 gap-4">
-      <PlanCard />
-      <CreditsCard />
-    </div>
-  );
-}
-
-function PlanCard() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [compareOpen, setCompareOpen] = useState(
-    () => searchParams.get("manage") === "1"
-  );
-
-  // Deep-link support: `?manage=1` opens the plan-comparison dialog on mount.
-  // Used by the sidebar upgrade CTA so a single click lands the user in the
-  // plan picker. Param is stripped when the dialog closes so the URL reflects
-  // state and re-mounts don't re-open it — same contract as Limits' `?create=1`.
-  const handleCompareOpenChange = (next: boolean) => {
-    setCompareOpen(next);
-    if (!next && searchParams.has("manage")) {
-      const params = new URLSearchParams(searchParams);
-      params.delete("manage");
-      setSearchParams(params, { replace: true });
-    }
-  };
-
-  return (
-    <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <CardTitle>Your plan</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-3">
-          <HeroNumeric size="lg">Free</HeroNumeric>
-          <p className="type-copy-14 m-0 text-pretty text-foreground">
-            BYOK gateway plus a tamper-evident audit trail, no security
-            pipeline. Upgrade to Pro for prompt-injection scans, PII redaction,
-            and a cryptographically verifiable audit trail fingerprinted to
-            Constellation&rsquo;s Digital Evidence layer.
-          </p>
-        </div>
-
-        {/* Plan-details sub-card — the Enterprise/Pro twin's recipe: a header
-            block of title over subtitle, a hairline, then the numbers as a
-            label/value stat list. Same shape on all three tiers so a plan
-            change reads as the same surface with different values. */}
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-card-muted p-4">
-          <div className="flex flex-col gap-1">
-            <p className="type-label-16 m-0 text-foreground">Plan details</p>
-            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              Free is a single-seat workspace with nothing to renew. Upgrade to
-              Pro to add teammates.
-            </p>
-          </div>
-          <dl className="type-copy-14 m-0 flex flex-col gap-2 border-border border-t pt-3">
-            <CreditStatRow label="Seats" mono value={1} />
-            <CreditStatRow
-              label="Price"
-              mono
-              value={`${formatCurrency(0)} / month`}
-            />
-            <CreditStatRow label="Renews on" muted value="No renewal" />
-          </dl>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button
-          onClick={() => setCompareOpen(true)}
-          size="sm"
-          variant="outline"
-        >
-          <SquareArrowUpIcon aria-hidden data-icon="inline-start" size={16} />
-          Manage subscription
-        </Button>
-      </CardFooter>
-      <PlanComparisonDialog
-        onOpenChange={handleCompareOpenChange}
-        onUpgrade={() => handleCompareOpenChange(false)}
-        open={compareOpen}
-      />
-    </Card>
-  );
+// "Last top-up" reads the newest Credits-added row (HISTORY_ROWS is newest
+// first) so the card copy and the history table can never disagree on the date.
+function lastTopUpLabel(): string {
+  const row = HISTORY_ROWS.find((r) => r.type === "Credits added");
+  return row ? `${formatDateNumeric(row.date)} · $25` : "None yet";
 }
 
 type AutoRechargeConfig = {
@@ -221,7 +94,7 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
-function CreditsCard() {
+export function CreditsCard() {
   const [addOpen, setAddOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
@@ -232,20 +105,20 @@ function CreditsCard() {
         <CardTitle>Credits</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$0.00</HeroNumeric>
+        <HeroNumeric size="lg">$49.99238</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
-          <CreditStatRow label="Used this month" mono value="$0.00" />
+          <CreditStatRow label="Used this month" mono value="$0.00 / $49.99" />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value="Never" />
+          <CreditStatRow label="Last top-up" value={lastTopUpLabel()} />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
@@ -356,7 +229,7 @@ function AddCreditsDialog({
       open={open}
     >
       {/* Fixed 500px modal; only shrinks on a phone. Width fills the viewport minus
-            16px gutters, capped at 500px. The inline style beats DialogContent's base
+            16px gutters, capped at 500px. The `!` cap beats DialogContent's base
             `sm:max-w-sm` (384px) so 500px always wins — no per-breakpoint width. */}
       <DialogContent
         className="gap-4"
@@ -451,7 +324,7 @@ function AddCreditsDialog({
           {custom.length > 0 && !customValid && (
             <p
               aria-live="polite"
-              className="type-copy-14 m-0 text-destructive"
+              className="type-copy-12 m-0 text-destructive"
               id="add-credits-custom-error"
             >
               Enter an amount between{" "}
@@ -522,7 +395,7 @@ function AutoRechargeDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       {/* Fixed 500px modal; only shrinks on a phone. Width fills the viewport minus
-            16px gutters, capped at 500px. The inline style beats DialogContent's base
+            16px gutters, capped at 500px. The `!` cap beats DialogContent's base
             `sm:max-w-sm` (384px) so 500px always wins — no per-breakpoint width. */}
       <DialogContent
         className="gap-4"
@@ -559,7 +432,7 @@ function AutoRechargeDialog({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2">
           {/* When balance drops below */}
           <div className="flex flex-col gap-2">
             <label
@@ -595,7 +468,7 @@ function AutoRechargeDialog({
             {thresholdInvalid && (
               <p
                 aria-live="polite"
-                className="type-copy-14 m-0 text-destructive"
+                className="type-copy-12 m-0 text-destructive"
                 id="ar-threshold-error"
               >
                 Enter a threshold greater than $0.
@@ -636,7 +509,7 @@ function AutoRechargeDialog({
             {topUpInvalid && (
               <p
                 aria-live="polite"
-                className="type-copy-14 m-0 text-destructive"
+                className="type-copy-12 m-0 text-destructive"
                 id="ar-topup-error"
               >
                 Enter a top-up amount greater than $0.
@@ -681,7 +554,7 @@ function AutoRechargeDialog({
           {capInvalid && (
             <p
               aria-live="polite"
-              className="type-copy-14 m-0 text-destructive"
+              className="type-copy-12 m-0 text-destructive"
               id="ar-cap-error"
             >
               Monthly cap must be greater than $0, or left blank.
@@ -745,68 +618,27 @@ function AutoRechargeDialog({
   );
 }
 
-function CreditStatRow({
+export function CreditStatRow({
   label,
   value,
   mono = false,
-  muted = false,
 }: {
   label: string;
   value: React.ReactNode;
   mono?: boolean;
-  /** A value that is the absence of data ("No renewal") reads as such. */
-  muted?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
-        className={cn(
-          "m-0",
-          mono && "font-mono tabular-nums",
-          muted ? "text-muted-foreground" : "text-foreground"
-        )}
+        className={
+          mono
+            ? "m-0 font-mono text-foreground tabular-nums"
+            : "m-0 text-foreground"
+        }
       >
         {value}
       </dd>
     </div>
-  );
-}
-
-/* ─── History ────────────────────────────────────────────────────────── */
-
-const MIN_TOPUP = 5;
-const MAX_TOPUP = 1000;
-
-function PaymentMethodCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Payment method</CardTitle>
-        <CardDescription>
-          Charged for subscription renewals and credit top-ups.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">
-          <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
-            CARD
-          </span>
-          <span className="type-copy-14 text-foreground">
-            No payment method on file
-          </span>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button size="sm">
-          <Plus
-            aria-hidden
-            className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
-            data-icon="inline-start"
-          />
-          Add card
-        </Button>
-      </CardFooter>
-    </Card>
   );
 }

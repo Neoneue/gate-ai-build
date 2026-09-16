@@ -29,6 +29,11 @@ const AuditTrail = lazy(() =>
 const Billing = lazy(() =>
   import("@/pages/Billing").then((m) => ({ default: m.Billing }))
 );
+const BillingEnterprise = lazy(() =>
+  import("@/pages/BillingEnterprise").then((m) => ({
+    default: m.BillingEnterprise,
+  }))
+);
 const BillingFree = lazy(() =>
   import("@/pages/BillingFree").then((m) => ({ default: m.BillingFree }))
 );
@@ -454,7 +459,7 @@ export default function App() {
               element={<TeamDetailEnterprise />}
               path="/teams-enterprise/:teamId"
             />
-            <Route element={<Billing />} path="/billing-enterprise" />
+            <Route element={<BillingEnterprise />} path="/billing-enterprise" />
             <Route element={<ApiKeys />} path="/api-keys-enterprise" />
             <Route
               element={<Notifications />}

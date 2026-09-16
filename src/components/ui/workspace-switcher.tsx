@@ -43,7 +43,7 @@ export function WorkspaceSwitcher({
         ? "Default"
         : "Free";
   const badgeLabel = compactBadge && isEnterprise ? "ENT." : plan;
-  const badgeVariant = isEnterprise || isPro ? "info" : "success";
+  const badgeVariant = isEnterprise ? "enterprise" : isPro ? "pro" : "neutral";
 
   return (
     <Menu>
@@ -73,7 +73,7 @@ export function WorkspaceSwitcher({
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>
-            <Badge variant="info">Enterprise</Badge>
+            <Badge variant="enterprise">Enterprise</Badge>
           </span>
           {isEnterprise ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />
@@ -82,7 +82,7 @@ export function WorkspaceSwitcher({
         <MenuItem active={isPro} onClick={() => navigate(toProPath(pathname))}>
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>
-            <Badge variant="info">Pro</Badge>
+            <Badge variant="pro">Pro</Badge>
           </span>
           {isPro ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />
@@ -94,7 +94,7 @@ export function WorkspaceSwitcher({
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>
-            <Badge variant="success">Default</Badge>
+            <Badge variant="neutral">Default</Badge>
           </span>
           {isDefault ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />
@@ -106,7 +106,7 @@ export function WorkspaceSwitcher({
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate">Chad's workspace</span>
-            <Badge variant="success">Free</Badge>
+            <Badge variant="neutral">Free</Badge>
           </span>
           {isFree ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />

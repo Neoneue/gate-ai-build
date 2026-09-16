@@ -33,8 +33,17 @@ function Card({
    * EDGE ONLY: the fill stays `bg-card` and the ink stays neutral, so the
    * destructive `<Button>` inside remains the loudest thing on the card.
    * Never paint a danger border onto a call site's `className`.
+   *
+   * `pro` and `enterprise` (2026-09-16, user direction) are PLAN-TIER
+   * edges, not statuses: light `-200`, dark `-500` at 30% — the same
+   * dark alpha rung the Callout and the status banners use, so no new
+   * alpha rung enters the system. Light was stepped 300 -> 200 the same
+   * day: at -300 the framed card read heavier than the content in it. Their only consumer is the "Your
+   * plan" card on the matching Billing page, so the card frames itself in
+   * its tier's colour the way the plan badge does. Free and Default keep
+   * `default`. EDGE ONLY, same as `danger`.
    */
-  tone?: "default" | "danger";
+  tone?: "default" | "danger" | "pro" | "enterprise";
   /**
    * The whole card is one click target (it navigates or opens a detail), so
    * it takes the same hover the table rows take: `hover-fine:bg-accent` plus
@@ -60,7 +69,7 @@ function Card({
       className={cn(
         // Card tier: honest border-border + shadow-xs (design.md, Material
         // ladder). Tailwind shadow scale only: xs/sm/md/lg.
-        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[tone=enterprise]:border-violet-200 data-[tone=pro]:border-indigo-200 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! dark:data-[tone=enterprise]:border-violet-500/30 dark:data-[tone=pro]:border-indigo-500/30 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         // Interactive: `TableRow`'s hover recipe, verbatim — plain
         // `hover:bg-accent`, `transition-[background-color]` (never
         // `transition-colors`: interpolating the border smudges, see
