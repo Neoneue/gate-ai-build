@@ -9,6 +9,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-16](./2026-09/changelog-9-16.md)
+
+- Plan-tier colors: Pro indigo, Enterprise violet, Free grey
+- Billing history and shared billing cards
+- Billing: Enterprise page, `/billing-enterprise`
+- Billing: Pro and Free plan cards adopt the stat-row sub-card
+- Activity: Tokens in and out merged into one column
+
 ### [2026-09-15](./2026-09/changelog-9-15.md)
 
 - Models: Featured cards on a per-card grid, split stats, CMS seed badges
