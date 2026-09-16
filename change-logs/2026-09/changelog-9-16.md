@@ -81,7 +81,7 @@ Prior day: [`changelog-9-15.md`](./changelog-9-15.md)
   from today to month end, one `First seat charge, prorated…` invoice,
   empty Changes. Billing being set up: Callout, stat rows read `After billing
   is set up` / `Not started`, no Changes card, empty History. Payment failed:
-  danger `role="alert"` "Payment failed. We couldn't collect $X on DATE."",
+  danger `role="alert"` "Payment failed. We couldn't collect $X on DATE.",
   newest charge `Failed`. Revoke: `/billing?state=revoked` renders a Callout
   on the Pro page.
 - **Data.** `src/data/billing-seats.ts` (engine), `billing-enterprise.ts`
