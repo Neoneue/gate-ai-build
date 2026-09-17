@@ -262,7 +262,7 @@ function SortableTableHead({
         // is NOT a click target. A fixed-size glyph slot is always present
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
-          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-muted-foreground outline-none transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-muted-foreground outline-none transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           // Numeric columns are right-aligned: put the glyph LEFT of the label
           // (flex-row-reverse) so the label stays flush to the column's right
           // edge and lines up with the right-aligned data below it.

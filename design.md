@@ -322,7 +322,9 @@ components:
   # WCAG 2.4.11). Recipe: `focus-visible:ring-2 focus-visible:ring-ring
   # focus-visible:ring-offset-2 focus-visible:ring-offset-background`; a
   # control that sits flush inside an `overflow-hidden` parent swaps the
-  # offset pair for `focus-visible:ring-inset` instead.
+  # offset pair for `focus-visible:ring-inset` instead. Inset sites as of
+  # 2026-09-17: Tabs triggers (scrolling tab list) and the SortableTableHead
+  # button (table scrollport), both clipped the offset by 0.5 to 1.5px.
   input:
     backgroundColor: "{colors.neutral-50}"
     textColor: "{colors.neutral-800}"
