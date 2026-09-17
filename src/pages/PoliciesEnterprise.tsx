@@ -43,7 +43,7 @@ export function PoliciesEnterprise() {
       <div className="flex w-full @5xl:max-w-5xl flex-col @2xl:gap-6 gap-8">
         <div className="flex max-w-2xl flex-col gap-2">
           <PageTitle>My policies</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
             Your policies for the three inline scans on every routed request.
             Settings locked by an admin apply to you as set.
           </p>

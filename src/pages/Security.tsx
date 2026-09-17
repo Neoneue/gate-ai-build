@@ -287,7 +287,7 @@ function PageHeader() {
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
           Every injection, PII, and credential event your policies caught,
           fingerprinted to Constellation's Digital Evidence layer. Blocked,
           flagged, or redacted.

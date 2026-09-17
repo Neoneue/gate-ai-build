@@ -19,6 +19,8 @@ import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Monogram } from "@/components/ui/monogram";
 import { initialsOf } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
+import { ReceiptIcon } from "@/components/ui/receipt";
+import { SectionTitle } from "@/components/ui/section-title";
 import {
   Select,
   SelectContent,
@@ -35,6 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Timestamp } from "@/components/ui/timestamp";
 import {
   ENTERPRISE_SEAT_RATE_USD,
@@ -50,7 +53,10 @@ import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { BillingHistorySection } from "@/pages/billing/BillingHistorySection";
+import { PlanChargesTable } from "@/pages/billing/BillingHistorySection";
+import { CreditsCard } from "@/pages/billing/CreditsCard";
+import { HistoryLedger } from "@/pages/billing/HistorySection";
+import { PaymentMethodCard } from "@/pages/billing/PaymentMethodCard";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing — ENTERPRISE twin (route: /billing-enterprise, sidebar: "Billing")
@@ -103,17 +109,33 @@ export function BillingEnterprise() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      {/* Plan, then what moved this period, then the history. NO
-          payment-method card and NO credits card: Constellation Support
-          provisions the Enterprise Stripe billing (H2 PRD), so the org has
-          no card of its own to manage, and no PRD sentence puts a credit
-          balance on this tier. */}
+      {/* Three sections, the Settings page pattern: an h2 plus one sentence
+          OUTSIDE the card, so a card carries content and actions only. H1
+          Billing PRD order: plan, credit balance, history. */}
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader onStateChange={onStateChange} state={state} />
         <StateBanner view={view} />
-        <PlanCard view={view} />
-        <SeatChangesSection view={view} />
-        <BillingHistorySection rows={view.invoices} />
+
+        <div className="flex flex-col gap-4">
+          <SectionTitle as="h2">Plan</SectionTitle>
+          <PlanCard view={view} />
+          <SeatChangesSection view={view} />
+        </div>
+
+        <div className="mt-2 flex flex-col gap-4">
+          <SectionTitle as="h2">Credits</SectionTitle>
+          <div className="grid grid-cols-1 gap-4">
+            <CreditsCard />
+            {/* Support invoices the Enterprise seat charge directly, so the
+                card on file only ever pays a credit top-up here. */}
+            <PaymentMethodCard description="Charged for credit top-ups." />
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-col gap-4">
+          <SectionTitle as="h2">Billing history</SectionTitle>
+          <BillingHistorySection view={view} />
+        </div>
       </div>
     </DashboardChrome>
   );
@@ -145,8 +167,8 @@ function PageHeader({
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Billing</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-          Your Enterprise plan, seats, and invoices.
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+          Everything your organization pays for Gate, in one place.
         </p>
       </div>
       <Select onValueChange={onStateChange} value={state}>
@@ -291,13 +313,10 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
 
   return (
     <Card className="min-w-0 pb-0!" tone="enterprise">
-      <CardHeader>
-        <CardTitle>Your plan</CardTitle>
-      </CardHeader>
-      {/* `gap-6`: the identity block (hero + description) and the Seats
-          sub-card are two different things, so 24px separates them while the
-          hero and its description stay a 12px pair. */}
-      <CardContent className="flex flex-1 flex-col gap-6">
+      {/* `gap-3`: the Credits card's flat rhythm, verbatim. Hero, plan
+          description and the seats subtitle read as one 12px column; the
+          `dl`'s own `mt-3` opens the 24px band that carries the hairline. */}
+      <CardContent className="flex flex-1 flex-col gap-3">
         <div className="flex flex-col gap-3">
           {/* Plan name carries its tier badge ink (user direction 2026-09-16). */}
           <HeroNumeric
@@ -312,62 +331,59 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
           </p>
         </div>
 
-        {/* Seats inset — the Pro twin's recipe, shaped like a Card: a header
-            block of title (16px label voice) over subtitle, then the numbers
-            as a label/value stat list rather than stacked sentences, so the
-            four facts an admin scans for line up in one column instead of
-            hiding inside prose (user direction 2026-09-16). Seat CHANGES are
-            their own table card outside this one, because a growing org
-            outgrows a sentence. */}
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-card-muted p-4">
-          <div className="flex flex-col gap-1">
-            <p className="type-label-16 m-0 text-foreground">Seats</p>
-            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              Each member of your organization uses one seat. Invitations count
-              once they're accepted.
-            </p>
-          </div>
-          {/* Hairline between the block's heading and its data, the same
-              `border-t` the CardFooter uses: without it the `dt` labels read
-              as a continuation of the subtitle. `pt-3` against the column's
-              `gap-3` centres the rule in a 24px band. */}
-          <dl className="type-copy-14 m-0 flex flex-col gap-2 border-border border-t pt-3">
-            <StatRow label="Seats" mono value={seats} />
-            <StatRow
-              label="Price per seat"
-              mono={!unprovisioned}
-              muted={unprovisioned}
-              value={
-                unprovisioned
-                  ? "After billing is set up"
-                  : `${formatCurrency(ENTERPRISE_SEAT_RATE_USD)} / seat / month`
-              }
-            />
-            <StatRow
-              label="Current period"
-              muted={unprovisioned}
-              value={
-                unprovisioned
-                  ? "Not started"
-                  : `${formatDateNumeric(view.period.start)} to ${formatDateNumeric(periodLastDay(view.period.end))}`
-              }
-            />
-            <StatRow
-              label="Next invoice"
-              mono={!unprovisioned}
-              muted={unprovisioned}
-              value={
-                unprovisioned
-                  ? "After billing is set up"
-                  : `${formatCurrency(nextInvoiceUsd())} on ${formatDateNumeric(view.period.end)}`
-              }
-            />
-          </dl>
-        </div>
+        {/* Seats facts, flat on the card (user direction 2026-09-16): no
+            inset chrome and no second title, so the plan card reads as one
+            surface. The subtitle stays with the plan description above the
+            hairline, and the numbers below it line up as a label/value stat
+            list instead of hiding inside prose. Seat CHANGES are their own
+            table card outside this one, because a growing org outgrows a
+            sentence. */}
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+          Each member of your organization uses one seat. Invitations count once
+          they're accepted.
+        </p>
+        {/* Hairline between the description block and its data, the same
+            `border-t` the CardFooter uses: without it the `dt` labels read
+            as a continuation of the subtitle. It sits 24px under the subtitle
+            (`gap-3` plus `mt-3`) and 12px over the first row (`pt-3`): the
+            Credits card's band, so the two cards on this page match. */}
+        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
+          <StatRow label="Seats" mono value={seats} />
+          <StatRow
+            label="Price per seat"
+            mono={!unprovisioned}
+            muted={unprovisioned}
+            value={
+              unprovisioned
+                ? "After billing is set up"
+                : `${formatCurrency(ENTERPRISE_SEAT_RATE_USD)} / seat / month`
+            }
+          />
+          <StatRow
+            label="Current period"
+            mono={!unprovisioned}
+            muted={unprovisioned}
+            value={
+              unprovisioned
+                ? "Not started"
+                : `${formatDateNumeric(view.period.start)} to ${formatDateNumeric(periodLastDay(view.period.end))}`
+            }
+          />
+          <StatRow
+            label="Next invoice"
+            mono={!unprovisioned}
+            muted={unprovisioned}
+            value={
+              unprovisioned
+                ? "After billing is set up"
+                : `${formatCurrency(nextInvoiceUsd())} on ${formatDateNumeric(view.period.end)}`
+            }
+          />
+        </dl>
       </CardContent>
       <CardFooter className="flex-wrap justify-end gap-2 border-border border-t py-2">
         <p className="type-copy-14 m-0 mr-auto text-pretty text-muted-foreground">
-          Want to add seats or change your plan? Constellation Support can help.
+          Want to add seats or change your plan?
         </p>
         {/* No-op, like the Pro twin's `Invoice portal` / `Update card`. */}
         <Button size="sm" variant="outline">
@@ -536,6 +552,60 @@ function SeatChangesSection({ view }: { view: EnterpriseBillingView }) {
           </TableBody>
         </Table>
       )}
+    </Card>
+  );
+}
+
+/* ─── Billing history ────────────────────────────────────────────────── */
+
+/** Two ledgers answer two different questions, so they are two tabs of one
+ *  card rather than two cards (user direction 2026-09-16). **Plan** is what
+ *  the seat subscription charged; **Balance** is the pay-as-you-go credit
+ *  ledger, which is plan-independent and therefore still has rows even when
+ *  billing is not provisioned. `Invoice portal` sits in the card header, not
+ *  in a tab: it is the route to the invoice documents behind both ledgers.
+ *
+ *  ONE explanation, in the card subtitle, rather than a sentence per tab:
+ *  the two tabs are only legible next to each other, so the copy that
+ *  distinguishes them has to be visible whichever tab is open. */
+function BillingHistorySection({ view }: { view: EnterpriseBillingView }) {
+  return (
+    <Card density="flush">
+      {/* `variant="line"` already carries the `px-4` gutter and the bottom
+          hairline, so the list lands on the same 16px edge as the card title
+          and the table's first column — no padding override here, unlike the
+          TeamDetail precedent whose parent column already pads. */}
+      {/* `gap-0`: Tabs defaults to an 8px column gap, which would float the
+          table off the tab underline. In a flush Card the table butts the
+          hairline the way the Pro history table butts its header. */}
+      <Tabs className="gap-0" defaultValue="plan">
+        {/* One 48px row holds the triggers and the action: `h-12` is the
+            bare TabsList's 43px rounded up the 4px grid, which gives the
+            32px `size="sm"` button room to centre against the triggers.
+            The WRAPPER owns the bottom hairline so it runs the full card
+            width; the list drops its own (`border-b-0`) and stretches, so
+            the active-tab indicator still lands on that hairline. */}
+        <div className="flex h-12 items-stretch justify-between border-border border-b">
+          <TabsList className="w-auto border-b-0" variant="line">
+            <TabsTrigger value="plan">Plan</TabsTrigger>
+            <TabsTrigger value="balance">Balance</TabsTrigger>
+          </TabsList>
+          <div className="flex shrink-0 items-center pr-4">
+            <Button size="sm" variant="outline">
+              <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
+              Invoice portal
+            </Button>
+          </div>
+        </div>
+
+        <TabsContent value="plan">
+          <PlanChargesTable rows={view.invoices} />
+        </TabsContent>
+
+        <TabsContent value="balance">
+          <HistoryLedger />
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 }

@@ -55,7 +55,7 @@ export function TokenSavingsEnterprise() {
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <PageTitle>My token savings</PageTitle>
-          <p className="type-copy-16 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
             Your token savings: cache, compress and deduplicate to spend less
             per request. Settings locked by an admin apply to you as set.
           </p>

@@ -1,15 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { IconActionButton } from "@/components/ui/icon-action-button";
-import { ReceiptIcon } from "@/components/ui/receipt";
 import {
   SortableTableHead,
   Table,
@@ -19,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Timestamp } from "@/components/ui/timestamp";
 import { HISTORY_ROWS, type HistoryRow } from "@/data/billing-history";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
@@ -27,6 +20,9 @@ import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HistorySection — the PAYG credit ledger, shared by Pro and Free.
+ *
+ * Card title is `Billing history`, not the live product's bare `History`
+ * (user direction 2026-09-16: "history is too vague").
  *
  * Restored from the live product (screenshots 2026-09-16) after a short
  * detour through an invoice-only list: History is the running balance, and
@@ -42,6 +38,12 @@ import { cn } from "@/lib/utils";
  *
  * The disclosure is `IconActionButton` + a rotating `ChevronDown` with
  * `aria-expanded`, the precedent from Policies.tsx.
+ *
+ * Split 2026-09-16 into `HistoryLedger` (the table alone) and
+ * `HistorySection` (Card + title + description + ledger). Pro and Free render
+ * the Card; the Enterprise page renders `HistoryLedger` inside the Balance
+ * tab of its own tabbed card. Pro/Free output is unchanged by the split.
+
  * ───────────────────────────────────────────────────────────────────────── */
 
 const fmtAmount = (n: number) =>
@@ -128,7 +130,9 @@ function AmountCell({ amount }: { amount: number }) {
     <TableCell
       className={cn(
         "type-mono-14 whitespace-nowrap text-right",
-        amount > 0 ? "text-success-700" : "text-foreground"
+        amount > 0
+          ? "text-success-700 dark:text-success-300"
+          : "text-foreground"
       )}
     >
       {fmtAmount(amount)}
@@ -177,8 +181,8 @@ function HistoryEntryRows({ entry }: { entry: HistoryEntry }) {
         ? kids.map((kid) => (
             <TableRow className="hover:bg-transparent" key={kid.id}>
               <TableCell className="w-12 whitespace-nowrap pr-0 pl-4" />
-              {/* Child rows indent under the day they belong to. */}
-              <TableCell className="type-mono-14 whitespace-nowrap pl-8 text-muted-foreground">
+              {/* Child dates sit flush under the day date, no extra indent. */}
+              <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
                 <Timestamp date={kid.date} />
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -195,29 +199,29 @@ function HistoryEntryRows({ entry }: { entry: HistoryEntry }) {
   );
 }
 
-export function HistorySection() {
+/** The credit ledger's table alone: no Card, no title, no description. The
+ *  Pro/Free `HistorySection` wraps it in the Card below; the Enterprise page
+ *  renders it inside the Balance tab of its own tabbed card. */
+export function HistoryLedger() {
   const { sort, toggle: toggleSort } = useTableSort();
+  const [page, setPage] = React.useState(1);
+  const [rowsPerPage, setRowsPerPage] = React.useState("25");
   const entries = React.useMemo(() => groupHistory(), []);
   const sortedRows = React.useMemo(
     () => sortRows(entries, sort, historySortValue),
     [entries, sort]
   );
+  // Same shape as the Members table: resolve the select value against the
+  // real total, then slice. A grouped gateway day counts as ONE row here,
+  // which is what the footer's "Showing 1-N of N" reports.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
+  const pageRows = React.useMemo(
+    () => sortedRows.slice((page - 1) * perPage, page * perPage),
+    [sortedRows, page, perPage]
+  );
 
   return (
-    <Card density="flush">
-      <CardHeader className="py-3">
-        <CardTitle>History</CardTitle>
-        <CardDescription>
-          Past charges and credit top-ups. Gateway messages are grouped by day.
-          Expand a day to see each message.
-        </CardDescription>
-        <CardAction>
-          <Button size="sm" variant="outline">
-            <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
-            Invoice portal
-          </Button>
-        </CardAction>
-      </CardHeader>
+    <>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -260,11 +264,18 @@ export function HistorySection() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedRows.map((entry) => (
+          {pageRows.map((entry) => (
             <HistoryEntryRows entry={entry} key={entry.id} />
           ))}
         </TableBody>
       </Table>
-    </Card>
+      <TablePaginationFooter
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={sortedRows.length}
+      />
+    </>
   );
 }

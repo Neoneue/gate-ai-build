@@ -15,14 +15,18 @@ import { CreditCardIcon } from "@/components/ui/credit-card";
  * both the subscription renewal and any credit top-up, on every paid tier.
  * ───────────────────────────────────────────────────────────────────── */
 
-export function PaymentMethodCard() {
+export function PaymentMethodCard({
+  /** What the card on file pays for. Pro renews a subscription AND funds
+   *  top-ups; Enterprise is invoiced by Support, so only top-ups. */
+  description = "Charged for subscription renewals and credit top-ups.",
+}: {
+  description?: string;
+} = {}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Payment method</CardTitle>
-        <CardDescription>
-          Charged for subscription renewals and credit top-ups.
-        </CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">

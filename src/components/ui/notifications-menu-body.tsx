@@ -103,7 +103,7 @@ function NotificationRow({
 }) {
   return (
     <button
-      className="flex w-full items-start gap-3 px-4 py-3 text-left outline-none transition-colors duration-100 ease-out hover:bg-muted focus-visible:inset-ring-3 focus-visible:inset-ring-ring/50 motion-reduce:transition-none"
+      className="flex w-full items-start gap-3 px-4 py-3 text-left outline-none transition-colors duration-100 ease-out hover:bg-muted focus-visible:inset-ring-2 focus-visible:inset-ring-ring motion-reduce:transition-none"
       onClick={() => onOpen(item)}
       type="button"
     >

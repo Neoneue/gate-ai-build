@@ -41,14 +41,14 @@ export function Calendar({
         nav: "absolute inset-x-2 top-1 flex items-center justify-between h-8 pointer-events-none",
         button_previous: cn(
           "pointer-events-auto relative z-10 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xs",
-          "text-muted-foreground hover:bg-accent hover:text-foreground",
-          "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "text-muted-foreground hover:bg-accent-muted hover:text-foreground",
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:pointer-events-none disabled:opacity-40"
         ),
         button_next: cn(
           "pointer-events-auto relative z-10 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xs",
-          "text-muted-foreground hover:bg-accent hover:text-foreground",
-          "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "text-muted-foreground hover:bg-accent-muted hover:text-foreground",
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:pointer-events-none disabled:opacity-40"
         ),
         month_grid: "w-full border-collapse",
@@ -67,8 +67,8 @@ export function Calendar({
         // reads as a soft swatch instead of a circle.
         day_button: cn(
           "mx-auto inline-flex size-8 items-center justify-center rounded-xs",
-          "text-foreground hover:bg-accent hover:text-foreground",
-          "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "text-foreground hover:bg-accent-muted hover:text-foreground",
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "transition-colors duration-100 ease-out motion-reduce:transition-none"
         ),
         // Range fills land on the <td>; end-caps round only the outer

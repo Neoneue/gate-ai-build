@@ -23,7 +23,7 @@ const badgeVariants = cva(
   //   5. **Variants encode tone.** `success` / `warning` / `destructive` /
   //      `info` / `neutral` / `outline` / `ghost` / `secondary` / `link` /
   //      `default`.
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-xs border border-transparent px-2 font-medium font-mono text-xs uppercase tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-xs border border-transparent px-2 font-medium font-mono text-xs uppercase tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0",
   {
     variants: {
       /* Size. `default` is the 20px pill at 12px type every status badge
@@ -60,9 +60,10 @@ const badgeVariants = cva(
            Named by ROLE so a tier badge never reads as a status. */
         enterprise:
           "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-        /* Pro's plan-tier badge. Indigo, NOT the shared `info` blue: blue
-           is a status tone used elsewhere, and a tier is not a status. */
-        pro: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
+        /* Pro's plan-tier badge. Brand blue on the -100 / -700 rung (indigo
+           was tried 2026-09-16 and reverted the same day: it read off-brand
+           next to the blue nav). Distinct from `info` by rung, not hue. */
+        pro: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
       },
     },
     defaultVariants: {

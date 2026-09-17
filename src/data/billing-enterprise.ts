@@ -182,8 +182,8 @@ export function invoicesForState(
 
 /** Everything the page renders for one preview state, coherent as a story:
  *  - `active` / `past-due`: an org on Enterprise since the oldest month
- *    shown, with the full seat-invoice history (no PAYG receipts: no PRD
- *    sentence gives Enterprise a credit balance; open question for review);
+ *    shown, with the seat-invoice history (the PAYG ledger is the Balance
+ *    tab, fed by `HISTORY_ROWS`);
  *  - `granted`: DAY ONE. Support upgraded the org today; the period runs
  *    from today to the end of the month, the only invoice is the prorated
  *    first seat charge, and there are no seat changes yet;
@@ -196,7 +196,7 @@ export type EnterpriseBillingView = {
   changes: SeatChangeRow[];
   /** Whether the Changes this period card renders at all. */
   showChanges: boolean;
-  /** Seat invoices, newest first. */
+  /** Seat invoices (the Plan tab), newest first. */
   invoices: EnterpriseInvoiceRow[];
   /** The invoice the past-due banner reports; null outside `past-due`. */
   failedInvoice: EnterpriseInvoiceRow | null;
@@ -252,6 +252,9 @@ export function enterpriseBillingView(
     };
   }
   const seatInvoices = invoicesForState(state, members);
+  // The Billing history card is tabbed (user 2026-09-16): Plan = these seat
+  // invoices; Balance = the PAYG ledger (`HISTORY_ROWS`), rendered by the
+  // shared HistorySection. Receipts therefore do not merge in here.
   return {
     state,
     grantedOn: ENTERPRISE_GRANTED_ON,

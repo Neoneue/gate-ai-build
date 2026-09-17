@@ -9,7 +9,7 @@ import { AVATAR_TONE_CLS, type MonogramProps } from "./monogram-types";
  * map, and the rendering logic into one primitive.
  *
  * Size variants:
- * 'sm' → size-4 (16px), text-[10px], single initial
+ * 'sm' → size-5 (20px), text-xs (12px), single initial (was 16px / 10px until 2026-09-16; the letter floated in the circle)
  * 'md' → size-7 (28px), text-xs (12px), two initials
  *
  * The `initials` prop accepts the pre-computed initials string. `initialsOf`
@@ -33,7 +33,7 @@ export function Monogram({ tone, initials, size = "md" }: MonogramProps) {
       aria-hidden
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full font-medium font-sans",
-        size === "sm" ? "size-4 text-[10px]" : "size-7 text-xs",
+        size === "sm" ? "size-5 text-xs" : "size-7 text-xs",
         AVATAR_TONE_CLS[tone]
       )}
     >

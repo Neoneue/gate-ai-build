@@ -83,7 +83,14 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
-      className={cn("bg-card-muted", className)}
+      // `[&>tr]:h-10` — a HEADER row is 40px, a body row is >= 48px (site
+      // rule 2026-09-16, user direction). `TableRow` carries `h-12` for the
+      // body floor, and a <tr> in <thead> is the same component, so without
+      // this the header inherited the 48px floor and overrode `TableHead`'s
+      // own `h-10`. Scoping the height to the parent wins on specificity
+      // (`.[&>tr]:h-10 > tr` beats `.h-12`), so no call site changes and no
+      // second row component is needed.
+      className={cn("bg-card-muted [&>tr]:h-10", className)}
       data-slot="table-header"
       {...props}
     />
@@ -126,10 +133,19 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
         // which already snap with no visible artifact.
         // `h-12` is a FLOOR, not a fixed height: on a <tr> `height` acts as
         // a minimum, so content-heavy rows still grow. Site rule 2026-09-14:
-        // no body row renders under 48px. Before this the row was
+        // no BODY row renders under 48px. Before this the row was
         // content-sized and landed at 45 to 46px wherever a cell held only
         // a 14px line (Models list, shelf tables), 48 or more elsewhere.
-        "h-12 border-border border-b transition-[background-color] ease-out hover:bg-accent data-[state=selected]:bg-accent motion-reduce:transition-none",
+        // HEADER rows are 40px (2026-09-16, user direction): `TableHeader`
+        // scopes `[&>tr]:h-10` to its own children, which outranks this
+        // `h-12` and restores `TableHead` / `SortableTableHead`'s `h-10`.
+        // Hover is `--accent-muted`, selected is `--accent` (design.md §2,
+        // 2026-09-16). No `data-[state=selected]:hover:` guard is needed:
+        // `[data-state="selected"]` (0,2,0) outranks `:hover` (0,1,0), so a
+        // hovered selected row keeps the full-strength accent. Verified in
+        // the browser AFTER the 150ms transition settles — read it sooner
+        // and getComputedStyle returns the mid-transition value.
+        "h-12 border-border border-b transition-[background-color] ease-out hover:bg-accent-muted data-[state=selected]:bg-accent motion-reduce:transition-none",
         className
       )}
       data-slot="table-row"
@@ -155,7 +171,7 @@ function NavTableRow({
   return (
     <TableRow
       className={cn(
-        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset active:bg-accent",
+        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:bg-accent",
         className
       )}
       onClick={onActivate}
@@ -246,7 +262,7 @@ function SortableTableHead({
         // is NOT a click target. A fixed-size glyph slot is always present
         // (opacity-toggled) so the label never shifts across states.
         className={cn(
-          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-muted-foreground outline-none transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+          "type-label-12 group/sort inline-flex h-10 w-fit max-w-1/2 select-none items-center gap-1 whitespace-nowrap rounded-xs align-middle text-muted-foreground outline-none transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           // Numeric columns are right-aligned: put the glyph LEFT of the label
           // (flex-row-reverse) so the label stays flush to the column's right
           // edge and lines up with the right-aligned data below it.

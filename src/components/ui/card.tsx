@@ -34,7 +34,7 @@ function Card({
    * destructive `<Button>` inside remains the loudest thing on the card.
    * Never paint a danger border onto a call site's `className`.
    *
-   * `pro` and `enterprise` (2026-09-16, user direction) are PLAN-TIER
+   * `pro` (blue) and `enterprise` (violet) (2026-09-16, user direction) are PLAN-TIER
    * edges, not statuses: light `-200`, dark `-500` at 30% — the same
    * dark alpha rung the Callout and the status banners use, so no new
    * alpha rung enters the system. Light was stepped 300 -> 200 the same
@@ -69,9 +69,9 @@ function Card({
       className={cn(
         // Card tier: honest border-border + shadow-xs (design.md, Material
         // ladder). Tailwind shadow scale only: xs/sm/md/lg.
-        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[tone=enterprise]:border-violet-200 data-[tone=pro]:border-indigo-200 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! dark:data-[tone=enterprise]:border-violet-500/30 dark:data-[tone=pro]:border-indigo-500/30 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[tone=enterprise]:border-violet-200 data-[tone=pro]:border-blue-200 data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! dark:data-[tone=enterprise]:border-violet-500/30 dark:data-[tone=pro]:border-blue-500/30 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
         // Interactive: `TableRow`'s hover recipe, verbatim — plain
-        // `hover:bg-accent`, `transition-[background-color]` (never
+        // `hover:bg-accent-muted`, `transition-[background-color]` (never
         // `transition-colors`: interpolating the border smudges, see
         // table.tsx), `motion-reduce:transition-none`.
         //
@@ -82,7 +82,7 @@ function Card({
         // itself uses plain `hover:`, which is why row hover works at all.
         // When `hover-fine` is repaired site-wide, this moves with it.
         interactive &&
-          "cursor-pointer transition-[background-color,scale] duration-150 ease-out hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+          "cursor-pointer transition-[background-color,scale] duration-150 ease-out hover:bg-accent-muted active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
         className
       )}
       data-density={density}
@@ -99,11 +99,14 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        // gap-y-0 collapses the additive 4px between title and description;
-        // their leading already supplies enough air. gap-x-2 keeps 8px
-        // between the title column and any CardAction so a long title
-        // doesn't butt against the action button.
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-x-2 gap-y-0 px-4 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] group-data-[size=sm]/card:px-3 [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        // gap-y-1 (4px, on the grid) separates the title from its
+        // description. It was gap-y-0 until 2026-09-16 on the theory that
+        // the leading supplied enough air; it did not — the pair read as
+        // one block (user direction). One value here, so every
+        // CardTitle/CardDescription pair on the site gets the same air.
+        // gap-x-2 keeps 8px between the title column and any CardAction so
+        // a long title doesn't butt against the action button.
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-x-2 gap-y-1 px-4 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] group-data-[size=sm]/card:px-3 [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
         className
       )}
       data-slot="card-header"

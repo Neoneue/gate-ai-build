@@ -164,7 +164,9 @@ export function CodeCardTabs({
           isActive
             ? "border border-border bg-card font-medium text-foreground shadow-xs"
             : "border border-transparent font-medium text-muted-foreground",
-          interactive && !isActive && "hover:bg-accent hover:text-foreground"
+          interactive &&
+            !isActive &&
+            "hover:bg-accent-muted hover:text-foreground"
         );
         if (interactive) {
           return (

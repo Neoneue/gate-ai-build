@@ -112,7 +112,7 @@ function PageHeader() {
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Messages</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
           Every model call across your stack, inspected for injection, PII, and
           credentials before it reaches the model.
         </p>

@@ -122,7 +122,7 @@ export function CopyButton(props: CopyButtonProps) {
           // Flush split-well segment: kill the primitive's radius, border,
           // and fixed height so the segment IS the well's right-hand half.
           labelSize === "segment" &&
-            "type-label-14 h-auto self-stretch rounded-none border-0 border-border border-l bg-transparent px-4 text-muted-foreground shadow-none hover:bg-accent hover:text-foreground",
+            "type-label-14 h-auto self-stretch rounded-none border-0 border-border border-l bg-transparent px-4 text-muted-foreground shadow-none hover:bg-accent-muted hover:text-foreground",
           className
         )}
         onClick={trigger}
@@ -160,7 +160,7 @@ export function CopyButton(props: CopyButtonProps) {
       <button
         aria-label={ariaLabel}
         className={cn(
-          'relative inline-flex size-5 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-[-2px] before:content-[""] hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none',
+          'relative inline-flex size-5 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-150 ease-out before:absolute before:inset-[-2px] before:content-[""] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none',
           copied && "text-success-600 hover:text-success-600",
           className
         )}

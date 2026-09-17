@@ -1,14 +1,5 @@
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ReceiptIcon } from "@/components/ui/receipt";
 import {
   SortableTableHead,
   Table,
@@ -19,18 +10,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Timestamp } from "@/components/ui/timestamp";
 import type { InvoiceRow } from "@/data/billing-seats";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { formatCurrency } from "@/lib/formatters";
 
 /* ─────────────────────────────────────────────────────────────────────────
- * BillingHistorySection — the ENTERPRISE history list.
+ * PlanChargesTable — the ENTERPRISE seat-charge table.
  *
  * Enterprise is billed by seat through its own Stripe configuration and has
  * no pay-as-you-go balance, so its history is a list of seat charges rather
  * than the running credit ledger Pro and Free show (`HistorySection.tsx`).
- * Same card title, `History`, because it answers the same question.
+ * It is the "Plan" tab of the Enterprise Billing history card (2026-09-16);
+ * the "Balance" tab renders `HistoryLedger` from `HistorySection.tsx`. The
+ * card, its title and the per-tab description live on the page, so this
+ * module is the table and its empty state alone.
  *
  * `seats` is null on a row with no seat count; the cell stays empty rather
  * than printing a zero that would read as "no seats billed". Sorting folds
@@ -38,7 +34,8 @@ import { formatCurrency } from "@/lib/formatters";
  * order.
  *
  * There is no per-row download. These rows are billing events; the
- * `Invoice portal` action is where an invoice document is fetched.
+ * `Invoice portal` action, which sits in the Plan tab's header row, is where
+ * an invoice document is fetched.
  * ───────────────────────────────────────────────────────────────────────── */
 
 function invoiceSortValue(
@@ -62,35 +59,30 @@ function invoiceSortValue(
 const DEFAULT_EMPTY_BODY =
   "Your first seat charge will show up here once billing is set up.";
 
-export function BillingHistorySection({
+export function PlanChargesTable({
   rows,
-  description = "Past charges for your plan.",
   emptyBody = DEFAULT_EMPTY_BODY,
 }: {
   rows: InvoiceRow[];
-  description?: string;
   emptyBody?: string;
 }) {
   const { sort, toggle: toggleSort } = useTableSort();
+  const [page, setPage] = React.useState(1);
+  const [rowsPerPage, setRowsPerPage] = React.useState("25");
   const sortedRows = React.useMemo(
     () => sortRows(rows, sort, invoiceSortValue),
     [rows, sort]
   );
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
+  const pageRows = React.useMemo(
+    () => sortedRows.slice((page - 1) * perPage, page * perPage),
+    [sortedRows, page, perPage]
+  );
 
   return (
-    <Card density="flush">
-      <CardHeader className="py-3">
-        <CardTitle>History</CardTitle>
-        <CardDescription>{description}</CardDescription>
-        <CardAction>
-          <Button size="sm" variant="outline">
-            <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
-            Invoice portal
-          </Button>
-        </CardAction>
-      </CardHeader>
+    <>
       {sortedRows.length === 0 ? (
-        <TableEmptyState body={emptyBody} title="No history yet" />
+        <TableEmptyState body={emptyBody} title="No billing history yet" />
       ) : (
         /* `table-fixed` + a `w-[N%]` on every head, the Members table's
            recipe (Team.tsx:295), so Status lands flush against the table's
@@ -143,7 +135,7 @@ export function BillingHistorySection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedRows.map((row) => (
+            {pageRows.map((row) => (
               <TableRow className="hover:bg-transparent" key={row.id}>
                 <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.date} format="dateNumeric" />
@@ -169,6 +161,15 @@ export function BillingHistorySection({
           </TableBody>
         </Table>
       )}
-    </Card>
+      {sortedRows.length === 0 ? null : (
+        <TablePaginationFooter
+          onPageChange={setPage}
+          onRowsPerPageChange={setRowsPerPage}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          total={sortedRows.length}
+        />
+      )}
+    </>
   );
 }

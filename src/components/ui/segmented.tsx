@@ -58,7 +58,7 @@ export function Segmented({
               aria-pressed={selected}
               className={cn(
                 // Skill: emil-design-eng — color/border-only transition (never `transition-all`).
-                "inline-flex items-center justify-center gap-2 px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+                "inline-flex items-center justify-center gap-2 px-3 font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
                 size === "sm" ? "h-7" : "h-8",
                 selected
                   ? "border border-surface-strong bg-surface-strong text-surface-strong-foreground"
@@ -192,7 +192,7 @@ function SegmentedPillVariant({
             className={cn(
               // z-10 keeps text above the indicator. Color-only transition
               // (skill: performance.md — never `transition-all`).
-              "relative z-10 inline-flex items-center justify-center gap-2 rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+              "relative z-10 inline-flex items-center justify-center gap-2 rounded-xs font-medium font-sans text-xs transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
               size === "sm" ? "px-3 py-1" : "px-4 py-2",
               selected
                 ? "text-foreground"

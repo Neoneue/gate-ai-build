@@ -2,13 +2,7 @@ import { Plus } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -101,16 +95,17 @@ export function CreditsCard() {
 
   return (
     <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <CardTitle>Credits</CardTitle>
-      </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$49.99238</HeroNumeric>
+        <HeroNumeric>$49.99</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
-        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
+        {/* Same hairline the plan sub-cards use: a 1px `border-border`
+            rule centred in a 24px band (12px above from `mt-3`, 12px
+            below from `pt-3`), so the stat rows read as data under the
+            description instead of more of it. */}
+        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
           <CreditStatRow label="Used this month" mono value="$0.00 / $49.99" />
           <CreditStatRow
             label="Auto-recharge"

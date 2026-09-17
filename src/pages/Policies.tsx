@@ -172,7 +172,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-2xl flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>

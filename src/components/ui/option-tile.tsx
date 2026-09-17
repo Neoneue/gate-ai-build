@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const optionTileVariants = cva(
-  "flex items-center justify-center border tabular-nums outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+  "flex items-center justify-center border tabular-nums outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       size: {
@@ -50,7 +50,8 @@ const optionTileVariants = cva(
       {
         tone: "neutral",
         selected: false,
-        className: "border-border bg-card text-foreground hover:bg-accent",
+        className:
+          "border-border bg-card text-foreground hover:bg-accent-muted",
       },
       {
         tone: "accent",

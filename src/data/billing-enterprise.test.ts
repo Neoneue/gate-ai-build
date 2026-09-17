@@ -135,8 +135,7 @@ describe("Enterprise billing view per state", () => {
     expect(active.grantedOn.getTime()).toBe(ENTERPRISE_GRANTED_ON.getTime());
     expect(active.period).toEqual(ENTERPRISE_CURRENT_PERIOD);
     expect(active.changes).toHaveLength(3);
-    // Seat invoices only: no PRD sentence gives Enterprise a PAYG balance,
-    // so no top-up receipts appear here (open question for review).
+    // Plan tab = seat invoices only; the PAYG ledger is the Balance tab.
     expect(active.invoices).toHaveLength(6);
     expect(active.invoices.every((r) => r.seats !== null)).toBe(true);
     for (let i = 1; i < active.invoices.length; i++) {

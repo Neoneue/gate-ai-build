@@ -55,7 +55,7 @@ export function SidebarUpgradeCard({
   return (
     <button
       className={cn(
-        "shadow-(color:--promo-shadow) relative flex w-full flex-col items-start justify-center overflow-hidden rounded-md border border-promo-border bg-card p-3 text-left shadow-sm transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+        "shadow-(color:--promo-shadow) relative flex w-full flex-col items-start justify-center overflow-hidden rounded-md border border-promo-border bg-card p-3 text-left shadow-sm transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
         className
       )}
       onClick={onClick}
