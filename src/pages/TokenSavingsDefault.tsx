@@ -5,6 +5,8 @@ import { PageTitle } from "@/components/ui/page-title";
 import { SectionTitle } from "@/components/ui/section-title";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { SavingsOptionsSection } from "@/pages/TokenSavings";
+import { SummaryCard } from "@/pages/token-savings/SummaryCard";
+import { summaryFor } from "@/pages/token-savings-summary";
 
 export function TokenSavingsDefault() {
   const navigate = useNavigate();
@@ -80,6 +82,17 @@ export function TokenSavingsDefault() {
             </div>
           </KpiRail>
         </div>
+
+        {/* Nothing has passed through this workspace, so every window is a
+            no-traffic window: the card explains instead of claiming zeros. */}
+        <SummaryCard
+          model={summaryFor("all", null, {
+            compressionOn: true,
+            cachingOn: true,
+            plan: "free",
+            hasTraffic: false,
+          })}
+        />
 
         <SavingsOptionsSection plan="free" />
       </div>

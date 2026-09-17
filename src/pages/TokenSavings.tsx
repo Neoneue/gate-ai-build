@@ -37,6 +37,7 @@ import {
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
+import { SummaryCard } from "@/pages/token-savings/SummaryCard";
 import {
   type CustomRange,
   KPI_BY_RANGE,
@@ -49,8 +50,13 @@ import {
   sparkDates,
   sparkDelta,
 } from "@/pages/token-savings-data";
+import { summaryFor } from "@/pages/token-savings-summary";
 
 type Plan = "pro" | "free";
+
+/** The two enable switches on the Savings options cards. On Pro the
+ *  compression switch is the Advanced card's; on Free it is Basic's. */
+export type SavingsSwitches = { compression: boolean; caching: boolean };
 
 export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
   const navigate = useNavigate();
@@ -66,6 +72,17 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
     return r === "24h" || r === "7d" || r === "30d" || r === "all" ? r : "all";
   });
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
+  // The two savings switches live here so the Summary card can read them:
+  // a mechanism that is off is named as off instead of showing a bare zero.
+  const [savings, setSavings] = useState<SavingsSwitches>({
+    compression: true,
+    caching: true,
+  });
+  const summary = summaryFor(range, customRange, {
+    compressionOn: savings.compression,
+    cachingOn: savings.caching,
+    plan,
+  });
   return (
     <DashboardChrome
       activeNavId="token-savings"
@@ -97,7 +114,12 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
           }}
           range={range}
         />
-        <SavingsOptionsSection plan={plan} />
+        <SummaryCard model={summary} />
+        <SavingsOptionsSection
+          onSavingsChange={setSavings}
+          plan={plan}
+          savings={savings}
+        />
       </div>
     </DashboardChrome>
   );
@@ -181,15 +203,42 @@ export function OverviewSection({
 
 /* ─── Savings options ───────────────────────────────────────────────── */
 
-export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
+export function SavingsOptionsSection({
+  plan = "pro",
+  savings,
+  onSavingsChange,
+}: {
+  plan?: Plan;
+  /** Controlled switches (the org page lifts them for the Summary card).
+   *  Omit both and the section owns its own state (TokenSavingsDefault). */
+  savings?: SavingsSwitches;
+  onSavingsChange?: (next: SavingsSwitches) => void;
+} = {}) {
+  const [local, setLocal] = useState<SavingsSwitches>({
+    compression: true,
+    caching: true,
+  });
+  const value = savings ?? local;
+  const update = (patch: Partial<SavingsSwitches>) => {
+    const next = { ...value, ...patch };
+    setLocal(next);
+    onSavingsChange?.(next);
+  };
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <SectionTitle>Savings options</SectionTitle>
       </div>
       <div className="flex flex-col gap-4">
-        <CompressionCard plan={plan} />
-        <CachingCard />
+        <CompressionCard
+          enabled={value.compression}
+          onEnabledChange={(compression) => update({ compression })}
+          plan={plan}
+        />
+        <CachingCard
+          enabled={value.caching}
+          onEnabledChange={(caching) => update({ caching })}
+        />
       </div>
     </div>
   );
@@ -229,8 +278,13 @@ const TTL_OPTIONS = [
   { value: "24h", label: "24h" },
 ] as const;
 
-function CachingCard() {
-  const [enabled, setEnabled] = useState(true);
+function CachingCard({
+  enabled,
+  onEnabledChange,
+}: {
+  enabled: boolean;
+  onEnabledChange: (next: boolean) => void;
+}) {
   const [ttl, setTtl] = useState("1h");
 
   return (
@@ -261,7 +315,7 @@ function CachingCard() {
                 checked={enabled}
                 className="mt-1 shrink-0"
                 onCheckedChange={(next) => {
-                  setEnabled(next);
+                  onEnabledChange(next);
                   toast(next ? "Caching enabled" : "Caching disabled");
                 }}
                 size="lg"
@@ -433,11 +487,18 @@ function BenefitList({
   );
 }
 
-function CompressionCard({ plan }: { plan: Plan }) {
+function CompressionCard({
+  plan,
+  enabled,
+  onEnabledChange,
+}: {
+  plan: Plan;
+  /** The one switch this card shows: Advanced on Pro, Basic on Free. */
+  enabled: boolean;
+  onEnabledChange: (next: boolean) => void;
+}) {
   const navigate = useNavigate();
   const isPro = plan === "pro";
-  const [enabled, setEnabled] = useState(true);
-  const [advancedEnabled, setAdvancedEnabled] = useState(true);
   const [compareOpen, setCompareOpen] = useState(false);
 
   // Free — neutral "safe lane" card. Only shown on the Free plan, where the
@@ -463,7 +524,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
               checked={enabled}
               className="shrink-0"
               onCheckedChange={(next) => {
-                setEnabled(next);
+                onEnabledChange(next);
                 toast(next ? "Compression enabled" : "Compression disabled");
               }}
               size="lg"
@@ -509,10 +570,10 @@ function CompressionCard({ plan }: { plan: Plan }) {
             {isPro ? (
               <Switch
                 aria-label="Enable advanced compression"
-                checked={advancedEnabled}
+                checked={enabled}
                 className="shrink-0"
                 onCheckedChange={(next) => {
-                  setAdvancedEnabled(next);
+                  onEnabledChange(next);
                   toast(
                     next
                       ? "Advanced compression enabled"
@@ -565,7 +626,7 @@ function CompressionCard({ plan }: { plan: Plan }) {
     <>
       <Card>
         <CardChromeHeader
-          action={<StatusBadge on={isPro ? advancedEnabled : enabled} />}
+          action={<StatusBadge on={enabled} />}
           description="Shrink prompts before they reach the provider, without affecting the model's output."
           title="Compression"
         />

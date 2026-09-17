@@ -118,7 +118,8 @@ colors:
   chart-2-soft: "oklch(0.776 0.136 50)"  # light · dark oklch(0.736 0.136 50)
   chart-3-soft: "oklch(0.776 0.160 145)"  # light · dark oklch(0.736 0.160 145)
   chart-4-soft: "oklch(0.760 0.144 290)"  # light · dark oklch(0.720 0.144 290)
-  # Only the four slots a bar consumes today exist. A fifth slot taking a bar
+  chart-7-soft: "oklch(0.880 0.128 88)"  # light · dark oklch(0.840 0.128 88) — added 2026-09-17 for the Token savings Summary Compression bar (the tile is chart-7)
+  # Only the slots a bar consumes exist (1-4 and 7). A fifth slot taking a bar
   # fill gets its twin added here and in src/index.css FIRST — never a
   # one-off lighter value at the call site.
 
@@ -1447,6 +1448,52 @@ switches).
   `h-5` wrapper, title `type-label-14` + body `type-copy-14`, one list item
   per breached window. Copy is single-sourced in `src/data/teams.ts`
   (`budgetBreachTitle`, `budgetBreachBody`, `budgetResetLabel`).
+
+### Token savings Summary card *(added 2026-09-17)*
+
+- **SummaryCard** (`src/pages/token-savings/SummaryCard.tsx`) — one `Card`
+  between the Overview rail and Savings options that says in plain language
+  what produced the window's savings. Model and every sentence come from
+  `token-savings-summary.ts` (`summaryFor`, `SUMMARY_COPY`); the card holds
+  no arithmetic and no copy of its own. Tokens and requests only, never
+  dollars; no tooltips, nothing focusable.
+- **Header:** `SectionTitle` "Summary" (the card is a peer of the Overview and
+  Savings options section titles, so it takes the 20px voice, not the 16px
+  card title) and ONE purpose subtitle in the card-description voice
+  (`type-copy-14 text-muted-foreground`). The period is read in the lede and
+  the epoch caveat sits in the footer: a header never stacks unrelated facts,
+  and never mono (user 2026-09-17).
+- **Body** (`CardContent`, `gap-6`): lede `type-copy-16` with the two figures
+  in `<strong className="font-medium tabular-nums">`; two figure cells in an
+  unconditional `grid grid-cols-2 gap-4` (user 2026-09-17: never stacked),
+  each the Caching card's nested-cell recipe (`rounded-sm border border-border
+  bg-transparent shadow-none`) in the KpiTile composition: `Eyebrow` label
+  above `HeroNumeric`, denominator as the `type-copy-14 text-muted-foreground`
+  caption (user 2026-09-17: KPIs take eyebrows everywhere); then the
+  breakdown: `SectionHeading as="h4"` "Where the savings came from", a `type-copy-14
+  text-muted-foreground` basis sentence ("Share of Gate-attributed savings,
+  as the Total saved tile reports it."), then two levels on that ONE basis:
+  Compression and Gate cache hits as the two tile rates over Total saved
+  (`KPI_BY_RANGE`, Total = Caching + Compression), compression's mechanisms
+  nested directly beneath it (`ml-4 border-l border-border pl-4`, narrower
+  label track so every bar starts on one line), a `my-3` hairline, then the
+  next mechanism. Rows use the Security page's grid (`grid-cols-[auto_1fr_auto]`
+  from `@md`, label track `w-72 pr-4`, nested `w-64 pr-4`; below `@md` two
+  columns with the label spanning). Fills follow "Data bars & meters": compression
+  `from-chart-7 to-chart-7-soft`, cache `from-chart-3 to-chart-3-soft`, each
+  its own tile's colour; `role="meter"` with a plain-language `aria-label`.
+  An off mechanism shows `StatusBadge on={false}` + a sentence, no bar; both
+  off replaces the rows with one sentence. Parent ticket: "compression
+  against Gate cache hits, and the leading compression passes inside that".
+- **Footer:** `border-t`, `gap-2` stack: `SectionHeading as="h4"` "What this
+  figure leaves out", the exclusion paragraph `type-copy-14
+  text-muted-foreground`.
+- **States:** loading skeletons the values and keeps the chrome
+  (`aria-busy`, one sr-only status); no traffic keeps the header and renders
+  an explanation, never zeros; both switches off replaces the rows with one
+  sentence and drops the partial note. PLACEHOLDERS awaiting a real source:
+  the mechanism weight table, the attribution start date and the epoch date
+  (`token-savings-summary.ts`).
 
 ### Modal / Drawer
 
