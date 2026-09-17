@@ -9,6 +9,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-17](./2026-09/changelog-9-17.md)
+
+- Focus ring goes inset on Tabs triggers and sortable table heads
+- Billing: one org across the four Enterprise states
+
 ### [2026-09-16](./2026-09/changelog-9-16.md)
 
 - Plan-tier colors: Pro indigo, Enterprise violet, Free grey
