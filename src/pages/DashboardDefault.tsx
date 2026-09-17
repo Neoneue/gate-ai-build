@@ -420,7 +420,7 @@ export function DownloadGateConnectDialog({
                 const p = PLATFORMS[id];
                 return (
                   <Radio.Root
-                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-input focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] data-checked:border-foreground data-checked:shadow-xs motion-reduce:active:scale-100"
+                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-input focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] data-checked:border-foreground data-checked:shadow-xs motion-reduce:active:scale-100"
                     key={id}
                     value={id}
                   >
@@ -704,7 +704,7 @@ function WorksWithFooter({
     );
     return asButtons ? (
       <button
-        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset ${hide ?? ""}`}
+        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${hide ?? ""}`}
         key={name}
         onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ""}`)}
         type="button"
@@ -959,7 +959,7 @@ export function DashboardDefault() {
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <PageTitle>Choose how to use Gate</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
+          <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
             However you connect, every request flows through Gate with
             prompt-injection defense, a tamper-evident audit trail, and lighter
             token bills from built-in compression.

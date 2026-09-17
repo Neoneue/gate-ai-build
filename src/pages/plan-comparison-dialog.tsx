@@ -28,6 +28,8 @@ type PlanCardData = {
   badge: { label: string; tone: "neutral" | "pro" };
   title: string;
   price: string;
+  /** Unit under the price. Pro is billed per user, Free is not. */
+  priceSuffix?: string;
   benefitsLabel: string;
   features: PlanFeature[];
   featured?: boolean;
@@ -84,6 +86,7 @@ const PRO_PLAN: PlanCardData = {
   badge: { label: "PRO PLAN", tone: "pro" },
   title: "Pro plan",
   price: "$20",
+  priceSuffix: "per user / month",
   benefitsLabel: "What you'll get going Pro:",
   features: [
     {
@@ -109,7 +112,7 @@ const PRO_PLAN: PlanCardData = {
     },
   ],
   cta: { label: "Upgrade to Pro", variant: "default" },
-  ctaCaption: "$20/month after your 14-day trial ends",
+  ctaCaption: "$20/user/month after your 14-day trial ends",
 };
 
 function PlanCard({
@@ -136,7 +139,10 @@ function PlanCard({
 
       <h3 className="type-heading-32 m-0 text-foreground tabular-nums tracking-tight">
         {plan.price}
-        <span className="type-copy-18 text-muted-foreground"> per month</span>
+        <span className="type-copy-18 text-muted-foreground">
+          {" "}
+          {plan.priceSuffix ?? "per month"}
+        </span>
       </h3>
 
       <div className="flex flex-col gap-4">

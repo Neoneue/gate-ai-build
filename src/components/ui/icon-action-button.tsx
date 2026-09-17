@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
  *   inline-flex centered children
  *   touch-manipulation (kills 300ms tap delay on mobile)
  *   transition-[color,background-color,transform,box-shadow] duration-150 ease-out
- *   hover: text-neutral-900 + bg-neutral-100
- *   focus-visible: ring-3 ring-ring/50
+ *   hover: text-foreground + bg-accent-muted (highlight fill, not selected)
+ *   focus-visible: ring-2 ring-ring ring-offset-2 ring-offset-background
  *   active: scale-[0.98] (press affordance — subtle scale-down; gated for reduced-motion)
  *   after:absolute after:-inset-3 — pseudo-element expands the hit area
  *     by 12px in every direction (48×48 effective tap target without
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const ICON_ACTION_BUTTON_BASE =
-  'relative inline-flex items-center justify-center size-6 rounded-xs text-muted-foreground outline-none touch-manipulation will-change-transform transition-[color,background-color,transform,box-shadow] duration-150 ease-out hover:text-foreground hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-3 after:content-[""]';
+  'relative inline-flex items-center justify-center size-6 rounded-xs text-muted-foreground outline-none touch-manipulation will-change-transform transition-[color,background-color,transform,box-shadow] duration-150 ease-out hover:text-foreground hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-3 after:content-[""]';
 
 export type IconActionButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

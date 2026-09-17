@@ -172,7 +172,7 @@ function PageHeader() {
   return (
     <div className="flex max-w-2xl flex-col gap-2">
       <PageTitle>Policies</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         Three inline scans run on every routed request. Each has its own
         settings — tune sensitivity, pick what to detect, choose how to respond.
       </p>
@@ -584,7 +584,7 @@ function SettingsHalf({
                   // handle. Grow + darken on hover so stops read as clickable.
                   // Solid fill in both modes — the radio primitive's
                   // translucent dark:bg-input/30 doesn't apply to slider stops.
-                  "relative z-10 bg-muted transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-ring motion-reduce:transform-none dark:bg-muted [&_[data-slot=radio-group-indicator]]:hidden",
+                  "relative z-10 bg-muted transition-[colors,transform] duration-150 ease-out hover:scale-110 hover:border-border-hover motion-reduce:transform-none dark:bg-muted [&_[data-slot=radio-group-indicator]]:hidden",
                   // Stops up to and including the selection read as "passed".
                   // data-checked: qualifiers needed to out-specify the base
                   // primitive's own data-checked:bg-primary on the exact

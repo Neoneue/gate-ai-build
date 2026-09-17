@@ -721,7 +721,7 @@ function FindingSwitcherCard({
       {/* Card body selects the group's FIRST finding (and scrolls to it),
        *  matching the single FindingCard click. Paddles step from there. */}
       <button
-        className="flex w-full flex-col gap-2 px-4 pt-3 pb-3 text-left outline-none transition-colors duration-150 ease-out after:absolute after:inset-0 after:content-[''] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:after:cursor-default motion-reduce:transition-none"
+        className="flex w-full flex-col gap-2 px-4 pt-3 pb-3 text-left outline-none transition-colors duration-150 ease-out after:absolute after:inset-0 after:content-[''] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:after:cursor-default motion-reduce:transition-none"
         disabled={isActive}
         onClick={() => onSelect(items[0].idx)}
         type="button"
@@ -1646,7 +1646,7 @@ function FullRequestCollapsible({
       onOpenChange={setOpen}
       open={open}
     >
-      <Collapsible.Trigger className="type-label-14 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
+      <Collapsible.Trigger className="type-label-14 group/fullreq flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-foreground transition-colors hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[panel-open]:border-border data-[panel-open]:border-b">
         Full request
         <ChevronDown
           aria-hidden

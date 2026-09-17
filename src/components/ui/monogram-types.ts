@@ -25,3 +25,15 @@ export interface MonogramProps {
   size?: "sm" | "md";
   tone: AvatarTone;
 }
+
+const WHITESPACE_RE = /\s+/;
+
+/** Two-character initials: first letter of the first and last word, or the
+ *  first two letters when the name is a single word. */
+export function initialsOf(name: string): string {
+  const parts = name.trim().split(WHITESPACE_RE);
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+}

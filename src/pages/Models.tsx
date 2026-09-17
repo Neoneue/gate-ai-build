@@ -1,5 +1,5 @@
 import { Bot, ChevronDown, ChevronLeft } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { AnthropicIcon, OpenAIIcon } from "@/components/icons/model-providers";
 import { ProviderAvatar, VendorAvatar } from "@/components/icons/vendor-avatar";
@@ -120,6 +120,33 @@ export function Models() {
   // re-mount DashboardChrome.
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
 
+  // Focus handoff between list and detail (WCAG 2.4.3). The swap is in-place,
+  // not a route change, so nothing moves focus on its own: opening a model
+  // would leave focus on a button that just unmounted, dropping the keyboard
+  // user to <body>. Opening moves focus to the detail's back link (handled in
+  // ModelDetailPage); closing restores it to the row button that opened it.
+  // The id sits in a ref so the restore survives the list re-mount without
+  // re-rendering the page on every selection.
+  const restoreFocusId = useRef<string | null>(null);
+
+  const handleSelect = useCallback((model: Model) => {
+    restoreFocusId.current = model.id;
+    setSelectedModel(model);
+  }, []);
+
+  useEffect(() => {
+    const id = restoreFocusId.current;
+    if (selectedModel || !id) {
+      return;
+    }
+    restoreFocusId.current = null;
+    // The row button carries `data-model-row`; querySelector rather than a ref
+    // because the list unmounts while the detail is open, so no ref survives.
+    document
+      .querySelector<HTMLElement>(`[data-model-row="${CSS.escape(id)}"]`)
+      ?.focus();
+  }, [selectedModel]);
+
   return (
     <DashboardChrome
       activeNavId="models"
@@ -127,6 +154,12 @@ export function Models() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
+      {/* Announces the view swap. Lives outside the conditional so the live
+          region is already mounted when its text changes: a region that
+          mounts with content does not reliably announce. */}
+      <span aria-live="polite" className="sr-only">
+        {selectedModel ? `${selectedModel.name} details` : ""}
+      </span>
       {selectedModel ? (
         <div className="flex flex-col gap-6">
           <ModelDetailPage
@@ -140,7 +173,7 @@ export function Models() {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <ModelsSurface onSelect={setSelectedModel} />
+          <ModelsSurface onSelect={handleSelect} />
         </div>
       )}
     </DashboardChrome>
@@ -277,30 +310,32 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             </TabsTrigger>
           </TabsList>
 
-          {isEmpty ? null : (
-            <Toolbar
-              features={features}
-              onFeaturesChange={(v) => {
-                setFeatures(v);
-                resetToFirstPage();
-              }}
-              onProviderChange={(v) => {
-                setProvider(v);
-                resetToFirstPage();
-              }}
-              onSearchChange={(v) => {
-                setSearch(v);
-                resetToFirstPage();
-              }}
-              onSortChange={(v) => {
-                setSort(v);
-                resetToFirstPage();
-              }}
-              provider={provider}
-              search={search}
-              sort={sort}
-            />
-          )}
+          {/* The Toolbar stays mounted when the result set empties. Typing a
+              query down to zero rows used to unmount it mid-keystroke, taking
+              the focused search input with it and dropping focus to <body>
+              (WCAG 2.4.3); the empty state renders below it instead. */}
+          <Toolbar
+            features={features}
+            onFeaturesChange={(v) => {
+              setFeatures(v);
+              resetToFirstPage();
+            }}
+            onProviderChange={(v) => {
+              setProvider(v);
+              resetToFirstPage();
+            }}
+            onSearchChange={(v) => {
+              setSearch(v);
+              resetToFirstPage();
+            }}
+            onSortChange={(v) => {
+              setSort(v);
+              resetToFirstPage();
+            }}
+            provider={provider}
+            search={search}
+            sort={sort}
+          />
 
           <Card density="flush">
             {isEmpty ? (
@@ -352,7 +387,7 @@ function PageHeader({
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         Route to{" "}
         <span className="text-foreground tabular-nums">{modelCount}</span>{" "}
         models across{" "}
@@ -562,6 +597,7 @@ function ModelsTable({
               <TableCell className="max-w-[280px]">
                 <RowActionButton
                   aria-label={`Inspect ${model.name}`}
+                  data-model-row={model.id}
                   onClick={() => onSelect(model)}
                 >
                   <VendorAvatar vendor={model.vendor} />
@@ -704,6 +740,7 @@ export function CapabilityStrip({
               <Badge
                 aria-label={`${hidden.length} more: ${hiddenLabels.join(", ")}`}
                 className="shrink-0"
+                role="img"
                 variant="neutral"
               />
             }
@@ -777,13 +814,23 @@ function ModelDetailPage({
     return curlSnippet(model.id);
   }, [lang, model.id]);
 
+  // Hand focus to the back link once the detail is on screen. See the comment
+  // on the link itself for why this is a query and not a ref.
+  useEffect(() => {
+    document.querySelector<HTMLElement>("[data-model-back-link]")?.focus();
+  }, []);
+
   return (
     <div className="flex flex-col gap-8 pb-8">
-      {/* Top utility bar — back affordance only for now. */}
+      {/* Top utility bar — back affordance only for now. The back link takes
+          focus on mount so the keyboard user lands inside the detail instead
+          of at <body> (the row button that opened it has just unmounted).
+          querySelector, not a ref: TextLink does not forward one. */}
       <div className="flex items-center justify-between gap-4">
         <TextLink
           aria-label="Back to Models"
           className="type-label-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
+          data-model-back-link=""
           onClick={onBack}
         >
           <ChevronLeft
@@ -975,7 +1022,16 @@ function ModelDetailPage({
                   </TabsTrigger>
                 </TabsList>
               </div>
-              <div className="h-[256px] overflow-y-auto">
+              {/* tabIndex so the snippet can be scrolled from the keyboard:
+                  Chrome and Safari only focus a scrollport that opts in. Ring
+                  is inset because the flush Card clips an outset one. */}
+              <div
+                aria-label="Code sample"
+                className="h-[256px] overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                role="region"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollport must be focusable or keyboard users cannot scroll it (axe scrollable-region-focusable, WCAG 2.1.1)
+                tabIndex={0}
+              >
                 <CodeBlock density="compact" lines={activeLines} />
               </div>
             </Tabs>
@@ -1391,7 +1447,14 @@ export function PaygToolConfigCard({ handle }: { handle: string }) {
             {PAYG_TOOL_CAPTIONS[tool]}
           </span>
         </div>
-        <div className="h-[216px] overflow-y-auto">
+        {/* Same keyboard-scroll opt-in as the Example request snippet. */}
+        <div
+          aria-label="Setup configuration"
+          className="h-[216px] overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          role="region"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollport must be focusable or keyboard users cannot scroll it (axe scrollable-region-focusable, WCAG 2.1.1)
+          tabIndex={0}
+        >
           <CodePanel snippet={paygConfigSnippet(tool, handle)} />
         </div>
       </Tabs>

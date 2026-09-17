@@ -170,7 +170,7 @@ export function FeaturedCard({
           `type-label-16` at 16/24) the card measures 146px. */}
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
-        className="relative h-full justify-start gap-5 rounded-md p-4 focus-visible:ring-inset"
+        className="relative h-full justify-start gap-5 rounded-md p-4 focus-visible:ring-inset focus-visible:ring-offset-0"
         layout="stack"
         onClick={() => onSelect(model)}
       >

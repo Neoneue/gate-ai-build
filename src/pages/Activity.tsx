@@ -170,7 +170,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Activity</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         Cost, request volume, and token usage by model, API key, and team
         member.
       </p>
@@ -689,8 +689,6 @@ function keySortValue(row: ScaledKeyRow, key: string): string | number | null {
       return parseNumeric(row.alerts);
     case "tokensIn":
       return parseNumeric(row.tokensIn);
-    case "tokensOut":
-      return parseNumeric(row.tokensOut);
     // BYOK has no Gateway spend ("—") → null so those rows sort last.
     case "spend":
       return row.path === "BYOK" ? null : parseNumeric(row.spend);
@@ -846,15 +844,22 @@ function UsageByKey({
           />
         ) : (
           <>
-            <Table className="min-w-[1168px] table-fixed">
+            {/* Floor re-derived after Tokens in/out merged into one column.
+                Binding column is the widest numeric head, "Tokens In/Out" at
+                121.3px (97.3px label + glyph, 24px padding). At 11.6% that
+                needs 1046px; the 4px-grid step that also clears the 1440
+                desktop container (1154px) without a horizontal scroll is
+                1152, which leaves the binding head 133.6px — 12.3px of
+                slack, up from 9.9px when six numerics shared 58%. */}
+            <Table className="min-w-[1152px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   {/* The three text columns carry an explicit 14% so they run
-                      ~40px wider than an even ninth (14% of the 1168px
-                      min-width = 163px vs. 124px). The six numeric columns
+                      ~20px wider than an even eighth (14% of the 1152px
+                      min-width = 161px vs. 144px). The five numeric columns
                       stay unspecified on purpose: `table-fixed` splits the
                       remaining 58% equally between them, which keeps them
-                      identical to each other without hand-maintaining six
+                      identical to each other without hand-maintaining five
                       fractional percentages that have to re-sum to 100. */}
                   <SortableTableHead
                     className="w-[14%] whitespace-nowrap"
@@ -905,16 +910,7 @@ function UsageByKey({
                     sort={sort}
                     sortKey="tokensIn"
                   >
-                    Tokens in
-                  </SortableTableHead>
-                  <SortableTableHead
-                    className="whitespace-nowrap"
-                    numeric
-                    onSort={toggleSort}
-                    sort={sort}
-                    sortKey="tokensOut"
-                  >
-                    Tokens out
+                    Tokens In/Out
                   </SortableTableHead>
                   <SortableTableHead
                     className="whitespace-nowrap"
@@ -980,11 +976,17 @@ function UsageByKey({
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtInt(row.alerts)}
                     </TableCell>
+                    {/* Tokens in and out share one column, same recipe as
+                        RequestsTable. Both were HEADER-bound, not value-bound:
+                        "Tokens out" needs ~105px for its label while its widest
+                        value ("201.73M") needs ~74px, so two columns were paying
+                        twice for words rather than data. Stacked in-over-out,
+                        the pair costs one column track instead of two. */}
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {fmtTokens(row.tokensIn)}
-                    </TableCell>
-                    <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                      {fmtTokens(row.tokensOut)}
+                      <span className="type-mono-12 block text-muted-foreground">
+                        {fmtTokens(row.tokensOut)}
+                      </span>
                     </TableCell>
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {row.saved === null ? (

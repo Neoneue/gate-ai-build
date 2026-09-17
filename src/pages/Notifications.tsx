@@ -493,7 +493,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>My notifications</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
           Manage how this workspace's notifications reach you.
         </p>
       </div>
@@ -1263,11 +1263,13 @@ function FeedRow({
  * honest one: the thing the banner talks about is directly beneath it, and
  * nothing it covers can be read while it is open.
  *
- * `bg-accent` is the same fill `TableRow` paints a selected row with, so the
- * banner and its rows read as one contiguous selection block. It needs no
- * `hover:` twin — the base row recipe already hovers to `--accent`, which is
- * the colour it is already sitting at, so a rollover is a visual no-op
- * instead of a fill that jumps on a row you cannot click.
+ * It paints itself with `data-state="selected"` — `TableRow`'s own selected
+ * hook — rather than a call-site `bg-accent`, so the banner and its rows read
+ * as one contiguous selection block and share one source for the fill. The
+ * hook is also what keeps the rollover a visual no-op: since 2026-09-16 the
+ * base row hovers to `--accent-muted`, and a bare `bg-accent` (0,1,0) would
+ * lose to `hover:` and lighten under the pointer on a row you cannot click.
+ * `[data-state="selected"]` is 0,2,0, so it holds the full-strength fill.
  *
  * Voice split per design.md §3: the sentence is PROSE, so it takes the copy
  * voice `TableCell` already supplies (and is not re-declared here — see
@@ -1321,7 +1323,7 @@ function FeedBulkBanner({
   onMarkRead: () => void;
 }) {
   return (
-    <TableRow className="bg-accent">
+    <TableRow data-state="selected">
       <TableCell colSpan={FEED_INBOX_COLUMN_COUNT}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <span>

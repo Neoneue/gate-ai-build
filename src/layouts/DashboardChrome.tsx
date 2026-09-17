@@ -400,7 +400,7 @@ function DashTopBar({
          *  switcher sits here in the top bar. */}
         <button
           aria-label="Go to overview"
-          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 lg:hidden"
+          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
           onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
           type="button"
         >

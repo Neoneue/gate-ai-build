@@ -277,7 +277,7 @@ function PageHeader() {
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         {/* h2 — see CMP012 PageHeader note. */}
         <PageTitle>Conversations</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
           A conversation is a chain of messages that share session context:
           agent runs, multi-turn chats, tool-calling loops. Click any row to see
           its message thread.

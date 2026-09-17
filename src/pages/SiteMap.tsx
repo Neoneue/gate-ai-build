@@ -74,7 +74,7 @@ function PageHeader() {
   return (
     <header className="flex max-w-4xl flex-col gap-2">
       <PageTitle>Site map</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         How the dashboard is laid out for every workspace type, and what the
         "Viewing as" role switch changes about it. Developers read the route
         paths on each node; product reads the PRD sections that justify it.

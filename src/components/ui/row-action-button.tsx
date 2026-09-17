@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const rowActionButtonVariants = cva(
-  "rounded-xs bg-transparent p-0 text-left outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+  "rounded-xs bg-transparent p-0 text-left outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   {
     variants: {
       layout: {

@@ -1,7 +1,51 @@
 import { demoAnchorFields } from "@/lib/demo-clock";
 import { formatSparkLabel } from "@/lib/formatters";
 import { scaleByShare } from "@/pages/teams/view-scope";
-import type { CustomRange, HeroView, RangeKey } from "./types";
+import type {
+  CustomRange,
+  HeroBucket,
+  HeroPoint,
+  HeroView,
+  RangeKey,
+} from "./types";
+
+/** Split a view's error total across its buckets, proportional to each
+ *  bucket's requests, by largest remainder: floors first, then one extra
+ *  error to the buckets with the biggest fractional share until the total
+ *  is met. Deterministic (ties by index), never more errors than requests
+ *  in a bucket, and the per-point errors sum EXACTLY to `errorsTotal`, so
+ *  the tooltip reconciles with the headline breakdown (Success + Errors =
+ *  Total on every point and in aggregate). */
+export function withBreakdown(
+  data: HeroBucket[],
+  errorsTotal: number
+): HeroPoint[] {
+  const total = data.reduce((sum, d) => sum + d.requests, 0);
+  const target = Math.max(0, Math.min(errorsTotal, total));
+  if (total === 0 || target === 0) {
+    return data.map((d) => ({ ...d, success: d.requests, errors: 0 }));
+  }
+  const quotas = data.map((d) => (d.requests * target) / total);
+  const errors = quotas.map(Math.floor);
+  let remaining = target - errors.reduce((a, b) => a + b, 0);
+  const order = quotas
+    .map((q, i) => ({ i, frac: q - Math.floor(q) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const { i } of order) {
+    if (remaining === 0) {
+      break;
+    }
+    if (errors[i] < data[i].requests) {
+      errors[i] += 1;
+      remaining -= 1;
+    }
+  }
+  return data.map((d, i) => ({
+    ...d,
+    success: d.requests - errors[i],
+    errors: errors[i],
+  }));
+}
 
 /** A Manager's or Member's reading of the hero: the org canon allocated by
  *  their share of request volume (view-scope.ts). Buckets are scaled first
@@ -24,7 +68,7 @@ export function scaleHeroView(view: HeroView, share: number): HeroView {
     total,
     success,
     errors: total - success,
-    data,
+    data: withBreakdown(data, total - success),
     domainTop: Math.max(...data.map((d) => d.requests), 1) + 1,
   };
 }
@@ -251,7 +295,11 @@ const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
 });
 const HERO_30D_TICKS = deriveTicks(HERO_30D_DATA);
 
-export const HERO_VIEWS: Record<RangeKey, HeroView> = {
+type HeroViewSeed = Omit<HeroView, "data"> & { data: HeroBucket[] };
+
+/** Seeds carry the bucket counts; `HERO_VIEWS` below adds the per-point
+ *  Success / Errors split from each view's own `errors` total. */
+const HERO_VIEW_SEEDS: Record<RangeKey, HeroViewSeed> = {
   all: {
     eyebrow: "MESSAGES",
     total: HERO_ALL_TOTAL,
@@ -322,6 +370,13 @@ export const HERO_VIEWS: Record<RangeKey, HeroView> = {
   },
 };
 
+export const HERO_VIEWS: Record<RangeKey, HeroView> = Object.fromEntries(
+  (Object.keys(HERO_VIEW_SEEDS) as RangeKey[]).map((key) => {
+    const seed = HERO_VIEW_SEEDS[key];
+    return [key, { ...seed, data: withBreakdown(seed.data, seed.errors) }];
+  })
+) as Record<RangeKey, HeroView>;
+
 /** Synthesize a HeroView for an arbitrary user-picked range. Mock-only:
  *  scales the total off a ~80 req/hr base rate, reuses the weekly LCG
  *  bucket generator so the chart stays spiky and seeded (no drift across
@@ -382,7 +437,7 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     errors,
     delta: "+0.0%",
     deltaNote: "vs prior range",
-    data,
+    data: withBreakdown(data, errors),
     ticks,
     bucketLabel: bucketSizeHours === 1 ? "Messages/hr" : "Messages/6h",
     domainTop: Math.max(...buckets, 1) + 1,

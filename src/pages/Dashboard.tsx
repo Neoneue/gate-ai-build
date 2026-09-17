@@ -182,7 +182,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Overview</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
         Monitor request volume, token usage, spend, and security signals across
         your gateway.
       </p>
@@ -719,7 +719,7 @@ function PreviewCard({
       <div className="flex shrink-0 items-center justify-between px-4 py-3">
         <CardTitle>{title}</CardTitle>
         <Link
-          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           to={viewAllTo}
         >
           View all →

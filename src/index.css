@@ -337,7 +337,16 @@ and (pointer: fine)) and (&:hover));
      dark. One token covers both states. Not a focus ring; that's --ring. */
   --border-hover: var(--color-neutral-300);
   --input: var(--color-neutral-300);
-  --ring: var(--color-neutral-400);
+  /* Focus ring, neutral (2026-09-17, user direction: blue is not a primary
+     color on this site; the 2026-09-16 blue-600 pick lasted one day).
+     WCAG 2.4.11 Focus Appearance wants >= 3:1 between the focus indicator
+     and the adjacent surface. The old neutral-400 at 50% alpha composited
+     to 1.54:1 light / 1.87:1 dark, so the ring was decorative, not an
+     indicator. neutral-600 measures 7.5:1 on --background (neutral-50) and
+     7.8:1 on --card (white), the same ink --muted-foreground uses, so no
+     new value enters the palette. Consumed SOLID at 2px with a 2px offset,
+     never `ring-ring/50`. */
+  --ring: var(--color-neutral-600);
   /* Chart gridline / dashed baseline stroke. Palette-atom neutral-200 read
      bright on the dark canvas; this token keeps neutral-200 in light and
      steps to a darker, subtler neutral-700 in dark. Use via stroke-chart-grid
@@ -645,7 +654,11 @@ body {
      has to read as a lift on any dark surface, same alpha-hairline technique. */
   --border-hover: color-mix(in oklch, var(--color-white) 20%, transparent);
   --input: color-mix(in oklch, var(--color-white) 15%, transparent);
-  --ring: var(--color-neutral-500);
+  /* Focus ring, dark. Steps UP the ramp rather than down: neutral-600 reads
+     under 2:1 on --background here. neutral-400 measures 7.6:1 on
+     --background (neutral-950), 6.9:1 on --card (neutral-900) and 5.8:1 on
+     --popover (neutral-800), clear of the 3:1 floor on every dark surface. */
+  --ring: var(--color-neutral-400);
   --chart-grid: var(--color-neutral-700);
   /* Categorical palette, 5 points darker (L -0.05) than the light-mode
   values above — same hue/chroma. Overview's "Tokens used" and Activity's

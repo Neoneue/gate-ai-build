@@ -388,7 +388,7 @@ function ModelPicker({
           the column width at the old `sm` viewport. */}
       <PopoverTrigger
         aria-label="Choose a model"
-        className="group/select flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="group/select flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <span className="flex flex-1 items-center gap-2 overflow-hidden">
           {selected ? (
@@ -433,7 +433,7 @@ function ModelPicker({
           ) : (
             filtered.map((m) => (
               <button
-                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[active=true]:bg-accent"
+                className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-xs px-3 text-foreground text-sm outline-none hover:bg-accent-muted focus-visible:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[active=true]:bg-accent"
                 data-active={m.handle === value}
                 key={m.handle}
                 onClick={() => onSelect(m.handle)}

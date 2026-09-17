@@ -1,4 +1,4 @@
-import { History, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import {
@@ -24,16 +24,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmptyState } from "@/components/ui/empty-state";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { OptionTile } from "@/components/ui/option-tile";
 import { PageTitle } from "@/components/ui/page-title";
+import { ReceiptIcon } from "@/components/ui/receipt";
 import { RefreshCWIcon } from "@/components/ui/refresh-cw";
+import { SectionTitle } from "@/components/ui/section-title";
 import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import { HistoryLedger } from "@/pages/billing/HistorySection";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -66,9 +69,32 @@ export function BillingFree() {
           the class is a no-op until the column is wide enough to bind. */}
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader />
-        <PlanCreditsRow />
-        <PaymentMethodCard />
-        <HistorySection />
+
+        <div className="flex flex-col gap-4">
+          <SectionTitle as="h2">Plan</SectionTitle>
+          <PlanCard />
+        </div>
+
+        <div className="mt-2 flex flex-col gap-4">
+          <SectionTitle as="h2">Credits</SectionTitle>
+          <div className="grid grid-cols-1 gap-4">
+            <CreditsCard />
+            <PaymentMethodCard />
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <SectionTitle as="h2">Billing history</SectionTitle>
+            <Button className="shrink-0" size="sm" variant="outline">
+              <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
+              Invoice portal
+            </Button>
+          </div>
+          <Card density="flush">
+            <HistoryLedger />
+          </Card>
+        </div>
       </div>
     </DashboardChrome>
   );
@@ -78,21 +104,9 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-        Manage your plan, track credit usage, and review every gateway
-        transaction.
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+        Everything you pay for Gate, in one place.
       </p>
-    </div>
-  );
-}
-
-/* ─── Plan + Credits (stacked, each full-width row) ──────────────────── */
-
-function PlanCreditsRow() {
-  return (
-    <div className="grid grid-cols-1 gap-4">
-      <PlanCard />
-      <CreditsCard />
     </div>
   );
 }
@@ -118,20 +132,45 @@ function PlanCard() {
 
   return (
     <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <CardTitle>Your plan</CardTitle>
-      </CardHeader>
+      {/* `gap-3`: the Credits card's flat rhythm, verbatim. Hero, plan
+          description and the plan-details subtitle read as one 12px column;
+          the `dl`'s own `mt-3` opens the 24px band that carries the
+          hairline. */}
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">Free</HeroNumeric>
-        <p className="type-copy-14 m-0 text-pretty text-foreground">
-          BYOK gateway plus a tamper-evident audit trail, no security pipeline.
-          Upgrade to Pro for prompt-injection scans, PII redaction, and a
-          cryptographically verifiable audit trail fingerprinted to
-          Constellation&rsquo;s Digital Evidence layer.
+        <div className="flex flex-col gap-3">
+          <HeroNumeric size="lg">Free</HeroNumeric>
+          <p className="type-copy-14 m-0 text-pretty text-foreground">
+            BYOK gateway plus a tamper-evident audit trail, no security
+            pipeline. Upgrade to Pro for prompt-injection scans, PII redaction,
+            and a cryptographically verifiable audit trail fingerprinted to
+            Constellation&rsquo;s Digital Evidence layer.
+          </p>
+        </div>
+
+        {/* Plan facts, flat on the card (user direction 2026-09-16): no inset
+            chrome and no second title, so the plan card reads as one surface.
+            The subtitle stays with the plan description above the hairline,
+            and the numbers below it line up as a label/value stat list. Same
+            shape on all three tiers so a plan change reads as the same
+            surface with different values. */}
+        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+          Free is a single-seat workspace with nothing to renew. Upgrade to Pro
+          to add teammates.
         </p>
-        <p className="type-copy-14 m-0 text-muted-foreground">
-          Free plan — no renewal needed
-        </p>
+        {/* Hairline between the description block and its data, the same
+            `border-t` the CardFooter uses: without it the `dt` labels read as
+            a continuation of the subtitle. It sits 24px under the subtitle
+            (`gap-3` plus `mt-3`) and 12px over the first row (`pt-3`): the
+            Credits card's band, so the two cards on this page match. */}
+        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
+          <CreditStatRow label="Seats" mono value={1} />
+          <CreditStatRow
+            label="Price"
+            mono
+            value={`${formatCurrency(0)} / month`}
+          />
+          <CreditStatRow label="Renews on" muted value="No renewal" />
+        </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
@@ -205,16 +244,17 @@ function CreditsCard() {
 
   return (
     <Card className="min-w-0 pb-0!">
-      <CardHeader>
-        <CardTitle>Credits</CardTitle>
-      </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric size="lg">$0.00</HeroNumeric>
+        <HeroNumeric>$0.00</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
         </p>
-        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2">
+        {/* Same hairline the plan sub-cards use: a 1px `border-border`
+            rule centred in a 24px band (12px above from `mt-3`, 12px
+            below from `pt-3`), so the stat rows read as data under the
+            description instead of more of it. */}
+        <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
           <CreditStatRow label="Used this month" mono value="$0.00" />
           <CreditStatRow
             label="Auto-recharge"
@@ -726,20 +766,23 @@ function CreditStatRow({
   label,
   value,
   mono = false,
+  muted = false,
 }: {
   label: string;
   value: React.ReactNode;
   mono?: boolean;
+  /** A value that is the absence of data ("No renewal") reads as such. */
+  muted?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
-        className={
-          mono
-            ? "m-0 font-mono text-foreground tabular-nums"
-            : "m-0 text-foreground"
-        }
+        className={cn(
+          "m-0",
+          mono && "font-mono tabular-nums",
+          muted ? "text-muted-foreground" : "text-foreground"
+        )}
       >
         {value}
       </dd>
@@ -782,25 +825,5 @@ function PaymentMethodCard() {
         </Button>
       </CardFooter>
     </Card>
-  );
-}
-
-function HistorySection() {
-  return (
-    <EmptyState
-      body="Charges and credit top-ups will appear here once your organization starts routing messages."
-      icon={
-        <div
-          aria-hidden
-          className="flex size-12 items-center justify-center rounded-full bg-muted"
-        >
-          <History
-            className="size-5 text-muted-foreground"
-            strokeWidth={1.75}
-          />
-        </div>
-      }
-      title="No history yet"
-    />
   );
 }

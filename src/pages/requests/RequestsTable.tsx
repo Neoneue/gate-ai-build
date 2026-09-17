@@ -645,7 +645,7 @@ export function RequestsTableSection({
                             <span
                               {...props}
                               aria-label="About the Cost column"
-                              className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                              className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                               <Info
                                 aria-hidden
@@ -937,7 +937,7 @@ export function RequestsTableSection({
                                   <span
                                     {...props}
                                     aria-label="Billed by your provider (BYOK)"
-                                    className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                    className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                   >
                                     <KeyRound
                                       aria-hidden
@@ -961,7 +961,7 @@ export function RequestsTableSection({
                                   <span
                                     {...props}
                                     aria-label="Billed by Gate (PAYG)"
-                                    className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                    className="inline-flex cursor-help rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                   >
                                     <CreditCard
                                       aria-hidden

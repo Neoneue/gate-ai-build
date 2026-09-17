@@ -262,7 +262,7 @@ function MultiSelect({
       >
         {searchable ? (
           <div className="border-border border-b p-2">
-            <div className="flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+            <div className="flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
               <Search className="size-4 shrink-0 text-muted-foreground" />
               <input
                 aria-label="Search options"

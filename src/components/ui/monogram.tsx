@@ -9,15 +9,14 @@ import { AVATAR_TONE_CLS, type MonogramProps } from "./monogram-types";
  * map, and the rendering logic into one primitive.
  *
  * Size variants:
- * 'sm' → size-4 (16px), text-[10px], single initial
+ * 'sm' → size-5 (20px), text-xs (12px), single initial (was 16px / 10px until 2026-09-16; the letter floated in the circle)
  * 'md' → size-7 (28px), text-xs (12px), two initials
  *
- * The `initials` prop accepts the pre-computed initials string. Callers are
- * responsible for deriving initials from a name — Team.tsx uses
- * `initialsOf(name)` for 2-char initials; Activity.tsx uses the first
- * character of the first word for single-char initials. Both helpers stay
- * in their respective pages (they are local formatting utilities, not
- * part of the visual primitive).
+ * The `initials` prop accepts the pre-computed initials string. `initialsOf`
+ * below is the 2-char derivation (first + last word), exported here because
+ * it now has two call sites — the Members table (Team.tsx) and the seat-change
+ * list on the Enterprise Billing page. Single-char derivations (Activity.tsx)
+ * stay local to their page.
  *
  * All tones use saturated 700-step bg + white fg — same recipe as the
  * DashTopBar `CP` monogram. Tones cycle through the existing 700-step
@@ -34,7 +33,7 @@ export function Monogram({ tone, initials, size = "md" }: MonogramProps) {
       aria-hidden
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full font-medium font-sans",
-        size === "sm" ? "size-4 text-[10px]" : "size-7 text-xs",
+        size === "sm" ? "size-5 text-xs" : "size-7 text-xs",
         AVATAR_TONE_CLS[tone]
       )}
     >

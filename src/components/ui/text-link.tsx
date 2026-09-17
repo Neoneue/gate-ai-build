@@ -22,14 +22,14 @@ import { cn } from "@/lib/utils";
  *   hover:decoration-neutral-500 focus-visible:decoration-neutral-500
  *   dark:decoration-border dark:hover:decoration-muted-foreground
  *   dark:focus-visible:decoration-muted-foreground
- *   focus-visible:ring-3 focus-visible:ring-ring/50
+ *   focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
  *
  * Pass `className` for typography overrides (font-mono, text-sm, etc.).
  * The recipe composes cleanly via twMerge; later utilities win.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const TEXT_LINK_BASE =
-  "text-foreground bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 dark:decoration-border dark:hover:decoration-muted-foreground dark:focus-visible:decoration-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
+  "text-foreground bg-transparent p-0 outline-none rounded-xs underline decoration-neutral-200 underline-offset-2 hover:decoration-neutral-500 focus-visible:decoration-neutral-500 dark:decoration-border dark:hover:decoration-muted-foreground dark:focus-visible:decoration-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50";
 
 type ButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

@@ -9,6 +9,30 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-17](./2026-09/changelog-9-17.md)
+
+- Focus ring goes inset on Tabs triggers and sortable table heads
+- Billing: one org across the four Enterprise states
+- Focus ring is neutral again
+- Chart tooltip dots follow the config colour
+- Messages: hero eyebrow, inline delta, breakdown tooltip
+- Security events: breakdown tooltip
+
+### [2026-09-16](./2026-09/changelog-9-16.md)
+
+- Plan-tier colors: Pro indigo, Enterprise violet, Free grey
+- Billing history and shared billing cards
+- Billing: Enterprise page, `/billing-enterprise`
+- Billing: Pro and Free plan cards adopt the stat-row sub-card
+- Activity: Tokens in and out merged into one column
+- Focus ring: solid 2px brand blue, offset 2
+- Hover fill is accent-muted, accent is selected only
+- Page subtitles step up to Copy 18
+- Plan-tier colors: Pro returns to blue
+- Monogram `sm` is 20px with a 12px letter
+- Models: focus and screen-reader fixes from the rams review
+- Billing: flat plan card, no section subtitles, ledger polish
+
 ### [2026-09-15](./2026-09/changelog-9-15.md)
 
 - Models: Featured cards on a per-card grid, split stats, CMS seed badges

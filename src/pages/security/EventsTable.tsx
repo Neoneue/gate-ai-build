@@ -565,7 +565,7 @@ export function EventsTableSection({
                     const verdict = verdicts[verdictKey(row)] ?? "unreviewed";
                     return (
                       <TableRow
-                        className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent motion-reduce:transition-none"
+                        className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none"
                         key={`${row.time}-${i}`}
                         onClick={() => setSelectedRow(row)}
                         onKeyDown={(e) => {

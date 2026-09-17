@@ -332,8 +332,20 @@ export function minutesBeforeAnchor(minutesAgo: number): {
   };
 }
 
+/** One chart bucket. `requests` is the bucket total and the three action
+ *  counts sum to it on every point, because the total series IS the sum of
+ *  the three sparks; the tooltip lists all four. */
+export type EventsChartPoint = {
+  time: string;
+  label: string;
+  requests: number;
+  blocked: number;
+  flagged: number;
+  redacted: number;
+};
+
 export type EventsChartView = {
-  data: Array<{ time: string; label: string; requests: number }>;
+  data: EventsChartPoint[];
   ticks: string[];
   domainTop: number;
 };
@@ -409,7 +421,14 @@ export function buildEventsChartView(
           minute: "2-digit",
           hour12: false,
         });
-    return { time, label: formatSparkLabel(d, true), requests };
+    return {
+      time,
+      label: formatSparkLabel(d, true),
+      requests,
+      blocked: blockedSpark[i] ?? 0,
+      flagged: flaggedSpark[i] ?? 0,
+      redacted: redactedSpark[i] ?? 0,
+    };
   });
 
   // 4–7 evenly spaced ticks across the series, de-duplicated.
@@ -430,10 +449,28 @@ export function buildEventsChartView(
   };
 }
 
+/** Tooltip rows: Total, then the three action types the point carries
+ *  (user 2026-09-17, same shape as the Messages hero). Total takes the
+ *  chart-1 blue the Messages tooltip uses, Blocked the chart stroke,
+ *  Flagged the warning tone the Action-types bars use, Redacted a light
+ *  neutral so its dot is not a second Flagged dot (the bars share warning
+ *  for both, the tooltip cannot). */
 export const HERO_CHART_CONFIG = {
   requests: {
-    label: "Events",
+    label: "Total",
+    color: "var(--color-chart-1)",
+  },
+  blocked: {
+    label: "Blocked",
     color: "var(--color-danger-500)",
+  },
+  flagged: {
+    label: "Flagged",
+    color: "var(--color-warning-500)",
+  },
+  redacted: {
+    label: "Redacted",
+    color: "var(--color-neutral-400)",
   },
 } satisfies ChartConfig;
 

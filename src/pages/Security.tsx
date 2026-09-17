@@ -177,13 +177,7 @@ function HeroMetricCard({
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  className="gap-1"
-                  formatter={(value) => (
-                    <span className="type-label-14 text-foreground">
-                      {Number(value).toLocaleString("en-US")}
-                    </span>
-                  )}
-                  hideIndicator
+                  className="min-w-36"
                   labelClassName="font-normal text-muted-foreground"
                   labelFormatter={(_label, items) =>
                     (items?.[0]?.payload as { label?: string } | undefined)
@@ -195,6 +189,12 @@ function HeroMetricCard({
                 stroke: "var(--color-neutral-500)",
                 strokeDasharray: "3 3",
               }}
+              /* Four rows (114px) outgrow the 96px chart band and the Card
+                 clips overflow, so the y is pinned: the box sits centred on
+                 the band, spilling 9px into the gap above and the card
+                 padding below, and never flips off the bottom. x still
+                 follows the cursor. */
+              position={{ y: -9 }}
             />
             <Area
               dataKey="requests"
@@ -203,6 +203,34 @@ function HeroMetricCard({
               stroke="var(--color-danger-500)"
               strokeWidth={1.5}
               type="linear"
+            />
+            {/* Tooltip-only series (the Messages hero recipe): zero-width
+                stroke and no fill, so nothing draws and there is no active
+                dot, but the tooltip reads each row's dot colour from the
+                series stroke. Labels and colours come from HERO_CHART_CONFIG. */}
+            <Area
+              activeDot={false}
+              dataKey="blocked"
+              fill="none"
+              isAnimationActive={false}
+              stroke="var(--color-danger-500)"
+              strokeWidth={0}
+            />
+            <Area
+              activeDot={false}
+              dataKey="flagged"
+              fill="none"
+              isAnimationActive={false}
+              stroke="var(--color-warning-500)"
+              strokeWidth={0}
+            />
+            <Area
+              activeDot={false}
+              dataKey="redacted"
+              fill="none"
+              isAnimationActive={false}
+              stroke="var(--color-neutral-400)"
+              strokeWidth={0}
             />
           </AreaChart>
         </ChartContainer>
@@ -287,7 +315,7 @@ function PageHeader() {
             h1; the in-surface page title reads as h2 in the document
             outline so child cards can use h3 without level skips. */}
         <PageTitle>Security events</PageTitle>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
           Every injection, PII, and credential event your policies caught,
           fingerprinted to Constellation's Digital Evidence layer. Blocked,
           flagged, or redacted.

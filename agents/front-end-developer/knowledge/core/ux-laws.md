@@ -2,9 +2,7 @@
 
 > **Source:** [lawsofux.com](https://lawsofux.com) — curated by Jon Yablonski. Definitions below are verbatim from that site unless marked `[interp]` for interpretation. Primary academic citations follow each entry.
 
-> **How to use this file:** This is a decision-support reference, not a reading assignment. When you're about to add an element, change a layout, pick a color, or make any UI call — scan the theme that governs the decision, read the 2-3 relevant laws, and apply. The Pre-flight Checklist at the bottom is for use before every Paper or Figma write.
-
-> **Reading order:** `craft-methodology.md` → `craft-checks.md` → `design-process-rules.md` → `ux-methodology.md` → **This file** → `design-recipes.md` → `pre-ship-quality-checklist.md`
+> **How to use this file:** This is a decision-support reference, not a reading assignment. When you're about to add an element, change a layout, pick a color, or make any UI call — scan the theme that governs the decision, read the 2-3 relevant laws, and apply. The Pre-flight Checklist at the bottom is for use before every UI change.
 
 ---
 
@@ -255,7 +253,7 @@ What the system accepts, and how it behaves when input is imperfect.
 
 ## Pre-flight Checklist — Apply Before Every UI Write
 
-Before any `write_html`, `update_styles`, `use_figma`, or code commit that changes UI, run these five questions. They map to the laws most commonly violated in practice:
+Before any code commit that changes UI, run these five questions. They map to the laws most commonly violated in practice:
 
 1. **Similarity (Law 2):** For every visual treatment I'm using, are elements with the same *role* getting the same *appearance*? If two things look different, is there a semantic reason?
 

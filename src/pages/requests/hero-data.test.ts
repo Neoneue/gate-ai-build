@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { scaleHeroView } from "./hero-data";
+import {
+  buildCustomHeroView,
+  HERO_VIEWS,
+  scaleHeroView,
+  withBreakdown,
+} from "./hero-data";
 import type { HeroView } from "./types";
 
 /** Bucket counts chosen so independent per-bucket rounding does NOT sum to
@@ -13,11 +18,14 @@ const FIXTURE: HeroView = {
   errors: 2,
   delta: "+1.0%",
   deltaNote: "vs prior week",
-  data: BUCKETS.map((requests, i) => ({
-    time: `Sep ${i + 1} 00:00`,
-    label: `Sep ${i + 1}`,
-    requests,
-  })),
+  data: withBreakdown(
+    BUCKETS.map((requests, i) => ({
+      time: `Sep ${i + 1} 00:00`,
+      label: `Sep ${i + 1}`,
+      requests,
+    })),
+    2
+  ),
   ticks: ["Sep 1 00:00", "Sep 12 00:00"],
   bucketLabel: "Messages/hr",
   domainTop: Math.max(...BUCKETS) + 1,
@@ -54,5 +62,54 @@ describe("scaleHeroView", () => {
     expect(view.domainTop).toBe(
       Math.max(...view.data.map((d) => d.requests), 1) + 1
     );
+  });
+});
+
+/** Every point's Success + Errors is its request count, and the per-point
+ *  errors sum to the view's errors, so the chart tooltip can never disagree
+ *  with the headline or the Success / Errors legend (charts reconcile). */
+function expectReconciled(view: HeroView) {
+  let errors = 0;
+  for (const p of view.data) {
+    expect(p.success + p.errors).toBe(p.requests);
+    expect(p.errors).toBeGreaterThanOrEqual(0);
+    expect(p.errors).toBeLessThanOrEqual(p.requests);
+    errors += p.errors;
+  }
+  expect(errors).toBe(view.errors);
+  expect(view.success + view.errors).toBe(view.total);
+}
+
+describe("withBreakdown", () => {
+  it("reconciles every preset view", () => {
+    for (const view of Object.values(HERO_VIEWS)) {
+      expectReconciled(view);
+    }
+  });
+
+  it("reconciles scoped views at every real share", () => {
+    for (const share of SCOPED_SHARES) {
+      expectReconciled(scaleHeroView(HERO_VIEWS.all, share));
+    }
+  });
+
+  it("reconciles a custom range", () => {
+    const view = buildCustomHeroView({
+      from: new Date(2026, 8, 1),
+      to: new Date(2026, 8, 8),
+    });
+    expectReconciled(view);
+  });
+
+  it("never puts errors in an empty bucket and caps errors at the total", () => {
+    const points = withBreakdown(
+      [
+        { time: "a", label: "a", requests: 0 },
+        { time: "b", label: "b", requests: 3 },
+      ],
+      10
+    );
+    expect(points[0].errors).toBe(0);
+    expect(points[1].errors).toBe(3);
   });
 });

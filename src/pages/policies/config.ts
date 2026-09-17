@@ -62,7 +62,7 @@ export const ACTION_ACTIVE_FILL: Record<string, string> = {
  *  than going gray. */
 export const ACTION_HOVER: Record<string, string> = {
   flag: "hover:border-warning-200 hover:bg-warning-25 dark:hover:border-warning-500/30 dark:hover:bg-warning-500/15",
-  redact: "hover:border-input hover:bg-accent",
+  redact: "hover:border-input hover:bg-accent-muted",
   block:
     "hover:border-danger-200 hover:bg-danger-25 dark:hover:border-danger-500/30 dark:hover:bg-danger-500/15",
 };

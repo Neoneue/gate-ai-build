@@ -114,7 +114,7 @@ const REPLY_PROSE = cn(
   // Inline runs.
   "[&_strong]:font-medium",
   "[&_a:hover]:no-underline [&_a]:underline [&_a]:decoration-solid [&_a]:underline-offset-2",
-  "[&_a:focus-visible]:rounded-xs [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-3 [&_a:focus-visible]:ring-ring/50",
+  "[&_a:focus-visible]:rounded-xs [&_a:focus-visible]:outline-none [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-ring [&_a:focus-visible]:ring-offset-2 [&_a:focus-visible]:ring-offset-background",
   /* Inline code + fenced code. BOTH render in the SANS body voice, not the
      mono Data voice — see design.md "Exception: Ask AI reply prose"
      (2026-07-27). Replies are long-form reading and mono degrades legibility
