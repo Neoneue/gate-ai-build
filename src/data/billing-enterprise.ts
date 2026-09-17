@@ -13,6 +13,12 @@
 // Replace `ENTERPRISE_SEAT_RATE_USD` when Constellation Support supplies it.
 
 import {
+  CREDIT_BALANCE_USD,
+  HISTORY_ROWS,
+  type HistoryRow,
+  lastTopUpLabel,
+} from "@/data/billing-history";
+import {
   type BillingPeriod,
   daysBetween,
   type FormerMemberRow,
@@ -48,8 +54,11 @@ export const ENTERPRISE_SEAT_RATE_USD = 50;
 const monthStart = (d: Date, offsetMonths = 0): Date =>
   new Date(d.getFullYear(), d.getMonth() + offsetMonths, 1);
 
-/** Months of history shown before the current one. */
-const HISTORY_MONTHS = 2;
+/** Months of history shown before the current one. ONE, not two (user
+ *  narrative 2026-09-17): the org owner joined on the last day of the
+ *  month before that, so Enterprise billing starts on the first 1st after
+ *  the org existed. An org can never predate its owner on the invoice. */
+const HISTORY_MONTHS = 1;
 
 /** The current calendar month, from the 1st to the 1st of next month. */
 export const ENTERPRISE_CURRENT_PERIOD: BillingPeriod = {
@@ -187,7 +196,9 @@ export function invoicesForState(
  *  - `granted`: DAY ONE. Support upgraded the org today; the period runs
  *    from today to the end of the month, the only invoice is the prorated
  *    first seat charge, and there are no seat changes yet;
- *  - `unprovisioned`: granted today, billing not set up, nothing billed. */
+ *  - `unprovisioned`: granted today, seat billing not set up, nothing
+ *    billed on the seat side; credits, card and PAYG ledger carry over from
+ *    Pro like every other state. */
 export type EnterpriseBillingView = {
   state: EnterpriseBillingState;
   grantedOn: Date;
@@ -200,6 +211,14 @@ export type EnterpriseBillingView = {
   invoices: EnterpriseInvoiceRow[];
   /** The invoice the past-due banner reports; null outside `past-due`. */
   failedInvoice: EnterpriseInvoiceRow | null;
+  /** PAYG credit balance behind the Credits card hero. */
+  creditBalance: number;
+  /** Formatted "Last top-up" value, null when there has never been one. */
+  lastTopUp: string | null;
+  /** Whether a card is on file (the Payment method card). */
+  hasCard: boolean;
+  /** PAYG ledger rows (the Balance tab), newest first. */
+  ledgerRows: HistoryRow[];
 };
 
 /** The prorated first charge Stripe raises when a seat subscription starts
@@ -238,17 +257,27 @@ export function enterpriseBillingView(
       start: DEMO_TODAY,
       end: ENTERPRISE_CURRENT_PERIOD.end,
     };
+    // ONE org in every state (user narrative 2026-09-17): it was on Pro
+    // before today, so seats, the PAYG ledger, the credit balance and the
+    // card on file exist in all four. Only the SEAT side differs here:
+    // `granted` has Stripe provisioned and raises the first charge,
+    // `unprovisioned` has the entitlement but no billing yet, so nothing
+    // seat-related exists to show. Credits are plan-independent (H2 §10).
+    const provisioned = state === "granted";
     return {
       state,
       grantedOn: DEMO_TODAY,
       period,
       changes: [],
-      showChanges: state === "granted",
-      invoices:
-        state === "granted"
-          ? [firstSeatChargeRow(DEMO_TODAY, period, members)]
-          : [],
+      showChanges: provisioned,
+      invoices: provisioned
+        ? [firstSeatChargeRow(DEMO_TODAY, period, members)]
+        : [],
       failedInvoice: null,
+      creditBalance: CREDIT_BALANCE_USD,
+      lastTopUp: lastTopUpLabel(),
+      hasCard: true,
+      ledgerRows: HISTORY_ROWS,
     };
   }
   const seatInvoices = invoicesForState(state, members);
@@ -263,5 +292,9 @@ export function enterpriseBillingView(
     showChanges: true,
     invoices: seatInvoices,
     failedInvoice: seatInvoices.find((r) => r.status === "Failed") ?? null,
+    creditBalance: CREDIT_BALANCE_USD,
+    lastTopUp: lastTopUpLabel(),
+    hasCard: true,
+    ledgerRows: HISTORY_ROWS,
   };
 }

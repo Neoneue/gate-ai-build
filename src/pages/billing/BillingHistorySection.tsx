@@ -56,12 +56,15 @@ function invoiceSortValue(
   }
 }
 
-const DEFAULT_EMPTY_BODY =
+/** Body sentence for an empty billing history. Exported because the Balance
+ *  tab's ledger (`HistorySection.tsx`) reuses it: both tabs are empty for the
+ *  same reason, so they say it the same way. */
+export const BILLING_HISTORY_EMPTY_BODY =
   "Your first seat charge will show up here once billing is set up.";
 
 export function PlanChargesTable({
   rows,
-  emptyBody = DEFAULT_EMPTY_BODY,
+  emptyBody = BILLING_HISTORY_EMPTY_BODY,
 }: {
   rows: InvoiceRow[];
   emptyBody?: string;

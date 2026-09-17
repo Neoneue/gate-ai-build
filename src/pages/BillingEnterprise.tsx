@@ -125,10 +125,16 @@ export function BillingEnterprise() {
         <div className="mt-2 flex flex-col gap-4">
           <SectionTitle as="h2">Credits</SectionTitle>
           <div className="grid grid-cols-1 gap-4">
-            <CreditsCard />
+            <CreditsCard
+              balance={view.creditBalance}
+              lastTopUp={view.lastTopUp}
+            />
             {/* Support invoices the Enterprise seat charge directly, so the
                 card on file only ever pays a credit top-up here. */}
-            <PaymentMethodCard description="Charged for credit top-ups." />
+            <PaymentMethodCard
+              description="Charged for credit top-ups."
+              empty={!view.hasCard}
+            />
           </div>
         </div>
 
@@ -246,9 +252,9 @@ function StateBanner({ view }: { view: EnterpriseBillingView }) {
     return (
       <Callout>
         Enterprise was added to your organization on{" "}
-        {formatDateNumeric(view.grantedOn)}. We're still setting up billing, so
-        nothing has been charged yet. Your seat pricing and invoices will appear
-        here shortly.
+        {formatDateNumeric(view.grantedOn)}. We're still setting up seat
+        billing, so no seat charge has been made yet. Your seat pricing and
+        invoices will appear here shortly. Credits keep working as before.
       </Callout>
     );
   }
@@ -561,8 +567,8 @@ function SeatChangesSection({ view }: { view: EnterpriseBillingView }) {
 /** Two ledgers answer two different questions, so they are two tabs of one
  *  card rather than two cards (user direction 2026-09-16). **Plan** is what
  *  the seat subscription charged; **Balance** is the pay-as-you-go credit
- *  ledger, which is plan-independent and therefore still has rows even when
- *  billing is not provisioned. `Invoice portal` sits in the card header, not
+ *  ledger. While seat billing is being set up only the Plan tab is empty; the
+ *  Balance ledger carries over from Pro. `Invoice portal` sits in the card header, not
  *  in a tab: it is the route to the invoice documents behind both ledgers.
  *
  *  ONE explanation, in the card subtitle, rather than a sentence per tab:
@@ -603,7 +609,7 @@ function BillingHistorySection({ view }: { view: EnterpriseBillingView }) {
         </TabsContent>
 
         <TabsContent value="balance">
-          <HistoryLedger />
+          <HistoryLedger rows={view.ledgerRows} />
         </TabsContent>
       </Tabs>
     </Card>

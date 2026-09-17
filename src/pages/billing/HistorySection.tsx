@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Timestamp } from "@/components/ui/timestamp";
@@ -17,6 +18,7 @@ import { HISTORY_ROWS, type HistoryRow } from "@/data/billing-history";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { BILLING_HISTORY_EMPTY_BODY } from "@/pages/billing/BillingHistorySection";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HistorySection — the PAYG credit ledger, shared by Pro and Free.
@@ -201,12 +203,22 @@ function HistoryEntryRows({ entry }: { entry: HistoryEntry }) {
 
 /** The credit ledger's table alone: no Card, no title, no description. The
  *  Pro/Free `HistorySection` wraps it in the Card below; the Enterprise page
- *  renders it inside the Balance tab of its own tabbed card. */
-export function HistoryLedger() {
+ *  renders it inside the Balance tab of its own tabbed card.
+ *
+ *  `rows` defaults to the live ledger, which is what Pro and Free always
+ *  show. An org whose billing is not provisioned yet passes an empty array
+ *  and gets the same `TableEmptyState` the Plan tab renders. */
+export function HistoryLedger({
+  rows = HISTORY_ROWS,
+  emptyBody = BILLING_HISTORY_EMPTY_BODY,
+}: {
+  rows?: HistoryRow[];
+  emptyBody?: string;
+} = {}) {
   const { sort, toggle: toggleSort } = useTableSort();
   const [page, setPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState("25");
-  const entries = React.useMemo(() => groupHistory(), []);
+  const entries = React.useMemo(() => groupHistory(rows), [rows]);
   const sortedRows = React.useMemo(
     () => sortRows(entries, sort, historySortValue),
     [entries, sort]
@@ -219,6 +231,12 @@ export function HistoryLedger() {
     () => sortedRows.slice((page - 1) * perPage, page * perPage),
     [sortedRows, page, perPage]
   );
+
+  // Same branch the Plan tab takes: the empty state replaces the table AND
+  // its pagination footer, so an empty tab has nothing to page through.
+  if (sortedRows.length === 0) {
+    return <TableEmptyState body={emptyBody} title="No billing history yet" />;
+  }
 
   return (
     <>

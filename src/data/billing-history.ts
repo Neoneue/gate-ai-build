@@ -60,6 +60,21 @@ export const HISTORY_ROWS: HistoryRow[] = [
   },
 ];
 
+/** The pay-as-you-go credit balance: the newest ledger row's running
+ *  balance, so the Credits card hero and the Balance ledger can never
+ *  disagree. Display rounds to two decimals; this is the real value. */
+export const CREDIT_BALANCE_USD: number = HISTORY_ROWS[0].balanceAfter;
+
+/** "Last top-up" label: the newest `Credits added` row (HISTORY_ROWS is
+ *  newest first), or null when the ledger has never been topped up, which
+ *  is what a freshly provisioned org shows. */
+export function lastTopUpLabel(
+  rows: HistoryRow[] = HISTORY_ROWS
+): string | null {
+  const row = rows.find((r) => r.type === "Credits added");
+  return row ? `${formatDateNumeric(row.date)} · $25` : null;
+}
+
 /**
  * Period end shown on the Pro Billing page ("Renews on ...") and in the
  * cancel-plan dialog intro. Same workspace, same subscription, so both

@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { OptionTile } from "@/components/ui/option-tile";
 import { RefreshCWIcon } from "@/components/ui/refresh-cw";
 import { Switch } from "@/components/ui/switch";
-import { HISTORY_ROWS } from "@/data/billing-history";
-import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
+import { CREDIT_BALANCE_USD, lastTopUpLabel } from "@/data/billing-history";
+import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 
 /* ──────────────────────────────────────────────────────────────────────
  * Credits card and its two dialogs, lifted VERBATIM out of Billing.tsx on
@@ -34,13 +35,6 @@ import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 
 const MIN_TOPUP = 5;
 const MAX_TOPUP = 1000;
-
-// "Last top-up" reads the newest Credits-added row (HISTORY_ROWS is newest
-// first) so the card copy and the history table can never disagree on the date.
-function lastTopUpLabel(): string {
-  const row = HISTORY_ROWS.find((r) => r.type === "Credits added");
-  return row ? `${formatDateNumeric(row.date)} · $25` : "None yet";
-}
 
 type AutoRechargeConfig = {
   enabled: boolean;
@@ -88,7 +82,18 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
-export function CreditsCard() {
+export function CreditsCard({
+  /** PAYG credit balance. Defaults to the live ledger balance, which is what
+   *  Pro and every provisioned Enterprise org shows; a freshly granted org
+   *  with billing not yet set up passes 0. */
+  balance = CREDIT_BALANCE_USD,
+  /** Formatted "Last top-up" value, or null when there has never been one.
+   *  Defaults to the newest `Credits added` row in the ledger. */
+  lastTopUp = lastTopUpLabel(),
+}: {
+  balance?: number;
+  lastTopUp?: string | null;
+} = {}) {
   const [addOpen, setAddOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
@@ -96,7 +101,7 @@ export function CreditsCard() {
   return (
     <Card className="min-w-0 pb-0!">
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric>$49.99</HeroNumeric>
+        <HeroNumeric>{formatCurrency(balance)}</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
@@ -106,16 +111,27 @@ export function CreditsCard() {
             below from `pt-3`), so the stat rows read as data under the
             description instead of more of it. */}
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
-          <CreditStatRow label="Used this month" mono value="$0.00 / $49.99" />
+          <CreditStatRow
+            label="Used this month"
+            mono
+            value={`${formatCurrency(0)} / ${formatCurrency(balance)}`}
+          />
           <CreditStatRow
             label="Auto-recharge"
             value={
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value={lastTopUpLabel()} />
+          {/* No top-up yet is an absence, not a value: it goes quiet in the
+              muted tone rather than reading as a real date. */}
+          <CreditStatRow
+            label="Last top-up"
+            muted={lastTopUp === null}
+            value={lastTopUp ?? "None yet"}
+          />
         </dl>
       </CardContent>
+      {/* Both buttons stay in the zero state: they are the way out of it. */}
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button onClick={() => setAutoOpen(true)} size="sm" variant="outline">
           <RefreshCWIcon aria-hidden data-icon="inline-start" size={16} />
@@ -617,20 +633,23 @@ export function CreditStatRow({
   label,
   value,
   mono = false,
+  muted = false,
 }: {
   label: string;
   value: React.ReactNode;
   mono?: boolean;
+  /** Quiet tone for an absent value ("None yet"), the BillingFree shape. */
+  muted?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
-        className={
-          mono
-            ? "m-0 font-mono text-foreground tabular-nums"
-            : "m-0 text-foreground"
-        }
+        className={cn(
+          "m-0",
+          mono && "font-mono tabular-nums",
+          muted ? "text-muted-foreground" : "text-foreground"
+        )}
       >
         {value}
       </dd>
