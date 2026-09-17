@@ -13,6 +13,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Focus ring goes inset on Tabs triggers and sortable table heads
 - Billing: one org across the four Enterprise states
+- Focus ring is neutral again
+- Chart tooltip dots follow the config colour
+- Messages: hero eyebrow, inline delta, breakdown tooltip
+- Security events: breakdown tooltip
 
 ### [2026-09-16](./2026-09/changelog-9-16.md)
 
