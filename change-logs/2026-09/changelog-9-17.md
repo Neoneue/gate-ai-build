@@ -176,3 +176,32 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   (no `prorateSeat`, `seatChangesThisPeriod`, `firstSeatChargeRow`);
   `billing-seats.ts` engine kept for `seatCount` / `periodDays`. Test
   rewritten to match.
+
+### Token savings: Summary breakdown from the gateway table, copy pass `e6a043f`
+
+- **Compression rows** now come from the gateway's "Methods, ranked" table
+  (30D, 85 methods, supplied by the user): Deferred tool definitions, Boost
+  recoverable elide, Tool output compaction: Search (grep) output, and "All
+  others" for the remaining 82. Four rows max (`BREAKDOWN_MAX_ROWS`), the
+  catch-all always last; the grep label breaks before "Search" on purpose
+  (`whitespace-pre-line`). Same rows on Free and Pro. Replaces the
+  authored eight-pass weight table.
+- **Mechanism rows** read "Compression" and "Caching" (the tile and option
+  card names); the figure cell keeps "Cache hits" for the request count.
+- **Partial state removed**: no badge (PM call) and no note (user). The
+  acceptance criterion "mark the per-pass breakdown as partial" is recorded
+  as open in `docs/tickets/token-savings-summary`.
+- **Copy pass against the tickets:** subtitle "What Gate did to earn the
+  rates above."; cache caption "0.15% of the 542,241 requests you sent";
+  basis "Share of everything Gate saved, the Total saved rate above.";
+  both-off and no-traffic lose their nudges; footer heading "What these
+  savings leave out" over "These figures only count what Gate did. Any
+  discount your provider gives for its own prompt caching is not included,
+  even when Gate set it up. Requests that did not go through Gate are not
+  included either." The All lede opens "Over this period" (no placeholder
+  date).
+- **8pt grid:** label track `w-72` + `gap-x-4` puts every bar origin at
+  304px from the grid edge; the nested block indents exactly 32px with its
+  hairline as a `before:` pseudo (no stray 1px) and a `w-64` track; the
+  value track is a fixed `3.5rem` so mono-14 and mono-12 values share one
+  right edge. Measured: all six bars 320 to 934px inside the card.

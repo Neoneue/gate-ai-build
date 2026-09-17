@@ -14,6 +14,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Focus ring goes inset on Tabs triggers and sortable table heads
 - Chart palette gets a chart-7 soft twin
 - Token savings: Summary card
+- Token savings: Summary breakdown from the gateway table, copy pass
 - Billing: Enterprise seats read as plan utilization, single history
 - Billing: one org across the four Enterprise states
 - Focus ring is neutral again
