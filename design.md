@@ -39,7 +39,7 @@ colors:
   destructive: "oklch(0.577 0.245 27.325)"  # danger-600
   border: "oklch(0.910 0 0)"             # neutral-200
   input: "oklch(0.820 0 0)"              # neutral-300 (bumped from neutral-200 on 2026-05-15)
-  ring: "oklch(0.680 0 0)"               # neutral-400
+  ring: "oklch(0.439 0 0)"               # neutral-600 light / neutral-400 dark (2026-09-17)
   canvas-bg: "#ECECE7"                   # reserved warm-paper canvas (not currently bound to --background)
 
   neutral-50: "oklch(0.985 0 0)"
@@ -317,9 +317,11 @@ components:
   button-ghost:      { backgroundColor: "transparent", textColor: "{colors.foreground}" }
   button-destructive:{ backgroundColor: "{colors.destructive}", textColor: "{colors.primary-foreground}" }
 
-  # Focus ring, site-wide. 2026-09-16: solid 2px brand-blue ring, offset 2,
-  # replaces ring-3 ring/50 (1.54:1 light / 1.87:1 dark vs the 3:1 floor,
-  # WCAG 2.4.11). Recipe: `focus-visible:ring-2 focus-visible:ring-ring
+  # Focus ring, site-wide. 2026-09-16: solid 2px ring, offset 2, replaces
+  # ring-3 ring/50 (1.54:1 light / 1.87:1 dark vs the 3:1 floor, WCAG
+  # 2.4.11). 2026-09-17: the ring is NEUTRAL, neutral-600 light /
+  # neutral-400 dark (7.5:1 / 7.6:1 on the page); the one-day blue-600 pick
+  # is rejected, blue is not a primary color on this site. Recipe: `focus-visible:ring-2 focus-visible:ring-ring
   # focus-visible:ring-offset-2 focus-visible:ring-offset-background`; a
   # control that sits flush inside an `overflow-hidden` parent swaps the
   # offset pair for `focus-visible:ring-inset` instead. Inset sites as of
@@ -439,7 +441,7 @@ components:
 
 ### Defaults being rejected
 
-1. **Blue primary action** → neutral-900 primary. Blue reserved for info/completed/active-tab/focus only. **One blessed exception: Pro-upsell CTAs use brand blue** (`bg-blue-700 text-white shadow-blue-700/30`, `dark:bg-blue-600`) to read as the paid-tier accent — the "Upgrade to Pro" / "Compare plans" buttons on `pro-upgrade-card`, `Policies`, `TokenSavings`, and the featured plan in `plan-comparison-dialog`. This is deliberate Pro-brand signaling, not a general primary; every other primary action stays neutral-900 ink.
+1. **Blue primary action** → neutral-900 primary. Blue reserved for info/completed/active-tab only; the focus ring is neutral (2026-09-17). **One blessed exception: Pro-upsell CTAs use brand blue** (`bg-blue-700 text-white shadow-blue-700/30`, `dark:bg-blue-600`) to read as the paid-tier accent — the "Upgrade to Pro" / "Compare plans" buttons on `pro-upgrade-card`, `Policies`, `TokenSavings`, and the featured plan in `plan-comparison-dialog`. This is deliberate Pro-brand signaling, not a general primary; every other primary action stays neutral-900 ink.
 2. **Blue underlined links** → ink + permanent faint underline (`decoration-neutral-200` → `decoration-neutral-500` on hover/focus). Blue is overloaded with 4 other meanings.
 3. **24px gutters (Bootstrap/Material default)** → 12-column grid with **16px gutters**. Denser, more on-genre for an operator tool.
 4. **Brand colors as chart series colors** → 8-slot OKLCH categorical palette picked by series index. Per-series `slot?: number` override only for brand-mnemonic exceptions (Anthropic→orange, OpenAI→blue).
@@ -468,7 +470,7 @@ Two layers: **palette atoms** (5 OKLCH ramps × 11 steps + atomic surfaces + 8-s
 ### Primary & brand accent
 
 - **Ink** `oklch(0.090 0 0)` ← `{colors.neutral-900}` — primary action, foreground, headlines. **Not blue.**
-- **Blue** `oklch(0.345 0.224 268.85)` ≈ `#1F2FCE` ← `{colors.blue-700}` — brand accent (anchored to `public/logomark.svg`). Info / completed / active-tab / focus only. Never primary CTA. Never inline links.
+- **Blue** `oklch(0.345 0.224 268.85)` ≈ `#1F2FCE` ← `{colors.blue-700}` — brand accent (anchored to `public/logomark.svg`). Info / completed / active-tab only (the focus ring is neutral, 2026-09-17). Never primary CTA. Never inline links.
 
 ### Step roles (apply across all 5 ramps)
 
@@ -554,7 +556,7 @@ Used only by `<VendorAvatar />` (bare icon at `size-4`, no chip wrapper). Anthro
 | `bg-accent` | neutral-100 | `bg-neutral-100` on selected/active fills |
 | `bg-accent-muted` | accent at 50% | `bg-accent/50` — the half-strength accent is a token, not a modifier |
 | `border-border` | neutral-200 | `border-neutral-200` for dividers, table separators, list containers, form control edges |
-| `ring-ring` | blue-600 / blue-400 dark | `ring-neutral-N` for focus rings |
+| `ring-ring` | neutral-600 / neutral-400 dark | `ring-neutral-N` for focus rings |
 | `text-foreground` | neutral-900 | `text-neutral-900` for primary text, headlines, row identifiers |
 | `text-muted-foreground` | neutral-600 | `text-neutral-500` for secondary text, eyebrows, icon-action tints |
 
@@ -1574,7 +1576,7 @@ outline-none
 
 Rendered as `<button type="button">` (no router in this codebase — no `<a href>`). **Visual contract = link styling, semantics = button.** (decided — see `feedback_link-affordance.md`)
 
-**No blue link color.** Blue is reserved for info / completed / active-tab / focus. Link affordance is permanent underline, not color.
+**No blue link color.** Blue is reserved for info / completed / active-tab. Link affordance is permanent underline, not color.
 
 ### Composed-row patterns
 

@@ -11,6 +11,14 @@ export type RangeKey = "all" | "24h" | "7d" | "30d" | "custom";
  *  share state without lifting through Requests(). */
 export type CustomRange = { from: Date; to: Date };
 
+/** One chart bucket before the outcome split. */
+export type HeroBucket = { time: string; label: string; requests: number };
+
+/** One chart bucket with its outcome split. `success + errors === requests`
+ *  on every point, and the per-point errors sum to the view's `errors`, so
+ *  the tooltip, the headline and the breakdown legend all reconcile. */
+export type HeroPoint = HeroBucket & { success: number; errors: number };
+
 export type HeroView = {
   eyebrow: string;
   total: number;
@@ -18,7 +26,7 @@ export type HeroView = {
   errors: number;
   delta: string;
   deltaNote: string;
-  data: Array<{ time: string; label: string; requests: number }>;
+  data: HeroPoint[];
   ticks: string[];
   bucketLabel: string;
   domainTop: number;

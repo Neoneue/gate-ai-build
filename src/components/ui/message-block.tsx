@@ -186,7 +186,7 @@ export function MessageBlock({
     "max-h-[200px] overflow-y-auto overscroll-contain rounded-md border p-4 transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
     MESSAGE_BODY_VOICE,
     selected ? selectedTone : baseBubbleBorder,
-    onClick && !selected && "cursor-pointer hover:border-ring",
+    onClick && !selected && "cursor-pointer hover:border-border-hover",
     onClick && "w-full text-left"
   );
 

@@ -201,7 +201,13 @@ function ChartTooltipContent({
           .map((item, index) => {
             const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = color ?? item.payload?.fill ?? item.color;
+            // Config colour first (2026-09-17): the config is what the legend
+            // reads, so a row's dot matches the legend even when the drawn
+            // series uses a different stroke (Security's Total row is blue
+            // in the tooltip while the trace stays red). Every other chart
+            // sets config colour === stroke, so nothing else moves.
+            const indicatorColor =
+              color ?? itemConfig?.color ?? item.payload?.fill ?? item.color;
 
             return (
               <div
