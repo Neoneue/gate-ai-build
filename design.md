@@ -1471,11 +1471,13 @@ switches).
   above `HeroNumeric`, denominator as the `type-copy-14 text-muted-foreground`
   caption (user 2026-09-17: KPIs take eyebrows everywhere); then the
   breakdown: `SectionHeading as="h4"` "Where the savings came from", a `type-copy-14
-  text-muted-foreground` basis sentence ("Share of Gate-attributed savings,
-  as the Total saved tile reports it."), then two levels on that ONE basis:
-  Compression and Gate cache hits as the two tile rates over Total saved
+  text-muted-foreground` basis sentence ("Share of everything Gate saved, the
+  Total saved rate above."), then two levels on that ONE basis:
+  Compression and Caching as the two tile rates over Total saved
   (`KPI_BY_RANGE`, Total = Caching + Compression), compression's mechanisms
-  nested directly beneath it (`ml-4 border-l border-border pl-4`, narrower
+  nested directly beneath it, FOUR rows from the gateway's "Methods, ranked"
+  table: the top three methods by tokens saved, verbatim, and "All others"
+  for the rest (user + PM, call 2026-09-17) (`ml-4 border-l border-border pl-4`, narrower
   label track so every bar starts on one line), a `my-3` hairline, then the
   next mechanism. Rows use the Security page's grid (`grid-cols-[auto_1fr_auto]`
   from `@md`, label track `w-72 pr-4`, nested `w-64 pr-4`; below `@md` two
@@ -1485,15 +1487,14 @@ switches).
   An off mechanism shows `StatusBadge on={false}` + a sentence, no bar; both
   off replaces the rows with one sentence. Parent ticket: "compression
   against Gate cache hits, and the leading compression passes inside that".
-- **Footer:** `border-t`, `gap-2` stack: `SectionHeading as="h4"` "What this
-  figure leaves out", the exclusion paragraph `type-copy-14
+- **Footer:** `border-t`, `gap-2` stack: `SectionHeading as="h4"` "What these
+  savings leave out", the exclusion paragraph `type-copy-14
   text-muted-foreground`.
 - **States:** loading skeletons the values and keeps the chrome
   (`aria-busy`, one sr-only status); no traffic keeps the header and renders
   an explanation, never zeros; both switches off replaces the rows with one
-  sentence and drops the partial note. PLACEHOLDERS awaiting a real source:
-  the mechanism weight table, the attribution start date and the epoch date
-  (`token-savings-summary.ts`).
+  sentence. Partial attribution is not marked (open). The epoch date in
+  `token-savings-summary.ts` is a placeholder.
 
 ### Modal / Drawer
 

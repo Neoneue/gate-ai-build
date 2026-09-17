@@ -51,11 +51,16 @@ import {
  * even ladder. Every row is a `display:contents` wrapper so its cells land
  * directly in these tracks. */
 const ROW_GRID =
-  "grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-3 @md:grid-cols-[auto_1fr_auto]";
+  "grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 @md:grid-cols-[auto_1fr_3.5rem]";
 // w-60 with pr-4 keeps the text at 224px and adds 16px of air before the bar
 // on top of the grid gap (user 2026-09-17).
 // 288px track, 16px inner padding: the longest nested name ("Cross-conversation
 // de-duplication", 238px at 14px) fits on one line inside the 32px indent.
+// 8pt grid: label track 288 + gap 16 puts every bar's origin at 304px from
+// the grid edge. The nested block indents 32 (ml-4 + pl-4, hairline drawn
+// as a pseudo so it takes no width) and its track is 256, so 32 + 256 + 16
+// lands on the same 304 (user 2026-09-17). The value track is a fixed 56px
+// so the mono-14 and mono-12 percentages cannot shift the bars' right edge.
 const LABEL_CELL = "col-span-2 @md:col-span-1 @md:w-72 @md:pr-4";
 /** Nested rows sit inside a 32px indent (ml-4 + pl-4), so their label track
  *  is 32px narrower and every bar in the block starts on one vertical line. */
@@ -189,7 +194,13 @@ function MeterRow({
 }) {
   return (
     <div className="contents">
-      <span className={cn(nested ? NESTED_LABEL_CELL : LABEL_CELL, labelVoice)}>
+      <span
+        className={cn(
+          nested ? NESTED_LABEL_CELL : LABEL_CELL,
+          "whitespace-pre-line",
+          labelVoice
+        )}
+      >
         {bar.label}
       </span>
       {loading ? (
@@ -271,7 +282,12 @@ function BreakdownRows({
             />
           )}
           {mechanism.passes.length > 0 ? (
-            <div className={cn(FULL_ROW, "ml-4 border-border border-l pl-4")}>
+            <div
+              className={cn(
+                FULL_ROW,
+                "relative ml-4 pl-4 before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-border"
+              )}
+            >
               <div className={ROW_GRID}>
                 {mechanism.passes.map((pass) => (
                   <MeterRow
@@ -315,9 +331,6 @@ function Breakdown({
       ) : (
         <BreakdownRows loading={loading} model={model} />
       )}
-      {model.partial && !model.bothOff ? (
-        <p className={NOTE}>{SUMMARY_COPY.breakdown.partial}</p>
-      ) : null}
       {model.lowVolume && !model.bothOff ? (
         <p className={NOTE}>{SUMMARY_COPY.breakdown.lowVolume}</p>
       ) : null}

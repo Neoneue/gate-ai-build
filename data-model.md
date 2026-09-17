@@ -1392,10 +1392,9 @@ Compression tile rate × `TOTAL_7D_BASE_INPUT_TOKENS` × `RANGE_SCALE`;
 cache-answered requests = Caching tile rate × `TOTAL_7D_BASE_REQUESTS` ×
 `RANGE_SCALE`; one basis for every bar = removed tokens + input tokens of the
 cache-answered requests. Constants: `COMPARABILITY_EPOCH` (first day of the
-All window), `ATTRIBUTION_START` (demo today − 25 days; earlier windows read
-Partial), `LOW_VOLUME_REQUESTS` 1,000. Per-pass split = `PASS_WEIGHTS`, the
-one authored table, over the eight `BenefitList` pass names (Free = Basic
-four). All copy in `SUMMARY_COPY`. Card: `src/pages/token-savings/SummaryCard.tsx`.
+All window), `LOW_VOLUME_REQUESTS` 1,000. Compression split = `METHOD_SHARES`,
+the gateway's "Methods, ranked" top three plus "All others", same on every
+plan. Partial attribution is not marked (open). All copy in `SUMMARY_COPY`. Card: `src/pages/token-savings/SummaryCard.tsx`.
 Twins: Pro / Free share `TokenSavings` via `plan`; Default mounts the card
 with `hasTraffic: false` (no-traffic state); Enterprise "My token savings" and
 the team pane do not render it.
