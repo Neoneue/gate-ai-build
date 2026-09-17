@@ -31,6 +31,49 @@ Prior day: [`changelog-9-15.md`](./changelog-9-15.md)
   title 7.30 / 9.66, Free badge 7.17 / 5.86. Every pairing clears 4.5:1.
   Documented in `design.md` §2 (plan-tier families) and §7 (Card tone).
 
+### Focus ring: solid 2px brand blue, offset 2 `92f692d`
+
+- Before: `focus-visible:ring-3 focus-visible:ring-ring/50` with `--ring` at
+  neutral-400 light / neutral-500 dark, compositing to 1.54:1 light and
+  1.87:1 dark against the page, under the 3:1 floor of WCAG 2.4.11. After:
+  `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+  focus-visible:ring-offset-background`, with `--ring` moved to `blue-600`
+  light / `blue-400` dark (`src/index.css`). Measured 7.11 / 7.01 against
+  the page and 7.42 / 6.35 against cards. 53 sites in 36 files swept; the
+  7 sites that already used `ring-inset` take `ring-2 ring-ring` with no
+  offset. Recorded in `design.md` Focus block, Input, Card, TableRow and
+  TextLink specs. Source: rams review of the Models page.
+
+### Hover fill is accent-muted, accent is selected only `92f692d`
+
+- Before: `hover:bg-accent` on interactive cards, table rows and 17 more
+  sites; dark muted text on the hovered fill measured 4.01:1. After:
+  `hover:bg-accent-muted` (5.42:1) on every hover, `bg-accent` kept for
+  selected fills (`data-[state=selected]`, calendar ranges, active menu
+  items). `card.tsx`, `table.tsx`, 13 call-site files. The Notifications
+  bulk banner (`Notifications.tsx`) switches from a bare `bg-accent` class,
+  which now loses to the hover rule, to the row's `data-state="selected"`
+  hook. `design.md` 555 already named this split; lines 692, 1218 and 1282
+  now agree with it.
+
+### Page subtitles step up to Copy 18 `92f692d`
+
+- Before: the subtitle under every `PageTitle` was `type-copy-16`, so the
+  page header ran 32 / 16 and the section header 24 / 16 shared a body
+  size. After: `type-copy-18` on the 33 page subtitles (32 files); section
+  and card subtitles stay 16. Ladder is now 32 / 18 page, 24 / 16 section,
+  20 / 14 block, 16 / 14 card.
+
+### Plan-tier colors: Pro returns to blue `92f692d`
+
+- Before (`dd4b262`, same day): Pro badge, card tone edge and plan title on
+  the indigo ramp. After: the same rungs on the brand blue ramp,
+  `bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300`
+  (badge), `border-blue-200 dark:border-blue-500/30` (card tone),
+  `text-blue-700 dark:text-blue-300` (Billing hero). Indigo read off-brand
+  next to the blue nav. Enterprise stays violet. `badge.tsx`, `card.tsx`,
+  `Billing.tsx`, `design.md` tier table.
+
 ## Components
 
 ### Billing history and shared billing cards `dd4b262`
@@ -52,6 +95,13 @@ Prior day: [`changelog-9-15.md`](./changelog-9-15.md)
   `CreditStatRow` exported from the Credits module.
 - **`initialsOf`** lifted from `Team.tsx` to `monogram-types.ts` (two
   consumers).
+
+### Monogram `sm` is 20px with a 12px letter `92f692d`
+
+- Before: `size-4 text-[10px]`, a 16px circle whose single initial floated.
+  After: `size-5 text-xs`, the same glyph size `md` uses. `monogram.tsx`;
+  lands on Activity, Team detail member lists, Security overview and the
+  team usage table.
 
 ## Sections
 
@@ -113,3 +163,36 @@ Prior day: [`changelog-9-15.md`](./changelog-9-15.md)
   explicit); `min-w` 1168 to 1152, which also removes a 14px horizontal
   scroll at 1440. Rows grow from 48 to about 61px. `src/pages/Activity.tsx`;
   Enterprise and Free routes share the component.
+
+### Models: focus and screen-reader fixes from the rams review `92f692d`
+
+- Search toolbar stays mounted when the filter empties, so the input keeps
+  focus and its text; the empty state renders below it. The `+N`
+  capability chip is `role="img"` so its label reaches assistive tech. The
+  code sample and setup config scrollports are `role="region"
+  tabIndex={0}` with the focus ring inset. Choosing a model focuses the
+  detail's back link and announces "(model name) details" through a polite live
+  region; back restores focus to the originating row via
+  `data-model-row`. No route change. `src/pages/Models.tsx`; `/models` and
+  `/models-enterprise` share it.
+
+### Billing: flat plan card, no section subtitles, ledger polish `92f692d`
+
+- **Plan card, all tiers.** Before: Seats / Plan details facts inside an
+  inset `rounded-md border bg-card-muted p-4` sub-card with its own title.
+  After: the one-sentence subtitle and the `dl` sit flat in `CardContent
+  gap-3`, `dl` `mt-3 border-t pt-3`, the Credits card recipe. Enterprise
+  `Current period` and Pro `Renews on` values are now mono like the rest
+  of the list. Footer sentence is "Want to add seats or change your
+  plan?" so it no longer repeats the `Contact support` button.
+- **Section subtitles removed** under Plan, Credits and Billing history on
+  Enterprise, Pro and Free; each card already carries its own
+  description. Titles sit directly in the `gap-4` column, the Dashboard
+  pattern. Page subtitle on Pro and Free is now "Everything you pay for
+  Gate, in one place." (Enterprise: "your organization pays").
+- **Credits hero** shows `$49.99`, matching the stat row beneath; the
+  ledger keeps the five-decimal balance. `CreditsCard.tsx`.
+- **Ledger.** Expanded child rows drop the `pl-8` on their Date cell so
+  dates align under the day date; positive amounts add
+  `dark:text-success-300`. `HistorySection.tsx`, shared by Pro, Free and
+  the Enterprise Balance tab.
