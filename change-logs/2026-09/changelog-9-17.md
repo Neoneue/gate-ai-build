@@ -41,6 +41,14 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   colour equal to its stroke, so only the Security Total row (blue dot, red
   trace) changes.
 
+### Chart palette gets a chart-7 soft twin `9cffeda`
+
+- `--chart-7-soft` added to `src/index.css` in both themes and the theme
+  alias block, the same `color-mix(in oklch, var(--chart-7), white 20%)`
+  derivation as slots 1 to 4. First consumer is the Token savings Summary's
+  Compression bar (the Compression tile is chart-7). Documented in the
+  `design.md` ramp block; the data-bar rule is unchanged.
+
 ## Sections
 
 ### Billing: one org across the four Enterprise states `4c39f0b`
@@ -106,3 +114,65 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   width and 8px rhythm; `position={{ y: -9 }}` centres the 114px box on
   the 96px band, inside the card. `src/pages/Security.tsx`,
   `src/pages/security/events-data.ts`.
+
+### Token savings: Summary card `9cffeda`
+
+- **New card** between the Overview rail and Savings options on
+  `/token-savings` (Pro and Free via `plan`) and `/token-savings-default`
+  (no-traffic state). `src/pages/token-savings/SummaryCard.tsx`; every
+  figure and sentence from `src/pages/token-savings-summary.ts`
+  (`summaryFor`, `SUMMARY_COPY`). Ticket: parent "Token Savings Summary"
+  plus the design ticket, local copy at `docs/tickets/token-savings-summary`.
+- **Header:** `SectionTitle` "Summary" (peer of the Overview and Savings
+  options titles) and one `type-copy-14` subtitle, "What Gate did to earn
+  the rates above, over the period selected in Overview." No mono meta
+  line, no epoch note (user, PM call 2026-09-17).
+- **Lede** `type-copy-16` with the two figures in `font-medium
+  tabular-nums`, period phrase from the Overview range.
+- **Two figure cells**, always side by side (`grid-cols-2`), the Caching
+  card's nested-cell recipe in the KpiTile composition: `Eyebrow` label,
+  `HeroNumeric`, denominator caption ("13.7% of the 447.4M input tokens
+  you sent" / "0.15% of 542,241 requests"). Off state names the switch.
+- **Where the savings came from:** `SectionHeading as="h4"`, basis sentence
+  "Share of Gate-attributed savings, as the Total saved tile reports it.",
+  then two levels on that one basis: Compression and Gate cache hits as the
+  two tile rates over Total saved, the compression mechanisms (the eight
+  `BenefitList` names, Free = Basic four) nested under Compression with
+  `ml-4 border-l pl-4`, a `my-3` hairline, then Gate cache hits. Security
+  page meter grid, label track `w-72 pr-4` (nested `w-64`), fills
+  `from-chart-7 to-chart-7-soft` / `from-chart-3 to-chart-3-soft`,
+  `role="meter"` with a plain-language `aria-label`. An off mechanism
+  shows `StatusBadge` OFF plus a sentence; both off is one sentence. Partial
+  attribution is a note under the rows, no badge (removed on the call).
+- **Footer:** `SectionHeading as="h4"` "What this figure leaves out" over
+  the exclusion paragraph. No dollar amounts anywhere; nothing focusable.
+- **Wiring:** the Compression and Caching switches lifted into
+  `TokenSavings.tsx` (`SavingsSwitches`) so the card can name an off
+  mechanism; `SavingsOptionsSection` takes them as optional controlled
+  props. `activity-data.ts` exports `TOTAL_7D_BASE_INPUT_TOKENS`.
+- **Open, waiting on the team:** bucket the eight compression mechanisms
+  down to about four (Riley); the mechanism weights are an authored
+  placeholder. Tests: `token-savings-summary.test.ts` (reconciliation with
+  the tiles, shares sum to 100.0, states) and `SummaryCard.test.tsx`
+  (renderToString per state, no "$").
+
+### Billing: Enterprise seats read as plan utilization, single history `73e725d`
+
+- **Seats stat** on the plan card reads "4 of 4": seats in use of seats on
+  the plan (`enterprisePlanSeats`). Seats are a plan quantity changed
+  through Support, not a headcount that follows joins and leaves (PM + user
+  call 2026-09-17; dev confirmed an org can pay for more seats than it has
+  members). Footer copy "Want to add or remove seats, or change your plan?"
+- **Changes this period card REMOVED**, with its proration and per-member
+  amounts. The table module `src/pages/billing/BillingHistorySection.tsx`
+  (the Plan tab) is deleted; its empty-ledger sentence moved into
+  `HistorySection.tsx`.
+- **Billing history** is Pro's, verbatim: title left, Invoice portal right,
+  one flush `Card` with `HistoryLedger`. No Plan / Balance tabs.
+- **Banners:** granted drops "your first seat invoice is below";
+  unprovisioned says seat pricing and next invoice appear shortly; payment
+  failed reports this month's seat charge on the 1st (`failedCharge`).
+- `src/data/billing-enterprise.ts` rewritten around the plan quantity
+  (no `prorateSeat`, `seatChangesThisPeriod`, `firstSeatChargeRow`);
+  `billing-seats.ts` engine kept for `seatCount` / `periodDays`. Test
+  rewritten to match.

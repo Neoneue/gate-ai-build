@@ -17,6 +17,9 @@
  * - Real API data (`models.ts` releasedAt) and transcript bodies stay put.
  *
  * Rollback: `__setDemoShiftDaysForTests(0)` restores the authored calendar.
+ * Tests: `src/test/setup.ts` fakes `Date` to 2026-09-17 before any module
+ * loads, so `DEMO_TODAY` is always 2026-09-16 under vitest and counts that
+ * depend on a calendar boundary cannot change overnight.
  */
 
 const MS_PER_DAY = 86_400_000;

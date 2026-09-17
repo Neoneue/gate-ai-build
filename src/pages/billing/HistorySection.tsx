@@ -18,7 +18,6 @@ import { HISTORY_ROWS, type HistoryRow } from "@/data/billing-history";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { BILLING_HISTORY_EMPTY_BODY } from "@/pages/billing/BillingHistorySection";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HistorySection — the PAYG credit ledger, shared by Pro and Free.
@@ -208,6 +207,11 @@ function HistoryEntryRows({ entry }: { entry: HistoryEntry }) {
  *  `rows` defaults to the live ledger, which is what Pro and Free always
  *  show. An org whose billing is not provisioned yet passes an empty array
  *  and gets the same `TableEmptyState` the Plan tab renders. */
+/** Body sentence for an empty ledger. The credit ledger is the one Billing
+ *  history on every tier (Plan tab removed 2026-09-17). */
+const BILLING_HISTORY_EMPTY_BODY =
+  "Your first charge will show up here once billing is set up.";
+
 export function HistoryLedger({
   rows = HISTORY_ROWS,
   emptyBody = BILLING_HISTORY_EMPTY_BODY,

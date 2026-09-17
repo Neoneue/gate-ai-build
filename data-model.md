@@ -1376,11 +1376,29 @@ Python / cURL tabs)
 
 ### Token Savings page (`/token-savings` → `TokenSavings.tsx`)
 
-**Purpose:** Caching and compression metrics and settings.
+**Purpose:** Caching and compression metrics and settings, plus a Summary
+card that says in plain language what produced the savings over the selected
+window (ticket 2026-09-17, `docs/tickets/token-savings-summary`).
 
-**State:** `cachingEnabled: boolean`, `ttl: '5m'|'30m'|'1h'|'6h'|'24h'`, `compressionEnabled: boolean`
+**State:** `range` / `customRange` (Overview picker, `?range=` read once),
+`savings: SavingsSwitches` (`{ compression, caching }`, lifted from the two
+Savings options cards so the Summary can name an off mechanism), `ttl:
+'5m'|'30m'|'1h'|'6h'|'24h'` (Caching card).
 
-**Data:** KPI tiles currently hardcoded at "0%" / "$0 saved" (placeholder).
+**Data:** Overview tiles from `KPI_BY_RANGE` (`token-savings-data.ts`). The
+Summary model is `summaryFor(range, customRange, { compressionOn, cachingOn,
+plan, hasTraffic? })` in `token-savings-summary.ts`: removed tokens =
+Compression tile rate × `TOTAL_7D_BASE_INPUT_TOKENS` × `RANGE_SCALE`;
+cache-answered requests = Caching tile rate × `TOTAL_7D_BASE_REQUESTS` ×
+`RANGE_SCALE`; one basis for every bar = removed tokens + input tokens of the
+cache-answered requests. Constants: `COMPARABILITY_EPOCH` (first day of the
+All window), `ATTRIBUTION_START` (demo today − 25 days; earlier windows read
+Partial), `LOW_VOLUME_REQUESTS` 1,000. Per-pass split = `PASS_WEIGHTS`, the
+one authored table, over the eight `BenefitList` pass names (Free = Basic
+four). All copy in `SUMMARY_COPY`. Card: `src/pages/token-savings/SummaryCard.tsx`.
+Twins: Pro / Free share `TokenSavings` via `plan`; Default mounts the card
+with `hasTraffic: false` (no-traffic state); Enterprise "My token savings" and
+the team pane do not render it.
 
 ---
 

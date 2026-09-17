@@ -386,12 +386,14 @@ and (pointer: fine)) and (&:hover));
      chroma easing off 20% so the tip reads lighter rather than louder.
      Derived over var(--chart-N) rather than restated per theme, so the dark
      palette's 5-points-darker slots come free — same derivation idiom as
-     --accent-muted. Only the four slots a bar consumes today are defined; add
-     the twin when a fifth slot takes a fill. */
+     --accent-muted. Only the slots a bar consumes are defined (1-4, and 7 for
+     the Token savings Summary's Compression bar, 2026-09-17); add the twin
+     when another slot takes a fill. */
   --chart-1-soft: color-mix(in oklch, var(--chart-1), white 20%);
   --chart-2-soft: color-mix(in oklch, var(--chart-2), white 20%);
   --chart-3-soft: color-mix(in oklch, var(--chart-3), white 20%);
   --chart-4-soft: color-mix(in oklch, var(--chart-4), white 20%);
+  --chart-7-soft: color-mix(in oklch, var(--chart-7), white 20%);
   --radius: 0.625rem;
   --sidebar: var(--color-white);
   --sidebar-foreground: var(--color-neutral-900);
@@ -527,6 +529,7 @@ body {
   --color-chart-1: var(--chart-1);
   /* Aliased so a bar can name the leading edge as a gradient stop
      (`to-chart-3-soft`); see the token note in :root. */
+  --color-chart-7-soft: var(--chart-7-soft);
   --color-chart-4-soft: var(--chart-4-soft);
   --color-chart-3-soft: var(--chart-3-soft);
   --color-chart-2-soft: var(--chart-2-soft);
@@ -682,6 +685,7 @@ body {
   --chart-2-soft: color-mix(in oklch, var(--chart-2), white 20%);
   --chart-3-soft: color-mix(in oklch, var(--chart-3), white 20%);
   --chart-4-soft: color-mix(in oklch, var(--chart-4), white 20%);
+  --chart-7-soft: color-mix(in oklch, var(--chart-7), white 20%);
 
   --surface-strong: var(--color-neutral-900);
   --surface-strong-foreground: var(--color-neutral-50);

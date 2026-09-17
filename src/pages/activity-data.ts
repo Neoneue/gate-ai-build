@@ -433,6 +433,14 @@ const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
   Object.entries(splitBy((c) => c.model)).map(([k, v]) => [k, rounded(v)])
 );
 
+/** Workspace 7d INPUT tokens — the prompt side of MODEL_TOKENS_7D. The Token
+ *  savings Summary's denominator ("of the N input tokens you sent"): compression
+ *  removes input tokens, so its rate applies to this, not to in + out. */
+export const TOTAL_7D_BASE_INPUT_TOKENS = Object.values(MODEL_TOKENS_7D).reduce(
+  (sum, s) => sum + s.tokensIn,
+  0
+);
+
 /** 7d spend per catalog model, routing markup included. Not simply
  *  `costOf(model, in, out)`: OpenRouter bills 10% over list, so what a model
  *  actually costs depends on where its traffic was sent. Grouping the same
