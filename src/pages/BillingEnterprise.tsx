@@ -1,5 +1,5 @@
 import { Headset, OctagonAlert } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import {
   useNavigate,
   useOutletContext,
@@ -7,17 +7,8 @@ import {
 } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
-import { Monogram } from "@/components/ui/monogram";
-import { initialsOf } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
 import { ReceiptIcon } from "@/components/ui/receipt";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -29,31 +20,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SortableTableHead,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { TableEmptyState } from "@/components/ui/table-empty-state";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Timestamp } from "@/components/ui/timestamp";
-import {
   ENTERPRISE_SEAT_RATE_USD,
   type EnterpriseBillingState,
   type EnterpriseBillingView,
   enterpriseBillingView,
+  enterprisePlanSeats,
   enterpriseSeatCount,
   nextInvoiceUsd,
   parseEnterpriseBillingState,
-  type SeatChange,
 } from "@/data/billing-enterprise";
-import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { PlanChargesTable } from "@/pages/billing/BillingHistorySection";
 import { CreditsCard } from "@/pages/billing/CreditsCard";
 import { HistoryLedger } from "@/pages/billing/HistorySection";
 import { PaymentMethodCard } from "@/pages/billing/PaymentMethodCard";
@@ -61,13 +39,13 @@ import { PaymentMethodCard } from "@/pages/billing/PaymentMethodCard";
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing — ENTERPRISE twin (route: /billing-enterprise, sidebar: "Billing")
  *
- * Enterprise is a Support-granted entitlement billed BY SEAT through its own
- * Stripe configuration (ticket `enterprise-billing-plan-surface`). It cannot
- * be self-upgraded, downgraded or cancelled, so this page deliberately drops
- * everything the Pro twin carries for self-serve commerce: the plan
- * comparison / cancel dialogs, the Credits card, Add-credits, Auto-recharge
- * and the payment-method card. The checkout CTA is replaced by a route to
- * Constellation Support. Free and Pro keep their own files untouched.
+ * Enterprise is a Support-granted entitlement billed BY SEAT (ticket
+ * `enterprise-billing-plan-surface`). It cannot be self-upgraded, downgraded
+ * or cancelled, so the plan card routes to Constellation Support instead of
+ * a checkout. Seats are a PLAN quantity read as utilization ("4 of 4"); seat
+ * changes happen on the plan via Support, so there is no proration and no
+ * per-member costing on this page (PM + user, call 2026-09-17). Billing
+ * history is the one PAYG credit ledger Pro shows, no Plan tab.
  *
  * `?state=` is a one-way preview link (like `?range=`): it is read, never
  * stripped. `revoked` is NOT handled here — a revoked org is back on Pro, so
@@ -82,10 +60,7 @@ export function BillingEnterprise() {
   }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const state = parseEnterpriseBillingState(searchParams.get("state"));
-  // ONE source for every section. A day-one org cannot also have months of
-  // invoices and a seat change, so the period, the changes and the invoices
-  // are resolved together per state rather than each section reaching for
-  // the current-month seed independently.
+  // ONE source for every section, resolved per state.
   const view = enterpriseBillingView(state);
 
   // The preview switch writes the same `?state=` the page already reads, so a
@@ -119,7 +94,6 @@ export function BillingEnterprise() {
         <div className="flex flex-col gap-4">
           <SectionTitle as="h2">Plan</SectionTitle>
           <PlanCard view={view} />
-          <SeatChangesSection view={view} />
         </div>
 
         <div className="mt-2 flex flex-col gap-4">
@@ -138,9 +112,19 @@ export function BillingEnterprise() {
           </div>
         </div>
 
+        {/* Pro's Billing history, verbatim: title left, Invoice portal right,
+            one flush card with the PAYG ledger. */}
         <div className="mt-2 flex flex-col gap-4">
-          <SectionTitle as="h2">Billing history</SectionTitle>
-          <BillingHistorySection view={view} />
+          <div className="flex items-start justify-between gap-4">
+            <SectionTitle as="h2">Billing history</SectionTitle>
+            <Button className="shrink-0" size="sm" variant="outline">
+              <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
+              Invoice portal
+            </Button>
+          </div>
+          <Card density="flush">
+            <HistoryLedger rows={view.ledgerRows} />
+          </Card>
         </div>
       </div>
     </DashboardChrome>
@@ -243,8 +227,7 @@ function StateBanner({ view }: { view: EnterpriseBillingView }) {
     return (
       <Callout>
         Welcome to Enterprise. Your organization was upgraded on{" "}
-        {formatDateNumeric(view.grantedOn)}, and your first seat invoice is
-        below.
+        {formatDateNumeric(view.grantedOn)}.
       </Callout>
     );
   }
@@ -253,21 +236,19 @@ function StateBanner({ view }: { view: EnterpriseBillingView }) {
       <Callout>
         Enterprise was added to your organization on{" "}
         {formatDateNumeric(view.grantedOn)}. We're still setting up seat
-        billing, so no seat charge has been made yet. Your seat pricing and
-        invoices will appear here shortly. Credits keep working as before.
+        billing; your seat pricing and next invoice will appear here shortly.
+        Credits keep working as before.
       </Callout>
     );
   }
   if (view.state === "past-due") {
-    // Only the seat charge can fail; a credit receipt is already settled.
-    // Nothing failed means nothing to report, so the banner slot collapses.
-    if (view.failedInvoice === null) {
+    if (view.failedCharge === null) {
       return null;
     }
     return (
       <PastDueBanner
-        amount={view.failedInvoice.amount}
-        invoicedOn={view.failedInvoice.date}
+        amount={view.failedCharge.amount}
+        invoicedOn={view.failedCharge.date}
       />
     );
   }
@@ -316,6 +297,7 @@ function StatRow({
 function PlanCard({ view }: { view: EnterpriseBillingView }) {
   const unprovisioned = view.state === "unprovisioned";
   const seats = enterpriseSeatCount();
+  const planSeats = enterprisePlanSeats();
 
   return (
     <Card className="min-w-0 pb-0!" tone="enterprise">
@@ -341,9 +323,7 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
             inset chrome and no second title, so the plan card reads as one
             surface. The subtitle stays with the plan description above the
             hairline, and the numbers below it line up as a label/value stat
-            list instead of hiding inside prose. Seat CHANGES are their own
-            table card outside this one, because a growing org outgrows a
-            sentence. */}
+            list instead of hiding inside prose. */}
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
           Each member of your organization uses one seat. Invitations count once
           they're accepted.
@@ -354,7 +334,9 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
             (`gap-3` plus `mt-3`) and 12px over the first row (`pt-3`): the
             Credits card's band, so the two cards on this page match. */}
         <dl className="type-copy-14 m-0 mt-3 flex flex-col gap-2 border-border border-t pt-3">
-          <StatRow label="Seats" mono value={seats} />
+          {/* Utilization, not a headcount: seats in use of seats on the plan
+              (PM + user, call 2026-09-17). */}
+          <StatRow label="Seats" mono value={`${seats} of ${planSeats}`} />
           <StatRow
             label="Price per seat"
             mono={!unprovisioned}
@@ -389,7 +371,7 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
       </CardContent>
       <CardFooter className="flex-wrap justify-end gap-2 border-border border-t py-2">
         <p className="type-copy-14 m-0 mr-auto text-pretty text-muted-foreground">
-          Want to add seats or change your plan?
+          Want to add or remove seats, or change your plan?
         </p>
         {/* No-op, like the Pro twin's `Invoice portal` / `Update card`. */}
         <Button size="sm" variant="outline">
@@ -402,216 +384,6 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
           Contact support
         </Button>
       </CardFooter>
-    </Card>
-  );
-}
-
-/* ─── Seat changes ───────────────────────────────────────────────────── */
-
-function changeSortValue(row: SeatChange, key: string): string | number | null {
-  switch (key) {
-    case "member":
-      return row.name;
-    case "kind":
-      return row.kind;
-    case "date":
-      return row.date.getTime();
-    case "amount":
-      return row.proratedUsd;
-    default:
-      return null;
-  }
-}
-
-/** Mid-period seat movement, its own table card between the plan and the
- *  invoices (user direction 2026-09-16). A sentence inside the plan card
- *  stopped scaling the moment a second person moved; a table does not. The
- *  member cell is the Members table's cell verbatim (Team.tsx
- *  `MemberRowView`) so the same person reads the same way on both surfaces.
- *  Additions carry a prorated charge; removals carry none — the seat is paid
- *  through this period and simply comes off the next invoice. */
-function SeatChangesSection({ view }: { view: EnterpriseBillingView }) {
-  const { sort, toggle: toggleSort } = useTableSort();
-  const sortedRows = React.useMemo(
-    () => sortRows(view.changes, sort, changeSortValue),
-    [view.changes, sort]
-  );
-
-  // Nothing has been billed yet, so there is no period to report changes
-  // against — the card would be an empty promise rather than an empty state.
-  if (!view.showChanges) {
-    return null;
-  }
-
-  return (
-    <Card density="flush">
-      <CardHeader className="py-3">
-        <CardTitle>Changes this period</CardTitle>
-        <CardDescription>
-          New seats are prorated to your renewal date. Removed seats come off
-          your next invoice.
-        </CardDescription>
-      </CardHeader>
-      {sortedRows.length === 0 ? (
-        <TableEmptyState
-          body="Seats added or removed before your renewal will show up here."
-          title="No seat changes this period"
-        />
-      ) : (
-        /* `table-fixed` + a `w-[N%]` on every head, the Members table's
-           recipe (Team.tsx:295): auto layout hands the slack to whichever
-           cell can grow most — here the stacked name + email — and starves
-           the rest. Fixed layout reads the widths off the header row alone,
-           so the last column lands flush against the table's right padding.
-           Shares sum to 100. Member is the one column that truncates (the
-           name and email spans carry `truncate`), so it does not bound the
-           table; the binding column is Date at 24%, which needs 113px for
-           "Sep 15, 2026" plus padding. Measured floor is 472px, rounded up
-           to `min-w-[480px]`; below it the heads overflow their cells
-           instead of the table scrolling. */
-        <Table className="min-w-[480px] table-fixed">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <SortableTableHead
-                className="w-[34%] whitespace-nowrap"
-                onSort={toggleSort}
-                sort={sort}
-                sortKey="member"
-              >
-                Member
-              </SortableTableHead>
-              <SortableTableHead
-                className="w-[18%] whitespace-nowrap text-right"
-                numeric
-                onSort={toggleSort}
-                sort={sort}
-                sortKey="kind"
-              >
-                Seats
-              </SortableTableHead>
-              <SortableTableHead
-                className="w-[24%] whitespace-nowrap"
-                onSort={toggleSort}
-                sort={sort}
-                sortKey="date"
-              >
-                Date
-              </SortableTableHead>
-              <SortableTableHead
-                className="w-[24%] whitespace-nowrap text-right"
-                numeric
-                onSort={toggleSort}
-                sort={sort}
-                sortKey="amount"
-              >
-                Amount
-              </SortableTableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedRows.map((change) => (
-              <TableRow className="hover:bg-transparent" key={change.id}>
-                <TableCell className="whitespace-nowrap">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Monogram
-                      initials={initialsOf(change.name)}
-                      size="md"
-                      tone={change.avatarTone}
-                    />
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span
-                        className="type-label-14 truncate text-foreground"
-                        title={change.name}
-                      >
-                        {change.name}
-                      </span>
-                      <span
-                        className="type-copy-12 truncate text-muted-foreground tracking-snug"
-                        title={change.email}
-                      >
-                        {change.email}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                  {change.kind === "added" ? "+1" : "-1"}
-                </TableCell>
-                <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                  <Timestamp date={change.date} format="dateNumeric" />
-                </TableCell>
-                {change.kind === "added" ? (
-                  <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                    {formatCurrency(change.proratedUsd)}
-                  </TableCell>
-                ) : (
-                  /* A removal is billed through the period and simply comes
-                     off the next invoice, so it costs nothing NOW. $0.00 in
-                     the muted ink keeps the column numeric and comparable
-                     rather than breaking it with a word. */
-                  <TableCell className="type-mono-14 whitespace-nowrap text-right text-muted-foreground">
-                    {formatCurrency(0)}
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </Card>
-  );
-}
-
-/* ─── Billing history ────────────────────────────────────────────────── */
-
-/** Two ledgers answer two different questions, so they are two tabs of one
- *  card rather than two cards (user direction 2026-09-16). **Plan** is what
- *  the seat subscription charged; **Balance** is the pay-as-you-go credit
- *  ledger. While seat billing is being set up only the Plan tab is empty; the
- *  Balance ledger carries over from Pro. `Invoice portal` sits in the card header, not
- *  in a tab: it is the route to the invoice documents behind both ledgers.
- *
- *  ONE explanation, in the card subtitle, rather than a sentence per tab:
- *  the two tabs are only legible next to each other, so the copy that
- *  distinguishes them has to be visible whichever tab is open. */
-function BillingHistorySection({ view }: { view: EnterpriseBillingView }) {
-  return (
-    <Card density="flush">
-      {/* `variant="line"` already carries the `px-4` gutter and the bottom
-          hairline, so the list lands on the same 16px edge as the card title
-          and the table's first column — no padding override here, unlike the
-          TeamDetail precedent whose parent column already pads. */}
-      {/* `gap-0`: Tabs defaults to an 8px column gap, which would float the
-          table off the tab underline. In a flush Card the table butts the
-          hairline the way the Pro history table butts its header. */}
-      <Tabs className="gap-0" defaultValue="plan">
-        {/* One 48px row holds the triggers and the action: `h-12` is the
-            bare TabsList's 43px rounded up the 4px grid, which gives the
-            32px `size="sm"` button room to centre against the triggers.
-            The WRAPPER owns the bottom hairline so it runs the full card
-            width; the list drops its own (`border-b-0`) and stretches, so
-            the active-tab indicator still lands on that hairline. */}
-        <div className="flex h-12 items-stretch justify-between border-border border-b">
-          <TabsList className="w-auto border-b-0" variant="line">
-            <TabsTrigger value="plan">Plan</TabsTrigger>
-            <TabsTrigger value="balance">Balance</TabsTrigger>
-          </TabsList>
-          <div className="flex shrink-0 items-center pr-4">
-            <Button size="sm" variant="outline">
-              <ReceiptIcon aria-hidden data-icon="inline-start" size={16} />
-              Invoice portal
-            </Button>
-          </div>
-        </div>
-
-        <TabsContent value="plan">
-          <PlanChargesTable rows={view.invoices} />
-        </TabsContent>
-
-        <TabsContent value="balance">
-          <HistoryLedger rows={view.ledgerRows} />
-        </TabsContent>
-      </Tabs>
     </Card>
   );
 }
