@@ -182,10 +182,8 @@ export type SummaryMechanism = SummaryBar & {
   id: "compression" | "cache";
   /** Data-bar fill class per design.md "Data bars & meters". */
   fill: string;
-  /** The mechanism's switch is off: no bar, the card names what is off. */
-  off: boolean;
-  /** Compression's mechanisms as shares of the same basis; empty for cache,
-   *  when compression is off, or when the window is low volume. */
+  /** Compression's mechanisms as shares of the same basis; empty for cache
+   *  or when the window is low volume. */
   passes: SummaryBar[];
 };
 
@@ -198,10 +196,6 @@ export type SummaryModel = {
   periodPhrase: string;
   /** Nothing passed through Gate in the window. */
   noTraffic: boolean;
-  compressionOff: boolean;
-  cachingOff: boolean;
-  /** Both switches off: nothing to attribute. */
-  bothOff: boolean;
   /** Under LOW_VOLUME_REQUESTS: mechanism bars only, passes hidden. */
   lowVolume: boolean;
   requests: number;
@@ -306,13 +300,11 @@ function periodCopy(
 export function summaryFor(
   range: Range,
   customRange: CustomRange | null,
+  // The Savings options switches govern future traffic and never feed this
+  // model: the card reports what Gate did in the selected window (user,
+  // 2026-09-17). A window with a mechanism off for its whole span would read
+  // 0 for that KPI from the data; the demo has no way to make time pass.
   options: {
-    /** Whether the mechanism was running DURING this window. These describe
-     *  the window's history, never the live Savings options switch: turning
-     *  compression off today does not un-remove tokens Gate already stripped.
-     *  Default true; no seeded window has a mechanism off. */
-    compressionOn?: boolean;
-    cachingOn?: boolean;
     plan: SummaryPlan;
     /** False for a workspace nothing has passed through yet (the Default
      *  twin): every window is then a no-traffic window. */
@@ -331,12 +323,8 @@ export function summaryFor(
 
   const [totalTile, cachingTile, compressionTile] =
     KPI_BY_RANGE[window.rateRange];
-  const compressionOff = options.compressionOn === false;
-  const cachingOff = options.cachingOn === false;
-  const compressionRate = compressionOff
-    ? 0
-    : Number(compressionTile.value) / 100;
-  const cachingRate = cachingOff ? 0 : Number(cachingTile.value) / 100;
+  const compressionRate = Number(compressionTile.value) / 100;
+  const cachingRate = Number(cachingTile.value) / 100;
 
   const requests = Math.round(TOTAL_7D_BASE_REQUESTS * window.scale);
   const inputTokensSent = Math.round(TOTAL_7D_BASE_INPUT_TOKENS * window.scale);
@@ -347,10 +335,9 @@ export function summaryFor(
   const lowVolume = !noTraffic && requests < LOW_VOLUME_REQUESTS;
 
   // Level one: the two tile rates over the Total saved tile, in tenths so the
-  // printed one-decimal shares sum to exactly 100.0. An off mechanism reads
-  // 0 and the other takes the whole; both off is nothing to attribute.
-  const compressionPoints = compressionOff ? 0 : Number(compressionTile.value);
-  const cachingPoints = cachingOff ? 0 : Number(cachingTile.value);
+  // printed one-decimal shares sum to exactly 100.0.
+  const compressionPoints = Number(compressionTile.value);
+  const cachingPoints = Number(cachingTile.value);
   const totalPoints = compressionPoints + cachingPoints;
   const [compressionTenths, cacheTenths] =
     totalPoints > 0
@@ -383,8 +370,7 @@ export function summaryFor(
     shareLabel: tenthsLabel(compressionTenths),
     tokens: inputTokensRemoved,
     fill: MECHANISM_FILL.compression,
-    off: compressionOff,
-    passes: compressionOff || lowVolume ? [] : passes,
+    passes: lowVolume ? [] : passes,
   };
   const cache: SummaryMechanism = {
     id: "cache",
@@ -402,10 +388,9 @@ export function summaryFor(
           )
         : 0,
     fill: MECHANISM_FILL.cache,
-    off: cachingOff,
     passes: [],
   };
-  // Ranked by measured contribution; an off mechanism sinks to the bottom.
+  // Ranked by measured contribution.
   const mechanisms = [compression, cache].sort((a, b) => b.share - a.share);
 
   return {
@@ -414,9 +399,6 @@ export function summaryFor(
     periodLabel,
     periodPhrase,
     noTraffic,
-    compressionOff,
-    cachingOff,
-    bothOff: compressionOff && cachingOff,
     lowVolume,
     requests,
     inputTokensSent,
@@ -457,7 +439,6 @@ export const SUMMARY_COPY = {
     label: "Input tokens removed",
     denominator: (m: SummaryModel) =>
       `${m.compressionRateLabel} of the ${formatCompactCount(m.inputTokensSent)} input tokens you sent`,
-    off: "Compression was off for this window, so nothing was removed.",
   },
   cached: {
     // The count of requests answered from the cache: an event name, where the
@@ -465,17 +446,10 @@ export const SUMMARY_COPY = {
     label: "Cache hits",
     denominator: (m: SummaryModel) =>
       `${m.cachingRateLabel} of the ${formatNumber(m.requests)} requests you sent`,
-    off: "Caching was off for this window, so every request went to a provider.",
   },
   breakdown: {
     title: "Where the savings came from",
     basis: "Share of everything Gate saved, the Total saved rate above.",
-    compressionOff:
-      "Compression is off, so no tokens were removed in this window.",
-    cachingOff:
-      "Caching is off, so no requests were answered from Gate's cache in this window.",
-    bothOff:
-      "Both savings options are off, so nothing was saved in this window.",
     lowVolume: `Fewer than ${formatNumber(LOW_VOLUME_REQUESTS)} requests in this window, too few to break down.`,
     /** Plain-language alternative for a bar (aria-label): what it stands for. */
     barAlt: (bar: SummaryBar) =>

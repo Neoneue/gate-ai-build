@@ -18,7 +18,7 @@ import {
 } from "@/pages/token-savings-summary";
 
 const RANGES: PresetRange[] = ["all", "24h", "7d", "30d"];
-const ON = { compressionOn: true, cachingOn: true, plan: "pro" as const };
+const ON = { plan: "pro" as const };
 
 const tenths = (label: string) => Math.round(Number.parseFloat(label) * 10);
 
@@ -138,32 +138,6 @@ test("a window entirely before the epoch is no traffic, not zero-valued claims",
   expect(m.noTraffic).toBe(true);
   expect(m.requests).toBe(0);
   expect(resolveWindow("custom", { from, to }).empty).toBe(true);
-});
-
-test("switch off: the mechanism is named as off with zero figure; the other takes the whole; both off is nothing", () => {
-  const noCompression = summaryFor("all", null, {
-    ...ON,
-    compressionOn: false,
-  });
-  expect(noCompression.compressionOff).toBe(true);
-  expect(noCompression.inputTokensRemoved).toBe(0);
-  const cache = noCompression.mechanisms.find((x) => x.id === "cache");
-  expect(cache?.shareLabel).toBe("100.0%");
-  expect(noCompression.mechanisms[0].id).toBe("cache");
-  expect(noCompression.mechanisms[1].passes).toHaveLength(0);
-
-  const noCaching = summaryFor("all", null, { ...ON, cachingOn: false });
-  expect(noCaching.cachingOff).toBe(true);
-  expect(noCaching.cacheAnswered).toBe(0);
-  expect(noCaching.mechanisms[0].shareLabel).toBe("100.0%");
-
-  const both = summaryFor("all", null, {
-    ...ON,
-    compressionOn: false,
-    cachingOn: false,
-  });
-  expect(both.bothOff).toBe(true);
-  expect(both.mechanisms.every((x) => x.shareLabel === "0.0%")).toBe(true);
 });
 
 test("low volume hides the passes; no preset org window is low volume", () => {

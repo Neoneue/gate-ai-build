@@ -33,14 +33,12 @@ import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionTitle } from "@/components/ui/section-title";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { formatCompactCount, formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   ledeParts,
   SUMMARY_COPY,
   type SummaryBar,
-  type SummaryMechanism,
   type SummaryModel,
 } from "@/pages/token-savings-summary";
 
@@ -67,11 +65,6 @@ const LABEL_CELL = "col-span-2 @md:col-span-1 @md:w-72 @md:pr-4";
 const NESTED_LABEL_CELL = "col-span-2 @md:col-span-1 @md:w-64 @md:pr-4";
 const FULL_ROW = "col-span-2 @md:col-span-3";
 
-/** The "this mechanism is off" sentences, keyed by mechanism. */
-const MECHANISM_OFF: Record<SummaryMechanism["id"], string> = {
-  compression: SUMMARY_COPY.breakdown.compressionOff,
-  cache: SUMMARY_COPY.breakdown.cachingOff,
-};
 const NOTE = "type-copy-12 m-0 text-pretty text-muted-foreground";
 
 /* ─── Header ───────────────────────────────────────────────────────────── */
@@ -98,12 +91,14 @@ function Lede({ model, loading }: { model: SummaryModel; loading: boolean }) {
   return (
     <p className="type-copy-16 m-0 text-pretty text-foreground">
       {before}
+      {/* design-allow-raw-type: inline figure emphasis inside a type-copy-16 lede; a voice class here would restate the parent size. */}
       {loading ? (
         <SkeletonText className="w-16" />
       ) : (
         <strong className="font-medium tabular-nums">{removed}</strong>
       )}
       {middle}
+      {/* design-allow-raw-type: inline figure emphasis inside a type-copy-16 lede; a voice class here would restate the parent size. */}
       {loading ? (
         <SkeletonText className="w-16" />
       ) : (
@@ -154,21 +149,13 @@ function Figures({
       <FigureCell
         label={SUMMARY_COPY.removed.label}
         loading={loading}
-        note={
-          model.compressionOff
-            ? SUMMARY_COPY.removed.off
-            : SUMMARY_COPY.removed.denominator(model)
-        }
+        note={SUMMARY_COPY.removed.denominator(model)}
         value={formatCompactCount(model.inputTokensRemoved)}
       />
       <FigureCell
         label={SUMMARY_COPY.cached.label}
         loading={loading}
-        note={
-          model.cachingOff
-            ? SUMMARY_COPY.cached.off
-            : SUMMARY_COPY.cached.denominator(model)
-        }
+        note={SUMMARY_COPY.cached.denominator(model)}
         value={formatNumber(model.cacheAnswered)}
       />
     </div>
@@ -239,22 +226,6 @@ function MeterRow({
   );
 }
 
-function OffRow({ mechanism }: { mechanism: SummaryMechanism }) {
-  return (
-    <div className="contents">
-      <span className={cn(LABEL_CELL, "type-copy-14 text-foreground")}>
-        {mechanism.label}
-      </span>
-      <div className="col-span-2 flex flex-wrap items-center gap-2">
-        <StatusBadge on={false} />
-        <span className="type-copy-14 text-pretty text-muted-foreground">
-          {MECHANISM_OFF[mechanism.id]}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 /** Two levels, one basis: each mechanism row, with compression's mechanisms
  *  nested directly beneath it (indented, left hairline), then a hairline and
  *  the next mechanism. The parent ticket's "compression against Gate cache
@@ -273,17 +244,13 @@ function BreakdownRows({
           {index > 0 ? (
             <div className={cn(FULL_ROW, "my-3 border-border border-t")} />
           ) : null}
-          {mechanism.off ? (
-            <OffRow mechanism={mechanism} />
-          ) : (
-            <MeterRow
-              bar={mechanism}
-              fill={mechanism.fill}
-              labelVoice="type-copy-14 text-foreground"
-              loading={loading}
-              valueVoice="type-mono-14"
-            />
-          )}
+          <MeterRow
+            bar={mechanism}
+            fill={mechanism.fill}
+            labelVoice="type-copy-14 text-foreground"
+            loading={loading}
+            valueVoice="type-mono-14"
+          />
           {mechanism.passes.length > 0 ? (
             <div
               className={cn(
@@ -327,14 +294,8 @@ function Breakdown({
           {SUMMARY_COPY.breakdown.basis}
         </p>
       </div>
-      {model.bothOff ? (
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          {SUMMARY_COPY.breakdown.bothOff}
-        </p>
-      ) : (
-        <BreakdownRows loading={loading} model={model} />
-      )}
-      {model.lowVolume && !model.bothOff ? (
+      <BreakdownRows loading={loading} model={model} />
+      {model.lowVolume ? (
         <p className={NOTE}>{SUMMARY_COPY.breakdown.lowVolume}</p>
       ) : null}
     </div>
