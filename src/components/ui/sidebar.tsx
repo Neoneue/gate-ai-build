@@ -192,7 +192,7 @@ function SidebarCollapsed({
                     className={
                       isActive
                         ? "flex size-9 items-center justify-center rounded-sm bg-accent text-accent-foreground transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                        : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                        : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                     }
                     key={item.id}
                     onClick={() => onNavigate?.(item.pageId)}
@@ -220,7 +220,7 @@ function SidebarCollapsed({
  * string (`.claude/rules/no-handrolling.md`). Values are unchanged: 36px row,
  * 16px glyph, `type-label-14` label, quiet by colour and structural by weight. */
 const NAV_ROW =
-  "flex h-10 lg:h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+  "flex h-10 lg:h-9 items-center gap-3 rounded-sm border border-transparent px-2 font-medium text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
 
 const NAV_ROW_ACTIVE =
   "flex h-10 lg:h-9 items-center gap-3 rounded-sm border border-border bg-accent px-2 font-medium text-accent-foreground shadow-xs transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
@@ -392,7 +392,7 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
  * touch target); the trailing sun / moon glyph reports the current state.
  * Sign out stays quiet: colour is for status, not for a routine action. */
 const ACCOUNT_ROW =
-  "flex h-10 w-full items-center justify-between gap-3 rounded-sm border border-transparent px-2 text-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+  "flex h-10 w-full items-center justify-between gap-3 rounded-sm border border-transparent px-2 text-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
 
 function SidebarAccountRows({
   hideDocsButton,
@@ -504,7 +504,7 @@ function DefaultUserArea({
       >
         <button
           aria-label="User menu"
-          className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-accent-muted hover:text-foreground active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-accent-muted hover:text-foreground active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           type="button"
         >
           <MoreHorizontal className="size-4" strokeWidth={1.75} />

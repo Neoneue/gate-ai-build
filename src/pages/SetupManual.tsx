@@ -388,7 +388,7 @@ function ModelPicker({
           the column width at the old `sm` viewport. */}
       <PopoverTrigger
         aria-label="Choose a model"
-        className="group/select flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground text-sm outline-none transition-[colors,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="group/select flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <span className="flex flex-1 items-center gap-2 overflow-hidden">
           {selected ? (

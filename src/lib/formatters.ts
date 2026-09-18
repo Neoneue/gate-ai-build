@@ -4,6 +4,53 @@
 // (e.g. machine-readable strings that must round-trip across users).
 const LOCALE: string | undefined = undefined;
 
+// Intl constructors are expensive (~57x the cost of a cached .format call
+// measured in Node); every formatter below reuses one instance per distinct
+// (locale, options) pair. Keys are JSON of the options, which are small and
+// have a stable property order at each call site.
+const numberFormats = new Map<string, Intl.NumberFormat>();
+const dateTimeFormats = new Map<string, Intl.DateTimeFormat>();
+const relativeTimeFormats = new Map<string, Intl.RelativeTimeFormat>();
+
+function numberFormat(
+  locale: string | undefined,
+  options: Intl.NumberFormatOptions
+): Intl.NumberFormat {
+  const key = `${locale ?? ""}|${JSON.stringify(options)}`;
+  let f = numberFormats.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(locale, options);
+    numberFormats.set(key, f);
+  }
+  return f;
+}
+
+function dateTimeFormat(
+  locale: string | undefined,
+  options: Intl.DateTimeFormatOptions
+): Intl.DateTimeFormat {
+  const key = `${locale ?? ""}|${JSON.stringify(options)}`;
+  let f = dateTimeFormats.get(key);
+  if (!f) {
+    f = new Intl.DateTimeFormat(locale, options);
+    dateTimeFormats.set(key, f);
+  }
+  return f;
+}
+
+function relativeTimeFormat(
+  locale: string | undefined,
+  options: Intl.RelativeTimeFormatOptions
+): Intl.RelativeTimeFormat {
+  const key = `${locale ?? ""}|${JSON.stringify(options)}`;
+  let f = relativeTimeFormats.get(key);
+  if (!f) {
+    f = new Intl.RelativeTimeFormat(locale, options);
+    relativeTimeFormats.set(key, f);
+  }
+  return f;
+}
+
 export function formatCurrency(
   amount: number,
   options: {
@@ -14,7 +61,7 @@ export function formatCurrency(
   } = {}
 ): string {
   const { currency = "USD", minFrac = 2, maxFrac = 2, signDisplay } = options;
-  return new Intl.NumberFormat(LOCALE, {
+  return numberFormat(LOCALE, {
     style: "currency",
     currency,
     minimumFractionDigits: minFrac,
@@ -27,7 +74,7 @@ export function formatNumber(
   n: number,
   options: Intl.NumberFormatOptions = {}
 ): string {
-  return new Intl.NumberFormat(LOCALE, options).format(n);
+  return numberFormat(LOCALE, options).format(n);
 }
 
 /** Compact "millions" formatter for KPI-tile COUNT values (tokens, messages,
@@ -51,7 +98,7 @@ export function formatDate(
     year: "numeric",
   }
 ): string {
-  return new Intl.DateTimeFormat(LOCALE, options).format(date);
+  return dateTimeFormat(LOCALE, options).format(date);
 }
 
 export function formatDateTime(
@@ -65,7 +112,7 @@ export function formatDateTime(
     hour12: false,
   }
 ): string {
-  return new Intl.DateTimeFormat(LOCALE, options).format(date);
+  return dateTimeFormat(LOCALE, options).format(date);
 }
 
 export function formatTime(
@@ -76,7 +123,7 @@ export function formatTime(
     hour12: false,
   }
 ): string {
-  return new Intl.DateTimeFormat(LOCALE, options).format(date);
+  return dateTimeFormat(LOCALE, options).format(date);
 }
 
 /** Chart hover-tooltip timestamp. Date only ("Mar 01, 2026") by default; pass
@@ -86,7 +133,7 @@ export function formatTime(
  *  Security, Token Savings, Activity). Pinned en-US: date and time are joined
  *  with a space (not a locale separator) so there is no comma before the time. */
 export function formatSparkLabel(date: Date, withTime = false): string {
-  const datePart = new Intl.DateTimeFormat("en-US", {
+  const datePart = dateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -94,7 +141,7 @@ export function formatSparkLabel(date: Date, withTime = false): string {
   if (!withTime) {
     return datePart;
   }
-  const timePart = new Intl.DateTimeFormat("en-US", {
+  const timePart = dateTimeFormat("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -109,7 +156,7 @@ export function formatTimestamp(date: Date | null): string {
   if (date === null) {
     return "Never";
   }
-  return new Intl.DateTimeFormat("en-US", {
+  return dateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -122,7 +169,7 @@ export function formatTimestamp(date: Date | null): string {
 /** Date only: "May 12, 2026". Use in table cells with date-only fields
  *  (joined date, transaction date) where time would be misleading. */
 export function formatDateNumeric(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
+  return dateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -135,7 +182,7 @@ export function formatRelative(
 ): string {
   const diffMs = target.getTime() - anchor.getTime();
   const absMs = Math.abs(diffMs);
-  const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
+  const rtf = relativeTimeFormat(LOCALE, { numeric: "auto" });
   const MIN = 60_000;
   const HOUR = 60 * MIN;
   const DAY = 24 * HOUR;

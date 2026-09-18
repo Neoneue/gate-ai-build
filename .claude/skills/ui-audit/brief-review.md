@@ -26,8 +26,10 @@ property, duration and easing literally; check nested radius, icon stroke vs
 text weight, unnamed transition properties, icon toggles by mount / unmount,
 optical alignment of icon + text, stagger on any entrance.
 
-Output EXACTLY the skill's own report format. Where the skill has none: rows
-grouped by principle, severity HIGH > MEDIUM > LOW, one row per root cause
-listing every `path:line`, columns Severity | Location | Before | After | Why.
+Output a CHECKLIST, not a table, even if the skill defines a table format:
+items grouped by principle, severity HIGH > MEDIUM > LOW, one item per root
+cause, numbered sequentially, in this exact shape:
+`- [ ] **N. SEVERITY** path:line, path:line` then three sub-bullets
+`  - Before: ...`, `  - After: ...`, `  - Why: ...`.
 `After` is the exact class string or CSS value. Then "Not verified" (you have
 no browser). End with the skill's verdict or closing line. Under 120 lines.

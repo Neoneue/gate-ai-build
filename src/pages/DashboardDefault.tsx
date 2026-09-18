@@ -420,7 +420,7 @@ export function DownloadGateConnectDialog({
                 const p = PLATFORMS[id];
                 return (
                   <Radio.Root
-                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[colors,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-input focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] data-checked:border-foreground data-checked:shadow-xs motion-reduce:active:scale-100"
+                    className="group/platform relative flex h-[92px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card outline-none transition-[color,background-color,border-color,box-shadow,scale] duration-150 ease-out will-change-transform hover:border-input focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] data-checked:border-foreground data-checked:shadow-xs motion-reduce:active:scale-100"
                     key={id}
                     value={id}
                   >

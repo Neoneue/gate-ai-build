@@ -375,7 +375,7 @@ function DashTopBar({
             <PanelLeftClose
               aria-hidden
               className={cn(
-                "absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+                "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
                 sidebarExpanded
                   ? "scale-100 opacity-100 blur-0"
                   : "scale-[0.25] opacity-0 blur-[1px]"
@@ -385,7 +385,7 @@ function DashTopBar({
             <PanelLeftOpen
               aria-hidden
               className={cn(
-                "absolute size-4 transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+                "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
                 sidebarExpanded
                   ? "scale-[0.25] opacity-0 blur-[1px]"
                   : "scale-100 opacity-100 blur-0"
