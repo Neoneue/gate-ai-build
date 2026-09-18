@@ -82,6 +82,11 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
+/** Evaluated once at module scope, not as a default parameter: a default is
+ *  re-evaluated on every render, and `lastTopUpLabel()` does a `.find` over the
+ *  ledger plus a date format on each call. */
+const DEFAULT_LAST_TOP_UP = lastTopUpLabel();
+
 export function CreditsCard({
   /** PAYG credit balance. Defaults to the live ledger balance, which is what
    *  Pro and every provisioned Enterprise org shows; a freshly granted org
@@ -89,7 +94,7 @@ export function CreditsCard({
   balance = CREDIT_BALANCE_USD,
   /** Formatted "Last top-up" value, or null when there has never been one.
    *  Defaults to the newest `Credits added` row in the ledger. */
-  lastTopUp = lastTopUpLabel(),
+  lastTopUp = DEFAULT_LAST_TOP_UP,
 }: {
   balance?: number;
   lastTopUp?: string | null;
@@ -437,7 +442,7 @@ function AutoRechargeDialog({
           <Switch
             aria-labelledby="ar-enable-label"
             checked={enabled}
-            className="mt-1 shrink-0"
+            className="shrink-0"
             onCheckedChange={setEnabled}
             size="lg"
           />
@@ -577,14 +582,16 @@ function AutoRechargeDialog({
           <div className="flex flex-col gap-2 rounded-md border border-border bg-card-muted px-4 py-3">
             <p className="type-copy-14 m-0 text-pretty text-foreground">
               When your balance drops below{" "}
-              <span className="font-medium text-foreground">${threshold}</span>,
-              we&apos;ll add{" "}
-              <span className="font-medium text-foreground">${topUp}</span> to
+              <span className="type-label-14 text-foreground">
+                ${threshold}
+              </span>
+              , we&apos;ll add{" "}
+              <span className="type-label-14 text-foreground">${topUp}</span> to
               your account
               {monthlyCap !== null && capValid ? (
                 <>
                   , up to{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     ${monthlyCap}/month
                   </span>
                 </>
@@ -592,7 +599,7 @@ function AutoRechargeDialog({
                 <>
                   {" "}
                   with{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     no monthly cap
                   </span>
                 </>
@@ -646,7 +653,7 @@ export function CreditStatRow({
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
         className={cn(
-          "m-0",
+          "type-copy-14 m-0",
           mono && "font-mono tabular-nums",
           muted ? "text-muted-foreground" : "text-foreground"
         )}

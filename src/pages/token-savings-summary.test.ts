@@ -6,8 +6,9 @@ import {
 } from "@/pages/activity-data";
 import { KPI_BY_RANGE } from "@/pages/token-savings-data";
 import {
-  ATTRIBUTION_START,
   allocateTenths,
+  BREAKDOWN_MAX_ROWS,
+  BREAKDOWN_OTHERS_LABEL,
   COMPARABILITY_EPOCH,
   LOW_VOLUME_REQUESTS,
   passesForPlan,
@@ -17,7 +18,7 @@ import {
 } from "@/pages/token-savings-summary";
 
 const RANGES: PresetRange[] = ["all", "24h", "7d", "30d"];
-const ON = { compressionOn: true, cachingOn: true, plan: "pro" as const };
+const ON = { plan: "pro" as const };
 
 const tenths = (label: string) => Math.round(Number.parseFloat(label) * 10);
 
@@ -67,7 +68,11 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
       0
     );
     expect(tenths(comp.shareLabel) + tenths(cache.shareLabel)).toBe(1000);
-    expect(comp.passes).toHaveLength(8);
+    // Four rows max: the top three mechanisms plus an "All others" catch-all
+    // whose share is the exact remainder.
+    expect(comp.passes).toHaveLength(BREAKDOWN_MAX_ROWS);
+    expect(comp.passes[3].label).toBe(BREAKDOWN_OTHERS_LABEL);
+    expect(comp.passes[3].share).toBeGreaterThan(0);
     const passTenths = comp.passes.reduce(
       (s, r) => s + tenths(r.shareLabel),
       0
@@ -75,11 +80,13 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
     expect(passTenths).toBe(tenths(comp.shareLabel));
     expect(cache.passes).toHaveLength(0);
     expect(m.mechanisms[0].share).toBeGreaterThanOrEqual(m.mechanisms[1].share);
-    for (let i = 1; i < comp.passes.length; i++) {
-      expect(comp.passes[i - 1].share).toBeGreaterThanOrEqual(
-        comp.passes[i].share
-      );
+    // Named rows are ranked; the "All others" remainder always sits last,
+    // whatever its size.
+    const named = comp.passes.filter((r) => r.id !== "others");
+    for (let i = 1; i < named.length; i++) {
+      expect(named[i - 1].share).toBeGreaterThanOrEqual(named[i].share);
     }
+    expect(comp.passes.at(-1)?.id).toBe("others");
   }
 });
 
@@ -94,32 +101,19 @@ test("allocateTenths distributes the whole and only the whole", () => {
   expect(allocateTenths(0, [0.7, 0.3])).toEqual([0, 0]);
 });
 
-test("pass weights: Pro runs all eight, Free the Basic four, both sum to 1", () => {
-  const pro = passesForPlan("pro");
-  const free = passesForPlan("free");
-  expect(pro).toHaveLength(8);
-  expect(free).toHaveLength(4);
-  expect(free.every((p) => p.tier === "free")).toBe(true);
-  expect(pro.reduce((s, p) => s + p.weight, 0)).toBeCloseTo(1, 9);
-  expect(free.reduce((s, p) => s + p.weight, 0)).toBeCloseTo(1, 9);
-  const freeModel = summaryFor("all", null, { ...ON, plan: "free" });
-  const freeComp = freeModel.mechanisms.find((x) => x.id === "compression");
-  expect(freeComp?.passes.map((p) => p.id).sort()).toEqual([
-    "blobs",
-    "json",
-    "lossless",
-    "wrapper",
+test("method shares: the gateway's top three plus All others, summing to 1, same on every plan", () => {
+  const methods = passesForPlan("pro");
+  expect(methods.map((m) => m.label)).toEqual([
+    "Deferred tool definitions",
+    "Boost recoverable elide",
+    "Tool output compaction:\nSearch (grep) output",
+    BREAKDOWN_OTHERS_LABEL,
   ]);
-});
-
-test("attribution: All and 30D are partial, 7D and 24H complete", () => {
-  expect(summaryFor("all", null, ON).partial).toBe(true);
-  expect(summaryFor("30d", null, ON).partial).toBe(true);
-  expect(summaryFor("7d", null, ON).partial).toBe(false);
-  expect(summaryFor("24h", null, ON).partial).toBe(false);
-  expect(ATTRIBUTION_START.getTime()).toBeGreaterThan(
-    COMPARABILITY_EPOCH.getTime()
-  );
+  expect(methods.reduce((s, m) => s + m.weight, 0)).toBeCloseTo(1, 9);
+  expect(passesForPlan("free")).toEqual(methods);
+  const free = summaryFor("all", null, { ...ON, plan: "free" });
+  const pro = summaryFor("all", null, ON);
+  expect(free.mechanisms).toEqual(pro.mechanisms);
 });
 
 test("a custom range starting before the epoch is clamped to it", () => {
@@ -146,32 +140,6 @@ test("a window entirely before the epoch is no traffic, not zero-valued claims",
   expect(resolveWindow("custom", { from, to }).empty).toBe(true);
 });
 
-test("switch off: the mechanism is named as off with zero figure; the other takes the whole; both off is nothing", () => {
-  const noCompression = summaryFor("all", null, {
-    ...ON,
-    compressionOn: false,
-  });
-  expect(noCompression.compressionOff).toBe(true);
-  expect(noCompression.inputTokensRemoved).toBe(0);
-  const cache = noCompression.mechanisms.find((x) => x.id === "cache");
-  expect(cache?.shareLabel).toBe("100.0%");
-  expect(noCompression.mechanisms[0].id).toBe("cache");
-  expect(noCompression.mechanisms[1].passes).toHaveLength(0);
-
-  const noCaching = summaryFor("all", null, { ...ON, cachingOn: false });
-  expect(noCaching.cachingOff).toBe(true);
-  expect(noCaching.cacheAnswered).toBe(0);
-  expect(noCaching.mechanisms[0].shareLabel).toBe("100.0%");
-
-  const both = summaryFor("all", null, {
-    ...ON,
-    compressionOn: false,
-    cachingOn: false,
-  });
-  expect(both.bothOff).toBe(true);
-  expect(both.mechanisms.every((x) => x.shareLabel === "0.0%")).toBe(true);
-});
-
 test("low volume hides the passes; no preset org window is low volume", () => {
   for (const range of RANGES) {
     const m = summaryFor(range, null, ON);
@@ -194,5 +162,5 @@ test("copy: no dollar amounts, denominators and exclusion present", () => {
   expect(SUMMARY_COPY.removed.denominator(m)).toContain("of the");
   expect(SUMMARY_COPY.cached.denominator(m)).toContain("requests");
   expect(SUMMARY_COPY.exclusion.body).toMatch(/prompt caching/);
-  expect(SUMMARY_COPY.exclusion.body).toMatch(/did not route through Gate/);
+  expect(SUMMARY_COPY.exclusion.body).toMatch(/did not go through Gate/);
 });

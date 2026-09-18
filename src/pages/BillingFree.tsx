@@ -104,7 +104,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
         Everything you pay for Gate, in one place.
       </p>
     </div>
@@ -570,7 +570,7 @@ function AutoRechargeDialog({
           <Switch
             aria-labelledby="ar-enable-label"
             checked={enabled}
-            className="mt-1 shrink-0"
+            className="shrink-0"
             onCheckedChange={setEnabled}
             size="lg"
           />
@@ -710,14 +710,16 @@ function AutoRechargeDialog({
           <div className="flex flex-col gap-2 rounded-md border border-border bg-card-muted px-4 py-3">
             <p className="type-copy-14 m-0 text-pretty text-foreground">
               When your balance drops below{" "}
-              <span className="font-medium text-foreground">${threshold}</span>,
-              we&apos;ll add{" "}
-              <span className="font-medium text-foreground">${topUp}</span> to
+              <span className="type-label-14 text-foreground">
+                ${threshold}
+              </span>
+              , we&apos;ll add{" "}
+              <span className="type-label-14 text-foreground">${topUp}</span> to
               your account
               {monthlyCap !== null && capValid ? (
                 <>
                   , up to{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     ${monthlyCap}/month
                   </span>
                 </>
@@ -725,7 +727,7 @@ function AutoRechargeDialog({
                 <>
                   {" "}
                   with{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     no monthly cap
                   </span>
                 </>
@@ -779,7 +781,7 @@ function CreditStatRow({
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
         className={cn(
-          "m-0",
+          "type-copy-14 m-0",
           mono && "font-mono tabular-nums",
           muted ? "text-muted-foreground" : "text-foreground"
         )}
@@ -805,7 +807,7 @@ function PaymentMethodCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">
+        <div className="flex items-center gap-4 rounded-xs border border-border bg-card-muted p-4">
           <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
             CARD
           </span>

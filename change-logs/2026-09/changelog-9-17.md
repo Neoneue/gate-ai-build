@@ -49,6 +49,94 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   Compression bar (the Compression tile is chart-7). Documented in the
   `design.md` ramp block; the data-bar rule is unchanged.
 
+### Transition lists name real CSS properties; presses tween again `533cdd3`
+
+- Before: Button, Switch, OptionTile, SelectTrigger, Toggle and BackLink (plus
+  four page copies in `DashboardDefault`, `SetupManual`, `Policies`,
+  `PoliciesPane`) carried `transition-[colors,...]`. `colors` is a Tailwind
+  shorthand, not a CSS property, so the compiled list never matched and every
+  hover fill and ink change snapped while opacity / shadow / scale eased.
+  After: `transition-[color,background-color,border-color,...]` with the
+  remaining tokens unchanged. Zero `transition-[colors` left in `src`.
+  `design.md` line 1136 now quotes the corrected Button string.
+- Before: `IconActionButton`, the four sidebar buttons, the theme toggle and
+  the sidebar collapse icons named `transform` while animating `scale-*`,
+  which in Tailwind v4 is the standalone `scale` property, so the 0.98 press
+  and the icon cross-scale had no tween. After: `scale` in each list. The two
+  segmented controls keep `transform` (real inline translate).
+- `src/lib/formatters.ts` reuses one `Intl.NumberFormat` / `DateTimeFormat`
+  / `RelativeTimeFormat` per locale + options pair instead of constructing
+  per call (measured 57x in Node). Public API unchanged; output identical.
+- Source: `audit.md` (repo root), the 2026-09-17 better-ui /
+  make-interfaces-feel-better / react-best-practices checklist; the four HIGH
+  items plus two sweep follow-ups are ticked.
+
+### Audit MEDIUM pass: Token savings, Models, Billing `751c216`
+
+- **TextLink** (`text-link.tsx`) base recipe gains
+  `transition-[color,text-decoration-color] duration-150 ease-out
+  motion-reduce:transition-none`; the Models "Show more" label now eases
+  with its chevron, whose list is `transition-[color,rotate]`.
+- **TabsTrigger** (`tabs.tsx`) presses: `active:scale-[0.98]
+  motion-reduce:active:scale-100`, list extended with `scale`.
+- **CopyButton** label mode renders `CopyIconSwap` (both glyphs in the DOM,
+  opacity cross-fade, success stays `text-success-600`) instead of swapping
+  Copy for CircleCheck by mount; stroke 1.8 -> 1.75. `CopyIconSwap` forwards
+  `data-icon` so Button's inline-start padding still matches.
+- **Token savings:** inset option cards and the Summary card step to
+  `rounded-xs` (redundant `border-border` dropped); the panel inside the
+  option cards is also `rounded-xs`, the ladder floor. The lg Switch loses
+  `mt-1` (was 6px below the label centre). The two h4 headings drop the
+  `type-heading-16` override. Summary bars animate `width` over 200ms when
+  Compression or Caching toggles.
+- **Models:** the detail back link is the shared `BackLink` (press, 44px hit
+  area, chevron nudge; accessible name "Models"). Capability filter options
+  hoisted to a module constant; the filter and sort memos are split; search
+  is deferred with `opacity-70` on the table while stale.
+- **Billing:** the payment method inset steps to `rounded-xs` on Pro and
+  Free; the Credits card default "Last top-up" label is a module constant.
+- Source: `audit.md`, 20 rows ticked (14 chosen MEDIUM items plus their
+  same-line companions).
+
+### Raw type utilities are linted; every page text goes through a voice `876afb4`
+
+- `lint:design` gains a `[raw-type]` check: a bare `font-medium` /
+  `font-semibold` / `font-bold` or `text-xs`..`text-2xl` on a line in
+  `src/pages` or `src/layouts` with no `type-*` voice fails the build.
+  Per-site waiver: a `design-allow-raw-type` comment with a reason within 5
+  lines above. `src/components` is exempt (primitive recipes are the voices).
+  Documented in design.md ("How it's enforced") and
+  `.claude/rules/design-tokens.md`.
+- Sweep of the 40 lines it found (14 pages + the auth layout): 31 converted to
+  the voice matching the element's role and size (`type-label-14` on value
+  spans inside `type-copy-14` parents, `type-mono-14` / `type-mono-12` on
+  mono data, `type-copy-16` on the Models detail description,
+  `type-heading-56` on the login headline), 9 waived with a stated reason
+  (inline figure emphasis in a voiced lede on the Summary card and the audit
+  record dialog, the Gate Connect fluid clamp title, the 10px "Detected"
+  pill, the login mono lede). Three menu-style rows move from 400 to 500
+  because design.md lists menu items as Label: SetupManual select trigger
+  (now matches `selectTriggerVariants`), SetupManual model list, Team role
+  menu. Follow-up: the `menu.tsx` primitive still renders items at 400.
+- Comment prose that named raw utilities ("text-xl/7", "font-medium") now
+  names px or weight so the check does not read them as code.
+
+### KPI values are always sans tabular; mono is for data `e2e62f6`
+
+- Before: the Request and Conversation detail KPI rails rendered values in
+  `font-medium font-mono text-lg` (18px mono), the only KPIs on the site not
+  in `HeroNumeric`. After: both rails use `CompactKpi` (`flat`), so values
+  are `HeroNumeric` = Geist sans 24px / 500 / tabular-nums like every other
+  KPI tile. Tile height grows ~8px (32px line box, `gap-2`). The local
+  `KpiTile` and `ConversationKpiTile` components are deleted.
+- The request detail count pill (`CountChip`, a copy of `TabsCount`) is
+  `TabsCount`: badge voice, mono 12 / 500. Two call sites drop from 14 to
+  12px.
+- `HeroNumeric` docblock and design.md principle 6 (line 450) no longer say
+  "numerics under 20px stay mono"; they say every KPI value is
+  `HeroNumeric` sans and mono is for table cells, IDs, badge and count
+  contents.
+
 ## Sections
 
 ### Billing: one org across the four Enterprise states `4c39f0b`
@@ -176,3 +264,75 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   (no `prorateSeat`, `seatChangesThisPeriod`, `firstSeatChargeRow`);
   `billing-seats.ts` engine kept for `seatCount` / `periodDays`. Test
   rewritten to match.
+
+### Token savings: Summary breakdown from the gateway table, copy pass `e6a043f`
+
+- **Compression rows** now come from the gateway's "Methods, ranked" table
+  (30D, 85 methods, supplied by the user): Deferred tool definitions, Boost
+  recoverable elide, Tool output compaction: Search (grep) output, and "All
+  others" for the remaining 82. Four rows max (`BREAKDOWN_MAX_ROWS`), the
+  catch-all always last; the grep label breaks before "Search" on purpose
+  (`whitespace-pre-line`). Same rows on Free and Pro. Replaces the
+  authored eight-pass weight table.
+- **Mechanism rows** read "Compression" and "Caching" (the tile and option
+  card names); the figure cell keeps "Cache hits" for the request count.
+- **Partial state removed**: no badge (PM call) and no note (user). The
+  acceptance criterion "mark the per-pass breakdown as partial" is recorded
+  as open in `docs/tickets/token-savings-summary`.
+- **Copy pass against the tickets:** subtitle "What Gate did to earn the
+  rates above."; cache caption "0.15% of the 542,241 requests you sent";
+  basis "Share of everything Gate saved, the Total saved rate above.";
+  both-off and no-traffic lose their nudges; footer heading "What these
+  savings leave out" over "These figures only count what Gate did. Any
+  discount your provider gives for its own prompt caching is not included,
+  even when Gate set it up. Requests that did not go through Gate are not
+  included either." The All lede opens "Over this period" (no placeholder
+  date).
+- **8pt grid:** label track `w-72` + `gap-x-4` puts every bar origin at
+  304px from the grid edge; the nested block indents exactly 32px with its
+  hairline as a `before:` pseudo (no stray 1px) and a `w-64` track; the
+  value track is a fixed `3.5rem` so mono-14 and mono-12 values share one
+  right edge. Measured: all six bars 320 to 934px inside the card.
+
+### Token savings Summary no longer follows the Savings options switches `d138ff4`
+
+- Before (`9cffeda`): the two enable switches were lifted to the page and
+  passed into `summaryFor`, so turning Compression off zeroed "Input tokens
+  removed", replaced the Compression rows with an OFF badge and gave Caching
+  100% of the breakdown. After: the switches govern future traffic and the
+  card reports the selected window, so it reads range + plan only and
+  nothing on it changes when a switch flips (user, 2026-09-17: "turning it
+  off doesn't make everything zero"). `SavingsOptionsSection` owns its
+  switch state again; the controlled props are gone.
+- The off states remain in `summaryFor` as optional flags (default true)
+  for a window in which a mechanism was off the whole period; no seeded
+  window hits them. `TokenSavings.tsx`, `TokenSavingsDefault.tsx`,
+  `token-savings-summary.ts`.
+
+### Audit LOW pass: Token savings, Models, Billing `876afb4`
+
+- Token savings headline: `HeroNumeric` renders at its own 24px (the
+  `text-xl leading-none` override and the now-dead `valueClassName` prop are
+  gone); `gap-y-0.5` -> `gap-y-1`. Dead `tracking-snug` removed from ten
+  `type-copy-16/18` page subtitles (TokenSavings x3, Models x2, ModelShelves,
+  FreeModels, Billing, BillingEnterprise, BillingFree) and from one
+  `type-copy-12` line on Models where it was a live deviation.
+- Models: the "+N%" markup Badge explains itself through the Tooltip recipe
+  (keyboard reachable) instead of a native `title`; the detail page builds a
+  Set for the capability filter like the list already does.
+- SetupModels: model name cell `font-medium` -> `type-label-14`, matching the
+  catalog and shelf tables.
+- Billing: `type-copy-14` sits on the stat-row `dd` itself in all three
+  `CreditStatRow` / `StatRow` copies, no longer inherited from the `dl`.
+- `audit.md` gains a Status section: what is done, what was skipped by
+  decision and why, what still needs a call, and the follow-on work above.
+
+### Token savings Summary: off state removed `efffac8`
+
+- Follows `d138ff4` (Summary decoupled from the switches). The OFF badge
+  row, the two off cell notes, the both-off sentence, the
+  `compressionOn` / `cachingOn` options and their four tests are deleted.
+  The card has four states: loading, no traffic, low volume, normal. Every
+  mechanism row always renders its meter. User rule: the toggle has no
+  effect on the summary; a real off window would read 0 from the data, and
+  the demo cannot make time pass.

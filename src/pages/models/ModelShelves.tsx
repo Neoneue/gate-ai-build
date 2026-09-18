@@ -61,7 +61,7 @@ export function FeaturedModels({
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
           The Gate team's suggested starting points for your project. Each one
           is a strong default for a different kind of work, so you can see what
           it costs and pick one with confidence.

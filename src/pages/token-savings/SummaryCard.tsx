@@ -33,14 +33,12 @@ import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionTitle } from "@/components/ui/section-title";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { formatCompactCount, formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   ledeParts,
   SUMMARY_COPY,
   type SummaryBar,
-  type SummaryMechanism,
   type SummaryModel,
 } from "@/pages/token-savings-summary";
 
@@ -51,22 +49,22 @@ import {
  * even ladder. Every row is a `display:contents` wrapper so its cells land
  * directly in these tracks. */
 const ROW_GRID =
-  "grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-3 @md:grid-cols-[auto_1fr_auto]";
+  "grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 @md:grid-cols-[auto_1fr_3.5rem]";
 // w-60 with pr-4 keeps the text at 224px and adds 16px of air before the bar
 // on top of the grid gap (user 2026-09-17).
 // 288px track, 16px inner padding: the longest nested name ("Cross-conversation
 // de-duplication", 238px at 14px) fits on one line inside the 32px indent.
+// 8pt grid: label track 288 + gap 16 puts every bar's origin at 304px from
+// the grid edge. The nested block indents 32 (ml-4 + pl-4, hairline drawn
+// as a pseudo so it takes no width) and its track is 256, so 32 + 256 + 16
+// lands on the same 304 (user 2026-09-17). The value track is a fixed 56px
+// so the mono-14 and mono-12 percentages cannot shift the bars' right edge.
 const LABEL_CELL = "col-span-2 @md:col-span-1 @md:w-72 @md:pr-4";
 /** Nested rows sit inside a 32px indent (ml-4 + pl-4), so their label track
  *  is 32px narrower and every bar in the block starts on one vertical line. */
 const NESTED_LABEL_CELL = "col-span-2 @md:col-span-1 @md:w-64 @md:pr-4";
 const FULL_ROW = "col-span-2 @md:col-span-3";
 
-/** The "this mechanism is off" sentences, keyed by mechanism. */
-const MECHANISM_OFF: Record<SummaryMechanism["id"], string> = {
-  compression: SUMMARY_COPY.breakdown.compressionOff,
-  cache: SUMMARY_COPY.breakdown.cachingOff,
-};
 const NOTE = "type-copy-12 m-0 text-pretty text-muted-foreground";
 
 /* ─── Header ───────────────────────────────────────────────────────────── */
@@ -93,12 +91,14 @@ function Lede({ model, loading }: { model: SummaryModel; loading: boolean }) {
   return (
     <p className="type-copy-16 m-0 text-pretty text-foreground">
       {before}
+      {/* design-allow-raw-type: inline figure emphasis inside a type-copy-16 lede; a voice class here would restate the parent size. */}
       {loading ? (
         <SkeletonText className="w-16" />
       ) : (
         <strong className="font-medium tabular-nums">{removed}</strong>
       )}
       {middle}
+      {/* design-allow-raw-type: inline figure emphasis inside a type-copy-16 lede; a voice class here would restate the parent size. */}
       {loading ? (
         <SkeletonText className="w-16" />
       ) : (
@@ -123,7 +123,7 @@ function FigureCell({
   loading: boolean;
 }) {
   return (
-    <Card className="rounded-sm border-border bg-transparent shadow-none">
+    <Card className="rounded-xs bg-transparent shadow-none">
       {/* KpiTile composition, the site's KPI pattern: Eyebrow above the
           HeroNumeric, the denominator as the caption line beneath. */}
       <CardContent className="flex flex-col gap-2">
@@ -149,21 +149,13 @@ function Figures({
       <FigureCell
         label={SUMMARY_COPY.removed.label}
         loading={loading}
-        note={
-          model.compressionOff
-            ? SUMMARY_COPY.removed.off
-            : SUMMARY_COPY.removed.denominator(model)
-        }
+        note={SUMMARY_COPY.removed.denominator(model)}
         value={formatCompactCount(model.inputTokensRemoved)}
       />
       <FigureCell
         label={SUMMARY_COPY.cached.label}
         loading={loading}
-        note={
-          model.cachingOff
-            ? SUMMARY_COPY.cached.off
-            : SUMMARY_COPY.cached.denominator(model)
-        }
+        note={SUMMARY_COPY.cached.denominator(model)}
         value={formatNumber(model.cacheAnswered)}
       />
     </div>
@@ -189,7 +181,13 @@ function MeterRow({
 }) {
   return (
     <div className="contents">
-      <span className={cn(nested ? NESTED_LABEL_CELL : LABEL_CELL, labelVoice)}>
+      <span
+        className={cn(
+          nested ? NESTED_LABEL_CELL : LABEL_CELL,
+          "whitespace-pre-line",
+          labelVoice
+        )}
+      >
         {bar.label}
       </span>
       {loading ? (
@@ -204,7 +202,10 @@ function MeterRow({
           role="meter"
         >
           <div
-            className={cn("h-full rounded-full", fill)}
+            className={cn(
+              "h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none",
+              fill
+            )}
             style={{ width: `${bar.share}%` }}
           />
         </div>
@@ -221,22 +222,6 @@ function MeterRow({
           {bar.shareLabel}
         </span>
       )}
-    </div>
-  );
-}
-
-function OffRow({ mechanism }: { mechanism: SummaryMechanism }) {
-  return (
-    <div className="contents">
-      <span className={cn(LABEL_CELL, "type-copy-14 text-foreground")}>
-        {mechanism.label}
-      </span>
-      <div className="col-span-2 flex flex-wrap items-center gap-2">
-        <StatusBadge on={false} />
-        <span className="type-copy-14 text-pretty text-muted-foreground">
-          {MECHANISM_OFF[mechanism.id]}
-        </span>
-      </div>
     </div>
   );
 }
@@ -259,19 +244,20 @@ function BreakdownRows({
           {index > 0 ? (
             <div className={cn(FULL_ROW, "my-3 border-border border-t")} />
           ) : null}
-          {mechanism.off ? (
-            <OffRow mechanism={mechanism} />
-          ) : (
-            <MeterRow
-              bar={mechanism}
-              fill={mechanism.fill}
-              labelVoice="type-copy-14 text-foreground"
-              loading={loading}
-              valueVoice="type-mono-14"
-            />
-          )}
+          <MeterRow
+            bar={mechanism}
+            fill={mechanism.fill}
+            labelVoice="type-copy-14 text-foreground"
+            loading={loading}
+            valueVoice="type-mono-14"
+          />
           {mechanism.passes.length > 0 ? (
-            <div className={cn(FULL_ROW, "ml-4 border-border border-l pl-4")}>
+            <div
+              className={cn(
+                FULL_ROW,
+                "relative ml-4 pl-4 before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-border"
+              )}
+            >
               <div className={ROW_GRID}>
                 {mechanism.passes.map((pass) => (
                   <MeterRow
@@ -308,17 +294,8 @@ function Breakdown({
           {SUMMARY_COPY.breakdown.basis}
         </p>
       </div>
-      {model.bothOff ? (
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-          {SUMMARY_COPY.breakdown.bothOff}
-        </p>
-      ) : (
-        <BreakdownRows loading={loading} model={model} />
-      )}
-      {model.partial && !model.bothOff ? (
-        <p className={NOTE}>{SUMMARY_COPY.breakdown.partial}</p>
-      ) : null}
-      {model.lowVolume && !model.bothOff ? (
+      <BreakdownRows loading={loading} model={model} />
+      {model.lowVolume ? (
         <p className={NOTE}>{SUMMARY_COPY.breakdown.lowVolume}</p>
       ) : null}
     </div>

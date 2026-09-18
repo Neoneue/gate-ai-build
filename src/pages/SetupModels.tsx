@@ -79,7 +79,7 @@ export function SetupModels() {
               }
               return (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium text-foreground">
+                  <TableCell className="type-label-14 text-foreground">
                     {model.name}
                   </TableCell>
                   <TableCell>

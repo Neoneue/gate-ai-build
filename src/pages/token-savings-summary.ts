@@ -20,11 +20,10 @@
 //                   Parent ticket: "compression against Gate cache hits, and
 //                   the leading compression passes inside that".
 //
-// The ONE authored fiction, single-sourced here: how compression's removal
-// splits across its mechanisms (PASS_WEIGHTS). PLACEHOLDER: the gateway
-// measures this per org and the mock has no per-mechanism telemetry, so the
-// split is a weight table over the names the Compression card already lists
-// (BenefitList), awaiting a real source. Nothing else is hand-authored.
+// The compression split (METHOD_SHARES) is the gateway's own "Methods,
+// ranked" table (30D, 85 methods, supplied by the user 2026-09-17): the top
+// three methods by tokens saved, verbatim, and "All others" for the other
+// 82. Same split on every plan and window until a per-plan table exists.
 
 import { DEMO_TODAY } from "@/lib/demo-clock";
 import { formatCompactCount, formatDate, formatNumber } from "@/lib/formatters";
@@ -69,77 +68,50 @@ export const COMPARABILITY_EPOCH: Date = daysBefore(
   PRESET_DAYS.all - 1
 );
 
-/** Per-pass attribution start: from this day the gateway records WHICH pass
- *  removed each token. Windows that reach further back still have exact
- *  totals but only a partial per-pass breakdown. 25 days back sits inside the
- *  30D window, so All and 30D read partial and 7D / 24H read complete. */
-export const ATTRIBUTION_START: Date = daysBefore(DEMO_TODAY, 25);
-
 /** Below this many requests a per-pass split is noise; the card keeps the two
  *  mechanism bars and says why the passes are missing. */
 export const LOW_VOLUME_REQUESTS = 1000;
 
-/* ─── Pass weights (the authored fiction) ──────────────────────────────── */
+/* ─── Method shares (gateway "Methods, ranked", 30D) ──────────────────── */
 
-export type PassId =
-  | "dedup"
-  | "tool-output"
-  | "tool-def"
-  | "prose"
-  | "wrapper"
-  | "json"
-  | "lossless"
-  | "blobs";
+/** The breakdown shows at most this many rows (user + PM, call 2026-09-17:
+ *  "four or five max"); the last is the "All others" catch-all. */
+export const BREAKDOWN_MAX_ROWS = 4;
+export const BREAKDOWN_OTHERS_LABEL = "All others";
 
-type PassSeed = {
-  id: PassId;
-  /** Exactly the title BenefitList shows on the Compression card. */
+export type MethodId = "deferred-tool-defs" | "boost-elide" | "grep" | "others";
+
+type MethodSeed = {
+  id: MethodId;
+  /** The method name as the gateway reports it. */
   label: string;
-  /** Share of compression's removal, Pro plan. Sums to 1. */
+  /** Share of compression's tokens saved. Sums to 1. */
   weight: number;
-  tier: "pro" | "free";
 };
 
-const PASS_WEIGHTS: PassSeed[] = [
+/** Top three of 85 methods plus the remainder. Shares from the gateway's
+ *  "Methods, ranked" table: 83.1 / 2.4 / 1.9, and 12.6 for the other 82. */
+const METHOD_SHARES: MethodSeed[] = [
   {
-    id: "dedup",
-    label: "Cross-conversation de-duplication",
-    weight: 0.46,
-    tier: "pro",
+    id: "deferred-tool-defs",
+    label: "Deferred tool definitions",
+    weight: 0.831,
   },
+  { id: "boost-elide", label: "Boost recoverable elide", weight: 0.024 },
   {
-    id: "tool-output",
-    label: "Tool-output compaction",
-    weight: 0.27,
-    tier: "pro",
+    id: "grep",
+    // "\n" is a forced break: the card renders labels whitespace-pre-line so
+    // "Search (grep) output" starts its own line (user 2026-09-17).
+    label: "Tool output compaction:\nSearch (grep) output",
+    weight: 0.019,
   },
-  {
-    id: "tool-def",
-    label: "Tool-definition slimming",
-    weight: 0.09,
-    tier: "pro",
-  },
-  { id: "prose", label: "Prose trimming", weight: 0.06, tier: "pro" },
-  {
-    id: "wrapper",
-    label: "Strips wrapper and clutter",
-    weight: 0.05,
-    tier: "free",
-  },
-  { id: "json", label: "JSON tidy", weight: 0.03, tier: "free" },
-  { id: "lossless", label: "Lossless clean-up", weight: 0.03, tier: "free" },
-  { id: "blobs", label: "Trims giant blobs", weight: 0.01, tier: "free" },
+  { id: "others", label: BREAKDOWN_OTHERS_LABEL, weight: 0.126 },
 ];
 
-/** Passes the plan runs, weights renormalised so they sum to 1. Free runs the
- *  Basic lane only. */
-export function passesForPlan(plan: SummaryPlan): PassSeed[] {
-  const passes =
-    plan === "pro"
-      ? PASS_WEIGHTS
-      : PASS_WEIGHTS.filter((p) => p.tier === "free");
-  const total = passes.reduce((s, p) => s + p.weight, 0);
-  return passes.map((p) => ({ ...p, weight: p.weight / total }));
+/** The methods the breakdown shows. Same on every plan: the gateway's table
+ *  is per org, not per plan. */
+export function passesForPlan(_plan: SummaryPlan): MethodSeed[] {
+  return METHOD_SHARES;
 }
 
 /* ─── Window resolution ────────────────────────────────────────────────── */
@@ -210,10 +182,8 @@ export type SummaryMechanism = SummaryBar & {
   id: "compression" | "cache";
   /** Data-bar fill class per design.md "Data bars & meters". */
   fill: string;
-  /** The mechanism's switch is off: no bar, the card names what is off. */
-  off: boolean;
-  /** Compression's mechanisms as shares of the same basis; empty for cache,
-   *  when compression is off, or when the window is low volume. */
+  /** Compression's mechanisms as shares of the same basis; empty for cache
+   *  or when the window is low volume. */
   passes: SummaryBar[];
 };
 
@@ -226,12 +196,6 @@ export type SummaryModel = {
   periodPhrase: string;
   /** Nothing passed through Gate in the window. */
   noTraffic: boolean;
-  compressionOff: boolean;
-  cachingOff: boolean;
-  /** Both switches off: nothing to attribute. */
-  bothOff: boolean;
-  /** Window reaches before ATTRIBUTION_START: passes are a partial reading. */
-  partial: boolean;
   /** Under LOW_VOLUME_REQUESTS: mechanism bars only, passes hidden. */
   lowVolume: boolean;
   requests: number;
@@ -277,6 +241,30 @@ export function allocateTenths(
 
 const tenthsLabel = (tenths: number) => `${(tenths / 10).toFixed(1)}%`;
 
+/** Ranked rows in, at most BREAKDOWN_MAX_ROWS out: the top rows kept, the
+ *  rest folded into one "All others" row whose share and tokens are the
+ *  exact remainder, so nothing printed is lost. */
+export function bucketBreakdown(ranked: SummaryBar[]): SummaryBar[] {
+  if (ranked.length <= BREAKDOWN_MAX_ROWS) {
+    // The catch-all is a remainder, not a method: it sits last regardless.
+    const others = ranked.filter((r) => r.id === "others");
+    return [...ranked.filter((r) => r.id !== "others"), ...others];
+  }
+  const kept = ranked.slice(0, BREAKDOWN_MAX_ROWS - 1);
+  const rest = ranked.slice(BREAKDOWN_MAX_ROWS - 1);
+  const tenths = rest.reduce((sum, r) => sum + Math.round(r.share * 10), 0);
+  return [
+    ...kept,
+    {
+      id: "others",
+      label: BREAKDOWN_OTHERS_LABEL,
+      share: tenths / 10,
+      shareLabel: tenthsLabel(tenths),
+      tokens: rest.reduce((sum, r) => sum + r.tokens, 0),
+    },
+  ];
+}
+
 function periodCopy(
   range: Range,
   w: SummaryWindow
@@ -286,7 +274,9 @@ function periodCopy(
   // so the label does not repeat it.
   const span = `${formatDate(w.from, { month: "short", day: "numeric" })} to ${formatDate(w.to)}`;
   if (range === "all") {
-    return { label: "All time", phrase: `Since ${formatDate(w.from)}` };
+    // No date on All: the epoch is a placeholder until the page's real one
+    // exists, so the lede opens the way the mockup did.
+    return { label: "All time", phrase: "Over this period" };
   }
   if (range === "24h") {
     return {
@@ -310,9 +300,11 @@ function periodCopy(
 export function summaryFor(
   range: Range,
   customRange: CustomRange | null,
+  // The Savings options switches govern future traffic and never feed this
+  // model: the card reports what Gate did in the selected window (user,
+  // 2026-09-17). A window with a mechanism off for its whole span would read
+  // 0 for that KPI from the data; the demo has no way to make time pass.
   options: {
-    compressionOn: boolean;
-    cachingOn: boolean;
     plan: SummaryPlan;
     /** False for a workspace nothing has passed through yet (the Default
      *  twin): every window is then a no-traffic window. */
@@ -331,12 +323,8 @@ export function summaryFor(
 
   const [totalTile, cachingTile, compressionTile] =
     KPI_BY_RANGE[window.rateRange];
-  const compressionOff = !options.compressionOn;
-  const cachingOff = !options.cachingOn;
-  const compressionRate = compressionOff
-    ? 0
-    : Number(compressionTile.value) / 100;
-  const cachingRate = cachingOff ? 0 : Number(cachingTile.value) / 100;
+  const compressionRate = Number(compressionTile.value) / 100;
+  const cachingRate = Number(cachingTile.value) / 100;
 
   const requests = Math.round(TOTAL_7D_BASE_REQUESTS * window.scale);
   const inputTokensSent = Math.round(TOTAL_7D_BASE_INPUT_TOKENS * window.scale);
@@ -344,15 +332,12 @@ export function summaryFor(
   const cacheAnswered = Math.round(cachingRate * requests);
 
   const noTraffic = window.empty || requests === 0;
-  const partial =
-    !noTraffic && window.from.getTime() < ATTRIBUTION_START.getTime();
   const lowVolume = !noTraffic && requests < LOW_VOLUME_REQUESTS;
 
   // Level one: the two tile rates over the Total saved tile, in tenths so the
-  // printed one-decimal shares sum to exactly 100.0. An off mechanism reads
-  // 0 and the other takes the whole; both off is nothing to attribute.
-  const compressionPoints = compressionOff ? 0 : Number(compressionTile.value);
-  const cachingPoints = cachingOff ? 0 : Number(cachingTile.value);
+  // printed one-decimal shares sum to exactly 100.0.
+  const compressionPoints = Number(compressionTile.value);
+  const cachingPoints = Number(cachingTile.value);
   const totalPoints = compressionPoints + cachingPoints;
   const [compressionTenths, cacheTenths] =
     totalPoints > 0
@@ -367,15 +352,17 @@ export function summaryFor(
     compressionTenths,
     seeds.map((p) => p.weight)
   );
-  const passes: SummaryBar[] = seeds
-    .map((p, i) => ({
-      id: p.id,
-      label: p.label,
-      share: passTenths[i] / 10,
-      shareLabel: tenthsLabel(passTenths[i]),
-      tokens: Math.round(inputTokensRemoved * p.weight),
-    }))
-    .sort((a, b) => b.share - a.share);
+  const passes = bucketBreakdown(
+    seeds
+      .map((p, i) => ({
+        id: p.id,
+        label: p.label,
+        share: passTenths[i] / 10,
+        shareLabel: tenthsLabel(passTenths[i]),
+        tokens: Math.round(inputTokensRemoved * p.weight),
+      }))
+      .sort((a, b) => b.share - a.share)
+  );
   const compression: SummaryMechanism = {
     id: "compression",
     label: "Compression",
@@ -383,12 +370,13 @@ export function summaryFor(
     shareLabel: tenthsLabel(compressionTenths),
     tokens: inputTokensRemoved,
     fill: MECHANISM_FILL.compression,
-    off: compressionOff,
-    passes: compressionOff || lowVolume ? [] : passes,
+    passes: lowVolume ? [] : passes,
   };
   const cache: SummaryMechanism = {
     id: "cache",
-    label: "Gate cache hits",
+    // The mechanism name, pairing with "Compression" (tiles + option cards);
+    // the figure cell keeps the event name "Cache hits".
+    label: "Caching",
     share: cacheTenths / 10,
     shareLabel: tenthsLabel(cacheTenths),
     // Token magnitude of the cache share on the same basis as compression.
@@ -400,10 +388,9 @@ export function summaryFor(
           )
         : 0,
     fill: MECHANISM_FILL.cache,
-    off: cachingOff,
     passes: [],
   };
-  // Ranked by measured contribution; an off mechanism sinks to the bottom.
+  // Ranked by measured contribution.
   const mechanisms = [compression, cache].sort((a, b) => b.share - a.share);
 
   return {
@@ -412,10 +399,6 @@ export function summaryFor(
     periodLabel,
     periodPhrase,
     noTraffic,
-    compressionOff,
-    cachingOff,
-    bothOff: compressionOff && cachingOff,
-    partial,
     lowVolume,
     requests,
     inputTokensSent,
@@ -450,43 +433,34 @@ export function ledeParts(
 
 export const SUMMARY_COPY = {
   title: "Summary",
-  subtitle:
-    "What Gate did to earn the rates above, over the period selected in Overview.",
+  subtitle: "What Gate did to earn the rates above.",
   lede: (m: SummaryModel) => ledeParts(m).join(""),
   removed: {
     label: "Input tokens removed",
     denominator: (m: SummaryModel) =>
       `${m.compressionRateLabel} of the ${formatCompactCount(m.inputTokensSent)} input tokens you sent`,
-    off: "Compression was off for this window, so nothing was removed.",
   },
   cached: {
-    label: "Requests answered from Gate's cache",
+    // The count of requests answered from the cache: an event name, where the
+    // breakdown row carries the mechanism name "Caching".
+    label: "Cache hits",
     denominator: (m: SummaryModel) =>
-      `${m.cachingRateLabel} of ${formatNumber(m.requests)} requests`,
-    off: "Caching was off for this window, so every request went to a provider.",
+      `${m.cachingRateLabel} of the ${formatNumber(m.requests)} requests you sent`,
   },
   breakdown: {
     title: "Where the savings came from",
-    basis:
-      "Share of Gate-attributed savings, as the Total saved tile reports it.",
-    compressionOff:
-      "Compression is off, so no tokens were removed in this window.",
-    cachingOff:
-      "Caching is off, so no requests were answered from Gate's cache in this window.",
-    bothOff:
-      "Both savings options are off, so nothing was saved in this window. Turn one on below and this breakdown fills in.",
-    partial: `Gate began recording which mechanism removed each token on ${formatDate(ATTRIBUTION_START)}. Earlier traffic counts in the totals above but not in this breakdown.`,
+    basis: "Share of everything Gate saved, the Total saved rate above.",
     lowVolume: `Fewer than ${formatNumber(LOW_VOLUME_REQUESTS)} requests in this window, too few to break down.`,
     /** Plain-language alternative for a bar (aria-label): what it stands for. */
     barAlt: (bar: SummaryBar) =>
-      `${bar.label}: ${bar.shareLabel} of Gate-attributed savings, about ${formatCompactCount(bar.tokens)} tokens`,
+      `${bar.label.replace("\n", " ")}: ${bar.shareLabel} of everything Gate saved, about ${formatCompactCount(bar.tokens)} tokens`,
   },
   noTraffic: {
     title: "Nothing passed through Gate in this window",
-    body: "There are no savings to report. Pick a longer range, or send a request through a Gate key.",
+    body: "There are no savings to report. Try a longer range.",
   },
   exclusion: {
-    lead: "What this figure leaves out",
-    body: "Discounts your provider grants for its own prompt caching are not counted here, whether or not Gate injected the cache markers that earned them, and neither is any traffic that did not route through Gate. This is only Gate's part.",
+    lead: "What these savings leave out",
+    body: "These figures only count what Gate did. Any discount your provider gives for its own prompt caching is not included, even when Gate set it up. Requests that did not go through Gate are not included either.",
   },
 } as const;

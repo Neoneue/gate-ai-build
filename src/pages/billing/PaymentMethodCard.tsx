@@ -38,7 +38,7 @@ export function PaymentMethodCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">
+        <div className="flex items-center gap-4 rounded-xs border border-border bg-card-muted p-4">
           {empty ? (
             <>
               <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">

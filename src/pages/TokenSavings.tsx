@@ -72,17 +72,10 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
     return r === "24h" || r === "7d" || r === "30d" || r === "all" ? r : "all";
   });
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
-  // The two savings switches live here so the Summary card can read them:
-  // a mechanism that is off is named as off instead of showing a bare zero.
-  const [savings, setSavings] = useState<SavingsSwitches>({
-    compression: true,
-    caching: true,
-  });
-  const summary = summaryFor(range, customRange, {
-    compressionOn: savings.compression,
-    cachingOn: savings.caching,
-    plan,
-  });
+  // The Summary reports the selected window, so it reads range + plan only.
+  // The Savings options switches govern future traffic and never rewrite
+  // what Gate already did (user, 2026-09-17).
+  const summary = summaryFor(range, customRange, { plan });
   return (
     <DashboardChrome
       activeNavId="token-savings"
@@ -115,11 +108,7 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
           range={range}
         />
         <SummaryCard model={summary} />
-        <SavingsOptionsSection
-          onSavingsChange={setSavings}
-          plan={plan}
-          savings={savings}
-        />
+        <SavingsOptionsSection plan={plan} />
       </div>
     </DashboardChrome>
   );
@@ -131,7 +120,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token savings</PageTitle>
-      <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -203,26 +192,13 @@ export function OverviewSection({
 
 /* ─── Savings options ───────────────────────────────────────────────── */
 
-export function SavingsOptionsSection({
-  plan = "pro",
-  savings,
-  onSavingsChange,
-}: {
-  plan?: Plan;
-  /** Controlled switches (the org page lifts them for the Summary card).
-   *  Omit both and the section owns its own state (TokenSavingsDefault). */
-  savings?: SavingsSwitches;
-  onSavingsChange?: (next: SavingsSwitches) => void;
-} = {}) {
-  const [local, setLocal] = useState<SavingsSwitches>({
+export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
+  const [value, setValue] = useState<SavingsSwitches>({
     compression: true,
     caching: true,
   });
-  const value = savings ?? local;
   const update = (patch: Partial<SavingsSwitches>) => {
-    const next = { ...value, ...patch };
-    setLocal(next);
-    onSavingsChange?.(next);
+    setValue((prev) => ({ ...prev, ...patch }));
   };
   return (
     <div className="mt-2 flex flex-col gap-4">
@@ -295,7 +271,7 @@ function CachingCard({
         title="Caching"
       />
       <CardContent className="flex flex-col gap-3">
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card className="rounded-xs bg-transparent shadow-none">
           <CardContent>
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -313,7 +289,7 @@ function CachingCard({
               <Switch
                 aria-labelledby="caching-switch-label"
                 checked={enabled}
-                className="mt-1 shrink-0"
+                className="shrink-0"
                 onCheckedChange={(next) => {
                   onEnabledChange(next);
                   toast(next ? "Caching enabled" : "Caching disabled");
@@ -324,7 +300,7 @@ function CachingCard({
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card className="rounded-xs bg-transparent shadow-none">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -418,17 +394,13 @@ const PRO_COMPRESSION_BENEFITS: CompressionBenefit[] = [
 function SavingsHeadline({
   value,
   caption,
-  valueClassName,
 }: {
   value: string;
   caption: string;
-  valueClassName: string;
 }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-      <HeroNumeric className={`leading-none ${valueClassName}`}>
-        {value}
-      </HeroNumeric>
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <HeroNumeric>{value}</HeroNumeric>
       <p className="type-copy-14 m-0 text-muted-foreground">{caption}</p>
     </div>
   );
@@ -445,7 +417,7 @@ function BenefitList({
   outlineClassName: string;
 }) {
   return (
-    <div className={`rounded-sm border bg-card/40 p-4 ${outlineClassName}`}>
+    <div className={`rounded-xs border bg-card/40 p-4 ${outlineClassName}`}>
       <ul className="m-0 grid list-none @lg:grid-cols-2 grid-cols-1 gap-4 p-0">
         {benefits.map((benefit) => (
           <li className="flex items-center gap-2" key={benefit.title}>
@@ -504,15 +476,13 @@ function CompressionCard({
   // Free — neutral "safe lane" card. Only shown on the Free plan, where the
   // Advanced card sits beside it as an upsell.
   const basicCard = (
-    <Card className="rounded-sm shadow-none">
+    <Card className="rounded-xs shadow-none">
       <CardContent className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <SectionHeading as="h4" className="type-heading-16">
-                  Basic compression
-                </SectionHeading>
+                <SectionHeading as="h4">Basic compression</SectionHeading>
                 <Badge variant="success">Free</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -548,8 +518,8 @@ function CompressionCard({
     <Card
       className={
         isPro
-          ? "rounded-sm shadow-none"
-          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          ? "rounded-xs shadow-none"
+          : "rounded-xs border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
       }
     >
       <CardContent className="flex flex-1 flex-col">
@@ -557,9 +527,7 @@ function CompressionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <SectionHeading as="h4" className="type-heading-16">
-                  Advanced compression
-                </SectionHeading>
+                <SectionHeading as="h4">Advanced compression</SectionHeading>
                 <Badge variant="info">Pro</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -601,7 +569,6 @@ function CompressionCard({
             <SavingsHeadline
               caption="smaller messages on average"
               value="~20%"
-              valueClassName="text-foreground text-xl"
             />
           )}
           <BenefitList

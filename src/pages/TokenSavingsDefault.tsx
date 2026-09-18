@@ -30,7 +30,7 @@ export function TokenSavingsDefault() {
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <PageTitle>Token savings</PageTitle>
-          <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
             Cache, compress and deduplicate to spend less per request.
           </p>
         </div>
@@ -87,8 +87,6 @@ export function TokenSavingsDefault() {
             no-traffic window: the card explains instead of claiming zeros. */}
         <SummaryCard
           model={summaryFor("all", null, {
-            compressionOn: true,
-            cachingOn: true,
             plan: "free",
             hasTraffic: false,
           })}

@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
  *   default  text-2xl/8  (24px) — KPI rail value, panel hero (Top Keys total)
  *   lg       text-3xl/9  (32px) — page-level hero metric (CMP-013 "8,241")
  *
- * Below ~20px, numerics revert to mono regardless of role — modal KpiTile,
- * table cells, badge contents stay font-mono. Don't extend HeroNumeric to
- * smaller sizes without re-examining that boundary.
+ * Every KPI value on the site renders through this primitive (KpiTile,
+ * CompactKpi, the Request / Conversation detail rails). Mono is for data,
+ * never for a KPI: table cells, IDs, badge and count contents stay
+ * font-mono. Don't add a smaller HeroNumeric size to fit a tile; use
+ * CompactKpi.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const heroNumericVariants = cva(

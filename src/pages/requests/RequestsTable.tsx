@@ -666,7 +666,7 @@ export function RequestsTableSection({
                                 />
                               </span>
                               <span>
-                                <span className="font-medium">Gateway</span> -
+                                <span className="type-label-12">Gateway</span> -
                                 Billed by Gate AI; shows the exact charge.
                               </span>
                             </span>
@@ -679,7 +679,7 @@ export function RequestsTableSection({
                                 />
                               </span>
                               <span>
-                                <span className="font-medium">BYOK</span>{" "}
+                                <span className="type-label-12">BYOK</span>{" "}
                                 (Bring-your-own-key) - Billed directly by your
                                 provider.
                               </span>
@@ -699,7 +699,7 @@ export function RequestsTableSection({
                     : "type-mono-14 text-right whitespace-nowrap text-foreground";
                   // Slow rows: leading amber TriangleAlert + neutral-900 (one step
                   // darker than the neutral-800 default). Same weight as non-slow rows
-                  // so `tabular-nums` keeps the column tracks aligned — font-medium
+                  // so `tabular-nums` keeps the column tracks aligned — a 500 weight
                   // would widen the digits and leave the column ragged. The icon
                   // sits in a fixed-width slot reserved on every row (slow or not)
                   // so the digit column stays anchored at the cell's right edge
@@ -778,7 +778,7 @@ export function RequestsTableSection({
                               the row's drill-in target: it is the row
                               IDENTIFIER, read alongside Message /
                               Conversation / Key, which all sit at 400. A
-                              font-medium here made Model the one column that
+                              500 weight here made Model the one column that
                               shouted (2026-08-20). design-allow-copy-voice —
                               see design.md §3. */}
                           <span

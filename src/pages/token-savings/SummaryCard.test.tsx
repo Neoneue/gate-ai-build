@@ -8,7 +8,7 @@ import {
   summaryFor,
 } from "@/pages/token-savings-summary";
 
-const ON = { compressionOn: true, cachingOn: true, plan: "pro" as const };
+const ON = { plan: "pro" as const };
 
 const html = (model: SummaryModel, loading = false) =>
   renderToString(<SummaryCard loading={loading} model={model} />);
@@ -31,13 +31,6 @@ const ALL_CASES: Record<string, string> = {
   "pro all": html(summaryFor("all", null, ON)),
   "pro 7d": html(summaryFor("7d", null, ON)),
   "free all": html(summaryFor("all", null, { ...ON, plan: "free" })),
-  "compression off": html(
-    summaryFor("all", null, { ...ON, compressionOn: false })
-  ),
-  "caching off": html(summaryFor("all", null, { ...ON, cachingOn: false })),
-  "both off": html(
-    summaryFor("all", null, { ...ON, compressionOn: false, cachingOn: false })
-  ),
   "no traffic": html(summaryFor("all", null, { ...ON, hasTraffic: false })),
   loading: html(summaryFor("all", null, ON), true),
 };
@@ -65,81 +58,37 @@ const mechanism = (model: SummaryModel, id: "compression" | "cache") => {
   return found;
 };
 
-test("Pro · All: two-level breakdown with Partial badge, its note, ten ranked meters", () => {
+test("Pro · All: two-level breakdown, six ranked meters", () => {
   const model = summaryFor("all", null, ON);
   const markup = ALL_CASES["pro all"];
   const text = plain(markup);
   expect(text).toContain(SUMMARY_COPY.breakdown.title);
   expect(text).toContain(SUMMARY_COPY.breakdown.basis);
-  expect(model.partial).toBe(true);
-  expect(text).toContain(SUMMARY_COPY.breakdown.partial);
   const compression = mechanism(model, "compression");
   const bars = [...model.mechanisms, ...compression.passes];
-  expect(bars).toHaveLength(10);
+  // Two mechanisms plus the four-row compression breakdown (top three and
+  // "All others").
+  expect(bars).toHaveLength(6);
   for (const bar of bars) {
     expect(text).toContain(bar.label);
     expect(text).toContain(bar.shareLabel);
     expect(markup).toContain(SUMMARY_COPY.breakdown.barAlt(bar));
   }
-  expect(meters(markup)).toBe(10);
+  expect(meters(markup)).toBe(6);
 });
 
-test("Pro · 7d: complete attribution, so no Partial badge and no partial note", () => {
-  const model = summaryFor("7d", null, ON);
+test("Pro · 7d renders the same shape with the 7d figures", () => {
   const text = plain(ALL_CASES["pro 7d"]);
-  expect(model.partial).toBe(false);
-  expect(text).not.toContain(SUMMARY_COPY.breakdown.partial);
+  expect(text).toContain(SUMMARY_COPY.breakdown.title);
   expect(text).toContain(SUMMARY_COPY.exclusion.body);
 });
 
-test("Free · All: the four Basic mechanisms render, the four Pro-only ones do not", () => {
+test("Free · All: the same four method rows as Pro", () => {
   const text = plain(ALL_CASES["free all"]);
-  const free = passesForPlan("free").map((p) => p.label);
-  const proOnly = passesForPlan("pro")
-    .filter((p) => p.tier === "pro")
-    .map((p) => p.label);
-  expect(free).toHaveLength(4);
-  for (const label of free) {
-    expect(text).toContain(label);
-  }
-  for (const label of proOnly) {
-    expect(text).not.toContain(label);
+  for (const method of passesForPlan("free")) {
+    expect(text).toContain(method.label);
   }
   expect(meters(ALL_CASES["free all"])).toBe(6);
-});
-
-test("Compression off: OFF badge and the named reason, no compression bar, cache takes the whole", () => {
-  const model = summaryFor("all", null, { ...ON, compressionOn: false });
-  const markup = ALL_CASES["compression off"];
-  const text = plain(markup);
-  expect(text).toContain("OFF");
-  expect(text).toContain(SUMMARY_COPY.removed.off);
-  expect(text).toContain(SUMMARY_COPY.breakdown.compressionOff);
-  expect(meters(markup)).toBe(1);
-  expect(markup).not.toContain(
-    SUMMARY_COPY.breakdown.barAlt(mechanism(model, "compression"))
-  );
-  expect(text).toContain("100.0%");
-});
-
-test("Caching off: OFF badge and the named reason; compression and its eight rows stay", () => {
-  const model = summaryFor("all", null, { ...ON, cachingOn: false });
-  const markup = ALL_CASES["caching off"];
-  const text = plain(markup);
-  expect(text).toContain("OFF");
-  expect(text).toContain(SUMMARY_COPY.cached.off);
-  expect(text).toContain(SUMMARY_COPY.breakdown.cachingOff);
-  expect(meters(markup)).toBe(9);
-  expect(markup).not.toContain(
-    SUMMARY_COPY.breakdown.barAlt(mechanism(model, "cache"))
-  );
-});
-
-test("Both off: one sentence replaces the rows, no bars, no Partial", () => {
-  const markup = ALL_CASES["both off"];
-  const text = plain(markup);
-  expect(text).toContain(SUMMARY_COPY.breakdown.bothOff);
-  expect(markup).not.toContain('role="meter"');
 });
 
 test("No traffic: header and explanation only — no figures, no bars, no exclusion", () => {

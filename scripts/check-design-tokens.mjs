@@ -31,6 +31,17 @@
  *     typed VALUES are never flagged — a false positive that blocks a commit
  *     is worse than a miss. See `.claude/rules/no-handrolling.md`.
  *
+ *  4. RAW TYPE UTILITY WITH NO VOICE — a bare `font-medium` / `font-semibold`
+ *     / `font-bold` or `text-xs` … `text-2xl` on a line in `src/pages` or
+ *     `src/layouts` that carries no `type-*` voice. design.md §3 routes every
+ *     page-level text through a named voice (`type-heading-*`, `type-copy-*`,
+ *     `type-label-*`, `type-mono-*`, `type-eyebrow-*`); a raw weight or size is
+ *     the pre-voice idiom and drifts from the ladder silently (added
+ *     2026-09-17 after an audit found 38 survivors across 14 pages).
+ *     Primitives under `src/components` are exempt: their recipes ARE the
+ *     voices. Waiver: a `design-allow-raw-type` comment with a reason within
+ *     the 5 lines above.
+ *
  * Tracking / width / translate arbitrary values are NOT linted here — those
  * have legitimate documented uses (PageTitle `-tracking-[1px]`, container-query
  * layout clamps). The closed-set rule still governs them by discipline.
@@ -83,6 +94,13 @@ const LABEL_TAGS =
   "button|Button|SelectTrigger|PopoverTrigger|DialogTrigger|AlertDialogTrigger|DropdownMenuTrigger|MenuTrigger|TabsTrigger|SelectItem|MenuItem|DropdownMenuItem|CommandItem|TextLink|Label|CardTitle|TableHead|SortableTableHead|RowActionButton|Link|dt";
 const LABEL_OPEN_RE = new RegExp(`<(?:${LABEL_TAGS})(?=[\\s/>]|$)`);
 const SPAN_OPEN_RE = /<span(?=[\s/>]|$)/;
+
+// --- 4. raw type utility with no voice ----------------------------------
+const RAW_TYPE_RE =
+  /(?:^|[\s"'`])(?:font-(?:medium|semibold|bold)|text-(?:xs|sm|base|lg|xl|2xl))(?=[\s"'`\]/]|$)/;
+const ANY_VOICE_RE =
+  /\btype-(?:heading|copy|label|mono|eyebrow|input|display)-/;
+const RAW_TYPE_SCOPE = /^src\/(?:pages|layouts)\//;
 
 // [fileEndsWith, substring] pairs that predate the rule and stay (documented).
 const FONT_ALLOW = [
@@ -215,6 +233,27 @@ for (const file of files) {
       violations.push({ file, line: i + 1, kind: "font-size", text: fontM[0] });
     }
 
+    if (RAW_TYPE_SCOPE.test(file) && !ANY_VOICE_RE.test(line)) {
+      const rawM = line.match(RAW_TYPE_RE);
+      if (rawM) {
+        let waived = false;
+        for (let j = i - 1; j >= 0 && j > i - 6; j--) {
+          if (/design-allow-raw-type/.test(lines[j])) {
+            waived = true;
+            break;
+          }
+        }
+        if (!waived) {
+          violations.push({
+            file,
+            line: i + 1,
+            kind: "raw-type",
+            text: `${rawM[0].trim()} with no type-* voice — use type-label-* / type-copy-* / type-heading-* / type-mono-*`,
+          });
+        }
+      }
+    }
+
     const jsFontM = line.match(JS_FONT_SIZE_RE);
     if (jsFontM && !TYPE_SCALE.has(Number(jsFontM[1]))) {
       violations.push({
@@ -242,5 +281,5 @@ if (violations.length > 0) {
 }
 
 console.log(
-  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label."
+  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page."
 );

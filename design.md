@@ -447,7 +447,7 @@ components:
 3. **24px gutters (Bootstrap/Material default)** → 12-column grid with **16px gutters**. Denser, more on-genre for an operator tool.
 4. **Brand colors as chart series colors** → 8-slot OKLCH categorical palette picked by series index. Per-series `slot?: number` override only for brand-mnemonic exceptions (Anthropic→orange, OpenAI→blue).
 5. **Heavy 1px+ card borders / shadcn default `border` + drop-shadow** → tight `border border-border` (neutral-200) + `shadow-xs`. The 2026-05-15 migration replaced the prior `shadow-(--shadow-border)` ring-as-border recipe with an explicit border so the edge reads at any zoom and against any backdrop. `--shadow-border` token is still in `index.css:117` but no longer the Card default.
-6. **All numerics mono** → five-voice taxonomy. Hero summary numerics ≥24px sans tabular via `<HeroNumeric>`; data numerics <20px stay mono.
+6. **All numerics mono** → five-voice taxonomy. Every KPI value is sans tabular via `<HeroNumeric>` (24px, inside `KpiTile` / `CompactKpi`), including the Request and Conversation detail rails (moved off 18px mono 2026-09-17). Mono is for data: table cells, IDs, hashes, badge and count contents.
 7. **WCAG 2.5.5 AAA 44×44 touch targets** → 32px (`h-8` / `size="sm"`) for Select / Input / SegmentedPill / IconActionButton chrome on dense filter rows. This is an operator dashboard on desktop (`Who: human operator running an AI gateway in production`), not a touch surface. WCAG 2.5.8 Level AA (24×24 minimum) is the target we hold — every chrome control clears it. If we ever ship a mobile / tablet surface, raise to AAA or wrap critical actions in `IconActionButton`'s `after:-inset-2` hit-target expansion. Until then, dense controls are correct and AAA touch findings should be marked "register carve-out" not "fix."
 
 ---
@@ -968,6 +968,16 @@ switch. Current uses: `src/pages/requests/RequestsTable.tsx` (Model cell).
 `RequestDetailBody.tsx`'s Model value needs no waiver — a `DetailList` value is
 not inside a label-role tag.
 
+**Raw type utilities are linted too (2026-09-17).** The same script fails a
+bare `font-medium` / `font-semibold` / `font-bold` or `text-xs` through
+`text-2xl` on any line in `src/pages` or `src/layouts` that carries no
+`type-*` voice. Page text always goes through a named voice; a raw weight or
+size is the pre-voice idiom and drifts from the ladder unseen. Primitives under
+`src/components` are exempt (their recipes are the voices). Inline emphasis
+inside a voiced paragraph, where the voice sits on the parent and the span only
+adds weight, takes a `design-allow-raw-type` comment with its reason within
+the 5 lines above, same per-site shape as the copy-voice waiver.
+
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
 
 ### Exception: Ask AI reply prose *(2026-07-27)*
@@ -1133,7 +1143,7 @@ Animate intent, not decoration. Transition only `color` / `background-color` / `
 
 Easings are declared in `@theme` (`index.css:168–171`). Base UI + tw-animate-css exits need `data-closed:fill-mode-forwards` on both popup and overlay, or they flicker back to opacity 1 for ~28ms before unmount (see §7 Dialog).
 
-The `<Button>` primitive's transition expands to `transition-[colors,opacity,box-shadow,scale]` so `disabled:opacity-50` *fades* on dirty-flip across every form button instead of snapping. Press affordance (standardized site-wide 2026-06-18, replacing the earlier `0.99`): **`active:scale-[0.98]` — a subtle scale-DOWN** with `will-change-transform` on the primitive so the scaled label re-rasters crisply instead of bitmap-stretching. Replaces the old `active:translate-y-px`. Gated so popover/select/menu *triggers* don't scale (`not-aria-[haspopup]` on the Button primitive, `enabled:` elsewhere), which avoids the anchor-reposition flicker. Always paired with `motion-reduce:active:scale-100`. Same press lives on `IconActionButton` + `TabsTrigger`; hand-rolled pressables match. Sliding indicator (Tabs / Segmented / SegmentedPill): 200ms ease-out, transform + width animated. Sheet enter: 300ms slide from right. Dialog enter: 200ms fade + zoom-in-95 (`Menu` popup gets `origin-[var(--transform-origin)]` so it scales *from the trigger*, not from the popup's geometric center — Base UI publishes the variable on the Positioner). MenuItem highlight uses `transition-colors duration-100 ease-out` — keyboard arrow-through no longer snaps. Toast: sonner default (200ms enter + 4s hold + 200ms exit).
+The `<Button>` primitive's transition expands to `transition-[color,background-color,border-color,opacity,box-shadow,scale]` so `disabled:opacity-50` *fades* on dirty-flip across every form button instead of snapping. Press affordance (standardized site-wide 2026-06-18, replacing the earlier `0.99`): **`active:scale-[0.98]` — a subtle scale-DOWN** with `will-change-transform` on the primitive so the scaled label re-rasters crisply instead of bitmap-stretching. Replaces the old `active:translate-y-px`. Gated so popover/select/menu *triggers* don't scale (`not-aria-[haspopup]` on the Button primitive, `enabled:` elsewhere), which avoids the anchor-reposition flicker. Always paired with `motion-reduce:active:scale-100`. Same press lives on `IconActionButton` + `TabsTrigger`; hand-rolled pressables match. Sliding indicator (Tabs / Segmented / SegmentedPill): 200ms ease-out, transform + width animated. Sheet enter: 300ms slide from right. Dialog enter: 200ms fade + zoom-in-95 (`Menu` popup gets `origin-[var(--transform-origin)]` so it scales *from the trigger*, not from the popup's geometric center — Base UI publishes the variable on the Positioner). MenuItem highlight uses `transition-colors duration-100 ease-out` — keyboard arrow-through no longer snaps. Toast: sonner default (200ms enter + 4s hold + 200ms exit).
 
 ---
 
@@ -1471,11 +1481,13 @@ switches).
   above `HeroNumeric`, denominator as the `type-copy-14 text-muted-foreground`
   caption (user 2026-09-17: KPIs take eyebrows everywhere); then the
   breakdown: `SectionHeading as="h4"` "Where the savings came from", a `type-copy-14
-  text-muted-foreground` basis sentence ("Share of Gate-attributed savings,
-  as the Total saved tile reports it."), then two levels on that ONE basis:
-  Compression and Gate cache hits as the two tile rates over Total saved
+  text-muted-foreground` basis sentence ("Share of everything Gate saved, the
+  Total saved rate above."), then two levels on that ONE basis:
+  Compression and Caching as the two tile rates over Total saved
   (`KPI_BY_RANGE`, Total = Caching + Compression), compression's mechanisms
-  nested directly beneath it (`ml-4 border-l border-border pl-4`, narrower
+  nested directly beneath it, FOUR rows from the gateway's "Methods, ranked"
+  table: the top three methods by tokens saved, verbatim, and "All others"
+  for the rest (user + PM, call 2026-09-17) (`ml-4 border-l border-border pl-4`, narrower
   label track so every bar starts on one line), a `my-3` hairline, then the
   next mechanism. Rows use the Security page's grid (`grid-cols-[auto_1fr_auto]`
   from `@md`, label track `w-72 pr-4`, nested `w-64 pr-4`; below `@md` two
@@ -1485,15 +1497,14 @@ switches).
   An off mechanism shows `StatusBadge on={false}` + a sentence, no bar; both
   off replaces the rows with one sentence. Parent ticket: "compression
   against Gate cache hits, and the leading compression passes inside that".
-- **Footer:** `border-t`, `gap-2` stack: `SectionHeading as="h4"` "What this
-  figure leaves out", the exclusion paragraph `type-copy-14
+- **Footer:** `border-t`, `gap-2` stack: `SectionHeading as="h4"` "What these
+  savings leave out", the exclusion paragraph `type-copy-14
   text-muted-foreground`.
 - **States:** loading skeletons the values and keeps the chrome
   (`aria-busy`, one sr-only status); no traffic keeps the header and renders
   an explanation, never zeros; both switches off replaces the rows with one
-  sentence and drops the partial note. PLACEHOLDERS awaiting a real source:
-  the mechanism weight table, the attribution start date and the epoch date
-  (`token-savings-summary.ts`).
+  sentence. Partial attribution is not marked (open). The epoch date in
+  `token-savings-summary.ts` is a placeholder.
 
 ### Modal / Drawer
 

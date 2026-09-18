@@ -1109,7 +1109,7 @@ function FeedRow({
    *  unread row sits at full strength and drops to `text-muted-foreground`
    *  once read. No dot, no badge — the contrast IS the indicator, so it
    *  needs no legend and costs no gutter. Weight never moves: the label
-   *  voice is already font-medium and Gmail's bold is approximated with ink,
+   *  voice is already 500 and Gmail's bold is approximated with ink,
    *  per design.md §3 (colour does the quiet work, weight does the
    *  structural work). User direction 2026-08-25.
    *

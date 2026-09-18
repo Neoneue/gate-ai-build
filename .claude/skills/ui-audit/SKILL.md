@@ -22,9 +22,13 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
 3. Fill [brief-review.md](brief-review.md) and spawn
    `subagent_type: front-end-developer`. Do not add constraints the template
    already covers; the agent's standing rules handle gates and scope.
-4. Relay the table verbatim in structure: severity or numbered list, one row
-   per root cause, `path:line`, before, after, why. Then the verdict. Then a
-   "Decision needed" list for every row that conflicts with design.md.
+4. Relay the findings as a CHECKLIST, never a table (user rule
+   2026-09-17): one `- [ ] **N. SEVERITY** path:line` item per root cause
+   with `Before:`, `After:`, `Why:` sub-bullets, numbered so items can be
+   picked by number and ticked when applied. When the user asks for a file,
+   write it the same way (`audit.md` at the repo root is the precedent).
+   Then the verdict. Then a "Decision needed" list for every row that
+   conflicts with design.md.
 5. Stop. Applying is a separate user instruction.
 
 ## 2. apply

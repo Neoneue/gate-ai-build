@@ -9,6 +9,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CompactKpi } from "@/components/ui/compact-kpi";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   DialogScrollSummary,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
 import { MessageBlock } from "@/components/ui/message-block";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -604,48 +604,21 @@ function ConversationKpiRail({ row }: { row: ConversationRow }) {
     Number.parseInt(s.replace(/[^0-9-]/g, ""), 10) || 0;
   return (
     <KpiRailShell columns={6}>
-      <ConversationKpiTile
-        label="Messages"
-        value={formatCompactCount(view.reqs)}
-      />
-      <ConversationKpiTile
-        label="Turns"
-        value={formatCompactCount(view.turns)}
-      />
-      <ConversationKpiTile
-        label="Tokens in"
+      <CompactKpi flat title="Messages" value={formatCompactCount(view.reqs)} />
+      <CompactKpi flat title="Turns" value={formatCompactCount(view.turns)} />
+      <CompactKpi
+        flat
+        title="Tokens in"
         value={formatCompactCount(toRawInt(view.inTokens))}
       />
-      <ConversationKpiTile
-        label="Tokens out"
+      <CompactKpi
+        flat
+        title="Tokens out"
         value={formatCompactCount(toRawInt(view.outTokens))}
       />
-      <ConversationKpiTile label="Cost" value={view.cost} />
-      <ConversationKpiTile label="Duration" value={view.duration} />
+      <CompactKpi flat title="Cost" value={view.cost} />
+      <CompactKpi flat title="Duration" value={view.duration} />
     </KpiRailShell>
-  );
-}
-
-function ConversationKpiTile({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  // Mono at text-lg (18px) — below the sans-hero threshold (≥24px), so
-  // these stay in the data-tier mono register per the five-voice taxonomy.
-  // Label uses plain sans (Title Case, not Eyebrow caps): KPI tiles inside
-  // a modal sit closer to body metadata than to page eyebrows, so the
-  // uppercase-tracked register from <Eyebrow> overweighted the label.
-  // Padding `p-4` matches the 16px card-padding rule (CompactKpi / ModelKpiTile).
-  return (
-    <div className="flex flex-col gap-1 p-4">
-      <Eyebrow>{label}</Eyebrow>
-      <span className="font-medium font-mono text-foreground text-lg tabular-nums tracking-snug">
-        {value}
-      </span>
-    </div>
   );
 }
 

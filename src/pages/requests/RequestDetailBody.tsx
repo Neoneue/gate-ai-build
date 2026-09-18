@@ -26,6 +26,7 @@ import {
   type CodeLine,
   type CodeToken,
 } from "@/components/ui/code-card";
+import { CompactKpi } from "@/components/ui/compact-kpi";
 import { CopyButton } from "@/components/ui/copy-button";
 import { DetailList, DetailRow } from "@/components/ui/detail-list";
 import {
@@ -33,8 +34,8 @@ import {
   DialogScrollSummary,
   DialogTitleBlock,
 } from "@/components/ui/dialog";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { KpiRail as KpiRailShell } from "@/components/ui/kpi-rail";
+import { TabsCount } from "@/components/ui/tabs-count";
 import { TextLink } from "@/components/ui/text-link";
 import { modelName } from "@/data/models";
 import { getRequestBody } from "@/data/request-bodies";
@@ -348,7 +349,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                 {findings.length > 0 && (
                   <section className="flex flex-col gap-2">
                     <PanelHeading
-                      aside={<CountChip count={findings.length} />}
+                      aside={<TabsCount>{findings.length}</TabsCount>}
                       title="Findings"
                     />
                     <div className="flex flex-col gap-2">
@@ -425,7 +426,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                 )}
                 <section className="flex flex-col gap-2">
                   <PanelHeading
-                    aside={<CountChip count={passed.length} />}
+                    aside={<TabsCount>{passed.length}</TabsCount>}
                     title="Passed"
                   />
                   <div className="flex flex-col gap-2">
@@ -729,7 +730,7 @@ function FindingSwitcherCard({
         <div className="flex items-start justify-between gap-2">
           <span className="type-label-14 flex items-center gap-2 text-foreground">
             {CATEGORY_LABEL[current.category]}
-            <CountChip count={total} size="xs" />
+            <TabsCount>{total}</TabsCount>
           </span>
           <Badge variant={actionVariant[current.action]}>
             {current.action}
@@ -776,23 +777,6 @@ function FindingSwitcherCard({
   );
 }
 
-/** Tabs-count-style count chip used on the Findings / Passed group headings. */
-function CountChip({
-  count,
-  size = "sm",
-}: {
-  count: number;
-  size?: "sm" | "xs";
-}) {
-  return (
-    <span
-      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-muted px-2 font-medium font-mono text-muted-foreground tabular-nums ${size === "xs" ? "text-xs" : "text-sm"}`}
-    >
-      {count}
-    </span>
-  );
-}
-
 /** Label-left / value-right row inside a panel card. */
 function KvRow({
   label,
@@ -808,7 +792,7 @@ function KvRow({
       <span className="type-label-14 text-foreground">{label}</span>
       <span
         className={[
-          "text-right font-mono text-foreground text-sm tabular-nums",
+          "type-mono-14 text-right text-foreground",
           valueClassName ?? "",
         ].join(" ")}
       >
@@ -893,7 +877,7 @@ function EvidenceWindow({
       f === selectedFinding && start === selectedFirstStart;
     evidenceNodes.push(
       <span
-        className={`rounded-xs px-1 font-medium ${tone}`}
+        className={`type-label-14 rounded-xs px-1 ${tone}`}
         data-selected-evidence={isSelectedSpan ? "" : undefined}
         key={`${start}-${f.entityType}`}
       >
@@ -1032,7 +1016,7 @@ function PiiDetailPanel({
     const isSelectedSpan = f === finding && start === selectedFirstStart;
     evidenceNodes.push(
       <span
-        className={`rounded-xs px-1 font-medium ${tone}`}
+        className={`type-label-14 rounded-xs px-1 ${tone}`}
         data-selected-evidence={isSelectedSpan ? "" : undefined}
         key={`${start}-${f.entityType}`}
       >
@@ -1260,31 +1244,20 @@ function KpiRail({ row }: { row: RequestRow }) {
     Number.parseInt(s.replace(/[^0-9-]/g, ""), 10) || 0;
   return (
     <KpiRailShell className="border border-border shadow-xs" columns={5}>
-      <KpiTile label="Latency" value={row.latency} />
-      <KpiTile label="Cost" value={row.cost} />
-      <KpiTile
-        label="Tokens in"
+      <CompactKpi flat title="Latency" value={row.latency} />
+      <CompactKpi flat title="Cost" value={row.cost} />
+      <CompactKpi
+        flat
+        title="Tokens in"
         value={formatCompactCount(toRawInt(row.inTokens))}
       />
-      <KpiTile
-        label="Tokens out"
+      <CompactKpi
+        flat
+        title="Tokens out"
         value={formatCompactCount(toRawInt(row.outTokens))}
       />
-      <KpiTile label="Compression" value={compressionValue(row)} />
+      <CompactKpi flat title="Compression" value={compressionValue(row)} />
     </KpiRailShell>
-  );
-}
-
-function KpiTile({ label, value }: { label: string; value: string }) {
-  // Tile chrome (border, radius, bg) lives on the parent rail container;
-  // each tile is just label + value at the locked 16px card-padding rule.
-  return (
-    <div className="flex flex-col gap-1 p-4">
-      <Eyebrow>{label}</Eyebrow>
-      <span className="font-medium font-mono text-foreground text-lg tabular-nums tracking-snug">
-        {value}
-      </span>
-    </div>
   );
 }
 
@@ -1576,7 +1549,7 @@ function ErrorResponseSubcard({ row }: { row: RequestRow }) {
         <section className="flex flex-col gap-2">
           <SubcardHeading label="Error response" />
           <div className="flex flex-col overflow-hidden rounded-xs border border-border">
-            <pre className="overflow-auto bg-background px-4 py-4 font-mono text-foreground text-xs">
+            <pre className="type-mono-12 overflow-auto bg-background px-4 py-4 text-foreground">
               {getRequestBody(row).errorBody}
             </pre>
           </div>

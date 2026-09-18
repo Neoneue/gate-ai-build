@@ -1,9 +1,17 @@
-import { Bot, ChevronDown, ChevronLeft } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bot, ChevronDown } from "lucide-react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { AnthropicIcon, OpenAIIcon } from "@/components/icons/model-providers";
 import { ProviderAvatar, VendorAvatar } from "@/components/icons/vendor-avatar";
 import { PROVIDER_META, PROVIDER_ORDER } from "@/components/icons/vendor-meta";
+import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -109,6 +117,14 @@ import {
  * state, same pattern as CMP-013 / CMP-014.
  * ───────────────────────────────────────────────────────────────────────── */
 
+/** Module constant, not a render-time `.map`: `MultiSelect` lists `options`
+ *  in a `useMemo` dep array (`multi-select.tsx:161`), so a fresh array
+ *  identity every render defeated that memo on every search keystroke. */
+const CAPABILITY_OPTIONS = CAPABILITY_ORDER.map((c) => ({
+  value: c,
+  label: CAPABILITY_META[c].label,
+}));
+
 export function Models() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -205,9 +221,17 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
 
+  // The query the catalog filters against lags the input by a frame under
+  // load: 390 rows and up to 25 tooltip-bearing rows reconcile per keystroke,
+  // and `search` stays bound to the SearchInput so typing never stalls.
+  const deferredSearch = useDeferredValue(search);
+  const stale = search !== deferredSearch;
+
+  // Filter and sort are two memos, not one: changing only the sort Select
+  // must not re-run a 390-row filter for a result that cannot change.
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const rows = MODELS.filter((m) => {
+    const q = deferredSearch.trim().toLowerCase();
+    return MODELS.filter((m) => {
       if (modality !== "all" && m.modality !== modality) {
         return false;
       }
@@ -225,17 +249,18 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       }
       return true;
     });
-    return sortModels(rows, sort);
-  }, [modality, search, provider, features, sort]);
+  }, [modality, deferredSearch, provider, features]);
+
+  const rows = useMemo(() => sortModels(filtered, sort), [filtered, sort]);
 
   const resetToFirstPage = () => setPage(1);
 
   // Page the visible rows by the footer's rows-per-page selector. The footer
   // only computes labels; slicing is the caller's job (see AuditTrail).
-  const perPage = resolveRowsPerPage(rowsPerPage, filtered.length);
-  const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
+  const perPage = resolveRowsPerPage(rowsPerPage, rows.length);
+  const pageRows = rows.slice((page - 1) * perPage, page * perPage);
 
-  const isEmpty = filtered.length === 0;
+  const isEmpty = rows.length === 0;
 
   const clearFilters = () => {
     setSearch("");
@@ -275,7 +300,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           <h2 className="type-heading-24 m-0 text-foreground">
             Explore our catalog
           </h2>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
             Every model Gate can send your requests to. Search by name, filter
             by provider, and compare what each one costs and can do.
           </p>
@@ -337,7 +362,17 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             sort={sort}
           />
 
-          <Card density="flush">
+          {/* The dim is the only cue that the catalog is a frame behind the
+              input. The transition is unconditional so it runs in BOTH
+              directions; toggling `transition-opacity` alongside `opacity-70`
+              would add the property in the same frame as the change and snap. */}
+          <Card
+            className={cn(
+              "transition-opacity duration-150 ease-out motion-reduce:transition-none",
+              stale && "opacity-70"
+            )}
+            density="flush"
+          >
             {isEmpty ? (
               <TableEmptyState
                 action={
@@ -357,7 +392,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                   onRowsPerPageChange={setRowsPerPage}
                   page={page}
                   rowsPerPage={rowsPerPage}
-                  total={filtered.length}
+                  total={rows.length}
                 />
               </>
             )}
@@ -365,7 +400,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         </Tabs>
       </div>
 
-      <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
+      <p className="type-copy-12 m-0 text-muted-foreground">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
         preferred provider, or{" "}
         <InlineCode size="sm">openrouter/claude-haiku-4-5</InlineCode> to pin a
@@ -387,7 +422,7 @@ function PageHeader({
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
         Route to{" "}
         <span className="text-foreground tabular-nums">{modelCount}</span>{" "}
         models across{" "}
@@ -466,10 +501,7 @@ function Toolbar({
         aria-label="Filter by features"
         className="w-auto min-w-0 @2xl:flex-none flex-1"
         onValueChange={(v) => onFeaturesChange(v as Capability[])}
-        options={CAPABILITY_ORDER.map((c) => ({
-          value: c,
-          label: CAPABILITY_META[c].label,
-        }))}
+        options={CAPABILITY_OPTIONS}
         placeholder="All features"
         popupWidth="content"
         value={features}
@@ -820,26 +852,19 @@ function ModelDetailPage({
     document.querySelector<HTMLElement>("[data-model-back-link]")?.focus();
   }, []);
 
+  // Same membership test CapabilityStrip uses: CAPABILITY_ORDER fixes the
+  // display order, the Set answers "does this model have it".
+  const have = new Set(model.capabilities);
+  const orderedCapabilities = CAPABILITY_ORDER.filter((c) => have.has(c));
+
   return (
     <div className="flex flex-col gap-8 pb-8">
       {/* Top utility bar — back affordance only for now. The back link takes
           focus on mount so the keyboard user lands inside the detail instead
           of at <body> (the row button that opened it has just unmounted).
-          querySelector, not a ref: TextLink does not forward one. */}
+          querySelector, not a ref: BackLink does not forward one. */}
       <div className="flex items-center justify-between gap-4">
-        <TextLink
-          aria-label="Back to Models"
-          className="type-label-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
-          data-model-back-link=""
-          onClick={onBack}
-        >
-          <ChevronLeft
-            aria-hidden="true"
-            className="size-4 shrink-0"
-            strokeWidth={1.75}
-          />
-          Models
-        </TextLink>
+        <BackLink data-model-back-link="" label="Models" onClick={onBack} />
       </div>
 
       {/* Hero — logo + H2 inline, then handle / capabilities / description.
@@ -872,18 +897,16 @@ function ModelDetailPage({
 
         {model.capabilities.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            {CAPABILITY_ORDER.filter((c) => model.capabilities.includes(c)).map(
-              (c) => {
-                const meta = CAPABILITY_META[c];
-                const Icon = meta.icon;
-                return (
-                  <Badge className="h-6" key={c} variant="neutral">
-                    <Icon aria-hidden="true" data-icon="inline-start" />
-                    {meta.label}
-                  </Badge>
-                );
-              }
-            )}
+            {orderedCapabilities.map((c) => {
+              const meta = CAPABILITY_META[c];
+              const Icon = meta.icon;
+              return (
+                <Badge className="h-6" key={c} variant="neutral">
+                  <Icon aria-hidden="true" data-icon="inline-start" />
+                  {meta.label}
+                </Badge>
+              );
+            })}
           </div>
         ) : null}
 
@@ -895,7 +918,7 @@ function ModelDetailPage({
               // text-wrap). Apply it conditionally so the rule is only
               // present where it can actually do work. `whitespace-pre-line`
               // preserves the paragraph breaks prod's descriptions carry.
-              "m-0 whitespace-pre-line font-sans text-base text-foreground",
+              "type-copy-16 m-0 whitespace-pre-line text-foreground",
               showFullDesc ? "text-pretty" : "line-clamp-3"
             )}
             id="model-description"
@@ -912,7 +935,7 @@ function ModelDetailPage({
             <ChevronDown
               aria-hidden="true"
               className={cn(
-                "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
+                "size-3.5 shrink-0 text-muted-foreground transition-[color,rotate] duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
                 showFullDesc && "rotate-180"
               )}
               strokeWidth={1.75}
@@ -1287,12 +1310,14 @@ function MarkupBadge({ markup }: { markup: number }) {
   }
   const percent = Math.round((markup - 1) * 100);
   return (
-    <Badge
-      title="Gateway markup over this provider's list price"
-      variant="neutral"
-    >
-      +{percent}%
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger render={<Badge variant="neutral" />}>
+        +{percent}%
+      </TooltipTrigger>
+      <TooltipContent>
+        Gateway markup over this provider's list price
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
