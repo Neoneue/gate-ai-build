@@ -131,7 +131,7 @@ function PlanCard({
       className={cn(
         "flex flex-col gap-4 rounded-md border p-4",
         plan.featured
-          ? "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          ? "border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)]"
           : "border-border bg-card"
       )}
       data-plan-card
@@ -159,9 +159,7 @@ function PlanCard({
                 aria-hidden
                 className={cn(
                   "mt-1 size-4 shrink-0",
-                  plan.featured
-                    ? "text-blue-700 dark:text-blue-400"
-                    : "text-muted-foreground"
+                  plan.featured ? "text-tier-pro" : "text-muted-foreground"
                 )}
                 strokeWidth={1.75}
               />

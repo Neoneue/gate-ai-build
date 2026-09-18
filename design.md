@@ -589,6 +589,25 @@ Three more, on the CTA group (added 2026-08-04 with Button `variant="promo"`). *
 
 **`--promo-foreground` has no consumer as of 2026-08-04.** The promo copy moved to the neutral text tokens — titles on `--foreground`, sub-copy on `--muted-foreground` — on both the sidenav card and the Policies banner, which was the token's only reader. It is left defined, and documented here, rather than deleted in the same pass; remove it from `index.css` (both themes, plus the `--color-promo-foreground` alias) and from this table when someone confirms no promo surface wants blue copy back.
 
+### Plan tier colours *(added 2026-09-18)*
+
+A plan tier is **not a status**. It says which plan a workspace is on; it never reports that something succeeded, degraded or failed, so it cannot borrow the success / warning / danger families or the `info` rung. **Pro is brand blue, Enterprise is violet** (user direction, 2026-09-16) — violet is Tailwind v4's default scale, which is why `index.css` declares no violet ramp and the tokens reference `var(--color-violet-N)` directly. ← code-direct: `src/index.css` `:root` / `.dark` / `@theme inline`
+
+| Token | Light | Dark | Consumed as |
+| --- | --- | --- | --- |
+| `--tier-pro` | blue-700 | blue-400 | `text-tier-pro` — icon and hero ink on a neutral surface |
+| `--tier-pro-foreground` | blue-700 | blue-300 | `text-tier-pro-foreground` — ink ON a tier wash (badge text, check glyphs) |
+| `--tier-pro-wash` | blue-100 | blue-500 @ 15% | `bg-tier-pro-wash` — Badge `pro`, check-circle fill |
+| `--tier-pro-surface` | blue-50 | blue-500 @ 15% | `bg-tier-pro-surface` — flat tinted surface (OptionTile selected, the Pro upsell card) |
+| `--tier-pro-border` | blue-200 | blue-500 @ 30% | `border-tier-pro-border` — Card `tone="pro"`, tinted banner edge |
+| `--tier-pro-surface-wash` | `blue-50 → blue-25`, downward | `blue-500 @ 10% → 5%`, downward | `bg-[image:var(--tier-pro-surface-wash)]` — the tinted banner gradient |
+| `--tier-enterprise` | violet-700 | violet-300 | `text-tier-enterprise` |
+| `--tier-enterprise-foreground` | violet-700 | violet-300 | `text-tier-enterprise-foreground` — ink on a tier wash |
+| `--tier-enterprise-wash` | violet-100 | violet-500 @ 15% | `bg-tier-enterprise-wash` — Badge `enterprise` |
+| `--tier-enterprise-border` | violet-200 | violet-500 @ 30% | `border-tier-enterprise-border` — Card `tone="enterprise"` |
+
+These ten are **the only sanctioned way to paint a plan tier.** Same contract as `--promo-*`: `--tier-pro-surface-wash` holds the whole gradient rather than its stops, and takes no `--color-*` alias because no colour utility reads it. Enterprise has no surface or surface-wash — nothing consumes one yet; add the pair here first if a tinted Enterprise banner ever ships. The dark alphas are the 15% / 30% rungs the status washes already use, so no new alpha rung enters the system.
+
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
 **Chart runtime colors** — `style={{ backgroundColor }}` / `style={{ color }}` from the chart palette helper are runtime values, not Tailwind classes. No token violation.
@@ -740,6 +759,7 @@ The border is light `-200` over the dark-500-at-30% rung the Callout and the sta
 - Blue for primary action — `--primary` resolves to neutral-900.
 - Blue for inline links — use ink + faint underline (see §7).
 - `text-neutral-600`/`text-neutral-700` as table body-cell tones — collides with three-tier policy.
+- Raw `blue-*` / `violet-*` for a plan tier — Pro and Enterprise bind to the `--tier-*` family (see Plan tier colours above); a raw ramp step does not flip under `.dark`.
 - Vendor colors as chart series colors by default — charts use `--chart-1..8` by index.
 - **Raw ramp classes where a semantic token exists** — see the semantic token quick-reference table above, and the Dark mode subsection for the full raw→token surface map. Since 2026-07-09 this is a **functional** requirement, not just hygiene: a raw ramp class does not invert under `.dark`. Exception: typography ramp tokens with no current alias (`text-neutral-800/600/400`). Every surface/border/ring/foreground ramp value has a semantic alias — use it. The old `bg-neutral-50` field-wash exception is retired: the input wash is now `bg-muted`.
 

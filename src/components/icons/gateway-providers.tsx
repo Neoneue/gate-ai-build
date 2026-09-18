@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import { BRAND_COLORS } from "./brand-colors";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Gateway upstream-provider icons — the three services Constellation Gate
@@ -17,10 +18,10 @@ import type { SVGProps } from "react";
  * Multi-color brands carry per-path fills so the wrapper's `style.color` is
  * ignored. Mono brands use `fill="currentColor"` so the wrapper paints them.
  *
- * Brand hex literals are intentional and are NOT design-system colors: they
- * are external brand marks (Alibaba orange, Google Vertex blues), reproduced
- * at their published values because a recolored logo is a wrong logo. Same
- * exception `vendor-meta.tsx` documents for the model-creator marks. Every
+ * Brand colours read from `brand-colors.ts` and are NOT design-system
+ * colors: they are external brand marks (Alibaba orange, Google Vertex
+ * blues) at their published values, because a recolored logo is a wrong
+ * logo. Same exception `vendor-meta.tsx` documents for the vendor marks. Every
  * other color in the app traces to a semantic token in `src/index.css`.
  * The design-token guard passes; the impeccable hook flags these two files
  * and that finding is a known false positive, confirmed 2026-08-03.
@@ -40,15 +41,15 @@ export function AlibabaIcon(props: IconProps) {
     >
       <path
         d="M24 14.014c-2.8 1.512-5.62 2.896-8.759 3.524-.7.139-1.476.139-2.187.043-.678-.085-1.017-.682-.776-1.31.23-.585.536-1.181.93-1.671.852-1.065 1.814-2.034 2.678-3.088a15.75 15.75 0 001.422-2.054c.306-.511.164-1.129-.372-1.384-.897-.437-1.859-.745-2.81-1.075-.11-.043-.274.074-.492.149.273.244.47.425.743.67-2.821.48-5.49 1.16-8.08 2.098-.012.053-.033.095-.023.117.383.585.208 1.032-.35 1.394a2.365 2.365 0 00-.568.522c1.706.5 3.226.213 4.68-.735-.087-.127-.175-.244-.262-.372.546.096.874.394.918.862.011.107-.054.213-.087.32-.077-.086-.175-.17-.24-.267-.045-.064-.056-.138-.088-.245-1.728 1.15-3.587 1.438-5.632.842 0 .404-.022.745.011 1.075.022.287-.098.415-.36.564-.591.362-1.204.735-1.696 1.214-.59.585-.371 1.299.427 1.597.907.34 1.859.35 2.81.234 1.126-.139 2.23-.32 3.456-.49-1.433.67-2.844 1.14-4.33 1.33-1.04.14-2.078.214-3.106-.084-1.476-.415-2.133-1.501-1.75-2.96.361-1.363 1.236-2.449 2.176-3.45 3.139-3.332 7.108-5.024 11.7-5.365 1.072-.074 2.155.064 3.16.511 1.411.639 2.002 1.99 1.313 3.354-.448.905-1.072 1.735-1.695 2.555-.612.809-1.301 1.554-1.946 2.331-.186.234-.361.48-.503.745-.274.5-.088.83.492.778 1.213-.118 2.45-.213 3.62-.511 1.716-.437 3.389-1.054 5.084-1.597.175-.043.339-.107.492-.17z"
-        fill="#FF6003"
+        fill={BRAND_COLORS.alibaba.primary}
       />
     </svg>
   );
 }
 
 export function VertexIcon(props: IconProps) {
-  // Google Vertex AI — three Google brand-blue tones (`#4285F4` primary,
-  // `#669DF6` mid, `#AECBFA` light) painting a circuit-like figure of
+  // Google Vertex AI — three Google brand-blue tones (`BRAND_COLORS.google.primary` primary,
+  // `BRAND_COLORS.google.blueMid` mid, `BRAND_COLORS.google.blueLight` light) painting a circuit-like figure of
   // dots and a connecting `Y`. Per-path fills explicit so the wrapper's
   // `style.color` is ignored.
   return (
@@ -60,37 +61,37 @@ export function VertexIcon(props: IconProps) {
     >
       <path
         d="M11.995 20.216a1.892 1.892 0 100 3.785 1.892 1.892 0 000-3.785zm0 2.806a.927.927 0 11.927-.914.914.914 0 01-.927.914z"
-        fill="#4285F4"
+        fill={BRAND_COLORS.google.primary}
       />
       <path
         clipRule="evenodd"
         d="M21.687 14.144c.237.038.452.16.605.344a.978.978 0 01-.18 1.3l-8.24 6.082a1.892 1.892 0 00-1.147-1.508l8.28-6.08a.991.991 0 01.682-.138z"
-        fill="#669DF6"
+        fill={BRAND_COLORS.google.blueMid}
       />
       <path
         clipRule="evenodd"
         d="M10.122 21.842l-8.217-6.066a.952.952 0 01-.206-1.287.978.978 0 011.287-.206l8.28 6.08a1.893 1.893 0 00-1.144 1.479z"
-        fill="#AECBFA"
+        fill={BRAND_COLORS.google.blueLight}
       />
       <path
         d="M4.273 4.475a.978.978 0 01-.965-.965V1.09a.978.978 0 111.943 0v2.42a.978.978 0 01-.978.965zM4.247 13.034a.978.978 0 100-1.956.978.978 0 000 1.956zM4.247 10.19a.978.978 0 100-1.956.978.978 0 000 1.956zM4.247 7.332a.978.978 0 100-1.956.978.978 0 000 1.956z"
-        fill="#AECBFA"
+        fill={BRAND_COLORS.google.blueLight}
       />
       <path
         d="M19.718 7.307a.978.978 0 01-.965-.979v-2.42a.965.965 0 011.93 0v2.42a.964.964 0 01-.965.979zM19.743 13.047a.978.978 0 100-1.956.978.978 0 000 1.956zM19.743 10.151a.978.978 0 100-1.956.978.978 0 000 1.956zM19.743 2.068a.978.978 0 100-1.956.978.978 0 000 1.956z"
-        fill="#4285F4"
+        fill={BRAND_COLORS.google.primary}
       />
       <path
         d="M11.995 15.917a.978.978 0 01-.965-.965v-2.459a.978.978 0 011.943 0v2.433a.976.976 0 01-.978.991zM11.995 18.762a.978.978 0 100-1.956.978.978 0 000 1.956zM11.995 10.64a.978.978 0 100-1.956.978.978 0 000 1.956zM11.995 7.783a.978.978 0 100-1.956.978.978 0 000 1.956z"
-        fill="#669DF6"
+        fill={BRAND_COLORS.google.blueMid}
       />
       <path
         d="M15.856 10.177a.978.978 0 01-.965-.965v-2.42a.977.977 0 011.702-.763.979.979 0 01.241.763v2.42a.978.978 0 01-.978.965zM15.869 4.913a.978.978 0 100-1.956.978.978 0 000 1.956zM15.869 15.853a.978.978 0 100-1.956.978.978 0 000 1.956zM15.869 12.996a.978.978 0 100-1.956.978.978 0 000 1.956z"
-        fill="#4285F4"
+        fill={BRAND_COLORS.google.primary}
       />
       <path
         d="M8.121 15.853a.978.978 0 100-1.956.978.978 0 000 1.956zM8.121 7.783a.978.978 0 100-1.956.978.978 0 000 1.956zM8.121 4.913a.978.978 0 100-1.957.978.978 0 000 1.957zM8.134 12.996a.978.978 0 01-.978-.94V9.611a.965.965 0 011.93 0v2.445a.966.966 0 01-.952.94z"
-        fill="#AECBFA"
+        fill={BRAND_COLORS.google.blueLight}
       />
     </svg>
   );
@@ -99,7 +100,7 @@ export function VertexIcon(props: IconProps) {
 export function OpenRouterIcon(props: IconProps) {
   // OpenRouter — single monochrome routing mark. Prod renders it with
   // `fill="currentColor"` and `color: var(--foreground)`, NOT the lime
-  // `#C8FF00` brand variant, so the wrapper paints it (same convention as
+  // lime brand variant, so the wrapper paints it (same convention as
   // AnthropicIcon / OpenAIIcon / MoonshotAIIcon).
   return (
     <svg

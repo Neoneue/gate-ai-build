@@ -455,7 +455,7 @@ function DetailCard({
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-card-muted p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon aria-hidden className="size-4 text-blue-700 dark:text-blue-400" />
+        <Icon aria-hidden className="size-4 text-tier-pro" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (

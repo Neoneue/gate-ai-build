@@ -56,9 +56,12 @@ export function SetupIconChip({
 }
 
 /**
- * A single tappable onboarding option. Featured cards get the same
- * blue-200 / blue-50→blue-25 gradient treatment used by the Pro and
- * Token-Savings upsell cards so the recommended path reads as primary.
+ * A single tappable onboarding option. Featured cards get the same Pro
+ * plan-tier treatment the Pro and Token-Savings upsell cards carry
+ * (`border-tier-pro-border` + `--tier-pro-surface-wash`, design.md §2 "Plan
+ * tier colours"), so the recommended path reads as primary. Accepted shift
+ * 2026-09-18: the dark edge moves blue-400/30 -> blue-500/30, the rung Card
+ * `tone="pro"` documents, so every Pro edge agrees.
  */
 export function ChoiceCard({
   icon: Icon,
@@ -86,7 +89,7 @@ export function ChoiceCard({
       className={cn(
         "flex h-full flex-col items-start gap-4 rounded-md border border-border bg-card p-5 text-left shadow-xs",
         featured &&
-          "border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          "border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)]"
       )}
     >
       <SetupIconChip icon={Icon} tone={featured ? "blue" : tone} />

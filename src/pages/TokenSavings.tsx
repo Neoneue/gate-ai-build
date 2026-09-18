@@ -519,7 +519,7 @@ function CompressionCard({
       className={
         isPro
           ? "rounded-xs shadow-none"
-          : "rounded-xs border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          : "rounded-xs border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)] shadow-none"
       }
     >
       <CardContent className="flex flex-1 flex-col">
@@ -577,11 +577,9 @@ function CompressionCard({
             // its gradient + CTA, so keeping checks light lets the saturated CTA
             // button stay the single loudest element instead of competing with
             // a mass of solid-blue dots.
-            checkClassName="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
+            checkClassName="bg-tier-pro-wash text-tier-pro-foreground"
             outlineClassName={
-              isPro
-                ? "border-border"
-                : "border-blue-200 dark:border-blue-400/30"
+              isPro ? "border-border" : "border-tier-pro-border"
             }
           />
         </div>

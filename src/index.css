@@ -468,6 +468,41 @@ and (pointer: fine)) and (&:hover));
      silently dropped its lift to a third of its strength in light. Unchanged
      across themes, as it has always been. */
   --promo-cta-shadow: color-mix(in oklch, var(--color-blue-700) 30%, transparent);
+
+  /* ─── Plan tiers ────────────────────────────────────────────────────────
+     Pro and Enterprise are a first-class concept in the product — Card
+     `tone="pro"` / `tone="enterprise"`, Badge `variant="pro"` /
+     `variant="enterprise"`, the Billing hero, the upgrade banners — and
+     until now they had no token, so every file re-derived the same ramp
+     steps by hand (six copies of one banner recipe, five of one badge
+     recipe, three different dark inks for one role).
+
+     A tier is NOT a status: it says which plan you are on, never that
+     something succeeded or failed, so it cannot borrow the status families.
+     Pro is brand blue, Enterprise is violet (user direction 2026-09-16).
+     Violet is Tailwind v4's default scale — index.css declares no violet
+     ramp on purpose, and `var(--color-violet-N)` resolves to Tailwind's
+     built-ins exactly the way the neutral ramp does.
+
+     Roles, both themes, one place to tune. Values are what shipped before
+     this block existed; only the binding moved. */
+  --tier-pro: var(--color-blue-700);
+  --tier-pro-foreground: var(--color-blue-700);
+  --tier-pro-wash: var(--color-blue-100);
+  --tier-pro-surface: var(--color-blue-50);
+  --tier-pro-border: var(--color-blue-200);
+  /* The whole banner gradient, not its stops — same contract as
+     --promo-wash. Consumed as `bg-[image:var(--tier-pro-surface-wash)]`, so
+     it takes no --color-* alias (see the @theme inline note). */
+  --tier-pro-surface-wash: linear-gradient(
+    to bottom,
+    var(--color-blue-50),
+    var(--color-blue-25)
+  );
+  --tier-enterprise: var(--color-violet-700);
+  --tier-enterprise-foreground: var(--color-violet-700);
+  --tier-enterprise-wash: var(--color-violet-100);
+  --tier-enterprise-border: var(--color-violet-200);
 }
 
 /* App shell: left nav + scrollable main area. */
@@ -519,6 +554,22 @@ body {
   --color-promo-cta-hover: var(--promo-cta-hover);
   --color-promo-cta-border: var(--promo-cta-border);
   --color-promo-cta-foreground: var(--promo-cta-foreground);
+  /* Plan tiers. Same rule again — only the roles a COLOR utility consumes
+     are aliased (`text-tier-pro`, `bg-tier-pro-wash`, `bg-tier-pro-surface`,
+     `border-tier-pro-border`, and the enterprise twins).
+     --tier-pro-surface-wash is a gradient read as
+     `bg-[image:var(--tier-pro-surface-wash)]`, so it gets no alias; one
+     would offer `bg-tier-pro-surface-wash` as a plausible-looking class
+     that means nothing. */
+  --color-tier-pro: var(--tier-pro);
+  --color-tier-pro-foreground: var(--tier-pro-foreground);
+  --color-tier-pro-wash: var(--tier-pro-wash);
+  --color-tier-pro-surface: var(--tier-pro-surface);
+  --color-tier-pro-border: var(--tier-pro-border);
+  --color-tier-enterprise: var(--tier-enterprise);
+  --color-tier-enterprise-foreground: var(--tier-enterprise-foreground);
+  --color-tier-enterprise-wash: var(--tier-enterprise-wash);
+  --color-tier-enterprise-border: var(--tier-enterprise-border);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);
@@ -743,6 +794,35 @@ body {
   --promo-cta: var(--color-blue-600);
   --promo-cta-hover: var(--color-blue-700);
   --promo-cta-border: var(--color-blue-500);
+
+  /* Dark twin of the plan tiers. Ink on a neutral surface lightens one step
+     (blue-400 / violet-300); ink ON a tier wash goes lighter still
+     (blue-300 / violet-300), matching the status-wash ink rule in §2. The
+     washes and borders become alphas of the family over the page — 15% for
+     a filled surface, 30% for an edge — the same closed rungs the status
+     washes use, so no new alpha rung enters the system. */
+  --tier-pro: var(--color-blue-400);
+  --tier-pro-foreground: var(--color-blue-300);
+  --tier-pro-wash: color-mix(in oklch, var(--color-blue-500) 15%, transparent);
+  --tier-pro-surface: color-mix(in oklch, var(--color-blue-500) 15%, transparent);
+  --tier-pro-border: color-mix(in oklch, var(--color-blue-500) 30%, transparent);
+  --tier-pro-surface-wash: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--color-blue-500) 10%, transparent),
+    color-mix(in oklch, var(--color-blue-500) 5%, transparent)
+  );
+  --tier-enterprise: var(--color-violet-300);
+  --tier-enterprise-foreground: var(--color-violet-300);
+  --tier-enterprise-wash: color-mix(
+    in oklch,
+    var(--color-violet-500) 15%,
+    transparent
+  );
+  --tier-enterprise-border: color-mix(
+    in oklch,
+    var(--color-violet-500) 30%,
+    transparent
+  );
 
   /* Syntax palette re-points to the ramp light-end on dark: the :root values
      (blue-700/success-700 + burnt-orange/amber hex) are tuned for code on

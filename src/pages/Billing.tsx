@@ -126,7 +126,7 @@ function PlanCard() {
       <CardContent className="flex flex-1 flex-col gap-3">
         <div className="flex flex-col gap-3">
           {/* Plan name carries its tier badge ink (user direction 2026-09-16). */}
-          <HeroNumeric className="text-blue-700 dark:text-blue-300" size="lg">
+          <HeroNumeric className="text-tier-pro" size="lg">
             Pro
           </HeroNumeric>
           <p className="type-copy-14 m-0 text-pretty text-foreground">

@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import { BRAND_COLORS } from "./brand-colors";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -33,7 +34,7 @@ export function OpenAIIcon(props: IconProps) {
 export function GeminiIcon(props: IconProps) {
   // Layered render matching the canonical Gemini mark (sourced from
   // lobe-icons gemini-color.svg). The official treatment is NOT a single
-  // diagonal gradient — it's a `#3186FF` blue base with three additional
+  // diagonal gradient — it's a `BRAND_COLORS.google.geminiBlue` blue base with three additional
   // colored gradients painted on top with alpha falloff, blending into
   // the corners. Each layer is the same path shape; the gradients are
   // partial-opacity overlays that fade to transparent so the underlying
@@ -47,7 +48,7 @@ export function GeminiIcon(props: IconProps) {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path d={path} fill="#3186FF" />
+      <path d={path} fill={BRAND_COLORS.google.geminiBlue} />
       <path d={path} fill="url(#gemini-green)" />
       <path d={path} fill="url(#gemini-red)" />
       <path d={path} fill="url(#gemini-yellow)" />
@@ -60,8 +61,12 @@ export function GeminiIcon(props: IconProps) {
           y1="15.5"
           y2="12"
         >
-          <stop stopColor="#08B962" />
-          <stop offset="1" stopColor="#08B962" stopOpacity="0" />
+          <stop stopColor={BRAND_COLORS.google.geminiGreen} />
+          <stop
+            offset="1"
+            stopColor={BRAND_COLORS.google.geminiGreen}
+            stopOpacity="0"
+          />
         </linearGradient>
         <linearGradient
           gradientUnits="userSpaceOnUse"
@@ -71,8 +76,12 @@ export function GeminiIcon(props: IconProps) {
           y1="5.5"
           y2="11"
         >
-          <stop stopColor="#F94543" />
-          <stop offset="1" stopColor="#F94543" stopOpacity="0" />
+          <stop stopColor={BRAND_COLORS.google.geminiRed} />
+          <stop
+            offset="1"
+            stopColor={BRAND_COLORS.google.geminiRed}
+            stopOpacity="0"
+          />
         </linearGradient>
         <linearGradient
           gradientUnits="userSpaceOnUse"
@@ -82,8 +91,12 @@ export function GeminiIcon(props: IconProps) {
           y1="13.5"
           y2="12"
         >
-          <stop stopColor="#FABC12" />
-          <stop offset="0.46" stopColor="#FABC12" stopOpacity="0" />
+          <stop stopColor={BRAND_COLORS.google.geminiYellow} />
+          <stop
+            offset="0.46"
+            stopColor={BRAND_COLORS.google.geminiYellow}
+            stopOpacity="0"
+          />
         </linearGradient>
       </defs>
     </svg>
@@ -142,16 +155,16 @@ export function MistralIcon(props: IconProps) {
           y1="3.4"
           y2="20.572"
         >
-          <stop offset="0" stopColor="#FFE008" />
-          <stop offset="0.2" stopColor="#FFE008" />
-          <stop offset="0.2" stopColor="#FFAF00" />
-          <stop offset="0.4" stopColor="#FFAF00" />
-          <stop offset="0.4" stopColor="#FA7A00" />
-          <stop offset="0.6" stopColor="#FA7A00" />
-          <stop offset="0.6" stopColor="#FF4F0F" />
-          <stop offset="0.8" stopColor="#FF4F0F" />
-          <stop offset="0.8" stopColor="#E10500" />
-          <stop offset="1" stopColor="#E10500" />
+          <stop offset="0" stopColor={BRAND_COLORS.mistral.yellow} />
+          <stop offset="0.2" stopColor={BRAND_COLORS.mistral.yellow} />
+          <stop offset="0.2" stopColor={BRAND_COLORS.mistral.amber} />
+          <stop offset="0.4" stopColor={BRAND_COLORS.mistral.amber} />
+          <stop offset="0.4" stopColor={BRAND_COLORS.mistral.orange} />
+          <stop offset="0.6" stopColor={BRAND_COLORS.mistral.orange} />
+          <stop offset="0.6" stopColor={BRAND_COLORS.mistral.red} />
+          <stop offset="0.8" stopColor={BRAND_COLORS.mistral.red} />
+          <stop offset="0.8" stopColor={BRAND_COLORS.mistral.crimson} />
+          <stop offset="1" stopColor={BRAND_COLORS.mistral.crimson} />
         </linearGradient>
       </defs>
       <path
@@ -219,8 +232,16 @@ export function QwenIcon(props: IconProps) {
           y1="0%"
           y2="0%"
         >
-          <stop offset="0%" stopColor="#6336E7" stopOpacity=".84" />
-          <stop offset="100%" stopColor="#6F69F7" stopOpacity=".84" />
+          <stop
+            offset="0%"
+            stopColor={BRAND_COLORS.qwen.primary}
+            stopOpacity=".84"
+          />
+          <stop
+            offset="100%"
+            stopColor={BRAND_COLORS.qwen.violetLight}
+            stopOpacity=".84"
+          />
         </linearGradient>
       </defs>
       <path
@@ -248,16 +269,16 @@ export function CohereIcon(props: IconProps) {
       <path
         clipRule="evenodd"
         d="M8.128 14.099c.592 0 1.77-.033 3.398-.703 1.897-.781 5.672-2.2 8.395-3.656 1.905-1.018 2.74-2.366 2.74-4.18A4.56 4.56 0 0018.1 1H7.549A6.55 6.55 0 001 7.55c0 3.617 2.745 6.549 7.128 6.549z"
-        fill="#39594D"
+        fill={BRAND_COLORS.cohere.green}
       />
       <path
         clipRule="evenodd"
         d="M9.912 18.61a4.387 4.387 0 012.705-4.052l3.323-1.38c3.361-1.394 7.06 1.076 7.06 4.715a5.104 5.104 0 01-5.105 5.104l-3.597-.001a4.386 4.386 0 01-4.386-4.387z"
-        fill="#C18BD9"
+        fill={BRAND_COLORS.cohere.lilac}
       />
       <path
         d="M4.776 14.962A3.775 3.775 0 001 18.738v.489a3.776 3.776 0 007.551 0v-.49a3.775 3.775 0 00-3.775-3.775z"
-        fill="#FF7759"
+        fill={BRAND_COLORS.cohere.primary}
       />
     </svg>
   );
