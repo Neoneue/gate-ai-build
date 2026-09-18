@@ -80,7 +80,46 @@ Prior day: [`changelog-9-17.md`](./changelog-9-17.md)
   `text-syntax-keyword`, `text-syntax-variable`, `text-syntax-property`,
   `text-syntax-literal`. No colour change.
 
+### Raw colours are linted `5ee7c78`
+
+- Before: the design guard caught only arbitrary colour classes
+  (`bg-[#…]`, `text-[rgb(…)]`). A bare string hex, an inline `rgba()`
+  gradient, or a raw `bg-white` where `bg-card` exists all passed.
+- After: `scripts/check-design-tokens.mjs` check 5 `[raw-color]` fails any
+  hex, `rgb()`, `hsl()`, `oklch()` or `oklab()` literal on a non-comment
+  line in `src`, except `src/index.css`, `src/components/icons/brand-colors.ts`
+  and `src/data`. Check 6 `[raw-palette]` fails `bg-white`,
+  `bg-neutral-100`, `border-neutral-200`, `ring-neutral-N`,
+  `text-neutral-900`, `text-neutral-500` and `bg-neutral-900/N` in pages,
+  layouts and components, naming the token to use. Waiver
+  `design-allow-raw-color` within 5 lines above; one use, `chart.tsx`
+  (Recharts attribute selectors). Documented in design.md "How it's
+  enforced" and `.claude/rules/design-tokens.md`.
+
+### Overlay scrim and terminal surface are tokens `5ee7c78`
+
+- Before: the modal scrim was `bg-neutral-900/40` in dialog (twice), sheet
+  and alert-dialog and `bg-neutral-900/50` in notifications; the dark
+  terminal card in `code-card.tsx` / `code-panel.tsx` was `bg-neutral-800`,
+  `bg-neutral-700`, `border-neutral-900/60`, `text-neutral-100`,
+  `text-neutral-400`.
+- After: `--overlay` and `--overlay-strong` (40% / 50%), and
+  `--terminal`, `--terminal-chrome`, `--terminal-edge`,
+  `--terminal-foreground`, `--terminal-foreground-muted`, all declared once
+  in `:root` because both surfaces are the same ink in both themes. Every
+  value identical to before. design.md §2 gains "Overlay scrim" and
+  "Terminal surface".
+
 ## Components
+
+### Sidebar and user-menu avatar circles reuse the Monogram tone `5ee7c78`
+
+- Before: four hand-rolled "CP" circles in `sidebar.tsx` (three) and
+  `user-menu.tsx` restated `bg-blue-700 text-white`.
+- After: they read `AVATAR_TONE_CLS.blue` from `monogram-types.ts`; sizes
+  (24 / 32 / 28 / 28px) and every other class unchanged. No `Monogram` swap:
+  its 20 / 28px sizes do not match. White on a brand fill stays intentional
+  per design.md §2 "Kept as-is".
 
 ### TextLink underline and Policies redact radio read semantic tokens `81888fb`
 
