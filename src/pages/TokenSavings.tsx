@@ -72,17 +72,10 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
     return r === "24h" || r === "7d" || r === "30d" || r === "all" ? r : "all";
   });
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
-  // The two savings switches live here so the Summary card can read them:
-  // a mechanism that is off is named as off instead of showing a bare zero.
-  const [savings, setSavings] = useState<SavingsSwitches>({
-    compression: true,
-    caching: true,
-  });
-  const summary = summaryFor(range, customRange, {
-    compressionOn: savings.compression,
-    cachingOn: savings.caching,
-    plan,
-  });
+  // The Summary reports the selected window, so it reads range + plan only.
+  // The Savings options switches govern future traffic and never rewrite
+  // what Gate already did (user, 2026-09-17).
+  const summary = summaryFor(range, customRange, { plan });
   return (
     <DashboardChrome
       activeNavId="token-savings"
@@ -115,11 +108,7 @@ export function TokenSavings({ plan = "pro" }: { plan?: Plan } = {}) {
           range={range}
         />
         <SummaryCard model={summary} />
-        <SavingsOptionsSection
-          onSavingsChange={setSavings}
-          plan={plan}
-          savings={savings}
-        />
+        <SavingsOptionsSection plan={plan} />
       </div>
     </DashboardChrome>
   );
@@ -203,26 +192,13 @@ export function OverviewSection({
 
 /* ─── Savings options ───────────────────────────────────────────────── */
 
-export function SavingsOptionsSection({
-  plan = "pro",
-  savings,
-  onSavingsChange,
-}: {
-  plan?: Plan;
-  /** Controlled switches (the org page lifts them for the Summary card).
-   *  Omit both and the section owns its own state (TokenSavingsDefault). */
-  savings?: SavingsSwitches;
-  onSavingsChange?: (next: SavingsSwitches) => void;
-} = {}) {
-  const [local, setLocal] = useState<SavingsSwitches>({
+export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
+  const [value, setValue] = useState<SavingsSwitches>({
     compression: true,
     caching: true,
   });
-  const value = savings ?? local;
   const update = (patch: Partial<SavingsSwitches>) => {
-    const next = { ...value, ...patch };
-    setLocal(next);
-    onSavingsChange?.(next);
+    setValue((prev) => ({ ...prev, ...patch }));
   };
   return (
     <div className="mt-2 flex flex-col gap-4">

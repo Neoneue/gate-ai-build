@@ -307,8 +307,12 @@ export function summaryFor(
   range: Range,
   customRange: CustomRange | null,
   options: {
-    compressionOn: boolean;
-    cachingOn: boolean;
+    /** Whether the mechanism was running DURING this window. These describe
+     *  the window's history, never the live Savings options switch: turning
+     *  compression off today does not un-remove tokens Gate already stripped.
+     *  Default true; no seeded window has a mechanism off. */
+    compressionOn?: boolean;
+    cachingOn?: boolean;
     plan: SummaryPlan;
     /** False for a workspace nothing has passed through yet (the Default
      *  twin): every window is then a no-traffic window. */
@@ -327,8 +331,8 @@ export function summaryFor(
 
   const [totalTile, cachingTile, compressionTile] =
     KPI_BY_RANGE[window.rateRange];
-  const compressionOff = !options.compressionOn;
-  const cachingOff = !options.cachingOn;
+  const compressionOff = options.compressionOn === false;
+  const cachingOff = options.cachingOn === false;
   const compressionRate = compressionOff
     ? 0
     : Number(compressionTile.value) / 100;

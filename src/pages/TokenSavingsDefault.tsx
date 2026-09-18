@@ -87,8 +87,6 @@ export function TokenSavingsDefault() {
             no-traffic window: the card explains instead of claiming zeros. */}
         <SummaryCard
           model={summaryFor("all", null, {
-            compressionOn: true,
-            cachingOn: true,
             plan: "free",
             hasTraffic: false,
           })}
