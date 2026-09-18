@@ -4,7 +4,7 @@ const statusColors = {
   success: "bg-success-600",
   warning: "bg-warning-600",
   danger: "bg-destructive",
-  info: "bg-blue-600",
+  info: "bg-info",
   neutral: "bg-muted-foreground",
 } as const;
 

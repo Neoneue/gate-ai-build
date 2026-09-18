@@ -27,7 +27,7 @@ export const ICON_COLOR: Record<string, string> = {
  *  red — mirrors the finding-card action tones. */
 export const ACTION_ACTIVE_BORDER: Record<string, string> = {
   flag: "border-warning-500 dark:border-warning-400",
-  redact: "border-muted-foreground",
+  redact: "border-primary",
   block: "border-destructive",
 };
 
@@ -68,11 +68,15 @@ export const ACTION_HOVER: Record<string, string> = {
 };
 
 /** Checked radio fill/border per action — matches ACTION_ACTIVE_BORDER so the
- *  radio dot and the card border read as one tone. Dot stays white. */
+ *  radio dot and the card border read as one tone. Dot stays white.
+ *  flag and block take the -600 / -700 step of their status family; redact
+ *  is the neutral one, so it binds to --primary (neutral-900 light /
+ *  neutral-200 dark) rather than a raw ramp step, and needs no dark twin.
+ *  ACTION_ACTIVE_BORDER.redact moved with it so the two still read as one
+ *  tone. */
 export const ACTION_ACTIVE_RADIO: Record<string, string> = {
   flag: "data-checked:border-warning-600 data-checked:bg-warning-600 dark:data-checked:border-warning-400 dark:data-checked:bg-warning-400",
-  redact:
-    "data-checked:border-neutral-700 data-checked:bg-neutral-700 dark:data-checked:border-muted-foreground dark:data-checked:bg-muted-foreground",
+  redact: "data-checked:border-primary data-checked:bg-primary",
   block:
     "data-checked:border-danger-700 data-checked:bg-danger-700 dark:data-checked:border-danger-400 dark:data-checked:bg-danger-400",
 };

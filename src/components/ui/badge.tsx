@@ -51,7 +51,7 @@ const badgeVariants = cva(
           "bg-success-100 text-success-800 dark:bg-success-500/15 dark:text-success-300",
         warning:
           "bg-warning-100 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300",
-        info: "bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
+        info: "bg-info-wash text-info-foreground",
         neutral: "bg-muted text-muted-foreground",
         /* Plan tier, not a status: it says which plan you are on, never that
            something succeeded or failed, so it takes the tier family

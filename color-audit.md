@@ -55,7 +55,7 @@ token, copied across files; LOW = single site or cosmetic.
     is a trap for the next caller. The audit first read this as a live bug;
     it was not, because nothing reached the preset path.
 
-- [ ] **2. MEDIUM** `src/layouts/AuthLayout.tsx:188,189,236`
+- [x] **2. MEDIUM** `src/layouts/AuthLayout.tsx:188,189,236`
   - Before: three inline gradients on `rgba(255,255,255,0.05)`.
   - After: one token in the `--canvas-*` block of `index.css`,
     `--auth-glow: color-mix(in oklch, var(--color-white) 5%, transparent)`,
@@ -63,7 +63,7 @@ token, copied across files; LOW = single site or cosmetic.
   - Why: the only `rgba()` in `src` outside `index.css`. Same value three
     times is a token by the promo-family precedent.
 
-- [ ] **3. LOW** `src/components/ui/code-card.tsx:66-74`,
+- [x] **3. LOW** `src/components/ui/code-card.tsx:66-74`,
   `src/components/ui/code-panel.tsx:103-107`
   - Before: `text-[var(--color-syntax-keyword)]` and siblings, 12 uses.
   - After: `text-syntax-keyword`, `text-syntax-variable`,
@@ -72,16 +72,19 @@ token, copied across files; LOW = single site or cosmetic.
   - Why: the arbitrary form hides the token from the theme scale and from
     class sorting. Also rename `--color-syntax-terminal-blue`: it resolves to
     `success-700` / `success-400` and is green in both themes.
+  - Applied 2026-09-18: plain `text-syntax-*` utilities in both files;
+    token renamed `--color-syntax-literal` in both themes.
 
-- [ ] **4. LOW** `src/components/ui/chart.tsx:64`
+- [x] **4. LOW** `src/components/ui/chart.tsx:64`
   - Before: `[&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border`
     and the `#fff` twin.
   - After: keep. These are attribute selectors matching Recharts' own
     default stroke so it can be overridden with `stroke-border`. Add a
     one-line comment naming that, so a future hex lint has a waiver to read.
   - Why: no colour is applied; the hex is a selector key.
+  - Applied 2026-09-18: JSX comment above the wrapper div.
 
-- [ ] **5. LOW** comments and copy
+- [x] **5. LOW** comments and copy
   - `segmented-pill.tsx:81` `#11141714`, `sidebar-upgrade-card.tsx:14`
     `#171717`, `RequestDetailBody.tsx:1299` `order #12345`. No action; listed
     so the count reconciles.
@@ -135,7 +138,7 @@ token, copied across files; LOW = single site or cosmetic.
   - Why: four copies of a primitive's recipe, and `text-white` is a palette
     atom standing in for a foreground token.
 
-- [ ] **10. LOW** `src/components/ui/status-dot.tsx:7`,
+- [x] **10. LOW** `src/components/ui/status-dot.tsx:7`,
   `src/components/ui/badge.tsx:54`
   - Before: `info: "bg-blue-600"`; badge `info` is
     `bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300`.
@@ -146,7 +149,7 @@ token, copied across files; LOW = single site or cosmetic.
   - Why: success, warning and danger each have a family; info is the one
     status with none, so every consumer picks its own blue step.
 
-- [ ] **11. LOW** `src/components/ui/text-link.tsx:38`
+- [x] **11. LOW** `src/components/ui/text-link.tsx:38`
   - Before: `decoration-neutral-200 hover:decoration-neutral-500` in light,
     `dark:decoration-border dark:hover:decoration-muted-foreground` in dark.
   - After: `decoration-border hover:decoration-muted-foreground` with no
@@ -155,7 +158,7 @@ token, copied across files; LOW = single site or cosmetic.
     500, so update that row or accept the one-step shift.
   - Why: the dark side already uses the tokens; light should match.
 
-- [ ] **12. LOW** `src/layouts/AuthLayout.tsx:185,213,233`
+- [x] **12. LOW** `src/layouts/AuthLayout.tsx:185,213,233`
   - Before: `bg-neutral-950`, `text-white`, `border-white/10 bg-neutral-900
     text-white`, `text-blue-400`.
   - After: `bg-surface-strong text-surface-strong-foreground` for the panel
@@ -166,7 +169,7 @@ token, copied across files; LOW = single site or cosmetic.
   - Why: the auth panel is a fixed-dark surface like the terminal; same
     argument as item 8.
 
-- [ ] **13. LOW** `src/pages/policies/config.ts:75`
+- [x] **13. LOW** `src/pages/policies/config.ts:75`
   - Before: `redact` radio is `data-checked:border-neutral-700
     data-checked:bg-neutral-700 dark:…muted-foreground`.
   - After: `data-checked:border-primary data-checked:bg-primary` in both
@@ -315,6 +318,22 @@ Applied 2026-09-18: items 1, 14, 15, 16, 18 (item 6 folded into 18).
   `SetupManual.tsx:172,447`) is left raw pending a call: same role as
   `--tier-pro` or its own token.
 
-Remaining open: 2, 3, 4, 5, 7 to 13, 17. Items 1, 14, 15, 16 are the ones worth doing first: 1 is a
+Applied 2026-09-18, second pass (LOW items plus item 2, which shares
+AuthLayout with item 12): 2, 3, 4, 5, 10, 11, 12, 13.
+
+- `--info` family (six tokens) completes the four status families;
+  StatusDot, Badge `info` and Callout bind to it with no value change.
+- `--auth-*` family (six tokens, `:root` only, fixed dark) owns every
+  colour on the AuthLayout panel including the two glow gradients.
+- `--color-syntax-terminal-blue` renamed `--color-syntax-literal`; code
+  surfaces use plain `text-syntax-*` utilities.
+- Shifts accepted: TextLink light hover underline neutral-500 -> neutral-600
+  (`--muted-foreground`); Policies `redact` radio and card border ->
+  `--primary` (light 700 / 600 -> 900, dark 400 -> 200).
+- Follow-up noted by the agent: `AuthLayout.tsx:60,107` DotRadar runtime
+  fills use `color-mix(... var(--color-neutral-800) ..., white ...)` in
+  template literals; ramp-referencing, not hex, left alone.
+
+Remaining open: 7, 8, 9, 17. Items 1, 14, 15, 16 are the ones worth doing first: 1 is a
 live bug, the other three remove about 60 of the 130 raw blue and violet
 uses and give the tier concept a name.

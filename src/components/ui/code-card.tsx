@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
  *
  * Token model: every span colour is a semantic Tailwind class — no inline
  * hex / oklch literals. The four syntax tones (keyword / variable /
- * property / terminal-blue) live in src/index.css alongside the existing
+ * property / literal) live in src/index.css alongside the existing
  * ink / blue / success / warning / danger ramps.
  * ───────────────────────────────────────────────────────────────────────── */
 
@@ -47,7 +47,7 @@ export type CodeTone =
   | "string" // success-2 — quoted strings
   | "variable" // syntax-variable — $KEY, interpolated values
   | "property" // syntax-property — JSON keys
-  | "number" // syntax-terminal-blue — numeric values, status codes
+  | "number" // syntax-literal — numeric values, status codes
   | "success"; // success — exit codes, "OK"
 
 export interface CodeToken {
@@ -63,26 +63,26 @@ export type CodeLine = CodeToken[];
 const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
   default: "text-foreground",
   muted: "text-muted-foreground",
-  keyword: "text-[var(--color-syntax-keyword)]",
+  keyword: "text-syntax-keyword",
   // Brand palette: keys = blue-700 (--color-syntax-property), all literal
-  // values = success-700 green (--color-syntax-terminal-blue). One hue per
+  // values = success-700 green (--color-syntax-literal). One hue per
   // role — keys vs values — using the codebase's own ramp instead of an
   // external palette so the JSON view stays on-brand.
-  string: "text-[var(--color-syntax-terminal-blue)]",
-  variable: "text-[var(--color-syntax-variable)]",
-  property: "text-[var(--color-syntax-property)]",
-  number: "text-[var(--color-syntax-terminal-blue)]",
+  string: "text-syntax-literal",
+  variable: "text-syntax-variable",
+  property: "text-syntax-property",
+  number: "text-syntax-literal",
   success: "text-success-700 dark:text-success-300",
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
   default: "text-neutral-100",
   muted: "text-neutral-400",
-  keyword: "text-[var(--color-syntax-variable)]", // dark terminal: keywords render as amber, matches Paper
+  keyword: "text-syntax-variable", // dark terminal: keywords render as amber, matches Paper
   string: "text-success-500",
-  variable: "text-[var(--color-syntax-variable)]",
-  property: "text-[var(--color-syntax-terminal-blue)]",
-  number: "text-[var(--color-syntax-terminal-blue)]",
+  variable: "text-syntax-variable",
+  property: "text-syntax-literal",
+  number: "text-syntax-literal",
   success: "text-success-500",
 };
 

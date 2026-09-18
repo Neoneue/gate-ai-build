@@ -443,7 +443,7 @@ components:
 ### Defaults being rejected
 
 1. **Blue primary action** → neutral-900 primary. Blue reserved for info/completed/active-tab only; the focus ring is neutral (2026-09-17). **One blessed exception: Pro-upsell CTAs use brand blue** (`bg-blue-700 text-white shadow-blue-700/30`, `dark:bg-blue-600`) to read as the paid-tier accent — the "Upgrade to Pro" / "Compare plans" buttons on `pro-upgrade-card`, `Policies`, `TokenSavings`, and the featured plan in `plan-comparison-dialog`. This is deliberate Pro-brand signaling, not a general primary; every other primary action stays neutral-900 ink.
-2. **Blue underlined links** → ink + permanent faint underline (`decoration-neutral-200` → `decoration-neutral-500` on hover/focus). Blue is overloaded with 4 other meanings.
+2. **Blue underlined links** → ink + permanent faint underline (`decoration-border` → `decoration-muted-foreground` on hover/focus). Blue is overloaded with 4 other meanings.
 3. **24px gutters (Bootstrap/Material default)** → 12-column grid with **16px gutters**. Denser, more on-genre for an operator tool.
 4. **Brand colors as chart series colors** → 8-slot OKLCH categorical palette picked by series index. Per-series `slot?: number` override only for brand-mnemonic exceptions (Anthropic→orange, OpenAI→blue).
 5. **Heavy 1px+ card borders / shadcn default `border` + drop-shadow** → tight `border border-border` (neutral-200) + `shadow-xs`. The 2026-05-15 migration replaced the prior `shadow-(--shadow-border)` ring-as-border recipe with an explicit border so the edge reads at any zoom and against any backdrop. `--shadow-border` token is still in `index.css:117` but no longer the Card default.
@@ -497,7 +497,7 @@ per step:
 
 ### Status semantics
 
-`success-100` bg + `success-700` text (success-600 for solid mid). `warning-100` bg + `warning-700` text (warning-600 for slow-row icons). `danger-100` bg + `danger-700` text; `--destructive` resolves to `danger-600`. `info` aliases to the blue ramp — no separate `info-*` ramp.
+`success-100` bg + `success-700` text (success-600 for solid mid). `warning-100` bg + `warning-700` text (warning-600 for slow-row icons). `danger-100` bg + `danger-700` text; `--destructive` resolves to `danger-600`. `info` has its own semantic family (`--info-*`, below) rather than an `info-*` ramp.
 
 ### Destructive alpha ladder *(added 2026-08-05)*
 
@@ -528,6 +528,21 @@ A status surface (a banner that reports an event, an inline note that states a c
 Ink is the same at every rung: `text-danger-800 dark:text-danger-300` and `text-warning-700 dark:text-warning-300` (§2 dark-mode mapping table). Border is always the 30% rung of the family; only the background steps.
 
 Rules: (1) the destructive family writes `destructive/N` (it tracks the `danger-600` → `danger-400` flip through the semantic token); the warning family has no semantic token (see "Do not use") and writes `warning-500/N`. (2) A surface takes the rung for its weight; do not pick a rung for taste. The one sanctioned deviation: a badge that sits ON an alert banner's surface, or reports the same state beside it, may drop to the banner's 10% so the two read as one system (the budget status `Blocking` / `Exceeded` badges, 2026-09-02). (3) `/[N%]` arbitrary alphas are off-token; the three rungs are the set. Add a rung here first if a fourth weight is ever needed.
+
+### Status info family *(added 2026-09-18)*
+
+`success`, `warning` and `danger` each own a family; `info` owned none, so every info surface picked its own blue step by hand and pasted a `dark:` twin beside it — StatusDot took `bg-blue-600`, Badge took `bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300`, Callout took `blue-50` / `blue-300` / `blue-900`. Six roles, both themes, one place to tune. ← code-direct: `src/index.css` `:root` / `.dark` / `@theme inline`
+
+| Token | Light | Dark | Consumed as |
+| --- | --- | --- | --- |
+| `--info` | blue-600 | blue-400 | `bg-info` — the solid mid (StatusDot `info`) |
+| `--info-foreground` | blue-600 | blue-300 | `text-info-foreground` — ink ON the badge wash |
+| `--info-wash` | blue-700 @ 10% | blue-500 @ 15% | `bg-info-wash` — Badge `info` |
+| `--info-surface` | blue-50 | blue-500 @ 10% | `bg-info-surface` — Callout fill |
+| `--info-border` | blue-300 | blue-500 @ 30% | `border-info-border` — Callout edge |
+| `--info-foreground-strong` | blue-900 | blue-300 | `text-info-foreground-strong` — Callout ink and icon |
+
+These six are **the only sanctioned way to paint an info status.** Values are what shipped before the family existed; only the binding moved. The dark alphas are the 10% / 15% / 30% rungs the status wash ladder already names, so no new rung enters the system. Info is **not** a plan tier: `--tier-pro` is also blue but flips to blue-700 in light, because it says which plan you are on rather than reporting state.
 
 ### Chart palette (categorical, 8-slot)
 
@@ -611,6 +626,21 @@ These ten are **the only sanctioned way to paint a plan tier.** Same contract as
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
 **Chart runtime colors** — `style={{ backgroundColor }}` / `style={{ color }}` from the chart palette helper are runtime values, not Tailwind classes. No token violation.
+
+### Auth panel *(added 2026-09-18)*
+
+The marketing half of the sign-in / sign-up split (`AuthLayout`) is painted dark in **both** themes on purpose — the product never shows it light — so this family is declared once in `:root` and has no `.dark` twin. That is also why the raw neutrals it replaced looked safe and were not: `bg-neutral-950` and `text-white` on a surface with no theme story have no owner, and the next reader cannot tell "fixed dark" from "someone forgot the `dark:` variant". ← code-direct: `src/index.css` `:root` / `@theme inline`
+
+| Token | Value (both themes) | Consumed as |
+| --- | --- | --- |
+| `--auth-panel` | neutral-950 | `bg-auth-panel` — the panel canvas |
+| `--auth-panel-foreground` | white | `text-auth-panel-foreground` — headline and tile ink |
+| `--auth-panel-tile` | neutral-900 | `bg-auth-panel-tile` — the feature-icon tile |
+| `--auth-panel-edge` | white @ 10% | `border-auth-panel-edge` — the tile hairline |
+| `--auth-glow` | white @ 5% | `var(--auth-glow)` inside the inline radial / linear gradients; no `--color-*` alias, since no colour utility reads it |
+| `--auth-accent` | blue-400 | `text-auth-accent` — the blue lede word |
+
+`--auth-accent` is deliberately **not** `--tier-pro` (which flips to blue-700 in light) and **not** `--info` (a status): it is brand ink on a panel that never goes light.
 
 ### Dark mode (`.dark` theme) *(added 2026-07-09)*
 
@@ -759,6 +789,8 @@ The border is light `-200` over the dark-500-at-30% rung the Callout and the sta
 - Blue for primary action — `--primary` resolves to neutral-900.
 - Blue for inline links — use ink + faint underline (see §7).
 - `text-neutral-600`/`text-neutral-700` as table body-cell tones — collides with three-tier policy.
+- Raw `blue-*` for an info status — StatusDot, Badge `info` and Callout bind to the `--info-*` family (see Status info family above); a raw ramp step does not flip under `.dark`.
+- Raw neutrals (`bg-neutral-950`, `bg-neutral-900`, `text-white`, `border-white/10`) on the auth panel — it is a fixed-dark surface with its own `--auth-*` family (see Auth panel above), and a bare ramp step there cannot be told apart from a missing `dark:` variant.
 - Raw `blue-*` / `violet-*` for a plan tier — Pro and Enterprise bind to the `--tier-*` family (see Plan tier colours above); a raw ramp step does not flip under `.dark`.
 - Vendor colors as chart series colors by default — charts use `--chart-1..8` by index.
 - **Raw ramp classes where a semantic token exists** — see the semantic token quick-reference table above, and the Dark mode subsection for the full raw→token surface map. Since 2026-07-09 this is a **functional** requirement, not just hygiene: a raw ramp class does not invert under `.dark`. Exception: typography ramp tokens with no current alias (`text-neutral-800/600/400`). Every surface/border/ring/foreground ramp value has a semantic alias — use it. The old `bg-neutral-50` field-wash exception is retired: the input wash is now `bg-muted`.
@@ -1563,7 +1595,7 @@ switches).
   - **AA contrast (2026-06-04):** `success` text raised 700→800 (4.47 → 6.44:1) and `destructive` moved from translucent `bg-destructive/10 text-destructive` (3.97:1) to solid `bg-danger-100 text-danger-800` (6.91:1) — both now clear WCAG 4.5:1 and the destructive variant matches the other solid status tones.
   - **`enterprise` — the plan-tier badge (added 2026-09-16, user direction "Enterprise badge should be violet").** `bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300` — the same rung recipe as `info` and `warning`. It is a **distinct variant named by role, not a reused status tone**: a tier is not a status, and painting an Enterprise workspace with `variant="warning"` would make every one of them read as an alert. Consumers: the workspace switcher only — trigger badge, menu item, and the compact `ENT.`. Pro keeps `info`; Free and Default are `neutral`. Measured 2026-09-16: **5.99:1 light**, **8.63:1 dark** — clears WCAG 4.5:1 for small text with headroom.
 - **Tag** (`tag.tsx`) — removable filter pill (NOT a Badge). `inline-flex h-6 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-900 font-sans text-xs gap-2`. With remove: `pr-1 pl-2`; without: `px-3`. **Use Tag for filter chips, Badge for status/counter/code.**
-- **StatusDot** (`status-dot.tsx`) — 6px (`size="sm"`) or 8px (`size="md"`) `rounded-full` inline-state dot. **Used standalone — NOT inside Badge.** Tones: success (success-600), warning (warning-600), danger (destructive), info (blue-600), neutral (neutral-500). After the 2026-05-11 Badge contract lock, StatusDot's only legitimate consumer is row markers like the Requests modal's `BreakdownRow` (label + dot + value 3-col grid) and the live-rail indicator inside `<KpiTile>`; the prior "Badge + StatusDot child" pattern is retired.
+- **StatusDot** (`status-dot.tsx`) — 6px (`size="sm"`) or 8px (`size="md"`) `rounded-full` inline-state dot. **Used standalone — NOT inside Badge.** Tones: success (success-600), warning (warning-600), danger (destructive), info (`--info`, blue-600 light / blue-400 dark), neutral (neutral-500). After the 2026-05-11 Badge contract lock, StatusDot's only legitimate consumer is row markers like the Requests modal's `BreakdownRow` (label + dot + value 3-col grid) and the live-rail indicator inside `<KpiTile>`; the prior "Badge + StatusDot child" pattern is retired.
 - **DeltaTag** (specimen in `CMP003BadgesAndTags.tsx`) — directional pill for KPI deltas. NOT a Badge. Inline-flex arrow icon (`size-3.5`) + value text at mono medium 12px tabular. API: `<DeltaTag delta="+8.2%" note="vs last hour" inverted={false} />`.
   - **Default sentiment** (sign-based): positive = `text-success-700` + up-right; negative = `text-destructive` + down-right.
   - **`inverted` flag** flips the tone: positive paints red, negative paints green; arrow still tracks the literal sign.
@@ -1646,9 +1678,9 @@ switches).
 **Not a primitive — a className convention.** Inline links in body text use **ink + permanent faint underline**:
 
 ```text
-underline decoration-neutral-200 underline-offset-2
-hover:decoration-neutral-500
-focus-visible:decoration-neutral-500
+underline decoration-border underline-offset-2
+hover:decoration-muted-foreground
+focus-visible:decoration-muted-foreground
 outline-none
 ```
 
