@@ -20,6 +20,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Syntax literal token renamed; code surfaces use plain utilities
 - TextLink underline and Policies redact radio read semantic tokens
 - Raw colours are linted
+- Audit files renamed and dated
 - Overlay scrim and terminal surface are tokens
 - Sidebar and user-menu avatar circles reuse the Monogram tone
 

@@ -1,7 +1,9 @@
-# Color audit - 2026-09-18
+# Color audit - tokens, raw hex and palette atoms
+
+Date: 2026-09-18.
 
 Checklist of every raw colour in `src` that is not a design token, what it
-should become, and which tokens are missing. Same shape as `audit.md`:
+should become, and which tokens are missing. Same shape as `ui-audit.md`:
 tick an item only after the fix lands; move ticked blocks to Status.
 
 ## Scope and method
