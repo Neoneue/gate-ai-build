@@ -1,7 +1,7 @@
 import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +17,6 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import { GoogleG } from "@/components/ui/google-g";
 import { Input } from "@/components/ui/input";
 import {
   InputGroup,

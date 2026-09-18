@@ -51,19 +51,20 @@ const badgeVariants = cva(
           "bg-success-100 text-success-800 dark:bg-success-500/15 dark:text-success-300",
         warning:
           "bg-warning-100 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300",
-        info: "bg-blue-700/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
+        info: "bg-info-wash text-info-foreground",
         neutral: "bg-muted text-muted-foreground",
-        /* Plan tier, not a status: Enterprise is violet (user direction
-           2026-09-16). Same rung recipe as `info` / `warning`, on
-           Tailwind v4's default violet scale — index.css carries no
-           violet ramp and the chart palette is off-limits for badges.
-           Named by ROLE so a tier badge never reads as a status. */
-        enterprise:
-          "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-        /* Pro's plan-tier badge. Brand blue on the -100 / -700 rung (indigo
-           was tried 2026-09-16 and reverted the same day: it read off-brand
-           next to the blue nav). Distinct from `info` by rung, not hue. */
-        pro: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+        /* Plan tier, not a status: it says which plan you are on, never that
+           something succeeded or failed, so it takes the tier family
+           (--tier-enterprise-wash / --tier-enterprise-foreground, §2 "Plan
+           tier colours") rather than a status ramp. Enterprise is violet
+           (user direction 2026-09-16). Named by ROLE so a tier badge never
+           reads as a status. */
+        enterprise: "bg-tier-enterprise-wash text-tier-enterprise-foreground",
+        /* Pro's plan-tier badge, on the same tier family
+           (--tier-pro-wash / --tier-pro-foreground). Brand blue: indigo was
+           tried 2026-09-16 and reverted the same day, it read off-brand next
+           to the blue nav. Distinct from `info` by token, not hue. */
+        pro: "bg-tier-pro-wash text-tier-pro-foreground",
       },
     },
     defaultVariants: {

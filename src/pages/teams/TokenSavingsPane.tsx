@@ -546,7 +546,7 @@ function CompressionCard({
                   // Soft blue checks: the card's own chrome already carries the
                   // tier mark, so keeping checks light stops a mass of
                   // solid-blue dots from competing with the toggle.
-                  checkClassName="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
+                  checkClassName="bg-tier-pro-wash text-tier-pro-foreground"
                   outlineClassName="border-border"
                 />
               </div>

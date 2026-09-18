@@ -408,7 +408,7 @@ function ProBenefitsCard() {
 
   return (
     <>
-      <Card className="rounded-sm border border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5">
+      <Card className="rounded-sm border border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)] shadow-none">
         <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
@@ -426,7 +426,7 @@ function ProBenefitsCard() {
             <ul className="m-0 mt-2 grid list-none @lg:grid-cols-2 grid-cols-1 gap-x-6 gap-y-4 p-0">
               {PRO_PROMPT_INJECTION_BENEFITS.map((benefit) => (
                 <li className="flex items-center gap-3" key={benefit.title}>
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-tier-pro-wash text-tier-pro-foreground">
                     <Check aria-hidden className="size-3.5" />
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
@@ -669,7 +669,7 @@ function DetailCard({
   return (
     <div className="mt-4 flex items-center gap-3 rounded-xs border border-border bg-card-muted p-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-xs border border-border bg-card">
-        <Icon aria-hidden className="size-4 text-blue-700 dark:text-blue-400" />
+        <Icon aria-hidden className="size-4 text-tier-pro" />
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         {title ? (

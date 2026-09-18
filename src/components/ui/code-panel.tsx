@@ -100,11 +100,11 @@ export function CodePanel({ snippet }: { snippet: string }) {
               // strings/values, blue keys, muted comments.
               const cls =
                 tok.type === "keyword"
-                  ? "text-[var(--color-syntax-keyword)]"
+                  ? "text-syntax-keyword"
                   : tok.type === "string"
-                    ? "text-[var(--color-syntax-terminal-blue)]"
+                    ? "text-syntax-literal"
                     : tok.type === "property"
-                      ? "text-[var(--color-syntax-property)]"
+                      ? "text-syntax-property"
                       : tok.type === "comment"
                         ? "text-muted-foreground"
                         : "text-foreground";

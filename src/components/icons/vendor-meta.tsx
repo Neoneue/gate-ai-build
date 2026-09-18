@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
+import { BRAND_COLORS, MONO_MARK_COLOR } from "./brand-colors";
 import { AlibabaIcon, OpenRouterIcon, VertexIcon } from "./gateway-providers";
 import {
   AnthropicIcon,
@@ -18,10 +19,10 @@ import {
  * icon color, and label. Shared across surfaces that show provider badges
  * AND across charts where vendors render as data series.
  *
- * Brand hex literals are intentional: they represent external brand colors
- * (Anthropic Sonnet orange, OpenAI ChatGPT green, Mistral orange, etc.) and
- * are not design-system colors. Same exception CMP-009 makes — every other
- * color in the app traces to ink-* / blue-* / semantic vars in src/index.css.
+ * Brand colours come from `brand-colors.ts`, the one file in `src` that
+ * holds raw hex: external brand marks are not design-system colors (same
+ * exception CMP-009 makes). Every other color in the app traces to a
+ * semantic token in src/index.css.
  *
  * The single `color` field is used for both chips (avatars, swatches, badges)
  * and chart series (bars, lines, legends). Twin-hue pairs (Meta + DeepSeek
@@ -87,22 +88,42 @@ export interface VendorMeta {
 // "Works with" footer still imports directly. Left in deliberately: an
 // unreferenced union member costs nothing and the BYOK story may want them.
 export const VENDOR_META: Record<Vendor, VendorMeta> = {
-  anthropic: { color: "#D97757", icon: AnthropicIcon, label: "Anthropic" },
-  xai: { color: "var(--foreground)", icon: GrokIcon, label: "xAI" },
-  google: { color: "#4285F4", icon: GeminiIcon, label: "Google" },
-  openai: { color: "var(--foreground)", icon: OpenAIIcon, label: "OpenAI" },
-  meta: { color: "#0064E0", icon: MetaIcon, label: "Meta" },
-  mistral: { color: "#FA520F", icon: MistralIcon, label: "Mistral" },
-  deepseek: { color: "#4D6BFE", icon: DeepSeekIcon, label: "DeepSeek" },
-  cohere: { color: "#FF7759", icon: CohereIcon, label: "Cohere" },
+  anthropic: {
+    color: BRAND_COLORS.anthropic.primary,
+    icon: AnthropicIcon,
+    label: "Anthropic",
+  },
+  xai: { color: MONO_MARK_COLOR, icon: GrokIcon, label: "xAI" },
+  google: {
+    color: BRAND_COLORS.google.primary,
+    icon: GeminiIcon,
+    label: "Google",
+  },
+  openai: { color: MONO_MARK_COLOR, icon: OpenAIIcon, label: "OpenAI" },
+  meta: { color: BRAND_COLORS.meta.primary, icon: MetaIcon, label: "Meta" },
+  mistral: {
+    color: BRAND_COLORS.mistral.primary,
+    icon: MistralIcon,
+    label: "Mistral",
+  },
+  deepseek: {
+    color: BRAND_COLORS.deepseek.primary,
+    icon: DeepSeekIcon,
+    label: "DeepSeek",
+  },
+  cohere: {
+    color: BRAND_COLORS.cohere.primary,
+    icon: CohereIcon,
+    label: "Cohere",
+  },
   moonshotai: {
-    color: "var(--foreground)",
+    color: MONO_MARK_COLOR,
     icon: MoonshotAIIcon,
     label: "MoonshotAI",
   },
   // Gradient-filled mark, so `color` never paints it; the value is kept for
   // parity with the other entries and for any future non-icon use.
-  qwen: { color: "#6336E7", icon: QwenIcon, label: "Qwen" },
+  qwen: { color: BRAND_COLORS.qwen.primary, icon: QwenIcon, label: "Qwen" },
 };
 
 /**
@@ -123,8 +144,8 @@ export const VENDOR_META: Record<Vendor, VendorMeta> = {
  * (7) brand-tinted bare icon — current state. Same shape as (3) with
  *     a clear reference (Stacklane competitor table) showing this is
  *     the convention for product/competitor lists. Trade-off accepted:
- *     low-contrast brands (Cohere #FF7759) sit lighter on white than
- *     high-contrast ones (xAI #3D3D3D); the brand identity is the
+ *     low-contrast brands (Cohere coral) sit lighter on white than
+ *     high-contrast ones (xAI ink); the brand identity is the
  *     payoff.
  */
 /** Avatar size keys. `sm` (size-4 = 16px) is the default in tables / row
@@ -148,8 +169,8 @@ export const VENDOR_META: Record<Vendor, VendorMeta> = {
  *   `filterLabel` the "All providers" dropdown             ("Alibaba Direct")
  *   `detailLabel` the model detail page's providers table  ("Google Vertex AI")
  *
- * Brand hex literals carry the same exception VENDOR_META does: external
- * brand colors are not design-system tokens. OpenRouter is deliberately
+ * Brand colours read from `brand-colors.ts`, same exception VENDOR_META
+ * documents: external brand colors are not design-system tokens. OpenRouter is deliberately
  * `var(--foreground)` and not its lime brand hex — prod renders the mark
  * monochrome, so it flips with the theme.
  * ───────────────────────────────────────────────────────────────────────── */
@@ -166,21 +187,21 @@ export interface ProviderMeta {
 
 export const PROVIDER_META: Record<ProviderId, ProviderMeta> = {
   alibaba: {
-    color: "#FF6003",
+    color: BRAND_COLORS.alibaba.primary,
     icon: AlibabaIcon,
     label: "Alibaba",
     filterLabel: "Alibaba Direct",
     detailLabel: "Alibaba",
   },
   vertex: {
-    color: "#4285F4",
+    color: BRAND_COLORS.google.primary,
     icon: VertexIcon,
     label: "Google Vertex",
     filterLabel: "Google Vertex",
     detailLabel: "Google Vertex AI",
   },
   openrouter: {
-    color: "var(--foreground)",
+    color: MONO_MARK_COLOR,
     icon: OpenRouterIcon,
     label: "OpenRouter",
     filterLabel: "OpenRouter",

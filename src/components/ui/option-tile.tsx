@@ -34,7 +34,13 @@ const optionTileVariants = cva(
          that predates this extraction — /billing marks the chosen amount with
          a neutral fill, /setup-credits marks it blue. Both are reproduced
          verbatim so this refactor moves no pixels. Picking one is a design
-         decision, not a refactor; flagged in docs/button-audit-7-28.md. */
+         decision, not a refactor; flagged in docs/button-audit-7-28.md.
+
+         2026-09-18: `accent`+`selected` now binds to the Pro plan-tier
+         family (design.md §2 "Plan tier colours") instead of raw blue
+         steps. One accepted shift: the dark border moves blue-400/30 ->
+         blue-500/30, because `--tier-pro-border` carries Card `tone="pro"`s
+         documented rung and the two edges must not disagree. */
       tone: {
         neutral: "",
         accent: "",
@@ -57,7 +63,7 @@ const optionTileVariants = cva(
         tone: "accent",
         selected: true,
         className:
-          "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/15 dark:text-blue-300",
+          "border-tier-pro-border bg-tier-pro-surface text-tier-pro-foreground",
       },
       {
         tone: "accent",

@@ -182,11 +182,11 @@ export function AuthLayout() {
     <div className="relative h-dvh w-dvw overflow-hidden" ref={rootRef}>
       <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2">
         <div
-          className="relative overflow-hidden bg-neutral-950"
+          className="relative overflow-hidden bg-auth-panel"
           style={{
             backgroundImage: [
-              "radial-gradient(ellipse 70% 60% at 85% 20%, rgba(255,255,255,0.05), transparent 75%)",
-              "radial-gradient(ellipse 70% 60% at 15% 80%, rgba(255,255,255,0.05), transparent 75%)",
+              "radial-gradient(ellipse 70% 60% at 85% 20%, var(--auth-glow), transparent 75%)",
+              "radial-gradient(ellipse 70% 60% at 15% 80%, var(--auth-glow), transparent 75%)",
             ].join(", "),
             backgroundSize: "100% 100%, 100% 100%",
             backgroundRepeat: "no-repeat, no-repeat",
@@ -210,9 +210,9 @@ export function AuthLayout() {
         </div>
 
         <div className="hidden self-center md:col-span-5 md:col-start-1 md:row-start-2 md:block">
-          <h1 className="type-heading-56 text-white leading-tight">
+          <h1 className="type-heading-56 text-auth-panel-foreground leading-tight">
             <span data-scramble>Gate</span>{" "}
-            <span className="text-blue-400" data-scramble>
+            <span className="text-auth-accent" data-scramble>
               every
             </span>{" "}
             <span data-scramble>agent call</span>
@@ -230,16 +230,18 @@ export function AuthLayout() {
             {FEATURES.map(({ Icon, title, sub }) => (
               <li className="flex items-start gap-4" data-anim key={title}>
                 <span
-                  className="grid size-10 shrink-0 place-items-center rounded-md border border-white/10 bg-neutral-900 text-white"
+                  className="grid size-10 shrink-0 place-items-center rounded-md border border-auth-panel-edge bg-auth-panel-tile text-auth-panel-foreground"
                   style={{
                     backgroundImage:
-                      "linear-gradient(to bottom, rgba(255,255,255,0.05), transparent)",
+                      "linear-gradient(to bottom, var(--auth-glow), transparent)",
                   }}
                 >
                   <Icon aria-hidden className="size-5" strokeWidth={1.75} />
                 </span>
                 <div>
-                  <p className="type-heading-16 text-white">{title}</p>
+                  <p className="type-heading-16 text-auth-panel-foreground">
+                    {title}
+                  </p>
                   <p className="type-copy-14 text-muted-foreground leading-6">
                     {sub}
                   </p>

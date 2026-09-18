@@ -112,7 +112,7 @@ and (pointer: fine)) and (&:hover));
   --color-syntax-keyword:        #B6491A; /* curl, -H, -d, export — orange-red */
   --color-syntax-variable:       #D69E2E; /* $KEY interpolations — amber */
   --color-syntax-property:       var(--color-blue-700); /* JSON keys / object props — brand blue-700 (#1F2FCE) */
-  --color-syntax-terminal-blue:  var(--color-success-700); /* JSON literals (strings + numbers + booleans) — brand success-700 green. Name retained for back-compat with code-card.tsx token map. */
+  --color-syntax-literal:  var(--color-success-700); /* JSON literals (strings + numbers + booleans) — success-700 green. Was --color-syntax-terminal-blue, renamed 2026-09-18: it was never blue. */
 
   /* macOS window-control "traffic light" tokens. These are platform
      affordances (CMP-012 dashboard chrome strip), not part of the
@@ -326,6 +326,27 @@ and (pointer: fine)) and (&:hover));
      --accent-muted. Re-declared in .dark for the reason given there. */
   --destructive-subtle: color-mix(in oklab, var(--destructive) 30%, transparent);
   --destructive-muted: color-mix(in oklab, var(--destructive) 50%, transparent);
+
+  /* ─── Status: info ──────────────────────────────────────────────────────
+     The fourth status family. success, warning and danger each own one, so
+     every info surface on the site had to pick its own blue step by hand —
+     StatusDot took blue-600, Badge took blue-700/10 + blue-600, Callout took
+     blue-50 / blue-300 / blue-900 — and none of them flipped on .dark without
+     a pasted `dark:` twin. Six roles, both themes, one place to tune.
+
+     Info is NOT a plan tier (--tier-pro is also blue and DOES flip to
+     blue-700 in light): this family says "here is context about state", the
+     tier family says "here is the plan you are on".
+
+     Values are what shipped before this block existed; only the binding
+     moved. The dark washes are the 10% / 15% / 30% rungs the status washes
+     already use (§2), so no new alpha rung enters the system. */
+  --info: var(--color-blue-600);
+  --info-foreground: var(--color-blue-600);
+  --info-wash: color-mix(in oklch, var(--color-blue-700) 10%, transparent);
+  --info-surface: var(--color-blue-50);
+  --info-border: var(--color-blue-300);
+  --info-foreground-strong: var(--color-blue-900);
   --border: var(--color-neutral-200);
   /* Active-control edge — 1px hairline around a raised active thumb (the
      segmented pill's indicator). A whisper-light crispening in light
@@ -468,6 +489,62 @@ and (pointer: fine)) and (&:hover));
      silently dropped its lift to a third of its strength in light. Unchanged
      across themes, as it has always been. */
   --promo-cta-shadow: color-mix(in oklch, var(--color-blue-700) 30%, transparent);
+
+  /* ─── Plan tiers ────────────────────────────────────────────────────────
+     Pro and Enterprise are a first-class concept in the product — Card
+     `tone="pro"` / `tone="enterprise"`, Badge `variant="pro"` /
+     `variant="enterprise"`, the Billing hero, the upgrade banners — and
+     until now they had no token, so every file re-derived the same ramp
+     steps by hand (six copies of one banner recipe, five of one badge
+     recipe, three different dark inks for one role).
+
+     A tier is NOT a status: it says which plan you are on, never that
+     something succeeded or failed, so it cannot borrow the status families.
+     Pro is brand blue, Enterprise is violet (user direction 2026-09-16).
+     Violet is Tailwind v4's default scale — index.css declares no violet
+     ramp on purpose, and `var(--color-violet-N)` resolves to Tailwind's
+     built-ins exactly the way the neutral ramp does.
+
+     Roles, both themes, one place to tune. Values are what shipped before
+     this block existed; only the binding moved. */
+  --tier-pro: var(--color-blue-700);
+  --tier-pro-foreground: var(--color-blue-700);
+  --tier-pro-wash: var(--color-blue-100);
+  --tier-pro-surface: var(--color-blue-50);
+  --tier-pro-border: var(--color-blue-200);
+  /* The whole banner gradient, not its stops — same contract as
+     --promo-wash. Consumed as `bg-[image:var(--tier-pro-surface-wash)]`, so
+     it takes no --color-* alias (see the @theme inline note). */
+  --tier-pro-surface-wash: linear-gradient(
+    to bottom,
+    var(--color-blue-50),
+    var(--color-blue-25)
+  );
+  --tier-enterprise: var(--color-violet-700);
+  --tier-enterprise-foreground: var(--color-violet-700);
+  --tier-enterprise-wash: var(--color-violet-100);
+  --tier-enterprise-border: var(--color-violet-200);
+
+  /* ─── Auth panel (fixed dark) ───────────────────────────────────────────
+     The marketing half of the sign-in / sign-up split (AuthLayout). It is
+     painted dark in BOTH themes on purpose — the product never shows it
+     light — so these are declared ONCE here and have no `.dark` twin. That
+     is also exactly why the raw neutrals they replace were safe-looking and
+     still wrong: `bg-neutral-950` and `text-white` on a surface with no
+     theme story have no owner, and the next reader cannot tell "fixed dark"
+     from "someone forgot the dark: variant".
+
+     --auth-accent is the blue lede word. It is NOT --tier-pro (which flips
+     to blue-700 in light) and NOT --info (a status): it is brand ink on a
+     panel that never goes light. --auth-glow is the white lift used by the
+     panel's two radial gradients and the tile's linear one; it is read
+     inside `style={{ backgroundImage }}`, so it takes no --color-* alias. */
+  --auth-panel: var(--color-neutral-950);
+  --auth-panel-foreground: var(--color-white);
+  --auth-panel-tile: var(--color-neutral-900);
+  --auth-panel-edge: color-mix(in oklch, var(--color-white) 10%, transparent);
+  --auth-glow: color-mix(in oklch, var(--color-white) 5%, transparent);
+  --auth-accent: var(--color-blue-400);
 }
 
 /* App shell: left nav + scrollable main area. */
@@ -519,6 +596,44 @@ body {
   --color-promo-cta-hover: var(--promo-cta-hover);
   --color-promo-cta-border: var(--promo-cta-border);
   --color-promo-cta-foreground: var(--promo-cta-foreground);
+  /* Plan tiers. Same rule again — only the roles a COLOR utility consumes
+     are aliased (`text-tier-pro`, `bg-tier-pro-wash`, `bg-tier-pro-surface`,
+     `border-tier-pro-border`, and the enterprise twins).
+     --tier-pro-surface-wash is a gradient read as
+     `bg-[image:var(--tier-pro-surface-wash)]`, so it gets no alias; one
+     would offer `bg-tier-pro-surface-wash` as a plausible-looking class
+     that means nothing. */
+  --color-tier-pro: var(--tier-pro);
+  --color-tier-pro-foreground: var(--tier-pro-foreground);
+  --color-tier-pro-wash: var(--tier-pro-wash);
+  --color-tier-pro-surface: var(--tier-pro-surface);
+  --color-tier-pro-border: var(--tier-pro-border);
+  --color-tier-enterprise: var(--tier-enterprise);
+  --color-tier-enterprise-foreground: var(--tier-enterprise-foreground);
+  --color-tier-enterprise-wash: var(--tier-enterprise-wash);
+  --color-tier-enterprise-border: var(--tier-enterprise-border);
+  /* Status: info — the fourth status family. All six roles are read by a
+     colour utility (`bg-info`, `text-info-foreground`, `bg-info-wash`,
+     `bg-info-surface`, `border-info-border`, `text-info-foreground-strong`),
+     so all six are aliased. */
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-wash: var(--info-wash);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-info-foreground-strong: var(--info-foreground-strong);
+  /* Auth panel. Same rule as the promo and tier families — only the roles a
+     COLOR utility consumes are aliased (`bg-auth-panel`,
+     `text-auth-panel-foreground`, `bg-auth-panel-tile`,
+     `border-auth-panel-edge`, `text-auth-accent`). --auth-glow is read
+     inside an inline gradient as `var(--auth-glow)` and needs no alias; one
+     would offer `bg-auth-glow` as a plausible-looking class that means
+     nothing. */
+  --color-auth-panel: var(--auth-panel);
+  --color-auth-panel-foreground: var(--auth-panel-foreground);
+  --color-auth-panel-tile: var(--auth-panel-tile);
+  --color-auth-panel-edge: var(--auth-panel-edge);
+  --color-auth-accent: var(--auth-accent);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);
@@ -646,6 +761,17 @@ body {
      block's --destructive rather than the light one. */
   --destructive-subtle: color-mix(in oklab, var(--destructive) 30%, transparent);
   --destructive-muted: color-mix(in oklab, var(--destructive) 50%, transparent);
+
+  /* Dark twin of the info family. The solid mid and the callout ink lighten
+     to the light-end of the ramp, and the two washes plus the border become
+     alphas of blue-500 over the page — the same closed rungs the status
+     washes use. */
+  --info: var(--color-blue-400);
+  --info-foreground: var(--color-blue-300);
+  --info-wash: color-mix(in oklch, var(--color-blue-500) 15%, transparent);
+  --info-surface: color-mix(in oklch, var(--color-blue-500) 10%, transparent);
+  --info-border: color-mix(in oklch, var(--color-blue-500) 30%, transparent);
+  --info-foreground-strong: var(--color-blue-300);
   /* Translucent white hairlines — read correctly on any dark surface
      (Vercel/shadcn gray-alpha technique), unlike a fixed neutral step. */
   --border: color-mix(in oklch, var(--color-white) 10%, transparent);
@@ -744,6 +870,35 @@ body {
   --promo-cta-hover: var(--color-blue-700);
   --promo-cta-border: var(--color-blue-500);
 
+  /* Dark twin of the plan tiers. Ink on a neutral surface lightens one step
+     (blue-400 / violet-300); ink ON a tier wash goes lighter still
+     (blue-300 / violet-300), matching the status-wash ink rule in §2. The
+     washes and borders become alphas of the family over the page — 15% for
+     a filled surface, 30% for an edge — the same closed rungs the status
+     washes use, so no new alpha rung enters the system. */
+  --tier-pro: var(--color-blue-400);
+  --tier-pro-foreground: var(--color-blue-300);
+  --tier-pro-wash: color-mix(in oklch, var(--color-blue-500) 15%, transparent);
+  --tier-pro-surface: color-mix(in oklch, var(--color-blue-500) 15%, transparent);
+  --tier-pro-border: color-mix(in oklch, var(--color-blue-500) 30%, transparent);
+  --tier-pro-surface-wash: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--color-blue-500) 10%, transparent),
+    color-mix(in oklch, var(--color-blue-500) 5%, transparent)
+  );
+  --tier-enterprise: var(--color-violet-300);
+  --tier-enterprise-foreground: var(--color-violet-300);
+  --tier-enterprise-wash: color-mix(
+    in oklch,
+    var(--color-violet-500) 15%,
+    transparent
+  );
+  --tier-enterprise-border: color-mix(
+    in oklch,
+    var(--color-violet-500) 30%,
+    transparent
+  );
+
   /* Syntax palette re-points to the ramp light-end on dark: the :root values
      (blue-700/success-700 + burnt-orange/amber hex) are tuned for code on
      white cards and read too dark on a neutral-900 card. The always-dark
@@ -751,7 +906,7 @@ body {
   --color-syntax-keyword:  #E0915E; /* lightened burnt-orange for dark */
   --color-syntax-variable: #F0C674; /* lightened amber for dark */
   --color-syntax-property: var(--color-blue-400);
-  --color-syntax-terminal-blue: var(--color-success-400);
+  --color-syntax-literal: var(--color-success-400);
 
   /* NOTE: the dark `--shadow-xs: … / 0.4` override is deliberately GONE.
      The Tailwind scale is one set of values, not a per-theme retune — a
