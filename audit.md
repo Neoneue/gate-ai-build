@@ -80,7 +80,7 @@ The same root causes surfaced in more than one report. Fix once.
 
 ### Token savings
 
-- [x] **1. MEDIUM** (applied 2026-09-17, uncommitted; also applies make-interfaces 11 on the same strings; the advanced-card ternary at :549 was taken with :550 so the Pro and Free branches stay on one tier) `pages/TokenSavings.tsx:298`, `:327`, `:507`, `:552`; `pages/token-savings/SummaryCard.tsx:131`
+- [x] **1. MEDIUM** (applied 2026-09-17, `876afb4`; also applies make-interfaces 11 on the same strings; the advanced-card ternary at :549 was taken with :550 so the Pro and Free branches stay on one tier) `pages/TokenSavings.tsx:298`, `:327`, `:507`, `:552`; `pages/token-savings/SummaryCard.tsx:131`
   - Before: `<Card className="rounded-sm ...">` (6px) inside the page `<Card>` (`rounded-md`, 8px)
   - After: `rounded-xs`
   - Why: Concentric border radius. design.md §6 locks the card-in-card step as `rounded-md` (8px) to `rounded-xs` (4px); 6px is the Button/chrome tier, so every inset panel on this page sits one tier off the ladder.
@@ -88,7 +88,7 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `... cursor-help ... text-muted-foreground hover:text-muted-foreground focus-visible:...`
   - After: `... cursor-help rounded-sm p-1 text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground motion-reduce:transition-none focus-visible:...`
   - Why: Every state change needs a visible cue. The hover target resolves to its own resting color, so the 11 benefit tooltips have a `cursor-help` affordance and no hover feedback.
-- [x] **3. LOW** (applied 2026-09-17, uncommitted; the only call site is now :569 (the Summary off state went away today); HeroNumeric's base already carries text-foreground, so the single-use valueClassName prop went with it) `pages/TokenSavings.tsx:429` (via `:604`)
+- [x] **3. LOW** (applied 2026-09-17, `876afb4`; the only call site is now :569 (the Summary off state went away today); HeroNumeric's base already carries text-foreground, so the single-use valueClassName prop went with it) `pages/TokenSavings.tsx:429` (via `:604`)
   - Before: `<HeroNumeric className={"leading-none text-foreground text-xl"}>`
   - After: drop `text-xl` / `leading-none`, keep `<HeroNumeric>` default
   - Why: `HeroNumeric` is the locked 24px+ display voice (`hero-numeric.tsx:15-20`); the call site pushes it to 20px, where the primitive's own contract says numerics revert to mono. The Overview rail beside it stays 24px, so the two savings figures read as different tiers.
@@ -107,11 +107,11 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `<img ... className="size-4" src="/icons/providers/openclaw.svg" />`
   - After: `className="size-4 opacity-80"`
   - Why: Three of the four PAYG tab glyphs are `currentColor` and fade with the tab's muted to foreground ink; the OpenClaw mark is a fixed `#00e5cc` + gradient asset, so an inactive OpenClaw tab reads louder than the active one. `Bot` is also the one non-brand glyph in the row (no `hermes.svg` in `public/icons/providers/`).
-- [x] **7. LOW** (applied 2026-09-17, uncommitted; fixed by make-interfaces 2 for the label; chevron list is now transition-[color,rotate]) `pages/Models.tsx:908`, `:915`
+- [x] **7. LOW** (applied 2026-09-17, `876afb4`; fixed by make-interfaces 2 for the label; chevron list is now transition-[color,rotate]) `pages/Models.tsx:908`, `:915`
   - Before: label: no transition; chevron: `transition-transform duration-150 ease-out` + `group-hover:text-foreground`
   - After: label: add `transition-colors duration-150 ease-out motion-reduce:transition-none`; chevron: `transition-[color,rotate] duration-150 ease-out`
   - Why: The Show more/less pair changes color on hover with nothing named to animate it. The back link at `:832` does transition color, so one page carries two link behaviours.
-- [x] **8. LOW** (applied 2026-09-17, uncommitted; fixed by better-ui 16 in the primitive) `pages/Models.tsx:1040`, `:1463`
+- [x] **8. LOW** (applied 2026-09-17, `876afb4`; fixed by better-ui 16 in the primitive) `pages/Models.tsx:1040`, `:1463`
   - Before: `<CopyButton className="shadow-sm" ... mode="label" />`
   - After: see 16 (root cause in `copy-button.tsx`)
   - Why: Both floating Copy buttons swap Copy to CircleCheck by unmount, so the success glyph hard-cuts. Consumer only; fix once in the primitive.
@@ -241,23 +241,23 @@ primitives that reach all three pages.
   - Before: `className="mt-1 shrink-0"` on `<Switch size="lg">`
   - After: `className="shrink-0"`
   - Why: `size="lg"` is `h-6` (24px); the label above is `type-label-14`, a 20px line box. With `items-start` the switch centre is already 2px below the line's; `mt-1` pushes it to 6px. The two Compression switches (`:526`, `:575`) sit on a 24px `type-heading-16` line and are centred with `items-start` alone, so the same control sits at two heights on one page.
-- [x] **8. MEDIUM** (applied 2026-09-17, uncommitted; parent is rounded-xs after better-ui 1, so the child went to rounded-xs too: the ladder bottoms out at 4px, no smaller rung was invented) `pages/TokenSavings.tsx:449` (rendered inside the cards at `:508` and `:549`)
+- [x] **8. MEDIUM** (applied 2026-09-17, `876afb4`; parent is rounded-xs after better-ui 1, so the child went to rounded-xs too: the ladder bottoms out at 4px, no smaller rung was invented) `pages/TokenSavings.tsx:449` (rendered inside the cards at `:508` and `:549`)
   - Before: `rounded-sm border bg-card/40 p-4` inside a `rounded-sm` card
   - After: `rounded-xs border bg-card/40 p-4`
   - Why: Third nesting level repeats its parent's 6px radius. Ladder is `md` 8, `sm` 6, `xs` 4 (`index.css:570-573`); one step per level.
-- [x] **9. MEDIUM** (applied 2026-09-17, uncommitted; same edit as better-ui 3) `pages/TokenSavings.tsx:430` + `:604`
+- [x] **9. MEDIUM** (applied 2026-09-17, `876afb4`; same edit as better-ui 3) `pages/TokenSavings.tsx:430` + `:604`
   - Before: `<HeroNumeric className={`leading-none ${valueClassName}`}>` with `valueClassName="text-foreground text-xl"`
   - After: `<HeroNumeric>` (drop `leading-none` and `text-xl`)
   - Why: Same as better-ui 3. HeroNumeric defines two rungs, 24px and 32px (`hero-numeric.tsx:27-29`); `text-xl` + `leading-none` is a third, off-ladder display size invented at the call site.
-- [x] **10. LOW** (applied 2026-09-17, uncommitted) `pages/TokenSavings.tsx:428`
+- [x] **10. LOW** (applied 2026-09-17, `876afb4`) `pages/TokenSavings.tsx:428`
   - Before: `gap-x-2 gap-y-0.5`
   - After: `gap-x-2 gap-y-1`
   - Why: `gap-0.5` (2px) is the half-step that was reverted project-wide; `px-2.5` on Button is the one sanctioned exception. Only occurrence in all 14 files.
-- [x] **11. LOW** (applied 2026-09-17, uncommitted; applied with better-ui 1; the call sites restated `border border-border`, both dropped) `pages/TokenSavings.tsx:299, 328`, `pages/token-savings/SummaryCard.tsx:131`
+- [x] **11. LOW** (applied 2026-09-17, `876afb4`; applied with better-ui 1; the call sites restated `border border-border`, both dropped) `pages/TokenSavings.tsx:299, 328`, `pages/token-savings/SummaryCard.tsx:131`
   - Before: `rounded-sm border-border bg-transparent shadow-none`
   - After: `rounded-sm bg-transparent shadow-none`
   - Why: `Card`'s base already carries `border-border`; re-stating it hides the one utility being changed. (Radius itself: see better-ui 1.)
-- [x] **12. LOW** (applied 2026-09-17, uncommitted; 10 utilities across the 10 listed files, zero hits left there; 37 hits remain in 26 other files, left alone as out of scope) `TokenSavings.tsx:135`, `TokenSavingsDefault.tsx:33`, `TokenSavingsEnterprise.tsx:58`, `Models.tsx:278`, `Models.tsx:390`, `ModelShelves.tsx:64`, `FreeModels.tsx:45`, `Billing.tsx:111`, `BillingEnterprise.tsx:160`, `BillingFree.tsx:107`
+- [x] **12. LOW** (applied 2026-09-17, `876afb4`; 10 utilities across the 10 listed files, zero hits left there; 37 hits remain in 26 other files, left alone as out of scope) `TokenSavings.tsx:135`, `TokenSavingsDefault.tsx:33`, `TokenSavingsEnterprise.tsx:58`, `Models.tsx:278`, `Models.tsx:390`, `ModelShelves.tsx:64`, `FreeModels.tsx:45`, `Billing.tsx:111`, `BillingEnterprise.tsx:160`, `BillingFree.tsx:107`
   - Before: `type-copy-18 ... tracking-snug` / `type-copy-16 ... tracking-snug`
   - After: drop `tracking-snug`
   - Why: `index.css:874-880` already bakes `tracking-snug` into both voices. Ten dead utilities that read as a deliberate tracking decision.
@@ -276,19 +276,19 @@ primitives that reach all three pages.
   - Before: `<span className="type-copy-12 text-muted-foreground">{label}</span>`
   - After: `<span className="type-label-12 text-muted-foreground">{label}</span>`
   - Why: It names a value inside a `RowActionButton`, so design.md §3's test lands on Label (500), not Copy (400). `lint:design` cannot catch it. Every sibling KPI label (`kpi-tile.tsx:72`, `SummaryCard.tsx:135`, `Models.tsx:1085`) is an `Eyebrow`; this is the one 400-weight stat label in the family.
-- [x] **16. MEDIUM** (applied 2026-09-17, uncommitted; fixed by make-interfaces 2) `pages/Models.tsx:905-920`
+- [x] **16. MEDIUM** (applied 2026-09-17, `876afb4`; fixed by make-interfaces 2) `pages/Models.tsx:905-920`
   - Before: TextLink with `hover:text-foreground focus-visible:text-foreground`, no transition; its `<ChevronDown>` has `transition-transform duration-150 ease-out`
   - After: fixed by 2 (primitive), no call-site change
   - Why: "Show more": the label's ink snaps while the caret glides for 150ms. Same as better-ui 7.
-- [x] **17. LOW** (applied 2026-09-17, uncommitted; recipe copied from the +N capability chip in the same file) `pages/Models.tsx:1291`
+- [x] **17. LOW** (applied 2026-09-17, `876afb4`; recipe copied from the +N capability chip in the same file) `pages/Models.tsx:1291`
   - Before: `<Badge title="Gateway markup over this provider's list price">`
   - After: `<Tooltip><TooltipTrigger render={<Badge .../>}>...` (recipe at `Models.tsx:737-757`)
   - Why: Native `title` is the only hover explanation on a page that otherwise speaks through the Tooltip primitive: two hover voices, OS delay, no keyboard path.
-- [x] **18. LOW** (applied 2026-09-17, uncommitted) `pages/Models.tsx:368`
+- [x] **18. LOW** (applied 2026-09-17, `876afb4`) `pages/Models.tsx:368`
   - Before: `type-copy-12 m-0 text-muted-foreground tracking-snug`
   - After: `type-copy-12 m-0 text-muted-foreground`
   - Why: Unlike `type-copy-16/18`, `type-copy-12` (`index.css:886-888`) sets no tracking, so this is a live deviation: a 12px body voice tightened while every other 12px body sits at normal.
-- [x] **19. LOW** (applied 2026-09-17, uncommitted) `pages/SetupModels.tsx:82`
+- [x] **19. LOW** (applied 2026-09-17, `876afb4`) `pages/SetupModels.tsx:82`
   - Before: `<TableCell className="font-medium text-foreground">`
   - After: `<TableCell className="type-label-14 text-foreground">`
   - Why: Raw weight instead of the named voice; the identical cell on the catalog table (`Models.tsx:605`) and the shelf table (`ModelShelves.tsx:433`) use `type-label-14`.
@@ -303,7 +303,7 @@ primitives that reach all three pages.
   - Before: `grid-cols-1 gap-4 min-[480px]:grid-cols-2` vs `grid-cols-1 gap-4 md:grid-cols-2`
   - After: `grid-cols-1 gap-4 min-[480px]:grid-cols-2` on both
   - Why: The dialog is a fixed 500px box, so the rung is read off the viewport either way. Between 480px and 768px the Pro auto-recharge dialog is two columns and the Free one is stacked.
-- [x] **22. MEDIUM** (applied 2026-09-17, uncommitted; resolved to rounded-xs per better-ui 9) `pages/billing/PaymentMethodCard.tsx:41`, `pages/BillingFree.tsx:808`
+- [x] **22. MEDIUM** (applied 2026-09-17, `876afb4`; resolved to rounded-xs per better-ui 9) `pages/billing/PaymentMethodCard.tsx:41`, `pages/BillingFree.tsx:808`
   - Before: `rounded-md border-border bg-card-muted p-4` inside `<Card>` (`rounded-md`)
   - After: `rounded-sm border-border bg-card-muted p-4`
   - Why: Inset repeats its parent's 8px radius. Note: better-ui 9 proposes `rounded-xs` for the same lines per design.md §6's 8 to 4 step; pick one.
@@ -311,7 +311,7 @@ primitives that reach all three pages.
   - Before: `<CreditStatRow label="Auto-recharge" value={`+$${auto.topUp} below $${auto.threshold}`} />`, `mono` omitted
   - After: add `mono`
   - Why: The `dd` column is a stack of right-aligned currency values; "Used this month" and "Last top-up" are `font-mono tabular-nums`, this one is proportional sans, so its digits sit off the column.
-- [x] **24. LOW** (applied 2026-09-17, uncommitted; the mono/muted conditionals are untouched) `pages/billing/CreditsCard.tsx:647`, `pages/BillingFree.tsx:780`, `pages/BillingEnterprise.tsx:284`
+- [x] **24. LOW** (applied 2026-09-17, `876afb4`; the mono/muted conditionals are untouched) `pages/billing/CreditsCard.tsx:647`, `pages/BillingFree.tsx:780`, `pages/BillingEnterprise.tsx:284`
   - Before: `<dd className={cn("m-0", mono && ...)}>`, no voice; inherits `type-copy-14` from the `<dl>`
   - After: put `type-copy-14` on the `<dd>` itself
   - Why: The inherited-voice case `design-tokens.md` calls out as invisible to `lint:design`.
@@ -373,7 +373,7 @@ already exists (`App.tsx` uses `lazy`).
   - Before: `models.find((m) => m.id === free.id)` / `ids.map((id) => models.find((m) => m.id === id))` over about 390 `MODELS` rows
   - After: Use the Map that already exists: `import { modelById } from "@/data/models"` then `modelById(free.id)` / `ids.map(modelById)`; keep the `models` param as an opt-in override that falls back to `find`
   - Why: `MODEL_BY_ID` is already built (`data/models.ts:1625`). `featuredModels()` does 4 scans, `freeModelRows()` 2, each shelf 4, all on every render of the Models list.
-- [x] **3. LOW** (applied 2026-09-17, uncommitted; the Set is hoisted into ModelDetailPage's body as orderedCapabilities) `js-set-map-lookups` Models: `pages/Models.tsx:875`
+- [x] **3. LOW** (applied 2026-09-17, `876afb4`; the Set is hoisted into ModelDetailPage's body as orderedCapabilities) `js-set-map-lookups` Models: `pages/Models.tsx:875`
   - Before: `CAPABILITY_ORDER.filter((c) => model.capabilities.includes(c))`
   - After: `const have = new Set(model.capabilities); CAPABILITY_ORDER.filter((c) => have.has(c))`
   - Why: The same file already does exactly this at `:698`; the detail page is the inconsistent copy. Tiny N, consistency more than speed.

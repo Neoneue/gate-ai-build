@@ -15,6 +15,10 @@ tokens; this index exists so nothing has to glob the directory.
 - Transition lists name real CSS properties; presses tween again
 - Audit MEDIUM pass: Token savings, Models, Billing
 - Token savings Summary no longer follows the Savings options switches
+- Raw type utilities are linted; every page text goes through a voice
+- KPI values are always sans tabular; mono is for data
+- Audit LOW pass: Token savings, Models, Billing
+- Token savings Summary: off state removed
 - Chart palette gets a chart-7 soft twin
 - Token savings: Summary card
 - Token savings: Summary breakdown from the gateway table, copy pass

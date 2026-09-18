@@ -98,6 +98,45 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
 - Source: `audit.md`, 20 rows ticked (14 chosen MEDIUM items plus their
   same-line companions).
 
+### Raw type utilities are linted; every page text goes through a voice `876afb4`
+
+- `lint:design` gains a `[raw-type]` check: a bare `font-medium` /
+  `font-semibold` / `font-bold` or `text-xs`..`text-2xl` on a line in
+  `src/pages` or `src/layouts` with no `type-*` voice fails the build.
+  Per-site waiver: a `design-allow-raw-type` comment with a reason within 5
+  lines above. `src/components` is exempt (primitive recipes are the voices).
+  Documented in design.md ("How it's enforced") and
+  `.claude/rules/design-tokens.md`.
+- Sweep of the 40 lines it found (14 pages + the auth layout): 31 converted to
+  the voice matching the element's role and size (`type-label-14` on value
+  spans inside `type-copy-14` parents, `type-mono-14` / `type-mono-12` on
+  mono data, `type-copy-16` on the Models detail description,
+  `type-heading-56` on the login headline), 9 waived with a stated reason
+  (inline figure emphasis in a voiced lede on the Summary card and the audit
+  record dialog, the Gate Connect fluid clamp title, the 10px "Detected"
+  pill, the login mono lede). Three menu-style rows move from 400 to 500
+  because design.md lists menu items as Label: SetupManual select trigger
+  (now matches `selectTriggerVariants`), SetupManual model list, Team role
+  menu. Follow-up: the `menu.tsx` primitive still renders items at 400.
+- Comment prose that named raw utilities ("text-xl/7", "font-medium") now
+  names px or weight so the check does not read them as code.
+
+### KPI values are always sans tabular; mono is for data `e2e62f6`
+
+- Before: the Request and Conversation detail KPI rails rendered values in
+  `font-medium font-mono text-lg` (18px mono), the only KPIs on the site not
+  in `HeroNumeric`. After: both rails use `CompactKpi` (`flat`), so values
+  are `HeroNumeric` = Geist sans 24px / 500 / tabular-nums like every other
+  KPI tile. Tile height grows ~8px (32px line box, `gap-2`). The local
+  `KpiTile` and `ConversationKpiTile` components are deleted.
+- The request detail count pill (`CountChip`, a copy of `TabsCount`) is
+  `TabsCount`: badge voice, mono 12 / 500. Two call sites drop from 14 to
+  12px.
+- `HeroNumeric` docblock and design.md principle 6 (line 450) no longer say
+  "numerics under 20px stay mono"; they say every KPI value is
+  `HeroNumeric` sans and mono is for table cells, IDs, badge and count
+  contents.
+
 ## Sections
 
 ### Billing: one org across the four Enterprise states `4c39f0b`
@@ -269,3 +308,31 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   for a window in which a mechanism was off the whole period; no seeded
   window hits them. `TokenSavings.tsx`, `TokenSavingsDefault.tsx`,
   `token-savings-summary.ts`.
+
+### Audit LOW pass: Token savings, Models, Billing `876afb4`
+
+- Token savings headline: `HeroNumeric` renders at its own 24px (the
+  `text-xl leading-none` override and the now-dead `valueClassName` prop are
+  gone); `gap-y-0.5` -> `gap-y-1`. Dead `tracking-snug` removed from ten
+  `type-copy-16/18` page subtitles (TokenSavings x3, Models x2, ModelShelves,
+  FreeModels, Billing, BillingEnterprise, BillingFree) and from one
+  `type-copy-12` line on Models where it was a live deviation.
+- Models: the "+N%" markup Badge explains itself through the Tooltip recipe
+  (keyboard reachable) instead of a native `title`; the detail page builds a
+  Set for the capability filter like the list already does.
+- SetupModels: model name cell `font-medium` -> `type-label-14`, matching the
+  catalog and shelf tables.
+- Billing: `type-copy-14` sits on the stat-row `dd` itself in all three
+  `CreditStatRow` / `StatRow` copies, no longer inherited from the `dl`.
+- `audit.md` gains a Status section: what is done, what was skipped by
+  decision and why, what still needs a call, and the follow-on work above.
+
+### Token savings Summary: off state removed `efffac8`
+
+- Follows `d138ff4` (Summary decoupled from the switches). The OFF badge
+  row, the two off cell notes, the both-off sentence, the
+  `compressionOn` / `cachingOn` options and their four tests are deleted.
+  The card has four states: loading, no traffic, low volume, normal. Every
+  mechanism row always renders its meter. User rule: the toggle has no
+  effect on the summary; a real off window would read 0 from the data, and
+  the demo cannot make time pass.
