@@ -110,7 +110,7 @@ Prior day: [`changelog-9-17.md`](./changelog-9-17.md)
   value identical to before. design.md §2 gains "Overlay scrim" and
   "Terminal surface".
 
-### Audit files renamed and dated `bcbc9ce`
+### Audit files renamed and dated `9a3fb0d`
 
 - `audit.md` is now `ui-audit.md` (its `Date: 2026-09-17.` line is the
   review day). `color-audit.md` takes the same shape: undated title plus
