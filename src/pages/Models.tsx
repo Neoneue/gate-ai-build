@@ -1,9 +1,17 @@
-import { Bot, ChevronDown, ChevronLeft } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bot, ChevronDown } from "lucide-react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { AnthropicIcon, OpenAIIcon } from "@/components/icons/model-providers";
 import { ProviderAvatar, VendorAvatar } from "@/components/icons/vendor-avatar";
 import { PROVIDER_META, PROVIDER_ORDER } from "@/components/icons/vendor-meta";
+import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -109,6 +117,14 @@ import {
  * state, same pattern as CMP-013 / CMP-014.
  * ───────────────────────────────────────────────────────────────────────── */
 
+/** Module constant, not a render-time `.map`: `MultiSelect` lists `options`
+ *  in a `useMemo` dep array (`multi-select.tsx:161`), so a fresh array
+ *  identity every render defeated that memo on every search keystroke. */
+const CAPABILITY_OPTIONS = CAPABILITY_ORDER.map((c) => ({
+  value: c,
+  label: CAPABILITY_META[c].label,
+}));
+
 export function Models() {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -205,9 +221,17 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
 
+  // The query the catalog filters against lags the input by a frame under
+  // load: 390 rows and up to 25 tooltip-bearing rows reconcile per keystroke,
+  // and `search` stays bound to the SearchInput so typing never stalls.
+  const deferredSearch = useDeferredValue(search);
+  const stale = search !== deferredSearch;
+
+  // Filter and sort are two memos, not one: changing only the sort Select
+  // must not re-run a 390-row filter for a result that cannot change.
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const rows = MODELS.filter((m) => {
+    const q = deferredSearch.trim().toLowerCase();
+    return MODELS.filter((m) => {
       if (modality !== "all" && m.modality !== modality) {
         return false;
       }
@@ -225,17 +249,18 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
       }
       return true;
     });
-    return sortModels(rows, sort);
-  }, [modality, search, provider, features, sort]);
+  }, [modality, deferredSearch, provider, features]);
+
+  const rows = useMemo(() => sortModels(filtered, sort), [filtered, sort]);
 
   const resetToFirstPage = () => setPage(1);
 
   // Page the visible rows by the footer's rows-per-page selector. The footer
   // only computes labels; slicing is the caller's job (see AuditTrail).
-  const perPage = resolveRowsPerPage(rowsPerPage, filtered.length);
-  const pageRows = filtered.slice((page - 1) * perPage, page * perPage);
+  const perPage = resolveRowsPerPage(rowsPerPage, rows.length);
+  const pageRows = rows.slice((page - 1) * perPage, page * perPage);
 
-  const isEmpty = filtered.length === 0;
+  const isEmpty = rows.length === 0;
 
   const clearFilters = () => {
     setSearch("");
@@ -337,7 +362,17 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
             sort={sort}
           />
 
-          <Card density="flush">
+          {/* The dim is the only cue that the catalog is a frame behind the
+              input. The transition is unconditional so it runs in BOTH
+              directions; toggling `transition-opacity` alongside `opacity-70`
+              would add the property in the same frame as the change and snap. */}
+          <Card
+            className={cn(
+              "transition-opacity duration-150 ease-out motion-reduce:transition-none",
+              stale && "opacity-70"
+            )}
+            density="flush"
+          >
             {isEmpty ? (
               <TableEmptyState
                 action={
@@ -357,7 +392,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                   onRowsPerPageChange={setRowsPerPage}
                   page={page}
                   rowsPerPage={rowsPerPage}
-                  total={filtered.length}
+                  total={rows.length}
                 />
               </>
             )}
@@ -466,10 +501,7 @@ function Toolbar({
         aria-label="Filter by features"
         className="w-auto min-w-0 @2xl:flex-none flex-1"
         onValueChange={(v) => onFeaturesChange(v as Capability[])}
-        options={CAPABILITY_ORDER.map((c) => ({
-          value: c,
-          label: CAPABILITY_META[c].label,
-        }))}
+        options={CAPABILITY_OPTIONS}
         placeholder="All features"
         popupWidth="content"
         value={features}
@@ -825,21 +857,9 @@ function ModelDetailPage({
       {/* Top utility bar — back affordance only for now. The back link takes
           focus on mount so the keyboard user lands inside the detail instead
           of at <body> (the row button that opened it has just unmounted).
-          querySelector, not a ref: TextLink does not forward one. */}
+          querySelector, not a ref: BackLink does not forward one. */}
       <div className="flex items-center justify-between gap-4">
-        <TextLink
-          aria-label="Back to Models"
-          className="type-label-14 inline-flex items-center gap-1 transition-colors duration-150 ease-out motion-reduce:transition-none"
-          data-model-back-link=""
-          onClick={onBack}
-        >
-          <ChevronLeft
-            aria-hidden="true"
-            className="size-4 shrink-0"
-            strokeWidth={1.75}
-          />
-          Models
-        </TextLink>
+        <BackLink data-model-back-link="" label="Models" onClick={onBack} />
       </div>
 
       {/* Hero — logo + H2 inline, then handle / capabilities / description.
@@ -912,7 +932,7 @@ function ModelDetailPage({
             <ChevronDown
               aria-hidden="true"
               className={cn(
-                "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
+                "size-3.5 shrink-0 text-muted-foreground transition-[color,rotate] duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
                 showFullDesc && "rotate-180"
               )}
               strokeWidth={1.75}

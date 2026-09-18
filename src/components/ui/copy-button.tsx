@@ -26,10 +26,12 @@ import { cn } from "@/lib/utils";
  * Motion: icon modes (icon-sm, icon-xs, inline-xs) use a CSS opacity
  * cross-fade — both Copy and CircleCheck are rendered in a stacked grid slot;
  * the inactive icon sits at opacity-0. `transition-opacity duration-150
- * ease-out motion-reduce:transition-none` drives the swap. Label mode
- * retains a color-only transition because the text label also changes
- * ("Copy" → "Copied!") and the width shift makes a clean cross-fade
- * impractical without layout animation.
+ * ease-out motion-reduce:transition-none` drives the swap. Label mode runs
+ * the SAME cross-fade (2026-09-17): it used to toggle the glyph by mount, so
+ * the transition on it could never run and the success state hard-cut. Its
+ * text still swaps outright ("Copy" → "Copied!"), because the width shift
+ * makes a clean cross-fade of the LABEL impractical without layout animation;
+ * the glyph is the state cue, and that now eases.
  *
  * Modern clipboard API only — no `document.execCommand` fallback. The app
  * targets evergreen browsers.
@@ -102,10 +104,6 @@ export function CopyButton(props: CopyButtonProps) {
   const { value, label, className } = props;
   const { copied, trigger } = useCopyFeedback({ value, label });
 
-  // Label mode uses a direct icon swap (text also changes, so cross-fade
-  // is impractical). Icon modes use CopyIconSwap for an opacity cross-fade.
-  const Icon = copied ? CircleCheck : Copy;
-
   if (props.mode === "label") {
     const restingText = props.text ?? "Copy";
     const labelSize = props.size ?? "compact";
@@ -130,14 +128,11 @@ export function CopyButton(props: CopyButtonProps) {
         type="button"
         variant="outline"
       >
-        <Icon
-          aria-hidden="true"
-          className={cn(
-            "transition-colors duration-150 ease-out motion-reduce:transition-none",
-            copied && "text-success-600"
-          )}
+        <CopyIconSwap
+          className={cn("size-3.5", copied && "text-success-600")}
+          copied={copied}
           data-icon="inline-start"
-          strokeWidth={1.8}
+          strokeWidth={1.75}
         />
         {copied ? "Copied!" : restingText}
       </Button>
@@ -240,17 +235,21 @@ function CopyIconSwap({
   copied,
   className,
   strokeWidth,
+  ...rest
 }: {
   copied: boolean;
   className?: string;
   strokeWidth?: number;
+  /** Forwarded to the wrapper so `<Button>`'s
+   *  `has-data-[icon=inline-start]:px-2.5` still matches in label mode. */
+  "data-icon"?: "inline-start" | "inline-end";
 }) {
   const shared = cn(
     "transition-opacity duration-150 ease-out [grid-area:1/1] motion-reduce:transition-none",
     className
   );
   return (
-    <span aria-hidden="true" className="grid">
+    <span aria-hidden="true" className="grid" {...rest}>
       <Copy
         className={cn(shared, copied ? "opacity-0" : "opacity-100")}
         strokeWidth={strokeWidth}

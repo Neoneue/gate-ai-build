@@ -82,6 +82,11 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
+/** Evaluated once at module scope, not as a default parameter: a default is
+ *  re-evaluated on every render, and `lastTopUpLabel()` does a `.find` over the
+ *  ledger plus a date format on each call. */
+const DEFAULT_LAST_TOP_UP = lastTopUpLabel();
+
 export function CreditsCard({
   /** PAYG credit balance. Defaults to the live ledger balance, which is what
    *  Pro and every provisioned Enterprise org shows; a freshly granted org
@@ -89,7 +94,7 @@ export function CreditsCard({
   balance = CREDIT_BALANCE_USD,
   /** Formatted "Last top-up" value, or null when there has never been one.
    *  Defaults to the newest `Credits added` row in the ledger. */
-  lastTopUp = lastTopUpLabel(),
+  lastTopUp = DEFAULT_LAST_TOP_UP,
 }: {
   balance?: number;
   lastTopUp?: string | null;
@@ -437,7 +442,7 @@ function AutoRechargeDialog({
           <Switch
             aria-labelledby="ar-enable-label"
             checked={enabled}
-            className="mt-1 shrink-0"
+            className="shrink-0"
             onCheckedChange={setEnabled}
             size="lg"
           />

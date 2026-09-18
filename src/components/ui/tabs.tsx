@@ -84,10 +84,12 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
       className={cn(
         // Skill: performance.md — `transition-all` would also animate
         // padding / sizing; we only want color + the active-state shadow
-        // and the underline opacity.
+        // and the underline opacity. `scale` is named explicitly: Tailwind
+        // v4's `scale-*` emits the standalone `scale` property, which a list
+        // naming `transform` (or the `colors` shorthand) never covers.
         // `z-10` keeps trigger labels above the sliding TabsIndicator
         // (which sits at z-0 inside the list).
-        "relative z-10 inline-flex h-[calc(100%-1px)] items-center justify-center gap-2 whitespace-nowrap rounded-xs border border-transparent font-medium text-sm transition-colors duration-150 ease-out focus-visible:border-ring focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start motion-reduce:transition-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "relative z-10 inline-flex h-[calc(100%-1px)] items-center justify-center gap-2 whitespace-nowrap rounded-xs border border-transparent font-medium text-sm transition-[color,background-color,border-color,scale] duration-150 ease-out focus-visible:border-ring focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         "group-data-[variant=default]/tabs-list:flex-1 group-data-[variant=default]/tabs-list:px-2 group-data-[variant=default]/tabs-list:py-1 group-data-[variant=default]/tabs-list:text-foreground/60 group-data-[variant=default]/tabs-list:hover:text-foreground dark:group-data-[variant=default]/tabs-list:text-muted-foreground dark:group-data-[variant=default]/tabs-list:hover:text-foreground",
         // Default variant active text only — bg + shadow now live on
         // the sliding TabsIndicator.

@@ -39,7 +39,7 @@ The same root causes surfaced in more than one report. Fix once.
 
 ### Token savings
 
-- [ ] **1. MEDIUM** `pages/TokenSavings.tsx:298`, `:327`, `:507`, `:552`; `pages/token-savings/SummaryCard.tsx:131`
+- [x] **1. MEDIUM** (applied 2026-09-17, uncommitted; also applies make-interfaces 11 on the same strings; the advanced-card ternary at :549 was taken with :550 so the Pro and Free branches stay on one tier) `pages/TokenSavings.tsx:298`, `:327`, `:507`, `:552`; `pages/token-savings/SummaryCard.tsx:131`
   - Before: `<Card className="rounded-sm ...">` (6px) inside the page `<Card>` (`rounded-md`, 8px)
   - After: `rounded-xs`
   - Why: Concentric border radius. design.md §6 locks the card-in-card step as `rounded-md` (8px) to `rounded-xs` (4px); 6px is the Button/chrome tier, so every inset panel on this page sits one tier off the ladder.
@@ -66,18 +66,18 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `<img ... className="size-4" src="/icons/providers/openclaw.svg" />`
   - After: `className="size-4 opacity-80"`
   - Why: Three of the four PAYG tab glyphs are `currentColor` and fade with the tab's muted to foreground ink; the OpenClaw mark is a fixed `#00e5cc` + gradient asset, so an inactive OpenClaw tab reads louder than the active one. `Bot` is also the one non-brand glyph in the row (no `hermes.svg` in `public/icons/providers/`).
-- [ ] **7. LOW** `pages/Models.tsx:908`, `:915`
+- [x] **7. LOW** (applied 2026-09-17, uncommitted; fixed by make-interfaces 2 for the label; chevron list is now transition-[color,rotate]) `pages/Models.tsx:908`, `:915`
   - Before: label: no transition; chevron: `transition-transform duration-150 ease-out` + `group-hover:text-foreground`
   - After: label: add `transition-colors duration-150 ease-out motion-reduce:transition-none`; chevron: `transition-[color,rotate] duration-150 ease-out`
   - Why: The Show more/less pair changes color on hover with nothing named to animate it. The back link at `:832` does transition color, so one page carries two link behaviours.
-- [ ] **8. LOW** `pages/Models.tsx:1040`, `:1463`
+- [x] **8. LOW** (applied 2026-09-17, uncommitted; fixed by better-ui 16 in the primitive) `pages/Models.tsx:1040`, `:1463`
   - Before: `<CopyButton className="shadow-sm" ... mode="label" />`
   - After: see 16 (root cause in `copy-button.tsx`)
   - Why: Both floating Copy buttons swap Copy to CircleCheck by unmount, so the success glyph hard-cuts. Consumer only; fix once in the primitive.
 
 ### Billing
 
-- [ ] **9. MEDIUM** `pages/billing/PaymentMethodCard.tsx:41`; `pages/BillingFree.tsx:808`
+- [x] **9. MEDIUM** (applied 2026-09-17, uncommitted) `pages/billing/PaymentMethodCard.tsx:41`; `pages/BillingFree.tsx:808`
   - Before: `rounded-md border-border bg-card-muted p-4` inside the `rounded-md` `<Card>`
   - After: `rounded-xs border-border bg-card-muted p-4`
   - Why: Identical radius across a parent/child boundary, which design.md §6 names as the bug outright. Same 8px arc twice with 16px between them is the most visible nesting error on either Billing page.
@@ -108,11 +108,11 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `md: "h-10 rounded-md font-medium font-sans text-sm"`
   - After: `md: "h-10 rounded-sm font-medium font-sans text-sm"`
   - Why: A 40px control takes the Card/surface tier (8px) while the primitive's own `lg` size takes the chrome tier (6px). Consumers: the Add credits preset grids (`CreditsCard.tsx:269`, `BillingFree.tsx:402`). The tile is also the one hand-rolled pressable with no `active:scale-[0.98] motion-reduce:active:scale-100`.
-- [ ] **16. MEDIUM** `components/ui/copy-button.tsx:107`, `:133-141`
+- [x] **16. MEDIUM** (applied 2026-09-17, uncommitted) `components/ui/copy-button.tsx:107`, `:133-141`
   - Before: `const Icon = copied ? CircleCheck : Copy;` then `<Icon className="transition-colors ..." />`
   - After: `<CopyIconSwap className="size-3.5" copied={copied} data-icon="inline-start" strokeWidth={1.75} />`
   - Why: Label mode toggles the glyph by mount/unmount, so the transition on it can never run and the success state hard-cuts. The primitive's own icon mode already does this correctly with `CopyIconSwap` (both glyphs in the DOM, opacity cross-fade).
-- [ ] **17. MEDIUM** `components/ui/tabs.tsx:90`
+- [x] **17. MEDIUM** (applied 2026-09-17, uncommitted) `components/ui/tabs.tsx:90`
   - Before: no press affordance on `TabsTrigger`
   - After: append `active:scale-[0.98] motion-reduce:active:scale-100` and extend the list to `transition-[color,background-color,border-color,scale]`
   - Why: design.md §Motion states "Same press lives on `IconActionButton` + `TabsTrigger`". It does not. Every tab row on these pages (Models modality tabs, both code-sample rails) presses dead.
@@ -120,7 +120,7 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `will-change-transform` (unconditional)
   - After: remove
   - Why: Applied to every icon action button on every row, so a 25-row ledger holds 25 permanent compositing layers for a 150ms press. design.md mandates it on `<Button>` for label re-raster; it does not cover this primitive, and the glyph has no text to re-raster.
-- [ ] **19. LOW** `components/ui/copy-button.tsx:140`
+- [x] **19. LOW** (applied 2026-09-17, uncommitted) `components/ui/copy-button.tsx:140`
   - Before: `strokeWidth={1.8}`
   - After: `strokeWidth={1.75}`
   - Why: Same file uses 1.75 at `:170`; design.md §6 locks 1.75 as a single global value.
@@ -173,7 +173,7 @@ primitives that reach all three pages.
   - Before: `transition-[colors,opacity,box-shadow,scale]` (and `transition-[colors,box-shadow]`, `transition-[colors,scale]`)
   - After: `transition-[color,background-color,border-color,opacity,box-shadow,scale]`
   - Why: Same root cause as better-ui 13. `colors` is a custom-ident, not a property, so every hover/active fill and ink change on Button, OptionTile, Switch, SelectTrigger and BackLink snaps while `scale` / `opacity` / `box-shadow` still ease. design.md:1214 names this bug; Badge was fixed 2026-09-14.
-- [ ] **2. MEDIUM** `components/ui/text-link.tsx:32`
+- [x] **2. MEDIUM** (applied 2026-09-17, uncommitted) `components/ui/text-link.tsx:32`
   - Before: base recipe has no `transition-*` at all
   - After: append `transition-[color,text-decoration-color] duration-150 ease-out motion-reduce:transition-none`
   - Why: `hover:decoration-neutral-500` and every call-site `hover:text-foreground` snap. Call sites paper over it individually (`Models.tsx:832` pastes `transition-colors`, `Models.tsx:908` does not), so the same link eases on one line and snaps on the next.
@@ -188,19 +188,19 @@ primitives that reach all three pages.
 
 ### Token savings
 
-- [ ] **5. MEDIUM** `pages/token-savings/SummaryCard.tsx:217-220`
+- [x] **5. MEDIUM** (applied 2026-09-17, uncommitted) `pages/token-savings/SummaryCard.tsx:217-220`
   - Before: `className={cn("h-full rounded-full", fill)}` with inline `width: ${bar.share}%`
   - After: `cn("h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none", fill)`
   - Why: Toggling Compression or Caching re-derives every share, and a range change does the same. Today all bars jump. 200ms ease-out is the project's indicator rung; `transition-[width]` has four precedents in `components/ui`.
-- [ ] **6. MEDIUM** `pages/TokenSavings.tsx:513-514, 560-561`
+- [x] **6. MEDIUM** (applied 2026-09-17, uncommitted) `pages/TokenSavings.tsx:513-514, 560-561`
   - Before: `<SectionHeading as="h4" className="type-heading-16">`
   - After: `<SectionHeading as="h4">`
   - Why: `section-heading.tsx:104` locks its voice (layout-only className). `SummaryCard.tsx:322, 358, 387` renders the same primitive un-overridden at 14px, so the same element is two sizes on one page.
-- [ ] **7. MEDIUM** `pages/TokenSavings.tsx:317`, `pages/billing/CreditsCard.tsx:440`, `pages/BillingFree.tsx:573`
+- [x] **7. MEDIUM** (applied 2026-09-17, uncommitted) `pages/TokenSavings.tsx:317`, `pages/billing/CreditsCard.tsx:440`, `pages/BillingFree.tsx:573`
   - Before: `className="mt-1 shrink-0"` on `<Switch size="lg">`
   - After: `className="shrink-0"`
   - Why: `size="lg"` is `h-6` (24px); the label above is `type-label-14`, a 20px line box. With `items-start` the switch centre is already 2px below the line's; `mt-1` pushes it to 6px. The two Compression switches (`:526`, `:575`) sit on a 24px `type-heading-16` line and are centred with `items-start` alone, so the same control sits at two heights on one page.
-- [ ] **8. MEDIUM** `pages/TokenSavings.tsx:449` (rendered inside the cards at `:508` and `:549`)
+- [x] **8. MEDIUM** (applied 2026-09-17, uncommitted; parent is rounded-xs after better-ui 1, so the child went to rounded-xs too: the ladder bottoms out at 4px, no smaller rung was invented) `pages/TokenSavings.tsx:449` (rendered inside the cards at `:508` and `:549`)
   - Before: `rounded-sm border bg-card/40 p-4` inside a `rounded-sm` card
   - After: `rounded-xs border bg-card/40 p-4`
   - Why: Third nesting level repeats its parent's 6px radius. Ladder is `md` 8, `sm` 6, `xs` 4 (`index.css:570-573`); one step per level.
@@ -212,7 +212,7 @@ primitives that reach all three pages.
   - Before: `gap-x-2 gap-y-0.5`
   - After: `gap-x-2 gap-y-1`
   - Why: `gap-0.5` (2px) is the half-step that was reverted project-wide; `px-2.5` on Button is the one sanctioned exception. Only occurrence in all 14 files.
-- [ ] **11. LOW** `pages/TokenSavings.tsx:299, 328`, `pages/token-savings/SummaryCard.tsx:131`
+- [x] **11. LOW** (applied 2026-09-17, uncommitted; applied with better-ui 1; the call sites restated `border border-border`, both dropped) `pages/TokenSavings.tsx:299, 328`, `pages/token-savings/SummaryCard.tsx:131`
   - Before: `rounded-sm border-border bg-transparent shadow-none`
   - After: `rounded-sm bg-transparent shadow-none`
   - Why: `Card`'s base already carries `border-border`; re-stating it hides the one utility being changed. (Radius itself: see better-ui 1.)
@@ -223,7 +223,7 @@ primitives that reach all three pages.
 
 ### Models
 
-- [ ] **13. MEDIUM** `pages/Models.tsx:830-842`
+- [x] **13. MEDIUM** (applied 2026-09-17, uncommitted) `pages/Models.tsx:830-842`
   - Before: `<TextLink className="type-label-14 inline-flex items-center gap-1 transition-colors ...">` + hand-placed `<ChevronLeft>`
   - After: `<BackLink label="Models" onClick={onBack} data-model-back-link="" />`
   - Why: `components/ui/back-link.tsx` is the primitive for this affordance. The hand-rolled one ships TextLink's underline (wrong for a nav affordance) and loses `active:scale-[0.98]`, the 44px-tall hit area (`after:inset-x-0 after:-inset-y-3`) and the chevron's `group-hover:-translate-x-px` nudge.
@@ -235,7 +235,7 @@ primitives that reach all three pages.
   - Before: `<span className="type-copy-12 text-muted-foreground">{label}</span>`
   - After: `<span className="type-label-12 text-muted-foreground">{label}</span>`
   - Why: It names a value inside a `RowActionButton`, so design.md §3's test lands on Label (500), not Copy (400). `lint:design` cannot catch it. Every sibling KPI label (`kpi-tile.tsx:72`, `SummaryCard.tsx:135`, `Models.tsx:1085`) is an `Eyebrow`; this is the one 400-weight stat label in the family.
-- [ ] **16. MEDIUM** `pages/Models.tsx:905-920`
+- [x] **16. MEDIUM** (applied 2026-09-17, uncommitted; fixed by make-interfaces 2) `pages/Models.tsx:905-920`
   - Before: TextLink with `hover:text-foreground focus-visible:text-foreground`, no transition; its `<ChevronDown>` has `transition-transform duration-150 ease-out`
   - After: fixed by 2 (primitive), no call-site change
   - Why: "Show more": the label's ink snaps while the caret glides for 150ms. Same as better-ui 7.
@@ -262,7 +262,7 @@ primitives that reach all three pages.
   - Before: `grid-cols-1 gap-4 min-[480px]:grid-cols-2` vs `grid-cols-1 gap-4 md:grid-cols-2`
   - After: `grid-cols-1 gap-4 min-[480px]:grid-cols-2` on both
   - Why: The dialog is a fixed 500px box, so the rung is read off the viewport either way. Between 480px and 768px the Pro auto-recharge dialog is two columns and the Free one is stacked.
-- [ ] **22. MEDIUM** `pages/billing/PaymentMethodCard.tsx:41`, `pages/BillingFree.tsx:808`
+- [x] **22. MEDIUM** (applied 2026-09-17, uncommitted; resolved to rounded-xs per better-ui 9) `pages/billing/PaymentMethodCard.tsx:41`, `pages/BillingFree.tsx:808`
   - Before: `rounded-md border-border bg-card-muted p-4` inside `<Card>` (`rounded-md`)
   - After: `rounded-sm border-border bg-card-muted p-4`
   - Why: Inset repeats its parent's 8px radius. Note: better-ui 9 proposes `rounded-xs` for the same lines per design.md §6's 8 to 4 step; pick one.
@@ -355,19 +355,19 @@ already exists (`App.tsx` uses `lazy`).
   - Before: `const sparkLabels = sparkDates(effectiveRange, sparkStops)` and `data={resampleSpark(k.spark, sparkStops)}` inside the `.map`
   - After: `useMemo(() => sparkDates(effectiveRange, sparkStops), [effectiveRange, sparkStops])` and hoist the resampled series into one `useMemo` keyed on `[effectiveRange, sparkStops]`
   - Why: `sparkDates` constructs 1 to 2 `Intl.DateTimeFormat` per label: 24h = 12 stops = 24 constructions per render. Caveat: `CompactSpark` is not wrapped in `memo` (`components/ui/compact-kpi.tsx:180`) and rebuilds `points` at `:200`, so the three Recharts `AreaChart`s still reconcile on every parent render. Stopping that needs `export const CompactSpark = memo(...)`, a shared primitive.
-- [ ] **8. MEDIUM** `rerender-memo-with-default-value` Models: `pages/Models.tsx:469-472`
+- [x] **8. MEDIUM** (applied 2026-09-17, uncommitted) `rerender-memo-with-default-value` Models: `pages/Models.tsx:469-472`
   - Before: `options={CAPABILITY_ORDER.map((c) => ({ value: c, label: CAPABILITY_META[c].label }))}`
   - After: Hoist to module scope: `const CAPABILITY_OPTIONS = CAPABILITY_ORDER.map(...)`; then `options={CAPABILITY_OPTIONS}`
   - Why: `components/ui/multi-select.tsx:161` lists `options` in a `useMemo` dep array. A new array identity every render defeats that memo on every keystroke in the model search box.
-- [ ] **9. MEDIUM** `rerender-split-combined-hooks` Models: `pages/Models.tsx:208-229`
+- [x] **9. MEDIUM** (applied 2026-09-17, uncommitted) `rerender-split-combined-hooks` Models: `pages/Models.tsx:208-229`
   - Before: One `useMemo` does filter then `sortModels(rows, sort)` with deps `[modality, search, provider, features, sort]`
   - After: Split: `const filtered = useMemo(() => MODELS.filter(...), [modality, search, provider, features])` then `const rows = useMemo(() => sortModels(filtered, sort), [filtered, sort])`
   - Why: Changing only the sort Select re-runs the full 390-row filter (three `toLowerCase().includes` per row) for a result that cannot change.
-- [ ] **10. MEDIUM** `rerender-use-deferred-value` Models: `pages/Models.tsx:199,208,236,353`
+- [x] **10. MEDIUM** (applied 2026-09-17, uncommitted) `rerender-use-deferred-value` Models: `pages/Models.tsx:199,208,236,353`
   - Before: `const [search, setSearch] = useState("")`, filter runs synchronously against `search` on every keystroke, then 25 `TableRow`s each with `CapabilityStrip` (up to 5 `Tooltip`s) and `ProviderStack` re-render
   - After: `const deferredSearch = useDeferredValue(search);` use it inside the filter memo (paired with 9), keep `search` on the `SearchInput`, dim the table with `search !== deferredSearch`
   - Why: Keeps the input responsive while 390 rows filter and up to 25 tooltip-bearing rows reconcile. Depends on 9 landing first.
-- [ ] **11. MEDIUM** `rerender-memo-with-default-value` Billing: `pages/billing/CreditsCard.tsx:92`
+- [x] **11. MEDIUM** (applied 2026-09-17, uncommitted) `rerender-memo-with-default-value` Billing: `pages/billing/CreditsCard.tsx:92`
   - Before: `lastTopUp = lastTopUpLabel()` as a default parameter value
   - After: Hoist: `const DEFAULT_LAST_TOP_UP = lastTopUpLabel();` then `lastTopUp = DEFAULT_LAST_TOP_UP`
   - Why: A default param is evaluated on every render. `lastTopUpLabel` (`data/billing-history.ts:71`) does a `.find` plus `formatDateNumeric`, one `Intl.DateTimeFormat` construction per render of the Pro and Enterprise Credits cards.

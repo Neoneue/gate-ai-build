@@ -295,7 +295,7 @@ function CachingCard({
         title="Caching"
       />
       <CardContent className="flex flex-col gap-3">
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card className="rounded-xs bg-transparent shadow-none">
           <CardContent>
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -313,7 +313,7 @@ function CachingCard({
               <Switch
                 aria-labelledby="caching-switch-label"
                 checked={enabled}
-                className="mt-1 shrink-0"
+                className="shrink-0"
                 onCheckedChange={(next) => {
                   onEnabledChange(next);
                   toast(next ? "Caching enabled" : "Caching disabled");
@@ -324,7 +324,7 @@ function CachingCard({
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card className="rounded-xs bg-transparent shadow-none">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -445,7 +445,7 @@ function BenefitList({
   outlineClassName: string;
 }) {
   return (
-    <div className={`rounded-sm border bg-card/40 p-4 ${outlineClassName}`}>
+    <div className={`rounded-xs border bg-card/40 p-4 ${outlineClassName}`}>
       <ul className="m-0 grid list-none @lg:grid-cols-2 grid-cols-1 gap-4 p-0">
         {benefits.map((benefit) => (
           <li className="flex items-center gap-2" key={benefit.title}>
@@ -504,15 +504,13 @@ function CompressionCard({
   // Free — neutral "safe lane" card. Only shown on the Free plan, where the
   // Advanced card sits beside it as an upsell.
   const basicCard = (
-    <Card className="rounded-sm shadow-none">
+    <Card className="rounded-xs shadow-none">
       <CardContent className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <SectionHeading as="h4" className="type-heading-16">
-                  Basic compression
-                </SectionHeading>
+                <SectionHeading as="h4">Basic compression</SectionHeading>
                 <Badge variant="success">Free</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -548,8 +546,8 @@ function CompressionCard({
     <Card
       className={
         isPro
-          ? "rounded-sm shadow-none"
-          : "rounded-sm border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
+          ? "rounded-xs shadow-none"
+          : "rounded-xs border-blue-200 bg-gradient-to-b from-blue-50 to-blue-25 shadow-none dark:border-blue-400/30 dark:from-blue-500/10 dark:to-blue-500/5"
       }
     >
       <CardContent className="flex flex-1 flex-col">
@@ -557,9 +555,7 @@ function CompressionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <SectionHeading as="h4" className="type-heading-16">
-                  Advanced compression
-                </SectionHeading>
+                <SectionHeading as="h4">Advanced compression</SectionHeading>
                 <Badge variant="info">Pro</Badge>
               </div>
               <p className="type-copy-14 m-0 text-pretty text-muted-foreground">

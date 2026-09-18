@@ -128,7 +128,7 @@ function FigureCell({
   loading: boolean;
 }) {
   return (
-    <Card className="rounded-sm border-border bg-transparent shadow-none">
+    <Card className="rounded-xs bg-transparent shadow-none">
       {/* KpiTile composition, the site's KPI pattern: Eyebrow above the
           HeroNumeric, the denominator as the caption line beneath. */}
       <CardContent className="flex flex-col gap-2">
@@ -215,7 +215,10 @@ function MeterRow({
           role="meter"
         >
           <div
-            className={cn("h-full rounded-full", fill)}
+            className={cn(
+              "h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none",
+              fill
+            )}
             style={{ width: `${bar.share}%` }}
           />
         </div>

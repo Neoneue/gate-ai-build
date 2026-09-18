@@ -570,7 +570,7 @@ function AutoRechargeDialog({
           <Switch
             aria-labelledby="ar-enable-label"
             checked={enabled}
-            className="mt-1 shrink-0"
+            className="shrink-0"
             onCheckedChange={setEnabled}
             size="lg"
           />
@@ -805,7 +805,7 @@ function PaymentMethodCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 rounded-md border border-border bg-card-muted p-4">
+        <div className="flex items-center gap-4 rounded-xs border border-border bg-card-muted p-4">
           <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
             CARD
           </span>
