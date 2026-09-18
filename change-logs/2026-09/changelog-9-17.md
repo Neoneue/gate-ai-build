@@ -71,6 +71,33 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   make-interfaces-feel-better / react-best-practices checklist; the four HIGH
   items plus two sweep follow-ups are ticked.
 
+### Audit MEDIUM pass: Token savings, Models, Billing `751c216`
+
+- **TextLink** (`text-link.tsx`) base recipe gains
+  `transition-[color,text-decoration-color] duration-150 ease-out
+  motion-reduce:transition-none`; the Models "Show more" label now eases
+  with its chevron, whose list is `transition-[color,rotate]`.
+- **TabsTrigger** (`tabs.tsx`) presses: `active:scale-[0.98]
+  motion-reduce:active:scale-100`, list extended with `scale`.
+- **CopyButton** label mode renders `CopyIconSwap` (both glyphs in the DOM,
+  opacity cross-fade, success stays `text-success-600`) instead of swapping
+  Copy for CircleCheck by mount; stroke 1.8 -> 1.75. `CopyIconSwap` forwards
+  `data-icon` so Button's inline-start padding still matches.
+- **Token savings:** inset option cards and the Summary card step to
+  `rounded-xs` (redundant `border-border` dropped); the panel inside the
+  option cards is also `rounded-xs`, the ladder floor. The lg Switch loses
+  `mt-1` (was 6px below the label centre). The two h4 headings drop the
+  `type-heading-16` override. Summary bars animate `width` over 200ms when
+  Compression or Caching toggles.
+- **Models:** the detail back link is the shared `BackLink` (press, 44px hit
+  area, chevron nudge; accessible name "Models"). Capability filter options
+  hoisted to a module constant; the filter and sort memos are split; search
+  is deferred with `opacity-70` on the table while stale.
+- **Billing:** the payment method inset steps to `rounded-xs` on Pro and
+  Free; the Credits card default "Last top-up" label is a module constant.
+- Source: `audit.md`, 20 rows ticked (14 chosen MEDIUM items plus their
+  same-line companions).
+
 ## Sections
 
 ### Billing: one org across the four Enterprise states `4c39f0b`
