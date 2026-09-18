@@ -12,6 +12,9 @@
 
 export type AvatarTone = "blue" | "rose" | "emerald" | "amber" | "ink";
 
+/** Fixed brand fills in BOTH themes, on purpose (design.md §2 "Kept as-is"):
+ *  `text-white` on a saturated -700 fill is the legible pair in either theme.
+ *  The sidebar / user-menu "CP" circles reuse `blue` rather than restating it. */
 export const AVATAR_TONE_CLS: Record<AvatarTone, string> = {
   blue: "bg-blue-700 text-white",
   rose: "bg-danger-700 text-white",

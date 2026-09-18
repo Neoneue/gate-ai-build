@@ -63,6 +63,16 @@ It also fails a **raw type utility with no voice** in `src/pages` /
 inside a voiced paragraph is waived per site with a `design-allow-raw-type`
 comment (reason stated) within 5 lines above. `src/components` is exempt.
 
+It also fails a **raw color literal** (hex, `rgb()`, `hsl()`, `oklch()`,
+`oklab()`) on any non-comment line in `src`, except `src/index.css` (the
+palette), `src/components/icons/brand-colors.ts` (the one registry of
+external brand hexes) and `src/data` (captured transcripts). And it fails a
+**raw palette atom with a semantic twin** in `src/pages` / `src/layouts` /
+`src/components`: `bg-white`, `bg-neutral-100`, `border-neutral-200`,
+`ring-neutral-N`, `text-neutral-900`, `text-neutral-500`, `bg-neutral-900/N`.
+The message names the token to use. Both waive per site with a
+`design-allow-raw-color` comment within 5 lines above (added 2026-09-18).
+
 The voice check is deliberately conservative — it declines to guess on
 ambiguous nesting, so it will miss some cases. Notably it cannot see a voice
 applied through a shared variant/`cva` recipe, a `cn()` helper defined away

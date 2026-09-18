@@ -2,6 +2,7 @@ import { BookOpen, Moon, MoreHorizontal, Sun, UserRound } from "lucide-react";
 import type * as React from "react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { LogoutIcon } from "@/components/ui/logout";
+import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
 import { Separator } from "@/components/ui/separator";
 import { SidebarUpgradeCard } from "@/components/ui/sidebar-upgrade-card";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -205,7 +206,12 @@ function SidebarCollapsed({
             </div>
           ))}
         </div>
-        <div className="flex size-6 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs">
+        <div
+          className={cn(
+            AVATAR_TONE_CLS.blue,
+            "flex size-6 items-center justify-center rounded-full font-medium font-mono text-xs"
+          )}
+        >
           CP
         </div>
       </div>
@@ -408,7 +414,10 @@ function SidebarAccountRows({
       <div className="flex items-center gap-3 border-border border-t bg-card px-5 py-4">
         <span
           aria-hidden
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
+          className={cn(
+            AVATAR_TONE_CLS.blue,
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-full font-medium font-mono text-xs"
+          )}
         >
           CP
         </span>
@@ -488,7 +497,10 @@ function DefaultUserArea({
       <div className="flex min-w-0 items-center gap-2">
         <span
           aria-hidden
-          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
+          className={cn(
+            AVATAR_TONE_CLS.blue,
+            "inline-flex size-7 shrink-0 items-center justify-center rounded-full font-medium font-mono text-xs"
+          )}
         >
           CP
         </span>

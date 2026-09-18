@@ -32,7 +32,7 @@ function DialogOverlay({
         // back to opacity 1 (its base style) and flashes the backdrop
         // while waiting for the popup's longer 200ms exit to complete —
         // a clearly visible flicker on dismiss.
-        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-neutral-900/40 duration-100 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
+        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-overlay duration-100 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       data-slot="dialog-overlay"
@@ -84,7 +84,7 @@ function DialogContent({
         <div
           aria-hidden
           className={cn(
-            "data-open:fade-in-0 fixed inset-0 z-50 bg-neutral-900/40 data-open:animate-in supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none",
+            "data-open:fade-in-0 fixed inset-0 z-50 bg-overlay data-open:animate-in supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none",
             overlayClassName
           )}
           data-open=""

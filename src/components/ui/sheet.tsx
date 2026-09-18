@@ -55,7 +55,7 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
         // produces a visible flicker as the keyframe element reverts to its
         // resting opacity early; matching the panel keeps the dim leaving
         // alongside it.
-        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-neutral-900/40 duration-300 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
+        "data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-overlay duration-300 data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-200 supports-backdrop-filter:backdrop-blur-xs motion-reduce:animate-none motion-reduce:duration-0",
         className
       )}
       data-slot="sheet-overlay"
