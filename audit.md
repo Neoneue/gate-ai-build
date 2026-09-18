@@ -96,11 +96,11 @@ The same root causes surfaced in more than one report. Fix once.
 
 ### Shared primitives
 
-- [x] **13. HIGH** (applied 2026-09-17, uncommitted) `components/ui/button.tsx:14`; `switch.tsx:17`; `option-tile.tsx:24`; `select-variants.ts:8`; `toggle-variants.ts:5`; `back-link.tsx:25`
+- [x] **13. HIGH** (applied 2026-09-17, `533cdd3`) `components/ui/button.tsx:14`; `switch.tsx:17`; `option-tile.tsx:24`; `select-variants.ts:8`; `toggle-variants.ts:5`; `back-link.tsx:25`
   - Before: `transition-[colors,...]`
   - After: button: `transition-[color,background-color,border-color,opacity,box-shadow,scale]`; switch / option-tile / select / toggle: `transition-[color,background-color,border-color,box-shadow]`; back-link: `transition-[color,background-color,border-color,scale]`
   - Why: Compiled: the class emits `transition-property: colors,opacity,box-shadow,scale`. `colors` is a Tailwind shorthand, not a CSS property, so it parses as an unmatched custom-ident and no color or fill on any Button, Switch, Select trigger, Toggle or OptionTile transitions; every hover fill snaps. Most visible on the Token savings switches: the thumb glides 150ms while the track colour cuts. design.md §Motion states this rule and records the same fix applied to Badge and Card on 2026-09-14; these six were missed. Out-of-scope copies of the same string: `DashboardDefault.tsx:423`, `SetupManual.tsx:391`, `Policies.tsx:587`, `teams/PoliciesPane.tsx:372`.
-- [x] **14. HIGH** (applied 2026-09-17, uncommitted) `components/ui/icon-action-button.tsx:30`
+- [x] **14. HIGH** (applied 2026-09-17, `533cdd3`) `components/ui/icon-action-button.tsx:30`
   - Before: `transition-[color,background-color,transform,box-shadow]` with `active:scale-[0.98]`
   - After: `transition-[color,background-color,scale,box-shadow]`
   - Why: Compiled: `active:scale-[0.98]` emits the standalone `scale: 0.98`, which a list naming `transform` does not cover; the press jumps with no tween, and `motion-reduce:transition-none` on the same element guards nothing. design.md §Motion names this Tailwind v4 trap. Consumer in scope: every History disclosure chevron (`HistorySection.tsx:153`).
@@ -129,11 +129,11 @@ The same root causes surfaced in more than one report. Fix once.
   - After: `hover:-translate-y-px motion-reduce:hover:translate-y-0`
   - Why: The `@custom-variant hover-fine` in `index.css:9` compiles to invalid nested CSS, so this is the last inert `hover-fine:` in `src/` and the FAB has no hover lift. No in-scope page file uses the variant.
 
-- [x] **21. MEDIUM** (applied 2026-09-17, uncommitted) `components/ui/sidebar.tsx:195, :223, :395, :507`
+- [x] **21. MEDIUM** (applied 2026-09-17, `533cdd3`) `components/ui/sidebar.tsx:195, :223, :395, :507`
   - Before: `transition-[color,background-color,transform]` with `active:scale-[0.98]`
   - After: `transition-[color,background-color,scale]`
   - Why: Same defect as 14, found by the sweep while applying it: Tailwind v4 `scale-*` is the standalone `scale` property, so the named `transform` never matches and the press has no tween.
-- [x] **22. LOW** (applied 2026-09-17, uncommitted) `components/ui/theme-toggle.tsx:32, :42`; `layouts/DashboardChrome.tsx:378, :388`
+- [x] **22. LOW** (applied 2026-09-17, `533cdd3`) `components/ui/theme-toggle.tsx:32, :42`; `layouts/DashboardChrome.tsx:378, :388`
   - Before: `transition-[opacity,transform,filter]` animating `scale-100` to `scale-[0.25]` plus `blur-*`
   - After: `transition-[opacity,scale,filter]`
   - Why: `transform` is dead here (should be `scale`); opacity still fades so the icons cross-fade but do not scale. `filter` is live because `blur-*` compiles to it; this is an existing exception to the no-`filter` rule, decide whether to keep it.
@@ -169,7 +169,7 @@ primitives that reach all three pages.
 
 ### Shared primitives
 
-- [x] **1. HIGH** (applied 2026-09-17, uncommitted) `components/ui/button.tsx:14`, `option-tile.tsx:24`, `switch.tsx:17`, `select-variants.ts:8`, `back-link.tsx:25`
+- [x] **1. HIGH** (applied 2026-09-17, `533cdd3`) `components/ui/button.tsx:14`, `option-tile.tsx:24`, `switch.tsx:17`, `select-variants.ts:8`, `back-link.tsx:25`
   - Before: `transition-[colors,opacity,box-shadow,scale]` (and `transition-[colors,box-shadow]`, `transition-[colors,scale]`)
   - After: `transition-[color,background-color,border-color,opacity,box-shadow,scale]`
   - Why: Same root cause as better-ui 13. `colors` is a custom-ident, not a property, so every hover/active fill and ink change on Button, OptionTile, Switch, SelectTrigger and BackLink snaps while `scale` / `opacity` / `box-shadow` still ease. design.md:1214 names this bug; Badge was fixed 2026-09-14.
@@ -324,7 +324,7 @@ already exists (`App.tsx` uses `lazy`).
 
 ### JavaScript performance
 
-- [x] **1. HIGH** (applied 2026-09-17, uncommitted) `js-cache-function-results` Shared: `lib/formatters.ts:17,30,54,68,79,89,97,112,125,138`
+- [x] **1. HIGH** (applied 2026-09-17, `533cdd3`) `js-cache-function-results` Shared: `lib/formatters.ts:17,30,54,68,79,89,97,112,125,138`
   - Before: `return new Intl.NumberFormat(LOCALE, options).format(n)` (every call constructs)
   - After: Module-level `Map` keyed on `JSON.stringify(options)`: `const nf = new Map(); function numberFormat(o) { const k = JSON.stringify(o); let f = nf.get(k); if (!f) { f = new Intl.NumberFormat(LOCALE, o); nf.set(k, f); } return f; }` and the same for `DateTimeFormat`
   - Why: Measured in this repo's Node: construct+format 20k times = 402ms, cached format = 7ms, 57x. `DateTimeFormat` is worse (606ms/20k). One `HistoryLedger` page at 25 rows builds about 50 `NumberFormat` objects per render; one keystroke in Add credits rebuilds 8. Every row here routes through this file.

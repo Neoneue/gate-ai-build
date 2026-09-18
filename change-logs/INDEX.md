@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-17](./2026-09/changelog-9-17.md)
 
 - Focus ring goes inset on Tabs triggers and sortable table heads
+- Transition lists name real CSS properties; presses tween again
 - Chart palette gets a chart-7 soft twin
 - Token savings: Summary card
 - Token savings: Summary breakdown from the gateway table, copy pass

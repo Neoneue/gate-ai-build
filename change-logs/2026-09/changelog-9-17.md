@@ -49,6 +49,28 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   Compression bar (the Compression tile is chart-7). Documented in the
   `design.md` ramp block; the data-bar rule is unchanged.
 
+### Transition lists name real CSS properties; presses tween again `533cdd3`
+
+- Before: Button, Switch, OptionTile, SelectTrigger, Toggle and BackLink (plus
+  four page copies in `DashboardDefault`, `SetupManual`, `Policies`,
+  `PoliciesPane`) carried `transition-[colors,...]`. `colors` is a Tailwind
+  shorthand, not a CSS property, so the compiled list never matched and every
+  hover fill and ink change snapped while opacity / shadow / scale eased.
+  After: `transition-[color,background-color,border-color,...]` with the
+  remaining tokens unchanged. Zero `transition-[colors` left in `src`.
+  `design.md` line 1136 now quotes the corrected Button string.
+- Before: `IconActionButton`, the four sidebar buttons, the theme toggle and
+  the sidebar collapse icons named `transform` while animating `scale-*`,
+  which in Tailwind v4 is the standalone `scale` property, so the 0.98 press
+  and the icon cross-scale had no tween. After: `scale` in each list. The two
+  segmented controls keep `transform` (real inline translate).
+- `src/lib/formatters.ts` reuses one `Intl.NumberFormat` / `DateTimeFormat`
+  / `RelativeTimeFormat` per locale + options pair instead of constructing
+  per call (measured 57x in Node). Public API unchanged; output identical.
+- Source: `audit.md` (repo root), the 2026-09-17 better-ui /
+  make-interfaces-feel-better / react-best-practices checklist; the four HIGH
+  items plus two sweep follow-ups are ticked.
+
 ## Sections
 
 ### Billing: one org across the four Enterprise states `4c39f0b`
