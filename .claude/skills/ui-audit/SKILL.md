@@ -26,7 +26,7 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    2026-09-17): one `- [ ] **N. SEVERITY** path:line` item per root cause
    with `Before:`, `After:`, `Why:` sub-bullets, numbered so items can be
    picked by number and ticked when applied. When the user asks for a file,
-   write it the same way (`audit.md` at the repo root is the precedent).
+   write it the same way (`ui-audit.md` at the repo root is the precedent).
    Then the verdict. Then a "Decision needed" list for every row that
    conflicts with design.md.
 5. Stop. Applying is a separate user instruction.
