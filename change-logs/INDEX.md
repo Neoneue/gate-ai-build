@@ -9,6 +9,13 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-18](./2026-09/changelog-9-18.md)
+
+- Plan tiers get their own colour tokens
+- Vendor brand colours live in one registry
+- Dot matrix loader drops its unused colour presets
+- Colour audit checklist
+
 ### [2026-09-17](./2026-09/changelog-9-17.md)
 
 - Focus ring goes inset on Tabs triggers and sortable table heads
