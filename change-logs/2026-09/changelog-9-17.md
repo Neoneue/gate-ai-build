@@ -254,3 +254,18 @@ Prior day: [`changelog-9-16.md`](./changelog-9-16.md)
   hairline as a `before:` pseudo (no stray 1px) and a `w-64` track; the
   value track is a fixed `3.5rem` so mono-14 and mono-12 values share one
   right edge. Measured: all six bars 320 to 934px inside the card.
+
+### Token savings Summary no longer follows the Savings options switches `d138ff4`
+
+- Before (`9cffeda`): the two enable switches were lifted to the page and
+  passed into `summaryFor`, so turning Compression off zeroed "Input tokens
+  removed", replaced the Compression rows with an OFF badge and gave Caching
+  100% of the breakdown. After: the switches govern future traffic and the
+  card reports the selected window, so it reads range + plan only and
+  nothing on it changes when a switch flips (user, 2026-09-17: "turning it
+  off doesn't make everything zero"). `SavingsOptionsSection` owns its
+  switch state again; the controlled props are gone.
+- The off states remain in `summaryFor` as optional flags (default true)
+  for a window in which a mechanism was off the whole period; no seeded
+  window hits them. `TokenSavings.tsx`, `TokenSavingsDefault.tsx`,
+  `token-savings-summary.ts`.
