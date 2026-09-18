@@ -49,7 +49,51 @@ Prior day: [`changelog-9-17.md`](./changelog-9-17.md)
   SignIn and SignUp import from there. Brand colours stay out of `@theme`
   on purpose: they must not shift with the theme or become utilities.
 
+### Info becomes the fourth status family `81888fb`
+
+- Before: `success`, `warning` and `danger` each owned a token family; info
+  did not, so StatusDot took `bg-blue-600`, Badge `info` took
+  `bg-blue-700/10 text-blue-600` with a `dark:` twin, and Callout took a
+  third recipe on blue-300 / blue-50 / blue-900.
+- After: `--info`, `--info-foreground`, `--info-wash`, `--info-surface`,
+  `--info-border`, `--info-foreground-strong` in `src/index.css`, both
+  themes, at exactly the values that shipped. StatusDot, Badge and Callout
+  bind to them. design.md §2 gains "Status info family".
+
+### Auth panel colours are tokens `81888fb`
+
+- Before: `AuthLayout.tsx` painted its fixed-dark marketing panel with raw
+  `bg-neutral-950`, `bg-neutral-900`, `text-white`, `border-white/10`,
+  `text-blue-400` and three inline `rgba(255,255,255,0.05)` gradients, the
+  only `rgba()` in `src` outside `index.css`.
+- After: `--auth-panel`, `--auth-panel-foreground`, `--auth-panel-tile`,
+  `--auth-panel-edge`, `--auth-glow`, `--auth-accent`, declared once in
+  `:root` because the panel never follows the theme. Same values.
+  design.md §2 gains "Auth panel".
+
+### Syntax literal token renamed; code surfaces use plain utilities `81888fb`
+
+- Before: `--color-syntax-terminal-blue` resolved to success-700 /
+  success-400 and was green in both themes; `code-card.tsx` and
+  `code-panel.tsx` reached it through `text-[var(--color-syntax-*)]`.
+- After: token is `--color-syntax-literal`; both files use
+  `text-syntax-keyword`, `text-syntax-variable`, `text-syntax-property`,
+  `text-syntax-literal`. No colour change.
+
 ## Components
+
+### TextLink underline and Policies redact radio read semantic tokens `81888fb`
+
+- TextLink: `decoration-neutral-200 hover:decoration-neutral-500` plus three
+  `dark:` twins becomes `decoration-border hover:decoration-muted-foreground`
+  (`text-link.tsx`). Light hover underline moves one step, neutral-500 to
+  neutral-600; dark is unchanged. design.md §0 and §7 recipes updated.
+- Policies redact action: checked radio and active card border move from
+  `neutral-700` / `border-muted-foreground` to `--primary`
+  (`policies/config.ts`). Light 700 / 600 to 900, dark 400 to 200, so the
+  redact state matches the primary button ink and stays one tone.
+- Chart wrapper (`chart.tsx`): a comment marks the `#ccc` / `#fff` as
+  Recharts attribute selectors, not colours.
 
 ### Dot matrix loader drops its unused colour presets `2b1c3b1`
 

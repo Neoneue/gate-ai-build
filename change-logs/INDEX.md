@@ -15,6 +15,10 @@ tokens; this index exists so nothing has to glob the directory.
 - Vendor brand colours live in one registry
 - Dot matrix loader drops its unused colour presets
 - Colour audit checklist
+- Info becomes the fourth status family
+- Auth panel colours are tokens
+- Syntax literal token renamed; code surfaces use plain utilities
+- TextLink underline and Policies redact radio read semantic tokens
 
 ### [2026-09-17](./2026-09/changelog-9-17.md)
 
