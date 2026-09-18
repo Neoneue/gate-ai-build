@@ -447,7 +447,7 @@ components:
 3. **24px gutters (Bootstrap/Material default)** → 12-column grid with **16px gutters**. Denser, more on-genre for an operator tool.
 4. **Brand colors as chart series colors** → 8-slot OKLCH categorical palette picked by series index. Per-series `slot?: number` override only for brand-mnemonic exceptions (Anthropic→orange, OpenAI→blue).
 5. **Heavy 1px+ card borders / shadcn default `border` + drop-shadow** → tight `border border-border` (neutral-200) + `shadow-xs`. The 2026-05-15 migration replaced the prior `shadow-(--shadow-border)` ring-as-border recipe with an explicit border so the edge reads at any zoom and against any backdrop. `--shadow-border` token is still in `index.css:117` but no longer the Card default.
-6. **All numerics mono** → five-voice taxonomy. Hero summary numerics ≥24px sans tabular via `<HeroNumeric>`; data numerics <20px stay mono.
+6. **All numerics mono** → five-voice taxonomy. Every KPI value is sans tabular via `<HeroNumeric>` (24px, inside `KpiTile` / `CompactKpi`), including the Request and Conversation detail rails (moved off 18px mono 2026-09-17). Mono is for data: table cells, IDs, hashes, badge and count contents.
 7. **WCAG 2.5.5 AAA 44×44 touch targets** → 32px (`h-8` / `size="sm"`) for Select / Input / SegmentedPill / IconActionButton chrome on dense filter rows. This is an operator dashboard on desktop (`Who: human operator running an AI gateway in production`), not a touch surface. WCAG 2.5.8 Level AA (24×24 minimum) is the target we hold — every chrome control clears it. If we ever ship a mobile / tablet surface, raise to AAA or wrap critical actions in `IconActionButton`'s `after:-inset-2` hit-target expansion. Until then, dense controls are correct and AAA touch findings should be marked "register carve-out" not "fix."
 
 ---
@@ -967,6 +967,16 @@ waiver is per-site by construction — there is no file-level or repo-level
 switch. Current uses: `src/pages/requests/RequestsTable.tsx` (Model cell).
 `RequestDetailBody.tsx`'s Model value needs no waiver — a `DetailList` value is
 not inside a label-role tag.
+
+**Raw type utilities are linted too (2026-09-17).** The same script fails a
+bare `font-medium` / `font-semibold` / `font-bold` or `text-xs` through
+`text-2xl` on any line in `src/pages` or `src/layouts` that carries no
+`type-*` voice. Page text always goes through a named voice; a raw weight or
+size is the pre-voice idiom and drifts from the ladder unseen. Primitives under
+`src/components` are exempt (their recipes are the voices). Inline emphasis
+inside a voiced paragraph, where the voice sits on the parent and the span only
+adds weight, takes a `design-allow-raw-type` comment with its reason within
+the 5 lines above, same per-site shape as the copy-voice waiver.
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
 

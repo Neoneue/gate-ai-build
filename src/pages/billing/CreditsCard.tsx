@@ -582,14 +582,16 @@ function AutoRechargeDialog({
           <div className="flex flex-col gap-2 rounded-md border border-border bg-card-muted px-4 py-3">
             <p className="type-copy-14 m-0 text-pretty text-foreground">
               When your balance drops below{" "}
-              <span className="font-medium text-foreground">${threshold}</span>,
-              we&apos;ll add{" "}
-              <span className="font-medium text-foreground">${topUp}</span> to
+              <span className="type-label-14 text-foreground">
+                ${threshold}
+              </span>
+              , we&apos;ll add{" "}
+              <span className="type-label-14 text-foreground">${topUp}</span> to
               your account
               {monthlyCap !== null && capValid ? (
                 <>
                   , up to{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     ${monthlyCap}/month
                   </span>
                 </>
@@ -597,7 +599,7 @@ function AutoRechargeDialog({
                 <>
                   {" "}
                   with{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="type-label-14 text-foreground">
                     no monthly cap
                   </span>
                 </>
@@ -651,7 +653,7 @@ export function CreditStatRow({
       <dt className="type-label-14 text-muted-foreground">{label}</dt>
       <dd
         className={cn(
-          "m-0",
+          "type-copy-14 m-0",
           mono && "font-mono tabular-nums",
           muted ? "text-muted-foreground" : "text-foreground"
         )}

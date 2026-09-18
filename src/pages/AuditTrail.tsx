@@ -164,9 +164,9 @@ function PageHeader() {
 
 /* Section label for the KPI rail. PageTitle renders an h2, so this heading is h3 to keep the outline
  * valid (h1 = document title owned by DashboardChrome → h2 page title → h3
- * section). Visual size is text-xl/7 (20/28) — a section-label tier one step
+ * section). Visual size is the type-heading-20 tier (20/28) — a section-label tier one step
  * under the design-system h2 "Section title" token (text-2xl/24) so it doesn't
- * match the 24px KPI hero values directly below — NOT the text-sm
+ * match the 24px KPI hero values directly below — NOT the 14px
  * `SectionHeading` primitive, whose tier is modal body-section labels. */
 function OverviewBar() {
   return <SectionTitle>Overview</SectionTitle>;

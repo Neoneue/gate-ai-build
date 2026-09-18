@@ -120,7 +120,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token savings</PageTitle>
-      <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>
@@ -394,17 +394,13 @@ const PRO_COMPRESSION_BENEFITS: CompressionBenefit[] = [
 function SavingsHeadline({
   value,
   caption,
-  valueClassName,
 }: {
   value: string;
   caption: string;
-  valueClassName: string;
 }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-      <HeroNumeric className={`leading-none ${valueClassName}`}>
-        {value}
-      </HeroNumeric>
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <HeroNumeric>{value}</HeroNumeric>
       <p className="type-copy-14 m-0 text-muted-foreground">{caption}</p>
     </div>
   );
@@ -573,7 +569,6 @@ function CompressionCard({
             <SavingsHeadline
               caption="smaller messages on average"
               value="~20%"
-              valueClassName="text-foreground text-xl"
             />
           )}
           <BenefitList

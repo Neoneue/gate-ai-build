@@ -300,7 +300,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           <h2 className="type-heading-24 m-0 text-foreground">
             Explore our catalog
           </h2>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
             Every model Gate can send your requests to. Search by name, filter
             by provider, and compare what each one costs and can do.
           </p>
@@ -400,7 +400,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
         </Tabs>
       </div>
 
-      <p className="type-copy-12 m-0 text-muted-foreground tracking-snug">
+      <p className="type-copy-12 m-0 text-muted-foreground">
         Pass <InlineCode size="sm">claude-haiku-4-5</InlineCode> to use the
         preferred provider, or{" "}
         <InlineCode size="sm">openrouter/claude-haiku-4-5</InlineCode> to pin a
@@ -422,7 +422,7 @@ function PageHeader({
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Models</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
         Route to{" "}
         <span className="text-foreground tabular-nums">{modelCount}</span>{" "}
         models across{" "}
@@ -852,6 +852,11 @@ function ModelDetailPage({
     document.querySelector<HTMLElement>("[data-model-back-link]")?.focus();
   }, []);
 
+  // Same membership test CapabilityStrip uses: CAPABILITY_ORDER fixes the
+  // display order, the Set answers "does this model have it".
+  const have = new Set(model.capabilities);
+  const orderedCapabilities = CAPABILITY_ORDER.filter((c) => have.has(c));
+
   return (
     <div className="flex flex-col gap-8 pb-8">
       {/* Top utility bar — back affordance only for now. The back link takes
@@ -892,18 +897,16 @@ function ModelDetailPage({
 
         {model.capabilities.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            {CAPABILITY_ORDER.filter((c) => model.capabilities.includes(c)).map(
-              (c) => {
-                const meta = CAPABILITY_META[c];
-                const Icon = meta.icon;
-                return (
-                  <Badge className="h-6" key={c} variant="neutral">
-                    <Icon aria-hidden="true" data-icon="inline-start" />
-                    {meta.label}
-                  </Badge>
-                );
-              }
-            )}
+            {orderedCapabilities.map((c) => {
+              const meta = CAPABILITY_META[c];
+              const Icon = meta.icon;
+              return (
+                <Badge className="h-6" key={c} variant="neutral">
+                  <Icon aria-hidden="true" data-icon="inline-start" />
+                  {meta.label}
+                </Badge>
+              );
+            })}
           </div>
         ) : null}
 
@@ -915,7 +918,7 @@ function ModelDetailPage({
               // text-wrap). Apply it conditionally so the rule is only
               // present where it can actually do work. `whitespace-pre-line`
               // preserves the paragraph breaks prod's descriptions carry.
-              "m-0 whitespace-pre-line font-sans text-base text-foreground",
+              "type-copy-16 m-0 whitespace-pre-line text-foreground",
               showFullDesc ? "text-pretty" : "line-clamp-3"
             )}
             id="model-description"
@@ -1307,12 +1310,14 @@ function MarkupBadge({ markup }: { markup: number }) {
   }
   const percent = Math.round((markup - 1) * 100);
   return (
-    <Badge
-      title="Gateway markup over this provider's list price"
-      variant="neutral"
-    >
-      +{percent}%
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger render={<Badge variant="neutral" />}>
+        +{percent}%
+      </TooltipTrigger>
+      <TooltipContent>
+        Gateway markup over this provider's list price
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

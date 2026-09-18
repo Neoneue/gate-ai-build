@@ -69,6 +69,7 @@ export function AuditRecordDialog({
          * "Verified" seal sitting directly beneath the copy. */}
         <DialogScrollSummary className="pt-4">
           <div className="flex flex-col gap-2">
+            {/* design-allow-raw-type: inline emphasis inside a type-copy-16 lede; type-label-16 would swap tracking-snug for tracking-tight mid-sentence. */}
             <p className="type-copy-16 m-0 text-foreground">
               This event is fingerprinted to{" "}
               <span className="font-medium">

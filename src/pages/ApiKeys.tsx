@@ -292,6 +292,15 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
 
 const CONNECT_TAB_IDS = ["gate-connect", "claude-code", "codex", "openclaw"];
 
+/* Fluid Gate Connect title: 20px, growing to 24px once the /connect container
+   clears 993px. It stays a raw recipe rather than a type-heading-20 base:
+   the voice utilities are emitted after Tailwind's generated utilities in the
+   same layer, so a voice class would outrank both @min-[993px] clamps at equal
+   specificity and pin the title at 20px.
+   design-allow-raw-type: fluid clamp title, no voice can carry the clamp. */
+const GATE_CONNECT_TITLE_CLASS =
+  "text-xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0";
+
 export function UsageInfo() {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -309,9 +318,9 @@ export function UsageInfo() {
         </h2>
         <p className="type-copy-14 m-0 text-muted-foreground">
           There are two ways to start making messages using your API key. With{" "}
-          <span className="font-medium">Gate Connect</span>, setup is automatic,
-          so you can skip the code entirely. Want to configure it yourself? Use
-          the code snippets to do it by hand.
+          <span className="type-label-14">Gate Connect</span>, setup is
+          automatic, so you can skip the code entirely. Want to configure it
+          yourself? Use the code snippets to do it by hand.
         </p>
         <p className="type-copy-14 m-0 text-muted-foreground">
           To learn more, check out our{" "}
@@ -357,7 +366,7 @@ export function UsageInfo() {
                 gateConnectOnly
                 imageClassName="hidden @min-[672px]/connect:block pointer-events-none select-none absolute top-1/2 right-0 -translate-y-1/2 w-[467.756px] scale-[0.6914426] origin-right"
                 textMaxWidth="max-w-full @min-[672px]/connect:max-w-[350px] @min-[993px]/connect:max-w-[400px]"
-                titleClassName="text-xl @min-[993px]/connect:text-[clamp(20px,calc(7.52px_+_1cqw),24px)] @min-[993px]/connect:leading-[clamp(28px,calc(15.52px_+_1cqw),32px)] font-medium tracking-tight text-foreground text-balance m-0"
+                titleClassName={GATE_CONNECT_TITLE_CLASS}
               />
             </div>
           </Card>

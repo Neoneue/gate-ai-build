@@ -210,13 +210,14 @@ export function AuthLayout() {
         </div>
 
         <div className="hidden self-center md:col-span-5 md:col-start-1 md:row-start-2 md:block">
-          <h1 className="font-medium text-6xl text-white leading-tight tracking-tight">
+          <h1 className="type-heading-56 text-white leading-tight">
             <span data-scramble>Gate</span>{" "}
             <span className="text-blue-400" data-scramble>
               every
             </span>{" "}
             <span data-scramble>agent call</span>
           </h1>
+          {/* design-allow-raw-type: mono display lede at 18/32; no type-mono-18 voice exists. */}
           <p
             className="mt-4 font-mono text-lg/8 text-muted-foreground"
             data-anim

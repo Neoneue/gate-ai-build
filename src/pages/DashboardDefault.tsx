@@ -424,6 +424,7 @@ export function DownloadGateConnectDialog({
                     key={id}
                     value={id}
                   >
+                    {/* design-allow-raw-type: 10px semibold detection pill; type-copy-10 is the only 10px voice and it is 400 weight, fenced to the sidenav promo. */}
                     {detected === id && (
                       <span className="absolute -top-2 left-1/2 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full bg-surface-strong px-2 font-semibold text-[10px]/[16px] text-surface-strong-foreground tracking-wide">
                         Detected
@@ -534,11 +535,11 @@ function GetStartedCard() {
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="anthropic" />
             </span>{" "}
-            <span className="font-medium text-foreground">Claude</span> and{" "}
+            <span className="type-label-14 text-foreground">Claude</span> and{" "}
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="openai" />
             </span>{" "}
-            <span className="font-medium text-foreground">Codex</span>{" "}
+            <span className="type-label-14 text-foreground">Codex</span>{" "}
             subscriptions, plus your own provider keys.
           </>
         }
@@ -562,15 +563,15 @@ function GetStartedCard() {
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="anthropic" />
             </span>{" "}
-            <span className="font-medium text-foreground">Claude</span>,{" "}
+            <span className="type-label-14 text-foreground">Claude</span>,{" "}
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="google" />
             </span>{" "}
-            <span className="font-medium text-foreground">Gemini</span>,{" "}
+            <span className="type-label-14 text-foreground">Gemini</span>,{" "}
             <span className="inline-flex align-middle">
               <VendorAvatar decorative vendor="deepseek" />
             </span>{" "}
-            <span className="font-medium text-foreground">DeepSeek</span>, and
+            <span className="type-label-14 text-foreground">DeepSeek</span>, and
             many more.
           </>
         }

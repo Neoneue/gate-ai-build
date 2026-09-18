@@ -57,6 +57,12 @@ fails on a **copy voice applied to a label** — a `type-copy-*` in the
 `type-label-*` (font-medium); `type-copy-*` is body text and silently renders a
 label at 400. See [`no-handrolling.md`](./no-handrolling.md).
 
+It also fails a **raw type utility with no voice** in `src/pages` /
+`src/layouts`: `font-medium`, `font-semibold`, `font-bold`, `text-xs` …
+`text-2xl` on a line without a `type-*` class. Use the voice. Inline emphasis
+inside a voiced paragraph is waived per site with a `design-allow-raw-type`
+comment (reason stated) within 5 lines above. `src/components` is exempt.
+
 The voice check is deliberately conservative — it declines to guess on
 ambiguous nesting, so it will miss some cases. Notably it cannot see a voice
 applied through a shared variant/`cva` recipe, a `cn()` helper defined away

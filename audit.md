@@ -21,6 +21,47 @@ in transition lists, Summary card breakdown labels (pending team), Enterprise
 seats "4 of 4", CMS Featured badge wording, the two rams Models items from
 2026-09-16.
 
+## Status (2026-09-17, end of day)
+
+Done: every HIGH, the 14 MEDIUM and 7 LOW items chosen on review, plus their
+same-line companions. Remaining unticked items fall in two groups.
+
+Skipped by decision (do not reopen without a new reason):
+
+- better-ui 4, 6, 12, 20; make-interfaces 3, 14, 15, 26; react 2, 4, 12,
+  13, 14, 17. Churn-only, unmounted shelves, brand asset, or no visible effect.
+- Free Billing duplicate set (better-ui 10, 11; make-interfaces 20, 21, 23,
+  25; react 15): the copies are marked deliberate in code and Enterprise
+  billing is closed. Needs a copy decision ("Never" vs "None yet") first.
+- better-ui 5: dim is the intended cue on a dimmed Free card.
+
+Open, needs a call:
+
+- better-ui 2: hover colour on the 11 benefit tooltip triggers (visual).
+- better-ui 18 vs make-interfaces 4: one `will-change` policy for pressables.
+- better-ui 15: OptionTile `md` radius tier.
+- react 6, 7, 16, 18: Token savings memoization, the Models import cycle,
+  the teams-store subscribe identity. Correct but no visible effect.
+
+Follow-on work the audit triggered (not in the item lists):
+
+- `lint:design` gained a `[raw-type]` check: a bare `font-*` / `text-xs`..`2xl`
+  with no `type-*` voice in `src/pages` or `src/layouts` fails. Waiver
+  `design-allow-raw-type` per site. Documented in design.md and
+  `.claude/rules/design-tokens.md`.
+- Sweep of the 40 hits it found: 31 converted to voices, 9 waived with a
+  reason. Three menu-style rows moved from 400 to 500 (design.md lists menu
+  items as Label); `menu.tsx` primitive still renders items at 400, follow-up.
+- Request and Conversation detail KPI rails moved onto `CompactKpi`, so KPI
+  values are `HeroNumeric` sans tabular 24px, never mono (user rule). The
+  request count pill is `TabsCount` (badge voice, mono 12). `HeroNumeric`
+  docblock and design.md line 450 updated.
+- Token savings Summary decoupled from the Savings options switches
+  (`d138ff4`) and the off state removed entirely (user: the toggle has no
+  effect on the summary; a demo cannot make time pass).
+- 37 dead `tracking-snug` utilities remain on `type-copy-16/18` lines in 26
+  other pages (outside the audited set); harmless, sweep when convenient.
+
 ## Overlap across the three skills
 
 The same root causes surfaced in more than one report. Fix once.
@@ -47,7 +88,7 @@ The same root causes surfaced in more than one report. Fix once.
   - Before: `... cursor-help ... text-muted-foreground hover:text-muted-foreground focus-visible:...`
   - After: `... cursor-help rounded-sm p-1 text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground motion-reduce:transition-none focus-visible:...`
   - Why: Every state change needs a visible cue. The hover target resolves to its own resting color, so the 11 benefit tooltips have a `cursor-help` affordance and no hover feedback.
-- [ ] **3. LOW** `pages/TokenSavings.tsx:429` (via `:604`)
+- [x] **3. LOW** (applied 2026-09-17, uncommitted; the only call site is now :569 (the Summary off state went away today); HeroNumeric's base already carries text-foreground, so the single-use valueClassName prop went with it) `pages/TokenSavings.tsx:429` (via `:604`)
   - Before: `<HeroNumeric className={"leading-none text-foreground text-xl"}>`
   - After: drop `text-xl` / `leading-none`, keep `<HeroNumeric>` default
   - Why: `HeroNumeric` is the locked 24px+ display voice (`hero-numeric.tsx:15-20`); the call site pushes it to 20px, where the primitive's own contract says numerics revert to mono. The Overview rail beside it stays 24px, so the two savings figures read as different tiers.
@@ -204,11 +245,11 @@ primitives that reach all three pages.
   - Before: `rounded-sm border bg-card/40 p-4` inside a `rounded-sm` card
   - After: `rounded-xs border bg-card/40 p-4`
   - Why: Third nesting level repeats its parent's 6px radius. Ladder is `md` 8, `sm` 6, `xs` 4 (`index.css:570-573`); one step per level.
-- [ ] **9. MEDIUM** `pages/TokenSavings.tsx:430` + `:604`
+- [x] **9. MEDIUM** (applied 2026-09-17, uncommitted; same edit as better-ui 3) `pages/TokenSavings.tsx:430` + `:604`
   - Before: `<HeroNumeric className={`leading-none ${valueClassName}`}>` with `valueClassName="text-foreground text-xl"`
   - After: `<HeroNumeric>` (drop `leading-none` and `text-xl`)
   - Why: Same as better-ui 3. HeroNumeric defines two rungs, 24px and 32px (`hero-numeric.tsx:27-29`); `text-xl` + `leading-none` is a third, off-ladder display size invented at the call site.
-- [ ] **10. LOW** `pages/TokenSavings.tsx:428`
+- [x] **10. LOW** (applied 2026-09-17, uncommitted) `pages/TokenSavings.tsx:428`
   - Before: `gap-x-2 gap-y-0.5`
   - After: `gap-x-2 gap-y-1`
   - Why: `gap-0.5` (2px) is the half-step that was reverted project-wide; `px-2.5` on Button is the one sanctioned exception. Only occurrence in all 14 files.
@@ -216,7 +257,7 @@ primitives that reach all three pages.
   - Before: `rounded-sm border-border bg-transparent shadow-none`
   - After: `rounded-sm bg-transparent shadow-none`
   - Why: `Card`'s base already carries `border-border`; re-stating it hides the one utility being changed. (Radius itself: see better-ui 1.)
-- [ ] **12. LOW** `TokenSavings.tsx:135`, `TokenSavingsDefault.tsx:33`, `TokenSavingsEnterprise.tsx:58`, `Models.tsx:278`, `Models.tsx:390`, `ModelShelves.tsx:64`, `FreeModels.tsx:45`, `Billing.tsx:111`, `BillingEnterprise.tsx:160`, `BillingFree.tsx:107`
+- [x] **12. LOW** (applied 2026-09-17, uncommitted; 10 utilities across the 10 listed files, zero hits left there; 37 hits remain in 26 other files, left alone as out of scope) `TokenSavings.tsx:135`, `TokenSavingsDefault.tsx:33`, `TokenSavingsEnterprise.tsx:58`, `Models.tsx:278`, `Models.tsx:390`, `ModelShelves.tsx:64`, `FreeModels.tsx:45`, `Billing.tsx:111`, `BillingEnterprise.tsx:160`, `BillingFree.tsx:107`
   - Before: `type-copy-18 ... tracking-snug` / `type-copy-16 ... tracking-snug`
   - After: drop `tracking-snug`
   - Why: `index.css:874-880` already bakes `tracking-snug` into both voices. Ten dead utilities that read as a deliberate tracking decision.
@@ -239,15 +280,15 @@ primitives that reach all three pages.
   - Before: TextLink with `hover:text-foreground focus-visible:text-foreground`, no transition; its `<ChevronDown>` has `transition-transform duration-150 ease-out`
   - After: fixed by 2 (primitive), no call-site change
   - Why: "Show more": the label's ink snaps while the caret glides for 150ms. Same as better-ui 7.
-- [ ] **17. LOW** `pages/Models.tsx:1291`
+- [x] **17. LOW** (applied 2026-09-17, uncommitted; recipe copied from the +N capability chip in the same file) `pages/Models.tsx:1291`
   - Before: `<Badge title="Gateway markup over this provider's list price">`
   - After: `<Tooltip><TooltipTrigger render={<Badge .../>}>...` (recipe at `Models.tsx:737-757`)
   - Why: Native `title` is the only hover explanation on a page that otherwise speaks through the Tooltip primitive: two hover voices, OS delay, no keyboard path.
-- [ ] **18. LOW** `pages/Models.tsx:368`
+- [x] **18. LOW** (applied 2026-09-17, uncommitted) `pages/Models.tsx:368`
   - Before: `type-copy-12 m-0 text-muted-foreground tracking-snug`
   - After: `type-copy-12 m-0 text-muted-foreground`
   - Why: Unlike `type-copy-16/18`, `type-copy-12` (`index.css:886-888`) sets no tracking, so this is a live deviation: a 12px body voice tightened while every other 12px body sits at normal.
-- [ ] **19. LOW** `pages/SetupModels.tsx:82`
+- [x] **19. LOW** (applied 2026-09-17, uncommitted) `pages/SetupModels.tsx:82`
   - Before: `<TableCell className="font-medium text-foreground">`
   - After: `<TableCell className="type-label-14 text-foreground">`
   - Why: Raw weight instead of the named voice; the identical cell on the catalog table (`Models.tsx:605`) and the shelf table (`ModelShelves.tsx:433`) use `type-label-14`.
@@ -270,7 +311,7 @@ primitives that reach all three pages.
   - Before: `<CreditStatRow label="Auto-recharge" value={`+$${auto.topUp} below $${auto.threshold}`} />`, `mono` omitted
   - After: add `mono`
   - Why: The `dd` column is a stack of right-aligned currency values; "Used this month" and "Last top-up" are `font-mono tabular-nums`, this one is proportional sans, so its digits sit off the column.
-- [ ] **24. LOW** `pages/billing/CreditsCard.tsx:647`, `pages/BillingFree.tsx:780`, `pages/BillingEnterprise.tsx:284`
+- [x] **24. LOW** (applied 2026-09-17, uncommitted; the mono/muted conditionals are untouched) `pages/billing/CreditsCard.tsx:647`, `pages/BillingFree.tsx:780`, `pages/BillingEnterprise.tsx:284`
   - Before: `<dd className={cn("m-0", mono && ...)}>`, no voice; inherits `type-copy-14` from the `<dl>`
   - After: put `type-copy-14` on the `<dd>` itself
   - Why: The inherited-voice case `design-tokens.md` calls out as invisible to `lint:design`.
@@ -332,7 +373,7 @@ already exists (`App.tsx` uses `lazy`).
   - Before: `models.find((m) => m.id === free.id)` / `ids.map((id) => models.find((m) => m.id === id))` over about 390 `MODELS` rows
   - After: Use the Map that already exists: `import { modelById } from "@/data/models"` then `modelById(free.id)` / `ids.map(modelById)`; keep the `models` param as an opt-in override that falls back to `find`
   - Why: `MODEL_BY_ID` is already built (`data/models.ts:1625`). `featuredModels()` does 4 scans, `freeModelRows()` 2, each shelf 4, all on every render of the Models list.
-- [ ] **3. LOW** `js-set-map-lookups` Models: `pages/Models.tsx:875`
+- [x] **3. LOW** (applied 2026-09-17, uncommitted; the Set is hoisted into ModelDetailPage's body as orderedCapabilities) `js-set-map-lookups` Models: `pages/Models.tsx:875`
   - Before: `CAPABILITY_ORDER.filter((c) => model.capabilities.includes(c))`
   - After: `const have = new Set(model.capabilities); CAPABILITY_ORDER.filter((c) => have.has(c))`
   - Why: The same file already does exactly this at `:698`; the detail page is the inconsistent copy. Tiny N, consistency more than speed.
@@ -343,7 +384,7 @@ already exists (`App.tsx` uses `lazy`).
 
 ### Re-render optimization
 
-- [ ] **5. MEDIUM** `rerender-derived-state-no-effect` Token savings: `pages/TokenSavings.tsx:218-227`
+- [x] **5. MEDIUM** (moot, `d138ff4`: the controlled `savings` props were removed when the Summary was decoupled from the switches) `rerender-derived-state-no-effect` Token savings: `pages/TokenSavings.tsx:218-227`
   - Before: `const [local, setLocal] = useState(...); const value = savings ?? local; const update = (patch) => { const next = {...value, ...patch}; setLocal(next); onSavingsChange?.(next); }`
   - After: Only write local state when uncontrolled: `const controlled = savings !== undefined; const update = (patch) => { const next = {...value, ...patch}; if (!controlled) setLocal(next); onSavingsChange?.(next); }`
   - Why: When `TokenSavings` controls the switches (`:119-122`), every toggle writes a `local` value nothing reads, forcing a second render of the section and both cards. Two sources of truth for one value.

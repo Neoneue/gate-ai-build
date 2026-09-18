@@ -42,7 +42,7 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
         <h2 className="type-heading-24 m-0 text-foreground">
           Free models from Gate
         </h2>
-        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
           Models Gate supports at no cost for your plan, so you can ship without
           a paid balance.
         </p>

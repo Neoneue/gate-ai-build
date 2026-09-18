@@ -854,7 +854,7 @@ function RowActionsMenu({
               return (
                 <MenuPrimitive.Item
                   className={cn(
-                    "relative flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-xs px-3 text-sm outline-none",
+                    "type-label-14 relative flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-xs px-3 outline-none",
                     "focus-visible:bg-muted data-[highlighted]:bg-muted",
                     item.destructive
                       ? "text-destructive data-[highlighted]:text-destructive"
