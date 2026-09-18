@@ -137,7 +137,7 @@ export function RequestTracePanel({
         {/* Per-row track segments are rendered inside TraceItem (see
             below) so geometry stays correct regardless of row content
             height. First/last items truncate the segment at the node
-            center; the node's bg-white masks the line where it crosses. */}
+            center; the node's bg-card masks the line where it crosses. */}
         <div className="flex flex-col">
           {items
             ? items.map((item, i) =>
@@ -255,7 +255,7 @@ function TraceItem({
     >
       {/* Per-row track segment — sits at x=23 inside TraceItem coords so
           the 2px line centers on the node centerline at x=24. Comes
-          first in DOM so the node renders above and its bg-white masks
+          first in DOM so the node renders above and its bg-card masks
           the line where it crosses. */}
       <span
         aria-hidden

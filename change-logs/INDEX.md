@@ -19,6 +19,9 @@ tokens; this index exists so nothing has to glob the directory.
 - Auth panel colours are tokens
 - Syntax literal token renamed; code surfaces use plain utilities
 - TextLink underline and Policies redact radio read semantic tokens
+- Raw colours are linted
+- Overlay scrim and terminal surface are tokens
+- Sidebar and user-menu avatar circles reuse the Monogram tone
 
 ### [2026-09-17](./2026-09/changelog-9-17.md)
 

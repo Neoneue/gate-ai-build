@@ -98,7 +98,7 @@ token, copied across files; LOW = single site or cosmetic.
 
 ### B. Raw palette atom where a semantic token exists
 
-- [ ] **7. MEDIUM** modal scrim, four copies
+- [x] **7. MEDIUM** modal scrim, four copies
   `src/components/ui/dialog.tsx:35`, `sheet.tsx:58`, `alert-dialog.tsx:29`,
   `notifications-menu.tsx:164`
   - Before: `bg-neutral-900/40` three times, `bg-neutral-900/50` once. No
@@ -110,7 +110,7 @@ token, copied across files; LOW = single site or cosmetic.
     deliberate, document why on the token.
   - Why: one role, four sites, two strengths, no theme handling.
 
-- [ ] **8. MEDIUM** dark terminal surface
+- [x] **8. MEDIUM** dark terminal surface
   `src/components/ui/code-card.tsx:79,80,336,341`, `code-panel.tsx:93`
   - Before: `bg-neutral-800`, `bg-neutral-700`, `border-neutral-900/60`,
     `text-neutral-100`, `text-neutral-400`.
@@ -124,7 +124,7 @@ token, copied across files; LOW = single site or cosmetic.
     Confidence moderate: check `design.md` CMP-012 first; if it pins the ramp
     steps, the family still wins because it names the role.
 
-- [ ] **9. MEDIUM** brand-blue monogram, five copies
+- [x] **9. MEDIUM** brand-blue monogram, five copies
   `src/components/ui/monogram-types.ts:16`, `sidebar.tsx:208,411,491`,
   `user-menu.tsx:45`
   - Before: `bg-blue-700 text-white` on four hand-rolled avatar circles plus
@@ -257,7 +257,7 @@ token, copied across files; LOW = single site or cosmetic.
 
 ### D. Enforcement gap
 
-- [ ] **17. MEDIUM** `scripts/check-design-tokens.mjs` check 1
+- [x] **17. MEDIUM** `scripts/check-design-tokens.mjs` check 1
   - Before: `COLOR_RE` fires only on `*-[#…]` / `*-[rgb(…)]` arbitrary
     classes. It cannot see a bare `"#34d399"` string (item 1), an inline
     `rgba(` (item 2), `fill="#…"` on an SVG, or a raw palette class that has
@@ -334,6 +334,25 @@ AuthLayout with item 12): 2, 3, 4, 5, 10, 11, 12, 13.
   fills use `color-mix(... var(--color-neutral-800) ..., white ...)` in
   template literals; ramp-referencing, not hex, left alone.
 
-Remaining open: 7, 8, 9, 17. Items 1, 14, 15, 16 are the ones worth doing first: 1 is a
+Applied 2026-09-18, third pass (MEDIUM, zero visual change): 7, 8, 9, 17.
+
+- `--overlay` (neutral-900 at 40%) and `--overlay-strong` (50%), `:root`
+  only, on dialog (both backdrops), sheet, alert-dialog, notifications.
+  The audit's proposed dark twin was NOT added: it would have changed the
+  dark scrim. Open as a future tune.
+- `--terminal{,-chrome,-edge,-foreground,-foreground-muted}`, `:root` only,
+  fixed dark, on code-card and code-panel. Exact values.
+- Item 9 narrowed: design.md §2 "Kept as-is" keeps white-on-brand fills, and
+  `Monogram` sizes (20 / 28) do not match the circles (24 / 32 / 28), so no
+  component swap and no token. The four circles now reuse
+  `AVATAR_TONE_CLS.blue` instead of restating `bg-blue-700 text-white`.
+- Lint checks 5 `[raw-color]` and 6 `[raw-palette]` in
+  `scripts/check-design-tokens.mjs`; documented in design.md "How it's
+  enforced" and `.claude/rules/design-tokens.md`. Allowlist is
+  `brand-colors.ts` alone; `src/data` skipped; waiver
+  `design-allow-raw-color` (one use, chart.tsx).
+
+All 18 items closed. Still open from item 15: the setup step-indicator ink
+call (`text-blue-600 dark:text-blue-400`, four lines). Items 1, 14, 15, 16 are the ones worth doing first: 1 is a
 live bug, the other three remove about 60 of the 130 raw blue and violet
 uses and give the tier concept a name.

@@ -642,6 +642,31 @@ The marketing half of the sign-in / sign-up split (`AuthLayout`) is painted dark
 
 `--auth-accent` is deliberately **not** `--tier-pro` (which flips to blue-700 in light) and **not** `--info` (a status): it is brand ink on a panel that never goes light.
 
+### Overlay scrim *(added 2026-09-18)*
+
+The dim behind a modal layer. Four sites wrote the same raw `bg-neutral-900/40` by hand — Dialog, Sheet, AlertDialog and the mobile notifications backdrop — and none of them named the role. The scrim darkens whatever it covers rather than reporting a state, so it is fixed in both themes and declared once in `:root`, the same contract as the auth panel. ← code-direct: `src/index.css` `:root` / `@theme inline`
+
+| Token | Value (both themes) | Consumed as |
+| --- | --- | --- |
+| `--overlay` | neutral-900 @ 40% | `bg-overlay` — Dialog, Sheet, AlertDialog backdrops |
+| `--overlay-strong` | neutral-900 @ 50% | `bg-overlay-strong` — the notifications backdrop |
+
+`--overlay-strong` exists because the notifications backdrop sits under a `top-16` panel on a busy page and wanted one more rung. Two rungs, a closed set, the same rule as the destructive ladder: pick the rung for the surface, and add a rung here first if a third weight is ever wanted.
+
+### Terminal surface *(added 2026-09-18)*
+
+The dark terminal flavour of the CodeCard family (§7 CMP-012). It is dark in both themes on purpose — a terminal that inverts is not a terminal — so all five roles are declared once in `:root` with no `.dark` twin, exactly like the auth panel. That is also why the raw steps they replaced looked safe and were not: a fixed neutral on a surface with no theme story has no owner, and the next reader cannot tell "fixed dark" from a missing `dark:` variant. The macOS traffic lights keep their own `--traffic-*` family. ← code-direct: `src/index.css` `:root` / `@theme inline`
+
+| Token | Value (both themes) | Consumed as |
+| --- | --- | --- |
+| `--terminal` | neutral-800 | `bg-terminal` — the card shell |
+| `--terminal-chrome` | neutral-700 | `bg-terminal-chrome` — the header strip |
+| `--terminal-edge` | neutral-900 @ 60% | `border-terminal-edge` — the strip hairline |
+| `--terminal-foreground` | neutral-100 | `text-terminal-foreground` — default code ink |
+| `--terminal-foreground-muted` | neutral-400 | `text-terminal-foreground-muted` — comments, gutter, title |
+
+**Do not use:** a raw `bg-neutral-900/N` for a scrim, or a raw neutral step on the terminal card. Both have a named token above, and both are what the guard now fails on.
+
 ### Dark mode (`.dark` theme) *(added 2026-07-09)*
 
 Dark mode is driven entirely by a `.dark` class on `<html>` that re-points the `:root {}` semantic tokens. **No component reads a palette atom for a themed surface.** Any surface already on a semantic token (`bg-card`, `text-foreground`, `border-border`, …) inverts for free — which is why the raw-ramp ban above is now a *functional* requirement, not just hygiene: a raw `bg-neutral-100` / `bg-white` / `text-neutral-700` does not invert and renders dark-on-dark (or light-on-light). ← code-direct: `src/index.css` `.dark {}`
@@ -1029,6 +1054,18 @@ size is the pre-voice idiom and drifts from the ladder unseen. Primitives under
 inside a voiced paragraph, where the voice sits on the parent and the span only
 adds weight, takes a `design-allow-raw-type` comment with its reason within
 the 5 lines above, same per-site shape as the copy-voice waiver.
+
+**Raw colours are linted too (2026-09-18).** The same script fails a hex,
+`rgb()`, `hsl()`, `oklch()` or `oklab()` literal on any non-comment line in
+`src`, except `src/index.css` (the palette), `src/components/icons/brand-colors.ts`
+(the one registry of external brand hexes, see "Vendor brand colors") and
+`src/data` (captured transcripts). It also fails a raw palette atom that has a
+semantic twin in the quick-reference table above (`bg-white`, `bg-neutral-100`,
+`border-neutral-200`, `ring-neutral-N`, `text-neutral-900`, `text-neutral-500`,
+`bg-neutral-900/N`) anywhere in `src/pages`, `src/layouts` or `src/components`,
+and names the token to use. Both waive per site with a `design-allow-raw-color`
+comment within the 5 lines above; the only current waiver is `chart.tsx`, whose
+`#ccc` / `#fff` are Recharts attribute selectors, not paint.
 
 **Hero/data split is size-gated.** Hero summary numerics ≥24px render sans (sans + `tabular-nums` carries the cell-padding mono affordance while signaling "presented summary"). **Below ~20px, numerics revert to mono regardless of role** — modal `KpiTile` at text-lg, table cells, badge contents, row costs all stay mono. The cutoff is real: at ~18px the digit-shape differences between Geist Sans tabular and Geist Mono become more visible, and the mono-illusion breaks.
 

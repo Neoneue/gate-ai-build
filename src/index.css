@@ -545,6 +545,38 @@ and (pointer: fine)) and (&:hover));
   --auth-panel-edge: color-mix(in oklch, var(--color-white) 10%, transparent);
   --auth-glow: color-mix(in oklch, var(--color-white) 5%, transparent);
   --auth-accent: var(--color-blue-400);
+
+  /* ─── Overlay scrim (fixed dark) ────────────────────────────────────────
+     The dim behind a modal layer — Dialog, Sheet, AlertDialog and the
+     mobile notifications panel. The scrim darkens whatever it covers, so it
+     does not flip with the theme; it is declared ONCE here and has no
+     `.dark` twin, the same contract as --auth-*. Four sites had been
+     writing the same raw `bg-neutral-900/40` by hand.
+
+     --overlay-strong is the second rung: the notifications backdrop sits
+     under a `top-16` panel on a busy page and wanted one more rung. Two
+     rungs, a closed set, the same rule as the destructive ladder — a bare
+     `bg-neutral-900/N` at a call site is off-token. */
+  --overlay: color-mix(in oklab, var(--color-neutral-900) 40%, transparent);
+  --overlay-strong: color-mix(
+    in oklab,
+    var(--color-neutral-900) 50%,
+    transparent
+  );
+
+  /* ─── Terminal surface (fixed dark) ─────────────────────────────────────
+     The dark terminal flavour of the CodeCard family (CMP-012). It is dark
+     in BOTH themes on purpose — a terminal that inverts is not a terminal —
+     so these are declared ONCE here with no `.dark` twin, exactly like the
+     auth panel. That is also why the raw neutrals they replace looked safe:
+     a fixed step on a surface with no theme story has no owner, and the
+     next reader cannot tell "fixed dark" from a missing `dark:` variant.
+     The macOS traffic lights keep their own --traffic-* family. */
+  --terminal: var(--color-neutral-800);
+  --terminal-chrome: var(--color-neutral-700);
+  --terminal-edge: color-mix(in oklch, var(--color-neutral-900) 60%, transparent);
+  --terminal-foreground: var(--color-neutral-100);
+  --terminal-foreground-muted: var(--color-neutral-400);
 }
 
 /* App shell: left nav + scrollable main area. */
@@ -634,6 +666,19 @@ body {
   --color-auth-panel-tile: var(--auth-panel-tile);
   --color-auth-panel-edge: var(--auth-panel-edge);
   --color-auth-accent: var(--auth-accent);
+  /* Overlay scrim. Both rungs are read as `bg-overlay` / `bg-overlay-strong`,
+     so both are aliased. */
+  --color-overlay: var(--overlay);
+  --color-overlay-strong: var(--overlay-strong);
+  /* Terminal surface. All five roles are read by a colour utility
+     (`bg-terminal`, `bg-terminal-chrome`, `border-terminal-edge`,
+     `text-terminal-foreground`, `text-terminal-foreground-muted`), so all
+     five are aliased. */
+  --color-terminal: var(--terminal);
+  --color-terminal-chrome: var(--terminal-chrome);
+  --color-terminal-edge: var(--terminal-edge);
+  --color-terminal-foreground: var(--terminal-foreground);
+  --color-terminal-foreground-muted: var(--terminal-foreground-muted);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);

@@ -161,7 +161,7 @@ function NotificationsMenu({
         // 50% scrim below `lg` (user call 2026-09-09; the Sheet's is 40%): the
         // page dims so the top sheet reads as the front layer. Starts under
         // the bar (`top-16`), so the bar itself stays lit. No scrim at `lg`+.
-        backdropClassName="top-16 bg-neutral-900/50 supports-backdrop-filter:backdrop-blur-xs lg:hidden"
+        backdropClassName="top-16 bg-overlay-strong supports-backdrop-filter:backdrop-blur-xs lg:hidden"
         className={cn(
           "w-full rounded-t-none border-t-0 p-0 lg:w-100 lg:rounded-t-sm lg:border-t",
           // Below `lg` it MOVES like the Sheet, not like a popover: slide down

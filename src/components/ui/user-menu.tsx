@@ -11,6 +11,8 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
+import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
+import { cn } from "@/lib/utils";
 
 /* Desktop-only (`lg`+). Below `lg` the nav Sheet renders the same account
  * actions inline at its foot instead — a popover inside a drawer is a second
@@ -42,7 +44,10 @@ function UserMenu({
         <MenuLabel className="flex-row items-center gap-2 py-3">
           <span
             aria-hidden
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-700 font-medium font-mono text-white text-xs"
+            className={cn(
+              AVATAR_TONE_CLS.blue,
+              "inline-flex size-7 shrink-0 items-center justify-center rounded-full font-medium font-mono text-xs"
+            )}
           >
             CP
           </span>

@@ -42,12 +42,30 @@
  *     voices. Waiver: a `design-allow-raw-type` comment with a reason within
  *     the 5 lines above.
  *
+ *  5. RAW COLOR LITERAL — a hex (`#abc`, `#aabbcc`, `#aabbccdd`), `rgb()`,
+ *     `rgba()`, `hsl()`, `oklch()` or `oklab()` on a non-comment line
+ *     anywhere in `src` except `src/index.css` (the palette) and
+ *     `src/components/icons/brand-colors.ts` (the ONE registry of external
+ *     brand hexes, design.md §2 "Vendor brand colors"). `src/data` is skipped:
+ *     it holds captured transcripts, not UI. Waiver: `design-allow-raw-color`
+ *     within the 5 lines above (chart.tsx uses it for Recharts attribute
+ *     selectors, which match a stroke value rather than paint one). Added
+ *     2026-09-18 after color-audit.md found the arbitrary-class check (1)
+ *     could not see a bare string hex or an inline `rgba(` gradient.
+ *
+ *  6. RAW PALETTE ATOM WITH A SEMANTIC TWIN — the "Do NOT write" column of
+ *     design.md §2 "Semantic token quick-reference" plus the families added
+ *     2026-09-18: `bg-white`, `bg-neutral-100`, `border-neutral-200`,
+ *     `ring-neutral-N`, `text-neutral-900`, `text-neutral-500`,
+ *     `bg-neutral-900/N` (scrim: `bg-overlay`). Non-comment lines in
+ *     `src/pages`, `src/layouts`, `src/components`. Same waiver as 5.
+ *
  * Tracking / width / translate arbitrary values are NOT linted here — those
  * have legitimate documented uses (PageTitle `-tracking-[1px]`, container-query
  * layout clamps). The closed-set rule still governs them by discipline.
  */
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, relative } from "node:path";
 
 const ROOT = "src";
 
@@ -102,6 +120,38 @@ const ANY_VOICE_RE =
   /\btype-(?:heading|copy|label|mono|eyebrow|input|display)-/;
 const RAW_TYPE_SCOPE = /^src\/(?:pages|layouts)\//;
 
+// --- 5. raw color literal -------------------------------------------------
+// 3/4/6/8 hex digits followed by a non-alphanumeric, so "order #12345" in
+// copy does not match. rgb/hsl/oklch/oklab in any casing.
+const RAW_COLOR_RE =
+  /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-zA-Z])|\b(?:rgba?|hsla?|oklch|oklab)\(/;
+const RAW_COLOR_SKIP =
+  /^src\/(?:index\.css$|data\/|components\/icons\/brand-colors\.ts$)/;
+
+// --- 6. raw palette atom with a semantic twin ----------------------------
+const RAW_PALETTE_RE =
+  /(?:^|[\s"'`:])(?:bg-white|bg-neutral-100|border-neutral-200|ring-neutral-\d+|text-neutral-900|text-neutral-500|bg-neutral-900\/\d+)(?=[\s"'`\]/]|$)/;
+const RAW_PALETTE_SCOPE = /^src\/(?:pages|layouts|components)\//;
+const RAW_PALETTE_HINT = {
+  "bg-white": "bg-card / bg-background / bg-popover",
+  "bg-neutral-100": "bg-muted / bg-secondary / bg-accent",
+  "border-neutral-200": "border-border",
+  "text-neutral-900": "text-foreground",
+  "text-neutral-500": "text-muted-foreground",
+};
+
+// A line that is only a comment never paints anything.
+const COMMENT_LINE_RE = /^\s*(?:\/\/|\*|\/\*|\{\/\*)/;
+
+function waivedAbove(lines, i, marker) {
+  for (let j = i - 1; j >= 0 && j > i - 6; j--) {
+    if (lines[j].includes(marker)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // [fileEndsWith, substring] pairs that predate the rule and stay (documented).
 const FONT_ALLOW = [
   ["monogram.tsx", "text-[10px]"], // sm avatar initial — 10px micro-label
@@ -128,8 +178,11 @@ const argFiles = process.argv.slice(2).filter((f) => /\.(tsx?|css)$/.test(f));
 const files = argFiles.length > 0 ? argFiles : walk(ROOT);
 
 const violations = [];
-for (const file of files) {
-  const lines = readFileSync(file, "utf8").split("\n");
+for (const rawFile of files) {
+  // lint-staged passes ABSOLUTE paths; every scope regex below is written
+  // against the repo-relative form (`src/...`), so normalise first.
+  const file = isAbsolute(rawFile) ? relative(process.cwd(), rawFile) : rawFile;
+  const lines = readFileSync(rawFile, "utf8").split("\n");
   lines.forEach((line, i) => {
     const colorM = line.match(COLOR_RE);
     if (colorM) {
@@ -254,6 +307,37 @@ for (const file of files) {
       }
     }
 
+    if (!COMMENT_LINE_RE.test(line)) {
+      if (!RAW_COLOR_SKIP.test(file)) {
+        const rawColorM = line.match(RAW_COLOR_RE);
+        if (rawColorM && !waivedAbove(lines, i, "design-allow-raw-color")) {
+          violations.push({
+            file,
+            line: i + 1,
+            kind: "raw-color",
+            text: `${rawColorM[0]} — colors are tokens; only src/index.css and icons/brand-colors.ts hold literals`,
+          });
+        }
+      }
+      if (RAW_PALETTE_SCOPE.test(file)) {
+        const rawPalM = line.match(RAW_PALETTE_RE);
+        if (rawPalM && !waivedAbove(lines, i, "design-allow-raw-color")) {
+          const cls = rawPalM[0].trim().replace(/^[:"'`]/, "");
+          const hint =
+            RAW_PALETTE_HINT[cls] ??
+            (cls.startsWith("ring-")
+              ? "ring-ring"
+              : "bg-overlay / bg-overlay-strong");
+          violations.push({
+            file,
+            line: i + 1,
+            kind: "raw-palette",
+            text: `${cls} has a semantic twin — use ${hint} (design.md §2 quick-reference)`,
+          });
+        }
+      }
+    }
+
     const jsFontM = line.match(JS_FONT_SIZE_RE);
     if (jsFontM && !TYPE_SCALE.has(Number(jsFontM[1]))) {
       violations.push({
@@ -281,5 +365,5 @@ if (violations.length > 0) {
 }
 
 console.log(
-  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page."
+  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page, no raw color literal or palette atom with a semantic twin."
 );

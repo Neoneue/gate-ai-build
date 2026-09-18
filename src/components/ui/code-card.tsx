@@ -19,6 +19,10 @@ import { cn } from "@/lib/utils";
  * component because the dark terminal flavour has a distinct surface +
  * chrome (traffic lights, no tabs, dark background) that would force
  * heavy variant overrides in a one-component design. Composition wins.
+ * That surface is fixed dark in BOTH themes and is painted from the
+ * --terminal-* family (src/index.css `:root`): `bg-terminal` shell,
+ * `bg-terminal-chrome` header strip, `border-terminal-edge` hairline,
+ * `text-terminal-foreground` / `-muted` ink. No raw neutral step here.
  *
  *   <CodeCard>                       light card shell
  *     <CodeCardHeader>               grey strip with tabs + actions
@@ -41,8 +45,8 @@ import { cn } from "@/lib/utils";
 /* ── Token model ─────────────────────────────────────────────────────────── */
 
 export type CodeTone =
-  | "default" // neutral-900 light · neutral-100 (faint white) on dark
-  | "muted" // neutral-500 light · neutral-400 on dark — comments, slashes, dividers
+  | "default" // neutral-900 light · --terminal-foreground (faint white) on dark
+  | "muted" // neutral-500 light · --terminal-foreground-muted on dark — comments, slashes, dividers
   | "keyword" // syntax-keyword — curl, -H, -d, export, npm
   | "string" // success-2 — quoted strings
   | "variable" // syntax-variable — $KEY, interpolated values
@@ -76,8 +80,8 @@ const TONE_CLASS_LIGHT: Record<CodeTone, string> = {
 };
 
 const TONE_CLASS_DARK: Record<CodeTone, string> = {
-  default: "text-neutral-100",
-  muted: "text-neutral-400",
+  default: "text-terminal-foreground",
+  muted: "text-terminal-foreground-muted",
   keyword: "text-syntax-variable", // dark terminal: keywords render as amber, matches Paper
   string: "text-success-500",
   variable: "text-syntax-variable",
@@ -333,12 +337,12 @@ export function TerminalCard({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-md bg-neutral-800",
+        "flex flex-col overflow-hidden rounded-md bg-terminal",
         className
       )}
       data-slot="terminal-card"
     >
-      <div className="flex items-center gap-2 border-neutral-900/60 border-b bg-neutral-700 px-4 py-2">
+      <div className="flex items-center gap-2 border-terminal-edge border-b bg-terminal-chrome px-4 py-2">
         {/* macOS traffic-light affordances live in their own token family
             (--color-traffic-red/amber/green) so we don't reuse the semantic
             danger/warning/success ramps for chrome decoration. */}
@@ -347,7 +351,7 @@ export function TerminalCard({
           <span className="size-2 rounded-full bg-traffic-amber" />
           <span className="size-2 rounded-full bg-traffic-green" />
         </div>
-        <span className="ml-auto font-mono text-neutral-400 text-xs/4">
+        <span className="ml-auto font-mono text-terminal-foreground-muted text-xs/4">
           {title}
         </span>
       </div>

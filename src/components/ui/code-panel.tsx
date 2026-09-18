@@ -90,7 +90,7 @@ export function CodePanel({ snippet }: { snippet: string }) {
     <div className="overflow-x-auto p-4">
       {lines.map((line, i) => (
         <div className="flex gap-4 leading-relaxed" key={i}>
-          <span className="w-4 shrink-0 select-none text-right font-mono text-neutral-400 text-xs tabular-nums">
+          <span className="w-4 shrink-0 select-none text-right font-mono text-terminal-foreground-muted text-xs tabular-nums">
             {i + 1}
           </span>
           <span className="flex-1 whitespace-pre font-mono text-xs">
