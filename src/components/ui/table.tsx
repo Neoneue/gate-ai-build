@@ -154,35 +154,36 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
-/* Keyboard-accessible clickable row. Built on <TableRow> so it inherits the
- * hairline + hover; adds link semantics (role, tabIndex), pointer affordance,
- * a focus ring, an active fill, and Enter/Space activation. `onActivate` fires
- * on click and on Enter/Space. Pass `aria-label` via props. */
+/* Drill-in row. Built on <TableRow> so it inherits the hairline + hover; adds
+ * the pointer affordance and the pressed fill, and fires `onActivate` on click.
+ *
+ * MOUSE ONLY, deliberately. A <tr> legally carries `role="row"` and nothing
+ * else: the earlier `role="link" tabIndex={0}` shape took the row AND its cells
+ * out of the table grid for assistive tech — no row/column position, no header
+ * association — in exchange for Enter/Space. The KEYBOARD and AT target is a
+ * `RowActionButton` inside the row's primary (identifier) cell: an <a href> for
+ * a URL-addressable drill-in, a <button> for an in-place one. That button
+ * carries the row's `aria-label` and the focus ring, and stops click
+ * propagation so `onActivate` cannot double-fire. See
+ * `row-action-button.tsx` — the pattern codified 2026-05-09; NavTableRow was
+ * the last holdout and converted 2026-09-20.
+ *
+ * `role`, `tabIndex`, `onKeyDown` and `aria-label` are Omit-ed so no call site
+ * can put the invalid shape back or name the <tr> instead of the button. */
 function NavTableRow({
   onActivate,
   className,
   ...props
 }: Omit<
   React.ComponentProps<"tr">,
-  "onClick" | "onKeyDown" | "role" | "tabIndex"
+  "aria-label" | "onClick" | "onKeyDown" | "role" | "tabIndex"
 > & {
   onActivate: () => void;
 }) {
   return (
     <TableRow
-      className={cn(
-        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:bg-accent",
-        className
-      )}
+      className={cn("cursor-pointer active:bg-accent", className)}
       onClick={onActivate}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onActivate();
-        }
-      }}
-      role="link"
-      tabIndex={0}
       {...props}
     />
   );

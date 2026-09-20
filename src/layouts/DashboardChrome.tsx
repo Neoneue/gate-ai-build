@@ -214,6 +214,21 @@ export function DashboardChrome({
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
+        {/* Skip link — WCAG 2.4.1. Without it a keyboard user tabs the 9 rail
+          buttons plus the top-bar controls on EVERY route before reaching
+          content. sr-only until focused, then a real card-surface chip pinned
+          to the top-left (there is no positioned ancestor, so it anchors to the
+          viewport). Focus recipe is design.md §2's site-wide ring —
+          ring-2 ring-ring + offset-2 offset-background — and the surface is
+          bg-card + border-border + shadow-xs, since a converted surface carries
+          an explicit border (design.md §5.0). `focus:` not `focus-visible:`:
+          the only way to reach it is the keyboard. */}
+        <a
+          className="type-label-14 sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:border focus:border-border focus:bg-card focus:px-3 focus:py-2 focus:text-foreground focus:shadow-xs focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+          href="#main-content"
+        >
+          Skip to content
+        </a>
         <div className="flex flex-row lg:min-h-0 lg:flex-1">
           {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
@@ -263,8 +278,22 @@ export function DashboardChrome({
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
             <main
-              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 focus:outline-none sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              id="main-content"
               ref={mainRef}
+              /* tabIndex={-1} is required, not belt-and-braces: per the HTML
+                 spec, fragment navigation focuses the target only if it is
+                 already focusable — otherwise it just moves the sequential
+                 focus starting point and leaves focus on <body> (and Safari
+                 does not reliably do even that). With -1 the skip link lands
+                 focus ON <main>, so the next Tab and the next SR read both
+                 start here. `focus:outline-none` goes with it: Chrome matches
+                 :focus-visible on this fragment focus (verified) and would
+                 paint a 1440px-wide ring around the whole pane. The pane is
+                 not operable, so no indicator is owed — the scroll + the next
+                 Tab landing inside is the feedback (govuk-frontend does the
+                 same on its skip target). */
+              tabIndex={-1}
             >
               {children}
             </main>
