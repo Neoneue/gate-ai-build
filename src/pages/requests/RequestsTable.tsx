@@ -692,7 +692,7 @@ export function RequestsTableSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagedRows.map((row, i) => {
+                {pagedRows.map((row) => {
                   const isMissing = row.inTokens === "—";
                   const numericCls = isMissing
                     ? "type-mono-14 text-right whitespace-nowrap text-muted-foreground"
@@ -717,7 +717,7 @@ export function RequestsTableSection({
                   return (
                     <TableRow
                       className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
-                      key={`${row.time}-${i}`}
+                      key={requestRowId(row)}
                       // Mouse-only convenience: the keyboard/AT target is the real
                       // <a href> drill-in in the model cell (RowActionButton href).
                       // A <tr> can't legally carry role="button"/tabIndex.

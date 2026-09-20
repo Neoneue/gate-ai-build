@@ -11,6 +11,8 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 | # | Time (CT) | Skill | Scope | Items |
 | --- | --- | --- | --- | --- |
 | 1 | 11:11 | web-design-guidelines | whole site (196 `.tsx`, `src/data` excluded) | wdg-1 to wdg-32 |
+| 2 | 15:36 | react-best-practices | whole site (271 `.ts`/`.tsx`, 71.8k lines, three parallel reviewers; blobs + tests excluded) | rbp-1 to rbp-13 |
+| 3 | 16:20 | test-smoke (Playwright 8 flows + vitest 144 route cases) | whole site | smk-1 to smk-2 |
 
 ## web-design-guidelines
 
@@ -209,3 +211,128 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 - Destructive actions are confirmed: ApiKeys revoke goes through `pendingRevoke` (ApiKeys.tsx:482), plus AlertDialog in Settings and cancel-plan-dialog.
 
 Verdict (run 1): fail. 4 HIGH items (invalid `<tr>` role on a shared primitive, two missing focus rings in shared primitives, one on a detail page, and no skip link) block a clean pass. 12 of the 32 items land in `components/ui/**` or `layouts/**` and fix every page at once.
+
+## react-best-practices
+
+Vite + React 19 SPA, so the Next.js-only rule families (`server-*`,
+`async-api-routes`, hydration) do not apply; `bundle-dynamic-imports` reads
+as `React.lazy`. Items rbp-1 to rbp-18 in `audit-9-18.md` (Token savings,
+Models, Billing) were excluded and are not re-flagged.
+
+### Global
+
+- [x] **rbp-1 HIGH** (applied 2026-09-20) `index-as-key` pages/requests/RequestsTable.tsx:720, pages/security/EventsTable.tsx:569
+  - Before: `key={`${row.time}-${i}`}` on `<TableRow>` inside `.map((row, i) => ...)` in both tables.
+  - After: `key={requestRowId(row)}` in RequestsTable, `key={verdictKey(row)}` in EventsTable; both ids are already computed in the same scope (RequestsTable.tsx:206, EventsTable.tsx:565).
+  - Why: `time` repeats across rows and `i` shifts on sort, filter and page, so React can carry hover, focus and verdict state to the wrong row.
+- [x] **rbp-2 MEDIUM** (applied 2026-09-20) `client-event-listeners` layouts/DashboardChrome.tsx:176-182, layouts/DashboardChrome.tsx:548-557
+  - Before: `DashboardChrome` subscribes `window.matchMedia("(min-width: 1024px)")` for `isDesktop`; `MobileNav` in the same file, always mounted, subscribes the identical query again to auto-close the drawer.
+  - After: pass `isDesktop` into `MobileNav` as a prop and close the drawer in an effect keyed on it, or extract one `useMediaQuery(query)` hook used once per query string.
+  - Why: two live listeners fire on every crossing of the same breakpoint for one piece of state; deduplicate global listeners.
+- [ ] **rbp-3 LOW** `js-cache-function-results` components/ui/bell.tsx:58, calendar-days.tsx, credit-card.tsx, download.tsx:55, external-link.tsx, logout.tsx, receipt.tsx:82, refresh-cw.tsx:41 +4 more (sliders-horizontal, sparkles, square-arrow-up, upload)
+  - Before: each animated icon runs `window.matchMedia("(prefers-reduced-motion: reduce)").matches` inside its mount effect.
+  - After: `import { REDUCE_MOTION } from "@/lib/reduce-motion"` and `if (REDUCE_MOTION) return;`; the module-level snapshot already exists and is used by Notifications and Conversations.
+  - Why: twelve copies of one query on every icon mount, and one shared constant already owns that read.
+- [ ] **rbp-4 LOW** `index-as-key` components/ui/field.tsx:202
+  - Before: `uniqueErrors.map((error, index) => (<li key={index}>{error.message}</li>))`
+  - After: `uniqueErrors.map((error) => (<li key={error?.message ?? String(error)}>{error.message}</li>))`
+  - Why: `uniqueErrors` is already deduped by `message`, so the message is a stable unique key.
+
+### Activity
+
+- [x] **rbp-5 MEDIUM** (applied 2026-09-20) `js-index-maps` pages/Activity.tsx:502
+  - Before: `MODEL_ROWS.find((m) => m.key === key)?.vendor ?? ...` inside a `.map()` over the scoped keys, itself inside a `useMemo` that reruns on every `scope` / `modelMetric` change.
+  - After: `const byKey = new Map(MODEL_ROWS.map((m) => [m.key, m]))` once at module scope, then `byKey.get(key)?.vendor`.
+  - Why: O(keys x MODEL_ROWS) per recompute where a Map lookup is O(1).
+
+### Models
+
+- [ ] **rbp-6 LOW** `js-index-maps` pages/Models.tsx:800-802
+  - Before: `PROVIDER_ORDER.filter((id) => providers.some((p) => p.id === id)).map((id) => providers.find((p) => p.id === id))`
+  - After: `const byId = new Map(providers.map((p) => [p.id, p])); PROVIDER_ORDER.filter((id) => byId.has(id)).map((id) => byId.get(id) as ModelProvider)`
+  - Why: two scans of `providers` per call, and `ProviderStack` renders once per catalog row (Models.tsx:672) and per shelf card (models/ModelShelves.tsx:449); `providers` is 2 to 3 long so the cost is small, the fix is free.
+
+### Teams
+
+- [x] **rbp-7 HIGH** (applied 2026-09-20) `rerender-derived-state` + `js-index-maps` pages/TeamDetailEnterprise.tsx:1414-1435, pages/TeamDetailEnterprise.tsx:541, pages/TeamDetailEnterprise.tsx:844, data/teams.ts:306
+  - Before: `const rows = team.memberIds.map((id) => memberById(id)).filter(...)` and `visible = rows.filter(...)` run inline in the roster component that also owns `query` / `roleFilter` state, so both rerun on every keystroke; `memberById` is `MEMBER_ROWS.find(...)`, O(n) per call, at three sites.
+  - After: `useMemo(() => team.memberIds.map(memberById).filter(...), [team.memberIds])` for `rows`, `useMemo(() => rows.filter(...), [rows, query, roleFilter])` for `visible`; back `memberById` with a module-level `Map` in `data/teams.ts` (same shape as `MODEL_BY_ID` in `data/models.ts`).
+  - Why: every keystroke in the roster search does O(members x MEMBER_ROWS) work that does not depend on the query. Same root pattern as audit-9-18 rbp-2.
+
+### Conversations
+
+- [ ] **rbp-8 LOW** `js-min-max-loop` pages/Conversations.tsx:414
+  - Before: `row.vendors.map((v) => VENDOR_META[v].label).sort()[0] ?? null` inside `conversationSortValue`, the accessor passed to `sortRows`.
+  - After: `row.vendors.reduce<string | null>((min, v) => { const l = VENDOR_META[v].label; return min === null || l < min ? l : min; }, null)`
+  - Why: allocates and sorts a throwaway array to read index 0, once per comparison during the sort.
+- [ ] **rbp-9 LOW** `index-as-key` pages/conversations/ConversationDetail.tsx:793
+  - Before: `(messages ?? []).map((m, i) => <MessageBlock ... key={i} />)` inside `ConversationMessagesPanel`; `ConversationMessage` has no id field, only optional `requestId` and `time`.
+  - After: `key={`${m.requestId ?? "user"}-${i}`}`, or add a stable `id` to `ConversationMessage` in `conversations/types.ts`.
+  - Why: three tab panels each mount a differently filtered `messages` array; low risk today because tabs never reorder, but the key should not rely on that.
+- [ ] **rbp-10 LOW** `js-cache-function-results` pages/conversations/data.ts:20-32, data/conversationDetail.ts:101-109
+  - Before: the `MODEL_FILTER_OPTIONS` IIFE calls `getConversationView(seed, REQUEST_ROWS_ALL)` per conversation at import; `Conversations.tsx` and `ConversationDetail.tsx` call it again for the same conversations, each running the ~150-row `getConversationRequests` filter.
+  - After: memoize `getConversationRequests` per `conversationId` in a module-level `Map`, or compute the view once in `data/conversations.ts` and export it.
+  - Why: three call sites re-filter the same rows with no shared cache; cheap at today's size, flagged so it does not move into a render loop.
+
+### Requests
+
+- [x] **rbp-11 MEDIUM** (applied 2026-09-20) `rerender-memo` pages/requests/RequestDetailBody.tsx:1599-1615
+  - Before: `FullRequestCollapsible` recomputes `lines` (`rawBody.split("\n").map(...)` or `buildRequestBodyLines(row)`) and `requestPayload` (`JSON.stringify(...)`) on every render, including while the panel is closed (`Collapsible.Panel` stays mounted).
+  - After: `const { lines, requestPayload } = useMemo(() => { ... }, [row]);`
+  - Why: both are pure functions of `row`; a JSON.stringify plus string split runs on every tab switch, finding click and evidence reveal while the content is hidden.
+- [ ] **rbp-12 LOW** `rendering-hoist-jsx` (static data) pages/requests/RequestsTable.tsx:112-122
+  - Before: `keyOptions = scope.keyNames ? [...scope.keyNames] : ["prod-web", "prod-agent", "development", "openclaw", "hermes-agent", "nova-chat", "test-key"]`, the fallback literal recreated every render.
+  - After: hoist to module scope `const DEFAULT_KEY_OPTIONS = [...] as const` and reference it.
+  - Why: static list allocated per render, and an unstable identity if it ever enters a `useMemo` dep list.
+- [ ] **rbp-13 LOW** `index-as-key` pages/requests/RequestDetailBody.tsx:414
+  - Before: `<FindingCard finding={f} key={idx} />` inside `findings.map((f, idx) => ...)`, while the sibling `FindingSwitcherCard` branch two lines up keys on `f.category`.
+  - After: `key={f.category}`; categories are unique among the single-occurrence findings that reach this branch.
+  - Why: consistency with the adjacent branch; the one remaining index key in the file.
+
+### Not verified
+
+- Re-render counts and flame graphs for `DashboardChrome`, the roster in `TeamDetailEnterprise`, and the chart primitives; a profiler run would size rbp-2, rbp-7 and rbp-11.
+- Whether the React Compiler (referenced in comments at pages/Security.tsx:88-91) is enabled; if it is, the memo halves of rbp-7 and rbp-11 are already handled at build time and only the Map / key halves stand.
+- Bundle impact of the per-icon `motion/react` imports across the 11 animated icons; needs a bundle analyzer.
+
+### Compliant, checked and clean
+
+- Routing: every routed page in `App.tsx` (~70 routes) is `lazy(() => import(...))`.
+- Hooks: `use-stick-to-bottom`, `use-theme`, `use-ask-ai-thread`, `use-table-sort`, `use-copy-feedback`, `use-is-truncated`, `use-scroll-overflow`, `use-scroll-restoration`, `ask-ai-thread-provider`: timer and observer cleanup correct, guarded setState, precise deps.
+- Stores: `data/notifications-store.ts`, `data/audit-trail-store.ts` use `useSyncExternalStore` with a stable snapshot and a server-snapshot argument. `data/models.ts` hoists `MODEL_BY_ID` at module load.
+- Lazy state init: `BillingFree.tsx:243`, `Notifications.tsx:305`, `App.tsx:271` read localStorage inside a `useState` initialiser. `AuditTrail.tsx:330-337` resets page during render, not in an effect.
+- `Models.tsx:227-234` already pairs `useDeferredValue(search)` with split filter / sort memos. `activity/TrendCard.tsx` memoizes every derivation with a hoisted `SAVINGS_DOMAIN`.
+- Positional index keys on lists that never reorder are correct and were left alone: `kpi-rail.tsx:83-85` (children), `code-panel.tsx:92` and `code-card.tsx:278` (code lines), `lib/dotmatrix-core.tsx:845,1352` (grid dots).
+- No inline component definitions inside render, no `new RegExp` in render, no non-passive scroll or touch listeners, no `&&` on a numeric `.length` in JSX, no derived-state effects on any page.
+- All 11 lucide-animated icons share one correct `forwardRef` + `useAnimation` + listener-cleanup shape.
+- Every folder under `pages/teams`, `pages/models`, `pages/billing`, `pages/security`, `pages/activity`, `pages/token-savings`, `pages/site-map`, `pages/policies` and every `src/data` helper module read in full with no new finding.
+
+Verdict (run 2): pass with fixes. 2 HIGH (index keys on the two largest tables, an unmemoized O(n^2) roster), 3 MEDIUM, 8 LOW. The codebase already follows the expensive rules (route-level lazy loading, external stores, deferred search, hoisted lookup maps); the remaining items are a handful of index keys and repeated linear lookups, all one-file fixes.
+
+## test-smoke
+
+Findings surfaced by the new test tiers (Playwright `e2e/smoke.spec.ts`,
+vitest `src/test/routes.smoke.test.tsx`). Every flow fails on any
+`console.error` or `pageerror`, nothing filtered, so each item below is an
+error the browser already logs on the live site today.
+
+### Global
+
+- [ ] **smk-1 HIGH** `Button render={<Link/>}` components/ui/button.tsx:163, pages/Notifications.tsx:657, pages/pro-upgrade-card.tsx:20
+  - Before: Base UI `Button` defaults `nativeButton: true`; rendering it as an anchor logs a console.error on every page that mounts either call site. Fails 7 vitest route cases (`/limits-default`, `/limits-free`, all four `/notifications*`, plus the Enterprise admin case) and Playwright flow b.
+  - After: `nativeButton={false}` on both call sites, or have the `Button` primitive set it whenever `render` is passed an anchor / `Link`.
+  - Why: a logged error on nearly every page; fails Playwright flow b (sidebar walk).
+
+### Messages
+
+- [ ] **smk-2 MEDIUM** recharts `<line>` `x1`/`x2` "undefined" pages/requests/HeroMetric.tsx:104
+  - Before: apply Filters -> Key -> Apply on `/messages`; the hero `AreaChart` re-renders on the narrowed series and logs 12 invalid-SVG errors (5 rows remain).
+  - After: guard the hero series so a narrowed range still yields numeric x coordinates (empty or single-point series is the likely cause; reproduce with the 5-row key).
+  - Why: invalid SVG attributes on a live interaction; fails Playwright flow d.
+
+### Compliant, checked and clean
+
+- vitest route smoke: 137 of 144 cases pass (84 routes, 19 Enterprise routes x 3 roles, 2 redirects); the 7 failures are all smk-1.
+- Playwright flows a, c, e, f, g, h pass: root redirect, Enterprise role switch + URL guard, team roster search, Billing `?state=` previews, theme persistence across reload, mobile drawer closes at 1024px.
+
+Verdict (run 3): fail. Two live console errors, one on nearly every page.

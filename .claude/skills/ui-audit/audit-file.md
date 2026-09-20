@@ -100,6 +100,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
    | oklch-skill | `oklch` |
    | svg-animations | `svga` |
    | color-audit (manual token sweep) | `col` |
+   | test-smoke (vitest route smoke + Playwright flows) | `smk` |
 
    A new skill gets its alias added here on its first run; section headings
    keep the full skill name (`## web-design-guidelines`).

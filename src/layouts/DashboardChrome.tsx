@@ -262,6 +262,7 @@ export function DashboardChrome({
               activeNavId={activeNavId}
               askAiOpen={askAiOpen}
               hideDocsButton={hideDocsButton}
+              isDesktop={isDesktop}
               onNavigate={onNavigate}
               onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
               onToggleSidebar={onToggleSidebar}
@@ -365,6 +366,7 @@ function DashTopBar({
   sidebarExpanded,
   onToggleSidebar,
   hideDocsButton = false,
+  isDesktop,
   sections,
   activeNavId,
   onNavigate,
@@ -378,6 +380,10 @@ function DashTopBar({
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
   hideDocsButton?: boolean;
+  /** Lifted from the chrome's single `(min-width: 1024px)` subscription and
+   *  passed down so MobileNav can close its drawer without opening a second
+   *  live listener on the same breakpoint. */
+  isDesktop: boolean;
   sections: SidebarSection[];
   activeNavId: string;
   onNavigate?: (pageId: string) => void;
@@ -505,6 +511,7 @@ function DashTopBar({
         <MobileNav
           activeId={activeNavId}
           hideDocsButton={hideDocsButton}
+          isDesktop={isDesktop}
           onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
@@ -525,6 +532,7 @@ function MobileNav({
   sections,
   activeId,
   hideDocsButton,
+  isDesktop,
   onNavigate,
   overviewPath,
   showViewRole,
@@ -535,6 +543,9 @@ function MobileNav({
   /** Mirrors `DashTopBar.hideDocsButton` — when true the Docs row is omitted
    *  from the user menu at the foot of the Sheet as well as from the top bar. */
   hideDocsButton?: boolean;
+  /** The chrome's single `(min-width: 1024px)` result, passed in rather than
+   *  re-subscribed here. */
+  isDesktop: boolean;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
@@ -542,19 +553,20 @@ function MobileNav({
   upgradePath?: string;
 }) {
   const [open, setOpen] = useState(false);
-  // Close the drawer when the viewport grows to md+, where the persistent rail
+  // Close the drawer when the viewport grows to lg+, where the persistent rail
   // returns and the hamburger hides — otherwise the portaled SheetContent would
-  // stay open orphaned beside the desktop sidebar.
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const handleChange = (event: MediaQueryListEvent) => {
-      if (event.matches) {
-        setOpen(false);
-      }
-    };
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
-  }, []);
+  // stay open orphaned beside the desktop sidebar. `isDesktop` is the chrome's
+  // own matchMedia result, so one listener drives both consumers of the
+  // breakpoint. Adjusted during render (React's "store the previous prop"
+  // pattern) rather than in an effect, so no extra commit and no
+  // set-state-in-effect lint hit.
+  const [prevDesktop, setPrevDesktop] = useState(isDesktop);
+  if (isDesktop !== prevDesktop) {
+    setPrevDesktop(isDesktop);
+    if (isDesktop) {
+      setOpen(false);
+    }
+  }
   // The nav rows are <Link>s, so the Sheet only needs to CLOSE on activation
   // (`onNavItemClick`). `handleNavigate` stays for the non-link controls the
   // panel still drives through `onNavigate` (upgrade card, user menu).

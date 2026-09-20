@@ -1596,23 +1596,31 @@ function FullRequestCollapsible({
     }, 16);
     return () => clearTimeout(id);
   }, [revealSignal]);
-  const rawBody = getRequestBody(row).requestBodyRaw;
-  const lines = rawBody
-    ? rawBody.split("\n").map((text): CodeLine => [{ text }])
-    : buildRequestBodyLines(row);
-  const requestPayload =
-    rawBody ??
-    JSON.stringify(
-      {
-        model: row.model,
-        messages: [{ role: "user", content: sampleRequestContent(row) }],
-        max_tokens: 1024,
-        temperature: 0.7,
-        stream: false,
-      },
-      null,
-      2
-    );
+  // Both derivations are pure functions of `row` (getRequestBody,
+  // buildRequestBodyLines and sampleRequestContent read nothing else), and the
+  // panel is collapsed by default — without this they re-split the body and
+  // re-stringify the payload on every parent render while nothing is visible.
+  const { lines, requestPayload } = useMemo(() => {
+    const rawBody = getRequestBody(row).requestBodyRaw;
+    return {
+      lines: rawBody
+        ? rawBody.split("\n").map((text): CodeLine => [{ text }])
+        : buildRequestBodyLines(row),
+      requestPayload:
+        rawBody ??
+        JSON.stringify(
+          {
+            model: row.model,
+            messages: [{ role: "user", content: sampleRequestContent(row) }],
+            max_tokens: 1024,
+            temperature: 0.7,
+            stream: false,
+          },
+          null,
+          2
+        ),
+    };
+  }, [row]);
   return (
     <Collapsible.Root
       className="flex flex-col overflow-hidden rounded-xs border border-border"
