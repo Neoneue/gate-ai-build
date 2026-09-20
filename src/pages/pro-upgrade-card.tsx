@@ -21,6 +21,7 @@ export function ProUpgradeCard({
       action={
         <div className="pt-4">
           <Button
+            nativeButton={false}
             render={<Link to="/billing" />}
             size="default"
             variant="promo"

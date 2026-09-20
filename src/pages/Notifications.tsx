@@ -621,6 +621,7 @@ function ChannelsCard({
                editor for the same value. */
             <Button
               aria-label="Change email in Settings"
+              nativeButton={false}
               render={<Link to="/settings" />}
               size="icon-xs"
               variant="ghost"

@@ -318,7 +318,7 @@ error the browser already logs on the live site today.
 
 ### Global
 
-- [ ] **smk-1 HIGH** `Button render={<Link/>}` components/ui/button.tsx:163, pages/Notifications.tsx:657, pages/pro-upgrade-card.tsx:20
+- [x] **smk-1 HIGH** (applied 2026-09-20) `Button render={<Link/>}` components/ui/button.tsx:163, pages/Notifications.tsx:657, pages/pro-upgrade-card.tsx:20
   - Before: Base UI `Button` defaults `nativeButton: true`; rendering it as an anchor logs a console.error on every page that mounts either call site. Fails 7 vitest route cases (`/limits-default`, `/limits-free`, all four `/notifications*`, plus the Enterprise admin case) and Playwright flow b.
   - After: `nativeButton={false}` on both call sites, or have the `Button` primitive set it whenever `render` is passed an anchor / `Link`.
   - Why: a logged error on nearly every page; fails Playwright flow b (sidebar walk).
