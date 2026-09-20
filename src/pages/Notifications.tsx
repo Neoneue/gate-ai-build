@@ -2,6 +2,7 @@ import { Archive, AtSign, Bell, Pencil } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import {
+  Link,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RowActionButton } from "@/components/ui/row-action-button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionTitle } from "@/components/ui/section-title";
 import { Switch } from "@/components/ui/switch";
@@ -582,7 +584,6 @@ function ChannelsCard({
   onSetChannel: (key: keyof ChannelSelection, on: boolean) => void;
   onSetFrequency: (id: EmailFrequency, on: boolean) => void;
 }) {
-  const navigate = useNavigate();
   const onlyOne = prefs.emailFrequency.length === 1;
 
   return (
@@ -620,7 +621,7 @@ function ChannelsCard({
                editor for the same value. */
             <Button
               aria-label="Change email in Settings"
-              onClick={() => navigate("/settings")}
+              render={<Link to="/settings" />}
               size="icon-xs"
               variant="ghost"
             >
@@ -1119,39 +1120,43 @@ function FeedRow({
 }) {
   return (
     <NavTableRow
-      aria-label={`Open ${item.title}: ${item.copy}`}
       /* h-12 pins every feed row to the Inbox's natural height (py-3 + the
          24px archive IconActionButton). The Archive tab has no action cell,
          so its text-only rows otherwise collapse 4px shorter and the table
          visibly shrinks on tab switch. On a <tr>, height acts as min-height. */
       className="h-12"
       data-state={selected ? "selected" : undefined}
+      /* Mouse-only convenience — clicking the row's dead space opens it. The
+         keyboard/AT target is the <a href> in the Notification cell below. */
       onActivate={() => onOpen(item)}
     >
       {onToggleSelect ? (
-        /* THE STOPPERS LIVE ON THE CELL, NOT ON THE CHECKBOX. The row is a
-           role="link" that activates on click AND on Enter/Space, so the
-           selection control has to stop both or ticking a box navigates away
-           from the page you were selecting on — the same two-handler shape the
-           archive button below uses. But the archive button can carry its own
-           handlers and this control cannot, and the reason is worth writing
-           down because it cost a debugging pass: Base UI's Checkbox renders a
-           hidden `<input type="checkbox">` as a SIBLING of the
-           `<span role="checkbox">` Root, not as a child of it, and on click it
-           re-dispatches an untrusted click on that input. Verified in the
-           browser: the trusted click on the Root is stopped correctly, then a
-           second `isTrusted=false` click surfaces from the input, which the
-           Root is not an ancestor of — so a handler on `<Checkbox>` never sees
-           it and the row navigates anyway. The `<td>` is the nearest node that
+        /* THE STOPPER LIVES ON THE CELL, NOT ON THE CHECKBOX. The row carries
+           a click handler, so the selection control has to stop it or ticking
+           a box navigates away from the page you were selecting on. But the
+           archive button below can carry its own handler and this control
+           cannot, and the reason is worth writing down because it cost a
+           debugging pass: Base UI's Checkbox renders a hidden
+           `<input type="checkbox">` as a SIBLING of the `<span role="checkbox">`
+           Root, not as a child of it, and on click it re-dispatches an
+           untrusted click on that input. Verified in the browser: the trusted
+           click on the Root is stopped correctly, then a second
+           `isTrusted=false` click surfaces from the input, which the Root is
+           not an ancestor of — so a handler on `<Checkbox>` never sees it and
+           the row navigates anyway. The `<td>` is the nearest node that
            contains BOTH, so it is the only place the guard works.
            Putting it there also makes the whole cell inert, which is the
            behaviour we want regardless: this is a control cell, so the dead
            space around a 16px box should not be a navigation target you can
-           hit by missing. */
+           hit by missing.
+
+           The matching `onKeyDown` stopper is GONE (2026-09-20): it existed
+           only because the row was a `role="link"` activating on Enter/Space.
+           The row no longer listens for keydown, so nothing above this cell
+           could receive the event and the guard was dead code. */
         <TableCell
           className="whitespace-nowrap"
           onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
         >
           <Checkbox
             aria-label={`Select notification: ${item.title}`}
@@ -1166,7 +1171,16 @@ function FeedRow({
           first column keeps the standard padding. Keyed off
           onToggleSelect, the same flag that renders the checkbox cell. */}
       <TableCell className={cn("whitespace-nowrap", onToggleSelect && "pl-1")}>
-        <span className="flex min-w-0 items-center gap-2">
+        {/* The Notification cell is the row identifier, so it holds the
+            drill-in: a real <a href> to the same `item.href` the row's
+            mouse handler navigates to. `onClick` marks read (the other half
+            of `openRow`) and RowActionButton stops propagation, so the row's
+            own handler cannot fire a second navigation on top of the link's. */}
+        <RowActionButton
+          aria-label={`Open ${item.title}: ${item.copy}`}
+          href={item.href}
+          onClick={() => markRead(item.id)}
+        >
           <item.Icon
             aria-hidden
             className={cn(
@@ -1185,7 +1199,7 @@ function FeedRow({
           >
             {item.title}
           </span>
-        </span>
+        </RowActionButton>
       </TableCell>
       <TableCell
         className={cn(
@@ -1238,14 +1252,15 @@ function FeedRow({
           <span className="flex justify-end">
             <IconActionButton
               aria-label={`Archive notification: ${item.title}`}
-              /* The row is a role="link" that activates on click AND on
-               Enter/Space, so the action has to stop BOTH or archiving would
-               also navigate away from the page you archived on. */
+              /* The row carries a click handler, so the action has to stop it
+                 or archiving would also navigate away from the page you
+                 archived on. The matching `onKeyDown` stopper is gone
+                 (2026-09-20): the row no longer activates on Enter/Space, so
+                 there was nothing left above this button to stop. */
               onClick={(event) => {
                 event.stopPropagation();
                 onArchive(item);
               }}
-              onKeyDown={(event) => event.stopPropagation()}
             >
               <Archive aria-hidden className="size-4" strokeWidth={1.75} />
             </IconActionButton>

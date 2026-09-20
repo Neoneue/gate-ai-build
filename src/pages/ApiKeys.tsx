@@ -181,6 +181,7 @@ export function ApiKeys() {
                     className="flex size-12 items-center justify-center rounded-full bg-muted"
                   >
                     <KeyRound
+                      aria-hidden
                       className="size-5 text-muted-foreground"
                       strokeWidth={1.75}
                     />
@@ -275,6 +276,7 @@ export function KeysEmptyState({ onCreate }: { onCreate: () => void }) {
           className="flex size-12 items-center justify-center rounded-full bg-muted"
         >
           <KeyRound
+            aria-hidden
             className="size-5 text-muted-foreground"
             strokeWidth={1.75}
           />

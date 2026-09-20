@@ -716,7 +716,7 @@ export function RequestsTableSection({
                   const messageText = messagePreview(row);
                   return (
                     <TableRow
-                      className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+                      className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
                       key={`${row.time}-${i}`}
                       // Mouse-only convenience: the keyboard/AT target is the real
                       // <a href> drill-in in the model cell (RowActionButton href).

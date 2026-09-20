@@ -52,7 +52,7 @@ export function MiniRadio({
     <button
       aria-checked={selected}
       className={cn(
-        "type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "type-label-12 flex h-6 items-center rounded-xs px-2 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
         selected
           ? "bg-muted text-foreground"
           : "text-muted-foreground hover:text-muted-foreground",

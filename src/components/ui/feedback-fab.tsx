@@ -98,7 +98,7 @@ function FeedbackFab({ askAiOpen = false }: { askAiOpen?: boolean }) {
           "[transition:background-color_150ms_ease-out,transform_150ms_ease-out,right_300ms_var(--ease-out)] motion-reduce:transition-none",
           // Hover lift. Press, focus ring and reduced-motion press come from
           // the primitive.
-          "hover-fine:-translate-y-px motion-reduce:hover:translate-y-0",
+          "hover:-translate-y-px motion-reduce:hover:translate-y-0",
           // lg+ only: when the docked panel is open, shift left by its width
           // (24px + 368px) so the FAB stays over the main content, clear of the
           // panel. Below lg the panel is a z-50 Sheet overlay that covers the

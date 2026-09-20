@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SparklesIcon } from "@/components/ui/sparkles";
@@ -16,13 +16,12 @@ export function ProUpgradeCard({
   body: string;
   title?: string;
 }) {
-  const navigate = useNavigate();
   return (
     <EmptyState
       action={
         <div className="pt-4">
           <Button
-            onClick={() => navigate("/billing")}
+            render={<Link to="/billing" />}
             size="default"
             variant="promo"
           >
@@ -41,7 +40,7 @@ export function ProUpgradeCard({
           aria-hidden
           className="flex size-12 items-center justify-center rounded-full bg-tier-pro-wash"
         >
-          <Icon className="size-5 text-tier-pro" />
+          <Icon aria-hidden className="size-5 text-tier-pro" />
         </div>
       }
       title={title}

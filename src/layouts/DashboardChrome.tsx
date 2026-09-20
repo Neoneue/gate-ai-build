@@ -7,7 +7,12 @@ import {
 } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
-import { Navigate, useLocation, useOutletContext } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useOutletContext,
+} from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
@@ -214,6 +219,21 @@ export function DashboardChrome({
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="flex min-h-dvh w-full flex-col bg-background lg:h-screen lg:overflow-hidden">
+        {/* Skip link — WCAG 2.4.1. Without it a keyboard user tabs the 9 rail
+          buttons plus the top-bar controls on EVERY route before reaching
+          content. sr-only until focused, then a real card-surface chip pinned
+          to the top-left (there is no positioned ancestor, so it anchors to the
+          viewport). Focus recipe is design.md §2's site-wide ring —
+          ring-2 ring-ring + offset-2 offset-background — and the surface is
+          bg-card + border-border + shadow-xs, since a converted surface carries
+          an explicit border (design.md §5.0). `focus:` not `focus-visible:`:
+          the only way to reach it is the keyboard. */}
+        <a
+          className="type-label-14 sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:border focus:border-border focus:bg-card focus:px-3 focus:py-2 focus:text-foreground focus:shadow-xs focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+          href="#main-content"
+        >
+          Skip to content
+        </a>
         <div className="flex flex-row lg:min-h-0 lg:flex-1">
           {/* Persistent rail on desktop (lg+). Below lg it is hidden and
             the nav moves into the top-bar hamburger Sheet (see MobileNav). */}
@@ -263,8 +283,22 @@ export function DashboardChrome({
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
             <main
-              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 focus:outline-none sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              id="main-content"
               ref={mainRef}
+              /* tabIndex={-1} is required, not belt-and-braces: per the HTML
+                 spec, fragment navigation focuses the target only if it is
+                 already focusable — otherwise it just moves the sequential
+                 focus starting point and leaves focus on <body> (and Safari
+                 does not reliably do even that). With -1 the skip link lands
+                 focus ON <main>, so the next Tab and the next SR read both
+                 start here. `focus:outline-none` goes with it: Chrome matches
+                 :focus-visible on this fragment focus (verified) and would
+                 paint a 1440px-wide ring around the whole pane. The pane is
+                 not operable, so no indicator is owed — the scroll + the next
+                 Tab landing inside is the feedback (govuk-frontend does the
+                 same on its skip target). */
+              tabIndex={-1}
             >
               {children}
             </main>
@@ -356,7 +390,7 @@ function DashTopBar({
   showViewRole: boolean;
 }) {
   return (
-    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
       <div className="flex items-center gap-2">
         <Button
           aria-expanded={sidebarExpanded}
@@ -398,19 +432,20 @@ function DashTopBar({
          *  the nav moves into the hamburger Sheet; the workspace switcher lives
          *  in that Sheet below lg. At lg+ the rail carries the brand and the
          *  switcher sits here in the top bar. */}
-        <button
+        <Link
           aria-label="Go to overview"
           className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
-          onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
-          type="button"
+          to={overviewPath ?? "/overview"}
         >
           <img
             alt=""
             aria-hidden
             className="h-8 w-auto"
+            height={226}
             src="/gate-ai-logo-mark.png"
+            width={195}
           />
-        </button>
+        </Link>
         {/* At lg+ the switcher normally lives here. In the tight band (rail +
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
@@ -477,7 +512,7 @@ function DashTopBar({
           upgradePath={upgradePath}
         />
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -520,6 +555,9 @@ function MobileNav({
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+  // The nav rows are <Link>s, so the Sheet only needs to CLOSE on activation
+  // (`onNavItemClick`). `handleNavigate` stays for the non-link controls the
+  // panel still drives through `onNavigate` (upgrade card, user menu).
   const handleNavigate = (pageId: string) => {
     onNavigate?.(pageId);
     setOpen(false);
@@ -543,6 +581,7 @@ function MobileNav({
         <SidebarPanel
           activeId={activeId}
           hideDocsButton={hideDocsButton}
+          onNavItemClick={() => setOpen(false)}
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}

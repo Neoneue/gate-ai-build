@@ -1,9 +1,13 @@
-/* ─── Geist via Google Fonts (must precede @import "tailwindcss") ──── */
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Geist, self-hosted (fontsource). The family names ARE "Geist Variable" /
+   "Geist Mono Variable" — the packages ship them that way, so --font-sans and
+   --font-mono below must name the Variable suffix or the @font-face never
+   matches. Replaced the render-blocking fonts.googleapis.com @import
+   2026-09-20 (wdg-11). */
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant hover-fine ((@media (hover: hover)
@@ -12,8 +16,8 @@ and (pointer: fine)) and (&:hover));
 /* ─── Design tokens (Constellation Gate AI) ────────────────── */
 @theme {
   /* Type families */
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
 
   /* Screens — Tailwind defaults (sm 640 … 2xl 1536) plus two custom steps.
      `xs` (450px) is a small-phone breakpoint below sm — the point where the
@@ -971,6 +975,9 @@ body {
     /* Skill: typography.md — pretty wrapping prevents orphaned words on
        short-to-medium text. Inherited by paragraphs / list items / captions. */
     text-wrap: pretty;
+    /* Every interactive surface ships its own active: press, so iOS must not
+       paint its grey tap flash over it. */
+    -webkit-tap-highlight-color: transparent;
     background: var(--canvas-bg);
     background-image:
       linear-gradient(var(--canvas-grid) 1px, transparent 1px),

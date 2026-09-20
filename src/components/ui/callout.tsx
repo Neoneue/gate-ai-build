@@ -35,6 +35,7 @@ export function Callout({
           the icon stays aligned when the copy wraps. */}
       <span aria-hidden className="flex h-5 shrink-0 items-center">
         <Info
+          aria-hidden
           className="size-4 text-info-foreground-strong"
           strokeWidth={1.75}
         />

@@ -5,7 +5,7 @@
 // 2026-09-02; nothing here is new data.
 
 import { DEMO_NOW } from "@/lib/demo-clock";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatChartTooltipDate } from "@/lib/formatters";
 import { TOKEN_SAVINGS_RATE_7D } from "@/pages/activity-data";
 
 export type PresetRange = "all" | "24h" | "7d" | "30d";
@@ -182,7 +182,7 @@ export function resampleSpark(values: number[], count: number): number[] {
 
 export function sparkDates(range: PresetRange, count: number): string[] {
   const step = SPARK_STEP[range];
-  return Array.from({ length: count }, (_, i) => {
+  const dates = Array.from({ length: count }, (_, i) => {
     const stepsBack = count - 1 - i;
     const d = new Date(SPARK_TODAY);
     if (range === "24h") {
@@ -192,6 +192,15 @@ export function sparkDates(range: PresetRange, count: number): string[] {
     } else {
       d.setDate(d.getDate() - stepsBack * step);
     }
-    return formatSparkLabel(d, range === "24h");
+    return d;
   });
+  // One tooltip date shape site-wide (design.md "Chart tooltip & legend");
+  // the year shows only when the window crosses one, as the lifetime does.
+  const span = {
+    start: dates[0] ?? new Date(),
+    end: dates.at(-1) ?? new Date(),
+  };
+  return dates.map((d) =>
+    formatChartTooltipDate(d, range === "24h" ? "hour" : "day", span)
+  );
 }

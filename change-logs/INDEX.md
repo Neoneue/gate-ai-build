@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-20](./2026-09/changelog-9-20.md)
+
+- Audit: web-design-guidelines, whole site (`audits/2026-09/audit-9-20.md`)
+
 ### [2026-09-18](./2026-09/changelog-9-18.md)
 
 - Plan tiers get their own colour tokens

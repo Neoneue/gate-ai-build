@@ -43,7 +43,11 @@ import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_NOW } from "@/lib/demo-clock";
-import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
+import {
+  formatChartTooltipDate,
+  formatCompactCount,
+  formatNumber,
+} from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
 import {
   type CustomRange,
@@ -137,18 +141,14 @@ function avgCostSeries(shape: number[], avgCost: number): number[] {
 
 function sparkDates(range: Range, customRange: CustomRange | null): string[] {
   const last = SPARK_POINTS - 1;
-  const labels: string[] = [];
+  const dates: Date[] = [];
 
   if (range === "custom" && customRange) {
     const span = customRange.to.getTime() - customRange.from.getTime();
     for (let i = 0; i < SPARK_POINTS; i++) {
-      labels.push(
-        formatSparkLabel(
-          new Date(customRange.from.getTime() + (span * i) / last)
-        )
-      );
+      dates.push(new Date(customRange.from.getTime() + (span * i) / last));
     }
-    return labels;
+    return labelDates(dates, "day");
   }
 
   const preset: PresetRange = range === "custom" ? "all" : range;
@@ -162,9 +162,20 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     } else {
       d.setDate(d.getDate() - stepsBack * (preset === "30d" ? 4 : 1));
     }
-    labels.push(formatSparkLabel(d, preset === "24h"));
+    dates.push(d);
   }
-  return labels;
+  return labelDates(dates, preset === "24h" ? "hour" : "day");
+}
+
+/** Tooltip date strings for a bucket list — one shape site-wide (design.md
+ *  "Chart tooltip & legend"); the year appears only when the window spans
+ *  two of them, which the lifetime range does. */
+function labelDates(dates: Date[], granularity: "hour" | "day"): string[] {
+  const span = {
+    start: dates[0] ?? new Date(),
+    end: dates.at(-1) ?? new Date(),
+  };
+  return dates.map((d) => formatChartTooltipDate(d, granularity, span));
 }
 
 // The Conversations KPI is the COUNT of conversations in the range; its
@@ -336,7 +347,7 @@ function KpiRail({
             data={conversationsSpark}
             labels={sparkLabels}
             tooltip
-            valueFormatter={(v) => Math.round(v).toLocaleString("en-US")}
+            valueFormatter={(v) => formatNumber(Math.round(v))}
           />
         }
         title="Conversations"
@@ -419,9 +430,7 @@ function conversationSortValue(
 }
 
 function scaleTokenStr(s: string, scale: number): string {
-  return Math.round(Number(s.replace(/,/g, "")) * scale).toLocaleString(
-    "en-US"
-  );
+  return formatNumber(Math.round(Number(s.replace(/,/g, "")) * scale));
 }
 function scaleCostStr(s: string, scale: number): string {
   const parsed = Number.parseFloat(s.replace("$", "")) * scale;
@@ -667,17 +676,15 @@ function ConversationsTableSection({
                 <TableBody>
                   {visibleRows.map((row) => (
                     <TableRow
-                      className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+                      className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
                       key={row.conversationId}
                       onClick={() => navigate(tracePath(row.conversationId))}
                     >
                       <TableCell className="max-w-0 whitespace-nowrap">
                         <RowActionButton
                           aria-label={`Inspect conversation ${row.title}`}
+                          href={tracePath(row.conversationId)}
                           layout="stack"
-                          onClick={() =>
-                            navigate(tracePath(row.conversationId))
-                          }
                         >
                           <span
                             className="type-label-14 truncate text-foreground"

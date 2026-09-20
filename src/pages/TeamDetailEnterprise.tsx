@@ -78,10 +78,10 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
+  formatChartTooltipDate,
   formatCompactCount,
   formatCurrency,
   formatNumber,
-  formatSparkLabel,
 } from "@/lib/formatters";
 import {
   isEnterpriseSurface,
@@ -286,9 +286,7 @@ export function TeamDetailEnterprise({
         aria-busy={loading}
         className="flex w-full @5xl:max-w-5xl flex-col gap-6"
       >
-        {teamRole ? null : (
-          <BackLink label="Teams" onClick={() => navigate(listPath)} />
-        )}
+        {teamRole ? null : <BackLink href={listPath} label="Teams" />}
 
         {/* The page's ONE announcement of the wait — the skeletons in every
             pane are `aria-hidden`. No visible spinner, no visible text. */}
@@ -938,8 +936,13 @@ function UsagePane({
     count,
     teamSeed * 31 + 3
   );
-  const sparkLabels = getRangeDates(range, customRange).map((d) =>
-    formatSparkLabel(d, range === "24h")
+  const sparkDates = getRangeDates(range, customRange);
+  const sparkSpan = {
+    start: sparkDates[0] ?? new Date(),
+    end: sparkDates.at(-1) ?? new Date(),
+  };
+  const sparkLabels = sparkDates.map((d) =>
+    formatChartTooltipDate(d, range === "24h" ? "hour" : "day", sparkSpan)
   );
 
   return (
@@ -1806,6 +1809,7 @@ function KeysPane({ team, loading }: { team: TeamRow; loading: boolean }) {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <KeyRound
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -2073,6 +2077,7 @@ function BudgetPane({
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <Wallet
+                aria-hidden
                 className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />

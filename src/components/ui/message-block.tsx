@@ -183,7 +183,7 @@ export function MessageBlock({
         ? "border-warning-500 bg-warning-500/10 dark:bg-warning-500/15"
         : "border-success-600";
   const bubbleClasses = cn(
-    "max-h-[200px] overflow-y-auto overscroll-contain rounded-md border p-4 transition-[box-shadow,border-color] duration-150 ease-out motion-reduce:transition-none",
+    "max-h-[200px] overflow-y-auto overscroll-contain rounded-md border p-4 outline-none transition-[box-shadow,border-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
     MESSAGE_BODY_VOICE,
     selected ? selectedTone : baseBubbleBorder,
     onClick && !selected && "cursor-pointer hover:border-border-hover",

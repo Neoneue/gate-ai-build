@@ -35,7 +35,7 @@ import { modelName } from "@/data/models";
 import { usageForTeam } from "@/data/teams";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
-import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
+import { formatChartTooltipDate, formatCompactCount } from "@/lib/formatters";
 import {
   type CustomRange,
   effectiveScale,
@@ -289,8 +289,13 @@ function KpiRail({
 }) {
   const scope = useViewScope();
   const k = getKpiSpec(range, customRange, scope);
-  const sparkLabels = getRangeDates(range, customRange).map((d) =>
-    formatSparkLabel(d, range === "24h")
+  const sparkDates = getRangeDates(range, customRange);
+  const sparkSpan = {
+    start: sparkDates[0] ?? new Date(),
+    end: sparkDates.at(-1) ?? new Date(),
+  };
+  const sparkLabels = sparkDates.map((d) =>
+    formatChartTooltipDate(d, range === "24h" ? "hour" : "day", sparkSpan)
   );
   const note = RANGE_DELTA_NOTE[range];
   return (

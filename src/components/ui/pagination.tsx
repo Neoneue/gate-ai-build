@@ -79,7 +79,7 @@ function PaginationPrevious({
       size="icon-sm"
       {...props}
     >
-      <ChevronLeftIcon />
+      <ChevronLeftIcon aria-hidden />
     </PaginationLink>
   );
 }
@@ -95,7 +95,7 @@ function PaginationNext({
       size="icon-sm"
       {...props}
     >
-      <ChevronRightIcon />
+      <ChevronRightIcon aria-hidden />
     </PaginationLink>
   );
 }
@@ -119,7 +119,7 @@ function PaginationEllipsis({
       data-slot="pagination-ellipsis"
       {...props}
     >
-      <MoreHorizontalIcon />
+      <MoreHorizontalIcon aria-hidden />
       <span className="sr-only">More pages</span>
     </span>
   );

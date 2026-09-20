@@ -100,7 +100,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // not driven by Base UI's --active-tab vars). Line variant's underline
         // now lives on the sliding TabsIndicator above so it tweens between
         // triggers instead of fade-cutting.
-        "after:absolute after:opacity-0 after:transition-opacity group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=default]/tabs-list:after:bg-foreground",
+        "after:absolute after:opacity-0 after:transition-opacity group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=default]/tabs-list:after:bg-foreground motion-reduce:transition-none",
         className
       )}
       data-slot="tabs-trigger"

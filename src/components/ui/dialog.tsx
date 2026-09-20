@@ -121,7 +121,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon />
+            <XIcon aria-hidden />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -214,7 +214,7 @@ function DialogStaticContent({
           type="button"
           variant="ghost"
         >
-          <XIcon />
+          <XIcon aria-hidden />
           <span className="sr-only">Close</span>
         </Button>
       ) : null}

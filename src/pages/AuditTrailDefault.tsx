@@ -57,6 +57,7 @@ export function AuditTrailDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <List
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -73,6 +74,7 @@ export function AuditTrailDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Fingerprint
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -96,6 +98,7 @@ export function AuditTrailDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <List
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />

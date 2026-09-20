@@ -1,6 +1,5 @@
 import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +26,6 @@ import {
 import { TextLink } from "@/components/ui/text-link";
 
 export function SignIn() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -82,9 +80,9 @@ export function SignIn() {
                     size="icon-sm"
                   >
                     {showPwd ? (
-                      <EyeOff className="size-4" />
+                      <EyeOff aria-hidden className="size-4" />
                     ) : (
-                      <Eye className="size-4" />
+                      <Eye aria-hidden className="size-4" />
                     )}
                   </InputGroupButton>
                 </InputGroupAddon>
@@ -107,7 +105,11 @@ export function SignIn() {
               type="button"
               variant="outline"
             >
-              <KeyRound className="size-4" data-icon="inline-start" />
+              <KeyRound
+                aria-hidden
+                className="size-4"
+                data-icon="inline-start"
+              />
               Continue with a passkey
             </Button>
 
@@ -127,10 +129,7 @@ export function SignIn() {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           New to Constellation Gate?{" "}
-          <TextLink
-            className="type-copy-12"
-            onClick={() => navigate("/sign-up")}
-          >
+          <TextLink className="type-copy-12" to="/sign-up">
             Create an account
           </TextLink>
         </p>

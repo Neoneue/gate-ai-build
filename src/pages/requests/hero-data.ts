@@ -1,5 +1,5 @@
 import { demoAnchorFields } from "@/lib/demo-clock";
-import { formatSparkLabel } from "@/lib/formatters";
+import { formatChartTooltipDate } from "@/lib/formatters";
 import { scaleByShare } from "@/pages/teams/view-scope";
 import type {
   CustomRange,
@@ -228,6 +228,16 @@ function deriveTicks(data: { time: string }[], tickCount = 7): string[] {
   return ticks;
 }
 
+/** Tooltip-date window for a view: oldest bucket → the anchor. Only feeds the
+ *  year rule in `formatChartTooltipDate` (year shows only across a boundary).
+ *  Every hero bucket is sub-daily, so the granularity is always "hour". */
+function heroTipRange(oldestMinutesAgo: number): { start: Date; end: Date } {
+  return {
+    start: minutesBeforeAnchor(oldestMinutesAgo).date,
+    end: minutesBeforeAnchor(0).date,
+  };
+}
+
 // ── All-time view (240 × 6-hour buckets ≈ 60-day lifetime window) ─────────
 // The widest preset: the lifetime cumulative request volume for this mock
 // account. Sits above 30D — same 6-hour bucketing as 30D extended back to
@@ -240,13 +250,14 @@ const HERO_ALL_BUCKETS = makeHeroBuckets(
   "monthly",
   0xa1_1d_ca_fe
 );
+const HERO_ALL_TIP_RANGE = heroTipRange(239 * 360);
 const HERO_ALL_DATA = HERO_ALL_BUCKETS.map((requests, i) => {
   // Bucket 239 = current 6h window (anchor); bucket 0 = 239*6h earlier.
   const minutesAgo = (239 - i) * 360;
   const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
   return {
     time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
-    label: formatSparkLabel(date, true),
+    label: formatChartTooltipDate(date, "hour", HERO_ALL_TIP_RANGE),
     requests,
   };
 });
@@ -254,6 +265,7 @@ const HERO_ALL_TICKS = deriveTicks(HERO_ALL_DATA);
 
 // ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
 const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, "daily", 0xc5_7e_11_a7);
+const HERO_24H_TIP_RANGE = heroTipRange(95 * 15);
 const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
   // Bucket 0 = 23h45m before the anchor; bucket 95 = the anchor (15-min
   // buckets), so the axis ends on the DEMO_NOW hour.
@@ -261,7 +273,7 @@ const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
   const { hour, minute, date } = minutesBeforeAnchor(minutesAgo);
   return {
     time: `${pad2(hour)}:${pad2(minute)}`,
-    label: formatSparkLabel(date, true),
+    label: formatChartTooltipDate(date, "hour", HERO_24H_TIP_RANGE),
     requests,
   };
 });
@@ -269,13 +281,14 @@ const HERO_24H_TICKS = deriveTicks(HERO_24H_DATA, 6);
 
 // ── 7D view (168 × 1-hour buckets) ────────────────────────────────────────
 const HERO_7D_BUCKETS = makeHeroBuckets(168, 468, "weekly", 0x7d_c0_ff_ee);
+const HERO_7D_TIP_RANGE = heroTipRange(167 * 60);
 const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
   // Bucket 167 = current hour (14:00 today); bucket 0 = 167h before that.
   const minutesAgo = (167 - i) * 60;
   const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
   return {
     time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
-    label: formatSparkLabel(date, true),
+    label: formatChartTooltipDate(date, "hour", HERO_7D_TIP_RANGE),
     requests,
   };
 });
@@ -283,13 +296,14 @@ const HERO_7D_TICKS = deriveTicks(HERO_7D_DATA);
 
 // ── 30D view (120 × 6-hour buckets) ───────────────────────────────────────
 const HERO_30D_BUCKETS = makeHeroBuckets(120, 2248, "monthly", 0x30_dc_af_e0);
+const HERO_30D_TIP_RANGE = heroTipRange(119 * 360);
 const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
   // Bucket 119 = current 6h window (anchor); bucket 0 = 119*6h earlier.
   const minutesAgo = (119 - i) * 360;
   const { month, day, hour, date } = minutesBeforeAnchor(minutesAgo);
   return {
     time: `${MONTH_NAMES[month]} ${day} ${pad2(hour)}:00`,
-    label: formatSparkLabel(date, true),
+    label: formatChartTooltipDate(date, "hour", HERO_30D_TIP_RANGE),
     requests,
   };
 });
@@ -413,7 +427,10 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     const hh = pad2(bucketStart.getHours());
     return {
       time: `${MONTH_NAMES[m]} ${d} ${hh}:00`,
-      label: formatSparkLabel(bucketStart, true),
+      label: formatChartTooltipDate(bucketStart, "hour", {
+        start: custom.from,
+        end: custom.to,
+      }),
       requests,
     };
   });

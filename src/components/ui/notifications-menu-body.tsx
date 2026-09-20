@@ -336,7 +336,11 @@ function NotificationsMenuBody({
             aria-hidden
             className="flex size-12 items-center justify-center rounded-full bg-muted"
           >
-            <Bell className="size-5 text-muted-foreground" strokeWidth={1.75} />
+            <Bell
+              aria-hidden
+              className="size-5 text-muted-foreground"
+              strokeWidth={1.75}
+            />
           </div>
           {/* One line, both tabs. The pointer to the Archive tab that used
               to sit under "All caught up!" is gone (user direction

@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatChartTooltipDate } from "@/lib/formatters";
 import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
@@ -59,6 +60,7 @@ import {
   getBucketCount,
   getBucketGroupSize,
   getBucketLabel,
+  getRangeDates,
   getRangeLabels,
 } from "./chart-helpers";
 
@@ -89,7 +91,8 @@ const DIMENSION_OPTIONS: { value: Dimension; noun: string }[] = [
 /** Bucket start dates per range: re-anchored on the demo clock (daily ranges
  *  end on `DEMO_TODAY`; 24H's trailing bucket is `DEMO_NOW`). Kept in lockstep
  *  with getRangeLabels (same anchor + stepping); getRangeLabels renders the
- *  short axis labels, the KPI rail renders these via formatSparkLabel. */
+ *  short axis labels, and the tooltip maps each one back to its bucket date
+ *  via formatChartTooltipDate. */
 
 /** Margin, Y-axis reserve, tick type and both tick renderers come from
  *  `@/components/ui/chart-geometry` (+ its `chart-axis-ticks` sibling) — the
@@ -400,6 +403,33 @@ export function TrendCard({
     return out;
   }, [isSavings, dimension, range, customRange, cappedSeries, tokenTotals7d]);
 
+  /** Axis label → tooltip date. The x-axis keeps the short `getRangeLabels`
+   *  strings; the box shows the full shape from `formatChartTooltipDate`
+   *  (design.md "Chart tooltip & legend"). `getRangeDates` is in lockstep with
+   *  `getRangeLabels`, and an aggregated group keeps its FIRST bucket's label,
+   *  so the lookup still hits at every column width. */
+  const tooltipDates = useMemo(() => {
+    const dates = getRangeDates(range, customRange);
+    const labels = getRangeLabels(range, customRange);
+    const map = new Map<string, string>();
+    const first = dates[0];
+    const last = dates.at(-1);
+    if (!(first && last)) {
+      return map;
+    }
+    const span = { start: first, end: last };
+    labels.forEach((label, i) => {
+      const d = dates[i];
+      if (d) {
+        map.set(
+          label,
+          formatChartTooltipDate(d, range === "24h" ? "hour" : "day", span)
+        );
+      }
+    });
+    return map;
+  }, [range, customRange]);
+
   // Metric-aware value formatter — drives the tooltip rows. YAxis ticks
   // use fmtTokens directly under the tokens metric so the axis reads in
   // "1 M" / "5 M" units that match the tooltip; savings reads in "N.N%".
@@ -536,30 +566,14 @@ export function TrendCard({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value, name) => {
-                      const cfg = chartConfig[name as string];
-                      return (
-                        <div className="flex w-full items-center justify-between gap-6">
-                          <span className="flex items-center gap-1">
-                            <span
-                              aria-hidden
-                              className="size-2 shrink-0 rounded-xs"
-                              style={{ backgroundColor: cfg?.color }}
-                            />
-                            <span className="text-muted-foreground">
-                              {cfg?.label ?? name}
-                            </span>
-                          </span>
-                          <span className="type-mono-14 text-foreground">
-                            {valueFormatter(Number(value))}
-                          </span>
-                        </div>
-                      );
-                    }}
                     indicator="dot"
-                    labelFormatter={(_, payload) =>
-                      String(payload?.[0]?.payload?.date ?? "")
-                    }
+                    labelFormatter={(_, payload) => {
+                      const axisLabel = String(
+                        payload?.[0]?.payload?.date ?? ""
+                      );
+                      return tooltipDates.get(axisLabel) ?? axisLabel;
+                    }}
+                    valueFormatter={valueFormatter}
                   />
                 }
                 cursor={false}

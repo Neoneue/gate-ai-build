@@ -1,5 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import type * as React from "react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -30,16 +31,33 @@ export type BackLinkProps = Omit<
 > & {
   /** The destination's name — "Conversations", "Messages", "Setup". */
   label: string;
+  /** The route to go back to. When set the breadcrumb renders a real
+   *  `<a href>` (React Router `<Link>`) instead of a `<button>` — a back
+   *  breadcrumb IS navigation, so it gets cmd/middle-click and "Copy link
+   *  address" (same contract as `RowActionButton.href`). Omit it only for a
+   *  back step that is an in-place action. */
+  href?: string;
 };
 
-export function BackLink({ label, className, ...rest }: BackLinkProps) {
+export function BackLink({ label, className, href, ...rest }: BackLinkProps) {
+  const glyph = (
+    <ChevronLeft
+      aria-hidden
+      className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+      strokeWidth={1.75}
+    />
+  );
+  if (href) {
+    return (
+      <Link className={cn(BACK_LINK_BASE, className)} to={href}>
+        {glyph}
+        {label}
+      </Link>
+    );
+  }
   return (
     <button className={cn(BACK_LINK_BASE, className)} type="button" {...rest}>
-      <ChevronLeft
-        aria-hidden
-        className="size-4 transition-transform duration-150 ease-out group-hover:-translate-x-px motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-        strokeWidth={1.75}
-      />
+      {glyph}
       {label}
     </button>
   );

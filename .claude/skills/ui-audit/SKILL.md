@@ -20,28 +20,43 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    `.claude/rules/no-thrash.md` twins rule (Free / Default / Pro are separate
    files); "project" means `src/` with the blob exclusions.
 3. Fill [brief-review.md](brief-review.md) and spawn
-   `subagent_type: front-end-developer`. Do not add constraints the template
-   already covers; the agent's standing rules handle gates and scope.
-4. Relay the findings as a CHECKLIST, never a table (user rule
-   2026-09-17): one `- [ ] **N. SEVERITY** path:line` item per root cause
-   with `Before:`, `After:`, `Why:` sub-bullets, numbered so items can be
-   picked by number and ticked when applied. When the user asks for a file,
-   write it the same way (`ui-audit.md` at the repo root is the precedent).
-   Then the verdict. Then a "Decision needed" list for every row that
-   conflicts with design.md.
+   `subagent_type: front-end-developer` with `model: sonnet` (user rule
+   2026-09-20: audits run on Sonnet; the orchestrator runs on whatever model
+   the user set). Do not add constraints the template already covers; the
+   agent's standing rules handle gates and scope.
+4. Write the findings into the day's audit file,
+   `audits/YYYY-MM/audit-M-D.md`, following [audit-file.md](audit-file.md)
+   exactly: create the file on the first run of the day, append on every
+   later run; section per skill, subsection per page with `### Global`
+   first; IDs `<alias>-N` (alias table in audit-file.md) from a per-skill
+   counter that never resets or
+   renumbers; HIGH > MEDIUM > LOW inside every subsection; one row in the
+   Runs table per run. Before writing, read the existing file and compute
+   the next N. First run of the day also adds one changelog line naming the
+   audit path.
+   Then relay in chat: the new items as a CHECKLIST, never a table (user
+   rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY** path:line` with
+   `Before:`, `After:`, `Why:` sub-bullets; the verdict; then "Decision
+   needed" for every item that conflicts with design.md.
 5. Stop. Applying is a separate user instruction.
 
 ## 2. apply
 
-Trigger: the user names item numbers ("do the highs", "apply 1-4").
+Trigger: the user names item IDs ("do the highs", "apply rams-1 to rams-4").
 
-1. Fill [brief-apply.md](brief-apply.md) with only the named items, each with
-   its exact file, line, before and after from the review table.
-2. Spawn `front-end-developer` (or `SendMessage` the review agent if it is
-   still alive and holds the files, to avoid two agents on one file).
+1. Fill [brief-apply.md](brief-apply.md) with only the named items (by ID,
+   e.g. `rams-3`, `wdg-7`), each with its exact file, line, before and after from
+   the audit file.
+2. Spawn a fresh `front-end-developer` on its default model (Opus: design,
+   development and testing always run on Opus). Never `SendMessage` the
+   Sonnet review agent to apply; it is read-only by brief and on the wrong
+   model.
 3. Relay before / after per file and the gate results. Name anything the
    agent skipped and why.
-4. Do not commit. The user asks for `/commit` separately, every time.
+4. Tick each applied item in the audit file and append the short commit
+   hash once the user commits. Changelog entries for applied items cite the
+   item ID.
+5. Do not commit. The user asks for `/commit` separately, every time.
 
 ## 3. decide
 

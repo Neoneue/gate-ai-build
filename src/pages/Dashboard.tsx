@@ -36,6 +36,7 @@ import {
 import { CompactKpi, CompactSpark } from "@/components/ui/compact-kpi";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
+import { RowActionButton } from "@/components/ui/row-action-button";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import {
@@ -65,6 +66,7 @@ import { usageForTeam } from "@/data/teams";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_TODAY } from "@/lib/demo-clock";
 import {
+  formatChartTooltipDate,
   formatCompactCount,
   formatCurrency,
   formatNumber,
@@ -193,18 +195,20 @@ function PageHeader() {
 /* ─── KPI rail helpers ───────────────────────────────────────────────────── */
 
 /** Generate 7 daily labels ending on the demo clock's today (real
- *  yesterday), the same anchor the Activity charts use. */
+ *  yesterday), the same anchor the Activity charts use. Shape comes from
+ *  `formatChartTooltipDate` (design.md "Chart tooltip & legend"): these
+ *  strings are both the x-axis categories and the tooltip date, so the axis
+ *  reads exactly what the box does. */
 function make7dLabels(): string[] {
   const anchor = new Date(DEMO_TODAY);
-  const labels: string[] = [];
+  const dates: Date[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - i);
-    labels.push(
-      d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    );
+    dates.push(d);
   }
-  return labels;
+  const range = { start: dates[0], end: dates[dates.length - 1] };
+  return dates.map((d) => formatChartTooltipDate(d, "day", range));
 }
 
 const KPI_7D_LABELS = make7dLabels();
@@ -327,27 +331,8 @@ function StackedKpiChart({
           <ChartTooltip
             content={
               <ChartTooltipContent
-                formatter={(value, name) => {
-                  const cfg = config[name as string];
-                  return (
-                    <div className="flex w-full items-center justify-between gap-6">
-                      <span className="flex items-center gap-1">
-                        <span
-                          aria-hidden
-                          className="size-2 shrink-0 rounded-xs"
-                          style={{ backgroundColor: cfg?.color }}
-                        />
-                        <span className="text-muted-foreground">
-                          {cfg?.label ?? name}
-                        </span>
-                      </span>
-                      <span className="type-mono-14 text-foreground">
-                        {yFormatter(Number(value))}
-                      </span>
-                    </div>
-                  );
-                }}
                 indicator="dot"
+                valueFormatter={yFormatter}
               />
             }
             cursor={false}
@@ -719,7 +704,7 @@ function PreviewCard({
       <div className="flex shrink-0 items-center justify-between px-4 py-3">
         <CardTitle>{title}</CardTitle>
         <Link
-          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
           to={viewAllTo}
         >
           View all →
@@ -754,47 +739,62 @@ function LatestRequestsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, i) => (
-            <NavTableRow
-              aria-label={
-                row.requestId ? `Open message ${row.requestId}` : "Open message"
-              }
-              className="h-12"
-              key={row.requestId ?? i}
-              onActivate={() => {
-                if (row.requestId) {
-                  navigate(
-                    withTierOf(pathname, `/messages-findings/${row.requestId}`)
-                  );
-                }
-              }}
-            >
-              <TableCell className="type-mono-14 whitespace-nowrap">
-                {requestDayLabel(row)} {row.time}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {modelName(row.model)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <Badge
-                  variant={
-                    row.slow
-                      ? "warning"
-                      : row.status === "success"
-                        ? "success"
-                        : "destructive"
+          {rows.map((row, i) => {
+            const timeLabel = `${requestDayLabel(row)} ${row.time}`;
+            const findingsPath = row.requestId
+              ? withTierOf(pathname, `/messages-findings/${row.requestId}`)
+              : null;
+            return (
+              <NavTableRow
+                className="h-12"
+                key={row.requestId ?? i}
+                onActivate={() => {
+                  if (findingsPath) {
+                    navigate(findingsPath);
                   }
-                >
-                  {row.slow ? "slow" : row.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
-                  {row.guardrail}
-                </Badge>
-              </TableCell>
-            </NavTableRow>
-          ))}
+                }}
+              >
+                {/* Time is this preview's identifier cell, so it holds the
+                    drill-in: a real <a href> (RowActionButton), which is the
+                    row's only keyboard/AT target. A row with no requestId has
+                    nothing to open and renders as plain text. */}
+                <TableCell className="type-mono-14 whitespace-nowrap">
+                  {findingsPath ? (
+                    <RowActionButton
+                      aria-label={`Open message ${row.requestId}`}
+                      href={findingsPath}
+                      layout="inline"
+                    >
+                      {timeLabel}
+                    </RowActionButton>
+                  ) : (
+                    timeLabel
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {modelName(row.model)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Badge
+                    variant={
+                      row.slow
+                        ? "warning"
+                        : row.status === "success"
+                          ? "success"
+                          : "destructive"
+                    }
+                  >
+                    {row.slow ? "slow" : row.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <Badge variant={GUARDRAIL_BADGE[row.guardrail].variant}>
+                    {row.guardrail}
+                  </Badge>
+                </TableCell>
+              </NavTableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </PreviewCard>
@@ -820,29 +820,36 @@ function RecentConversationsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
-            <NavTableRow
-              aria-label={`Open conversation: ${row.title}`}
-              className="h-12"
-              key={row.conversationId}
-              onActivate={() =>
-                navigate(`/conversations?open=${row.conversationId}`)
-              }
-            >
-              <TableCell className="w-full max-w-0">
-                <span className="block truncate">{row.title}</span>
-              </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap">
-                {formatTimestamp(row.updated)}
-              </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap text-right">
-                {row.turns}
-              </TableCell>
-              <TableCell className="type-mono-14 whitespace-nowrap text-right">
-                {row.reqs}
-              </TableCell>
-            </NavTableRow>
-          ))}
+          {rows.map((row) => {
+            const tracePath = `/conversations?open=${row.conversationId}`;
+            return (
+              <NavTableRow
+                className="h-12"
+                key={row.conversationId}
+                onActivate={() => navigate(tracePath)}
+              >
+                <TableCell className="w-full max-w-0">
+                  <RowActionButton
+                    aria-label={`Open conversation: ${row.title}`}
+                    className="block w-full truncate"
+                    href={tracePath}
+                    layout="inline"
+                  >
+                    {row.title}
+                  </RowActionButton>
+                </TableCell>
+                <TableCell className="type-mono-14 whitespace-nowrap">
+                  {formatTimestamp(row.updated)}
+                </TableCell>
+                <TableCell className="type-mono-14 whitespace-nowrap text-right">
+                  {row.turns}
+                </TableCell>
+                <TableCell className="type-mono-14 whitespace-nowrap text-right">
+                  {row.reqs}
+                </TableCell>
+              </NavTableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </PreviewCard>
@@ -872,19 +879,27 @@ function SecurityEventsTable() {
             const badge = ACTION_BADGE[row.action];
             const typeMeta = TYPE_META[row.type];
             const TypeIcon = typeMeta.Icon;
+            const eventPath = `/security?open=${row.requestId}`;
             return (
               <NavTableRow
-                aria-label={
-                  row.requestId
-                    ? `View security event ${row.requestId}`
-                    : "View security event"
-                }
                 className="h-12"
                 key={`${row.requestId}-${i}`}
-                onActivate={() => navigate(`/security?open=${row.requestId}`)}
+                onActivate={() => navigate(eventPath)}
               >
+                {/* Identifier cell = the drill-in, matching the two previews
+                    above: the <a href> is the row's keyboard/AT target. */}
                 <TableCell className="type-mono-14 whitespace-nowrap">
-                  {formatTimestamp(parseEventTime(row.time))}
+                  <RowActionButton
+                    aria-label={
+                      row.requestId
+                        ? `View security event ${row.requestId}`
+                        : "View security event"
+                    }
+                    href={eventPath}
+                    layout="inline"
+                  >
+                    {formatTimestamp(parseEventTime(row.time))}
+                  </RowActionButton>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span className="inline-flex items-center gap-2 align-middle">

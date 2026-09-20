@@ -164,7 +164,7 @@ export function CodeCardTabs({
           // Skill: emil-design-eng — explicit `transition-colors duration-150
           // ease-out`; the active pill uses `shadow-xs` to match the segmented
           // family's lift instead of inlining its own rgba shadow.
-          "inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out",
+          "inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm outline-none transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
           isActive
             ? "border border-border bg-card font-medium text-foreground shadow-xs"
             : "border border-transparent font-medium text-muted-foreground",

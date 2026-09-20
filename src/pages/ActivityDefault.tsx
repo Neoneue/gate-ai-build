@@ -40,6 +40,7 @@ export function ActivityDefault() {
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <BarChart2
+                aria-hidden
                 className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />
@@ -54,6 +55,7 @@ export function ActivityDefault() {
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <ArrowLeftRight
+                aria-hidden
                 className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />
@@ -68,6 +70,7 @@ export function ActivityDefault() {
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <Zap
+                aria-hidden
                 className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />
@@ -86,6 +89,7 @@ export function ActivityDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Zap
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -109,6 +113,7 @@ export function ActivityDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Key
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />

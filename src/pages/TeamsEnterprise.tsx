@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { PageTitle } from "@/components/ui/page-title";
+import { RowActionButton } from "@/components/ui/row-action-button";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import {
   NavTableRow,
@@ -318,9 +319,9 @@ export function TeamsEnterprise(
           </TabsList>
           <TabsContent value="current">
             <TeamsTable
+              hrefFor={(id) => `${basePath}/${id}`}
               loading={loading}
               onDelete={setDeleting}
-              onOpen={(id) => navigate(`${basePath}/${id}`)}
               onRename={setRenaming}
               spendByTeam={spendByTeam}
               teams={teams}
@@ -336,6 +337,7 @@ export function TeamsEnterprise(
                     className="flex size-12 items-center justify-center rounded-full bg-muted"
                   >
                     <Archive
+                      aria-hidden
                       className="size-5 text-muted-foreground"
                       strokeWidth={1.75}
                     />
@@ -345,7 +347,7 @@ export function TeamsEnterprise(
               />
             ) : (
               <DeletedTeamsCard
-                onOpen={(id) => navigate(`${basePath}/${id}`)}
+                hrefFor={(id) => `${basePath}/${id}`}
                 rows={deletedTeams}
               />
             )}
@@ -400,14 +402,17 @@ export function TeamsEnterprise(
 function TeamsTable({
   teams,
   spendByTeam,
-  onOpen,
+  hrefFor,
   onRename,
   onDelete,
   loading,
 }: {
   teams: TeamRow[];
   spendByTeam: Map<string, number>;
-  onOpen: (id: string) => void;
+  /** The team's detail path. A PATH, not an open callback: the row's drill-in
+   *  is a real <a href> in the Team cell (RowActionButton), so it needs the
+   *  URL, not a handler. */
+  hrefFor: (id: string) => string;
   onRename: (team: TeamRow) => void;
   onDelete: (team: TeamRow) => void;
   loading: boolean;
@@ -495,9 +500,9 @@ function TeamsTable({
                 const spend = spendByTeam.get(row.id) ?? 0;
                 return (
                   <TeamTableRow
+                    hrefFor={hrefFor}
                     key={row.id}
                     onDelete={onDelete}
-                    onOpen={onOpen}
                     onRename={onRename}
                     row={row}
                     spend={spend}
@@ -549,23 +554,24 @@ function TeamSkeletonRow() {
 function TeamTableRow({
   row,
   spend,
-  onOpen,
+  hrefFor,
   onRename,
   onDelete,
 }: {
   row: TeamRow;
   spend: number;
-  onOpen: (id: string) => void;
+  hrefFor: (id: string) => string;
   onRename: (team: TeamRow) => void;
   onDelete: (team: TeamRow) => void;
 }) {
+  const navigate = useNavigate();
+  const href = hrefFor(row.id);
   return (
-    <NavTableRow
-      aria-label={`Open ${row.name}`}
-      onActivate={() => onOpen(row.id)}
-    >
+    // onActivate is a mouse-only convenience; the keyboard/AT target is the
+    // <a href> in the Team cell below.
+    <NavTableRow onActivate={() => navigate(href)}>
       <TableCell className="whitespace-nowrap">
-        <div className="flex min-w-0 items-center gap-2">
+        <RowActionButton aria-label={`Open ${row.name}`} href={href}>
           {/* Row-IDENTIFIER cell: it names the row the way Members / Keys /
               Manager name their own values, so it stays at 400 rather than
               making Team the one column that shouts.
@@ -576,7 +582,7 @@ function TeamTableRow({
           >
             {row.name}
           </span>
-        </div>
+        </RowActionButton>
       </TableCell>
       <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
         {formatNumber(row.memberIds.length)}
@@ -699,7 +705,7 @@ function TeamRowActions({
           />
         }
       >
-        <MoreHorizontal />
+        <MoreHorizontal aria-hidden />
       </MenuTrigger>
       {/* The popup is a REACT portal, so its events still bubble up the React
           tree into the row's `onActivate` — clicking "Delete" navigated to the
@@ -732,11 +738,12 @@ function TeamRowActions({
  *  stops having a row. No sort, no actions: nothing here is actionable. */
 function DeletedTeamsCard({
   rows,
-  onOpen,
+  hrefFor,
 }: {
   rows: DeletedTeam[];
-  onOpen: (id: string) => void;
+  hrefFor: (id: string) => string;
 }) {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-4">
       <Card density="flush">
@@ -755,12 +762,17 @@ function DeletedTeamsCard({
           <TableBody>
             {rows.map((row) => (
               <NavTableRow
-                aria-label={`Open ${row.name}`}
                 key={row.id}
-                onActivate={() => onOpen(row.id)}
+                onActivate={() => navigate(hrefFor(row.id))}
               >
                 <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                  {row.name}
+                  <RowActionButton
+                    aria-label={`Open ${row.name}`}
+                    href={hrefFor(row.id)}
+                    layout="inline"
+                  >
+                    {row.name}
+                  </RowActionButton>
                 </TableCell>
                 <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
                   <Timestamp date={row.deletedAt} />

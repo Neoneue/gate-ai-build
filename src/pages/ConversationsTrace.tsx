@@ -49,8 +49,8 @@ export function ConversationsTrace() {
           (top-right), mirroring the Requests findings page. */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <BackLink
+          href={withTierOf(pathname, "/conversations")}
           label="Conversations"
-          onClick={() => navigate(withTierOf(pathname, "/conversations"))}
         />
       </div>
 

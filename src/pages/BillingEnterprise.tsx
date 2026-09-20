@@ -205,6 +205,7 @@ function PastDueBanner({
     >
       <span aria-hidden className="flex h-5 shrink-0 items-center">
         <OctagonAlert
+          aria-hidden
           className="size-4 text-danger-800 dark:text-danger-300"
           strokeWidth={1.75}
         />

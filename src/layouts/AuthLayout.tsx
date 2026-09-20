@@ -251,12 +251,12 @@ export function AuthLayout() {
           </ul>
         </div>
 
-        <div
+        <main
           className="row-start-2 flex justify-center self-center md:col-span-6 md:col-start-7"
           data-anim-pop
         >
           <Outlet />
-        </div>
+        </main>
 
         <p
           className="type-label-12 row-start-3 self-end text-center text-muted-foreground uppercase tracking-widest md:col-span-5 md:col-start-1 md:text-left"
