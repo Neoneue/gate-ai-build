@@ -1233,7 +1233,7 @@ function compressionValue(row: RequestRow): string {
     return "—";
   }
   const pct = Math.max(20, Math.min(55, 22 + tokens / 220));
-  return `${Math.round(pct)}%`;
+  return `${pct.toFixed(1)}%`;
 }
 
 function KpiRail({ row }: { row: RequestRow }) {

@@ -113,7 +113,7 @@ const SlidersHorizontalIcon = forwardRef<
       >
         <m.line
           animate={controls}
-          initial={false}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -130,6 +130,7 @@ const SlidersHorizontalIcon = forwardRef<
         />
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -147,6 +148,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -164,6 +166,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -181,6 +184,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -198,6 +202,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -215,6 +220,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -234,6 +240,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -253,6 +260,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {

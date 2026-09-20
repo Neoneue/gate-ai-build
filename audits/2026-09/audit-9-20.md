@@ -12,7 +12,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 | --- | --- | --- | --- | --- |
 | 1 | 11:11 | web-design-guidelines | whole site (196 `.tsx`, `src/data` excluded) | wdg-1 to wdg-32 |
 | 2 | 15:36 | react-best-practices | whole site (271 `.ts`/`.tsx`, 71.8k lines, three parallel reviewers; blobs + tests excluded) | rbp-1 to rbp-13 |
-| 3 | 16:20 | test-smoke (Playwright 8 flows + vitest 144 route cases) | whole site | smk-1 to smk-2 |
+| 3 | 16:20 | test-smoke (Playwright 8 flows + vitest 144 route cases) | whole site | smk-1 to smk-4 |
 
 ## web-design-guidelines
 
@@ -325,14 +325,23 @@ error the browser already logs on the live site today.
 
 ### Messages
 
-- [ ] **smk-2 MEDIUM** recharts `<line>` `x1`/`x2` "undefined" pages/requests/HeroMetric.tsx:104
-  - Before: apply Filters -> Key -> Apply on `/messages`; the hero `AreaChart` re-renders on the narrowed series and logs 12 invalid-SVG errors (5 rows remain).
-  - After: guard the hero series so a narrowed range still yields numeric x coordinates (empty or single-point series is the likely cause; reproduce with the 5-row key).
-  - Why: invalid SVG attributes on a live interaction; fails Playwright flow d.
+- [x] **smk-3 HIGH** (applied 2026-09-20) search box not wired pages/requests/RequestsTable.tsx:277, pages/requests/RequestsTable.tsx:212
+  - Before: `<SearchInput ariaLabel="Search messages">` has no `value` / `onChange`, and `filteredRows` ANDs only response / guardrail / model / key, so typing does nothing; 25 rows stay. Security's EventsTable search is wired.
+  - After: mirror EventsTable: search state, deferred query, match model label / key name / request id / message preview, page reset on change, `TableEmptyState` no-match copy.
+  - Why: a visible control that does nothing on the demo's busiest page. Found by `RequestsTable.test.tsx` "a search that matches nothing shows the empty state".
+- [x] **smk-2 MEDIUM** (applied 2026-09-20) motion `m.line` without `initial` components/ui/sliders-horizontal.tsx:116-266, components/ui/sparkles.tsx:153-165
+  - Before: the Filters button's animated icon had nine `m.line` elements with `variants` and no `initial`, so the first `controls.start()` wrote `x1="undefined"` for one frame; 12 invalid-SVG console errors on `/messages` when Filters is clicked. The audit first blamed the hero AreaChart; a setAttribute trap disproved that. Sparkles had the same gap on `fill` / `opacity` (Chrome drops those silently, no error, same defect).
+  - After: `initial="normal"` on every animated line, `initial="initial"` on the five sparkle paths; the rest variant equals the static geometry so nothing moves at mount. The other six animated icons animate transform keys only, which motion seeds from numeric defaults, and were left alone.
+  - Why: invalid SVG attribute writes on a live interaction; failed Playwright flow d. Regression guard: `hero-data.test.ts` "hero series shape" (12 cases) pins the chart side as well.
+- [x] **smk-4 MEDIUM** (applied 2026-09-20) compression fallback rounds to an integer pages/requests/RequestDetailBody.tsx:1236
+  - Before: `compressionValue` returned `${Math.round(pct)}%` for every row without an authored `row.compression`.
+  - After: `${pct.toFixed(1)}%`.
+  - Why: "Compression % always one decimal" (design rule); found by `design-invariants.test.ts`.
 
 ### Compliant, checked and clean
 
+- Behaviour tier (`src/test/role-matrix`, `deep-links`, `stores`, `design-invariants`, `RequestsTable`, `EventsTable`, `use-theme`, `DashboardChrome` tests, 133 cases): role x tier sidebar and URL guard, strip-on-close deep links, store snapshots, range defaults, revoked keys excluded, chart reconciliation, theme persistence, drawer close all pass; the two failures are smk-3 and smk-4.
 - vitest route smoke: 137 of 144 cases pass (84 routes, 19 Enterprise routes x 3 roles, 2 redirects); the 7 failures are all smk-1.
 - Playwright flows a, c, e, f, g, h pass: root redirect, Enterprise role switch + URL guard, team roster search, Billing `?state=` previews, theme persistence across reload, mobile drawer closes at 1024px.
 
-Verdict (run 3): fail. Two live console errors, one on nearly every page.
+Verdict (run 3): fail at first run. Four defects: two live console errors (one on nearly every page), one dead search box, one rounding rule breach. All four fixed the same day.

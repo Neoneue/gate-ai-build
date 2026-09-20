@@ -5,7 +5,7 @@ import {
   scaleHeroView,
   withBreakdown,
 } from "./hero-data";
-import type { HeroView } from "./types";
+import type { HeroView, RangeKey } from "./types";
 
 /** Bucket counts chosen so independent per-bucket rounding does NOT sum to
  *  the rounded total (e.g. 0.24 × 7 = 1.68 → 2 in several buckets). */
@@ -111,5 +111,45 @@ describe("withBreakdown", () => {
     );
     expect(points[0].errors).toBe(0);
     expect(points[1].errors).toBe(3);
+  });
+});
+
+/** smk-2 guard: the hero AreaChart must never receive a malformed point.
+ *  A non-finite `requests` or a tick that is not a member of the series
+ *  makes recharts emit `<line> attribute x1/x2: Expected length` and drop
+ *  the axis. Covers every preset range AND the Manager / Member scoped
+ *  narrowings, which rebuild the series through `scaleHeroView`. */
+describe("hero series shape", () => {
+  const views: [string, HeroView][] = [
+    ...(Object.keys(HERO_VIEWS) as RangeKey[]).map(
+      (key) => [key, HERO_VIEWS[key]] as [string, HeroView]
+    ),
+    ...SCOPED_SHARES.flatMap((share) =>
+      (["all", "24h", "7d", "30d"] as RangeKey[]).map(
+        (key) =>
+          [`${key} @ ${share}`, scaleHeroView(HERO_VIEWS[key], share)] as [
+            string,
+            HeroView,
+          ]
+      )
+    ),
+  ];
+
+  it.each(views)("keeps %s well-formed for the chart", (_name, view) => {
+    for (const point of view.data) {
+      expect(typeof point.time).toBe("string");
+      expect(point.time.length).toBeGreaterThan(0);
+      expect(point.label.length).toBeGreaterThan(0);
+      for (const n of [point.requests, point.success, point.errors]) {
+        expect(Number.isFinite(n)).toBe(true);
+        expect(n).toBeGreaterThanOrEqual(0);
+      }
+    }
+    const times = new Set(view.data.map((d) => d.time));
+    for (const tick of view.ticks) {
+      expect(times.has(tick)).toBe(true);
+    }
+    expect(Number.isFinite(view.domainTop)).toBe(true);
+    expect(view.domainTop).toBeGreaterThan(0);
   });
 });

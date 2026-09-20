@@ -15,8 +15,8 @@ applied. Rules and the alias table: `.claude/skills/ui-audit/audit-file.md`.
   21 of 32 applied; wdg-15 kept by decision; the other ten skipped as mobile-only or redundant.
 - `rbp` react-best-practices, whole site: rbp-1 to rbp-13. Verdict pass
   with fixes; 2 HIGH (table index keys, TeamDetail roster), 3 MEDIUM, 8 LOW.
-- `smk` test-smoke, Playwright 8 flows + route smoke: smk-1 to smk-2 so far.
-  Verdict fail; two live console errors.
+- `smk` test-smoke, Playwright 8 flows + route smoke: smk-1 to smk-4.
+  Verdict fail at first run; 4 defects, all fixed same day.
 
 ### [2026-09-18](./2026-09/audit-9-18.md)
 

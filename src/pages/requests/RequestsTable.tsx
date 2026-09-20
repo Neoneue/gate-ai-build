@@ -120,6 +120,10 @@ export function RequestsTableSection({
         "nova-chat",
         "test-key",
       ];
+  // Toolbar search. Plain state, no debounce/defer — same shape as
+  // EventsTableSection (security/EventsTable.tsx:136), which filters
+  // synchronously off the committed value.
+  const [query, setQuery] = useState("");
   const [model, setModel] = useState("all");
   const [keyId, setKeyId] = useState("all");
   // Response + guardrail filters are independent (split out of the single
@@ -181,10 +185,14 @@ export function RequestsTableSection({
     setFiltersOpen(false);
   }, [draftModel, draftKeyId, draftResponseFilter, draftGuardrailFilter]);
   const [rowsPerPage, setRowsPerPage] = useState("25");
-  const pageScopeKey =
+  // `query` joins the scope key so a new search resets to page 1 — same
+  // effect as the Events resetKey, reusing the reset mechanism this file
+  // already has rather than adding a second one.
+  const rangeScopeKey =
     range === "custom"
       ? `${range}:${customRange?.from.getTime() ?? "none"}:${customRange?.to.getTime() ?? "none"}`
       : range;
+  const pageScopeKey = `${rangeScopeKey}|${query}`;
   const [paging, setPaging] = useState<{ scopeKey: string; page: number }>(
     () => ({
       scopeKey: pageScopeKey,
@@ -209,25 +217,39 @@ export function RequestsTableSection({
   // Two independent filters, ANDed. `slow` in the response filter is the
   // facet alias (matches `row.slow === true`); the other values match
   // `row.status` directly. Guardrail filter matches `row.guardrail`.
-  const filteredRows = useMemo(
-    () =>
-      rows.filter((r) => {
-        const matchesResponse =
-          responseFilter === "all"
-            ? true
-            : responseFilter === "slow"
-              ? r.slow === true
-              : r.status === responseFilter;
-        const matchesGuardrail =
-          guardrailFilter === "all" ? true : r.guardrail === guardrailFilter;
-        const matchesModel = model === "all" ? true : r.model === model;
-        const matchesKey = keyId === "all" ? true : r.keyId === keyId;
-        return (
-          matchesResponse && matchesGuardrail && matchesModel && matchesKey
-        );
-      }),
-    [rows, responseFilter, guardrailFilter, model, keyId]
-  );
+  // The search term ANDs on top, case-insensitive substring over the four
+  // things the row shows: model label, key name, request id, and the message
+  // preview. Transcript bodies are NOT searched — `messagePreview` reads the
+  // precomputed one-line map, so this stays off the 425 KB blob.
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      const matchesResponse =
+        responseFilter === "all"
+          ? true
+          : responseFilter === "slow"
+            ? r.slow === true
+            : r.status === responseFilter;
+      const matchesGuardrail =
+        guardrailFilter === "all" ? true : r.guardrail === guardrailFilter;
+      const matchesModel = model === "all" ? true : r.model === model;
+      const matchesKey = keyId === "all" ? true : r.keyId === keyId;
+      if (
+        !(matchesResponse && matchesGuardrail && matchesModel && matchesKey)
+      ) {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
+      return [
+        modelName(r.model),
+        keyLabel(r.keyId),
+        requestRowId(r),
+        messagePreview(r) ?? "",
+      ].some((field) => field.toLowerCase().includes(q));
+    });
+  }, [rows, responseFilter, guardrailFilter, model, keyId, query]);
 
   // Click-to-sort on column headers. No sort by default → rows stay in their
   // authored (chronological) order; picking a column sorts client-side.
@@ -277,8 +299,10 @@ export function RequestsTableSection({
           <SearchInput
             ariaLabel="Search messages"
             className="@2xl:w-auto w-full min-w-0 @2xl:flex-1"
+            onChange={setQuery}
             placeholder="Search message…"
             surface="elevated"
+            value={query}
           />
 
           {/* PROTOTYPE — four section-header filters collapsed into one
