@@ -286,9 +286,7 @@ export function TeamDetailEnterprise({
         aria-busy={loading}
         className="flex w-full @5xl:max-w-5xl flex-col gap-6"
       >
-        {teamRole ? null : (
-          <BackLink label="Teams" onClick={() => navigate(listPath)} />
-        )}
+        {teamRole ? null : <BackLink href={listPath} label="Teams" />}
 
         {/* The page's ONE announcement of the wait — the skeletons in every
             pane are `aria-hidden`. No visible spinner, no visible text. */}

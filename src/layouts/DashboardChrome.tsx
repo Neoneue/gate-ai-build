@@ -7,7 +7,12 @@ import {
 } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
-import { Navigate, useLocation, useOutletContext } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useOutletContext,
+} from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
@@ -385,7 +390,7 @@ function DashTopBar({
   showViewRole: boolean;
 }) {
   return (
-    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
       <div className="flex items-center gap-2">
         <Button
           aria-expanded={sidebarExpanded}
@@ -427,11 +432,10 @@ function DashTopBar({
          *  the nav moves into the hamburger Sheet; the workspace switcher lives
          *  in that Sheet below lg. At lg+ the rail carries the brand and the
          *  switcher sits here in the top bar. */}
-        <button
+        <Link
           aria-label="Go to overview"
           className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
-          onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
-          type="button"
+          to={overviewPath ?? "/overview"}
         >
           <img
             alt=""
@@ -439,7 +443,7 @@ function DashTopBar({
             className="h-8 w-auto"
             src="/gate-ai-logo-mark.png"
           />
-        </button>
+        </Link>
         {/* At lg+ the switcher normally lives here. In the tight band (rail +
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}
@@ -506,7 +510,7 @@ function DashTopBar({
           upgradePath={upgradePath}
         />
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -549,6 +553,9 @@ function MobileNav({
     mq.addEventListener("change", handleChange);
     return () => mq.removeEventListener("change", handleChange);
   }, []);
+  // The nav rows are <Link>s, so the Sheet only needs to CLOSE on activation
+  // (`onNavItemClick`). `handleNavigate` stays for the non-link controls the
+  // panel still drives through `onNavigate` (upgrade card, user menu).
   const handleNavigate = (pageId: string) => {
     onNavigate?.(pageId);
     setOpen(false);
@@ -572,6 +579,7 @@ function MobileNav({
         <SidebarPanel
           activeId={activeId}
           hideDocsButton={hideDocsButton}
+          onNavItemClick={() => setOpen(false)}
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}

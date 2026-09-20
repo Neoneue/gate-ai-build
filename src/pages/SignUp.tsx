@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,6 @@ import { Input } from "@/components/ui/input";
 import { TextLink } from "@/components/ui/text-link";
 
 export function SignUp() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [invite, setInvite] = useState("");
 
@@ -104,10 +102,7 @@ export function SignUp() {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           Already have an account?{" "}
-          <TextLink
-            className="type-copy-12"
-            onClick={() => navigate("/sign-in")}
-          >
+          <TextLink className="type-copy-12" to="/sign-in">
             Sign in
           </TextLink>
         </p>

@@ -674,17 +674,15 @@ function ConversationsTableSection({
                 <TableBody>
                   {visibleRows.map((row) => (
                     <TableRow
-                      className="cursor-pointer transition-[background-color] duration-150 ease-out hover-fine:bg-accent motion-reduce:transition-none"
+                      className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
                       key={row.conversationId}
                       onClick={() => navigate(tracePath(row.conversationId))}
                     >
                       <TableCell className="max-w-0 whitespace-nowrap">
                         <RowActionButton
                           aria-label={`Inspect conversation ${row.title}`}
+                          href={tracePath(row.conversationId)}
                           layout="stack"
-                          onClick={() =>
-                            navigate(tracePath(row.conversationId))
-                          }
                         >
                           <span
                             className="type-label-14 truncate text-foreground"

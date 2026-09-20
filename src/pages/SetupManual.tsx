@@ -407,18 +407,22 @@ function ModelPicker({
       </PopoverTrigger>
 
       <PopoverContent align="start" className="w-72 p-0" sideOffset={6}>
-        {/* Sticky search bar */}
-        <div className="flex items-center gap-2 border-border border-b px-3 py-2">
+        {/* Sticky search bar. The Input's own ring is suppressed and replaced
+            by a `focus-within:` ring on this row, so the whole search band is
+            the focus indicator (design.md §2 ring recipe). */}
+        <div className="flex items-center gap-2 border-border border-b px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
           <Search
             aria-hidden
             className="size-4 shrink-0 text-muted-foreground"
             strokeWidth={1.75}
           />
           <Input
-            className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+            aria-label="Search models"
+            className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search models…"
             ref={searchRef}
+            spellCheck={false}
             type="search"
             value={query}
           />

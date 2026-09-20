@@ -2,6 +2,7 @@ import { Archive, AtSign, Bell, Pencil } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import {
+  Link,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -583,7 +584,6 @@ function ChannelsCard({
   onSetChannel: (key: keyof ChannelSelection, on: boolean) => void;
   onSetFrequency: (id: EmailFrequency, on: boolean) => void;
 }) {
-  const navigate = useNavigate();
   const onlyOne = prefs.emailFrequency.length === 1;
 
   return (
@@ -621,7 +621,7 @@ function ChannelsCard({
                editor for the same value. */
             <Button
               aria-label="Change email in Settings"
-              onClick={() => navigate("/settings")}
+              render={<Link to="/settings" />}
               size="icon-xs"
               variant="ghost"
             >

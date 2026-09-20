@@ -1,4 +1,5 @@
 import type * as React from "react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -12,10 +13,13 @@ import { cn } from "@/lib/utils";
  * links. See feedback_link-affordance.md.
  *
  * Semantics:
- *   default          renders <button type="button"> — correct for this
- *                    repo's no-router architecture (cmd/middle-click on
- *                    an <a href="#"> was never navigating anywhere).
- *   as="a" + href    renders an <a> for real navigation.
+ *   default          renders <button type="button"> — for in-place actions
+ *                    (open a dialog, toggle something) that read as a link.
+ *   to="/route"      renders a React Router <Link> — a real <a href> that
+ *                    routes client-side. This is the branch for every
+ *                    in-app route change; a plain <a href="/route"> would
+ *                    full-reload the SPA.
+ *   as="a" + href    renders a plain <a> — for EXTERNAL destinations only.
  *
  * Visual recipe (locked):
  *   text-foreground bg-transparent p-0 outline-none rounded-xs
@@ -41,16 +45,35 @@ type ButtonProps = Omit<
   "type"
 > & {
   as?: "button";
+  to?: never;
 };
 
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
   as: "a";
   href: string;
+  to?: never;
 };
 
-export type TextLinkProps = ButtonProps | AnchorProps;
+type RouterProps = Omit<
+  React.AnchorHTMLAttributes<HTMLAnchorElement>,
+  "href"
+> & {
+  as?: never;
+  /** In-app route. Renders a React Router <Link>. */
+  to: string;
+};
+
+export type TextLinkProps = ButtonProps | AnchorProps | RouterProps;
 
 export function TextLink(props: TextLinkProps) {
+  if (props.to !== undefined) {
+    const { to, className, children, ...rest } = props;
+    return (
+      <Link className={cn(TEXT_LINK_BASE, className)} to={to} {...rest}>
+        {children}
+      </Link>
+    );
+  }
   if (props.as === "a") {
     const { as: _as, className, children, ...rest } = props;
     return (

@@ -125,12 +125,12 @@ export function ChoiceCard({
  *  + label, hover ink + nudge, generous invisible hit area). */
 export function SetupBackLink({
   label,
-  onClick,
+  href,
 }: {
   label: string;
-  onClick: () => void;
+  href: string;
 }) {
-  return <BackLink label={label} onClick={onClick} />;
+  return <BackLink href={href} label={label} />;
 }
 
 /**
@@ -169,7 +169,7 @@ export function SetupScaffold({
       sidebarExpanded={sidebarExpanded}
     >
       <div className={cn("flex w-full flex-col gap-6", maxWidthClassName)}>
-        <SetupBackLink label={backLabel} onClick={() => navigate(backTo)} />
+        <SetupBackLink href={backTo} label={backLabel} />
         <div className="flex flex-col gap-2">
           <PageTitle>{title}</PageTitle>
           {subtitle ? (

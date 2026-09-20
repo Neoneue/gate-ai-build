@@ -1,5 +1,6 @@
 import { BookOpen, Moon, MoreHorizontal, Sun, UserRound } from "lucide-react";
 import type * as React from "react";
+import { Link } from "react-router-dom";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { LogoutIcon } from "@/components/ui/logout";
 import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
@@ -112,7 +113,6 @@ export function Sidebar({
       >
         <SidebarCollapsed
           activeId={activeId}
-          onNavigate={onNavigate}
           overviewPath={overviewPath}
           sections={sections}
         />
@@ -147,30 +147,36 @@ export function Sidebar({
 function SidebarCollapsed({
   sections,
   activeId,
-  onNavigate,
   overviewPath,
 }: {
   sections: SidebarSection[];
   activeId: string;
-  onNavigate?: (pageId: string) => void;
   overviewPath?: string;
 }) {
   return (
     <div className="flex h-full w-16 shrink-0 flex-col items-center">
       <div className="flex h-16 w-full shrink-0 items-center justify-center border-border border-b">
-        <button
-          aria-label="Go to overview"
-          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          onClick={overviewPath ? () => onNavigate?.(overviewPath) : undefined}
-          type="button"
-        >
+        {overviewPath ? (
+          <Link
+            aria-label="Go to overview"
+            className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            to={overviewPath}
+          >
+            <img
+              alt=""
+              aria-hidden
+              className="h-8 w-auto"
+              src="/gate-ai-logo-mark.png"
+            />
+          </Link>
+        ) : (
           <img
             alt=""
             aria-hidden
             className="h-8 w-auto"
             src="/gate-ai-logo-mark.png"
           />
-        </button>
+        )}
       </div>
       <div className="flex w-full flex-1 flex-col items-center justify-between overflow-y-auto pt-3 pb-5">
         <div className="flex w-full flex-col items-center gap-1">
@@ -184,10 +190,10 @@ function SidebarCollapsed({
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
                 return (
-                  <button
+                  <Link
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
-                    // Collapsed-rail icon buttons (36px square) use
+                    // Collapsed-rail icon links (36px square) use
                     // `active:scale-[0.98]` — a subtle 1% scale-down on press,
                     // matching the project's Button primitive press feel.
                     className={
@@ -196,11 +202,10 @@ function SidebarCollapsed({
                         : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                     }
                     key={item.id}
-                    onClick={() => onNavigate?.(item.pageId)}
-                    type="button"
+                    to={item.pageId}
                   >
                     <Icon className="size-[18px]" strokeWidth={1.5} />
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -237,6 +242,10 @@ export interface SidebarPanelProps {
   /** Mirrors `DashboardChrome.hideDocsButton`. Reaches the below-`lg` account
    *  rows, the mobile home of the top bar's Docs button. */
   hideDocsButton?: boolean;
+  /** Fired AFTER a nav row is activated, for side effects only — the <Link>
+   *  owns the navigation. The mobile Sheet passes its close handler here;
+   *  the desktop rail passes nothing. */
+  onNavItemClick?: () => void;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   sections: SidebarSection[];
@@ -270,6 +279,7 @@ function SidebarExpanded(props: SidebarPanelProps) {
 export function SidebarPanel({
   sections,
   activeId,
+  onNavItemClick,
   onNavigate,
   overviewPath,
   brand,
@@ -278,15 +288,12 @@ export function SidebarPanel({
   topSlot,
   upgradePath,
 }: SidebarPanelProps) {
-  const onLogoClick = overviewPath
-    ? () => onNavigate?.(overviewPath)
-    : undefined;
   return (
     <div className="flex h-full w-full flex-col">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
           Gate AI title with "AI" in brand-blue). */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-border border-b px-4">
-        {brand ?? <DefaultBrand onLogoClick={onLogoClick} />}
+        {brand ?? <DefaultBrand overviewPath={overviewPath} />}
       </div>
 
       {topSlot}
@@ -309,12 +316,12 @@ export function SidebarPanel({
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
                 return (
-                  <button
+                  <Link
                     aria-current={isActive ? "page" : undefined}
                     className={isActive ? NAV_ROW_ACTIVE : NAV_ROW}
                     key={item.id}
-                    onClick={() => onNavigate?.(item.pageId)}
-                    type="button"
+                    onClick={onNavItemClick}
+                    to={item.pageId}
                   >
                     <Icon
                       className={cn(
@@ -324,7 +331,7 @@ export function SidebarPanel({
                       strokeWidth={1.75}
                     />
                     <span className="type-label-14">{item.label}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -355,7 +362,7 @@ export function SidebarPanel({
 
         <SidebarAccountRows
           hideDocsButton={hideDocsButton}
-          onNavigate={onNavigate}
+          onNavItemClick={onNavItemClick}
         />
       </div>
     </div>
@@ -364,14 +371,9 @@ export function SidebarPanel({
 
 /* ─── Slot defaults ──────────────────────────────────────────────────────── */
 
-function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
-  return (
-    <button
-      aria-label="Go to overview"
-      className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      onClick={onLogoClick}
-      type="button"
-    >
+function DefaultBrand({ overviewPath }: { overviewPath?: string }) {
+  const marks = (
+    <>
       <img
         alt="Constellation Gate AI"
         className="h-8 w-auto dark:hidden"
@@ -384,7 +386,19 @@ function DefaultBrand({ onLogoClick }: { onLogoClick?: () => void }) {
         draggable={false}
         src="/gate-ai-logo-dark.png"
       />
-    </button>
+    </>
+  );
+  if (!overviewPath) {
+    return marks;
+  }
+  return (
+    <Link
+      aria-label="Go to overview"
+      className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      to={overviewPath}
+    >
+      {marks}
+    </Link>
   );
 }
 
@@ -402,10 +416,10 @@ const ACCOUNT_ROW =
 
 function SidebarAccountRows({
   hideDocsButton,
-  onNavigate,
+  onNavItemClick,
 }: {
   hideDocsButton?: boolean;
-  onNavigate?: (pageId: string) => void;
+  onNavItemClick?: () => void;
 }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
@@ -453,17 +467,13 @@ function SidebarAccountRows({
             />
           )}
         </button>
-        <button
-          className={ACCOUNT_ROW}
-          onClick={() => onNavigate?.("/settings")}
-          type="button"
-        >
+        <Link className={ACCOUNT_ROW} onClick={onNavItemClick} to="/settings">
           <span className="type-label-14">Account settings</span>
           <UserRound
             className="size-4 shrink-0 text-muted-foreground"
             strokeWidth={1.75}
           />
-        </button>
+        </Link>
         {hideDocsButton ? null : (
           <button className={ACCOUNT_ROW} type="button">
             <span className="type-label-14">Docs</span>

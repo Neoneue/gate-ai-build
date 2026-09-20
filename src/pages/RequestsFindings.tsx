@@ -52,10 +52,7 @@ export function RequestsFindings() {
     >
       {/* Back breadcrumb to Requests (top-left); View Conversation (top-right). */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <BackLink
-          label="Messages"
-          onClick={() => navigate(withTierOf(pathname, "/messages"))}
-        />
+        <BackLink href={withTierOf(pathname, "/messages")} label="Messages" />
         {row && (
           <Button
             onClick={() =>
