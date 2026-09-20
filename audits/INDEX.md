@@ -12,7 +12,7 @@ applied. Rules and the alias table: `.claude/skills/ui-audit/audit-file.md`.
 ### [2026-09-20](./2026-09/audit-9-20.md)
 
 - `wdg` web-design-guidelines, whole site: wdg-1 to wdg-32. Verdict fail;
-  wdg-1 and wdg-4 taken, wdg-2 / wdg-3 / wdg-24 downgraded to LOW.
+  wdg-1, 4, 5, 6, 8, 11, 12, 25, 31 applied; ten items downgraded to LOW.
 
 ### [2026-09-18](./2026-09/audit-9-18.md)
 

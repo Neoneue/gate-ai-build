@@ -49,7 +49,40 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
   events, `/messages` hero, any KPI spark. Every dot is round, every date
   is foreground, every value is mono 12.
 
+### Navigation renders as links (`components/ui/sidebar.tsx`, `text-link.tsx`, `back-link.tsx`) · [f54859b]
+
+- Before: every sidebar nav item, the logomark, Account settings, both
+  link primitives and two navigate-only Buttons were `<button>`s calling
+  `navigate()`. Nav announced as buttons and lost Cmd-click, middle-click
+  and copy-link.
+- After: sidebar rows, logomark, brand and Account settings are react-router
+  `<Link>`s with `aria-current="page"` on the active one; Theme, Docs and
+  Sign out stay buttons. `BackLink` gains `href`, `TextLink` gains `to`
+  (`as="a"` is now external-only since a plain anchor full-reloads the
+  SPA). Converted: SignIn, SignUp, ConversationsTrace, RequestsFindings,
+  onboarding-shared `SetupBackLink`, TeamDetailEnterprise, Conversations
+  row drill-in (`RowActionButton href`), pro-upgrade-card and Notifications
+  Buttons via `render={<Link />}`. Pages keep passing `onNavigate`; nav
+  rows no longer call it, so one history push per click. Mobile Sheet
+  closes via a new side-effect-only `onNavItemClick`.
+- Audit: wdg-5, wdg-6, wdg-25, wdg-18 (Conversations line).
+
+### Self-hosted Geist + Geist Mono (`src/index.css`) · [f54859b]
+
+- Before: Google Fonts `@import` (render-blocking, third-party origin)
+  supplied Geist and Geist Mono while `@fontsource-variable/geist` shipped a
+  second copy of the sans.
+- After: `@fontsource-variable/geist` + new `@fontsource-variable/geist-mono`,
+  families `"Geist Variable"` / `"Geist Mono Variable"` in `--font-sans` /
+  `--font-mono`. Zero requests to googleapis. Preload skipped: Vite hashes
+  the woff2 path.
+- Audit: wdg-11.
+
 ## Components
+
+### Button base gains `touch-manipulation` (`components/ui/button.tsx`) · [f54859b]
+
+- Removes the 300ms double-tap delay on touch for every Button. Audit: wdg-12.
 
 ### NavTableRow drops the `<tr>` link role (`components/ui/table.tsx`) · [a2debd7]
 
@@ -69,6 +102,22 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
 - Audit: wdg-1.
 
 ## Sections & surfaces
+
+### Landmarks: top bar is a `<header>`, auth pages get a `<main>` (`layouts/DashboardChrome.tsx`, `layouts/AuthLayout.tsx`) · [f54859b]
+
+- Same classes, semantic tags. Audit: wdg-8.
+
+### Setup model search gets a name and a ring (`pages/SetupManual.tsx`) · [f54859b]
+
+- Before: the popover search input had no label and `focus-visible:ring-0`,
+  which never actually cancelled the ring (Tailwind v4 ring width is `0 +
+  ring-offset`, and `ring-offset-2` leaked from the Input base), so it drew
+  a stray 2px ring.
+- After: `aria-label="Search models"`, `spellCheck={false}`,
+  `focus-visible:ring-offset-0` on the input; the wrapper row carries
+  `focus-within:ring-2 focus-within:ring-ring`.
+- Verify: `/setup-manual?bill=payg`, open a model picker, Tab into search.
+- Audit: wdg-31.
 
 ### Skip link on the dashboard shell (`layouts/DashboardChrome.tsx`) · [a2debd7]
 

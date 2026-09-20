@@ -24,38 +24,41 @@ to `src/`. Already decided, not re-flagged: see the settled table in
   - Before: `<main className="@container flex max-w-[1920px] …" ref={mainRef}>` with no `id`, and no skip link anywhere in the app.
   - After: `<main id="main-content" …>` plus, as the first child of the chrome root, `<a className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-card focus:px-3 focus:py-2 focus:ring-2 focus:ring-ring" href="#main-content">Skip to content</a>`.
   - Why: a keyboard user tabs the full sidebar (2 rail/nav groups, 4 account rows, top bar) on every route before reaching content. WCAG 2.4.1.
-- [ ] **wdg-5 MEDIUM** components/ui/sidebar.tsx:187, components/ui/sidebar.tsx:312, components/ui/sidebar.tsx:439, components/ui/sidebar.tsx:457, components/ui/sidebar.tsx:468, components/ui/sidebar.tsx:476, layouts/DashboardChrome.tsx:402
+- [x] **wdg-5 MEDIUM** (applied 2026-09-20, `f54859b`; nav rows, logomark, brand and Account settings are `<Link>`; Theme / Docs / Sign out stay buttons; `onNavItemClick` added so the mobile Sheet still closes) components/ui/sidebar.tsx:187, components/ui/sidebar.tsx:312, components/ui/sidebar.tsx:439, components/ui/sidebar.tsx:457, components/ui/sidebar.tsx:468, components/ui/sidebar.tsx:476, layouts/DashboardChrome.tsx:402
   - Before: every primary nav target is `<button type="button" onClick={() => onNavigate?.(item.pageId)}>`; each page wires `onNavigate={(path) => navigate(path)}` (35 call sites, e.g. pages/ApiKeys.tsx:143).
   - After: render `<Link to={item.pageId} className={isActive ? NAV_ROW_ACTIVE : NAV_ROW} aria-current={isActive ? "page" : undefined}>` (react-router `Link` is already imported in components/ui/row-action-button.tsx); keep `<button>` only for the theme toggle and Sign out.
   - Why: the whole nav loses Cmd/Ctrl-click, middle-click, "Copy link address", and announces as "button" instead of "link". Skill rule "Links use `<a>`/`<Link>`".
-- [ ] **wdg-6 MEDIUM** components/ui/text-link.tsx:64, components/ui/back-link.tsx:37
+- [x] **wdg-6 MEDIUM** (applied 2026-09-20, `f54859b`; `BackLink href`, `TextLink to` (a plain `as="a"` full-reloads, now external-only); Button sites use `render={<Link />}`) components/ui/text-link.tsx:64, components/ui/back-link.tsx:37
   - Before: both primitives render `<button type="button">`; navigation call sites pass `onClick={() => navigate(...)}`: pages/SignIn.tsx:132, pages/SignUp.tsx:109, pages/ConversationsTrace.tsx:53, pages/RequestsFindings.tsx:57, pages/onboarding-shared.tsx:172, pages/TeamDetailEnterprise.tsx:290, pages/pro-upgrade-card.tsx:25, pages/Notifications.tsx:623.
   - After: `TextLink` already has an `as="a"` branch (text-link.tsx:57); add an `href`/`to` prop to `BackLink` that renders `<Link to={…} className={cn(BACK_LINK_BASE, className)}>`, and switch those 8 sites from `onClick={() => navigate(x)}` to `href={x}`.
   - Why: same rule as wdg-5; these are route changes rendered as buttons.
-- [ ] **wdg-7 MEDIUM** components/ui/card.tsx:123
-  - Before: `function CardTitle({ as: Tag = "h3", … })`; pages render `PageTitle` (`<h1>`, page-title.tsx:32) then jump straight to `<h3>`. Only 1 call site overrides `as=`, and 18 `<h2>` exist across 196 files.
-  - After: default `CardTitle` to `as: Tag = "h2"`, and keep `h3` for cards nested inside a section that already has an `h2`.
-  - Why: heading levels must not skip; "h1 then h3" is the shape on most pages. Skill rule "Headings hierarchical `<h1>` to `<h6>`".
-- [ ] **wdg-8 MEDIUM** layouts/DashboardChrome.tsx:359, layouts/AuthLayout.tsx:258
+- [x] **wdg-8 MEDIUM** (applied 2026-09-20, `f54859b`) layouts/DashboardChrome.tsx:359, layouts/AuthLayout.tsx:258
   - Before: the top bar returns `<div className="sticky top-0 z-40 flex h-16 …">`; `AuthLayout` renders `<Outlet />` inside plain `<div>`s with no `<main>`.
   - After: `<header className="sticky top-0 z-40 flex h-16 …">` in DashboardChrome; wrap the AuthLayout outlet as `<main className="…"><Outlet /></main>`.
   - Why: SignIn and SignUp have no main landmark, and the dashboard has no banner landmark. Skill rule "Use semantic HTML before ARIA". The `<aside aria-label="Primary navigation">` and `<nav>` in sidebar.tsx:94,300 are correct.
-- [ ] **wdg-9 MEDIUM** pages/requests/RequestsTable.tsx:326, pages/requests/RequestsTable.tsx:349, pages/requests/RequestsTable.tsx:371, pages/requests/RequestsTable.tsx:394, pages/security/EventsTable.tsx:386, pages/security/EventsTable.tsx:408, pages/security/EventsTable.tsx:429, pages/security/EventsTable.tsx:451, pages/AuditTrail.tsx:472, pages/AuditTrail.tsx:486, pages/AuditTrail.tsx:503, pages/teams/dialogs.tsx:417, pages/teams/dialogs.tsx:728
-  - Before: `<Label className="type-label-14 text-muted-foreground">Model</Label>` above a `<SelectTrigger id="filter-model" aria-label="Model">`; the label has no `htmlFor`.
-  - After: `<Label className="type-label-14 text-muted-foreground" htmlFor="filter-model">Model</Label>` and drop the now-duplicated `aria-label` from the trigger.
-  - Why: the visible label is not a click target and is not programmatically associated; the name is duplicated in two places that can drift. Skill rules "Labels clickable" and "Form controls need `<label>`".
-- [ ] **wdg-10 MEDIUM** index.html:6
-  - Before: `<meta name="viewport" content="width=device-width, initial-scale=1.0">` and no `theme-color` meta, while the app sets light/dark before paint (index.html:13-23).
-  - After: add `<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">` and `<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">` matching `--background` in src/index.css:199 and :764.
-  - Why: mobile browser chrome renders the wrong colour band above and below a dark dashboard. Skill rule "`theme-color` matches page background".
-- [ ] **wdg-11 MEDIUM** src/index.css:2, src/index.css:6
+- [x] **wdg-11 MEDIUM** (applied 2026-09-20, `f54859b`; `@fontsource-variable/geist-mono` added, families renamed to `Geist Variable` / `Geist Mono Variable`; preload skipped, Vite hashes the asset) src/index.css:2, src/index.css:6
   - Before: `@import url("https://fonts.googleapis.com/css2?family=Geist…&display=swap");` followed by `@import "@fontsource-variable/geist";`. Geist is fetched twice, once from a third-party origin, and index.html has no `preconnect` or `preload`.
   - After: drop the Google Fonts `@import` (line 2), keep the self-hosted `@fontsource-variable/geist`, and add `<link rel="preload" as="font" type="font/woff2" crossorigin href="/…/geist-latin-wght-normal.woff2">` to index.html.
   - Why: a CSS `@import` to fonts.googleapis.com is render-blocking on a domain never preconnected, and the second copy is dead bytes. Skill rules "preconnect for CDN domains" and "critical fonts preload".
-- [ ] **wdg-12 MEDIUM** components/ui/button.tsx:14
+- [x] **wdg-12 MEDIUM** (applied 2026-09-20, `f54859b`) components/ui/button.tsx:14
   - Before: base string `"group/button inline-flex shrink-0 select-none items-center … will-change-transform focus-visible:… active:not-aria-[haspopup]:scale-[0.98] …"` has no `touch-manipulation`. Only components/ui/icon-action-button.tsx:30 sets it.
   - After: insert `touch-manipulation` into the Button base string, next to `select-none`.
   - Why: every Button on the site carries the 300ms double-tap-zoom delay on touch. Skill rule "`touch-action: manipulation`".
+- [ ] **wdg-7 LOW** components/ui/card.tsx:123
+  - Severity: was MEDIUM, downgraded 2026-09-20. Heading-level skips are best practice, not a WCAG failure, and flipping the default to h2 would silently change hierarchy on every card including ones nested under an existing h2.
+  - Before: `function CardTitle({ as: Tag = "h3", … })`; pages render `PageTitle` (`<h1>`, page-title.tsx:32) then jump straight to `<h3>`. Only 1 call site overrides `as=`, and 18 `<h2>` exist across 196 files.
+  - After: default `CardTitle` to `as: Tag = "h2"`, and keep `h3` for cards nested inside a section that already has an `h2`.
+  - Why: heading levels must not skip; "h1 then h3" is the shape on most pages. Skill rule "Headings hierarchical `<h1>` to `<h6>`".
+- [ ] **wdg-9 LOW** pages/requests/RequestsTable.tsx:326, pages/requests/RequestsTable.tsx:349, pages/requests/RequestsTable.tsx:371, pages/requests/RequestsTable.tsx:394, pages/security/EventsTable.tsx:386, pages/security/EventsTable.tsx:408, pages/security/EventsTable.tsx:429, pages/security/EventsTable.tsx:451, pages/AuditTrail.tsx:472, pages/AuditTrail.tsx:486, pages/AuditTrail.tsx:503, pages/teams/dialogs.tsx:417, pages/teams/dialogs.tsx:728
+  - Severity: was MEDIUM, downgraded 2026-09-20. The triggers already carry `aria-label`, so the accessible name exists; the gain is a clickable label on 13 filter fields.
+  - Before: `<Label className="type-label-14 text-muted-foreground">Model</Label>` above a `<SelectTrigger id="filter-model" aria-label="Model">`; the label has no `htmlFor`.
+  - After: `<Label className="type-label-14 text-muted-foreground" htmlFor="filter-model">Model</Label>` and drop the now-duplicated `aria-label` from the trigger.
+  - Why: the visible label is not a click target and is not programmatically associated; the name is duplicated in two places that can drift. Skill rules "Labels clickable" and "Form controls need `<label>`".
+- [ ] **wdg-10 LOW** index.html:6
+  - Severity: was MEDIUM, downgraded 2026-09-20. Mobile browser chrome tint only; not needed for this mockup.
+  - Before: `<meta name="viewport" content="width=device-width, initial-scale=1.0">` and no `theme-color` meta, while the app sets light/dark before paint (index.html:13-23).
+  - After: add `<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">` and `<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">` matching `--background` in src/index.css:199 and :764.
+  - Why: mobile browser chrome renders the wrong colour band above and below a dark dashboard. Skill rule "`theme-color` matches page background".
 - [ ] **wdg-2 LOW** components/ui/message-block.tsx:185, components/ui/message-block.tsx:214
   - Severity: was HIGH, downgraded 2026-09-20. No `outline-none` on these buttons and the base layer applies `outline-ring/50`, so the browser default focus-visible outline shows. Ring-recipe consistency, not WCAG 2.4.7.
   - Before: `bubbleClasses` = `"max-h-[200px] overflow-y-auto overscroll-contain rounded-md border p-4 transition-[box-shadow,border-color] …"`; `<Bubble>` renders as `<button type="button">` whenever `onClick` is set.
@@ -86,7 +89,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
   - Before: `loading: <Loader2Icon className="size-4 animate-spin" />` and `"animate-spin text-blue-600 dark:text-blue-400"`.
   - After: `"size-4 animate-spin motion-reduce:animate-none"` and `"animate-spin motion-reduce:animate-none text-blue-600 dark:text-blue-400"` (components/ui/skeleton.tsx:28 is the precedent).
   - Why: an unbounded spin is the motion `prefers-reduced-motion` users most often cite; skeleton already guards, these two do not.
-- [ ] **wdg-18 LOW** components/ui/feedback-fab.tsx:101, pages/Conversations.tsx:670, pages/requests/RequestsTable.tsx:719
+- [ ] **wdg-18 LOW** (Conversations line done with wdg-25, `f54859b`; feedback-fab and RequestsTable remain) components/ui/feedback-fab.tsx:101, pages/Conversations.tsx:670, pages/requests/RequestsTable.tsx:719
   - Before: `hover-fine:-translate-y-px` / `hover-fine:bg-accent`, against `@custom-variant hover-fine` at src/index.css:9, which the repo documents as emitting invalid CSS (components/ui/card.tsx:82-87).
   - After: use `hover:` and pair with the existing pointer guard, e.g. `hover:bg-accent` on the row (components/ui/table.tsx:148 already supplies row hover from the primitive, so the two table lines can drop the class entirely).
   - Why: these three rules are silently dead; the hover feedback never paints. Flagged per brief as remaining `hover-fine:` uses.
@@ -121,7 +124,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 ### Conversations
 
-- [ ] **wdg-25 MEDIUM** pages/Conversations.tsx:672, pages/Conversations.tsx:675
+- [x] **wdg-25 MEDIUM** (applied 2026-09-20, `f54859b`; also removed the dead `hover-fine:` on that row (wdg-18 Conversations line)) pages/Conversations.tsx:672, pages/Conversations.tsx:675
   - Before: `<RowActionButton aria-label={…} layout="stack" onClick={() => navigate(tracePath(row.conversationId))}>`; the drill-in renders as a `<button>` even though the target is URL-addressable.
   - After: `<RowActionButton aria-label={…} href={tracePath(row.conversationId)} layout="stack">` (the `href` branch exists at row-action-button.tsx:22-27, and pages/requests/RequestsTable.tsx uses it).
   - Why: same primitive, two tables, two behaviours. Messages supports Cmd-click to a new tab, Conversations does not.
@@ -139,32 +142,36 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 ### Teams
 
-- [ ] **wdg-28 MEDIUM** pages/teams/dialogs.tsx:571, pages/teams/dialogs.tsx:616, pages/Team.tsx:698
+- [ ] **wdg-28 LOW** pages/teams/dialogs.tsx:571, pages/teams/dialogs.tsx:616, pages/Team.tsx:698
+  - Severity: was MEDIUM, downgraded 2026-09-20. `type="email"` already gives the email keyboard and `type="number"` already gives a numeric one on iOS and Android; `inputMode` only trims a few keys.
   - Before: `<Input type="number" min={1} max={100} … />` (warn / block thresholds) and `<Input type="email" autoComplete="off" … placeholder="teammate@example.com" />`; none set `inputMode`.
   - After: `inputMode="decimal"` on the two number fields, `inputMode="email"` on the invite field.
   - Why: skill rule "Use correct `type` and `inputmode`".
 
 ### Billing
 
-- [ ] **wdg-29 MEDIUM** pages/billing/CreditsCard.tsx:467, pages/billing/CreditsCard.tsx:510, pages/billing/CreditsCard.tsx:555, pages/BillingFree.tsx:595, pages/BillingFree.tsx:638, pages/BillingFree.tsx:683
+- [ ] **wdg-29 LOW** pages/billing/CreditsCard.tsx:467, pages/billing/CreditsCard.tsx:510, pages/billing/CreditsCard.tsx:555, pages/BillingFree.tsx:595, pages/BillingFree.tsx:638, pages/BillingFree.tsx:683
+  - Severity: was MEDIUM, downgraded 2026-09-20. `type="number"` already gives a numeric keyboard; `inputMode="decimal"` only trims a few keys.
   - Before: `<Input className="type-mono-14 pl-7 …" placeholder="0" type="number" />`, the auto-reload dollar fields, no `inputMode`.
   - After: add `inputMode="decimal"`.
   - Why: currency entry on mobile without a numeric keypad. `CreditsCard` is shared by the Billing twins, so one edit covers Pro and Enterprise; `BillingFree` needs its own.
 
 ### Settings
 
-- [ ] **wdg-30 MEDIUM** pages/Settings.tsx:221
+- [ ] **wdg-30 LOW** pages/Settings.tsx:221
+  - Severity: was MEDIUM, downgraded 2026-09-20. `type="email"` already gives the email keyboard; `inputMode="email"` adds nothing.
   - Before: `<Input autoComplete="email" id=… spellCheck={false} type="email" />` with no `inputMode`.
   - After: add `inputMode="email"`.
   - Why: same rule as wdg-23 and -28; this is the account email field.
 
 ### Onboarding
 
-- [ ] **wdg-31 MEDIUM** pages/SetupManual.tsx:417
+- [x] **wdg-31 MEDIUM** (applied 2026-09-20, `f54859b`; `focus-visible:ring-0` never cancelled the ring (ring-offset-2 leaked), so `ring-offset-0` added on the input and the ring lives on the wrapper) pages/SetupManual.tsx:417
   - Before: `<Input className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" onChange={…} placeholder="Search models…" ref={searchRef} type="search" value={query} />`: no label, no `aria-label`, and `focus-visible:ring-0` removes the ring (the wrapping row at :411 has no `focus-within:` replacement).
   - After: add `aria-label="Search models"` and `spellCheck={false}`; either drop `focus-visible:ring-0` or add `focus-within:ring-2 focus-within:ring-ring` to the wrapper div at pages/SetupManual.tsx:411.
   - Why: the only unlabelled input in the app, and the only field whose focus ring is cancelled with no replacement. Skill rules "Form inputs without labels" and "Never `outline-none` without focus replacement".
-- [ ] **wdg-32 MEDIUM** pages/SignIn.tsx:55, pages/SignUp.tsx:50
+- [ ] **wdg-32 LOW** pages/SignIn.tsx:55, pages/SignUp.tsx:50
+  - Severity: was MEDIUM, downgraded 2026-09-20. `type="email"` already gives the email keyboard; `inputMode="email"` adds nothing.
   - Before: `<Input autoComplete="email" id="email" placeholder="you@company.com" type="email" />` with no `inputMode`.
   - After: add `inputMode="email"`.
   - Why: the two highest-traffic email fields on the site.
