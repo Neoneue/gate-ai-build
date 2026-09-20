@@ -12,6 +12,8 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-20](./2026-09/changelog-9-20.md)
 
 - Audit: web-design-guidelines, whole site (`audits/2026-09/audit-9-20.md`)
+- Audits: react-best-practices rbp-1..13, test-smoke smk-1..4 (same file)
+- Test tiers: route smoke, Playwright, behaviour, coverage floor; four defects fixed
 
 ### [2026-09-18](./2026-09/changelog-9-18.md)
 

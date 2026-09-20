@@ -18,6 +18,11 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
   Original numbers kept behind aliases (`bui-`, `mifb-`, `rbp-`, `col-`).
 - New [`audits/INDEX.md`](../../audits/INDEX.md), same job as the
   change-log index.
+- [`audits/2026-09/audit-9-20.md`](../../audits/2026-09/audit-9-20.md)
+  run 2: react-best-practices on the whole site, rbp-1 to rbp-13, verdict
+  pass with fixes. rbp-1, 2, 5, 7, 11 applied (`244dad1`).
+- Same file, run 3: test-smoke, smk-1 to smk-4. Four defects found by the
+  new test tiers, all fixed the same day (`038545d`, `7e36271`).
 
 ## Conventions
 
@@ -110,6 +115,23 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
 
 ## Components
 
+### Button-as-Link stops logging (`pages/pro-upgrade-card.tsx`, `pages/Notifications.tsx`) · [038545d]
+
+- Before: the sidebar upgrade card and the Notifications "Change email"
+  link rendered `Button render={<Link/>}` with Base UI's default
+  `nativeButton`, logging a console error on nearly every page.
+- After: `nativeButton={false}` at both call sites, matching the existing
+  `AuditRecordDialog` precedent. No visual change.
+
+### Animated icons seed their rest state (`components/ui/sliders-horizontal.tsx`, `components/ui/sparkles.tsx`) · [7e36271]
+
+- Before: nine `m.line` and five `m.path` elements had `variants` with no
+  `initial`, so the first hover wrote `undefined` to SVG attributes for one
+  frame; 12 invalid-SVG errors when the Messages Filters button was clicked.
+- After: `initial` set to each file's rest variant, which equals the static
+  geometry, so nothing moves at mount. Six sibling icons animate transforms
+  only and were left alone.
+
 ### Button base gains `touch-manipulation` (`components/ui/button.tsx`) · [f54859b]
 
 - Removes the 300ms double-tap delay on touch for every Button. Audit: wdg-12.
@@ -132,6 +154,29 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
 - Audit: wdg-1.
 
 ## Sections & surfaces
+
+### Messages search box filters (`pages/requests/RequestsTable.tsx`) · [7e36271]
+
+- Before: the toolbar `SearchInput` had no value or handler; typing did
+  nothing and 25 rows stayed.
+- After: case-insensitive substring over model label, key name, request id
+  and message preview, ANDed with the four selects; page resets to 1 on a
+  new query; zero matches show the existing "No messages" empty state.
+  Same shape as the Security events search.
+
+### Compression fallback prints one decimal (`pages/requests/RequestDetailBody.tsx`) · [7e36271]
+
+- Before: rows without an authored compression value showed a rounded
+  integer (`31%`).
+- After: `toFixed(1)` (`31.4%`), per the one-decimal rule.
+
+### Row keys and lookup maps, no visual change (`pages/requests/RequestsTable.tsx`, `pages/security/EventsTable.tsx`, `layouts/DashboardChrome.tsx`, `pages/Activity.tsx`, `pages/TeamDetailEnterprise.tsx`, `data/teams.ts`) · [244dad1]
+
+- Rows key on `requestRowId` / `verdictKey` instead of time + index; the
+  mobile drawer closes from the chrome's single breakpoint listener via a
+  render-time adjust; `MODEL_BY_KEY`, `MEMBER_BY_ID`, `KEY_BY_ID` maps
+  replace linear finds; the team roster and Full Request panel memoise
+  their derivations. rbp-1, 2, 5, 7, 11.
 
 ### Landmarks: top bar is a `<header>`, auth pages get a `<main>` (`layouts/DashboardChrome.tsx`, `layouts/AuthLayout.tsx`) · [f54859b]
 
