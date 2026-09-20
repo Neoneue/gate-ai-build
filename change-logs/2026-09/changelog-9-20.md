@@ -19,6 +19,36 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
 - New [`audits/INDEX.md`](../../audits/INDEX.md), same job as the
   change-log index.
 
+## Conventions
+
+### One chart tooltip recipe (`components/ui/chart.tsx`, design.md "Chart tooltip & legend") · [3e1290b]
+
+- Before: three drifted recipes across six charts. Security and Messages
+  hero used the primitive's 10px `rounded-[2px]` square, gray date, mono
+  12 values. Activity trend and Overview usage bars hand-drew rows through a
+  JSX `formatter`: 8px `rounded-xs` swatch, `type-mono-14` values. Compact
+  KPI sparks and the team security pane hand-drew sans `type-label-14`
+  values with `gap-1`. Date strings came from each chart's own formatter
+  ("Aug 14, 2026 06:30" vs "Sep 15").
+- After: `ChartTooltipContent` owns the row. Date `type-label-12
+  text-foreground`; indicator `size-2 rounded-full` coloured from config;
+  name `type-copy-12 text-muted-foreground`; value `type-mono-12
+  text-foreground`, `gap-6` from the name. New `valueFormatter` prop
+  replaces JSX `formatter`, which is no longer honoured. `hideIndicator`
+  also drops the name, so single-series sparks show the value alone under
+  the date. Legend swatch is the same circle. Consumers stripped of
+  `formatter`, `labelClassName`, `className="gap-1"`: Security,
+  HeroMetric, TrendCard, Dashboard, compact-kpi, SecurityOverviewPane.
+- Date shape: new `formatChartTooltipDate(date, granularity, range)` in
+  `lib/formatters.ts`. Hourly "Aug 14, 06:30", daily "Sep 15", year only
+  when the chart's range crosses a year boundary. Routed through
+  events-data, hero-data, Dashboard, TrendCard, Activity,
+  TeamDetailEnterprise, Conversations, token-savings-data.
+  `formatSparkLabel` stays axis-only.
+- Verify: hover the Overview usage bars, `/activity` trend, `/security`
+  events, `/messages` hero, any KPI spark. Every dot is round, every date
+  is foreground, every value is mono 12.
+
 ## Components
 
 ### NavTableRow drops the `<tr>` link role (`components/ui/table.tsx`) · [a2debd7]
