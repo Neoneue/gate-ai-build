@@ -66,6 +66,7 @@ import { usageForTeam } from "@/data/teams";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_TODAY } from "@/lib/demo-clock";
 import {
+  formatChartTooltipDate,
   formatCompactCount,
   formatCurrency,
   formatNumber,
@@ -194,18 +195,20 @@ function PageHeader() {
 /* ─── KPI rail helpers ───────────────────────────────────────────────────── */
 
 /** Generate 7 daily labels ending on the demo clock's today (real
- *  yesterday), the same anchor the Activity charts use. */
+ *  yesterday), the same anchor the Activity charts use. Shape comes from
+ *  `formatChartTooltipDate` (design.md "Chart tooltip & legend"): these
+ *  strings are both the x-axis categories and the tooltip date, so the axis
+ *  reads exactly what the box does. */
 function make7dLabels(): string[] {
   const anchor = new Date(DEMO_TODAY);
-  const labels: string[] = [];
+  const dates: Date[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - i);
-    labels.push(
-      d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    );
+    dates.push(d);
   }
-  return labels;
+  const range = { start: dates[0], end: dates[dates.length - 1] };
+  return dates.map((d) => formatChartTooltipDate(d, "day", range));
 }
 
 const KPI_7D_LABELS = make7dLabels();
@@ -328,27 +331,8 @@ function StackedKpiChart({
           <ChartTooltip
             content={
               <ChartTooltipContent
-                formatter={(value, name) => {
-                  const cfg = config[name as string];
-                  return (
-                    <div className="flex w-full items-center justify-between gap-6">
-                      <span className="flex items-center gap-1">
-                        <span
-                          aria-hidden
-                          className="size-2 shrink-0 rounded-xs"
-                          style={{ backgroundColor: cfg?.color }}
-                        />
-                        <span className="text-muted-foreground">
-                          {cfg?.label ?? name}
-                        </span>
-                      </span>
-                      <span className="type-mono-14 text-foreground">
-                        {yFormatter(Number(value))}
-                      </span>
-                    </div>
-                  );
-                }}
                 indicator="dot"
+                valueFormatter={yFormatter}
               />
             }
             cursor={false}

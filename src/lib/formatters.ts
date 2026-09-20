@@ -126,11 +126,13 @@ export function formatTime(
   return dateTimeFormat(LOCALE, options).format(date);
 }
 
-/** Chart hover-tooltip timestamp. Date only ("Mar 01, 2026") by default; pass
+/** X-AXIS category string, not a tooltip label any more (tooltips all run
+ *  through `formatChartTooltipDate` below since 2026-09-20). Date only
+ *  ("Mar 01, 2026") by default; pass
  *  `withTime` for sub-daily buckets to append a 24-hour, no-AM/PM time
  *  ("Mar 01, 2026 12:00"). Single source of truth so the label format stays
- *  identical across every KPI / area-chart tooltip (Conversations, Requests,
- *  Security, Token Savings, Activity). Pinned en-US: date and time are joined
+ *  identical across the axis categories that parse it (the team Security
+ *  pane's spark, whose tick formatters slice this exact shape). Pinned en-US: date and time are joined
  *  with a space (not a locale separator) so there is no comma before the time. */
 export function formatSparkLabel(date: Date, withTime = false): string {
   const datePart = dateTimeFormat("en-US", {
@@ -147,6 +149,35 @@ export function formatSparkLabel(date: Date, withTime = false): string {
     hourCycle: "h23",
   }).format(date);
   return `${datePart} ${timePart}`;
+}
+
+/** Chart-tooltip date, the single shape every Recharts tooltip on the site
+ *  shows (design.md "Chart tooltip & legend", 2026-09-20). Hourly buckets read
+ *  "Aug 14, 06:30"; daily buckets read "Sep 15". The year appears only when
+ *  `range` is given and its ends fall in different years — otherwise it is
+ *  noise the axis already settled. Axis ticks keep their own formatters. */
+export function formatChartTooltipDate(
+  date: Date,
+  granularity: "hour" | "day",
+  range?: { start: Date; end: Date }
+): string {
+  const withYear = range
+    ? range.start.getFullYear() !== range.end.getFullYear()
+    : false;
+  const datePart = dateTimeFormat(LOCALE, {
+    month: "short",
+    day: "numeric",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  }).format(date);
+  if (granularity === "day") {
+    return datePart;
+  }
+  const timePart = dateTimeFormat(LOCALE, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+  return `${datePart}, ${timePart}`;
 }
 
 /** Absolute timestamp: "May 12, 09:23:49". For null inputs (e.g., key never

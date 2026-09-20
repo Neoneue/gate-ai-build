@@ -1439,6 +1439,34 @@ The semantic test: are these *pages of the surface* (line tabs) or *filters/view
 - **Tooltip** (`tooltip.tsx`) — Base UI `Tooltip.*` thin wrapper. Surface: `rounded-sm bg-popover shadow-md` with `text-xs` body. Mandatory on every `<Timestamp>` (relative ↔ absolute pairing), on Cost-column dashes for BYOK rows (Requests), and on truncated identifiers. Trigger needs `tabIndex={0}` whenever the tooltip carries content keyboard users must reach (BYOK Info icon, Cost cell dash).
 - **Separator** (`separator.tsx`) — Base UI `Separator` wrapper. Renders a 1px `bg-border` rule. Use for in-card section breaks where `border-t` on the next child would couple to the child instead of belonging to the parent layout. Rare — most rhythm in this codebase comes from `border-t` + spacing rather than dedicated rules.
 
+### Chart tooltip & legend *(added 2026-09-20)*
+
+One recipe for every Recharts tooltip on the site, owned by
+`ChartTooltipContent` in `chart.tsx`. Consumers pass data and a number
+formatter; they never draw a row. User direction 2026-09-20 after three
+drifted recipes (square vs rounded swatch, gray vs white date, sans vs mono
+values, 12 vs 14px) were found across six charts.
+
+| Part | Value |
+| --- | --- |
+| Surface | menu tier: `rounded-sm border border-border bg-card px-3 py-2 shadow-md`, `min-w-32`, 8px between the date and the rows, 8px between rows |
+| Date / label | `type-label-12 text-foreground`. Foreground, not muted: it is the heading of the box |
+| Indicator | `size-2 shrink-0 rounded-full` circle, colour from the chart config so it matches the legend. Never a square, never `rounded-xs` |
+| Series name | `type-copy-12 text-muted-foreground` |
+| Value | `type-mono-12 text-foreground`, right-aligned, `gap-6` from the name. Formatted by the consumer's `valueFormatter`, never `toLocaleString()` inline |
+| Single-series sparks | same row minus the indicator and name when the date line already identifies the series (`hideIndicator`) |
+| Legend swatch | `size-2 rounded-full`, same colour source as the tooltip indicator |
+
+Date shape comes from one formatter, `formatChartTooltipDate(date,
+granularity, range)` in `lib/formatters.ts`, so a hourly bucket reads
+"Aug 14, 06:30" and a daily bucket reads "Sep 15" on every chart. The year
+appears only when the chart's range crosses a year boundary; otherwise it is
+noise the axis already settled.
+
+Do not: pass a `formatter` that returns JSX (it bypasses the recipe), set
+`labelClassName` to a muted colour, use `type-*-14` inside the box, or
+render a square swatch anywhere near a chart.
+
 ### Callout *(added 2026-08-31)*
 
 - **Callout** (`callout.tsx`) — persistent INFO banner for scope-setting

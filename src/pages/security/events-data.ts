@@ -9,9 +9,9 @@
 import type { ChartConfig } from "@/components/ui/chart";
 import { demoAnchorFields } from "@/lib/demo-clock";
 import {
+  formatChartTooltipDate,
   formatDateTime,
   formatNumber,
-  formatSparkLabel,
   formatTime,
 } from "@/lib/formatters";
 import type { CustomRange, PresetRange } from "@/lib/range";
@@ -406,6 +406,18 @@ export function buildEventsChartView(
     hourly = totalMinutes <= 24 * 60;
   }
   const bucketMinutes = totalMinutes / buckets;
+  // Tooltip date shape (design.md "Chart tooltip & legend"): sub-daily buckets
+  // read "Aug 14, 06:30", daily-or-wider buckets read "Sep 15". The year shows
+  // only when the window itself crosses one.
+  const tipGranularity = bucketMinutes < 24 * 60 ? "hour" : "day";
+  const firstFields = minutesBeforeAnchor(
+    Math.round((buckets - 1) * bucketMinutes)
+  );
+  const lastFields = minutesBeforeAnchor(0);
+  const tipRange = {
+    start: new Date(firstFields.year, firstFields.month, firstFields.day),
+    end: new Date(lastFields.year, lastFields.month, lastFields.day),
+  };
 
   // Bucket 0 = oldest, bucket `buckets - 1` = "now" (ANCHOR).
   const data = totalSpark.map((requests, i) => {
@@ -423,7 +435,7 @@ export function buildEventsChartView(
         });
     return {
       time,
-      label: formatSparkLabel(d, true),
+      label: formatChartTooltipDate(d, tipGranularity, tipRange),
       requests,
       blocked: blockedSpark[i] ?? 0,
       flagged: flaggedSpark[i] ?? 0,

@@ -43,7 +43,7 @@ import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_NOW } from "@/lib/demo-clock";
-import { formatCompactCount, formatSparkLabel } from "@/lib/formatters";
+import { formatChartTooltipDate, formatCompactCount } from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
 import {
   type CustomRange,
@@ -137,18 +137,14 @@ function avgCostSeries(shape: number[], avgCost: number): number[] {
 
 function sparkDates(range: Range, customRange: CustomRange | null): string[] {
   const last = SPARK_POINTS - 1;
-  const labels: string[] = [];
+  const dates: Date[] = [];
 
   if (range === "custom" && customRange) {
     const span = customRange.to.getTime() - customRange.from.getTime();
     for (let i = 0; i < SPARK_POINTS; i++) {
-      labels.push(
-        formatSparkLabel(
-          new Date(customRange.from.getTime() + (span * i) / last)
-        )
-      );
+      dates.push(new Date(customRange.from.getTime() + (span * i) / last));
     }
-    return labels;
+    return labelDates(dates, "day");
   }
 
   const preset: PresetRange = range === "custom" ? "all" : range;
@@ -162,9 +158,20 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     } else {
       d.setDate(d.getDate() - stepsBack * (preset === "30d" ? 4 : 1));
     }
-    labels.push(formatSparkLabel(d, preset === "24h"));
+    dates.push(d);
   }
-  return labels;
+  return labelDates(dates, preset === "24h" ? "hour" : "day");
+}
+
+/** Tooltip date strings for a bucket list — one shape site-wide (design.md
+ *  "Chart tooltip & legend"); the year appears only when the window spans
+ *  two of them, which the lifetime range does. */
+function labelDates(dates: Date[], granularity: "hour" | "day"): string[] {
+  const span = {
+    start: dates[0] ?? new Date(),
+    end: dates.at(-1) ?? new Date(),
+  };
+  return dates.map((d) => formatChartTooltipDate(d, granularity, span));
 }
 
 // The Conversations KPI is the COUNT of conversations in the range; its

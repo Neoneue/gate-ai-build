@@ -2,6 +2,7 @@ import * as React from "react";
 import type { TooltipValueType } from "recharts";
 import * as RechartsPrimitive from "recharts";
 
+import { formatNumber } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
@@ -118,6 +119,10 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+/** The ONE chart-tooltip recipe (design.md "Chart tooltip & legend",
+ *  2026-09-20). Consumers pass data plus a `valueFormatter`; they never draw a
+ *  row. Recharts' `formatter` prop is deliberately NOT honoured here — a JSX
+ *  formatter bypasses the recipe and is how three drifted tooltips happened. */
 function ChartTooltipContent({
   active,
   payload,
@@ -128,7 +133,7 @@ function ChartTooltipContent({
   label,
   labelFormatter,
   labelClassName,
-  formatter,
+  valueFormatter,
   color,
   nameKey,
   labelKey,
@@ -139,6 +144,8 @@ function ChartTooltipContent({
     indicator?: "line" | "dot" | "dashed";
     nameKey?: string;
     labelKey?: string;
+    /** Formats every numeric value in the box. Falls back to `formatNumber`. */
+    valueFormatter?: (value: number) => string;
   } & Omit<
     RechartsPrimitive.DefaultTooltipContentProps<
       TooltipValueType,
@@ -163,7 +170,7 @@ function ChartTooltipContent({
 
     if (labelFormatter) {
       return (
-        <div className={cn("font-medium", labelClassName)}>
+        <div className={cn("type-label-12 text-foreground", labelClassName)}>
           {labelFormatter(value, payload)}
         </div>
       );
@@ -173,7 +180,11 @@ function ChartTooltipContent({
       return null;
     }
 
-    return <div className={cn("font-medium", labelClassName)}>{value}</div>;
+    return (
+      <div className={cn("type-label-12 text-foreground", labelClassName)}>
+        {value}
+      </div>
+    );
   }, [
     label,
     labelFormatter,
@@ -211,30 +222,41 @@ function ChartTooltipContent({
             // sets config colour === stroke, so nothing else moves.
             const indicatorColor =
               color ?? itemConfig?.color ?? item.payload?.fill ?? item.color;
+            const seriesName = hideIndicator
+              ? null
+              : (itemConfig?.label ?? item.name);
+            // `hideIndicator` is the single-series-spark signal (design.md):
+            // the date line already names the series, so the row drops BOTH
+            // the dot and the name and the value sits alone under the date —
+            // the geometry those sparks had before this recipe landed.
+            const showLead = !hideIndicator || nestLabel;
+            const formattedValue =
+              typeof item.value === "number"
+                ? (valueFormatter ?? formatNumber)(item.value)
+                : String(item.value);
 
             return (
               <div
                 className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
-                  indicator === "dot" && "items-center"
+                  "flex w-full gap-6",
+                  indicator === "dot" ? "items-center" : "items-stretch"
                 )}
                 key={`${item.dataKey ?? item.name ?? index}`}
               >
-                {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
-                ) : (
-                  <>
+                {showLead ? (
+                  <div className="flex min-w-0 flex-1 items-center gap-2 [&>svg]:size-2 [&>svg]:text-muted-foreground">
                     {itemConfig?.icon ? (
                       <itemConfig.icon />
                     ) : (
                       !hideIndicator && (
                         <div
                           className={cn(
-                            "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
+                            "shrink-0 rounded-full border-(--color-border) bg-(--color-bg)",
                             {
-                              "h-2.5 w-2.5": indicator === "dot",
-                              "w-1": indicator === "line",
-                              "w-0 border-[1.5px] border-dashed bg-transparent":
+                              "size-2": indicator === "dot",
+                              "w-1 self-stretch rounded-xs":
+                                indicator === "line",
+                              "w-0 self-stretch rounded-none border-[1.5px] border-dashed bg-transparent":
                                 indicator === "dashed",
                               "my-1": nestLabel && indicator === "dashed",
                             }
@@ -248,27 +270,20 @@ function ChartTooltipContent({
                         />
                       )
                     )}
-                    <div
-                      className={cn(
-                        "flex flex-1 justify-between gap-2 leading-none",
-                        nestLabel ? "items-end" : "items-center"
-                      )}
-                    >
-                      <div className="grid gap-2">
-                        {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">
-                          {itemConfig?.label ?? item.name}
+                    <div className="grid gap-2">
+                      {nestLabel ? tooltipLabel : null}
+                      {seriesName ? (
+                        <span className="type-copy-12 text-muted-foreground">
+                          {seriesName}
                         </span>
-                      </div>
-                      {item.value != null && (
-                        <span className="font-medium font-mono text-foreground tabular-nums">
-                          {typeof item.value === "number"
-                            ? item.value.toLocaleString()
-                            : String(item.value)}
-                        </span>
-                      )}
+                      ) : null}
                     </div>
-                  </>
+                  </div>
+                ) : null}
+                {item.value != null && (
+                  <span className="type-mono-12 text-foreground">
+                    {formattedValue}
+                  </span>
                 )}
               </div>
             );
@@ -321,9 +336,9 @@ function ChartLegendContent({
                 <itemConfig.icon />
               ) : (
                 <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  className="size-2 shrink-0 rounded-full"
                   style={{
-                    backgroundColor: item.color,
+                    backgroundColor: itemConfig?.color ?? item.color,
                   }}
                 />
               )}

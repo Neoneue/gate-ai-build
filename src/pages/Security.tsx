@@ -178,7 +178,6 @@ function HeroMetricCard({
               content={
                 <ChartTooltipContent
                   className="min-w-36"
-                  labelClassName="font-normal text-muted-foreground"
                   labelFormatter={(_label, items) =>
                     (items?.[0]?.payload as { label?: string } | undefined)
                       ?.label ?? ""

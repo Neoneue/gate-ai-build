@@ -268,16 +268,7 @@ export function CompactSpark({
           <ChartTooltip
             content={
               <ChartTooltipContent
-                className="gap-1"
-                formatter={(value) => (
-                  <span className="type-label-14 text-foreground">
-                    {valueFormatter
-                      ? valueFormatter(Number(value))
-                      : String(value)}
-                  </span>
-                )}
                 hideIndicator
-                labelClassName="font-normal text-muted-foreground"
                 labelFormatter={(_label, items) =>
                   (
                     items?.[0]?.payload as
@@ -285,6 +276,7 @@ export function CompactSpark({
                       | undefined
                   )?.label ?? ""
                 }
+                valueFormatter={valueFormatter}
               />
             }
             cursor={{ stroke: "var(--color-chart-grid)", strokeWidth: 1 }}

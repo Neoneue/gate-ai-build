@@ -40,6 +40,7 @@ import { TableEmptyState } from "@/components/ui/table-empty-state";
 import { memberById, type TeamRow } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import {
+  formatChartTooltipDate,
   formatCompactCount,
   formatNumber,
   formatSparkLabel,
@@ -385,9 +386,14 @@ function HeroEventsCard({
   // the tick formatters below reduce it to what the axis shows, and `label`
   // is what the tooltip reads.
   const hourly = range === "24h";
-  const data = getRangeDates(range, customRange).map((d, i) => ({
+  const rangeDates = getRangeDates(range, customRange);
+  const tipSpan = {
+    start: rangeDates[0] ?? new Date(),
+    end: rangeDates.at(-1) ?? new Date(),
+  };
+  const data = rangeDates.map((d, i) => ({
     time: formatSparkLabel(d, true),
-    label: formatSparkLabel(d, hourly),
+    label: formatChartTooltipDate(d, hourly ? "hour" : "day", tipSpan),
     requests: series[i] ?? 0,
   }));
   const domainTop = Math.max(...data.map((d) => d.requests), 1) + 1;
@@ -498,18 +504,12 @@ function HeroEventsCard({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    className="gap-1"
-                    formatter={(value) => (
-                      <span className="type-label-14 text-foreground">
-                        {formatNumber(Math.round(Number(value)))}
-                      </span>
-                    )}
                     hideIndicator
-                    labelClassName="font-normal text-muted-foreground"
                     labelFormatter={(_label, items) =>
                       (items?.[0]?.payload as { label?: string } | undefined)
                         ?.label ?? ""
                     }
+                    valueFormatter={(value) => formatNumber(Math.round(value))}
                   />
                 }
                 cursor={{

@@ -78,10 +78,10 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import {
+  formatChartTooltipDate,
   formatCompactCount,
   formatCurrency,
   formatNumber,
-  formatSparkLabel,
 } from "@/lib/formatters";
 import {
   isEnterpriseSurface,
@@ -938,8 +938,13 @@ function UsagePane({
     count,
     teamSeed * 31 + 3
   );
-  const sparkLabels = getRangeDates(range, customRange).map((d) =>
-    formatSparkLabel(d, range === "24h")
+  const sparkDates = getRangeDates(range, customRange);
+  const sparkSpan = {
+    start: sparkDates[0] ?? new Date(),
+    end: sparkDates.at(-1) ?? new Date(),
+  };
+  const sparkLabels = sparkDates.map((d) =>
+    formatChartTooltipDate(d, range === "24h" ? "hour" : "day", sparkSpan)
   );
 
   return (
