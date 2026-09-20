@@ -139,7 +139,7 @@ export function AuditRecordDialog({
         {/* ── Footer ── */}
         <DialogScrollFooter>
           <Button size="sm" variant="outline">
-            <Copy className="size-3.5" data-icon="inline-start" />
+            <Copy aria-hidden className="size-3.5" data-icon="inline-start" />
             Copy proof JSON
           </Button>
           <Button
@@ -154,7 +154,11 @@ export function AuditRecordDialog({
             }
             size="sm"
           >
-            <ExternalLink className="size-3.5" data-icon="inline-start" />
+            <ExternalLink
+              aria-hidden
+              className="size-3.5"
+              data-icon="inline-start"
+            />
             Open Explorer
           </Button>
         </DialogScrollFooter>

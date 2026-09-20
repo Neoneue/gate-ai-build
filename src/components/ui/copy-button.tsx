@@ -251,10 +251,12 @@ function CopyIconSwap({
   return (
     <span aria-hidden="true" className="grid" {...rest}>
       <Copy
+        aria-hidden
         className={cn(shared, copied ? "opacity-0" : "opacity-100")}
         strokeWidth={strokeWidth}
       />
       <CircleCheck
+        aria-hidden
         className={cn(shared, copied ? "opacity-100" : "opacity-0")}
         strokeWidth={strokeWidth}
       />

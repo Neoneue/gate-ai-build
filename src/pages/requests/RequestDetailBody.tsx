@@ -759,7 +759,7 @@ function FindingSwitcherCard({
             type="button"
             variant="outline"
           >
-            <ChevronLeft />
+            <ChevronLeft aria-hidden />
           </Button>
           <Button
             aria-label={`Next ${CATEGORY_LABEL[current.category]} finding`}
@@ -769,7 +769,7 @@ function FindingSwitcherCard({
             type="button"
             variant="outline"
           >
-            <ChevronRight />
+            <ChevronRight aria-hidden />
           </Button>
         </div>
       </div>

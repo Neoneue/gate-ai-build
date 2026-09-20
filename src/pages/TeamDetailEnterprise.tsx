@@ -1809,6 +1809,7 @@ function KeysPane({ team, loading }: { team: TeamRow; loading: boolean }) {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <KeyRound
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -2076,6 +2077,7 @@ function BudgetPane({
               className="flex size-12 items-center justify-center rounded-md bg-muted"
             >
               <Wallet
+                aria-hidden
                 className="size-5 text-muted-foreground"
                 strokeWidth={1.75}
               />

@@ -108,7 +108,7 @@ export function SetupManual() {
             aria-hidden
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-success-700 dark:text-success-400"
           >
-            <KeyRound className="size-4" />
+            <KeyRound aria-hidden className="size-4" />
           </span>
           <div className="flex flex-1 flex-col gap-1">
             <span className="type-label-14 text-success-800 dark:text-success-300">

@@ -248,7 +248,10 @@ function MultiSelect({
         type="button"
       >
         <span className="line-clamp-1">{triggerLabel}</span>
-        <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none" />
+        <ChevronDownIcon
+          aria-hidden
+          className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-aria-expanded/select:rotate-180 motion-reduce:transition-none"
+        />
       </PopoverTrigger>
 
       <PopoverContent
@@ -263,7 +266,10 @@ function MultiSelect({
         {searchable ? (
           <div className="border-border border-b p-2">
             <div className="flex h-8 items-center gap-2 rounded-sm border border-border bg-card px-2 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
-              <Search className="size-4 shrink-0 text-muted-foreground" />
+              <Search
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground"
+              />
               <input
                 aria-label="Search options"
                 autoComplete="off"

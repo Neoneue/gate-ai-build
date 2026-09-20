@@ -80,9 +80,9 @@ export function SignIn() {
                     size="icon-sm"
                   >
                     {showPwd ? (
-                      <EyeOff className="size-4" />
+                      <EyeOff aria-hidden className="size-4" />
                     ) : (
-                      <Eye className="size-4" />
+                      <Eye aria-hidden className="size-4" />
                     )}
                   </InputGroupButton>
                 </InputGroupAddon>
@@ -105,7 +105,11 @@ export function SignIn() {
               type="button"
               variant="outline"
             >
-              <KeyRound className="size-4" data-icon="inline-start" />
+              <KeyRound
+                aria-hidden
+                className="size-4"
+                data-icon="inline-start"
+              />
               Continue with a passkey
             </Button>
 

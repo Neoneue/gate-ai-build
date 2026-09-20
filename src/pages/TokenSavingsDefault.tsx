@@ -44,6 +44,7 @@ export function TokenSavingsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <BarChart2
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -58,6 +59,7 @@ export function TokenSavingsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Layers
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />
@@ -72,6 +74,7 @@ export function TokenSavingsDefault() {
                 className="flex size-12 items-center justify-center rounded-md bg-muted"
               >
                 <Zap
+                  aria-hidden
                   className="size-5 text-muted-foreground"
                   strokeWidth={1.75}
                 />

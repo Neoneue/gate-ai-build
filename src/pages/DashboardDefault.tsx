@@ -398,7 +398,7 @@ export function DownloadGateConnectDialog({
               />
             }
           >
-            <XIcon className="size-5" />
+            <XIcon aria-hidden className="size-5" />
           </DialogClose>
         </div>
 
@@ -513,8 +513,8 @@ export function DownloadGateConnectDialog({
             }}
             size="default"
           >
-            <Download className="size-4" data-icon="inline-start" /> Download
-            for {spec.label}
+            <Download aria-hidden className="size-4" data-icon="inline-start" />{" "}
+            Download for {spec.label}
           </Button>
         </div>
       </DialogContent>
@@ -626,6 +626,7 @@ export function HeroCard() {
           <div className="flex items-center gap-3">
             <Button onClick={() => navigate("/api-keys")} size="default">
               <Plus
+                aria-hidden
                 className="size-4 transition-transform duration-150 ease-out group-hover/button:scale-[1.11] motion-reduce:transition-none"
                 data-icon="inline-start"
               />{" "}

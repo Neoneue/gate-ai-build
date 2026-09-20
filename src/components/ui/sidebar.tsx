@@ -465,11 +465,13 @@ function SidebarAccountRows({
           <span className="type-label-14">Theme</span>
           {isDark ? (
             <Moon
+              aria-hidden
               className="size-4 shrink-0 text-muted-foreground"
               strokeWidth={1.75}
             />
           ) : (
             <Sun
+              aria-hidden
               className="size-4 shrink-0 text-muted-foreground"
               strokeWidth={1.75}
             />
@@ -478,6 +480,7 @@ function SidebarAccountRows({
         <Link className={ACCOUNT_ROW} onClick={onNavItemClick} to="/settings">
           <span className="type-label-14">Account settings</span>
           <UserRound
+            aria-hidden
             className="size-4 shrink-0 text-muted-foreground"
             strokeWidth={1.75}
           />
@@ -486,6 +489,7 @@ function SidebarAccountRows({
           <button className={ACCOUNT_ROW} type="button">
             <span className="type-label-14">Docs</span>
             <BookOpen
+              aria-hidden
               className="size-4 shrink-0 text-muted-foreground"
               strokeWidth={1.75}
             />
@@ -537,7 +541,7 @@ function DefaultUserArea({
           className="relative inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out after:absolute after:-inset-2 after:content-[''] hover:bg-accent-muted hover:text-foreground active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           type="button"
         >
-          <MoreHorizontal className="size-4" strokeWidth={1.75} />
+          <MoreHorizontal aria-hidden className="size-4" strokeWidth={1.75} />
         </button>
       </UserMenu>
     </>

@@ -48,8 +48,14 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
         data-slot="checkbox-indicator"
       >
-        <CheckIcon className="group-data-indeterminate/checkbox:hidden" />
-        <MinusIcon className="hidden group-data-indeterminate/checkbox:block" />
+        <CheckIcon
+          aria-hidden
+          className="group-data-indeterminate/checkbox:hidden"
+        />
+        <MinusIcon
+          aria-hidden
+          className="hidden group-data-indeterminate/checkbox:block"
+        />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

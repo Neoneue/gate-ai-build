@@ -142,6 +142,7 @@ export function TeamDefault() {
                     className="flex size-12 items-center justify-center rounded-md bg-muted"
                   >
                     <UserPlus
+                      aria-hidden
                       className="size-5 text-muted-foreground"
                       strokeWidth={1.75}
                     />

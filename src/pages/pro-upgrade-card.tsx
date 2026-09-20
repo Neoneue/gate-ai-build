@@ -40,7 +40,7 @@ export function ProUpgradeCard({
           aria-hidden
           className="flex size-12 items-center justify-center rounded-full bg-tier-pro-wash"
         >
-          <Icon className="size-5 text-tier-pro" />
+          <Icon aria-hidden className="size-5 text-tier-pro" />
         </div>
       }
       title={title}

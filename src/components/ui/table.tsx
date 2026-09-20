@@ -281,6 +281,7 @@ function SortableTableHead({
             hover-reveal, and is held at 0 once a direction is active. */}
         <span aria-hidden="true" className="grid">
           <ArrowUp
+            aria-hidden
             className={cn(
               sortGlyph,
               "text-foreground",
@@ -289,6 +290,7 @@ function SortableTableHead({
             strokeWidth={2}
           />
           <ArrowDown
+            aria-hidden
             className={cn(
               sortGlyph,
               "text-foreground",
@@ -297,6 +299,7 @@ function SortableTableHead({
             strokeWidth={2}
           />
           <ChevronsUpDown
+            aria-hidden
             className={cn(
               sortGlyph,
               "text-muted-foreground opacity-0",

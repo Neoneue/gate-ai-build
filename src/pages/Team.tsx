@@ -834,7 +834,7 @@ function RowActionsMenu({
           />
         }
       >
-        <MoreHorizontal />
+        <MoreHorizontal aria-hidden />
       </MenuPrimitive.Trigger>
       <MenuPrimitive.Portal>
         <MenuPrimitive.Positioner
