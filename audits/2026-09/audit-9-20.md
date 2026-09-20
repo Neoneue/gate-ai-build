@@ -59,37 +59,37 @@ to `src/`. Already decided, not re-flagged: see the settled table in
   - Before: `<meta name="viewport" content="width=device-width, initial-scale=1.0">` and no `theme-color` meta, while the app sets light/dark before paint (index.html:13-23).
   - After: add `<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">` and `<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">` matching `--background` in src/index.css:199 and :764.
   - Why: mobile browser chrome renders the wrong colour band above and below a dark dashboard. Skill rule "`theme-color` matches page background".
-- [ ] **wdg-2 LOW** components/ui/message-block.tsx:185, components/ui/message-block.tsx:214
+- [x] **wdg-2 LOW** (applied 2026-09-20, `cc5b345`) components/ui/message-block.tsx:185, components/ui/message-block.tsx:214
   - Severity: was HIGH, downgraded 2026-09-20. No `outline-none` on these buttons and the base layer applies `outline-ring/50`, so the browser default focus-visible outline shows. Ring-recipe consistency, not WCAG 2.4.7.
   - Before: `bubbleClasses` = `"max-h-[200px] overflow-y-auto overscroll-contain rounded-md border p-4 transition-[box-shadow,border-color] …"`; `<Bubble>` renders as `<button type="button">` whenever `onClick` is set.
   - After: append `outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` to the `bubbleClasses` base string.
   - Why: every message bubble in the conversation trace is a focusable button with no visible focus indicator. WCAG 2.4.7. This is the primary cross-link selection control on that surface.
-- [ ] **wdg-3 LOW** components/ui/code-card.tsx:167, components/ui/code-card.tsx:177
+- [x] **wdg-3 LOW** (applied 2026-09-20, `cc5b345`) components/ui/code-card.tsx:167, components/ui/code-card.tsx:177
   - Severity: was HIGH, downgraded 2026-09-20. No `outline-none` on these buttons and the base layer applies `outline-ring/50`, so the browser default focus-visible outline shows. Ring-recipe consistency, not WCAG 2.4.7.
   - Before: `sharedClass` = `"inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm transition-colors duration-150 ease-out"`, applied to a real `<button aria-pressed>`.
   - After: `"inline-flex h-6 items-center rounded-xs px-3 font-sans text-sm outline-none transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"`.
   - Why: the code-card language and tab toggles are keyboard-reachable with no focus ring and no reduced-motion opt-out.
-- [ ] **wdg-13 LOW** components/ui/pagination.tsx:82, components/ui/pagination.tsx:98, components/ui/pagination.tsx:122, components/ui/select.tsx:139, components/ui/select.tsx:228, components/ui/select.tsx:260, components/ui/select.tsx:278, components/ui/dialog.tsx:124, components/ui/dialog.tsx:217, components/ui/sheet.tsx:139, components/ui/table.tsx:282, components/ui/table.tsx:290, components/ui/table.tsx:298, components/ui/sonner.tsx:17-21, components/ui/multi-select.tsx:251, components/ui/multi-select.tsx:266, components/ui/sidebar.tsx:445, components/ui/sidebar.tsx:450, components/ui/sidebar.tsx:462, components/ui/sidebar.tsx:470, components/ui/sidebar.tsx:522, components/ui/table-empty-state.tsx:63, components/ui/notifications-menu-body.tsx:339
+- [x] **wdg-13 LOW** (applied 2026-09-20, `b1db0b6`; 75 icons in 34 files, one more than counted) components/ui/pagination.tsx:82, components/ui/pagination.tsx:98, components/ui/pagination.tsx:122, components/ui/select.tsx:139, components/ui/select.tsx:228, components/ui/select.tsx:260, components/ui/select.tsx:278, components/ui/dialog.tsx:124, components/ui/dialog.tsx:217, components/ui/sheet.tsx:139, components/ui/table.tsx:282, components/ui/table.tsx:290, components/ui/table.tsx:298, components/ui/sonner.tsx:17-21, components/ui/multi-select.tsx:251, components/ui/multi-select.tsx:266, components/ui/sidebar.tsx:445, components/ui/sidebar.tsx:450, components/ui/sidebar.tsx:462, components/ui/sidebar.tsx:470, components/ui/sidebar.tsx:522, components/ui/table-empty-state.tsx:63, components/ui/notifications-menu-body.tsx:339
   - Before: decorative lucide glyphs rendered with no `aria-hidden` (74 sites total; the 51 page-level ones include pages/ActivityDefault.tsx:42-111, pages/RequestsDefault.tsx:42,65, pages/ConversationsDefault.tsx:43-93, pages/TokenSavingsDefault.tsx:46-74, pages/AuditTrailDefault.tsx:59-98, pages/SecurityDefault.tsx:46,69, pages/ApiKeys.tsx:183,277, pages/requests/RequestDetailBody.tsx:762,772).
   - After: add `aria-hidden` to each, e.g. `<ChevronDownIcon aria-hidden className="size-4 …" />`.
   - Why: the repo's own convention (used correctly on about 200 other icons) is `aria-hidden` on decorative glyphs; without it assistive tech may announce a bare graphic next to the already-correct accessible name.
-- [ ] **wdg-14 LOW** components/ui/sidebar.tsx:167, components/ui/sidebar.tsx:375, components/ui/sidebar.tsx:381, layouts/DashboardChrome.tsx:407, pages/Models.tsx:1020, pages/Models.tsx:1029, pages/Models.tsx:1038, pages/Models.tsx:1460, pages/DashboardDefault.tsx:438, pages/DashboardDefault.tsx:698, pages/DashboardDefault.tsx:819, pages/DashboardDefault.tsx:837, pages/DashboardDefault.tsx:858, pages/AuditRecordDialog.tsx:35
+- [x] **wdg-14 LOW** (applied 2026-09-20, `cc5b345`; 15 sites, the extra is the second logo mark in sidebar.tsx; `w-auto` marks took real asset dimensions) components/ui/sidebar.tsx:167, components/ui/sidebar.tsx:375, components/ui/sidebar.tsx:381, layouts/DashboardChrome.tsx:407, pages/Models.tsx:1020, pages/Models.tsx:1029, pages/Models.tsx:1038, pages/Models.tsx:1460, pages/DashboardDefault.tsx:438, pages/DashboardDefault.tsx:698, pages/DashboardDefault.tsx:819, pages/DashboardDefault.tsx:837, pages/DashboardDefault.tsx:858, pages/AuditRecordDialog.tsx:35
   - Before: `<img alt="" aria-hidden className="size-6" src={p.icon} />`; size comes only from the class.
   - After: add intrinsic dimensions, e.g. `<img alt="" aria-hidden className="size-6" height={24} src={p.icon} width={24} />` (layouts/AuthLayout.tsx:202 already does this).
   - Why: no intrinsic ratio means a layout shift between markup parse and CSS apply on slow first paint. Skill rule "`<img>` needs explicit `width` and `height`".
-- [ ] **wdg-15 LOW** components/ui/theme-toggle.tsx:32, components/ui/theme-toggle.tsx:42, layouts/DashboardChrome.tsx:378, layouts/DashboardChrome.tsx:388
+- [ ] **wdg-15 LOW** (skipped by decision 2026-09-20: keep the blur for now, the blur-family row stays OPEN in the settled table) components/ui/theme-toggle.tsx:32, components/ui/theme-toggle.tsx:42, layouts/DashboardChrome.tsx:378, layouts/DashboardChrome.tsx:388
   - Before: `"absolute size-4 transition-[opacity,scale,filter] duration-300 … motion-reduce:transition-none"` with `blur-[1px]` / `blur-0` as the animated endpoints.
   - After: `"absolute size-4 transition-[opacity,scale] duration-300 …"` and drop `blur-[1px]` / `blur-0` from both branches.
   - Why: `filter` is not compositor-friendly (skill: "Animate `transform`/`opacity` only") and `filter` is excluded from design.md's transition property list, so this violates both. Relates to the OPEN blur-family row in the settled table.
-- [ ] **wdg-16 LOW** components/ui/badge.tsx:26, components/ui/checkbox.tsx:41, components/ui/radio-group.tsx:25, components/ui/switch.tsx:17, components/ui/segmented.tsx:61, components/ui/segmented.tsx:195, components/ui/mini-radio-group.tsx:55, components/ui/option-tile.tsx:24, components/ui/textarea.tsx:10, components/ui/tabs.tsx:103, components/ui/table.tsx:265, components/ui/ask-ai-composer.tsx:105, pages/Dashboard.tsx:722, pages/DashboardDefault.tsx:463, pages/DashboardDefault.tsx:707, pages/Policies.tsx:721, pages/teams/PoliciesPane.tsx:510, pages/SetupGateConnect.tsx:142, pages/SetupManual.tsx:209, pages/SetupManual.tsx:255, pages/SetupManual.tsx:267, pages/SetupManual.tsx:291, pages/SetupManual.tsx:391
+- [x] **wdg-16 LOW** (applied 2026-09-20, `cc5b345`) components/ui/badge.tsx:26, components/ui/checkbox.tsx:41, components/ui/radio-group.tsx:25, components/ui/switch.tsx:17, components/ui/segmented.tsx:61, components/ui/segmented.tsx:195, components/ui/mini-radio-group.tsx:55, components/ui/option-tile.tsx:24, components/ui/textarea.tsx:10, components/ui/tabs.tsx:103, components/ui/table.tsx:265, components/ui/ask-ai-composer.tsx:105, pages/Dashboard.tsx:722, pages/DashboardDefault.tsx:463, pages/DashboardDefault.tsx:707, pages/Policies.tsx:721, pages/teams/PoliciesPane.tsx:510, pages/SetupGateConnect.tsx:142, pages/SetupManual.tsx:209, pages/SetupManual.tsx:255, pages/SetupManual.tsx:267, pages/SetupManual.tsx:291, pages/SetupManual.tsx:391
   - Before: a `transition-colors` / `transition-opacity` / `transition-[…]` declaration with no reduced-motion opt-out in the same class string.
   - After: append `motion-reduce:transition-none` to each (the shape used in components/ui/button.tsx:14 and components/ui/table.tsx:148).
   - Why: design.md requires `motion-reduce:` on every transition; skill rule "Honor `prefers-reduced-motion`". components/ui/ask-ai-composer.tsx:105 also has no `duration-*` or `ease-*`, so it falls back to the browser default curve.
-- [ ] **wdg-17 LOW** components/ui/sonner.tsx:21, pages/onboarding-shared.tsx:210
+- [x] **wdg-17 LOW** (applied 2026-09-20, `cc5b345`) components/ui/sonner.tsx:21, pages/onboarding-shared.tsx:210
   - Before: `loading: <Loader2Icon className="size-4 animate-spin" />` and `"animate-spin text-blue-600 dark:text-blue-400"`.
   - After: `"size-4 animate-spin motion-reduce:animate-none"` and `"animate-spin motion-reduce:animate-none text-blue-600 dark:text-blue-400"` (components/ui/skeleton.tsx:28 is the precedent).
   - Why: an unbounded spin is the motion `prefers-reduced-motion` users most often cite; skeleton already guards, these two do not.
-- [ ] **wdg-18 LOW** (Conversations line done with wdg-25, `f54859b`; feedback-fab and RequestsTable remain) components/ui/feedback-fab.tsx:101, pages/Conversations.tsx:670, pages/requests/RequestsTable.tsx:719
+- [x] **wdg-18 LOW** (applied 2026-09-20: Conversations line `f54859b`, feedback-fab + RequestsTable `cc5b345`; zero live `hover-fine:` left in `src`) components/ui/feedback-fab.tsx:101, pages/Conversations.tsx:670, pages/requests/RequestsTable.tsx:719
   - Before: `hover-fine:-translate-y-px` / `hover-fine:bg-accent`, against `@custom-variant hover-fine` at src/index.css:9, which the repo documents as emitting invalid CSS (components/ui/card.tsx:82-87).
   - After: use `hover:` and pair with the existing pointer guard, e.g. `hover:bg-accent` on the row (components/ui/table.tsx:148 already supplies row hover from the primitive, so the two table lines can drop the class entirely).
   - Why: these three rules are silently dead; the hover feedback never paints. Flagged per brief as remaining `hover-fine:` uses.
@@ -97,15 +97,15 @@ to `src/`. Already decided, not re-flagged: see the settled table in
   - Before: `"fixed right-4 bottom-4 z-40 sm:right-6 sm:bottom-6"` on the 48px FAB, with no `env(safe-area-inset-*)` anywhere in the repo and no `viewport-fit=cover`.
   - After: `content="width=device-width, initial-scale=1.0, viewport-fit=cover"` in index.html, and `"fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 sm:right-6 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"`.
   - Why: on a notched iPhone the FAB sits under the home indicator. Skill rule "Full-bleed layouts need `env(safe-area-inset-*)`".
-- [ ] **wdg-20 LOW** components/ui/workspace-switcher.tsx:55, components/ui/workspace-switcher.tsx:75, components/ui/workspace-switcher.tsx:84, components/ui/workspace-switcher.tsx:96, components/ui/workspace-switcher.tsx:108
+- [x] **wdg-20 LOW** (applied 2026-09-20, `cc5b345`) components/ui/workspace-switcher.tsx:55, components/ui/workspace-switcher.tsx:75, components/ui/workspace-switcher.tsx:84, components/ui/workspace-switcher.tsx:96, components/ui/workspace-switcher.tsx:108
   - Before: `<span className="truncate">Chad's workspace</span>` with a straight apostrophe.
   - After: `<span className="truncate">Chad’s workspace</span>`.
   - Why: the only user-facing straight apostrophes left in the app (every other hit is inside a code comment). Skill rule "Curly quotes".
-- [ ] **wdg-21 LOW** src/index.css:9
+- [x] **wdg-21 LOW** (applied 2026-09-20, `cc5b345`) src/index.css:9
   - Before: no `-webkit-tap-highlight-color` declared anywhere, so iOS paints its default grey flash over every row, nav item and Button.
   - After: add `-webkit-tap-highlight-color: transparent;` to the `body` (or `:root`) rule in src/index.css, since every interactive surface already ships its own `active:` state.
   - Why: skill rule "`-webkit-tap-highlight-color` set intentionally"; the default flash fights the `active:scale-[0.98]` press.
-- [ ] **wdg-22 LOW** components/ui/multi-select.tsx:269
+- [x] **wdg-22 LOW** (applied 2026-09-20, `cc5b345`) components/ui/multi-select.tsx:269
   - Before: `<input aria-label="Search options" className="…" onChange={…} placeholder="Search options…" type="text" value={query} />`.
   - After: add `autoComplete="off"` and `spellCheck={false}` (components/ui/search-input.tsx:61 is the precedent and sets both).
   - Why: the only filter field in the app that can raise a password-manager or spellcheck overlay inside a popover.
@@ -116,7 +116,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 ### Requests
 
-- [ ] **wdg-24 LOW** pages/requests/RequestDetailBody.tsx:584, pages/requests/RequestDetailBody.tsx:617
+- [x] **wdg-24 LOW** (applied 2026-09-20, `cc5b345`) pages/requests/RequestDetailBody.tsx:584, pages/requests/RequestDetailBody.tsx:617
   - Severity: was HIGH, downgraded 2026-09-20. No `outline-none` on these buttons and the base layer applies `outline-ring/50`, so the browser default focus-visible outline shows. Ring-recipe consistency, not WCAG 2.4.7.
   - Before: `const base = "flex-col gap-2 rounded-xs border px-4 py-3 text-left shadow-xs";` applied to `<button aria-pressed={selected} …>` with only `select-none transition-colors duration-150 ease-out motion-reduce:transition-none` added.
   - After: `const base = "flex-col gap-2 rounded-xs border px-4 py-3 text-left shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";`
@@ -128,7 +128,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
   - Before: `<RowActionButton aria-label={…} layout="stack" onClick={() => navigate(tracePath(row.conversationId))}>`; the drill-in renders as a `<button>` even though the target is URL-addressable.
   - After: `<RowActionButton aria-label={…} href={tracePath(row.conversationId)} layout="stack">` (the `href` branch exists at row-action-button.tsx:22-27, and pages/requests/RequestsTable.tsx uses it).
   - Why: same primitive, two tables, two behaviours. Messages supports Cmd-click to a new tab, Conversations does not.
-- [ ] **wdg-26 LOW** pages/Conversations.tsx:339, pages/Conversations.tsx:422
+- [x] **wdg-26 LOW** (applied 2026-09-20, `cc5b345`) pages/Conversations.tsx:339, pages/Conversations.tsx:422
   - Before: `Math.round(v).toLocaleString("en-US")` with the locale pinned.
   - After: route through `src/lib/formatters.ts`, which deliberately leaves the locale undefined (formatters.ts:1) so `Intl.*` follows `navigator.language`.
   - Why: the only two hardcoded locales in the app; everything else uses the shared formatter. Skill rule "Numbers/currency: use `Intl.NumberFormat`".
@@ -185,6 +185,11 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 - Anything needing a browser: real focus-ring visibility against each surface, reflow at 390px, iOS safe-area behaviour, and whether the `hover-fine` variant emits invalid CSS in the current Tailwind build (asserted from the repo's note at components/ui/card.tsx:82-87, not compiled).
 - Runtime assistive-tech behaviour of `role="link"` on `<tr>` (wdg-1): the violation is static, the announcement is not.
 - `scroll-margin-top` on heading anchors: not applicable, the app has no in-page `href="#…"` anchors.
+
+### Skipped by decision
+
+- wdg-15: keep the theme-toggle blur cross-fade for now (user, 2026-09-20). Re-open only with the blur-family decision.
+- wdg-7, wdg-9, wdg-10, wdg-19, wdg-23, wdg-27, wdg-28, wdg-29, wdg-30, wdg-32: mobile-only or redundant with the `type` attribute; not worth the churn on this mockup (2026-09-20).
 
 ### Compliant, checked and clean
 

@@ -78,6 +78,36 @@ Prior day: [`changelog-9-18.md`](./changelog-9-18.md)
   the woff2 path.
 - Audit: wdg-11.
 
+### Focus ring, reduced motion, image dims: LOW sweep · [cc5b345]
+
+- Ring recipe (`outline-none focus-visible:ring-2 focus-visible:ring-ring
+  focus-visible:ring-offset-2 focus-visible:ring-offset-background`) on the
+  message bubbles (`message-block.tsx`), code-card tabs (`code-card.tsx`)
+  and findings cards (`RequestDetailBody.tsx`), so every pressable shows the
+  same ring. Audit: wdg-2, wdg-3, wdg-24.
+- `motion-reduce:transition-none` on 23 transitions that lacked it (badge,
+  checkbox, radio, switch, segmented, mini-radio, option-tile, textarea,
+  tabs, table, ask-ai-composer, Dashboard, DashboardDefault, Policies,
+  PoliciesPane, SetupGateConnect, SetupManual); `ask-ai-composer` also gains
+  `duration-150 ease-out`. `motion-reduce:animate-none` on the sonner and
+  onboarding spinners. Audit: wdg-16, wdg-17.
+- `width` / `height` on 15 logo and provider `<img>` tags (sidebar,
+  DashboardChrome, Models, DashboardDefault, AuditRecordDialog); `size-*`
+  marks match the class, `w-auto` marks carry real asset dimensions. Audit:
+  wdg-14.
+- Last live `hover-fine:` uses removed (feedback FAB now `hover:`, Messages
+  row drops it). `body` gets `-webkit-tap-highlight-color: transparent`.
+  Audit: wdg-18, wdg-21.
+- Curly apostrophe in the workspace switcher; multi-select search
+  `autoComplete="off" spellCheck={false}`; Conversations totals through
+  `formatNumber`. Audit: wdg-20, wdg-22, wdg-26.
+
+### `aria-hidden` on every decorative lucide icon · [b1db0b6]
+
+- 75 icon tags in 34 files gain `aria-hidden`, matching the ~200 that
+  already had it. Every icon-only control already carried an `aria-label`
+  or `sr-only` text, so no accessible name was lost. Audit: wdg-13.
+
 ## Components
 
 ### Button base gains `touch-manipulation` (`components/ui/button.tsx`) · [f54859b]
