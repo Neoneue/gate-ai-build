@@ -27,8 +27,11 @@ text weight, unnamed transition properties, icon toggles by mount / unmount,
 optical alignment of icon + text, stagger on any entrance.
 
 Output a CHECKLIST, not a table, even if the skill defines a table format:
-items grouped by principle, severity HIGH > MEDIUM > LOW, one item per root
-cause, numbered sequentially, in this exact shape:
+a `### Global` group first (shared primitives, tokens, anything reached from
+more than one page), then one `### <Page>` group per page in scope; inside
+each group severity HIGH > MEDIUM > LOW; one item per root cause; numbered
+sequentially starting at <N> (the orchestrator gives you this), in this
+exact shape:
 `- [ ] **N. SEVERITY** path:line, path:line` then three sub-bullets
 `  - Before: ...`, `  - After: ...`, `  - Why: ...`.
 `After` is the exact class string or CSS value. Then "Not verified" (you have
