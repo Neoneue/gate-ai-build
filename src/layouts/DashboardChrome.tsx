@@ -441,7 +441,9 @@ function DashTopBar({
             alt=""
             aria-hidden
             className="h-8 w-auto"
+            height={226}
             src="/gate-ai-logo-mark.png"
+            width={195}
           />
         </Link>
         {/* At lg+ the switcher normally lives here. In the tight band (rail +

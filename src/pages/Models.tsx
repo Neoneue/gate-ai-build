@@ -1021,7 +1021,9 @@ function ModelDetailPage({
                       alt=""
                       aria-hidden
                       className="size-4"
+                      height={16}
                       src="/icons/languages/typescript.svg"
+                      width={16}
                     />
                     TypeScript
                   </TabsTrigger>
@@ -1030,7 +1032,9 @@ function ModelDetailPage({
                       alt=""
                       aria-hidden
                       className="size-4"
+                      height={16}
                       src="/icons/languages/python.svg"
+                      width={16}
                     />
                     Python
                   </TabsTrigger>
@@ -1039,7 +1043,9 @@ function ModelDetailPage({
                       alt=""
                       aria-hidden
                       className="h-4 w-auto"
+                      height={854}
                       src="/icons/languages/curl.svg"
+                      width={1021}
                     />
                     cURL
                   </TabsTrigger>
@@ -1461,7 +1467,9 @@ export function PaygToolConfigCard({ handle }: { handle: string }) {
                 alt=""
                 aria-hidden
                 className="size-4"
+                height={16}
                 src="/icons/providers/openclaw.svg"
+                width={16}
               />
               OpenClaw
             </TabsTrigger>

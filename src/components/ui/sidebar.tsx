@@ -166,7 +166,9 @@ function SidebarCollapsed({
               alt=""
               aria-hidden
               className="h-8 w-auto"
+              height={226}
               src="/gate-ai-logo-mark.png"
+              width={195}
             />
           </Link>
         ) : (
@@ -174,7 +176,9 @@ function SidebarCollapsed({
             alt=""
             aria-hidden
             className="h-8 w-auto"
+            height={226}
             src="/gate-ai-logo-mark.png"
+            width={195}
           />
         )}
       </div>
@@ -378,13 +382,17 @@ function DefaultBrand({ overviewPath }: { overviewPath?: string }) {
         alt="Constellation Gate AI"
         className="h-8 w-auto dark:hidden"
         draggable={false}
+        height={303}
         src="/gate-ai-logo.png"
+        width={904}
       />
       <img
         alt="Constellation Gate AI"
         className="hidden h-8 w-auto dark:block"
         draggable={false}
+        height={226}
         src="/gate-ai-logo-dark.png"
+        width={653}
       />
     </>
   );

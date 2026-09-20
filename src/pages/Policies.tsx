@@ -718,7 +718,7 @@ function ActionHalf({
           return (
             <label
               className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-xs border p-4 transition-colors duration-150 ease-out",
+                "flex cursor-pointer items-center gap-3 rounded-xs border p-4 transition-colors duration-150 ease-out motion-reduce:transition-none",
                 selected
                   ? cn(
                       ACTION_ACTIVE_FILL[opt.value],

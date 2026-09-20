@@ -704,7 +704,7 @@ function PreviewCard({
       <div className="flex shrink-0 items-center justify-between px-4 py-3">
         <CardTitle>{title}</CardTitle>
         <Link
-          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="type-label-12 -mx-2 -my-2 rounded-sm px-2 py-2 text-muted-foreground outline-none transition-colors duration-100 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
           to={viewAllTo}
         >
           View all →

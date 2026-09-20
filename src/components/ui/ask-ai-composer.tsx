@@ -102,7 +102,7 @@ export function AskAiComposer({
         // Raised wash on the panel's bg-card surface — matches the mock's
         // neutral-800-on-neutral-900 step, and inverts correctly in light.
         // Border highlights to --primary while the textarea holds focus.
-        "flex flex-col gap-3 rounded-md border border-border bg-card-muted p-4 transition-colors focus-within:border-primary",
+        "flex flex-col gap-3 rounded-md border border-border bg-card-muted p-4 transition-colors duration-150 ease-out focus-within:border-primary motion-reduce:transition-none",
         className
       )}
       ref={rootRef}

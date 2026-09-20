@@ -139,7 +139,7 @@ function SetupStep({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-sm border border-border bg-card p-4 transition-opacity duration-150 ease-out",
+        "flex flex-col gap-3 rounded-sm border border-border bg-card p-4 transition-opacity duration-150 ease-out motion-reduce:transition-none",
         dimmed && "opacity-50",
         dimmed && dimmedBlocking && "pointer-events-none"
       )}

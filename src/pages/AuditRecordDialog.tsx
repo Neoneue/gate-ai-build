@@ -35,7 +35,9 @@ function VerifiedBySeal() {
     <img
       alt="Verified by Constellation Digital Evidence"
       className="h-6 w-auto self-start"
+      height={40}
       src="/icons/de-verified-badge.svg"
+      width={269}
     />
   );
 }

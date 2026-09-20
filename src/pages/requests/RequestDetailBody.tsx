@@ -618,7 +618,7 @@ function FindingCard({
       aria-pressed={selected}
       className={[
         base,
-        "select-none transition-colors duration-150 ease-out motion-reduce:transition-none",
+        "select-none outline-none transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
         selected
           ? `${activeBg} ${selectedBorder}`
           : `border-border bg-card ${hoverBg}`,

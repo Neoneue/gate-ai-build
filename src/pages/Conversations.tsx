@@ -43,7 +43,11 @@ import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { DEMO_NOW } from "@/lib/demo-clock";
-import { formatChartTooltipDate, formatCompactCount } from "@/lib/formatters";
+import {
+  formatChartTooltipDate,
+  formatCompactCount,
+  formatNumber,
+} from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
 import {
   type CustomRange,
@@ -343,7 +347,7 @@ function KpiRail({
             data={conversationsSpark}
             labels={sparkLabels}
             tooltip
-            valueFormatter={(v) => Math.round(v).toLocaleString("en-US")}
+            valueFormatter={(v) => formatNumber(Math.round(v))}
           />
         }
         title="Conversations"
@@ -426,9 +430,7 @@ function conversationSortValue(
 }
 
 function scaleTokenStr(s: string, scale: number): string {
-  return Math.round(Number(s.replace(/,/g, "")) * scale).toLocaleString(
-    "en-US"
-  );
+  return formatNumber(Math.round(Number(s.replace(/,/g, "")) * scale));
 }
 function scaleCostStr(s: string, scale: number): string {
   const parsed = Number.parseFloat(s.replace("$", "")) * scale;

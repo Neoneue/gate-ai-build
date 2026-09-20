@@ -207,7 +207,7 @@ export function WaitingStrip({
         className={cn(
           "size-5 shrink-0 motion-reduce:animate-none",
           active
-            ? "animate-spin text-blue-600 dark:text-blue-400"
+            ? "animate-spin text-blue-600 motion-reduce:animate-none dark:text-blue-400"
             : "text-muted-foreground"
         )}
         strokeWidth={1.75}

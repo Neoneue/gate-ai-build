@@ -435,7 +435,14 @@ export function DownloadGateConnectDialog({
                     >
                       <Check aria-hidden className="size-3" strokeWidth={2.5} />
                     </Radio.Indicator>
-                    <img alt="" aria-hidden className="size-6" src={p.icon} />
+                    <img
+                      alt=""
+                      aria-hidden
+                      className="size-6"
+                      height={24}
+                      src={p.icon}
+                      width={24}
+                    />
                     <span className="type-label-14 text-foreground">
                       {p.label}
                     </span>
@@ -464,7 +471,7 @@ export function DownloadGateConnectDialog({
                       selected
                         ? "border-foreground"
                         : "border-border hover:border-input"
-                    }`}
+                    } motion-reduce:transition-none`}
                     key={b.id}
                   >
                     <RadioGroupItem
@@ -695,7 +702,14 @@ function WorksWithFooter({
         {Icon ? (
           <Icon className="size-4 shrink-0 text-muted-foreground" />
         ) : (
-          <img alt="" aria-hidden className="size-4 shrink-0" src={src} />
+          <img
+            alt=""
+            aria-hidden
+            className="size-4 shrink-0"
+            height={16}
+            src={src}
+            width={16}
+          />
         )}
         <span className="type-copy-14 whitespace-nowrap text-muted-foreground">
           {name}
@@ -704,7 +718,7 @@ function WorksWithFooter({
     );
     return asButtons ? (
       <button
-        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${hide ?? ""}`}
+        className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-3 transition-colors duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${hide ?? ""} motion-reduce:transition-none`}
         key={name}
         onClick={() => navigate(`/api-keys${tab ? `?tab=${tab}` : ""}`)}
         type="button"
@@ -820,7 +834,9 @@ export function ConnectTabs({
                   alt=""
                   aria-hidden
                   className="h-4 w-auto"
+                  height={226}
                   src="/gate-ai-logo-mark.png"
+                  width={195}
                 />
                 Gate Connect
               </TabsTrigger>
@@ -838,7 +854,9 @@ export function ConnectTabs({
                 alt=""
                 aria-hidden
                 className="size-4"
+                height={16}
                 src="/icons/providers/openclaw.svg"
+                width={16}
               />
               OpenClaw
             </TabsTrigger>
@@ -859,7 +877,9 @@ export function ConnectTabs({
               alt=""
               aria-hidden
               className={imageClassName}
+              height={768}
               src="/gateconnect-app-fade.png"
+              width={1158}
             />
             <div
               className={`relative z-10 flex flex-col gap-6 p-8 max-xl:p-6 ${fillHeight ? "h-full" : ""}`}

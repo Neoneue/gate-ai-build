@@ -266,9 +266,11 @@ function MultiSelect({
               <Search className="size-4 shrink-0 text-muted-foreground" />
               <input
                 aria-label="Search options"
+                autoComplete="off"
                 className="type-copy-14 w-full min-w-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search options…"
+                spellCheck={false}
                 type="text"
                 value={query}
               />

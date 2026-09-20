@@ -206,7 +206,7 @@ export function SetupManual() {
                   or cancels the dialog. */}
               <div
                 className={cn(
-                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out motion-reduce:transition-none",
                   configRevealed ? null : "pointer-events-none opacity-50"
                 )}
               >
@@ -252,7 +252,7 @@ export function SetupManual() {
                   Dimmed until the user interacts with the model selector. */}
               <div
                 className={cn(
-                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out motion-reduce:transition-none",
                   modelChosen ? null : "pointer-events-none opacity-50"
                 )}
               >
@@ -264,7 +264,7 @@ export function SetupManual() {
                   once the model selector has been used. */}
               <div
                 className={cn(
-                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out motion-reduce:transition-none",
                   modelChosen ? null : "pointer-events-none opacity-50"
                 )}
               >
@@ -288,7 +288,7 @@ export function SetupManual() {
                   The listening strip sits 12px below the snippet card (gap-3). */}
               <div
                 className={cn(
-                  "flex flex-col gap-3 transition-opacity duration-150 ease-out",
+                  "flex flex-col gap-3 transition-opacity duration-150 ease-out motion-reduce:transition-none",
                   configRevealed ? null : "pointer-events-none opacity-50"
                 )}
               >
@@ -388,7 +388,7 @@ function ModelPicker({
           the column width at the old `sm` viewport. */}
       <PopoverTrigger
         aria-label="Choose a model"
-        className="group/select type-label-14 flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="group/select type-label-14 flex h-9 @xl:w-72 w-full select-none items-center justify-between gap-2 whitespace-nowrap rounded-sm border border-border bg-muted pr-3 pl-4 text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
       >
         <span className="flex flex-1 items-center gap-2 overflow-hidden">
           {selected ? (

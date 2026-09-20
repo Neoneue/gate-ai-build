@@ -975,6 +975,9 @@ body {
     /* Skill: typography.md — pretty wrapping prevents orphaned words on
        short-to-medium text. Inherited by paragraphs / list items / captions. */
     text-wrap: pretty;
+    /* Every interactive surface ships its own active: press, so iOS must not
+       paint its grey tap flash over it. */
+    -webkit-tap-highlight-color: transparent;
     background: var(--canvas-bg);
     background-image:
       linear-gradient(var(--canvas-grid) 1px, transparent 1px),
