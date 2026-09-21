@@ -188,7 +188,8 @@ function FingerprintInfoTooltip() {
         <Info aria-hidden className="size-3.5" strokeWidth={2} />
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        A fingerprint is a permanent record saved to Constellation's Digital
+        {/* copy-allow: definition answering "What is a fingerprint?" */}A
+        fingerprint is a permanent record saved to Constellation's Digital
         Evidence each time events are logged, so anyone can confirm these events
         really happened and were never changed.
       </TooltipContent>

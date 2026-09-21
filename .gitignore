@@ -53,3 +53,7 @@ test-results/
 blob-report/
 .playwright/
 coverage/
+
+# Local secrets (TypeSafe / Jev key etc.)
+.env
+.env.*
