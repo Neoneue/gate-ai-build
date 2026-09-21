@@ -1,7 +1,8 @@
 # Daily audit file: shape and append rules
 
 One file per day: `audits/YYYY-MM/audit-M-D.md`. Every review run that day
-lands in it. Create it on the first run; append on every later run. Never
+lands in it. Create it on the first run from
+[audit-report-template.md](audit-report-template.md); append on every later run. Never
 start a second file for the same day, never rewrite what an earlier run
 wrote, never renumber.
 

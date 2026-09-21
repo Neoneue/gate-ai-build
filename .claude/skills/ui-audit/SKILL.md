@@ -9,6 +9,14 @@ argument-hint: <review-skill> <scope>   e.g. "better-ui Models page" or "transit
 Orchestrator skill. It never edits UI itself; it writes briefs, spawns
 `front-end-developer`, relays, and keeps the decision ledger. Three verbs.
 
+**Day file first, every time.** Before any verb, check whether
+`audits/YYYY-MM/audit-M-D.md` exists for today. If not, create it from
+[audit-report-template.md](audit-report-template.md) (portable: copy it to a
+new project's audit skill as the starting shape). If it does, append to it;
+never start a second file for the day. Rules for both cases live in
+[audit-file.md](audit-file.md); the template's trailing comment is the short
+form.
+
 Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
 
 ## 1. review
