@@ -18,6 +18,8 @@ import {
   useOrgSettings,
   useUserSettings,
 } from "@/pages/teams/teams-store";
+import { SummaryCard } from "@/pages/token-savings/SummaryCard";
+import { summaryFor } from "@/pages/token-savings-summary";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * TokenSavingsEnterprise (route: /token-savings-enterprise)
@@ -44,6 +46,9 @@ export function TokenSavingsEnterprise() {
   const team = useCurrentUserTeam();
   const org = useOrgSettings();
   const effective = resolveEffectiveSettings(user, team, org);
+  // Same org reading as the KPI rail above it: the Summary explains those
+  // tiles, so it reads range + plan only, never the user's own switches.
+  const summary = summaryFor(range, customRange, { plan: "pro" });
 
   return (
     <DashboardChrome
@@ -54,10 +59,10 @@ export function TokenSavingsEnterprise() {
     >
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <PageTitle>My token savings</PageTitle>
+          <PageTitle>Token savings</PageTitle>
           <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
-            Your token savings: cache, compress and deduplicate to spend less
-            per request. Settings locked by an admin apply to you as set.
+            Cache, compress and deduplicate to spend less per request. Settings
+            locked by an admin apply to you as set.
           </p>
         </div>
         <OverviewSection
@@ -77,6 +82,7 @@ export function TokenSavingsEnterprise() {
           }}
           range={range}
         />
+        <SummaryCard model={summary} />
         <div className="mt-2 flex flex-col gap-4">
           <SectionTitle>Savings options</SectionTitle>
           {effective.lockedBy ? <Callout>{effective.lockedBy}</Callout> : null}
