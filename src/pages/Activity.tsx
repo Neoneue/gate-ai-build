@@ -70,6 +70,11 @@ import {
 } from "./activity/chart-helpers";
 import { TrendCard } from "./activity/TrendCard";
 
+/** Key -> model index. The scoped branch of `modelRows` looks a vendor up per
+ *  key inside a `.map()` inside a `useMemo`; a linear `.find()` there is
+ *  O(keys x MODEL_ROWS) on every recompute. Built once at module scope. */
+const MODEL_BY_KEY = new Map(MODEL_ROWS.map((m) => [m.key, m]));
+
 /* ─────────────────────────────────────────────────────────────────────────
  * CMP-019 — Activity (workspace usage analytics)
  *
@@ -499,7 +504,7 @@ function TopByAxisRow({
           (key) => ({
             key,
             vendor:
-              MODEL_ROWS.find((m) => m.key === key)?.vendor ??
+              MODEL_BY_KEY.get(key)?.vendor ??
               (key.split("/")[0] as (typeof MODEL_ROWS)[number]["vendor"]),
             spend: scoped.spend.model[key] ?? 0,
             tokensIn: scoped.tokens.model[key] ?? 0,

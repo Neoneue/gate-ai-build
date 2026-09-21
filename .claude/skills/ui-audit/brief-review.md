@@ -32,7 +32,13 @@ more than one page), then one `### <Page>` group per page in scope; inside
 each group severity HIGH > MEDIUM > LOW; one item per root cause; numbered
 sequentially starting at <N> (the orchestrator gives you this), in this
 exact shape:
-`- [ ] **N. SEVERITY** path:line, path:line` then three sub-bullets
-`  - Before: ...`, `  - After: ...`, `  - Why: ...`.
-`After` is the exact class string or CSS value. Then "Not verified" (you have
+`- [ ] **N. SEVERITY** \`<rule-slug>\` path:line, path:line` (slug = the skill
+rule id or a short kebab name for the rule breached) then three sub-bullets
+`  - Before: ...`, `  - After: ...`, `  - Why: ...` (cause first, then
+consequence, one sentence each). Then one `Opinion:` line: Clean / Qualified /
+Adverse / Disclaimer (Disclaimer = you did not read every file in scope; name
+them). The user owns the final severity and opinion; propose, do not decide.
+`After` is the exact class string or CSS value. Every sub-bullet is one line,
+backticked inline, never a fenced block; if a fix needs more, name the pattern
+and a precedent file:line instead of pasting code. Then "Not verified" (you have
 no browser). End with the skill's verdict or closing line. Under 120 lines.

@@ -9,11 +9,26 @@ argument-hint: <review-skill> <scope>   e.g. "better-ui Models page" or "transit
 Orchestrator skill. It never edits UI itself; it writes briefs, spawns
 `front-end-developer`, relays, and keeps the decision ledger. Three verbs.
 
+**Day file first, every time.** Before any verb, check whether
+`audits/YYYY-MM/audit-M-D.md` exists for today. If not, create it from
+[audit-report-template.md](audit-report-template.md) (portable: copy it to a
+new project's audit skill as the starting shape). If it does, append to it;
+never start a second file for the day. Rules for both cases live in
+[audit-file.md](audit-file.md); the template's trailing comment is the short
+form.
+
 Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
 
 ## 1. review
 
 1. Resolve the skill file: `agents/front-end-developer/skills/<review-skill>/SKILL.md`.
+   Exception: `<review-skill>` = `test-smoke` (alias `smk`) has no skill
+   file. It means: run `npx vitest run` and `npx playwright test` against the
+   live dev server (`lsof -ti :3000` first, never a second Vite), and file
+   every failing case as an item under `## test-smoke`, page = the surface
+   the test drives, slug = the rule the failure breaks, `Why:` = the
+   assertion text. A green run is a Clean opinion with one Compliant line
+   naming the counts. No agent spawn; the orchestrator runs it directly.
    If the folder is missing, stop and say so (do not guess a path; the kit is
    the only home for design skills).
 2. Resolve scope to files. A page name maps through `src/pages/` and the
@@ -24,7 +39,12 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    2026-09-20: audits run on Sonnet; the orchestrator runs on whatever model
    the user set). Do not add constraints the template already covers; the
    agent's standing rules handle gates and scope.
-4. Write the findings into the day's audit file,
+4. Relay FIRST, then write. Relay in chat: the new items as a CHECKLIST,
+   never a table (user rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY**
+   `rule-slug` path:line` with `Before:`, `After:`, `Why:` sub-bullets; the
+   opinion; then "Decision needed" for every item that conflicts with
+   design.md. The user confirms facts and severities before anything is
+   formal. Then write the findings into the day's audit file,
    `audits/YYYY-MM/audit-M-D.md`, following [audit-file.md](audit-file.md)
    exactly: create the file on the first run of the day, append on every
    later run; section per skill, subsection per page with `### Global`
@@ -34,10 +54,10 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    Runs table per run. Before writing, read the existing file and compute
    the next N. First run of the day also adds one changelog line naming the
    audit path.
-   Then relay in chat: the new items as a CHECKLIST, never a table (user
-   rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY** path:line` with
-   `Before:`, `After:`, `Why:` sub-bullets; the verdict; then "Decision
-   needed" for every item that conflicts with design.md.
+   Before saving, run the quality gate: every item has a rule slug and a
+   file:line; figures in the Summary match the item counts; the opinion
+   word matches the worst open item; Patterns has a line for every root
+   cause seen twice or more.
 5. Stop. Applying is a separate user instruction.
 
 ## 2. apply
@@ -53,10 +73,15 @@ Trigger: the user names item IDs ("do the highs", "apply rams-1 to rams-4").
    model.
 3. Relay before / after per file and the gate results. Name anything the
    agent skipped and why.
-4. Tick each applied item in the audit file and append the short commit
+4. Verify with the suites before ticking: `npx vitest run` and
+   `npx playwright test`. Any new failure is filed as an `smk-N` item in the
+   same day file (same shape as a test-smoke run, with the apply item's ID
+   in `Why:`) and the apply item stays unticked until it is green. Add the
+   run to the Runs table as `test-smoke (after <ids>)` with the counts.
+5. Tick each applied item in the audit file and append the short commit
    hash once the user commits. Changelog entries for applied items cite the
    item ID.
-5. Do not commit. The user asks for `/commit` separately, every time.
+6. Do not commit. The user asks for `/commit` separately, every time.
 
 ## 3. decide
 

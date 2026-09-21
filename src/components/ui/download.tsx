@@ -11,6 +11,7 @@ import {
   useRef,
 } from "react";
 
+import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { cn } from "@/lib/utils";
 
 export interface DownloadIconHandle {
@@ -52,7 +53,7 @@ const DownloadIcon = forwardRef<DownloadIconHandle, DownloadIconProps>(
       if (!host) {
         return;
       }
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (REDUCE_MOTION) {
         return;
       }
       const enter = () => void controls.start("animate");

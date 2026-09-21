@@ -303,12 +303,25 @@ const keyIdByName = (name: string): string | null =>
 const keyIds = (...names: string[]): string[] =>
   names.map(keyIdByName).filter((id): id is string => id !== null);
 
+/* ─── Id lookups ──────────────────────────────────────────────────────────
+ * Both helpers are called inside `.map()` over member / key id lists, so a
+ * linear `.find()` made every roster render O(ids x rows). Indexed once at
+ * module scope, matching `MODEL_BY_ID` in src/data/models.ts. */
+
+const MEMBER_BY_ID: ReadonlyMap<string, MemberRow> = new Map(
+  MEMBER_ROWS.map((m) => [m.id, m])
+);
+
+const KEY_BY_ID: ReadonlyMap<string, ApiKeyRow> = new Map(
+  ASSIGNABLE_KEYS.map((k) => [k.id, k])
+);
+
 export function memberById(id: string): MemberRow | undefined {
-  return MEMBER_ROWS.find((m) => m.id === id);
+  return MEMBER_BY_ID.get(id);
 }
 
 export function keyById(id: string): ApiKeyRow | undefined {
-  return ASSIGNABLE_KEYS.find((k) => k.id === id);
+  return KEY_BY_ID.get(id);
 }
 
 /** Display name for a member id; em dash when the id resolves to nobody

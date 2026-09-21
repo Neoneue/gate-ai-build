@@ -46,3 +46,10 @@ gateway-fixes.md
 
 # Editor workspace files
 *.code-workspace
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+coverage/

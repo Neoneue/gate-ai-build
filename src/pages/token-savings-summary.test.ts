@@ -68,11 +68,12 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
       0
     );
     expect(tenths(comp.shareLabel) + tenths(cache.shareLabel)).toBe(1000);
-    // Four rows max: the top three mechanisms plus an "All others" catch-all
-    // whose share is the exact remainder.
+    // Five rows: four categories plus the "All others" catch-all, last.
     expect(comp.passes).toHaveLength(BREAKDOWN_MAX_ROWS);
-    expect(comp.passes[3].label).toBe(BREAKDOWN_OTHERS_LABEL);
-    expect(comp.passes[3].share).toBeGreaterThan(0);
+    expect(comp.passes.at(-1)?.label).toBe(BREAKDOWN_OTHERS_LABEL);
+    for (const r of comp.passes) {
+      expect(r.share).toBeGreaterThan(0);
+    }
     const passTenths = comp.passes.reduce(
       (s, r) => s + tenths(r.shareLabel),
       0
@@ -80,7 +81,7 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
     expect(passTenths).toBe(tenths(comp.shareLabel));
     expect(cache.passes).toHaveLength(0);
     expect(m.mechanisms[0].share).toBeGreaterThanOrEqual(m.mechanisms[1].share);
-    // Named rows are ranked; the "All others" remainder always sits last,
+    // Named rows are ranked; the "All others" catch-all always sits last,
     // whatever its size.
     const named = comp.passes.filter((r) => r.id !== "others");
     for (let i = 1; i < named.length; i++) {
@@ -101,14 +102,18 @@ test("allocateTenths distributes the whole and only the whole", () => {
   expect(allocateTenths(0, [0.7, 0.3])).toEqual([0, 0]);
 });
 
-test("method shares: the gateway's top three plus All others, summing to 1, same on every plan", () => {
+test("method shares: four categories plus All others, descending, summing to 1, same on every plan", () => {
   const methods = passesForPlan("pro");
   expect(methods.map((m) => m.label)).toEqual([
-    "Deferred tool definitions",
-    "Boost recoverable elide",
-    "Tool output compaction:\nSearch (grep) output",
+    "Tool compression",
+    "Output compaction",
+    "Deduplication",
+    "Text trimming",
     BREAKDOWN_OTHERS_LABEL,
   ]);
+  for (let i = 1; i < methods.length; i++) {
+    expect(methods[i].weight).toBeLessThan(methods[i - 1].weight);
+  }
   expect(methods.reduce((s, m) => s + m.weight, 0)).toBeCloseTo(1, 9);
   expect(passesForPlan("free")).toEqual(methods);
   const free = summaryFor("all", null, { ...ON, plan: "free" });

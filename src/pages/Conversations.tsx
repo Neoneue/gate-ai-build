@@ -410,8 +410,16 @@ function conversationSortValue(
       return row.initiator;
     // Models column is a multi-vendor set rendered as icons; sort by the
     // alphabetically-first vendor label so the column orders by the brand shown.
-    case "vendors":
-      return row.vendors.map((v) => VENDOR_META[v].label).sort()[0] ?? null;
+    case "vendors": {
+      let minLabel: string | null = null;
+      for (const v of row.vendors) {
+        const label = VENDOR_META[v].label;
+        if (minLabel === null || label < minLabel) {
+          minLabel = label;
+        }
+      }
+      return minLabel;
+    }
     case "turns":
       return row.turns;
     case "reqs":

@@ -98,11 +98,30 @@ const turnCount = (seed: ConversationRow, requestCount: number): number =>
 // ── the owned set ───────────────────────────────────────────────────────────
 // A conversation's requests, oldest-first. REQUEST_ROWS_ALL is reverse-chrono
 // (most recent first), so a conversation's slice reversed reads chronologically.
+// Memoized per conversationId: every caller on the site passes the same
+// REQUEST_ROWS_ALL array (mock data, never mutated), so the filter+reverse is
+// a pure function of the id. Keyed defensively on the array identity too, so a
+// different source array invalidates rather than returning a stale slice.
+let requestsCacheSource: RequestRow[] | null = null;
+const requestsCache = new Map<string, RequestRow[]>();
+
 function getConversationRequests(
   conversationId: string,
   allRows: RequestRow[]
 ): RequestRow[] {
-  return allRows.filter((r) => r.conversation === conversationId).reverse();
+  if (requestsCacheSource !== allRows) {
+    requestsCacheSource = allRows;
+    requestsCache.clear();
+  }
+  const cached = requestsCache.get(conversationId);
+  if (cached) {
+    return cached;
+  }
+  const rows = allRows
+    .filter((r) => r.conversation === conversationId)
+    .reverse();
+  requestsCache.set(conversationId, rows);
+  return rows;
 }
 
 // ── list / KPI-rail aggregates (derived from the owned set) ──────────────────

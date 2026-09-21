@@ -1,33 +1,21 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
-    /* "node" is for the test tier only: `src/test/routes.smoke.test.tsx`
-       reads App.tsx off disk so the route list is derived, not duplicated. */
-    "types": ["vite/client", "node"],
+    "types": ["node"],
     "skipLibCheck": true,
-
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-
-    /* Path aliases */
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "strict": true
   },
-  "include": ["src"]
+  "include": ["e2e", "playwright.config.ts"]
 }

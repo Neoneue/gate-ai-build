@@ -558,7 +558,7 @@ export function EventsTableSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageRows.map((row, i) => {
+                  {pageRows.map((row) => {
                     const typeMeta = TYPE_META[row.type];
                     const actionMeta = ACTION_BADGE[row.action];
                     const TypeIcon = typeMeta.Icon;
@@ -566,7 +566,7 @@ export function EventsTableSection({
                     return (
                       <TableRow
                         className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none"
-                        key={`${row.time}-${i}`}
+                        key={verdictKey(row)}
                         onClick={() => setSelectedRow(row)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {

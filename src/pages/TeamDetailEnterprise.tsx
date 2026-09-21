@@ -1411,28 +1411,38 @@ function MembersPane({
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | RoleOption>("all");
 
-  const rows = team.memberIds
-    .map((id) => memberById(id))
-    .filter((m): m is NonNullable<typeof m> => m !== undefined);
+  // Resolving the roster does not depend on the search box, so it must not
+  // rerun on every keystroke: memoised on `team.memberIds` alone.
+  const rows = useMemo(
+    () =>
+      team.memberIds
+        .map((id) => memberById(id))
+        .filter((m): m is NonNullable<typeof m> => m !== undefined),
+    [team.memberIds]
+  );
 
   // Role reads `team.managerIds`, the same source the Role column and the row
   // select read, so promoting someone to Manager immediately makes them
   // findable under the Managers filter. Search matches name or email.
-  const visible = rows.filter((m) => {
-    if (
-      roleFilter !== "all" &&
-      team.managerIds.includes(m.id) !== (roleFilter === "manager")
-    ) {
-      return false;
-    }
-    if (!query) {
-      return true;
-    }
-    const q = query.toLowerCase();
-    return (
-      m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
-    );
-  });
+  const visible = useMemo(
+    () =>
+      rows.filter((m) => {
+        if (
+          roleFilter !== "all" &&
+          team.managerIds.includes(m.id) !== (roleFilter === "manager")
+        ) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        const q = query.toLowerCase();
+        return (
+          m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+        );
+      }),
+    [rows, query, roleFilter, team.managerIds]
+  );
 
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;

@@ -11,6 +11,7 @@ import {
   useRef,
 } from "react";
 
+import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { cn } from "@/lib/utils";
 
 export interface SlidersHorizontalIconHandle {
@@ -48,7 +49,7 @@ const SlidersHorizontalIcon = forwardRef<
     if (!host) {
       return;
     }
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (REDUCE_MOTION) {
       return;
     }
     const enter = () => void controls.start("animate");
@@ -113,7 +114,7 @@ const SlidersHorizontalIcon = forwardRef<
       >
         <m.line
           animate={controls}
-          initial={false}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -130,6 +131,7 @@ const SlidersHorizontalIcon = forwardRef<
         />
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -147,6 +149,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -164,6 +167,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -181,6 +185,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -198,6 +203,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -215,6 +221,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -234,6 +241,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {
@@ -253,6 +261,7 @@ const SlidersHorizontalIcon = forwardRef<
 
         <m.line
           animate={controls}
+          initial="normal"
           transition={DEFAULT_TRANSITION}
           variants={{
             normal: {

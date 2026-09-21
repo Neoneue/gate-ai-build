@@ -299,180 +299,170 @@ function Layout() {
   );
 }
 
+/** The route tree on its own, so tests can mount it under a MemoryRouter.
+ *  `App` renders it inside BrowserRouter + Suspense exactly as before. */
+export function AppRoutes() {
+  return (
+    <Routes>
+      {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
+      <Route element={<AuthLayout />}>
+        <Route element={<SignIn />} path="/sign-in" />
+        <Route element={<SignUp />} path="/sign-up" />
+      </Route>
+      {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
+          A chart of the shell cannot be read from inside the shell, so it
+          mounts at the root beside the auth routes. Admin-only; the page
+          itself bounces any other role to /overview. */}
+      <Route element={<SiteMap />} path="/site-map" />
+      <Route element={<Layout />}>
+        <Route element={<Navigate replace to="/overview" />} index />
+        <Route element={<Dashboard />} path="/overview" />
+        <Route element={<DashboardDefault />} path="/overview-default" />
+        {/* Overview onboarding subflows (multi-level back stack). */}
+        <Route element={<SetupConnect />} path="/setup-connect-default" />
+        <Route
+          element={<SetupGateConnect />}
+          path="/setup-gate-connect-default"
+        />
+        <Route element={<SetupManual />} path="/setup-manual-default" />
+        <Route element={<SetupCredits />} path="/setup-credits-default" />
+        <Route element={<SetupModels />} path="/setup-models-default" />
+        <Route element={<Requests />} path="/messages" />
+        <Route
+          element={<RequestsFindings />}
+          path="/messages-findings/:requestId"
+        />
+        <Route element={<Conversations />} path="/conversations" />
+        <Route
+          element={<ConversationsTrace />}
+          path="/conversations-trace/:conversationId"
+        />
+        <Route element={<Models />} path="/models" />
+        <Route element={<TokenSavings />} path="/token-savings" />
+        <Route element={<TokenSavingsFree />} path="/token-savings-free" />
+        <Route element={<Limits />} path="/limits" />
+        <Route element={<LimitsDefault />} path="/limits-default" />
+        <Route element={<LimitsFree />} path="/limits-free" />
+        <Route element={<Upgrade />} path="/upgrade" />
+        <Route element={<Security />} path="/security" />
+        <Route element={<SecurityDefault />} path="/events-default" />
+        <Route element={<SecurityDefault />} path="/security-default" />
+        <Route element={<SecurityFree />} path="/security-free" />
+        <Route element={<Policies />} path="/policies" />
+        <Route element={<AuditTrail />} path="/audit-trail" />
+        <Route element={<Activity />} path="/activity" />
+        <Route element={<Team />} path="/members" />
+        <Route element={<TeamsEnterprise />} path="/teams" />
+        <Route element={<TeamDetailEnterprise />} path="/teams/:teamId" />
+        <Route element={<Notifications />} path="/notifications" />
+        <Route element={<Settings showCancelPlan={false} />} path="/settings" />
+        <Route element={<ApiKeys />} path="/api-keys" />
+        <Route element={<ApiKeysDefault />} path="/api-keys-default" />
+        <Route element={<Billing />} path="/billing" />
+        <Route element={<BillingFree />} path="/billing-free" />
+        {/* Default-workspace twins — reached via the workspace switcher. */}
+        <Route element={<RequestsDefault />} path="/messages-default" />
+        <Route
+          element={<RequestsFindings />}
+          path="/messages-findings-default/:requestId"
+        />
+        <Route
+          element={<ConversationsDefault />}
+          path="/conversations-default"
+        />
+        <Route
+          element={<ConversationsTrace />}
+          path="/conversations-trace-default/:conversationId"
+        />
+        <Route element={<ModelsDefault />} path="/models-default" />
+        <Route
+          element={<TokenSavingsDefault />}
+          path="/token-savings-default"
+        />
+        <Route element={<PoliciesDefault />} path="/policies-default" />
+        <Route element={<AuditTrailDefault />} path="/audit-trail-default" />
+        <Route element={<ActivityDefault />} path="/activity-default" />
+        <Route element={<TeamDefault />} path="/members-default" />
+        <Route element={<TeamsDefault />} path="/teams-default" />
+        <Route element={<TeamDetailDefault />} path="/teams-default/:teamId" />
+        <Route element={<BillingDefault />} path="/billing-default" />
+        <Route
+          element={<NotificationsDefault />}
+          path="/notifications-default"
+        />
+        <Route element={<SettingsDefault />} path="/settings-default" />
+        {/* Free-tier twins — reached via the workspace switcher. */}
+        <Route element={<DashboardFree />} path="/overview-free" />
+        <Route element={<RequestsFree />} path="/messages-free" />
+        <Route
+          element={<RequestsFindings />}
+          path="/messages-findings-free/:requestId"
+        />
+        <Route element={<ConversationsFree />} path="/conversations-free" />
+        <Route
+          element={<ConversationsTrace />}
+          path="/conversations-trace-free/:conversationId"
+        />
+        <Route element={<ModelsFree />} path="/models-free" />
+        <Route element={<PoliciesFree />} path="/policies-free" />
+        <Route element={<AuditTrailFree />} path="/audit-trail-free" />
+        <Route element={<ActivityFree />} path="/activity-free" />
+        <Route element={<TeamFree />} path="/members-free" />
+        <Route element={<ApiKeysFree />} path="/api-keys-free" />
+        <Route element={<NotificationsFree />} path="/notifications-free" />
+        <Route element={<SettingsFree />} path="/settings-free" />
+        {/* Enterprise-workspace twins — reached via the workspace
+         * switcher. Every route reuses the Pro page component under the
+         * Enterprise chrome, so in-page cross-links may land back on Pro
+         * paths. Teams is one build for Pro + Enterprise (the Enterprise
+         * design is the north star); it derives its subtree from the
+         * pathname, so its links stay in-tier. */}
+        <Route element={<Dashboard />} path="/overview-enterprise" />
+        <Route element={<Requests />} path="/messages-enterprise" />
+        <Route
+          element={<RequestsFindings />}
+          path="/messages-findings-enterprise/:requestId"
+        />
+        <Route element={<Conversations />} path="/conversations-enterprise" />
+        <Route
+          element={<ConversationsTrace />}
+          path="/conversations-trace-enterprise/:conversationId"
+        />
+        <Route element={<Models />} path="/models-enterprise" />
+        <Route
+          element={<TokenSavingsEnterprise />}
+          path="/token-savings-enterprise"
+        />
+        <Route element={<Limits />} path="/limits-enterprise" />
+        <Route element={<Security />} path="/security-enterprise" />
+        <Route element={<PoliciesEnterprise />} path="/policies-enterprise" />
+        <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
+        <Route element={<Activity />} path="/activity-enterprise" />
+        <Route element={<Team />} path="/members-enterprise" />
+        <Route element={<TeamsEnterprise />} path="/teams-enterprise" />
+        <Route
+          element={<TeamDetailEnterprise />}
+          path="/teams-enterprise/:teamId"
+        />
+        <Route element={<BillingEnterprise />} path="/billing-enterprise" />
+        <Route element={<ApiKeys />} path="/api-keys-enterprise" />
+        <Route element={<Notifications />} path="/notifications-enterprise" />
+        <Route
+          element={<Settings showCancelPlan={false} />}
+          path="/settings-enterprise"
+        />
+        {/* Unknown routes fall back to Requests. */}
+        <Route element={<Navigate replace to="/overview" />} path="*" />
+      </Route>
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={null}>
-        <Routes>
-          {/* Auth routes — no dashboard chrome (sidebar/topbar). */}
-          <Route element={<AuthLayout />}>
-            <Route element={<SignIn />} path="/sign-in" />
-            <Route element={<SignUp />} path="/sign-up" />
-          </Route>
-          {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
-              A chart of the shell cannot be read from inside the shell, so it
-              mounts at the root beside the auth routes. Admin-only; the page
-              itself bounces any other role to /overview. */}
-          <Route element={<SiteMap />} path="/site-map" />
-          <Route element={<Layout />}>
-            <Route element={<Navigate replace to="/overview" />} index />
-            <Route element={<Dashboard />} path="/overview" />
-            <Route element={<DashboardDefault />} path="/overview-default" />
-            {/* Overview onboarding subflows (multi-level back stack). */}
-            <Route element={<SetupConnect />} path="/setup-connect-default" />
-            <Route
-              element={<SetupGateConnect />}
-              path="/setup-gate-connect-default"
-            />
-            <Route element={<SetupManual />} path="/setup-manual-default" />
-            <Route element={<SetupCredits />} path="/setup-credits-default" />
-            <Route element={<SetupModels />} path="/setup-models-default" />
-            <Route element={<Requests />} path="/messages" />
-            <Route
-              element={<RequestsFindings />}
-              path="/messages-findings/:requestId"
-            />
-            <Route element={<Conversations />} path="/conversations" />
-            <Route
-              element={<ConversationsTrace />}
-              path="/conversations-trace/:conversationId"
-            />
-            <Route element={<Models />} path="/models" />
-            <Route element={<TokenSavings />} path="/token-savings" />
-            <Route element={<TokenSavingsFree />} path="/token-savings-free" />
-            <Route element={<Limits />} path="/limits" />
-            <Route element={<LimitsDefault />} path="/limits-default" />
-            <Route element={<LimitsFree />} path="/limits-free" />
-            <Route element={<Upgrade />} path="/upgrade" />
-            <Route element={<Security />} path="/security" />
-            <Route element={<SecurityDefault />} path="/events-default" />
-            <Route element={<SecurityDefault />} path="/security-default" />
-            <Route element={<SecurityFree />} path="/security-free" />
-            <Route element={<Policies />} path="/policies" />
-            <Route element={<AuditTrail />} path="/audit-trail" />
-            <Route element={<Activity />} path="/activity" />
-            <Route element={<Team />} path="/members" />
-            <Route element={<TeamsEnterprise />} path="/teams" />
-            <Route element={<TeamDetailEnterprise />} path="/teams/:teamId" />
-            <Route element={<Notifications />} path="/notifications" />
-            <Route
-              element={<Settings showCancelPlan={false} />}
-              path="/settings"
-            />
-            <Route element={<ApiKeys />} path="/api-keys" />
-            <Route element={<ApiKeysDefault />} path="/api-keys-default" />
-            <Route element={<Billing />} path="/billing" />
-            <Route element={<BillingFree />} path="/billing-free" />
-            {/* Default-workspace twins — reached via the workspace switcher. */}
-            <Route element={<RequestsDefault />} path="/messages-default" />
-            <Route
-              element={<RequestsFindings />}
-              path="/messages-findings-default/:requestId"
-            />
-            <Route
-              element={<ConversationsDefault />}
-              path="/conversations-default"
-            />
-            <Route
-              element={<ConversationsTrace />}
-              path="/conversations-trace-default/:conversationId"
-            />
-            <Route element={<ModelsDefault />} path="/models-default" />
-            <Route
-              element={<TokenSavingsDefault />}
-              path="/token-savings-default"
-            />
-            <Route element={<PoliciesDefault />} path="/policies-default" />
-            <Route
-              element={<AuditTrailDefault />}
-              path="/audit-trail-default"
-            />
-            <Route element={<ActivityDefault />} path="/activity-default" />
-            <Route element={<TeamDefault />} path="/members-default" />
-            <Route element={<TeamsDefault />} path="/teams-default" />
-            <Route
-              element={<TeamDetailDefault />}
-              path="/teams-default/:teamId"
-            />
-            <Route element={<BillingDefault />} path="/billing-default" />
-            <Route
-              element={<NotificationsDefault />}
-              path="/notifications-default"
-            />
-            <Route element={<SettingsDefault />} path="/settings-default" />
-            {/* Free-tier twins — reached via the workspace switcher. */}
-            <Route element={<DashboardFree />} path="/overview-free" />
-            <Route element={<RequestsFree />} path="/messages-free" />
-            <Route
-              element={<RequestsFindings />}
-              path="/messages-findings-free/:requestId"
-            />
-            <Route element={<ConversationsFree />} path="/conversations-free" />
-            <Route
-              element={<ConversationsTrace />}
-              path="/conversations-trace-free/:conversationId"
-            />
-            <Route element={<ModelsFree />} path="/models-free" />
-            <Route element={<PoliciesFree />} path="/policies-free" />
-            <Route element={<AuditTrailFree />} path="/audit-trail-free" />
-            <Route element={<ActivityFree />} path="/activity-free" />
-            <Route element={<TeamFree />} path="/members-free" />
-            <Route element={<ApiKeysFree />} path="/api-keys-free" />
-            <Route element={<NotificationsFree />} path="/notifications-free" />
-            <Route element={<SettingsFree />} path="/settings-free" />
-            {/* Enterprise-workspace twins — reached via the workspace
-             * switcher. Every route reuses the Pro page component under the
-             * Enterprise chrome, so in-page cross-links may land back on Pro
-             * paths. Teams is one build for Pro + Enterprise (the Enterprise
-             * design is the north star); it derives its subtree from the
-             * pathname, so its links stay in-tier. */}
-            <Route element={<Dashboard />} path="/overview-enterprise" />
-            <Route element={<Requests />} path="/messages-enterprise" />
-            <Route
-              element={<RequestsFindings />}
-              path="/messages-findings-enterprise/:requestId"
-            />
-            <Route
-              element={<Conversations />}
-              path="/conversations-enterprise"
-            />
-            <Route
-              element={<ConversationsTrace />}
-              path="/conversations-trace-enterprise/:conversationId"
-            />
-            <Route element={<Models />} path="/models-enterprise" />
-            <Route
-              element={<TokenSavingsEnterprise />}
-              path="/token-savings-enterprise"
-            />
-            <Route element={<Limits />} path="/limits-enterprise" />
-            <Route element={<Security />} path="/security-enterprise" />
-            <Route
-              element={<PoliciesEnterprise />}
-              path="/policies-enterprise"
-            />
-            <Route element={<AuditTrail />} path="/audit-trail-enterprise" />
-            <Route element={<Activity />} path="/activity-enterprise" />
-            <Route element={<Team />} path="/members-enterprise" />
-            <Route element={<TeamsEnterprise />} path="/teams-enterprise" />
-            <Route
-              element={<TeamDetailEnterprise />}
-              path="/teams-enterprise/:teamId"
-            />
-            <Route element={<BillingEnterprise />} path="/billing-enterprise" />
-            <Route element={<ApiKeys />} path="/api-keys-enterprise" />
-            <Route
-              element={<Notifications />}
-              path="/notifications-enterprise"
-            />
-            <Route
-              element={<Settings showCancelPlan={false} />}
-              path="/settings-enterprise"
-            />
-            {/* Unknown routes fall back to Requests. */}
-            <Route element={<Navigate replace to="/overview" />} path="*" />
-          </Route>
-        </Routes>
+        <AppRoutes />
       </Suspense>
       <Toaster position="bottom-right" />
     </BrowserRouter>
