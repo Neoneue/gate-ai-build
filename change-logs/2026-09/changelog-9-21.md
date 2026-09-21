@@ -18,6 +18,30 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
 
 ## Sections & surfaces
 
+### Limits, Settings and Teams copy grounded in the PRDs (`pages/Limits.tsx`, `pages/LimitsFree.tsx`, `pages/Upgrade.tsx`, `pages/Settings.tsx`, `pages/TeamDetailEnterprise.tsx`, `pages/teams/dialogs.tsx`) · [f34ca3d]
+
+- Before: Limits intro "Enforce spend, token, and request rate caps at the
+  org, project, or key level. Limits run inline with no separate billing
+  system to wire up."; Create-limit description "Block messages that exceed
+  the threshold (returns 429)." and block-mode hint "Messages that exceed
+  the threshold are blocked (returns 429)."; Settings email helper "Verified
+  at sign-in; changes require identity-provider re-verification."; default
+  team callout "The default team can't be renamed or deleted. Members and
+  keys removed from other teams land here."; Add members "Only existing org
+  members can be added, and their keys move with them. This doesn't send
+  invites."
+- After: intro "Cap spend, tokens, or requests for the whole org, a team, or
+  a single key, and choose whether crossing a cap blocks or only notifies."
+  (Gateway PRD usage limits + H2 budgets; project scope and request rate
+  were unsupported); description "Cap spend, tokens, or requests on any
+  scope."; hint "Requests over the cap are refused."; email helper removed
+  (Accounts PRD: Cognito email + password, no IdP re-verification);
+  callout "Your org's default team. People and keys removed from other
+  teams land here."; Add members "Pick people already in your org. Only
+  their new traffic counts here; past requests stay with their old team."
+  (H2 PRD 8.1 reassignment). Found by `npm run lint:copy` (new, opt-in Jev
+  copy lint, e7553bb); truth-checked against Notion by hand.
+
 ### Enterprise twins: Summary card on Token Savings, shared titles on Token Savings and Policies (`pages/TokenSavingsEnterprise.tsx`, `pages/PoliciesEnterprise.tsx`) · [1d2de90]
 
 - Before: the Enterprise Token Savings twin was the only one without the
