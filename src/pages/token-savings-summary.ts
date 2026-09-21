@@ -21,12 +21,14 @@
 //                   the leading compression passes inside that".
 //
 // The compression split (METHOD_SHARES) is the team's four reader-facing
-// categories (user, 2026-09-21): Tool schemas, Output compaction,
-// Deduplication, Text trimming. The shares are an ASSUMED distribution until
-// the gateway supplies a per-category table; ordering reasons from how agentic
-// prompts are built (tool definitions dominate and are re-sent every turn,
-// tool results are next, repeated context and whitespace are small). Replace
-// the four weights when real numbers land; nothing else needs to change.
+// categories plus an "All others" catch-all (user, 2026-09-21): Tool
+// compression, Output compaction, Deduplication, Text trimming, All others.
+// The shares are an ASSUMED distribution until the gateway supplies a
+// per-category table; ordering reasons from how agentic prompts are built
+// (tool definitions dominate and are re-sent every turn, tool results are
+// next, repeated context and whitespace are small, a few percent is a long
+// tail of minor passes). Replace the five weights when real numbers land;
+// nothing else needs to change.
 // Same split on every plan and window until a per-plan table exists.
 
 import { DEMO_TODAY } from "@/lib/demo-clock";
@@ -79,12 +81,13 @@ export const LOW_VOLUME_REQUESTS = 1000;
 /* ─── Method shares (gateway "Methods, ranked", 30D) ──────────────────── */
 
 /** The breakdown shows at most this many rows (user + PM, call 2026-09-17:
- *  "four or five max"); the last is the "All others" catch-all. */
-export const BREAKDOWN_MAX_ROWS = 4;
+ *  "four or five max"; five as of 2026-09-21); the last is the "All others"
+ *  catch-all. */
+export const BREAKDOWN_MAX_ROWS = 5;
 export const BREAKDOWN_OTHERS_LABEL = "All others";
 
 export type MethodId =
-  | "tool-schemas"
+  | "tool-compression"
   | "output-compaction"
   | "deduplication"
   | "text-trimming"
@@ -98,13 +101,14 @@ type MethodSeed = {
   weight: number;
 };
 
-/** Four categories, a complete set (no remainder row). ASSUMED weights, see
- *  the header comment; sum to 1. */
+/** Four categories plus the "All others" catch-all for the long tail of
+ *  small passes. ASSUMED weights, see the header comment; sum to 1. */
 const METHOD_SHARES: MethodSeed[] = [
-  { id: "tool-schemas", label: "Tool schemas", weight: 0.72 },
-  { id: "output-compaction", label: "Output compaction", weight: 0.14 },
+  { id: "tool-compression", label: "Tool compression", weight: 0.7 },
+  { id: "output-compaction", label: "Output compaction", weight: 0.13 },
   { id: "deduplication", label: "Deduplication", weight: 0.09 },
   { id: "text-trimming", label: "Text trimming", weight: 0.05 },
+  { id: "others", label: BREAKDOWN_OTHERS_LABEL, weight: 0.03 },
 ];
 
 /** The methods the breakdown shows. Same on every plan: the split is per

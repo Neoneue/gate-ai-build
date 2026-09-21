@@ -11,7 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 
-- Token Savings breakdown: four categories, assumed weights
+- Token Savings breakdown: four categories + All others, assumed weights
 - Eight react-best-practices LOWs applied; audit method reshaped
 
 ### [2026-09-20](./2026-09/changelog-9-20.md)

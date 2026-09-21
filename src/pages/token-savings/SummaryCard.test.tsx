@@ -66,15 +66,15 @@ test("Pro · All: two-level breakdown, six ranked meters", () => {
   expect(text).toContain(SUMMARY_COPY.breakdown.basis);
   const compression = mechanism(model, "compression");
   const bars = [...model.mechanisms, ...compression.passes];
-  // Two mechanisms plus the four-row compression breakdown (the four
-  // categories).
-  expect(bars).toHaveLength(6);
+  // Two mechanisms plus the five-row compression breakdown (four categories
+  // and "All others").
+  expect(bars).toHaveLength(7);
   for (const bar of bars) {
     expect(text).toContain(bar.label);
     expect(text).toContain(bar.shareLabel);
     expect(markup).toContain(SUMMARY_COPY.breakdown.barAlt(bar));
   }
-  expect(meters(markup)).toBe(6);
+  expect(meters(markup)).toBe(7);
 });
 
 test("Pro · 7d renders the same shape with the 7d figures", () => {
@@ -83,12 +83,12 @@ test("Pro · 7d renders the same shape with the 7d figures", () => {
   expect(text).toContain(SUMMARY_COPY.exclusion.body);
 });
 
-test("Free · All: the same four method rows as Pro", () => {
+test("Free · All: the same five method rows as Pro", () => {
   const text = plain(ALL_CASES["free all"]);
   for (const method of passesForPlan("free")) {
     expect(text).toContain(method.label);
   }
-  expect(meters(ALL_CASES["free all"])).toBe(6);
+  expect(meters(ALL_CASES["free all"])).toBe(7);
 });
 
 test("No traffic: header and explanation only — no figures, no bars, no exclusion", () => {

@@ -68,12 +68,9 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
       0
     );
     expect(tenths(comp.shareLabel) + tenths(cache.shareLabel)).toBe(1000);
-    // Four rows: the four categories are a complete set, so no "All others"
-    // remainder row is produced at this size.
+    // Five rows: four categories plus the "All others" catch-all, last.
     expect(comp.passes).toHaveLength(BREAKDOWN_MAX_ROWS);
-    expect(comp.passes.map((r) => r.label)).not.toContain(
-      BREAKDOWN_OTHERS_LABEL
-    );
+    expect(comp.passes.at(-1)?.label).toBe(BREAKDOWN_OTHERS_LABEL);
     for (const r of comp.passes) {
       expect(r.share).toBeGreaterThan(0);
     }
@@ -84,14 +81,13 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
     expect(passTenths).toBe(tenths(comp.shareLabel));
     expect(cache.passes).toHaveLength(0);
     expect(m.mechanisms[0].share).toBeGreaterThanOrEqual(m.mechanisms[1].share);
-    // Rows are ranked. With four categories no "All others" remainder is
-    // produced; if one ever is, it sits last whatever its size.
+    // Named rows are ranked; the "All others" catch-all always sits last,
+    // whatever its size.
     const named = comp.passes.filter((r) => r.id !== "others");
     for (let i = 1; i < named.length; i++) {
       expect(named[i - 1].share).toBeGreaterThanOrEqual(named[i].share);
     }
-    const othersIdx = comp.passes.findIndex((r) => r.id === "others");
-    expect(othersIdx === -1 || othersIdx === comp.passes.length - 1).toBe(true);
+    expect(comp.passes.at(-1)?.id).toBe("others");
   }
 });
 
@@ -106,13 +102,14 @@ test("allocateTenths distributes the whole and only the whole", () => {
   expect(allocateTenths(0, [0.7, 0.3])).toEqual([0, 0]);
 });
 
-test("method shares: the four categories, descending, summing to 1, same on every plan", () => {
+test("method shares: four categories plus All others, descending, summing to 1, same on every plan", () => {
   const methods = passesForPlan("pro");
   expect(methods.map((m) => m.label)).toEqual([
-    "Tool schemas",
+    "Tool compression",
     "Output compaction",
     "Deduplication",
     "Text trimming",
+    BREAKDOWN_OTHERS_LABEL,
   ]);
   for (let i = 1; i < methods.length; i++) {
     expect(methods[i].weight).toBeLessThan(methods[i - 1].weight);

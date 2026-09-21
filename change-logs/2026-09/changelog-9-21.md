@@ -23,10 +23,11 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
 - Before: the gateway's "Methods, ranked" top three (Deferred tool
   definitions, Boost recoverable elide, Tool output compaction: grep) plus
   "All others" at 83.1 / 2.4 / 1.9 / 12.6.
-- After: Tool schemas 72.0, Output compaction 14.0, Deduplication 9.0, Text
-  trimming 5.0. A complete set, so no remainder row. Weights are an assumed
-  distribution until the gateway supplies real shares; the header comment
-  says so.
+- After: Tool compression 70.0, Output compaction 13.0, Deduplication 9.0,
+  Text trimming 5.0, All others 3.0 (five rows, `BREAKDOWN_MAX_ROWS` 4 to
+  5). Weights are an assumed distribution until the gateway supplies real
+  shares; the header comment says so. Renamed from Tool schemas and the
+  catch-all re-added the same day.
 
 ### Animated icons read one reduced-motion constant, plus six small lookups (`components/ui/*.tsx`, `data/teams.ts`, `data/conversationDetail.ts`, others) · [65494e2]
 
