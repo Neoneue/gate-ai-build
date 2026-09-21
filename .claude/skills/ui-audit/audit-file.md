@@ -189,3 +189,15 @@ Verdict (run 1): Qualified. <one sentence>
     one exists, the lint rule or hook that would catch it. Twelve lines maximum; a class with a
     line already gets IDs added to it. Nothing else may be added at day
     level, so a day file grows by the summary and the patterns and no more.
+14. **Split at 600 lines, by whole skill section.** When a day file passes
+    600 lines, or the next run would take it there, move whole `## <skill>`
+    sections (never part of one) into `audit-M-D-2.md`, then `-3`, in
+    first-run order so part 1 keeps the earliest skills. Part 1 keeps the
+    name, the `## Summary` and the `## Patterns` for the WHOLE day; later
+    parts have neither and open with one line: `Part N of audit-M-D.
+    Summary and Patterns are in part 1.` Each part has its own `## Runs`
+    table for the runs it holds; part 1's table gains a `File` column
+    naming the part for any run that moved. The `<alias>-N` counter stays
+    per day, so a skill's section lives in exactly one part and its IDs
+    continue across a split. `audits/INDEX.md` keeps one date heading and
+    names the part on each run line. Existing links to part 1 never break.

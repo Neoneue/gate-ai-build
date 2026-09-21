@@ -104,6 +104,9 @@ Rules (full text lives with the audit skill; this is the short form):
 - Summary is five bullets rewritten in place after every run and apply
   pass. Patterns is the last section, twelve lines max, keyed by slug.
   Nothing else at day level.
+- Over 600 lines: split by whole skill section into `audit-M-D-2.md`,
+  `-3`. Summary and Patterns stay in part 1 for the whole day; each part
+  has its own Runs table; ID counters stay per day.
 - test-smoke: run the suites on their own or after every apply batch; each
   failure is an smk item; a green run is one Compliant line.
 - Relay findings in chat before writing; quality gate before saving:
