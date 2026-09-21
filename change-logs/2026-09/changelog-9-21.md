@@ -18,6 +18,18 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
 
 ## Sections & surfaces
 
+### Enterprise twins: Summary card on Token Savings, shared titles on Token Savings and Policies (`pages/TokenSavingsEnterprise.tsx`, `pages/PoliciesEnterprise.tsx`) · [1d2de90]
+
+- Before: the Enterprise Token Savings twin was the only one without the
+  Summary section; it and Policies were titled "My token savings" / "My
+  policies" with "Your ..." subtitles while every other twin says "Token
+  savings" / "Policies".
+- After: `SummaryCard` sits between the KPI rail and Savings options, fed by
+  `summaryFor(range, customRange, { plan: "pro" })` so the Overview range
+  picker drives it and the user's own switches do not. Both titles match
+  their siblings; subtitles open with the shared sentence and keep the
+  Enterprise-only admin-lock sentence.
+
 ### Token Savings breakdown: four categories plus All others (`pages/token-savings-summary.ts`) · [48f13d7]
 
 - Before: the gateway's "Methods, ranked" top three (Deferred tool
