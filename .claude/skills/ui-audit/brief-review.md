@@ -33,6 +33,10 @@ each group severity HIGH > MEDIUM > LOW; one item per root cause; numbered
 sequentially starting at <N> (the orchestrator gives you this), in this
 exact shape:
 `- [ ] **N. SEVERITY** path:line, path:line` then three sub-bullets
-`  - Before: ...`, `  - After: ...`, `  - Why: ...`.
+`  - Rule: ...` (the design.md section, guideline or skill rule breached, one
+clause), `  - Before: ...`, `  - After: ...`, `  - Why: ...` (cause first, then
+consequence, one sentence each). Then one `Opinion:` line: Clean / Qualified /
+Adverse / Disclaimer (Disclaimer = you did not read every file in scope; name
+them). The user owns the final severity and opinion; propose, do not decide.
 `After` is the exact class string or CSS value. Then "Not verified" (you have
 no browser). End with the skill's verdict or closing line. Under 120 lines.

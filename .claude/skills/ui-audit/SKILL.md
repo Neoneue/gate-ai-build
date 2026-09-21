@@ -24,7 +24,12 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    2026-09-20: audits run on Sonnet; the orchestrator runs on whatever model
    the user set). Do not add constraints the template already covers; the
    agent's standing rules handle gates and scope.
-4. Write the findings into the day's audit file,
+4. Relay FIRST, then write. Relay in chat: the new items as a CHECKLIST,
+   never a table (user rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY**
+   path:line` with `Rule:`, `Before:`, `After:`, `Why:` sub-bullets; the
+   opinion; then "Decision needed" for every item that conflicts with
+   design.md. The user confirms facts and severities before anything is
+   formal. Then write the findings into the day's audit file,
    `audits/YYYY-MM/audit-M-D.md`, following [audit-file.md](audit-file.md)
    exactly: create the file on the first run of the day, append on every
    later run; section per skill, subsection per page with `### Global`
@@ -34,10 +39,10 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    Runs table per run. Before writing, read the existing file and compute
    the next N. First run of the day also adds one changelog line naming the
    audit path.
-   Then relay in chat: the new items as a CHECKLIST, never a table (user
-   rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY** path:line` with
-   `Before:`, `After:`, `Why:` sub-bullets; the verdict; then "Decision
-   needed" for every item that conflicts with design.md.
+   Before saving, run the quality gate: every item has a `Rule:` and a
+   file:line; figures in the Summary match the item counts; the opinion
+   word matches the worst open item; Patterns has a line for every root
+   cause seen twice or more.
 5. Stop. Applying is a separate user instruction.
 
 ## 2. apply
