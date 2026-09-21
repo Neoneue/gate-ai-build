@@ -153,7 +153,11 @@ Verdict (run 1): Qualified. <one sentence>
    `motion-reduce`, `focus-visible`, `input-type`). Reuse an existing slug
    before coining one; the slug is what `## Patterns` groups by. Then
    `Before:`, `After:` (exact value), `Why:` (cause first, then consequence,
-   one sentence each). No other sub-bullets except `Severity:` per rule 9.
+   one sentence each). Each sub-bullet is ONE line: the offending class
+   string, prop or expression in backticks, never a fenced code block and
+   never more than one statement. If the fix needs more than a line to
+   show, name the pattern and the precedent file instead ("mirror
+   EventsTable.tsx:136"). No other sub-bullets except `Severity:` per rule 9.
    Open items under `### Decision needed` end with `(owner, by date)`.
 9. **Item lifecycle lives on the item.** Applied: tick the box and append the
    short commit hash to the first line. Skipped: leave unticked and add one

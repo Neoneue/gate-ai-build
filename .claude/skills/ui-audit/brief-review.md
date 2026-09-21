@@ -38,5 +38,7 @@ rule id or a short kebab name for the rule breached) then three sub-bullets
 consequence, one sentence each). Then one `Opinion:` line: Clean / Qualified /
 Adverse / Disclaimer (Disclaimer = you did not read every file in scope; name
 them). The user owns the final severity and opinion; propose, do not decide.
-`After` is the exact class string or CSS value. Then "Not verified" (you have
+`After` is the exact class string or CSS value. Every sub-bullet is one line,
+backticked inline, never a fenced block; if a fix needs more, name the pattern
+and a precedent file:line instead of pasting code. Then "Not verified" (you have
 no browser). End with the skill's verdict or closing line. Under 120 lines.
