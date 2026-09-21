@@ -18,7 +18,7 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
 
 ## Sections & surfaces
 
-### Token Savings breakdown: four categories (`pages/token-savings-summary.ts`) · [65494e2]
+### Token Savings breakdown: four categories plus All others (`pages/token-savings-summary.ts`) · [48f13d7]
 
 - Before: the gateway's "Methods, ranked" top three (Deferred tool
   definitions, Boost recoverable elide, Tool output compaction: grep) plus
