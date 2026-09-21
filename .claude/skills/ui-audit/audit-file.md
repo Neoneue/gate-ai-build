@@ -118,7 +118,7 @@ Verdict (run 1): Qualified. <one sentence>
    | oklch-skill | `oklch` |
    | svg-animations | `svga` |
    | color-audit (manual token sweep) | `col` |
-   | test-smoke (vitest route smoke + Playwright flows) | `smk` |
+   | test-smoke (vitest + Playwright; a run on its own, or the verify step after every apply pass) | `smk` |
 
    A new skill gets its alias added here on its first run; section headings
    keep the full skill name (`## web-design-guidelines`).
