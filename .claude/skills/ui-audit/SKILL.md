@@ -26,7 +26,7 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    agent's standing rules handle gates and scope.
 4. Relay FIRST, then write. Relay in chat: the new items as a CHECKLIST,
    never a table (user rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY**
-   path:line` with `Rule:`, `Before:`, `After:`, `Why:` sub-bullets; the
+   `rule-slug` path:line` with `Before:`, `After:`, `Why:` sub-bullets; the
    opinion; then "Decision needed" for every item that conflicts with
    design.md. The user confirms facts and severities before anything is
    formal. Then write the findings into the day's audit file,
@@ -39,7 +39,7 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    Runs table per run. Before writing, read the existing file and compute
    the next N. First run of the day also adds one changelog line naming the
    audit path.
-   Before saving, run the quality gate: every item has a `Rule:` and a
+   Before saving, run the quality gate: every item has a rule slug and a
    file:line; figures in the Summary match the item counts; the opinion
    word matches the worst open item; Patterns has a line for every root
    cause seen twice or more.

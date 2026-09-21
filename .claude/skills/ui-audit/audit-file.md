@@ -36,15 +36,14 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 ### Global
 
-- [ ] **rams-2 HIGH** components/ui/button.tsx:41
-  - Rule: design.md "Motion" table, press scale 0.98.
+- [ ] **rams-2 HIGH** `press-scale` components/ui/button.tsx:41
   - Before: ...
   - After: ...
   - Why: <cause first>, then the consequence.
 
 ### Models
 
-- [ ] **rams-1 HIGH** pages/Models.tsx:88, pages/ModelsFree.tsx:70
+- [ ] **rams-1 HIGH** `icon-stroke` pages/Models.tsx:88, pages/ModelsFree.tsx:70
   - Before: ...
   - After: ...
   - Why: ...
@@ -75,8 +74,8 @@ Verdict (run 1): Qualified. <one sentence>
 
 ## Patterns
 
-- index-as-key: rams-3, bui-2, bui-5. Lint candidate `react/no-array-index-key`.
-- raw blue on setup pages: rams-7, rams-9. Token gap, not a lint.
+- `index-as-key`: rams-3, bui-2, bui-5. Lint candidate `react/no-array-index-key`.
+- `raw-color`: rams-7, rams-9. Token gap, not a lint.
 ```
 
 ## Rules
@@ -148,12 +147,14 @@ Verdict (run 1): Qualified. <one sentence>
 7. **Runs table:** append one row per run with the ID range it produced and
    an `Applied` cell (`applied/total`) updated on every apply pass. This is
    the only place time appears.
-8. **Item shape is five lines.** First line `- [ ] **<id> SEVERITY** path:line`,
-   then `Rule:` (the design.md section, guideline, or skill rule breached,
-   one clause), `Before:`, `After:` (exact value), `Why:` (cause first,
-   then consequence, one sentence each). No other sub-bullets except
-   `Severity:` per rule 9. Open items under `### Decision needed` end with
-   `(owner, by date)`.
+8. **Item shape is four lines.** First line `- [ ] **<id> SEVERITY** \`<rule>\`
+   path:line`, where `<rule>` is a short kebab slug naming the rule breached
+   (a skill rule id like `index-as-key`, or a project slug like
+   `motion-reduce`, `focus-visible`, `input-type`). Reuse an existing slug
+   before coining one; the slug is what `## Patterns` groups by. Then
+   `Before:`, `After:` (exact value), `Why:` (cause first, then consequence,
+   one sentence each). No other sub-bullets except `Severity:` per rule 9.
+   Open items under `### Decision needed` end with `(owner, by date)`.
 9. **Item lifecycle lives on the item.** Applied: tick the box and append the
    short commit hash to the first line. Skipped: leave unticked and add one
    line under `### Skipped by decision` with the reason and date.
@@ -179,8 +180,7 @@ Verdict (run 1): Qualified. <one sentence>
     across the day's runs) / Next (open decisions with owner and date).
     Rewritten in place after every run and every apply pass, never
     appended. `## Patterns` is the last section: one line per root-cause
-    class seen that day with its item IDs and, where one exists, the lint
-    rule or hook that would catch it. Twelve lines maximum; a class with a
+    class (keyed by its rule slug) seen that day with its item IDs and, where
+    one exists, the lint rule or hook that would catch it. Twelve lines maximum; a class with a
     line already gets IDs added to it. Nothing else may be added at day
-    level, so a day file grows by the summary, the patterns, and one
-    `Rule:` line per item and no more.
+    level, so a day file grows by the summary and the patterns and no more.

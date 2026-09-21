@@ -32,9 +32,9 @@ more than one page), then one `### <Page>` group per page in scope; inside
 each group severity HIGH > MEDIUM > LOW; one item per root cause; numbered
 sequentially starting at <N> (the orchestrator gives you this), in this
 exact shape:
-`- [ ] **N. SEVERITY** path:line, path:line` then three sub-bullets
-`  - Rule: ...` (the design.md section, guideline or skill rule breached, one
-clause), `  - Before: ...`, `  - After: ...`, `  - Why: ...` (cause first, then
+`- [ ] **N. SEVERITY** \`<rule-slug>\` path:line, path:line` (slug = the skill
+rule id or a short kebab name for the rule breached) then three sub-bullets
+`  - Before: ...`, `  - After: ...`, `  - Why: ...` (cause first, then
 consequence, one sentence each). Then one `Opinion:` line: Clean / Qualified /
 Adverse / Disclaimer (Disclaimer = you did not read every file in scope; name
 them). The user owns the final severity and opinion; propose, do not decide.
