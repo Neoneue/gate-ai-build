@@ -10,16 +10,16 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 - Why: close the gap between the written rules (design.md, WCAG, React) and the shipped code before the next promotion; three days of fixes showed drift the rules should have prevented.
 - Tested: web-design-guidelines and react-best-practices on the whole site (196 `.tsx` / 271 files, blobs excluded); the new test tiers (144 route cases, 133 behaviour cases, 8 Playwright flows) on the live build.
-- Found: 49 items, 6 HIGH / 12 MEDIUM / 31 LOW; 30 applied, 11 skipped by decision, 8 open LOW.
+- Found: 49 items, 6 HIGH / 12 MEDIUM / 31 LOW; 37 applied, 12 skipped by decision, 0 open.
 - Opinion: Qualified. Every HIGH is closed; the four smk defects were live in the demo until 2026-09-20.
-- Next: user decides the blur family (wdg-15) and whether to apply rbp-3/4/6/8/9/10/12/13 (all LOW, no date); Patterns below feed the lint-hook plan.
+- Next: user decides the blur family (wdg-15, no date); seven of the eight remaining rbp LOWs were applied 2026-09-21, rbp-12 skipped (see audit-9-21); Patterns below feed the lint-hook plan.
 
 ## Runs
 
 | # | Time (CT) | Skill | Scope | Items | Applied |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 11:11 | web-design-guidelines | whole site (196 `.tsx`, `src/data` excluded) | wdg-1 to wdg-32 | 21/32 |
-| 2 | 15:36 | react-best-practices | whole site (271 `.ts`/`.tsx`, 71.8k lines, three parallel reviewers; blobs + tests excluded) | rbp-1 to rbp-13 | 5/13 |
+| 2 | 15:36 | react-best-practices | whole site (271 `.ts`/`.tsx`, 71.8k lines, three parallel reviewers; blobs + tests excluded) | rbp-1 to rbp-13 | 12/13 |
 | 3 | 16:20 | test-smoke (Playwright 8 flows + vitest 144 route cases) | whole site | smk-1 to smk-4 | 4/4 |
 
 ## web-design-guidelines
@@ -237,11 +237,11 @@ Models, Billing) were excluded and are not re-flagged.
   - Before: `DashboardChrome` subscribes `window.matchMedia("(min-width: 1024px)")` for `isDesktop`; `MobileNav` in the same file, always mounted, subscribes the identical query again to auto-close the drawer.
   - After: pass `isDesktop` into `MobileNav` as a prop and close the drawer in an effect keyed on it, or extract one `useMediaQuery(query)` hook used once per query string.
   - Why: two live listeners fire on every crossing of the same breakpoint for one piece of state; deduplicate global listeners.
-- [ ] **rbp-3 LOW** `js-cache-function-results` components/ui/bell.tsx:58, calendar-days.tsx, credit-card.tsx, download.tsx:55, external-link.tsx, logout.tsx, receipt.tsx:82, refresh-cw.tsx:41 +4 more (sliders-horizontal, sparkles, square-arrow-up, upload)
+- [x] **rbp-3 LOW** (applied 2026-09-21) `js-cache-function-results` components/ui/bell.tsx:58, calendar-days.tsx, credit-card.tsx, download.tsx:55, external-link.tsx, logout.tsx, receipt.tsx:82, refresh-cw.tsx:41 +4 more (sliders-horizontal, sparkles, square-arrow-up, upload)
   - Before: each animated icon runs `window.matchMedia("(prefers-reduced-motion: reduce)").matches` inside its mount effect.
   - After: `import { REDUCE_MOTION } from "@/lib/reduce-motion"` and `if (REDUCE_MOTION) return;`; the module-level snapshot already exists and is used by Notifications and Conversations.
   - Why: twelve copies of one query on every icon mount, and one shared constant already owns that read.
-- [ ] **rbp-4 LOW** `index-as-key` components/ui/field.tsx:202
+- [x] **rbp-4 LOW** (applied 2026-09-21) `index-as-key` components/ui/field.tsx:202
   - Before: `uniqueErrors.map((error, index) => (<li key={index}>{error.message}</li>))`
   - After: `uniqueErrors.map((error) => (<li key={error?.message ?? String(error)}>{error.message}</li>))`
   - Why: `uniqueErrors` is already deduped by `message`, so the message is a stable unique key.
@@ -255,7 +255,7 @@ Models, Billing) were excluded and are not re-flagged.
 
 ### Models
 
-- [ ] **rbp-6 LOW** `js-index-maps` pages/Models.tsx:800-802
+- [x] **rbp-6 LOW** (applied 2026-09-21) `js-index-maps` pages/Models.tsx:800-802
   - Before: `PROVIDER_ORDER.filter((id) => providers.some((p) => p.id === id)).map((id) => providers.find((p) => p.id === id))`
   - After: `const byId = new Map(providers.map((p) => [p.id, p])); PROVIDER_ORDER.filter((id) => byId.has(id)).map((id) => byId.get(id) as ModelProvider)`
   - Why: two scans of `providers` per call, and `ProviderStack` renders once per catalog row (Models.tsx:672) and per shelf card (models/ModelShelves.tsx:449); `providers` is 2 to 3 long so the cost is small, the fix is free.
@@ -269,15 +269,15 @@ Models, Billing) were excluded and are not re-flagged.
 
 ### Conversations
 
-- [ ] **rbp-8 LOW** `js-min-max-loop` pages/Conversations.tsx:414
+- [x] **rbp-8 LOW** (applied 2026-09-21) `js-min-max-loop` pages/Conversations.tsx:414
   - Before: `row.vendors.map((v) => VENDOR_META[v].label).sort()[0] ?? null` inside `conversationSortValue`, the accessor passed to `sortRows`.
   - After: `row.vendors.reduce<string | null>((min, v) => { const l = VENDOR_META[v].label; return min === null || l < min ? l : min; }, null)`
   - Why: allocates and sorts a throwaway array to read index 0, once per comparison during the sort.
-- [ ] **rbp-9 LOW** `index-as-key` pages/conversations/ConversationDetail.tsx:793
+- [x] **rbp-9 LOW** (applied 2026-09-21) `index-as-key` pages/conversations/ConversationDetail.tsx:793
   - Before: `(messages ?? []).map((m, i) => <MessageBlock ... key={i} />)` inside `ConversationMessagesPanel`; `ConversationMessage` has no id field, only optional `requestId` and `time`.
   - After: `key={`${m.requestId ?? "user"}-${i}`}`, or add a stable `id` to `ConversationMessage` in `conversations/types.ts`.
   - Why: three tab panels each mount a differently filtered `messages` array; low risk today because tabs never reorder, but the key should not rely on that.
-- [ ] **rbp-10 LOW** `js-cache-function-results` pages/conversations/data.ts:20-32, data/conversationDetail.ts:101-109
+- [x] **rbp-10 LOW** (applied 2026-09-21) `js-cache-function-results` pages/conversations/data.ts:20-32, data/conversationDetail.ts:101-109
   - Before: the `MODEL_FILTER_OPTIONS` IIFE calls `getConversationView(seed, REQUEST_ROWS_ALL)` per conversation at import; `Conversations.tsx` and `ConversationDetail.tsx` call it again for the same conversations, each running the ~150-row `getConversationRequests` filter.
   - After: memoize `getConversationRequests` per `conversationId` in a module-level `Map`, or compute the view once in `data/conversations.ts` and export it.
   - Why: three call sites re-filter the same rows with no shared cache; cheap at today's size, flagged so it does not move into a render loop.
@@ -288,11 +288,11 @@ Models, Billing) were excluded and are not re-flagged.
   - Before: `FullRequestCollapsible` recomputes `lines` (`rawBody.split("\n").map(...)` or `buildRequestBodyLines(row)`) and `requestPayload` (`JSON.stringify(...)`) on every render, including while the panel is closed (`Collapsible.Panel` stays mounted).
   - After: `const { lines, requestPayload } = useMemo(() => { ... }, [row]);`
   - Why: both are pure functions of `row`; a JSON.stringify plus string split runs on every tab switch, finding click and evidence reveal while the content is hidden.
-- [ ] **rbp-12 LOW** `rendering-hoist-jsx` (static data) pages/requests/RequestsTable.tsx:112-122
+- [ ] **rbp-12 LOW** (skipped by decision 2026-09-21: the module-scope hoist makes the React Compiler ESLint rule reject the file at the unrelated `openFilters` useCallback, "existing memoization could not be preserved"; reverted, identity is already stable under the compiler) `rendering-hoist-jsx` (static data) pages/requests/RequestsTable.tsx:112-122
   - Before: `keyOptions = scope.keyNames ? [...scope.keyNames] : ["prod-web", "prod-agent", "development", "openclaw", "hermes-agent", "nova-chat", "test-key"]`, the fallback literal recreated every render.
   - After: hoist to module scope `const DEFAULT_KEY_OPTIONS = [...] as const` and reference it.
   - Why: static list allocated per render, and an unstable identity if it ever enters a `useMemo` dep list.
-- [ ] **rbp-13 LOW** `index-as-key` pages/requests/RequestDetailBody.tsx:414
+- [x] **rbp-13 LOW** (applied 2026-09-21) `index-as-key` pages/requests/RequestDetailBody.tsx:414
   - Before: `<FindingCard finding={f} key={idx} />` inside `findings.map((f, idx) => ...)`, while the sibling `FindingSwitcherCard` branch two lines up keys on `f.category`.
   - After: `key={f.category}`; categories are unique among the single-occurrence findings that reach this branch.
   - Why: consistency with the adjacent branch; the one remaining index key in the file.
@@ -302,6 +302,10 @@ Models, Billing) were excluded and are not re-flagged.
 - Re-render counts and flame graphs for `DashboardChrome`, the roster in `TeamDetailEnterprise`, and the chart primitives; a profiler run would size rbp-2, rbp-7 and rbp-11.
 - Whether the React Compiler (referenced in comments at pages/Security.tsx:88-91) is enabled; if it is, the memo halves of rbp-7 and rbp-11 are already handled at build time and only the Map / key halves stand.
 - Bundle impact of the per-icon `motion/react` imports across the 11 animated icons; needs a bundle analyzer.
+
+### Skipped by decision
+
+- rbp-12: hoisting the fallback list trips the React Compiler lint on `openFilters`; no runtime effect under the compiler (2026-09-21).
 
 ### Compliant, checked and clean
 
@@ -315,7 +319,7 @@ Models, Billing) were excluded and are not re-flagged.
 - All 11 lucide-animated icons share one correct `forwardRef` + `useAnimation` + listener-cleanup shape.
 - Every folder under `pages/teams`, `pages/models`, `pages/billing`, `pages/security`, `pages/activity`, `pages/token-savings`, `pages/site-map`, `pages/policies` and every `src/data` helper module read in full with no new finding.
 
-Verdict (run 2): Qualified. 2 HIGH (index keys on the two largest tables, an unmemoized O(n^2) roster), 3 MEDIUM, 8 LOW. The codebase already follows the expensive rules (route-level lazy loading, external stores, deferred search, hoisted lookup maps); the remaining items are a handful of index keys and repeated linear lookups, all one-file fixes.
+Verdict (run 2): Qualified at first run, Clean after apply (2026-09-21). 2 HIGH (index keys on the two largest tables, an unmemoized O(n^2) roster), 3 MEDIUM, 8 LOW. The codebase already follows the expensive rules (route-level lazy loading, external stores, deferred search, hoisted lookup maps); the remaining items are a handful of index keys and repeated linear lookups, all one-file fixes.
 
 ## test-smoke
 

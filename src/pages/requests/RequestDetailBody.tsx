@@ -411,7 +411,7 @@ export function RequestDetailBodyV2({ row }: { row: RequestRow }) {
                             <FindingCard
                               finding={f}
                               interactive={findings.length > 1}
-                              key={idx}
+                              key={f.category}
                               onClick={() => {
                                 setSelectedIdx(idx);
                                 setRevealNonce((n) => n + 1);

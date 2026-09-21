@@ -9,6 +9,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-21](./2026-09/changelog-9-21.md)
+
+- Token Savings breakdown: four categories, assumed weights
+- Eight react-best-practices LOWs applied; audit method reshaped
+
 ### [2026-09-20](./2026-09/changelog-9-20.md)
 
 - Audit: web-design-guidelines, whole site (`audits/2026-09/audit-9-20.md`)

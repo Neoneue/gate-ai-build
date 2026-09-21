@@ -20,10 +20,14 @@
 //                   Parent ticket: "compression against Gate cache hits, and
 //                   the leading compression passes inside that".
 //
-// The compression split (METHOD_SHARES) is the gateway's own "Methods,
-// ranked" table (30D, 85 methods, supplied by the user 2026-09-17): the top
-// three methods by tokens saved, verbatim, and "All others" for the other
-// 82. Same split on every plan and window until a per-plan table exists.
+// The compression split (METHOD_SHARES) is the team's four reader-facing
+// categories (user, 2026-09-21): Tool schemas, Output compaction,
+// Deduplication, Text trimming. The shares are an ASSUMED distribution until
+// the gateway supplies a per-category table; ordering reasons from how agentic
+// prompts are built (tool definitions dominate and are re-sent every turn,
+// tool results are next, repeated context and whitespace are small). Replace
+// the four weights when real numbers land; nothing else needs to change.
+// Same split on every plan and window until a per-plan table exists.
 
 import { DEMO_TODAY } from "@/lib/demo-clock";
 import { formatCompactCount, formatDate, formatNumber } from "@/lib/formatters";
@@ -79,7 +83,12 @@ export const LOW_VOLUME_REQUESTS = 1000;
 export const BREAKDOWN_MAX_ROWS = 4;
 export const BREAKDOWN_OTHERS_LABEL = "All others";
 
-export type MethodId = "deferred-tool-defs" | "boost-elide" | "grep" | "others";
+export type MethodId =
+  | "tool-schemas"
+  | "output-compaction"
+  | "deduplication"
+  | "text-trimming"
+  | "others";
 
 type MethodSeed = {
   id: MethodId;
@@ -89,27 +98,17 @@ type MethodSeed = {
   weight: number;
 };
 
-/** Top three of 85 methods plus the remainder. Shares from the gateway's
- *  "Methods, ranked" table: 83.1 / 2.4 / 1.9, and 12.6 for the other 82. */
+/** Four categories, a complete set (no remainder row). ASSUMED weights, see
+ *  the header comment; sum to 1. */
 const METHOD_SHARES: MethodSeed[] = [
-  {
-    id: "deferred-tool-defs",
-    label: "Deferred tool definitions",
-    weight: 0.831,
-  },
-  { id: "boost-elide", label: "Boost recoverable elide", weight: 0.024 },
-  {
-    id: "grep",
-    // "\n" is a forced break: the card renders labels whitespace-pre-line so
-    // "Search (grep) output" starts its own line (user 2026-09-17).
-    label: "Tool output compaction:\nSearch (grep) output",
-    weight: 0.019,
-  },
-  { id: "others", label: BREAKDOWN_OTHERS_LABEL, weight: 0.126 },
+  { id: "tool-schemas", label: "Tool schemas", weight: 0.72 },
+  { id: "output-compaction", label: "Output compaction", weight: 0.14 },
+  { id: "deduplication", label: "Deduplication", weight: 0.09 },
+  { id: "text-trimming", label: "Text trimming", weight: 0.05 },
 ];
 
-/** The methods the breakdown shows. Same on every plan: the gateway's table
- *  is per org, not per plan. */
+/** The methods the breakdown shows. Same on every plan: the split is per
+ *  org, not per plan. */
 export function passesForPlan(_plan: SummaryPlan): MethodSeed[] {
   return METHOD_SHARES;
 }

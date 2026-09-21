@@ -66,8 +66,8 @@ test("Pro · All: two-level breakdown, six ranked meters", () => {
   expect(text).toContain(SUMMARY_COPY.breakdown.basis);
   const compression = mechanism(model, "compression");
   const bars = [...model.mechanisms, ...compression.passes];
-  // Two mechanisms plus the four-row compression breakdown (top three and
-  // "All others").
+  // Two mechanisms plus the four-row compression breakdown (the four
+  // categories).
   expect(bars).toHaveLength(6);
   for (const bar of bars) {
     expect(text).toContain(bar.label);

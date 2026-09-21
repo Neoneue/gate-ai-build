@@ -11,6 +11,7 @@ import {
   useRef,
 } from "react";
 
+import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { cn } from "@/lib/utils";
 
 export interface SparklesIconHandle {
@@ -73,7 +74,7 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
       if (!host) {
         return;
       }
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (REDUCE_MOTION) {
         return;
       }
       const enter = () => {

@@ -790,7 +790,7 @@ function ConversationMessagesPanel({
               // rather than "" so the prop reads as absent, not as a copy of
               // nothing.
               copyValue={messageCopyText(m) || undefined}
-              key={i}
+              key={`${m.requestId ?? "user"}-${i}`}
               // Only assistant + tool turns participate in cross-link
               // selection — user input has no gateway request to pair with.
               onClick={

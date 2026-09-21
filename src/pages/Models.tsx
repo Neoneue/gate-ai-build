@@ -797,9 +797,10 @@ export function ProviderStack({ providers }: { providers: ModelProvider[] }) {
   // row, so the column scans as one axis. Until 2026-09-14 the stack kept
   // each model's own API order, which flipped Vertex / OpenRouter between
   // neighbouring rows; prod still does that, this build deliberately does not.
-  const ordered = PROVIDER_ORDER.filter((id) =>
-    providers.some((p) => p.id === id)
-  ).map((id) => providers.find((p) => p.id === id) as ModelProvider);
+  const byId = new Map(providers.map((p) => [p.id, p]));
+  const ordered = PROVIDER_ORDER.filter((id) => byId.has(id)).map(
+    (id) => byId.get(id) as ModelProvider
+  );
   const names = ordered.map((p) => PROVIDER_META[p.id].label);
   const ariaLabel = `Available from ${ordered.length} providers: ${names.join(", ")}`;
   return (
