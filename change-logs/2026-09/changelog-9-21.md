@@ -18,7 +18,7 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
 
 ## Sections & surfaces
 
-### Token Savings breakdown: four categories (`pages/token-savings-summary.ts`) · [pending]
+### Token Savings breakdown: four categories (`pages/token-savings-summary.ts`) · [65494e2]
 
 - Before: the gateway's "Methods, ranked" top three (Deferred tool
   definitions, Boost recoverable elide, Tool output compaction: grep) plus
@@ -28,7 +28,7 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   distribution until the gateway supplies real shares; the header comment
   says so.
 
-### Animated icons read one reduced-motion constant, plus six small lookups (`components/ui/*.tsx`, `data/teams.ts`, `data/conversationDetail.ts`, others) · [pending]
+### Animated icons read one reduced-motion constant, plus six small lookups (`components/ui/*.tsx`, `data/teams.ts`, `data/conversationDetail.ts`, others) · [65494e2]
 
 - rbp-3: twelve icons import `REDUCE_MOTION` instead of querying
   `matchMedia` on mount. rbp-4/9/13: stable keys in `field.tsx`,
