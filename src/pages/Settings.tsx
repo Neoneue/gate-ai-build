@@ -226,10 +226,6 @@ function ProfileCard() {
                 type="email"
                 value={email}
               />
-              <p className="type-input-helper">
-                Verified at sign-in; changes require identity-provider
-                re-verification.
-              </p>
             </div>
             <div>
               <label

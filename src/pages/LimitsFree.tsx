@@ -134,9 +134,8 @@ function PageHeader() {
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
-          Enforce spend, token, and request rate caps at the org, project, or
-          key level. Limits run inline with no separate billing system to wire
-          up.
+          Cap spend, tokens, or requests for the whole org, a team, or a single
+          key, and choose whether crossing a cap blocks or only notifies.
         </p>
       </div>
     </div>
@@ -533,7 +532,7 @@ function CreateLimitDialog({
             Create limit
           </DialogTitle>
           <DialogDescription>
-            Block messages that exceed the threshold (returns 429).
+            Cap spend, tokens, or requests on any scope.
           </DialogDescription>
         </DialogHeader>
 

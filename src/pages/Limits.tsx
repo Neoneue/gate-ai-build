@@ -162,9 +162,8 @@ function PageHeader({ onCreate }: { onCreate: () => void }) {
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Limits & quotas</PageTitle>
         <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
-          Enforce spend, token, and request rate caps at the org, project, or
-          key level. Limits run inline with no separate billing system to wire
-          up.
+          Cap spend, tokens, or requests for the whole org, a team, or a single
+          key, and choose whether crossing a cap blocks or only notifies.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -895,7 +894,7 @@ function CreateLimitDialog({
               >
                 {notifyOnly
                   ? "Nothing is blocked. Crossing the threshold only raises a notification."
-                  : "Messages that exceed the threshold are blocked (returns 429)."}
+                  : "Requests over the cap are refused."}
               </p>
             </div>
             <RadioGroup

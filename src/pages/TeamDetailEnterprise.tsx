@@ -786,8 +786,8 @@ function GeneralSettings({
   if (team.isDefault) {
     return (
       <Callout>
-        The default team can’t be renamed or deleted. Members and keys removed
-        from other teams land here.
+        Your org’s default team. People and keys removed from other teams land
+        here.
       </Callout>
     );
   }

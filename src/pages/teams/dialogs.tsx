@@ -776,7 +776,7 @@ function AddEntitiesBody({
 const ADD_MEMBERS_COPY: AddEntitiesCopy = {
   title: "Add members",
   description:
-    "Only existing org members can be added, and their keys move with them. This doesn’t send invites.",
+    "Pick people already in your org. Only their new traffic counts here; past requests stay with their old team.",
   fieldLabel: "Members",
   placeholder: "Select members",
   submitLabel: "Add members",
