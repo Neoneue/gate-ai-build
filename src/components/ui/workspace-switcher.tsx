@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { WORKSPACE_NAME } from "@/data/team-members";
 import {
   isDefaultSurface,
   isEnterpriseSurface,
@@ -52,7 +53,7 @@ export function WorkspaceSwitcher({
           <Button className={className} size="default" variant="outline" />
         }
       >
-        <span className="type-label-14 text-foreground">Chad’s workspace</span>
+        <span className="type-label-14 text-foreground">{WORKSPACE_NAME}</span>
         <Badge variant={badgeVariant}>{badgeLabel}</Badge>
         <ChevronsUpDown
           aria-hidden
@@ -72,7 +73,7 @@ export function WorkspaceSwitcher({
           onClick={() => navigate(toEnterprisePath(pathname))}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate">Chad’s workspace</span>
+            <span className="truncate">{WORKSPACE_NAME}</span>
             <Badge variant="enterprise">Enterprise</Badge>
           </span>
           {isEnterprise ? (
@@ -81,7 +82,7 @@ export function WorkspaceSwitcher({
         </MenuItem>
         <MenuItem active={isPro} onClick={() => navigate(toProPath(pathname))}>
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate">Chad’s workspace</span>
+            <span className="truncate">{WORKSPACE_NAME}</span>
             <Badge variant="pro">Pro</Badge>
           </span>
           {isPro ? (
@@ -93,7 +94,7 @@ export function WorkspaceSwitcher({
           onClick={() => navigate(toDefaultPath(pathname))}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate">Chad’s workspace</span>
+            <span className="truncate">{WORKSPACE_NAME}</span>
             <Badge variant="neutral">Default</Badge>
           </span>
           {isDefault ? (
@@ -105,7 +106,7 @@ export function WorkspaceSwitcher({
           onClick={() => navigate(toFreePath(pathname))}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate">Chad’s workspace</span>
+            <span className="truncate">{WORKSPACE_NAME}</span>
             <Badge variant="neutral">Free</Badge>
           </span>
           {isFree ? (

@@ -654,6 +654,25 @@ The dim behind a modal layer. Four sites wrote the same raw `bg-neutral-900/40` 
 
 `--overlay-strong` exists because the notifications backdrop sits under a `top-16` panel on a busy page and wanted one more rung. Two rungs, a closed set, the same rule as the destructive ladder: pick the rung for the surface, and add a rung here first if a third weight is ever wanted.
 
+### Lift ramp *(added 2026-09-22)*
+
+A **lift** is pure alpha over whatever surface sits beneath it, so it darkens or brightens that surface and leaves it recognisable. It is not a fill. The distinction matters because `--muted`, the fill every `outline` and `ghost` control hovers to, is an OPAQUE grey: on the Manage subscription page's tinted plan cards that grey covered the blue and violet washes, and a card lost its colour under its own button. A lift has no colour of its own to impose. ← code-direct: `src/index.css` `:root` / `.dark` / `@theme inline`
+
+**Four rungs, and the rung number IS the alpha percentage**, so `hover:bg-lift-8` states its weight at the call site without anyone opening `index.css`.
+
+| Token | Light | Dark | Role | Consumer today |
+| --- | --- | --- | --- | --- |
+| `--lift-4` | black @ 4% | white @ 4% | The faintest touch: a row or list item that must register under the cursor without becoming a surface of its own. | **none** |
+| `--lift-8` | black @ 8% | white @ 8% | **The default.** The hover weight for a control that sits on a coloured surface: the Button `lift` family (§7). | Button `lift`, `lift-pro`, `lift-enterprise`, `lift-ghost` |
+| `--lift-16` | black @ 16% | white @ 16% | A deliberate, heavier hover, or a press one rung under 24, where 8 is too quiet to register on a busy surface. | **none** |
+| `--lift-24` | black @ 24% | white @ 24% | Active / pressed, one rung past the hover, for a control that needs a distinct press state on a coloured surface. | **none** |
+
+**Three of the four rungs have no consumer, and that is deliberate.** The ramp is the unit, not the step: shipping one alpha would have meant a second ad-hoc value the first time a row or a press state wanted a different weight, which is exactly how `bg-neutral-900/N` spread before `--overlay` existed. The rungs are named and documented now so the next one is a lookup rather than a decision. All four take a `--color-*` alias for the same reason. Do not add a fifth rung without editing this table.
+
+**It flips by theme, unlike `--overlay`.** A scrim dims a page and reads the same in both themes; a lift has to work *with* the surface under it, and a white veil over a near-white card does nothing. So black in light, white in dark, same four alphas, same rung numbers: `bg-lift-8` means "one rung of lift" in either theme.
+
+**Measured, 2026-09-22, rung 8 on the three plan-card surfaces (light / dark):** plain card `rgb(255,255,255)` → `rgb(235,235,235)` / `rgb(23,23,23)` → `rgb(41,41,41)`; Pro card `rgb(246,250,255)` → `rgb(227,229,235)` / `rgb(13,15,23)` → `rgb(32,34,41)`; Enterprise card `rgb(249,248,255)` → `rgb(229,229,235)` / `rgb(17,14,23)` → `rgb(36,33,41)`. Each hovered value keeps its card's channel spread, which is the test: a lift stays blue over blue and violet over violet, where `--muted` would have flattened all three to the same neutral. Rung 16 was built and measured first and read about five times heavier than the `bg-muted` hover the rest of the app uses; 8 is the settled default.
+
 ### Terminal surface *(added 2026-09-18)*
 
 The dark terminal flavour of the CodeCard family (§7 CMP-012). It is dark in both themes on purpose — a terminal that inverts is not a terminal — so all five roles are declared once in `:root` with no `.dark` twin, exactly like the auth panel. That is also why the raw steps they replaced looked safe and were not: a fixed neutral on a surface with no theme story has no owner, and the next reader cannot tell "fixed dark" from a missing `dark:` variant. The macOS traffic lights keep their own `--traffic-*` family. ← code-direct: `src/index.css` `:root` / `@theme inline`

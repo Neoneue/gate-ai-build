@@ -580,6 +580,24 @@ and (pointer: fine)) and (&:hover));
     transparent
   );
 
+  /* ─── Lift ramp (added 2026-09-22) ──────────────────────────────────────
+     Four rungs of a LIFT: pure alpha over whatever surface sits beneath,
+     so it darkens or brightens that surface instead of painting a new one
+     over it. Black in light, white in dark, which is the whole point: a
+     white veil over a near-white card does nothing, and a grey fill over a
+     tinted card erases the tint. This is NOT the overlay scrim above: that
+     is a fixed modal dim that covers a whole page, this is a hover / active
+     weight that belongs to one control.
+
+     The rung number IS the alpha percentage and it is visible at the call
+     site (`hover:bg-lift-8`), so a reviewer reads the weight without
+     opening this file. Roles and current consumers are in design.md §2
+     "Lift ramp"; rungs with no consumer are recorded there deliberately. */
+  --lift-4: color-mix(in oklab, var(--color-black) 4%, transparent);
+  --lift-8: color-mix(in oklab, var(--color-black) 8%, transparent);
+  --lift-16: color-mix(in oklab, var(--color-black) 16%, transparent);
+  --lift-24: color-mix(in oklab, var(--color-black) 24%, transparent);
+
   /* ─── Terminal surface (fixed dark) ─────────────────────────────────────
      The dark terminal flavour of the CodeCard family (CMP-012). It is dark
      in BOTH themes on purpose — a terminal that inverts is not a terminal —
@@ -686,6 +704,13 @@ body {
      so both are aliased. */
   --color-overlay: var(--overlay);
   --color-overlay-strong: var(--overlay-strong);
+  /* Lift ramp. Every rung is meant to be read by a colour utility
+     (`hover:bg-lift-8`), so all four are aliased even where a rung has no
+     consumer yet: the ramp is the unit, not the individual step. */
+  --color-lift-4: var(--lift-4);
+  --color-lift-8: var(--lift-8);
+  --color-lift-16: var(--lift-16);
+  --color-lift-24: var(--lift-24);
   /* Terminal surface. All five roles are read by a colour utility
      (`bg-terminal`, `bg-terminal-chrome`, `border-terminal-edge`,
      `text-terminal-foreground`, `text-terminal-foreground-muted`), so all
@@ -781,6 +806,15 @@ body {
 
   --canvas-bg:   var(--color-neutral-950);
   --canvas-grid: color-mix(in oklch, var(--color-white) 8%, transparent);
+
+  /* Lift ramp flips to WHITE on dark. Same four alphas, opposite ink: a
+     lift has to brighten a dark surface for the same reason it has to
+     darken a light one. The rung numbers and their roles do not change,
+     so `hover:bg-lift-8` means "one rung of lift" in either theme. */
+  --lift-4: color-mix(in oklab, var(--color-white) 4%, transparent);
+  --lift-8: color-mix(in oklab, var(--color-white) 8%, transparent);
+  --lift-16: color-mix(in oklab, var(--color-white) 16%, transparent);
+  --lift-24: color-mix(in oklab, var(--color-white) 24%, transparent);
 
   --background: var(--color-neutral-950);
   --foreground: var(--color-white);

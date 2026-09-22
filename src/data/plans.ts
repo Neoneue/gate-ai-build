@@ -1,3 +1,5 @@
+import { tierSuffixOf } from "@/lib/plan";
+
 /* ─────────────────────────────────────────────────────────────────────────
  * Plan ladder data: Free, Pro, Enterprise.
  *
@@ -16,13 +18,48 @@
  *
  * ENTERPRISE is new here: seat-based billing and the Support-granted
  * entitlement come from `src/data/billing-enterprise.ts` and H2 PRD §3 /
- * §8.5 / §10; nothing self-serve, so its actions are Contact support and
- * Book a demo rather than a checkout.
+ * §8.5 / §10; nothing self-serve, so its actions are Contact us and Book a
+ * demo rather than a checkout.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** The viewing organization's own plan. `-default` maps to `free` (the
  *  Default workspace is on the Free plan), matching `lib/plan.ts`. */
 export type PlanTier = "free" | "pro" | "enterprise";
+
+/** Which contact flow a surface is in. Both are placeholders for a
+ *  third-party embed: `contact` for the HubSpot form, `demo` for the
+ *  scheduler. */
+export type ContactKind = "contact" | "demo";
+
+/**
+ * The ONE rule for what a contact route is called, used both for the button
+ * label on the plan ladder and for the heading of the page that button
+ * opens, so the two cannot drift. A Free or Pro org looking at Enterprise is
+ * a prospect reaching sales; an Enterprise org is an existing customer
+ * routing to Support.
+ */
+export const contactFlowTitle = (tier: PlanTier, flow: ContactKind): string => {
+  if (flow === "demo") {
+    return "Book a demo";
+  }
+  return tier === "enterprise" ? "Contact support" : "Contact us";
+};
+
+const TIER_BY_SUFFIX: Record<
+  "" | "-default" | "-free" | "-enterprise",
+  PlanTier
+> = {
+  "": "pro",
+  "-free": "free",
+  // The Default workspace is on the Free plan.
+  "-default": "free",
+  "-enterprise": "enterprise",
+};
+
+/** The org's plan, read off the pathname rather than passed as a prop, so
+ *  every surface under `/billing*` agrees without a twin to keep in sync. */
+export const planTierOf = (pathname: string): PlanTier =>
+  TIER_BY_SUFFIX[tierSuffixOf(pathname)];
 
 /** A rung on the ladder. Always rendered in this order: free, pro, enterprise. */
 export type PlanId = "free" | "pro" | "enterprise";
@@ -38,17 +75,29 @@ export type PlanActionIntent =
   | "cancel"
   | "contact"
   | "demo"
-  /** Back to the tier's Billing page. The card the org is already on has
-   *  nothing to sell it, so its slot carries the way out instead. */
-  | "billing";
+  /** Into the product, at the tier's Overview. The card the org is already
+   *  on has no plan action to offer, so its slot carries the way forward. */
+  | "overview";
 
 export type PlanAction = {
   label: string;
-  variant: "default" | "outline" | "promo";
+  /**
+   * `ghost` is FENCED to a paired secondary: a control sitting directly
+   * under a bordered sibling in the same slot, where the pair reads as
+   * primary-then-quieter. Its only use is "Book a demo" under "Contact
+   * support". A ghost on a LONE button was tried and rejected (2026-09-22):
+   * with nothing to anchor it, an unbordered control floats in an otherwise
+   * empty slot and stops reading as a button. A second `ghost` needs the
+   * same justification, in writing, here.
+   */
+  variant: "default" | "outline" | "ghost" | "promo";
   intent?: PlanActionIntent;
-  /** Leading glyph. `sparkles` is the animated upgrade mark used site-wide;
-   *  `headset` is the site's support glyph (BillingEnterprise footer). */
-  icon?: "sparkles" | "headset";
+  /** Leading glyph, and the ONLY one left on a plan-card button. The cards
+   *  already carry a `CircleCheck` per feature row, so a glyph on every
+   *  control read as decoration; a glyph now means "this is the promoted
+   *  action", at most one per view. `sparkles` is the animated upgrade mark
+   *  used site-wide. */
+  icon?: "sparkles";
   ariaLabel?: string;
 };
 
@@ -136,8 +185,11 @@ const PRO_FEATURES: PlanFeature[] = [
  *  list: private cloud deployment, custom retention, procurement support. */
 const ENTERPRISE_FEATURES: PlanFeature[] = [
   {
+    // Title is the PRD's own term and stays; the detail states the same
+    // fact positively (PRD 8.5: "Forced settings apply to the team's
+    // traffic and are enforced at the gateway; teams see them as locked").
     title: "Org and team forced settings",
-    detail: "Compression and security policies teams cannot override.",
+    detail: "Compression and security policies every team follows.",
   },
   {
     title: "Private cloud deployment",
@@ -155,14 +207,16 @@ const ENTERPRISE_FEATURES: PlanFeature[] = [
 
 /* ─── Shared strings ─────────────────────────────────────────────────── */
 
-/** The slot on the card the org is already on. It used to be a disabled
- *  "Your current plan" label, which is a dead control saying what the page
- *  context already says; it is now the live way back, and outline on every
- *  view: naming the current plan is the badge's job, not a button's. */
+/** The slot on the card the org is already on. That card has no plan action
+ *  to offer, so the slot used to carry a dead "Your current plan" label and
+ *  then a "Back to Billing" link that only duplicated the page's own
+ *  BackLink. It now sends the user INTO the product instead, the v0 "Start
+ *  Building" pattern. Outline on every view: naming the current plan is the
+ *  badge's job, not a button's. */
 const CURRENT_PLAN_ACTION: PlanAction = {
-  label: "Back to Billing",
+  label: "Go to Overview",
   variant: "outline",
-  intent: "billing",
+  intent: "overview",
 };
 /** Upsell copy, not the plan's name: the Pro rung is the plan most orgs
  *  land on, which is the whole point of saying so. Only shown to an org
@@ -176,6 +230,11 @@ const CURRENT_PLAN_BADGE = (tone: "pro" | "enterprise") => ({
   tone,
 });
 const FREE_CAPTION = "Free to use, forever";
+/** Both downgrade paths on the Enterprise-org view read alike, because
+ *  neither is self-serve: the entitlement is granted and revoked by Support
+ *  in the admin portal (org/team PRD, "no self-upgrade"). Lifted from the
+ *  Pro rung's caption on that same view rather than written fresh. */
+const SUPPORT_ROUTE_CAPTION = "Available through Support.";
 const PRO_CAPTION = "$20/user/month after your 14-day trial ends";
 /** Mirrors `src/data/billing-enterprise.ts`: Enterprise is a Support-granted
  *  entitlement, so no rung of the ladder is self-serve for that org. Scoped
@@ -188,32 +247,38 @@ const ENTERPRISE_CAPTION = "Plan changes go through Support.";
  *  seat charge. */
 const ENTERPRISE_PITCH_CAPTION = "Billed per seat, changes go through Support.";
 
-/** Support routing in place of a self-serve change (PRD scope, "Support
- *  routing in place of self-serve upgrade"). ONE label and ONE glyph for
- *  every rung that routes to a human: the Enterprise card's primary on all
- *  three views, and the Free and Pro rungs on the Enterprise-org view, which
- *  is the only view where those two cannot be acted on directly. Variant is
- *  the caller's, since the same action is the Pro-org view's one fill and an
- *  outline everywhere else. */
-const SUPPORT_ACTION = (
-  variant: "default" | "outline" = "outline"
-): PlanAction => ({
-  label: "Contact support",
-  variant,
+/** The SUPPORT path: an existing customer routing to Support, not a
+ *  prospect reaching sales (PRD scope, "Support routing in place of
+ *  self-serve upgrade"). Its only home is the Enterprise-org view, on the
+ *  Free and Pro rungs, which that org cannot act on directly. The sales
+ *  twin is `CONTACT_ACTIONS` below and is labelled "Contact us". The dialog
+ *  takes its title from whichever of the two opened it. */
+const SUPPORT_ACTION = (): PlanAction => ({
+  label: contactFlowTitle("enterprise", "contact"),
+  variant: "outline",
   intent: "contact",
-  icon: "headset",
 });
 
-/** At most ONE filled control per view, and never two. On the Free-org view
- *  that is "Upgrade to Pro", so Enterprise stays outline there; on the
- *  Pro-org view there is no upgrade to sell, so "Contact support" takes the
- *  fill instead. "Book a demo" is always the quieter twin beneath it, with
- *  no glyph: the site has no precedent for one on a scheduling action.
+/** The one filled control on the whole page is "Upgrade to Pro", on the
+ *  Free-org and Default views; the Pro-org and Enterprise-org views carry
+ *  none. The contact primary is `outline` on every view: with "Book a demo"
+ *  ghost beneath it the outline already carries the hierarchy, and a filled
+ *  Enterprise CTA made that rung shout at a Pro customer who did not ask
+ *  for it. "Book a demo" is the quieter twin directly beneath it:
+ *  `ghost`, which is legible here precisely because the bordered sibling
+ *  above anchors it (see the fence on `PlanAction.variant`), and label-only,
+ *  the site having no precedent for a glyph on a scheduling action.
  *  Fill is weight, not focus: the Enterprise card stays untinted and
  *  unbadged on both of those views. */
-const CONTACT_ACTIONS = (filled: boolean): PlanAction[] => [
-  SUPPORT_ACTION(filled ? "default" : "outline"),
-  { label: "Book a demo", variant: "outline", intent: "demo" },
+const CONTACT_ACTIONS: PlanAction[] = [
+  // The SALES path, and the ticket's own wording: a Free or Pro org looking
+  // at Enterprise is a prospect, not a customer with a support case.
+  {
+    label: contactFlowTitle("pro", "contact"),
+    variant: "outline",
+    intent: "contact",
+  },
+  { label: contactFlowTitle("pro", "demo"), variant: "ghost", intent: "demo" },
 ];
 
 /* ─── The three cards, per viewing org ───────────────────────────────── */
@@ -252,16 +317,23 @@ const freeCard = (tier: PlanTier): PlanCardData => {
       tier === "pro"
         ? [
             {
-              // The ticket's own wording, which is why this one string is
-              // not the dialog's "Cancel Pro plan" it was lifted from.
-              label: "Downgrade plan",
+              // The ticket's wording, which is why this one string is not
+              // the dialog's "Cancel Pro plan" it was lifted from, and it
+              // names its TARGET the way every other button here does
+              // ("Upgrade to Pro", "Go to Overview"): a bare "Downgrade
+              // plan" read as an action against the Free card, not a move
+              // to it.
+              label: "Downgrade to Free",
               variant: "outline",
               intent: "cancel",
               ariaLabel: "Downgrade to the Free plan",
             },
           ]
         : [SUPPORT_ACTION()],
-    ctaCaption: FREE_CAPTION,
+    // The Free-org, Default and Pro-org views keep "Free to use, forever";
+    // an Enterprise org cannot take that route itself, so its Free rung
+    // reads like its Pro rung.
+    ctaCaption: tier === "pro" ? FREE_CAPTION : SUPPORT_ROUTE_CAPTION,
   };
 };
 
@@ -315,7 +387,7 @@ const proCard = (tier: PlanTier): PlanCardData => {
     actions: [SUPPORT_ACTION()],
     // NOT the trial caption: an Enterprise org has no trial to end, and the
     // price line above already carries the rate.
-    ctaCaption: "Available through Support.",
+    ctaCaption: SUPPORT_ROUTE_CAPTION,
   };
 };
 
@@ -346,9 +418,7 @@ const enterpriseCard = (tier: PlanTier): PlanCardData => {
     price: "Custom",
     benefitsLabel: "Included with the Enterprise plan:",
     features: ENTERPRISE_FEATURES,
-    // A Pro org has nowhere left to upgrade, so this is the view's one
-    // filled CTA; a Free org's is "Upgrade to Pro", so this stays outline.
-    actions: CONTACT_ACTIONS(tier === "pro"),
+    actions: CONTACT_ACTIONS,
     // Seat-based Stripe billing, H2 PRD §3 / §10.
     ctaCaption: ENTERPRISE_PITCH_CAPTION,
   };

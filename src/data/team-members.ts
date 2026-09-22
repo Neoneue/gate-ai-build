@@ -6,6 +6,12 @@
 import type { AvatarTone } from "@/components/ui/monogram-types";
 import { authoredDate } from "@/lib/demo-clock";
 
+/** The workspace this build is signed in to. The name was a JSX literal
+ *  repeated five times in `workspace-switcher.tsx`; it lives here now so a
+ *  surface that needs to NAME the workspace (the contact form's Company
+ *  prefill) reads the same string the switcher shows. */
+export const WORKSPACE_NAME = "Chad’s workspace";
+
 export type MemberRole = "owner" | "admin" | "member";
 
 export type MemberRow = {
@@ -51,3 +57,15 @@ export const MEMBER_ROWS: MemberRow[] = [
     joined: authoredDate(2026, 5, 6), // authored 2026-06-06, the newest member; feeds the "Member added" notification
   },
 ];
+
+/** The signed-in user, derived from the roster rather than duplicated: the
+ *  owner row is who this build is signed in as (`user-menu.tsx` shows the
+ *  same name and email). Surfaces that need to PREFILL a form with "you"
+ *  read this instead of hard-coding a second copy. */
+export const signedInMember = (): MemberRow => {
+  const owner = MEMBER_ROWS.find((row) => row.role === "owner");
+  if (owner === undefined) {
+    throw new Error("roster has no owner row");
+  }
+  return owner;
+};
