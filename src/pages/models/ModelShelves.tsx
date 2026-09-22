@@ -303,7 +303,7 @@ function FeaturedStat({
 }) {
   return (
     <span className={cn("flex min-w-0 flex-col", className)}>
-      <span className="type-copy-12 text-muted-foreground">{label}</span>
+      <span className="type-label-12 text-muted-foreground">{label}</span>
       {/* A string value takes the mono numeric voice. A node (the capability
           strip) brings its own voice and only needs the same 20px line box,
           so the two kinds of stat sit on one baseline grid. */}
@@ -353,9 +353,10 @@ function ShelfSection({
       </div>
 
       {/* The shelf table needs ~831px to hold six columns without wrapping or
-          truncating anything, so below that the Card scrolls horizontally
-          rather than compressing the columns. */}
-      <Card className="overflow-x-auto" density="flush">
+          truncating anything; below that it scrolls horizontally inside
+          `Table`'s own `[data-slot=table-container]` rather than compressing
+          the columns. */}
+      <Card density="flush">
         <ShelfTable onSelect={onSelect} rows={rows} />
       </Card>
     </section>

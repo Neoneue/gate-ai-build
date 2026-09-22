@@ -83,7 +83,7 @@ export function TokenSavingsEnterprise() {
           range={range}
         />
         <SummaryCard model={summary} />
-        <div className="mt-2 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <SectionTitle as="h2">Savings options</SectionTitle>
           {effective.lockedBy ? <Callout>{effective.lockedBy}</Callout> : null}
           <TeamSavingsOptionCards

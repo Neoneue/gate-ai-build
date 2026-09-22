@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
 /* ─── useIsTruncated — is this element's text actually clipped? ─────────────
- * Reports whether a single-line, `truncate`d element is overflowing its own
- * box, so a consumer can mount a Tooltip carrying the full string ONLY when
- * the ellipsis is really there. A short name gets no tooltip at all, which is
+ * Reports whether a `truncate`d (one line) or `line-clamp-N`ed (many lines)
+ * element is overflowing its own box, so a consumer can mount a Tooltip
+ * carrying the full string (or a Show more toggle) ONLY when the ellipsis is
+ * really there. A short name gets no tooltip at all, which is
  * the whole point: a tooltip that repeats text already fully visible is noise.
  *
  * Same two deliberate choices as `useHorizontalScrollOverflow`, for the same
@@ -28,9 +29,12 @@ import { useEffect, useState } from "react";
 const CLIP_TOLERANCE_PX = 1;
 
 export interface IsTruncated {
-  /** The element's text does not fit its box — an ellipsis is showing. */
+  /** The element's text does not fit its box — an ellipsis is showing.
+   *  BOTH axes are measured: `truncate` clips horizontally, `line-clamp-N`
+   *  clips vertically, and a width-only test reports a clamped paragraph as
+   *  fully visible. */
   isTruncated: boolean;
-  /** Attach to the element that carries `truncate`. */
+  /** Attach to the element that carries `truncate` or `line-clamp-N`. */
   ref: (node: HTMLElement | null) => void;
 }
 
@@ -44,7 +48,9 @@ export function useIsTruncated(): IsTruncated {
     }
 
     const measure = () => {
-      const clipped = node.scrollWidth - node.clientWidth > CLIP_TOLERANCE_PX;
+      const clipped =
+        node.scrollWidth - node.clientWidth > CLIP_TOLERANCE_PX ||
+        node.scrollHeight - node.clientHeight > CLIP_TOLERANCE_PX;
       // Bail on an unchanged read: a ResizeObserver fires on every frame of a
       // window drag, and each one would otherwise re-render the consumer.
       setIsTruncated((prev) => (prev === clipped ? prev : clipped));

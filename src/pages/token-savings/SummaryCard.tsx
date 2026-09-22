@@ -44,15 +44,15 @@ import {
 
 /* The breakdown grid. Three tracks from `@md` (label · bar · value); below
  * it two tracks with the label spanning both so a 390px column never
- * truncates a name. The label track is fixed at w-56 so the longest name
- * ("Cross-conversation de-duplication") holds one line and the rows stay an
- * even ladder. Every row is a `display:contents` wrapper so its cells land
+ * truncates a name. The label track is fixed at `w-72` (288px) so the longest
+ * name ("Cross-conversation de-duplication") holds one line and the rows stay
+ * an even ladder. Every row is a `display:contents` wrapper so its cells land
  * directly in these tracks. */
 const ROW_GRID =
   "grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 @md:grid-cols-[auto_1fr_3.5rem]";
-// w-60 with pr-4 keeps the text at 224px and adds 16px of air before the bar
-// on top of the grid gap (user 2026-09-17).
-// 288px track, 16px inner padding: the longest nested name ("Cross-conversation
+// One track width, documented once: `w-72` = 288px with `pr-4` keeping the
+// text at 272px and adding 16px of air before the bar on top of the grid gap
+// (user 2026-09-17). The longest nested name ("Cross-conversation
 // de-duplication", 238px at 14px) fits on one line inside the 32px indent.
 // 8pt grid: label track 288 + gap 16 puts every bar's origin at 304px from
 // the grid edge. The nested block indents 32 (ml-4 + pl-4, hairline drawn
@@ -123,10 +123,15 @@ function FigureCell({
   loading: boolean;
 }) {
   return (
-    <Card className="rounded-xs bg-transparent shadow-none">
+    // Subgrid, two levels: the Card spans the Figures grid's three rows and
+    // the CardContent subgrids them again, so the Eyebrow, the HeroNumeric
+    // and the caption of BOTH cells sit on shared row lines. At 390px
+    // "INPUT TOKENS REMOVED" wraps to two lines and "CACHE HITS" does not;
+    // without the subgrid the two 24px numerals lose their common baseline.
+    <Card className="row-span-3 grid grid-rows-subgrid gap-0" variant="inset">
       {/* KpiTile composition, the site's KPI pattern: Eyebrow above the
           HeroNumeric, the denominator as the caption line beneath. */}
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="row-span-3 grid grid-rows-subgrid gap-2">
         <Eyebrow as="div">{label}</Eyebrow>
         <HeroNumeric loading={loading}>{value}</HeroNumeric>
         <span className="type-copy-14 text-pretty text-muted-foreground">
@@ -145,7 +150,7 @@ function Figures({
   loading: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 grid-rows-[auto_auto_auto] gap-x-4 gap-y-2">
       <FigureCell
         label={SUMMARY_COPY.removed.label}
         loading={loading}
@@ -203,10 +208,13 @@ function MeterRow({
         >
           <div
             className={cn(
-              "h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none",
+              // Full-width fill scaled from the left: `width` is outside the
+              // animatable set and re-lays out all seven bars on every range
+              // change, `transform` composites.
+              "h-full w-full origin-left rounded-full transition-transform duration-200 ease-out motion-reduce:transition-none",
               fill
             )}
-            style={{ width: `${bar.share}%` }}
+            style={{ transform: `scaleX(${bar.share / 100})` }}
           />
         </div>
       )}

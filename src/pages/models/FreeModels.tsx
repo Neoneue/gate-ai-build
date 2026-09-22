@@ -51,7 +51,7 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
       {/* Two cards, so half the Featured row's column count at the same
           breakpoint — the cards keep their width band instead of stretching
           across four tracks. */}
-      <div className="grid @3xl:grid-cols-2 grid-cols-1 gap-4">
+      <div className="grid @4xl:grid-cols-2 grid-cols-1 gap-4">
         {rows.map(({ free, model }) => (
           <FeaturedCard
             badge={free.tagline}

@@ -1,4 +1,4 @@
-import { BarChart2, Layers, Zap } from "lucide-react";
+import { BarChart2, Layers, type LucideIcon, Zap } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { KpiRail } from "@/components/ui/kpi-rail";
 import { PageTitle } from "@/components/ui/page-title";
@@ -7,6 +7,36 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { SavingsOptionsSection } from "@/pages/TokenSavings";
 import { SummaryCard } from "@/pages/token-savings/SummaryCard";
 import { summaryFor } from "@/pages/token-savings-summary";
+
+/** The Default workspace has never seen traffic, so its rail carries three
+ *  placeholders instead of tiles. Padding is `p-4`, the same 16px every KPI
+ *  tile on the site takes (`CompactKpi`, `ModelKpiTile`), and the height is
+ *  whatever the content needs — the rail's own tracks keep the three even, so
+ *  a hand-picked minimum only pushed this rail out of line with the Free, Pro
+ *  and Enterprise twins. */
+function EmptyKpiTile({
+  icon: Icon,
+  label,
+}: {
+  icon: LucideIcon;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 bg-card p-4">
+      <div
+        aria-hidden
+        className="flex size-12 items-center justify-center rounded-md bg-muted"
+      >
+        <Icon
+          aria-hidden
+          className="size-5 text-muted-foreground"
+          strokeWidth={1.75}
+        />
+      </div>
+      <span className="type-copy-14 text-muted-foreground">{label}</span>
+    </div>
+  );
+}
 
 export function TokenSavingsDefault() {
   const navigate = useNavigate();
@@ -38,51 +68,9 @@ export function TokenSavingsDefault() {
         <div className="flex flex-col gap-4">
           <SectionTitle as="h2">Overview</SectionTitle>
           <KpiRail columns={3}>
-            <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-              <div
-                aria-hidden
-                className="flex size-12 items-center justify-center rounded-md bg-muted"
-              >
-                <BarChart2
-                  aria-hidden
-                  className="size-5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </div>
-              <span className="type-copy-14 text-muted-foreground">
-                No savings yet
-              </span>
-            </div>
-            <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-              <div
-                aria-hidden
-                className="flex size-12 items-center justify-center rounded-md bg-muted"
-              >
-                <Layers
-                  aria-hidden
-                  className="size-5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </div>
-              <span className="type-copy-14 text-muted-foreground">
-                No caching yet
-              </span>
-            </div>
-            <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
-              <div
-                aria-hidden
-                className="flex size-12 items-center justify-center rounded-md bg-muted"
-              >
-                <Zap
-                  aria-hidden
-                  className="size-5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </div>
-              <span className="type-copy-14 text-muted-foreground">
-                No compression yet
-              </span>
-            </div>
+            <EmptyKpiTile icon={BarChart2} label="No savings yet" />
+            <EmptyKpiTile icon={Layers} label="No caching yet" />
+            <EmptyKpiTile icon={Zap} label="No compression yet" />
           </KpiRail>
         </div>
 

@@ -670,6 +670,8 @@ export function RequestsTableSection({
                               {...props}
                               aria-label="About the Cost column"
                               className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                              // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                              tabIndex={0}
                             >
                               <Info
                                 aria-hidden
@@ -962,6 +964,8 @@ export function RequestsTableSection({
                                     {...props}
                                     aria-label="Billed by your provider (BYOK)"
                                     className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                                    tabIndex={0}
                                   >
                                     <KeyRound
                                       aria-hidden
@@ -986,6 +990,8 @@ export function RequestsTableSection({
                                     {...props}
                                     aria-label="Billed by Gate (PAYG)"
                                     className="-m-1 inline-flex cursor-help rounded-sm p-1 text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                                    tabIndex={0}
                                   >
                                     <CreditCard
                                       aria-hidden
