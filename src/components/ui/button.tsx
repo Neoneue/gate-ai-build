@@ -76,6 +76,35 @@ const buttonVariants = cva(
         // `bg-clip-padding` from base keeps every bordered variant intact.
         promo:
           "shadow-(color:--promo-cta-shadow) border-promo-cta-border bg-promo-cta text-promo-cta-foreground shadow-sm hover:bg-promo-cta-hover",
+
+        /* ─── The LIFT family (added 2026-09-22) ──────────────────────────
+         * Four variants for a control that sits ON a coloured surface, most
+         * of all a tinted card. They exist because `outline` and `ghost`
+         * hover to `bg-muted`, an OPAQUE grey: on the Pro card's blue wash
+         * or the Enterprise card's violet that grey covers the tint instead
+         * of lifting it, and the card's colour disappears under its own
+         * button. These keep the fill transparent and hover to
+         * `bg-lift-8`, pure alpha over whatever is beneath (design.md §2
+         * "Lift ramp"), so the surface darkens or brightens and stays
+         * itself.
+         *
+         * They are ADDITIVE. `outline` and `ghost` are untouched, so no
+         * existing consumer moves; a surface that wants the lift asks for
+         * it by name. All four share the same hover rung, so a lift row
+         * behaves identically and differs only in border and ink:
+         *   · `lift`            neutral edge, the plain-card default
+         *   · `lift-pro`        --tier-pro edge and ink
+         *   · `lift-enterprise` --tier-enterprise edge and ink
+         *   · `lift-ghost`      no edge, the quieter paired secondary
+         * `shadow-xs` is deliberately absent, unlike `outline`: a drop
+         * shadow under a transparent control on a tinted card reads as a
+         * seam, not a lift. */
+        lift: "border-border hover:bg-lift-8 aria-expanded:bg-lift-8",
+        "lift-pro":
+          "border-tier-pro-border text-tier-pro-foreground hover:bg-lift-8 aria-expanded:bg-lift-8",
+        "lift-enterprise":
+          "border-tier-enterprise-border text-tier-enterprise-foreground hover:bg-lift-8 aria-expanded:bg-lift-8",
+        "lift-ghost": "hover:bg-lift-8 aria-expanded:bg-lift-8",
       },
       size: {
         // shadcn-aligned scale (realigned 2026-07-28) — xs 24 / sm 32 /
@@ -183,5 +212,12 @@ function Button({
     />
   );
 }
+
+/** The Button's `variant` vocabulary, exported so a call site that has to
+ *  CHOOSE a variant at runtime can name the return type instead of widening
+ *  to `string`. */
+export type ButtonVariant = NonNullable<
+  VariantProps<typeof buttonVariants>["variant"]
+>;
 
 export { Button };

@@ -4,7 +4,9 @@
  *
  * Every surface in `src/pages` that calls `useSearchParams`, and what the
  * contract says about its param. Enumerated by grepping `useSearchParams`
- * across `src/pages` (14 surfaces, 2026-09-20):
+ * across `src/pages` (14 surfaces; `BillingFree.tsx`'s `?manage=1` retired
+ * 2026-09-22 when the plan ladder became a page, and `ManageSubscription.tsx`
+ * arrived with it):
  *
  * | surface                         | param        | contract                          |
  * | ------------------------------- | ------------ | --------------------------------- |
@@ -12,11 +14,11 @@
  * | `security/EventsTable.tsx`      | `?open=`     | opens dialog; stripped on CLOSE   |
  * | `Limits.tsx`                    | `?create=1`  | opens dialog; stripped on CLOSE   |
  * | `LimitsFree.tsx`                | `?create=1`  | opens dialog; stripped on CLOSE   |
- * | `BillingFree.tsx`               | `?manage=1`  | opens dialog; stripped on CLOSE   |
  * | `Notifications.tsx`             | `?tab=`      | selects Archive; strip on TAB CLICK|
  * | `Notifications.tsx`             | `?view=feed` | stripped on LOAD                  |
  * | `Billing.tsx`                   | `?state=`    | preview param, KEPT               |
  * | `BillingEnterprise.tsx`         | `?state=`    | preview param, KEPT               |
+ * | `ManageSubscription.tsx`        | `?form=`     | preview param, KEPT               |
  * | `Activity.tsx`                  | `?range=`    | one-way: read on mount, KEPT      |
  * | `TokenSavings.tsx`              | `?range=`    | one-way: read on mount, KEPT      |
  * | `TokenSavingsEnterprise.tsx`    | `?range=`    | one-way: read on mount, KEPT      |
@@ -102,11 +104,10 @@ describe("`?open=` opens the dialog, then the URL is cleaned on close", () => {
   );
 });
 
-describe("`?create=1` / `?manage=1` open a dialog and are stripped on close", () => {
+describe("`?create=1` opens a dialog and is stripped on close", () => {
   const cases: [string, string][] = [
     ["/limits", "create"],
     ["/limits-free", "create"],
-    ["/billing-free", "manage"],
   ];
 
   it.each(cases)(
@@ -192,4 +193,47 @@ describe("Billing `?state=` is a preview param and is KEPT", () => {
     const { location } = await mountRoute(path);
     expect(params(location().search).get("state")).toBe(value);
   });
+});
+
+/**
+ * The two upgrade CTAs that used to carry `?manage=1` now navigate straight
+ * to the nested Manage subscription page. They are buttons, not anchors
+ * (`SidebarUpgradeCard`, the Free Models banner), so the assertion is the
+ * landing URL rather than an `href`.
+ */
+describe("upgrade CTAs land on the Manage subscription page", () => {
+  it.each([
+    ["/overview-free", "/billing-free/plans"],
+    ["/overview-default", "/billing-default/plans"],
+  ])(
+    "%s sidebar upgrade card navigates to %s",
+    async (from, to) => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const { location } = await mountRoute(from);
+      const card = await screen.findByRole("button", {
+        name: /Upgrade to Pro plan/,
+      });
+      await user.click(card);
+      await waitFor(() => {
+        expect(location().pathname).toBe(to);
+      });
+    },
+    SLOW
+  );
+
+  it(
+    "/models-free upgrade banner navigates to /billing-free/plans",
+    async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const { location } = await mountRoute("/models-free");
+      const cta = await screen.findByRole("button", {
+        name: "Upgrade to Pro",
+      });
+      await user.click(cta);
+      await waitFor(() => {
+        expect(location().pathname).toBe("/billing-free/plans");
+      });
+    },
+    SLOW
+  );
 });

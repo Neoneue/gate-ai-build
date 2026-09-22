@@ -37,6 +37,13 @@ const BillingEnterprise = lazy(() =>
 const BillingFree = lazy(() =>
   import("@/pages/BillingFree").then((m) => ({ default: m.BillingFree }))
 );
+/** One component behind all four Manage subscription routes; it reads the
+ *  tier off the pathname, so there is no twin to keep in sync. */
+const ManageSubscription = lazy(() =>
+  import("@/pages/ManageSubscription").then((m) => ({
+    default: m.ManageSubscription,
+  }))
+);
 const Conversations = lazy(() =>
   import("@/pages/Conversations").then((m) => ({ default: m.Conversations }))
 );
@@ -230,7 +237,7 @@ const SettingsDefault = lazy(() =>
     default: m.SettingsDefault,
   }))
 );
-/* Overview onboarding subflows — dedicated `-default` subpages reached from
+/* Overview onboarding subflows: dedicated `-default` subpages reached from
  * the Overview get-started card. Each keeps the default-tier chrome and
  * breadcrumbs back through the concept's multi-level flow. */
 const SetupConnect = lazy(() =>
@@ -359,7 +366,9 @@ export function AppRoutes() {
         <Route element={<ApiKeys />} path="/api-keys" />
         <Route element={<ApiKeysDefault />} path="/api-keys-default" />
         <Route element={<Billing />} path="/billing" />
+        <Route element={<ManageSubscription />} path="/billing/plans" />
         <Route element={<BillingFree />} path="/billing-free" />
+        <Route element={<ManageSubscription />} path="/billing-free/plans" />
         {/* Default-workspace twins — reached via the workspace switcher. */}
         <Route element={<RequestsDefault />} path="/messages-default" />
         <Route
@@ -386,6 +395,7 @@ export function AppRoutes() {
         <Route element={<TeamsDefault />} path="/teams-default" />
         <Route element={<TeamDetailDefault />} path="/teams-default/:teamId" />
         <Route element={<BillingDefault />} path="/billing-default" />
+        <Route element={<ManageSubscription />} path="/billing-default/plans" />
         <Route
           element={<NotificationsDefault />}
           path="/notifications-default"
@@ -445,6 +455,10 @@ export function AppRoutes() {
           path="/teams-enterprise/:teamId"
         />
         <Route element={<BillingEnterprise />} path="/billing-enterprise" />
+        <Route
+          element={<ManageSubscription />}
+          path="/billing-enterprise/plans"
+        />
         <Route element={<ApiKeys />} path="/api-keys-enterprise" />
         <Route element={<Notifications />} path="/notifications-enterprise" />
         <Route

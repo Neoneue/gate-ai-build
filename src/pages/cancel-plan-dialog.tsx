@@ -18,14 +18,15 @@ import { BILLING_PERIOD_END } from "@/data/billing-history";
  * Cancel plan — shared confirm dialog
  *
  * ONE dialog, two entry points: the Settings account-management "Cancel plan"
- * card and the Billing "Downgrade plan" action inside PlanComparisonDialogPro.
+ * card and the "Downgrade to Free" action on the Manage subscription plans
+ * page (`ManageSubscription.tsx`, the Free rung of the Pro-org view).
  * It was extracted out of Settings so that removing it from Settings later is
  * a one-line change and the Billing path is untouched — the whole reason this
  * file exists.
  *
  * Controlled: the caller owns `open` / `onOpenChange`. There is no built-in
- * trigger by default because Billing opens it programmatically (after the
- * comparison dialog finishes closing). Settings passes its CardFooter button
+ * trigger by default because the plans page opens it programmatically.
+ * Settings passes its CardFooter button
  * as `trigger` so that card keeps its native `AlertDialogTrigger` behaviour
  * (aria-haspopup, focus return) exactly as before the extraction.
  *

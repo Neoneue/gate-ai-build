@@ -2,9 +2,10 @@ import { Plus } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import {
+  Link,
+  useLocation,
   useNavigate,
   useOutletContext,
-  useSearchParams,
 } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,9 +37,9 @@ import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { HistoryLedger } from "@/pages/billing/HistorySection";
-import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page — Free-plan duplicate (route: /billing-free, sidebar: "Billing")
@@ -113,23 +114,7 @@ function PageHeader() {
 }
 
 function PlanCard() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [compareOpen, setCompareOpen] = useState(
-    () => searchParams.get("manage") === "1"
-  );
-
-  // Deep-link support: `?manage=1` opens the plan-comparison dialog on mount.
-  // Used by the sidebar upgrade CTA so a single click lands the user in the
-  // plan picker. Param is stripped when the dialog closes so the URL reflects
-  // state and re-mounts don't re-open it — same contract as Limits' `?create=1`.
-  const handleCompareOpenChange = (next: boolean) => {
-    setCompareOpen(next);
-    if (!next && searchParams.has("manage")) {
-      const params = new URLSearchParams(searchParams);
-      params.delete("manage");
-      setSearchParams(params, { replace: true });
-    }
-  };
+  const { pathname } = useLocation();
 
   return (
     <Card className="min-w-0 pb-0!">
@@ -175,7 +160,8 @@ function PlanCard() {
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
-          onClick={() => setCompareOpen(true)}
+          nativeButton={false}
+          render={<Link to={withTierOf(pathname, "/billing/plans")} />}
           size="sm"
           variant="outline"
         >
@@ -183,11 +169,6 @@ function PlanCard() {
           Manage subscription
         </Button>
       </CardFooter>
-      <PlanComparisonDialog
-        onOpenChange={handleCompareOpenChange}
-        onUpgrade={() => handleCompareOpenChange(false)}
-        open={compareOpen}
-      />
     </Card>
   );
 }

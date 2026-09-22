@@ -130,7 +130,7 @@ const withSuffix = (
 };
 
 /** Tier suffix of the pathname the user is currently on ("" for Pro). */
-const tierSuffixOf = (
+export const tierSuffixOf = (
   pathname: string
 ): "" | "-default" | "-free" | "-enterprise" => {
   if (isDefaultSurface(pathname)) {

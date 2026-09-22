@@ -1,6 +1,8 @@
-import { Headset, OctagonAlert } from "lucide-react";
+import { OctagonAlert } from "lucide-react";
 import type * as React from "react";
 import {
+  Link,
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -19,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import {
   ENTERPRISE_SEAT_RATE_USD,
   type EnterpriseBillingState,
@@ -31,6 +34,7 @@ import {
 } from "@/data/billing-enterprise";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { CreditsCard } from "@/pages/billing/CreditsCard";
 import { HistoryLedger } from "@/pages/billing/HistorySection";
@@ -41,8 +45,9 @@ import { PaymentMethodCard } from "@/pages/billing/PaymentMethodCard";
  *
  * Enterprise is a Support-granted entitlement billed BY SEAT (ticket
  * `enterprise-billing-plan-surface`). It cannot be self-upgraded, downgraded
- * or cancelled, so the plan card routes to Constellation Support instead of
- * a checkout. Seats are a PLAN quantity read as utilization ("4 of 4"); seat
+ * or cancelled, so the plan card routes to the Manage subscription ladder,
+ * where every Enterprise rung points at Constellation Support rather than a
+ * checkout. Seats are a PLAN quantity read as utilization ("4 of 4"); seat
  * changes happen on the plan via Support, so there is no proration and no
  * per-member costing on this page (PM + user, call 2026-09-17). Billing
  * history is the one PAYG credit ledger Pro shows, no Plan tab.
@@ -296,6 +301,7 @@ function StatRow({
 }
 
 function PlanCard({ view }: { view: EnterpriseBillingView }) {
+  const { pathname } = useLocation();
   const unprovisioned = view.state === "unprovisioned";
   const seats = enterpriseSeatCount();
   const planSeats = enterprisePlanSeats();
@@ -371,15 +377,17 @@ function PlanCard({ view }: { view: EnterpriseBillingView }) {
         <p className="type-copy-14 m-0 mr-auto text-pretty text-muted-foreground">
           Want to add or remove seats, or change your plan?
         </p>
-        {/* No-op, like the Pro twin's `Invoice portal` / `Update card`. */}
-        <Button size="sm" variant="outline">
-          <Headset
-            aria-hidden
-            data-icon="inline-start"
-            size={16}
-            strokeWidth={1.75}
-          />
-          Contact support
+        {/* The plan ladder, same destination and label as every other tier
+            (2026-09-22): an Enterprise org opening it sees Enterprise marked
+            as its current plan. */}
+        <Button
+          nativeButton={false}
+          render={<Link to={withTierOf(pathname, "/billing/plans")} />}
+          size="sm"
+          variant="outline"
+        >
+          <SquareArrowUpIcon aria-hidden data-icon="inline-start" size={16} />
+          Manage subscription
         </Button>
       </CardFooter>
     </Card>

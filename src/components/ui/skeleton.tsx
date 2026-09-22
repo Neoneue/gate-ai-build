@@ -38,7 +38,7 @@ export function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
  *  box rather than filling it, so a 14px value reads as a 16px bar in a 20px
  *  row instead of a slab. */
 const SKELETON_TEXT_BAR = {
-  sm: "h-3", // type-copy-12 / type-mono-12 — 16px leading
+  sm: "h-3", // type-mono-12 (16px leading) / type-copy-12 (18px since 2026-09-22)
   default: "h-4", // type-copy-14 / type-mono-14 / type-label-14 — 20px leading
   hero: "h-6", // HeroNumeric default — text-2xl/8, 32px leading
   heroLg: "h-7", // HeroNumeric lg — text-3xl/9, 36px leading
