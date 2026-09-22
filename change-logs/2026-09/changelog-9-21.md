@@ -26,7 +26,9 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   write a report and run `check-report.mjs` to PASS, the orchestrator runs it
   once and bounces FAILs at most three rounds; `verify-twins` resolves a route
   to every file that renders on it; `triage-copy` sources rewrites from Notion
-  top down; `/promote` command and two skill indexes.
+  top down; `/promote` command and two skill indexes. `/end-session` chains
+  `/commit-push`, `/promote` and `/handoff`, gated, ending in one
+  `SAFE TO /clear` line (`cff281a`).
 
 ## Sections & surfaces
 
