@@ -42,6 +42,10 @@ If `handoff.md` does not exist, create it with the structure in "Shape" below.
 6. **OPEN items never expire.** An item leaves `## OPEN / next` only when
    resolved, and its removal names where the resolution landed (hash or doc).
 
+## Runs on Opus
+
+The orchestrator delegates this whole command to one `general-purpose` agent with `model: opus`, briefed with this file, the facts it needs, and the approval the user gave. Never run the git or docs steps on the orchestrator's own model (user, 2026-09-21).
+
 ## Rules
 
 - **No em dashes.** Anywhere. This is the user's standing writing preference and
