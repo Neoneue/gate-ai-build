@@ -282,12 +282,7 @@ function PolicyCard({
     ? undefined
     : "pointer-events-none select-none opacity-50";
   const actionPanel = (
-    <Card
-      className={cn(
-        "rounded-sm border border-border bg-transparent shadow-none",
-        optionsDim
-      )}
-    >
+    <Card className={cn("rounded-sm", optionsDim)} variant="inset">
       <CardContent>
         <ActionHalf
           config={config}
@@ -298,12 +293,7 @@ function PolicyCard({
     </Card>
   );
   const settingsPanel = (
-    <Card
-      className={cn(
-        "rounded-sm border border-border bg-transparent shadow-none",
-        optionsDim
-      )}
-    >
+    <Card className={cn("rounded-sm", optionsDim)} variant="inset">
       <CardContent>
         <SettingsHalf
           config={config}
@@ -335,9 +325,9 @@ function PolicyCard({
             />
           </span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            <h3 className="type-heading-16 m-0 text-balance text-foreground">
+            <h2 className="type-heading-16 m-0 text-balance text-foreground">
               {config.name}
-            </h3>
+            </h2>
           </div>
           <span className="flex h-6 shrink-0 items-center">
             <StatusBadge on={state.enabled} />
@@ -483,7 +473,7 @@ function FreeToggleCard({
   onToggle: () => void;
 }) {
   return (
-    <Card className="rounded-sm border border-border bg-transparent shadow-none">
+    <Card className="rounded-sm" variant="inset">
       <CardContent>
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1">

@@ -1,8 +1,8 @@
-import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { MoreHorizontal, Send, Trash2, UserPlus } from "lucide-react";
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -17,6 +17,7 @@ import {
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { Monogram } from "@/components/ui/monogram";
 import { initialsOf } from "@/components/ui/monogram-types";
 import { PageTitle } from "@/components/ui/page-title";
@@ -50,7 +51,6 @@ import {
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { authoredDate } from "@/lib/demo-clock";
-import { cn } from "@/lib/utils";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -113,6 +113,10 @@ export function Team() {
 function TeamSurface() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [tab, setTab] = useState<"members" | "invitations">("members");
+  // Seeded invitations held here, not in the pane, so revoking a row updates
+  // the tab count with the table. Mockup scope: session-lived, no server call.
+  const [invitations, setInvitations] =
+    useState<InvitationRow[]>(INVITATION_ROWS);
 
   return (
     <>
@@ -129,7 +133,7 @@ function TeamSurface() {
             value="members"
           />
           <TeamTabsTrigger
-            count={INVITATION_ROWS.length}
+            count={invitations.length}
             label="Invitations"
             value="invitations"
           />
@@ -139,7 +143,14 @@ function TeamSurface() {
           <MembersPane />
         </TabsContent>
         <TabsContent value="invitations">
-          <InvitationsPane onInvite={() => setInviteOpen(true)} />
+          <InvitationsPane
+            onInvite={() => setInviteOpen(true)}
+            onRevoke={(row) => {
+              setInvitations((prev) => prev.filter((r) => r.id !== row.id));
+              toast(`Invitation to ${row.email} revoked`);
+            }}
+            rows={invitations}
+          />
         </TabsContent>
       </Tabs>
 
@@ -518,14 +529,22 @@ function invitationSortValue(
   }
 }
 
-function InvitationsPane({ onInvite }: { onInvite: () => void }) {
+function InvitationsPane({
+  onInvite,
+  rows,
+  onRevoke,
+}: {
+  onInvite: () => void;
+  rows: InvitationRow[];
+  onRevoke: (row: InvitationRow) => void;
+}) {
   const { sort, toggle: toggleSort } = useTableSort();
   const sortedRows = useMemo(
-    () => sortRows(INVITATION_ROWS, sort, invitationSortValue),
-    [sort]
+    () => sortRows(rows, sort, invitationSortValue),
+    [rows, sort]
   );
 
-  if (INVITATION_ROWS.length === 0) {
+  if (rows.length === 0) {
     return (
       <Card density="flush">
         <TableEmptyState
@@ -621,9 +640,33 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
               <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
                 <RowActionsMenu
                   items={[
-                    { id: "resend", label: "Resend invite" },
-                    { id: "copy", label: "Copy invite link" },
-                    { id: "revoke", label: "Revoke invite", destructive: true },
+                    {
+                      id: "resend",
+                      label: "Resend invite",
+                      onSelect: () =>
+                        toast(`Invitation resent to ${row.email}`),
+                    },
+                    {
+                      id: "copy",
+                      label: "Copy invite link",
+                      onSelect: () => {
+                        navigator.clipboard
+                          ?.writeText(
+                            `${window.location.origin}/invite/${row.id}`
+                          )
+                          .catch(() => {
+                            /* clipboard unavailable — the toast still tells
+                               the user what was meant to happen */
+                          });
+                        toast("Invite link copied");
+                      },
+                    },
+                    {
+                      id: "revoke",
+                      label: "Revoke invite",
+                      destructive: true,
+                      onSelect: () => onRevoke(row),
+                    },
                   ]}
                   label={`Open actions for ${row.email}`}
                 />
@@ -638,7 +681,7 @@ function InvitationsPane({ onInvite }: { onInvite: () => void }) {
 
 /* ─── Invite member dialog ────────────────────────────────────────────── */
 
-function InviteMemberDialog({
+export function InviteMemberDialog({
   open,
   onOpenChange,
 }: {
@@ -800,12 +843,10 @@ function RoleItemBody({
 
 /* ─── Row actions menu (kebab + popup) ───────────────────────────────────
  * Hidden-affordance pattern for row-level actions. The trigger is a ghost
- * MoreHorizontal button at icon-sm; click pops a menu of items. Built on
- * Base UI's `Menu` primitive directly because this codebase doesn't ship
- * a `dropdown-menu.tsx` wrapper yet — when a second consumer appears,
- * lift this into `components/ui/`. Visual treatment mirrors SelectContent
- * (white popup, neutral-200 border, --shadow-popup, neutral-100 highlight) so
- * the menu reads as part of the same chrome family. */
+ * MoreHorizontal button at icon-sm; click pops a menu of items. Built on the
+ * shared `components/ui/menu` wrapper (Menu / MenuTrigger / MenuContent /
+ * MenuItem), the same one `TeamsEnterprise` uses for its team-row kebab, so
+ * popup surface, highlight and destructive ink are defined once. */
 
 type RowActionItem = {
   id: string;
@@ -823,8 +864,8 @@ function RowActionsMenu({
   items: RowActionItem[];
 }) {
   return (
-    <MenuPrimitive.Root>
-      <MenuPrimitive.Trigger
+    <Menu>
+      <MenuTrigger
         render={
           <Button
             aria-label={label}
@@ -835,43 +876,22 @@ function RowActionsMenu({
         }
       >
         <MoreHorizontal aria-hidden />
-      </MenuPrimitive.Trigger>
-      <MenuPrimitive.Portal>
-        <MenuPrimitive.Positioner
-          align="end"
-          className="isolate z-50"
-          side="bottom"
-          sideOffset={8}
-        >
-          <MenuPrimitive.Popup
-            className={cn(
-              "min-w-32 origin-[var(--transform-origin)] overflow-hidden rounded-sm border border-border bg-popover py-1 text-foreground shadow-md outline-none",
-              "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-150 ease-out data-closed:animate-out data-open:animate-in data-closed:fill-mode-forwards data-closed:duration-100 motion-reduce:animate-none motion-reduce:duration-0"
-            )}
-          >
-            {items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <MenuPrimitive.Item
-                  className={cn(
-                    "type-label-14 relative flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-xs px-3 outline-none",
-                    "focus-visible:bg-muted data-[highlighted]:bg-muted",
-                    item.destructive
-                      ? "text-destructive data-[highlighted]:text-destructive"
-                      : "text-foreground",
-                    "[&_svg]:size-4 [&_svg]:shrink-0"
-                  )}
-                  key={item.id}
-                  onClick={item.onSelect}
-                >
-                  {Icon ? <Icon aria-hidden strokeWidth={1.75} /> : null}
-                  <span className="flex-1 text-left">{item.label}</span>
-                </MenuPrimitive.Item>
-              );
-            })}
-          </MenuPrimitive.Popup>
-        </MenuPrimitive.Positioner>
-      </MenuPrimitive.Portal>
-    </MenuPrimitive.Root>
+      </MenuTrigger>
+      <MenuContent className="min-w-32">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <MenuItem
+              key={item.id}
+              onClick={item.onSelect}
+              variant={item.destructive ? "destructive" : "default"}
+            >
+              {Icon ? <Icon aria-hidden strokeWidth={1.75} /> : null}
+              <span className="flex-1 text-left">{item.label}</span>
+            </MenuItem>
+          );
+        })}
+      </MenuContent>
+    </Menu>
   );
 }

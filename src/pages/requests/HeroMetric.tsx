@@ -177,10 +177,6 @@ export function HeroMetricCard() {
                 stroke: "var(--color-neutral-500)",
                 strokeDasharray: "3 3",
               }}
-              /* Three rows (94px) fit the 96px chart band only if the box
-                 is pinned to its top; the default flip would push it past
-                 the card edge. x still follows the cursor. */
-              position={{ y: 0 }}
             />
             <Area
               dataKey="requests"

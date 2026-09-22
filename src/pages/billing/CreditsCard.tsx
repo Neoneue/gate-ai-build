@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { Input } from "@/components/ui/input";
 import { OptionTile } from "@/components/ui/option-tile";
@@ -200,6 +201,12 @@ function AddCreditsDialog({
   const selectedPreset = custom.length === 0 ? selected : null;
   const presetRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
 
+  const handleCheckout = () => {
+    onOpenChange(false);
+    setSelected(null);
+    setCustom("");
+  };
+
   const movePresetSelection = (nextIndex: number) => {
     const nextValue = CREDIT_PRESETS[nextIndex];
     setSelected(nextValue);
@@ -338,15 +345,11 @@ function AddCreditsDialog({
             />
           </div>
           {custom.length > 0 && !customValid && (
-            <p
-              aria-live="polite"
-              className="type-copy-12 m-0 text-destructive"
-              id="add-credits-custom-error"
-            >
+            <FieldError id="add-credits-custom-error">
               Enter an amount between{" "}
               {formatCurrency(MIN_TOPUP, { minFrac: 0, maxFrac: 0 })} and{" "}
               {formatCurrency(MAX_TOPUP, { minFrac: 0, maxFrac: 0 })}.
-            </p>
+            </FieldError>
           )}
         </div>
 
@@ -361,7 +364,15 @@ function AddCreditsDialog({
           >
             Cancel
           </DialogClose>
-          <Button disabled={!canSubmit} size="sm" type="button">
+          {/* Mock checkout: the real flow hands off to Stripe, so the demo
+              ends the same way the auto-recharge Save does — close and clear,
+              never a dead button. */}
+          <Button
+            disabled={!canSubmit}
+            onClick={handleCheckout}
+            size="sm"
+            type="button"
+          >
             Continue to checkout
           </Button>
         </DialogFooter>
@@ -482,13 +493,9 @@ function AutoRechargeDialog({
               />
             </div>
             {thresholdInvalid && (
-              <p
-                aria-live="polite"
-                className="type-copy-12 m-0 text-destructive"
-                id="ar-threshold-error"
-              >
+              <FieldError id="ar-threshold-error">
                 Enter a threshold greater than $0.
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -523,13 +530,9 @@ function AutoRechargeDialog({
               />
             </div>
             {topUpInvalid && (
-              <p
-                aria-live="polite"
-                className="type-copy-12 m-0 text-destructive"
-                id="ar-topup-error"
-              >
+              <FieldError id="ar-topup-error">
                 Enter a top-up amount greater than $0.
-              </p>
+              </FieldError>
             )}
           </div>
         </div>
@@ -568,13 +571,9 @@ function AutoRechargeDialog({
             />
           </div>
           {capInvalid && (
-            <p
-              aria-live="polite"
-              className="type-copy-12 m-0 text-destructive"
-              id="ar-cap-error"
-            >
+            <FieldError id="ar-cap-error">
               Monthly cap must be greater than $0, or left blank.
-            </p>
+            </FieldError>
           )}
         </div>
 

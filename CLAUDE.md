@@ -49,6 +49,8 @@ Read the relevant doc before working in its area. Do not re-inject on every prom
 | [`docs/Credentials-findings.md`](./docs/Credentials-findings.md) | Credential/secret detection — regex + Shannon entropy (NOT Presidio). |
 | [`docs/Injection-findings.md`](./docs/Injection-findings.md) | Prompt-injection detection — ML classifier (NOT Presidio/regex); §3 = the 10 verdict enums. |
 | [`README.md`](./README.md) | Repo overview, stack, routes. |
+| [`agents/front-end-developer/skills/INDEX.md`](./agents/front-end-developer/skills/INDEX.md) | Which design skill fits which job; start here before picking a review or build skill. |
+| [`.claude/skills/INDEX.md`](./.claude/skills/INDEX.md) | Orchestrator skills and slash commands by situation, recurring chains, and the scripts they own. |
 
 The whole `docs/` folder is **local-only** (gitignored): the findings docs above,
 the `message-script.md` / `request-trace.md` session

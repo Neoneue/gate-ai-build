@@ -144,11 +144,14 @@ export function OverviewSection({
   const kpis = KPI_BY_RANGE[effectiveRange];
   const sparkStops = SPARK_STOPS[effectiveRange];
   const sparkLabels = sparkDates(effectiveRange, sparkStops);
-  const note = RANGE_DELTA_NOTE[range];
+  // The delta note has to describe the window the tiles ACTUALLY read. On a
+  // custom range they fall back to the lifetime series, so the note follows
+  // `effectiveRange` and never claims a comparison nobody computed.
+  const note = RANGE_DELTA_NOTE[effectiveRange];
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Overview</SectionTitle>
+        <SectionTitle as="h2">Overview</SectionTitle>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedPill
             aria-label="Time range"
@@ -201,9 +204,9 @@ export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
     setValue((prev) => ({ ...prev, ...patch }));
   };
   return (
-    <div className="mt-2 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Savings options</SectionTitle>
+        <SectionTitle as="h2">Savings options</SectionTitle>
       </div>
       <div className="flex flex-col gap-4">
         <CompressionCard
@@ -271,7 +274,7 @@ function CachingCard({
         title="Caching"
       />
       <CardContent className="flex flex-col gap-3">
-        <Card className="rounded-xs bg-transparent shadow-none">
+        <Card variant="inset">
           <CardContent>
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -300,7 +303,7 @@ function CachingCard({
           </CardContent>
         </Card>
 
-        <Card className="rounded-xs bg-transparent shadow-none">
+        <Card variant="inset">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -388,6 +391,11 @@ const PRO_COMPRESSION_BENEFITS: CompressionBenefit[] = [
   },
 ];
 
+// Upsell figure reads off the same row the Compression tile and the Summary
+// render, looked up by title so a reorder cannot silently change the claim.
+const COMPRESSION_RATE_ALL =
+  KPI_BY_RANGE.all.find((kpi) => kpi.title === "Compression")?.value ?? "0";
+
 // Payoff-first hero: the savings figure is the point of the card, so it leads
 // at the same 24px sans-tabular voice as the Overview rail (HeroNumeric),
 // with the checklist beneath it as supporting proof.
@@ -417,13 +425,16 @@ function BenefitList({
   outlineClassName: string;
 }) {
   return (
-    <div className={`rounded-xs border bg-card/40 p-4 ${outlineClassName}`}>
+    // Third frame in the Token savings ladder: outer Card 12 (rounded-md) >
+    // option card 8 (rounded-sm) > this list 4 (rounded-xs), one step per
+    // level so the list reads as belonging to the card above it.
+    <div className={cn("rounded-xs border bg-card/40 p-4", outlineClassName)}>
       <ul className="m-0 grid list-none @lg:grid-cols-2 grid-cols-1 gap-4 p-0">
         {benefits.map((benefit) => (
           <li className="flex items-center gap-2" key={benefit.title}>
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-primary-foreground",
+                "flex size-5 shrink-0 items-center justify-center rounded-full",
                 checkClassName
               )}
             >
@@ -440,6 +451,8 @@ function BenefitList({
                       {...props}
                       aria-label={`About ${benefit.title}`}
                       className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                      tabIndex={0}
                     >
                       <Info
                         aria-hidden
@@ -476,7 +489,7 @@ function CompressionCard({
   // Free — neutral "safe lane" card. Only shown on the Free plan, where the
   // Advanced card sits beside it as an upsell.
   const basicCard = (
-    <Card className="rounded-xs shadow-none">
+    <Card className="rounded-sm" variant="inset">
       <CardContent className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
@@ -516,11 +529,14 @@ function CompressionCard({
   // and blue savings KPI to mark it as the Pro-tier capability.
   const advancedCard = (
     <Card
-      className={
-        isPro
-          ? "rounded-xs shadow-none"
-          : "rounded-xs border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)] shadow-none"
-      }
+      className={cn(
+        // `rounded-sm` is the middle rung of the ladder, one step under the
+        // framing Card and one above the benefit list inside.
+        "rounded-sm",
+        isPro ||
+          "border-tier-pro-border bg-[image:var(--tier-pro-surface-wash)]"
+      )}
+      variant="inset"
     >
       <CardContent className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col gap-4">
@@ -568,7 +584,7 @@ function CompressionCard({
           {isPro ? null : (
             <SavingsHeadline
               caption="smaller messages on average"
-              value="~20%"
+              value={`${COMPRESSION_RATE_ALL}%`}
             />
           )}
           <BenefitList

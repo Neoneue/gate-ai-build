@@ -7,6 +7,7 @@ function Card({
   size = "default",
   density = "default",
   tone = "default",
+  variant = "default",
   interactive = false,
   ...props
 }: React.ComponentProps<"div"> & {
@@ -49,6 +50,17 @@ function Card({
    */
   tone?: "default" | "danger" | "pro" | "enterprise";
   /**
+   * `inset` = a panel nested INSIDE another Card: one radius step down
+   * (`rounded-xs`), no shadow (a shadow inside a shadowed surface reads as a
+   * second elevation the ladder does not have) and a transparent fill so the
+   * parent's `bg-card` shows through unchanged. Added 2026-09-21 after six
+   * call sites hand-assembled the same three overrides and drifted on
+   * `bg-transparent` (no-handrolling.md). Consumers that need their own
+   * radius step (a third frame in the Token savings ladder) pass
+   * `className="rounded-sm"`; `cn` merges it over the variant.
+   */
+  variant?: "default" | "inset";
+  /**
    * The whole card is one click target (it navigates or opens a detail), so
    * it takes the same hover the table rows take: `hover-fine:bg-accent` plus
    * `cursor-pointer`, 150ms ease-out on background-color only, opted out
@@ -74,6 +86,10 @@ function Card({
         // Card tier: honest border-border + shadow-xs (design.md, Material
         // ladder). Tailwind shadow scale only: xs/sm/md/lg.
         "group/card flex flex-col overflow-hidden rounded-md border border-border bg-card text-card-foreground text-sm shadow-xs has-[>img:first-child]:pt-0! has-data-[slot=card-footer]:pb-0! data-[size=sm]:data-[density=default]:gap-3 data-[size=sm]:data-[density=default]:py-3 data-[density=default]:gap-4 data-[density=flush]:gap-0 data-[tone=danger]:border-destructive-subtle data-[tone=enterprise]:border-tier-enterprise-border data-[tone=pro]:border-tier-pro-border data-[density=default]:py-4 data-[density=flush]:py-0 data-[size=sm]:has-data-[slot=card-footer]:pb-0! *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+        // Inset: a panel nested inside another Card (see the `variant` doc).
+        // Ahead of `className`, so a call site needing its own radius step
+        // merges over it.
+        variant === "inset" && "rounded-xs bg-transparent shadow-none",
         // Interactive: `TableRow`'s hover recipe, verbatim — plain
         // `hover:bg-accent-muted`, `transition-[background-color]` (never
         // `transition-colors`: interpolating the border smudges, see
@@ -94,6 +110,7 @@ function Card({
       data-size={size}
       data-slot="card"
       data-tone={tone}
+      data-variant={variant}
       {...props}
     />
   );

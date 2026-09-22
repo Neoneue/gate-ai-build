@@ -281,7 +281,6 @@ export function CompactSpark({
             }
             cursor={{ stroke: "var(--color-chart-grid)", strokeWidth: 1 }}
             isAnimationActive={false}
-            position={{ y: -24 }}
           />
         ) : null}
         <XAxis dataKey="i" hide />

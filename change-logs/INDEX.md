@@ -11,6 +11,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 
+- Models and Token Savings impeccable polish: 20 items, imp-1 to imp-20
+- rams whole-site audit applied: 14 items, rams-2 to rams-15
+- Chart tooltips portal to body; recipe enforced by design.md, lint check 7 and a test
+- Limits, Settings and Teams copy grounded in the PRDs; opt-in Jev copy lint
 - Token Savings breakdown: four categories + All others, assumed weights
 - Enterprise twins: Summary card on Token Savings, shared titles on Token Savings and Policies
 - Eight react-best-practices LOWs applied; audit method reshaped

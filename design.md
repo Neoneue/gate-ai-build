@@ -1463,9 +1463,24 @@ granularity, range)` in `lib/formatters.ts`, so a hourly bucket reads
 appears only when the chart's range crosses a year boundary; otherwise it is
 noise the axis already settled.
 
+**Positioning (added 2026-09-21).** Every chart tooltip renders in a
+`document.body` portal. `ChartTooltip` in `chart.tsx` is the only tooltip
+element a chart may use; it passes `portal` to Recharts and
+`ChartTooltipContent` positions itself with `position: fixed` from the
+chart's bounding rect plus the cursor coordinate, flipping to the cursor's
+left near the right viewport edge and clamping 8px inside every edge. Cards
+are `overflow-hidden`, so a tooltip drawn inside the chart container clips
+the moment it is taller than the chart band (found 2026-09-21 on the
+Security Overview spark: a 130px box in a 96px band). Recharts 3 gives a
+portalled wrapper no position of its own, which is why the content owns it.
+
 Do not: pass a `formatter` that returns JSX (it bypasses the recipe), set
 `labelClassName` to a muted colour, use `type-*-14` inside the box, or
-render a square swatch anywhere near a chart.
+render a square swatch anywhere near a chart. Do not import `Tooltip` from
+`recharts` outside `chart.tsx`, and never pass `position`, `wrapperStyle`
+or `allowEscapeViewBox` to `ChartTooltip`: those were the pre-portal
+workarounds and only move the clipping. `lint:design` check 7 fails the
+commit on any of them.
 
 ### Callout *(added 2026-08-31)*
 

@@ -12,6 +12,11 @@ applied. Rules and the alias table: `.claude/skills/ui-audit/audit-file.md`.
 ### [2026-09-21](./2026-09/audit-9-21.md)
 
 - `smk` test-smoke after applying rbp-3/4/6/8/9/10/13: 0 items. Clean. rbp-12 skipped.
+- `rams` whole site (three review agents; set B re-run full-read after a Disclaimer): rams-2 to rams-15 (rams-1 retired as a reviewer false positive), 14/14 applied.
+  Clean after two apply passes; rams-2 residue on PoliciesEnterprise pending. 4 HIGH at review (hand-rolled menu, two no-op CTAs, LimitsFree form reset), 5 MEDIUM, 5 LOW.
+- `smk` test-smoke after rams-5/6/8/11 and again after rams-2/3/4/7/9/10/12/13/14/15: 0 items. Clean.
+- `imp` impeccable polish (review mode, Opus, browser), Models + Token Savings all twins: imp-1 to imp-20, 20/20 applied (imp-19, 20 surfaced by the apply passes).
+  Clean after apply; at review Qualified. 2 HIGH (Free upsell `~20%` vs 13.7% on the same page; tooltip triggers without tabIndex), 9 MEDIUM, 7 LOW.
 
 ### [2026-09-20](./2026-09/audit-9-20.md)
 

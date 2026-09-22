@@ -58,6 +58,7 @@
     "build:previews": "node scripts/build-request-previews.mjs",
     "lint": "eslint . && ultracite check && npm run lint:design",
     "lint:design": "node scripts/check-design-tokens.mjs",
+    "lint:copy": "node scripts/lint-copy.mjs",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "preview": "vite preview",
@@ -68,7 +69,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "smoke": "vitest run && playwright test"
   },
   "type": "module",
   "version": "0.0.0",

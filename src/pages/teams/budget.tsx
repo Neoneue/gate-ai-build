@@ -249,6 +249,8 @@ function BudgetFact({
                 {...props}
                 aria-label={`About ${label}`}
                 className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                tabIndex={0}
               >
                 <Info aria-hidden className="size-3.5" strokeWidth={1.75} />
               </span>

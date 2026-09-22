@@ -314,7 +314,7 @@ export function TeamDetailEnterprise({
             className="rounded-md border border-border bg-card p-8 text-center"
             role="alert"
           >
-            <h2 className="type-label-14 m-0 text-balance text-foreground">
+            <h2 className="type-heading-16 m-0 text-balance text-foreground">
               Team not found
             </h2>
             <p className="type-copy-14 mt-1 text-muted-foreground">
@@ -786,8 +786,8 @@ function GeneralSettings({
   if (team.isDefault) {
     return (
       <Callout>
-        The default team can’t be renamed or deleted. Members and keys removed
-        from other teams land here.
+        Your org’s default team. People and keys removed from other teams land
+        here.
       </Callout>
     );
   }

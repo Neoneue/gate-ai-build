@@ -194,3 +194,50 @@ describe("charts reconcile: the KPI total equals the sum of its bars", () => {
     });
   });
 });
+
+/* ─── Chart tooltips render in a body portal and position themselves ────── */
+
+describe("chart tooltips escape their Card through a body portal", () => {
+  const chartSrc = readFileSync(
+    resolve(process.cwd(), "src/components/ui/chart.tsx"),
+    "utf8"
+  );
+
+  it("ChartTooltip passes a document.body portal to Recharts", () => {
+    expect(chartSrc).toMatch(/function ChartTooltip\(/);
+    expect(chartSrc).toMatch(/document\.body/);
+    expect(chartSrc).toMatch(/<RechartsPrimitive\.Tooltip[^>]*\bportal=\{/);
+  });
+
+  it("ChartTooltipContent owns its position (Recharts gives a portal none)", () => {
+    expect(chartSrc).toMatch(/usePortalPosition/);
+    expect(chartSrc).toMatch(/position:\s*["']fixed["']/);
+  });
+
+  it("no call site pins or escapes the tooltip by hand", () => {
+    const files = [
+      "src/pages/Security.tsx",
+      "src/pages/Dashboard.tsx",
+      "src/pages/activity/TrendCard.tsx",
+      "src/pages/requests/HeroMetric.tsx",
+      "src/pages/teams/SecurityOverviewPane.tsx",
+      "src/components/ui/compact-kpi.tsx",
+    ];
+    for (const f of files) {
+      const src = readFileSync(resolve(process.cwd(), f), "utf8");
+      expect(src, f).toMatch(/<ChartTooltip\b/);
+      expect(src, f).not.toMatch(/wrapperStyle=|allowEscapeViewBox/);
+      expect(src, f).not.toMatch(
+        /import\s*\{[^}]*\bTooltip\b[^}]*\}\s*from\s*["']recharts["']/
+      );
+      const tooltipBlocks = src.split(/<ChartTooltip\b/).slice(1);
+      for (const block of tooltipBlocks) {
+        const props = block.slice(
+          0,
+          block.indexOf("/>") === -1 ? 600 : block.indexOf("/>")
+        );
+        expect(props, `${f} ChartTooltip props`).not.toMatch(/\bposition=\{/);
+      }
+    }
+  });
+});

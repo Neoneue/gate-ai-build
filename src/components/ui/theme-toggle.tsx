@@ -1,5 +1,6 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconCrossFade } from "@/components/ui/icon-cross-fade";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
@@ -25,28 +26,11 @@ export function ThemeToggle({ className }: { className?: string }) {
       size="icon"
       variant="ghost"
     >
-      <span className="relative inline-flex size-4 items-center justify-center">
-        <Sun
-          aria-hidden
-          className={cn(
-            "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
-            isDark
-              ? "scale-[0.25] opacity-0 blur-[1px]"
-              : "scale-100 opacity-100 blur-0"
-          )}
-          strokeWidth={1.75}
-        />
-        <Moon
-          aria-hidden
-          className={cn(
-            "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
-            isDark
-              ? "scale-100 opacity-100 blur-0"
-              : "scale-[0.25] opacity-0 blur-[1px]"
-          )}
-          strokeWidth={1.75}
-        />
-      </span>
+      <IconCrossFade
+        active={isDark}
+        first={<Sun aria-hidden strokeWidth={1.75} />}
+        second={<Moon aria-hidden strokeWidth={1.75} />}
+      />
     </Button>
   );
 }

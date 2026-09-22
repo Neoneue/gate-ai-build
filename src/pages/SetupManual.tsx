@@ -137,12 +137,14 @@ export function SetupManual() {
             </span>
           </div>
           <Button
-            onClick={() =>
-              window.open(
-                "https://docs.constellationgate.ai",
-                "_blank",
-                "noopener,noreferrer"
-              )
+            nativeButton={false}
+            render={
+              // biome-ignore lint/a11y/useAnchorContent: label + icon are injected as children by Base UI's render prop at runtime
+              <a
+                href="https://docs.constellationgate.ai"
+                rel="noopener noreferrer"
+                target="_blank"
+              />
             }
             size="default"
             variant="outline"

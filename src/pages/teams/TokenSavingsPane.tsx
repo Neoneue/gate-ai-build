@@ -182,7 +182,10 @@ function OverviewSection({
   const kpis = teamSavingsKpis(team, teams, effectiveRange);
   const sparkStops = SPARK_STOPS[effectiveRange];
   const sparkLabels = sparkDates(effectiveRange, sparkStops);
-  const note = RANGE_DELTA_NOTE[range];
+  // Twin of the org page: the note describes the window the tiles actually
+  // read, so on a custom range it follows `effectiveRange` rather than
+  // claiming a comparison nobody computed.
+  const note = RANGE_DELTA_NOTE[effectiveRange];
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -252,7 +255,7 @@ function SavingsOptionsSection({
   onChange: (savings: TeamSavings) => void;
 }) {
   return (
-    <div className="mt-2 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <SectionTitle>Savings options</SectionTitle>
       </div>
@@ -336,7 +339,7 @@ function CachingCard({
         title="Caching"
       />
       <CardContent className="flex flex-col gap-3">
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card variant="inset">
           <CardContent>
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -366,7 +369,7 @@ function CachingCard({
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border border-border bg-transparent shadow-none">
+        <Card variant="inset">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1">
@@ -445,13 +448,15 @@ function BenefitList({
   outlineClassName: string;
 }) {
   return (
-    <div className={`rounded-sm border bg-card/40 p-4 ${outlineClassName}`}>
+    // Third frame in the Token savings ladder, same as the org page: outer
+    // Card 12 > option card 8 (`rounded-sm`) > this list 4 (`rounded-xs`).
+    <div className={cn("rounded-xs border bg-card/40 p-4", outlineClassName)}>
       <ul className="m-0 grid list-none @lg:grid-cols-2 grid-cols-1 gap-4 p-0">
         {benefits.map((benefit) => (
           <li className="flex items-center gap-2" key={benefit.title}>
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-primary-foreground",
+                "flex size-5 shrink-0 items-center justify-center rounded-full",
                 checkClassName
               )}
             >
@@ -468,6 +473,8 @@ function BenefitList({
                       {...props}
                       aria-label={`About ${benefit.title}`}
                       className="-m-1 inline-flex shrink-0 cursor-help rounded-sm p-1 text-muted-foreground hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip trigger must be focusable or its explanation is keyboard-unreachable (WCAG 2.1.1)
+                      tabIndex={0}
                     >
                       <Info
                         aria-hidden
@@ -512,7 +519,7 @@ function CompressionCard({
               toggle instead of an Upgrade CTA, but it keeps the blue Pro
               badge and blue checks to mark the tier the capability comes
               from. */}
-          <Card className="rounded-sm shadow-none">
+          <Card className="rounded-sm" variant="inset">
             <CardContent className="flex flex-1 flex-col">
               <div className="flex flex-1 flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">

@@ -7,6 +7,10 @@ Commit the current work to the **current branch** and update the changelog. Do *
 
 Optional hint for the commit scope/subject (use as guidance, not verbatim): $ARGUMENTS
 
+## Runs on Opus
+
+The orchestrator delegates this whole command to one `general-purpose` agent with `model: opus`, briefed with this file, the facts it needs, and the approval the user gave. Never run the git or docs steps on the orchestrator's own model (user, 2026-09-21).
+
 ## Rules
 
 - **Current branch only.** Run `git branch --show-current`. If it is `main` or `master`, STOP and tell the user — iteration happens on `dev`.

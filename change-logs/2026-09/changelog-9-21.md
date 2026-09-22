@@ -15,8 +15,110 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   lint rejected the hoist. Clean. Audit method reshaped: rule slug
   per item, day Summary, opinion scale, Patterns tail, portable template,
   600-line split rule.
+- [`audits/2026-09/audit-9-21.md`](../../audits/2026-09/audit-9-21.md):
+  rams, whole site, rams-2 to rams-15 (4 HIGH / 5 MEDIUM / 5 LOW; rams-1
+  retired as a false positive), Adverse at review, Clean after two apply
+  passes (`ac3758d`) and two smoke runs. Workflow changes in `2522402`: review
+  model by scope, full-read proof, `npm run smoke`.
+- [`audits/2026-09/audit-9-21.md`](../../audits/2026-09/audit-9-21.md):
+  impeccable, Models and Token Savings, imp-1 to imp-20 (3 HIGH / 10 MEDIUM
+  / 7 LOW), all applied in `2bb392b`. Workflow changes in `0b70d8f`: agents
+  write a report and run `check-report.mjs` to PASS, the orchestrator runs it
+  once and bounces FAILs at most three rounds; `verify-twins` resolves a route
+  to every file that renders on it; `triage-copy` sources rewrites from Notion
+  top down; `/promote` command and two skill indexes.
 
 ## Sections & surfaces
+
+### Models and Token Savings impeccable polish: 20 items, imp-1 to imp-20 (`pages/Models.tsx`, `models/FreeModels.tsx`, `models/ModelShelves.tsx`, `TokenSavings*.tsx`, `token-savings/SummaryCard.tsx`, `Policies.tsx`, `teams/PoliciesPane.tsx`, `teams/TokenSavingsPane.tsx`, `teams/budget.tsx`, `requests/RequestsTable.tsx`, `components/ui/card.tsx`, `hooks/use-is-truncated.ts`) · [2bb392b]
+
+- Before: the Free Token Savings upsell headline claimed a literal "~20%"
+  while the Compression KPI beside it read 13.7% (imp-1); cost tooltip
+  triggers on Token Savings, Messages and the budget banner were plain
+  spans no keyboard could reach (imp-2, imp-3); Models and Token Savings
+  jumped h1 to h3; a custom range showed a delta with nothing to compare
+  against; 14 nested panels hand-rolled their own inset surface classes;
+  the Summary figures each set their own baseline so the numbers drifted
+  row to row; the Default rail tile, the radius ladder and the meter fill
+  were off the ladder (the meter animated `width`); the Providers table
+  carried a Context column it had no value for; "Show more" rendered
+  whether or not the text actually clipped; the filter triggers overflowed
+  below 390px.
+- After: the headline derives from the same Compression constant the KPI
+  reads, so the two can never disagree; every tooltip trigger takes
+  `tabIndex`; `SectionTitle as="h2"` on first sections; the custom-range
+  note says what the delta is measured against; a `Card` `inset` variant
+  replaces the 14 hand-rolled panels; the Summary figures share a subgrid
+  so the baselines line up; the meter fills with `scaleX`; the Providers
+  Context column is dropped; `useIsTruncated` now measures height as well
+  as width so "Show more" is gated on real clipping; the filter triggers
+  stack at 390. LOWs: heading voices, grid breakpoints, dead classes,
+  margins, `cn()`. Enterprise pane twins fixed alongside.
+
+### rams whole-site audit applied: 14 items, rams-2 to rams-15 (`pages/*`, `components/ui/icon-cross-fade.tsx`, `layouts/DashboardChrome.tsx`) · [ac3758d]
+
+- Before: LimitsFree Create limit kept the last submission's fields on
+  reopen (rams-11); Team row-actions menu hand-built on raw Base UI
+  (rams-5); TeamDefault "Invite member" and Billing "Continue to checkout"
+  had no handler (rams-6, rams-8); Policies and Token Savings jumped h1 to
+  h3 (rams-2); Messages cost tooltip triggers were 14px targets (rams-4);
+  Invitations menu items did nothing (rams-7); Billing field errors were
+  hand-rolled `<p aria-live>` at two voices (rams-9, rams-10); Setup docs
+  links were buttons calling `window.open` (rams-12); SignIn/SignUp arrow
+  absolutely positioned (rams-13); ApiKeys `max-w-5xl` without the container
+  prefix (rams-14); TeamDetail "Team not found" h2 at label voice (rams-15);
+  theme-toggle and sidebar cross-fade duplicated (rams-3).
+- After: `resetForm()` on submit and cancel; shared `Menu` primitives; the
+  Invite dialog opens on Default; checkout closes and clears the dialog;
+  `SectionTitle as="h2"` on first sections (Policies raw h3 becomes h2 at
+  the same 16 voice); `p-1 -m-1` on the triggers; resend / copy / revoke
+  wired with the site toast; `FieldError` in both Billing twins;
+  `Button render={<a/>} nativeButton={false}`; `data-icon="inline-end"`;
+  `@5xl:max-w-5xl`; `type-heading-16`; one `IconCrossFade` primitive.
+  Residue: PoliciesEnterprise still h1 to h3 via the shared pane (decision
+  pending). Audit: `audits/2026-09/audit-9-21.md` (rams-1 retired as a
+  reviewer false positive).
+
+### Chart tooltips portal to body; recipe enforced by design.md, lint check 7 and a test (`components/ui/chart.tsx`, `compact-kpi.tsx`, `pages/Security.tsx`, `pages/requests/HeroMetric.tsx`) · [ef71075]
+
+- Before: `ChartTooltip` was the raw Recharts Tooltip rendered inside the
+  chart container; Cards are `overflow-hidden`, so the Security Overview
+  four-row box (130px in a 96px band) clipped at the card edge. Three sites
+  pinned `position={{ y }}` to nudge it, which only moved the clipping.
+- After: `ChartTooltip` passes `portal={document.body}`; `ChartTooltipContent`
+  positions itself (`usePortalPosition`: fixed, cursor + 12px, left-flip
+  near the right viewport edge, 8px clamp) because Recharts 3 gives a portal
+  no position. Pins and their comments removed. Visual recipe byte-identical.
+  Verified in Playwright on `/security`, `/overview`, `/activity`.
+  Enforcement: design.md "Chart tooltip & legend" Positioning paragraph;
+  `lint:design` check 7 `[chart-tooltip]` (no waiver) fails a recharts
+  `Tooltip` import or `position=` / `wrapperStyle=` / `allowEscapeViewBox`
+  on `ChartTooltip`; `design-invariants.test.ts` asserts the portal and
+  sweeps all six chart sites. Probe: re-adding the pin failed both.
+
+### Limits, Settings and Teams copy grounded in the PRDs (`pages/Limits.tsx`, `pages/LimitsFree.tsx`, `pages/Upgrade.tsx`, `pages/Settings.tsx`, `pages/TeamDetailEnterprise.tsx`, `pages/teams/dialogs.tsx`) · [f34ca3d]
+
+- Before: Limits intro "Enforce spend, token, and request rate caps at the
+  org, project, or key level. Limits run inline with no separate billing
+  system to wire up."; Create-limit description "Block messages that exceed
+  the threshold (returns 429)." and block-mode hint "Messages that exceed
+  the threshold are blocked (returns 429)."; Settings email helper "Verified
+  at sign-in; changes require identity-provider re-verification."; default
+  team callout "The default team can't be renamed or deleted. Members and
+  keys removed from other teams land here."; Add members "Only existing org
+  members can be added, and their keys move with them. This doesn't send
+  invites."
+- After: intro "Cap spend, tokens, or requests for the whole org, a team, or
+  a single key, and choose whether crossing a cap blocks or only notifies."
+  (Gateway PRD usage limits + H2 budgets; project scope and request rate
+  were unsupported); description "Cap spend, tokens, or requests on any
+  scope."; hint "Requests over the cap are refused."; email helper removed
+  (Accounts PRD: Cognito email + password, no IdP re-verification);
+  callout "Your org's default team. People and keys removed from other
+  teams land here."; Add members "Pick people already in your org. Only
+  their new traffic counts here; past requests stay with their old team."
+  (H2 PRD 8.1 reassignment). Found by `npm run lint:copy` (new, opt-in Jev
+  copy lint, e7553bb); truth-checked against Notion by hand.
 
 ### Enterprise twins: Summary card on Token Savings, shared titles on Token Savings and Policies (`pages/TokenSavingsEnterprise.tsx`, `pages/PoliciesEnterprise.tsx`) · [1d2de90]
 

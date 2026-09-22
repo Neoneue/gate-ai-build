@@ -79,6 +79,7 @@ import {
   sortModels,
   TOTAL_PROVIDERS,
 } from "@/data/models";
+import { useIsTruncated } from "@/hooks/use-is-truncated";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatNumber, linesToString } from "@/lib/formatters";
@@ -480,7 +481,7 @@ function Toolbar({
       <Select onValueChange={onProviderChange} value={provider}>
         <SelectTrigger
           aria-label="Filter by provider"
-          className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+          className="min-w-0 @2xl:flex-none @xl:flex-1 @xl:basis-auto basis-full border-border bg-card text-foreground"
         >
           <SelectValue />
         </SelectTrigger>
@@ -499,7 +500,7 @@ function Toolbar({
           it is a filter, and each toggle is a cheap, reversible narrowing. */}
       <MultiSelect
         aria-label="Filter by features"
-        className="w-auto min-w-0 @2xl:flex-none flex-1"
+        className="w-auto min-w-0 @2xl:flex-none @xl:flex-1 @xl:basis-auto basis-full"
         onValueChange={(v) => onFeaturesChange(v as Capability[])}
         options={CAPABILITY_OPTIONS}
         placeholder="All features"
@@ -510,7 +511,7 @@ function Toolbar({
       <Select onValueChange={(v) => onSortChange(v as ModelSort)} value={sort}>
         <SelectTrigger
           aria-label="Sort"
-          className="min-w-0 @2xl:flex-none flex-1 border-border bg-card text-foreground"
+          className="min-w-0 @2xl:flex-none @xl:flex-1 @xl:basis-auto basis-full border-border bg-card text-foreground"
         >
           <SelectValue />
         </SelectTrigger>
@@ -837,6 +838,11 @@ function ModelDetailPage({
     "TypeScript"
   );
   const [showFullDesc, setShowFullDesc] = useState(false);
+  // The toggle only earns its place when the description is REALLY clamped:
+  // a 75-character blurb never engages `line-clamp-3`, and the control then
+  // toggled text that already fit and moved nothing (ModelShelves.tsx is the
+  // precedent for measuring instead of assuming).
+  const { ref: descRef, isTruncated: descClipped } = useIsTruncated();
   const activeLines = useMemo(() => {
     if (lang === "TypeScript") {
       return tsSnippet(model.id);
@@ -923,25 +929,30 @@ function ModelDetailPage({
               showFullDesc ? "text-pretty" : "line-clamp-3"
             )}
             id="model-description"
+            ref={descRef}
           >
             {model.description}
           </p>
-          <TextLink
-            aria-controls="model-description"
-            aria-expanded={showFullDesc}
-            className="type-label-14 group inline-flex w-fit items-center gap-1 hover:text-foreground focus-visible:text-foreground"
-            onClick={() => setShowFullDesc((v) => !v)}
-          >
-            {showFullDesc ? "Show less" : "Show more"}
-            <ChevronDown
-              aria-hidden="true"
-              className={cn(
-                "size-3.5 shrink-0 text-muted-foreground transition-[color,rotate] duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
-                showFullDesc && "rotate-180"
-              )}
-              strokeWidth={1.75}
-            />
-          </TextLink>
+          {/* Expanded, the clamp is off and nothing is clipped, so the measure
+              reads false — `showFullDesc` keeps "Show less" on screen. */}
+          {descClipped || showFullDesc ? (
+            <TextLink
+              aria-controls="model-description"
+              aria-expanded={showFullDesc}
+              className="type-label-14 group inline-flex w-fit items-center gap-1 hover:text-foreground focus-visible:text-foreground"
+              onClick={() => setShowFullDesc((v) => !v)}
+            >
+              {showFullDesc ? "Show less" : "Show more"}
+              <ChevronDown
+                aria-hidden="true"
+                className={cn(
+                  "size-3.5 shrink-0 text-muted-foreground transition-[color,rotate] duration-150 ease-out group-hover:text-foreground motion-reduce:transition-none",
+                  showFullDesc && "rotate-180"
+                )}
+                strokeWidth={1.75}
+              />
+            </TextLink>
+          ) : null}
         </div>
       </div>
 
@@ -1136,8 +1147,6 @@ function providerSortValue(
   switch (key) {
     case "provider":
       return PROVIDER_META[p.id].detailLabel;
-    case "context":
-      return model.contextWindow;
     case "latency":
       return p.latencyP50Ms;
     case "throughput":
@@ -1176,15 +1185,6 @@ function ProvidersTable({ model }: { model: Model }) {
               sortKey="provider"
             >
               Provider
-            </SortableTableHead>
-            <SortableTableHead
-              className="whitespace-nowrap"
-              numeric
-              onSort={toggleSort}
-              sort={sort}
-              sortKey="context"
-            >
-              Context
             </SortableTableHead>
             <SortableTableHead
               className="whitespace-nowrap"
@@ -1251,7 +1251,7 @@ function ProvidersTable({ model }: { model: Model }) {
                   <div className="flex min-w-0 items-center gap-2">
                     <ProviderAvatar decorative provider={p.id} />
                     <span
-                      className="type-copy-14 truncate text-foreground"
+                      className="type-label-14 truncate text-foreground"
                       title={PROVIDER_META[p.id].detailLabel}
                     >
                       {PROVIDER_META[p.id].detailLabel}
@@ -1265,7 +1265,6 @@ function ProvidersTable({ model }: { model: Model }) {
                     />
                   </div>
                 </TableCell>
-                <NumericCell value={formatTokenCount(model.contextWindow)} />
                 <NumericCell
                   value={
                     p.latencyP50Ms === null

@@ -60,6 +60,16 @@
  *     `bg-neutral-900/N` (scrim: `bg-overlay`). Non-comment lines in
  *     `src/pages`, `src/layouts`, `src/components`. Same waiver as 5.
  *
+ *  7. CHART TOOLTIP OUTSIDE THE PORTAL RECIPE — design.md §"Chart tooltip &
+ *     legend", Positioning (2026-09-21). Every chart tooltip renders through
+ *     `ChartTooltip` in `components/ui/chart.tsx`, which portals to
+ *     `document.body` and positions itself. Flagged anywhere in `src` except
+ *     that file: a `recharts` import naming `Tooltip`, or the props
+ *     `position=`, `wrapperStyle=`, `allowEscapeViewBox` on a tooltip line.
+ *     Those were the pre-portal workarounds; a Card is `overflow-hidden`, so
+ *     a tooltip drawn inside the chart container clips the moment it is
+ *     taller than the chart band. No waiver: the recipe is the only shape.
+ *
  * Tracking / width / translate arbitrary values are NOT linted here — those
  * have legitimate documented uses (PageTitle `-tracking-[1px]`, container-query
  * layout clamps). The closed-set rule still governs them by discipline.
@@ -139,6 +149,14 @@ const RAW_PALETTE_HINT = {
   "text-neutral-900": "text-foreground",
   "text-neutral-500": "text-muted-foreground",
 };
+
+// --- 7. chart tooltip outside the portal recipe --------------------------
+// chart.tsx owns the recipe; src/test asserts it and quotes the banned props.
+const CHART_TOOLTIP_OWNER = /^src\/(?:components\/ui\/chart\.tsx$|test\/)/;
+const RECHARTS_TOOLTIP_IMPORT_RE =
+  /import\s*\{[^}]*\bTooltip\b[^}]*\}\s*from\s*["']recharts["']/;
+const CHART_TOOLTIP_PROP_RE =
+  /\b(?:position=\{|wrapperStyle=|allowEscapeViewBox)/;
 
 // A line that is only a comment never paints anything.
 const COMMENT_LINE_RE = /^\s*(?:\/\/|\*|\/\*|\{\/\*)/;
@@ -338,6 +356,30 @@ for (const rawFile of files) {
       }
     }
 
+    if (!(CHART_TOOLTIP_OWNER.test(file) || COMMENT_LINE_RE.test(line))) {
+      if (RECHARTS_TOOLTIP_IMPORT_RE.test(line)) {
+        violations.push({
+          file,
+          line: i + 1,
+          kind: "chart-tooltip",
+          text: "Tooltip imported from recharts — use ChartTooltip from components/ui/chart (portalled, self-positioning; design.md Chart tooltip & legend)",
+        });
+      }
+      if (
+        /<ChartTooltip\b/.test(
+          lines.slice(Math.max(0, i - 12), i + 1).join("\n")
+        ) &&
+        CHART_TOOLTIP_PROP_RE.test(line)
+      ) {
+        violations.push({
+          file,
+          line: i + 1,
+          kind: "chart-tooltip",
+          text: `${line.match(CHART_TOOLTIP_PROP_RE)[0]} on ChartTooltip — the portal recipe positions itself; this prop only moves the clipping (design.md Chart tooltip & legend)`,
+        });
+      }
+    }
+
     const jsFontM = line.match(JS_FONT_SIZE_RE);
     if (jsFontM && !TYPE_SCALE.has(Number(jsFontM[1]))) {
       violations.push({
@@ -365,5 +407,5 @@ if (violations.length > 0) {
 }
 
 console.log(
-  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page, no raw color literal or palette atom with a semantic twin."
+  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page, no raw color literal or palette atom with a semantic twin, no chart tooltip outside the portal recipe."
 );

@@ -24,6 +24,10 @@ export type ChartConfig = Record<
 
 type ChartContextProps = {
   config: ChartConfig;
+  /** The chart's outer div. Tooltips portal to `document.body`, so they read
+   *  this element's rect to turn a chart-relative `coordinate` into viewport
+   *  coordinates. */
+  containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
@@ -57,9 +61,15 @@ function ChartContainer({
 }) {
   const uniqueId = React.useId();
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`;
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const contextValue = React.useMemo(
+    () => ({ config, containerRef }),
+    [config]
+  );
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       {/* The '#ccc' / '#fff' below are ATTRIBUTE SELECTORS matching Recharts'
       own default strokes so they can be re-pointed to tokens; no colour
       is applied (design-allow-raw-color). */}
@@ -70,6 +80,7 @@ function ChartContainer({
         )}
         data-chart={chartId}
         data-slot="chart"
+        ref={containerRef}
         {...props}
       >
         <ChartStyle config={config} id={chartId} />
@@ -117,7 +128,72 @@ ${colorConfig
   );
 };
 
-const ChartTooltip = RechartsPrimitive.Tooltip;
+/** Every chart tooltip escapes its Card. `Card` is `overflow-hidden`, and a
+ *  Recharts tooltip renders inside the chart container, so any box taller than
+ *  the chart band used to clip. Portalling to `document.body` lifts it out;
+ *  Recharts gives a portalled wrapper NO positioning, so `ChartTooltipContent`
+ *  positions itself (fixed, from the container rect + `coordinate`). */
+function ChartTooltip(
+  props: React.ComponentProps<typeof RechartsPrimitive.Tooltip>
+) {
+  const portal = typeof document === "undefined" ? null : document.body;
+
+  return <RechartsPrimitive.Tooltip portal={portal} {...props} />;
+}
+
+const TOOLTIP_CURSOR_GAP = 12;
+const TOOLTIP_VIEWPORT_MARGIN = 8;
+
+/** Turns the chart-relative `coordinate` Recharts hands the content into fixed
+ *  viewport coordinates, clamped to the viewport: right of the cursor by
+ *  default, flipped to its left when the box would overflow the right edge,
+ *  vertically centred on the cursor and clamped 8px off either edge. */
+function usePortalPosition(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  boxRef: React.RefObject<HTMLDivElement | null>,
+  coordinate: { x?: number; y?: number } | undefined,
+  active: boolean | undefined
+) {
+  const [style, setStyle] = React.useState<React.CSSProperties | null>(null);
+  const x = coordinate?.x;
+  const y = coordinate?.y;
+
+  React.useLayoutEffect(() => {
+    const box = boxRef.current;
+    const chart =
+      containerRef.current?.querySelector(".recharts-wrapper") ??
+      containerRef.current;
+
+    if (!(active && box && chart) || x == null || y == null) {
+      return;
+    }
+
+    const rect = chart.getBoundingClientRect();
+    const { width, height } = box.getBoundingClientRect();
+    const cursorX = rect.left + x;
+    const cursorY = rect.top + y;
+
+    let left = cursorX + TOOLTIP_CURSOR_GAP;
+
+    if (left + width > window.innerWidth - TOOLTIP_VIEWPORT_MARGIN) {
+      left = cursorX - TOOLTIP_CURSOR_GAP - width;
+    }
+
+    left = Math.min(
+      Math.max(left, TOOLTIP_VIEWPORT_MARGIN),
+      Math.max(window.innerWidth - width - TOOLTIP_VIEWPORT_MARGIN, 0)
+    );
+
+    const top = Math.min(
+      Math.max(cursorY - height / 2, TOOLTIP_VIEWPORT_MARGIN),
+      Math.max(window.innerHeight - height - TOOLTIP_VIEWPORT_MARGIN, 0)
+    );
+
+    setStyle({ left, position: "fixed", top });
+  }, [active, boxRef, containerRef, x, y]);
+
+  return style;
+}
 
 /** The ONE chart-tooltip recipe (design.md "Chart tooltip & legend",
  *  2026-09-20). Consumers pass data plus a `valueFormatter`; they never draw a
@@ -137,6 +213,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
+  coordinate,
 }: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
@@ -146,6 +223,9 @@ function ChartTooltipContent({
     labelKey?: string;
     /** Formats every numeric value in the box. Falls back to `formatNumber`. */
     valueFormatter?: (value: number) => string;
+    /** Cursor position, chart-relative. Recharts passes it to `content`; the
+     *  portalled box turns it into viewport coordinates. */
+    coordinate?: { x?: number; y?: number };
   } & Omit<
     RechartsPrimitive.DefaultTooltipContentProps<
       TooltipValueType,
@@ -153,7 +233,14 @@ function ChartTooltipContent({
     >,
     "accessibilityLayer"
   >) {
-  const { config } = useChart();
+  const { config, containerRef } = useChart();
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  const positionStyle = usePortalPosition(
+    containerRef,
+    boxRef,
+    coordinate,
+    active
+  );
 
   const tooltipLabel = React.useMemo(() => {
     if (hideLabel || !payload?.length) {
@@ -204,9 +291,18 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-2 rounded-sm border border-border bg-card px-3 py-2 text-foreground text-xs shadow-md",
+        "pointer-events-none z-50 grid min-w-32 items-start gap-2 rounded-sm border border-border bg-card px-3 py-2 text-foreground text-xs shadow-md",
         className
       )}
+      ref={boxRef}
+      style={
+        positionStyle ?? {
+          left: 0,
+          position: "fixed",
+          top: 0,
+          visibility: "hidden",
+        }
+      }
     >
       {nestLabel ? null : tooltipLabel}
       <div className="grid gap-2">
