@@ -29,7 +29,8 @@ indexed at `agents/front-end-developer/skills/INDEX.md`.
 - **Copy change:** `triage-copy` -> proposal with source -> user go ->
   edit -> `lint:copy` re-run -> `/commit`.
 - **Ship:** `/commit-push` on dev -> user says promote -> `/promote`.
-- **End of day:** `/end-session` -> `SAFE TO /clear` -> user clears.
+- **End of day:** `/end-session` (commit-push + handoff, never promotes) ->
+  `SAFE TO /clear` -> user clears. Promotion to `main` stays manual.
 
 ## Scripts these skills own
 
