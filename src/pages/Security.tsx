@@ -188,12 +188,6 @@ function HeroMetricCard({
                 stroke: "var(--color-neutral-500)",
                 strokeDasharray: "3 3",
               }}
-              /* Four rows (114px) outgrow the 96px chart band and the Card
-                 clips overflow, so the y is pinned: the box sits centred on
-                 the band, spilling 9px into the gap above and the card
-                 padding below, and never flips off the bottom. x still
-                 follows the cursor. */
-              position={{ y: -9 }}
             />
             <Area
               dataKey="requests"
