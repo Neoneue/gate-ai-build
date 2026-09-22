@@ -15,6 +15,9 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   lint rejected the hoist. Clean. Audit method reshaped: rule slug
   per item, day Summary, opinion scale, Patterns tail, portable template,
   600-line split rule.
+- [`audits/2026-09/audit-9-21.md`](../../audits/2026-09/audit-9-21.md):
+  rams, whole site, rams-2 to rams-15 (4 HIGH / 5 MEDIUM / 5 LOW; rams-1
+  retired as a false positive), Adverse at review.
 
 ## Sections & surfaces
 
