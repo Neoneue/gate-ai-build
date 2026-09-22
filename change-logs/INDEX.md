@@ -12,11 +12,14 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-22](./2026-09/changelog-9-22.md)
 
 - Manage subscription is a page, and Enterprise is the third rung
-- Contact support / Book a demo placeholder dialog with four `?form=` states
+- Contact and Book a demo: one modal, our own form
+- A four-rung lift ramp, and a Button family that uses it
+- Plan cards get the Card tier elevation they never had
 - `?manage=1` retired; upgrade CTAs point at the `/plans` page
 - Enterprise gets a tinted surface wash token
 - The 12px line box goes to 12/18 across copy, label and mono
 - Manage subscription ladder test, 15 cases
+- Contact dialog behaviour, and the ladder suite grows
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 

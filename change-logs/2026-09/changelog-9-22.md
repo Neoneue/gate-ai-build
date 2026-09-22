@@ -44,6 +44,68 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   pages at 1440 and 390: no clipped 12px text, no document overflow, badge
   height 20px and table rows 48px+ throughout.
 
+### A four-rung lift ramp, and a Button family that uses it (`src/index.css`, `components/ui/button.tsx`, design.md §2 "Lift ramp") · [a8901a2]
+
+- Before: `outline` and `ghost` hover to `bg-muted`, an opaque grey. On the
+  Manage subscription plan cards that grey covered the Pro card's blue wash
+  and the Enterprise card's violet, so a card lost its colour under its own
+  button. The page had been papering over the rest state with a call-site
+  `bg-transparent`, which did nothing for the hover.
+- After: `--lift-4` / `-8` / `-16` / `-24`, pure alpha over whatever sits
+  beneath, black in light and white in dark, each aliased so it reads as
+  `hover:bg-lift-16` with the rung number visible at the call site. The ramp
+  is the unit, not the step: rung 8 is the hover default and the other
+  three are named for a row touch (4), a heavier deliberate hover (16) and a
+  press (24). Three have no consumer today and design.md records that as
+  deliberate, so the next weight is a lookup rather than a fresh ad-hoc
+  alpha. Rung 16 was built and measured first, read about five times heavier
+  than the `bg-muted` hover the rest of the app uses, and 8 is the settled
+  default.
+- It flips by theme, unlike `--overlay` beside it: a scrim dims a page the
+  same way in both themes, a lift has to work WITH the surface under it, and
+  a white veil over a near-white card does nothing.
+- Four ADDITIVE Button variants, `lift` / `lift-pro` / `lift-enterprise` /
+  `lift-ghost`: transparent fill, `hover:bg-lift-8`, edge and ink from
+  `--border` or the matching tier family. `outline` and `ghost` are
+  untouched, so no existing consumer moves. `shadow-xs` is deliberately
+  absent: a drop shadow under a transparent control on a tinted card reads
+  as a seam.
+- On the plan cards the focal card's button wears that card's tier
+  (`lift-pro` on the Pro view, `lift-enterprise` on the Enterprise view),
+  every plain card's button is neutral `lift`, and "Book a demo" is
+  `lift-ghost`, so the whole page hovers on one rung and differs only in
+  edge. The mapping lives in one `liftVariant()` on the page, because it
+  depends on the CARD, not on the action; the data keeps saying what a
+  control means. The call-site `bg-transparent` is gone, the variant covers
+  it. "Upgrade to Pro" keeps `promo` untouched; a fill has no tint to
+  protect.
+- Measured at rung 8, card to hover: plain `rgb(255,255,255)` to
+  `rgb(235,235,235)` light and `rgb(23,23,23)` to `rgb(41,41,41)` dark; Pro
+  `rgb(246,250,255)` to `rgb(227,229,235)` and `rgb(13,15,23)` to
+  `rgb(32,34,41)`; Enterprise `rgb(249,248,255)` to `rgb(229,229,235)` and
+  `rgb(17,14,23)` to `rgb(36,33,41)`. Every hovered value keeps its card's
+  channel spread, which is the whole test. Focus rings hold at 6.94:1 to
+  7.81:1 against every card surface in both themes.
+
+### Plan cards get the Card tier elevation they never had (`pages/ManageSubscription.tsx`) · [a8901a2]
+
+- Before: the plan cards are a hand-rolled `div` (`rounded-md border p-4`)
+  rather than a `<Card>`, because they subgrid across the ladder, so they
+  never picked up the primitive's `shadow-xs` and sat flat on the canvas
+  while every other card on the site is raised.
+- After: `shadow-xs` on all three cards, on every view, the tinted focal card
+  included. Same rung the `Card` primitive uses (design.md §5.1 Card /
+  Surface tier, `border border-border shadow-xs` at `rounded-md`), not a
+  bespoke value. Measured in light: 1px under a card the canvas reads
+  `rgb(247,247,247)` against `rgb(250,250,250)` 14px away, so the lift is
+  visible on all three. In dark it reads `rgb(10,10,10)` against
+  `rgb(10,10,10)`, effectively invisible, which is the documented and
+  knowingly accepted behaviour of the single Tailwind scale (§5.1, "Dark
+  mode reads softer... the `border-border` hairline is now doing most of the
+  separation work"). The tinted cards need nothing different and get
+  nothing different. A test now asserts the elevation so it cannot be
+  dropped again.
+
 ## Sections & surfaces
 
 ### Manage subscription is a page, and Enterprise is the third rung (`pages/ManageSubscription.tsx`, `data/plans.ts`, `App.tsx`, `pages/Billing.tsx`, `pages/BillingFree.tsx`, `pages/BillingEnterprise.tsx`) · [48aa4a8]
@@ -97,22 +159,28 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   Enterprise is never focal on the other two views. Every other card is
   plain `border-border bg-card` with muted icons. The Enterprise-org tint is
   what finally gives `--tier-enterprise-surface-wash` a consumer.
-- Fill rule: at most ONE filled control per view, and it need not sit on the
-  focal card. "Upgrade to Pro" (`variant="promo"`, SparklesIcon) on the
-  Free-org and Default views; "Contact support" (`variant="default"`) on the
-  Enterprise card on the Pro-org view, which has no upgrade left to sell.
-  Everything else is `outline`, including "Back to Billing", which keeps its
-  ArrowLeft and its transparent fill on every view. The Enterprise-org view
-  deliberately has NO filled control: the violet tint and the "Current plan"
-  badge already mark that card, and a fill would be a third signal saying
-  the same thing.
-- Badges: exactly ONE per view, saying one of two things. "Most popular"
-  where the view still has an upsell to make, "Current plan" where it names
-  the rung the org is already on. Per view: Free-org and Default "Most
-  popular" on Pro; Pro-org "Current plan" on Pro; Enterprise-org "Current
-  plan" on Enterprise, plus "Current plan" on the FREE card on those first
-  two views, which is the one case where a view carries two: one naming the
-  current plan, one selling the next. The badge takes its CARD's tier tone
+- Fill rule: the ONLY filled control on the page is "Upgrade to Pro"
+  (`variant="promo"`, SparklesIcon), so only the Free-org and Default views
+  carry one. The Pro-org and Enterprise-org views have none: a Pro org has
+  nowhere left to upgrade and an Enterprise org is already at the top, and
+  on both the tint plus the "Current plan" badge already mark the card. The
+  contact primary is `outline` on every view (it was briefly `default` on
+  the Pro-org view; with "Book a demo" ghost beneath it the outline already
+  carries the hierarchy, and the fill made Enterprise shout at a Pro
+  customer). Everything else is `outline`, apart from the one fenced ghost.
+- "Book a demo" is `variant="ghost"`, sitting directly under the bordered
+  contact primary so the pair reads primary-then-quieter. It is the only
+  ghost on the page and `PlanAction.variant` documents the fence: ghost is
+  allowed ONLY for a paired secondary with a bordered sibling above it. A
+  ghost on a LONE button was tried and rejected the same day; with nothing
+  to anchor it an unbordered control floats in an empty slot and stops
+  reading as a button.
+- Badges say one of two things: "Most popular" where the view still has an
+  upsell to make, "Current plan" where they name the rung the org is already
+  on. Per view: Free-org and Default carry TWO, "Current plan" on Free plus
+  "Most popular" on Pro, the one case where a view names the current plan
+  and sells the next at once; Pro-org carries one, "Current plan" on Pro;
+  Enterprise-org carries one, "Current plan" on Enterprise. The badge takes its CARD's tier tone
   rather than neutral grey, so the pill belongs to the wash under it: Badge
   `pro` on the Pro card, Badge `enterprise` on the Enterprise card, both
   primitive variants used unchanged, no border and no call-site override.
@@ -122,41 +190,68 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   The header row carries `min-h-7` so an unbadged card keeps the badged
   card's height.
 - An Enterprise org shows no empty slot: its own card is the focal one and
-  takes the same "Back to Billing" link every current plan wears, while
-  the Free and Pro rungs each take an `outline` "Contact support" with the
-  Headset glyph opening the contact dialog, which is the PRD's "Support
-  routing in place of self-serve upgrade". No `ghost` buttons on the page.
+  takes the same "Go to Overview" link every current plan wears, while
+  the Free and Pro rungs each take an `outline` "Contact support" opening
+  the contact dialog, which is the PRD's "Support routing in place of
+  self-serve upgrade".
 - Enterprise rung: a bare "Custom" price with no unit beside it (the card
   renders a unit only when its data names one, so nothing trails "Custom"),
   four features (org and team forced settings per §8.5, private cloud
   deployment, custom retention, procurement support) and the actions
-  "Contact support" + "Book a demo" on the Free and Pro views: the first
+  "Contact us" (`outline`) + "Book a demo" (`ghost`) on the Free and Pro
+  views: the first
   card in the system to carry two. The seat basis lives in the caption,
   "Billed per seat, changes go through Support." (seat-based Stripe billing,
   H2 PRD §3 and §10); on the Enterprise-org view it is "Plan changes go
   through Support.", dropping the seat half because that org's Billing page
   already shows the seat charge. Both captions carry the same two facts the
   longer sentence did and add none.
-- The card for the plan the org is already on carries an `outline` "Back to
-  Billing" link (`Button render={<Link>} nativeButton={false}`) with a
-  `data-icon="inline-start"` `ArrowLeft`, rather than a disabled "Your
-  current plan" label, on all three views. Arrow, not the `ChevronLeft`
-  `BackLink` uses: the site's only button uses of the chevron are icon-only
-  (Pagination previous, Calendar nav), and a labelled button takes the Arrow
-  family, as `ArrowRight data-icon="inline-end"` does on SignIn / SignUp /
-  onboarding. There is no disabled control anywhere on the page.
-- Copy: the Free rung's action on the Pro-org view reads "Downgrade plan",
-  the ticket's own wording, which is why this one string departs from the
-  dialog copy the rest of the ladder preserves verbatim. Its aria-label is
+- The card for the plan the org is already on carries a label-only
+  `outline` "Go to Overview" link (`Button render={<Link>}
+  nativeButton={false}` to `withTierOf(pathname, "/overview")`). That card
+  has no plan action to offer, so
+  the slot first held a disabled "Your current plan" label and then a "Back
+  to Billing" link that only duplicated the page's own BackLink; sending the
+  user INTO the product instead is the v0 "Start Building" pattern. No
+  back-pointing arrow, because this is forward navigation, and returning to
+  Billing remains the BackLink's job. Applies on the Free, Default, Pro and
+  Enterprise views, resolving to `/overview-free`, `/overview-default`,
+  `/overview` and `/overview-enterprise`. There is no disabled control
+  anywhere on the page.
+- Copy: the Free rung's action on the Pro-org view reads "Downgrade to
+  Free", from the ticket's "Downgrade plan", which is why this one string
+  departs from the dialog copy the rest of the ladder preserves verbatim.
+  It names its TARGET the way every other button on the page does ("Upgrade
+  to Pro", "Go to Overview"); a bare "Downgrade plan" read as an action
+  against the Free card rather than a move to it. Its aria-label is
   "Downgrade to the Free plan", the same register. It still opens the shared
   `CancelPlanDialog` unchanged and stays `outline`.
-- Copy: the Enterprise card's primary action reads "Contact support" on
-  every view, with the site's `Headset` glyph in the inline-start slot, the
-  same label and glyph the Free and Pro rungs use on the Enterprise-org
-  view: one label for every route to a human. The dialog it opens is titled
-  "Contact support" to match. "Book a demo" keeps its label, stays `outline`
-  and takes no glyph, there being no site precedent for one on a scheduling
-  action.
+- Copy: TWO contact paths, two labels. On the Free-org, Default and Pro-org
+  views the Enterprise card's primary reads "Contact us", the ticket's own
+  wording for the sales action: that org is a prospect. On the
+  Enterprise-org view the Free and Pro rungs read "Contact support": that
+  org is an existing customer routing to Support, not a prospect reaching
+  sales. Both open the same dialog, which takes its TITLE from the label of
+  the button that opened it, so the heading always matches the control the
+  user clicked. "Book a demo" keeps its label and takes no glyph, there
+  being no site precedent for one on a scheduling action.
+- Copy (PRD-sourced, after a `triage-copy` pass): on the Enterprise-org view
+  the FREE rung's caption reads "Available through Support." instead of
+  "Free to use, forever", so both downgrade paths on that view read alike.
+  Source: the Pro rung's existing caption on the same view plus the org/team
+  PRD scope line that the Enterprise entitlement is granted and revoked by
+  Support in the admin portal, with no self-upgrade. The Free-org, Default
+  and Pro-org views keep "Free to use, forever" unchanged; the string is now
+  one `SUPPORT_ROUTE_CAPTION` constant shared by both rungs.
+- Copy (PRD-sourced): the forced-settings feature detail reads "Compression
+  and security policies every team follows." instead of "Compression and
+  security policies teams cannot override." Same fact, stated positively,
+  dropping the negative mechanism. Source: PRD 8.5, "Forced settings apply
+  to the team's traffic and are enforced at the gateway; teams see them as
+  locked." The TITLE "Org and team forced settings" deliberately stays: it
+  is the PRD's own term, which is also why `lint:copy` scores it
+  prd-echo 0.78 without flagging it (`mechanic` 0.55, and both questions
+  must clear 0.7). The six benefits labels are untouched, as inherited.
 - Copy: the Pro rung's caption on the Enterprise-org view reads "Available
   through Support." rather than "Available through Constellation Support",
   matching the two Enterprise captions beside it. "Constellation Support" is
@@ -173,6 +268,13 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   box the cards grew to 591px on the Free and Pro views and 547px on
   Enterprise (from 547 / 503), still inside a 900px viewport without
   scrolling.
+- Only the PROMOTED button wears a glyph, at most one per view: the
+  SparklesIcon on "Upgrade to Pro". The cards already carry a `CircleCheck`
+  on every feature row, so a glyph on every control read as decoration
+  rather than as signal. The contact primary lost its Headset, "Go to
+  Overview" is label-only, and "Downgrade to Free" and "Book a demo" were
+  already bare. `PlanAction.icon` narrows to `"sparkles"` and the `Headset`
+  / `Home` imports are gone.
 - Feature rows take ONE shared glyph, lucide `CircleCheck` (site precedent:
   `copy-button.tsx`, `ask-ai-message.tsx`), at the same `size-4 mt-1
   shrink-0` / stroke 1.75 the per-feature icons used, `text-tier-pro` on the
@@ -185,24 +287,73 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   entrance and `gsap` / `@gsap/react` are not imported here.
   `[data-plan-card]` survives only as the hook the tests scope to.
 
-### Contact support / Book a demo placeholder dialog (`pages/ManageSubscription.tsx`) · [48aa4a8]
+### Contact and Book a demo: one modal, our own form (`pages/ManageSubscription.tsx`, `data/plans.ts`, `data/team-members.ts`) · [a8901a2]
 
-- Before: nothing. Enterprise had no self-serve surface of any kind.
-- After: ONE Base UI `Dialog` serving both actions; `kind` picks the title
-  ("Contact support" / "Book a demo"), the prompt field and the submit verb
-  ("Send" / "Book"). Its body is a bordered `rounded-md` `aria-busy` frame
-  standing in for the embedded HubSpot form and scheduler, with four states
-  driven by a one-way `?form=loading|error|done` preview param (absent or
-  unknown is `ready`), read on every render and never stripped: the same
-  contract `?state=` has on Billing. `ready` is a mock Name / Work email /
-  prompt form; `loading` is the `Skeleton` primitive; `error` is the site's
-  `OctagonAlert` inline pattern plus a no-op "Try again" outline button;
-  `done` is a confirmation with a "Done" close. Footer is "Cancel" ghost
-  plus the primary, 24px above the buttons from `DialogFooter`'s `mt-2` on
-  the content grid's `gap-4`. Width capped at `!max-w-[560px]` with
-  `w-[calc(100%-2rem)]` keeping the phone gutters. Escape closes and returns
-  focus to the exact button that opened it (`finalFocus`). No network, no
-  analytics; the two confirmation strings are marked draft in code.
+- Before: a bordered placeholder frame in a Dialog, three generic fields,
+  standing in for an embedded HubSpot form on both flows. It was briefly
+  converted to a nested page earlier in the day and reverted the same day:
+  the flow is a short form, not a detail surface, so it is a modal.
+- The dialog carries the LABEL of the button that opened it, and that label
+  is `contactFlowTitle(tier, flow)` from `data/plans.ts`, the same function
+  that builds the button. Heading and control say the same string by
+  construction, not by wiring: "Contact us" on the Free, Default and Pro
+  views, "Contact support" on the Enterprise view, "Book a demo" from
+  either. Escape closes and `finalFocus` returns focus to the exact opener.
+- TWO bodies now, and the BORDER is the difference. The demo really does
+  host a vendor-rendered scheduler in an iframe we cannot style, so its
+  region keeps a visible `rounded-md` edge: the border says "this is theirs".
+  The contact body is our own form on our own dialog, so it has no inner
+  frame at all, because a card inside a card is chrome with nothing to say.
+  `aria-busy` moved onto whichever region wraps the content, so loading is
+  still announced in both.
+- CONTACT is now OUR form, not an embed placeholder: on a signed-in surface
+  the guidance is to build the form in our own framework and submit to
+  HubSpot's Forms Submission API, so it uses our tokens, our voices and our
+  own submit. Four fields and no more, Name, Work email, Company, Notes.
+  Work email is the only one HubSpot requires by default and is what links a
+  later booking to the same contact record; Company routes the enquiry;
+  Notes captures the intent the ticket says we have no way to capture today.
+  No phone, country, job title or employee count.
+- All four are PREFILLED and all four stay EDITABLE. Name and Work email
+  come from `signedInMember()` and Company from `WORKSPACE_NAME`, both new
+  exports on `data/team-members.ts`: the owner row is who this build is
+  signed in as, and the workspace name was a JSX literal repeated five times
+  in `workspace-switcher.tsx` and is now read from one place. Notes has no
+  prefill, it is the only thing we cannot know.
+- Per-field error affordances, inline and never a summary block: validation
+  fires on BLUR and on submit, never per keystroke, so a half-typed address
+  is not flagged mid-entry. The invalid control takes `aria-invalid` plus
+  `aria-describedby`, its `Field` takes `data-invalid`, and the message
+  renders under its own field through `FieldError`, the pattern
+  `BillingFree.tsx` already uses. Email checks FORMAT only; MX and
+  deliverability are server-side and this is a mockup. The three required
+  fields are marked with the word "Required" in the label row, never colour
+  alone. Field errors and the frame-level `?form=error` state are separate
+  and both previewable.
+- DEMO reserves 480px, and that number is a PLACEHOLDER, not a measurement.
+  No scheduling link exists yet, so the real widget has never been measured
+  and its height is not controllable by the host; 480 is reasoned from the
+  four-screen flow and the developer should size the container against the
+  live scheduling page. It is a `min-h`, never a fixed height, so a shorter
+  embed cannot leave a gap and a taller one grows the region. Its own
+  booking form always collects first name, last name and email, HubSpot's
+  documented default and not ours to change, so we draw none of our own
+  fields in it and our footer carries only Cancel. It keeps the frame-level
+  error, because a blocked script renders an empty container with no message
+  of its own.
+- The dialog now caps at `max-h-[90vh]` on an `auto 1fr auto` row template,
+  with the body as the scrolling middle row. That is what lets a body of
+  UNKNOWN height be safe: the popup can never grow past the viewport, the
+  header and footer stay put, and anything taller scrolls. Verified across
+  18 combinations, two flows by three simulated embed heights by three
+  viewport heights (1000 / 700 / 520): nothing renders off-screen, the
+  footer stays visible in every one, and the body scrolls exactly when it
+  needs to.
+- Labels: the contact submit reads "Submit form". Cancel is unchanged.
+- On the ladder, contact and demo are buttons again rather than links, since
+  they open a surface in place. Everything that still NAVIGATES stays a real
+  anchor through one `hrefByIntent` map: "Go to Overview" and "Upgrade to
+  Pro". Only the downgrade confirm and the two dialog openers are buttons.
 
 ### `?manage=1` retired; upgrade CTAs point at the page (`layouts/DashboardChrome.tsx`, `pages/models/FreeModels.tsx`, `test/deep-links.test.tsx`) · [48aa4a8]
 
@@ -227,3 +378,26 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   "Current plan" badge and that badge is on the Enterprise card, and no card
   carries a filled CTA. Assertions are scoped to the `data-plan-card`
   articles so sidebar chrome cannot satisfy them.
+
+### Contact dialog behaviour, and the ladder suite grows (`test/contact-dialog.test.tsx`, `test/manage-subscription.test.tsx`) · [a8901a2]
+
+- New suite, 28 cases, `render` inside a `MemoryRouter`: the contact and
+  demo controls open a dialog rather than navigating, Escape closes and
+  returns focus to the exact opener, and each of the four `?form=` states
+  renders its own affordance (enabled submit on `ready`, `aria-busy` with
+  the fields gone on `loading`, a retained `role="alert"` plus retry on
+  `error`, a `role="status"` confirmation with the submit collapsed on
+  `done`). Submitting the mock form reaches `done` without touching the URL.
+- The form's own contract is asserted, not assumed: exactly four fields in
+  order, prefilled from `signedInMember()` and `WORKSPACE_NAME`, every one
+  still editable rather than read-only or disabled, and the three required
+  ones marked with a word rather than colour alone. Per-field errors fire on
+  BLUR and never mid-entry, wire to their control, never flag the optional
+  Notes field, and stay separate from the frame-level `?form=error` state.
+- Two cases pin the border rule that distinguishes the bodies: only the demo
+  keeps a visible boundary, and the demo draws none of our fields and no
+  submit of ours, so a future refactor cannot quietly give the contact form
+  a frame or the scheduler a submit button.
+- The ladder suite gains groups for the Card tier elevation, the per-view
+  lift treatment, the single promoted glyph, the Enterprise price row and
+  its caption, and slot order inside a card; it now runs 131 cases.
