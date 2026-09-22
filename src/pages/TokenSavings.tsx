@@ -148,7 +148,7 @@ export function OverviewSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Overview</SectionTitle>
+        <SectionTitle as="h2">Overview</SectionTitle>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedPill
             aria-label="Time range"
@@ -203,7 +203,7 @@ export function SavingsOptionsSection({ plan = "pro" }: { plan?: Plan } = {}) {
   return (
     <div className="mt-2 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle>Savings options</SectionTitle>
+        <SectionTitle as="h2">Savings options</SectionTitle>
       </div>
       <div className="flex flex-col gap-4">
         <CompressionCard

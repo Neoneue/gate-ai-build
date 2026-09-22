@@ -335,9 +335,9 @@ function PolicyCard({
             />
           </span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            <h3 className="type-heading-16 m-0 text-balance text-foreground">
+            <h2 className="type-heading-16 m-0 text-balance text-foreground">
               {config.name}
-            </h3>
+            </h2>
           </div>
           <span className="flex h-6 shrink-0 items-center">
             <StatusBadge on={state.enabled} />

@@ -36,7 +36,7 @@ export function TokenSavingsDefault() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <SectionTitle>Overview</SectionTitle>
+          <SectionTitle as="h2">Overview</SectionTitle>
           <KpiRail columns={3}>
             <div className="flex min-h-[120px] flex-col items-center justify-center gap-3 bg-card p-6">
               <div

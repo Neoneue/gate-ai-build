@@ -16,6 +16,7 @@ import {
 import type { LayoutContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
+import { IconCrossFade } from "@/components/ui/icon-cross-fade";
 import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import {
   Sheet,
@@ -406,33 +407,12 @@ function DashTopBar({
           size="icon"
           variant="ghost"
         >
-          {/* Contextual icon cross-fade. Both icons stay in DOM,
-              absolute-positioned; toggle scale/opacity/blur. The skill's
-              reference 4px blur dissolves a 16px icon into fuzz at
-              scale 0.25 — using 1px here so the softening reads as
-              edge-feathering, not vanish-into-blob. */}
-          <span className="relative inline-flex size-4 items-center justify-center">
-            <PanelLeftClose
-              aria-hidden
-              className={cn(
-                "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
-                sidebarExpanded
-                  ? "scale-100 opacity-100 blur-0"
-                  : "scale-[0.25] opacity-0 blur-[1px]"
-              )}
-              strokeWidth={1.75}
-            />
-            <PanelLeftOpen
-              aria-hidden
-              className={cn(
-                "absolute size-4 transition-[opacity,scale,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
-                sidebarExpanded
-                  ? "scale-[0.25] opacity-0 blur-[1px]"
-                  : "scale-100 opacity-100 blur-0"
-              )}
-              strokeWidth={1.75}
-            />
-          </span>
+          {/* Contextual icon cross-fade — shared recipe, see IconCrossFade. */}
+          <IconCrossFade
+            active={!sidebarExpanded}
+            first={<PanelLeftClose aria-hidden strokeWidth={1.75} />}
+            second={<PanelLeftOpen aria-hidden strokeWidth={1.75} />}
+          />
         </Button>
         {/* Below lg there's no rail, so the top bar carries the logomark and
          *  the nav moves into the hamburger Sheet; the workspace switcher lives

@@ -499,6 +499,19 @@ function CreateLimitDialog({
     Number.isFinite(thresholdNum) &&
     thresholdNum > 0;
 
+  /* Extracted so BOTH close paths clear the form. Base UI only fires the
+     Dialog's own `onOpenChange` for user-driven dismissals (Escape, overlay,
+     Cancel) — submitting closes by flipping the controlled `open` prop, which
+     never reaches that handler, so the fields survived into the next open.
+     Mirrors the Pro twin (Limits.tsx). */
+  const resetForm = () => {
+    setName("");
+    setType("spend");
+    setThreshold("");
+    setPeriod("1d");
+    setScope("org");
+  };
+
   const handleSubmit = () => {
     onCreate({
       id: crypto.randomUUID(),
@@ -509,6 +522,7 @@ function CreateLimitDialog({
       scope,
       used: "0",
     });
+    resetForm();
     onOpenChange(false);
   };
 
@@ -517,11 +531,7 @@ function CreateLimitDialog({
       onOpenChange={(next) => {
         onOpenChange(next);
         if (!next) {
-          setName("");
-          setType("spend");
-          setThreshold("");
-          setPeriod("1d");
-          setScope("org");
+          resetForm();
         }
       }}
       open={open}

@@ -144,7 +144,7 @@ export function ApiKeys() {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <div className="flex w-full max-w-5xl flex-col gap-6">
+      <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <PageHeader
           onCreate={
             ownKeys.length === 0 ? undefined : () => setCreateOpen(true)

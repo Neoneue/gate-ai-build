@@ -20,6 +20,7 @@ import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { authoredDate } from "@/lib/demo-clock";
+import { InviteMemberDialog } from "@/pages/Team";
 
 const OWNER = {
   name: "Chad Ponticas",
@@ -34,6 +35,7 @@ export function TeamDefault() {
     toggleSidebar: () => void;
   }>();
   const [tab, setTab] = useState<"members" | "invitations">("members");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   return (
     <DashboardChrome
@@ -56,7 +58,11 @@ export function TeamDefault() {
               Ponticas&rsquo;s workspace.
             </p>
           </div>
-          <Button size="default" variant="default">
+          <Button
+            onClick={() => setInviteOpen(true)}
+            size="default"
+            variant="default"
+          >
             <UserPlus aria-hidden data-icon="inline-start" />
             Invite member
           </Button>
@@ -153,6 +159,8 @@ export function TeamDefault() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <InviteMemberDialog onOpenChange={setInviteOpen} open={inviteOpen} />
       </div>
     </DashboardChrome>
   );

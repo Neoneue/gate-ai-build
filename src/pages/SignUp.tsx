@@ -72,12 +72,9 @@ export function SignUp() {
               />
             </Field>
 
-            <Button className="relative w-full" size="default" type="submit">
+            <Button className="w-full" size="default" type="submit">
               Continue with email
-              <ArrowRight
-                aria-hidden
-                className="absolute top-1/2 right-3 -translate-y-1/2"
-              />
+              <ArrowRight aria-hidden data-icon="inline-end" />
             </Button>
 
             <FieldSeparator>or</FieldSeparator>

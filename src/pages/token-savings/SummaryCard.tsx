@@ -72,7 +72,7 @@ const NOTE = "type-copy-12 m-0 text-pretty text-muted-foreground";
 function SummaryHeader() {
   return (
     <CardHeader className="border-border border-b">
-      <SectionTitle>{SUMMARY_COPY.title}</SectionTitle>
+      <SectionTitle as="h2">{SUMMARY_COPY.title}</SectionTitle>
       {/* One subtitle in the card-description voice (CardChromeHeader) that
           says what the card is for. The period is read in the lede, and the
           epoch caveat sits with the exclusion in the footer, so the header
